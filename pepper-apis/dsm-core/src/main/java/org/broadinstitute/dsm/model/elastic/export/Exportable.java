@@ -6,8 +6,6 @@ import org.broadinstitute.dsm.util.ParticipantUtil;
 
 public interface Exportable {
 
-    void export();
-
     static String getParticipantGuid(String participantId, String index) {
         if (!(ParticipantUtil.isGuid(participantId))) {
             ElasticSearchParticipantDto participantById =
@@ -16,5 +14,7 @@ public interface Exportable {
         }
         return participantId;
     }
+
+    void export();
 
 }

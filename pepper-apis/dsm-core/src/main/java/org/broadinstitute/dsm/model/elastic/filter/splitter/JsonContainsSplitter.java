@@ -3,11 +3,7 @@ package org.broadinstitute.dsm.model.elastic.filter.splitter;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.Util;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
-
-import java.util.Arrays;
 
 public class JsonContainsSplitter extends BaseSplitter {
 
@@ -25,7 +21,7 @@ public class JsonContainsSplitter extends BaseSplitter {
 
     @Override
     public String[] getValue() {
-        return new String[]{splittedFilter[FIELD_INDEX].split(Util.COMMA_SEPARATOR)[FIELD_INDEX].trim()};
+        return new String[] {splittedFilter[FIELD_INDEX].split(Util.COMMA_SEPARATOR)[FIELD_INDEX].trim()};
     }
 
     @Override
@@ -38,6 +34,6 @@ public class JsonContainsSplitter extends BaseSplitter {
                 .replace(Filter.SINGLE_QUOTE, StringUtils.EMPTY)
                 .trim()
                 .split(Util.COMMA_SEPARATOR)[ALIAS_INDEX].trim();
-        return new String[]{fieldWithAlias[ALIAS_INDEX], fieldWithAlias[FIELD_INDEX], innerProperty};
+        return new String[] {fieldWithAlias[ALIAS_INDEX], fieldWithAlias[FIELD_INDEX], innerProperty};
     }
 }

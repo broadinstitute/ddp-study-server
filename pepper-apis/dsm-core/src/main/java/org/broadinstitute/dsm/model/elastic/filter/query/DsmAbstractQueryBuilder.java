@@ -1,5 +1,8 @@
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
+import java.util.List;
+import java.util.Map;
+
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
@@ -13,9 +16,6 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
-
-import java.util.List;
-import java.util.Map;
 
 public class DsmAbstractQueryBuilder {
 
@@ -43,7 +43,7 @@ public class DsmAbstractQueryBuilder {
 
     public AbstractQueryBuilder build() {
         Map<String, List<String>> parsedFilters = filterSeparator.parseFiltersByLogicalOperators();
-        for (Map.Entry<String, List<String>> parsedFilter: parsedFilters.entrySet()) {
+        for (Map.Entry<String, List<String>> parsedFilter : parsedFilters.entrySet()) {
             List<String> filterValues = parsedFilter.getValue();
             if (parsedFilter.getKey().equals(Filter.AND_TRIMMED)) {
                 buildUpQuery(filterValues, BoolQueryBuilder::must);

@@ -6,7 +6,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -34,6 +37,33 @@ public class ParticipantData {
 
     @ColumnName(ParticipantDataDao.DDP_PARTICIPANT_ID)
     private String ddpParticipantId;
+    @ColumnName(ParticipantDataDao.DDP_INSTANCE_ID)
+    private int ddpInstanceId;
+    @ColumnName(ParticipantDataDao.FIELD_TYPE_ID)
+    private String fieldTypeId;
+    @ColumnName(ParticipantDataDao.DATA)
+    @JsonProperty("dynamicFields")
+    private String data;
+    @JsonIgnore
+    private long lastChanged;
+    @JsonIgnore
+    private String changedBy;
+    // We cache the json data map to avoid deserializing it multiple times.
+    @JsonIgnore
+    private Map<String, String> cachedDataMap;
+
+    public ParticipantData() {
+    }
+
+    private ParticipantData(Builder builder) {
+        this.participantDataId = builder.participantDataId;
+        this.ddpParticipantId = builder.ddpParticipantId;
+        this.ddpInstanceId = builder.ddpInstanceId;
+        this.fieldTypeId = builder.fieldTypeId;
+        this.data = builder.data;
+        this.lastChanged = builder.lastChanged;
+        this.changedBy = builder.changedBy;
+    }
 
     /*
         used only for Jackson library, jackson by default uses getter of the field to serialize its data
@@ -45,12 +75,6 @@ public class ParticipantData {
         return ddpParticipantId;
     }
 
-    @ColumnName(ParticipantDataDao.DDP_INSTANCE_ID)
-    private int ddpInstanceId;
-
-    @ColumnName(ParticipantDataDao.FIELD_TYPE_ID)
-    private String fieldTypeId;
-
     /*
         used only for Jackson library, jackson by default uses getter of the field to serialize its data
         since we follow Optional way of getters, jackson by default weirdly serializes Optional and not field's data
@@ -61,30 +85,15 @@ public class ParticipantData {
         return fieldTypeId;
     }
 
-    @ColumnName(ParticipantDataDao.DATA)
-    @JsonProperty("dynamicFields")
-    private String data;
-
     @JsonProperty("dynamicFields")
     public Map<String, Object> getDynamicFields() {
         try {
-            return ObjectMapperSingleton.instance().readValue(data, new TypeReference<Map<String, Object>>() {});
+            return ObjectMapperSingleton.instance().readValue(data, new TypeReference<Map<String, Object>>() {
+            });
         } catch (IOException | NullPointerException e) {
             return Map.of();
         }
     }
-
-    public ParticipantData() {}
-
-    @JsonIgnore
-    private long lastChanged;
-
-    @JsonIgnore
-    private String changedBy;
-
-    // We cache the json data map to avoid deserializing it multiple times.
-    @JsonIgnore
-    private Map<String, String> cachedDataMap;
 
     public int getParticipantDataId() {
         return participantDataId;
@@ -119,7 +128,8 @@ public class ParticipantData {
         if (StringUtils.isBlank(data)) {
             return null;
         }
-        Type type = new TypeToken<HashMap<String, String>>() {}.getType();
+        Type type = new TypeToken<HashMap<String, String>>() {
+        }.getType();
         cachedDataMap = gson.fromJson(data, type);
         return cachedDataMap;
     }
@@ -132,16 +142,6 @@ public class ParticipantData {
         return Optional.ofNullable(changedBy);
     }
 
-    private ParticipantData(Builder builder) {
-        this.participantDataId = builder.participantDataId;
-        this.ddpParticipantId = builder.ddpParticipantId;
-        this.ddpInstanceId = builder.ddpInstanceId;
-        this.fieldTypeId = builder.fieldTypeId;
-        this.data = builder.data;
-        this.lastChanged = builder.lastChanged;
-        this.changedBy = builder.changedBy;
-    }
-
     public static class Builder {
         private int participantDataId;
         private String ddpParticipantId;
@@ -150,12 +150,12 @@ public class ParticipantData {
         private String data;
         private long lastChanged;
         private String changedBy;
-        
+
         public Builder withParticipantDataId(int participantDataId) {
             this.participantDataId = participantDataId;
             return this;
         }
-        
+
         public Builder withDdpParticipantId(String ddpParticipantId) {
             this.ddpParticipantId = ddpParticipantId;
             return this;
@@ -189,8 +189,8 @@ public class ParticipantData {
         public ParticipantData build() {
             return new ParticipantData(this);
         }
-        
-        
+
+
     }
 }
 

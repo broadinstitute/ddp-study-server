@@ -3,7 +3,6 @@ package org.broadinstitute.dsm.model.elastic.export.process;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -53,13 +52,17 @@ public abstract class BaseProcessor implements Processor {
     }
 
     protected String getPrimaryKey(Object obj) {
-        if (Objects.isNull(obj)) return StringUtils.EMPTY;
+        if (Objects.isNull(obj)) {
+            return StringUtils.EMPTY;
+        }
         TableName tableName = obj.getClass().getAnnotation(TableName.class);
         return tableName != null ? tableName.primaryKey() : StringUtils.EMPTY;
     }
 
     protected void updateExistingRecord(Map<String, Object> eachRecord) {
-        if (Objects.isNull(eachRecord)) return;
+        if (Objects.isNull(eachRecord)) {
+            return;
+        }
         logger.info("Updating existing record");
         Optional<Map<String, Object>> maybeEndResult = collectEndResult();
         if (maybeEndResult.isPresent()) {
@@ -87,7 +90,9 @@ public abstract class BaseProcessor implements Processor {
                     ? new ArrayList<>()
                     : new HashMap<>();
         }
-    };
+    }
+
+    ;
 
     protected Object getValueByField(Field field) {
         try {

@@ -1,5 +1,22 @@
 package org.broadinstitute.dsm.util.tools;
 
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Writer;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Scanner;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -20,13 +37,6 @@ import org.broadinstitute.dsm.util.tools.util.DBUtil;
 import org.broadinstitute.dsm.util.tools.util.FileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.*;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.*;
-
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 /**
  * Tool to combine dsm data with data from datStat
@@ -63,7 +73,7 @@ public class ParticipantMedicalRecordTool {
         littleMain();
     }
 
-    public static void argumentsForTesting(String propFileTesting, String realm, String datStat){
+    public static void argumentsForTesting(String propFileTesting, String realm, String datStat) {
         testScenario = true;
         propFile = propFileTesting;
         realmName = realm;
@@ -88,13 +98,11 @@ public class ParticipantMedicalRecordTool {
                         }
                     }
                 }
-            }
-            else{
+            } else {
                 setup(propFile);
                 combineData(realmName, datStatFile);
             }
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             logger.error("Failed to combine data ", ex);
             System.exit(-1);
         }
@@ -135,8 +143,7 @@ public class ParticipantMedicalRecordTool {
                     if (datStat != null) {
                         writeParticipantData(lineOutput, datStat.getDdpParticipant());
                         writeInstitution(lineOutput, datStat.getInstitution());
-                    }
-                    else {
+                    } else {
                         logger.error("Check " + record.getKey());
                     }
                     writeRecordData(lineOutput, record);
@@ -146,21 +153,21 @@ public class ParticipantMedicalRecordTool {
                 writer.flush();
                 writer.close();
             }
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
     }
 
     /**
      * Extract data from given datStatData file
+     *
      * @param datStatDataFile
      * @return HashMap<String, DatStatParticipantInstitution>
-     *     Key: (String) ddp_institution_id + "_1_INITIAL_BIOPSY"
-     *     Value: DatStatParticipantInstitution (datStat information of participant institution)
+     * Key: (String) ddp_institution_id + "_1_INITIAL_BIOPSY"
+     * Value: DatStatParticipantInstitution (datStat information of participant institution)
      */
     private static HashMap<String, DatStatParticipantInstitution> extractDataFromFile(@NonNull String datStatDataFile) {
-        try{
+        try {
             Collection<String[]> datStatDataCollection = readDatStatFile(datStatDataFile);
             logger.info("Found " + datStatDataCollection.size() + " participant data in datStat file");
 
@@ -181,7 +188,7 @@ public class ParticipantMedicalRecordTool {
             int datStatBiopsyState = -1;
 
             HashMap<String, DatStatParticipantInstitution> datStatDataHashMap = new HashMap<>();
-            for (Iterator iter = datStatDataCollection.iterator(); iter.hasNext();) {
+            for (Iterator iter = datStatDataCollection.iterator(); iter.hasNext(); ) {
                 String[] datStatLineData = (String[]) iter.next();
                 if (datStatParticipantIdField == -1) {
                     for (int i = 0; i < datStatLineData.length; i++) {
@@ -247,7 +254,8 @@ public class ParticipantMedicalRecordTool {
                 String state = datStatStateField != -1 ? datStatLineData[datStatStateField] : "";
                 String zip = datStatZipField != -1 ? datStatLineData[datStatZipField] : "";
                 String country = datStatCountryField != -1 ? datStatLineData[datStatCountryField] : "";
-                DDPParticipant participant = new DDPParticipant(participantId, firstName, lastName, country, city, zip, street1, street2, state, shortId, null);
+                DDPParticipant participant =
+                        new DDPParticipant(participantId, firstName, lastName, country, city, zip, street1, street2, state, shortId, null);
 
                 String biopsyInst = "";
                 if (datStatLineData.length > datStatBiopsyInstitute) {
@@ -266,12 +274,12 @@ public class ParticipantMedicalRecordTool {
                 physicianInstitutionJsonToCSV(datStatDataHashMap, participant, institutionListJson);
 
                 logger.info(participant.getParticipantId().concat("_1_INITIAL_BIOPSY"));
-                datStatDataHashMap.put(participant.getParticipantId().concat("_1_INITIAL_BIOPSY"), new DatStatParticipantInstitution(participant,
-                        new DatStatInstitution(null, "INITIAL_BIOPSY", biopsyInst, null, biopsyCity, biopsyState)));
+                datStatDataHashMap.put(participant.getParticipantId().concat("_1_INITIAL_BIOPSY"),
+                        new DatStatParticipantInstitution(participant,
+                                new DatStatInstitution(null, "INITIAL_BIOPSY", biopsyInst, null, biopsyCity, biopsyState)));
             }
             return datStatDataHashMap;
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
     }
@@ -300,8 +308,7 @@ public class ParticipantMedicalRecordTool {
                         }
                     }
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 throw new RuntimeException("Failed to query database ", e);
             }
             return null;
@@ -310,46 +317,53 @@ public class ParticipantMedicalRecordTool {
     }
 
     private static void physicianInstitutionJsonToCSV(HashMap<String, DatStatParticipantInstitution> datStatDataHashMap,
-                                           @NonNull DDPParticipant participant, String json) throws Exception {
+                                                      @NonNull DDPParticipant participant, String json) throws Exception {
 
         try {
-            JsonArray physiciansInstitutions = (JsonArray) (new JsonParser().parse(json.replaceFirst("^\"", "").replaceAll("\"$", "").replaceAll("\"\"", "\"")));
+            JsonArray physiciansInstitutions =
+                    (JsonArray) (new JsonParser().parse(json.replaceFirst("^\"", "").replaceAll("\"$", "").replaceAll("\"\"", "\"")));
 
             for (JsonElement physicianInstitution : physiciansInstitutions) {
                 String physicianInstitutionId = "";
                 String type = "";
-                if (physicianInstitution.getAsJsonObject().get("physicianId") != null && !physicianInstitution.getAsJsonObject().get("physicianId").isJsonNull()) {
+                if (physicianInstitution.getAsJsonObject().get("physicianId") != null &&
+                        !physicianInstitution.getAsJsonObject().get("physicianId").isJsonNull()) {
                     physicianInstitutionId = physicianInstitution.getAsJsonObject().get("physicianId").getAsString();
                     type = "PHYSICIAN";
                 }
-                if (physicianInstitution.getAsJsonObject().get("institutionId") != null && !physicianInstitution.getAsJsonObject().get("institutionId").isJsonNull()) {
+                if (physicianInstitution.getAsJsonObject().get("institutionId") != null &&
+                        !physicianInstitution.getAsJsonObject().get("institutionId").isJsonNull()) {
                     physicianInstitutionId = physicianInstitution.getAsJsonObject().get("institutionId").getAsString();
                     type = "INSTITUTION";
                 }
                 String instName = "";
-                if (physicianInstitution.getAsJsonObject().get("name") != null && !physicianInstitution.getAsJsonObject().get("name").isJsonNull()) {
+                if (physicianInstitution.getAsJsonObject().get("name") != null &&
+                        !physicianInstitution.getAsJsonObject().get("name").isJsonNull()) {
                     instName = physicianInstitution.getAsJsonObject().get("name").getAsString();
                 }
                 String institution = "";
-                if (physicianInstitution.getAsJsonObject().get("institution") != null && !physicianInstitution.getAsJsonObject().get("institution").isJsonNull()) {
+                if (physicianInstitution.getAsJsonObject().get("institution") != null &&
+                        !physicianInstitution.getAsJsonObject().get("institution").isJsonNull()) {
                     institution = physicianInstitution.getAsJsonObject().get("institution").getAsString();
                 }
                 String city = "";
-                if (physicianInstitution.getAsJsonObject().get("city") != null && !physicianInstitution.getAsJsonObject().get("city").isJsonNull()) {
+                if (physicianInstitution.getAsJsonObject().get("city") != null &&
+                        !physicianInstitution.getAsJsonObject().get("city").isJsonNull()) {
                     city = physicianInstitution.getAsJsonObject().get("city").getAsString();
                 }
                 String instState = "";
-                if (physicianInstitution.getAsJsonObject().get("state") != null && !physicianInstitution.getAsJsonObject().get("state").isJsonNull()) {
+                if (physicianInstitution.getAsJsonObject().get("state") != null &&
+                        !physicianInstitution.getAsJsonObject().get("state").isJsonNull()) {
                     instState = physicianInstitution.getAsJsonObject().get("state").getAsString();
                 }
 
                 String key = participant.getParticipantId().concat("_" + physicianInstitutionId).concat("_" + type);
                 logger.info(key);
-                datStatDataHashMap.put(key, new DatStatParticipantInstitution(participant, new DatStatInstitution(physicianInstitutionId, type,
-                        institution, instName, city, instState)));
+                datStatDataHashMap.put(key,
+                        new DatStatParticipantInstitution(participant, new DatStatInstitution(physicianInstitutionId, type,
+                                institution, instName, city, instState)));
             }
-        }
-        catch (ClassCastException e) {
+        } catch (ClassCastException e) {
             logger.info("No Json in that field " + json);
         }
     }
@@ -469,19 +483,15 @@ public class ParticipantMedicalRecordTool {
                 data.add(lineData);
             }
             return data;
-        }
-        catch (FileNotFoundException e) {
+        } catch (FileNotFoundException e) {
             throw new RuntimeException("Failed to read datStat file ", e);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Failed to read datStat file ", e);
-        }
-        finally {
+        } finally {
             if (br != null) {
                 try {
                     br.close();
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     throw new RuntimeException("Failed to read datStat file ", e);
                 }
             }

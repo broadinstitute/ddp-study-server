@@ -15,6 +15,18 @@ public class ElasticSearchTest {
 
     private static final Gson GSON = new Gson();
 
+    private static ESProfile esProfileGeneratorWithGuid() {
+        ESProfile esProfile = new ESProfile();
+        esProfile.setGuid(ParticipantWrapperTest.randomGuidGenerator());
+        return esProfile;
+    }
+
+    private static ESProfile esProfileGeneratorWithLegacyAltPid() {
+        ESProfile esProfile = new ESProfile();
+        esProfile.setLegacyAltPid(ParticipantWrapperTest.randomLegacyAltPidGenerator());
+        return esProfile;
+    }
+
     @Test
     public void getParticipantIdFromProfile() {
         ESProfile profile = esProfileGeneratorWithGuid();
@@ -84,19 +96,6 @@ public class ElasticSearchTest {
             Assert.fail();
         }
     }
-
-    private static ESProfile esProfileGeneratorWithGuid() {
-        ESProfile esProfile = new ESProfile();
-        esProfile.setGuid(ParticipantWrapperTest.randomGuidGenerator());
-        return esProfile;
-    }
-
-    private static ESProfile esProfileGeneratorWithLegacyAltPid() {
-        ESProfile esProfile = new ESProfile();
-        esProfile.setLegacyAltPid(ParticipantWrapperTest.randomLegacyAltPidGenerator());
-        return esProfile;
-    }
-
 
 
 }

@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.broadinstitute.dsm.model.elastic.Util;
-import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +12,8 @@ public class SingleSourceGenerator extends SourceGenerator {
 
     private static final Logger logger = LoggerFactory.getLogger(SingleSourceGenerator.class);
 
-    public SingleSourceGenerator() {}
+    public SingleSourceGenerator() {
+    }
 
     @Override
     public Object construct() {

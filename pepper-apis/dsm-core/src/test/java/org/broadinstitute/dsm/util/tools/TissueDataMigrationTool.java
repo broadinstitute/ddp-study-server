@@ -1,5 +1,27 @@
 package org.broadinstitute.dsm.util.tools;
 
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.typesafe.config.Config;
@@ -7,7 +29,6 @@ import com.typesafe.config.ConfigFactory;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
@@ -22,67 +43,55 @@ import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.dsm.util.TestUtil;
 import org.broadinstitute.dsm.util.tools.util.DBUtil;
 import org.broadinstitute.dsm.util.tools.util.FileUtil;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
-
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-
-import java.sql.*;
 
 @Data
 public class TissueDataMigrationTool {
 
     public final static Logger logger = LoggerFactory.getLogger(TissueDataMigrationTool.class);
 
-    private static final String SQL_INSERT_ONC_HISTORY_DETAIL = "INSERT INTO ddp_onc_history_detail (medical_record_id,  accession_number," +
-            " last_changed, changed_by) VALUES (?, ?, ?, ?)";
+    private static final String SQL_INSERT_ONC_HISTORY_DETAIL =
+            "INSERT INTO ddp_onc_history_detail (medical_record_id,  accession_number," +
+                    " last_changed, changed_by) VALUES (?, ?, ?, ?)";
     private static final String SQL_INSERT_TISSUE = "INSERT INTO ddp_tissue ( onc_history_detail_id, last_changed, changed_by)" +
             "VALUES (? ,? , ?)";
-    private final String SQL_SELECT_FROM_ONC_HISTORY_BY_ACCESSION_NUM = "SELECT part.ddp_participant_id, onc.accession_number, tis.sk_id, tis.sm_id " +
-            "FROM ddp_institution inst  " +
-            "LEFT JOIN ddp_participant part on(part.participant_id = inst.participant_id) " +
-            "LEFT JOIN ddp_medical_record rec on (rec.institution_id = inst.institution_id) " +
-            "LEFT JOIN ddp_onc_history_detail onc on (onc.medical_record_id = rec.medical_record_id) " +
-            "LEFT JOIN ddp_tissue tis on (tis.onc_history_detail_id = onc.onc_history_detail_id) " +
-            "WHERE onc.accession_number = ? AND NOT (onc.deleted  <=> 1)";
-    private final String SQL_SELECT_ONC_HIST_DETAIL_AND_TISSUE = "SELECT oncDetail.onc_history_detail_id,  oncDetail.request, oncDetail.deleted, oncDetail.fax_sent, " +
-            " oncDetail.tissue_received, oncDetail.medical_record_id, oncDetail.date_px, oncDetail.type_px, oncDetail.location_px, oncDetail.histology, oncDetail.accession_number, " +
-            "oncDetail.facility, oncDetail.phone, oncDetail.fax, oncDetail.notes, oncDetail.additional_values, oncDetail.additional_values_json, oncDetail.request, oncDetail.fax_sent, oncDetail.fax_sent_by, " +
-            "oncDetail.fax_confirmed, oncDetail.fax_sent_2, oncDetail.fax_sent_2_by, oncDetail.fax_confirmed_2, oncDetail.fax_sent_3, oncDetail.fax_sent_3_by, oncDetail.fax_confirmed_3, " +
-            "oncDetail.tissue_received, oncDetail.tissue_problem_option, oncDetail.gender, oncDetail.destruction_policy, oncDetail.unable_obtain_tissue, tissue_id, tissue.notes, count_received, tissue_type, tissue_site, " +
-            "tumor_type, h_e, pathology_report, collaborator_sample_id, block_sent, scrolls_received, sk_id, sm_id, sent_gp, first_sm_id, additional_tissue_value, additional_tissue_value_json, expected_return, return_date, " +
-            "return_fedex_id, shl_work_number, tumor_percentage, tissue_sequence FROM ddp_onc_history_detail oncDetail LEFT JOIN ddp_tissue tissue ON (oncDetail.onc_history_detail_id = tissue.onc_history_detail_id) ";
-
-    private static final String CHOOSE_BY_ONC_DETAIL_ACCESSION_NUMBER = " WHERE oncDetail.accession_number = ? AND NOT (oncDetail.deleted  <=> 1)";
+    private static final String CHOOSE_BY_ONC_DETAIL_ACCESSION_NUMBER =
+            " WHERE oncDetail.accession_number = ? AND NOT (oncDetail.deleted  <=> 1)";
     private static final String CHOOSE_BY_ONC_DETAIL_ID = " WHERE oncDetail.onc_history_detail_id = ?";
-    private static final String SQL_SELECT_SK_ID_SM_ID_FROM_ONCHISTORY_AND_TISSUE = "SELECT * FROM ddp_onc_history_detail onc LEFT JOIN ddp_tissue tis ON(onc.onc_history_detail_id = tis.onc_history_detail_id) WHERE sk_id = ? OR sm_id = ?";
+    private static final String SQL_SELECT_SK_ID_SM_ID_FROM_ONCHISTORY_AND_TISSUE =
+            "SELECT * FROM ddp_onc_history_detail onc LEFT JOIN ddp_tissue tis ON(onc.onc_history_detail_id = tis.onc_history_detail_id) WHERE sk_id = ? OR sm_id = ?";
+    public static HashMap<String, String> headersToValues = new HashMap<>();
+    public static File outputFile;
     private static Config cfg;
     private static String realmId;
-    public static HashMap<String, String> headersToValues = new HashMap<>();
     private static HashMap<Integer, String> fieldNameMap = new HashMap<>();
-
     private static Map<String, DBElement> columnNameMap;
     private static Set<String> dateFields;
     private static HashMap<String, String> dsmData = new HashMap<>();
-    public static File outputFile;
     private static FileWriter outputFileWriter;
+    private final String SQL_SELECT_FROM_ONC_HISTORY_BY_ACCESSION_NUM =
+            "SELECT part.ddp_participant_id, onc.accession_number, tis.sk_id, tis.sm_id " +
+                    "FROM ddp_institution inst  " +
+                    "LEFT JOIN ddp_participant part on(part.participant_id = inst.participant_id) " +
+                    "LEFT JOIN ddp_medical_record rec on (rec.institution_id = inst.institution_id) " +
+                    "LEFT JOIN ddp_onc_history_detail onc on (onc.medical_record_id = rec.medical_record_id) " +
+                    "LEFT JOIN ddp_tissue tis on (tis.onc_history_detail_id = onc.onc_history_detail_id) " +
+                    "WHERE onc.accession_number = ? AND NOT (onc.deleted  <=> 1)";
+    private final String SQL_SELECT_ONC_HIST_DETAIL_AND_TISSUE =
+            "SELECT oncDetail.onc_history_detail_id,  oncDetail.request, oncDetail.deleted, oncDetail.fax_sent, " +
+                    " oncDetail.tissue_received, oncDetail.medical_record_id, oncDetail.date_px, oncDetail.type_px, oncDetail.location_px, oncDetail.histology, oncDetail.accession_number, " +
+                    "oncDetail.facility, oncDetail.phone, oncDetail.fax, oncDetail.notes, oncDetail.additional_values, oncDetail.additional_values_json, oncDetail.request, oncDetail.fax_sent, oncDetail.fax_sent_by, " +
+                    "oncDetail.fax_confirmed, oncDetail.fax_sent_2, oncDetail.fax_sent_2_by, oncDetail.fax_confirmed_2, oncDetail.fax_sent_3, oncDetail.fax_sent_3_by, oncDetail.fax_confirmed_3, " +
+                    "oncDetail.tissue_received, oncDetail.tissue_problem_option, oncDetail.gender, oncDetail.destruction_policy, oncDetail.unable_obtain_tissue, tissue_id, tissue.notes, count_received, tissue_type, tissue_site, " +
+                    "tumor_type, h_e, pathology_report, collaborator_sample_id, block_sent, scrolls_received, sk_id, sm_id, sent_gp, first_sm_id, additional_tissue_value, additional_tissue_value_json, expected_return, return_date, " +
+                    "return_fedex_id, shl_work_number, tumor_percentage, tissue_sequence FROM ddp_onc_history_detail oncDetail LEFT JOIN ddp_tissue tissue ON (oncDetail.onc_history_detail_id = tissue.onc_history_detail_id) ";
 
 
     //    public static void main(String[] args) throws Exception {
     //        TissueDataMigrationTool.littleMain("ASC_Tissue_Migration_v8.txt", "Angio");
     //    }
-
-    public static void littleMain(String ttFilePath, String realm) {
-        TissueDataMigrationTool tissueDataMigrationTool = new TissueDataMigrationTool(ttFilePath, realm);
-    }
 
     public TissueDataMigrationTool(String pathName, String realm) {
         String confFile = "config/test-config.conf";
@@ -94,6 +103,34 @@ public class TissueDataMigrationTool {
         useReadFileMethod(pathName);
     }
 
+    public static void littleMain(String ttFilePath, String realm) {
+        TissueDataMigrationTool tissueDataMigrationTool = new TissueDataMigrationTool(ttFilePath, realm);
+    }
+
+    private static void setup(String config) {
+        cfg = ConfigFactory.load();
+        //secrets from vault in a config file
+        File c = new File(config);
+
+        cfg = cfg.withFallback(ConfigFactory.parseFile(c));
+        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
+                cfg.getString("portal.dbSslKeyStorePwd"),
+                cfg.getString("portal.dbSslTrustStore"),
+                cfg.getString("portal.dbSslTrustStorePwd"));
+        TransactionWrapper.init(cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS),
+                cfg.getString(ApplicationConfigConstants.DSM_DB_URL), cfg, false);
+        logger.info("TISSUE MIGRATION TOOL SETUP COMPLETED ");
+    }
+
+    public static String getParticipantIdFromId(String id) {
+        String query = "SELECT * FROM ddp_participant WHERE ddp_participant_id = ? ";
+        String ddpParticipantId = DBTestUtil.getQueryDetail(query, id, "participant_id");
+        if (StringUtils.isNotBlank(ddpParticipantId)) {
+            return ddpParticipantId;
+        } else {
+            throw new RuntimeException("This Participant ID " + id + " is not associated with any participants!");
+        }
+    }
 
     public void useReadFileMethod(String file) {
         try {
@@ -115,17 +152,14 @@ public class TissueDataMigrationTool {
                 logger.info(i + "/" + content.size() + " tissue(s) inserted.");
                 i++;
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error(e.getMessage());
-        }
-        finally {
+        } finally {
 
             writeToOutPutFile("</body>\n</html>");
             try {
                 outputFileWriter.close();
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 logger.error("Error closing output file.");
                 logger.error(e.getMessage());
             }
@@ -142,23 +176,19 @@ public class TissueDataMigrationTool {
             if (StringUtils.isBlank(value) || StringUtils.isBlank(value.trim())) {
                 results.put(header, value);
                 continue;
-            }
-            else {
+            } else {
                 value = value.trim();
             }
             if (header.equals(DBConstants.NOTES)) {
                 header = "oncDetail." + DBConstants.NOTES;
                 results.put(header, value);
-            }
-            else if (this.dateFields.contains(header) && !value.equals("N/A")) {
+            } else if (this.dateFields.contains(header) && !value.equals("N/A")) {
                 value = DBUtil.changeDateFormat(value);
                 results.put(header, value);
-            }
-            else if (this.dateFields.contains(header) && value.equals("N/A")) {
+            } else if (this.dateFields.contains(header) && value.equals("N/A")) {
                 if (header.equals(DBConstants.EXPECTED_RETURN)) {
                     results.put(header, value);
-                }
-                else {
+                } else {
                     writeToOutPutFile("There shouldn't be an N/A in date field " + header);
                     writeToOutPutFile("Inserting null instead");
                     writeToOutPutFile("Accession Number is " + line.get(DBConstants.ACCESSION_NUMBER));
@@ -166,20 +196,19 @@ public class TissueDataMigrationTool {
                     results.put(header, null);
                 }
 
-            }
-            else if ((header.equals(DBConstants.REQUEST) || (header.equals(DBConstants.H_E) || header.equals(DBConstants.PATHOLOGY_REPORT))
-                    || (header.equals(DBConstants.TUMOR_TYPE)) || (header.equals(DBConstants.TISSUE_TYPE)) || (header.equals(DBConstants.GENDER)))
-                    && StringUtils.isNotBlank(value)) {
+            } else if (
+                    (header.equals(DBConstants.REQUEST) || (header.equals(DBConstants.H_E) || header.equals(DBConstants.PATHOLOGY_REPORT))
+                            || (header.equals(DBConstants.TUMOR_TYPE)) || (header.equals(DBConstants.TISSUE_TYPE)) ||
+                            (header.equals(DBConstants.GENDER)))
+                            && StringUtils.isNotBlank(value)) {
                 value = value.toLowerCase();
                 results.put(header, value);
-            }
-            else if (header.equals("consult1") || header.equals("consult2") || header.equals("consult3")) {
-                if (additionalValueJson.isEmpty()){
+            } else if (header.equals("consult1") || header.equals("consult2") || header.equals("consult3")) {
+                if (additionalValueJson.isEmpty()) {
                     additionalValueJson = "{";
                 }
                 additionalValueJson = additionalValueJson + "\"" + header + "\":\"" + value + "\",";
-            }
-            else if (header.equals(DBConstants.TISSUE_PROBLEM_OPTION)) {
+            } else if (header.equals(DBConstants.TISSUE_PROBLEM_OPTION)) {
                 switch (value.toLowerCase()) {
                     case "other": {
                         value = "other";
@@ -211,7 +240,8 @@ public class TissueDataMigrationTool {
                         break;
                     }
                     default: {
-                        writeToOutPutFile("This row with accession number " + line.get(DBConstants.ACCESSION_NUMBER) + " didn't have a known tissue_problem_option");
+                        writeToOutPutFile("This row with accession number " + line.get(DBConstants.ACCESSION_NUMBER) +
+                                " didn't have a known tissue_problem_option");
                         writeToOutPutFile("tissue_problem_option is " + value);
                         writeToOutPutFile("Nothing will be inserted for tissue_problem_option for this accession_number");
                         value = null;
@@ -219,14 +249,13 @@ public class TissueDataMigrationTool {
                     }
                 }
                 results.put(header, value);
-            }
-            else {
+            } else {
                 results.put(header, value);
             }
 
         }
         if (additionalValueJson.length() > 0) {
-            additionalValueJson = additionalValueJson.substring(0, additionalValueJson.length()-1) + "}";
+            additionalValueJson = additionalValueJson.substring(0, additionalValueJson.length() - 1) + "}";
         }
         results.put(DBConstants.ADDITIONAL_TISSUE_VALUES, additionalValueJson);
         return results;
@@ -235,8 +264,7 @@ public class TissueDataMigrationTool {
     public void writeToOutPutFile(String msg) {
         try {
             outputFileWriter.write(msg + "</br>");
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             logger.error("Problem writing to output file", e);
         }
     }
@@ -249,8 +277,7 @@ public class TissueDataMigrationTool {
             outputFile = new File(name);
             outputFileWriter = new FileWriter(outputFile);
             logger.info("Output file created in " + outputFile.getPath());
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             logger.info("Problem creating output html file...");
             throw new RuntimeException(ex);
         }
@@ -294,21 +321,6 @@ public class TissueDataMigrationTool {
         this.dateFields.add(DBConstants.TISSUE_RETURN_DATE);
     }
 
-    private static void setup(String config) {
-        cfg = ConfigFactory.load();
-        //secrets from vault in a config file
-        File c = new File(config);
-
-        cfg = cfg.withFallback(ConfigFactory.parseFile(c));
-        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
-                cfg.getString("portal.dbSslKeyStorePwd"),
-                cfg.getString("portal.dbSslTrustStore"),
-                cfg.getString("portal.dbSslTrustStorePwd"));
-        TransactionWrapper.init(cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS),
-                cfg.getString(ApplicationConfigConstants.DSM_DB_URL), cfg, false);
-        logger.info("TISSUE MIGRATION TOOL SETUP COMPLETED ");
-    }
-
     public void migrateData(String ddpParticipantId) {
         String accessionNumber = headersToValues.get(DBConstants.ACCESSION_NUMBER).trim();
         String smId = headersToValues.get(DBConstants.SM_ID);
@@ -323,8 +335,7 @@ public class TissueDataMigrationTool {
                 dsmData = new HashMap<>();
                 //updateOncHistory anf tissue
                 insertMissingFields(accessionNumber, ddpParticipantId);
-            }
-            else if (StringUtils.isNotBlank(accessionNumber) && !accessionNumberInDB) {
+            } else if (StringUtils.isNotBlank(accessionNumber) && !accessionNumberInDB) {
                 //insert institute
 
                 SimpleResult results = inTransaction((conn) -> {
@@ -355,16 +366,16 @@ public class TissueDataMigrationTool {
                     //insert tissue for onc history
                     String tissueId = insertNewTissue(oncDetailId, headersToValues);
                     insertMissingFields(headersToValues.get(DBConstants.ACCESSION_NUMBER), ddpParticipantId);
-                }
-                else {
-                    results.resultException = new RuntimeException("Error inserting a new institute for participant with ddpParticipantId: " + ddpParticipantId);
+                } else {
+                    results.resultException = new RuntimeException(
+                            "Error inserting a new institute for participant with ddpParticipantId: " + ddpParticipantId);
                 }
             }
 
             logger.info("All the data related to Accession number " + accessionNumber + " added.");
-        }
-        else if (StringUtils.isBlank(accessionNumber)) {
-            writeToOutPutFile("<p>Data with ddpParticipantId  <b>" + ddpParticipantId + "</b> doesn't have an accession number, ignoring this row of data.</p>");
+        } else if (StringUtils.isBlank(accessionNumber)) {
+            writeToOutPutFile("<p>Data with ddpParticipantId  <b>" + ddpParticipantId +
+                    "</b> doesn't have an accession number, ignoring this row of data.</p>");
         }
     }
 
@@ -382,25 +393,26 @@ public class TissueDataMigrationTool {
                     String foundSkId = rs.getString(DBConstants.SK_ID);
                     String foundSmId = rs.getString(DBConstants.SM_ID);
                     String foundAccessionNumber = rs.getString(DBConstants.ACCESSION_NUMBER);
-                    Boolean r = (StringUtils.isNotBlank(foundSkId) || StringUtils.isNotBlank(foundSmId)) && (!accessionNumber.equals(foundAccessionNumber));
+                    Boolean r = (StringUtils.isNotBlank(foundSkId) || StringUtils.isNotBlank(foundSmId)) &&
+                            (!accessionNumber.equals(foundAccessionNumber));
                     if (r) {
                         dbVals.resultValue = true;
-                        writeToOutPutFile("<p>Data with accession number <b>" + accessionNumber + "</b> doesn't have a unique SK Id or SM Id. Their SK ID or SM ID has been previously assigned to another asseccion number <b>" + foundAccessionNumber + "</b>.</br> Ignoring this line of data <br>--------------------------------</p>");
+                        writeToOutPutFile("<p>Data with accession number <b>" + accessionNumber +
+                                "</b> doesn't have a unique SK Id or SM Id. Their SK ID or SM ID has been previously assigned to another asseccion number <b>" +
+                                foundAccessionNumber + "</b>.</br> Ignoring this line of data <br>--------------------------------</p>");
                         return dbVals;
                     }
                 }
                 dbVals.resultValue = false;
                 return dbVals;
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 dbVals.resultException = e;
             }
             return dbVals;
         });
         if (result.resultException == null) {
             return (Boolean) result.resultValue;
-        }
-        else {
+        } else {
             throw new RuntimeException(result.resultException);
         }
     }
@@ -423,21 +435,19 @@ public class TissueDataMigrationTool {
                                 logger.info("The oncHistoryDetail has the id " + dbVals.resultValue);
 
                             }
-                        }
-                        catch (Exception e) {
+                        } catch (Exception e) {
                             dbVals.resultException = new RuntimeException("Error getting id of the new oncHistoryDetails ", e);
                         }
+                    } else {
+                        dbVals.resultException = new RuntimeException(
+                                "Error adding new oncHistoryDetail for medicalRecord w/ id " + mrID.toString() + " it was updating " +
+                                        result + " rows");
                     }
-                    else {
-                        dbVals.resultException = new RuntimeException("Error adding new oncHistoryDetail for medicalRecord w/ id " + mrID.toString() + " it was updating " + result + " rows");
-                    }
-                }
-                catch (Exception ex) {
+                } catch (Exception ex) {
                     dbVals.resultException = new RuntimeException(ex);
                 }
 
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 dbVals.resultException = new RuntimeException(ex);
             }
 
@@ -470,20 +480,17 @@ public class TissueDataMigrationTool {
                                 logger.info("The new tissue has the id " + dbVals.resultValue);
 
                             }
-                        }
-                        catch (Exception e) {
+                        } catch (Exception e) {
                             dbVals.resultException = new RuntimeException("Error getting id of the new Tissue ", e);
                         }
+                    } else {
+                        dbVals.resultException = new RuntimeException(
+                                "Error adding new tissue for onc history w/ id " + oncDetailId + " it was updating " + result + " rows");
                     }
-                    else {
-                        dbVals.resultException = new RuntimeException("Error adding new tissue for onc history w/ id " + oncDetailId + " it was updating " + result + " rows");
-                    }
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     dbVals.resultException = e;
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -503,7 +510,8 @@ public class TissueDataMigrationTool {
             SimpleResult dbVals = new SimpleResult();
             boolean written = false;
             try {
-                PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ONC_HIST_DETAIL_AND_TISSUE + CHOOSE_BY_ONC_DETAIL_ACCESSION_NUMBER);
+                PreparedStatement stmt =
+                        conn.prepareStatement(SQL_SELECT_ONC_HIST_DETAIL_AND_TISSUE + CHOOSE_BY_ONC_DETAIL_ACCESSION_NUMBER);
                 stmt.setString(1, accessionNumber);
                 ResultSet rs = stmt.executeQuery();
                 if (rs.next()) {
@@ -516,7 +524,8 @@ public class TissueDataMigrationTool {
                     String mrId = rs.getString(DBConstants.MEDICAL_RECORD_ID);
                     for (String columnName : headersToValues.keySet()) {
                         columnName = columnName.trim();
-                        if (columnName.equals("consult1") || columnName.equals("consult2") || columnName.equals("consult3") || columnName.equals(DBConstants.DDP_PARTICIPANT_ID)) {
+                        if (columnName.equals("consult1") || columnName.equals("consult2") || columnName.equals("consult3") ||
+                                columnName.equals(DBConstants.DDP_PARTICIPANT_ID)) {
                             continue;//ignore these columns
                         }
                         String data = rs.getString(columnName);
@@ -528,19 +537,23 @@ public class TissueDataMigrationTool {
                             value = value.trim();
                         }
                         if (StringUtils.isBlank(data) && StringUtils.isNotBlank(value)) {
-                            logger.info("Found an empty field " + columnName + " for ACCESSION NUMBER " + accessionNumber + ", going to try to update that. ");
+                            logger.info("Found an empty field " + columnName + " for ACCESSION NUMBER " + accessionNumber +
+                                    ", going to try to update that. ");
                             updateBlankField(columnName, oncDetailId, tissueId, conn);
-                        }
-                        else if (StringUtils.isNotBlank(data) && StringUtils.isNotBlank(value) && columnName.equals(DBConstants.REQUEST)) {
+                        } else if (StringUtils.isNotBlank(data) && StringUtils.isNotBlank(value) &&
+                                columnName.equals(DBConstants.REQUEST)) {
                             logger.info("OVER WRITING request field for  " + accessionNumber + " from " + data + " to " + value);
-                            writeToOutPutFile("OVER WRITING request field for  <b>" + accessionNumber + "</b> from <b>" + data + "</b> to <b>" + value + "</b>");
+                            writeToOutPutFile(
+                                    "OVER WRITING request field for  <b>" + accessionNumber + "</b> from <b>" + data + "</b> to <b>" +
+                                            value + "</b>");
                             updateBlankField(columnName, oncDetailId, tissueId, conn);
-                        }
-                        else {
+                        } else {
                             dsmData.put(columnName, data);
                             if (StringUtils.isNotBlank(value) && !data.toLowerCase().trim().equals(value.toLowerCase())) {
                                 if (!written) {
-                                    writeToOutPutFile("<p>ACCESSION NUMBER <b>" + accessionNumber + "</b> is already in DSM. Participant id is <b>" + shortID + "</b></p>");
+                                    writeToOutPutFile(
+                                            "<p>ACCESSION NUMBER <b>" + accessionNumber + "</b> is already in DSM. Participant id is <b>" +
+                                                    shortID + "</b></p>");
                                     written = true;
                                 }
                                 String message = getHTMLOutput(columnName, data, value);
@@ -551,13 +564,11 @@ public class TissueDataMigrationTool {
                     if (written) {
                         writeToOutPutFile("<p>---------------------------</p>");
                     }
-                }
-                else {
+                } else {
                     dbVals.resultException = new RuntimeException("Error getting oncHistoryDetails Data from tables.  No data returned");
                 }
 
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 logger.error(e.getMessage());
                 dbVals.resultException = e;
                 throw new RuntimeException(e);
@@ -575,21 +586,20 @@ public class TissueDataMigrationTool {
         DBElement element;
         if (columnName.equals("oncDetail.notes")) {
             columnName = DBConstants.NOTES;
-            element = new DBElement("ddp_onc_history_detail", "","onc_history_detail_id", columnName);
-        }
-        else {
+            element = new DBElement("ddp_onc_history_detail", "", "onc_history_detail_id", columnName);
+        } else {
             element = columnNameMap.get(columnName);
         }
         String tableName = element.tableName;
         String primaryKey = element.primaryKey;
         String id = primaryKey.equals("tissue_id") ? tissueId : oncDetailId;
-        String updateStatement = "UPDATE " + tableName + " SET " + columnName + " = ?, last_changed = ?, changed_by= ? WHERE " + primaryKey + " = ?";
+        String updateStatement =
+                "UPDATE " + tableName + " SET " + columnName + " = ?, last_changed = ?, changed_by= ? WHERE " + primaryKey + " = ?";
         try {
             PreparedStatement stmt = conn.prepareStatement(updateStatement);
             if (isNull) {
                 stmt.setNull(1, Types.VARCHAR);
-            }
-            else {
+            } else {
                 stmt.setString(1, value);
             }
             stmt.setLong(2, System.currentTimeMillis());
@@ -598,12 +608,10 @@ public class TissueDataMigrationTool {
             try {
                 stmt.executeUpdate();
                 logger.info("Updated field " + columnName + " in " + tableName + " for id: " + id);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 throw new RuntimeException("Error updating field for oncDetailId", e);
             }
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             throw new RuntimeException("Error updating field for oncDetailId", ex);
         }
     }
@@ -619,19 +627,19 @@ public class TissueDataMigrationTool {
                         String participantId = rs.getString(DBConstants.DDP_PARTICIPANT_ID);
                         if (StringUtils.isNotBlank(accessionNumber) && accessionNumber.equals(accesionDataValue)) {
                             if (!participantId.equals(ddpParticipantId)) {
-                                throw new RuntimeException("Accession Number " + accesionDataValue + " belongs to a different particpant in DSM!");
+                                throw new RuntimeException(
+                                        "Accession Number " + accesionDataValue + " belongs to a different particpant in DSM!");
                             }
-                            logger.info("OncHistory with ACCESSION NUMBER  " + accesionDataValue + " already exists, going to check for SK ID and SM ID ");
+                            logger.info("OncHistory with ACCESSION NUMBER  " + accesionDataValue +
+                                    " already exists, going to check for SK ID and SM ID ");
 
                             dbVals.resultValue = true;
                         }
-                    }
-                    else {
+                    } else {
                         dbVals.resultValue = false;
                     }
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 dbVals.resultException = e;
             }
             return dbVals;
@@ -642,23 +650,12 @@ public class TissueDataMigrationTool {
         return (boolean) results.resultValue;
     }
 
-    public static String getParticipantIdFromId(String id) {
-        String query = "SELECT * FROM ddp_participant WHERE ddp_participant_id = ? ";
-        String ddpParticipantId = DBTestUtil.getQueryDetail(query, id, "participant_id");
-        if (StringUtils.isNotBlank(ddpParticipantId)) {
-            return ddpParticipantId;
-        }
-        else {
-            throw new RuntimeException("This Participant ID " + id + " is not associated with any participants!");
-        }
-    }
-
-
     public String getHTMLOutput(String columnName, String data, String value) {
         StringBuilder builder = new StringBuilder();
         if (columnName.equals(DBConstants.ADDITIONAL_TISSUE_VALUES)) {
-            String[] consults = { "consult1", "consult2", "consult3" };
-            Type jsonMap = new TypeToken<Map<String, String>>(){}.getType();
+            String[] consults = {"consult1", "consult2", "consult3"};
+            Type jsonMap = new TypeToken<Map<String, String>>() {
+            }.getType();
             Gson gson = new Gson();
             Map<String, String> mapData = gson.fromJson(data, jsonMap);
             Map<String, String> mapValue = gson.fromJson(value, jsonMap);
@@ -672,16 +669,14 @@ public class TissueDataMigrationTool {
                             builder.append("<td>" + mapValue.get(name) + "</td></tr>");
                             builder.append("</tbody></table>");
                         }
-                    }
-                    else {
+                    } else {
                         builder.append("<p> Field: <b>" + name + "</b></p>");
                         builder.append("<table><thead><tr><th>DSM value</th><th>Tissue tracker value</th></tr></thead><tbody><tr>");
                         builder.append("<td>" + mapData.get(name) + "</td>");
                         builder.append("<td>" + "" + "</td></tr>");
                         builder.append("</tbody></table>");
                     }
-                }
-                else {
+                } else {
                     if (mapValue.containsKey(name)) {
                         builder.append("<p> Field: <b>" + name + "</b></p>");
                         builder.append("<table><thead><tr><th>DSM value</th><th>Tissue tracker value</th></tr></thead><tbody><tr>");
@@ -692,8 +687,7 @@ public class TissueDataMigrationTool {
                 }
             }
 
-        }
-        else {
+        } else {
             builder.append("<p> Field: <b>" + columnName + "</b></p>");
             builder.append("<table><thead><tr><th>DSM value</th><th>Tissue tracker value</th></tr></thead><tbody><tr>");
             builder.append("<td>" + data + "</td>");

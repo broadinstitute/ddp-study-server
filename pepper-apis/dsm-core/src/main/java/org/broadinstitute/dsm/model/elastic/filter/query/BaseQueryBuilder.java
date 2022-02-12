@@ -3,14 +3,38 @@ package org.broadinstitute.dsm.model.elastic.filter.query;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
-import org.broadinstitute.dsm.model.elastic.filter.splitter.*;
-import org.elasticsearch.index.query.*;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.BaseSplitter;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.GreaterThanEqualsSplitter;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.IsNullSplitter;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.JsonExtractSplitter;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.LessThanEqualsSplitter;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.ExistsQueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.RangeQueryBuilder;
 
 public abstract class BaseQueryBuilder {
 
     protected Operator operator;
     protected QueryPayload payload;
     protected BaseSplitter splitter;
+
+    public static BaseQueryBuilder of(String alias, String fieldName) {
+        BaseQueryBuilder queryBuilder;
+        boolean isCollection = Util.TABLE_ALIAS_MAPPINGS.get(alias).isCollection();
+        if (isCollection) {
+            if (TestResultCollectionQueryBuilder.TEST_RESULT.equals(fieldName)) {
+                queryBuilder =
+                        new TestResultCollectionQueryBuilder();
+            } else {
+                queryBuilder = new CollectionQueryBuilder();
+            }
+        } else {
+            queryBuilder = new SingleQueryBuilder();
+        }
+        return queryBuilder;
+    }
 
     protected QueryBuilder buildQueryBuilder() {
         QueryBuilder qb;
@@ -55,10 +79,10 @@ public abstract class BaseQueryBuilder {
                 if (!StringUtils.EMPTY.equals(dynamicFieldValues[0])) {
                     if (jsonExtractSplitter.getDecoratedSplitter() instanceof GreaterThanEqualsSplitter) {
                         qb = new RangeQueryBuilder(payload.getFieldName());
-                        ((RangeQueryBuilder)qb).gte(dynamicFieldValues[0]);
+                        ((RangeQueryBuilder) qb).gte(dynamicFieldValues[0]);
                     } else if (jsonExtractSplitter.getDecoratedSplitter() instanceof LessThanEqualsSplitter) {
                         qb = new RangeQueryBuilder(payload.getFieldName());
-                        ((RangeQueryBuilder)qb).lte(dynamicFieldValues[0]);
+                        ((RangeQueryBuilder) qb).lte(dynamicFieldValues[0]);
                     } else {
                         qb = new MatchQueryBuilder(payload.getFieldName(), dynamicFieldValues[0]);
                     }
@@ -92,25 +116,12 @@ public abstract class BaseQueryBuilder {
     }
 
     public QueryBuilder buildEachQuery(Operator operator,
-                                                   QueryPayload queryPayload,
-                                                   BaseSplitter splitter) {
+                                       QueryPayload queryPayload,
+                                       BaseSplitter splitter) {
         this.operator = operator;
         this.payload = queryPayload;
         this.splitter = splitter;
         return buildQueryBuilder();
-    }
-
-    public static BaseQueryBuilder of(String alias, String fieldName) {
-        BaseQueryBuilder queryBuilder;
-        boolean isCollection = Util.TABLE_ALIAS_MAPPINGS.get(alias).isCollection();
-        if (isCollection) {
-            if (TestResultCollectionQueryBuilder.TEST_RESULT.equals(fieldName)) queryBuilder =
-                    new TestResultCollectionQueryBuilder();
-            else queryBuilder = new CollectionQueryBuilder();
-        } else {
-            queryBuilder = new SingleQueryBuilder();
-        }
-        return queryBuilder;
     }
 
 }

@@ -38,7 +38,7 @@ public class BaseCollectionMigratorTest {
         List<Tissue> fieldValue = new ArrayList<>(List.of(new Tissue(11, 22,
                 "notes", 0, null, "awdwadawdawdawd", null, null, null, null, null, null,
                 null, null, "Awdawd", null, null, null, null, null, null, null,
-                null, 0, 0, 0, 0, null, null, null), new  Tissue(555, 777,
+                null, 0, 0, 0, 0, null, null, null), new Tissue(555, 777,
                 null, 0, null, null, null, null, null, "awdawd", null, null,
                 null, null, "awdawddwa", null, null, null, null, null, null, null,
                 null, 0, 0, 0, 0, null, null, null)));

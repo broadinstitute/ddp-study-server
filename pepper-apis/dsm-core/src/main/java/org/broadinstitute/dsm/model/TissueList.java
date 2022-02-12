@@ -1,20 +1,19 @@
 package org.broadinstitute.dsm.model;
 
-import lombok.Data;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.dsm.db.OncHistoryDetail;
-import org.broadinstitute.dsm.db.Tissue;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import lombok.Data;
+import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.db.Tissue;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Data
 public class TissueList {
@@ -60,7 +59,8 @@ public class TissueList {
                     String ptId = null;
                     while (rs.next()) {
                         oncHistory = OncHistoryDetail.getOncHistoryDetail(rs);
-                        ptId = rs.getString(DBConstants.DDP_PARTICIPANT_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.DDP_PARTICIPANT_ID);
+                        ptId = rs.getString(
+                                DBConstants.DDP_PARTICIPANT_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.DDP_PARTICIPANT_ID);
                         Tissue tissue = Tissue.getTissue(rs);
                         TissueList tissueList = new TissueList(oncHistory, null, ptId);
 
@@ -70,12 +70,10 @@ public class TissueList {
                         results.add(tissueList);
                     }
                     dbVals.resultValue = results;
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 dbVals.resultException = e;
             }
             return dbVals;

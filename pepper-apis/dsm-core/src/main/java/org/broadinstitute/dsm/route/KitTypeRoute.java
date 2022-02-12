@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.route;
 
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.KitType;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RequestParameter;
@@ -10,6 +9,7 @@ import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.UserUtil;
+import org.broadinstitute.lddp.handlers.util.Result;
 import spark.Request;
 import spark.Response;
 
@@ -27,20 +27,19 @@ public class KitTypeRoute extends RequestHandler {
         if (StringUtils.isNotBlank(realm)) {
             String userIdRequest = UserUtil.getUserId(request);
             if (request.url().contains(RoutePath.KIT_TYPE)) {
-                if (UserUtil.checkUserAccess(realm, userId, "kit_shipping", userIdRequest) || UserUtil.checkUserAccess(realm, userId, "kit_shipping_view", userIdRequest)) {
+                if (UserUtil.checkUserAccess(realm, userId, "kit_shipping", userIdRequest) ||
+                        UserUtil.checkUserAccess(realm, userId, "kit_shipping_view", userIdRequest)) {
                     return KitType.getKitTypes(realm, userIdRequest);
-                }
-                else {
+                } else {
                     response.status(500);
                     return new Result(500, UserErrorMessages.NO_RIGHTS);
                 }
-            }
-            else {
+            } else {
                 if (request.url().contains(RoutePath.UPLOAD_REASONS)) {
-                    if (UserUtil.checkUserAccess(realm, userId, "kit_upload", userIdRequest) || UserUtil.checkUserAccess(realm, userId, "kit_shipping_view", userIdRequest)) {
+                    if (UserUtil.checkUserAccess(realm, userId, "kit_upload", userIdRequest) ||
+                            UserUtil.checkUserAccess(realm, userId, "kit_shipping_view", userIdRequest)) {
                         return KitType.getUploadReasons(realm);
-                    }
-                    else {
+                    } else {
                         response.status(500);
                         return new Result(500, UserErrorMessages.NO_RIGHTS);
                     }

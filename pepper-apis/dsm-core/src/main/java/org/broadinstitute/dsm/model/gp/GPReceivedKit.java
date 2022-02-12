@@ -1,5 +1,9 @@
 package org.broadinstitute.dsm.model.gp;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.InstanceSettings;
 import org.broadinstitute.dsm.db.KitRequestShipping;
@@ -18,10 +22,6 @@ import org.broadinstitute.dsm.util.NotificationUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-
 public class GPReceivedKit {
 
     private static Logger logger = LoggerFactory.getLogger(BSPKit.class);
@@ -33,7 +33,8 @@ public class GPReceivedKit {
         BSPKitDao bspKitDao = new BSPKitDao();
         InstanceSettingsDto instanceSettingsDto = instanceSettings.getInstanceSettings(bspKitQueryResult.getInstanceName());
         instanceSettingsDto.getKitBehaviorChange()
-                .flatMap(kitBehavior -> kitBehavior.stream().filter(o -> o.getName().equals(InstanceSettings.INSTANCE_SETTING_RECEIVED)).findFirst())
+                .flatMap(kitBehavior -> kitBehavior.stream().filter(o -> o.getName().equals(InstanceSettings.INSTANCE_SETTING_RECEIVED))
+                        .findFirst())
                 .ifPresentOrElse(received -> {
                     Map<String, Map<String, Object>> participants = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance,
                             ElasticSearchUtil.BY_GUID + bspKitQueryResult.getDdpParticipantId());
@@ -46,10 +47,12 @@ public class GPReceivedKit {
                             //don't trigger ddp to sent out email, only email to study staff
                             triggerDDP = false;
                             if (InstanceSettings.TYPE_NOTIFICATION.equals(received.getType())) {
-                                String message = "Kit of participant " + bspKitQueryResult.getBspParticipantId() + " was received by GP. <br> " +
-                                        "CollaboratorSampleId:  " + bspKitQueryResult.getBspSampleId() + " <br> " +
-                                        received.getValue();
-                                notificationUtil.sentNotification(bspKitQueryResult.getNotificationRecipient(), message, NotificationUtil.UNIVERSAL_NOTIFICATION_TEMPLATE, NotificationUtil.DSM_SUBJECT);
+                                String message =
+                                        "Kit of participant " + bspKitQueryResult.getBspParticipantId() + " was received by GP. <br> " +
+                                                "CollaboratorSampleId:  " + bspKitQueryResult.getBspSampleId() + " <br> " +
+                                                received.getValue();
+                                notificationUtil.sentNotification(bspKitQueryResult.getNotificationRecipient(), message,
+                                        NotificationUtil.UNIVERSAL_NOTIFICATION_TEMPLATE, NotificationUtil.DSM_SUBJECT);
                             } else {
                                 logger.error("Instance settings behavior for kit was not known " + received.getType());
                             }
@@ -93,7 +96,8 @@ public class GPReceivedKit {
         kitRequestShipping.setReceiveDate(receivedDate);
         kitRequestShipping.setKitLabel(kitLabel);
 
-        DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(maybeBspKitQueryResult.getInstanceName()).orElseThrow();
+        DDPInstanceDto ddpInstanceDto =
+                new DDPInstanceDao().getDDPInstanceByInstanceName(maybeBspKitQueryResult.getInstanceName()).orElseThrow();
 
         UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.KIT_LABEL,
                         ESObjectConstants.KIT_LABEL, kitLabel)

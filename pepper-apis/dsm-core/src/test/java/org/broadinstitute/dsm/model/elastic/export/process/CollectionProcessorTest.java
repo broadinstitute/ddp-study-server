@@ -1,30 +1,21 @@
 package org.broadinstitute.dsm.model.elastic.export.process;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.broadinstitute.dsm.db.MedicalRecord;
-import org.broadinstitute.dsm.db.structure.DBElement;
-import org.broadinstitute.dsm.model.NameValue;
-import org.broadinstitute.dsm.model.elastic.ESDsm;
-import org.broadinstitute.dsm.model.elastic.export.TestPatchUtil;
-import org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator;
-import org.broadinstitute.dsm.model.elastic.export.generate.CollectionSourceGenerator;
-import org.broadinstitute.dsm.model.elastic.export.generate.Collector;
-import org.broadinstitute.dsm.model.elastic.export.generate.Generator;
-import org.broadinstitute.dsm.model.elastic.export.generate.GeneratorPayload;
-import org.broadinstitute.dsm.model.elastic.export.generate.MappingGeneratorTest;
-import org.broadinstitute.dsm.model.elastic.export.generate.SourceGenerator;
-import org.broadinstitute.dsm.model.elastic.export.parse.BaseParser;
-import org.broadinstitute.dsm.model.elastic.export.parse.DynamicFieldsParser;
-import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
-import org.broadinstitute.dsm.model.elastic.export.parse.TypeParser;
-import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
-import org.broadinstitute.dsm.model.elastic.export.process.CollectionProcessor;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.broadinstitute.dsm.db.MedicalRecord;
+import org.broadinstitute.dsm.model.NameValue;
+import org.broadinstitute.dsm.model.elastic.ESDsm;
+import org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator;
+import org.broadinstitute.dsm.model.elastic.export.generate.CollectionSourceGenerator;
+import org.broadinstitute.dsm.model.elastic.export.generate.Collector;
+import org.broadinstitute.dsm.model.elastic.export.generate.GeneratorPayload;
+import org.broadinstitute.dsm.model.elastic.export.parse.BaseParser;
+import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class CollectionProcessorTest {
 
@@ -62,7 +53,8 @@ public class CollectionProcessorTest {
     public void updateIfExistsOrPut() throws IOException {
         String propertyName = "medicalRecord";
         double recordId = 5;
-        String json = String.format("{\"%s\":[{\"medicalRcordId\":%s,\"mrProblemText\":\"%s\"}]}", propertyName, recordId, "value");;
+        String json = String.format("{\"%s\":[{\"medicalRcordId\":%s,\"mrProblemText\":\"%s\"}]}", propertyName, recordId, "value");
+        ;
 
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -88,7 +80,9 @@ public class CollectionProcessorTest {
     public void updateIfExists() throws IOException {
         String propertyName = "medicalRecord";
         double recordId = 5;
-        String json = String.format("{\"%s\":[{\"medicalRecordId\":%s,\"type\":\"%s\", \"mrProblemText\":\"TEST_VAL2\"}]}", propertyName, recordId, "value");;
+        String json = String.format("{\"%s\":[{\"medicalRecordId\":%s,\"type\":\"%s\", \"mrProblemText\":\"TEST_VAL2\"}]}", propertyName,
+                recordId, "value");
+        ;
 
         ObjectMapper objectMapper = new ObjectMapper();
 

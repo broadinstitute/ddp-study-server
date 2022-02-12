@@ -1,5 +1,14 @@
 package org.broadinstitute.dsm;
 
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.auth0.client.auth.AuthAPI;
 import com.auth0.json.auth.TokenHolder;
 import com.auth0.net.AuthRequest;
@@ -11,32 +20,32 @@ import com.google.gson.reflect.TypeToken;
 import lombok.NonNull;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
-import org.broadinstitute.dsm.db.*;
+import org.broadinstitute.dsm.db.KitStatus;
+import org.broadinstitute.dsm.db.ParticipantStatus;
 import org.broadinstitute.dsm.model.DashboardInformation;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
 import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.TestUtil;
-import org.junit.*;
-
-import java.io.IOException;
-import java.util.*;
-
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 public class RouteInfoTest extends TestHelper {
 
-    private static final String SQL_SELECT_MR_STATUS = "SELECT UNIX_TIMESTAMP(str_to_date(min(med.fax_sent), '%Y-%m-%d')) as mrRequested, " +
-            "UNIX_TIMESTAMP(str_to_date(min(med.mr_received), '%Y-%m-%d')) as mrReceived, " +
-            "UNIX_TIMESTAMP(str_to_date(min(onc.fax_sent), '%Y-%m-%d')) as tissueRequested, " +
-            "UNIX_TIMESTAMP(str_to_date(min(onc.tissue_received), '%Y-%m-%d')) as tissueReceived, " +
-            "UNIX_TIMESTAMP(str_to_date(min(tis.sent_gp), '%Y-%m-%d')) as tissueSent " +
-            "FROM ddp_medical_record med " +
-            "LEFT JOIN ddp_institution inst on (med.institution_id = inst.institution_id) LEFT JOIN ddp_participant as part on (part.participant_id = inst.participant_id) " +
-            "LEFT JOIN ddp_onc_history_detail onc on (med.medical_record_id = onc.medical_record_id) LEFT JOIN ddp_tissue tis on (tis.onc_history_detail_id = onc.onc_history_detail_id) " +
-            "WHERE part.ddp_participant_id = ? GROUP BY ddp_participant_id";
+    private static final String SQL_SELECT_MR_STATUS =
+            "SELECT UNIX_TIMESTAMP(str_to_date(min(med.fax_sent), '%Y-%m-%d')) as mrRequested, " +
+                    "UNIX_TIMESTAMP(str_to_date(min(med.mr_received), '%Y-%m-%d')) as mrReceived, " +
+                    "UNIX_TIMESTAMP(str_to_date(min(onc.fax_sent), '%Y-%m-%d')) as tissueRequested, " +
+                    "UNIX_TIMESTAMP(str_to_date(min(onc.tissue_received), '%Y-%m-%d')) as tissueReceived, " +
+                    "UNIX_TIMESTAMP(str_to_date(min(tis.sent_gp), '%Y-%m-%d')) as tissueSent " +
+                    "FROM ddp_medical_record med " +
+                    "LEFT JOIN ddp_institution inst on (med.institution_id = inst.institution_id) LEFT JOIN ddp_participant as part on (part.participant_id = inst.participant_id) " +
+                    "LEFT JOIN ddp_onc_history_detail onc on (med.medical_record_id = onc.medical_record_id) LEFT JOIN ddp_tissue tis on (tis.onc_history_detail_id = onc.onc_history_detail_id) " +
+                    "WHERE part.ddp_participant_id = ? GROUP BY ddp_participant_id";
 
     private static AuthAPI ddpAuthApi = null;
     private static String accessToken = null;
@@ -50,7 +59,8 @@ public class RouteInfoTest extends TestHelper {
 
         setupMock();
         addTestMigratedParticipant();
-        ddpAuthApi = new AuthAPI(cfg.getString(ApplicationConfigConstants.AUTH0_ACCOUNT), cfg.getString(ApplicationConfigConstants.AUTH0_CLIENT_KEY), cfg.getString(ApplicationConfigConstants.AUTH0_SECRET));
+        ddpAuthApi = new AuthAPI(cfg.getString(ApplicationConfigConstants.AUTH0_ACCOUNT),
+                cfg.getString(ApplicationConfigConstants.AUTH0_CLIENT_KEY), cfg.getString(ApplicationConfigConstants.AUTH0_SECRET));
         AuthRequest request = ddpAuthApi.requestToken(cfg.getString(ApplicationConfigConstants.AUTH0_AUDIENCE));
         TokenHolder tokenHolder = request.execute();
         accessToken = tokenHolder.getAccessToken();
@@ -63,7 +73,7 @@ public class RouteInfoTest extends TestHelper {
     private static void setupDDPMRRoutes() throws Exception {
         String messageParticipant = TestUtil.readFile("ddpResponses/ParticipantInstitutions.json");
         mockDDP.when(
-                request().withPath("/dsm/studies/migratedDDP/ddp/participantinstitutions"))
+                        request().withPath("/dsm/studies/migratedDDP/ddp/participantinstitutions"))
                 .respond(response().withStatusCode(200).withBody(messageParticipant));
     }
 
@@ -75,12 +85,6 @@ public class RouteInfoTest extends TestHelper {
         cleanupDB();
     }
 
-    @Before
-    public void removeAddedKitsBeforeNextTest() throws Exception {
-        DBTestUtil.deleteAllKitData("1112321.22-698-965-659-666");
-        DBTestUtil.deleteAllFieldSettings(TEST_DDP);
-    }
-
     //kits will get deleted even if test failed!
     private static void cleanDB() {
         DBTestUtil.deleteAllParticipantData("FAKE_MIGRATED_PARTICIPANT_ID", true);
@@ -88,15 +92,31 @@ public class RouteInfoTest extends TestHelper {
         DBTestUtil.deleteAllFieldSettings(TEST_DDP);
     }
 
+    public static Map<String, String> getHeaderAppRoute() {
+        Map<String, String> authHeaders = new HashMap<>();
+        authHeaders.put("Authorization", "Bearer " + accessToken);
+
+        return authHeaders;
+    }
+
+    @Before
+    public void removeAddedKitsBeforeNextTest() throws Exception {
+        DBTestUtil.deleteAllKitData("1112321.22-698-965-659-666");
+        DBTestUtil.deleteAllFieldSettings(TEST_DDP);
+    }
+
     @Test
     public void participantStatusStudyNotFound() throws Exception {
-        HttpResponse response = TestUtil.performGet(DSM_BASE_URL, "/info/" + "participantstatus/TESTSDY1/123", getHeaderAppRoute()).returnResponse();
+        HttpResponse response =
+                TestUtil.performGet(DSM_BASE_URL, "/info/" + "participantstatus/TESTSDY1/123", getHeaderAppRoute()).returnResponse();
         Assert.assertEquals(404, response.getStatusLine().getStatusCode());
     }
 
     @Test
     public void allKitsTestEmptyParticipantList() throws Exception {
-        HttpResponse response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/app/batchKitsStatus/TESTSTUDY1"), "", testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.perform(Request.Post(DSM_BASE_URL + "/app/batchKitsStatus/TESTSTUDY1"), "", testUtil.buildAuthHeaders())
+                        .returnResponse();
         Assert.assertEquals(500, response.getStatusLine().getStatusCode());
     }
 
@@ -110,13 +130,15 @@ public class RouteInfoTest extends TestHelper {
                 "\"participantIds\":[\"-2104929193.692d24f5-c0eb-4155-865f-2b2fb9ba99fd\", \"-2104929193.692d24f5-c0eb-4155-865f-2b2fb9ba99fd\",\"-2104929193.692d24f5-c0eb-4155-865f-2b2fb9ba99fd\"]" +
                 "}";
 
-        HttpResponse response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/app/batchKitsStatus/GEC"), json, testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/app/batchKitsStatus/GEC"), json, testUtil.buildAuthHeaders())
+                .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     }
 
     @Test
     public void participantStatusParticipantNotFound() throws Exception {
-        HttpResponse response = TestUtil.performGet(DSM_BASE_URL, "/app/" + "participantstatus/TESTSTUDY1/123", getHeaderAppRoute()).returnResponse();
+        HttpResponse response =
+                TestUtil.performGet(DSM_BASE_URL, "/app/" + "participantstatus/TESTSTUDY1/123", getHeaderAppRoute()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         String message = DDPRequestUtil.getContentAsString(response);
         Gson gson = new GsonBuilder().create();
@@ -132,7 +154,8 @@ public class RouteInfoTest extends TestHelper {
 
     @Test
     public void editMedicalRecordReceiveMRWithStatus() throws Exception {
-        editMedicalRecord(TEST_DDP_MIGRATED, "FAKE_MIGRATED_PARTICIPANT_ID", "FAKE_MIGRATED_PHYSICIAN_ID", "m.mrReceived", "2017-02-06", "mr_received");
+        editMedicalRecord(TEST_DDP_MIGRATED, "FAKE_MIGRATED_PARTICIPANT_ID", "FAKE_MIGRATED_PHYSICIAN_ID", "m.mrReceived", "2017-02-06",
+                "mr_received");
         participantStatus(TEST_DDP_MIGRATED, "FAKE_MIGRATED_PARTICIPANT_ID", "mrReceived");
     }
 
@@ -175,10 +198,12 @@ public class RouteInfoTest extends TestHelper {
         String newFormat1 = constructEscapedAdditionalValues(names, vals);
         String newSubFormat1 = constructValueForAdditionalValues(names, vals);
         String participantId = DBTestUtil.getParticipantIdOfTestParticipant("FAKE_MIGRATED_PARTICIPANT_ID");
-        String oncJsonNew = "{\"id\":null,\"parentId\":\"" + participantId + "\",\"parent\":\"participantId\",\"user\":\"simone+1@broadinstitute.org\"," + newFormat1 + "}";
+        String oncJsonNew = "{\"id\":null,\"parentId\":\"" + participantId +
+                "\",\"parent\":\"participantId\",\"user\":\"simone+1@broadinstitute.org\"," + newFormat1 + "}";
 
         //Add onc history detail to the database with a patch
-        HttpResponse response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/patch"), oncJsonNew, testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/patch"), oncJsonNew, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
         //Make sure the patch succeeded
@@ -192,8 +217,11 @@ public class RouteInfoTest extends TestHelper {
         List<String> strings = new ArrayList<>();
         strings.add(oncHistoryDetailId);
         strings.add(newSubFormat1);
-        String returned = DBTestUtil.getStringFromQuery("select * from ddp_onc_history_detail where onc_history_detail_id = ? and additional_values_json = ? order by last_changed desc limit 1", strings, "additional_values_json");
-        Assert.assertEquals("oncHistoryAdditionalValuesFormat: additional_values_json in database did not match what we expected", newSubFormat1, returned);
+        String returned = DBTestUtil.getStringFromQuery(
+                "select * from ddp_onc_history_detail where onc_history_detail_id = ? and additional_values_json = ? order by last_changed desc limit 1",
+                strings, "additional_values_json");
+        Assert.assertEquals("oncHistoryAdditionalValuesFormat: additional_values_json in database did not match what we expected",
+                newSubFormat1, returned);
     }
 
     @Test
@@ -207,8 +235,10 @@ public class RouteInfoTest extends TestHelper {
 
         oncHistoryId = addOncHistoryDetails(participantId);
         changeOncHistoryValue(oncHistoryId, participantId, "oD.datePX", "2017-01-26", "date_px");
-        changeOncHistoryValue(oncHistoryId, participantId, "oD.tFaxSent", "2017-12-20", "fax_sent"); // a tissue requested before the previous one
-        Long faxSent2 = participantStatus(TEST_DDP_MIGRATED, "FAKE_MIGRATED_PARTICIPANT_ID", "tFaxSent"); // will return min fax, which is now the last added one
+        changeOncHistoryValue(oncHistoryId, participantId, "oD.tFaxSent", "2017-12-20",
+                "fax_sent"); // a tissue requested before the previous one
+        Long faxSent2 = participantStatus(TEST_DDP_MIGRATED, "FAKE_MIGRATED_PARTICIPANT_ID",
+                "tFaxSent"); // will return min fax, which is now the last added one
 
         Assert.assertNotEquals(faxSent, faxSent2); // check that fax sent were not the same
         Assert.assertTrue(faxSent2 < faxSent); //test that second fax is smaller than first fax
@@ -253,7 +283,9 @@ public class RouteInfoTest extends TestHelper {
         Assert.assertNotNull(request);
         Assert.assertEquals(request, "returned");
 
-        HttpResponse response = TestUtil.performGet(DSM_BASE_URL, "/ui/ddpInformation/2017-03-01/2020-03-20?realm=" + TEST_DDP_MIGRATED + "&userId=26", testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.performGet(DSM_BASE_URL, "/ui/ddpInformation/2017-03-01/2020-03-20?realm=" + TEST_DDP_MIGRATED + "&userId=26",
+                        testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
         String message = DDPRequestUtil.getContentAsString(response);
@@ -302,7 +334,9 @@ public class RouteInfoTest extends TestHelper {
         Assert.assertNotNull(request);
         Assert.assertEquals(request, "received");
 
-        HttpResponse response = TestUtil.performGet(DSM_BASE_URL, "/ui/ddpInformation/2017-03-01/2020-03-20?realm=" + TEST_DDP_MIGRATED + "&userId=26", testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.performGet(DSM_BASE_URL, "/ui/ddpInformation/2017-03-01/2020-03-20?realm=" + TEST_DDP_MIGRATED + "&userId=26",
+                        testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
         String message = DDPRequestUtil.getContentAsString(response);
@@ -326,13 +360,17 @@ public class RouteInfoTest extends TestHelper {
         String testValue = "21";
 
         String json =
-                "{\"id\":\"" + tissueId + "\",\"parentId\":\"" + oncHistoryId + "\",\"parent\":\"oncHistoryDetailId\",\"user\":\"ptaheri@broadinstitute.org\",\"nameValue\":{\"name\":\"t.additionalValues\",\"value\":\"{\\\"" + name.get(0) + "\\\":\\\"" + testValue + "\\\"}\"}}";
-        HttpResponse response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/" + "patch"), json, testUtil.buildAuthHeaders()).returnResponse();
+                "{\"id\":\"" + tissueId + "\",\"parentId\":\"" + oncHistoryId +
+                        "\",\"parent\":\"oncHistoryDetailId\",\"user\":\"ptaheri@broadinstitute.org\",\"nameValue\":{\"name\":\"t.additionalValues\",\"value\":\"{\\\"" +
+                        name.get(0) + "\\\":\\\"" + testValue + "\\\"}\"}}";
+        HttpResponse response =
+                TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/" + "patch"), json, testUtil.buildAuthHeaders()).returnResponse();
 
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
         String additionalValues = getTestTissueInfo("additional_tissue_value_json", tissueId);
-        TypeToken jsonMap = new TypeToken<Map<String, String>>(){};
+        TypeToken jsonMap = new TypeToken<Map<String, String>>() {
+        };
         Map<String, String> valuesMap = new Gson().fromJson(additionalValues, jsonMap.getType());
         Assert.assertEquals(1, valuesMap.size());
         Assert.assertTrue(valuesMap.containsKey(name.get(0)));
@@ -342,14 +380,17 @@ public class RouteInfoTest extends TestHelper {
     @Test
     public void participantStatus() throws Exception {
         //insert a kit for pt of migrated ddp (will be uploaded with legacy shortId)
-        DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"), "M1", 1, INSTANCE_ID_MIGRATED,
+        DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"), "M1", 1,
+                INSTANCE_ID_MIGRATED,
                 "adr_6c3ace20442b49bd8fae9a661e481c9e", "shp_f470591c3fb441a68dbb9b76ecf3bb3d", "1112321.22-698-965-659-666", 0);
         //change bsp_collaborator_ids
-        DBTestUtil.executeQuery("UPDATE ddp_kit_request set bsp_collaborator_participant_id = \"MigratedProject_0011\", bsp_collaborator_sample_id =\"MigratedProject_0011_SALIVA\" where ddp_participant_id = \"1112321.22-698-965-659-666\"");
+        DBTestUtil.executeQuery(
+                "UPDATE ddp_kit_request set bsp_collaborator_participant_id = \"MigratedProject_0011\", bsp_collaborator_sample_id =\"MigratedProject_0011_SALIVA\" where ddp_participant_id = \"1112321.22-698-965-659-666\"");
 
         ParticipantStatus participantStatus1 = participantStatus(TEST_DDP_MIGRATED, "1112321.22-698-965-659-666");
         Assert.assertNull(participantStatus1.getSamples());
-        String ddpLabel = DBTestUtil.getQueryDetail("select ddp_label from ddp_kit_request where ddp_participant_id = ?", "1112321.22-698-965-659-666", "ddp_label");
+        String ddpLabel = DBTestUtil.getQueryDetail("select ddp_label from ddp_kit_request where ddp_participant_id = ?",
+                "1112321.22-698-965-659-666", "ddp_label");
         Long sent = System.currentTimeMillis();
 
         DBTestUtil.setKitToSent("MIGRATED_KIT_SENT", ddpLabel, sent);
@@ -367,7 +408,8 @@ public class RouteInfoTest extends TestHelper {
     @Test
     public void poBoxParticipantStatus() throws Exception {
         //insert a kit for pt of migrated ddp (will be uploaded with legacy shortId)
-        DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"), "M1", 1, INSTANCE_ID_MIGRATED,
+        DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"), "M1", 1,
+                INSTANCE_ID_MIGRATED,
                 "adr_6c3ace20442b49bd8fae9a661e481c9e", null, "1112321.22-698-965-659-666", 0);
 
         //create label an therefore collaborator id
@@ -376,7 +418,8 @@ public class RouteInfoTest extends TestHelper {
         ParticipantStatus participantStatus1 = participantStatus(TEST_DDP_MIGRATED, "1112321.22-698-965-659-666");
         Assert.assertNull(participantStatus1.getSamples());
         //set kit to sent
-        String ddpLabel = DBTestUtil.getQueryDetail("select ddp_label from ddp_kit_request where ddp_participant_id = ?", "1112321.22-698-965-659-666", "ddp_label");
+        String ddpLabel = DBTestUtil.getQueryDetail("select ddp_label from ddp_kit_request where ddp_participant_id = ?",
+                "1112321.22-698-965-659-666", "ddp_label");
         Long sent = System.currentTimeMillis();
         DBTestUtil.setKitToSent("MIGRATED_KIT_SENT", ddpLabel, sent);
 
@@ -390,7 +433,9 @@ public class RouteInfoTest extends TestHelper {
     }
 
     public Long participantStatus(String realm, String ddpParticipantId, String valueName) throws Exception {
-        HttpResponse response = TestUtil.performGet(DSM_BASE_URL, "/info/" + "participantstatus/" + realm + "/" + ddpParticipantId, getHeaderAppRoute()).returnResponse();
+        HttpResponse response =
+                TestUtil.performGet(DSM_BASE_URL, "/info/" + "participantstatus/" + realm + "/" + ddpParticipantId, getHeaderAppRoute())
+                        .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         String message = DDPRequestUtil.getContentAsString(response);
         Gson gson = new GsonBuilder().create();
@@ -441,7 +486,9 @@ public class RouteInfoTest extends TestHelper {
     }
 
     private ParticipantStatus participantStatus(String realm, String ddpParticipantId) throws Exception {
-        HttpResponse response = TestUtil.performGet(DSM_BASE_URL, "/info/" + "participantstatus/" + realm + "/" + ddpParticipantId, getHeaderAppRoute()).returnResponse();
+        HttpResponse response =
+                TestUtil.performGet(DSM_BASE_URL, "/info/" + "participantstatus/" + realm + "/" + ddpParticipantId, getHeaderAppRoute())
+                        .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         String message = DDPRequestUtil.getContentAsString(response);
         Gson gson = new GsonBuilder().create();
@@ -449,7 +496,8 @@ public class RouteInfoTest extends TestHelper {
         return participantStatus;
     }
 
-    private void participantStatus(ParticipantStatus participantStatus, String kitType, Long sent, Long received, boolean noTracking, boolean deliveredDateSet) {
+    private void participantStatus(ParticipantStatus participantStatus, String kitType, Long sent, Long received, boolean noTracking,
+                                   boolean deliveredDateSet) {
         List<KitStatus> kitStatuses = participantStatus.getSamples();
         boolean found = false;
         if (kitStatuses != null) {
@@ -461,8 +509,7 @@ public class RouteInfoTest extends TestHelper {
                     if (sample.getCarrier() != null && sent != null) {
                         Assert.fail();
                     }
-                }
-                else {
+                } else {
                     if (deliveredDateSet) {
                         if (sample.getDelivered() == null) {
                             Assert.fail();
@@ -483,8 +530,7 @@ public class RouteInfoTest extends TestHelper {
                     if (sample.getKitType().equals(kitType) && sample.getSent() == sent && sample.getReceived() == received) {
                         found = true;
                     }
-                }
-                else if (sent != null) {
+                } else if (sent != null) {
                     if (sample.getKitType().equals(kitType) && sample.getSent().equals(sent) && sample.getReceived() == null) {
                         found = true;
                     }
@@ -494,12 +540,5 @@ public class RouteInfoTest extends TestHelper {
                 Assert.fail();
             }
         }
-    }
-
-    public static Map<String, String> getHeaderAppRoute() {
-        Map<String, String> authHeaders = new HashMap<>();
-        authHeaders.put("Authorization", "Bearer " + accessToken);
-
-        return authHeaders;
     }
 }

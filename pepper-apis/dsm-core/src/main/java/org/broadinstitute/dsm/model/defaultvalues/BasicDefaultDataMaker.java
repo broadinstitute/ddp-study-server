@@ -25,7 +25,6 @@ public abstract class BasicDefaultDataMaker implements Defaultable {
     protected ElasticSearchParticipantDto elasticSearchParticipantDto;
 
 
-
     protected abstract boolean setDefaultData();
 
     @Override

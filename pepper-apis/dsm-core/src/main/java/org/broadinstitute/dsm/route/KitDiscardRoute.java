@@ -1,13 +1,14 @@
 package org.broadinstitute.dsm.route;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.ArrayList;
+
 import com.google.gson.Gson;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.util.ConfigUtil;
-import org.broadinstitute.lddp.handlers.util.Result;
-import org.broadinstitute.lddp.security.Auth0Util;
-import org.broadinstitute.lddp.util.GoogleBucket;
 import org.broadinstitute.dsm.db.KitDiscard;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
@@ -17,16 +18,14 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
+import org.broadinstitute.lddp.handlers.util.Result;
+import org.broadinstitute.lddp.security.Auth0Util;
+import org.broadinstitute.lddp.util.GoogleBucket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.ArrayList;
 
 public class KitDiscardRoute extends RequestHandler {
 
@@ -49,17 +48,16 @@ public class KitDiscardRoute extends RequestHandler {
         String realm;
         if (queryParams.value(RoutePath.REALM) != null) {
             realm = queryParams.get(RoutePath.REALM).value();
-        }
-        else {
+        } else {
             throw new RuntimeException("No realm query param was sent");
         }
         String userIdRequest = UserUtil.getUserId(request);
 
         if (RoutePath.RequestMethod.GET.toString().equals(request.requestMethod())) {
-            if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest) || userUtil.checkUserAccess(realm, userId, "participant_exit",userIdRequest)) {
+            if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest) ||
+                    userUtil.checkUserAccess(realm, userId, "participant_exit", userIdRequest)) {
                 return KitDiscard.getExitedKits(realm);
-            }
-            else {
+            } else {
                 response.status(500);
                 return new Result(500, UserErrorMessages.NO_RIGHTS);
             }
@@ -68,7 +66,8 @@ public class KitDiscardRoute extends RequestHandler {
             String requestBody = request.body();
             KitDiscard kitAction = new Gson().fromJson(requestBody, KitDiscard.class);
             if (request.url().contains(RoutePath.DISCARD_SHOW_UPLOAD)) {
-                if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest) || userUtil.checkUserAccess(realm, userId, "participant_exit", userIdRequest)) {
+                if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest) ||
+                        userUtil.checkUserAccess(realm, userId, "participant_exit", userIdRequest)) {
                     if (kitAction.getPath() != null) {
                         byte[] bytes = GoogleBucket.downloadFile(null,
                                 ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME),
@@ -82,26 +81,23 @@ public class KitDiscardRoute extends RequestHandler {
                                 rawResponse.getOutputStream().flush();
                                 rawResponse.getOutputStream().close();
                                 return new Result(200);
-                            }
-                            catch (IOException e) {
+                            } catch (IOException e) {
                                 throw new RuntimeException("Couldn't send file ", e);
                             }
                         }
                     }
-                }
-                else {
+                } else {
                     response.status(500);
                     return new Result(500, UserErrorMessages.NO_RIGHTS);
                 }
-            }
-            else {
+            } else {
                 if (StringUtils.isNotBlank(kitAction.getKitDiscardId())) {
                     if (StringUtils.isNotBlank(kitAction.getAction())) {
-                        if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest) || userUtil.checkUserAccess(realm, userId, "participant_exit", userIdRequest)) {
+                        if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest) ||
+                                userUtil.checkUserAccess(realm, userId, "participant_exit", userIdRequest)) {
                             kitAction.setAction(kitAction.getKitDiscardId(), kitAction.getAction());
                             return new Result(200);
-                        }
-                        else {
+                        } else {
                             response.status(500);
                             return new Result(500, UserErrorMessages.NO_RIGHTS);
                         }
@@ -110,8 +106,7 @@ public class KitDiscardRoute extends RequestHandler {
                         if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest)) {
                             kitAction.setKitDiscarded(kitAction.getKitDiscardId(), userIdRequest, kitAction.getDiscardDate());
                             return new Result(200);
-                        }
-                        else {
+                        } else {
                             response.status(500);
                             return new Result(500, UserErrorMessages.NO_RIGHTS);
                         }
@@ -140,37 +135,32 @@ public class KitDiscardRoute extends RequestHandler {
                                         return new Result(200, userDto.getName().orElse(""));
                                     }
                                     throw new RuntimeException("Failed to save confirm");
-                                }
-                                else {
+                                } else {
                                     return new Result(500, DIFFERENT_USER);
                                 }
-                            }
-                            else {
+                            } else {
                                 return new Result(500, USER_NO_RIGHT);
                             }
-                        }
-                        else {
+                        } else {
                             throw new RuntimeException("User is not known in DSM");
                         }
-                    }
-                    else {
+                    } else {
                         throw new RuntimeException("User not found");
                     }
                 }
-            }
-            else {
+            } else {
                 if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest)) {
                     //save note and files
                     String kitDiscardId = null;
                     if (queryParams.value(KitDiscard.KIT_DISCARD_ID) != null) {
                         kitDiscardId = queryParams.get(KitDiscard.KIT_DISCARD_ID).value();
-                    }
-                    else {
+                    } else {
                         throw new RuntimeException("No kitDiscardId query param was sent");
                     }
 
                     //create a kitAction with the given kitDiscardId
-                    KitDiscard kitAction = new Gson().fromJson("{\"" + KitDiscard.KIT_DISCARD_ID + "\": \"" + kitDiscardId + "\"}", KitDiscard.class);
+                    KitDiscard kitAction =
+                            new Gson().fromJson("{\"" + KitDiscard.KIT_DISCARD_ID + "\": \"" + kitDiscardId + "\"}", KitDiscard.class);
 
                     String pathName = null;
                     String path = null;
@@ -178,12 +168,10 @@ public class KitDiscardRoute extends RequestHandler {
                     if (queryParams.value(KitDiscard.BSP_FILE) != null) {
                         pathName = KitDiscard.BSP_FILE;
                         path = queryParams.get(KitDiscard.BSP_FILE).value();
-                    }
-                    else if (queryParams.value(KitDiscard.IMAGE_FILE) != null) {
+                    } else if (queryParams.value(KitDiscard.IMAGE_FILE) != null) {
                         pathName = KitDiscard.IMAGE_FILE;
                         path = queryParams.get(KitDiscard.IMAGE_FILE).value();
-                    }
-                    else if (queryParams.value("note") != null) {
+                    } else if (queryParams.value("note") != null) {
                         String note = queryParams.get("note").value();
                         KitDiscard.updateInfo(kitAction.getKitDiscardId(), userIdRequest, note, null, null);
                     }
@@ -200,19 +188,18 @@ public class KitDiscardRoute extends RequestHandler {
                                 KitDiscard.updateInfo(kitAction.getKitDiscardId(), userIdRequest, null, pathName, null);
                                 return new Result(200);
                             }
-                        }
-                        else {
+                        } else {
                             //save file
                             HttpServletRequest rawRequest = request.raw();
                             String fileName = GoogleBucket.uploadFile(null,
                                     ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME),
-                                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_DISCARD_BUCKET), kitDiscardId + "_" + path, rawRequest.getInputStream());
+                                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_DISCARD_BUCKET),
+                                    kitDiscardId + "_" + path, rawRequest.getInputStream());
                             KitDiscard.updateInfo(kitAction.getKitDiscardId(), userIdRequest, null, pathName, fileName);
                             return new Result(200, fileName);
                         }
                     }
-                }
-                else {
+                } else {
                     response.status(500);
                     return new Result(500, UserErrorMessages.NO_RIGHTS);
                 }

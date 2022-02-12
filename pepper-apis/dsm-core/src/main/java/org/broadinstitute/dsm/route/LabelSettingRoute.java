@@ -1,12 +1,12 @@
 package org.broadinstitute.dsm.route;
 
 import com.google.gson.Gson;
-import org.broadinstitute.lddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.LabelSettings;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
+import org.broadinstitute.lddp.handlers.util.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -20,10 +20,10 @@ public class LabelSettingRoute extends RequestHandler {
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         String userIdRequest = UserUtil.getUserId(request);
         if (RoutePath.RequestMethod.GET.toString().equals(request.requestMethod())) {
-            if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest) || UserUtil.checkUserAccess(null, userId, "kit_shipping_view", userIdRequest)) {
+            if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest) ||
+                    UserUtil.checkUserAccess(null, userId, "kit_shipping_view", userIdRequest)) {
                 return LabelSettings.getLabelSettings();
-            }
-            else {
+            } else {
                 response.status(500);
                 return new Result(500, UserErrorMessages.NO_RIGHTS);
             }
@@ -34,8 +34,7 @@ public class LabelSettingRoute extends RequestHandler {
                 LabelSettings[] labelSettings = new Gson().fromJson(requestBody, LabelSettings[].class);
                 LabelSettings.saveLabelSettings(labelSettings);
                 return new Result(200);
-            }
-            else {
+            } else {
                 response.status(500);
                 return new Result(500, UserErrorMessages.NO_RIGHTS);
             }

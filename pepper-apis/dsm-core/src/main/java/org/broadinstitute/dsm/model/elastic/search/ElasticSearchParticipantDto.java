@@ -1,15 +1,11 @@
 package org.broadinstitute.dsm.model.elastic.search;
 
 import java.util.Collections;
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Setter;
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.ESActivities;
@@ -36,6 +32,25 @@ public class ElasticSearchParticipantDto {
     private String status;
     private ESDsm dsm;
     private String ddp;
+
+    public ElasticSearchParticipantDto() {
+    }
+
+    private ElasticSearchParticipantDto(ElasticSearchParticipantDto.Builder builder) {
+        this.address = builder.address;
+        this.medicalProviders = builder.medicalProviders;
+        this.invitations = builder.invitations;
+        this.activities = builder.activities;
+        this.statusTimestamp = builder.statusTimeStamp;
+        this.profile = builder.profile;
+        this.files = builder.files;
+        this.proxies = builder.proxies;
+        this.workflows = builder.workflows;
+        this.status = builder.status;
+        this.dsm = builder.dsm;
+        this.computed = builder.computed;
+        this.governedUsers = builder.governedUsers;
+    }
 
     public Optional<ESAddress> getAddress() {
         return Optional.ofNullable(address);
@@ -91,27 +106,9 @@ public class ElasticSearchParticipantDto {
 
     public String getParticipantId() {
         return getProfile().map(esProfile -> StringUtils.isNotBlank(esProfile.getGuid())
-                ? esProfile.getGuid()
-                : esProfile.getLegacyAltPid())
+                        ? esProfile.getGuid()
+                        : esProfile.getLegacyAltPid())
                 .orElse(StringUtils.EMPTY);
-    }
-
-    public ElasticSearchParticipantDto() {}
-
-    private ElasticSearchParticipantDto(ElasticSearchParticipantDto.Builder builder) {
-        this.address = builder.address;
-        this.medicalProviders = builder.medicalProviders;
-        this.invitations = builder.invitations;
-        this.activities = builder.activities;
-        this.statusTimestamp = builder.statusTimeStamp;
-        this.profile = builder.profile;
-        this.files = builder.files;
-        this.proxies = builder.proxies;
-        this.workflows = builder.workflows;
-        this.status = builder.status;
-        this.dsm = builder.dsm;
-        this.computed = builder.computed;
-        this.governedUsers = builder.governedUsers;
     }
 
     public static class Builder {
@@ -129,7 +126,8 @@ public class ElasticSearchParticipantDto {
         private String status;
         private ESDsm dsm;
 
-        public Builder() {}
+        public Builder() {
+        }
 
         public Builder withAddress(ESAddress esAddress) {
             this.address = esAddress;

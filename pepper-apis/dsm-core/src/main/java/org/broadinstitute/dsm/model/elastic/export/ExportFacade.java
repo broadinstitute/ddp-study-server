@@ -13,9 +13,7 @@ import org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator;
 import org.broadinstitute.dsm.model.elastic.export.generate.MappingGeneratorFactory;
 import org.broadinstitute.dsm.model.elastic.export.generate.SourceGeneratorFactory;
 import org.broadinstitute.dsm.model.elastic.export.parse.BaseParser;
-import org.broadinstitute.dsm.model.elastic.export.parse.TypeParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.TypeParserFactory;
-import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.ValueParserFactory;
 import org.broadinstitute.dsm.model.elastic.export.process.BaseProcessor;
 import org.broadinstitute.dsm.model.elastic.export.process.ProcessorFactory;
@@ -35,8 +33,8 @@ public class ExportFacade {
     BaseExporter exportable;
     BaseGenerator generator;
     ElasticSearchable searchable;
-    private ExportFacadePayload exportFacadePayload;
     BaseProcessor processor;
+    private ExportFacadePayload exportFacadePayload;
 
     public ExportFacade(ExportFacadePayload exportFacadePayload) {
         this.exportFacadePayload = Objects.requireNonNull(exportFacadePayload);
@@ -70,7 +68,8 @@ public class ExportFacade {
 
     private ESDsm fetchData() {
         searchable.setDeserializer(new DefaultDeserializer());
-        ElasticSearchParticipantDto participantById = searchable.getParticipantById(exportFacadePayload.getIndex(), exportFacadePayload.getDocId());
+        ElasticSearchParticipantDto participantById =
+                searchable.getParticipantById(exportFacadePayload.getIndex(), exportFacadePayload.getDocId());
         // Ensure that participant data will be stored by participant guid
         exportFacadePayload.setDocId(participantById.getParticipantId());
         return participantById.getDsm().orElseThrow();
@@ -94,7 +93,7 @@ public class ExportFacade {
         Object processedData = processor.process();
         Map<String, Object> dataToReturn = new HashMap<>(Map.of(MappingGenerator.DSM_OBJECT,
                 new HashMap<>(Map.of(propertyInfo.getPropertyName(),
-                processedData))));
+                        processedData))));
         logger.info("Returning processed ES participant data");
         return dataToReturn;
     }

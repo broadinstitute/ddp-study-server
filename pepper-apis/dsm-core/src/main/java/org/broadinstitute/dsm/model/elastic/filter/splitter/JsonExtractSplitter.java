@@ -49,7 +49,7 @@ public class JsonExtractSplitter extends BaseSplitter {
                 .replace(Filter.SINGLE_QUOTE, StringUtils.EMPTY)
                 .trim();
         String innerProperty = removedSingleQuotes
-                .substring(removedSingleQuotes.indexOf(DBConstants.ALIAS_DELIMITER)+1);
+                .substring(removedSingleQuotes.indexOf(DBConstants.ALIAS_DELIMITER) + 1);
         return new String[] {alias, String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DYNAMIC_FIELDS,
                 innerProperty)};
     }

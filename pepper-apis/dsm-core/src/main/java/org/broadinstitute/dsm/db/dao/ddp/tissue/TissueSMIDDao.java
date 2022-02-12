@@ -1,27 +1,30 @@
 package org.broadinstitute.dsm.db.dao.ddp.tissue;
 
-import lombok.NonNull;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import lombok.NonNull;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TissueSMIDDao {
-    private static final Logger logger = LoggerFactory.getLogger(TissueSMIDDao.class);
-
-    public static final String SQL_GET_SM_ID_BASED_ON_TISSUE_ID = " SELECT * from sm_id sm where sm.tissue_id= ?   and NOT sm.deleted <=> 1";
+    public static final String SQL_GET_SM_ID_BASED_ON_TISSUE_ID =
+            " SELECT * from sm_id sm where sm.tissue_id= ?   and NOT sm.deleted <=> 1";
     public static final String SQL_TYPE_ID_FOR_TYPE = "SELECT sm_id_type_id from sm_id_type where `sm_id_type` = ?";
-    public static final String SQL_INSERT_SM_ID = "INSERT INTO sm_id SET tissue_id = ?, sm_id_type_id = ?, sm_id_value=?, last_changed = ?, changed_by = ?";
-    public static final String SQL_INSERT_SM_ID_WITH_VALUE = "INSERT INTO sm_id SET tissue_id = ?, sm_id_type_id = ?, last_changed = ?, changed_by = ?, sm_id_value = ?";
-    public static final String SQL_SELECT_SM_ID_VALUE_WITH_ID = "SELECT sm_id_value from sm_id where sm_id_value = ? and NOT sm_id_pk = ? and Not deleted <=> 1";
+    public static final String SQL_INSERT_SM_ID =
+            "INSERT INTO sm_id SET tissue_id = ?, sm_id_type_id = ?, sm_id_value=?, last_changed = ?, changed_by = ?";
+    public static final String SQL_INSERT_SM_ID_WITH_VALUE =
+            "INSERT INTO sm_id SET tissue_id = ?, sm_id_type_id = ?, last_changed = ?, changed_by = ?, sm_id_value = ?";
+    public static final String SQL_SELECT_SM_ID_VALUE_WITH_ID =
+            "SELECT sm_id_value from sm_id where sm_id_value = ? and NOT sm_id_pk = ? and Not deleted <=> 1";
     public static final String SQL_SELECT_SM_ID_VALUE = "SELECT sm_id_value from sm_id where sm_id_value = ?  and Not deleted <=> 1";
+    private static final Logger logger = LoggerFactory.getLogger(TissueSMIDDao.class);
 
     public String getTypeForName(String type) {
         SimpleResult results = inTransaction((conn) -> {
@@ -67,7 +70,8 @@ public class TissueSMIDDao {
                         throw new RuntimeException("Error getting id of new sm id ", e);
                     }
                 } else {
-                    throw new RuntimeException("Error adding new sm id for tissue w/ id " + tissueId + " it was updating " + result + " rows");
+                    throw new RuntimeException(
+                            "Error adding new sm id for tissue w/ id " + tissueId + " it was updating " + result + " rows");
                 }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
@@ -104,7 +108,8 @@ public class TissueSMIDDao {
                         throw new RuntimeException("Error getting id of new sm id ", e);
                     }
                 } else {
-                    throw new RuntimeException("Error adding new sm id for tissue w/ id " + tissueId + " it was updating " + result + " rows");
+                    throw new RuntimeException(
+                            "Error adding new sm id for tissue w/ id " + tissueId + " it was updating " + result + " rows");
                 }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;

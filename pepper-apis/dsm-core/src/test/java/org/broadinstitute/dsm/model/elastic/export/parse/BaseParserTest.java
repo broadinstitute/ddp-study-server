@@ -1,12 +1,8 @@
 package org.broadinstitute.dsm.model.elastic.export.parse;
 
-import static org.broadinstitute.dsm.model.elastic.export.parse.TypeParser.TEXT_KEYWORD_MAPPING;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
-import org.broadinstitute.dsm.db.MedicalRecord;
-import org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 

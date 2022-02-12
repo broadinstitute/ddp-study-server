@@ -1,13 +1,6 @@
 package org.broadinstitute.dsm.model;
 
-import lombok.Getter;
-import org.broadinstitute.ddp.util.ConfigUtil;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,7 +9,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import lombok.Getter;
+import org.broadinstitute.ddp.util.ConfigUtil;
+import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Getter
 public class KitDDPSummary {
@@ -47,7 +46,8 @@ public class KitDDPSummary {
         List<KitDDPSummary> kits = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_UNSENT_KIT_REQUESTS_FOR_REALM))) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_UNSENT_KIT_REQUESTS_FOR_REALM))) {
                 stmt.setString(1, DBConstants.KIT_REQUEST_ACTIVATED);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
@@ -88,8 +88,7 @@ public class KitDDPSummary {
                         }
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;

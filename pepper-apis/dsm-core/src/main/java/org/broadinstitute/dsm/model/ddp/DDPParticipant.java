@@ -3,9 +3,9 @@ package org.broadinstitute.dsm.model.ddp;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.util.DeliveryAddress;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
+import org.broadinstitute.lddp.util.DeliveryAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +28,8 @@ public class DDPParticipant {
     private String legacyShortId;
     private DeliveryAddress address;
 
-    public DDPParticipant() {}
+    public DDPParticipant() {
+    }
 
     public DDPParticipant(String shortId, String legacyShortId, String firstName, String lastName) {
         this.shortId = shortId;
@@ -45,7 +46,8 @@ public class DDPParticipant {
         this.address = address;
     }
 
-    public DDPParticipant(String participantId, String firstName, String lastName, String country, String city, String postalCode, String street1, String street2, String state, String shortId, String legacyShortId) {
+    public DDPParticipant(String participantId, String firstName, String lastName, String country, String city, String postalCode,
+                          String street1, String street2, String state, String shortId, String legacyShortId) {
         this(shortId, legacyShortId, firstName, lastName);
         this.participantId = participantId;
         this.country = country;
@@ -56,23 +58,23 @@ public class DDPParticipant {
         this.state = state;
     }
 
+    public static DDPParticipant getDDPParticipant(@NonNull String baseUrl, @NonNull String name, @NonNull String ddpParticipantId,
+                                                   boolean auth0Token) {
+        DDPParticipant ddpParticipant;
+        try {
+            String ddpParticipantEndpoint = baseUrl + RoutePath.DDP_PARTICIPANTS_PATH + "/" + ddpParticipantId;
+            ddpParticipant = DDPRequestUtil.getResponseObject(DDPParticipant.class, ddpParticipantEndpoint, name, auth0Token);
+        } catch (Exception e) {
+            throw new RuntimeException("Error getting ddp participant w/ id " + ddpParticipantId, e);
+        }
+        logger.info("Got participant from " + name + " w/ id " + ddpParticipantId);
+        return ddpParticipant;
+    }
+
     public String getShortId() {
         if (StringUtils.isNotBlank(shortId)) {
             return shortId;
         }
         return participantId;
-    }
-
-    public static DDPParticipant getDDPParticipant(@NonNull String baseUrl, @NonNull String name, @NonNull String ddpParticipantId, boolean auth0Token) {
-        DDPParticipant ddpParticipant;
-        try {
-            String ddpParticipantEndpoint = baseUrl + RoutePath.DDP_PARTICIPANTS_PATH + "/" + ddpParticipantId;
-            ddpParticipant = DDPRequestUtil.getResponseObject(DDPParticipant.class, ddpParticipantEndpoint, name, auth0Token);
-        }
-        catch (Exception e) {
-            throw new RuntimeException("Error getting ddp participant w/ id " + ddpParticipantId, e);
-        }
-        logger.info("Got participant from " + name + " w/ id " + ddpParticipantId);
-        return ddpParticipant;
     }
 }

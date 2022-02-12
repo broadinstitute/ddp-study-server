@@ -1,6 +1,9 @@
 package org.broadinstitute.dsm.model.elastic.filter;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -35,20 +38,24 @@ public enum Operator {
     }
 
     public static Operator getOperator(String value) {
-        for (Operator op: Operator.values()) {
-            if (op.value.trim().equals(value)) return op;
+        for (Operator op : Operator.values()) {
+            if (op.value.trim().equals(value)) {
+                return op;
+            }
         }
         throw new IllegalArgumentException(UNKNOWN_OPERATOR);
     }
 
     public static Operator extract(String filter) {
         String[] splittedFilter = filter.split(Filter.SPACE);
-        if (isMultipleOptions(splittedFilter))
+        if (isMultipleOptions(splittedFilter)) {
             return MULTIPLE_OPTIONS;
+        }
         Optional<String> maybeOperator = Arrays.stream(splittedFilter)
                 .filter(StringUtils::isNotBlank)
                 .map(Operator::handleSpecialCaseOperators)
-                .filter(word -> Arrays.stream(Operator.values()).anyMatch(op -> op.value.equals(word)) || Operator.IS_NOT_NULL_LIST.contains(word))
+                .filter(word -> Arrays.stream(Operator.values()).anyMatch(op -> op.value.equals(word)) ||
+                        Operator.IS_NOT_NULL_LIST.contains(word))
                 .distinct()
                 .reduce((prev, curr) -> String.join(Filter.SPACE, prev, curr));
         if (maybeOperator.isPresent()) {
@@ -85,9 +92,14 @@ public enum Operator {
         String strOperator = StringUtils.EMPTY;
         for (Operator operator : Operator.values()) {
             int startIndex = word.indexOf(operator.value);
-            if (startIndex == -1 && !Operator.IS_NOT_NULL_LIST.contains(word)) continue;
-            if (word.contains(Filter.OPEN_PARENTHESIS)) strOperator = word.substring(startIndex, startIndex + operator.value.length());
-            else strOperator = word;
+            if (startIndex == -1 && !Operator.IS_NOT_NULL_LIST.contains(word)) {
+                continue;
+            }
+            if (word.contains(Filter.OPEN_PARENTHESIS)) {
+                strOperator = word.substring(startIndex, startIndex + operator.value.length());
+            } else {
+                strOperator = word;
+            }
             return strOperator;
         }
         return strOperator;
@@ -95,11 +107,13 @@ public enum Operator {
 
     private static boolean isMultipleOptions(String[] splittedFilter) {
         splittedFilter = cleanFromEmptySpaces(splittedFilter);
-        if (splittedFilter.length == 0) return false;
+        if (splittedFilter.length == 0) {
+            return false;
+        }
         String firstElement = splittedFilter[0];
         String lastElement = splittedFilter[splittedFilter.length - 1];
         return (Filter.OPEN_PARENTHESIS.equals(firstElement) && Filter.CLOSE_PARENTHESIS.equals(lastElement))
-                || (firstElement.charAt(0) == Filter.OPEN_PARENTHESIS_CHAR && lastElement.charAt(lastElement.length()-1) ==
+                || (firstElement.charAt(0) == Filter.OPEN_PARENTHESIS_CHAR && lastElement.charAt(lastElement.length() - 1) ==
                 Filter.CLOSE_PARENTHESIS_CHAR);
     }
 

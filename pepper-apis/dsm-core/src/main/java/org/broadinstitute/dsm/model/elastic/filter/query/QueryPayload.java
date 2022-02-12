@@ -6,9 +6,9 @@ import org.broadinstitute.dsm.statics.DBConstants;
 @Getter
 public class QueryPayload {
 
+    Object[] values;
     private String property;
     private String path;
-    Object[] values;
 
     public QueryPayload(String path, String property, Object[] values) {
         this.path = path;

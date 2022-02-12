@@ -29,6 +29,35 @@ public class ParticipantWrapperTest {
         elasticSearchable = new ElasticSearchTest();
     }
 
+    public static List<String> generateProxies() {
+        return Stream
+                .generate(ParticipantWrapperTest::randomGuidGenerator)
+                .limit(PROXIES_QUANTITY)
+                .collect(Collectors.toList());
+    }
+
+    public static String randomGuidGenerator() {
+        char[] letters = new char[] {'A', 'B', 'C', 'D', 'F', 'G', 'H', 'I', 'G'};
+        return generateParticipantId(letters, 20);
+    }
+
+    public static String randomLegacyAltPidGenerator() {
+        char[] letters = new char[] {'a', 'B', 'C', 'd', 'F', 'g', 'H', 'I', 'j', 'K', 'L', 'm', 'X', 'Y', 'z'};
+        return generateParticipantId(letters, 50);
+    }
+
+    private static String generateParticipantId(char[] letters, int stringSize) {
+        StringBuilder guid = new StringBuilder();
+        Random rand = new Random();
+        for (int i = 1; i <= stringSize; i++) {
+            if (i % 5 == 0) {
+                guid.append(rand.nextInt(10));
+            } else {
+                guid.append(letters[rand.nextInt(letters.length)]);
+            }
+        }
+        return guid.toString();
+    }
 
     @Test
     public void getParticipantIdFromElasticList() {
@@ -58,8 +87,9 @@ public class ParticipantWrapperTest {
         ParticipantWrapper participantWrapper = new ParticipantWrapper(participantWrapperPayload, elasticSearchable);
         List<ElasticSearchParticipantDto> elasticSearchList = elasticSearchable.getParticipantsWithinRange("", 0, 50).getEsParticipants();
         Map<String, List<String>> proxiesIdsFromElasticList = participantWrapper.getProxiesIdsFromElasticList(elasticSearchList);
-        Map<String, List<ElasticSearchParticipantDto>> proxiesByParticipantIds = participantWrapper.getProxiesWithParticipantIdsByProxiesIds(
-                "", proxiesIdsFromElasticList);
+        Map<String, List<ElasticSearchParticipantDto>> proxiesByParticipantIds =
+                participantWrapper.getProxiesWithParticipantIdsByProxiesIds(
+                        "", proxiesIdsFromElasticList);
         Assert.assertEquals(proxiesByParticipantIds.keySet().size(), proxiesByParticipantIds.keySet().size());
         String parentId = proxiesIdsFromElasticList.keySet().stream().findFirst().get();
         String proxyId = proxiesIdsFromElasticList.values().stream().findFirst().get().get(0);
@@ -78,6 +108,12 @@ public class ParticipantWrapperTest {
         ParticipantWrapper participantWrapper = new ParticipantWrapper(new ParticipantWrapperPayload.Builder().build(), elasticSearchable);
         participantWrapper.sortBySelfElseById(Collections.singleton(pDatas));
         Assert.assertTrue(pDatas.get(0).getData().orElse("").contains(FamilyMemberConstants.MEMBER_TYPE_SELF));
+    }
+
+    @Test
+    public void testGuidGenerator() {
+        String guid = randomGuidGenerator();
+        Assert.assertEquals(20, guid.length());
     }
 
     private static class ElasticSearchTest implements ElasticSearchable {
@@ -122,7 +158,8 @@ public class ParticipantWrapperTest {
         }
 
         @Override
-        public ElasticSearch getParticipantsByRangeAndFilter(String esParticipantsIndex, int from, int to, AbstractQueryBuilder queryBuilder) {
+        public ElasticSearch getParticipantsByRangeAndFilter(String esParticipantsIndex, int from, int to,
+                                                             AbstractQueryBuilder queryBuilder) {
             return null;
         }
 
@@ -140,42 +177,5 @@ public class ParticipantWrapperTest {
         public ElasticSearch getAllParticipantsDataByInstanceIndex(String esParticipantsIndex) {
             return null;
         }
-    }
-
-
-    @Test
-    public void testGuidGenerator() {
-        String guid = randomGuidGenerator();
-        Assert.assertEquals(20, guid.length());
-    }
-
-    public static List<String> generateProxies() {
-        return Stream
-                .generate(ParticipantWrapperTest::randomGuidGenerator)
-                .limit(PROXIES_QUANTITY)
-                .collect(Collectors.toList());
-    }
-
-    public static String randomGuidGenerator() {
-        char[] letters = new char[] {'A', 'B', 'C', 'D', 'F', 'G', 'H', 'I', 'G'};
-        return generateParticipantId(letters, 20);
-    }
-
-    public static String randomLegacyAltPidGenerator() {
-        char[] letters = new char[] {'a', 'B', 'C', 'd', 'F', 'g', 'H', 'I', 'j', 'K', 'L', 'm', 'X', 'Y', 'z'};
-        return generateParticipantId(letters, 50);
-    }
-
-    private static String generateParticipantId(char[] letters, int stringSize) {
-        StringBuilder guid = new StringBuilder();
-        Random rand = new Random();
-        for (int i = 1; i <= stringSize; i++) {
-            if (i % 5 == 0) {
-                guid.append(rand.nextInt(10));
-            } else {
-                guid.append(letters[rand.nextInt(letters.length)]);
-            }
-        }
-        return guid.toString();
     }
 }

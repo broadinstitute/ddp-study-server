@@ -1,5 +1,10 @@
 package org.broadinstitute.dsm.db.dto.kit;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
@@ -15,57 +20,41 @@ import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 @Data
 public class ClinicalKitDto {
 
+    private static final Logger logger = LoggerFactory.getLogger(ClinicalKitDto.class);
     @SerializedName("participant_id")
     String collaboratorParticipantId;
-
     @SerializedName("sample_id")
     String sampleId;
-
     @SerializedName("sample_collection")
     String sampleCollection;
-
     @SerializedName("material_type")
     String materialType;
-
     @SerializedName("vessel_type")
     String vesselType;
-
     @SerializedName("first_name")
     String firstName;
-
     @SerializedName("last_name")
     String lastName;
-
     @SerializedName("date_of_birth")
     String dateOfBirth;
-
     @SerializedName("sample_type")
     String sampleType;
-
     @SerializedName("gender")
     String gender;
-
     @SerializedName("accession_number")
     String accessionNumber;
-
     @SerializedName("collection_date")
     String collectionDate;
-
     @SerializedName("kit_label")
     String mfBarcode;
 
-    private static final Logger logger = LoggerFactory.getLogger(ClinicalKitDto.class);
-
-    public ClinicalKitDto(String collaboratorParticipantId, String sampleId, String sampleCollection, String materialType, String vesselType,
-                          String firstName, String lastName, String dateOfBirth, String sampleType, String gender, String accessionNumber, String mfBarcode) {
+    public ClinicalKitDto(String collaboratorParticipantId, String sampleId, String sampleCollection, String materialType,
+                          String vesselType,
+                          String firstName, String lastName, String dateOfBirth, String sampleType, String gender, String accessionNumber,
+                          String mfBarcode) {
         this.collaboratorParticipantId = collaboratorParticipantId;
         this.sampleId = sampleId;
         this.sampleCollection = sampleCollection;
@@ -124,8 +113,10 @@ public class ClinicalKitDto {
             this.setLastName(maybeParticipantESDataByParticipantId.get().getProfile().map(ESProfile::getLastName).orElse(""));
             this.setGender(getParticipantGender(maybeParticipantESDataByParticipantId.get(), ddpInstance.getName()));
             String shortId = maybeParticipantESDataByParticipantId.get().getProfile().map(ESProfile::getHruid).orElse("");
-            String collaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(), ddpInstance.isMigratedDDP(),
-                    ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId, shortId, null);
+            String collaboratorParticipantId =
+                    KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
+                            ddpInstance.isMigratedDDP(),
+                            ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId, shortId, null);
             this.setCollaboratorParticipantId(collaboratorParticipantId);
         } catch (Exception e) {
             throw new RuntimeException("Participant doesn't exist / is not valid for kit " + e.getMessage());
@@ -138,7 +129,8 @@ public class ClinicalKitDto {
         list.add(participantByShortId.getParticipantId());
         Map<String, List<OncHistoryDetail>> oncHistoryDetails = OncHistoryDetail.getOncHistoryDetailsByParticipantIds(realm, list);
         if (!oncHistoryDetails.isEmpty()) {
-            Optional<OncHistoryDetail> oncHistoryWithGender = oncHistoryDetails.get(participantByShortId.getParticipantId()).stream().filter(o -> StringUtils.isNotBlank(o.getGender())).findFirst();
+            Optional<OncHistoryDetail> oncHistoryWithGender = oncHistoryDetails.get(participantByShortId.getParticipantId()).stream()
+                    .filter(o -> StringUtils.isNotBlank(o.getGender())).findFirst();
             if (oncHistoryWithGender.isPresent()) {
                 return oncHistoryWithGender.get().getGender();
             }

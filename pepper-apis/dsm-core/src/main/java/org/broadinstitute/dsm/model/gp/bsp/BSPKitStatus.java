@@ -10,7 +10,7 @@ public class BSPKitStatus {
 
     public String status;
 
-    public BSPKitStatus (String status) {
+    public BSPKitStatus(String status) {
         this.status = status;
     }
 }

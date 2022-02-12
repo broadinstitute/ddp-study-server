@@ -2,9 +2,6 @@ package org.broadinstitute.dsm.model.elastic.export;
 
 import java.util.Map;
 
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
-import org.elasticsearch.client.RestHighLevelClient;
-
 public abstract class BaseExporter implements Exportable, ExportableHelper {
 
     protected RequestPayload requestPayload;

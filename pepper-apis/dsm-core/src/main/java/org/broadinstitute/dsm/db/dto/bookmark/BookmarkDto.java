@@ -11,6 +11,12 @@ public class BookmarkDto {
     private long value;
     private String instance;
 
+    private BookmarkDto(Builder builder) {
+        this.bookmarkId = builder.bookmarkId;
+        this.value = builder.value;
+        this.instance = builder.instance;
+    }
+
     public int getBookmarkId() {
         return bookmarkId;
     }
@@ -21,12 +27,6 @@ public class BookmarkDto {
 
     public Optional<String> getInstance() {
         return Optional.ofNullable(instance);
-    }
-
-    private BookmarkDto(Builder builder) {
-        this.bookmarkId = builder.bookmarkId;
-        this.value = builder.value;
-        this.instance = builder.instance;
     }
 
     public static class Builder {

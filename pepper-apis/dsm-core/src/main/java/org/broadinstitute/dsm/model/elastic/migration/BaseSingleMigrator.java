@@ -1,10 +1,10 @@
 package org.broadinstitute.dsm.model.elastic.migration;
 
-import org.broadinstitute.dsm.model.elastic.Util;
-import org.broadinstitute.dsm.statics.ESObjectConstants;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
 
 public abstract class BaseSingleMigrator extends BaseMigrator {
 

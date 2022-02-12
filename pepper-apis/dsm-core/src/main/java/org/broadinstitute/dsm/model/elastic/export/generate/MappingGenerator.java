@@ -3,7 +3,6 @@ package org.broadinstitute.dsm.model.elastic.export.generate;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -12,17 +11,17 @@ import org.slf4j.LoggerFactory;
 
 abstract public class MappingGenerator extends BaseGenerator {
 
-    private static final Logger logger = LoggerFactory.getLogger(MappingGenerator.class);
-
     public static final String TYPE = "type";
     public static final String NESTED = "nested";
     public static final String TYPE_KEYWORD = "keyword";
+    private static final Logger logger = LoggerFactory.getLogger(MappingGenerator.class);
 
     public MappingGenerator(Parser parser, GeneratorPayload generatorPayload) {
         super(parser, generatorPayload);
     }
 
-    public MappingGenerator() {}
+    public MappingGenerator() {
+    }
 
     @Override
     public Map<String, Object> generate() {
@@ -48,12 +47,13 @@ abstract public class MappingGenerator extends BaseGenerator {
     protected Map<String, Object> parseJson() {
         Map<String, Object> resultMap = new HashMap<>();
         Map<String, Object> fieldsByValues = parseJsonToMapFromValue();
-        for (Map.Entry<String, Object> entry: fieldsByValues.entrySet()) {
+        for (Map.Entry<String, Object> entry : fieldsByValues.entrySet()) {
             parser.setFieldName(entry.getKey());
             Object eachType = parser.parse(entry.getKey());
             resultMap.put(Util.underscoresToCamelCase(entry.getKey()), eachType);
         }
-        Map<String, Object> returnMap = new HashMap<>(Map.of(ESObjectConstants.DYNAMIC_FIELDS, new HashMap<>(Map.of(PROPERTIES, resultMap))));
+        Map<String, Object> returnMap =
+                new HashMap<>(Map.of(ESObjectConstants.DYNAMIC_FIELDS, new HashMap<>(Map.of(PROPERTIES, resultMap))));
         return returnMap;
     }
 }

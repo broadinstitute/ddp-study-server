@@ -1,8 +1,9 @@
 package org.broadinstitute.dsm.model.elastic.search;
 
 import java.io.IOException;
-import java.io.Serializable;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
@@ -26,7 +27,8 @@ public class SourceMapDeserializerTest {
         SourceMapDeserializer sourceMapDeserializer = new SourceMapDeserializer();
         sourceMapDeserializer.outerProperty = ESObjectConstants.PARTICIPANT_DATA;
         try {
-            Map<String, Object> dynamicFieldsValueAsJson = ObjectMapperSingleton.instance().readValue(sourceMapDeserializer.getDynamicFieldsValueAsJson(outerProperties), Map.class);
+            Map<String, Object> dynamicFieldsValueAsJson = ObjectMapperSingleton.instance()
+                    .readValue(sourceMapDeserializer.getDynamicFieldsValueAsJson(outerProperties), Map.class);
             Assert.assertEquals(dynamicFieldsValueAsJson.get("REGISTRATION_TYPE"), "Self");
             Assert.assertEquals(dynamicFieldsValueAsJson.get("REGISTRATION_STATUS"), "Registered");
             Assert.assertEquals(12, outerProperties.get("ddpInstanceId"));

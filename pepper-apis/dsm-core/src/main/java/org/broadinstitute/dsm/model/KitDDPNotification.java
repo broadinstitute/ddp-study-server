@@ -1,27 +1,25 @@
 package org.broadinstitute.dsm.model;
 
-import lombok.Data;
-import lombok.NonNull;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import lombok.Data;
+import lombok.NonNull;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Data
 public class KitDDPNotification {
 
-    private static final Logger logger = LoggerFactory.getLogger(KitDDPNotification.class);
-
     public static final String RECEIVED = "RECEIVED";
     public static final String REMINDER = "REMINDER";
     public static final String SENT = "SENT";
-
+    private static final Logger logger = LoggerFactory.getLogger(KitDDPNotification.class);
     private final String participantId;
     private final String dsmKitRequestId;
     private final String ddpInstanceId;
@@ -36,7 +34,7 @@ public class KitDDPNotification {
 
     public KitDDPNotification(String participantId, String dsmKitRequestId, String ddpInstanceId, String instanceName,
                               String baseUrl, String eventName, String eventType, long date, boolean hasAuth0Token, String uploadReason,
-                              String ddpKitRequestId ) {
+                              String ddpKitRequestId) {
         this.participantId = participantId;
         this.dsmKitRequestId = dsmKitRequestId;
         this.ddpInstanceId = ddpInstanceId;
@@ -59,7 +57,8 @@ public class KitDDPNotification {
                     rs.last();
                     int count = rs.getRow();
                     rs.beforeFirst();
-                    if (count == expectedCount && rs.next()) { //if row is 0 the ddp/kit type combination does not trigger a participant event
+                    if (count == expectedCount &&
+                            rs.next()) { //if row is 0 the ddp/kit type combination does not trigger a participant event
                         dbVals.resultValue = new KitDDPNotification(rs.getString(DBConstants.DDP_PARTICIPANT_ID),
                                 rs.getString(DBConstants.DSM_KIT_REQUEST_ID),
                                 rs.getString(DBConstants.DDP_INSTANCE_ID),
@@ -74,8 +73,7 @@ public class KitDDPNotification {
 
                     }
                 }
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -87,7 +85,8 @@ public class KitDDPNotification {
         return (KitDDPNotification) results.resultValue;
     }
 
-    public static KitDDPNotification getKitDDPNotification(Connection conn, @NonNull String query, @NonNull String[] inputs, int expectedCount) {
+    public static KitDDPNotification getKitDDPNotification(Connection conn, @NonNull String query, @NonNull String[] inputs,
+                                                           int expectedCount) {
         KitDDPNotification result = null;
         try (PreparedStatement stmt = conn.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
             int counter = 1;

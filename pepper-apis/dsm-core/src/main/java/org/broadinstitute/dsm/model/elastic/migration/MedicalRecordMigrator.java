@@ -1,9 +1,9 @@
 package org.broadinstitute.dsm.model.elastic.migration;
 
+import java.util.Map;
+
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
-
-import java.util.Map;
 
 public class MedicalRecordMigrator extends BaseCollectionMigrator {
 

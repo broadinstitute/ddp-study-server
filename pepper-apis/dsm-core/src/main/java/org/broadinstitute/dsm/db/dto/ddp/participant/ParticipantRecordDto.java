@@ -19,43 +19,54 @@ public class ParticipantRecordDto {
     @ColumnName(DBConstants.PARTICIPANT_RECORD_ID)
     private Integer participantRecordId;
 
-    @ColumnName (DBConstants.PARTICIPANT_ID)
+    @ColumnName(DBConstants.PARTICIPANT_ID)
     private int participantId;
 
-    @ColumnName (DBConstants.CR_SENT)
+    @ColumnName(DBConstants.CR_SENT)
     private String crSent;
 
-    @ColumnName (DBConstants.CR_RECEIVED)
+    @ColumnName(DBConstants.CR_RECEIVED)
     private String crReceived;
 
-    @ColumnName (DBConstants.NOTES)
+    @ColumnName(DBConstants.NOTES)
     private String notes;
 
-    @ColumnName (DBConstants.MINIMAL_MR)
+    @ColumnName(DBConstants.MINIMAL_MR)
     private Integer minimalMr;
 
-    @ColumnName (DBConstants.ABSTRACTION_READY)
+    @ColumnName(DBConstants.ABSTRACTION_READY)
     private Integer abstractionReady;
 
-    @ColumnName (DBConstants.ADDITIONAL_VALUES_JSON)
+    @ColumnName(DBConstants.ADDITIONAL_VALUES_JSON)
     @JsonProperty("dynamicFields")
     private String additionalValuesJson;
+    private long lastChanged;
+    private String changedBy;
+    public ParticipantRecordDto() {
+
+    }
+
+    private ParticipantRecordDto(Builder builder) {
+        this.participantRecordId = builder.participantRecordId;
+        this.participantId = builder.participantId;
+        this.crSent = builder.crSent;
+        this.crReceived = builder.crReceived;
+        this.notes = builder.notes;
+        this.minimalMr = builder.minimalMr;
+        this.abstractionReady = builder.abstractionReady;
+        this.additionalValuesJson = builder.additionalValuesJson;
+        this.lastChanged = builder.lastChanged;
+        this.changedBy = builder.changedBy;
+    }
 
     @JsonProperty("dynamicFields")
     public Map<String, Object> getDynamicFields() {
         try {
-            return ObjectMapperSingleton.instance().readValue(additionalValuesJson, new TypeReference<Map<String, Object>>() {});
+            return ObjectMapperSingleton.instance().readValue(additionalValuesJson, new TypeReference<Map<String, Object>>() {
+            });
         } catch (IOException | NullPointerException e) {
             return Map.of();
         }
-    }
-
-
-    private long lastChanged;
-    private String changedBy;
-
-    public ParticipantRecordDto() {
-
     }
 
     public Optional<Integer> getParticipantRecordId() {
@@ -98,19 +109,6 @@ public class ParticipantRecordDto {
         return Optional.ofNullable(changedBy);
     }
 
-    private ParticipantRecordDto(Builder builder) {
-        this.participantRecordId = builder.participantRecordId;
-        this.participantId = builder.participantId;
-        this.crSent = builder.crSent;
-        this.crReceived = builder.crReceived;
-        this.notes = builder.notes;
-        this.minimalMr = builder.minimalMr;
-        this.abstractionReady = builder.abstractionReady;
-        this.additionalValuesJson = builder.additionalValuesJson;
-        this.lastChanged = builder.lastChanged;
-        this.changedBy = builder.changedBy;
-    }
-
     public static class Builder {
         public Integer participantRecordId;
         public int participantId;
@@ -122,12 +120,12 @@ public class ParticipantRecordDto {
         public String additionalValuesJson;
         public long lastChanged;
         public String changedBy;
-        
+
         public Builder(int participantId, long lastChanged) {
             this.participantId = participantId;
             this.lastChanged = lastChanged;
         }
-        
+
         public Builder withParticipantRecordId(int participantRecordId) {
             this.participantRecordId = participantRecordId;
             return this;

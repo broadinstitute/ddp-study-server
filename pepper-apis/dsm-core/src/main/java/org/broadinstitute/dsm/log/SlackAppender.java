@@ -61,6 +61,7 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
             "throttled so you will only see 1 per %s minutes.", JOB_DELAY);
     final String NON_JOB_ERROR_MESSAGE = String.format("This does NOT look like a job error. " +
             "Non-job error reporting is throttled so you will only see 1 per %s minutes.", NON_JOB_DELAY);
+
     public SlackAppender() {
     }
 

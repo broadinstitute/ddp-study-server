@@ -21,6 +21,22 @@ public class InstanceSettingsDto {
     private boolean hasAddressTab;
     private boolean hasComputedObject;
 
+    private InstanceSettingsDto(Builder builder) {
+        this.instanceSettingsId = builder.instanceSettingsId;
+        this.ddpInstanceId = builder.ddpInstanceId;
+        this.mrCoverPdf = builder.mrCoverPdf;
+        this.kitBehaviorChange = builder.kitBehaviorChange;
+        this.specialFormat = builder.specialFormat;
+        this.hideESFields = builder.hideESFields;
+        this.hideSamplesTab = builder.hideSamplesTab;
+        this.studySpecificStatuses = builder.studySpecificStatuses;
+        this.defaultColumns = builder.defaultColumns;
+        this.hasInvitations = builder.hasInvitations;
+        this.gbfShippedTriggerDSSDelivered = builder.gbfShippedTriggerDSSDelivered;
+        this.hasAddressTab = builder.hasAddressTab;
+        this.hasComputedObject = builder.hasComputedObject;
+    }
+
     public Optional<Integer> getInstanceSettingsId() {
         return Optional.of(instanceSettingsId);
     }
@@ -72,24 +88,6 @@ public class InstanceSettingsDto {
     public Optional<Boolean> hasComputedObject() {
         return Optional.of(hasComputedObject);
     }
-
-
-    private InstanceSettingsDto(Builder builder) {
-        this.instanceSettingsId = builder.instanceSettingsId;
-        this.ddpInstanceId = builder.ddpInstanceId;
-        this.mrCoverPdf = builder.mrCoverPdf;
-        this.kitBehaviorChange = builder.kitBehaviorChange;
-        this.specialFormat = builder.specialFormat;
-        this.hideESFields = builder.hideESFields;
-        this.hideSamplesTab = builder.hideSamplesTab;
-        this.studySpecificStatuses = builder.studySpecificStatuses;
-        this.defaultColumns = builder.defaultColumns;
-        this.hasInvitations = builder.hasInvitations;
-        this.gbfShippedTriggerDSSDelivered = builder.gbfShippedTriggerDSSDelivered;
-        this.hasAddressTab = builder.hasAddressTab;
-        this.hasComputedObject = builder.hasComputedObject;
-    }
-
 
     public static class Builder {
         public int instanceSettingsId;

@@ -31,11 +31,12 @@ public class KitRequest {
     @ColumnName(DBConstants.EXTERNAL_ORDER_NUMBER)
     private String externalOrderNumber;
 
-    @ColumnName (DBConstants.EXTERNAL_ORDER_DATE)
+    @ColumnName(DBConstants.EXTERNAL_ORDER_DATE)
     @DbDateConversion(SqlDateConverter.EPOCH)
     private Long externalOrderDate;
 
-    public KitRequest() {}
+    public KitRequest() {
+    }
 
     public KitRequest(String participantId, String shortId, DDPParticipant participant, String externalOrderNumber) {
         this(null, participantId, shortId, null, externalOrderNumber, participant, null, null, null);

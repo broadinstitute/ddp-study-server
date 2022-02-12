@@ -10,11 +10,15 @@ public class ValueParser extends BaseParser {
     }
 
     @Override
-    protected Object forBoolean(String value) { return Boolean.valueOf(value); }
+    protected Object forBoolean(String value) {
+        return Boolean.valueOf(value);
+    }
 
     @Override
     protected Object forDate(String value) {
-        if (StringUtils.isBlank(value)) return null;
+        if (StringUtils.isBlank(value)) {
+            return null;
+        }
         return value;
     }
 

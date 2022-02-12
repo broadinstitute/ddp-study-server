@@ -14,7 +14,10 @@ import java.lang.annotation.Target;
  */
 public @interface TableName {
     String name();
+
     String alias();
+
     String primaryKey();
+
     String columnPrefix();
 }

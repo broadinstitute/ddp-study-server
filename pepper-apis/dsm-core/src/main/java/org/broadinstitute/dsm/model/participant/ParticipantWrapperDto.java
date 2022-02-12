@@ -38,8 +38,10 @@ public class ParticipantWrapperDto {
     private List<ParticipantData> participantData;
 
     public ParticipantWrapperDto(ElasticSearchParticipantDto esData, Participant participant, List<MedicalRecord> medicalRecords,
-                                 List<OncHistoryDetail> oncHistoryDetails, List<KitRequestShipping> kits, List<AbstractionActivity> abstractionActivities,
-                                 List<AbstractionGroup> abstractionSummary, List<ElasticSearchParticipantDto> proxyData, List<ParticipantData> participantData) {
+                                 List<OncHistoryDetail> oncHistoryDetails, List<KitRequestShipping> kits,
+                                 List<AbstractionActivity> abstractionActivities,
+                                 List<AbstractionGroup> abstractionSummary, List<ElasticSearchParticipantDto> proxyData,
+                                 List<ParticipantData> participantData) {
         this.esData = esData;
         this.participant = participant;
         this.medicalRecords = medicalRecords;
@@ -57,7 +59,9 @@ public class ParticipantWrapperDto {
 
     public Map<String, Object> getEsDataAsMap() {
         Map<String, Object> esDataMap = new HashMap<>();
-        if (Objects.isNull(esData)) return esDataMap;
+        if (Objects.isNull(esData)) {
+            return esDataMap;
+        }
         ObjectMapper objectMapper = new ObjectMapper();
         String esDataAsJson = new Gson().toJson(esData);
         try {

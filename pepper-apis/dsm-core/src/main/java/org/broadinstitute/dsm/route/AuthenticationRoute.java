@@ -1,33 +1,31 @@
 package org.broadinstitute.dsm.route;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.security.Auth0Util;
-import org.broadinstitute.lddp.security.SecurityHelper;
-import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.db.UserSettings;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
+import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.util.UserUtil;
+import org.broadinstitute.lddp.security.Auth0Util;
+import org.broadinstitute.lddp.security.SecurityHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
 public class AuthenticationRoute implements Route {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationRoute.class);
-
-    private final String payloadToken = "token";
-
     public final String authUserId = "USER_ID";
+    private final String payloadToken = "token";
     private final String authUserName = "USER_NAME";
     private final String authUserEmail = "USER_MAIL";
     private final String userAccessRoles = "USER_ACCESS_ROLE";
@@ -73,8 +71,7 @@ public class AuthenticationRoute implements Route {
                     userUtil.insertUser(email, email);
                     userDto = userDao.getUserByEmail(email).orElseThrow();
                     claims.put(userAccessRoles, "user needs roles and groups");
-                }
-                else {
+                } else {
                     String userSetting = gson.toJson(userUtil.getUserAccessRoles(email), ArrayList.class);
                     claims.put(userAccessRoles, userSetting);
                     logger.info(userSetting);
@@ -87,16 +84,16 @@ public class AuthenticationRoute implements Route {
                 long auth0Expiration = auth0UserInfo.getTokenExpiration();
                 int cookieAgeInSeconds = new Long(auth0Expiration - new Double(System.currentTimeMillis() / 1000d).intValue()).intValue();
 
-                String jwtToken = new SecurityHelper().createToken(jwtSecret, cookieAgeInSeconds + (System.currentTimeMillis() / 1000) + (60 * 5), claims);
+                String jwtToken =
+                        new SecurityHelper().createToken(jwtSecret, cookieAgeInSeconds + (System.currentTimeMillis() / 1000) + (60 * 5),
+                                claims);
 
                 DSMToken authResponse = new DSMToken(jwtToken);
                 return authResponse;
-            }
-            else {
+            } else {
                 throw new RuntimeException("UserIdentity not found");
             }
-        }
-        else {
+        } else {
             throw new RuntimeException("There was no token in the payload");
         }
     }

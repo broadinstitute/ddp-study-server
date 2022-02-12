@@ -42,8 +42,8 @@ public class BaseQueryBuilderTest {
         BaseQueryBuilder testResultCollectionQueryBuilder = BaseQueryBuilder.of("k", "testResult");
         BaseQueryBuilder collectionQueryBuilder = BaseQueryBuilder.of("m", "");
         BaseQueryBuilder singleQueryBuilder = BaseQueryBuilder.of("o", "");
-        assertTrue(testResultCollectionQueryBuilder instanceof  TestResultCollectionQueryBuilder);
-        assertTrue(collectionQueryBuilder instanceof  CollectionQueryBuilder);
+        assertTrue(testResultCollectionQueryBuilder instanceof TestResultCollectionQueryBuilder);
+        assertTrue(collectionQueryBuilder instanceof CollectionQueryBuilder);
         assertTrue(singleQueryBuilder instanceof SingleQueryBuilder);
     }
 

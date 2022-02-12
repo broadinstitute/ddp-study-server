@@ -1,22 +1,34 @@
 package org.broadinstitute.dsm.util;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.*;
+import org.broadinstitute.dsm.db.AbstractionActivity;
+import org.broadinstitute.dsm.db.AbstractionFieldValue;
+import org.broadinstitute.dsm.db.AbstractionQCValue;
+import org.broadinstitute.dsm.db.AbstractionReviewValue;
+import org.broadinstitute.dsm.db.Drug;
+import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.MedicalRecord;
+import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.db.Participant;
+import org.broadinstitute.dsm.db.ParticipantData;
+import org.broadinstitute.dsm.db.Tissue;
+import org.broadinstitute.dsm.db.ViewFilter;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
-import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
-import org.broadinstitute.dsm.db.ViewFilter;
 import org.broadinstitute.dsm.model.KitRequest;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.util.*;
 
 public class PatchUtil {
 
@@ -45,7 +57,7 @@ public class PatchUtil {
         getColumnNames(ParticipantRecordDto.class);
         logger.info("Loaded patch utils");
     }
-    
+
     public PatchUtil() {
     }
 
@@ -112,7 +124,8 @@ public class PatchUtil {
                         fieldKey = columnPrefix.concat("_").concat(field.getName());
                     }
 
-                    columnNameMap.put(fieldKey, new DBElement(tableName, tableAlias, primaryKey, column.value(), field.getAnnotation(DbDateConversion.class)));
+                    columnNameMap.put(fieldKey,
+                            new DBElement(tableName, tableAlias, primaryKey, column.value(), field.getAnnotation(DbDateConversion.class)));
                     dataBaseMap.put(nameKey, field.getName());
                 }
             }

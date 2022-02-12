@@ -13,7 +13,8 @@ public class DateSplitter extends EqualsSplitter {
         String rightSide = equalSeparated[1].trim();
         String fieldWithAlias =
                 leftSide.split(Util.ESCAPE_CHARACTER + Filter.OPEN_PARENTHESIS)[2].split(Util.FORWARD_SLASH_SEPARATOR)[0];
-        String value = rightSide.split(Util.ESCAPE_CHARACTER + Filter.OPEN_PARENTHESIS)[2].split(Util.ESCAPE_CHARACTER + Filter.CLOSE_PARENTHESIS)[0];
+        String value = rightSide.split(Util.ESCAPE_CHARACTER + Filter.OPEN_PARENTHESIS)[2].split(
+                Util.ESCAPE_CHARACTER + Filter.CLOSE_PARENTHESIS)[0];
         return new String[] {fieldWithAlias, value};
     }
 

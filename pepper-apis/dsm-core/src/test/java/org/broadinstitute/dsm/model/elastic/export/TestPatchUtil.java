@@ -1,9 +1,9 @@
 package org.broadinstitute.dsm.model.elastic.export;
 
+import java.util.Map;
+
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.util.PatchUtil;
-
-import java.util.Map;
 
 public class TestPatchUtil extends PatchUtil {
 

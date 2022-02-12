@@ -17,6 +17,17 @@ public class MedicalRecordMigrationToolTest extends TestHelper {
         setupDB();
     }
 
+    @AfterClass
+    public static void stopMockServer() {
+        TransactionWrapper.reset(TestUtil.UNIT_TEST);
+        TransactionWrapper.init(cfg.getInt("portal.maxConnections"), cfg.getString("portal.dbUrl"), cfg, false);
+        //delete all KitRequests added by the test
+        DBTestUtil.deleteAllParticipantData("66666");
+        DBTestUtil.deleteAllParticipantData("20160", true);
+        DBTestUtil.deleteAllParticipantData("20164", true);
+        DBTestUtil.deleteAllParticipantData("20170", true);
+    }
+
     @Test
     public void testMigrationTool() {
         TransactionWrapper.reset(TestUtil.UNIT_TEST);
@@ -24,21 +35,27 @@ public class MedicalRecordMigrationToolTest extends TestHelper {
         MedicalRecordMigrationTool.littleMain();
 
         //check value of participant 1
-        String medicalRecordId = DBTestUtil.getQueryDetail(MedicalRecordMigrationTool.SQL_SELECT_MEDICAL_RECORD_INFORMATION + " and inst.ddp_institution_id = \"40324\"", "20160", "medical_record_id");
+        String medicalRecordId = DBTestUtil.getQueryDetail(
+                MedicalRecordMigrationTool.SQL_SELECT_MEDICAL_RECORD_INFORMATION + " and inst.ddp_institution_id = \"40324\"", "20160",
+                "medical_record_id");
         String valueFromDB = DBTestUtil.getQueryDetail(RouteTest.SELECT_DATA_MEDICALRECORD_QUERY, medicalRecordId, "fax_sent");
         Assert.assertEquals("2016-02-28", valueFromDB);
         valueFromDB = DBTestUtil.getQueryDetail(RouteTest.SELECT_DATA_MEDICALRECORD_QUERY, medicalRecordId, "mr_received");
         Assert.assertEquals("2017-01-17", valueFromDB);
 
         //check value of participant 2 and second institution
-        medicalRecordId = DBTestUtil.getQueryDetail(MedicalRecordMigrationTool.SQL_SELECT_MEDICAL_RECORD_INFORMATION + " and inst.ddp_institution_id = \"40347\"", "20164", "medical_record_id");
+        medicalRecordId = DBTestUtil.getQueryDetail(
+                MedicalRecordMigrationTool.SQL_SELECT_MEDICAL_RECORD_INFORMATION + " and inst.ddp_institution_id = \"40347\"", "20164",
+                "medical_record_id");
         valueFromDB = DBTestUtil.getQueryDetail(RouteTest.SELECT_DATA_MEDICALRECORD_QUERY, medicalRecordId, "fax_sent");
         Assert.assertEquals("2016-03-01", valueFromDB);
         valueFromDB = DBTestUtil.getQueryDetail(RouteTest.SELECT_DATA_MEDICALRECORD_QUERY, medicalRecordId, "mr_received");
         Assert.assertEquals("2017-01-19", valueFromDB);
 
         //check value of last participant
-        medicalRecordId = DBTestUtil.getQueryDetail(MedicalRecordMigrationTool.SQL_SELECT_MEDICAL_RECORD_INFORMATION + " and inst.ddp_institution_id = \"40390\"", "20170", "medical_record_id");
+        medicalRecordId = DBTestUtil.getQueryDetail(
+                MedicalRecordMigrationTool.SQL_SELECT_MEDICAL_RECORD_INFORMATION + " and inst.ddp_institution_id = \"40390\"", "20170",
+                "medical_record_id");
         valueFromDB = DBTestUtil.getQueryDetail(RouteTest.SELECT_DATA_MEDICALRECORD_QUERY, medicalRecordId, "fax_sent");
         Assert.assertEquals("2016-03-02", valueFromDB);
         valueFromDB = DBTestUtil.getQueryDetail(RouteTest.SELECT_DATA_MEDICALRECORD_QUERY, medicalRecordId, "mr_received");
@@ -57,16 +74,5 @@ public class MedicalRecordMigrationToolTest extends TestHelper {
         String dateString = "2/28/16";
         String changedDate = "2016-02-28";
         Assert.assertEquals(changedDate, DBUtil.changeDateFormat(dateString));
-    }
-
-    @AfterClass
-    public static void stopMockServer() {
-        TransactionWrapper.reset(TestUtil.UNIT_TEST);
-        TransactionWrapper.init(cfg.getInt("portal.maxConnections"), cfg.getString("portal.dbUrl"), cfg, false);
-        //delete all KitRequests added by the test
-        DBTestUtil.deleteAllParticipantData("66666");
-        DBTestUtil.deleteAllParticipantData("20160", true);
-        DBTestUtil.deleteAllParticipantData("20164", true);
-        DBTestUtil.deleteAllParticipantData("20170", true);
     }
 }

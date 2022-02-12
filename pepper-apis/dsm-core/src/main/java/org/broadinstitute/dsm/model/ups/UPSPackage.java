@@ -39,8 +39,7 @@ public class UPSPackage {
             if (filter.includeEvent(event)) {
                 if (earliestFilteredEvent == null) {
                     earliestFilteredEvent = event;
-                }
-                else if (event!=null && event.getInstant()!= null && event.getInstant().isBefore(earliestFilteredEvent.getInstant())) {
+                } else if (event != null && event.getInstant() != null && event.getInstant().isBefore(earliestFilteredEvent.getInstant())) {
                     earliestFilteredEvent = event;
                 }
             }

@@ -1,16 +1,25 @@
 package org.broadinstitute.dsm.util;
 
-import com.google.gson.*;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.typesafe.config.Config;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.util.ConfigUtil;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.lddp.email.EmailClient;
-import org.broadinstitute.lddp.email.EmailRecord;
-import org.broadinstitute.lddp.email.Recipient;
-import org.broadinstitute.lddp.exception.EmailQueueException;
 import org.broadinstitute.dsm.db.EmailQueue;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
@@ -18,26 +27,21 @@ import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.route.AssignParticipantRoute;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.broadinstitute.lddp.email.EmailClient;
+import org.broadinstitute.lddp.email.EmailRecord;
+import org.broadinstitute.lddp.email.Recipient;
+import org.broadinstitute.lddp.exception.EmailQueueException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
-
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-
 public class NotificationUtil {
-
-    private static final Logger logger = LoggerFactory.getLogger(NotificationUtil.class);
 
     public static final String EMAIL_TYPE = "EXITED_KIT_RECEIVED_NOTIFICATION";
     public static final String UNIVERSAL_NOTIFICATION_TEMPLATE = "UNIVERSAL_NOTIFICATION_TEMPLATE";
     public static final String DSM_SUBJECT = "Study-Manager Notification";
-
     public static final String KITREQUEST_LINK = "/permalink/whereto?";
-
+    private static final Logger logger = LoggerFactory.getLogger(NotificationUtil.class);
     private static String emailClassName = null;
     private static String emailKey = null;
     private static JsonObject emailClientSettings = null;
@@ -48,6 +52,34 @@ public class NotificationUtil {
         startup(config);
     }
 
+    public static Long getLastChanged(@NonNull String participantId) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    MedicalRecord.SQL_SELECT_MEDICAL_RECORD_LAST_CHANGED + " UNION " + OncHistoryDetail.SQL_SELECT_ONC_HISTORY_LAST_CHANGED
+                            + " UNION " + Tissue.SQL_SELECT_TISSUE_LAST_CHANGED + " ORDER BY last_changed DESC LIMIT 1")) {
+                stmt.setString(1, participantId);
+                stmt.setString(2, participantId);
+                stmt.setString(3, participantId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        dbVals.resultValue = rs.getLong(DBConstants.LAST_CHANGED);
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Error getting last_changed of medicalRecord of participant /w id " + participantId,
+                    results.resultException);
+        }
+
+        return (Long) results.resultValue;
+    }
+
     public synchronized void startup(@NonNull Config config) {
         emailClassName = config.getString(ApplicationConfigConstants.EMAIL_CLASS_NAME);
         emailKey = config.getString(ApplicationConfigConstants.EMAIL_KEY);
@@ -55,13 +87,17 @@ public class NotificationUtil {
 
         JsonArray array = (JsonArray) (new JsonParser().parse(config.getString(ApplicationConfigConstants.EMAIL_NOTIFICATIONS)));
         for (JsonElement notificationInfo : array) {
-            notificationLookup.put(notificationInfo.getAsJsonObject().get(ApplicationConfigConstants.EMAIL_NOTIFICATION_REASON).getAsString(), notificationInfo);
+            notificationLookup.put(
+                    notificationInfo.getAsJsonObject().get(ApplicationConfigConstants.EMAIL_NOTIFICATION_REASON).getAsString(),
+                    notificationInfo);
         }
         array = (JsonArray) (new JsonParser().parse(config.getString(ApplicationConfigConstants.EMAIL_REMINDER_NOTIFICATIONS)));
         for (JsonElement reminderInfo : array) {
             if (reminderInfo.isJsonObject()) {
-                reminderNotificationLookup.put(reminderInfo.getAsJsonObject().get(ApplicationConfigConstants.EMAIL_NOTIFICATION_REASON).getAsString(),
-                        reminderInfo.getAsJsonObject().get(ApplicationConfigConstants.EMAIL_REMINDER_NOTIFICATIONS_REMINDERS).getAsJsonArray());
+                reminderNotificationLookup.put(
+                        reminderInfo.getAsJsonObject().get(ApplicationConfigConstants.EMAIL_NOTIFICATION_REASON).getAsString(),
+                        reminderInfo.getAsJsonObject().get(ApplicationConfigConstants.EMAIL_REMINDER_NOTIFICATIONS_REMINDERS)
+                                .getAsJsonArray());
             }
         }
     }
@@ -81,8 +117,7 @@ public class NotificationUtil {
                 List<String> recipients = Arrays.asList(notificationRecipient.split(","));
                 sentNotification(recipients, message, recordId, subject);
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("Was not able to notify study staff.", e);
         }
     }
@@ -112,12 +147,12 @@ public class NotificationUtil {
             email = recipient.getEmail();
 
             JsonElement notificationInfo = notificationLookup.get(reason);
-            String template = notificationInfo.getAsJsonObject().get(ApplicationConfigConstants.EMAIL_NOTIFICATIONS_SEND_GRID_TEMPLATE_ID).getAsString();
+            String template = notificationInfo.getAsJsonObject().get(ApplicationConfigConstants.EMAIL_NOTIFICATIONS_SEND_GRID_TEMPLATE_ID)
+                    .getAsString();
 
             queueEmail(recipient, getPortalReminderNotifications(reason), template, recordId);
             EmailRecord.removeOldReminders(email, reason, false);
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             //NOTE: we need to swallow this because frontend should NOT get a 500 for this
             logger.error("Unable to queue email(s) for user with email = " + email + " and status = " + reason + ".", ex);
         }
@@ -126,12 +161,10 @@ public class NotificationUtil {
     private void queueEmail(@NonNull Recipient recipient, JsonElement reminderInfo, @NonNull String template, @NonNull String recordId) {
         try {
             EmailRecord.add(template, recipient, reminderInfo, recordId);
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             throw new RuntimeException("Unable to queue email for " + recipient.getEmail() + ".", ex);
         }
     }
-
 
     public void queueFutureEmails(@NonNull String reason, @NonNull Recipient recipient, @NonNull String recordId) {
         String email = null;
@@ -144,8 +177,7 @@ public class NotificationUtil {
 
             queueOnlyReminderEmail(recipient, reminderInfo, recordId);
             EmailRecord.removeOldReminders(recordId, reason, false);
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             //NOTE: we need to swallow this because frontend should NOT get a 500 for this
             logger.error("Unable to queue email(s) for user with email = " + email + " and status = " + reason + ".", ex);
         }
@@ -154,8 +186,7 @@ public class NotificationUtil {
     private void queueOnlyReminderEmail(@NonNull Recipient recipient, @NonNull JsonElement reminderInfo, @NonNull String recordId) {
         try {
             EmailRecord.addOnlyReminders(recipient, reminderInfo, recordId);
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             throw new RuntimeException("Unable to queue email for " + recipient.getEmail() + ".", ex);
         }
     }
@@ -164,7 +195,8 @@ public class NotificationUtil {
         EmailRecord.removeOldReminders(recordId, reason, false);
     }
 
-    public void sentAbstractionExpertQuestion(@NonNull String from, @NonNull String name, @NonNull String to, String field, String question, @NonNull String sendGridTemplate) {
+    public void sentAbstractionExpertQuestion(@NonNull String from, @NonNull String name, @NonNull String to, String field, String question,
+                                              @NonNull String sendGridTemplate) {
         Map<String, String> mapy = new HashMap<>();
         mapy.put(":customSubject", "Question about: " + field);
         mapy.put(":customText", question);
@@ -178,12 +210,10 @@ public class NotificationUtil {
             emailClientSettings.addProperty("sendGridFromName", name);
             abstractionEmailClient.configure(emailKey, new Gson().fromJson(emailClientSettings.toString(), JsonObject.class), "", "");
             abstractionEmailClient.sendSingleEmail(sendGridTemplate, emailRecipient, null);
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             logger.error("An error occurred trying to send abstraction expert question.", ex);
         }
     }
-
 
     public int sendQueuedNotifications() {
         logger.info("Checking for queued notifications...");
@@ -213,8 +243,7 @@ public class NotificationUtil {
                         }
 
                         totalNotificationsSent = totalNotificationsSent + templateRecords.getValue().size();
-                    }
-                    catch (Exception ex) {
+                    } catch (Exception ex) {
                         success = false;
                         //for now swallow and log errors for individual templates so we can continue the loop
                         logger.error("Unable to process notifications for template " + template + ".", ex);
@@ -230,8 +259,7 @@ public class NotificationUtil {
             if (totalNotificationsSent != totalNotificationsToProcess) {
                 throw new EmailQueueException("Wrong number of notifications processed.");
             }
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             logger.error("An error occurred trying to send notifications.", ex);
         }
 
@@ -258,33 +286,6 @@ public class NotificationUtil {
                 }
             }
         }
-    }
-
-    public static Long getLastChanged(@NonNull String participantId) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(MedicalRecord.SQL_SELECT_MEDICAL_RECORD_LAST_CHANGED + " UNION " + OncHistoryDetail.SQL_SELECT_ONC_HISTORY_LAST_CHANGED
-                    + " UNION " + Tissue.SQL_SELECT_TISSUE_LAST_CHANGED + " ORDER BY last_changed DESC LIMIT 1")) {
-                stmt.setString(1, participantId);
-                stmt.setString(2, participantId);
-                stmt.setString(3, participantId);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        dbVals.resultValue = rs.getLong(DBConstants.LAST_CHANGED);
-                    }
-                }
-            }
-            catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Error getting last_changed of medicalRecord of participant /w id " + participantId, results.resultException);
-        }
-
-        return (Long) results.resultValue;
     }
 
     public String getTemplate(@NonNull String templateName) {

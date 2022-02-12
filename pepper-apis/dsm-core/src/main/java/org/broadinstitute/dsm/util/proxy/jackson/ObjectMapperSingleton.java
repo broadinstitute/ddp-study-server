@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.util.proxy.jackson;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 
@@ -10,7 +9,8 @@ import org.apache.commons.lang3.StringUtils;
 
 public class ObjectMapperSingleton {
 
-    private ObjectMapperSingleton() {}
+    private ObjectMapperSingleton() {
+    }
 
     public static ObjectMapper instance() {
         return Helper.objectMapperInstance;
@@ -20,7 +20,6 @@ public class ObjectMapperSingleton {
         content = StringUtils.isBlank(content) ? "{}" : content;
         return null;
 //        try {
-////            return Helper.objectMapperInstance.readValue(content, typeReference);
 //            return Helper.objectMapperInstance.readValue(content, typeReference);
 //        } catch (com.fasterxml.jackson.core.JsonParseException e) {
 //            throw new JsonParseException(e.getMessage());

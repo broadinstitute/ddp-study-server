@@ -8,10 +8,9 @@ import org.slf4j.LoggerFactory;
 public class KitInfo {
 
     private static final Logger logger = LoggerFactory.getLogger(KitInfo.class);
-
+    private final int organismClassificationId;
     private String collaboratorParticipantId, collaboratorSampleId, sampleCollectionBarcode, gender, materialInfo, receptacleName,
             accessionNumber, realm, kitTypeName;
-    private final int organismClassificationId;
 
     public KitInfo(String sampleCollectionBarcode,
                    int organismClassificationId,

@@ -1,13 +1,6 @@
 package org.broadinstitute.dsm.db;
 
-import lombok.Data;
-import lombok.NonNull;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.dsm.db.structure.ColumnName;
-import org.broadinstitute.dsm.db.structure.TableName;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,10 +8,17 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import lombok.Data;
+import lombok.NonNull;
+import org.broadinstitute.dsm.db.structure.ColumnName;
+import org.broadinstitute.dsm.db.structure.TableName;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Data
-@TableName (
+@TableName(
         name = DBConstants.DRUG_LIST,
         alias = DBConstants.DRUG_ALIAS,
         primaryKey = DBConstants.DRUG_ID,
@@ -28,41 +28,44 @@ public class Drug {
     private static final Logger logger = LoggerFactory.getLogger(Drug.class);
 
     private static final String SQL_SELECT_DRUGS = "SELECT display_name FROM drug_list ORDER BY display_name asc";
-    private static final String SQL_SELECT_DRUGS_ALL_INFO = "SELECT drug_id, display_name, generic_name, brand_name, chemocat2, chemo_type, study_drug, " +
-            "treatment_type, chemotherapy, active FROM drug_list ORDER BY display_name asc";
-    private static final String SQL_UPDATE_DRUG = "UPDATE drug_list SET display_name = ?, generic_name = ?, brand_name = ?, chemocat2 = ?, chemo_type = ?, " +
-            "study_drug = ?, treatment_type = ?, chemotherapy = ?, active = ?, date_updated = ?, changed_by = ? WHERE drug_id = ?";
-    private static final String SQL_INSERT_DRUG = "INSERT INTO drug_list SET display_name = ?, generic_name = ?, brand_name = ?, chemocat2 = ?, " +
-            "chemo_type = ?, study_drug = ?, treatment_type = ?, chemotherapy = ?, date_created = ?, active = ?, changed_by = ?";
+    private static final String SQL_SELECT_DRUGS_ALL_INFO =
+            "SELECT drug_id, display_name, generic_name, brand_name, chemocat2, chemo_type, study_drug, " +
+                    "treatment_type, chemotherapy, active FROM drug_list ORDER BY display_name asc";
+    private static final String SQL_UPDATE_DRUG =
+            "UPDATE drug_list SET display_name = ?, generic_name = ?, brand_name = ?, chemocat2 = ?, chemo_type = ?, " +
+                    "study_drug = ?, treatment_type = ?, chemotherapy = ?, active = ?, date_updated = ?, changed_by = ? WHERE drug_id = ?";
+    private static final String SQL_INSERT_DRUG =
+            "INSERT INTO drug_list SET display_name = ?, generic_name = ?, brand_name = ?, chemocat2 = ?, " +
+                    "chemo_type = ?, study_drug = ?, treatment_type = ?, chemotherapy = ?, date_created = ?, active = ?, changed_by = ?";
 
-    @ColumnName (DBConstants.DRUG_ID)
+    @ColumnName(DBConstants.DRUG_ID)
     private final int drugId;
 
-    @ColumnName (DBConstants.DISPLAY_NAME)
+    @ColumnName(DBConstants.DISPLAY_NAME)
     private String displayName;
 
-    @ColumnName (DBConstants.GENERIC_NAME)
+    @ColumnName(DBConstants.GENERIC_NAME)
     private String genericName;
 
-    @ColumnName (DBConstants.BRAND_NAME)
+    @ColumnName(DBConstants.BRAND_NAME)
     private String brandName;
 
-    @ColumnName (DBConstants.CHEMOCAT)
+    @ColumnName(DBConstants.CHEMOCAT)
     private String chemocat;
 
-    @ColumnName (DBConstants.CHEMO_TYPE)
+    @ColumnName(DBConstants.CHEMO_TYPE)
     private String chemoType;
 
-    @ColumnName (DBConstants.STUDY_DRUG)
+    @ColumnName(DBConstants.STUDY_DRUG)
     private boolean studyDrug;
 
-    @ColumnName (DBConstants.TREATMENT_TYPE)
+    @ColumnName(DBConstants.TREATMENT_TYPE)
     private String treatmentType;
 
-    @ColumnName (DBConstants.CHEMOTHERAPY)
+    @ColumnName(DBConstants.CHEMOTHERAPY)
     private String chemotherapy;
 
-    @ColumnName (DBConstants.ACTIVE)
+    @ColumnName(DBConstants.ACTIVE)
     private boolean active;
 
     private String changedBy;
@@ -96,12 +99,10 @@ public class Drug {
                             drugList.add(rs.getString(DBConstants.DISPLAY_NAME));
                         }
                     }
-                }
-                else {
+                } else {
                     throw new RuntimeException("Drug list is empty");
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -137,12 +138,10 @@ public class Drug {
                             drugList.add(drug);
                         }
                     }
-                }
-                else {
+                } else {
                     throw new RuntimeException("Drug list is empty");
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -176,12 +175,10 @@ public class Drug {
                 int result = stmt.executeUpdate();
                 if (result == 1) {
                     logger.info("Added new drug ");
-                }
-                else {
+                } else {
                     throw new RuntimeException("Error adding new drug, it was updating " + result + " rows");
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;

@@ -22,9 +22,9 @@ public class DiamondEqualsSplitter extends BaseSplitter {
         String value = Filter.SINGLE_QUOTE + super.getValue()[0] + Filter.SINGLE_QUOTE;
         try {
             String not = splitFieldWithAliasBySpace(super.getFieldWithAlias())[0];
-            return new String[] { not + value };
+            return new String[] {not + value};
         } catch (Exception e) {
-            return new String[] { value };
+            return new String[] {value};
         }
     }
 

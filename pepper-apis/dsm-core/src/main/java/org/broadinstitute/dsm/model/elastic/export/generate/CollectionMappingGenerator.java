@@ -11,10 +11,12 @@ public class CollectionMappingGenerator extends MappingGenerator {
         super(parser, generatorPayload);
     }
 
-    public CollectionMappingGenerator() {}
+    public CollectionMappingGenerator() {
+    }
 
     @Override
-    protected Map<String, Object> getElement(Object type) { return new HashMap<>(Map.of(getFieldName(), type));
+    protected Map<String, Object> getElement(Object type) {
+        return new HashMap<>(Map.of(getFieldName(), type));
     }
 
     @Override

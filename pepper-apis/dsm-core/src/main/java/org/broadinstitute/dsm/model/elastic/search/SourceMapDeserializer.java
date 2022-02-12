@@ -1,18 +1,20 @@
 package org.broadinstitute.dsm.model.elastic.search;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.ESDsm;
 import org.broadinstitute.dsm.model.elastic.Util;
-import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
-
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.*;
 
 public class SourceMapDeserializer implements Deserializer {
 
@@ -21,10 +23,14 @@ public class SourceMapDeserializer implements Deserializer {
     public Optional<ElasticSearchParticipantDto> deserialize(Map<String, Object> sourceMap) {
         Map<String, Object> dsmLevel = (Map<String, Object>) sourceMap.get(ESObjectConstants.DSM);
 
-        if (Objects.isNull(dsmLevel)) return Optional.of(ObjectMapperSingleton.instance().convertValue(sourceMap, ElasticSearchParticipantDto.class));
+        if (Objects.isNull(dsmLevel)) {
+            return Optional.of(ObjectMapperSingleton.instance().convertValue(sourceMap, ElasticSearchParticipantDto.class));
+        }
 
         Map<String, Object> updatedPropertySourceMap = updatePropertySourceMapIfSpecialCases(dsmLevel);
-        if (!updatedPropertySourceMap.isEmpty()) dsmLevel.putAll(updatedPropertySourceMap);
+        if (!updatedPropertySourceMap.isEmpty()) {
+            dsmLevel.putAll(updatedPropertySourceMap);
+        }
 
         return Optional.of(ObjectMapperSingleton.instance().convertValue(sourceMap, ElasticSearchParticipantDto.class));
     }
@@ -34,17 +40,23 @@ public class SourceMapDeserializer implements Deserializer {
         for (Map.Entry<String, Object> entry : dsmLevel.entrySet()) {
             outerProperty = entry.getKey();
             Object outerPropertyValue = entry.getValue();
-            if (!hasSpecialCases(outerProperty)) continue;
+            if (!hasSpecialCases(outerProperty)) {
+                continue;
+            }
             if (outerPropertyValue instanceof List) {
                 List<Map<String, Object>> outerPropertyValues = (List<Map<String, Object>>) outerPropertyValue;
-                List<Map<String, Object>> updatedOuterPropertyValues = handleSpecialCases(outerPropertyValues);;
-                if (!updatedOuterPropertyValues.isEmpty())
+                List<Map<String, Object>> updatedOuterPropertyValues = handleSpecialCases(outerPropertyValues);
+                ;
+                if (!updatedOuterPropertyValues.isEmpty()) {
                     updatedPropertySourceMap.put(outerProperty, updatedOuterPropertyValues);
+                }
             } else {
                 Map<String, Object> singleOuterPropertyValue = (Map<String, Object>) outerPropertyValue;
                 Map<String, Object> updatedSingleOuterPropertyValue = new HashMap<>(singleOuterPropertyValue);
-                if (singleOuterPropertyValue.containsKey(ESObjectConstants.DYNAMIC_FIELDS))
-                    updatedSingleOuterPropertyValue.put(ESObjectConstants.DYNAMIC_FIELDS, getDynamicFieldsValueAsJson(updatedSingleOuterPropertyValue));
+                if (singleOuterPropertyValue.containsKey(ESObjectConstants.DYNAMIC_FIELDS)) {
+                    updatedSingleOuterPropertyValue.put(ESObjectConstants.DYNAMIC_FIELDS,
+                            getDynamicFieldsValueAsJson(updatedSingleOuterPropertyValue));
+                }
 
                 updatedPropertySourceMap.put(outerProperty, updatedSingleOuterPropertyValue);
             }
@@ -72,7 +84,8 @@ public class SourceMapDeserializer implements Deserializer {
 
     private List<Map<String, Object>> convertFollowUpsJsonToList(Map<String, Object> clonedMap) {
         String followUps = (String) clonedMap.get(ESObjectConstants.FOLLOW_UPS);
-        return ObjectMapperSingleton.readValue(followUps, new TypeReference<List<Map<String, Object>>>() {});
+        return ObjectMapperSingleton.readValue(followUps, new TypeReference<List<Map<String, Object>>>() {
+        });
     }
 
     String getDynamicFieldsValueAsJson(Map<String, Object> clonedMap) {
@@ -89,7 +102,7 @@ public class SourceMapDeserializer implements Deserializer {
 
     protected Map<String, Object> convertDynamicFieldsFromCamelCaseToPascalCase(Map<String, Object> dynamicFields) {
         Map<String, Object> updatedParticipantDataDynamicFields = new HashMap<>();
-        for (Map.Entry<String, Object> entry: dynamicFields.entrySet()) {
+        for (Map.Entry<String, Object> entry : dynamicFields.entrySet()) {
             updatedParticipantDataDynamicFields.put(Util.camelCaseToPascalSnakeCase(entry.getKey()), entry.getValue());
         }
         dynamicFields = updatedParticipantDataDynamicFields;
@@ -109,8 +122,11 @@ public class SourceMapDeserializer implements Deserializer {
 
     private boolean isDynamicField(Field field) {
         JsonProperty jsonProperty = field.getAnnotation(JsonProperty.class);
-        if (Objects.isNull(jsonProperty)) return false;
-        else return jsonProperty.value().equals(ESObjectConstants.DYNAMIC_FIELDS);
+        if (Objects.isNull(jsonProperty)) {
+            return false;
+        } else {
+            return jsonProperty.value().equals(ESObjectConstants.DYNAMIC_FIELDS);
+        }
     }
 
     private boolean isTestResult(Field field) {

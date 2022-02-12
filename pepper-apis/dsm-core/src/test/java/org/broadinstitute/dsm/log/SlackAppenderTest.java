@@ -25,11 +25,8 @@ public class SlackAppenderTest extends TestHelper {
 
     @Rule
     public MockServerRule mockServerRule = new MockServerRule(this);
-
-    private LoggingEvent loggingEvent = new LoggingEvent(null, new RootLogger(Level.ERROR), Level.ERROR, null, new Throwable());
-
     public Config cfg;
-
+    private LoggingEvent loggingEvent = new LoggingEvent(null, new RootLogger(Level.ERROR), Level.ERROR, null, new Throwable());
 
     @Before
     public void setUp() {

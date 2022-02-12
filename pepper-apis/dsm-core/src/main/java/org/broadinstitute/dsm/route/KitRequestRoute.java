@@ -1,13 +1,13 @@
 package org.broadinstitute.dsm.route;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
+import org.broadinstitute.lddp.handlers.util.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.QueryParamsMap;
@@ -20,7 +20,8 @@ public class KitRequestRoute extends RequestHandler {
 
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
-        if (UserUtil.checkUserAccess(null, userId, "kit_shipping", null) || UserUtil.checkUserAccess(null, userId, "kit_shipping_view", null)) {
+        if (UserUtil.checkUserAccess(null, userId, "kit_shipping", null) ||
+                UserUtil.checkUserAccess(null, userId, "kit_shipping_view", null)) {
             logger.info("Getting list of kit requests");
             QueryParamsMap queryParams = request.queryMap();
 
@@ -40,8 +41,7 @@ public class KitRequestRoute extends RequestHandler {
                 kitType = queryParams.get(RoutePath.KIT_TYPE).value();
             }
             return KitRequestShipping.getKitRequestsByRealm(realm, target, kitType);
-        }
-        else {
+        } else {
             response.status(500);
             return new Result(500, UserErrorMessages.NO_RIGHTS);
         }

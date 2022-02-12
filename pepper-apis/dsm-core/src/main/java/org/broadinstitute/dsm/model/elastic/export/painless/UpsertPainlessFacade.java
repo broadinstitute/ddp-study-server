@@ -9,27 +9,19 @@ import org.elasticsearch.index.query.QueryBuilder;
 
 public abstract class UpsertPainlessFacade {
 
-    Generator generator;
-    Exportable upsertPainless;
     protected String uniqueIdentifier;
     protected String fieldName;
     protected Object fieldValue;
+    Generator generator;
+    Exportable upsertPainless;
 
     UpsertPainlessFacade(Object source, DDPInstanceDto ddpInstanceDto, String uniqueIdentifier,
-                                String fieldName, Object fieldValue) {
+                         String fieldName, Object fieldValue) {
         this.uniqueIdentifier = uniqueIdentifier;
         this.fieldName = fieldName;
         this.fieldValue = fieldValue;
         generator = new ParamsGenerator(source, ddpInstanceDto.getInstanceName());
         upsertPainless = new UpsertPainless(generator, ddpInstanceDto.getEsParticipantIndex(), buildScriptBuilder(), buildQueryBuilder());
-    }
-
-    protected abstract ScriptBuilder buildScriptBuilder();
-
-    protected abstract QueryBuilder buildQueryBuilder();
-
-    public void export() {
-        upsertPainless.export();
     }
 
     public static UpsertPainlessFacade of(String alias, Object source, DDPInstanceDto ddpInstanceDto, String uniqueIdentifier,
@@ -38,6 +30,14 @@ public abstract class UpsertPainlessFacade {
         return propertyInfo.isCollection()
                 ? new NestedUpsertPainlessFacade(source, ddpInstanceDto, uniqueIdentifier, fieldName, fieldValue)
                 : new SingleUpsertPainlessFacade(source, ddpInstanceDto, uniqueIdentifier, fieldName, fieldValue);
+    }
+
+    protected abstract ScriptBuilder buildScriptBuilder();
+
+    protected abstract QueryBuilder buildQueryBuilder();
+
+    public void export() {
+        upsertPainless.export();
     }
 
 }

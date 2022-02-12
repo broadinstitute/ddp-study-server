@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.model.patch;
 
+import java.util.Optional;
+
 import org.broadinstitute.dsm.db.ParticipantData;
 import org.broadinstitute.dsm.db.dao.settings.EventTypeDao;
 import org.broadinstitute.dsm.model.NameValue;
@@ -7,15 +9,13 @@ import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
-import java.util.Optional;
-
 public class ParticipantDataPatch extends BasePatch {
+
+    private String participantDataId;
 
     public ParticipantDataPatch(Patch patch) {
         super(patch);
     }
-
-    private String participantDataId;
 
     @Override
     public Object doPatch() {
@@ -41,10 +41,11 @@ public class ParticipantDataPatch extends BasePatch {
     @Override
     Optional<Object> processEachNameValue(NameValue nameValue) {
         if (participantDataId == null) {
-            participantDataId = ParticipantData.createNewParticipantData(patch.getParentId(), ddpInstance.getDdpInstanceId(), patch.getFieldId(), String.valueOf(nameValue.getValue()), patch.getUser());
+            participantDataId =
+                    ParticipantData.createNewParticipantData(patch.getParentId(), ddpInstance.getDdpInstanceId(), patch.getFieldId(),
+                            String.valueOf(nameValue.getValue()), patch.getUser());
             resultMap.put(ESObjectConstants.PARTICIPANT_DATA_ID, participantDataId);
-        }
-        else if (participantDataId != null) {
+        } else if (participantDataId != null) {
             Patch.patch(participantDataId, patch.getUser(), nameValue, dbElement);
             exportToESWithId(participantDataId, nameValue);
         }
@@ -54,8 +55,7 @@ public class ParticipantDataPatch extends BasePatch {
             for (Value action : patch.getActions()) {
                 if (hasProfileAndESWorkflowType(profile, action)) {
                     writeESWorkflow(patch, nameValue, action, ddpInstance, profile.getGuid());
-                }
-                else if (EventTypeDao.EVENT.equals(action.getType())) {
+                } else if (EventTypeDao.EVENT.equals(action.getType())) {
                     triggerParticipantEvent(ddpInstance, patch, action);
                 }
             }

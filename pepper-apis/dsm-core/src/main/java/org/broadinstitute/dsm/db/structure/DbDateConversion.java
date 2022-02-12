@@ -11,6 +11,6 @@ import java.lang.annotation.Target;
 /**
  * Defines how to convert the column into a date during date filtering
  */
-public @interface DbDateConversion  {
+public @interface DbDateConversion {
     SqlDateConverter value();
 }

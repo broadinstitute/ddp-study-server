@@ -1,12 +1,15 @@
 package org.broadinstitute.dsm.model.patch;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.settings.EventTypeDao;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
@@ -42,8 +45,9 @@ public class ExistingRecordPatch extends BasePatch {
 
     @Override
     public Object patchNameValuePairs() {
-        ESProfile profile = ElasticSearchUtil.getParticipantProfileByGuidOrAltPid(ddpInstance.getParticipantIndexES(), patch.getDdpParticipantId())
-                .orElse(null);
+        ESProfile profile =
+                ElasticSearchUtil.getParticipantProfileByGuidOrAltPid(ddpInstance.getParticipantIndexES(), patch.getDdpParticipantId())
+                        .orElse(null);
         if (profile == null) {
             logger.error("Unable to find ES profile for participant with guid/altpid: {}, continuing w/ patch", patch.getParentId());
         }
@@ -124,7 +128,9 @@ public class ExistingRecordPatch extends BasePatch {
                 Map<String, Object> esMap = ElasticSearchUtil
                         .getObjectsMap(ddpInstance.getParticipantIndexES(), profile.getGuid(),
                                 ESObjectConstants.WORKFLOWS);
-                if (Objects.isNull(esMap) || esMap.isEmpty()) return;
+                if (Objects.isNull(esMap) || esMap.isEmpty()) {
+                    return;
+                }
                 removeFamilyMemberWorkflowData(ddpInstance, profile, pData, esMap);
             }
         } catch (Exception e) {
@@ -137,8 +143,12 @@ public class ExistingRecordPatch extends BasePatch {
         int ddpInstanceIdByGuid = Integer.parseInt(ddpInstance.getDdpInstanceId());
         FieldSettings fieldSettings = new FieldSettings();
         pData.forEach((columnName, columnValue) -> {
-            if (!fieldSettings.isColumnExportable(ddpInstanceIdByGuid, columnName)) return;
-            if (!patch.getFieldId().contains(org.broadinstitute.dsm.model.participant.data.ParticipantData.FIELD_TYPE_PARTICIPANTS)) return;
+            if (!fieldSettings.isColumnExportable(ddpInstanceIdByGuid, columnName)) {
+                return;
+            }
+            if (!patch.getFieldId().contains(org.broadinstitute.dsm.model.participant.data.ParticipantData.FIELD_TYPE_PARTICIPANTS)) {
+                return;
+            }
             // Use participant guid here to avoid multiple ES lookups.
             ElasticSearchUtil.writeWorkflow(WorkflowForES.createInstanceWithStudySpecificData(ddpInstance,
                     profile.getGuid(), columnName, columnValue, new WorkflowForES.StudySpecificData(
@@ -148,15 +158,19 @@ public class ExistingRecordPatch extends BasePatch {
         });
     }
 
-    private void removeFamilyMemberWorkflowData(DDPInstance ddpInstance, ESProfile profile, Map<String, String> pData, Map<String, Object> esMap) throws
+    private void removeFamilyMemberWorkflowData(DDPInstance ddpInstance, ESProfile profile, Map<String, String> pData,
+                                                Map<String, Object> esMap) throws
             IOException {
         logger.info("Email in patch data does not match participant profile email, will remove workflows");
-        CopyOnWriteArrayList<Map<String, Object>> workflowsList = new CopyOnWriteArrayList<>((List<Map<String, Object>>) esMap.get(ESObjectConstants.WORKFLOWS));
+        CopyOnWriteArrayList<Map<String, Object>> workflowsList =
+                new CopyOnWriteArrayList<>((List<Map<String, Object>>) esMap.get(ESObjectConstants.WORKFLOWS));
         int startingSize = workflowsList.size();
         workflowsList.forEach(workflow -> {
             Map<String, String> workflowDataMap = (Map<String, String>) workflow.get(ESObjectConstants.DATA);
             String collaboratorParticipantId = workflowDataMap.get(ESObjectConstants.SUBJECT_ID);
-            if (Objects.isNull(collaboratorParticipantId)) return;
+            if (Objects.isNull(collaboratorParticipantId)) {
+                return;
+            }
             if (collaboratorParticipantId.equals(pData.get(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID))) {
                 workflowsList.remove(workflow);
             }
@@ -172,8 +186,7 @@ public class ExistingRecordPatch extends BasePatch {
         for (Value action : patch.getActions()) {
             if (hasProfileAndESWorkflowType(profile, action)) {
                 writeESWorkflow(patch, nameValue, action, ddpInstance, profile.getGuid());
-            }
-            else if (EventTypeDao.EVENT.equals(action.getType())) {
+            } else if (EventTypeDao.EVENT.equals(action.getType())) {
                 triggerParticipantEvent(ddpInstance, patch, action);
             }
         }

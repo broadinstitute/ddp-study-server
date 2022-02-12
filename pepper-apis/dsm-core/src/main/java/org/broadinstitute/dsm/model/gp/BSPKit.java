@@ -1,8 +1,10 @@
 package org.broadinstitute.dsm.model.gp;
 
+import java.sql.Connection;
+import java.util.Optional;
+
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.db.dao.kit.BSPKitDao;
 import org.broadinstitute.dsm.db.dto.kit.BSPKitDto;
@@ -13,9 +15,6 @@ import org.broadinstitute.dsm.util.EventUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.sql.Connection;
-import java.util.Optional;
 
 public class BSPKit extends GPReceivedKit {
 
@@ -46,7 +45,9 @@ public class BSPKit extends GPReceivedKit {
     public void triggerDDP(Connection conn, @NonNull BSPKitDto bspKitInfo, boolean firstTimeReceived, String kitLabel) {
         try {
             if (bspKitInfo.isHasParticipantNotifications() && firstTimeReceived) {
-                KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_RECEIVED_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL), kitLabel, 1);
+                KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(
+                        ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_RECEIVED_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL),
+                        kitLabel, 1);
                 if (kitDDPNotification != null) {
                     EventUtil.triggerDDP(conn, kitDDPNotification);
                 }

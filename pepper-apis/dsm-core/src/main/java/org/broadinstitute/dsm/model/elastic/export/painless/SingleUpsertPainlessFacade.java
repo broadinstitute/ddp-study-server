@@ -7,7 +7,7 @@ import org.elasticsearch.index.query.QueryBuilder;
 public class SingleUpsertPainlessFacade extends UpsertPainlessFacade {
 
     SingleUpsertPainlessFacade(Object source, DDPInstanceDto ddpInstanceDto,
-                                      String uniqueIdentifier, String fieldName, Object fieldValue) {
+                               String uniqueIdentifier, String fieldName, Object fieldValue) {
         super(source, ddpInstanceDto, uniqueIdentifier, fieldName, fieldValue);
     }
 

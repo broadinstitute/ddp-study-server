@@ -1,7 +1,10 @@
 package org.broadinstitute.dsm.model.elastic.export.parse;
 
-import static org.broadinstitute.dsm.model.elastic.export.parse.TypeParser.*;
-import static org.junit.Assert.*;
+import static org.broadinstitute.dsm.model.elastic.export.parse.TypeParser.BOOLEAN_MAPPING;
+import static org.broadinstitute.dsm.model.elastic.export.parse.TypeParser.DATE_MAPPING;
+import static org.broadinstitute.dsm.model.elastic.export.parse.TypeParser.LONG_MAPPING;
+import static org.broadinstitute.dsm.model.elastic.export.parse.TypeParser.TEXT_KEYWORD_MAPPING;
+import static org.junit.Assert.assertEquals;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.MedicalRecord;

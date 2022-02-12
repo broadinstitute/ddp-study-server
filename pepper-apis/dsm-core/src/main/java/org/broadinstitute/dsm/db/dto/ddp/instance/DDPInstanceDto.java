@@ -1,12 +1,15 @@
 package org.broadinstitute.dsm.db.dto.ddp.instance;
 
-import lombok.Data;
-import org.apache.commons.lang3.StringUtils;
-
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 
 @Data
 public class DDPInstanceDto {
@@ -32,15 +35,6 @@ public class DDPInstanceDto {
     String esActivityDefinitionIndex;
     String esUsersIndex;
 
-    public List<String> getNotificationRecipients() {
-        if (StringUtils.isBlank(notificationRecipients)) {
-            return Collections.emptyList();
-        }
-        notificationRecipients = notificationRecipients.replaceAll("\\s", "");
-        return Arrays.asList(notificationRecipients.split(","));
-    }
-
-
     private DDPInstanceDto(Builder builder) {
         Class<DDPInstanceDto> ddpInstanceDtoClazz = DDPInstanceDto.class;
         Field[] declaredFields = ddpInstanceDtoClazz.getDeclaredFields();
@@ -53,6 +47,14 @@ public class DDPInstanceDto {
                 e.printStackTrace();
             }
         }
+    }
+
+    public List<String> getNotificationRecipients() {
+        if (StringUtils.isBlank(notificationRecipients)) {
+            return Collections.emptyList();
+        }
+        notificationRecipients = notificationRecipients.replaceAll("\\s", "");
+        return Arrays.asList(notificationRecipients.split(","));
     }
 
     public static class Builder {

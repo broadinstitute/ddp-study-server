@@ -1,10 +1,10 @@
 package org.broadinstitute.dsm.model.elastic.migration;
 
-import org.broadinstitute.dsm.db.KitRequestShipping;
-import org.broadinstitute.dsm.statics.ESObjectConstants;
-
 import java.util.List;
 import java.util.Map;
+
+import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
 
 public class KitRequestShippingMigrator extends BaseCollectionMigrator {
 

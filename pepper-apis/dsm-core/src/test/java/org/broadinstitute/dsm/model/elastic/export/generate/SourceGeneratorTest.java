@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.model.elastic.export.generate;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -10,14 +9,13 @@ import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.export.TestPatchUtil;
 import org.broadinstitute.dsm.model.elastic.export.parse.BaseParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.DynamicFieldsParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
-import org.broadinstitute.dsm.model.elastic.export.TestPatchUtil;
-import org.broadinstitute.dsm.model.elastic.export.parse.TypeParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
-import org.junit.Test;
 import org.junit.Assert;
+import org.junit.Test;
 
 public class SourceGeneratorTest {
 
@@ -33,7 +31,9 @@ public class SourceGeneratorTest {
         Optional<Map<String, Object>> first = medicalRecords.stream()
                 .filter(i -> i.get(Util.underscoresToCamelCase(TestPatchUtil.MEDICAL_RECORD_COLUMN)) != null)
                 .findFirst();
-        first.ifPresentOrElse(val -> Assert.assertEquals("value", val.get(Util.underscoresToCamelCase(TestPatchUtil.MEDICAL_RECORD_COLUMN))), Assert::fail);
+        first.ifPresentOrElse(
+                val -> Assert.assertEquals("value", val.get(Util.underscoresToCamelCase(TestPatchUtil.MEDICAL_RECORD_COLUMN))),
+                Assert::fail);
     }
 
     private GeneratorPayload getGeneratorPayload(String columnName, Object value, int recordId) {
@@ -57,7 +57,8 @@ public class SourceGeneratorTest {
         Optional<Map<String, Object>> first = medicalRecords.stream()
                 .filter(i -> i.get(Util.underscoresToCamelCase(TestPatchUtil.NUMERIC_FIELD)) != null)
                 .findFirst();
-        first.ifPresentOrElse(val -> Assert.assertEquals(1L, val.get(Util.underscoresToCamelCase(TestPatchUtil.NUMERIC_FIELD))), Assert::fail);
+        first.ifPresentOrElse(val -> Assert.assertEquals(1L, val.get(Util.underscoresToCamelCase(TestPatchUtil.NUMERIC_FIELD))),
+                Assert::fail);
     }
 
     @Test
@@ -79,11 +80,10 @@ public class SourceGeneratorTest {
     }
 
 
-
     private static class TestSourceGenerator extends CollectionSourceGenerator {
 
         public TestSourceGenerator(Parser parser, GeneratorPayload generatorPayload) {
-            super(parser,generatorPayload);
+            super(parser, generatorPayload);
         }
 
         @Override

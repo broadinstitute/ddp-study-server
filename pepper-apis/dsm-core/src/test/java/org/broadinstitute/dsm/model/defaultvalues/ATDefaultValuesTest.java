@@ -1,12 +1,14 @@
 package org.broadinstitute.dsm.model.defaultvalues;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
 import org.broadinstitute.dsm.model.elastic.ESActivities;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.*;
 
 public class ATDefaultValuesTest {
 

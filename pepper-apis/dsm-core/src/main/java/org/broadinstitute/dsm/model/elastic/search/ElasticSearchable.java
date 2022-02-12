@@ -1,8 +1,8 @@
 package org.broadinstitute.dsm.model.elastic.search;
 
-import org.elasticsearch.index.query.AbstractQueryBuilder;
-
 import java.util.List;
+
+import org.elasticsearch.index.query.AbstractQueryBuilder;
 
 public interface ElasticSearchable {
 

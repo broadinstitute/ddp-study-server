@@ -1,5 +1,9 @@
 package org.broadinstitute.dsm.model.PDF;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -9,10 +13,6 @@ import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 public class MiscPDFDownload {
 
     private static final Logger logger = LoggerFactory.getLogger(MiscPDFDownload.class);
@@ -20,8 +20,7 @@ public class MiscPDFDownload {
     public Object create(String ddpParticipantId, String realm) {
         if (StringUtils.isNotBlank(ddpParticipantId)) {
             return returnPDFS(ddpParticipantId, realm);
-        }
-        else {// it is the misc download
+        } else {// it is the misc download
             return getPDFRole(realm);
         }
     }
@@ -32,9 +31,9 @@ public class MiscPDFDownload {
         if (ParticipantUtil.isGuid(ddpParticipantId)) {
             participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(instance,
                     ElasticSearchUtil.BY_GUID + ddpParticipantId);
-        }
-        else {// altpid
-            participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(instance, ElasticSearchUtil.BY_LEGACY_ALTPID + ddpParticipantId);
+        } else {// altpid
+            participantESData =
+                    ElasticSearchUtil.getFilteredDDPParticipantsFromES(instance, ElasticSearchUtil.BY_LEGACY_ALTPID + ddpParticipantId);
         }
         if (participantESData != null && !participantESData.isEmpty() && participantESData.size() == 1) {
             Map<String, Object> participantData = participantESData.get(ddpParticipantId);
@@ -44,8 +43,7 @@ public class MiscPDFDownload {
                     Object pdf = dsm.get(ElasticSearchUtil.PDFS);
                     return pdf;
                 }
-            }
-            else {
+            } else {
                 for (Object value : participantESData.values()) {
                     participantData = (Map<String, Object>) value;
                     //check that it is really right participant

@@ -1,13 +1,13 @@
 package org.broadinstitute.dsm.model.elastic.migration;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.broadinstitute.dsm.TestHelper;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.List;
 
 public class DynamicFieldsMappingMigratorTest {
 

@@ -23,7 +23,9 @@ public class AddFamilyMemberPayloadTest {
 
     @AfterClass
     public static void tearDown() {
-        if (createdTestFamilyIdPK > 0) bookmarkDao.delete(createdTestFamilyIdPK);
+        if (createdTestFamilyIdPK > 0) {
+            bookmarkDao.delete(createdTestFamilyIdPK);
+        }
     }
 
     @Test

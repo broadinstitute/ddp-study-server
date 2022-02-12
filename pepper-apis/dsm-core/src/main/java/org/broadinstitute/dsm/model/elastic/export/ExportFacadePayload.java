@@ -28,12 +28,12 @@ public class ExportFacadePayload {
         return docId;
     }
 
-    public int getRecordId() {
-        return generatorPayload.getRecordId();
-    }
-
     public void setDocId(String docId) {
         this.docId = docId;
+    }
+
+    public int getRecordId() {
+        return generatorPayload.getRecordId();
     }
 
     public String getColumnName() {
@@ -61,5 +61,7 @@ public class ExportFacadePayload {
         return generatorPayload.getValue();
     }
 
-    public String getRealm() { return realm; }
+    public String getRealm() {
+        return realm;
+    }
 }

@@ -30,6 +30,7 @@ public class FollowUp {
         this.fRequest3 = fRequest3;
 
     }
+
     public FollowUp() {
 
     }

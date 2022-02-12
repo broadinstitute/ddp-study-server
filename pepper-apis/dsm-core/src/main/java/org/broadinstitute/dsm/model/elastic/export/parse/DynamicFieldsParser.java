@@ -1,16 +1,16 @@
 package org.broadinstitute.dsm.model.elastic.export.parse;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
-import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
-import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
+import static org.broadinstitute.dsm.model.Filter.NUMBER;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.broadinstitute.dsm.model.Filter.NUMBER;
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
+import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
+import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class DynamicFieldsParser extends BaseParser {
 
@@ -18,10 +18,10 @@ public class DynamicFieldsParser extends BaseParser {
     public static final String CHECKBOX_TYPE = "CHECKBOX";
     public static final String ACTIVITY_STAFF_TYPE = "ACTIVITY_STAFF";
     public static final String ACTIVITY_TYPE = "ACTIVITY";
+    public FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
     protected String displayType;
     private String possibleValuesJson;
     private BaseParser parser;
-    public FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
 
     public void setDisplayType(String displayType) {
         this.displayType = displayType;
@@ -38,7 +38,6 @@ public class DynamicFieldsParser extends BaseParser {
     public void setFieldSettingsDao(FieldSettingsDao fieldSettingsDao) {
         this.fieldSettingsDao = fieldSettingsDao;
     }
-
 
 
     @Override
@@ -58,8 +57,11 @@ public class DynamicFieldsParser extends BaseParser {
             this.displayType = maybeType.orElse(StringUtils.EMPTY);
             parsedValue = maybeType
                     .map(displayType -> {
-                        if (parser instanceof TypeParser) return parse(displayType);
-                        else return parse(element);
+                        if (parser instanceof TypeParser) {
+                            return parse(displayType);
+                        } else {
+                            return parse(element);
+                        }
                     })
                     .orElse(forString(element));
         } else if (NUMBER.equals(displayType)) {
@@ -111,7 +113,9 @@ public class DynamicFieldsParser extends BaseParser {
 
     private Optional<String> getTypeFromPossibleValuesJson() {
         try {
-            List<Map<String, String>> possibleValues = ObjectMapperSingleton.instance().readValue(possibleValuesJson, new TypeReference<List<Map<String, String>>>() {});
+            List<Map<String, String>> possibleValues =
+                    ObjectMapperSingleton.instance().readValue(possibleValuesJson, new TypeReference<List<Map<String, String>>>() {
+                    });
             Optional<String> maybeType = possibleValues.stream()
                     .filter(possibleValue -> possibleValue.containsKey(TYPE))
                     .map(possibleValue -> possibleValue.get(TYPE))

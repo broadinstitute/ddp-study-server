@@ -28,15 +28,17 @@ public class AndOrFilterSeparator {
     }
 
     public Map<String, List<String>> parseFiltersByLogicalOperators() {
-        Map<String, List<String>> filterByLogicalOperators = new ConcurrentHashMap<>(Map.of(Filter.AND_TRIMMED, new ArrayList<>(), Filter.OR_TRIMMED, new ArrayList<>()));
+        Map<String, List<String>> filterByLogicalOperators =
+                new ConcurrentHashMap<>(Map.of(Filter.AND_TRIMMED, new ArrayList<>(), Filter.OR_TRIMMED, new ArrayList<>()));
         int andIndex = filter.indexOf(Filter.AND_TRIMMED);
         int orIndex = filter.indexOf(Filter.OR_TRIMMED);
         while (andIndex != -1 || orIndex != -1) {
-            andIndex = findProperOperatorSplitterIndex(Filter.AND_TRIMMED, andIndex, AND_PATTERN_MATCHER_NUMBER, MINIMUM_STEP_FROM_OPERATOR);
+            andIndex =
+                    findProperOperatorSplitterIndex(Filter.AND_TRIMMED, andIndex, AND_PATTERN_MATCHER_NUMBER, MINIMUM_STEP_FROM_OPERATOR);
             orIndex = findProperOperatorSplitterIndex(Filter.OR_TRIMMED, orIndex, OR_PATTERN_MATCHER_NUMBER, MINIMUM_STEP_FROM_OPERATOR);
             if (andIndex != -1) {
                 andIndex = getIndex(filterByLogicalOperators, andIndex, Filter.AND_TRIMMED);
-            } else if (orIndex != -1){
+            } else if (orIndex != -1) {
                 orIndex = getIndex(filterByLogicalOperators, orIndex, Filter.OR_TRIMMED);
             }
         }
@@ -47,9 +49,9 @@ public class AndOrFilterSeparator {
     /**
      * "AND ( oD.request = 'review' OR oD.request = 'no' ) " - filter
      *
-     * @param operator -"AND", "OR"
-     * @param startIndex - index where first operator is found
-     * @param patternMatcherNumber - number to add start index to find out whether it matches alias regex | "AND ( o"
+     * @param operator               -"AND", "OR"
+     * @param startIndex             - index where first operator is found
+     * @param patternMatcherNumber   - number to add start index to find out whether it matches alias regex | "AND ( o"
      * @param nextOperatorFromNumber - number to add start index to find next operator index | OR oD. index of OR
      * @return index of next proper operator after first operator, proper operator matches either AND_DSM_ALIAS_REGEX or OR_DSM_ALIAS_REGEX
      */
@@ -57,7 +59,7 @@ public class AndOrFilterSeparator {
         String aliasRegex = getAliasRegexByOperator(operator);
         while (startIndex != -1
                 && (isOperatorWrappedInParenthesis(startIndex)
-                || !isMatches(startIndex, startIndex + patternMatcherNumber, aliasRegex))){
+                || !isMatches(startIndex, startIndex + patternMatcherNumber, aliasRegex))) {
             startIndex = findNextOperatorIndex(operator, startIndex + nextOperatorFromNumber);
         }
         return startIndex;
@@ -66,14 +68,17 @@ public class AndOrFilterSeparator {
     private int getIndex(Map<String, List<String>> filterByLogicalOperators, int index, String operator) {
 
         int orPrecedeIndex = findNextOperatorIndex(Filter.OR_TRIMMED, index + MINIMUM_STEP_FROM_OPERATOR);
-        orPrecedeIndex = findProperOperatorSplitterIndex(Filter.OR_TRIMMED, orPrecedeIndex, OR_PATTERN_MATCHER_NUMBER, MINIMUM_STEP_FROM_OPERATOR);
+        orPrecedeIndex =
+                findProperOperatorSplitterIndex(Filter.OR_TRIMMED, orPrecedeIndex, OR_PATTERN_MATCHER_NUMBER, MINIMUM_STEP_FROM_OPERATOR);
 
         int andPrecedeIndex = findNextOperatorIndex(Filter.AND_TRIMMED, index + MINIMUM_STEP_FROM_OPERATOR);
-        andPrecedeIndex = findProperOperatorSplitterIndex(Filter.AND_TRIMMED, andPrecedeIndex, AND_PATTERN_MATCHER_NUMBER, MINIMUM_STEP_FROM_OPERATOR);
+        andPrecedeIndex = findProperOperatorSplitterIndex(Filter.AND_TRIMMED, andPrecedeIndex, AND_PATTERN_MATCHER_NUMBER,
+                MINIMUM_STEP_FROM_OPERATOR);
 
         // index = 5, 4 ,20
         if (isAndOrGreaterThanCurrentPosition(index, orPrecedeIndex, andPrecedeIndex)) {
-            filterByLogicalOperators.get(operator).add(filter.substring(index + MINIMUM_STEP_FROM_OPERATOR, Math.min(orPrecedeIndex, andPrecedeIndex)).trim());
+            filterByLogicalOperators.get(operator)
+                    .add(filter.substring(index + MINIMUM_STEP_FROM_OPERATOR, Math.min(orPrecedeIndex, andPrecedeIndex)).trim());
             index = Math.min(orPrecedeIndex, andPrecedeIndex);
         } else {
             if (isEndOfFilter(orPrecedeIndex, andPrecedeIndex)) {
@@ -91,7 +96,7 @@ public class AndOrFilterSeparator {
 
     private void handleSpecialCases(Map<String, List<String>> filterByLogicalOperators) {
         final String additionalValuesJsonIsNotNull = "additional_values_json IS NOT NULL";
-        for (Map.Entry<String, List<String>> entry: filterByLogicalOperators.entrySet()) {
+        for (Map.Entry<String, List<String>> entry : filterByLogicalOperators.entrySet()) {
             List<String> filteredByNotAdditionalValuesIsNotNull = entry.getValue().stream()
                     .filter(f -> !f.contains(additionalValuesJsonIsNotNull))
                     .collect(Collectors.toList());
@@ -111,7 +116,9 @@ public class AndOrFilterSeparator {
                 exists = true;
                 break;
             }
-            if (Filter.AND_TRIMMED.equals(filter.substring(i - 3, i)) || c == Filter.CLOSE_PARENTHESIS_CHAR) break;
+            if (Filter.AND_TRIMMED.equals(filter.substring(i - 3, i)) || c == Filter.CLOSE_PARENTHESIS_CHAR) {
+                break;
+            }
         }
         return exists;
     }

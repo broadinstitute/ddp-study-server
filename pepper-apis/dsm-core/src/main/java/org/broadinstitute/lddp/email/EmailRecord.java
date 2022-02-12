@@ -61,7 +61,8 @@ public class EmailRecord {
         add(immediateEmailTemplate, recipient, recipient.getCurrentStatus(), reminderInfo, emailGroupId);
     }
 
-    public static void addOnlyReminders(@NonNull Recipient recipient, @NonNull JsonElement reminderInfo, @NonNull String emailGroupId) throws Exception {
+    public static void addOnlyReminders(@NonNull Recipient recipient, @NonNull JsonElement reminderInfo, @NonNull String emailGroupId)
+            throws Exception {
         addOnlyReminders(recipient, recipient.getCurrentStatus(), reminderInfo, emailGroupId);
     }
 

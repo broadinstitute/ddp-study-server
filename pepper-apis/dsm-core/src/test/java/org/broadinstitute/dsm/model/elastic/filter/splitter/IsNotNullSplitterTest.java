@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.model.elastic.filter.splitter;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 

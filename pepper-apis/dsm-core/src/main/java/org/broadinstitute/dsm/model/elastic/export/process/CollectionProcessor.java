@@ -35,7 +35,9 @@ public class CollectionProcessor extends BaseProcessor {
     @Override
     protected String findPrimaryKeyOfObject(Object object) {
         List<Object> objectCollection = (List<Object>) object;
-        if (Objects.isNull(objectCollection)) return StringUtils.EMPTY;
+        if (Objects.isNull(objectCollection)) {
+            return StringUtils.EMPTY;
+        }
         Optional<Object> maybeObject = objectCollection.stream().findFirst();
         return maybeObject
                 .map(this::getPrimaryKey)
@@ -53,7 +55,9 @@ public class CollectionProcessor extends BaseProcessor {
     }
 
     private boolean isExistingRecord(Map<String, Object> eachRecord) {
-        if (!eachRecord.containsKey(Util.underscoresToCamelCase(primaryKey))) return false;
+        if (!eachRecord.containsKey(Util.underscoresToCamelCase(primaryKey))) {
+            return false;
+        }
         double id = Double.parseDouble(String.valueOf(eachRecord.get(Util.underscoresToCamelCase(primaryKey))));
         return id == (double) recordId;
     }

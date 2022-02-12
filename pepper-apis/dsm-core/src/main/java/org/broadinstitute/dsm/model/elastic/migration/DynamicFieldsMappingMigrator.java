@@ -1,5 +1,12 @@
 package org.broadinstitute.dsm.model.elastic.migration;
 
+import static org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator.DSM_OBJECT;
+import static org.broadinstitute.dsm.util.ElasticSearchUtil.PROPERTIES;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.broadinstitute.dsm.db.ParticipantData;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
@@ -11,14 +18,6 @@ import org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator;
 import org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator;
 import org.broadinstitute.dsm.model.elastic.export.parse.DynamicFieldsParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.TypeParser;
-import org.broadinstitute.dsm.model.elastic.export.parse.TypeParserFactory;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator.DSM_OBJECT;
-import static org.broadinstitute.dsm.util.ElasticSearchUtil.PROPERTIES;
 
 public class DynamicFieldsMappingMigrator implements Exportable {
 
@@ -48,10 +47,11 @@ public class DynamicFieldsMappingMigrator implements Exportable {
             parser.setPossibleValuesJson(fieldSettingsDto.getPossibleValues());
             String fieldType = fieldSettingsDto.getFieldType();
             BaseGenerator.PropertyInfo propertyInfo = Util.TABLE_ALIAS_MAPPINGS.get(fieldType);
-            if (propertyInfo != null)
+            if (propertyInfo != null) {
                 buildMapping(fieldSettingsDto, propertyInfo);
-            else
+            } else {
                 buildMapping(fieldSettingsDto, new BaseGenerator.PropertyInfo(ParticipantData.class, true));
+            }
         }
         elasticMappingExportAdapter.setRequestPayload(new RequestPayload(index));
         elasticMappingExportAdapter.setSource(buildFinalMapping());
@@ -70,7 +70,8 @@ public class DynamicFieldsMappingMigrator implements Exportable {
         String propertyName = propertyInfo.getPropertyName();
         Object typeMap = parser.parse(fieldSettingsDto.getDisplayType());
         if (!(propertyMap.containsKey(propertyName))) {
-            Map<String, Object> dynamicFields = new HashMap<>(Map.of(DYNAMIC_FIELDS_WRAPPER_NAME, new HashMap<>(Map.of(PROPERTIES, new HashMap<>(Map.of(columnName, typeMap))))));
+            Map<String, Object> dynamicFields = new HashMap<>(
+                    Map.of(DYNAMIC_FIELDS_WRAPPER_NAME, new HashMap<>(Map.of(PROPERTIES, new HashMap<>(Map.of(columnName, typeMap))))));
             Map<String, Object> wrapperMap = new HashMap<>();
             if (propertyInfo.isCollection()) {
                 wrapperMap.put(MappingGenerator.TYPE, MappingGenerator.NESTED);

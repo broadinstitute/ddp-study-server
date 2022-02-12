@@ -4,10 +4,10 @@ import javax.xml.bind.annotation.XmlElement;
 
 public class LineItem {
 
-    @XmlElement(name="ItemNumber")
+    @XmlElement(name = "ItemNumber")
     private String itemNumber;
 
-    @XmlElement(name="ItemQuantity")
+    @XmlElement(name = "ItemQuantity")
     private String itemQuantity;
 
     public LineItem() {

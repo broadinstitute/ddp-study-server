@@ -1,35 +1,26 @@
 package org.broadinstitute.dsm.model.elastic.export.generate;
 
 
+import static org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator.PROPERTIES;
+
+import java.util.Map;
+
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.export.TestPatchUtil;
 import org.broadinstitute.dsm.model.elastic.export.parse.BaseParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.DynamicFieldsParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
-import org.broadinstitute.dsm.model.elastic.export.TestPatchUtil;
 import org.broadinstitute.dsm.model.elastic.export.parse.TypeParser;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Map;
-
-import static org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator.PROPERTIES;
-
 public class MappingGeneratorTest {
 
-
-    @Test
-    public void generateTextType() {
-        Map<String, Object> objectMap = TestCollectionMappingGenerator.of(getGeneratorPayload(TestPatchUtil.MEDICAL_RECORD_COLUMN, "value"
-                , 0)).generate();
-        Assert.assertEquals(objectMap.keySet().stream().findFirst().get(), PROPERTIES);
-        String type = extractDeepestLeveleValue(objectMap, TestPatchUtil.MEDICAL_RECORD_COLUMN);
-        Assert.assertEquals("text", type);
-    }
 
     public static GeneratorPayload getGeneratorPayload(String columnName, Object value, int recordId) {
         return new GeneratorPayload(new NameValue(columnName, value),
@@ -42,8 +33,17 @@ public class MappingGeneratorTest {
     }
 
     @Test
+    public void generateTextType() {
+        Map<String, Object> objectMap = TestCollectionMappingGenerator.of(getGeneratorPayload(TestPatchUtil.MEDICAL_RECORD_COLUMN, "value"
+                , 0)).generate();
+        Assert.assertEquals(objectMap.keySet().stream().findFirst().get(), PROPERTIES);
+        String type = extractDeepestLeveleValue(objectMap, TestPatchUtil.MEDICAL_RECORD_COLUMN);
+        Assert.assertEquals("text", type);
+    }
+
+    @Test
     public void generateTextTypeWithFields() {
-        Map<String, Object> objectMap = TestCollectionMappingGenerator.of(getGeneratorPayload(TestPatchUtil.MEDICAL_RECORD_COLUMN,"value"
+        Map<String, Object> objectMap = TestCollectionMappingGenerator.of(getGeneratorPayload(TestPatchUtil.MEDICAL_RECORD_COLUMN, "value"
                 , 0)).generate();
         Assert.assertEquals(objectMap.keySet().stream().findFirst().get(), PROPERTIES);
         String type = extractKeywordType(objectMap, TestPatchUtil.MEDICAL_RECORD_COLUMN);
@@ -52,7 +52,7 @@ public class MappingGeneratorTest {
 
     @Test
     public void generateBooleanType() {
-        Map<String, Object> objectMap = TestCollectionMappingGenerator.of(getGeneratorPayload(TestPatchUtil.MR_PROBLEM,true,
+        Map<String, Object> objectMap = TestCollectionMappingGenerator.of(getGeneratorPayload(TestPatchUtil.MR_PROBLEM, true,
                 0)).generate();
         Assert.assertEquals(objectMap.keySet().stream().findFirst().get(), PROPERTIES);
         String type = extractDeepestLeveleValue(objectMap, TestPatchUtil.MR_PROBLEM);
@@ -98,44 +98,45 @@ public class MappingGeneratorTest {
         parser.setPropertyInfo(new BaseGenerator.PropertyInfo(MedicalRecord.class, true));
         BaseGenerator mappingGenerator = new CollectionMappingGenerator(parser, generatorPayload);
         Map<String, Object> parseJson = mappingGenerator.parseJson();
-        Map<String, Object> additionalValuesJson = (Map)parseJson.get("dynamicFields");
+        Map<String, Object> additionalValuesJson = (Map) parseJson.get("dynamicFields");
         Assert.assertNotNull(additionalValuesJson);
-        Assert.assertEquals(TypeParser.TEXT_KEYWORD_MAPPING,((Map) additionalValuesJson.get(PROPERTIES)).get(Util.underscoresToCamelCase("DDP_INSTANCE")));
+        Assert.assertEquals(TypeParser.TEXT_KEYWORD_MAPPING,
+                ((Map) additionalValuesJson.get(PROPERTIES)).get(Util.underscoresToCamelCase("DDP_INSTANCE")));
     }
 
 
     private String extractDeepestLeveleValue(Map<String, Object> objectMap, String field) {
         return (String)
                 ((Map)
-                ((Map)
-                getMedicalRecordProperty(objectMap)
-                        .get(PROPERTIES))
-                        .get(Util.underscoresToCamelCase(field)))
+                        ((Map)
+                                getMedicalRecordProperty(objectMap)
+                                        .get(PROPERTIES))
+                                .get(Util.underscoresToCamelCase(field)))
                         .get("type");
     }
 
     private String extractKeywordType(Map<String, Object> objectMap, String field) {
         return (String)
                 ((Map)
-                ((Map)
-                ((Map)
-                ((Map)
-                getMedicalRecordProperty(objectMap)
-                        .get(PROPERTIES))
-                        .get(Util.underscoresToCamelCase(field)))
-                        .get("fields"))
-                        .get("keyword"))
+                        ((Map)
+                                ((Map)
+                                        ((Map)
+                                                getMedicalRecordProperty(objectMap)
+                                                        .get(PROPERTIES))
+                                                .get(Util.underscoresToCamelCase(field)))
+                                        .get("fields"))
+                                .get("keyword"))
                         .get("type");
     }
 
     private Map getMedicalRecordProperty(Map<String, Object> objectMap) {
         return (Map)
                 ((Map)
-                ((Map)
-                ((Map) objectMap
-                        .get(PROPERTIES))
-                        .get(BaseGenerator.DSM_OBJECT))
-                        .get(PROPERTIES))
+                        ((Map)
+                                ((Map) objectMap
+                                        .get(PROPERTIES))
+                                        .get(BaseGenerator.DSM_OBJECT))
+                                .get(PROPERTIES))
                         .get("medicalRecord");
     }
 
@@ -146,13 +147,13 @@ public class MappingGeneratorTest {
             super(parser, generatorPayload);
         }
 
+        public static TestSingleMappingGenerator of(GeneratorPayload generatorPayload) {
+            return new TestSingleMappingGenerator(new TypeParser(), generatorPayload);
+        }
+
         @Override
         protected DBElement getDBElement() {
             return TestPatchUtil.getColumnNameMap().get(getNameValue().getName());
-        }
-
-        public static TestSingleMappingGenerator of(GeneratorPayload generatorPayload) {
-            return new TestSingleMappingGenerator(new TypeParser(), generatorPayload);
         }
 
     }
@@ -164,15 +165,15 @@ public class MappingGeneratorTest {
             super(typeParser, generatorPayload);
         }
 
-        @Override
-        protected DBElement getDBElement() {
-            return TestPatchUtil.getColumnNameMap().get(getNameValue().getName());
-        }
-
         public static TestCollectionMappingGenerator of(GeneratorPayload generatorPayload) {
             BaseParser typeParser = new TypeParser();
             typeParser.setPropertyInfo(new PropertyInfo(TestPropertyClass.class, true));
             return new TestCollectionMappingGenerator(typeParser, generatorPayload);
+        }
+
+        @Override
+        protected DBElement getDBElement() {
+            return TestPatchUtil.getColumnNameMap().get(getNameValue().getName());
         }
     }
 

@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.export.process;
 
+import java.util.Map;
+
 import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.elastic.ESDsm;
@@ -14,8 +16,6 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Map;
 
 public class SingleProcessorTest {
 
@@ -36,14 +36,14 @@ public class SingleProcessorTest {
 
         ESDsm esDsm = new ESDsm();
         esDsm.setParticipant(new Participant(2174, null, null, null, null, null, null,
-                null, null, null, false, false, "{\"key\": \"oldVal\"}", 12874512387612L ));
+                null, null, null, false, false, "{\"key\": \"oldVal\"}", 12874512387612L));
         BaseProcessor processor = new SingleProcessor();
         processor.setEsDsm(esDsm);
         processor.setPropertyName(propertyInfo.getPropertyName());
         processor.setRecordId(0);
         processor.setCollector(generator);
         Map<String, Object> processedData = (Map<String, Object>) processor.process();
-        Assert.assertEquals("value", ((Map<String, Object>)processedData.get(ESObjectConstants.DYNAMIC_FIELDS)).get("key"));
+        Assert.assertEquals("value", ((Map<String, Object>) processedData.get(ESObjectConstants.DYNAMIC_FIELDS)).get("key"));
     }
 
     @Test
@@ -62,13 +62,13 @@ public class SingleProcessorTest {
 
         ESDsm esDsm = new ESDsm();
         esDsm.setParticipant(new Participant(2174, null, null, null, null, null, null,
-                null, null, null, false, false, "", 12874512387612L ));
+                null, null, null, false, false, "", 12874512387612L));
         BaseProcessor processor = new SingleProcessor();
         processor.setEsDsm(esDsm);
         processor.setPropertyName(propertyInfo.getPropertyName());
         processor.setRecordId(0);
         processor.setCollector(generator);
         Map<String, Object> processedData = (Map<String, Object>) processor.process();
-        Assert.assertEquals("value", ((Map<String, Object>)processedData.get(ESObjectConstants.DYNAMIC_FIELDS)).get("key"));
+        Assert.assertEquals("value", ((Map<String, Object>) processedData.get(ESObjectConstants.DYNAMIC_FIELDS)).get("key"));
     }
 }

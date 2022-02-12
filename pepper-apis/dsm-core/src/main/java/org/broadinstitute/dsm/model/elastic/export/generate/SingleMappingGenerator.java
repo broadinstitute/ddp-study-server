@@ -11,7 +11,8 @@ public class SingleMappingGenerator extends MappingGenerator {
         super(parser, generatorPayload);
     }
 
-    public SingleMappingGenerator() {}
+    public SingleMappingGenerator() {
+    }
 
     @Override
     protected Map<String, Object> getElement(Object type) {

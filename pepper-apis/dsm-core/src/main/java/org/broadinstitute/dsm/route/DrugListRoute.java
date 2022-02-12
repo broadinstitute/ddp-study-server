@@ -1,12 +1,12 @@
 package org.broadinstitute.dsm.route;
 
 import com.google.gson.Gson;
-import org.broadinstitute.lddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.Drug;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
+import org.broadinstitute.lddp.handlers.util.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -30,8 +30,7 @@ public class DrugListRoute extends RequestHandler {
                     Drug.addDrug(userId, drugUpdateValues);
                     return new Result(200);
                 }
-            }
-            else {
+            } else {
                 response.status(500);
                 return new Result(500, UserErrorMessages.NO_RIGHTS);
             }

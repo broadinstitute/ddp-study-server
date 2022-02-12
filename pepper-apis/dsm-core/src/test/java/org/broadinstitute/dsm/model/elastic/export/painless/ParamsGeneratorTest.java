@@ -1,18 +1,14 @@
 package org.broadinstitute.dsm.model.elastic.export.painless;
 
-import com.google.gson.Gson;
+import java.util.List;
+import java.util.Map;
+
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.model.birch.DSMTestResult;
-import org.broadinstitute.dsm.model.birch.TestBostonResult;
-import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
 
 public class ParamsGeneratorTest {
 
@@ -21,8 +17,8 @@ public class ParamsGeneratorTest {
         KitRequestShipping kitRequestShipping = new KitRequestShipping(1L, 2L, "easyPostIdValue", "easyPostAddressIdValue", true, "msg");
         ParamsGenerator paramsGenerator = new ParamsGenerator(kitRequestShipping, "");
         Map<String, Object> paramsMap = paramsGenerator.generate();
-        Map <String, Object> dsm = (Map <String, Object>) paramsMap.get("dsm");
-        Map <String, Object> kitRequestShippingObj = (Map <String, Object>) dsm.get("kitRequestShipping");
+        Map<String, Object> dsm = (Map<String, Object>) paramsMap.get("dsm");
+        Map<String, Object> kitRequestShippingObj = (Map<String, Object>) dsm.get("kitRequestShipping");
         Assert.assertEquals(1L, kitRequestShippingObj.get("dsmKitRequestId"));
         Assert.assertEquals(2L, kitRequestShippingObj.get("dsmKitId"));
         Assert.assertEquals("easyPostIdValue", kitRequestShippingObj.get("easypostToId"));
@@ -33,7 +29,7 @@ public class ParamsGeneratorTest {
     @Test
     public void generateKitRequest() {
 
-        DSMTestResult[] array = new DSMTestResult[] { new DSMTestResult("Negative", "2012-05-02", true) };
+        DSMTestResult[] array = new DSMTestResult[] {new DSMTestResult("Negative", "2012-05-02", true)};
         String finalArray = ObjectMapperSingleton.writeValueAsString(array);
 
         KitRequestShipping kitRequestShipping = new KitRequestShipping();

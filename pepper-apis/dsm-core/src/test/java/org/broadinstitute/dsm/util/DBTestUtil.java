@@ -1,11 +1,22 @@
 package org.broadinstitute.dsm.util;
 
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+
+import java.lang.reflect.Type;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.TestHelper;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.FieldSettings;
@@ -15,25 +26,61 @@ import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.util.tools.util.DBUtil;
-
-import java.lang.reflect.Type;
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
-
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import org.broadinstitute.lddp.db.SimpleResult;
 
 public class DBTestUtil {
 
+    public static final String CHECK_KIT_REQUEST = "select * from ddp_kit_request req where req.ddp_participant_id = ?";
+    public static final String CHECK_KIT =
+            "select * from ddp_kit_request req, ddp_kit kit where req.dsm_kit_request_id = kit.dsm_kit_request_id and req.ddp_participant_id = ?";
+    public static final String CHECK_KIT_BY_TYPE =
+            "select * from ddp_kit_request req, ddp_kit kit where req.dsm_kit_request_id = kit.dsm_kit_request_id and req.ddp_participant_id = ? and req.kit_type_id = ? order by dsm_kit_id desc";
+    public static final String CHECK_KITREQUEST = "select * from ddp_kit_request req where req.ddp_kit_request_id = ?";
+    public static final String CHECK_PARTICIPANT = "select * from ddp_participant where ddp_participant_id = ?";
+    public static final String CHECK_INSTITUTION = "select * from ddp_institution where ddp_institution_id = ?";
+    public static final String SELECT_MAXPARTICIPANT = "SELECT value from bookmark WHERE instance = ?";
+    public static final String SELECT_KITREQUEST_BY_PARTICIPANT_QUERY =
+            "SELECT dsm_kit_request_id FROM ddp_kit_request WHERE ddp_participant_id = ?";
+    public static final String SELECT_KIT_BY_KITREQUEST_QUERY = "SELECT dsm_kit_id FROM ddp_kit WHERE dsm_kit_request_id = ?";
+    public static final String DELETE_KITREQUEST = "DELETE FROM ddp_kit_request WHERE dsm_kit_request_id = ?";
+    public static final String DELETE_KIT_QUERY = "DELETE FROM ddp_kit WHERE dsm_kit_id = ?";
+    public static final String DELETE_TISSUE = "delete from ddp_tissue where onc_history_detail_id = ?";
+    public static final String DELETE_ONC_HISTROY_DETAIL = "delete from ddp_onc_history_detail where onc_history_detail_id = ? ";
+    public static final String SELECT_ONC_HISTORY_DETAIL =
+            "select onc_history_detail_id from ddp_onc_history_detail where medical_record_id = ? ";
+    public static final String SELECT_UNSENT_EMAILS = "SELECT EMAIL_ID FROM EMAIL_QUEUE where EMAIL_DATE_PROCESSED is null";
+    public static final String DELETE_UNSENT_EMAILS = "DELETE FROM EMAIL_QUEUE where EMAIL_ID = ?";
+    public static final String UPDATE_KIT_SENT =
+            "update ddp_kit set test_result = '[{\"isCorrected\":false,\"result\":\"UNSATISFACTORY_12\",\"timeCompleted\":\"2020-09-03T12:08:21.657Z\"}]', kit_complete = 1, scan_date = ?, scan_by = ?, kit_label = ? where dsm_kit_request_id = ( select dsm_kit_request_id from ddp_kit_request where ddp_label = ?) and deactivated_date is null";
+    public static final String UPDATE_KIT_SENT_UPS =
+            "update ddp_kit set test_result = '[{\"isCorrected\":false,\"result\":\"UNSATISFACTORY_12\",\"timeCompleted\":\"2020-09-03T12:08:21.657Z\"}]', kit_complete = 1, scan_date = ?, scan_by = ?, kit_label = ?, ups_tracking_status = ?, ups_return_status = ?, ups_tracking_date = ?, ups_return_date = ? where dsm_kit_request_id = ( select dsm_kit_request_id from ddp_kit_request where ddp_label = ?) and deactivated_date is null";
+    public static final String UPDATE_KIT_RECEIVED =
+            "update ddp_kit set test_result = '[{\"isCorrected\":false,\"result\":\"UNSATISFACTORY_12\",\"timeCompleted\":\"2020-09-03T12:08:21.657Z\"}]', kit_complete = 1, scan_date = ?, scan_by = ?, kit_label = ?, ups_tracking_status = ?, ups_return_status = ?, ups_tracking_date = ?, ups_return_date = ?, receive_date = ?, receive_by = 'TEST' where dsm_kit_request_id = ( select dsm_kit_request_id from ddp_kit_request where ddp_label = ?) and deactivated_date is null";
+    public static final String SQL_INSERT_UPS_SHIPMENT = "INSERT INTO ups_shipment (dsm_kit_request_id) values (?)";
+    public static final String SQL_INSERT_UPS_PACKAGE = "INSERT INTO ups_package (ups_shipment_id, tracking_number) values (?,?)";
+    public static final String SQL_INSERT_UPS_ACTIVITY =
+            "INSERT INTO ups_activity (ups_package_id, ups_location, ups_status_type, ups_status_description, ups_status_code,ups_activity_date_time) values (?,?,?,?,?,?)";
+    public static final String SELECT_GENERIC_DRUG_ROWS =
+            "SELECT generic_name FROM drug_list WHERE ( length(brand_name) < 1 or brand_name is null) ORDER BY generic_name asc";
+    public static final String SELECT_DISTINCT_GENERICS_FROM_BRAND_ROWS =
+            "SELECT distinct generic_name FROM drug_list WHERE length(brand_name) > 1 ORDER BY generic_name asc";
+    public static final String DELETE_ALL_NDI_ADDED = "DELETE FROM ddp_ndi WHERE ndi_id = ?";
+    public static final String SQL_INSERT_KIT_REQUEST = "INSERT INTO ddp_kit_request " +
+            "(ddp_instance_id, ddp_kit_request_id, kit_type_id, ddp_participant_id, bsp_collaborator_participant_id, bsp_collaborator_sample_id, " +
+            "ddp_label, created_by, created_date, external_order_number, upload_reason, external_order_date, external_order_status) " +
+            "values (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    public static final long WEEK = 7 * 24 * 60 * 60 * 1000;
     private static final String SELECT_PARTICIPANT_QUERY = "SELECT participant_id FROM ddp_participant WHERE last_version = ?";
     private static final String SELECT_PARTICIPANT_QUERY_2 = "SELECT participant_id FROM ddp_participant WHERE ddp_participant_id = ?";
     private static final String SELECT_INSTITUTION_QUERY = "SELECT institution_id FROM ddp_institution WHERE participant_id = ? LIMIT 1";
     private static final String SELECT_ONCHISTORY_QUERY = "SELECT onc_history_id FROM ddp_onc_history WHERE participant_id = ?";
-    private static final String SELECT_PARTICIPANTRECORD_QUERY = "SELECT participant_record_id FROM ddp_participant_record WHERE participant_id = ?";
-    private static final String SELECT_PARTICIPANTEXIT_QUERY = "SELECT ddp_participant_exit_id FROM ddp_participant_exit WHERE ddp_participant_id = (select ddp_participant_id from ddp_participant where participant_id = ?)";
+    private static final String SELECT_PARTICIPANTRECORD_QUERY =
+            "SELECT participant_record_id FROM ddp_participant_record WHERE participant_id = ?";
+    private static final String SELECT_PARTICIPANTEXIT_QUERY =
+            "SELECT ddp_participant_exit_id FROM ddp_participant_exit WHERE ddp_participant_id = (select ddp_participant_id from ddp_participant where participant_id = ?)";
     private static final String SELECT_MEDICALRECORD_QUERY = "SELECT medical_record_id FROM ddp_medical_record WHERE institution_id = ?";
-    private static final String SELECT_MEDICALRECORDLOG_QUERY = "SELECT medical_record_log_id FROM ddp_medical_record_log WHERE medical_record_id = ?";
+    private static final String SELECT_MEDICALRECORDLOG_QUERY =
+            "SELECT medical_record_log_id FROM ddp_medical_record_log WHERE medical_record_id = ?";
     private static final String DELETE_PARTICIPANT_QUERY = "DELETE FROM ddp_participant WHERE participant_id = ?";
     private static final String DELETE_INSTITUTION_QUERY = "DELETE FROM ddp_institution WHERE institution_id = ?";
     private static final String DELETE_ONCHISTORY_QUERY = "DELETE FROM ddp_onc_history WHERE onc_history_id = ?";
@@ -41,36 +88,11 @@ public class DBTestUtil {
     private static final String DELETE_PARTICIPANTEXIT_QUERY = "DELETE FROM ddp_participant_exit WHERE ddp_participant_exit_id = ?";
     private static final String DELETE_MEDICALRECORD_QUERY = "DELETE FROM ddp_medical_record WHERE medical_record_id = ?";
     private static final String DELETE_MEDICALRECORDLOG_QUERY = "DELETE FROM ddp_medical_record_log WHERE medical_record_log_id = ?";
-    public static final String CHECK_KIT_REQUEST = "select * from ddp_kit_request req where req.ddp_participant_id = ?";
-    public static final String CHECK_KIT = "select * from ddp_kit_request req, ddp_kit kit where req.dsm_kit_request_id = kit.dsm_kit_request_id and req.ddp_participant_id = ?";
-    public static final String CHECK_KIT_BY_TYPE = "select * from ddp_kit_request req, ddp_kit kit where req.dsm_kit_request_id = kit.dsm_kit_request_id and req.ddp_participant_id = ? and req.kit_type_id = ? order by dsm_kit_id desc";
-    public static final String CHECK_KITREQUEST = "select * from ddp_kit_request req where req.ddp_kit_request_id = ?";
-    public static final String CHECK_PARTICIPANT = "select * from ddp_participant where ddp_participant_id = ?";
-    public static final String CHECK_INSTITUTION = "select * from ddp_institution where ddp_institution_id = ?";
-    public static final String SELECT_MAXPARTICIPANT = "SELECT value from bookmark WHERE instance = ?";
     private static final String DELETE_EMAIL_QUERY = "DELETE FROM EMAIL_QUEUE WHERE EMAIL_RECORD_ID = ?";
     private static final String DELETE_EVENT_QUERY = "DELETE FROM EVENT_QUEUE WHERE DSM_KIT_REQUEST_ID = ?";
     private static final String DELETE_DISCARD_QUERY = "DELETE FROM ddp_kit_discard WHERE dsm_kit_request_id = ?";
     private static final String DELETE_PARTICIPANT_EVENT_QUERY = "DELETE FROM ddp_participant_event WHERE ddp_participant_id = ?";
     private static final String SELECT_ASSIGNEE_QUERY = "SELECT * FROM access_user WHERE name = ?";
-    public static final String SELECT_KITREQUEST_BY_PARTICIPANT_QUERY = "SELECT dsm_kit_request_id FROM ddp_kit_request WHERE ddp_participant_id = ?";
-    public static final String SELECT_KIT_BY_KITREQUEST_QUERY = "SELECT dsm_kit_id FROM ddp_kit WHERE dsm_kit_request_id = ?";
-    public static final String DELETE_KITREQUEST = "DELETE FROM ddp_kit_request WHERE dsm_kit_request_id = ?";
-    public static final String DELETE_KIT_QUERY = "DELETE FROM ddp_kit WHERE dsm_kit_id = ?";
-    public static final String DELETE_TISSUE = "delete from ddp_tissue where onc_history_detail_id = ?";
-    public static final String DELETE_ONC_HISTROY_DETAIL = "delete from ddp_onc_history_detail where onc_history_detail_id = ? ";
-    public static final String SELECT_ONC_HISTORY_DETAIL = "select onc_history_detail_id from ddp_onc_history_detail where medical_record_id = ? ";
-    public static final String SELECT_UNSENT_EMAILS = "SELECT EMAIL_ID FROM EMAIL_QUEUE where EMAIL_DATE_PROCESSED is null";
-    public static final String DELETE_UNSENT_EMAILS = "DELETE FROM EMAIL_QUEUE where EMAIL_ID = ?";
-    public static final String UPDATE_KIT_SENT = "update ddp_kit set test_result = '[{\"isCorrected\":false,\"result\":\"UNSATISFACTORY_12\",\"timeCompleted\":\"2020-09-03T12:08:21.657Z\"}]', kit_complete = 1, scan_date = ?, scan_by = ?, kit_label = ? where dsm_kit_request_id = ( select dsm_kit_request_id from ddp_kit_request where ddp_label = ?) and deactivated_date is null";
-    public static final String UPDATE_KIT_SENT_UPS = "update ddp_kit set test_result = '[{\"isCorrected\":false,\"result\":\"UNSATISFACTORY_12\",\"timeCompleted\":\"2020-09-03T12:08:21.657Z\"}]', kit_complete = 1, scan_date = ?, scan_by = ?, kit_label = ?, ups_tracking_status = ?, ups_return_status = ?, ups_tracking_date = ?, ups_return_date = ? where dsm_kit_request_id = ( select dsm_kit_request_id from ddp_kit_request where ddp_label = ?) and deactivated_date is null";
-    public static final String UPDATE_KIT_RECEIVED = "update ddp_kit set test_result = '[{\"isCorrected\":false,\"result\":\"UNSATISFACTORY_12\",\"timeCompleted\":\"2020-09-03T12:08:21.657Z\"}]', kit_complete = 1, scan_date = ?, scan_by = ?, kit_label = ?, ups_tracking_status = ?, ups_return_status = ?, ups_tracking_date = ?, ups_return_date = ?, receive_date = ?, receive_by = 'TEST' where dsm_kit_request_id = ( select dsm_kit_request_id from ddp_kit_request where ddp_label = ?) and deactivated_date is null";
-    public static final String SQL_INSERT_UPS_SHIPMENT = "INSERT INTO ups_shipment (dsm_kit_request_id) values (?)";
-    public static final String SQL_INSERT_UPS_PACKAGE = "INSERT INTO ups_package (ups_shipment_id, tracking_number) values (?,?)";
-    public static final String SQL_INSERT_UPS_ACTIVITY = "INSERT INTO ups_activity (ups_package_id, ups_location, ups_status_type, ups_status_description, ups_status_code,ups_activity_date_time) values (?,?,?,?,?,?)";
-    public static final String SELECT_GENERIC_DRUG_ROWS = "SELECT generic_name FROM drug_list WHERE ( length(brand_name) < 1 or brand_name is null) ORDER BY generic_name asc";
-    public static final String SELECT_DISTINCT_GENERICS_FROM_BRAND_ROWS = "SELECT distinct generic_name FROM drug_list WHERE length(brand_name) > 1 ORDER BY generic_name asc";
-    public static final String DELETE_ALL_NDI_ADDED = "DELETE FROM ddp_ndi WHERE ndi_id = ?";
     private static final String SQL_SELECT_PK_FROM_TABLE = "SELECT %PK FROM %TABLE WHERE participant_id = ? LIMIT 1";
     private static final String SQL_DELETE_PK_FROM_TABLE = "DELETE FROM %TABLE WHERE %PK = ?";
     private static final String SQL_INSERT_USER = "INSERT INTO access_user (user_id, name, email, is_active) VALUES (?, ?, ?, ?)";
@@ -78,15 +100,10 @@ public class DBTestUtil {
     private static final String SQL_DELETE_MESSAGE_BY_USER_ID =
             "DELETE FROM " +
                     "message " +
-            "WHERE " +
+                    "WHERE " +
                     "user_id = ? " +
-            "ORDER BY published_at DESC " +
-            "LIMIT 1";
-    public static final String SQL_INSERT_KIT_REQUEST = "INSERT INTO ddp_kit_request " +
-            "(ddp_instance_id, ddp_kit_request_id, kit_type_id, ddp_participant_id, bsp_collaborator_participant_id, bsp_collaborator_sample_id, " +
-            "ddp_label, created_by, created_date, external_order_number, upload_reason, external_order_date, external_order_status) " +
-            "values (?,?,?,?,?,?,?,?,?,?,?,?,?)";
-    public static final long WEEK = 7 * 24 * 60 * 60 * 1000;
+                    "ORDER BY published_at DESC " +
+                    "LIMIT 1";
 
     public static void deleteAllParticipantData(String participantMaxVersionId) {
         deleteAllParticipantData(participantMaxVersionId, false);
@@ -97,8 +114,7 @@ public class DBTestUtil {
         do {
             if (idIsDDPParticipantId) {
                 participantId = getQueryDetail(SELECT_PARTICIPANT_QUERY_2, participantMaxVersionId, "participant_id");
-            }
-            else {
+            } else {
                 participantId = getQueryDetail(SELECT_PARTICIPANT_QUERY, participantMaxVersionId, "participant_id");
             }
             if (StringUtils.isNotBlank(participantId)) {
@@ -114,7 +130,8 @@ public class DBTestUtil {
                         if (StringUtils.isNotBlank(medicalRecordId)) {
                             String medicalRecordLogId;
                             do {
-                                medicalRecordLogId = getQueryDetail(SELECT_MEDICALRECORDLOG_QUERY, medicalRecordId, "medical_record_log_id");
+                                medicalRecordLogId =
+                                        getQueryDetail(SELECT_MEDICALRECORDLOG_QUERY, medicalRecordId, "medical_record_log_id");
                                 executeQuery(DELETE_EMAIL_QUERY, "MR_ID_" + medicalRecordId);
                                 if (StringUtils.isNotBlank(medicalRecordLogId)) {
                                     executeQuery(DELETE_MEDICALRECORDLOG_QUERY, medicalRecordLogId);
@@ -160,17 +177,20 @@ public class DBTestUtil {
         String participantId = getQueryDetail(SELECT_PARTICIPANT_QUERY_2, ddpParticipantId, "participant_id");
         if (StringUtils.isNotBlank(participantId)) {
             //delete abstraction activity
-            deleteAllDataForPrimaryKeyFromTable("medical_record_abstraction_activities_id", "ddp_medical_record_abstraction_activities", participantId);
+            deleteAllDataForPrimaryKeyFromTable("medical_record_abstraction_activities_id", "ddp_medical_record_abstraction_activities",
+                    participantId);
             deleteAllDataForPrimaryKeyFromTable("medical_record_abstraction_id", "ddp_medical_record_abstraction", participantId);
             deleteAllDataForPrimaryKeyFromTable("medical_record_review_id", "ddp_medical_record_review", participantId);
             deleteAllDataForPrimaryKeyFromTable("medical_record_qc_id", "ddp_medical_record_qc", participantId);
         }
     }
 
-    private static void deleteAllDataForPrimaryKeyFromTable(@NonNull String pkName, @NonNull String tableName, @NonNull String participantId) {
+    private static void deleteAllDataForPrimaryKeyFromTable(@NonNull String pkName, @NonNull String tableName,
+                                                            @NonNull String participantId) {
         String abstractionActivityId;
         do {
-            abstractionActivityId = getQueryDetail(SQL_SELECT_PK_FROM_TABLE.replace("%PK", pkName).replace("%TABLE", tableName), participantId, pkName);
+            abstractionActivityId =
+                    getQueryDetail(SQL_SELECT_PK_FROM_TABLE.replace("%PK", pkName).replace("%TABLE", tableName), participantId, pkName);
             if (StringUtils.isNotBlank(abstractionActivityId)) {
                 executeQuery(SQL_DELETE_PK_FROM_TABLE.replace("%PK", pkName).replace("%TABLE", tableName), abstractionActivityId);
             }
@@ -246,7 +266,8 @@ public class DBTestUtil {
         createTestData(realm, participantId, institutionId, "66666666", false, null);
     }
 
-    public static void createTestData(@NonNull String realm, @NonNull String participantId, @NonNull String institutionId, String lastVersion, boolean addFakeData, String shortId) {
+    public static void createTestData(@NonNull String realm, @NonNull String participantId, @NonNull String institutionId,
+                                      String lastVersion, boolean addFakeData, String shortId) {
         String insertParticipant = "insert ignore into " +
                 "ddp_participant" +
                 "(ddp_participant_id," +
@@ -256,7 +277,9 @@ public class DBTestUtil {
                 "release_completed, " +
                 "last_changed, changed_by) " +
                 "values " +
-                "(\"" + participantId + "\", " + lastVersion + ", \"2017-02-07T18:07:02Z\", " + DBTestUtil.getQueryDetail(DBUtil.GET_REALM_QUERY, realm, "ddp_instance_id") + ", 1, " + System.currentTimeMillis() + " , \"SYSTEM\")";
+                "(\"" + participantId + "\", " + lastVersion + ", \"2017-02-07T18:07:02Z\", " +
+                DBTestUtil.getQueryDetail(DBUtil.GET_REALM_QUERY, realm, "ddp_instance_id") + ", 1, " + System.currentTimeMillis() +
+                " , \"SYSTEM\")";
         executeQueryReturnKey(insertParticipant);
 
         String insertInstitution1 = "insert ignore into " +
@@ -270,7 +293,8 @@ public class DBTestUtil {
                 "from " +
                 "ddp_participant " +
                 "where " +
-                "ddp_participant_id = \"" + participantId + "\" AND ddp_instance_id = " + DBTestUtil.getQueryDetail(DBUtil.GET_REALM_QUERY, realm, "ddp_instance_id") + "), " + System.currentTimeMillis() + ")";
+                "ddp_participant_id = \"" + participantId + "\" AND ddp_instance_id = " +
+                DBTestUtil.getQueryDetail(DBUtil.GET_REALM_QUERY, realm, "ddp_instance_id") + "), " + System.currentTimeMillis() + ")";
         int institutionId1 = executeQueryReturnKey(insertInstitution1);
 
         if (!addFakeData) {
@@ -365,10 +389,10 @@ public class DBTestUtil {
                 values.add(String.valueOf(System.currentTimeMillis()));
                 values.add("UNIT-TEST");
                 values.add(String.valueOf(medicalRecord1Id));
-                executeQueryWStrings("UPDATE ddp_medical_record SET name = ?, contact = ?, phone = ?, fax = ?, fax_sent = ?, fax_sent_by = ?, fax_confirmed = ?, mr_received = ?, notes = ?," +
-                        "last_changed = ?, changed_by = ? WHERE medical_record_id = ?", values);
-            }
-            else {
+                executeQueryWStrings(
+                        "UPDATE ddp_medical_record SET name = ?, contact = ?, phone = ?, fax = ?, fax_sent = ?, fax_sent_by = ?, fax_confirmed = ?, mr_received = ?, notes = ?," +
+                                "last_changed = ?, changed_by = ? WHERE medical_record_id = ?", values);
+            } else {
                 values.add("Institution " + lastVersion);
                 values.add("Dr. " + lastVersion);
                 values.add("123-456-7890");
@@ -380,8 +404,9 @@ public class DBTestUtil {
                 values.add(String.valueOf(System.currentTimeMillis()));
                 values.add("UNIT-TEST");
                 values.add(String.valueOf(medicalRecord1Id));
-                executeQueryWStrings("UPDATE ddp_medical_record SET name = ?, contact = ?, phone = ?, fax = ?, fax_sent = ?, fax_sent_by = ?, fax_confirmed = ?, notes = ?," +
-                        "last_changed = ?, changed_by = ? WHERE medical_record_id = ?", values);
+                executeQueryWStrings(
+                        "UPDATE ddp_medical_record SET name = ?, contact = ?, phone = ?, fax = ?, fax_sent = ?, fax_sent_by = ?, fax_confirmed = ?, notes = ?," +
+                                "last_changed = ?, changed_by = ? WHERE medical_record_id = ?", values);
             }
 
             if (ThreadLocalRandom.current().nextInt(1, 2 + 1) == 1) {
@@ -402,11 +427,11 @@ public class DBTestUtil {
                 values.add(String.valueOf(System.currentTimeMillis()));
                 values.add("UNIT-TEST");
                 values.add(String.valueOf(oncHistoryDetail1Id));
-                executeQueryWStrings("UPDATE ddp_onc_history_detail SET date_px = ?, type_px = ?, location_px = ?, histology = ?, accession_number = ?, " +
-                        "facility = ?, phone= ?, fax = ?, fax_sent = ?, fax_sent_by = ?, fax_confirmed = ?, notes = ?, request = ?," +
-                        "last_changed = ?, changed_by = ? WHERE onc_history_detail_id = ?", values);
-            }
-            else {
+                executeQueryWStrings(
+                        "UPDATE ddp_onc_history_detail SET date_px = ?, type_px = ?, location_px = ?, histology = ?, accession_number = ?, " +
+                                "facility = ?, phone= ?, fax = ?, fax_sent = ?, fax_sent_by = ?, fax_confirmed = ?, notes = ?, request = ?," +
+                                "last_changed = ?, changed_by = ? WHERE onc_history_detail_id = ?", values);
+            } else {
                 values = new ArrayList<>();
                 values.add("2019-" + ThreadLocalRandom.current().nextInt(1, 12 + 1) + "-" + ThreadLocalRandom.current().nextInt(1, 27 + 1));
                 values.add("Biopsy " + lastVersion);
@@ -421,9 +446,10 @@ public class DBTestUtil {
                 values.add(String.valueOf(System.currentTimeMillis()));
                 values.add("UNIT-TEST");
                 values.add(String.valueOf(oncHistoryDetail1Id));
-                executeQueryWStrings("UPDATE ddp_onc_history_detail SET date_px = ?, type_px = ?, location_px = ?, histology = ?, accession_number = ?, " +
-                        "facility = ?, phone= ?, fax = ?, notes = ?, request = ?," +
-                        "last_changed = ?, changed_by = ? WHERE onc_history_detail_id = ?", values);
+                executeQueryWStrings(
+                        "UPDATE ddp_onc_history_detail SET date_px = ?, type_px = ?, location_px = ?, histology = ?, accession_number = ?, " +
+                                "facility = ?, phone= ?, fax = ?, notes = ?, request = ?," +
+                                "last_changed = ?, changed_by = ? WHERE onc_history_detail_id = ?", values);
             }
 
             values = new ArrayList<>();
@@ -444,9 +470,10 @@ public class DBTestUtil {
             values.add(String.valueOf(System.currentTimeMillis()));
             values.add("UNIT-TEST");
             values.add(String.valueOf(oncHistoryDetail2Id));
-            executeQueryWStrings("UPDATE ddp_onc_history_detail SET date_px = ?, type_px = ?, location_px = ?, histology = ?, accession_number = ?, " +
-                    "facility = ?, phone= ?, fax = ?, fax_sent = ?, fax_sent_by = ?, fax_confirmed = ?, tissue_received = ?, notes = ?, request = ?, " +
-                    "last_changed = ?, changed_by = ? WHERE onc_history_detail_id = ?", values);
+            executeQueryWStrings(
+                    "UPDATE ddp_onc_history_detail SET date_px = ?, type_px = ?, location_px = ?, histology = ?, accession_number = ?, " +
+                            "facility = ?, phone= ?, fax = ?, fax_sent = ?, fax_sent_by = ?, fax_confirmed = ?, tissue_received = ?, notes = ?, request = ?, " +
+                            "last_changed = ?, changed_by = ? WHERE onc_history_detail_id = ?", values);
 
             if (ThreadLocalRandom.current().nextInt(1, 2 + 1) == 1) {
                 values = new ArrayList<>();
@@ -468,11 +495,11 @@ public class DBTestUtil {
                 values.add(String.valueOf(System.currentTimeMillis()));
                 values.add("UNIT-TEST");
                 values.add(String.valueOf(tissueId3));
-                executeQueryWStrings("UPDATE ddp_tissue SET notes = ?, h_e_count = ?, scrolls_count = ?, blocks_count = ?, uss_count = ?, " +
-                        "tissue_type = ?, tumor_type= ?, block_sent = ?, shl_work_number = ?, scrolls_received = ?, sent_gp = ?, sk_id = ?, sm_id = ?, first_sm_id = ?, " +
-                        "collaborator_sample_id = ?, last_changed = ?, changed_by = ? WHERE tissue_id = ?", values);
-            }
-            else {
+                executeQueryWStrings(
+                        "UPDATE ddp_tissue SET notes = ?, h_e_count = ?, scrolls_count = ?, blocks_count = ?, uss_count = ?, " +
+                                "tissue_type = ?, tumor_type= ?, block_sent = ?, shl_work_number = ?, scrolls_received = ?, sent_gp = ?, sk_id = ?, sm_id = ?, first_sm_id = ?, " +
+                                "collaborator_sample_id = ?, last_changed = ?, changed_by = ? WHERE tissue_id = ?", values);
+            } else {
                 values = new ArrayList<>();
                 values.add("Tissue created by Unit Test");
                 values.add(String.valueOf(ThreadLocalRandom.current().nextInt(0, 10 + 1)));
@@ -504,11 +531,10 @@ public class DBTestUtil {
                 stmt.setString(3, userDto.getEmail().orElse(""));
                 stmt.setInt(4, is_active);
                 int result = stmt.executeUpdate();
-                if (result != 1){
+                if (result != 1) {
                     throw new RuntimeException("Error adding new user, it was adding " + result + " rows");
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -525,11 +551,10 @@ public class DBTestUtil {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_USER_BY_ID)) {
                 stmt.setInt(1, userId);
                 int result = stmt.executeUpdate();
-                if (result != 1){
+                if (result != 1) {
                     throw new RuntimeException("Error deleting user, it was deleting " + result + " rows");
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -551,8 +576,7 @@ public class DBTestUtil {
                         dbVals.resultValue = rs.getString(returnColumn);
                     }
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 dbVals.resultException = e;
             }
             return dbVals;
@@ -575,8 +599,7 @@ public class DBTestUtil {
                         dbVals.resultValue = rs.getString(column);
                     }
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 dbVals.resultException = e;
             }
             return dbVals;
@@ -611,8 +634,7 @@ public class DBTestUtil {
                         dbVals.resultValue = rs.getString(returnColumn);
                     }
                 }
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 dbVals.resultException = e;
             }
             return dbVals;
@@ -633,8 +655,7 @@ public class DBTestUtil {
                     counter++;
                 }
                 stmt.executeUpdate();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException("Error executeQueryWStrings", e);
             }
             return null;
@@ -657,8 +678,7 @@ public class DBTestUtil {
                         dbVals.resultValue = rs.getInt(1);
                     }
                 }
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 dbVals.resultException = e;
             }
             return dbVals;
@@ -681,8 +701,7 @@ public class DBTestUtil {
                         dbVals.resultValue = rs.getInt(1);
                     }
                 }
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 dbVals.resultException = e;
             }
             return dbVals;
@@ -705,8 +724,7 @@ public class DBTestUtil {
                     stmt.setString(1, value);
                 }
                 stmt.executeUpdate();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException("Error executeQuery", e);
             }
             return null;
@@ -725,15 +743,15 @@ public class DBTestUtil {
                 stmt.setString(3, kitLabel);
                 stmt.setString(4, ddpLabel);
                 stmt.executeUpdate();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException("Error setKitToSent", e);
             }
             return null;
         });
     }
 
-    public static void setKitToStatus(String kitLabel, String ddpLabel, String toStatus, String returnStatus, String toDate, String returnDate) {
+    public static void setKitToStatus(String kitLabel, String ddpLabel, String toStatus, String returnStatus, String toDate,
+                                      String returnDate) {
         inTransaction((conn) -> {
             try (PreparedStatement stmt = conn.prepareStatement(UPDATE_KIT_SENT_UPS)) {
                 stmt.setLong(1, System.currentTimeMillis());
@@ -745,8 +763,7 @@ public class DBTestUtil {
                 stmt.setString(7, returnDate);
                 stmt.setString(8, ddpLabel);
                 stmt.executeUpdate();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException("Error setKitToSent", e);
             }
             return null;
@@ -766,40 +783,45 @@ public class DBTestUtil {
                 stmt.setLong(8, System.currentTimeMillis());
                 stmt.setString(9, ddpLabel);
                 stmt.executeUpdate();
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException("Error setKitToReceived", e);
             }
             return null;
         });
     }
 
-    public static void insertLatestKitRequest(String insertKitRequestQuery, String insertKitQuery, String suffix, int kitType, String instanceId) {
+    public static void insertLatestKitRequest(String insertKitRequestQuery, String insertKitQuery, String suffix, int kitType,
+                                              String instanceId) {
         insertLatestKitRequest(insertKitRequestQuery, insertKitQuery, suffix, kitType, instanceId, null);
     }
 
-    public static void insertLatestKitRequest(String insertKitRequestQuery, String insertKitQuery, String suffix, int kitType, String instanceId, String ddpParticipantId) {
+    public static void insertLatestKitRequest(String insertKitRequestQuery, String insertKitQuery, String suffix, int kitType,
+                                              String instanceId, String ddpParticipantId) {
         String testAddress = "adr_64dad76d44c24a5daa95c0148ecb3ea8";
         String testShipment = "shp_428f62fbafe84b33a4b5d9685981390a";
         if (TestHelper.INSTANCE_ID_2 == instanceId) {
             testAddress = "adr_3633293dc8db49c99e962ca251a0eab4";
             testShipment = "shp_529711e853f048bb9c0cbc527204c7d4";
         }
-        insertLatestKitRequest(insertKitRequestQuery, insertKitQuery, suffix, kitType, instanceId, testAddress, testShipment, ddpParticipantId, System.currentTimeMillis());
-    }
-
-    public static void insertLatestKitRequest(String insertKitRequestQuery, String insertKitQuery, String suffix, int kitType, String instanceId, String ddpParticipantId, long ordered) {
-        String testAddress = "adr_64dad76d44c24a5daa95c0148ecb3ea8";
-        String testShipment = "shp_428f62fbafe84b33a4b5d9685981390a";
-        if (TestHelper.INSTANCE_ID_2 == instanceId) {
-            testAddress = "adr_3633293dc8db49c99e962ca251a0eab4";
-            testShipment = "shp_529711e853f048bb9c0cbc527204c7d4";
-        }
-        insertLatestKitRequest(insertKitRequestQuery, insertKitQuery, suffix, kitType, instanceId, testAddress, testShipment, ddpParticipantId, ordered);
+        insertLatestKitRequest(insertKitRequestQuery, insertKitQuery, suffix, kitType, instanceId, testAddress, testShipment,
+                ddpParticipantId, System.currentTimeMillis());
     }
 
     public static void insertLatestKitRequest(String insertKitRequestQuery, String insertKitQuery, String suffix, int kitType,
-                                              String instanceId, String testAddress, String testShipment, String ddpParticipantId, long ordered) {
+                                              String instanceId, String ddpParticipantId, long ordered) {
+        String testAddress = "adr_64dad76d44c24a5daa95c0148ecb3ea8";
+        String testShipment = "shp_428f62fbafe84b33a4b5d9685981390a";
+        if (TestHelper.INSTANCE_ID_2 == instanceId) {
+            testAddress = "adr_3633293dc8db49c99e962ca251a0eab4";
+            testShipment = "shp_529711e853f048bb9c0cbc527204c7d4";
+        }
+        insertLatestKitRequest(insertKitRequestQuery, insertKitQuery, suffix, kitType, instanceId, testAddress, testShipment,
+                ddpParticipantId, ordered);
+    }
+
+    public static void insertLatestKitRequest(String insertKitRequestQuery, String insertKitQuery, String suffix, int kitType,
+                                              String instanceId, String testAddress, String testShipment, String ddpParticipantId,
+                                              long ordered) {
         inTransaction((conn) -> {
             try (PreparedStatement stmt = conn.prepareStatement(insertKitRequestQuery, PreparedStatement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, instanceId);
@@ -841,26 +863,26 @@ public class DBTestUtil {
                 }
                 if (kitRequestKey != -1) {
                     //add ups shipment
-                    PreparedStatement insertShipment = conn.prepareStatement(SQL_INSERT_UPS_SHIPMENT, PreparedStatement.RETURN_GENERATED_KEYS);
+                    PreparedStatement insertShipment =
+                            conn.prepareStatement(SQL_INSERT_UPS_SHIPMENT, PreparedStatement.RETURN_GENERATED_KEYS);
                     insertShipment.setInt(1, kitRequestKey);
                     insertShipment.executeUpdate();
 
                     ResultSet upsShipmentRS = insertShipment.getGeneratedKeys();
                     if (upsShipmentRS.next()) {
                         int shipmentId = upsShipmentRS.getInt(1);
-                         addUPSPackage(conn, shipmentId, "FAKE_TRACKING_TO_ID" + suffix);
-                         addUPSPackage(conn, shipmentId, "FAKE_TRACKING_RETURN_ID" + suffix);
+                        addUPSPackage(conn, shipmentId, "FAKE_TRACKING_TO_ID" + suffix);
+                        addUPSPackage(conn, shipmentId, "FAKE_TRACKING_RETURN_ID" + suffix);
                     }
                 }
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException("Error insertLatestKitRequest", e);
             }
             return null;
         });
     }
 
-    private static void addUPSPackage (Connection conn, int shipmentId, String trackingNumber) throws SQLException {
+    private static void addUPSPackage(Connection conn, int shipmentId, String trackingNumber) throws SQLException {
         //add ups package
         PreparedStatement insertPackage = conn.prepareStatement(SQL_INSERT_UPS_PACKAGE, PreparedStatement.RETURN_GENERATED_KEYS);
         insertPackage.setInt(1, shipmentId);
@@ -888,7 +910,8 @@ public class DBTestUtil {
         }
     }
 
-    private static void addUPSActivity(Connection conn, int packageId, String location, String status, String description, String code, String dateTime) throws SQLException {
+    private static void addUPSActivity(Connection conn, int packageId, String location, String status, String description, String code,
+                                       String dateTime) throws SQLException {
         //add ups activity
         PreparedStatement insertPackage = conn.prepareStatement(SQL_INSERT_UPS_ACTIVITY);
         insertPackage.setInt(1, packageId);
@@ -915,8 +938,7 @@ public class DBTestUtil {
                         dbVals.resultValue = true;
                     }
                 }
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException("Error checkIfValueExists ", e);
             }
             return dbVals;
@@ -961,8 +983,7 @@ public class DBTestUtil {
                     list.add(rs.getString(returnColumn));
                 }
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             dbVals.resultException = e;
         }
         return dbVals;
@@ -977,7 +998,8 @@ public class DBTestUtil {
      * @param displayType        Display type of field (number, text, textarea, boolean, select, or multi-select)
      * @param possibleValuesList If displayType is select or multiselect, the possible values
      */
-    public static void createAdditionalFieldForRealm(String name, String displayName, String fieldType, String displayType, List<Value> possibleValuesList) {
+    public static void createAdditionalFieldForRealm(String name, String displayName, String fieldType, String displayType,
+                                                     List<Value> possibleValuesList) {
         String possibleValues = new GsonBuilder().create().toJson(possibleValuesList, ArrayList.class);
         List<String> strings = new ArrayList<>();
         strings.add(TestHelper.TEST_DDP);
@@ -991,8 +1013,7 @@ public class DBTestUtil {
         strings2.add(displayType);
         if (!"null".equals(possibleValues)) {
             strings2.add(possibleValues);
-        }
-        else {
+        } else {
             strings2.add(null);
         }
 
@@ -1045,8 +1066,7 @@ public class DBTestUtil {
         String possibleValuesString = getQueryDetail(columnQuery, settingId, "possible_values");
         if (possibleValuesString == null || possibleValuesString.isEmpty() || "[]".equals(possibleValuesString)) {
             possibleValues = null;
-        }
-        else {
+        } else {
             Type arrayListValueType = new TypeToken<ArrayList<Value>>() {
             }.getType();
             possibleValues = new Gson().fromJson(possibleValuesString, arrayListValueType);
@@ -1058,7 +1078,8 @@ public class DBTestUtil {
             deleted = true;
         }
 
-        FieldSettings setting = new FieldSettings(settingId, columnName, columnDisplay, fieldType, displayType, possibleValues, new Integer(orderNumber).intValue(), null, false, null);
+        FieldSettings setting = new FieldSettings(settingId, columnName, columnDisplay, fieldType, displayType, possibleValues,
+                new Integer(orderNumber).intValue(), null, false, null);
         setting.setDeleted(deleted);
         checkSettingMatch(setting, expectedFieldType, expectedColumnDisplay, expectedColumnName, expectedDisplayType,
                 expectedPossibleValues, expectedDeleted, "setting with id " + settingId);
@@ -1107,18 +1128,15 @@ public class DBTestUtil {
                 throw new RuntimeException("checkSettingsMatch: possible_values for " + fieldDescription + " had " +
                         setting.getPossibleValues().size() + " elements instead of being empty");
             }
-        }
-        else if (setting.getPossibleValues() == null || setting.getPossibleValues().isEmpty()) {
+        } else if (setting.getPossibleValues() == null || setting.getPossibleValues().isEmpty()) {
             //If we are expecting possible values, make sure there are some
             throw new RuntimeException("checkSettingsMatch: possible_values for " + fieldDescription + " was empty " +
                     " instead of having " + expectedPossibleValues.size() + " elements");
-        }
-        else if (expectedPossibleValues.size() != setting.getPossibleValues().size()) {
+        } else if (expectedPossibleValues.size() != setting.getPossibleValues().size()) {
             //The number of settings should match
             throw new RuntimeException("checkSettingsMatch: possible_values for " + fieldDescription + " had " +
                     setting.getPossibleValues().size() + " elements instead of " + expectedPossibleValues.size());
-        }
-        else {
+        } else {
             //Make sure the actual settings match
             for (Value v : expectedPossibleValues) {
                 if (!setting.getPossibleValues().contains(v)) {
@@ -1135,11 +1153,10 @@ public class DBTestUtil {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_MESSAGE_BY_USER_ID)) {
                 stmt.setInt(1, userId);
                 int result = stmt.executeUpdate();
-                if (result != 1){
+                if (result != 1) {
                     throw new RuntimeException("Error deleting message, it was deleting " + result + " rows");
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -1150,7 +1167,8 @@ public class DBTestUtil {
         }
     }
 
-    public static DDPInstanceDto createTestDdpInstance(DDPInstanceDto ddpInstanceDto, DDPInstanceDao ddpInstanceDao, String ddpInstanceName) {
+    public static DDPInstanceDto createTestDdpInstance(DDPInstanceDto ddpInstanceDto, DDPInstanceDao ddpInstanceDao,
+                                                       String ddpInstanceName) {
         ddpInstanceDto = new DDPInstanceDto.Builder().build();
         ddpInstanceDto.setInstanceName(ddpInstanceName);
         int testCreatedInstanceId = ddpInstanceDao.create(ddpInstanceDto);

@@ -1,10 +1,6 @@
 package org.broadinstitute.dsm.model.elastic.export.parse;
 
 import java.lang.reflect.Field;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeParseException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
@@ -63,7 +59,7 @@ public abstract class BaseParser implements Parser {
 
     protected boolean isBoolean(String value) {
         return convertBoolean(value).equalsIgnoreCase(Boolean.TRUE.toString()) ||
-               convertBoolean(value).equalsIgnoreCase(Boolean.FALSE.toString());
+                convertBoolean(value).equalsIgnoreCase(Boolean.FALSE.toString());
     }
 
     public String convertBoolean(String value) {
@@ -77,8 +73,9 @@ public abstract class BaseParser implements Parser {
     }
 
     public String convertString(String value) {
-        if (isWrappedByChar(value))
+        if (isWrappedByChar(value)) {
             return value.substring(1, value.length() - 1);
+        }
         return value;
     }
 

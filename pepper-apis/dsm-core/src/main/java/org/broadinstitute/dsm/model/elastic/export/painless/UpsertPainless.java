@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.export.painless;
 
+import java.io.IOException;
+
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.model.elastic.export.generate.Generator;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -12,16 +14,13 @@ import org.elasticsearch.script.ScriptType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-
 public class UpsertPainless implements Exportable {
 
+    private static final Logger logger = LoggerFactory.getLogger(UpsertPainless.class);
     private Generator generator;
     private String index;
     private ScriptBuilder scriptBuilder;
     private QueryBuilder queryBuilder;
-
-    private static final Logger logger = LoggerFactory.getLogger(UpsertPainless.class);
 
 
     public UpsertPainless(Generator generator, String index, ScriptBuilder scriptBuilder, QueryBuilder queryBuilder) {

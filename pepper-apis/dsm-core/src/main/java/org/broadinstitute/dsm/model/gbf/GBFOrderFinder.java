@@ -27,12 +27,6 @@ import org.slf4j.LoggerFactory;
 public class GBFOrderFinder {
 
     private static final Logger logger = LoggerFactory.getLogger(GBFOrderFinder.class);
-
-    private final int maxOrdersToProcess;
-    private final String esIndex;
-    private final RestHighLevelClient esClient;
-    private int maxDaysToReturnPreviousKit = 99999; // many years later
-
     private static final String FIND_KITS_TO_ORDER_QUERY =
             " " +
                     "select distinct " +
@@ -116,6 +110,10 @@ public class GBFOrderFinder {
                     "and " +
                     "subkit.kit_type_id = orders.kit_type_id " +
                     "order by max_kit_request_id asc limit ? ";
+    private final int maxOrdersToProcess;
+    private final String esIndex;
+    private final RestHighLevelClient esClient;
+    private int maxDaysToReturnPreviousKit = 99999; // many years later
 
     public GBFOrderFinder(Integer maxDaysToReturnPreviousKit,
                           int maxOrdersToProcess,
@@ -129,49 +127,9 @@ public class GBFOrderFinder {
         this.esIndex = esIndex;
     }
 
-    public Collection<SimpleKitOrder> findKitsToOrder(String ddpInstanceName, Connection conn) {
-        Set<String> participantGuids = new HashSet<>();
-        List<SimpleKitOrder> kitsToOrder = new ArrayList<>();
-        try (PreparedStatement stmt = conn.prepareStatement(FIND_KITS_TO_ORDER_QUERY,ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
-            stmt.setString(1, ddpInstanceName);
-            stmt.setString(2, ddpInstanceName);
-            stmt.setInt(3, maxDaysToReturnPreviousKit);
-            stmt.setString(4, ddpInstanceName);
-            stmt.setString(5, ddpInstanceName);
-            stmt.setInt(6, maxOrdersToProcess);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                // loop through once to get participants
-                while (rs.next()) {
-                    participantGuids.add(rs.getString(DBConstants.DDP_PARTICIPANT_ID));
-                }
-
-                if (!participantGuids.isEmpty()) {
-                    logger.info("Found {} participants", participantGuids.size());
-                    Map<String, Address> addressForParticipants = ElasticSearchUtil.getParticipantAddresses(esClient, esIndex, participantGuids);
-                    // now iterate again to get address
-                    while (rs.previous()) {
-                        String participantGuid = rs.getString(DBConstants.DDP_PARTICIPANT_ID);
-                        String externalOrderId = rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER);
-                        String kitName = rs.getString(DBConstants.EXTERNAL_KIT_NAME);
-                        if (addressForParticipants.containsKey(participantGuid)) {
-                            Address recipientAddress = addressForParticipants.get(participantGuid);
-                            kitsToOrder.add(new SimpleKitOrder(recipientAddress, externalOrderId, kitName, participantGuid));
-                        } else {
-                            logger.error("No address found in elastic for {}",participantGuid);
-                        }
-                    }
-                } // else no participants, which will happen if there are no pending kits
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Error querying kits", e);
-        }
-        return kitsToOrder;
-    }
-
     /**
      * Prints out orders, but does not order them
+     *
      * @param args
      */
     public static void main(String[] args) {
@@ -188,7 +146,7 @@ public class GBFOrderFinder {
         try {
             esClient = ElasticSearchUtil.getClientForElasticsearchCloud(esUrl, esUser, esPassword);
         } catch (MalformedURLException e) {
-            throw new RuntimeException("Could not initialize es client",e);
+            throw new RuntimeException("Could not initialize es client", e);
         }
         GBFOrderFinder orderFinder = new GBFOrderFinder(numDays, 10000, esClient, "participants_structured.testboston.testboston");
 
@@ -206,5 +164,48 @@ public class GBFOrderFinder {
         });
         System.exit(0);
 
+    }
+
+    public Collection<SimpleKitOrder> findKitsToOrder(String ddpInstanceName, Connection conn) {
+        Set<String> participantGuids = new HashSet<>();
+        List<SimpleKitOrder> kitsToOrder = new ArrayList<>();
+        try (PreparedStatement stmt = conn.prepareStatement(FIND_KITS_TO_ORDER_QUERY, ResultSet.TYPE_SCROLL_SENSITIVE,
+                ResultSet.CONCUR_UPDATABLE)) {
+            stmt.setString(1, ddpInstanceName);
+            stmt.setString(2, ddpInstanceName);
+            stmt.setInt(3, maxDaysToReturnPreviousKit);
+            stmt.setString(4, ddpInstanceName);
+            stmt.setString(5, ddpInstanceName);
+            stmt.setInt(6, maxOrdersToProcess);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                // loop through once to get participants
+                while (rs.next()) {
+                    participantGuids.add(rs.getString(DBConstants.DDP_PARTICIPANT_ID));
+                }
+
+                if (!participantGuids.isEmpty()) {
+                    logger.info("Found {} participants", participantGuids.size());
+                    Map<String, Address> addressForParticipants =
+                            ElasticSearchUtil.getParticipantAddresses(esClient, esIndex, participantGuids);
+                    // now iterate again to get address
+                    while (rs.previous()) {
+                        String participantGuid = rs.getString(DBConstants.DDP_PARTICIPANT_ID);
+                        String externalOrderId = rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER);
+                        String kitName = rs.getString(DBConstants.EXTERNAL_KIT_NAME);
+                        if (addressForParticipants.containsKey(participantGuid)) {
+                            Address recipientAddress = addressForParticipants.get(participantGuid);
+                            kitsToOrder.add(new SimpleKitOrder(recipientAddress, externalOrderId, kitName, participantGuid));
+                        } else {
+                            logger.error("No address found in elastic for {}", participantGuid);
+                        }
+                    }
+                } // else no participants, which will happen if there are no pending kits
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error querying kits", e);
+        }
+        return kitsToOrder;
     }
 }

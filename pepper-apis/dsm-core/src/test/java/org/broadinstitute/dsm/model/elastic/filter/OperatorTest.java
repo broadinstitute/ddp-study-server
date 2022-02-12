@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.model.elastic.filter;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import org.broadinstitute.dsm.model.Filter;
 import org.junit.Assert;

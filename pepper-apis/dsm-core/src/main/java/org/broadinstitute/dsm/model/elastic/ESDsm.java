@@ -8,7 +8,12 @@ import java.util.Optional;
 import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 import lombok.Setter;
-import org.broadinstitute.dsm.db.*;
+import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.MedicalRecord;
+import org.broadinstitute.dsm.db.OncHistory;
+import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.db.Participant;
+import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 
@@ -64,27 +69,37 @@ public class ESDsm {
     List<Map<String, Object>> tissueRecords;
 
     public List<Tissue> getTissue() {
-        if (tissue == null) tissue = Collections.emptyList();
+        if (tissue == null) {
+            tissue = Collections.emptyList();
+        }
         return tissue;
     }
 
     public List<MedicalRecord> getMedicalRecord() {
-        if (medicalRecord == null) medicalRecord = Collections.emptyList();
+        if (medicalRecord == null) {
+            medicalRecord = Collections.emptyList();
+        }
         return medicalRecord;
     }
 
     public List<OncHistoryDetail> getOncHistoryDetail() {
-        if (oncHistoryDetail == null) oncHistoryDetail = Collections.emptyList();
+        if (oncHistoryDetail == null) {
+            oncHistoryDetail = Collections.emptyList();
+        }
         return oncHistoryDetail;
     }
 
     public List<ParticipantData> getParticipantData() {
-        if (participantData == null) participantData = Collections.emptyList();
+        if (participantData == null) {
+            participantData = Collections.emptyList();
+        }
         return participantData;
     }
 
     public List<KitRequestShipping> getKitRequestShipping() {
-        if (kitRequestShipping == null) kitRequestShipping = Collections.emptyList();
+        if (kitRequestShipping == null) {
+            kitRequestShipping = Collections.emptyList();
+        }
         return kitRequestShipping;
     }
 

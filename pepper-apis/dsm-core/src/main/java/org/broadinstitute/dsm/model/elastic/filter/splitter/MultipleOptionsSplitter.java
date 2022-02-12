@@ -30,11 +30,11 @@ public class MultipleOptionsSplitter extends BaseSplitter {
     public String[] split() {
         String multipleFilters =
                 Filter.OR +
-                filter
-                .replace(Filter.OPEN_PARENTHESIS, StringUtils.EMPTY)
-                .replace(Filter.CLOSE_PARENTHESIS, StringUtils.EMPTY)
-                .trim();
+                        filter
+                                .replace(Filter.OPEN_PARENTHESIS, StringUtils.EMPTY)
+                                .replace(Filter.CLOSE_PARENTHESIS, StringUtils.EMPTY)
+                                .trim();
         List<String> splittedFilter = new AndOrFilterSeparator(multipleFilters).parseFiltersByLogicalOperators().get(Filter.OR_TRIMMED);
-        return splittedFilter.toArray(new String[]{});
+        return splittedFilter.toArray(new String[] {});
     }
 }

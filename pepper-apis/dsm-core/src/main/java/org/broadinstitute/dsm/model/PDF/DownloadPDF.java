@@ -1,5 +1,17 @@
 package org.broadinstitute.dsm.model.PDF;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -10,11 +22,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
-import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.util.ConfigUtil;
-import org.broadinstitute.lddp.exception.FileProcessingException;
-import org.broadinstitute.lddp.handlers.util.MedicalInfo;
-import org.broadinstitute.lddp.util.GoogleBucket;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
@@ -28,11 +36,11 @@ import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
+import org.broadinstitute.lddp.exception.FileProcessingException;
+import org.broadinstitute.lddp.handlers.util.MedicalInfo;
+import org.broadinstitute.lddp.util.GoogleBucket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.*;
-import java.util.*;
 
 @Getter
 public class DownloadPDF {
@@ -42,14 +50,12 @@ public class DownloadPDF {
     private static final String IRB = "irb";
     private static final String JSON_START_DATE = "startDate";
     private static final String JSON_END_DATE = "endDate";
-
+    List<String> oncHistoryIDs;
+    Logger logger = LoggerFactory.getLogger(DownloadPDF.class);
     private String ddpParticipantId;
     private String configName;
     private String medicalRecordId;
     private List<PDF> pdfs;
-    List<String> oncHistoryIDs;
-
-    Logger logger = LoggerFactory.getLogger(DownloadPDF.class);
 
     public DownloadPDF(@NonNull String requestBody) {
         JsonObject jsonObject = new JsonParser().parse(requestBody).getAsJsonObject();
@@ -77,7 +83,7 @@ public class DownloadPDF {
 
 
     public Optional<byte[]> getPDFs(long userIdRequest, String realm, String requestBody) {
-        UserDto user = new UserDao().get(userIdRequest ).orElseThrow();
+        UserDto user = new UserDao().get(userIdRequest).orElseThrow();
         Optional<byte[]> pdfBytes = Optional.empty();
         if (StringUtils.isNotBlank(this.ddpParticipantId)) {
             DDPInstance ddpInstance = DDPInstance.getDDPInstance(realm);
@@ -85,16 +91,14 @@ public class DownloadPDF {
                 String fileName = "";
                 if (configName == null) {
                     pdfBytes = getPDFBundle(ddpInstance, requestBody, user);
-                }
-                else {
+                } else {
                     pdfBytes = generateSinglePDF(requestBody, configName, user, ddpInstance);
                 }
                 pdfBytes.ifPresent(bytes -> {
                     savePDFinBucket(ddpInstance.getName(), ddpParticipantId, new ByteArrayInputStream(bytes), fileName, user.getId());
                 });
                 pdfBytes.orElseThrow();
-            }
-            else {
+            } else {
                 throw new RuntimeException("DDPInstance of participant " + ddpParticipantId + " not found");
             }
         }
@@ -105,16 +109,13 @@ public class DownloadPDF {
         byte[] pdfByte = null;
         if (COVER.equals(configName)) {
             pdfByte = new MRCoverPDF(this).getMRCoverPDF(requestBody, ddpInstance, user);
-        }
-        else if (IRB.equals(configName)) {
+        } else if (IRB.equals(configName)) {
             String groupId = DDPInstance.getDDPGroupId(ddpInstance.getName());
             pdfByte = PDFProcessor.getTemplateFromGoogleBucket(groupId + "_IRB_Letter.pdf");
-        }
-        else if (TISSUE.equals(configName) || REQUEST.equals(configName)) {
+        } else if (TISSUE.equals(configName) || REQUEST.equals(configName)) {
             TissueCoverPDF tissueCoverPDF = new TissueCoverPDF(this);
             pdfByte = tissueCoverPDF.getTissueCoverPDF(ddpInstance, user);
-        }
-        else if (configName != null) {
+        } else if (configName != null) {
             pdfByte = requestPDF(ddpInstance, ddpParticipantId, configName);
         }
         return Optional.ofNullable(pdfByte);
@@ -143,8 +144,7 @@ public class DownloadPDF {
                 }
                 pdfMerger.mergeDocuments(MemoryUsageSetting.setupTempFileOnly());
                 //todo get page count and add them to the cover/request pdf
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 throw new FileProcessingException("Unable to merge documents ", e);
             }
             return Optional.ofNullable(output.toByteArray());
@@ -156,18 +156,20 @@ public class DownloadPDF {
         try (InputStream stream = processor.generateStream(valueMap)) {
             stream.mark(0);
             return IOUtils.toByteArray(stream);
-        }
-        catch (IOException e) {
-            throw new RuntimeException("Couldn't get pdf for participant " + ddpParticipantId + " of ddpInstance " + ddpInstance.getName(), e);
+        } catch (IOException e) {
+            throw new RuntimeException("Couldn't get pdf for participant " + ddpParticipantId + " of ddpInstance " + ddpInstance.getName(),
+                    e);
         }
     }
 
-    public void addDDPParticipantDataToValueMap(@NonNull DDPInstance ddpInstance, @NonNull Map<String, Object> valueMap, boolean addDateOfDiagnosis, String ddpParticipantId) {
+    public void addDDPParticipantDataToValueMap(@NonNull DDPInstance ddpInstance, @NonNull Map<String, Object> valueMap,
+                                                boolean addDateOfDiagnosis, String ddpParticipantId) {
         DDPParticipant ddpParticipant = null;
         MedicalInfo medicalInfo = null;
         String dob = null;
         if (StringUtils.isNotBlank(ddpInstance.getParticipantIndexES())) {
-            Map<String, Map<String, Object>> participantsESData = ElasticSearchUtil.getDDPParticipantsFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES());
+            Map<String, Map<String, Object>> participantsESData =
+                    ElasticSearchUtil.getDDPParticipantsFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES());
             ddpParticipant = ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData, ddpParticipantId);
             medicalInfo = ElasticSearchUtil.getParticipantAsMedicalInfo(participantsESData, ddpParticipantId);
             dob = SystemUtil.changeDateFormat(SystemUtil.DATE_FORMAT, SystemUtil.US_DATE_FORMAT, medicalInfo.getDob());
@@ -181,14 +183,14 @@ public class DownloadPDF {
             if (StringUtils.isNotBlank(dod) && dod.startsWith("0/") && !dod.equals("0/0")) {
                 dod = "01/" + dod.split("/")[1];
                 valueMap.put(CoverPDFProcessor.FIELD_DATE_OF_DIAGNOSIS, dod);
-            }
-            else {
+            } else {
                 valueMap.put(CoverPDFProcessor.FIELD_DATE_OF_DIAGNOSIS, medicalInfo.getDateOfDiagnosis());
             }
         }
     }
 
-    private void savePDFinBucket(@NonNull String realm, @NonNull String ddpParticipantId, @NonNull InputStream stream, @NonNull String fileType, @NonNull Integer userId) {
+    private void savePDFinBucket(@NonNull String realm, @NonNull String ddpParticipantId, @NonNull InputStream stream,
+                                 @NonNull String fileType, @NonNull Integer userId) {
         String gcpName = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
         if (StringUtils.isNotBlank(gcpName)) {
             String bucketName = gcpName + "_dsm_" + realm.toLowerCase();
@@ -201,10 +203,10 @@ public class DownloadPDF {
                 if (GoogleBucket.bucketExists(credentials, gcpName, bucketName)) {
                     long time = System.currentTimeMillis();
                     GoogleBucket.uploadFile(credentials, gcpName, bucketName,
-                            ddpParticipantId + "/readonly/" + ddpParticipantId + "_" + fileType + "_" + userId + "_download_" + time + ".pdf", stream);
+                            ddpParticipantId + "/readonly/" + ddpParticipantId + "_" + fileType + "_" + userId + "_download_" + time +
+                                    ".pdf", stream);
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 logger.error("Failed to check for GCP bucket " + bucketName, e);
             }
         }
@@ -215,9 +217,9 @@ public class DownloadPDF {
         logger.info("Requesting pdf for participant  " + dsmRequest);
         try {
             return DDPRequestUtil.getPDFByteArray(dsmRequest, ddpInstance.getName(), ddpInstance.isHasAuth0Token());
-        }
-        catch (IOException e) {
-            throw new RuntimeException("Couldn't get pdf for participant " + ddpParticipantId + " of ddpInstance " + ddpInstance.getName(), e);
+        } catch (IOException e) {
+            throw new RuntimeException("Couldn't get pdf for participant " + ddpParticipantId + " of ddpInstance " + ddpInstance.getName(),
+                    e);
         }
     }
 

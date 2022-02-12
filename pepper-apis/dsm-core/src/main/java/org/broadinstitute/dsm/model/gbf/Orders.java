@@ -5,7 +5,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.List;
 
-@XmlRootElement(name="Orders")
+@XmlRootElement(name = "Orders")
 public class Orders {
 
     private List<Order> orders = new ArrayList<>();
@@ -14,7 +14,8 @@ public class Orders {
         orders.add(order);
     }
 
-    public Orders() { }
+    public Orders() {
+    }
 
     @XmlElement(name = "Order")
     public List<Order> getOrders() {

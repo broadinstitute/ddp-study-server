@@ -1,16 +1,20 @@
 package org.broadinstitute.dsm.model;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import lombok.Data;
 import lombok.NonNull;
-import org.broadinstitute.lddp.handlers.util.ParticipantSurveyInfo;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.exception.FileColumnMissing;
 import org.broadinstitute.dsm.exception.UploadLineException;
 import org.broadinstitute.dsm.util.SystemUtil;
+import org.broadinstitute.lddp.handlers.util.ParticipantSurveyInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.*;
 
 @Data
 public class ParticipantSurveyStatusResponse {
@@ -32,7 +36,7 @@ public class ParticipantSurveyStatusResponse {
         this.surveyInfo = surveyInfo;
     }
 
-    public static List<ParticipantSurveyUploadObject> isFileValid(@NonNull DDPInstance instance, @NonNull String fileContent){
+    public static List<ParticipantSurveyUploadObject> isFileValid(@NonNull DDPInstance instance, @NonNull String fileContent) {
         if (fileContent != null) {
             String linebreak = SystemUtil.lineBreak(fileContent);
             String[] rows = fileContent.split(linebreak);
@@ -54,26 +58,22 @@ public class ParticipantSurveyStatusResponse {
                                 if (instance.isHasRole()) {
                                     object = new ParticipantSurveyUploadObject(obj.get(SHORT_ID),
                                             obj.get(FIRST_NAME), obj.get(LAST_NAME), obj.get(EMAIL));
-                                }
-                                else {
+                                } else {
                                     object = new ParticipantSurveyUploadObject(obj.get(DDP_PARTICIPANT_ID));
                                 }
                                 if (object != null) {
                                     uploadObjects.add(object);
                                 }
-                            }
-                            catch (Exception e) {
+                            } catch (Exception e) {
                                 throw new RuntimeException("Text file is not valid. Couldn't be parsed to upload object ", e);
                             }
-                        }
-                        else {
+                        } else {
                             throw new UploadLineException("Error in line " + (rowIndex + 1));
                         }
                     }
                     logger.info(uploadObjects.size() + " participants were uploaded for followup surveys ");
                     return uploadObjects;
-                }
-                else {
+                } else {
                     throw new FileColumnMissing("File is missing column " + missingFieldName);
                 }
             }
@@ -95,8 +95,7 @@ public class ParticipantSurveyStatusResponse {
             if (!fieldName.contains(EMAIL)) {
                 return EMAIL;
             }
-        }
-        else {
+        } else {
             if (!fieldName.contains(DDP_PARTICIPANT_ID)) {
                 return DDP_PARTICIPANT_ID;
             }

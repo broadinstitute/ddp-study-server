@@ -10,7 +10,8 @@ public class GeneratorPayload {
     private String parent;
     private String parentId;
 
-    public GeneratorPayload() {}
+    public GeneratorPayload() {
+    }
 
     public GeneratorPayload(NameValue nameValue, int recordId) {
         this.nameValue = nameValue;

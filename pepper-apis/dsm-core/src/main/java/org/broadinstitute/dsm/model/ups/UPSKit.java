@@ -1,16 +1,17 @@
 package org.broadinstitute.dsm.model.ups;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-
 @Data
 public class UPSKit {
+    private static final Logger logger = LoggerFactory.getLogger(UPSKit.class.getName());
     // the two shipments differ in tracking id
     UPSPackage upsPackage; // package with tracking_to_id
     String kitLabel;
@@ -22,8 +23,6 @@ public class UPSKit {
     String ddpInstanceId;
     String hruid;
     boolean gbfShippedTriggerDSSDelivered;
-
-    private static final Logger logger = LoggerFactory.getLogger(UPSKit.class.getName());
 
     public UPSKit(@NonNull UPSPackage upsPackage, String kitLabel, Boolean CE_order, String dsmKitRequestId, String externalOrderNumber,
                   String trackingToId, String trackingReturnId, String ddpInstanceId, String hruid, boolean gbfShippedTriggerDSSDelivered) {
@@ -45,9 +44,9 @@ public class UPSKit {
     public boolean isReturn() {
         if (this.upsPackage != null && this.upsPackage.getTrackingNumber() != null && trackingReturnId != null) {
             return upsPackage.getTrackingNumber().equals(trackingReturnId);
-        }
-        else {
-            throw new RuntimeException("Couldn't say if the package was return, either upsPackage or tracking number was null  for  " + getDsmKitRequestId());
+        } else {
+            throw new RuntimeException(
+                    "Couldn't say if the package was return, either upsPackage or tracking number was null  for  " + getDsmKitRequestId());
         }
     }
 
@@ -65,13 +64,13 @@ public class UPSKit {
             stmt.setString(2, this.getDsmKitRequestId());
             int r = stmt.executeUpdate();
             if (r != 1) {//number of subkits
-                throw new RuntimeException("Update query for CE order flag updated " + r + " rows! with dsm kit request id: " + this.getDsmKitRequestId());
+                throw new RuntimeException(
+                        "Update query for CE order flag updated " + r + " rows! with dsm kit request id: " + this.getDsmKitRequestId());
             }
             logger.info("Updated CE_Order value for kit with dsm kit request id " + this.getDsmKitRequestId()
                     + " to " + orderStatus);
             conn.commit();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException("Could not update ce_ordered status for " + this.getDsmKitRequestId(), e);
         }
     }

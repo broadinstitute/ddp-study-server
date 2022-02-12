@@ -1,24 +1,25 @@
 package org.broadinstitute.dsm.db;
 
-import lombok.Getter;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import lombok.Getter;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Getter
 public class SurveyTrigger {
 
     private static final Logger logger = LoggerFactory.getLogger(SurveyTrigger.class);
 
-    private static final String SQL_SELECT_SURVEY_TRIGGER = "SELECT st.survey_trigger_id, st.note, st.created_date, st.created_by, user.name FROM ddp_survey_trigger st, access_user user WHERE st.created_by = user.user_id";
+    private static final String SQL_SELECT_SURVEY_TRIGGER =
+            "SELECT st.survey_trigger_id, st.note, st.created_date, st.created_by, user.name FROM ddp_survey_trigger st, access_user user WHERE st.created_by = user.user_id";
 
     private String surveyTriggerId;
     private String reason;
@@ -46,8 +47,7 @@ public class SurveyTrigger {
                                 rs.getLong(DBConstants.CREATED_DATE)));
                     }
                 }
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;

@@ -1,9 +1,20 @@
 package org.broadinstitute.dsm.route;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.handlers.util.Result;
-import org.broadinstitute.dsm.db.*;
+import org.broadinstitute.dsm.db.Assignee;
+import org.broadinstitute.dsm.db.Cancer;
+import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.Drug;
+import org.broadinstitute.dsm.db.FieldSettings;
+import org.broadinstitute.dsm.db.InstanceSettings;
+import org.broadinstitute.dsm.db.KitType;
+import org.broadinstitute.dsm.db.ViewFilter;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dto.settings.InstanceSettingsDto;
 import org.broadinstitute.dsm.model.KitRequestSettings;
@@ -13,17 +24,17 @@ import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
-import org.broadinstitute.dsm.util.*;
+import org.broadinstitute.dsm.util.AbstractionUtil;
+import org.broadinstitute.dsm.util.DDPRequestUtil;
+import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.broadinstitute.dsm.util.PatchUtil;
+import org.broadinstitute.dsm.util.UserUtil;
+import org.broadinstitute.lddp.handlers.util.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class DisplaySettingsRoute extends RequestHandler {
 
@@ -53,7 +64,8 @@ public class DisplaySettingsRoute extends RequestHandler {
         if (!userId.equals(userIdRequest)) {
             throw new RuntimeException("User id was not equal. User Id in token " + userId + " user Id in request " + userIdRequest);
         }
-        if (UserUtil.checkUserAccess(realm, userId, "mr_view", userIdRequest) || UserUtil.checkUserAccess(realm, userId, "pt_list_view", userIdRequest)) {
+        if (UserUtil.checkUserAccess(realm, userId, "mr_view", userIdRequest) ||
+                UserUtil.checkUserAccess(realm, userId, "pt_list_view", userIdRequest)) {
             String parent = queryParams.get("parent").value();
             if (StringUtils.isBlank(parent)) {
                 logger.error("Parent is empty");
@@ -71,7 +83,8 @@ public class DisplaySettingsRoute extends RequestHandler {
                 displaySettings.put("drugs", Drug.getDrugList());
                 displaySettings.put("cancers", Cancer.getCancers());
                 displaySettings.put("activityDefinitions", ElasticSearchUtil.getActivityDefinitions(instance));
-                displaySettings.put("filters", ViewFilter.getAllFilters(userIdRequest, patchUtil.getColumnNameMap(), parent, ddpGroupId, instance.getDdpInstanceId()));
+                displaySettings.put("filters", ViewFilter.getAllFilters(userIdRequest, patchUtil.getColumnNameMap(), parent, ddpGroupId,
+                        instance.getDdpInstanceId()));
                 displaySettings.put("abstractionFields", AbstractionUtil.getFormControls(realm));
                 InstanceSettingsDto instanceSettingsDto = instanceSettings.getInstanceSettings(realm);
                 displaySettings.putAll(instanceSettings.getInstanceSettingsAsMap(instanceSettingsDto));
@@ -87,8 +100,10 @@ public class DisplaySettingsRoute extends RequestHandler {
                         displaySettings.put("preferredLanguages", preferredLanguages);
                     }
                 }
-                if (DDPInstanceDao.getRole(instance.getName(), DBConstants.KIT_REQUEST_ACTIVATED)) { //only needed if study is shipping samples per DSM
-                    Map<Integer, KitRequestSettings> kitRequestSettingsMap = KitRequestSettings.getKitRequestSettings(instance.getDdpInstanceId());
+                if (DDPInstanceDao.getRole(instance.getName(),
+                        DBConstants.KIT_REQUEST_ACTIVATED)) { //only needed if study is shipping samples per DSM
+                    Map<Integer, KitRequestSettings> kitRequestSettingsMap =
+                            KitRequestSettings.getKitRequestSettings(instance.getDdpInstanceId());
                     if (kitRequestSettingsMap != null) {
                         List<KitType> kits = new ArrayList<>();
                         List<KitType> kitTypes = KitType.getKitTypes(realm, null);
@@ -123,8 +138,7 @@ public class DisplaySettingsRoute extends RequestHandler {
                 }
                 return displaySettings;
             }
-        }
-        else {
+        } else {
             logger.warn(UserErrorMessages.NO_RIGHTS);
             response.status(500);
             return new Result(500, UserErrorMessages.NO_RIGHTS);

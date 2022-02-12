@@ -20,8 +20,7 @@ public class NotificationJob implements Job {
             Config config = (Config) dataMap.get(DSMServer.CONFIG);
             NotificationUtil notification = new NotificationUtil(config);
             notification.sendQueuedNotifications();
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             logger.error("Failed to execute properly.", ex);
         }
     }

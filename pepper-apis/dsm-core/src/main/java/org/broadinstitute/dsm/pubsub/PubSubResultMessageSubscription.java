@@ -1,5 +1,9 @@
 package org.broadinstitute.dsm.pubsub;
 
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import com.google.api.gax.batching.FlowControlSettings;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
@@ -14,9 +18,6 @@ import org.broadinstitute.dsm.db.EditParticipantMessage;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 public class PubSubResultMessageSubscription {
 
@@ -26,7 +27,7 @@ public class PubSubResultMessageSubscription {
         subscribeWithFlowControlSettings(projectId, subscriptionId);
     }
 
-    public static void subscribeWithFlowControlSettings (
+    public static void subscribeWithFlowControlSettings(
             String projectId, String subscriptionId) {
 
         // Instantiate an asynchronous message receiver.
@@ -74,8 +75,7 @@ public class PubSubResultMessageSubscription {
         try {
             subscriber.startAsync().awaitRunning(1L, TimeUnit.MINUTES);
             logger.info("Started pubsub subscription receiver for edit participant");
-        }
-        catch (TimeoutException e) {
+        } catch (TimeoutException e) {
             throw new RuntimeException("Timed out while starting pubsub subscription for edit participant", e);
         }
 

@@ -1,24 +1,6 @@
 package org.broadinstitute.dsm.route;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.lddp.email.Recipient;
-import org.broadinstitute.lddp.handlers.util.Result;
-import org.broadinstitute.dsm.security.RequestHandler;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.statics.RoutePath;
-import org.broadinstitute.dsm.statics.UserErrorMessages;
-import org.broadinstitute.dsm.util.NotificationUtil;
-import org.broadinstitute.dsm.util.UserUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import spark.QueryParamsMap;
-import spark.Request;
-import spark.Response;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -27,22 +9,38 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.security.RequestHandler;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.statics.RoutePath;
+import org.broadinstitute.dsm.statics.UserErrorMessages;
+import org.broadinstitute.dsm.util.NotificationUtil;
+import org.broadinstitute.dsm.util.UserUtil;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.broadinstitute.lddp.email.Recipient;
+import org.broadinstitute.lddp.handlers.util.Result;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import spark.QueryParamsMap;
+import spark.Request;
+import spark.Response;
 
 public class AssignParticipantRoute extends RequestHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(AssignParticipantRoute.class);
-
     public static final String PARTICIPANT_LINK = "/permalink/participant?realm=%1";
-
     public static final String EMAIL_TYPE = "PARTICIPANT_ASSIGNED";
     public static final String EMAIL_TYPE_REMINDER = "PARTICIPANT_REMINDER";
-
     public static final String ASSIGN_MR = "assignMR";
     public static final String ASSIGN_TISSUE = "assignTissue";
-
-    private static final String SQL_UPDATE_MR_ASSIGNEE = "UPDATE ddp_participant SET assignee_id_mr = ?, last_changed = ? WHERE participant_id = ?";
-    private static final String SQL_UPDATE_TISSUE_ASSIGNEE = "UPDATE ddp_participant SET assignee_id_tissue = ?, last_changed = ? WHERE participant_id = ?";
+    private static final Logger logger = LoggerFactory.getLogger(AssignParticipantRoute.class);
+    private static final String SQL_UPDATE_MR_ASSIGNEE =
+            "UPDATE ddp_participant SET assignee_id_mr = ?, last_changed = ? WHERE participant_id = ?";
+    private static final String SQL_UPDATE_TISSUE_ASSIGNEE =
+            "UPDATE ddp_participant SET assignee_id_tissue = ?, last_changed = ? WHERE participant_id = ?";
 
     private final String queryForDDPParticipantId;
 
@@ -50,7 +48,8 @@ public class AssignParticipantRoute extends RequestHandler {
 
     private NotificationUtil notificationUtil;
 
-    public AssignParticipantRoute(@NonNull String queryForDDPParticipantId, @NonNull String frontendUrl, @NonNull NotificationUtil notificationUtil) {
+    public AssignParticipantRoute(@NonNull String queryForDDPParticipantId, @NonNull String frontendUrl,
+                                  @NonNull NotificationUtil notificationUtil) {
         this.queryForDDPParticipantId = queryForDDPParticipantId;
         this.frontendUrl = frontendUrl;
         this.notificationUtil = notificationUtil;
@@ -77,8 +76,7 @@ public class AssignParticipantRoute extends RequestHandler {
                 }
             }
             return new Result(200);
-        }
-        else {
+        } else {
             response.status(500);
             return new Result(500, UserErrorMessages.NO_RIGHTS);
         }
@@ -122,8 +120,7 @@ public class AssignParticipantRoute extends RequestHandler {
                     }
                 }
                 //remove all emails for participant
-            }
-            else {
+            } else {
                 //assign participant
                 if (assignMr) {
                     if (!assignParticipant(shortIds, assigneeId, participantId, shortId, email, realm, SQL_UPDATE_MR_ASSIGNEE)) {
@@ -159,8 +156,7 @@ public class AssignParticipantRoute extends RequestHandler {
                 if (result != 1) {
                     throw new RuntimeException("Error updating participant " + participantId + " it was updating " + result + " rows");
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 dbVals.resultException = e;
             }
             return dbVals;
@@ -179,8 +175,7 @@ public class AssignParticipantRoute extends RequestHandler {
             logger.info("Updated assignee for participant " + participantId);
             if (shortId != null) {
                 shortIds.add(shortId);
-            }
-            else {
+            } else {
                 shortIds.add(getDDPParticipantId(participantId));
             }
             if (StringUtils.isNotBlank(email) && StringUtils.isNotBlank(assigneeId)) {
@@ -201,8 +196,7 @@ public class AssignParticipantRoute extends RequestHandler {
         if (onlyFuture) {
             notificationUtil.removeOldNotifications("", recordId);
             notificationUtil.queueFutureEmails(reason, emailRecipient, recordId);
-        }
-        else {
+        } else {
             notificationUtil.queueCurrentAndFutureEmails(reason, emailRecipient, recordId);
         }
     }
@@ -212,7 +206,7 @@ public class AssignParticipantRoute extends RequestHandler {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(queryForDDPParticipantId,
-                    ResultSet.TYPE_SCROLL_SENSITIVE,ResultSet.CONCUR_READ_ONLY)) {
+                    ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
                 stmt.setString(1, participantId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     rs.last();
@@ -220,13 +214,11 @@ public class AssignParticipantRoute extends RequestHandler {
                     rs.beforeFirst();
                     if (count == 1 && rs.next()) {
                         dbVals.resultValue = rs.getString(DBConstants.DDP_PARTICIPANT_ID);
-                    }
-                    else {
+                    } else {
                         throw new RuntimeException("Error getting ddpParticipantId (count: " + count + ")");
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;

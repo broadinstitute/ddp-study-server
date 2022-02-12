@@ -25,8 +25,7 @@ public class ParticipantSurveyUploadObject {
     public String getDDPParticipantID() {
         if (ddpParticipantId != null) {
             return ddpParticipantId;
-        }
-        else if (shortId != null) {
+        } else if (shortId != null) {
             return shortId;
         }
         return null;

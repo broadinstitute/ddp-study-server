@@ -1,10 +1,14 @@
 package org.broadinstitute.dsm.util.tools.util;
 
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import lombok.NonNull;
 import org.broadinstitute.dsm.exception.FileWrongSeparator;
-
-import java.io.Writer;
-import java.util.*;
 
 public class FileUtil {
 
@@ -12,7 +16,7 @@ public class FileUtil {
     private static final String LINEBREAK = "\r";
     private static final String SEPARATOR = "\t";
 
-    public static List<Map<String, String>>  readFileContent(@NonNull String fileContent) throws Exception {
+    public static List<Map<String, String>> readFileContent(@NonNull String fileContent) throws Exception {
         List<Map<String, String>> content = new ArrayList();
         if (fileContent != null) {
             String linebreak = lineBreak(fileContent);
@@ -33,8 +37,7 @@ public class FileUtil {
                         }
                         content.add(obj);
                     }
-                }
-                else {
+                } else {
                     throw new FileWrongSeparator("Please use tab as separator in the text file");
                 }
             }
@@ -54,8 +57,8 @@ public class FileUtil {
 
     public static void writeCSV(@NonNull Writer writer, ArrayList<String> lineOutput) throws Exception {
         StringBuilder builder = new StringBuilder();
-        for(String data : lineOutput) {
-            builder.append("\""+data + "\",");
+        for (String data : lineOutput) {
+            builder.append("\"" + data + "\",");
         }
         builder.append("\n");
         writer.write(builder.toString());

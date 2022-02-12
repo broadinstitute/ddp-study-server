@@ -9,23 +9,23 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.onchistory.OncHistoryDto;
 import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.lddp.db.SimpleResult;
 
 public class OncHistoryDao implements Dao<OncHistoryDto> {
 
+    public static final String ONC_HISTORY_ID = "onc_history_id";
+    public static final String PARTICIPANT_ID = "participant_id";
+    public static final String CREATED = "created";
+    public static final String REVIEWED = "reviewed";
     private static final String SQL_SELECT_ONC_HISTORIES_BY_STUDY = "SELECT p.participant_id, p.ddp_participant_id, " +
             "o.onc_history_id, o.created, o.reviewed " +
             "FROM ddp_participant p " +
             "LEFT JOIN ddp_instance realm on (p.ddp_instance_id = realm.ddp_instance_id) " +
             "LEFT JOIN ddp_onc_history o on (o.participant_id = p.participant_id) " +
             "WHERE realm.instance_name = ? ";
-    public static final String ONC_HISTORY_ID = "onc_history_id";
-    public static final String PARTICIPANT_ID = "participant_id";
-    public static final String CREATED = "created";
-    public static final String REVIEWED = "reviewed";
 
     @Override
     public int create(OncHistoryDto oncHistoryDto) {
@@ -48,7 +48,7 @@ public class OncHistoryDao implements Dao<OncHistoryDto> {
             SimpleResult execResult = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ONC_HISTORIES_BY_STUDY)) {
                 stmt.setString(1, study);
-                try(ResultSet rs = stmt.executeQuery()) {
+                try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         String ddpParticipantId = rs.getString(DBConstants.DDP_PARTICIPANT_ID);
                         OncHistoryDto oncHistoryDto = new OncHistoryDto(
@@ -60,8 +60,7 @@ public class OncHistoryDao implements Dao<OncHistoryDto> {
                         oncHistories.put(ddpParticipantId, oncHistoryDto);
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 execResult.resultException = ex;
             }
             return execResult;

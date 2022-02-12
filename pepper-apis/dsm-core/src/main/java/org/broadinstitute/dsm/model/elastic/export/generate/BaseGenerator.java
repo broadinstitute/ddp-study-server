@@ -18,11 +18,10 @@ import org.slf4j.LoggerFactory;
 
 public abstract class BaseGenerator implements Generator, Collector, GeneratorHelper {
 
-    private static final Logger logger = LoggerFactory.getLogger(BaseGenerator.class);
-
     public static final String DSM_OBJECT = "dsm";
     public static final String PROPERTIES = "properties";
     protected static final Gson GSON = new Gson();
+    private static final Logger logger = LoggerFactory.getLogger(BaseGenerator.class);
     protected Parser parser;
     protected GeneratorPayload generatorPayload;
     private DBElement dbElement;
@@ -47,11 +46,6 @@ public abstract class BaseGenerator implements Generator, Collector, GeneratorHe
         this.generatorPayload = Objects.requireNonNull(generatorPayload);
     }
 
-    //setter method to set dbElement for testing only!!!
-    public void setDBElement(DBElement dbElement) {
-        this.dbElement = dbElement;
-    }
-
     protected NameValue getNameValue() {
         return generatorPayload.getNameValue();
     }
@@ -59,6 +53,11 @@ public abstract class BaseGenerator implements Generator, Collector, GeneratorHe
     //wrap Util.getDBElement in protected method so that we can override it in testing class for tests
     protected DBElement getDBElement() {
         return Util.getDBElement(getNameValue().getName());
+    }
+
+    //setter method to set dbElement for testing only!!!
+    public void setDBElement(DBElement dbElement) {
+        this.dbElement = dbElement;
     }
 
     private PropertyInfo getOuterPropertyByAlias() {
@@ -140,19 +139,21 @@ public abstract class BaseGenerator implements Generator, Collector, GeneratorHe
             return isCollection;
         }
 
-        public void setFieldName(String fieldName) {
-            this.fieldName = Objects.requireNonNull(fieldName);
+        public String getFieldName() {
+            if (StringUtils.isBlank(this.fieldName)) {
+                this.fieldName = "";
+            }
+            return this.fieldName;
         }
 
-        public String getFieldName() {
-            if (StringUtils.isBlank(this.fieldName)) this.fieldName = "";
-            return this.fieldName;
+        public void setFieldName(String fieldName) {
+            this.fieldName = Objects.requireNonNull(fieldName);
         }
 
         public Class<?> getPropertyClass() {
             return propertyClass;
         }
     }
-    
+
 }
 

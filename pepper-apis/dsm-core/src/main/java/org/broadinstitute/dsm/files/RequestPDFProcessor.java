@@ -1,23 +1,17 @@
 package org.broadinstitute.dsm.files;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.broadinstitute.lddp.exception.FileProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.util.HashMap;
-import java.util.Map;
-
 public class RequestPDFProcessor extends PDFProcessor {
-    private static final Logger logger = LoggerFactory.getLogger(RequestPDFProcessor.class);
-
-    private static final String GENERATED_TISSUE_FILENAME = "request.pdf";
-    private static final String TEMPLATE_TISSUE_FILENAME = "%1-Tissue-Request-Template.pdf";
-    private static final String ADDITIONAL_TEMPLATE_TISSUE_FILENAME = "Tissue-Request-Template_additional.pdf";
-
     // Fields which are needed for cover pdf
     public static final String FIELD_CONFIRMED_INSTITUTION_NAME = "confirmedInstitutionName";
     public static final String FIELD_CONFIRMED_PHONE = "confirmedPhone";
@@ -29,12 +23,13 @@ public class RequestPDFProcessor extends PDFProcessor {
     public static final String FIELD_DATE_PX = "datePX";
     public static final String FIELD_TYPE_LOCATION = "typeAndLoc";
     public static final String FIELD_ACCESSION_NUMBER = "accessionNumber";
-
     public static final String BLOCK_COUNTER = "accessionNumber";
-
     public static final String USER_NAME = "username";
     public static final String USER_PHONE = "userPhone";
-
+    private static final Logger logger = LoggerFactory.getLogger(RequestPDFProcessor.class);
+    private static final String GENERATED_TISSUE_FILENAME = "request.pdf";
+    private static final String TEMPLATE_TISSUE_FILENAME = "%1-Tissue-Request-Template.pdf";
+    private static final String ADDITIONAL_TEMPLATE_TISSUE_FILENAME = "Tissue-Request-Template_additional.pdf";
     private String ddp;
 
     public RequestPDFProcessor(String ddp) {
@@ -67,7 +62,7 @@ public class RequestPDFProcessor extends PDFProcessor {
 
             fields.put(USER_NAME, valueMap.get(USER_NAME));
             fields.put(USER_PHONE, valueMap.getOrDefault(USER_PHONE, ""));
-            fields.put(USER_PHONE+"#1", valueMap.getOrDefault(USER_PHONE, ""));
+            fields.put(USER_PHONE + "#1", valueMap.getOrDefault(USER_PHONE, ""));
 
             PDFMergerUtility pdfMerger = new PDFMergerUtility();
             pdfMerger.setDestinationStream(output);
@@ -75,7 +70,7 @@ public class RequestPDFProcessor extends PDFProcessor {
 
             // more than 4 tissues selected, pdf will need additional pages
             if (blockCounter > 4) {
-                int additionalPages = (int)Math.ceil(blockCounter / 4);
+                int additionalPages = (int) Math.ceil(blockCounter / 4);
                 for (int page = 1; page <= additionalPages; page++) {
                     for (int block = 0; block < 4; block++) {
                         fields.put(FIELD_TYPE_LOCATION + block, valueMap.get(FIELD_TYPE_LOCATION + ((page * 4) + block)));
@@ -86,8 +81,7 @@ public class RequestPDFProcessor extends PDFProcessor {
                 }
             }
             pdfMerger.mergeDocuments(MemoryUsageSetting.setupTempFileOnly());
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             throw new FileProcessingException("Unable to generate request pdf stream.", ex);
         }
 
@@ -105,8 +99,7 @@ public class RequestPDFProcessor extends PDFProcessor {
     }
 
 
-    public String getFileName()
-    {
+    public String getFileName() {
         return GENERATED_TISSUE_FILENAME;
     }
 }

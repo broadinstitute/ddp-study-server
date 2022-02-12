@@ -10,7 +10,7 @@ public class KitDetail {
     private String kitType;
     private boolean needsApproval;
 
-    public KitDetail(String  participantId, String kitRequestId, String kitType, boolean needsApproval){
+    public KitDetail(String participantId, String kitRequestId, String kitType, boolean needsApproval) {
         this.participantId = participantId;
         this.kitRequestId = kitRequestId;
         this.kitType = kitType;

@@ -45,7 +45,7 @@ public class DBConstants {
     public static final String ES_ACTIVITY_DEFINITION_INDEX = "es_activity_definition_index";
     public static final String ES_USERS_INDEX = "es_users_index";
     public static final String CARRIER_USERNAME = "carrier_username";
-    public static final String CARRIER_PASSWORD= "carrier_password";
+    public static final String CARRIER_PASSWORD = "carrier_password";
     public static final String CARRIER_ACCESSKEY = "carrier_accesskey";
     public static final String BSP_COLLECTION = "bsp_collection";
     public static final String BSP_ORGANISM = "bsp_organism";
@@ -216,7 +216,7 @@ public class DBConstants {
     public static final String COLUMN_NAME = "column_name";
     public static final String COLUMN_DISPLAY = "column_display";
     public static final String TISSUE_RECEIVED = "tissue_received";
-    public static final String TISSUE_PROBLEM_OPTION = "tissue_problem_option" ;
+    public static final String TISSUE_PROBLEM_OPTION = "tissue_problem_option";
     public static final String GENDER = "gender";
     public static final String DESTRUCTION_POLICY = "destruction_policy";
     public static final String UNABLE_OBTAIN_TISSUE = "unable_obtain_tissue";
@@ -426,7 +426,7 @@ public class DBConstants {
     public static final String MATCH_PHRASE = "match_phrase";
     public static final String DOUBLE_CHECK = "double_check";
     public static final String NO_DATA = "no_data";
-    public static final String ACTIVITY= "activity";
+    public static final String ACTIVITY = "activity";
     public static final String STATUS = "status";
     public static final String START_DATE = "start_date";
     public static final String FILES_USED = "files_used";

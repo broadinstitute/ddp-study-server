@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.route;
 
+import java.util.Optional;
+
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -18,15 +20,11 @@ import spark.Request;
 import spark.Response;
 import spark.Route;
 
-import java.util.Optional;
-
 public class ClinicalKitsRoute implements Route {
+    private static final Logger logger = LoggerFactory.getLogger(ClinicalKitsRoute.class);
     private String FIRSTNAME = "firstName";
     private String LASTNAME = "lastName";
     private String DATE_OF_BIRtH = "dateOfBirth";
-
-    private static final Logger logger = LoggerFactory.getLogger(ClinicalKitsRoute.class);
-
     private NotificationUtil notificationUtil;
 
     public ClinicalKitsRoute(@NonNull NotificationUtil notificationUtil) {

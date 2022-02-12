@@ -1,5 +1,9 @@
 package org.broadinstitute.dsm.db;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
@@ -12,37 +16,28 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
-
 @Data
-@TableName (
+@TableName(
         name = DBConstants.SM_ID_TABLE,
         alias = DBConstants.SM_ID_TABLE_ALIAS,
         primaryKey = DBConstants.SM_ID_PK,
         columnPrefix = "")
 public class TissueSmId {
 
-    @ColumnName (DBConstants.SM_ID_VALUE)
-    private String smIdValue;
-
-    @ColumnName (DBConstants.SM_ID_TYPE_ID)
-    private String smIdType;
-
-    @ColumnName (DBConstants.SM_ID_TISSUE_ID)
-    private String tissueId;
-
-    @ColumnName (DBConstants.SM_ID_PK)
-    private String smIdPk;
-
-    @ColumnName (DBConstants.DELETED)
-    private Boolean deleted;
-
+    private static final Logger logger = LoggerFactory.getLogger(TissueSmId.class);
     public static String HE = "he";
     public static String USS = "uss";
     public static String SCROLLS = "scrolls";
-    private static final Logger logger = LoggerFactory.getLogger(TissueSmId.class);
+    @ColumnName(DBConstants.SM_ID_VALUE)
+    private String smIdValue;
+    @ColumnName(DBConstants.SM_ID_TYPE_ID)
+    private String smIdType;
+    @ColumnName(DBConstants.SM_ID_TISSUE_ID)
+    private String tissueId;
+    @ColumnName(DBConstants.SM_ID_PK)
+    private String smIdPk;
+    @ColumnName(DBConstants.DELETED)
+    private Boolean deleted;
 
     public TissueSmId() {
     }
@@ -71,8 +66,7 @@ public class TissueSmId {
             if (tissueSmId != null) {
                 tissueSmId.setDeleted(rs.getBoolean("sm." + DBConstants.DELETED));
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             logger.error("problem getting tissue sm ids", e);
         }
         return tissueSmId;
@@ -92,16 +86,15 @@ public class TissueSmId {
         for (NameValue nameValue : smIdDetails) {
             if (nameValue.getName().equals("smIdType")) {
                 smIdType = String.valueOf(nameValue.getValue());
-            }
-            else if (nameValue.getName().equals("smIdValue")) {
+            } else if (nameValue.getName().equals("smIdValue")) {
                 smIdValue = String.valueOf(nameValue.getValue());
             }
         }
-        if(StringUtils.isNotBlank(smIdValue) && this.isUniqueSmId(smIdValue)) {
+        if (StringUtils.isNotBlank(smIdValue) && this.isUniqueSmId(smIdValue)) {
             String smIdId = new TissueSMIDDao().createNewSMIDForTissue(tissueId, userId, smIdType, smIdValue);
             return smIdId;
-        } else{
-            throw new DuplicateException("Duplicate or blank value for sm id value "+smIdValue);
+        } else {
+            throw new DuplicateException("Duplicate or blank value for sm id value " + smIdValue);
         }
     }
 }

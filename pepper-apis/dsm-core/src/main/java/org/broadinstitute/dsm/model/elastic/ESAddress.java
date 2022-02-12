@@ -67,5 +67,7 @@ public class ESAddress {
         return recipient;
     }
 
-    public boolean isValid() { return valid; }
+    public boolean isValid() {
+        return valid;
+    }
 }

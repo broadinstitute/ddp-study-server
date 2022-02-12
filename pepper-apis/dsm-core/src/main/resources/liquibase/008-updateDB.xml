@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <databaseChangeLog
-        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
@@ -16,16 +16,16 @@
             <where>display_name="AVELUMAB (BAVENCIO)"</where>
         </delete>
         <insert tableName="drug_list">
-            <column name="display_name" type="varchar(200)" value="AVELUMAB (BAVENCIO)" />
-            <column name="generic_name" type="varchar(100)" value="AVELUMAB" />
-            <column name="brand_name" type="varchar(100)" value="BAVENCIO" />
-            <column name="chemocat2" type="varchar(50)" value="AVELUMAB" />
-            <column name="chemo_type" type="varchar(1)" value="I" />
-            <column name="study_drug" type="tinyint(1)" value="0" />
-            <column name="treatment_type" type="varchar(1)" value="B" />
-            <column name="chemotherapy"  type="varchar(1)" value="Y" />
-            <column name="active" type="tinyint(1)" value="1" />
-            <column name="date_created" type="BIGINT" value="1528119063" />
+            <column name="display_name" type="varchar(200)" value="AVELUMAB (BAVENCIO)"/>
+            <column name="generic_name" type="varchar(100)" value="AVELUMAB"/>
+            <column name="brand_name" type="varchar(100)" value="BAVENCIO"/>
+            <column name="chemocat2" type="varchar(50)" value="AVELUMAB"/>
+            <column name="chemo_type" type="varchar(1)" value="I"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="B"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1528119063"/>
         </insert>
     </changeSet>
 

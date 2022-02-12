@@ -1,29 +1,8 @@
 package org.broadinstitute.dsm;
 
-import com.easypost.model.*;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.fluent.Request;
-import org.broadinstitute.lddp.util.GoogleBucket;
-import org.broadinstitute.dsm.db.*;
-import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.exception.RateNotAvailableException;
-import org.broadinstitute.dsm.model.*;
-import org.broadinstitute.dsm.model.KitType;
-import org.broadinstitute.dsm.model.gp.KitInfo;
-import org.broadinstitute.dsm.model.gp.bsp.BSPKitRegistration;
-import org.broadinstitute.dsm.model.gp.bsp.BSPKitStatus;
-import org.broadinstitute.dsm.model.ddp.DDPParticipant;
-import org.broadinstitute.dsm.route.KitStatusChangeRoute;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.util.*;
-import org.broadinstitute.dsm.util.tools.util.DBUtil;
-import org.junit.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -33,9 +12,51 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
+import com.easypost.model.Address;
+import com.easypost.model.CustomsInfo;
+import com.easypost.model.Parcel;
+import com.easypost.model.Rate;
+import com.easypost.model.Shipment;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.fluent.Request;
+import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.KitDiscard;
+import org.broadinstitute.dsm.db.KitReport;
+import org.broadinstitute.dsm.db.KitRequestCreateLabel;
+import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.LabelSettings;
+import org.broadinstitute.dsm.db.LatestKitRequest;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.exception.RateNotAvailableException;
+import org.broadinstitute.dsm.model.EasypostLabelRate;
+import org.broadinstitute.dsm.model.KitRequest;
+import org.broadinstitute.dsm.model.KitRequestSettings;
+import org.broadinstitute.dsm.model.KitType;
+import org.broadinstitute.dsm.model.ddp.DDPParticipant;
+import org.broadinstitute.dsm.model.gp.KitInfo;
+import org.broadinstitute.dsm.model.gp.bsp.BSPKitRegistration;
+import org.broadinstitute.dsm.model.gp.bsp.BSPKitStatus;
+import org.broadinstitute.dsm.route.KitStatusChangeRoute;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.util.DBTestUtil;
+import org.broadinstitute.dsm.util.DDPRequestUtil;
+import org.broadinstitute.dsm.util.EasyPostUtil;
+import org.broadinstitute.dsm.util.KitUtil;
+import org.broadinstitute.dsm.util.PDFAudit;
+import org.broadinstitute.dsm.util.TestUtil;
+import org.broadinstitute.dsm.util.tools.util.DBUtil;
+import org.broadinstitute.lddp.util.GoogleBucket;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RouteTestSample extends TestHelper {
 
@@ -142,56 +163,114 @@ public class RouteTestSample extends TestHelper {
     private static void setupDDPKitRoutes() throws Exception {
         String message = TestUtil.readFile("ddpResponses/Kitrequests.json");
         mockDDP.when(
-                request().withPath("/ddp/kitrequests"))
+                        request().withPath("/ddp/kitrequests"))
                 .respond(response().withStatusCode(200).withBody(message));
 
         message = TestUtil.readFile("ddpResponses/KitrequestsWithId.json");
         mockDDP.when(
-                request().withPath("/ddp/kitrequests/" + FAKE_LATEST_KIT))
+                        request().withPath("/ddp/kitrequests/" + FAKE_LATEST_KIT))
                 .respond(response().withStatusCode(200).withBody(message));
     }
 
     private static void setupDDPParticipantRoutes() throws Exception {
         String messageParticipant = TestUtil.readFile("ddpResponses/Participants.json");
         mockDDP.when(
-                request().withPath("/ddp/participants"))
+                        request().withPath("/ddp/participants"))
                 .respond(response().withStatusCode(200).withBody(messageParticipant));
 
         messageParticipant = TestUtil.readFile("ddpResponses/ParticipantsWithIdWithoutShortId.json");
         mockDDP.when(
-                request().withPath("/ddp/participants/" + VERY_LONG_PARTICIPANT_ID))
+                        request().withPath("/ddp/participants/" + VERY_LONG_PARTICIPANT_ID))
                 .respond(response().withStatusCode(200).withBody(messageParticipant));
 
         messageParticipant = TestUtil.readFile("ddpResponses/ParticipantsWithIdCA.json");
         mockDDP.when(
-                request().withPath("/ddp/participants/CA"))
+                        request().withPath("/ddp/participants/CA"))
                 .respond(response().withStatusCode(200).withBody(messageParticipant));
 
         messageParticipant = TestUtil.readFile("ddpResponses/ParticipantsWithIdPOBox.json");
         mockDDP.when(
-                request().withPath("/ddp/participants/POBOX"))
+                        request().withPath("/ddp/participants/POBOX"))
                 .respond(response().withStatusCode(200).withBody(messageParticipant));
 
         messageParticipant = TestUtil.readFile("ddpResponses/ParticipantsWithId.json");
         mockDDP.when(
-                request().withPath("/ddp/participants/" + FAKE_BSP_TEST))
+                        request().withPath("/ddp/participants/" + FAKE_BSP_TEST))
                 .respond(response().withStatusCode(200).withBody(messageParticipant));
         mockDDP.when(
-                request().withPath("/ddp/participants/" + FAKE_DDP_PARTICIPANT_ID))
+                        request().withPath("/ddp/participants/" + FAKE_DDP_PARTICIPANT_ID))
                 .respond(response().withStatusCode(200).withBody(messageParticipant));
         mockDDP.when(
-                request().withPath("/ddp/participants/CheapLabelPT"))
+                        request().withPath("/ddp/participants/CheapLabelPT"))
                 .respond(response().withStatusCode(200).withBody(messageParticipant));
 
         messageParticipant = TestUtil.readFile("ddpResponses/ParticipantsWithIdWithNewField.json");
         mockDDP.when(
-                request().withPath("/ddp/participants/PepperParticipant"))
+                        request().withPath("/ddp/participants/PepperParticipant"))
                 .respond(response().withStatusCode(200).withBody(messageParticipant));
 
         messageParticipant = TestUtil.readFile("ddpResponses/ParticipantsWithIdWithNewFieldAsNull.json");
         mockDDP.when(
-                request().withPath("/ddp/participants/OtherPepperParticipant"))
+                        request().withPath("/ddp/participants/OtherPepperParticipant"))
                 .respond(response().withStatusCode(200).withBody(messageParticipant));
+    }
+
+    public static void triggerLabelCreationAndWaitForLabel(String ddp, String kitType, long waitSeconds) {
+        // set all kits of the realm to generate a label
+        KitRequestCreateLabel.updateKitLabelRequested(ddp, kitType, "1", new DDPInstanceDto.Builder().build());
+        //start method of label job
+        List<KitRequestCreateLabel> kitsLabelTriggered = KitUtil.getListOfKitsLabelTriggered();
+        if (!kitsLabelTriggered.isEmpty()) {
+            KitUtil.createLabel(kitsLabelTriggered);
+            // wait for labels to get created
+            try {
+                Thread.sleep(waitSeconds * 1000L);//20 sec
+            } catch (Exception e) {
+                throw new RuntimeException("something went wrong, while waiting for quartz job to finish...", e);
+            }
+        }
+    }
+
+    public static void checkFileInBucket(String fileName, String instanceName) throws Exception {
+        String projectName = cfg.getString("portal.googleProjectName");
+        String bucketName = projectName + "_dsm_" + instanceName;
+
+        List<String> fileNames = GoogleBucket.getFiles(cfg.getString("portal.googleProjectCredentials"), bucketName, bucketName);
+        boolean found = false;
+        for (String name : fileNames) {
+            if (name.startsWith(fileName)) {
+                found = true;
+                break;
+            }
+        }
+        Assert.assertTrue(found);
+    }
+
+    public static void checkBucket(String instanceName) throws Exception {
+        String projectName = cfg.getString("portal.googleProjectName");
+        String bucketName = projectName + "_dsm_" + instanceName;
+
+        List<String> fileNames = GoogleBucket.getFiles(cfg.getString("portal.googleProjectCredentials"), bucketName, bucketName);
+
+        for (String fileName : fileNames) {
+            byte[] downloadedFile =
+                    GoogleBucket.downloadFile(cfg.getString("portal.googleProjectCredentials"), cfg.getString("portal.googleProjectName"),
+                            bucketName, fileName);
+            Assert.assertNotNull(downloadedFile);
+
+            //delete file
+            boolean fileDeleted =
+                    GoogleBucket.deleteFile(cfg.getString("portal.googleProjectCredentials"), cfg.getString("portal.googleProjectName"),
+                            bucketName, fileName);
+            Assert.assertTrue(fileDeleted);
+        }
+    }
+
+    public static boolean bucketExists(String instanceName) throws Exception {
+        String projectName = cfg.getString("portal.googleProjectName");
+        String bucketName = projectName + "_dsm_" + instanceName;
+        return GoogleBucket.bucketExists(cfg.getString("portal.googleProjectCredentials"), cfg.getString("portal.googleProjectName"),
+                bucketName);
     }
 
     @Test
@@ -264,10 +343,17 @@ public class RouteTestSample extends TestHelper {
         checkError("POBOX");
 
         //check collaborator sample id
-        Assert.assertEquals("TestProject_0007_SALIVA_2", DBTestUtil.getQueryDetail("select * from ddp_kit_request where ddp_participant_id = ?", FAKE_BSP_TEST, "bsp_collaborator_sample_id"));
-        Assert.assertEquals("TestProject_0007_SALIVA_3", DBTestUtil.getQueryDetail("select * from ddp_kit_request where ddp_participant_id = ?", "CA", "bsp_collaborator_sample_id"));
-        Assert.assertEquals("TestProject_0007_SALIVA_4", DBTestUtil.getQueryDetail("select * from ddp_kit_request where ddp_participant_id = ?", "POBOX", "bsp_collaborator_sample_id"));
-        Assert.assertNull(DBTestUtil.getQueryDetail("select * from ddp_kit_request where ddp_participant_id = ?", VERY_LONG_PARTICIPANT_ID, "bsp_collaborator_sample_id"));
+        Assert.assertEquals("TestProject_0007_SALIVA_2",
+                DBTestUtil.getQueryDetail("select * from ddp_kit_request where ddp_participant_id = ?", FAKE_BSP_TEST,
+                        "bsp_collaborator_sample_id"));
+        Assert.assertEquals("TestProject_0007_SALIVA_3",
+                DBTestUtil.getQueryDetail("select * from ddp_kit_request where ddp_participant_id = ?", "CA",
+                        "bsp_collaborator_sample_id"));
+        Assert.assertEquals("TestProject_0007_SALIVA_4",
+                DBTestUtil.getQueryDetail("select * from ddp_kit_request where ddp_participant_id = ?", "POBOX",
+                        "bsp_collaborator_sample_id"));
+        Assert.assertNull(DBTestUtil.getQueryDetail("select * from ddp_kit_request where ddp_participant_id = ?", VERY_LONG_PARTICIPANT_ID,
+                "bsp_collaborator_sample_id"));
     }
 
     @Test
@@ -289,8 +375,7 @@ public class RouteTestSample extends TestHelper {
                 String id = KitRequestShipping.generateBspSampleID(conn, "TestProject_0023", "SALIVA", 1);
                 Assert.assertNotNull(id);
                 Assert.assertEquals("TestProject_0023_SALIVA", id);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 throw new RuntimeException("generateBspSampleID ", e);
             }
             return null;
@@ -328,7 +413,7 @@ public class RouteTestSample extends TestHelper {
     }
 
     @Test
-    @Ignore ("No shipping to PO Box participants")
+    @Ignore("No shipping to PO Box participants")
     public void labelPOBoxUSParticipant() throws Exception {
         DDPParticipant participant = DDPParticipant.getDDPParticipant(DDP_BASE_URL, TEST_DDP, "POBOX", false);
         easyPost(INSTANCE_ID, TEST_DDP, participant, false);
@@ -363,18 +448,15 @@ public class RouteTestSample extends TestHelper {
                 logger.info("took " + (end - start) / 1000 + " seconds");
                 if (notFEDEX2DAY) {
                     Assert.assertNotEquals("FEDEX_2_DAY", shipment2Participant.getSelectedRate().getService());
-                }
-                else {
+                } else {
                     Assert.assertEquals("FEDEX_2_DAY", shipment2Participant.getSelectedRate().getService());
                 }
                 printShipmentInfos(shipment2Participant);
                 doAsserts(shipment2Participant);
-            }
-            catch (RateNotAvailableException e) {
+            } catch (RateNotAvailableException e) {
                 Assert.fail("Rate was not available " + e.getMessage());
             }
-        }
-        else {
+        } else {
             //at least the label to participants must be bought, otherwise nothing would be testes, so throw an error!
             Assert.fail();
         }
@@ -425,8 +507,7 @@ public class RouteTestSample extends TestHelper {
             latestKitRequests.add(new LatestKitRequest(TestHelper.FAKE_DDP_PARTICIPANT_ID, INSTANCE_ID, TEST_DDP, DDP_BASE_URL,
                     "TestProject", false, false, false, false, null));
             ddpKitRequest.requestAndWriteKitRequests(latestKitRequests);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             //will throw exception, because it can't write into db anymore, but that is ok!!! :)
             logger.info("Previous Error was wanted!!!");
         }
@@ -457,11 +538,11 @@ public class RouteTestSample extends TestHelper {
                 if (kitRequestSettings.getCollaboratorSampleTypeOverwrite() != null) {
                     bspCollaboratorSampleType = kitRequestSettings.getCollaboratorSampleTypeOverwrite();
                 }
-                String collaboratorSampleId = KitRequestShipping.generateBspSampleID(conn, "TestProject_1_3", bspCollaboratorSampleType, kitType.getKitTypeId());
+                String collaboratorSampleId =
+                        KitRequestShipping.generateBspSampleID(conn, "TestProject_1_3", bspCollaboratorSampleType, kitType.getKitTypeId());
                 Assert.assertNotNull(collaboratorSampleId);
                 Assert.assertEquals("TestProject_1_3", collaboratorSampleId);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 throw new RuntimeException("generateBspSampleID ", e);
             }
             return null;
@@ -476,7 +557,9 @@ public class RouteTestSample extends TestHelper {
         KitType kitType = kitTypes.get(key);
         //upload kits for one type
         String csvContent = TestUtil.readFile("KitUploadTestDDP.txt");
-        HttpResponse response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP + "&kitType=SALIVA&userId=26"), csvContent, testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP + "&kitType=SALIVA&userId=26"),
+                        csvContent, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         List<String> strings = new ArrayList<>();
         strings.add(TEST_DDP);
@@ -489,7 +572,9 @@ public class RouteTestSample extends TestHelper {
         String otherKitType = "TEST";
         key = otherKitType + "_" + INSTANCE_ID;
         kitType = kitTypes.get(key);
-        response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP + "&kitType=" + otherKitType + "&userId=26"), csvContent, testUtil.buildAuthHeaders()).returnResponse();
+        response = TestUtil.perform(
+                Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP + "&kitType=" + otherKitType + "&userId=26"), csvContent,
+                testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         strings = new ArrayList<>();
         strings.add(TEST_DDP);
@@ -504,7 +589,9 @@ public class RouteTestSample extends TestHelper {
     public void uploadOsteoBloodKitAOM() throws Exception {
         //upload kits for one type
         String csvContent = TestUtil.readFile("SpecialKitOsteo.txt");
-        HttpResponse response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=osteo&kitType=BLOOD&userId=26"), csvContent, testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=osteo&kitType=BLOOD&userId=26"), csvContent,
+                        testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         //TODO check db for kit
     }
@@ -513,12 +600,15 @@ public class RouteTestSample extends TestHelper {
     public void differentReturnPhoneAddress() throws Exception {
         //upload kits for one type
         String csvContent = TestUtil.readFile("KitUploadTestDDP.txt");
-        HttpResponse response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP + "&kitType=TEST&userId=26"), csvContent, testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP + "&kitType=TEST&userId=26"),
+                        csvContent, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
         //upload kits for one type
         csvContent = TestUtil.readFile("KitUploadTestDDP.txt");
-        response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP + "&kitType=SALIVA&userId=26"), csvContent, testUtil.buildAuthHeaders()).returnResponse();
+        response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP + "&kitType=SALIVA&userId=26"),
+                csvContent, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
         triggerLabelCreationAndWaitForLabel(TEST_DDP, null, 60);
@@ -552,28 +642,13 @@ public class RouteTestSample extends TestHelper {
         Assert.assertEquals("6177148952", address.getPhone());
     }
 
-    public static void triggerLabelCreationAndWaitForLabel(String ddp, String kitType, long waitSeconds) {
-        // set all kits of the realm to generate a label
-        KitRequestCreateLabel.updateKitLabelRequested(ddp, kitType, "1", new DDPInstanceDto.Builder().build());
-        //start method of label job
-        List<KitRequestCreateLabel> kitsLabelTriggered = KitUtil.getListOfKitsLabelTriggered();
-        if (!kitsLabelTriggered.isEmpty()) {
-            KitUtil.createLabel(kitsLabelTriggered);
-            // wait for labels to get created
-            try {
-                Thread.sleep(waitSeconds * 1000L);//20 sec
-            }
-            catch (Exception e) {
-                throw new RuntimeException("something went wrong, while waiting for quartz job to finish...", e);
-            }
-        }
-    }
-
     @Test
     public void removeTrailingSpaces() throws Exception {
         //upload kits for one type
         String csvContent = TestUtil.readFile("KitUploadTestDDP.txt");
-        HttpResponse response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP + "&kitType=TEST&userId=26"), csvContent, testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP + "&kitType=TEST&userId=26"),
+                        csvContent, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
         Map<String, KitType> kitTypes = KitType.getKitLookup();
@@ -594,9 +669,11 @@ public class RouteTestSample extends TestHelper {
                 INSTANCE_ID);
         DBTestUtil.setKitToSent("FAKE_KIT_" + EVENT_UTIL_TEST, "FAKE_DSM_LABEL_UID" + EVENT_UTIL_TEST, System.currentTimeMillis());
 
-        DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"), EVENT_UTIL_TEST + "2",
+        DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"),
+                EVENT_UTIL_TEST + "2",
                 2, INSTANCE_ID);
-        DBTestUtil.setKitToSent("FAKE_KIT_" + EVENT_UTIL_TEST + "2", "FAKE_DSM_LABEL_UID" + EVENT_UTIL_TEST + "2", System.currentTimeMillis() - (17 * DBTestUtil.WEEK));
+        DBTestUtil.setKitToSent("FAKE_KIT_" + EVENT_UTIL_TEST + "2", "FAKE_DSM_LABEL_UID" + EVENT_UTIL_TEST + "2",
+                System.currentTimeMillis() - (17 * DBTestUtil.WEEK));
 
         eventUtil.triggerReminder();
 
@@ -612,12 +689,17 @@ public class RouteTestSample extends TestHelper {
         strings.add(FAKE_LATEST_KIT + EVENT_UTIL_TEST + "2");
         strings.add(FAKE_DDP_PARTICIPANT_ID + EVENT_UTIL_TEST + "2");
         kitId = DBTestUtil.getStringFromQuery(RouteTest.SELECT_KITREQUEST_QUERY, strings, "dsm_kit_request_id");
-        Assert.assertNull(DBTestUtil.getQueryDetail("select * from EVENT_QUEUE WHERE DSM_KIT_REQUEST_ID = ? AND EVENT_TYPE='BLOOD_SENT_4WK'", kitId, "EVENT_ID"));
+        Assert.assertNull(
+                DBTestUtil.getQueryDetail("select * from EVENT_QUEUE WHERE DSM_KIT_REQUEST_ID = ? AND EVENT_TYPE='BLOOD_SENT_4WK'", kitId,
+                        "EVENT_ID"));
 
         //check kit which is now 18 weeks old is in event table
-        DBTestUtil.setKitToSent("FAKE_KIT_" + EVENT_UTIL_TEST + "2", "FAKE_DSM_LABEL_UID" + EVENT_UTIL_TEST + "2", System.currentTimeMillis() - (18 * DBTestUtil.WEEK));
+        DBTestUtil.setKitToSent("FAKE_KIT_" + EVENT_UTIL_TEST + "2", "FAKE_DSM_LABEL_UID" + EVENT_UTIL_TEST + "2",
+                System.currentTimeMillis() - (18 * DBTestUtil.WEEK));
         eventUtil.triggerReminder();
-        Assert.assertNotNull(DBTestUtil.getQueryDetail("select * from EVENT_QUEUE WHERE DSM_KIT_REQUEST_ID = ? AND EVENT_TYPE='BLOOD_SENT_4WK'", kitId, "EVENT_ID"));
+        Assert.assertNotNull(
+                DBTestUtil.getQueryDetail("select * from EVENT_QUEUE WHERE DSM_KIT_REQUEST_ID = ? AND EVENT_TYPE='BLOOD_SENT_4WK'", kitId,
+                        "EVENT_ID"));
     }
 
     @Test
@@ -625,13 +707,19 @@ public class RouteTestSample extends TestHelper {
         DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"),
                 "_tt3", 2, INSTANCE_ID);
         DBTestUtil.setKitToSent("FAKE_SPK_UUID_tt3", "FAKE_DSM_LABEL_UID_tt3", System.currentTimeMillis() - (18 * DBTestUtil.WEEK));
-        DBTestUtil.executeQuery("insert into ddp_participant_event (event, ddp_participant_id, ddp_instance_id, date, done_by) values (\'BLOOD_SENT_2WK\', \'" + FAKE_DDP_PARTICIPANT_ID + "_tt3" + "\', \'" + INSTANCE_ID + "\', \'" + System.currentTimeMillis() + "\', \'1\')");
+        DBTestUtil.executeQuery(
+                "insert into ddp_participant_event (event, ddp_participant_id, ddp_instance_id, date, done_by) values (\'BLOOD_SENT_2WK\', \'" +
+                        FAKE_DDP_PARTICIPANT_ID + "_tt3" + "\', \'" + INSTANCE_ID + "\', \'" + System.currentTimeMillis() + "\', \'1\')");
 
         eventUtil.triggerReminder();
 
         //check if event_triggered = 1, which would mean it was sent
-        Assert.assertNull(DBTestUtil.getQueryDetail("select * from EVENT_QUEUE queue, ddp_kit_request request where queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id and request.ddp_label = ? and EVENT_TYPE='BLOOD_SENT_2WK' AND queue.EVENT_TRIGGERED = 1", "FAKE_DSM_LABEL_UID_tt3", "EVENT_ID"));
-        Assert.assertNotNull(DBTestUtil.getQueryDetail("select * from EVENT_QUEUE queue, ddp_kit_request request where queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id and request.ddp_label = ? and EVENT_TYPE='BLOOD_SENT_4WK' AND queue.EVENT_TRIGGERED = 1", "FAKE_DSM_LABEL_UID_tt3", "EVENT_ID"));
+        Assert.assertNull(DBTestUtil.getQueryDetail(
+                "select * from EVENT_QUEUE queue, ddp_kit_request request where queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id and request.ddp_label = ? and EVENT_TYPE='BLOOD_SENT_2WK' AND queue.EVENT_TRIGGERED = 1",
+                "FAKE_DSM_LABEL_UID_tt3", "EVENT_ID"));
+        Assert.assertNotNull(DBTestUtil.getQueryDetail(
+                "select * from EVENT_QUEUE queue, ddp_kit_request request where queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id and request.ddp_label = ? and EVENT_TYPE='BLOOD_SENT_4WK' AND queue.EVENT_TRIGGERED = 1",
+                "FAKE_DSM_LABEL_UID_tt3", "EVENT_ID"));
     }
 
     @Test
@@ -639,7 +727,9 @@ public class RouteTestSample extends TestHelper {
         DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"),
                 "_tt4", 2, INSTANCE_ID);
         DBTestUtil.setKitToSent("FAKE_SPK_UUID_tt4", "FAKE_DSM_LABEL_UID_tt4", System.currentTimeMillis() - (3 * DBTestUtil.WEEK));
-        DBTestUtil.executeQuery("insert into ddp_participant_event (event, ddp_participant_id, ddp_instance_id, date, done_by) values (\'BLOOD_RECEIVED\', \'" + FAKE_DDP_PARTICIPANT_ID + "_tt4" + "\', \'" + INSTANCE_ID + "\', \'" + System.currentTimeMillis() + "\', \'1\')");
+        DBTestUtil.executeQuery(
+                "insert into ddp_participant_event (event, ddp_participant_id, ddp_instance_id, date, done_by) values (\'BLOOD_RECEIVED\', \'" +
+                        FAKE_DDP_PARTICIPANT_ID + "_tt4" + "\', \'" + INSTANCE_ID + "\', \'" + System.currentTimeMillis() + "\', \'1\')");
 
         HttpResponse response = bspKit("FAKE_SPK_UUID_tt4");
         Gson gson = new GsonBuilder().create();
@@ -652,7 +742,9 @@ public class RouteTestSample extends TestHelper {
         Assert.assertEquals("SC-123", bspMetaData.getSampleCollectionBarcode());
         Assert.assertEquals(1, bspMetaData.getOrganismClassificationId());
         //check if event_triggered = 1, which would mean it was sent
-        Assert.assertNull(DBTestUtil.getQueryDetail("select * from EVENT_QUEUE queue, ddp_kit_request request where queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id and request.ddp_label = ? AND queue.EVENT_TRIGGERED = 1", "FAKE_DSM_LABEL_UID_tt4", "EVENT_ID"));
+        Assert.assertNull(DBTestUtil.getQueryDetail(
+                "select * from EVENT_QUEUE queue, ddp_kit_request request where queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id and request.ddp_label = ? AND queue.EVENT_TRIGGERED = 1",
+                "FAKE_DSM_LABEL_UID_tt4", "EVENT_ID"));
     }
 
     @Test
@@ -686,21 +778,26 @@ public class RouteTestSample extends TestHelper {
     }
 
     private HttpResponse bspKit(@NonNull String kitLabel) throws Exception {
-        HttpResponse response = TestUtil.performGet(DSM_BASE_URL, "/api/" + "Kits/" + kitLabel, testUtil.buildHeaders(cfg.getString("bsp.secret"))).returnResponse();
+        HttpResponse response =
+                TestUtil.performGet(DSM_BASE_URL, "/api/" + "Kits/" + kitLabel, testUtil.buildHeaders(cfg.getString("bsp.secret")))
+                        .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         return response;
     }
 
     @Test
     public void bspBadKit() throws Exception {
-        HttpResponse response = TestUtil.performGet(DSM_BASE_URL, "/api/" + "Kits/badK", testUtil.buildHeaders(cfg.getString("bsp.secret"))).returnResponse();
+        HttpResponse response = TestUtil.performGet(DSM_BASE_URL, "/api/" + "Kits/badK", testUtil.buildHeaders(cfg.getString("bsp.secret")))
+                .returnResponse();
         Assert.assertEquals(404, response.getStatusLine().getStatusCode());
     }
 
     @Test
     public void labelCreation() throws Exception {
         String csvContent = TestUtil.readFile("KitUpload.txt");
-        HttpResponse response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP + "&kitType=BLOOD&userId=26"), csvContent, testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP + "&kitType=BLOOD&userId=26"),
+                        csvContent, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         triggerLabelCreationAndWaitForLabel(TEST_DDP, "BLOOD", 30);
 
@@ -753,18 +850,19 @@ public class RouteTestSample extends TestHelper {
     public void multipleFedExAccountsKitQuartzDDPRequest() throws Exception {
         String message = TestUtil.readFile("ddpResponses/KitRequestsSingle.json");
         mockDDP.when(
-                request().withPath("/ddp/kitrequests/" + "TEST_MULTIPLE_FEDEX_QUARTZ"))
+                        request().withPath("/ddp/kitrequests/" + "TEST_MULTIPLE_FEDEX_QUARTZ"))
                 .respond(response().withStatusCode(200).withBody(message));
 
         message = TestUtil.readFile("ddpResponses/ParticipantsWithIdMULTIPLE_ACCOUNT_TEST.json");
         mockDDP.when(
-                request().withPath("/ddp/participants/MULTIPLE_ACCOUNT_TEST"))
+                        request().withPath("/ddp/participants/MULTIPLE_ACCOUNT_TEST"))
                 .respond(response().withStatusCode(200).withBody(message));
 
         // Getting all KitRequests (because of the null --> getting whole list)
         List<LatestKitRequest> latestKitRequests = new ArrayList<>();
         latestKitRequests.add(new LatestKitRequest("TEST_MULTIPLE_FEDEX_QUARTZ", INSTANCE_ID_2, TEST_DDP_2, DDP_BASE_URL,
-                DBTestUtil.getQueryDetail(DBUtil.GET_REALM_QUERY, TEST_DDP_2, DBConstants.COLLABORATOR_ID_PREFIX), false, false, false, false, null));
+                DBTestUtil.getQueryDetail(DBUtil.GET_REALM_QUERY, TEST_DDP_2, DBConstants.COLLABORATOR_ID_PREFIX), false, false, false,
+                false, null));
         ddpKitRequest.requestAndWriteKitRequests(latestKitRequests);
 
         checkKitShipmentIdEmpty("MULTIPLE_ACCOUNT_TEST", "4");
@@ -780,11 +878,14 @@ public class RouteTestSample extends TestHelper {
     @Test
     public void multipleFedExAccountsKitUpload() throws Exception {
         String csvContent = TestUtil.readFile("KitUploadAnotherDDP.txt");
-        HttpResponse response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP_2 + "&kitType=SHIPPING-1&userId=26"), csvContent, testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP_2 + "&kitType=SHIPPING-1&userId=26"),
+                        csvContent, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
         csvContent = TestUtil.readFile("KitUploadAnotherDDP2.txt");
-        response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP_2 + "&kitType=SHIPPING-2&userId=26"), csvContent, testUtil.buildAuthHeaders()).returnResponse();
+        response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP_2 + "&kitType=SHIPPING-2&userId=26"),
+                csvContent, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
         checkKitShipmentIdEmpty("MULTIPLE_ACCOUNT_TEST_666", "4");
@@ -844,12 +945,17 @@ public class RouteTestSample extends TestHelper {
         strings.add(FAKE_DDP_PARTICIPANT_ID + suffix);
         String kitRequestId = DBTestUtil.getStringFromQuery(SELECT_KITREQUEST_QUERY, strings, "dsm_kit_request_id");
 
-        HttpResponse response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/" + "expressKit/" + kitRequestId + "?userId=26"), null, testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/" + "expressKit/" + kitRequestId + "?userId=26"), null,
+                testUtil.buildAuthHeaders()).returnResponse();
 
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-        Assert.assertEquals("2", DBTestUtil.getQueryDetail("SELECT count(*) from ddp_kit where dsm_kit_request_id = ?", kitRequestId, "count(*)"));
-        Assert.assertEquals("Generated Express", DBTestUtil.getQueryDetail("SELECT * from ddp_kit where dsm_kit_request_id = ? order by dsm_kit_id limit 1 ", kitRequestId, "deactivation_reason"));
-        String testValue = DBTestUtil.getQueryDetail("SELECT * from ddp_kit where dsm_kit_request_id = ? order by dsm_kit_id desc limit 1 ", kitRequestId, "label_url_to");
+        Assert.assertEquals("2",
+                DBTestUtil.getQueryDetail("SELECT count(*) from ddp_kit where dsm_kit_request_id = ?", kitRequestId, "count(*)"));
+        Assert.assertEquals("Generated Express",
+                DBTestUtil.getQueryDetail("SELECT * from ddp_kit where dsm_kit_request_id = ? order by dsm_kit_id limit 1 ", kitRequestId,
+                        "deactivation_reason"));
+        String testValue = DBTestUtil.getQueryDetail("SELECT * from ddp_kit where dsm_kit_request_id = ? order by dsm_kit_id desc limit 1 ",
+                kitRequestId, "label_url_to");
         Assert.assertNotNull(testValue);
 
         checkKitShipmentId(TEST_DDP_2, FAKE_DDP_PARTICIPANT_ID + suffix, kitId, carrierId);
@@ -857,8 +963,10 @@ public class RouteTestSample extends TestHelper {
 
     @Test
     public void differentKitTypesSameName() throws Exception {
-        bspEndpoint(INSTANCE_ID, 2, "_BLOOD_TEST_DDP", "Whole Blood:Streck Cell-Free Preserved", "Vacutainer Cell-Free DNA Tube Camo-Top [10mL]", "SC-123");
-        bspEndpoint(INSTANCE_ID_2, 6, "_BLOOD_ANOTHER_DDP", "Whole Blood: Paxgene Preserved", "Vacutainer EDTA Tube Purple-Top [10mL]", "SC-12333");
+        bspEndpoint(INSTANCE_ID, 2, "_BLOOD_TEST_DDP", "Whole Blood:Streck Cell-Free Preserved",
+                "Vacutainer Cell-Free DNA Tube Camo-Top [10mL]", "SC-123");
+        bspEndpoint(INSTANCE_ID_2, 6, "_BLOOD_ANOTHER_DDP", "Whole Blood: Paxgene Preserved", "Vacutainer EDTA Tube Purple-Top [10mL]",
+                "SC-12333");
     }
 
     @Test
@@ -870,12 +978,15 @@ public class RouteTestSample extends TestHelper {
         String labelId = DBTestUtil.getStringFromQuery("select * from label_setting where name = \"Avery1\"", null, "label_setting_id");
 
         //change value of label setting
-        String json = "[{\"labelSettingId\":\"" + labelId + "\", \"name\": \"Avery1.0\", \"description\": \"testLabel changed Name\", \"defaultPage\": false, \"labelOnPage\": 4, \"labelHeight\": 10.0, \"labelWidth\": 8.0, \"topMargin\": 1, \"rightMargin\": 1.0, \"bottomMargin\": 8.0, \"leftMargin\": 1.0, \"spaceBetweenLabelsLeftRight\": 1, \"spaceBetweenLabelsTopBottom\": 1.0}]";
-        HttpResponse response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/labelSettings"), json, testUtil.buildAuthHeaders()).returnResponse();
+        String json = "[{\"labelSettingId\":\"" + labelId +
+                "\", \"name\": \"Avery1.0\", \"description\": \"testLabel changed Name\", \"defaultPage\": false, \"labelOnPage\": 4, \"labelHeight\": 10.0, \"labelWidth\": 8.0, \"topMargin\": 1, \"rightMargin\": 1.0, \"bottomMargin\": 8.0, \"leftMargin\": 1.0, \"spaceBetweenLabelsLeftRight\": 1, \"spaceBetweenLabelsTopBottom\": 1.0}]";
+        HttpResponse response =
+                TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/labelSettings"), json, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
         //check changed value
-        Assert.assertEquals("Avery1.0", DBTestUtil.getStringFromQuery("select * from label_setting where label_setting_id = " + labelId, null, "name"));
+        Assert.assertEquals("Avery1.0",
+                DBTestUtil.getStringFromQuery("select * from label_setting where label_setting_id = " + labelId, null, "name"));
 
         //delete label again
         DBTestUtil.executeQuery("DELETE FROM label_setting WHERE label_setting_id = " + labelId);
@@ -883,12 +994,15 @@ public class RouteTestSample extends TestHelper {
 
     public void addLabelSetting() throws Exception {
         //add label setting
-        String json = "[{\"name\": \"Avery1\", \"description\": \"testLabel\", \"defaultPage\": false, \"labelOnPage\": 4, \"labelHeight\": 10.0, \"labelWidth\": 8.0, \"topMargin\": 1, \"rightMargin\": 1.0, \"bottomMargin\": 8.0, \"leftMargin\": 1.0, \"spaceBetweenLabelsLeftRight\": 1, \"spaceBetweenLabelsTopBottom\": 1.0}]";
-        HttpResponse response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/labelSettings"), json, testUtil.buildAuthHeaders()).returnResponse();
+        String json =
+                "[{\"name\": \"Avery1\", \"description\": \"testLabel\", \"defaultPage\": false, \"labelOnPage\": 4, \"labelHeight\": 10.0, \"labelWidth\": 8.0, \"topMargin\": 1, \"rightMargin\": 1.0, \"bottomMargin\": 8.0, \"leftMargin\": 1.0, \"spaceBetweenLabelsLeftRight\": 1, \"spaceBetweenLabelsTopBottom\": 1.0}]";
+        HttpResponse response =
+                TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/labelSettings"), json, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
         //get last changed on with that combination to get the one just added
-        Assert.assertEquals("testLabel", DBTestUtil.getStringFromQuery("select * from label_setting where name = \"Avery1\"", null, "description"));
+        Assert.assertEquals("testLabel",
+                DBTestUtil.getStringFromQuery("select * from label_setting where name = \"Avery1\"", null, "description"));
     }
 
     @Test
@@ -900,7 +1014,8 @@ public class RouteTestSample extends TestHelper {
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         Gson gson = new GsonBuilder().create();
         LabelSettings[] labelSettings = gson.fromJson(DDPRequestUtil.getContentAsString(response), LabelSettings[].class);
-        Assert.assertEquals(String.valueOf(labelSettings.length), DBTestUtil.getStringFromQuery("select count(*) from label_setting where not (deleted <=> 1)", null, "count(*)"));
+        Assert.assertEquals(String.valueOf(labelSettings.length),
+                DBTestUtil.getStringFromQuery("select count(*) from label_setting where not (deleted <=> 1)", null, "count(*)"));
 
         //get labelId
         String labelId = DBTestUtil.getStringFromQuery("select * from label_setting where name = \"Avery1\"", null, "label_setting_id");
@@ -911,7 +1026,8 @@ public class RouteTestSample extends TestHelper {
 
     @Test
     public void shippingReportDownloadEndpoint() throws Exception {
-        HttpResponse response = TestUtil.performGet(DSM_BASE_URL, "/ui/sampleReport?userId=26", testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.performGet(DSM_BASE_URL, "/ui/sampleReport?userId=26", testUtil.buildAuthHeaders()).returnResponse();
 
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
@@ -924,7 +1040,9 @@ public class RouteTestSample extends TestHelper {
 
     @Test
     public void shippingReportEndpoint() throws Exception {
-        HttpResponse response = TestUtil.performGet(DSM_BASE_URL, "/ui/sampleReport/2017-03-01/2017-03-20?userId=26", testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.performGet(DSM_BASE_URL, "/ui/sampleReport/2017-03-01/2017-03-20?userId=26", testUtil.buildAuthHeaders())
+                        .returnResponse();
 
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
@@ -944,7 +1062,9 @@ public class RouteTestSample extends TestHelper {
         strings.add(FAKE_DDP_PARTICIPANT_ID + "_express");
         String kitRequestId = DBTestUtil.getStringFromQuery(SELECT_KITREQUEST_QUERY, strings, "dsm_kit_request_id");
 
-        HttpResponse response = TestUtil.performGet(DSM_BASE_URL, "/ui/" + "expressKit/" + kitRequestId + "?userId=26", testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.performGet(DSM_BASE_URL, "/ui/" + "expressKit/" + kitRequestId + "?userId=26", testUtil.buildAuthHeaders())
+                        .returnResponse();
 
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         String message = DDPRequestUtil.getContentAsString(response);
@@ -964,12 +1084,17 @@ public class RouteTestSample extends TestHelper {
         strings.add(FAKE_DDP_PARTICIPANT_ID + "_express2");
         String kitRequestId = DBTestUtil.getStringFromQuery(SELECT_KITREQUEST_QUERY, strings, "dsm_kit_request_id");
 
-        HttpResponse response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/" + "expressKit/" + kitRequestId + "?userId=26"), null, testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/" + "expressKit/" + kitRequestId + "?userId=26"), null,
+                testUtil.buildAuthHeaders()).returnResponse();
 
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-        Assert.assertEquals("2", DBTestUtil.getQueryDetail("SELECT count(*) from ddp_kit where dsm_kit_request_id = ?", kitRequestId, "count(*)"));
-        Assert.assertEquals("Generated Express", DBTestUtil.getQueryDetail("SELECT * from ddp_kit where dsm_kit_request_id = ? order by dsm_kit_id limit 1 ", kitRequestId, "deactivation_reason"));
-        String testValue = DBTestUtil.getQueryDetail("SELECT * from ddp_kit where dsm_kit_request_id = ? order by dsm_kit_id desc limit 1 ", kitRequestId, "label_url_to");
+        Assert.assertEquals("2",
+                DBTestUtil.getQueryDetail("SELECT count(*) from ddp_kit where dsm_kit_request_id = ?", kitRequestId, "count(*)"));
+        Assert.assertEquals("Generated Express",
+                DBTestUtil.getQueryDetail("SELECT * from ddp_kit where dsm_kit_request_id = ? order by dsm_kit_id limit 1 ", kitRequestId,
+                        "deactivation_reason"));
+        String testValue = DBTestUtil.getQueryDetail("SELECT * from ddp_kit where dsm_kit_request_id = ? order by dsm_kit_id desc limit 1 ",
+                kitRequestId, "label_url_to");
         Assert.assertNotNull(testValue);
     }
 
@@ -983,9 +1108,12 @@ public class RouteTestSample extends TestHelper {
         strings.add(FAKE_LATEST_KIT + "_deactivate");
         strings.add(FAKE_DDP_PARTICIPANT_ID + "_deactivate");
         String kitRequestId = DBTestUtil.getStringFromQuery(SELECT_KITREQUEST_QUERY, strings, "dsm_kit_request_id");
-        HttpResponse response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/" + "activateKit/" + kitRequestId + "?userId=26"), null, testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/" + "activateKit/" + kitRequestId + "?userId=26"), null,
+                testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-        Assert.assertNull(DBTestUtil.getQueryDetail("select * from(select req.ddp_participant_id, req.dsm_kit_request_id from kit_type kt, ddp_kit_request req, ddp_instance ddp_site where req.ddp_instance_id = ddp_site.ddp_instance_id and req.kit_type_id = kt.kit_type_id) as request left join (select * from (SELECT kit.dsm_kit_request_id, kit.error, kit.message, kit.deactivated_date FROM ddp_kit kit INNER JOIN( SELECT dsm_kit_request_id, MAX(dsm_kit_id) AS kit_id FROM ddp_kit GROUP BY dsm_kit_request_id) groupedKit ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id AND kit.dsm_kit_id = groupedKit.kit_id LEFT JOIN ddp_kit_tracking tracking ON (kit.kit_label = tracking.kit_label))as wtf) as kit on kit.dsm_kit_request_id = request.dsm_kit_request_id where request.dsm_kit_request_id = ?", kitRequestId, "deactivated_date"));
+        Assert.assertNull(DBTestUtil.getQueryDetail(
+                "select * from(select req.ddp_participant_id, req.dsm_kit_request_id from kit_type kt, ddp_kit_request req, ddp_instance ddp_site where req.ddp_instance_id = ddp_site.ddp_instance_id and req.kit_type_id = kt.kit_type_id) as request left join (select * from (SELECT kit.dsm_kit_request_id, kit.error, kit.message, kit.deactivated_date FROM ddp_kit kit INNER JOIN( SELECT dsm_kit_request_id, MAX(dsm_kit_id) AS kit_id FROM ddp_kit GROUP BY dsm_kit_request_id) groupedKit ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id AND kit.dsm_kit_id = groupedKit.kit_id LEFT JOIN ddp_kit_tracking tracking ON (kit.kit_label = tracking.kit_label))as wtf) as kit on kit.dsm_kit_request_id = request.dsm_kit_request_id where request.dsm_kit_request_id = ?",
+                kitRequestId, "deactivated_date"));
     }
 
     @Test
@@ -1001,9 +1129,12 @@ public class RouteTestSample extends TestHelper {
         if (StringUtils.isBlank(kitRequestId)) {
             Assert.fail("Didn't find kit");
         }
-        HttpResponse response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/" + "activateKit/" + kitRequestId + "?userId=26"), null, testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/" + "activateKit/" + kitRequestId + "?userId=26"), null,
+                testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-        Assert.assertNull(DBTestUtil.getQueryDetail("select * from(select req.ddp_participant_id, req.dsm_kit_request_id from kit_type kt, ddp_kit_request req, ddp_instance ddp_site where req.ddp_instance_id = ddp_site.ddp_instance_id and req.kit_type_id = kt.kit_type_id) as request left join (select * from (SELECT kit.dsm_kit_request_id, kit.error, kit.message, kit.deactivated_date FROM ddp_kit kit INNER JOIN( SELECT dsm_kit_request_id, MAX(dsm_kit_id) AS kit_id FROM ddp_kit GROUP BY dsm_kit_request_id) groupedKit ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id AND kit.dsm_kit_id = groupedKit.kit_id LEFT JOIN ddp_kit_tracking tracking ON (kit.kit_label = tracking.kit_label))as wtf) as kit on kit.dsm_kit_request_id = request.dsm_kit_request_id where request.dsm_kit_request_id = ?", kitRequestId, "deactivated_date"));
+        Assert.assertNull(DBTestUtil.getQueryDetail(
+                "select * from(select req.ddp_participant_id, req.dsm_kit_request_id from kit_type kt, ddp_kit_request req, ddp_instance ddp_site where req.ddp_instance_id = ddp_site.ddp_instance_id and req.kit_type_id = kt.kit_type_id) as request left join (select * from (SELECT kit.dsm_kit_request_id, kit.error, kit.message, kit.deactivated_date FROM ddp_kit kit INNER JOIN( SELECT dsm_kit_request_id, MAX(dsm_kit_id) AS kit_id FROM ddp_kit GROUP BY dsm_kit_request_id) groupedKit ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id AND kit.dsm_kit_id = groupedKit.kit_id LEFT JOIN ddp_kit_tracking tracking ON (kit.kit_label = tracking.kit_label))as wtf) as kit on kit.dsm_kit_request_id = request.dsm_kit_request_id where request.dsm_kit_request_id = ?",
+                kitRequestId, "deactivated_date"));
     }
 
     public void deactivateKitRequest(boolean beforeLabelCreation, String suffix) throws Exception {
@@ -1019,7 +1150,8 @@ public class RouteTestSample extends TestHelper {
         strings.add(FAKE_DDP_PARTICIPANT_ID + suffix);
         String kitRequestId = DBTestUtil.getStringFromQuery(SELECT_KITREQUEST_QUERY, strings, "dsm_kit_request_id");
 
-        HttpResponse response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/" + "deactivateKit/" + kitRequestId + "?userId=26"), "{\"reason\": \"test\"}", testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/" + "deactivateKit/" + kitRequestId + "?userId=26"),
+                "{\"reason\": \"test\"}", testUtil.buildAuthHeaders()).returnResponse();
 
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         Assert.assertNotNull(DBTestUtil.getQueryDetail(SELECT_KIT_QUERY, kitRequestId, "deactivated_date"));
@@ -1028,7 +1160,9 @@ public class RouteTestSample extends TestHelper {
     @Test
     public void fileUpload() throws Exception {
         String csvContent = TestUtil.readFile("KitUpload.txt");
-        HttpResponse response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP + "&kitType=BLOOD&userId=26"), csvContent, testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP + "&kitType=BLOOD&userId=26"),
+                        csvContent, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
         //check if participant in kit request table
@@ -1054,7 +1188,8 @@ public class RouteTestSample extends TestHelper {
         DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"),
                 "_kit-2", 1, INSTANCE_ID);
 
-        HttpResponse response = TestUtil.performGet(DSM_BASE_URL, "/ui/kitRequests?realm=" + TEST_DDP + "&target=queue&kitType=SALIVA", testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response = TestUtil.performGet(DSM_BASE_URL, "/ui/kitRequests?realm=" + TEST_DDP + "&target=queue&kitType=SALIVA",
+                testUtil.buildAuthHeaders()).returnResponse();
 
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
@@ -1080,7 +1215,9 @@ public class RouteTestSample extends TestHelper {
 
     @Test
     public void bspKitEndpointWithUnknownLabel() throws Exception {
-        HttpResponse response = TestUtil.performGet(DSM_BASE_URL, "/api/Kits/notExisting", testUtil.buildHeaders(cfg.getString("bsp.secret"))).returnResponse();
+        HttpResponse response =
+                TestUtil.performGet(DSM_BASE_URL, "/api/Kits/notExisting", testUtil.buildHeaders(cfg.getString("bsp.secret")))
+                        .returnResponse();
         Assert.assertEquals(404, response.getStatusLine().getStatusCode());
     }
 
@@ -1089,7 +1226,9 @@ public class RouteTestSample extends TestHelper {
         //difference to bspEndpointSkipDDPEventSalivaReceived is that ddp is not setup to sent notifications
         String suffix = "_tt7";
         bspKitEndpointSkipDDPEventTriggered(1, "SALIVA_RECEIVED", suffix, INSTANCE_ID_2);
-        Assert.assertNull(DBTestUtil.getQueryDetail("select * from EVENT_QUEUE queue, ddp_kit_request request where queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id and request.ddp_label = ?", "FAKE_DSM_LABEL_UID" + suffix, "EVENT_ID"));
+        Assert.assertNull(DBTestUtil.getQueryDetail(
+                "select * from EVENT_QUEUE queue, ddp_kit_request request where queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id and request.ddp_label = ?",
+                "FAKE_DSM_LABEL_UID" + suffix, "EVENT_ID"));
     }
 
     @Test
@@ -1097,7 +1236,9 @@ public class RouteTestSample extends TestHelper {
         String suffix = "_tt9";
         bspKitEndpointSkipDDPEventTriggered(1, "SALIVA_RECEIVED", suffix, INSTANCE_ID);
         //check if event_triggered = 1, which would mean it was sent
-        Assert.assertNull(DBTestUtil.getQueryDetail("select * from EVENT_QUEUE queue, ddp_kit_request request where queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id and request.ddp_label = ? AND queue.EVENT_TRIGGERED = 1", "FAKE_DSM_LABEL_UID" + suffix, "EVENT_ID"));
+        Assert.assertNull(DBTestUtil.getQueryDetail(
+                "select * from EVENT_QUEUE queue, ddp_kit_request request where queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id and request.ddp_label = ? AND queue.EVENT_TRIGGERED = 1",
+                "FAKE_DSM_LABEL_UID" + suffix, "EVENT_ID"));
     }
 
     @Test
@@ -1105,15 +1246,22 @@ public class RouteTestSample extends TestHelper {
         String suffix = "_tt2";
         bspKitEndpointSkipDDPEventTriggered(2, "BLOOD_RECEIVED", suffix, INSTANCE_ID);
         //check if event_triggered = 1, which would mean it was sent
-        Assert.assertNull(DBTestUtil.getQueryDetail("select * from EVENT_QUEUE queue, ddp_kit_request request where queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id and request.ddp_label = ? AND queue.EVENT_TRIGGERED = 1", "FAKE_DSM_LABEL_UID" + suffix, "EVENT_ID"));
+        Assert.assertNull(DBTestUtil.getQueryDetail(
+                "select * from EVENT_QUEUE queue, ddp_kit_request request where queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id and request.ddp_label = ? AND queue.EVENT_TRIGGERED = 1",
+                "FAKE_DSM_LABEL_UID" + suffix, "EVENT_ID"));
     }
 
     private void bspKitEndpointSkipDDPEventTriggered(int kitType, String eventName, String suffix, String ddpInstance) throws Exception {
         DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"),
                 suffix, kitType, ddpInstance);
-        DBTestUtil.executeQuery("insert into ddp_participant_event (event, ddp_participant_id, ddp_instance_id, date, done_by) values (\'" + eventName + "\', \'" + FAKE_DDP_PARTICIPANT_ID + suffix + "\', \'" + ddpInstance + "\', \'" + System.currentTimeMillis() + "\', \'1\')");
+        DBTestUtil.executeQuery(
+                "insert into ddp_participant_event (event, ddp_participant_id, ddp_instance_id, date, done_by) values (\'" + eventName +
+                        "\', \'" + FAKE_DDP_PARTICIPANT_ID + suffix + "\', \'" + ddpInstance + "\', \'" + System.currentTimeMillis() +
+                        "\', \'1\')");
         DBTestUtil.setKitToSent("FAKE_SPK_UUID" + suffix, "FAKE_DSM_LABEL_UID" + suffix);
-        HttpResponse response = TestUtil.performGet(DSM_BASE_URL, "/api/Kits/FAKE_SPK_UUID" + suffix, testUtil.buildHeaders(cfg.getString("bsp.secret"))).returnResponse();
+        HttpResponse response =
+                TestUtil.performGet(DSM_BASE_URL, "/api/Kits/FAKE_SPK_UUID" + suffix, testUtil.buildHeaders(cfg.getString("bsp.secret")))
+                        .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     }
 
@@ -1121,31 +1269,39 @@ public class RouteTestSample extends TestHelper {
     public void bspEndpointNoDDPEventSalivaReceived() throws Exception {
         String suffix = "_tt6";
         bspKitEndpointDDPEventTriggered(1, "SALIVA_RECEIVED", suffix, INSTANCE_ID_2);
-        Assert.assertNull(DBTestUtil.getQueryDetail("select * from EVENT_QUEUE queue, ddp_kit_request request where queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id and request.ddp_label = ?", "FAKE_DSM_LABEL_UID" + suffix, "EVENT_ID"));
+        Assert.assertNull(DBTestUtil.getQueryDetail(
+                "select * from EVENT_QUEUE queue, ddp_kit_request request where queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id and request.ddp_label = ?",
+                "FAKE_DSM_LABEL_UID" + suffix, "EVENT_ID"));
     }
 
     @Test
     public void bspEndpointDDPEventSalivaReceived2() throws Exception {
         String suffix = "_tt1";
         bspKitEndpointDDPEventTriggered(1, "SALIVA_RECEIVED", suffix, INSTANCE_ID);
-        Assert.assertNotNull(DBTestUtil.getQueryDetail("select * from EVENT_QUEUE queue, ddp_kit_request request where queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id and request.ddp_label = ?", "FAKE_DSM_LABEL_UID" + suffix, "EVENT_ID"));
+        Assert.assertNotNull(DBTestUtil.getQueryDetail(
+                "select * from EVENT_QUEUE queue, ddp_kit_request request where queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id and request.ddp_label = ?",
+                "FAKE_DSM_LABEL_UID" + suffix, "EVENT_ID"));
     }
 
     @Test
     public void bspEndpointDDPEventBloodReceived() throws Exception {
         String suffix = "_tt8";
         bspKitEndpointDDPEventTriggered(2, "BLOOD_RECEIVED", suffix, INSTANCE_ID);
-        Assert.assertNotNull(DBTestUtil.getQueryDetail("select * from EVENT_QUEUE queue, ddp_kit_request request where queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id and request.ddp_label = ?", "FAKE_DSM_LABEL_UID" + suffix, "EVENT_ID"));
+        Assert.assertNotNull(DBTestUtil.getQueryDetail(
+                "select * from EVENT_QUEUE queue, ddp_kit_request request where queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id and request.ddp_label = ?",
+                "FAKE_DSM_LABEL_UID" + suffix, "EVENT_ID"));
     }
 
     private void bspKitEndpointDDPEventTriggered(int kitType, String eventName, String suffix, String ddpInstance) throws Exception {
         mockDDP.when(
-                request().withPath("/ddp/participantevent/FAKE_DDP_PARTICIPANT_ID" + suffix))
+                        request().withPath("/ddp/participantevent/FAKE_DDP_PARTICIPANT_ID" + suffix))
                 .respond(response().withStatusCode(200));
         DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"),
                 suffix, kitType, ddpInstance);
         DBTestUtil.setKitToSent("FAKE_SPK_UUID" + suffix, "FAKE_DSM_LABEL_UID" + suffix);
-        HttpResponse response = TestUtil.performGet(DSM_BASE_URL, "/api/Kits/FAKE_SPK_UUID" + suffix, testUtil.buildHeaders(cfg.getString("bsp.secret"))).returnResponse();
+        HttpResponse response =
+                TestUtil.performGet(DSM_BASE_URL, "/api/Kits/FAKE_SPK_UUID" + suffix, testUtil.buildHeaders(cfg.getString("bsp.secret")))
+                        .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     }
 
@@ -1156,18 +1312,22 @@ public class RouteTestSample extends TestHelper {
 
     @Test
     public void bspEndpointBlood() throws Exception {
-        bspEndpoint(INSTANCE_ID, 2, "_test2", "Whole Blood:Streck Cell-Free Preserved", "Vacutainer Cell-Free DNA Tube Camo-Top [10mL]", "SC-123");
+        bspEndpoint(INSTANCE_ID, 2, "_test2", "Whole Blood:Streck Cell-Free Preserved", "Vacutainer Cell-Free DNA Tube Camo-Top [10mL]",
+                "SC-123");
     }
 
-    private void bspEndpoint(String instanceId, int kitType, String suffix, String materialInfo, String receptacle, String collection) throws Exception {
+    private void bspEndpoint(String instanceId, int kitType, String suffix, String materialInfo, String receptacle, String collection)
+            throws Exception {
         mockDDP.when(
-                request().withPath("/ddp/participantevent/FAKE_DDP_PARTICIPANT_ID" + suffix))
+                        request().withPath("/ddp/participantevent/FAKE_DDP_PARTICIPANT_ID" + suffix))
                 .respond(response().withStatusCode(200));
         DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"),
                 suffix, kitType, instanceId);
         DBTestUtil.setKitToSent("FAKE_SPK_UUID" + suffix, "FAKE_DSM_LABEL_UID" + suffix);
 
-        HttpResponse response = TestUtil.performGet(DSM_BASE_URL, "/api/Kits/FAKE_SPK_UUID" + suffix, testUtil.buildHeaders(cfg.getString("bsp.secret"))).returnResponse();
+        HttpResponse response =
+                TestUtil.performGet(DSM_BASE_URL, "/api/Kits/FAKE_SPK_UUID" + suffix, testUtil.buildHeaders(cfg.getString("bsp.secret")))
+                        .returnResponse();
 
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
@@ -1185,10 +1345,13 @@ public class RouteTestSample extends TestHelper {
         Assert.assertEquals(collection, bspKitInfo.getSampleCollectionBarcode());
 
         //check that bsp scan added received_date to kit
-        Assert.assertNotNull(DBTestUtil.getQueryDetail("select * from ddp_kit where kit_label = ?", "FAKE_SPK_UUID" + suffix, "receive_date"));
+        Assert.assertNotNull(
+                DBTestUtil.getQueryDetail("select * from ddp_kit where kit_label = ?", "FAKE_SPK_UUID" + suffix, "receive_date"));
 
         //check that bsp scan triggered ddp event
-        Assert.assertNotNull(DBTestUtil.getQueryDetail("select * from EVENT_QUEUE queue, ddp_kit_request request where queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id and request.ddp_label = ?", "FAKE_DSM_LABEL_UID" + suffix, "EVENT_ID"));
+        Assert.assertNotNull(DBTestUtil.getQueryDetail(
+                "select * from EVENT_QUEUE queue, ddp_kit_request request where queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id and request.ddp_label = ?",
+                "FAKE_DSM_LABEL_UID" + suffix, "EVENT_ID"));
     }
 
     @Test
@@ -1198,7 +1361,9 @@ public class RouteTestSample extends TestHelper {
         BSPKitStatus bspStatus = gson.fromJson(DDPRequestUtil.getContentAsString(response), BSPKitStatus.class);
         Assert.assertEquals("EXITED", bspStatus.getStatus());
 
-        String emailId = DBTestUtil.getQueryDetail("select * from EMAIL_QUEUE where EMAIL_RECORD_ID = ? and REMINDER_TYPE=\"NA\" and EMAIL_DATE_PROCESSED is null limit 1", "EXITED_KIT_RECEIVED_NOTIFICATION", "EMAIL_ID");
+        String emailId = DBTestUtil.getQueryDetail(
+                "select * from EMAIL_QUEUE where EMAIL_RECORD_ID = ? and REMINDER_TYPE=\"NA\" and EMAIL_DATE_PROCESSED is null limit 1",
+                "EXITED_KIT_RECEIVED_NOTIFICATION", "EMAIL_ID");
         Assert.assertNotNull(emailId);
 
         //delete kit so that other exit kit is not failing
@@ -1207,10 +1372,14 @@ public class RouteTestSample extends TestHelper {
 
     @Test
     public void bspKitEndpointWithKitAlreadyReceived() throws Exception {
-        HttpResponse response = TestUtil.performGet(DSM_BASE_URL, "/api/Kits/testing123", testUtil.buildHeaders(cfg.getString("bsp.secret"))).returnResponse();
+        HttpResponse response =
+                TestUtil.performGet(DSM_BASE_URL, "/api/Kits/testing123", testUtil.buildHeaders(cfg.getString("bsp.secret")))
+                        .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         //check that no email is triggered, because it is already received
-        Assert.assertNull(DBTestUtil.getQueryDetail("select * from EVENT_QUEUE queue, ddp_kit_request request where queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id and request.ddp_label = ?", "XZGIAKSJELUA4EDEF0KN", "EVENT_ID"));
+        Assert.assertNull(DBTestUtil.getQueryDetail(
+                "select * from EVENT_QUEUE queue, ddp_kit_request request where queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id and request.ddp_label = ?",
+                "XZGIAKSJELUA4EDEF0KN", "EVENT_ID"));
     }
 
     @Test
@@ -1232,28 +1401,34 @@ public class RouteTestSample extends TestHelper {
         strings.add(FAKE_LATEST_KIT + "_refundKit_normal");
         strings.add(FAKE_DDP_PARTICIPANT_ID + "_refundKit");
         String kitRequestId2 = DBTestUtil.getStringFromQuery(SELECT_KITREQUEST_QUERY, strings, "dsm_kit_request_id");
-        HttpResponse response = TestUtil.performGet(DSM_BASE_URL, "/ui/" + "expressKit/" + kitRequestId1 + "?userId=1", testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.performGet(DSM_BASE_URL, "/ui/" + "expressKit/" + kitRequestId1 + "?userId=1", testUtil.buildAuthHeaders())
+                        .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
         mockDDP.when(
-                request().withPath("/ddp/exitparticipantrequest/" + FAKE_DDP_PARTICIPANT_ID + "_refundKit"))
+                        request().withPath("/ddp/exitparticipantrequest/" + FAKE_DDP_PARTICIPANT_ID + "_refundKit"))
                 .respond(response().withStatusCode(200));
         RouteTest.exitPat(FAKE_DDP_PARTICIPANT_ID + "_refundKit");
 
         //kit will have an error, because test label is not possible to refund
         //express kit
-        String testValue = DBTestUtil.getQueryDetail("SELECT * from ddp_kit where dsm_kit_request_id = ? order by dsm_kit_id desc limit 1 ", kitRequestId1, "message");
+        String testValue = DBTestUtil.getQueryDetail("SELECT * from ddp_kit where dsm_kit_request_id = ? order by dsm_kit_id desc limit 1 ",
+                kitRequestId1, "message");
         Assert.assertNotNull(testValue);
         Assert.assertEquals("To: Refund was not possible Return: Refund was not possible", testValue);
         //normal kit
-        testValue = DBTestUtil.getQueryDetail("SELECT * from ddp_kit where dsm_kit_request_id = ? order by dsm_kit_id desc limit 1 ", kitRequestId2, "message");
+        testValue = DBTestUtil.getQueryDetail("SELECT * from ddp_kit where dsm_kit_request_id = ? order by dsm_kit_id desc limit 1 ",
+                kitRequestId2, "message");
         Assert.assertNotNull(testValue);
         Assert.assertEquals("To: Refund was not possible Return: Refund was not possible", testValue);
     }
 
     @Test
     public void sampleDiscard() throws Exception {
-        HttpResponse response = TestUtil.performGet(DSM_BASE_URL, "/ui/" + "discardSamples" + "?userId=1&realm=" + TEST_DDP, testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.performGet(DSM_BASE_URL, "/ui/" + "discardSamples" + "?userId=1&realm=" + TEST_DDP, testUtil.buildAuthHeaders())
+                        .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         String message = DDPRequestUtil.getContentAsString(response);
         Gson gson = new GsonBuilder().create();
@@ -1268,11 +1443,12 @@ public class RouteTestSample extends TestHelper {
         DBTestUtil.setKitToSent("FAKE_KIT_exitKit_2", "FAKE_DSM_LABEL_UID" + "_exitKit_2", System.currentTimeMillis());
 
         mockDDP.when(
-                request().withPath("/ddp/exitparticipantrequest/" + FAKE_DDP_PARTICIPANT_ID + "_exitKit"))
+                        request().withPath("/ddp/exitparticipantrequest/" + FAKE_DDP_PARTICIPANT_ID + "_exitKit"))
                 .respond(response().withStatusCode(200));
         RouteTest.exitPat(FAKE_DDP_PARTICIPANT_ID + "_exitKit");
 
-        response = TestUtil.performGet(DSM_BASE_URL, "/ui/" + "discardSamples" + "?userId=1&realm=" + TEST_DDP, testUtil.buildAuthHeaders()).returnResponse();
+        response = TestUtil.performGet(DSM_BASE_URL, "/ui/" + "discardSamples" + "?userId=1&realm=" + TEST_DDP, testUtil.buildAuthHeaders())
+                .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         message = DDPRequestUtil.getContentAsString(response);
         KitDiscard[] kitDiscardsAfter = gson.fromJson(message, KitDiscard[].class);
@@ -1282,8 +1458,12 @@ public class RouteTestSample extends TestHelper {
         Assert.assertTrue(kitDiscardsBefore.length + 2 == kitDiscardsAfter.length);
 
         //check that the kits are set to hold per default
-        Assert.assertEquals("hold", DBTestUtil.getQueryDetail("select * from ddp_kit_discard dis, ddp_kit kit where dis.dsm_kit_request_id = kit.dsm_kit_request_id and kit.kit_label = ?", "FAKE_KIT_exitKit_1", "action"));
-        Assert.assertEquals("hold", DBTestUtil.getQueryDetail("select * from ddp_kit_discard dis, ddp_kit kit where dis.dsm_kit_request_id = kit.dsm_kit_request_id and kit.kit_label = ?", "FAKE_KIT_exitKit_2", "action"));
+        Assert.assertEquals("hold", DBTestUtil.getQueryDetail(
+                "select * from ddp_kit_discard dis, ddp_kit kit where dis.dsm_kit_request_id = kit.dsm_kit_request_id and kit.kit_label = ?",
+                "FAKE_KIT_exitKit_1", "action"));
+        Assert.assertEquals("hold", DBTestUtil.getQueryDetail(
+                "select * from ddp_kit_discard dis, ddp_kit kit where dis.dsm_kit_request_id = kit.dsm_kit_request_id and kit.kit_label = ?",
+                "FAKE_KIT_exitKit_2", "action"));
     }
 
     @Test
@@ -1298,7 +1478,9 @@ public class RouteTestSample extends TestHelper {
 
         //use endpoint to set kit to sent
         String json = "[{\"leftValue\":\"FAKE_MF_" + kitId + "\", \"rightValue\": \"" + FAKE_DSM_LABEL_UID + "_BLOOD_TRACKING" + "\"}]";
-        HttpResponse response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "finalScan?userId=26"), json, testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "finalScan?userId=26"), json, testUtil.buildAuthHeaders())
+                        .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         String message = DDPRequestUtil.getContentAsString(response);
         KitStatusChangeRoute.ScanError[] scanErrors = new GsonBuilder().create().fromJson(message, KitStatusChangeRoute.ScanError[].class);
@@ -1307,12 +1489,14 @@ public class RouteTestSample extends TestHelper {
 
         //use endpoint to give kit tracking number
         json = "[{\"leftValue\":\"FAKE_TRACKING_" + kitId + "\", \"rightValue\": \"" + "FAKE_MF_" + kitId + "\"}]";
-        response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "trackingScan?userId=26"), json, testUtil.buildAuthHeaders()).returnResponse();
+        response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "trackingScan?userId=26"), json, testUtil.buildAuthHeaders())
+                .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
         //use endpoint to set kit to sent
         json = "[{\"leftValue\":\"FAKE_MF_" + kitId + "\", \"rightValue\": \"" + FAKE_DSM_LABEL_UID + "_BLOOD_TRACKING" + "\"}]";
-        response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "finalScan?userId=26"), json, testUtil.buildAuthHeaders()).returnResponse();
+        response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "finalScan?userId=26"), json, testUtil.buildAuthHeaders())
+                .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         message = DDPRequestUtil.getContentAsString(response);
         scanErrors = new GsonBuilder().create().fromJson(message, KitStatusChangeRoute.ScanError[].class);
@@ -1338,11 +1522,14 @@ public class RouteTestSample extends TestHelper {
 
         //use endpoint to give kit tracking number
         String json = "[{\"leftValue\":\"FAKE_TRACKING_" + kitId + "\", \"rightValue\": \"" + "FAKE_MF_" + kitId + "\"}]";
-        HttpResponse response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "trackingScan?userId=26"), json, testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "trackingScan?userId=26"), json, testUtil.buildAuthHeaders())
+                        .returnResponse();
 
         //use endpoint to set kit to sent
         json = "[{\"leftValue\":\"FAKE_MF_" + kitId + "\", \"rightValue\": \"" + FAKE_DSM_LABEL_UID + suffix + "\"}]";
-        response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "finalScan?userId=26"), json, testUtil.buildAuthHeaders()).returnResponse();
+        response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "finalScan?userId=26"), json, testUtil.buildAuthHeaders())
+                .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         String message = DDPRequestUtil.getContentAsString(response);
         KitStatusChangeRoute.ScanError[] scanErrors = new GsonBuilder().create().fromJson(message, KitStatusChangeRoute.ScanError[].class);
@@ -1367,7 +1554,9 @@ public class RouteTestSample extends TestHelper {
 
         //use endpoint to set kit to sent
         String json = "[{\"leftValue\":\"FAKE_MF_" + kitId + "\", \"rightValue\": \"" + FAKE_DSM_LABEL_UID + "_SALIVA_SENT" + "\"}]";
-        HttpResponse response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "finalScan?userId=26"), json, testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "finalScan?userId=26"), json, testUtil.buildAuthHeaders())
+                        .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         String message = DDPRequestUtil.getContentAsString(response);
         KitStatusChangeRoute.ScanError[] scanErrors = new GsonBuilder().create().fromJson(message, KitStatusChangeRoute.ScanError[].class);
@@ -1391,7 +1580,9 @@ public class RouteTestSample extends TestHelper {
         strings.add(FAKE_DDP_PARTICIPANT_ID + suffix);
         kitId = DBTestUtil.getStringFromQuery(RouteTest.SELECT_KITREQUEST_QUERY, strings, "dsm_kit_request_id");
         //check that kit is twice in table because of sent and reminder
-        Assert.assertEquals("2", DBTestUtil.getQueryDetail("select count(dsm_kit_request_id) from EVENT_QUEUE WHERE DSM_KIT_REQUEST_ID = ? AND EVENT_TRIGGERED = 1", kitId, "count(dsm_kit_request_id)"));
+        Assert.assertEquals("2", DBTestUtil.getQueryDetail(
+                "select count(dsm_kit_request_id) from EVENT_QUEUE WHERE DSM_KIT_REQUEST_ID = ? AND EVENT_TRIGGERED = 1", kitId,
+                "count(dsm_kit_request_id)"));
 
         eventUtil.triggerReminder();
         //check kit which is just 3 weeks old is in event table
@@ -1400,7 +1591,9 @@ public class RouteTestSample extends TestHelper {
         strings.add(FAKE_DDP_PARTICIPANT_ID + suffix);
         kitId = DBTestUtil.getStringFromQuery(RouteTest.SELECT_KITREQUEST_QUERY, strings, "dsm_kit_request_id");
         //check that kit is ONLY twice in table because of sent and reminder and was not added again!
-        Assert.assertEquals("2", DBTestUtil.getQueryDetail("select count(dsm_kit_request_id) from EVENT_QUEUE WHERE DSM_KIT_REQUEST_ID = ? AND EVENT_TRIGGERED = 1", kitId, "count(dsm_kit_request_id)"));
+        Assert.assertEquals("2", DBTestUtil.getQueryDetail(
+                "select count(dsm_kit_request_id) from EVENT_QUEUE WHERE DSM_KIT_REQUEST_ID = ? AND EVENT_TRIGGERED = 1", kitId,
+                "count(dsm_kit_request_id)"));
     }
 
     @Test
@@ -1409,135 +1602,119 @@ public class RouteTestSample extends TestHelper {
         byte[] bytes = Files.readAllBytes(Paths.get(file.getPath()));
         //setting up mock angio
         mockDDP.when(
-                request().withPath("/ddp/participants/1771332079.c31d1fb7-82fd-4a86-81d5-6d01b846a8f7/consentpdf"))
+                        request().withPath("/ddp/participants/1771332079.c31d1fb7-82fd-4a86-81d5-6d01b846a8f7/consentpdf"))
                 .respond(response().withStatusCode(200).withBody(bytes));
         mockDDP.when(
-                request().withPath("/ddp/participants/-2084982510.fe0f352f-3474-45ac-b0a9-974e24092b06/consentpdf"))
+                        request().withPath("/ddp/participants/-2084982510.fe0f352f-3474-45ac-b0a9-974e24092b06/consentpdf"))
                 .respond(response().withStatusCode(200).withBody(bytes));
         mockDDP.when(
-                request().withPath("/ddp/participants/1_3/consentpdf"))
+                        request().withPath("/ddp/participants/1_3/consentpdf"))
                 .respond(response().withStatusCode(200).withBody(bytes));
         mockDDP.when(
-                request().withPath("/ddp/participants/7/consentpdf"))
+                        request().withPath("/ddp/participants/7/consentpdf"))
                 .respond(response().withStatusCode(200).withBody(bytes));
         mockDDP.when(
-                request().withPath("/ddp/participants/1771332079.c31d1fb7-82fd-4a86-81d5-6d01b846a8f7/releasepdf"))
+                        request().withPath("/ddp/participants/1771332079.c31d1fb7-82fd-4a86-81d5-6d01b846a8f7/releasepdf"))
                 .respond(response().withStatusCode(200).withBody(bytes));
         mockDDP.when(
-                request().withPath("/ddp/participants/-2084982510.fe0f352f-3474-45ac-b0a9-974e24092b06/releasepdf"))
+                        request().withPath("/ddp/participants/-2084982510.fe0f352f-3474-45ac-b0a9-974e24092b06/releasepdf"))
                 .respond(response().withStatusCode(200).withBody(bytes));
         mockDDP.when(
-                request().withPath("/ddp/participants/1_3/releasepdf"))
+                        request().withPath("/ddp/participants/1_3/releasepdf"))
                 .respond(response().withStatusCode(200).withBody(bytes));
         mockDDP.when(
-                request().withPath("/ddp/participants/7/releasepdf"))
+                        request().withPath("/ddp/participants/7/releasepdf"))
                 .respond(response().withStatusCode(200).withBody(bytes));
 
         String roleId = DBTestUtil.getQueryDetail("SELECT * from instance_role where name = ?", "pdf_download_consent", "instance_role_id");
-        String secondRoleId = DBTestUtil.getQueryDetail("SELECT * from instance_role where name = ?", "pdf_download_release", "instance_role_id");
+        String secondRoleId =
+                DBTestUtil.getQueryDetail("SELECT * from instance_role where name = ?", "pdf_download_release", "instance_role_id");
         try {
-            DBTestUtil.executeQuery("INSERT INTO ddp_instance_role SET ddp_instance_id = " + INSTANCE_ID + ", instance_role_id = " + roleId);
-            DBTestUtil.executeQuery("INSERT INTO ddp_instance_role SET ddp_instance_id = " + INSTANCE_ID + ", instance_role_id = " + secondRoleId);
+            DBTestUtil.executeQuery(
+                    "INSERT INTO ddp_instance_role SET ddp_instance_id = " + INSTANCE_ID + ", instance_role_id = " + roleId);
+            DBTestUtil.executeQuery(
+                    "INSERT INTO ddp_instance_role SET ddp_instance_id = " + INSTANCE_ID + ", instance_role_id = " + secondRoleId);
             String kitType = "TEST";
             //upload kits for one type
             String csvContent = TestUtil.readFile("KitUploadTestDDP.txt");
-            HttpResponse response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP + "&kitType=SALIVA&userId=26"), csvContent, testUtil.buildAuthHeaders()).returnResponse();
+            HttpResponse response =
+                    TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP + "&kitType=SALIVA&userId=26"),
+                            csvContent, testUtil.buildAuthHeaders()).returnResponse();
             Assert.assertEquals(200, response.getStatusLine().getStatusCode());
             PDFAudit pdfAudit = new PDFAudit();
             pdfAudit.checkAndSavePDF();
-            checkFileInBucket("1771332079.c31d1fb7-82fd-4a86-81d5-6d01b846a8f7/readonly/1771332079.c31d1fb7-82fd-4a86-81d5-6d01b846a8f7_consent", TEST_DDP.toLowerCase());
-            checkFileInBucket("1771332079.c31d1fb7-82fd-4a86-81d5-6d01b846a8f7/readonly/1771332079.c31d1fb7-82fd-4a86-81d5-6d01b846a8f7_release", TEST_DDP.toLowerCase());
-            checkFileInBucket("-2084982510.fe0f352f-3474-45ac-b0a9-974e24092b06/readonly/-2084982510.fe0f352f-3474-45ac-b0a9-974e24092b06_consent", TEST_DDP.toLowerCase());
-            checkFileInBucket("-2084982510.fe0f352f-3474-45ac-b0a9-974e24092b06/readonly/-2084982510.fe0f352f-3474-45ac-b0a9-974e24092b06_release", TEST_DDP.toLowerCase());
+            checkFileInBucket(
+                    "1771332079.c31d1fb7-82fd-4a86-81d5-6d01b846a8f7/readonly/1771332079.c31d1fb7-82fd-4a86-81d5-6d01b846a8f7_consent",
+                    TEST_DDP.toLowerCase());
+            checkFileInBucket(
+                    "1771332079.c31d1fb7-82fd-4a86-81d5-6d01b846a8f7/readonly/1771332079.c31d1fb7-82fd-4a86-81d5-6d01b846a8f7_release",
+                    TEST_DDP.toLowerCase());
+            checkFileInBucket(
+                    "-2084982510.fe0f352f-3474-45ac-b0a9-974e24092b06/readonly/-2084982510.fe0f352f-3474-45ac-b0a9-974e24092b06_consent",
+                    TEST_DDP.toLowerCase());
+            checkFileInBucket(
+                    "-2084982510.fe0f352f-3474-45ac-b0a9-974e24092b06/readonly/-2084982510.fe0f352f-3474-45ac-b0a9-974e24092b06_release",
+                    TEST_DDP.toLowerCase());
             checkFileInBucket("1_3/readonly/1_3_consent", TEST_DDP.toLowerCase());
             checkFileInBucket("1_3/readonly/1_3_release", TEST_DDP.toLowerCase());
             checkFileInBucket("7/readonly/7_consent", TEST_DDP.toLowerCase());
             checkFileInBucket("7/readonly/7_release", TEST_DDP.toLowerCase());
             checkBucket(TEST_DDP.toLowerCase());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error(e.getMessage());
             Assert.fail();
+        } finally {
+            DBTestUtil.executeQuery(
+                    "DELETE FROM ddp_instance_role WHERE ddp_instance_id = " + INSTANCE_ID + " and instance_role_id = " + roleId);
+            DBTestUtil.executeQuery(
+                    "DELETE FROM ddp_instance_role WHERE ddp_instance_id = " + INSTANCE_ID + " and instance_role_id = " + secondRoleId);
         }
-        finally {
-            DBTestUtil.executeQuery("DELETE FROM ddp_instance_role WHERE ddp_instance_id = " + INSTANCE_ID + " and instance_role_id = " + roleId);
-            DBTestUtil.executeQuery("DELETE FROM ddp_instance_role WHERE ddp_instance_id = " + INSTANCE_ID + " and instance_role_id = " + secondRoleId);
-        }
-    }
-
-    public static void checkFileInBucket(String fileName, String instanceName) throws Exception {
-        String projectName = cfg.getString("portal.googleProjectName");
-        String bucketName = projectName + "_dsm_" + instanceName;
-
-        List<String> fileNames = GoogleBucket.getFiles(cfg.getString("portal.googleProjectCredentials"), bucketName, bucketName);
-        boolean found = false;
-        for (String name : fileNames) {
-            if (name.startsWith(fileName)) {
-                found = true;
-                break;
-            }
-        }
-        Assert.assertTrue(found);
-    }
-
-    public static void checkBucket(String instanceName) throws Exception {
-        String projectName = cfg.getString("portal.googleProjectName");
-        String bucketName = projectName + "_dsm_" + instanceName;
-
-        List<String> fileNames = GoogleBucket.getFiles(cfg.getString("portal.googleProjectCredentials"), bucketName, bucketName);
-
-        for (String fileName : fileNames) {
-            byte[] downloadedFile = GoogleBucket.downloadFile(cfg.getString("portal.googleProjectCredentials"), cfg.getString("portal.googleProjectName"),
-                    bucketName, fileName);
-            Assert.assertNotNull(downloadedFile);
-
-            //delete file
-            boolean fileDeleted = GoogleBucket.deleteFile(cfg.getString("portal.googleProjectCredentials"), cfg.getString("portal.googleProjectName"),
-                    bucketName, fileName);
-            Assert.assertTrue(fileDeleted);
-        }
-    }
-
-    public static boolean bucketExists(String instanceName) throws Exception {
-        String projectName = cfg.getString("portal.googleProjectName");
-        String bucketName = projectName + "_dsm_" + instanceName;
-        return GoogleBucket.bucketExists(cfg.getString("portal.googleProjectCredentials"), cfg.getString("portal.googleProjectName"), bucketName);
     }
 
     @Test
-    @Ignore ("We won't be using external shipper... for now...")
+    @Ignore("We won't be using external shipper... for now...")
     public void promiseFileUpload() throws Exception {
         DBTestUtil.deleteAllKitData("00004");
         DBTestUtil.deleteAllKitData("00003");
 
         String gbfResponse = TestUtil.readFile("gbf/OrderResponse.json");
         mockDDP.when(
-                request().withPath("/order"))
+                        request().withPath("/order"))
                 .respond(response().withStatusCode(200).withBody(gbfResponse));
 
         //upload kits for one type
         String csvContent = TestUtil.readFile("KitUploadPromise.txt");
-        HttpResponse response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + DDP_PROMISE + "&kitType=SUB_KITS&userId=1"), csvContent, testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + DDP_PROMISE + "&kitType=SUB_KITS&userId=1"),
+                        csvContent, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-        response = TestUtil.performGet(DSM_BASE_URL, "/ui/" + "kitRequests?realm=" + DDP_PROMISE + "&kitType=BLOOD&target=uploaded", testUtil.buildAuthHeaders()).returnResponse();
+        response = TestUtil.performGet(DSM_BASE_URL, "/ui/" + "kitRequests?realm=" + DDP_PROMISE + "&kitType=BLOOD&target=uploaded",
+                testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         String message = DDPRequestUtil.getContentAsString(response);
         Gson gson = new GsonBuilder().create();
         KitRequestShipping[] kits = gson.fromJson(message, KitRequestShipping[].class);
         List<String> strings = new ArrayList<>();
         strings.add("promise");
-        String kitsBeforeUpload = DBTestUtil.getStringFromQuery("select count(*) from ddp_kit_request req, ddp_kit kit where req.dsm_kit_request_id = kit.dsm_kit_request_id AND NOT kit.kit_complete <=> 1 and ddp_instance_id = (select ddp_instance_id from ddp_instance where instance_name = ?) and kit_type_id = 2", strings, "count(*)");
+        String kitsBeforeUpload = DBTestUtil.getStringFromQuery(
+                "select count(*) from ddp_kit_request req, ddp_kit kit where req.dsm_kit_request_id = kit.dsm_kit_request_id AND NOT kit.kit_complete <=> 1 and ddp_instance_id = (select ddp_instance_id from ddp_instance where instance_name = ?) and kit_type_id = 2",
+                strings, "count(*)");
         Assert.assertTrue(kits.length > 0);
         Assert.assertEquals(Integer.parseInt(kitsBeforeUpload), kits.length);
 
-        response = TestUtil.performGet(DSM_BASE_URL, "/ui/" + "kitRequests?realm=" + DDP_PROMISE + "&kitType=SUB_KITS&target=uploaded", testUtil.buildAuthHeaders()).returnResponse();
+        response = TestUtil.performGet(DSM_BASE_URL, "/ui/" + "kitRequests?realm=" + DDP_PROMISE + "&kitType=SUB_KITS&target=uploaded",
+                testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         message = DDPRequestUtil.getContentAsString(response);
         gson = new GsonBuilder().create();
         kits = gson.fromJson(message, KitRequestShipping[].class);
-        kitsBeforeUpload = DBTestUtil.getStringFromQuery("select count(*) from ddp_kit_request req, ddp_kit kit where req.dsm_kit_request_id = kit.dsm_kit_request_id AND NOT kit.kit_complete <=> 1 and ddp_instance_id = (select ddp_instance_id from ddp_instance where instance_name = ?) and kit_type_id = 2", strings, "count(*)");
-        String noReturnKits = DBTestUtil.getStringFromQuery("select count(*) from ddp_kit_request req, ddp_kit kit where req.dsm_kit_request_id = kit.dsm_kit_request_id AND NOT kit.kit_complete <=> 1 and ddp_instance_id = (select ddp_instance_id from ddp_instance where instance_name = ?) and kit_type_id = 8", strings, "count(*)");
+        kitsBeforeUpload = DBTestUtil.getStringFromQuery(
+                "select count(*) from ddp_kit_request req, ddp_kit kit where req.dsm_kit_request_id = kit.dsm_kit_request_id AND NOT kit.kit_complete <=> 1 and ddp_instance_id = (select ddp_instance_id from ddp_instance where instance_name = ?) and kit_type_id = 2",
+                strings, "count(*)");
+        String noReturnKits = DBTestUtil.getStringFromQuery(
+                "select count(*) from ddp_kit_request req, ddp_kit kit where req.dsm_kit_request_id = kit.dsm_kit_request_id AND NOT kit.kit_complete <=> 1 and ddp_instance_id = (select ddp_instance_id from ddp_instance where instance_name = ?) and kit_type_id = 8",
+                strings, "count(*)");
         Assert.assertEquals(Integer.parseInt(kitsBeforeUpload) + Integer.parseInt(noReturnKits), kits.length);
 
         EasyPostUtil easyPostUtil = new EasyPostUtil(DDP_PROMISE);
@@ -1550,13 +1727,15 @@ public class RouteTestSample extends TestHelper {
     }
 
     @Test
-    @Ignore ("We won't be using external shipper... for now...")
+    @Ignore("We won't be using external shipper... for now...")
     public void retryGBFOrder() throws Exception {
         mockDDP.when(
-                request().withPath("/order"))
+                        request().withPath("/order"))
                 .respond(response().withStatusCode(500));
         String csvContent = TestUtil.readFile("KitUploadTestDDP2.txt");
-        HttpResponse response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + DDP_PROMISE + "&kitType=SUB_KITS&userId=1"), csvContent, testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + DDP_PROMISE + "&kitType=SUB_KITS&userId=1"),
+                        csvContent, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(500, response.getStatusLine().getStatusCode());
     }
 
@@ -1570,20 +1749,26 @@ public class RouteTestSample extends TestHelper {
 
         //upload kits for pt not already in DSM
         String csvContent = TestUtil.readFile("KitUploadMigratedDDP.txt");
-        HttpResponse response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP_MIGRATED + "&kitType=SALIVA&userId=26"), csvContent, testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP_MIGRATED + "&kitType=SALIVA&userId=26"),
+                        csvContent, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
         //insert a kit for pt of migrated ddp (will be uploaded with legacy shortId)
-        DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"), "M1", 1, INSTANCE_ID_MIGRATED,
-                "adr_6c3ace20442b49bd8fae9a661e481c9e", "shp_f470591c3fb441a68dbb9b76ecf3bb3d", "1112321.22-698-965-659-666",0);
+        DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"), "M1", 1,
+                INSTANCE_ID_MIGRATED,
+                "adr_6c3ace20442b49bd8fae9a661e481c9e", "shp_f470591c3fb441a68dbb9b76ecf3bb3d", "1112321.22-698-965-659-666", 0);
         //change bsp_collaborator_ids
-        DBTestUtil.executeQuery("UPDATE ddp_kit_request set bsp_collaborator_participant_id = \"MigratedProject_0011\", bsp_collaborator_sample_id =\"MigratedProject_0011_SALIVA\" where ddp_participant_id = \"1112321.22-698-965-659-666\"");
+        DBTestUtil.executeQuery(
+                "UPDATE ddp_kit_request set bsp_collaborator_participant_id = \"MigratedProject_0011\", bsp_collaborator_sample_id =\"MigratedProject_0011_SALIVA\" where ddp_participant_id = \"1112321.22-698-965-659-666\"");
 
         //insert a kit for pt of migrated ddp (will be uploaded with pepper HRUID)
-        DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"), "M2", 1, INSTANCE_ID_MIGRATED,
+        DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"), "M2", 1,
+                INSTANCE_ID_MIGRATED,
                 "adr_6c3ace20442b49bd8fae9a661e481c9e", "shp_f470591c3fb441a68dbb9b76ecf3bb3d", "1112321.22-698-965-659-667", 0);
         //change bsp_collaborator_ids
-        DBTestUtil.executeQuery("UPDATE ddp_kit_request set bsp_collaborator_participant_id = \"MigratedProject_0012\", bsp_collaborator_sample_id =\"MigratedProject_0012_SALIVA\" where ddp_participant_id = \"1112321.22-698-965-659-667\"");
+        DBTestUtil.executeQuery(
+                "UPDATE ddp_kit_request set bsp_collaborator_participant_id = \"MigratedProject_0012\", bsp_collaborator_sample_id =\"MigratedProject_0012_SALIVA\" where ddp_participant_id = \"1112321.22-698-965-659-667\"");
 
         //upload duplicates
         Map<String, KitType> kitTypes = KitType.getKitLookup();
@@ -1591,7 +1776,9 @@ public class RouteTestSample extends TestHelper {
         KitType kitType = kitTypes.get(key);
 
         String dupParticipants = TestUtil.readFile("KitUploadMigratedDDP.json");
-        response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP_MIGRATED + "&kitType=SALIVA&userId=26&uploadAnyway=true"), dupParticipants, testUtil.buildAuthHeaders()).returnResponse();
+        response = TestUtil.perform(Request.Post(
+                        DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP_MIGRATED + "&kitType=SALIVA&userId=26&uploadAnyway=true"),
+                dupParticipants, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         List<String> strings = new ArrayList<>();
         strings.add(TEST_DDP_MIGRATED);
@@ -1628,7 +1815,7 @@ public class RouteTestSample extends TestHelper {
         //setup the response to get the shortID from the ddp
         String messageParticipant = TestUtil.readFile("ddpResponses/ParticipantsMigrated.json");
         mockDDP.when(
-                request().withPath("/dsm/studies/migratedDDP/ddp/participants/1112321.22-698-965-659-668"))
+                        request().withPath("/dsm/studies/migratedDDP/ddp/participants/1112321.22-698-965-659-668"))
                 .respond(response().withStatusCode(200).withBody(messageParticipant));
 
         //create label an therefore collaborator id
@@ -1654,7 +1841,9 @@ public class RouteTestSample extends TestHelper {
 
         //upload kits for pt not already in DSM
         String csvContent = TestUtil.readFile("KitUploadMigratedDDP.txt");
-        HttpResponse response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP_MIGRATED + "&kitType=SALIVA&userId=26"), csvContent, testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP_MIGRATED + "&kitType=SALIVA&userId=26"),
+                        csvContent, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
         //check collaborator sample id
@@ -1676,7 +1865,8 @@ public class RouteTestSample extends TestHelper {
 
     @Test
     public void kitRegistered() throws Exception {
-        HttpResponse response = TestUtil.performGet(DSM_BASE_URL, "/api/" + "KitsRegistered?barcode=a&barcode=b&barcode=testing123", testUtil.buildHeaders(cfg.getString("bsp.secret"))).returnResponse();
+        HttpResponse response = TestUtil.performGet(DSM_BASE_URL, "/api/" + "KitsRegistered?barcode=a&barcode=b&barcode=testing123",
+                testUtil.buildHeaders(cfg.getString("bsp.secret"))).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         Gson gson = new GsonBuilder().create();
         BSPKitRegistration[] kitRegistrations = gson.fromJson(DDPRequestUtil.getContentAsString(response), BSPKitRegistration[].class);
@@ -1684,8 +1874,7 @@ public class RouteTestSample extends TestHelper {
         for (BSPKitRegistration kit : kitRegistrations) {
             if (kit.getBarcode().equals("testing123")) {
                 Assert.assertTrue(kit.isDsmKit());
-            }
-            else {
+            } else {
                 Assert.assertFalse(kit.isDsmKit());
             }
         }
@@ -1710,7 +1899,8 @@ public class RouteTestSample extends TestHelper {
         KitUtil.getKitStatus();
 
         //check that delivered is now set
-        Assert.assertNotNull(DBTestUtil.getQueryDetail("select * from ddp_kit where kit_label = ?", "FAKE_KIT_DELIVERED_STATUS", "easypost_shipment_date"));
+        Assert.assertNotNull(DBTestUtil.getQueryDetail("select * from ddp_kit where kit_label = ?", "FAKE_KIT_DELIVERED_STATUS",
+                "easypost_shipment_date"));
     }
 
     @Test
@@ -1718,12 +1908,16 @@ public class RouteTestSample extends TestHelper {
         //add kit
         String csvContent = "participantId\tsignature\tstreet1\tstreet2\tcity\tstate\tpostalCode\tcountry\n" +
                 "BILLING_TEST\tBill Test\t320 Charles St\t\tCambridge\tMA\t02141\tUS";
-        HttpResponse response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP + "&kitType=SALIVA&userId=26"), csvContent, testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP + "&kitType=SALIVA&userId=26"),
+                        csvContent, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         triggerLabelCreationAndWaitForLabel(TEST_DDP, "SALIVA", 20);
 
         //get shipping id
-        String shippingId = DBTestUtil.getQueryDetail("select * from ddp_kit_request req, ddp_kit kit where req.dsm_kit_request_id = kit.dsm_kit_request_id and ddp_participant_id = ?", "BILLING_TEST", "easypost_to_id");
+        String shippingId = DBTestUtil.getQueryDetail(
+                "select * from ddp_kit_request req, ddp_kit kit where req.dsm_kit_request_id = kit.dsm_kit_request_id and ddp_participant_id = ?",
+                "BILLING_TEST", "easypost_to_id");
 
         EasyPostUtil easyPostUtil = new EasyPostUtil(TEST_DDP);
         Shipment shipment = easyPostUtil.getShipment(shippingId);
@@ -1732,12 +1926,10 @@ public class RouteTestSample extends TestHelper {
             Object billingReference = options.get("print_custom_1");
             if (billingReference != null) {
                 Assert.assertEquals("CO Test", billingReference.toString());
-            }
-            else {
+            } else {
                 Assert.fail("No billing reference");
             }
-        }
-        else {
+        } else {
             Assert.fail("No options");
         }
     }
@@ -1747,12 +1939,16 @@ public class RouteTestSample extends TestHelper {
         //add kit
         String csvContent = "participantId\tsignature\tstreet1\tstreet2\tcity\tstate\tpostalCode\tcountry\n" +
                 "BILLING_TEST_2\tBill The Tester\t320 Charles St\t\tCambridge\tMA\t02141\tUS";
-        HttpResponse response = TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP_2 + "&kitType=SALIVA&userId=26"), csvContent, testUtil.buildAuthHeaders()).returnResponse();
+        HttpResponse response =
+                TestUtil.perform(Request.Post(DSM_BASE_URL + "/ui/" + "kitUpload?realm=" + TEST_DDP_2 + "&kitType=SALIVA&userId=26"),
+                        csvContent, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         triggerLabelCreationAndWaitForLabel(TEST_DDP_2, "SALIVA", 20);
 
         //get shipping id
-        String shippingId = DBTestUtil.getQueryDetail("select * from ddp_kit_request req, ddp_kit kit where req.dsm_kit_request_id = kit.dsm_kit_request_id and ddp_participant_id = ?", "BILLING_TEST_2", "easypost_to_id");
+        String shippingId = DBTestUtil.getQueryDetail(
+                "select * from ddp_kit_request req, ddp_kit kit where req.dsm_kit_request_id = kit.dsm_kit_request_id and ddp_participant_id = ?",
+                "BILLING_TEST_2", "easypost_to_id");
 
         EasyPostUtil easyPostUtil = new EasyPostUtil(TEST_DDP_2);
         Shipment shipment = easyPostUtil.getShipment(shippingId);
@@ -1760,8 +1956,7 @@ public class RouteTestSample extends TestHelper {
         if (options != null) {
             Object billingReference = options.get("print_custom_1");
             Assert.assertNull(billingReference);
-        }
-        else {
+        } else {
             Assert.fail("No options");
         }
     }

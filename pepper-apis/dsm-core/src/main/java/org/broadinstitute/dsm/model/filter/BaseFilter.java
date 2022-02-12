@@ -36,9 +36,13 @@ public class BaseFilter {
 
     protected void prepareNeccesaryData(QueryParamsMap queryParamsMap) {
         parent = Objects.requireNonNull(queryParamsMap).get(DBConstants.FILTER_PARENT).value();
-        if (StringUtils.isBlank(parent)) throw new RuntimeException("parent is necessary");
+        if (StringUtils.isBlank(parent)) {
+            throw new RuntimeException("parent is necessary");
+        }
         realm = queryParamsMap.get(RoutePath.REALM).value();
-        if (StringUtils.isBlank(realm)) throw new RuntimeException("realm is necessary");
+        if (StringUtils.isBlank(realm)) {
+            throw new RuntimeException("realm is necessary");
+        }
         ddpInstance = DDPInstance.getDDPInstance(realm);
         filterQuery = "";
         quickFilterName = "";

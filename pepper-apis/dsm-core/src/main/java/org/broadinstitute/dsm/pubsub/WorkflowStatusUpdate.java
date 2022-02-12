@@ -1,24 +1,24 @@
 package org.broadinstitute.dsm.pubsub;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
+import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.export.ExportToES;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
-import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
-import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 public class WorkflowStatusUpdate {
     public static final String STUDY_GUID = "studyGuid";
@@ -42,7 +42,8 @@ public class WorkflowStatusUpdate {
         DDPInstance instance = DDPInstance.getDDPInstanceByGuid(studyGuid);
 
         List<ParticipantData> participantDatas = participantDataDao.getParticipantDataByParticipantId(ddpParticipantId);
-        Optional<FieldSettingsDto> fieldSetting = fieldSettingsDao.getFieldSettingByColumnNameAndInstanceId(Integer.parseInt(instance.getDdpInstanceId()), workflow);
+        Optional<FieldSettingsDto> fieldSetting =
+                fieldSettingsDao.getFieldSettingByColumnNameAndInstanceId(Integer.parseInt(instance.getDdpInstanceId()), workflow);
         if (fieldSetting.isEmpty()) {
             logger.warn("Wrong workflow name");
         } else {
@@ -68,7 +69,7 @@ public class WorkflowStatusUpdate {
         if (actions == null) {
             return;
         }
-        Value[] actionsArray =  gson.fromJson(actions, Value[].class);
+        Value[] actionsArray = gson.fromJson(actions, Value[].class);
         for (Value action : actionsArray) {
             if (ESObjectConstants.ELASTIC_EXPORT_WORKFLOWS.equals(action.getType())) {
                 if (!setting.getFieldType().contains(FamilyMemberConstants.PARTICIPANTS)) {
@@ -84,7 +85,7 @@ public class WorkflowStatusUpdate {
     }
 
     private static Optional<WorkflowForES.StudySpecificData> getProbandStudySpecificData(List<ParticipantData> participantDatas) {
-        for (ParticipantData participantData: participantDatas) {
+        for (ParticipantData participantData : participantDatas) {
             String data = participantData.getData().orElse(null);
             if (data == null) {
                 continue;
@@ -94,7 +95,7 @@ public class WorkflowStatusUpdate {
                     || !dataMap.containsKey(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID)) {
                 logger.warn("Participant data doesn't have necessary fields");
             }
-            if(isProband(dataMap)) {
+            if (isProband(dataMap)) {
                 return Optional.of(new WorkflowForES.StudySpecificData(dataMap.get(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID),
                         dataMap.get(FamilyMemberConstants.FIRSTNAME), dataMap.get(FamilyMemberConstants.LASTNAME)));
             }
@@ -108,13 +109,13 @@ public class WorkflowStatusUpdate {
         int participantDataId;
         participantDataId = participantDataDao.create(
                 new ParticipantData.Builder()
-                    .withDdpParticipantId(ddpParticipantId)
-                    .withDdpInstanceId(setting.getDdpInstanceId())
-                    .withFieldTypeId(setting.getFieldType())
-                    .withData(dataJsonObject.toString())
-                    .withLastChanged(System.currentTimeMillis())
-                    .withChangedBy(WorkflowStatusUpdate.DSS)
-                    .build()
+                        .withDdpParticipantId(ddpParticipantId)
+                        .withDdpInstanceId(setting.getDdpInstanceId())
+                        .withFieldTypeId(setting.getFieldType())
+                        .withData(dataJsonObject.toString())
+                        .withLastChanged(System.currentTimeMillis())
+                        .withChangedBy(WorkflowStatusUpdate.DSS)
+                        .build()
         );
         return participantDataId;
     }
@@ -129,14 +130,14 @@ public class WorkflowStatusUpdate {
             dataJsonObject.addProperty(workflow, status);
             participantDataDao.updateParticipantDataColumn(
                     new ParticipantData.Builder()
-                        .withParticipantDataId(participantData.getParticipantDataId())
-                        .withDdpParticipantId(participantData.getDdpParticipantId().orElse(""))
-                        .withDdpInstanceId(participantData.getDdpInstanceId())
-                        .withFieldTypeId(participantData.getFieldTypeId().orElse(""))
-                        .withData(dataJsonObject.toString())
-                        .withLastChanged(System.currentTimeMillis())
-                        .withChangedBy(DSS)
-                        .build()
+                            .withParticipantDataId(participantData.getParticipantDataId())
+                            .withDdpParticipantId(participantData.getDdpParticipantId().orElse(""))
+                            .withDdpInstanceId(participantData.getDdpInstanceId())
+                            .withFieldTypeId(participantData.getFieldTypeId().orElse(""))
+                            .withData(dataJsonObject.toString())
+                            .withLastChanged(System.currentTimeMillis())
+                            .withChangedBy(DSS)
+                            .build()
             );
         }
     }

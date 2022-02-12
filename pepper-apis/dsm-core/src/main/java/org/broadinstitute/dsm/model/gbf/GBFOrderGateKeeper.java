@@ -13,10 +13,10 @@ import java.time.Instant;
  */
 public class GBFOrderGateKeeper {
 
+    private static final String UPDATE_TRANSMISSION_DATE = "update ddp_kit_request req set req.transmitted_at = ? where external_order = ?";
     private final GBFOrderFinder orderFinder;
     private final GBFOrderTransmitter transmitter;
     private final String ddpInstanceName;
-    private static final String UPDATE_TRANSMISSION_DATE = "update ddp_kit_request req set req.transmitted_at = ? where external_order = ?";
 
     public GBFOrderGateKeeper(GBFOrderFinder orderFinder, GBFOrderTransmitter transmitter, String ddpInstanceName) {
         this.orderFinder = orderFinder;
@@ -27,7 +27,8 @@ public class GBFOrderGateKeeper {
 
     public void sendPendingOrders(Connection conn) {
         for (SimpleKitOrder simpleKitOrder : orderFinder.findKitsToOrder(ddpInstanceName, conn)) {
-            Response orderResponse = transmitter.orderKit(simpleKitOrder.getRecipientAddress(), simpleKitOrder.getExternalKitName(), simpleKitOrder.getExternalKitOrderNumber(), simpleKitOrder.getParticipantGuid());
+            Response orderResponse = transmitter.orderKit(simpleKitOrder.getRecipientAddress(), simpleKitOrder.getExternalKitName(),
+                    simpleKitOrder.getExternalKitOrderNumber(), simpleKitOrder.getParticipantGuid());
 
             if (orderResponse.isSuccess()) {
                 try (PreparedStatement stmt = conn.prepareStatement(UPDATE_TRANSMISSION_DATE)) {
@@ -37,13 +38,17 @@ public class GBFOrderGateKeeper {
 
                     // putting 10 things in a kit seems crazy?
                     if (numRowsUpdated > 10) {
-                        throw new RuntimeException("Updated " + numRowsUpdated + " for order " + simpleKitOrder.getExternalKitOrderNumber() + ".  That seems like a lot?");
+                        throw new RuntimeException(
+                                "Updated " + numRowsUpdated + " for order " + simpleKitOrder.getExternalKitOrderNumber() +
+                                        ".  That seems like a lot?");
                     }
                 } catch (SQLException e) {
-                    throw new RuntimeException("Order " + simpleKitOrder.getExternalKitOrderNumber() + " has been ordered, but we were unable to update the database.", e);
+                    throw new RuntimeException("Order " + simpleKitOrder.getExternalKitOrderNumber() +
+                            " has been ordered, but we were unable to update the database.", e);
                 }
             } else {
-                throw new RuntimeException("Transmission of order " + simpleKitOrder.getExternalKitOrderNumber() + " failed with " + orderResponse.getErrorMessage());
+                throw new RuntimeException("Transmission of order " + simpleKitOrder.getExternalKitOrderNumber() + " failed with " +
+                        orderResponse.getErrorMessage());
             }
         }
     }

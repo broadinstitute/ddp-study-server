@@ -13,12 +13,13 @@ public class FilterParser extends ValueParser {
 
     @Override
     public Object parse(String value) {
-        if (isBoolean(value))
+        if (isBoolean(value)) {
             return forBoolean(convertBoolean(value));
-        else if (isNumeric(value))
+        } else if (isNumeric(value)) {
             return forNumber(value);
-        else
+        } else {
             return convertString(value);
+        }
     }
 
     private boolean isNumeric(String value) {
@@ -29,12 +30,13 @@ public class FilterParser extends ValueParser {
     public Object[] parse(String[] values) {
         List<Object> parsedValues = new ArrayList<>();
         for (String value : values) {
-            if (isBoolean(value))
+            if (isBoolean(value)) {
                 parsedValues.add(forBoolean(convertBoolean(value)));
-            else if (isNumeric(value))
+            } else if (isNumeric(value)) {
                 parsedValues.add(forNumber(value));
-            else
+            } else {
                 parsedValues.add(convertString(value));
+            }
         }
         return parsedValues.toArray();
     }

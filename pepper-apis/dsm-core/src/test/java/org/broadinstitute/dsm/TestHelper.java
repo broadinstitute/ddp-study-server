@@ -1,5 +1,10 @@
 package org.broadinstitute.dsm;
 
+import java.io.File;
+import java.net.MalformedURLException;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.typesafe.config.Config;
@@ -9,14 +14,19 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
-import org.broadinstitute.lddp.BasicServer;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.lddp.util.Utility;
 import org.broadinstitute.dsm.db.MedicalRecord;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.util.*;
+import org.broadinstitute.dsm.util.DBTestUtil;
+import org.broadinstitute.dsm.util.DDPKitRequest;
+import org.broadinstitute.dsm.util.DDPRequestUtil;
+import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.broadinstitute.dsm.util.EventUtil;
+import org.broadinstitute.dsm.util.KitUtil;
+import org.broadinstitute.dsm.util.NotificationUtil;
+import org.broadinstitute.dsm.util.TestUtil;
+import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.dsm.util.externalShipper.GBFRequestUtil;
-import org.broadinstitute.dsm.util.tools.util.DBUtil;
+import org.broadinstitute.lddp.util.Utility;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.Assert;
 import org.mockserver.integration.ClientAndServer;
@@ -24,15 +34,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Spark;
 
-import java.io.File;
-import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.List;
-import org.broadinstitute.lddp.BasicServer;
-
 public class TestHelper {
 
-    public static final String SELECT_KITREQUEST_QUERY = "SELECT dsm_kit_request_id FROM ddp_kit_request WHERE ddp_kit_request_id = ? AND ddp_participant_id = ?";
+    public static final String SELECT_KITREQUEST_QUERY =
+            "SELECT dsm_kit_request_id FROM ddp_kit_request WHERE ddp_kit_request_id = ? AND ddp_participant_id = ?";
     public static final String SELECT_KIT_QUERY = "SELECT * FROM ddp_kit WHERE dsm_kit_request_id = ?";
     public static final String SELECT_DATA_MEDICALRECORD_QUERY = "SELECT * FROM ddp_medical_record WHERE medical_record_id = ?";
 
@@ -41,8 +46,10 @@ public class TestHelper {
     public static final String SELECT_PARTICIPANT_QUERY = "SELECT * FROM ddp_participant WHERE ddp_participant_id = ?";
     public static final String SELECT_DATA_ONCHISTORY_QUERY = "SELECT * FROM ddp_onc_history WHERE participant_id = ?";
     public static final String SELECT_PARTICIPANTRECORD_QUERY = "SELECT * FROM ddp_participant_record WHERE participant_id = ?";
-    public static final String SELECT_EMAILQUEUE_QUERY = "select * from EMAIL_QUEUE where EMAIL_RECORD_ID = ? and REMINDER_TYPE = ? and EMAIL_DATE_PROCESSED is null";
-    public static final String SELECT_USER_SETTING = "select * from user_settings settings, access_user user where user.user_id = settings.user_id and user.is_active = 1 and user.name = ?";
+    public static final String SELECT_EMAILQUEUE_QUERY =
+            "select * from EMAIL_QUEUE where EMAIL_RECORD_ID = ? and REMINDER_TYPE = ? and EMAIL_DATE_PROCESSED is null";
+    public static final String SELECT_USER_SETTING =
+            "select * from user_settings settings, access_user user where user.user_id = settings.user_id and user.is_active = 1 and user.name = ?";
 
     public static final String TEST_DDP = "TestDDP";
     public static final String TEST_DDP_2 = "anotherDDP";
@@ -54,8 +61,10 @@ public class TestHelper {
     public static final String FAKE_DSM_LABEL_UID = "FAKE_DSM_LABEL_UID";
     public static final String FAKE_BILLING_REF = "FAKE_BILLING_REF";
     public static final String FAKE_BSP_TEST = "FAKE_BSP_TEST";
-    public static final String CUSTOMS_JSON = "{\"description\": \"T-shirt\", \"quantity\": 1, \"value\": 11, \"weight\": 6, \"origin_country\": \"US\", \"hs_tariff_number\": \"610910\", \"customs_certify\": true,\"customs_signer\": \"Jarrett Streebin\", \"contents_type\": \"gift\", \"contents_explanation\":\"\", \"eel_pfc\": \"NOEEI 30.37(a)\", \"restriction_type\": \"none\", \"restriction_comments\": \"\", \"non_delivery_option\": \"abandon\"}";
-    public static final String VERY_LONG_PARTICIPANT_ID = "IAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTVERYLONGPARTICIPANTIDWHICHDOESNOTMAKESENSEBUTWILLTHROWERRORFORCOLLABORATORPARTICIPANTIDANDSAMPLEIDIAMGROOTHOPEFULLYITISNOWLONGENOUGHIAMGROOT";
+    public static final String CUSTOMS_JSON =
+            "{\"description\": \"T-shirt\", \"quantity\": 1, \"value\": 11, \"weight\": 6, \"origin_country\": \"US\", \"hs_tariff_number\": \"610910\", \"customs_certify\": true,\"customs_signer\": \"Jarrett Streebin\", \"contents_type\": \"gift\", \"contents_explanation\":\"\", \"eel_pfc\": \"NOEEI 30.37(a)\", \"restriction_type\": \"none\", \"restriction_comments\": \"\", \"non_delivery_option\": \"abandon\"}";
+    public static final String VERY_LONG_PARTICIPANT_ID =
+            "IAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTVERYLONGPARTICIPANTIDWHICHDOESNOTMAKESENSEBUTWILLTHROWERRORFORCOLLABORATORPARTICIPANTIDANDSAMPLEIDIAMGROOTHOPEFULLYITISNOWLONGENOUGHIAMGROOT";
 
     public static final String KIT_QUERY_BY_PARTICIPANT = "select * from ddp_kit_request, ddp_kit " +
             "where ddp_kit_request.dsm_kit_request_id = ddp_kit.dsm_kit_request_id " +
@@ -72,25 +81,19 @@ public class TestHelper {
     public static String INSTANCE_ID_2 = null;
     public static String INSTANCE_ID_MIGRATED = null;
     public static String PROMISE_INSTANCE_ID = null;
-    protected static String DDP_BASE_URL;
-    protected static String DSM_BASE_URL;
-    protected static RestHighLevelClient esClient;
-
     public static Config cfg;
-
     public static DSMServer server;
-
     public static ClientAndServer mockDDP;
-
     public static TestUtil testUtil;
-
     public static DDPKitRequest ddpKitRequest;
-
     public static KitUtil kitUtil;
     public static DDPRequestUtil ddpRequestUtil;
     public static NotificationUtil notificationUtil;
     public static UserUtil userUtil;
     public static EventUtil eventUtil;
+    protected static String DDP_BASE_URL;
+    protected static String DSM_BASE_URL;
+    protected static RestHighLevelClient esClient;
 
     public static void setupDB() {
         setupDB(false);
@@ -139,7 +142,7 @@ public class TestHelper {
                         cfg.getString("portal.dbSslTrustStorePwd"));
             }
 
-        TransactionWrapper.reset(TestUtil.UNIT_TEST);
+            TransactionWrapper.reset(TestUtil.UNIT_TEST);
             TransactionWrapper.init(maxConnections, dbUrl, cfg, skipSsl);
             if (!Utility.dbCheck()) {
                 throw new RuntimeException("DB connection error.");
@@ -238,7 +241,8 @@ public class TestHelper {
 
     private static void checkRole(String role, List<String> roles, String user, String group) {
         if (!roles.contains(role)) {
-            DBTestUtil.executeQuery("INSERT INTO access_user_role_group set user_id = " + user + ", group_id = " + group + ", role_id = (SELECT role_id from access_role where name = \"" + role + "\") ");
+            DBTestUtil.executeQuery("INSERT INTO access_user_role_group set user_id = " + user + ", group_id = " + group +
+                    ", role_id = (SELECT role_id from access_role where name = \"" + role + "\") ");
         }
     }
 
@@ -250,11 +254,13 @@ public class TestHelper {
         addTestParticipant(TEST_DDP_MIGRATED, "FAKE_MIGRATED_PARTICIPANT_ID", "FAKE_MIGRATED_PHYSICIAN_ID");
     }
 
-    public static void addTestParticipant(@NonNull String realm, @NonNull String fakeDDPParticipantId, @NonNull String fakeDDPInstitutionId) {
+    public static void addTestParticipant(@NonNull String realm, @NonNull String fakeDDPParticipantId,
+                                          @NonNull String fakeDDPInstitutionId) {
         DBTestUtil.createTestData(realm, fakeDDPParticipantId, fakeDDPInstitutionId);
     }
 
-    public static void addTestParticipant(@NonNull String realm, @NonNull String fakeDDPParticipantId, @NonNull String shortId, @NonNull String fakeDDPInstitutionId, @NonNull String lastVersion, boolean addFakeData) {
+    public static void addTestParticipant(@NonNull String realm, @NonNull String fakeDDPParticipantId, @NonNull String shortId,
+                                          @NonNull String fakeDDPInstitutionId, @NonNull String lastVersion, boolean addFakeData) {
         DBTestUtil.createTestData(realm, fakeDDPParticipantId, fakeDDPInstitutionId, lastVersion, addFakeData, shortId);
     }
 
@@ -310,108 +316,23 @@ public class TestHelper {
                 setupDB();
             }
             try {
-                esClient = ElasticSearchUtil.getClientForElasticsearchCloud(cfg.getString("elasticSearch.url"), cfg.getString("elasticSearch.username"), cfg.getString("elasticSearch.password"));
+                esClient = ElasticSearchUtil.getClientForElasticsearchCloud(cfg.getString("elasticSearch.url"),
+                        cfg.getString("elasticSearch.username"), cfg.getString("elasticSearch.password"));
             } catch (MalformedURLException e) {
-                throw new RuntimeException("Could not initialize es client",e);
+                throw new RuntimeException("Could not initialize es client", e);
             }
         }
 
-    }
-
-    //Methods shared by more than 2 classes!!!
-    public String editMedicalRecord(@NonNull String instanceName, @NonNull String participantId, @NonNull String institutionId, String valueName, String value, String columnName) throws Exception {
-        //add value for fax_sent
-        List strings = new ArrayList<>();
-        strings.add(institutionId);
-
-        String medicalRecordId = DBTestUtil.getQueryDetail(MedicalRecord.SQL_SELECT_MEDICAL_RECORD + " and inst.ddp_institution_id = \"" + institutionId + "\" and p.ddp_participant_id = \"" + participantId + "\"", instanceName, "medical_record_id");
-
-        if (medicalRecordId == null) {
-            Assert.fail("medicalRecordId was null!");
-        }
-        String json = "{\"id\":\"" + medicalRecordId + "\",\"user\":\"simone+1@broadinstitute.org\",\"nameValue\":{\"name\":\"" + valueName + "\",\"value\":\"" + value + "\"}}";
-        HttpResponse response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/" + "patch"), json, testUtil.buildAuthHeaders()).returnResponse();
-
-        Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-        String valueFromDB = DBTestUtil.getQueryDetail(SELECT_DATA_MEDICALRECORD_QUERY, medicalRecordId, columnName);
-
-        if (!valueName.equals("m.followUps")) {
-            Assert.assertEquals(value, valueFromDB);
-        }
-
-        return medicalRecordId;
-    }
-
-    public String addOncHistoryDetails(String participantId) throws Exception {
-        //add oncHistoryDetail
-        String json = "{\"id\":null,\"parentId\":\"" + participantId + "\",\"parent\":\"participantId\",\"user\":\"simone+1@broadinstitute.org\",\"nameValue\":{\"name\":\"oD.datePX\",\"value\":\"2017-01-02\"}}";
-        HttpResponse response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/patch"), json, testUtil.buildAuthHeaders()).returnResponse();
-        Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-        String message = DDPRequestUtil.getContentAsString(response);
-        JsonObject jsonObject = new JsonParser().parse(message).getAsJsonObject();
-        String body = jsonObject.get("body").getAsString();
-        jsonObject = new JsonParser().parse(body).getAsJsonObject();
-        String oncHistoryId = jsonObject.get("oncHistoryDetailId").getAsString();
-
-        json = "{\"id\":\"" + oncHistoryId + "\",\"parentId\":\"" + participantId + "\",\"parent\":\"participantId\",\"user\":\"simone+1@broadinstitute.org\",\"nameValue\":{\"name\":\"oD.typePX\",\"value\":\"typeTesty\"}}";
-        response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/patch"), json, testUtil.buildAuthHeaders()).returnResponse();
-        Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-        //check if oncHistoryDetail is in db
-        ArrayList strings = new ArrayList<>();
-        strings.add(oncHistoryId);
-        strings.add("typeTesty");
-        //get last changed on with that combination to get the one just added
-        Assert.assertEquals("2017-01-02", DBTestUtil.getStringFromQuery("select * from ddp_onc_history_detail where onc_history_detail_id = ? and type_px = ? order by last_changed desc limit 1", strings, "date_px"));
-
-        //check that oncHistoryDetails created was also set
-        String created = DBTestUtil.getQueryDetail(SELECT_DATA_ONCHISTORY_QUERY, participantId, "created");
-        Assert.assertNotNull(created);
-        return oncHistoryId;
-    }
-
-    public void changeValue(String valueId, String participantId, String field, Object value, String columnName, String parent, String user, String pkName, String tableName, String fieldId) throws Exception {
-        //change value
-        String json = "{\"id\":\"" + valueId + "\",\"parentId\":\"" + participantId + "\",\"parent\":\"" + parent + "\",\"user\":\"" + user + "\",\"nameValue\":{\"name\":\"" + field + "\",\"value\":\"" + value + "\"}}";
-        if (fieldId != null && valueId != null) {
-            json = "{\"id\":\"" + valueId + "\",\"parentId\":\"" + participantId + "\",\"parent\":\"" + parent + "\",\"user\":\"" + user + "\",\"fieldId\":\"" + fieldId + "\",\"nameValue\":{\"name\":\"" + field + "\",\"value\":\"" + value + "\"}}";
-        }
-        else if (fieldId != null && valueId == null) {
-            if (value instanceof Integer) {
-                json = "{\"id\":null,\"parentId\":\"" + participantId + "\",\"parent\":\"" + parent + "\",\"user\":\"" + user + "\",\"fieldId\":\"" + fieldId + "\",\"nameValue\":{\"name\":\"" + field + "\",\"value\":" + value + "}}";
-            }
-            else {
-                json = "{\"id\":null,\"parentId\":\"" + participantId + "\",\"parent\":\"" + parent + "\",\"user\":\"" + user + "\",\"fieldId\":\"" + fieldId + "\",\"nameValue\":{\"name\":\"" + field + "\",\"value\":\"" + value + "\"}}";
-            }
-        }
-        if (String.valueOf(value).startsWith("[")) {//for abstraction value change
-            json = "{\"id\":null,\"parentId\":\"" + participantId + "\",\"parent\":\"" + parent + "\",\"user\":\"" + user + "\",\"fieldId\":\"" + fieldId + "\",\"nameValue\":{\"name\":\"" + field + "\",\"value\":" + value + "}}";
-        }
-        HttpResponse response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/patch"), json, testUtil.buildAuthHeaders()).returnResponse();
-        Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-        //check changed value
-        if (fieldId == null && value instanceof String) {
-            ArrayList strings = new ArrayList<>();
-            strings.add(valueId);
-            if (StringUtils.isNotBlank((String) value)) {
-                Assert.assertEquals(value, DBTestUtil.getStringFromQuery("select * from " + tableName + " where " + pkName + " = ?", strings, columnName));
-            }
-            else {
-                Assert.assertNull(DBTestUtil.getStringFromQuery("select * from " + tableName + " where " + pkName + " = ?", strings, columnName));
-            }
-        }
-    }
-
-    public void changeOncHistoryValue(String oncHistoryId, String participantId, String field, String value, String columnName) throws Exception {
-        changeValue(oncHistoryId, participantId, field, value, columnName, "participantId", "ptaheri+1@broadinstitute.org", "onc_history_detail_id", "ddp_onc_history_detail", null);
     }
 
     public static String addTissue(String oncHistoryId) throws Exception {
         //add oncHistoryDetail
         String note = "Created: " + System.currentTimeMillis();
-        String json = "{\"id\":null,\"parentId\":\"" + oncHistoryId + "\",\"parent\":\"oncHistoryDetailId\",\"user\":\"simone+1@broadinstitute.org\",\"nameValue\":{\"name\":\"t.tNotes\",\"value\":\"" + note + "\"}}";
-        HttpResponse response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/patch"), json, testUtil.buildAuthHeaders()).returnResponse();
+        String json = "{\"id\":null,\"parentId\":\"" + oncHistoryId +
+                "\",\"parent\":\"oncHistoryDetailId\",\"user\":\"simone+1@broadinstitute.org\",\"nameValue\":{\"name\":\"t.tNotes\",\"value\":\"" +
+                note + "\"}}";
+        HttpResponse response =
+                TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/patch"), json, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         String message = DDPRequestUtil.getContentAsString(response);
         JsonObject jsonObject = new JsonParser().parse(message).getAsJsonObject();
@@ -424,14 +345,19 @@ public class TestHelper {
         strings.add(tissueId);
         strings.add(note);
         //get last changed on with that combination to get the one just added
-        Assert.assertEquals(note, DBTestUtil.getStringFromQuery("select * from ddp_tissue where tissue_id = ? and notes = ? order by last_changed desc limit 1", strings, "notes"));
+        Assert.assertEquals(note, DBTestUtil.getStringFromQuery(
+                "select * from ddp_tissue where tissue_id = ? and notes = ? order by last_changed desc limit 1", strings, "notes"));
         return tissueId;
     }
 
-    public static void changeTissueValue(String tissueId, String oncHistoryId, String field, String value, String columnName) throws Exception {
+    public static void changeTissueValue(String tissueId, String oncHistoryId, String field, String value, String columnName)
+            throws Exception {
         //change value of oncHistoryDetail
-        String json = "{\"id\":\"" + tissueId + "\",\"parentId\":\"" + oncHistoryId + "\",\"parent\":\"oncHistoryDetailId\",\"user\":\"ptaheri+1@broadinstitute.org\",\"nameValue\":{\"name\":\"" + field + "\",\"value\":\"" + value + "\"}}";
-        HttpResponse response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/patch"), json, testUtil.buildAuthHeaders()).returnResponse();
+        String json = "{\"id\":\"" + tissueId + "\",\"parentId\":\"" + oncHistoryId +
+                "\",\"parent\":\"oncHistoryDetailId\",\"user\":\"ptaheri+1@broadinstitute.org\",\"nameValue\":{\"name\":\"" + field +
+                "\",\"value\":\"" + value + "\"}}";
+        HttpResponse response =
+                TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/patch"), json, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
         //check changed value
@@ -439,8 +365,7 @@ public class TestHelper {
         strings.add(tissueId);
         if (StringUtils.isNotBlank(value)) {
             Assert.assertEquals(value, DBTestUtil.getStringFromQuery("select * from ddp_tissue where tissue_id = ?", strings, columnName));
-        }
-        else {
+        } else {
             Assert.assertNull(DBTestUtil.getStringFromQuery("select * from ddp_tissue where tissue_id = ?", strings, columnName));
         }
     }
@@ -469,5 +394,114 @@ public class TestHelper {
         }
 
         return sb.toString();
+    }
+
+    //Methods shared by more than 2 classes!!!
+    public String editMedicalRecord(@NonNull String instanceName, @NonNull String participantId, @NonNull String institutionId,
+                                    String valueName, String value, String columnName) throws Exception {
+        //add value for fax_sent
+        List strings = new ArrayList<>();
+        strings.add(institutionId);
+
+        String medicalRecordId = DBTestUtil.getQueryDetail(
+                MedicalRecord.SQL_SELECT_MEDICAL_RECORD + " and inst.ddp_institution_id = \"" + institutionId +
+                        "\" and p.ddp_participant_id = \"" + participantId + "\"", instanceName, "medical_record_id");
+
+        if (medicalRecordId == null) {
+            Assert.fail("medicalRecordId was null!");
+        }
+        String json =
+                "{\"id\":\"" + medicalRecordId + "\",\"user\":\"simone+1@broadinstitute.org\",\"nameValue\":{\"name\":\"" + valueName +
+                        "\",\"value\":\"" + value + "\"}}";
+        HttpResponse response =
+                TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/" + "patch"), json, testUtil.buildAuthHeaders()).returnResponse();
+
+        Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+        String valueFromDB = DBTestUtil.getQueryDetail(SELECT_DATA_MEDICALRECORD_QUERY, medicalRecordId, columnName);
+
+        if (!valueName.equals("m.followUps")) {
+            Assert.assertEquals(value, valueFromDB);
+        }
+
+        return medicalRecordId;
+    }
+
+    public String addOncHistoryDetails(String participantId) throws Exception {
+        //add oncHistoryDetail
+        String json = "{\"id\":null,\"parentId\":\"" + participantId +
+                "\",\"parent\":\"participantId\",\"user\":\"simone+1@broadinstitute.org\",\"nameValue\":{\"name\":\"oD.datePX\",\"value\":\"2017-01-02\"}}";
+        HttpResponse response =
+                TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/patch"), json, testUtil.buildAuthHeaders()).returnResponse();
+        Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+        String message = DDPRequestUtil.getContentAsString(response);
+        JsonObject jsonObject = new JsonParser().parse(message).getAsJsonObject();
+        String body = jsonObject.get("body").getAsString();
+        jsonObject = new JsonParser().parse(body).getAsJsonObject();
+        String oncHistoryId = jsonObject.get("oncHistoryDetailId").getAsString();
+
+        json = "{\"id\":\"" + oncHistoryId + "\",\"parentId\":\"" + participantId +
+                "\",\"parent\":\"participantId\",\"user\":\"simone+1@broadinstitute.org\",\"nameValue\":{\"name\":\"oD.typePX\",\"value\":\"typeTesty\"}}";
+        response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/patch"), json, testUtil.buildAuthHeaders()).returnResponse();
+        Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+        //check if oncHistoryDetail is in db
+        ArrayList strings = new ArrayList<>();
+        strings.add(oncHistoryId);
+        strings.add("typeTesty");
+        //get last changed on with that combination to get the one just added
+        Assert.assertEquals("2017-01-02", DBTestUtil.getStringFromQuery(
+                "select * from ddp_onc_history_detail where onc_history_detail_id = ? and type_px = ? order by last_changed desc limit 1",
+                strings, "date_px"));
+
+        //check that oncHistoryDetails created was also set
+        String created = DBTestUtil.getQueryDetail(SELECT_DATA_ONCHISTORY_QUERY, participantId, "created");
+        Assert.assertNotNull(created);
+        return oncHistoryId;
+    }
+
+    public void changeValue(String valueId, String participantId, String field, Object value, String columnName, String parent, String user,
+                            String pkName, String tableName, String fieldId) throws Exception {
+        //change value
+        String json =
+                "{\"id\":\"" + valueId + "\",\"parentId\":\"" + participantId + "\",\"parent\":\"" + parent + "\",\"user\":\"" + user +
+                        "\",\"nameValue\":{\"name\":\"" + field + "\",\"value\":\"" + value + "\"}}";
+        if (fieldId != null && valueId != null) {
+            json = "{\"id\":\"" + valueId + "\",\"parentId\":\"" + participantId + "\",\"parent\":\"" + parent + "\",\"user\":\"" + user +
+                    "\",\"fieldId\":\"" + fieldId + "\",\"nameValue\":{\"name\":\"" + field + "\",\"value\":\"" + value + "\"}}";
+        } else if (fieldId != null && valueId == null) {
+            if (value instanceof Integer) {
+                json = "{\"id\":null,\"parentId\":\"" + participantId + "\",\"parent\":\"" + parent + "\",\"user\":\"" + user +
+                        "\",\"fieldId\":\"" + fieldId + "\",\"nameValue\":{\"name\":\"" + field + "\",\"value\":" + value + "}}";
+            } else {
+                json = "{\"id\":null,\"parentId\":\"" + participantId + "\",\"parent\":\"" + parent + "\",\"user\":\"" + user +
+                        "\",\"fieldId\":\"" + fieldId + "\",\"nameValue\":{\"name\":\"" + field + "\",\"value\":\"" + value + "\"}}";
+            }
+        }
+        if (String.valueOf(value).startsWith("[")) {//for abstraction value change
+            json = "{\"id\":null,\"parentId\":\"" + participantId + "\",\"parent\":\"" + parent + "\",\"user\":\"" + user +
+                    "\",\"fieldId\":\"" + fieldId + "\",\"nameValue\":{\"name\":\"" + field + "\",\"value\":" + value + "}}";
+        }
+        HttpResponse response =
+                TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/patch"), json, testUtil.buildAuthHeaders()).returnResponse();
+        Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+        //check changed value
+        if (fieldId == null && value instanceof String) {
+            ArrayList strings = new ArrayList<>();
+            strings.add(valueId);
+            if (StringUtils.isNotBlank((String) value)) {
+                Assert.assertEquals(value,
+                        DBTestUtil.getStringFromQuery("select * from " + tableName + " where " + pkName + " = ?", strings, columnName));
+            } else {
+                Assert.assertNull(
+                        DBTestUtil.getStringFromQuery("select * from " + tableName + " where " + pkName + " = ?", strings, columnName));
+            }
+        }
+    }
+
+    public void changeOncHistoryValue(String oncHistoryId, String participantId, String field, String value, String columnName)
+            throws Exception {
+        changeValue(oncHistoryId, participantId, field, value, columnName, "participantId", "ptaheri+1@broadinstitute.org",
+                "onc_history_detail_id", "ddp_onc_history_detail", null);
     }
 }

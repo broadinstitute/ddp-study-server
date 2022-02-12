@@ -1,22 +1,44 @@
 package org.broadinstitute.dsm.db.dao.ddp.instance;
 
-import lombok.NonNull;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.dsm.db.dao.Dao;
-import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.statics.QueryExtension;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Optional;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import lombok.NonNull;
+import org.broadinstitute.dsm.db.dao.Dao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.statics.QueryExtension;
+import org.broadinstitute.lddp.db.SimpleResult;
 
 
 public class DDPInstanceDao implements Dao<DDPInstanceDto> {
 
+    public static final String COLLABORATOR_ID_PREFIX = "collaborator_id_prefix";
+    public static final String DDP_INSTANCE_ID = "ddp_instance_id";
+    public static final String INSTANCE_NAME = "instance_name";
+    public static final String STUDY_GUID = "study_guid";
+    public static final String DISPLAY_NAME = "display_name";
+    public static final String BASE_URL = "base_url";
+    public static final String IS_ACTIVE = "is_active";
+    public static final String BSP_GROUP = "bsp_group";
+    public static final String BSP_COLLECTION = "bsp_collection";
+    public static final String BSP_ORGANISM = "bsp_organism";
+    public static final String COLLABORATOR_ID_PREFIX1 = "collaborator_id_prefix";
+    public static final String REMINDER_NOTIFICATION_WKS = "reminder_notification_wks";
+    public static final String MR_ATTENTION_FLAG_D = "mr_attention_flag_d";
+    public static final String TISSUE_ATTENTION_FLAG_D = "tissue_attention_flag_d";
+    public static final String AUTH0_TOKEN = "auth0_token";
+    public static final String NOTIFICATION_RECIPIENTS = "notification_recipients";
+    public static final String MIGRATED_DDP = "migrated_ddp";
+    public static final String BILLING_REFERENCE = "billing_reference";
+    public static final String ES_PARTICIPANT_INDEX = "es_participant_index";
+    public static final String ES_ACTIVITY_DEFINITION_INDEX = "es_activity_definition_index";
+    public static final String ES_USERS_INDEX = "es_users_index";
     private static final String SQL_INSERT_DDP_INSTANCE = "INSERT INTO ddp_instance SET " +
             "instance_name = ?, " +
             "study_guid = ?," +
@@ -37,33 +59,26 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
             "es_participant_index = ?," +
             "es_activity_definition_index = ?," +
             "es_users_index = ?";
-
     private static final String SQL_DELETE_DDP_INSTANCE = "DELETE FROM ddp_instance WHERE ddp_instance_id = ?";
-
-    private static final String SQL_SELECT_INSTANCE_WITH_ROLE = "SELECT ddp_instance_id, instance_name, base_url, collaborator_id_prefix, migrated_ddp, billing_reference, " +
-            "es_participant_index, es_activity_definition_index, es_users_index, (SELECT count(role.name) " +
-            "FROM ddp_instance realm, ddp_instance_role inRol, instance_role role WHERE realm.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id AND role.name = ? " +
-            "AND realm.ddp_instance_id = main.ddp_instance_id) AS 'has_role', mr_attention_flag_d, tissue_attention_flag_d, auth0_token, notification_recipients FROM ddp_instance main " +
-            "WHERE is_active = 1";
-
+    private static final String SQL_SELECT_INSTANCE_WITH_ROLE =
+            "SELECT ddp_instance_id, instance_name, base_url, collaborator_id_prefix, migrated_ddp, billing_reference, " +
+                    "es_participant_index, es_activity_definition_index, es_users_index, (SELECT count(role.name) " +
+                    "FROM ddp_instance realm, ddp_instance_role inRol, instance_role role WHERE realm.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id AND role.name = ? " +
+                    "AND realm.ddp_instance_id = main.ddp_instance_id) AS 'has_role', mr_attention_flag_d, tissue_attention_flag_d, auth0_token, notification_recipients FROM ddp_instance main " +
+                    "WHERE is_active = 1";
     private static final String SQL_GET_INSTANCE_ID_BY_GUID = "SELECT ddp_instance_id " +
             "FROM ddp_instance " +
             "WHERE " +
             "study_guid = ? ";
-
     private static final String SQL_GET_PARTICIPANT_ES_INDEX_BY_ID = "SELECT es_participant_index " +
             "FROM ddp_instance " +
             "WHERE ddp_instance_id = ?";
-
     private static final String SQL_GET_PARTICIPANT_ES_INDEX_BY_STUDY_GUID = "SELECT es_participant_index " +
             "FROM ddp_instance " +
             "WHERE study_guid = ?";
-
     private static final String SQL_GET_COLLABORATOR_ID_PREFIX_BY_STUDY_GUID = "SELECT collaborator_id_prefix " +
             "FROM ddp_instance " +
             "WHERE study_guid = ?";
-    public static final String COLLABORATOR_ID_PREFIX = "collaborator_id_prefix";
-
     private static final String SQL_BASE_SELECT = "SELECT " +
             "ddp_instance_id," +
             "instance_name," +
@@ -86,38 +101,12 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
             "es_activity_definition_index," +
             "es_users_index " +
             "FROM ddp_instance ";
-
     private static final String SQL_SELECT_DDP_INSTANCE_BY_GUID = SQL_BASE_SELECT +
             "WHERE study_guid = ? ";
-
     private static final String SQL_SELECT_DDP_INSTANCE_BY_INSTANCE_NAME = SQL_BASE_SELECT +
             "WHERE instance_name = ? ";
-
     private static final String SQL_SELECT_DDP_INSTANCE_BY_INSTANCE_ID = SQL_BASE_SELECT +
             "WHERE ddp_instance_id = ? ";
-
-
-
-    public static final String DDP_INSTANCE_ID = "ddp_instance_id";
-    public static final String INSTANCE_NAME = "instance_name";
-    public static final String STUDY_GUID = "study_guid";
-    public static final String DISPLAY_NAME = "display_name";
-    public static final String BASE_URL = "base_url";
-    public static final String IS_ACTIVE = "is_active";
-    public static final String BSP_GROUP = "bsp_group";
-    public static final String BSP_COLLECTION = "bsp_collection";
-    public static final String BSP_ORGANISM = "bsp_organism";
-    public static final String COLLABORATOR_ID_PREFIX1 = "collaborator_id_prefix";
-    public static final String REMINDER_NOTIFICATION_WKS = "reminder_notification_wks";
-    public static final String MR_ATTENTION_FLAG_D = "mr_attention_flag_d";
-    public static final String TISSUE_ATTENTION_FLAG_D = "tissue_attention_flag_d";
-    public static final String AUTH0_TOKEN = "auth0_token";
-    public static final String NOTIFICATION_RECIPIENTS = "notification_recipients";
-    public static final String MIGRATED_DDP = "migrated_ddp";
-    public static final String BILLING_REFERENCE = "billing_reference";
-    public static final String ES_PARTICIPANT_INDEX = "es_participant_index";
-    public static final String ES_ACTIVITY_DEFINITION_INDEX = "es_activity_definition_index";
-    public static final String ES_USERS_INDEX = "es_users_index";
 
     public static boolean getRole(@NonNull String realm, @NonNull String role) {
         SimpleResult results = inTransaction((conn) -> {
@@ -130,12 +119,10 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                     if (rs.next()) {
                         dbVals.resultValue = rs.getBoolean(DBConstants.HAS_ROLE);
                     }
-                }
-                catch (SQLException e) {
+                } catch (SQLException e) {
                     throw new RuntimeException("Error getting role of realm " + realm, e);
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -225,12 +212,10 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                     if (instanceIdRs.next()) {
                         dbVals.resultValue = instanceIdRs.getInt(DBConstants.DDP_INSTANCE_ID);
                     }
-                }
-                catch (SQLException e) {
+                } catch (SQLException e) {
                     throw new RuntimeException("Error getting information for " + studyGuid, e);
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -251,12 +236,10 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                     if (rs.next()) {
                         dbVals.resultValue = getDdpInstanceDtoFromResultSet(rs);
                     }
-                }
-                catch (SQLException e) {
+                } catch (SQLException e) {
                     throw new RuntimeException("Error getting ddp instance for " + studyGuid, e);
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -278,12 +261,10 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                     if (rs.next()) {
                         dbVals.resultValue = getDdpInstanceDtoFromResultSet(rs);
                     }
-                }
-                catch (SQLException e) {
+                } catch (SQLException e) {
                     throw new RuntimeException("Error getting ddp instance for " + instanceName, e);
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -329,12 +310,10 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                     if (rsInstanceId.next()) {
                         dbVals.resultValue = rsInstanceId.getString(DBConstants.ES_PARTICIPANT_INDEX);
                     }
-                }
-                catch (SQLException e) {
+                } catch (SQLException e) {
                     throw new RuntimeException("Error getting participant es index with instance id: " + instanceId, e);
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -355,12 +334,10 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                     if (rs.next()) {
                         dbVals.resultValue = rs.getString(DBConstants.ES_PARTICIPANT_INDEX);
                     }
-                }
-                catch (SQLException e) {
+                } catch (SQLException e) {
                     throw new RuntimeException("Error getting participant es index with study guid: " + studyGuid, e);
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -381,12 +358,10 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                     if (rs.next()) {
                         dbVals.resultValue = rs.getString(COLLABORATOR_ID_PREFIX);
                     }
-                }
-                catch (SQLException e) {
+                } catch (SQLException e) {
                     throw new RuntimeException("Error getting collaborator id prefix with study guid: " + studyGuid, e);
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -407,12 +382,10 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                     if (rs.next()) {
                         dbVals.resultValue = getDdpInstanceDtoFromResultSet(rs);
                     }
-                }
-                catch (SQLException e) {
+                } catch (SQLException e) {
                     throw new RuntimeException("Error getting ddp instance for " + ddpInstanceId, e);
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;

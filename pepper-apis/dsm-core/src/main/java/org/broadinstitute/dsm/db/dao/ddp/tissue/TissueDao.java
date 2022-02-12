@@ -6,17 +6,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.lddp.db.SimpleResult;
 
 public class TissueDao implements Dao<Tissue> {
 
@@ -55,19 +54,20 @@ public class TissueDao implements Dao<Tissue> {
             SimpleResult execResult = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_TISSUES_BY_STUDY)) {
                 stmt.setString(1, study);
-                try(ResultSet rs = stmt.executeQuery()) {
+                try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         String ddpParticipantId = rs.getString(DBConstants.DDP_PARTICIPANT_ID);
                         Tissue tissue = Tissue.getTissue(rs);
-                        if (Objects.isNull(tissue)) continue;
+                        if (Objects.isNull(tissue)) {
+                            continue;
+                        }
                         tissues.merge(ddpParticipantId, new ArrayList<>(List.of(tissue)), (prev, curr) -> {
                             prev.addAll(curr);
                             return prev;
                         });
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 execResult.resultException = ex;
             }
             return execResult;

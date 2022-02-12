@@ -51,9 +51,10 @@ public class ParticipantMedicalRecord {
         this.medReviewMR = medReviewMR;
     }
 
-    public String getKey(){
+    public String getKey() {
         return ddpParticipantId + "_" + ddpInstitutionId + "_" + institutionType;
     }
+
     public String getInstanceName() {
         return instanceName;
     }
