@@ -1064,6 +1064,10 @@ parameters:
     type: boolean
     default: false
 
+  test_parallelism:
+    type: integer
+    default: *test_parallelism
+
   api-docs:
     type: boolean
     default: false
@@ -1085,7 +1089,7 @@ workflows:
     jobs:
       - dss-compile-and-run-test-suite-job
       - dss-parallel-compile-and-test-job:
-          parallelism: *test_parallelism
+          parallelism: << pipeline.parameters.test_parallelism >>
 
   # Run tests on DSM
   dsm-build-test-workflow:
