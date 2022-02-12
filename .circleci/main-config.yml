@@ -770,6 +770,7 @@ jobs:
         type: string
         default: *api-spec-path
     steps:
+      - run: echo "Doing build-api-docs-job"
       - when:
           condition: << pipeline.parameters.api-docs >>
           steps:
