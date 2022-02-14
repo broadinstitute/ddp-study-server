@@ -128,7 +128,7 @@ public class NotificationJobTest extends TestHelper {
         String emailClientKey = cfg.getString("errorAlert.key");
         JsonObject emailClientSettings = (JsonObject) ((new JsonParser()).parse(cfg.getString("errorAlert.clientSettings")));
         EmailClient emailClient = (EmailClient) Class.forName(cfg.getString(ApplicationConfigConstants.EMAIL_CLASS_NAME)).newInstance();
-        emailClient.configure(emailClientKey, emailClientSettings, "", null, "");
+        emailClient.configure(emailClientKey, emailClientSettings, "", null);
         emailClient.sendSingleNonTemplate("simone@broadinstitute.org", "fake error alert",
                 "something bad happened go look into the log around " + System.currentTimeMillis(), "FAKEALERT");
     }

@@ -73,7 +73,7 @@ public class KitStatusChangeRouteTest extends TestHelper {
         //check if kitlabel was added to dsmlabel
         Assert.assertEquals("1", count);
 
-        TransactionWrapper.reset(TestUtil.UNIT_TEST);
+        TransactionWrapper.reset();
         //update receive_date per tool
         UpdateReceivedDateTool.argumentsForTesting("config/test-config.conf", "receivedUpdate.txt");
         UpdateReceivedDateTool.littleMain();

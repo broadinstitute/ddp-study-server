@@ -22,7 +22,7 @@ public class ParticipantMedicalRecordToolTest extends TestHelper {
         if (!cfg.getString("portal.dbUrl").contains("local")) {
             throw new RuntimeException("Not your test db");
         }
-        TransactionWrapper.reset(TestUtil.UNIT_TEST);
+        TransactionWrapper.reset();
 //        TransactionWrapper.reset(TestUtil.UNIT_TEST, DBConstants.EEL_DB_NAME);
         ParticipantMedicalRecordTool.argumentsForTesting("config/test-config.conf", TEST_DDP,
                 "/Users/simone/IdeaProjects/ddp-dsm/src/test/resources/AllFieldsDatStat.txt");

@@ -964,13 +964,13 @@ public class DBTestUtil {
 
     public static List<String> getStringList(String query, String returnColumn, String dbName) {
         List<String> list = new ArrayList<>();
-        SimpleResult results = inTransaction((conn) -> {
-            return getSimpleResult(conn, query, returnColumn, list);
-        }, dbName);
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Error getting data ", results.resultException);
-        }
+//        SimpleResult results = inTransaction((conn) -> {
+//            return getSimpleResult(conn, query, returnColumn, list);
+//        }, dbName);
+//
+//        if (results.resultException != null) {
+//            throw new RuntimeException("Error getting data ", results.resultException);
+//        }
         return list;
     }
 

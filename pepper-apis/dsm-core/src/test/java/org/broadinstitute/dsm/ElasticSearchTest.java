@@ -11,6 +11,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.join.ScoreMode;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.elastic.ESProfile;

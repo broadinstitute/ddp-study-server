@@ -10,6 +10,7 @@ import java.util.Map;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -34,7 +35,6 @@ import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.dsm.util.externalShipper.ExternalShipper;
 import org.broadinstitute.dsm.util.externalShipper.GBFRequestUtil;
-import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -86,7 +86,9 @@ GBFTest extends TestHelper {
             orders.getOrders().add(order);
 
             String orderXml = GBFRequestUtil.orderXmlToString(Orders.class, orders);
-            JSONObject payload = new JSONObject().put("orderXml", orderXml).put("test", true);
+            JsonObject payload = new JsonObject();
+            payload.addProperty("orderXml", orderXml);
+            payload.addProperty("test", true);
             String sendRequest = GBF_URL + GBFRequestUtil.ORDER_ENDPOINT;
             Response gbfResponse = GBFRequestUtil.executePost(Response.class, sendRequest, payload.toString(), apiKey);
             Assert.assertNotNull(gbfResponse);
@@ -100,8 +102,9 @@ GBFTest extends TestHelper {
             long start = testDate - SystemUtil.MILLIS_PER_DAY;
             long end = testDate;
 
-            JSONObject payload =
-                    new JSONObject().put("startDate", SystemUtil.getDateFormatted(start)).put("endDate", SystemUtil.getDateFormatted(end));
+            JsonObject payload = new JsonObject();
+            payload.addProperty("startDate", SystemUtil.getDateFormatted(start));
+            payload.addProperty("endDate", SystemUtil.getDateFormatted(end));
             String sendRequest = GBF_URL + GBFRequestUtil.CONFIRM_ENDPOINT;
             Response gbfResponse = GBFRequestUtil.executePost(Response.class, sendRequest, payload.toString(), apiKey);
             Assert.assertNotNull(gbfResponse);
@@ -113,7 +116,12 @@ GBFTest extends TestHelper {
         if (apiKey != null) {
             List<String> orderNumbers = new ArrayList<>();
             orderNumbers.add(ORDER_NUMBER);
-            JSONObject payload = new JSONObject().put("orderNumbers", orderNumbers);
+            JsonObject payload = new JsonObject();
+            JsonArray orderNumbersJson = new JsonArray();
+            for (String orderNumber : orderNumbers) {
+                orderNumbersJson.add(orderNumber);
+            }
+            payload.add("orderNumbers", orderNumbersJson);
 
             String sendRequest = GBF_URL + GBFRequestUtil.STATUS_ENDPOINT;
             Response gbfResponse = GBFRequestUtil.executePost(Response.class, sendRequest, payload.toString(), apiKey);
@@ -164,7 +172,13 @@ GBFTest extends TestHelper {
                     .newInstance(); //to get blindTestExecutor instance
             //            ArrayList<KitRequest> kitRequests = shipper.getKitRequestsNotDone(9);
             //            shipper.orderStatus(kitRequests);;
-            JSONObject payload = new JSONObject().put("orderNumbers", orderNumbers);
+
+            JsonObject payload = new JsonObject();
+            JsonArray orderNumbersJson = new JsonArray();
+            for (String orderNumber : orderNumbers) {
+                orderNumbersJson.add(orderNumber);
+            }
+            payload.add("orderNumbers", orderNumbersJson);
 
             String sendRequest = GBF_URL + GBFRequestUtil.STATUS_ENDPOINT;
             Response gbfResponse = GBFRequestUtil.executePost(Response.class, sendRequest, payload.toString(), apiKey);
@@ -189,8 +203,9 @@ GBFTest extends TestHelper {
             long start = 0;
             long end = testDate;
 
-            JSONObject payload =
-                    new JSONObject().put("startDate", SystemUtil.getDateFormatted(start)).put("endDate", SystemUtil.getDateFormatted(end));
+            JsonObject payload = new JsonObject();
+            payload.addProperty("startDate", SystemUtil.getDateFormatted(start));
+            payload.addProperty("endDate", SystemUtil.getDateFormatted(end));
             String sendRequest = GBF_URL + GBFRequestUtil.CONFIRM_ENDPOINT;
             Response gbfResponse = GBFRequestUtil.executePost(Response.class, sendRequest, payload.toString(), apiKey);
             Assert.assertNotNull(gbfResponse);
@@ -211,8 +226,9 @@ GBFTest extends TestHelper {
             long start = 0L;
             long end = testDate;
 
-            JSONObject payload =
-                    new JSONObject().put("startDate", SystemUtil.getDateFormatted(start)).put("endDate", SystemUtil.getDateFormatted(end));
+            JsonObject payload = new JsonObject();
+            payload.addProperty("startDate", SystemUtil.getDateFormatted(start));
+            payload.addProperty("endDate", SystemUtil.getDateFormatted(end));
             String sendRequest = GBF_URL + GBFRequestUtil.CONFIRM_ENDPOINT;
             Response gbfResponse = GBFRequestUtil.executePost(Response.class, sendRequest, payload.toString(), apiKey);
 
