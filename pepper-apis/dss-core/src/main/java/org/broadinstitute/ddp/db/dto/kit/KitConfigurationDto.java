@@ -1,54 +1,28 @@
 package org.broadinstitute.ddp.db.dto.kit;
 
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
+@Value
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class KitConfigurationDto {
+    @ColumnName("kit_configuration_id")
+    long id;
 
-    private long id;
-    private long studyId;
-    private String studyGuid;
-    private long numberOfKits;
-    private long kitTypeId;
-    private boolean needsApproval;
+    @ColumnName("study_id")
+    long studyId;
 
-    @JdbiConstructor
-    public KitConfigurationDto(
-            @ColumnName("kit_configuration_id") long id,
-            @ColumnName("study_id") long studyId,
-            @ColumnName("study_guid") String studyGuid,
-            @ColumnName("number_of_kits") long numberOfKits,
-            @ColumnName("kit_type_id") long kitTypeId,
-            @ColumnName("needs_approval") boolean needsApproval) {
-        this.id = id;
-        this.studyId = studyId;
-        this.studyGuid = studyGuid;
-        this.numberOfKits = numberOfKits;
-        this.kitTypeId = kitTypeId;
-        this.needsApproval = needsApproval;
-    }
+    @ColumnName("study_guid")
+    String studyGuid;
 
-    public long getId() {
-        return id;
-    }
+    @ColumnName("number_of_kits")
+    long numberOfKits;
 
-    public long getStudyId() {
-        return studyId;
-    }
+    @ColumnName("kit_type_id")
+    long kitTypeId;
 
-    public String getStudyGuid() {
-        return studyGuid;
-    }
-
-    public long getNumberOfKits() {
-        return numberOfKits;
-    }
-
-    public long getKitTypeId() {
-        return kitTypeId;
-    }
-
-    public boolean needsApproval() {
-        return needsApproval;
-    }
+    @ColumnName("needs_approval")
+    boolean needsApproval;
 }
