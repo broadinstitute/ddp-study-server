@@ -34,3 +34,4 @@ docker-compose.yaml
 .java-version
 
 appengine
+.idea
