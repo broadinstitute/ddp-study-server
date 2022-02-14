@@ -24,5 +24,5 @@ public class KitConfigurationDto {
     long kitTypeId;
 
     @ColumnName("needs_approval")
-    boolean needsApproval;
+    boolean approvalNeeded;
 }
