@@ -6,12 +6,16 @@ import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 
 import javax.validation.Valid;
+import java.math.BigInteger;
 import java.util.List;
 
 public final class DecimalQuestionDef extends QuestionDef {
     @Valid
     @SerializedName("placeholderTemplate")
     private Template placeholderTemplate;
+
+    @SerializedName("scale")
+    private BigInteger scale;
 
     public static Builder builder() {
         return new Builder();
@@ -26,18 +30,24 @@ public final class DecimalQuestionDef extends QuestionDef {
     public DecimalQuestionDef(String stableId, Template promptTemplate, Template placeholderTemplate,
                               boolean isRestricted, boolean hideNumber, boolean writeOnce,
                               Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
-                              List<RuleDef> validations) {
+                              List<RuleDef> validations, BigInteger scale) {
         super(QuestionType.DECIMAL, stableId, isRestricted, promptTemplate,
                 additionalInfoHeaderTemplate, additionalInfoFooterTemplate, validations, hideNumber, writeOnce);
         this.placeholderTemplate = placeholderTemplate;
+        this.scale = scale;
     }
 
     public Template getPlaceholderTemplate() {
         return placeholderTemplate;
     }
 
+    public BigInteger getScale() {
+        return scale;
+    }
+
     public static final class Builder extends AbstractQuestionBuilder<Builder> {
         private Template placeholderTemplate;
+        private BigInteger scale;
 
         private Builder() {
             // Use static factories.
@@ -53,6 +63,11 @@ public final class DecimalQuestionDef extends QuestionDef {
             return self();
         }
 
+        public Builder setScale(BigInteger scale) {
+            this.scale = scale;
+            return self();
+        }
+
         public DecimalQuestionDef build() {
             DecimalQuestionDef question = new DecimalQuestionDef(
                     stableId,
@@ -63,7 +78,8 @@ public final class DecimalQuestionDef extends QuestionDef {
                     writeOnce,
                     getAdditionalInfoHeader(),
                     getAdditionalInfoFooter(),
-                    validations);
+                    validations,
+                    scale);
             configure(question);
             return question;
         }

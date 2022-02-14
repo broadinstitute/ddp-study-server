@@ -68,6 +68,8 @@ select qt.question_type_code as question_type,
          dq.placeholder_template_id, nq.placeholder_template_id, dcq.placeholder_template_id, tq.placeholder_template_id
        ) as placeholder_template_id,
 
+       dcq.scale,
+
        bq.true_template_id,
        bq.false_template_id,
 

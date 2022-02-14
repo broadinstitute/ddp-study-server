@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,7 +25,7 @@ public class DecimalRangeRuleTest {
 
     @BeforeClass
     public static void setup() {
-        unused = new DecimalQuestion("sid", 1L, 2L, false, false, false, null, null, null, List.of(), List.of());
+        unused = new DecimalQuestion("sid", 1L, 2L, false, false, false, null, null, null, List.of(), List.of(), BigInteger.ZERO);
     }
 
     @Test
