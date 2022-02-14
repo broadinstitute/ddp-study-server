@@ -82,11 +82,12 @@ public class EventQueueTool {
         //secrets from vault in a config file
         cfg = cfg.withFallback(ConfigFactory.parseFile(new File(config)));
 
-//        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
-//                cfg.getString("portal.dbSslKeyStorePwd"),
-//                cfg.getString("portal.dbSslTrustStore"),
-//                cfg.getString("portal.dbSslTrustStorePwd"));
-        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS), cfg.getString(ApplicationConfigConstants.DSM_DB_URL)));
+        //        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
+        //                cfg.getString("portal.dbSslKeyStorePwd"),
+        //                cfg.getString("portal.dbSslTrustStore"),
+        //                cfg.getString("portal.dbSslTrustStorePwd"));
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM,
+                cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS), cfg.getString(ApplicationConfigConstants.DSM_DB_URL)));
     }
 
     private static void eventQueue(Connection conn, @NonNull String realm, @NonNull String eventName) {
@@ -118,14 +119,12 @@ public class EventQueueTool {
                         String participantId = rs.getString(DBConstants.DDP_PARTICIPANT_ID);
                         String instanceName = rs.getString(DBConstants.INSTANCE_NAME);
                         String eventName = rs.getString(DBConstants.EVENT_NAME);
-                        if (StringUtils.isNotBlank(instanceName) && instanceName.equals(realmName) &&
-                                StringUtils.isNotBlank(eventName) && eventName.equals(skipEventName)) {
-                            kitDDPNotifications.add(new KitDDPNotification(participantId,
-                                    rs.getString(DBConstants.DSM_KIT_REQUEST_ID), rs.getString(DBConstants.DDP_INSTANCE_ID), realmName,
-                                    rs.getString(DBConstants.BASE_URL), eventName,
+                        if (StringUtils.isNotBlank(instanceName) && instanceName.equals(realmName) && StringUtils.isNotBlank(eventName)
+                                && eventName.equals(skipEventName)) {
+                            kitDDPNotifications.add(new KitDDPNotification(participantId, rs.getString(DBConstants.DSM_KIT_REQUEST_ID),
+                                    rs.getString(DBConstants.DDP_INSTANCE_ID), realmName, rs.getString(DBConstants.BASE_URL), eventName,
                                     rs.getString(DBConstants.EVENT_TYPE), System.currentTimeMillis(),
-                                    rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN),
-                                    rs.getString(DBConstants.UPLOAD_REASON),
+                                    rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN), rs.getString(DBConstants.UPLOAD_REASON),
                                     rs.getString(DBConstants.DDP_KIT_REQUEST_ID)));
                         }
                     }

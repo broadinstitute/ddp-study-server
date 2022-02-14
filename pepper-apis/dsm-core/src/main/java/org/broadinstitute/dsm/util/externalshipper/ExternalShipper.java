@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.util.externalShipper;
+package org.broadinstitute.dsm.util.externalshipper;
 
 import java.util.ArrayList;
 

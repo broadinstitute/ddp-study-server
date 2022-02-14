@@ -24,9 +24,10 @@ import org.slf4j.LoggerFactory;
 public class SearchKitRequest {
 
     public static final String SQL_SELECT_KIT_REQUEST =
-            "SELECT participant_data_id, ddp_participant_id, data, JSON_EXTRACT(data,'$.GENOME_STUDY_KIT_TRACKING_NUMBER'), " +
-                    "JSON_EXTRACT(data,'$.GENOME_STUDY_SPIT_KIT_BARCODE'), JSON_EXTRACT(data,'$.GENOME_STUDY_CPT_ID'), JSON_EXTRACT(data,'$.GENOME_STUDY_DATE_RECEIVED') " +
-                    "FROM ddp_participant_data where ";
+            "SELECT participant_data_id, ddp_participant_id, data, JSON_EXTRACT(data,'$.GENOME_STUDY_KIT_TRACKING_NUMBER'), "
+                    + "JSON_EXTRACT(data,'$.GENOME_STUDY_SPIT_KIT_BARCODE'), JSON_EXTRACT(data,'$.GENOME_STUDY_CPT_ID'), "
+                    + "JSON_EXTRACT(data,'$.GENOME_STUDY_DATE_RECEIVED') "
+                    + "FROM ddp_participant_data where ";
     private static final Logger logger = LoggerFactory.getLogger(SearchKitRequest.class);
     private static final String SHORT_ID = "SHORT_ID";
     private static final String SEARCH_TRACKING_NUMBER = "TRACKING_NUMBER";
@@ -107,8 +108,8 @@ public class SearchKitRequest {
         if (!kitRequests.isEmpty()) {
             DDPInstance ddpInstance = DDPInstance.getDDPInstance("atcp");
             kitRequests.forEach((ddpParticipantId, kitRequestShipping) -> {
-                Map<String, Map<String, Object>> participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance,
-                        ElasticSearchUtil.BY_GUID + ddpParticipantId);
+                Map<String, Map<String, Object>> participantESData =
+                        ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance, ElasticSearchUtil.BY_GUID + ddpParticipantId);
                 if (participantESData == null || participantESData.isEmpty()) {
                     participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance,
                             ElasticSearchUtil.BY_LEGACY_ALTPID + ddpParticipantId);

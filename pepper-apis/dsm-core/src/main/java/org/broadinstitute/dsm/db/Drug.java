@@ -18,25 +18,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Data
-@TableName(
-        name = DBConstants.DRUG_LIST,
-        alias = DBConstants.DRUG_ALIAS,
-        primaryKey = DBConstants.DRUG_ID,
-        columnPrefix = "")
+@TableName(name = DBConstants.DRUG_LIST, alias = DBConstants.DRUG_ALIAS, primaryKey = DBConstants.DRUG_ID, columnPrefix = "")
 public class Drug {
 
     private static final Logger logger = LoggerFactory.getLogger(Drug.class);
 
     private static final String SQL_SELECT_DRUGS = "SELECT display_name FROM drug_list ORDER BY display_name asc";
     private static final String SQL_SELECT_DRUGS_ALL_INFO =
-            "SELECT drug_id, display_name, generic_name, brand_name, chemocat2, chemo_type, study_drug, " +
-                    "treatment_type, chemotherapy, active FROM drug_list ORDER BY display_name asc";
+            "SELECT drug_id, display_name, generic_name, brand_name, chemocat2, chemo_type, study_drug, "
+                    + "treatment_type, chemotherapy, active FROM drug_list ORDER BY display_name asc";
     private static final String SQL_UPDATE_DRUG =
-            "UPDATE drug_list SET display_name = ?, generic_name = ?, brand_name = ?, chemocat2 = ?, chemo_type = ?, " +
-                    "study_drug = ?, treatment_type = ?, chemotherapy = ?, active = ?, date_updated = ?, changed_by = ? WHERE drug_id = ?";
+            "UPDATE drug_list SET display_name = ?, generic_name = ?, brand_name = ?, chemocat2 = ?, chemo_type = ?, "
+                    + "study_drug = ?, treatment_type = ?, chemotherapy = ?, active = ?, date_updated = ?, changed_by = ? "
+                    + "WHERE drug_id = ?";
     private static final String SQL_INSERT_DRUG =
-            "INSERT INTO drug_list SET display_name = ?, generic_name = ?, brand_name = ?, chemocat2 = ?, " +
-                    "chemo_type = ?, study_drug = ?, treatment_type = ?, chemotherapy = ?, date_created = ?, active = ?, changed_by = ?";
+            "INSERT INTO drug_list SET display_name = ?, generic_name = ?, brand_name = ?, chemocat2 = ?, "
+                    + "chemo_type = ?, study_drug = ?, treatment_type = ?, chemotherapy = ?, date_created = ?, active = ?, changed_by = ?";
 
     @ColumnName(DBConstants.DRUG_ID)
     private final int drugId;
@@ -71,8 +68,8 @@ public class Drug {
     private String changedBy;
 
 
-    public Drug(int drugId, String displayName, String genericName, String brandName, String chemocat, String chemoType,
-                boolean studyDrug, String treatmentType, String chemotherapy, boolean active) {
+    public Drug(int drugId, String displayName, String genericName, String brandName, String chemocat, String chemoType, boolean studyDrug,
+                String treatmentType, String chemotherapy, boolean active) {
         this.drugId = drugId;
         this.displayName = displayName;
         this.genericName = genericName;
@@ -125,16 +122,11 @@ public class Drug {
                 if (stmt != null) {
                     try (ResultSet rs = stmt.executeQuery()) {
                         while (rs.next()) {
-                            Drug drug = new Drug(rs.getInt(DBConstants.DRUG_ID),
-                                    rs.getString(DBConstants.DISPLAY_NAME),
-                                    rs.getString(DBConstants.GENERIC_NAME),
-                                    rs.getString(DBConstants.BRAND_NAME),
-                                    rs.getString(DBConstants.CHEMOCAT),
-                                    rs.getString(DBConstants.CHEMO_TYPE),
-                                    rs.getBoolean(DBConstants.STUDY_DRUG),
-                                    rs.getString(DBConstants.TREATMENT_TYPE),
-                                    rs.getString(DBConstants.CHEMOTHERAPY),
-                                    rs.getBoolean(DBConstants.ACTIVE));
+                            Drug drug = new Drug(rs.getInt(DBConstants.DRUG_ID), rs.getString(DBConstants.DISPLAY_NAME),
+                                    rs.getString(DBConstants.GENERIC_NAME), rs.getString(DBConstants.BRAND_NAME),
+                                    rs.getString(DBConstants.CHEMOCAT), rs.getString(DBConstants.CHEMO_TYPE),
+                                    rs.getBoolean(DBConstants.STUDY_DRUG), rs.getString(DBConstants.TREATMENT_TYPE),
+                                    rs.getString(DBConstants.CHEMOTHERAPY), rs.getBoolean(DBConstants.ACTIVE));
                             drugList.add(drug);
                         }
                     }

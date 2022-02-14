@@ -74,7 +74,8 @@ public class DBUtil {
         }
     }
 
-    public static void updateBookmark(Connection conn, long value, String bookmarkName) {//writeBookmarkIntoDb
+    public static void updateBookmark(Connection conn, long value, String bookmarkName) {
+        //writeBookmarkIntoDb
         if (conn != null) {
             try (PreparedStatement updateBookmark = conn.prepareStatement(SQL_UPDATE_BOOKMARK)) {
                 updateBookmark.setLong(1, value);

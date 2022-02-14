@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.model.KitType;
-import org.broadinstitute.dsm.util.externalShipper.ExternalShipper;
+import org.broadinstitute.dsm.util.externalshipper.ExternalShipper;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.slf4j.Logger;
@@ -23,7 +23,8 @@ public class ExternalShipperJob implements Job {
             try {
                 logger.info("Starting the external shipper job");
                 ExternalShipper shipper =
-                        (ExternalShipper) Class.forName(DSMServer.getClassName(kitType.getExternalShipper())).newInstance();//GBFRequestUtil
+                        (ExternalShipper) Class.forName(DSMServer.getClassName(kitType.getExternalShipper()))
+                                .newInstance(); //GBFRequestUtil
                 shipper.updateOrderStatusForPendingKitRequests(kitType.getInstanceId());
                 Instant now = Instant.now();
                 Instant dynamicStartTime = now.minus(5, ChronoUnit.DAYS);

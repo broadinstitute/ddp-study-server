@@ -43,8 +43,7 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         }
 
         if (isSelfOrDependentParticipant()) {
-            return insertGenomicIdForParticipant()
-                    && insertExitStatusForParticipant();
+            return insertGenomicIdForParticipant() && insertExitStatusForParticipant();
         } else {
             //in case if 3rd registration option is chosen in prequalifier of ATCP
             //which is just stay inform registration
@@ -62,17 +61,14 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         if (elasticSearchParticipantDto.getActivities().isEmpty()) {
             return false;
         }
-        return elasticSearchParticipantDto.getActivities().stream()
-                .anyMatch(this::isPrequalAndSelfOrDependent);
+        return elasticSearchParticipantDto.getActivities().stream().anyMatch(this::isPrequalAndSelfOrDependent);
     }
 
     private boolean isPrequalAndSelfOrDependent(ESActivities activity) {
-        return ACTIVITY_CODE_PREQUAL.equals(activity.getActivityCode()) &&
-                (activity.getQuestionsAnswers().stream()
-                        .filter(anwers -> PREQUAL_SELF_DESCRIBE.equals(anwers.get(DDPActivityConstants.DDP_ACTIVITY_STABLE_ID)))
-                        .anyMatch(answers -> ((List) answers.get(QUESTION_ANSWER)).stream()
-                                .anyMatch(answer -> SELF_DESCRIBE_CHILD_DIAGNOSED.equals(answer) ||
-                                        SELF_DESCRIBE_DIAGNOSED.equals(answer))));
+        return ACTIVITY_CODE_PREQUAL.equals(activity.getActivityCode()) && (activity.getQuestionsAnswers().stream()
+                .filter(anwers -> PREQUAL_SELF_DESCRIBE.equals(anwers.get(DDPActivityConstants.DDP_ACTIVITY_STABLE_ID))).anyMatch(
+                        answers -> ((List) answers.get(QUESTION_ANSWER)).stream().anyMatch(
+                                answer -> SELF_DESCRIBE_CHILD_DIAGNOSED.equals(answer) || SELF_DESCRIBE_DIAGNOSED.equals(answer))));
     }
 
     private boolean insertGenomicIdForParticipant() {
@@ -87,12 +83,10 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         this.setDataAccess(new BookmarkDao());
         BookmarkDao dataAccess = (BookmarkDao) this.dataAccess;
         Optional<BookmarkDto> maybeGenomicId = dataAccess.getBookmarkByInstance(AT_GENOMIC_ID);
-        return maybeGenomicId
-                .map(bookmarkDto -> {
-                    dataAccess.updateBookmarkValueByBookmarkId(bookmarkDto.getBookmarkId(), bookmarkDto.getValue() + 1);
-                    return String.valueOf(bookmarkDto.getValue());
-                })
-                .orElse(hruid);
+        return maybeGenomicId.map(bookmarkDto -> {
+            dataAccess.updateBookmarkValueByBookmarkId(bookmarkDto.getBookmarkId(), bookmarkDto.getValue() + 1);
+            return String.valueOf(bookmarkDto.getValue());
+        }).orElse(hruid);
     }
 
     private boolean insertExitStatusForParticipant() {
@@ -103,27 +97,24 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
 
     private String getDefaultExitStatus() {
         this.setDataAccess(FieldSettingsDao.of());
-        Optional<FieldSettingsDto> fieldSettingByColumnNameAndInstanceId = ((FieldSettingsDao) dataAccess)
-                .getFieldSettingByColumnNameAndInstanceId(Integer.parseInt(instance.getDdpInstanceId()), EXIT_STATUS);
-        return fieldSettingByColumnNameAndInstanceId.
-                map(fieldSettingsDto -> {
-                    FieldSettings fieldSettings = new FieldSettings();
-                    return fieldSettings.getDefaultValue(fieldSettingsDto.getPossibleValues());
-                })
-                .orElse(StringUtils.EMPTY);
+        Optional<FieldSettingsDto> fieldSettingByColumnNameAndInstanceId =
+                ((FieldSettingsDao) dataAccess).getFieldSettingByColumnNameAndInstanceId(Integer.parseInt(instance.getDdpInstanceId()),
+                        EXIT_STATUS);
+        return fieldSettingByColumnNameAndInstanceId.map(fieldSettingsDto -> {
+            FieldSettings fieldSettings = new FieldSettings();
+            return fieldSettings.getDefaultValue(fieldSettingsDto.getPossibleValues());
+        }).orElse(StringUtils.EMPTY);
     }
 
     private boolean insertParticipantData(Map<String, String> data, String ddpParticipantId, String fieldTypeId) {
         this.setDataAccess(new ParticipantDataDao());
         org.broadinstitute.dsm.model.participant.data.ParticipantData participantData =
                 new org.broadinstitute.dsm.model.participant.data.ParticipantData(dataAccess);
-        participantData.setData(ddpParticipantId, Integer.parseInt(instance.getDdpInstanceId()),
-                fieldTypeId, data);
+        participantData.setData(ddpParticipantId, Integer.parseInt(instance.getDdpInstanceId()), fieldTypeId, data);
         try {
             participantData.insertParticipantData("SYSTEM");
-            logger.info("values: " + data.keySet().stream().collect(Collectors.joining(", ", "[", "]")) +
-                    " were created for participant with id: " + ddpParticipantId + " at " +
-                    GENOME_STUDY_FIELD_TYPE);
+            logger.info("values: " + data.keySet().stream().collect(Collectors.joining(", ", "[", "]"))
+                    + " were created for participant with id: " + ddpParticipantId + " at " + GENOME_STUDY_FIELD_TYPE);
             return true;
         } catch (RuntimeException re) {
             return false;

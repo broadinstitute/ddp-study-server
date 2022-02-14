@@ -102,8 +102,6 @@ public class MedicalRecordLogRoute extends RequestHandler {
      * Save value at ddp_medical_record_log table
      * for the given medicalRecordLog
      *
-     * @return boolean value if changes where successful
-     * @throws Exception
      */
     public void saveMedicalRecordLog(@NonNull String medicalRecordLogId, @NonNull MedicalRecordLog medicalRecordLog) {
         SimpleResult results = inTransaction((conn) -> {

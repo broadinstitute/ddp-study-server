@@ -110,7 +110,6 @@ import org.broadinstitute.dsm.route.ParticipantEventRoute;
 import org.broadinstitute.dsm.route.ParticipantExitRoute;
 import org.broadinstitute.dsm.route.ParticipantStatusRoute;
 import org.broadinstitute.dsm.route.PatchRoute;
-import org.broadinstitute.dsm.route.PermalinkRoute;
 import org.broadinstitute.dsm.route.TriggerSurveyRoute;
 import org.broadinstitute.dsm.route.UserSettingRoute;
 import org.broadinstitute.dsm.route.ViewFilterRoute;
@@ -131,14 +130,14 @@ import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.PatchUtil;
 import org.broadinstitute.dsm.util.SecurityUtil;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.dsm.util.externalShipper.GBFRequestUtil;
-import org.broadinstitute.dsm.util.triggerListener.DDPEventTriggerListener;
-import org.broadinstitute.dsm.util.triggerListener.DDPRequestTriggerListener;
-import org.broadinstitute.dsm.util.triggerListener.EasypostShipmentStatusTriggerListener;
-import org.broadinstitute.dsm.util.triggerListener.ExternalShipperTriggerListener;
-import org.broadinstitute.dsm.util.triggerListener.GPNotificationTriggerListener;
-import org.broadinstitute.dsm.util.triggerListener.LabelCreationTriggerListener;
-import org.broadinstitute.dsm.util.triggerListener.NotificationTriggerListener;
+import org.broadinstitute.dsm.util.externalshipper.GBFRequestUtil;
+import org.broadinstitute.dsm.util.triggerlistener.DDPEventTriggerListener;
+import org.broadinstitute.dsm.util.triggerlistener.DDPRequestTriggerListener;
+import org.broadinstitute.dsm.util.triggerlistener.EasypostShipmentStatusTriggerListener;
+import org.broadinstitute.dsm.util.triggerlistener.ExternalShipperTriggerListener;
+import org.broadinstitute.dsm.util.triggerlistener.GPNotificationTriggerListener;
+import org.broadinstitute.dsm.util.triggerlistener.LabelCreationTriggerListener;
+import org.broadinstitute.dsm.util.triggerlistener.NotificationTriggerListener;
 import org.broadinstitute.lddp.security.Auth0Util;
 import org.broadinstitute.lddp.security.CookieUtil;
 import org.broadinstitute.lddp.util.BasicTriggerListener;
@@ -185,8 +184,8 @@ public class DSMServer {
     private static final String API_ROOT = "/ddp/";
     private static final String UI_ROOT = "/ui/";
     private static final String[] CORS_HTTP_METHODS = new String[] {"GET", "PUT", "POST", "OPTIONS", "PATCH"};
-    private static final String[] CORS_HTTP_HEADERS = new String[] {"Content-Type", "Authorization", "X-Requested-With",
-            "Content-Length", "Accept", "Origin", ""};
+    private static final String[] CORS_HTTP_HEADERS =
+            new String[] {"Content-Type", "Authorization", "X-Requested-With", "Content-Length", "Accept", "Origin", ""};
     private static final String VAULT_DOT_CONF = "vault.conf";
     private static final String GAE_DEPLOY_DIR = "appengine/deploy";
     private static final Duration DEFAULT_BOOT_WAIT = Duration.ofMinutes(10);
@@ -234,17 +233,15 @@ public class DSMServer {
                                                      BasicTriggerListener triggerListener, @NonNull NotificationUtil notificationUtil)
             throws SchedulerException {
         //create job
-        JobDetail job = JobBuilder.newJob(jobClass)
-                .withIdentity(identity, BasicTriggerListener.NO_CONCURRENCY_GROUP + ".DSM").build();
+        JobDetail job = JobBuilder.newJob(jobClass).withIdentity(identity, BasicTriggerListener.NO_CONCURRENCY_GROUP + ".DSM").build();
 
         //pass parameters to JobDataMap for JobDetail
         job.getJobDataMap().put(NOTIFICATION_UTIL, notificationUtil);
 
         //create trigger
         TriggerKey triggerKey = new TriggerKey(identity + "_TRIGGER", "DDP");
-        SimpleTrigger trigger = TriggerBuilder.newTrigger()
-                .withIdentity(triggerKey).withSchedule(simpleSchedule()
-                        .withIntervalInSeconds(jobIntervalInSeconds).repeatForever()).build();
+        SimpleTrigger trigger = TriggerBuilder.newTrigger().withIdentity(triggerKey)
+                .withSchedule(simpleSchedule().withIntervalInSeconds(jobIntervalInSeconds).repeatForever()).build();
 
         //add job
         scheduler.scheduleJob(job, trigger);
@@ -259,17 +256,15 @@ public class DSMServer {
                                           @NonNull String identity, @NonNull int jobIntervalInSeconds,
                                           @NonNull BasicTriggerListener triggerListener) throws SchedulerException {
         //create job
-        JobDetail job = JobBuilder.newJob(jobClass)
-                .withIdentity(identity, BasicTriggerListener.NO_CONCURRENCY_GROUP).build();
+        JobDetail job = JobBuilder.newJob(jobClass).withIdentity(identity, BasicTriggerListener.NO_CONCURRENCY_GROUP).build();
 
         //pass parameters to JobDataMap for JobDetail
         job.getJobDataMap().put(CONFIG, config);
 
         //create trigger
         TriggerKey triggerKey = new TriggerKey(identity + "_TRIGGER", "DDP");
-        SimpleTrigger trigger = TriggerBuilder.newTrigger()
-                .withIdentity(triggerKey).withSchedule(simpleSchedule()
-                        .withIntervalInSeconds(jobIntervalInSeconds).repeatForever()).build();
+        SimpleTrigger trigger = TriggerBuilder.newTrigger().withIdentity(triggerKey)
+                .withSchedule(simpleSchedule().withIntervalInSeconds(jobIntervalInSeconds).repeatForever()).build();
 
         //add job
         scheduler.scheduleJob(job, trigger);
@@ -281,11 +276,10 @@ public class DSMServer {
      * Job to sent GP notification email
      */
     public static void createScheduleJob(@NonNull Scheduler scheduler, @NonNull Config config, @NonNull NotificationUtil notificationUtil,
-                                         @NonNull KitUtil kitUtil, @NonNull Class<? extends Job> jobClass,
-                                         @NonNull String identity, @NonNull String cronExpression) throws SchedulerException {
+                                         @NonNull KitUtil kitUtil, @NonNull Class<? extends Job> jobClass, @NonNull String identity,
+                                         @NonNull String cronExpression) throws SchedulerException {
         //create job
-        JobDetail job = JobBuilder.newJob(jobClass)
-                .withIdentity(identity, BasicTriggerListener.NO_CONCURRENCY_GROUP).build();
+        JobDetail job = JobBuilder.newJob(jobClass).withIdentity(identity, BasicTriggerListener.NO_CONCURRENCY_GROUP).build();
 
         //pass parameters to JobDataMap for JobDetail
         job.getJobDataMap().put(CONFIG, config);
@@ -294,8 +288,7 @@ public class DSMServer {
 
         //create trigger
         TriggerKey triggerKey = new TriggerKey(identity + "_TRIGGER", "DDP");
-        CronTrigger trigger = TriggerBuilder.newTrigger()
-                .withIdentity(triggerKey).withSchedule(cronSchedule(cronExpression)).build();
+        CronTrigger trigger = TriggerBuilder.newTrigger().withIdentity(triggerKey).withSchedule(cronSchedule(cronExpression)).build();
         //add job
         scheduler.scheduleJob(job, trigger);
         //add listener for all triggers
@@ -306,13 +299,10 @@ public class DSMServer {
      * Job to trigger ddp reminder emails and external shipper
      */
     public static void createScheduleJob(@NonNull Scheduler scheduler, EventUtil eventUtil, NotificationUtil notificationUtil,
-                                         @NonNull Class<? extends Job> jobClass,
-                                         @NonNull String identity, @NonNull String cronExpression,
-                                         @NonNull BasicTriggerListener basicTriggerListener,
-                                         Config config) throws SchedulerException {
+                                         @NonNull Class<? extends Job> jobClass, @NonNull String identity, @NonNull String cronExpression,
+                                         @NonNull BasicTriggerListener basicTriggerListener, Config config) throws SchedulerException {
         //create job
-        JobDetail job = JobBuilder.newJob(jobClass)
-                .withIdentity(identity, BasicTriggerListener.NO_CONCURRENCY_GROUP).build();
+        JobDetail job = JobBuilder.newJob(jobClass).withIdentity(identity, BasicTriggerListener.NO_CONCURRENCY_GROUP).build();
 
         if (eventUtil != null) {
             //pass parameters to JobDataMap for JobDetail
@@ -332,8 +322,7 @@ public class DSMServer {
 
         //create trigger
         TriggerKey triggerKey = new TriggerKey(identity + "_TRIGGER", "DDP");
-        CronTrigger trigger = TriggerBuilder.newTrigger()
-                .withIdentity(triggerKey).withSchedule(cronSchedule(cronExpression)).build();
+        CronTrigger trigger = TriggerBuilder.newTrigger().withIdentity(triggerKey).withSchedule(cronSchedule(cronExpression)).build();
         //add job
         scheduler.scheduleJob(job, trigger);
 
@@ -559,12 +548,10 @@ public class DSMServer {
         auth0Util = new Auth0Util(cfg.getString(ApplicationConfigConstants.AUTH0_ACCOUNT),
                 cfg.getStringList(ApplicationConfigConstants.AUTH0_CONNECTIONS),
                 cfg.getBoolean(ApplicationConfigConstants.AUTH0_IS_BASE_64_ENCODED),
-                cfg.getString(ApplicationConfigConstants.AUTH0_CLIENT_KEY),
-                cfg.getString(ApplicationConfigConstants.AUTH0_SECRET),
-                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_KEY),
-                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_SECRET),
-                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL),
-                false, cfg.getString(ApplicationConfigConstants.AUTH0_AUDIENCE));
+                cfg.getString(ApplicationConfigConstants.AUTH0_CLIENT_KEY), cfg.getString(ApplicationConfigConstants.AUTH0_SECRET),
+                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_KEY), cfg.getString(ApplicationConfigConstants.AUTH0_MGT_SECRET),
+                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL), false,
+                cfg.getString(ApplicationConfigConstants.AUTH0_AUDIENCE));
 
         before("/info/" + RoutePath.PARTICIPANT_STATUS_REQUEST, (req, res) -> {
             String tokenFromHeader = Utility.getTokenFromHeader(req);
@@ -599,9 +586,8 @@ public class DSMServer {
         });
         setupDDPConfigurationLookup(cfg.getString(ApplicationConfigConstants.DDP));
 
-        AuthenticationRoute authenticationRoute = new AuthenticationRoute(auth0Util,
-                jwtSecret, cookieSalt, cookieName, userUtil,
-                cfg.getString("portal.environment"));
+        AuthenticationRoute authenticationRoute =
+                new AuthenticationRoute(auth0Util, jwtSecret, cookieSalt, cookieName, userUtil, cfg.getString("portal.environment"));
         post(UI_ROOT + RoutePath.AUTHENTICATION_REQUEST, authenticationRoute, new JsonTransformer());
 
         KitUtil kitUtil = new KitUtil();
@@ -653,32 +639,28 @@ public class DSMServer {
 
         try {
             // Instantiate an asynchronous message receiver.
-            MessageReceiver receiver =
-                    (PubsubMessage message, AckReplyConsumer consumer) -> {
-                        // Handle incoming message, then ack the received message.
-                        try {
-                            TransactionWrapper.inTransaction(conn -> {
-                                PubSubLookUp.processCovidTestResults(conn, message, notificationUtil);
-                                logger.info("Processing the message finished");
-                                consumer.ack();
-                                return null;
-                            });
+            MessageReceiver receiver = (PubsubMessage message, AckReplyConsumer consumer) -> {
+                // Handle incoming message, then ack the received message.
+                try {
+                    TransactionWrapper.inTransaction(conn -> {
+                        PubSubLookUp.processCovidTestResults(conn, message, notificationUtil);
+                        logger.info("Processing the message finished");
+                        consumer.ack();
+                        return null;
+                    });
 
-                        } catch (Exception ex) {
-                            logger.info("about to nack the message", ex);
-                            consumer.nack();
-                            ex.printStackTrace();
-                        }
-                    };
+                } catch (Exception ex) {
+                    logger.info("about to nack the message", ex);
+                    consumer.nack();
+                    ex.printStackTrace();
+                }
+            };
 
             Subscriber subscriber = null;
             ProjectSubscriptionName resultSubName = ProjectSubscriptionName.of(projectId, subscriptionId);
             ExecutorProvider resultsSubExecProvider = InstantiatingExecutorProvider.newBuilder().setExecutorThreadCount(1).build();
-            subscriber = Subscriber.newBuilder(resultSubName, receiver)
-                    .setParallelPullCount(1)
-                    .setExecutorProvider(resultsSubExecProvider)
-                    .setMaxAckExtensionPeriod(org.threeten.bp.Duration.ofSeconds(120))
-                    .build();
+            subscriber = Subscriber.newBuilder(resultSubName, receiver).setParallelPullCount(1).setExecutorProvider(resultsSubExecProvider)
+                    .setMaxAckExtensionPeriod(org.threeten.bp.Duration.ofSeconds(120)).build();
             try {
                 subscriber.startAsync().awaitRunning(1L, TimeUnit.MINUTES);
                 logger.info("Started pubsub subscription receiver for {}", subscriptionId);
@@ -709,8 +691,8 @@ public class DSMServer {
     protected void updateDB(@NonNull String dbUrl) {
         logger.info("Running DB update...");
 
-        try (Connection conn = DriverManager.getConnection(dbUrl
-                + "&sessionVariables=innodb_strict_mode=on,tx_isolation='READ-COMMITTED',sql_mode='TRADITIONAL'")) {
+        try (Connection conn = DriverManager.getConnection(
+                dbUrl + "&sessionVariables=innodb_strict_mode=on,tx_isolation='READ-COMMITTED',sql_mode='TRADITIONAL'")) {
             Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(conn));
 
             Liquibase liquibase = new liquibase.Liquibase("master-changelog.xml", new ClassLoaderResourceAccessor(), database);
@@ -774,9 +756,9 @@ public class DSMServer {
         post(UI_ROOT + RoutePath.DOWNLOAD_PDF + DownloadPDFRoute.BUNDLE, pdfRoute, new JsonTransformer());
         get(UI_ROOT + DownloadPDFRoute.PDF, pdfRoute, new JsonTransformer());
 
-        patch(UI_ROOT + RoutePath.ASSIGN_PARTICIPANT_REQUEST, new AssignParticipantRoute(
-                cfg.getString(ApplicationConfigConstants.GET_DDP_PARTICIPANT_ID),
-                cfg.getString(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS), notificationUtil), new JsonTransformer());
+        patch(UI_ROOT + RoutePath.ASSIGN_PARTICIPANT_REQUEST,
+                new AssignParticipantRoute(cfg.getString(ApplicationConfigConstants.GET_DDP_PARTICIPANT_ID),
+                        cfg.getString(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS), notificationUtil), new JsonTransformer());
 
         ViewFilterRoute viewFilterRoute = new ViewFilterRoute(patchUtil);
         //gets filter names for user for this realm (shared filters and user's filters
@@ -797,9 +779,9 @@ public class DSMServer {
         get(UI_ROOT + RoutePath.MEDICAL_RECORD_LOG_REQUEST, medicalRecordLogRoute, new JsonTransformer());
         patch(UI_ROOT + RoutePath.MEDICAL_RECORD_LOG_REQUEST, medicalRecordLogRoute, new JsonTransformer());
 
-        PermalinkRoute permalinkRoute = new PermalinkRoute();
-        get(UI_ROOT + RoutePath.PERMALINK_PARTICIPANT_REQUEST, permalinkRoute, new JsonTransformer());
-        get(UI_ROOT + RoutePath.PERMALINK_INSTITUTION_REQUEST, permalinkRoute, new JsonTransformer());
+        //        PermalinkRoute permalinkRoute = new PermalinkRoute();
+        //        get(UI_ROOT + RoutePath.PERMALINK_PARTICIPANT_REQUEST, permalinkRoute, new JsonTransformer());
+        //        get(UI_ROOT + RoutePath.PERMALINK_INSTITUTION_REQUEST, permalinkRoute, new JsonTransformer());
 
         get(UI_ROOT + RoutePath.LOOKUP, new LookupRoute(), new JsonTransformer());
 
@@ -854,15 +836,14 @@ public class DSMServer {
         get(UI_ROOT + RoutePath.GET_PARTICIPANT_DATA, getParticipantDataRoute, new JsonTransformer());
     }
 
-    private void setupSharedRoutes(@NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil,
-                                   @NonNull PatchUtil patchUtil) {
+    private void setupSharedRoutes(@NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil, @NonNull PatchUtil patchUtil) {
         DashboardRoute dashboardRoute = new DashboardRoute(kitUtil);
         get(UI_ROOT + RoutePath.DASHBOARD_REQUEST, dashboardRoute, new JsonTransformer());
-        get(UI_ROOT + RoutePath.DASHBOARD_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.START + RoutePath.ROUTE_SEPARATOR +
-                RequestParameter.END, dashboardRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.DASHBOARD_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.START + RoutePath.ROUTE_SEPARATOR
+                + RequestParameter.END, dashboardRoute, new JsonTransformer());
         get(UI_ROOT + RoutePath.SAMPLE_REPORT_REQUEST, dashboardRoute, new JsonTransformer());
-        get(UI_ROOT + RoutePath.SAMPLE_REPORT_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.START + RoutePath.ROUTE_SEPARATOR +
-                RequestParameter.END, dashboardRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.SAMPLE_REPORT_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.START + RoutePath.ROUTE_SEPARATOR
+                + RequestParameter.END, dashboardRoute, new JsonTransformer());
 
         AllowedRealmsRoute allowedRealmsRoute = new AllowedRealmsRoute();
         get(UI_ROOT + RoutePath.ALLOWED_REALMS_REQUEST, allowedRealmsRoute, new JsonTransformer());
@@ -889,8 +870,8 @@ public class DSMServer {
         get(UI_ROOT + RoutePath.EDIT_PARTICIPANT_MESSAGE, editParticipantMessageReceiverRoute, new JsonTransformer());
     }
 
-    private void setupJobs(@NonNull Config cfg, @NonNull KitUtil kitUtil,
-                           @NonNull NotificationUtil notificationUtil, @NonNull EventUtil eventUtil) {
+    private void setupJobs(@NonNull Config cfg, @NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil,
+                           @NonNull EventUtil eventUtil) {
         String schedulerName = null;
         if (cfg.getBoolean(ApplicationConfigConstants.QUARTZ_ENABLE_JOBS)) {
             logger.info("Setting up jobs");
@@ -898,21 +879,16 @@ public class DSMServer {
                 Scheduler scheduler = new StdSchedulerFactory().getScheduler();
                 schedulerName = scheduler.getSchedulerName();
                 createDDPRequestScheduledJobs(scheduler, DDPRequestJob.class, "DDPREQUEST_JOB",
-                        cfg.getInt(ApplicationConfigConstants.QUARTZ_DDP_REQUEST_JOB_INTERVAL_SEC),
-                        new DDPRequestTriggerListener(), notificationUtil);
+                        cfg.getInt(ApplicationConfigConstants.QUARTZ_DDP_REQUEST_JOB_INTERVAL_SEC), new DDPRequestTriggerListener(),
+                        notificationUtil);
 
-                createScheduledJob(scheduler, cfg,
-                        NotificationJob.class, "NOTIFICATION_JOB",
-                        cfg.getInt(ApplicationConfigConstants.QUARTZ_NOTIFICATION_JOB_INTERVAL_SEC),
-                        new NotificationTriggerListener());
+                createScheduledJob(scheduler, cfg, NotificationJob.class, "NOTIFICATION_JOB",
+                        cfg.getInt(ApplicationConfigConstants.QUARTZ_NOTIFICATION_JOB_INTERVAL_SEC), new NotificationTriggerListener());
 
-                createScheduledJob(scheduler, cfg,
-                        LabelCreationJob.class, "LABEL_CREATION_JOB",
-                        cfg.getInt(ApplicationConfigConstants.QUARTZ_LABEL_CREATION_JOB_INTERVAL_SEC),
-                        new LabelCreationTriggerListener());
+                createScheduledJob(scheduler, cfg, LabelCreationJob.class, "LABEL_CREATION_JOB",
+                        cfg.getInt(ApplicationConfigConstants.QUARTZ_LABEL_CREATION_JOB_INTERVAL_SEC), new LabelCreationTriggerListener());
 
-                createScheduleJob(scheduler, cfg, notificationUtil, kitUtil,
-                        GPNotificationJob.class, "GP_SCHEDULE_JOB",
+                createScheduleJob(scheduler, cfg, notificationUtil, kitUtil, GPNotificationJob.class, "GP_SCHEDULE_JOB",
                         cfg.getString(ApplicationConfigConstants.EMAIL_CRON_EXPRESSION_FOR_GP_NOTIFICATION));
 
                 createScheduleJob(scheduler, eventUtil, notificationUtil, DDPEventJob.class, "TRIGGER_DDP_EVENT",
@@ -920,8 +896,7 @@ public class DSMServer {
                         new DDPEventTriggerListener(), null);
 
                 // currently not needed anymore but might come back
-                createScheduleJob(scheduler, eventUtil, notificationUtil,
-                        ExternalShipperJob.class, "CHECK_EXTERNAL_SHIPPER",
+                createScheduleJob(scheduler, eventUtil, notificationUtil, ExternalShipperJob.class, "CHECK_EXTERNAL_SHIPPER",
                         cfg.getString(ApplicationConfigConstants.QUARTZ_CRON_EXPRESSION_FOR_EXTERNAL_SHIPPER),
                         new ExternalShipperTriggerListener(), cfg);
 
@@ -962,8 +937,8 @@ public class DSMServer {
                     throw new IllegalArgumentException("Could not parse " + slackHookUrlString + "\n" + e);
                 }
                 SlackAppender.configure(schedulerName, appEnv, slackHookUrl, slackChannel, gcpServiceName, rootPackage);
-                logger.info("Error notification setup complete. If log4j.xml is configured, notifications will be sent to " + slackChannel +
-                        ".");
+                logger.info("Error notification setup complete. If log4j.xml is configured, notifications will be sent to " + slackChannel
+                        + ".");
             } else {
                 logger.warn("Skipping error notification setup.");
             }

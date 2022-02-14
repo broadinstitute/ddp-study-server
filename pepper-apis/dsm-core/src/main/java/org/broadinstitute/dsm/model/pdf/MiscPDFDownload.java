@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.model.PDF;
+package org.broadinstitute.dsm.model.pdf;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +20,8 @@ public class MiscPDFDownload {
     public Object create(String ddpParticipantId, String realm) {
         if (StringUtils.isNotBlank(ddpParticipantId)) {
             return returnPDFS(ddpParticipantId, realm);
-        } else {// it is the misc download
+        } else {
+            // it is the misc download
             return getPDFRole(realm);
         }
     }
@@ -31,7 +32,8 @@ public class MiscPDFDownload {
         if (ParticipantUtil.isGuid(ddpParticipantId)) {
             participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(instance,
                     ElasticSearchUtil.BY_GUID + ddpParticipantId);
-        } else {// altpid
+        } else {
+            // altpid
             participantESData =
                     ElasticSearchUtil.getFilteredDDPParticipantsFromES(instance, ElasticSearchUtil.BY_LEGACY_ALTPID + ddpParticipantId);
         }

@@ -33,13 +33,6 @@ public class SecurityUtil {
         this.secret = secret;
     }
 
-    /**
-     * Header for ddp communication
-     *
-     * @param instanceName
-     * @param auth0Token
-     * @return
-     */
     public static Map<String, String> createHeader(@NonNull String instanceName, boolean auth0Token) {
         String token = null;
         String secret = null;
@@ -66,14 +59,6 @@ public class SecurityUtil {
         return authHeaders;
     }
 
-    /**
-     * GET Request with header for ddp communication
-     *
-     * @param requestString
-     * @param instanceName
-     * @param auth0Token
-     * @return
-     */
     public static org.apache.http.client.fluent.Request createGetRequestWithHeader(@NonNull String requestString,
                                                                                    @NonNull String instanceName,
                                                                                    boolean auth0Token) {
@@ -92,15 +77,6 @@ public class SecurityUtil {
         return request;
     }
 
-    /**
-     * POST Request with header for ddp communication
-     *
-     * @param requestString
-     * @param instanceName
-     * @param auth0Token
-     * @param objectToPost
-     * @return
-     */
     public static org.apache.http.client.fluent.Request createPostRequestWithHeader(@NonNull String requestString,
                                                                                     @NonNull String instanceName,
                                                                                     boolean auth0Token,

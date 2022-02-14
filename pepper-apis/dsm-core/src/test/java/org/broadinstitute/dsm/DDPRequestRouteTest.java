@@ -103,35 +103,31 @@ public class DDPRequestRouteTest extends TestHelper {
                 throw new RuntimeException("Error getting list of kitRequests for test ddp ", results.resultException);
             }
 
-            mockDDP.when(request().withPath("/ddp/participants/" + test_participant_id)).respond(
-                    response().withStatusCode(200).withBody(message.replaceAll("%1", test_participant_id).replaceAll("%2", ""))
-            );
-            kitRequestTestList.add(new KitRequestShipping(test_participant_id, "TestProject_2", null, "FAKE_DSM_LABEL_UID", TEST_DDP,
-                    "SALIVA", 1L, 1L, "https://easypost-files.s3-us-west-2.amazonaws" +
-                    ".com/files/postage_label/20200214/8240f1b66535494a82b1ec0d566c3f0f.png",
-                    "", "794685038506", "9405536897846100551129",
-                    "https://track.easypost.com/djE6dHJrXzY4NGJmYzU3ZjM5OTQ1Zjg5MjEzOGRmMWVmMjI1NWZl",
-                    null, 12L, false, "", 12L, null, 12L, "so what", "mf_testLabel", false, "shp_f470591c3fb441a68dbb9b76ecf3bb3d",
-                    12L, null, "44445", false, "NOT FOUND", null, null, null, null, 0L, false, "STANDALONE", null, null, null));
+            mockDDP.when(request().withPath("/ddp/participants/" + test_participant_id))
+                    .respond(response().withStatusCode(200).withBody(message.replaceAll("%1", test_participant_id).replaceAll("%2", "")));
+            kitRequestTestList.add(
+                    new KitRequestShipping(test_participant_id, "TestProject_2", null, "FAKE_DSM_LABEL_UID", TEST_DDP, "SALIVA", 1L, 1L,
+                            "https://easypost-files.s3-us-west-2.amazonaws"
+                                    + ".com/files/postage_label/20200214/8240f1b66535494a82b1ec0d566c3f0f.png", "", "794685038506",
+                            "9405536897846100551129", "https://track.easypost.com/djE6dHJrXzY4NGJmYzU3ZjM5OTQ1Zjg5MjEzOGRmMWVmMjI1NWZl",
+                            null, 12L, false, "", 12L, null, 12L, "so what", "mf_testLabel", false, "shp_f470591c3fb441a68dbb9b76ecf3bb3d",
+                            12L, null, "44445", false, "NOT FOUND", null, null, null, null, 0L, false, "STANDALONE", null, null, null));
             addedDefaultKitRequest = true;
             counter = 1;
         } else {
             // fill mockAngio with requests
             for (String participant_id : kitRequests) {
                 logger.info(message.replaceAll("%1", participant_id).replaceAll("%2", Integer.toString(counter)));
-                mockDDP.when(request().withPath("/ddp/participants/" + participant_id)).respond(
-                        response().withStatusCode(200)
-                                .withBody(message.replaceAll("%1", participant_id).replaceAll("%2", Integer.toString(counter)))
-                );
+                mockDDP.when(request().withPath("/ddp/participants/" + participant_id)).respond(response().withStatusCode(200)
+                        .withBody(message.replaceAll("%1", participant_id).replaceAll("%2", Integer.toString(counter))));
                 kitRequestTestList.add(
-                        new KitRequestShipping(participant_id, "TestProject_2", null, "FAKE_DSM_LABEL_UID" + counter, TEST_DDP,
-                                "SALIVA", 1L, 1L,
+                        new KitRequestShipping(participant_id, "TestProject_2", null, "FAKE_DSM_LABEL_UID" + counter, TEST_DDP, "SALIVA",
+                                1L, 1L,
                                 "https://easypost-files.s3-us-west-2.amazonaws.com/files/postage_label/20200214/8240f1b66535494a82b1ec0d566c3f0f.png",
                                 "", "794685038506", "9405536897846100551129",
-                                "https://track.easypost.com/djE6dHJrXzY4NGJmYzU3ZjM5OTQ1Zjg5MjEzOGRmMWVmMjI1NWZl",
-                                null, 12L, false, "", 12L, null, 12L, "so what", "mf_testLabel", false,
-                                "shp_f470591c3fb441a68dbb9b76ecf3bb3d",
-                                12L, null, "44445", false, "NOT FOUND", null, null, null, null, 0L, false, null, null, null, null));
+                                "https://track.easypost.com/djE6dHJrXzY4NGJmYzU3ZjM5OTQ1Zjg5MjEzOGRmMWVmMjI1NWZl", null, 12L, false, "",
+                                12L, null, 12L, "so what", "mf_testLabel", false, "shp_f470591c3fb441a68dbb9b76ecf3bb3d", 12L, null,
+                                "44445", false, "NOT FOUND", null, null, null, null, 0L, false, null, null, null, null));
                 counter++;
             }
         }

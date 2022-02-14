@@ -130,7 +130,8 @@ public class KitRequestMigrationTool {
         cfg = ConfigFactory.load();
         //secrets from vault in a config file
         cfg = cfg.withFallback(ConfigFactory.parseFile(new File(config)));
-        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS), cfg.getString(ApplicationConfigConstants.DSM_DB_URL)));
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM,
+                cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS), cfg.getString(ApplicationConfigConstants.DSM_DB_URL)));
         kitUtil = new KitUtil();
     }
 

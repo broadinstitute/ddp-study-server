@@ -18,8 +18,8 @@ public class Item {
     public Item() {
     }
 
-    public Item(String itemNumber, String lotNumber, String serialNumber, String expireDate, String shippedQty,
-                String returnTracking, String tubeSerial) {
+    public Item(String itemNumber, String lotNumber, String serialNumber, String expireDate, String shippedQty, String returnTracking,
+                String tubeSerial) {
         this.itemNumber = itemNumber;
         this.lotNumber = lotNumber;
         this.serialNumber = serialNumber;
@@ -27,7 +27,7 @@ public class Item {
         this.shippedQty = shippedQty;
         this.returnTracking = returnTracking;
         this.tubeSerial = tubeSerial;
-//        this.subItem = subItem;
+        // this.subItem = subItem;
     }
 
     @XmlAttribute(name = "ItemNumber")

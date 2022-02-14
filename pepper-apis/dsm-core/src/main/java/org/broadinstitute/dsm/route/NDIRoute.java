@@ -67,8 +67,8 @@ public class NDIRoute extends RequestHandler {
                                         }
                                     }
                                     if (obj.get(FIRST_NAME).length() == 0 || obj.get(LAST_NAME).length() == 0 || obj.get(YEAR).length() == 0
-                                            || obj.get(MONTH).length() == 0 || obj.get(DAY).length() == 0 ||
-                                            obj.get(PARTICIPANT_ID).length() == 0) {
+                                            || obj.get(MONTH).length() == 0 || obj.get(DAY).length() == 0
+                                            || obj.get(PARTICIPANT_ID).length() == 0) {
                                         throw new FileWrongFormat("A mandatory column was empty! Error in line " + (rowIndex + 1));
                                     }
                                     if (obj.get(MIDDLE).length() > 1) {

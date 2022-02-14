@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.util.triggerListener;
+package org.broadinstitute.dsm.util.triggerlistener;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

@@ -159,11 +159,11 @@ public abstract class BasePatch {
                         WorkflowForES.createInstance(ddpInstance, esParticipantId, action.getName(), action.getValue()), false);
             } else if (ParticipantUtil.matchesApplicantEmail(data.get(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID),
                     participantDataDao.getParticipantDataByParticipantId(patch.getParentId()))) {
-                ElasticSearchUtil.writeWorkflow(WorkflowForES.createInstanceWithStudySpecificData(ddpInstance,
-                        esParticipantId, action.getName(), data.get(action.getName()), new WorkflowForES.StudySpecificData(
-                                data.get(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID),
-                                data.get(FamilyMemberConstants.FIRSTNAME),
-                                data.get(FamilyMemberConstants.LASTNAME))), false);
+                ElasticSearchUtil.writeWorkflow(
+                        WorkflowForES.createInstanceWithStudySpecificData(ddpInstance, esParticipantId, action.getName(),
+                                data.get(action.getName()),
+                                new WorkflowForES.StudySpecificData(data.get(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID),
+                                        data.get(FamilyMemberConstants.FIRSTNAME), data.get(FamilyMemberConstants.LASTNAME))), false);
             }
         } else if (StringUtils.isNotBlank(action.getName()) && data.containsKey(action.getName())) {
             if (!patch.getFieldId().contains(FamilyMemberConstants.PARTICIPANTS)) {
@@ -171,11 +171,11 @@ public abstract class BasePatch {
                         WorkflowForES.createInstance(ddpInstance, esParticipantId, action.getName(), data.get(action.getName())), false);
             } else if (ParticipantUtil.matchesApplicantEmail(data.get(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID),
                     participantDataDao.getParticipantDataByParticipantId(patch.getParentId()))) {
-                ElasticSearchUtil.writeWorkflow(WorkflowForES.createInstanceWithStudySpecificData(ddpInstance,
-                        esParticipantId, action.getName(), data.get(action.getName()), new WorkflowForES.StudySpecificData(
-                                data.get(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID),
-                                data.get(FamilyMemberConstants.FIRSTNAME),
-                                data.get(FamilyMemberConstants.LASTNAME))), false);
+                ElasticSearchUtil.writeWorkflow(
+                        WorkflowForES.createInstanceWithStudySpecificData(ddpInstance, esParticipantId, action.getName(),
+                                data.get(action.getName()),
+                                new WorkflowForES.StudySpecificData(data.get(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID),
+                                        data.get(FamilyMemberConstants.FIRSTNAME), data.get(FamilyMemberConstants.LASTNAME))), false);
             }
         }
     }
@@ -216,9 +216,8 @@ public abstract class BasePatch {
         } else if (patch.getNameValue().getName().equals("m.faxSent3")) {
             nameValues.add(setAdditionalValue("m.faxSent3By", patch, patch.getUser()));
             nameValues.add(setAdditionalValue("m.faxConfirmed3", patch, patch.getNameValue().getValue()));
-        }
-        //tissue request workflow
-        else if (patch.getNameValue().getName().equals("oD.faxSent")) {
+        } else if (patch.getNameValue().getName().equals("oD.faxSent")) {
+            //tissue request workflow
             nameValues.add(setAdditionalValue("oD.faxSentBy", patch, patch.getUser()));
             nameValues.add(setAdditionalValue("oD.faxConfirmed", patch, patch.getNameValue().getValue()));
             nameValues.add(setAdditionalValue("oD.request", patch, "sent"));
@@ -234,31 +233,34 @@ public abstract class BasePatch {
             nameValues.add(setAdditionalValue("oD.request", patch, "received"));
         } else if (patch.getNameValue().getName().equals("t.tissueReturnDate")) {
             if (StringUtils.isNotBlank(patch.getNameValue().getValue().toString())) {
-                nameValues.add(setAdditionalValue("oD.request", new Patch(patch.getParentId(), PARTICIPANT_ID,
-                        null, patch.getUser(), patch.getNameValue(), patch.getNameValues(), patch.getDdpParticipantId()), "returned"));
+                nameValues.add(setAdditionalValue("oD.request",
+                        new Patch(patch.getParentId(), PARTICIPANT_ID, null, patch.getUser(), patch.getNameValue(), patch.getNameValues(),
+                                patch.getDdpParticipantId()), "returned"));
             } else {
                 Boolean hasReceivedDate = OncHistoryDetail.hasReceivedDate(patch);
 
                 if (hasReceivedDate) {
-                    nameValues.add(setAdditionalValue("oD.request", new Patch(patch.getParentId(), PARTICIPANT_ID,
-                            null, patch.getUser(), patch.getNameValue(), patch.getNameValues(), patch.getDdpParticipantId()), "received"));
+                    nameValues.add(setAdditionalValue("oD.request",
+                            new Patch(patch.getParentId(), PARTICIPANT_ID, null, patch.getUser(), patch.getNameValue(),
+                                    patch.getNameValues(), patch.getDdpParticipantId()), "received"));
                 } else {
-                    nameValues.add(setAdditionalValue("oD.request", new Patch(patch.getParentId(), PARTICIPANT_ID,
-                            null, patch.getUser(), patch.getNameValue(), patch.getNameValues(), patch.getDdpParticipantId()), "sent"));
+                    nameValues.add(setAdditionalValue("oD.request",
+                            new Patch(patch.getParentId(), PARTICIPANT_ID, null, patch.getUser(), patch.getNameValue(),
+                                    patch.getNameValues(), patch.getDdpParticipantId()), "sent"));
                 }
             }
-        } else if (patch.getNameValue().getName().equals("oD.unableToObtain") && (boolean) patch.getNameValue().getValue()) {
+        // } else if (patch.getNameValue().getName().equals("oD.unableToObtain") && (boolean) patch.getNameValue().getValue()) {
         } else if (patch.getNameValue().getName().equals("oD.unableToObtain") && !(boolean) patch.getNameValue().getValue()) {
             Boolean hasReceivedDate = OncHistoryDetail.hasReceivedDate(patch);
 
             if (hasReceivedDate) {
-                nameValues.add(setAdditionalValue("oD.request", new Patch(patch.getId(), PARTICIPANT_ID,
-                                patch.getParentId(), patch.getUser(), patch.getNameValue(), patch.getNameValues(), patch.getDdpParticipantId()),
-                        "received"));
+                nameValues.add(setAdditionalValue("oD.request",
+                        new Patch(patch.getId(), PARTICIPANT_ID, patch.getParentId(), patch.getUser(), patch.getNameValue(),
+                                patch.getNameValues(), patch.getDdpParticipantId()), "received"));
             } else {
-                nameValues.add(setAdditionalValue("oD.request", new Patch(patch.getId(), PARTICIPANT_ID,
-                                patch.getParentId(), patch.getUser(), patch.getNameValue(), patch.getNameValues(), patch.getDdpParticipantId()),
-                        "sent"));
+                nameValues.add(setAdditionalValue("oD.request",
+                        new Patch(patch.getId(), PARTICIPANT_ID, patch.getParentId(), patch.getUser(), patch.getNameValue(),
+                                patch.getNameValues(), patch.getDdpParticipantId()), "sent"));
             }
         }
         return nameValues;

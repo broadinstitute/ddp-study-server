@@ -23,7 +23,8 @@ public class AbstractionGroup {
     private static final Logger logger = LoggerFactory.getLogger(AbstractionGroup.class);
 
     private static final String SQL_INSERT_FORM_GROUP =
-            "INSERT INTO medical_record_abstraction_group SET display_name = ?, ddp_instance_id = (SELECT ddp_instance_id from ddp_instance where instance_name = ?), order_number = ?";
+            "INSERT INTO medical_record_abstraction_group SET display_name = ?, ddp_instance_id = (SELECT ddp_instance_id "
+                    + "from ddp_instance where instance_name = ?), order_number = ?";
     private static final String SQL_DELETE_FORM_GROUP =
             "UPDATE medical_record_abstraction_group SET deleted = 1 WHERE medical_record_abstraction_group_id = ?";
     private static final String SQL_UPDATE_FORM_GROUP =

@@ -26,10 +26,10 @@ import spark.Response;
 public class InstitutionRoute extends RequestHandler {
 
     public static final String APPLY_DESTRUCTION_POLICY =
-            "UPDATE ddp_onc_history_detail SET destruction_policy = ?, last_changed = ?, changed_by = ? " +
-                    "WHERE onc_history_detail_id <> 0 AND onc_history_detail_id in " +
-                    "(SELECT onc_history_detail_id FROM (SELECT * from ddp_onc_history_detail) as something " +
-                    "WHERE something.facility = ?)";
+            "UPDATE ddp_onc_history_detail SET destruction_policy = ?, last_changed = ?, changed_by = ? "
+                    + "WHERE onc_history_detail_id <> 0 AND onc_history_detail_id in "
+                    + "(SELECT onc_history_detail_id FROM (SELECT * from ddp_onc_history_detail) as something "
+                    + "WHERE something.facility = ?)";
     private static final Logger logger = LoggerFactory.getLogger(InstitutionRoute.class);
 
     @Override

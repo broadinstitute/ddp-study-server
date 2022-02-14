@@ -38,17 +38,16 @@ public class GBFOrderGateKeeper {
 
                     // putting 10 things in a kit seems crazy?
                     if (numRowsUpdated > 10) {
-                        throw new RuntimeException(
-                                "Updated " + numRowsUpdated + " for order " + simpleKitOrder.getExternalKitOrderNumber() +
-                                        ".  That seems like a lot?");
+                        throw new RuntimeException("Updated " + numRowsUpdated + " for order " + simpleKitOrder.getExternalKitOrderNumber()
+                                + ".  That seems like a lot?");
                     }
                 } catch (SQLException e) {
-                    throw new RuntimeException("Order " + simpleKitOrder.getExternalKitOrderNumber() +
-                            " has been ordered, but we were unable to update the database.", e);
+                    throw new RuntimeException("Order " + simpleKitOrder.getExternalKitOrderNumber()
+                            + " has been ordered, but we were unable to update the database.", e);
                 }
             } else {
-                throw new RuntimeException("Transmission of order " + simpleKitOrder.getExternalKitOrderNumber() + " failed with " +
-                        orderResponse.getErrorMessage());
+                throw new RuntimeException("Transmission of order " + simpleKitOrder.getExternalKitOrderNumber() + " failed with "
+                        + orderResponse.getErrorMessage());
             }
         }
     }

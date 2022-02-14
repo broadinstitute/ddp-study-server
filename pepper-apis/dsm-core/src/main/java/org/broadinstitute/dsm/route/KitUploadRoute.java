@@ -51,7 +51,7 @@ import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.dsm.util.externalShipper.ExternalShipper;
+import org.broadinstitute.dsm.util.externalshipper.ExternalShipper;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.lddp.handlers.util.Result;
 import org.broadinstitute.lddp.util.DeliveryAddress;
@@ -64,10 +64,13 @@ import spark.Response;
 public class KitUploadRoute extends RequestHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(KitUploadRoute.class);
-    private static final String SQL_SELECT_CHECK_KIT_ALREADY_EXISTS =
-            "SELECT count(*) as found FROM ddp_kit_request request LEFT JOIN ddp_kit kit on (request.dsm_kit_request_id = kit.dsm_kit_request_id) " +
-                    "LEFT JOIN ddp_participant_exit ex on (ex.ddp_instance_id = request.ddp_instance_id AND ex.ddp_participant_id = request.ddp_participant_id) WHERE ex.ddp_participant_exit_id is null " +
-                    "AND kit.deactivated_date is null AND request.ddp_instance_id = ? AND request.kit_type_id = ? AND request.ddp_participant_id = ?";
+    private static final String SQL_SELECT_CHECK_KIT_ALREADY_EXISTS = "SELECT count(*) as found "
+            + "FROM ddp_kit_request request LEFT JOIN ddp_kit kit on (request.dsm_kit_request_id = kit.dsm_kit_request_id) "
+            + "LEFT JOIN ddp_participant_exit ex on (ex.ddp_instance_id = request.ddp_instance_id "
+            + "AND ex.ddp_participant_id = request.ddp_participant_id) "
+            + "WHERE ex.ddp_participant_exit_id is null "
+            + "AND kit.deactivated_date is null AND request.ddp_instance_id = ? AND request.kit_type_id = ? "
+            + "AND request.ddp_participant_id = ?";
     private static final String PARTICIPANT_ID = "participantId";
     private static final String SHORT_ID = "shortId";
     private static final String SIGNATURE = "signature";
@@ -83,6 +86,7 @@ public class KitUploadRoute extends RequestHandler {
     private static final String PHONE_NUMBER = "phoneNumber";
     private NotificationUtil notificationUtil;
     private ElasticSearch elasticSearch;
+
     public KitUploadRoute(@NonNull NotificationUtil notificationUtil) {
         this.notificationUtil = notificationUtil;
         this.elasticSearch = new ElasticSearch();
@@ -141,8 +145,7 @@ public class KitUploadRoute extends RequestHandler {
                 InstanceSettings instanceSettings = new InstanceSettings();
                 InstanceSettingsDto instanceSettingsDto = instanceSettings.getInstanceSettings(realm);
                 StringBuilder specialMessage = new StringBuilder();
-                Value upload = instanceSettingsDto.
-                        getKitBehaviorChange()
+                Value upload = instanceSettingsDto.getKitBehaviorChange()
                         .map(kitBehavior -> {
                             Optional<Value> maybeKitBehaviorValue =
                                     kitBehavior.stream().filter(o -> o.getName().equals(InstanceSettings.INSTANCE_SETTING_UPLOAD))
@@ -203,8 +206,8 @@ public class KitUploadRoute extends RequestHandler {
 
                 //send not valid address back to client
                 logger.info(kitUploadObjects.size() + " " + ddpInstance.getName() + " " + kitTypeName + " kit uploaded");
-                logger.info(invalidAddressList.size() + " uploaded addresses were not valid and " + duplicateKitList.size() +
-                        " are already in DSM");
+                logger.info(invalidAddressList.size() + " uploaded addresses were not valid and " + duplicateKitList.size()
+                        + " are already in DSM");
                 logger.info(specialKitList.size() + " kits didn't meet the kit behaviour");
                 return new KitUploadResponse(invalidAddressList.values(), duplicateKitList, specialKitList, specialMessage.toString());
             } catch (UploadLineException e) {
@@ -318,8 +321,8 @@ public class KitUploadRoute extends RequestHandler {
                 if (InstanceSettings.TYPE_ALERT.equals(behavior.getType())) {
                     specialKitList.add(kit);
                 } else if (InstanceSettings.TYPE_NOTIFICATION.equals(behavior.getType())) {
-                    String message = "Kit uploaded for participant " + kit.getParticipantId() + ". \n" +
-                            behavior.getValue();
+                    String message = "Kit uploaded for participant " + kit.getParticipantId() + ". \n"
+                            + behavior.getValue();
                     notificationUtil.sentNotification(ddpInstance.getNotificationRecipient(), message,
                             NotificationUtil.UNIVERSAL_NOTIFICATION_TEMPLATE, NotificationUtil.DSM_SUBJECT);
                 } else {
@@ -345,9 +348,10 @@ public class KitUploadRoute extends RequestHandler {
                            List<KitRequest> duplicateKitList, ArrayList<KitRequest> orderKits, String externalOrderNumber,
                            String uploadReason, String carrier) {
         if (StringUtils.isBlank(
-                ddpInstance.getParticipantIndexES())) {//bringing old code back for RGP (can be removed after migration is finished)
-            if (checkIfKitAlreadyExists(conn, kit.getParticipantId(), ddpInstance.getDdpInstanceId(), kitType.getKitTypeId()) &&
-                    !uploadAnyway) {
+                ddpInstance.getParticipantIndexES())) {
+            //bringing old code back for RGP (can be removed after migration is finished)
+            if (checkIfKitAlreadyExists(conn, kit.getParticipantId(), ddpInstance.getDdpInstanceId(), kitType.getKitTypeId())
+                    && !uploadAnyway) {
                 duplicateKitList.add(kit);
             } else {
                 String shippingId = DDPKitRequest.UPLOADED_KIT_REQUEST + KitRequestShipping.createRandom(20);
@@ -573,8 +577,8 @@ public class KitUploadRoute extends RequestHandler {
         for (KitRequest o : kitUploadObjects) {
             KitUploadObject object = (KitUploadObject) o;
             //only if participant has shortId, first- and lastName
-            if ((StringUtils.isNotBlank(object.getShortId()) || StringUtils.isNotBlank(object.getExternalOrderNumber())) &&
-                    StringUtils.isNotBlank(object.getLastName())) {
+            if ((StringUtils.isNotBlank(object.getShortId()) || StringUtils.isNotBlank(object.getExternalOrderNumber()))
+                    && StringUtils.isNotBlank(object.getLastName())) {
                 //let's validate the participant's address
                 String name = "";
                 if (StringUtils.isNotBlank(object.getFirstName())) {

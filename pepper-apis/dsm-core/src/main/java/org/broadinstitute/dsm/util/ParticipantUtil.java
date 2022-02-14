@@ -48,7 +48,8 @@ public class ParticipantUtil {
     }
 
     public static boolean matchesApplicantEmail(String collaboratorParticipantId, List<ParticipantData> participantDatas) {
-        String applicantEmail = null, currentParticipantEmail = null;
+        String applicantEmail = null;
+        String currentParticipantEmail = null;
         for (ParticipantData participantData : participantDatas) {
             Map<String, String> dataMap = participantData.getDataMap();
             if (dataMap == null) {

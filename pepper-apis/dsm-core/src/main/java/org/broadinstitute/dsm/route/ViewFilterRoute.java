@@ -48,8 +48,8 @@ public class ViewFilterRoute extends RequestHandler {
         if (queryParams.value(UserUtil.USER_ID) != null) {
             userIdRequest = UserUtil.getUserId(request);
         }
-        if (UserUtil.checkUserAccess(realm, userId, "mr_view", userIdRequest) ||
-                UserUtil.checkUserAccess(realm, userId, "pt_list_view", userIdRequest)) {
+        if (UserUtil.checkUserAccess(realm, userId, "mr_view", userIdRequest)
+                || UserUtil.checkUserAccess(realm, userId, "pt_list_view", userIdRequest)) {
             String json = request.body();
             if (request.url().contains(RoutePath.GET_FILTERS)) {
                 if (StringUtils.isNotBlank(realm)) {

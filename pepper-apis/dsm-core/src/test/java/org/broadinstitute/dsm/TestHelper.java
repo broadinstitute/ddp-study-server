@@ -26,7 +26,7 @@ import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.TestUtil;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.dsm.util.externalShipper.GBFRequestUtil;
+import org.broadinstitute.dsm.util.externalshipper.GBFRequestUtil;
 import org.broadinstitute.lddp.util.Utility;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.Assert;
@@ -50,7 +50,8 @@ public class TestHelper {
     public static final String SELECT_EMAILQUEUE_QUERY =
             "select * from EMAIL_QUEUE where EMAIL_RECORD_ID = ? and REMINDER_TYPE = ? and EMAIL_DATE_PROCESSED is null";
     public static final String SELECT_USER_SETTING =
-            "select * from user_settings settings, access_user user where user.user_id = settings.user_id and user.is_active = 1 and user.name = ?";
+            "select * from user_settings settings, access_user user where user.user_id = settings.user_id and user.is_active = 1 "
+                    + "and user.name = ?";
 
     public static final String TEST_DDP = "TestDDP";
     public static final String TEST_DDP_2 = "anotherDDP";
@@ -63,18 +64,21 @@ public class TestHelper {
     public static final String FAKE_BILLING_REF = "FAKE_BILLING_REF";
     public static final String FAKE_BSP_TEST = "FAKE_BSP_TEST";
     public static final String CUSTOMS_JSON =
-            "{\"description\": \"T-shirt\", \"quantity\": 1, \"value\": 11, \"weight\": 6, \"origin_country\": \"US\", \"hs_tariff_number\": \"610910\", \"customs_certify\": true,\"customs_signer\": \"Jarrett Streebin\", \"contents_type\": \"gift\", \"contents_explanation\":\"\", \"eel_pfc\": \"NOEEI 30.37(a)\", \"restriction_type\": \"none\", \"restriction_comments\": \"\", \"non_delivery_option\": \"abandon\"}";
+            "{\"description\": \"T-shirt\", \"quantity\": 1, \"value\": 11, \"weight\": 6, \"origin_country\": \"US\","
+                    + " \"hs_tariff_number\": \"610910\", \"customs_certify\": true,\"customs_signer\": \"Jarrett Streebin\","
+                    + " \"contents_type\": \"gift\", \"contents_explanation\":\"\", \"eel_pfc\": \"NOEEI 30.37(a)\", "
+                    + "\"restriction_type\": \"none\", \"restriction_comments\": \"\", \"non_delivery_option\": \"abandon\"}";
     public static final String VERY_LONG_PARTICIPANT_ID =
-            "IAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTVERYLONGPARTICIPANTIDWHICHDOESNOTMAKESENSEBUTWILLTHROWERRORFORCOLLABORATORPARTICIPANTIDANDSAMPLEIDIAMGROOTHOPEFULLYITISNOWLONGENOUGHIAMGROOT";
+            "IAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTVERYLONGPARTICIPANTIDWHICHDOESNOTMAKESENSEBUTWILLTHROWERROR"
+                    + "FORCOLLABORATORPARTICIPANTIDANDSAMPLEIDIAMGROOTHOPEFULLYITISNOWLONGENOUGHIAMGROOT";
 
-    public static final String KIT_QUERY_BY_PARTICIPANT = "select * from ddp_kit_request, ddp_kit " +
-            "where ddp_kit_request.dsm_kit_request_id = ddp_kit.dsm_kit_request_id " +
-            "and ddp_kit_request.ddp_participant_id = ?";
-    public static final String KIT_QUERY = "select * from ddp_kit_request, ddp_kit " +
-            "where ddp_kit_request.dsm_kit_request_id = ddp_kit.dsm_kit_request_id and " +
-            "ddp_instance_id = (select ddp_instance_id from ddp_instance where instance_name = ?) " +
-            "and kit_type_id = ? " +
-            "and ddp_participant_id = ? order by ddp_kit_request.dsm_kit_request_id desc ";
+    public static final String KIT_QUERY_BY_PARTICIPANT =
+            "select * from ddp_kit_request, ddp_kit " + "where ddp_kit_request.dsm_kit_request_id = ddp_kit.dsm_kit_request_id "
+                    + "and ddp_kit_request.ddp_participant_id = ?";
+    public static final String KIT_QUERY =
+            "select * from ddp_kit_request, ddp_kit " + "where ddp_kit_request.dsm_kit_request_id = ddp_kit.dsm_kit_request_id and "
+                    + "ddp_instance_id = (select ddp_instance_id from ddp_instance where instance_name = ?) " + "and kit_type_id = ? "
+                    + "and ddp_participant_id = ? order by ddp_kit_request.dsm_kit_request_id desc ";
 
     private static final Logger logger = LoggerFactory.getLogger(TestHelper.class);
 
@@ -102,21 +106,19 @@ public class TestHelper {
 
     public static void setupDB(boolean setupDDPConfigLookup) {
         cfg = ConfigFactory.load();
-//        //secrets from vault in a config file
+        //  secrets from vault in a config file
         cfg = cfg.withFallback(ConfigFactory.parseFile(new File("config/test-config.conf")));
-//
-//        //overwrite quartz.jobs
+        // overwrite quartz.jobs
         cfg = cfg.withValue("quartz.enableJobs", ConfigValueFactory.fromAnyRef("false"));
         cfg = cfg.withValue("portal.port", ConfigValueFactory.fromAnyRef("9999"));
         cfg = cfg.withValue("errorAlert.recipientAddress", ConfigValueFactory.fromAnyRef(""));
-//
         if (!cfg.getString("portal.environment").startsWith("Local")) {
             throw new RuntimeException("Not local environment");
         }
 
-//        if (!cfg.getString("portal.dbUrl").contains("local")) {
-//            throw new RuntimeException("Not your test db");
-//        }
+        //        if (!cfg.getString("portal.dbUrl").contains("local")) {
+        //            throw new RuntimeException("Not your test db");
+        //        }
 
         if (cfg == null) {
             throw new NullPointerException("config");
@@ -137,31 +139,31 @@ public class TestHelper {
             }
 
             if (!skipSsl) {
-//                TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
-//                        cfg.getString("portal.dbSslKeyStorePwd"),
-//                        cfg.getString("portal.dbSslTrustStore"),
-//                        cfg.getString("portal.dbSslTrustStorePwd"));
+            //                TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
+            //                        cfg.getString("portal.dbSslKeyStorePwd"),
+            //                        cfg.getString("portal.dbSslTrustStore"),
+            //                        cfg.getString("portal.dbSslTrustStorePwd"));
             }
 
             TransactionWrapper.reset();
-            TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, cfg.getInt(
-                    ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS), cfg.getString(ApplicationConfigConstants.DSM_DB_URL)));
+            TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM,
+                    cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS), cfg.getString(ApplicationConfigConstants.DSM_DB_URL)));
             if (!Utility.dbCheck()) {
                 throw new RuntimeException("DB connection error.");
             } else {
                 logger.info("DB setup complete.");
             }
         }
-//
-//        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
-//                cfg.getString("portal.dbSslKeyStorePwd"),
-//                cfg.getString("portal.dbSslTrustStore"),
-//                cfg.getString("portal.dbSslTrustStorePwd"));
-//
-//        TransactionWrapper.reset(TestUtil.UNIT_TEST);
-//        TransactionWrapper.init(cfg.getInt("portal.maxConnections"), cfg.getString("portal.dbUrl"), cfg, false);
-//
-//        DBTestUtil.executeQuery("UPDATE ddp_instance set is_active = 1 where instance_name = \"" + TEST_DDP_MIGRATED + "\"");
+        //
+        //        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
+        //                cfg.getString("portal.dbSslKeyStorePwd"),
+        //                cfg.getString("portal.dbSslTrustStore"),
+        //                cfg.getString("portal.dbSslTrustStorePwd"));
+        //
+        //        TransactionWrapper.reset(TestUtil.UNIT_TEST);
+        //        TransactionWrapper.init(cfg.getInt("portal.maxConnections"), cfg.getString("portal.dbUrl"), cfg, false);
+        //
+        //        DBTestUtil.executeQuery("UPDATE ddp_instance set is_active = 1 where instance_name = \"" + TEST_DDP_MIGRATED + "\"");
 
         /*
         INSTANCE_ID = DBTestUtil.getQueryDetail(DBUtil.GET_REALM_QUERY, TEST_DDP, DDP_INSTANCE_ID);
@@ -174,13 +176,18 @@ public class TestHelper {
         DBTestUtil.executeQuery("UPDATE ddp_instance set is_active = 1 where instance_name = \"" + TEST_DDP_2 + "\"");
         DBTestUtil.executeQuery("UPDATE ddp_instance set billing_reference = 'CO Test' where instance_name = \"" + TEST_DDP + "\"");
         if (!DBTestUtil.checkIfValueExists("SELECT * from ddp_instance where instance_name = ?", TEST_DDP_MIGRATED)) {
-            DBTestUtil.executeQuery("INSERT INTO ddp_instance set instance_name = \"" + TEST_DDP_MIGRATED + "\", base_url=\"https://localhost:6666\", collaborator_id_prefix = \"MigratedProject\", migrated_ddp = 1 ");
+            DBTestUtil.executeQuery("INSERT INTO ddp_instance set instance_name = \"" + TEST_DDP_MIGRATED + "\",
+            base_url=\"https://localhost:6666\", collaborator_id_prefix = \"MigratedProject\", migrated_ddp = 1 ");
             String tmp = DBTestUtil.getQueryDetail(DBUtil.GET_REALM_QUERY, TEST_DDP_MIGRATED, DDP_INSTANCE_ID);
-            DBTestUtil.executeQuery("INSERT INTO ddp_kit_request_settings set ddp_instance_id = \"" + tmp + "\", kit_type_id = 1, kit_return_id = 1, carrier_service_to_id = 1, kit_dimension_id = 1 ");
+            DBTestUtil.executeQuery("INSERT INTO ddp_kit_request_settings set ddp_instance_id = \"" + tmp + "\",
+            kit_type_id = 1, kit_return_id = 1, carrier_service_to_id = 1, kit_dimension_id = 1 ");
         }
         //add second reminder
-        if (!DBTestUtil.checkIfValueExists("SELECT * from event_type where ddp_instance_id = " + INSTANCE_ID + " AND event_name = ?", "BLOOD_SENT_2WK")) {
-            DBTestUtil.executeQuery("INSERT INTO event_type set ddp_instance_id = " + INSTANCE_ID + ", event_name=\"BLOOD_SENT_2WK\", event_description=\"Blood kit - reminder email - 2 WKS\", kit_type_id=\"2\", event_type=\"REMINDER\", hours=\"336\"");
+        if (!DBTestUtil.checkIfValueExists("SELECT * from event_type where ddp_instance_id = " + INSTANCE_ID
+        + " AND event_name = ?", "BLOOD_SENT_2WK")) {
+            DBTestUtil.executeQuery("INSERT INTO event_type set ddp_instance_id = " + INSTANCE_ID
+            + ", event_name=\"BLOOD_SENT_2WK\", event_description=\"Blood kit - reminder email - 2 WKS\", kit_type_id=\"2\",
+            event_type=\"REMINDER\", hours=\"336\"");
         }
         //adding test group
         if (!DBTestUtil.checkIfValueExists("SELECT * from access_user where name = ?", "THE UNIT TESTER 1")) {
@@ -191,13 +198,19 @@ public class TestHelper {
             DBTestUtil.executeQuery("INSERT INTO ddp_group set name = \"test\", description=\"Unit Test\"");
         }
         //setting roles for test user for test group
-        List<String> roles = UserUtil.getUserRolesPerRealm("SELECT role.name FROM  access_user_role_group roleGroup LEFT JOIN ddp_instance_group gr on (gr.ddp_group_id = roleGroup.group_id) " +
-                "LEFT JOIN access_user user on (roleGroup.user_id = user.user_id) LEFT JOIN ddp_instance realm on (realm.ddp_instance_id = gr.ddp_instance_id) " +
-                "LEFT JOIN access_role role on (role.role_id = roleGroup.role_id) WHERE user.name = ? and instance_name = ?", "THE UNIT TESTER 1", TEST_DDP);
+        List<String> roles = UserUtil.getUserRolesPerRealm("SELECT role.name FROM  access_user_role_group roleGroup
+        LEFT JOIN ddp_instance_group gr on (gr.ddp_group_id = roleGroup.group_id) " +
+                "LEFT JOIN access_user user on (roleGroup.user_id = user.user_id) LEFT JOIN ddp_instance realm
+                on (realm.ddp_instance_id = gr.ddp_instance_id) " +
+                "LEFT JOIN access_role role on (role.role_id = roleGroup.role_id) WHERE user.name = ? and instance_name = ?",
+                "THE UNIT TESTER 1", TEST_DDP);
         //setting roles for test user for test group
-        List<String> roles2 = UserUtil.getUserRolesPerRealm("SELECT role.name FROM  access_user_role_group roleGroup LEFT JOIN ddp_instance_group gr on (gr.ddp_group_id = roleGroup.group_id) " +
-                "LEFT JOIN access_user user on (roleGroup.user_id = user.user_id) LEFT JOIN ddp_instance realm on (realm.ddp_instance_id = gr.ddp_instance_id) " +
-                "LEFT JOIN access_role role on (role.role_id = roleGroup.role_id) WHERE user.name = ? and instance_name = ?", "THE UNIT TESTER 1", "angio");
+        List<String> roles2 = UserUtil.getUserRolesPerRealm("SELECT role.name FROM  access_user_role_group roleGroup
+        LEFT JOIN ddp_instance_group gr on (gr.ddp_group_id = roleGroup.group_id) " +
+                "LEFT JOIN access_user user on (roleGroup.user_id = user.user_id) LEFT JOIN ddp_instance realm
+                on (realm.ddp_instance_id = gr.ddp_instance_id) " +
+                "LEFT JOIN access_role role on (role.role_id = roleGroup.role_id) WHERE user.name = ? and instance_name = ?",
+                "THE UNIT TESTER 1", "angio");
         String testGroup = DBTestUtil.getQueryDetail("SELECT * FROM ddp_group where name = ?", "test", "group_id");
         String testGroup2 = DBTestUtil.getQueryDetail("SELECT * FROM ddp_group where name = ?", "cmi", "group_id");
         String testUser = DBTestUtil.getQueryDetail("SELECT * FROM access_user where name = ?", "THE UNIT TESTER 1", "user_id");
@@ -226,8 +239,11 @@ public class TestHelper {
         checkRole("drug_list_edit", roles, testUser, testGroup);
 
         //adding instance setting
-        if (!DBTestUtil.checkIfValueExists("SELECT * from instance_settings where ddp_instance_id = (SELECT ddp_instance_id from ddp_instance where instance_name = ?) ", TEST_DDP)) {
-            DBTestUtil.executeQuery("INSERT INTO instance_settings set mr_cover_pdf = \"[{\\\"value\\\":\\\"exchange_cb\\\", \\\"name\\\":\\\"MD to MD exchange\\\", \\\"type\\\":\\\"checkbox\\\"}]\", ddp_instance_id = (SELECT ddp_instance_id from ddp_instance where instance_name = \"" + TEST_DDP + "\") ");
+        if (!DBTestUtil.checkIfValueExists("SELECT * from instance_settings where ddp_instance_id = (SELECT ddp_instance_id
+        from ddp_instance where instance_name = ?) ", TEST_DDP)) {
+            DBTestUtil.executeQuery("INSERT INTO instance_settings set mr_cover_pdf = \"[{\\\"value\\\":\\\"exchange_cb\\\",
+            \\\"name\\\":\\\"MD to MD exchange\\\", \\\"type\\\":\\\"checkbox\\\"}]\", ddp_instance_id = (
+            SELECT ddp_instance_id from ddp_instance where instance_name = \"" + TEST_DDP + "\") ");
         }
 
 
@@ -243,8 +259,8 @@ public class TestHelper {
 
     private static void checkRole(String role, List<String> roles, String user, String group) {
         if (!roles.contains(role)) {
-            DBTestUtil.executeQuery("INSERT INTO access_user_role_group set user_id = " + user + ", group_id = " + group +
-                    ", role_id = (SELECT role_id from access_role where name = \"" + role + "\") ");
+            DBTestUtil.executeQuery("INSERT INTO access_user_role_group set user_id = " + user + ", group_id = " + group
+                    + ", role_id = (SELECT role_id from access_role where name = \"" + role + "\") ");
         }
     }
 
@@ -296,10 +312,10 @@ public class TestHelper {
     }
 
     public static void setupUtils() throws Exception {
-//        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
-//                cfg.getString("portal.dbSslKeyStorePwd"),
-//                cfg.getString("portal.dbSslTrustStore"),
-//                cfg.getString("portal.dbSslTrustStorePwd"));
+        //        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
+        //                cfg.getString("portal.dbSslKeyStorePwd"),
+        //                cfg.getString("portal.dbSslTrustStore"),
+        //                cfg.getString("portal.dbSslTrustStorePwd"));
 
         testUtil = TestUtil.newInstance(cfg);
         ddpRequestUtil = new DDPRequestUtil();
@@ -330,9 +346,10 @@ public class TestHelper {
     public static String addTissue(String oncHistoryId) throws Exception {
         //add oncHistoryDetail
         String note = "Created: " + System.currentTimeMillis();
-        String json = "{\"id\":null,\"parentId\":\"" + oncHistoryId +
-                "\",\"parent\":\"oncHistoryDetailId\",\"user\":\"simone+1@broadinstitute.org\",\"nameValue\":{\"name\":\"t.tNotes\",\"value\":\"" +
-                note + "\"}}";
+        String json = "{\"id\":null,\"parentId\":\"" + oncHistoryId
+                + "\",\"parent\":\"oncHistoryDetailId\",\"user\":\"simone+1@broadinstitute.org\",\"nameValue\":"
+                + "{\"name\":\"t.tNotes\",\"value\":\""
+                + note + "\"}}";
         HttpResponse response =
                 TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/patch"), json, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -355,9 +372,9 @@ public class TestHelper {
     public static void changeTissueValue(String tissueId, String oncHistoryId, String field, String value, String columnName)
             throws Exception {
         //change value of oncHistoryDetail
-        String json = "{\"id\":\"" + tissueId + "\",\"parentId\":\"" + oncHistoryId +
-                "\",\"parent\":\"oncHistoryDetailId\",\"user\":\"ptaheri+1@broadinstitute.org\",\"nameValue\":{\"name\":\"" + field +
-                "\",\"value\":\"" + value + "\"}}";
+        String json = "{\"id\":\"" + tissueId + "\",\"parentId\":\"" + oncHistoryId
+                + "\",\"parent\":\"oncHistoryDetailId\",\"user\":\"ptaheri+1@broadinstitute.org\",\"nameValue\":{\"name\":\"" + field
+                + "\",\"value\":\"" + value + "\"}}";
         HttpResponse response =
                 TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/patch"), json, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -376,8 +393,7 @@ public class TestHelper {
         String AlphaNumericString = "";
 
         if (includeLetters) {
-            AlphaNumericString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                    + "abcdefghijklmnopqrstuvxyz";
+            AlphaNumericString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" + "abcdefghijklmnopqrstuvxyz";
         }
         if (includeSpace) {
             AlphaNumericString += " ";
@@ -406,15 +422,14 @@ public class TestHelper {
         strings.add(institutionId);
 
         String medicalRecordId = DBTestUtil.getQueryDetail(
-                MedicalRecord.SQL_SELECT_MEDICAL_RECORD + " and inst.ddp_institution_id = \"" + institutionId +
-                        "\" and p.ddp_participant_id = \"" + participantId + "\"", instanceName, "medical_record_id");
+                MedicalRecord.SQL_SELECT_MEDICAL_RECORD + " and inst.ddp_institution_id = \"" + institutionId
+                        + "\" and p.ddp_participant_id = \"" + participantId + "\"", instanceName, "medical_record_id");
 
         if (medicalRecordId == null) {
             Assert.fail("medicalRecordId was null!");
         }
-        String json =
-                "{\"id\":\"" + medicalRecordId + "\",\"user\":\"simone+1@broadinstitute.org\",\"nameValue\":{\"name\":\"" + valueName +
-                        "\",\"value\":\"" + value + "\"}}";
+        String json = "{\"id\":\"" + medicalRecordId + "\",\"user\":\"simone+1@broadinstitute.org\",\"nameValue\":{\"name\":\"" + valueName
+                + "\",\"value\":\"" + value + "\"}}";
         HttpResponse response =
                 TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/" + "patch"), json, testUtil.buildAuthHeaders()).returnResponse();
 
@@ -430,8 +445,9 @@ public class TestHelper {
 
     public String addOncHistoryDetails(String participantId) throws Exception {
         //add oncHistoryDetail
-        String json = "{\"id\":null,\"parentId\":\"" + participantId +
-                "\",\"parent\":\"participantId\",\"user\":\"simone+1@broadinstitute.org\",\"nameValue\":{\"name\":\"oD.datePX\",\"value\":\"2017-01-02\"}}";
+        String json = "{\"id\":null,\"parentId\":\"" + participantId
+                + "\",\"parent\":\"participantId\",\"user\":\"simone+1@broadinstitute.org\",\"nameValue\":{\"name\":\"oD.datePX\","
+                + "\"value\":\"2017-01-02\"}}";
         HttpResponse response =
                 TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/patch"), json, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -441,8 +457,9 @@ public class TestHelper {
         jsonObject = new JsonParser().parse(body).getAsJsonObject();
         String oncHistoryId = jsonObject.get("oncHistoryDetailId").getAsString();
 
-        json = "{\"id\":\"" + oncHistoryId + "\",\"parentId\":\"" + participantId +
-                "\",\"parent\":\"participantId\",\"user\":\"simone+1@broadinstitute.org\",\"nameValue\":{\"name\":\"oD.typePX\",\"value\":\"typeTesty\"}}";
+        json = "{\"id\":\"" + oncHistoryId + "\",\"parentId\":\"" + participantId
+                + "\",\"parent\":\"participantId\",\"user\":\"simone+1@broadinstitute.org\",\"nameValue\":{\"name\":\"oD.typePX\","
+                + "\"value\":\"typeTesty\"}}";
         response = TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/patch"), json, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
@@ -464,24 +481,23 @@ public class TestHelper {
     public void changeValue(String valueId, String participantId, String field, Object value, String columnName, String parent, String user,
                             String pkName, String tableName, String fieldId) throws Exception {
         //change value
-        String json =
-                "{\"id\":\"" + valueId + "\",\"parentId\":\"" + participantId + "\",\"parent\":\"" + parent + "\",\"user\":\"" + user +
-                        "\",\"nameValue\":{\"name\":\"" + field + "\",\"value\":\"" + value + "\"}}";
+        String json = "{\"id\":\"" + valueId + "\",\"parentId\":\"" + participantId + "\",\"parent\":\"" + parent + "\",\"user\":\"" + user
+                + "\",\"nameValue\":{\"name\":\"" + field + "\",\"value\":\"" + value + "\"}}";
         if (fieldId != null && valueId != null) {
-            json = "{\"id\":\"" + valueId + "\",\"parentId\":\"" + participantId + "\",\"parent\":\"" + parent + "\",\"user\":\"" + user +
-                    "\",\"fieldId\":\"" + fieldId + "\",\"nameValue\":{\"name\":\"" + field + "\",\"value\":\"" + value + "\"}}";
+            json = "{\"id\":\"" + valueId + "\",\"parentId\":\"" + participantId + "\",\"parent\":\"" + parent + "\",\"user\":\"" + user
+                    + "\",\"fieldId\":\"" + fieldId + "\",\"nameValue\":{\"name\":\"" + field + "\",\"value\":\"" + value + "\"}}";
         } else if (fieldId != null && valueId == null) {
             if (value instanceof Integer) {
-                json = "{\"id\":null,\"parentId\":\"" + participantId + "\",\"parent\":\"" + parent + "\",\"user\":\"" + user +
-                        "\",\"fieldId\":\"" + fieldId + "\",\"nameValue\":{\"name\":\"" + field + "\",\"value\":" + value + "}}";
+                json = "{\"id\":null,\"parentId\":\"" + participantId + "\",\"parent\":\"" + parent + "\",\"user\":\"" + user
+                        + "\",\"fieldId\":\"" + fieldId + "\",\"nameValue\":{\"name\":\"" + field + "\",\"value\":" + value + "}}";
             } else {
-                json = "{\"id\":null,\"parentId\":\"" + participantId + "\",\"parent\":\"" + parent + "\",\"user\":\"" + user +
-                        "\",\"fieldId\":\"" + fieldId + "\",\"nameValue\":{\"name\":\"" + field + "\",\"value\":\"" + value + "\"}}";
+                json = "{\"id\":null,\"parentId\":\"" + participantId + "\",\"parent\":\"" + parent + "\",\"user\":\"" + user
+                        + "\",\"fieldId\":\"" + fieldId + "\",\"nameValue\":{\"name\":\"" + field + "\",\"value\":\"" + value + "\"}}";
             }
         }
-        if (String.valueOf(value).startsWith("[")) {//for abstraction value change
-            json = "{\"id\":null,\"parentId\":\"" + participantId + "\",\"parent\":\"" + parent + "\",\"user\":\"" + user +
-                    "\",\"fieldId\":\"" + fieldId + "\",\"nameValue\":{\"name\":\"" + field + "\",\"value\":" + value + "}}";
+        if (String.valueOf(value).startsWith("[")) { //for abstraction value change
+            json = "{\"id\":null,\"parentId\":\"" + participantId + "\",\"parent\":\"" + parent + "\",\"user\":\"" + user
+                    + "\",\"fieldId\":\"" + fieldId + "\",\"nameValue\":{\"name\":\"" + field + "\",\"value\":" + value + "}}";
         }
         HttpResponse response =
                 TestUtil.perform(Request.Patch(DSM_BASE_URL + "/ui/patch"), json, testUtil.buildAuthHeaders()).returnResponse();

@@ -31,21 +31,32 @@ import org.slf4j.LoggerFactory;
 public class EventUtil {
 
     public static final String SQL_SELECT_KIT_FOR_REMINDER_EMAILS =
-            "SELECT eve.event_name, eve.event_type, request.ddp_participant_id, request.dsm_kit_request_id, realm.instance_name, realm.base_url, " +
-                    "realm.ddp_instance_id, realm.auth0_token, realm.notification_recipients, kit.receive_date, kit.scan_date, request.upload_reason, request.ddp_kit_request_id, " +
-                    "(SELECT count(role.name) FROM ddp_instance realm2, ddp_instance_role inRol, instance_role role " +
-                    "WHERE realm2.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id AND role.name = ? AND realm2.ddp_instance_id = realm.ddp_instance_id) AS 'has_role' " +
-                    "FROM ddp_kit_request request LEFT JOIN ddp_kit kit ON (kit.dsm_kit_request_id = request.dsm_kit_request_id) LEFT JOIN ddp_instance realm ON (request.ddp_instance_id = realm.ddp_instance_id) " +
-                    "LEFT JOIN ddp_participant_exit ex ON (ex.ddp_participant_id = request.ddp_participant_id AND ex.ddp_instance_id = request.ddp_instance_id) " +
-                    "LEFT JOIN event_type eve ON (eve.ddp_instance_id = request.ddp_instance_id AND eve.kit_type_id = request.kit_type_id AND eve.event_type = 'REMINDER') " +
-                    "LEFT JOIN EVENT_QUEUE queue ON (queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id AND queue.EVENT_TYPE = eve.event_name) " +
-                    "WHERE ex.ddp_participant_exit_id IS NULL AND kit.scan_date IS NOT NULL " +
-                    "AND kit.scan_date <= (UNIX_TIMESTAMP(NOW())-(eve.hours*60*60))*1000 AND kit.receive_date IS NULL AND kit.deactivated_date IS NULL AND realm.is_active = 1 AND queue.EVENT_TYPE IS NULL";
+            "SELECT eve.event_name, eve.event_type, request.ddp_participant_id, request.dsm_kit_request_id, realm.instance_name, "
+                    + "realm.base_url, "
+                    + "realm.ddp_instance_id, realm.auth0_token, realm.notification_recipients, kit.receive_date, kit.scan_date, "
+                    + "request.upload_reason, request.ddp_kit_request_id, "
+                    + "(SELECT count(role.name) FROM ddp_instance realm2, ddp_instance_role inRol, instance_role role "
+                    + "WHERE realm2.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id "
+                    + "AND role.name = ? AND realm2.ddp_instance_id = realm.ddp_instance_id) AS 'has_role' "
+                    + "FROM ddp_kit_request request LEFT JOIN ddp_kit kit ON (kit.dsm_kit_request_id = request.dsm_kit_request_id) "
+                    + "LEFT JOIN ddp_instance realm ON (request.ddp_instance_id = realm.ddp_instance_id) "
+                    + "LEFT JOIN ddp_participant_exit ex ON (ex.ddp_participant_id = request.ddp_participant_id "
+                    + "AND ex.ddp_instance_id = request.ddp_instance_id) "
+                    + "LEFT JOIN event_type eve ON (eve.ddp_instance_id = request.ddp_instance_id "
+                    + "AND eve.kit_type_id = request.kit_type_id "
+                    + "AND eve.event_type = 'REMINDER') "
+                    + "LEFT JOIN EVENT_QUEUE queue ON (queue.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id "
+                    + "AND queue.EVENT_TYPE = eve.event_name) "
+                    + "WHERE ex.ddp_participant_exit_id IS NULL AND kit.scan_date IS NOT NULL "
+                    + "AND kit.scan_date <= (UNIX_TIMESTAMP(NOW())-(eve.hours*60*60))*1000 "
+                    + "AND kit.receive_date IS NULL AND kit.deactivated_date IS NULL AND realm.is_active = 1 AND queue.EVENT_TYPE IS NULL";
     private static final Logger logger = LoggerFactory.getLogger(EventUtil.class);
     private static final String SQL_INSERT_EVENT =
-            "INSERT INTO EVENT_QUEUE SET EVENT_DATE_CREATED = ?, EVENT_TYPE = ?, DDP_INSTANCE_ID = ?, DSM_KIT_REQUEST_ID = ?, EVENT_TRIGGERED = ?";
+            "INSERT INTO EVENT_QUEUE SET EVENT_DATE_CREATED = ?, EVENT_TYPE = ?, DDP_INSTANCE_ID = ?, "
+                    + "DSM_KIT_REQUEST_ID = ?, EVENT_TRIGGERED = ?";
     private static final String SQL_INSERT_PT_EVENT =
-            "INSERT INTO EVENT_QUEUE SET EVENT_DATE_CREATED = ?, EVENT_TYPE = ?, DDP_INSTANCE_ID = ?, DDP_PARTICIPANT_ID = ?, EVENT_TRIGGERED = ?";
+            "INSERT INTO EVENT_QUEUE SET EVENT_DATE_CREATED = ?, EVENT_TYPE = ?, DDP_INSTANCE_ID = ?, "
+                    + "DDP_PARTICIPANT_ID = ?, EVENT_TRIGGERED = ?";
 
     public static void triggerDDP(Connection conn, @NonNull KitDDPNotification kitDDPNotification) {
         Collection<String> events =
@@ -94,15 +105,15 @@ public class EventUtil {
             addEvent(conn, eventType, kitInfo.getDdpInstanceId(), kitInfo.getDsmKitRequestId());
         } catch (IOException e) {
             logger.error(
-                    "Failed to trigger " + kitInfo.getInstanceName() + " to notify participant " + kitInfo.getParticipantId() + " about " +
-                            eventType + " for dsm_kit_request_id " + kitInfo.getDsmKitRequestId());
+                    "Failed to trigger " + kitInfo.getInstanceName() + " to notify participant " + kitInfo.getParticipantId() + " about "
+                            + eventType + " for dsm_kit_request_id " + kitInfo.getDsmKitRequestId());
             e.printStackTrace();
             //to add these events also to the event table, but without triggering the ddp and flag EVENT_TRIGGERED = false
             addEvent(conn, eventType, kitInfo.getDdpInstanceId(), kitInfo.getDsmKitRequestId(), false);
         } catch (RuntimeException e) {
             logger.error(
-                    "Failed to trigger " + kitInfo.getInstanceName() + " to notify participant " + kitInfo.getParticipantId() + " about " +
-                            eventType + " for dsm_kit_request_id " + kitInfo.getDsmKitRequestId());
+                    "Failed to trigger " + kitInfo.getInstanceName() + " to notify participant " + kitInfo.getParticipantId() + " about "
+                            + eventType + " for dsm_kit_request_id " + kitInfo.getDsmKitRequestId());
             e.printStackTrace();
             //to add these events also to the event table, but without triggering the ddp and flag EVENT_TRIGGERED = false
             addEvent(conn, eventType, kitInfo.getDdpInstanceId(), kitInfo.getDsmKitRequestId(), false);
@@ -118,15 +129,15 @@ public class EventUtil {
             addPTEvent(conn, eventType, eventTypes.get().getDdpInstanceId(), ddpParticipantId, true);
         } catch (IOException e) {
             logger.error(
-                    "Failed to trigger " + eventTypes.get().getInstanceName() + " to notify participant " + ddpParticipantId + " about " +
-                            eventType);
+                    "Failed to trigger " + eventTypes.get().getInstanceName() + " to notify participant " + ddpParticipantId + " about "
+                            + eventType);
             e.printStackTrace();
             //to add these events also to the event table, but without triggering the ddp and flag EVENT_TRIGGERED = false
             addPTEvent(conn, eventType, eventTypes.get().getDdpInstanceId(), ddpParticipantId, false);
         } catch (RuntimeException e) {
             logger.error(
-                    "Failed to trigger " + eventTypes.get().getInstanceName() + " to notify participant " + ddpParticipantId + " about " +
-                            eventType);
+                    "Failed to trigger " + eventTypes.get().getInstanceName() + " to notify participant " + ddpParticipantId + " about "
+                            + eventType);
             e.printStackTrace();
             //to add these events also to the event table, but without triggering the ddp and flag EVENT_TRIGGERED = false
             addPTEvent(conn, eventType, eventTypes.get().getDdpInstanceId(), ddpParticipantId, false);
@@ -190,15 +201,15 @@ public class EventUtil {
             addEvent(conn, eventType, kitInfo.getDdpInstanceId(), kitInfo.getDsmKitRequestId());
         } catch (IOException e) {
             logger.error(
-                    "Failed to trigger " + kitInfo.getInstanceName() + " to notify participant " + kitInfo.getParticipantId() + " about " +
-                            eventType + " for dsm_kit_request_id " + kitInfo.getDsmKitRequestId());
+                    "Failed to trigger " + kitInfo.getInstanceName() + " to notify participant " + kitInfo.getParticipantId() + " about "
+                            + eventType + " for dsm_kit_request_id " + kitInfo.getDsmKitRequestId());
             e.printStackTrace();
             //to add these events also to the event table, but without triggering the ddp and flag EVENT_TRIGGERED = false
             addEvent(conn, eventType, kitInfo.getDdpInstanceId(), kitInfo.getDsmKitRequestId(), false);
         } catch (RuntimeException e) {
             logger.error(
-                    "Failed to trigger " + kitInfo.getInstanceName() + " to notify participant " + kitInfo.getParticipantId() + " about " +
-                            eventType + " for dsm_kit_request_id " + kitInfo.getDsmKitRequestId());
+                    "Failed to trigger " + kitInfo.getInstanceName() + " to notify participant " + kitInfo.getParticipantId() + " about "
+                            + eventType + " for dsm_kit_request_id " + kitInfo.getDsmKitRequestId());
             e.printStackTrace();
             //to add these events also to the event table, but without triggering the ddp and flag EVENT_TRIGGERED = false
             addEvent(conn, eventType, kitInfo.getDdpInstanceId(), kitInfo.getDsmKitRequestId(), false);
@@ -242,11 +253,9 @@ public class EventUtil {
                         if (rs.getBoolean(DBConstants.HAS_ROLE)) {
                             String participantId = rs.getString(DBConstants.DDP_PARTICIPANT_ID);
                             String realm = rs.getString(DBConstants.INSTANCE_NAME);
-                            kitDDPNotifications.add(new KitDDPNotification(participantId,
-                                    rs.getString(DBConstants.DSM_KIT_REQUEST_ID), rs.getString(DBConstants.DDP_INSTANCE_ID), realm,
-                                    rs.getString(DBConstants.BASE_URL),
-                                    rs.getString(DBConstants.EVENT_NAME),
-                                    rs.getString(DBConstants.EVENT_TYPE), System.currentTimeMillis(),
+                            kitDDPNotifications.add(new KitDDPNotification(participantId, rs.getString(DBConstants.DSM_KIT_REQUEST_ID),
+                                    rs.getString(DBConstants.DDP_INSTANCE_ID), realm, rs.getString(DBConstants.BASE_URL),
+                                    rs.getString(DBConstants.EVENT_NAME), rs.getString(DBConstants.EVENT_TYPE), System.currentTimeMillis(),
                                     rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN), rs.getString(DBConstants.UPLOAD_REASON),
                                     rs.getString(DBConstants.DDP_KIT_REQUEST_ID)));
                         }

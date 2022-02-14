@@ -439,10 +439,10 @@ public class ElasticSearchUtil {
                 return;
             }
             List<Map<String, Object>> workflowListES = (List<Map<String, Object>>) workflowMapES.get(ESObjectConstants.WORKFLOWS);
-            boolean removed = workflowListES.removeIf(workflow -> !workflow.containsKey(ESObjectConstants.DATA) ||
-                    (((Map) workflow.get(ESObjectConstants.DATA)).get(ESObjectConstants.SUBJECT_ID) != null
-                            && (collaboratorParticipantId != null && collaboratorParticipantId.equals(
-                            ((Map) workflow.get(ESObjectConstants.DATA)).get(ESObjectConstants.SUBJECT_ID)))));
+            boolean removed = workflowListES.removeIf(workflow -> !workflow.containsKey(ESObjectConstants.DATA)
+                    || (((Map) workflow.get(ESObjectConstants.DATA)).get(ESObjectConstants.SUBJECT_ID) != null
+                    && (collaboratorParticipantId != null && collaboratorParticipantId.equals(
+                    ((Map) workflow.get(ESObjectConstants.DATA)).get(ESObjectConstants.SUBJECT_ID)))));
             if (!removed) {
                 return;
             }
@@ -452,8 +452,8 @@ public class ElasticSearchUtil {
                 updateRequest(ddpParticipantId, index, workflowMapES);
             }
         } catch (Exception e) {
-            logger.error("Couldn't remove workflows for participant " + ddpParticipantId + " to ES index " +
-                    ddpInstance.getParticipantIndexES() + " for instance " + ddpInstance.getName(), e);
+            logger.error("Couldn't remove workflows for participant " + ddpParticipantId + " to ES index "
+                    + ddpInstance.getParticipantIndexES() + " for instance " + ddpInstance.getName(), e);
         }
     }
 
@@ -500,8 +500,8 @@ public class ElasticSearchUtil {
                 updateRequest(ddpParticipantId, index, workflowMapES);
             }
         } catch (Exception e) {
-            logger.error("Couldn't write workflow information for participant " + ddpParticipantId + " to ES index " +
-                    instance.getParticipantIndexES() + " for instance " + instance.getName(), e);
+            logger.error("Couldn't write workflow information for participant " + ddpParticipantId + " to ES index "
+                    + instance.getParticipantIndexES() + " for instance " + instance.getName(), e);
         }
     }
 
@@ -632,12 +632,12 @@ public class ElasticSearchUtil {
                 } else {
                     updateRequest(ddpParticipantId, index, objectsMapES);
                 }
-                logger.info("Updated " + objectType + " information for participant " + ddpParticipantId + " in ES for instance " +
-                        instance.getName());
+                logger.info("Updated " + objectType + " information for participant " + ddpParticipantId + " in ES for instance "
+                        + instance.getName());
             }
         } catch (Exception e) {
-            logger.error("Couldn't write " + objectType + " information for participant " + ddpParticipantId + " to ES index " +
-                    instance.getParticipantIndexES() + " for instance " + instance.getName(), e);
+            logger.error("Couldn't write " + objectType + " information for participant " + ddpParticipantId + " to ES index "
+                    + instance.getParticipantIndexES() + " for instance " + instance.getName(), e);
         }
     }
 
@@ -668,12 +668,12 @@ public class ElasticSearchUtil {
                 }
 
                 updateRequest(client, ddpParticipantId, index, objectsMapES);
-                logger.info("Updated " + objectType + " information for participant " + ddpParticipantId + " in ES for instance " +
-                        instance.getName());
+                logger.info("Updated " + objectType + " information for participant " + ddpParticipantId + " in ES for instance "
+                        + instance.getName());
             }
         } catch (Exception e) {
-            logger.error("Couldn't write " + objectType + " information for participant " + ddpParticipantId + " to ES index " +
-                    instance.getParticipantIndexES() + " for instance " + instance.getName(), e);
+            logger.error("Couldn't write " + objectType + " information for participant " + ddpParticipantId + " to ES index "
+                    + instance.getParticipantIndexES() + " for instance " + instance.getName(), e);
         }
     }
 
@@ -823,8 +823,8 @@ public class ElasticSearchUtil {
                 if (address != null && !address.isEmpty() && profile != null && !profile.isEmpty()) {
                     String firstName = "";
                     String lastName = "";
-                    if (StringUtils.isNotBlank((String) profile.get("firstName")) &&
-                            StringUtils.isNotBlank((String) profile.get("lastName"))) {
+                    if (StringUtils.isNotBlank((String) profile.get("firstName"))
+                            && StringUtils.isNotBlank((String) profile.get("lastName"))) {
                         firstName = (String) profile.get("firstName");
                         lastName = (String) profile.get("lastName");
                     } else {
@@ -959,8 +959,8 @@ public class ElasticSearchUtil {
                             }
                         } else {
                             String[] surveyParam = nameValue[0].split("\\.");
-                            if (CREATED_AT.equals(surveyParam[1].trim()) || COMPLETED_AT.equals(surveyParam[1].trim()) ||
-                                    LAST_UPDATED.equals(surveyParam[1].trim())) {
+                            if (CREATED_AT.equals(surveyParam[1].trim()) || COMPLETED_AT.equals(surveyParam[1].trim())
+                                    || LAST_UPDATED.equals(surveyParam[1].trim())) {
                                 QueryBuilder tmpBuilder = findQueryBuilderForFieldName(finalQuery, surveyParam[1].trim());
                                 try {
                                     long date = SystemUtil.getLongFromString(userEntered);
@@ -1053,8 +1053,8 @@ public class ElasticSearchUtil {
                             }
                         } else {
                             String[] surveyParam = nameValue[0].split("\\.");
-                            if (CREATED_AT.equals(surveyParam[1].trim()) || COMPLETED_AT.equals(surveyParam[1].trim()) ||
-                                    LAST_UPDATED.equals(surveyParam[1].trim())) {
+                            if (CREATED_AT.equals(surveyParam[1].trim()) || COMPLETED_AT.equals(surveyParam[1].trim())
+                                    || LAST_UPDATED.equals(surveyParam[1].trim())) {
                                 QueryBuilder tmpBuilder = findQueryBuilderForFieldName(finalQuery, surveyParam[1].trim());
                                 try {
                                     long date = SystemUtil.getLongFromString(userEntered);
@@ -1113,8 +1113,8 @@ public class ElasticSearchUtil {
                             finalQuery.must(existsQuery);
                         } else {
                             String[] surveyParam = nameValue[0].split("\\.");
-                            if (CREATED_AT.equals(surveyParam[1].trim()) || COMPLETED_AT.equals(surveyParam[1].trim()) ||
-                                    LAST_UPDATED.equals(surveyParam[1].trim()) || STATUS.equals(surveyParam[1].trim())) {
+                            if (CREATED_AT.equals(surveyParam[1].trim()) || COMPLETED_AT.equals(surveyParam[1].trim())
+                                    || LAST_UPDATED.equals(surveyParam[1].trim()) || STATUS.equals(surveyParam[1].trim())) {
                                 BoolQueryBuilder activityAnswer = new BoolQueryBuilder();
                                 ExistsQueryBuilder existsQuery =
                                         new ExistsQueryBuilder(ACTIVITIES + DBConstants.ALIAS_DELIMITER + surveyParam[1].trim());
@@ -1151,7 +1151,7 @@ public class ElasticSearchUtil {
                         logger.error("one of the following is null: fieldName: " + nameValue[0] + " userEntered: [hidingValueInCasePHI]");
                     }
                 } else if (f.contains(Filter.IS_NULL)) {
-
+                    logger.warn("Filter contains is null");
                 } else {
                     logger.error("Filter could not be parsed");
                 }
@@ -1190,9 +1190,9 @@ public class ElasticSearchUtil {
         if (!tmpFilters.isEmpty()) {
             for (Iterator<QueryBuilder> iterator = tmpFilters.iterator(); iterator.hasNext() && tmpBuilder == null; ) {
                 QueryBuilder builder = iterator.next();
-                if (builder instanceof RangeQueryBuilder &&
-                        (((RangeQueryBuilder) builder).fieldName().equals(fieldName) ||
-                                queryPartsMap != null && fieldName.equals(queryPartsMap.get(((RangeQueryBuilder) builder).fieldName())))) {
+                if (builder instanceof RangeQueryBuilder
+                        && (((RangeQueryBuilder) builder).fieldName().equals(fieldName)
+                        || queryPartsMap != null && fieldName.equals(queryPartsMap.get(((RangeQueryBuilder) builder).fieldName())))) {
                     tmpBuilder = builder;
                 } else if (builder instanceof NestedQueryBuilder) {
                     tmpBuilder =
@@ -1206,8 +1206,8 @@ public class ElasticSearchUtil {
                         for (QueryBuilder should : shouldQueries) {
                             if (should instanceof MatchQueryBuilder) {
                                 String otherName = ((MatchQueryBuilder) should).fieldName();
-                                if (StringUtils.isNotBlank(otherName) && (fieldName.equals(otherName) ||
-                                        queryPartsMap != null && fieldName.equals(queryPartsMap.get(otherName)))) {
+                                if (StringUtils.isNotBlank(otherName) && (fieldName.equals(otherName)
+                                        || queryPartsMap != null && fieldName.equals(queryPartsMap.get(otherName)))) {
                                     tmpBuilder = builder;
                                 }
                             }
@@ -1297,8 +1297,8 @@ public class ElasticSearchUtil {
      *                                            a same fieldName (for example related tp `SELF_CURRENT_AGE`)
      * @param parentNestedOfRangeBuilderOfNumbers reference to NestedQueryBuilder containing a Range of numbers
      * @return BoolQueryBuilder  finalQuery: it can be the same finalQuery or it can be reorganized finalQuery
-     * where RangeQueryBuilder removed from the initial place inside finalQuery and added into a must()-block
-     * together with `IS NOT NULL` query (for a field `fieldName`)
+     *      where RangeQueryBuilder removed from the initial place inside finalQuery and added into a must()-block
+     *      together with `IS NOT NULL` query (for a field `fieldName`)
      */
     private static BoolQueryBuilder processIsNotNullForRangeOfNumbers(
             String fieldName,
@@ -1399,8 +1399,8 @@ public class ElasticSearchUtil {
                 userEntered = userEntered.replaceAll("%", "").trim();
             }
             if (nameValue[0].strip().startsWith(PROFILE)) {
-                if (nameValue[0].trim().endsWith(ESObjectConstants.HRUID) || nameValue[0].trim().endsWith("legacyShortId") ||
-                        nameValue[0].trim().endsWith(GUID) || nameValue[0].trim().endsWith(LEGACY_ALT_PID)) {
+                if (nameValue[0].trim().endsWith(ESObjectConstants.HRUID) || nameValue[0].trim().endsWith("legacyShortId")
+                        || nameValue[0].trim().endsWith(GUID) || nameValue[0].trim().endsWith(LEGACY_ALT_PID)) {
                     valueQueryBuilder(finalQuery, nameValue[0].trim(), userEntered, wildCard, must);
                 } else {
                     try {
@@ -1474,8 +1474,8 @@ public class ElasticSearchUtil {
                 BoolQueryBuilder queryBuilder = new BoolQueryBuilder();
 
                 boolean alreadyAdded = false;
-                if (CREATED_AT.equals(surveyParam[1].trim()) || COMPLETED_AT.equals(surveyParam[1].trim()) ||
-                        LAST_UPDATED.equals(surveyParam[1].trim())) {
+                if (CREATED_AT.equals(surveyParam[1].trim()) || COMPLETED_AT.equals(surveyParam[1].trim())
+                        || LAST_UPDATED.equals(surveyParam[1].trim())) {
                     try {
                         //activity dates
                         long start = SystemUtil.getLongFromString(userEntered);

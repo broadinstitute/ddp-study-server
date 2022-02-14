@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.model.PDF;
+package org.broadinstitute.dsm.model.pdf;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

@@ -21,39 +21,15 @@ public class EditParticipantMessage {
     private static final Logger logger = LoggerFactory.getLogger(EditParticipantMessage.class);
 
     private static final String SQL_SELECT_MESSAGE_AND_STATUS =
-            "SELECT " +
-                    "message_id, message_status, received_message " +
-                    "FROM " +
-                    "message " +
-                    "WHERE " +
-                    "user_id = ? " +
-                    "ORDER BY published_at DESC " +
-                    "LIMIT 1";
+            "SELECT message_id, message_status, received_message FROM message WHERE user_id = ? ORDER BY published_at DESC LIMIT 1";
 
-    private static final String SQL_INSERT_MESSAGE =
-            "INSERT INTO " +
-                    "message " +
-                    "(user_id, message_status, published_at) " +
-                    "VALUES " +
-                    "(?, ?, ?)";
+    private static final String SQL_INSERT_MESSAGE = "INSERT INTO message (user_id, message_status, published_at) VALUES (?, ?, ?)";
 
     private static final String SQL_UPDATE_MESSAGE =
-            "UPDATE " +
-                    "message " +
-                    "SET " +
-                    "message_status = ?, received_message = ?, received_at = ? " +
-                    "WHERE " +
-                    "user_id = ? " +
-                    "ORDER BY published_at DESC " +
-                    "LIMIT 1";
+            "UPDATE message SET message_status = ?, received_message = ?, received_at = ? WHERE user_id = ? "
+                    + "ORDER BY published_at DESC LIMIT 1";
 
-    private static final String SQL_UPDATE_MESSAGE_STATUS =
-            "UPDATE " +
-                    "message " +
-                    "SET " +
-                    "message_status = ? " +
-                    "WHERE " +
-                    "message_id = ? ";
+    private static final String SQL_UPDATE_MESSAGE_STATUS = "UPDATE message SET message_status = ? WHERE message_id = ? ";
 
     private int messageId;
     private int userId;
@@ -83,9 +59,9 @@ public class EditParticipantMessage {
                 stmt.setInt(1, userId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        messagesWithStatus.add(new EditParticipantMessage(rs.getInt(DBConstants.MESSAGE_ID),
-                                rs.getString(DBConstants.MESSAGE_STATUS),
-                                rs.getString(DBConstants.RECEIVED_MESSAGE)));
+                        messagesWithStatus.add(
+                                new EditParticipantMessage(rs.getInt(DBConstants.MESSAGE_ID), rs.getString(DBConstants.MESSAGE_STATUS),
+                                        rs.getString(DBConstants.RECEIVED_MESSAGE)));
                     }
                 }
             } catch (SQLException ex) {
@@ -123,8 +99,8 @@ public class EditParticipantMessage {
             return dbVals;
         });
         if (results.resultException != null) {
-            throw new RuntimeException("Error inserting message for the user with user ID: "
-                    + message.getUserId(), results.resultException);
+            throw new RuntimeException("Error inserting message for the user with user ID: " + message.getUserId(),
+                    results.resultException);
         }
     }
 

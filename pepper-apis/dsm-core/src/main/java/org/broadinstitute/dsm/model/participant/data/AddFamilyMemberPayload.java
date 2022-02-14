@@ -62,11 +62,7 @@ public class AddFamilyMemberPayload {
         }
         DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
         String collaboratorIdPrefix = ddpInstanceDao.getCollaboratorIdPrefixByStudyGuid(this.realm).orElseThrow();
-        return collaboratorIdPrefix +
-                "_" +
-                getOrGenerateFamilyId() +
-                "_" +
-                this.data.getSubjectId();
+        return collaboratorIdPrefix + "_" + getOrGenerateFamilyId() + "_" + this.data.getSubjectId();
     }
 
     public long getFamilyId(List<ParticipantData> participantData) throws NoSuchFieldException {

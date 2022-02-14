@@ -33,12 +33,6 @@ public class DDPKitRequest {
         return externalOrderNumber;
     }
 
-    /**
-     * Requesting 'new' DDPKitRequests and write them into ddp_kit_request
-     *
-     * @param latestKitRequests List<LatestKitRequest>
-     * @throws Exception
-     */
     public void requestAndWriteKitRequests(List<LatestKitRequest> latestKitRequests) {
         logger.info("Request kits from the DDPs");
         try {
@@ -62,9 +56,9 @@ public class DDPKitRequest {
                                 if (kitDetail != null && kitDetail.getParticipantId() != null && kitDetail.getKitRequestId() != null
                                         && kitDetail.getKitType() != null) {
                                     //ignore kits from the ddp which starts with internal upload prefix (mainly for mbc migration)
-                                    if (StringUtils.isNotBlank(kitDetail.getKitRequestId()) &&
-                                            !kitDetail.getKitRequestId().startsWith(UPLOADED_KIT_REQUEST)
-                                            && !kitDetail.getKitRequestId().startsWith(MIGRATED_KIT_REQUEST)) {
+                                    if (StringUtils.isNotBlank(kitDetail.getKitRequestId()) && !kitDetail.getKitRequestId()
+                                            .startsWith(UPLOADED_KIT_REQUEST) && !kitDetail.getKitRequestId()
+                                            .startsWith(MIGRATED_KIT_REQUEST)) {
                                         String key = kitDetail.getKitType() + "_" + latestKit.getInstanceID();
                                         KitType kitType = kitTypes.get(key);
                                         if (kitType != null) {
@@ -99,18 +93,17 @@ public class DDPKitRequest {
                                                                         kitRequestSettings, latestKit.getInstanceID(), null, ddpInstance);
                                                             } else {
                                                                 KitRequestShipping.addKitRequests(latestKit.getInstanceID(), kitDetail,
-                                                                        kitType.getKitTypeId(),
-                                                                        kitRequestSettings, collaboratorParticipantId, null, null,
-                                                                        ddpInstance);
+                                                                        kitType.getKitTypeId(), kitRequestSettings,
+                                                                        collaboratorParticipantId, null, null, ddpInstance);
                                                             }
                                                         } else {
                                                             logger.error(
-                                                                    "ES profile data was empty for participant with ddp_kit_request_id " +
-                                                                            kitDetail.getKitRequestId());
+                                                                    "ES profile data was empty for participant with ddp_kit_request_id "
+                                                                            + kitDetail.getKitRequestId());
                                                         }
                                                     } else {
-                                                        logger.error("Participant of ddp_kit_request_id " + kitDetail.getKitRequestId() +
-                                                                " not found in ES ");
+                                                        logger.error("Participant of ddp_kit_request_id " + kitDetail.getKitRequestId()
+                                                                + " not found in ES ");
                                                     }
                                                 }
                                             } else {
@@ -122,11 +115,10 @@ public class DDPKitRequest {
                                         }
                                     }
                                 } else {
-                                    logger.error("Important information for DDPKitRequest is missing. " +
-                                            kitDetail == null ? " DDPKitRequest is null " :
-                                            " participantId " + kitDetail.getParticipantId() +
-                                                    " kitRequest.getKitRequestId() " + kitDetail.getKitRequestId() +
-                                                    " kitRequest.getKitType() " + kitDetail.getKitType());
+                                    logger.error("Important information for DDPKitRequest is missing. " + kitDetail == null
+                                            ? " DDPKitRequest is null " :
+                                            " participantId " + kitDetail.getParticipantId() + " kitRequest.getKitRequestId() "
+                                                    + kitDetail.getKitRequestId() + " kitRequest.getKitType() " + kitDetail.getKitType());
                                     throw new RuntimeException("Important information for kitRequest is missing");
                                 }
                             }
@@ -156,8 +148,8 @@ public class DDPKitRequest {
                 //kitRequestId needs to stay unique -> add `_[SUB_COUNTER]` to it
                 KitRequestShipping.addKitRequests(instanceId, subKit.getKitName(), kitDetail.getParticipantId(),
                         subCounter == 0 ? kitDetail.getKitRequestId() : kitDetail.getKitRequestId() + "_" + subCounter,
-                        subKit.getKitTypeId(), kitRequestSettings,
-                        collaboratorParticipantId, kitDetail.isNeedsApproval(), externalOrderNumber, uploadReason, ddpInstance);
+                        subKit.getKitTypeId(), kitRequestSettings, collaboratorParticipantId, kitDetail.isNeedsApproval(),
+                        externalOrderNumber, uploadReason, ddpInstance);
                 subCounter = subCounter + 1;
             }
         }

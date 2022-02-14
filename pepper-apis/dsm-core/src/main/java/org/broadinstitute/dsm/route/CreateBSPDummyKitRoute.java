@@ -23,7 +23,8 @@ public class CreateBSPDummyKitRoute implements Route {
         logger.info("Got Mercury Test request");
         String kitLabel = request.params(RequestParameter.LABEL);
         if (StringUtils.isBlank(kitLabel)) {
-            response.status(500);// return bad request
+            // return bad request
+            response.status(500);
             logger.error("Bad request from Mercury! Should include a kitlabel");
             return null;
         }

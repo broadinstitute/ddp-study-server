@@ -23,22 +23,20 @@ public class SourceGeneratorTest {
     public void generateCollection() {
         BaseParser parser = new ValueParser();
         parser.setPropertyInfo(new BaseGenerator.PropertyInfo(MappingGeneratorTest.TestPropertyClass.class, true));
-        Generator generator = new TestSourceGenerator(parser, getGeneratorPayload(TestPatchUtil.MEDICAL_RECORD_COLUMN, "value"
-                , 0));
+        Generator generator = new TestSourceGenerator(parser, getGeneratorPayload(TestPatchUtil.MEDICAL_RECORD_COLUMN, "value", 0));
         Map<String, Object> objectMap = generator.generate();
         Assert.assertEquals(objectMap.keySet().stream().findFirst().get(), SourceGenerator.DSM_OBJECT);
         List<Map<String, Object>> medicalRecords = (List) ((Map) objectMap.get(SourceGenerator.DSM_OBJECT)).get("medicalRecord");
-        Optional<Map<String, Object>> first = medicalRecords.stream()
-                .filter(i -> i.get(Util.underscoresToCamelCase(TestPatchUtil.MEDICAL_RECORD_COLUMN)) != null)
-                .findFirst();
+        Optional<Map<String, Object>> first =
+                medicalRecords.stream().filter(i -> i.get(Util.underscoresToCamelCase(TestPatchUtil.MEDICAL_RECORD_COLUMN)) != null)
+                        .findFirst();
         first.ifPresentOrElse(
                 val -> Assert.assertEquals("value", val.get(Util.underscoresToCamelCase(TestPatchUtil.MEDICAL_RECORD_COLUMN))),
                 Assert::fail);
     }
 
     private GeneratorPayload getGeneratorPayload(String columnName, Object value, int recordId) {
-        return new GeneratorPayload(new NameValue(columnName, value),
-                recordId) {
+        return new GeneratorPayload(new NameValue(columnName, value), recordId) {
             @Override
             public String getCamelCaseFieldName() {
                 return Util.underscoresToCamelCase(columnName);
@@ -54,9 +52,8 @@ public class SourceGeneratorTest {
         Map<String, Object> objectMap = generator.generate();
         Assert.assertEquals(objectMap.keySet().stream().findFirst().get(), SourceGenerator.DSM_OBJECT);
         List<Map<String, Object>> medicalRecords = (List) ((Map) objectMap.get(SourceGenerator.DSM_OBJECT)).get("medicalRecord");
-        Optional<Map<String, Object>> first = medicalRecords.stream()
-                .filter(i -> i.get(Util.underscoresToCamelCase(TestPatchUtil.NUMERIC_FIELD)) != null)
-                .findFirst();
+        Optional<Map<String, Object>> first =
+                medicalRecords.stream().filter(i -> i.get(Util.underscoresToCamelCase(TestPatchUtil.NUMERIC_FIELD)) != null).findFirst();
         first.ifPresentOrElse(val -> Assert.assertEquals(1L, val.get(Util.underscoresToCamelCase(TestPatchUtil.NUMERIC_FIELD))),
                 Assert::fail);
     }
@@ -101,4 +98,3 @@ public class SourceGeneratorTest {
     }
 
 }
-

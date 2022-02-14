@@ -31,10 +31,11 @@ import org.slf4j.LoggerFactory;
 public class PubSubLookUp {
     private static final Logger logger = LoggerFactory.getLogger(PubSubLookUp.class);
     private static String SELECT_LATEST_RESULT_QUERY =
-            "SELECT kit.test_result FROM ddp_kit_request req LEFT JOIN  ddp_kit kit ON (kit.dsm_kit_request_id = req.dsm_kit_request_id) " +
-                    "WHERE kit.kit_label = ?";
+            "SELECT kit.test_result FROM ddp_kit_request req LEFT JOIN  ddp_kit kit ON (kit.dsm_kit_request_id = req.dsm_kit_request_id) "
+                    + "WHERE kit.kit_label = ?";
     private static String UPDATE_TEST_RESULT =
-            "UPDATE ddp_kit SET  test_result = ? WHERE dsm_kit_id <> 0 and  dsm_kit_request_id  in (select  dsm_kit_request_id from (select * from ddp_kit as something where something.kit_label = ? ) as t  )";
+            "UPDATE ddp_kit SET  test_result = ? WHERE dsm_kit_id <> 0 and  dsm_kit_request_id  in (select  dsm_kit_request_id "
+                    + "from (select * from ddp_kit as something where something.kit_label = ? ) as t  )";
 
     public static void processCovidTestResults(Connection conn, PubsubMessage message, @NonNull NotificationUtil notificationUtil) {
         String data = message.getData().toStringUtf8();
@@ -45,7 +46,7 @@ public class PubSubLookUp {
                 logger.info("Processing test results for " + testBostonResult.getSampleId());
                 if (shouldWriteResultIntoDB(testBostonResult)) {
                     writeResultsIntoDB(testBostonResult, ddpInstance);
-                    tellPepperAboutTheNewResults(conn, testBostonResult);// notify pepper if we update DB
+                    tellPepperAboutTheNewResults(conn, testBostonResult); // notify pepper if we update DB
                     notifyPIs(ddpInstance, testBostonResult, notificationUtil);
                 }
             }
@@ -57,12 +58,12 @@ public class PubSubLookUp {
         String subject = "";
         if (testBostonResult.isCorrected()) {
             subject = "CORRECTED RESULT: " + testBostonResult.getSampleId();
-            message = "A test result has been recorded as corrected for sample Id " + testBostonResult.getSampleId() + " on time " +
-                    testBostonResult.getTimeCompleted() + ". Please login to the study manager to review the result.";
+            message = "A test result has been recorded as corrected for sample Id " + testBostonResult.getSampleId() + " on time "
+                    + testBostonResult.getTimeCompleted() + ". Please login to the study manager to review the result.";
         } else if ("POSITIVE".equals(testBostonResult.getResult())) {
             subject = "POSITIVE RESULT: " + testBostonResult.getSampleId();
-            message = "A positive viral test has been recorded for sample Id " + testBostonResult.getSampleId() + " on time " +
-                    testBostonResult.getTimeCompleted() + ". Please login to the study manager to review the result.";
+            message = "A positive viral test has been recorded for sample Id " + testBostonResult.getSampleId() + " on time "
+                    + testBostonResult.getTimeCompleted() + ". Please login to the study manager to review the result.";
         }
         if (StringUtils.isNotBlank(subject) && StringUtils.isNotBlank(message)) {
             notificationUtil.sentNotification(ddpInstance.getNotificationRecipient(), message,
@@ -81,21 +82,20 @@ public class PubSubLookUp {
 
         //corrected result -> assuming corrected results are always changed
         if (dsmTestResult != null && !testBostonResult.isCorrected() && dsmTestResult.isCorrected()) {
-            return false;//should we error?
+            return false; //should we error?
         }
         //duplicate result
-        if (testBostonResult.isCorrected() == dsmTestResult.isCorrected()
-                && StringUtils.isNotBlank(dsmTestResult.getResult()) && dsmTestResult.getResult().equals(testBostonResult.getResult())
-                && StringUtils.isNotBlank(dsmTestResult.getTimeCompleted()) &&
-                dsmTestResult.getTimeCompleted().equals(testBostonResult.getTimeCompleted())) {
+        if (testBostonResult.isCorrected() == dsmTestResult.isCorrected() && StringUtils.isNotBlank(dsmTestResult.getResult())
+                && dsmTestResult.getResult().equals(testBostonResult.getResult()) && StringUtils.isNotBlank(
+                dsmTestResult.getTimeCompleted()) && dsmTestResult.getTimeCompleted().equals(testBostonResult.getTimeCompleted())) {
             return false;
         }
         // weird result
-        if (!testBostonResult.isCorrected()
-                && StringUtils.isNotBlank(dsmTestResult.getResult()) && !dsmTestResult.getResult().equals(testBostonResult.getResult())) {
+        if (!testBostonResult.isCorrected() && StringUtils.isNotBlank(dsmTestResult.getResult()) && !dsmTestResult.getResult()
+                .equals(testBostonResult.getResult())) {
 
-            throw new RuntimeException("A new result for sample id " + testBostonResult.getSampleId() +
-                    " that doesn't match the previous one. Date of the new result: " + testBostonResult.getTimeCompleted());
+            throw new RuntimeException("A new result for sample id " + testBostonResult.getSampleId()
+                    + " that doesn't match the previous one. Date of the new result: " + testBostonResult.getTimeCompleted());
         }
         return true;
     }
@@ -103,13 +103,17 @@ public class PubSubLookUp {
     public static void tellPepperAboutTheNewResults(Connection conn, TestBostonResult testBostonResult) {
         logger.info("Going to Notify Pepper");
         String query =
-                "select eve.event_name, eve.event_type, request.ddp_participant_id, request.dsm_kit_request_id, request.ddp_kit_request_id, request.upload_reason, " +
-                        "realm.ddp_instance_id, realm.instance_name, realm.base_url, realm.auth0_token,   realm.notification_recipients,   realm.migrated_ddp,   kit.receive_date,   kit.scan_date  " +
-                        " from   ddp_kit_request request,   " +
-                        "ddp_kit kit,   event_type eve,   ddp_instance realm   where request.dsm_kit_request_id = kit.dsm_kit_request_id   and request.ddp_instance_id = realm.ddp_instance_id   " +
-                        " and (eve.ddp_instance_id = request.ddp_instance_id   and eve.kit_type_id = request.kit_type_id)   and eve.event_type = \"RESULT\" " +
+                "select eve.event_name, eve.event_type, request.ddp_participant_id, request.dsm_kit_request_id, "
+                        + "request.ddp_kit_request_id, request.upload_reason, "
+                        + "realm.ddp_instance_id, realm.instance_name, realm.base_url, realm.auth0_token,realm.notification_recipients, "
+                        + "realm.migrated_ddp,   kit.receive_date,   kit.scan_date  "
+                        + " from   ddp_kit_request request,   "
+                        + "ddp_kit kit, event_type eve, ddp_instance realm where request.dsm_kit_request_id = kit.dsm_kit_request_id "
+                        + "and request.ddp_instance_id = realm.ddp_instance_id   "
+                        + " and (eve.ddp_instance_id = request.ddp_instance_id   and eve.kit_type_id = request.kit_type_id) "
+                        + "and eve.event_type = \"RESULT\" "
                         // that's the change from the original query
-                        " and kit.kit_label = ?"; // that's the change from the original query
+                        + " and kit.kit_label = ?"; // that's the change from the original query
 
         KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(query, testBostonResult.getSampleId(), 1);
         if (kitDDPNotification != null) {
@@ -164,20 +168,19 @@ public class PubSubLookUp {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(UPDATE_TEST_RESULT)) {
-                if (StringUtils.isNotBlank(testBostonResult.getResult())
-                        && StringUtils.isNotBlank(testBostonResult.getTimeCompleted())
+                if (StringUtils.isNotBlank(testBostonResult.getResult()) && StringUtils.isNotBlank(testBostonResult.getTimeCompleted())
                         && StringUtils.isNotBlank(testBostonResult.getSampleId())) {
                     stmt.setString(1, finalArray);
                     stmt.setString(2, testBostonResult.getSampleId());
                     int result = stmt.executeUpdate();
                     if (result != 1) {
                         throw new RuntimeException(
-                                "Error updating test result for kit label" + testBostonResult.getSampleId() + ", returned " + result +
-                                        " rows");
+                                "Error updating test result for kit label" + testBostonResult.getSampleId() + ", returned " + result
+                                        + " rows");
                     } else {
-                        logger.info("Updated test result for kit with kit label " + testBostonResult.getSampleId() + " to " +
-                                testBostonResult.getResult());
-//                        tellPepperAboutTheNewResults(testBostonResult);
+                        logger.info("Updated test result for kit with kit label " + testBostonResult.getSampleId() + " to "
+                                + testBostonResult.getResult());
+                        // tellPepperAboutTheNewResults(testBostonResult);
                     }
                 }
             } catch (SQLException ex) {
@@ -194,14 +197,11 @@ public class PubSubLookUp {
             kitRequestShipping.setTestResult(finalArray);
             kitRequestShipping.setKitLabel(testBostonResult.getSampleId());
 
-            DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder()
-                    .withEsParticipantIndex(ddpInstance.getParticipantIndexES())
-                    .withInstanceName(ddpInstance.getName())
-                    .build();
+            DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder().withEsParticipantIndex(ddpInstance.getParticipantIndexES())
+                    .withInstanceName(ddpInstance.getName()).build();
 
             UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.KIT_LABEL,
-                            ESObjectConstants.KIT_LABEL, testBostonResult.getSampleId())
-                    .export();
+                    ESObjectConstants.KIT_LABEL, testBostonResult.getSampleId()).export();
 
             logger.info("Updated test result for kit with external id " + testBostonResult.getSampleId());
         }

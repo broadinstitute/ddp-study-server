@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.util.externalShipper;
+package org.broadinstitute.dsm.util.externalshipper;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
@@ -78,20 +78,23 @@ import org.w3c.dom.Node;
 
 public class GBFRequestUtil implements ExternalShipper {
 
-    public static final String SQL_SELECT_EXTERNAL_KIT_NOT_DONE =
-            "SELECT * FROM (SELECT kt.kit_type_name, ddp_site.instance_name, ddp_site.ddp_instance_id, ddp_site.base_url, ddp_site.auth0_token, ddp_site.migrated_ddp, " +
-                    "                                    ddp_site.collaborator_id_prefix, req.bsp_collaborator_sample_id, req.ddp_participant_id, req.ddp_label, req.dsm_kit_request_id, req.bsp_collaborator_participant_id,  " +
-                    "                                    req.kit_type_id, req.external_order_status, req.external_order_number, req.external_order_date, req.external_response, kt.no_return, req.created_by, kit.kit_label FROM kit_type kt, ddp_kit_request req, ddp_kit kit, ddp_instance ddp_site " +
-                    "                                    WHERE req.ddp_instance_id = ddp_site.ddp_instance_id AND req.kit_type_id = kt.kit_type_id AND kit.dsm_kit_request_id = req.dsm_kit_request_id " +
-                    "                                    and kit.test_result is null and kit.CE_order is null " +
-                    "                                    and (kit.kit_label is null or kit.tracking_return_id is null or kit.tracking_to_id is null)" +
-                    ") " +
-                    "                                     AS request" +
-                    "                                    LEFT JOIN ddp_participant_exit ex ON (ex.ddp_instance_id = request.ddp_instance_id AND ex.ddp_participant_id = request.ddp_participant_id)" +
-                    "                                    LEFT JOIN (SELECT subK.kit_type_id, subK.external_name from ddp_kit_request_settings dkc " +
-                    "                                    LEFT JOIN sub_kits_settings subK ON (subK.ddp_kit_request_settings_id = dkc.ddp_kit_request_settings_id)) as subkits ON (subkits.kit_type_id = request.kit_type_id) " +
-                    "                                WHERE ex.ddp_participant_exit_id is null AND request.ddp_instance_id = ? AND (external_order_status not like '%CANCELLED%' or external_order_status is null) AND external_order_number IS NOT NULL " +
-                    "                                order by request.dsm_kit_request_id desc ";
+    public static final String SQL_SELECT_EXTERNAL_KIT_NOT_DONE = "SELECT * FROM (SELECT kt.kit_type_name, ddp_site.instance_name, "
+            + "ddp_site.ddp_instance_id, ddp_site.base_url, ddp_site.auth0_token, ddp_site.migrated_ddp, ddp_site.collaborator_id_prefix, "
+            + "req.bsp_collaborator_sample_id, req.ddp_participant_id, req.ddp_label, req.dsm_kit_request_id, "
+            + "req.bsp_collaborator_participant_id, req.kit_type_id, req.external_order_status, req.external_order_number, "
+            + "req.external_order_date, req.external_response, kt.no_return, req.created_by, kit.kit_label "
+            + "FROM kit_type kt, ddp_kit_request req, ddp_kit kit, ddp_instance ddp_site "
+            + "WHERE req.ddp_instance_id = ddp_site.ddp_instance_id AND req.kit_type_id = kt.kit_type_id "
+            + "AND kit.dsm_kit_request_id = req.dsm_kit_request_id and kit.test_result is null and kit.CE_order is null "
+            + "and (kit.kit_label is null or kit.tracking_return_id is null or kit.tracking_to_id is null)) AS request "
+            + "LEFT JOIN ddp_participant_exit ex ON (ex.ddp_instance_id = request.ddp_instance_id "
+            + "AND ex.ddp_participant_id = request.ddp_participant_id) "
+            + "LEFT JOIN (SELECT subK.kit_type_id, subK.external_name from ddp_kit_request_settings dkc "
+            + "LEFT JOIN sub_kits_settings subK ON (subK.ddp_kit_request_settings_id = dkc.ddp_kit_request_settings_id)) as subkits "
+            + "ON (subkits.kit_type_id = request.kit_type_id) "
+            + "WHERE ex.ddp_participant_exit_id is null AND request.ddp_instance_id = ? "
+            + "AND (external_order_status not like '%CANCELLED%' or external_order_status is null) AND external_order_number IS NOT NULL "
+            + "order by request.dsm_kit_request_id desc ";
     public static final String ORDER_ENDPOINT = "order";
     public static final String CONFIRM_ENDPOINT = "confirm";
     public static final String STATUS_ENDPOINT = "status";
@@ -99,10 +102,13 @@ public class GBFRequestUtil implements ExternalShipper {
     private static final Logger logger = LoggerFactory.getLogger(GBFRequestUtil.class);
     private static final String SQL_SELECT_KIT_REQUEST_BY_EXTERNAL_ORDER_NUMBER =
             "SELECT dsm_kit_request_id FROM ddp_kit_request req WHERE external_order_number = ?";
-    private static final String SQL_SELECT_SENT_KIT_FOR_NOTIFICATION_EXTERNAL_SHIPPER =
-            "select  eve.*,   request.ddp_participant_id,   request.ddp_label, request.upload_reason, request.ddp_kit_request_id, request.dsm_kit_request_id, realm.ddp_instance_id, realm.instance_name, realm.base_url, realm.auth0_token, realm.notification_recipients, realm.migrated_ddp, kit.receive_date, kit.scan_date" +
-                    "        from ddp_kit_request request, ddp_kit kit, event_type eve, ddp_instance realm where request.dsm_kit_request_id = kit.dsm_kit_request_id and request.ddp_instance_id = realm.ddp_instance_id" +
-                    "        and (eve.ddp_instance_id = request.ddp_instance_id and eve.kit_type_id = request.kit_type_id) and eve.event_type = \"SENT\" and request.external_order_number is not null and request.external_order_number= ?";
+    private static final String SQL_SELECT_SENT_KIT_FOR_NOTIFICATION_EXTERNAL_SHIPPER = "select  eve.*, request.ddp_participant_id, "
+            + "request.ddp_label, request.upload_reason, request.ddp_kit_request_id, request.dsm_kit_request_id, realm.ddp_instance_id, "
+            + "realm.instance_name, realm.base_url, realm.auth0_token, realm.notification_recipients, realm.migrated_ddp, "
+            + "kit.receive_date, kit.scan_date " + "from ddp_kit_request request, ddp_kit kit, event_type eve, ddp_instance realm "
+            + "where request.dsm_kit_request_id = kit.dsm_kit_request_id and request.ddp_instance_id = realm.ddp_instance_id "
+            + "and (eve.ddp_instance_id = request.ddp_instance_id and eve.kit_type_id = request.kit_type_id) "
+            + "and eve.event_type = \"SENT\" and request.external_order_number is not null and request.external_order_number= ? ";
     private static final String XML_NODE_EXPRESSION = "/ShippingConfirmations/ShippingConfirmation[@OrderNumber=\'%1\']";
     private static int additionalAttempts = 1;
     private static int sleepInMs = 500;
@@ -115,25 +121,19 @@ public class GBFRequestUtil implements ExternalShipper {
     private final String PROCESSING = "PROCESSING"; //INDICATES: the order is in our back-end system and being fulfilled
     private final String FORMS_PRINTED = "FORMS PRINTED"; //N/A to Promise project
     private final String DISTRIBUTED = "DISTRIBUTION";
-            //INDICATES: the order is in the final stages of shipping / Can no longer be ‘Cancelled’
+    //INDICATES: the order is in the final stages of shipping / Can no longer be ‘Cancelled’
     private final String SHIPPED = "SHIPPED"; //INDICATES: the order has been shipped and is with the carrier
     String DELIVERED = "DELIVERED";
-    private String SQL_SELECT_KIT_FOR_NOTIFICATION_EXTERNAL_SHIPPER =
-            "select  eve.*,   request.ddp_participant_id,   request.ddp_label,   request.dsm_kit_request_id, request.ddp_kit_request_id, request.upload_reason, " +
-                    "        realm.ddp_instance_id, realm.instance_name, realm.base_url, realm.auth0_token, realm.notification_recipients, realm.migrated_ddp, kit.receive_date, kit.scan_date" +
-                    "        FROM ddp_kit_request request, ddp_kit kit, event_type eve, ddp_instance realm where request.dsm_kit_request_id = kit.dsm_kit_request_id and request.ddp_instance_id = realm.ddp_instance_id" +
-                    "        and not exists " +
-                    "                    (select 1 FROM EVENT_QUEUE q" +
-                    "                    where q.DDP_INSTANCE_ID = realm.ddp_instance_id" +
-                    "                    and " +
-                    "                    q.EVENT_TYPE = eve.event_name" +
-                    "                    and " +
-                    "                    q.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id " +
-                    "                    and q.event_triggered = true" +
-                    "                    )" +
-                    "        and (eve.ddp_instance_id = request.ddp_instance_id and eve.kit_type_id = request.kit_type_id) and eve.event_type = ? " +
-                    "         and realm.ddp_instance_id = ?" +
-                    "          and kit.dsm_kit_request_id = ?";
+    private String SQL_SELECT_KIT_FOR_NOTIFICATION_EXTERNAL_SHIPPER = "select  eve.*, request.ddp_participant_id, request.ddp_label, "
+            + "request.dsm_kit_request_id, request.ddp_kit_request_id, request.upload_reason, realm.ddp_instance_id, realm.instance_name, "
+            + "realm.base_url, realm.auth0_token, realm.notification_recipients, realm.migrated_ddp, kit.receive_date, kit.scan_date"
+            + " FROM ddp_kit_request request, ddp_kit kit, event_type eve, ddp_instance realm "
+            + "where request.dsm_kit_request_id = kit.dsm_kit_request_id and request.ddp_instance_id = realm.ddp_instance_id"
+            + " and not exists (select 1 FROM EVENT_QUEUE q"
+            + " where q.DDP_INSTANCE_ID = realm.ddp_instance_id and q.EVENT_TYPE = eve.event_name and "
+            + " q.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id and q.event_triggered = true)"
+            + " and (eve.ddp_instance_id = request.ddp_instance_id and eve.kit_type_id = request.kit_type_id) and eve.event_type = ? "
+            + " and realm.ddp_instance_id = ? and kit.dsm_kit_request_id = ?";
     private String SELECT_BY_EXTERNAL_ORDER_NUMBER = "and request.external_order_number = ?";
 
     public GBFRequestUtil() {
@@ -167,9 +167,9 @@ public class GBFRequestUtil implements ExternalShipper {
                         if (counter > 0) {
                             kitLabel += "_" + counter;
                         }
-                        KitRequestExternal.updateKitRequestResponse(conn, confirmation.getTracking(), item.getReturnTracking(),
-                                kitLabel, SystemUtil.getLongFromDateString(confirmation.getShipDate()), EXTERNAL_SHIPPER_NAME,
-                                dsmKitRequestId, ddpInstanceId);
+                        KitRequestExternal.updateKitRequestResponse(conn, confirmation.getTracking(), item.getReturnTracking(), kitLabel,
+                                SystemUtil.getLongFromDateString(confirmation.getShipDate()), EXTERNAL_SHIPPER_NAME, dsmKitRequestId,
+                                ddpInstanceId);
                         counter++;
                         logger.info("Updated confirmation information for : " + dsmKitRequestId + " " + kitLabel);
                     }
@@ -333,7 +333,7 @@ public class GBFRequestUtil implements ExternalShipper {
 
     public static void markKitRequestAsOrdered(ArrayList<KitRequest> kitRequests) {
         String query =
-                "UPDATE ddp_kit_requests set external_order_status = 'ORDERED', external_order_date = ? where dsm_kit_request_id = ? ";
+                "UPDATE ddp_kit_requests set external_order_status = 'ORDERED', external_order_date = ? " + "where dsm_kit_request_id = ? ";
         for (KitRequest kitRequest : kitRequests) {
             SimpleResult results = inTransaction((conn) -> {
                 SimpleResult dbVals = new SimpleResult();
@@ -369,14 +369,13 @@ public class GBFRequestUtil implements ExternalShipper {
                 // kit was uploaded
                 if (kit instanceof KitUploadObject) {
                     com.easypost.model.Address participantAddress = easyPostUtil.getAddress(((KitUploadObject) kit).getEasyPostAddressId());
-                    address = new Address(participantAddress.getName(),
-                            participantAddress.getStreet1(), participantAddress.getStreet2(), participantAddress.getCity(),
-                            participantAddress.getState(), participantAddress.getZip(), participantAddress.getCountry(),
-                            StringUtils.isNotBlank(((KitUploadObject) kit).getPhoneNumber()) ?
-                                    ((KitUploadObject) kit).getPhoneNumber() : participantAddress.getPhone());
-                }
-                // kit per ddp request
-                else if (kit.getParticipant() != null) {
+                    address = new Address(participantAddress.getName(), participantAddress.getStreet1(), participantAddress.getStreet2(),
+                            participantAddress.getCity(), participantAddress.getState(), participantAddress.getZip(),
+                            participantAddress.getCountry(),
+                            StringUtils.isNotBlank(((KitUploadObject) kit).getPhoneNumber()) ? ((KitUploadObject) kit).getPhoneNumber() :
+                                    participantAddress.getPhone());
+                } else if (kit.getParticipant() != null) {
+                    // kit per ddp request
                     address = new Address(kit.getParticipant().getFirstName() + " " + kit.getParticipant().getLastName(),
                             kit.getParticipant().getStreet1(), kit.getParticipant().getStreet2(), kit.getParticipant().getCity(),
                             kit.getParticipant().getState(), kit.getParticipant().getPostalCode(), kit.getParticipant().getCountry(),
@@ -404,7 +403,7 @@ public class GBFRequestUtil implements ExternalShipper {
                 String orderXml = GBFRequestUtil.orderXmlToString(Orders.class, orders);
 
                 //                logger.info("orderXML: " + orderXml);
-                boolean test = DSMServer.isTest(getExternalShipperName());//true for dev in `not-secret.conf`
+                boolean test = DSMServer.isTest(getExternalShipperName()); //true for dev in `not-secret.conf`
                 JsonObject payload = new JsonObject();
                 payload.addProperty("orderXml", orderXml);
                 payload.addProperty("test", test);
@@ -464,28 +463,28 @@ public class GBFRequestUtil implements ExternalShipper {
                 for (Status status : statuses) {
                     logger.info("Got Kit status in GBF Response is " + status.getOrderStatus() + " for " + status.getOrderNumber());
                     if (!status.getOrderStatus().equals(kit.getExternalOrderStatus())) {
-                        logger.info(
-                                "Kit status from GBF is changed from " + kit.getExternalOrderStatus() + " to " + status.getOrderStatus() +
-                                        " for kit: " + kit.getExternalOrderNumber());
+                        logger.info("Kit status from GBF is changed from " + kit.getExternalOrderStatus() + " to " + status.getOrderStatus()
+                                + " for kit: " + kit.getExternalOrderNumber());
                     }
                     KitDDPNotification kitDDPNotification =
                             KitDDPNotification.getKitDDPNotification(SQL_SELECT_SENT_KIT_FOR_NOTIFICATION_EXTERNAL_SHIPPER,
-                                    kit.getExternalOrderNumber(),
-                                    2);//todo change this to the number of subkits but for now 2 for test boston works
-                    if (status.getOrderStatus().equals(NOT_FOUND) && StringUtils.isNotBlank(kit.getExternalOrderStatus()) &&
-                            kit.getExternalOrderStatus().equals("NOT FOUND")
+                                    kit.getExternalOrderNumber(), 2);
+                    //todo change this to the number of subkits but for now 2 for test boston works
+                    if (status.getOrderStatus().equals(NOT_FOUND) && StringUtils.isNotBlank(kit.getExternalOrderStatus())
+                            && kit.getExternalOrderStatus().equals("NOT FOUND")
                             && System.currentTimeMillis() - kit.getExternalOrderDate() >= TimeUnit.HOURS.toMillis(24)) {
                         List<String> dsmKitRequestIds = getDSMKitRequestIds(status.getOrderNumber());
                         if (dsmKitRequestIds != null && !dsmKitRequestIds.isEmpty()) {
                             for (String dsmKitRequestId : dsmKitRequestIds) {
                                 KitRequestExternal.updateKitRequest(conn, status.getOrderStatus(), System.currentTimeMillis(),
-                                        dsmKitRequestId, instanceId);// in order to update time for the  next 24 hour check we need this
+                                        dsmKitRequestId, instanceId); // in order to update time for the  next 24 hour check we need this
                             }
                         }
-                        logger.warn("Kit Request with external order number " + kit.getExternalOrderNumber() +
-                                "has not been shipped in the last 24 hours! ");//todo pegah uncomment for production
-                    } else if (status.getOrderStatus().contains(SHIPPED) && (StringUtils.isBlank(kit.getExternalOrderStatus()) ||
-                            !kit.getExternalOrderStatus().contains(SHIPPED))) {
+                        logger.warn("Kit Request with external order number " + kit.getExternalOrderNumber()
+                                + "has not been shipped in the last 24 hours! ");
+                        //todo pegah uncomment for production
+                    } else if (status.getOrderStatus().contains(SHIPPED) && (StringUtils.isBlank(kit.getExternalOrderStatus())
+                            || !kit.getExternalOrderStatus().contains(SHIPPED))) {
                         if (kitDDPNotification != null) {
                             logger.info("Triggering DDP for shipped kit with external order number: " + kit.getExternalOrderNumber());
                             if (gbfShippedTriggerDSSDelivered) {
@@ -494,8 +493,8 @@ public class GBFRequestUtil implements ExternalShipper {
                                         new String[] {DELIVERED, String.valueOf(instanceId), String.valueOf(kit.getDsmKitRequestId()),
                                                 kit.getExternalOrderNumber()}, 1);
                                 if (kitDeliveredNotification != null) {
-                                    logger.info("Triggering DDP for kit 'DELIVERED' with external order number: " +
-                                            kit.getExternalOrderNumber());
+                                    logger.info("Triggering DDP for kit 'DELIVERED' with external order number: "
+                                            + kit.getExternalOrderNumber());
                                     EventUtil.triggerDDP(conn, kitDeliveredNotification);
                                 } else {
                                     logger.error("delivered kitDDPNotification was null for " + kit.getExternalOrderNumber());
@@ -505,14 +504,16 @@ public class GBFRequestUtil implements ExternalShipper {
                         } else {
                             logger.error("kitDDPNotification was null for " + kit.getExternalOrderNumber());
                         }
-                    } else if (status.getOrderStatus().contains("CANCELLED") && (StringUtils.isBlank(kit.getExternalOrderStatus()) ||
-                            (StringUtils.isNotBlank(kit.getExternalOrderStatus()) &&
-                                    !kit.getExternalOrderStatus().contains("CANCELLED")))) {//todo uncomment for prod
-                        logger.error("Kit Request with external order number " + kit.getExternalOrderNumber() +
-                                "has got cancelled by GBF!");//todo pegah uncomment for production
+                    } else if (status.getOrderStatus().contains("CANCELLED") && (StringUtils.isBlank(kit.getExternalOrderStatus()) || (
+                            StringUtils.isNotBlank(kit.getExternalOrderStatus()) && !kit.getExternalOrderStatus().contains("CANCELLED")))) {
+                        //todo uncomment for prod
+                        logger.error(
+                                "Kit Request with external order number " + kit.getExternalOrderNumber() + "has got cancelled by GBF!");
+                        //todo pegah uncomment for production
                     }
-                    if (StringUtils.isBlank(kit.getExternalOrderStatus()) ||
-                            !kit.getExternalOrderStatus().equals(status.getOrderStatus())) {// if changed
+                    if (StringUtils.isBlank(kit.getExternalOrderStatus()) || !kit.getExternalOrderStatus()
+                            .equals(status.getOrderStatus())) {
+                        // if changed
                         List<String> dsmKitRequestIds = getDSMKitRequestIds(status.getOrderNumber());
                         if (dsmKitRequestIds != null && !dsmKitRequestIds.isEmpty()) {
                             for (String dsmKitRequestId : dsmKitRequestIds) {
@@ -531,7 +532,8 @@ public class GBFRequestUtil implements ExternalShipper {
     }
 
     // The confirmation, dependent upon level of detail required, is a shipping receipt to prove completion.
-    // Confirmation may include order number, client(participant) ID, outbound tracking number, return tracking number(s), line item(s), kit serial number(s), etc.
+    // Confirmation may include order number, client(participant) ID, outbound tracking number, return tracking number(s),
+    // line item(s), kit serial number(s), etc.
     public void orderConfirmation(long startDate, long endDate, int ddpInstanceId) throws Exception {
         JsonObject payload = new JsonObject();
         payload.addProperty("startDate", SystemUtil.getDateFormatted(startDate));
@@ -591,11 +593,9 @@ public class GBFRequestUtil implements ExternalShipper {
                     while (rs.next()) {
                         String ddpParticipantId = rs.getString(DBConstants.DDP_PARTICIPANT_ID);
                         if (StringUtils.isNotBlank(ddpParticipantId)) {
-                            KitRequest kitRequest = new KitRequest(rs.getLong(DBConstants.DSM_KIT_REQUEST_ID), ddpParticipantId,
-                                    null, null, rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), null,
-                                    rs.getString(DBConstants.EXTERNAL_ORDER_STATUS),
-                                    rs.getString("subkits." + DBConstants.EXTERNAL_KIT_NAME),
-                                    rs.getLong(DBConstants.EXTERNAL_ORDER_DATE));
+                            KitRequest kitRequest = new KitRequest(rs.getLong(DBConstants.DSM_KIT_REQUEST_ID), ddpParticipantId, null, null,
+                                    rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), null, rs.getString(DBConstants.EXTERNAL_ORDER_STATUS),
+                                    rs.getString("subkits." + DBConstants.EXTERNAL_KIT_NAME), rs.getLong(DBConstants.EXTERNAL_ORDER_DATE));
                             try {
                                 // keep track of which request ids we've already asked about, since this
                                 // result set may show subkits with the same external order id
@@ -641,23 +641,22 @@ public class GBFRequestUtil implements ExternalShipper {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         String ddpParticipantId = rs.getString(DBConstants.DDP_PARTICIPANT_ID);
-//                        logger.info("querying ES for ddpParticipantId: "+ddpParticipantId);
+                        //                        logger.info("querying ES for ddpParticipantId: "+ddpParticipantId);
                         if (StringUtils.isNotBlank(ddpParticipantId)) {
-//                            Map participantsESData = getParticipant(ddpInstance, ddpParticipantId);
-//                            if (participantsESData != null && !participantsESData.isEmpty()) {
-//                                DDPParticipant ddpParticipant = ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData, ddpParticipantId);
-//                                logger.info("ddpParticipant found: "+ddpParticipant.getParticipantId());
-//                                if (ddpParticipant != null) {
-                            kitRequests.add(new KitRequest(rs.getLong(DBConstants.DSM_KIT_REQUEST_ID), ddpParticipantId,
-                                    null, null, rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), null,
-                                    rs.getString(DBConstants.EXTERNAL_ORDER_STATUS),
-                                    rs.getString("subkits." + DBConstants.EXTERNAL_KIT_NAME),
-                                    rs.getLong(DBConstants.EXTERNAL_ORDER_DATE)));
-//                                }
-//                            }
-//                            else {
-//                                logger.error("Participant not found in ES! " + ddpParticipantId);
-//                            }
+                            //                            Map participantsESData = getParticipant(ddpInstance, ddpParticipantId);
+                            //                            if (participantsESData != null && !participantsESData.isEmpty()) {
+                            //                                DDPParticipant ddpParticipant = ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData,
+                            //                                ddpParticipantId);
+                            //                                logger.info("ddpParticipant found: "+ddpParticipant.getParticipantId());
+                            //                                if (ddpParticipant != null) {
+                            kitRequests.add(new KitRequest(rs.getLong(DBConstants.DSM_KIT_REQUEST_ID), ddpParticipantId, null, null,
+                                    rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), null, rs.getString(DBConstants.EXTERNAL_ORDER_STATUS),
+                                    rs.getString("subkits." + DBConstants.EXTERNAL_KIT_NAME), rs.getLong(DBConstants.EXTERNAL_ORDER_DATE)));
+                            //                                }
+                            //                            }
+                            //                            else {
+                            //                                logger.error("Participant not found in ES! " + ddpParticipantId);
+                            //                            }
 
                         }
                     }

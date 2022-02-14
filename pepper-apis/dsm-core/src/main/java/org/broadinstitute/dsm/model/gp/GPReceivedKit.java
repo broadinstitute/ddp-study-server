@@ -32,9 +32,8 @@ public class GPReceivedKit {
         InstanceSettings instanceSettings = new InstanceSettings();
         BSPKitDao bspKitDao = new BSPKitDao();
         InstanceSettingsDto instanceSettingsDto = instanceSettings.getInstanceSettings(bspKitQueryResult.getInstanceName());
-        instanceSettingsDto.getKitBehaviorChange()
-                .flatMap(kitBehavior -> kitBehavior.stream().filter(o -> o.getName().equals(InstanceSettings.INSTANCE_SETTING_RECEIVED))
-                        .findFirst())
+        instanceSettingsDto.getKitBehaviorChange().flatMap(kitBehavior -> kitBehavior.stream().filter(
+                o -> o.getName().equals(InstanceSettings.INSTANCE_SETTING_RECEIVED)).findFirst())
                 .ifPresentOrElse(received -> {
                     Map<String, Map<String, Object>> participants = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance,
                             ElasticSearchUtil.BY_GUID + bspKitQueryResult.getDdpParticipantId());
@@ -48,9 +47,9 @@ public class GPReceivedKit {
                             triggerDDP = false;
                             if (InstanceSettings.TYPE_NOTIFICATION.equals(received.getType())) {
                                 String message =
-                                        "Kit of participant " + bspKitQueryResult.getBspParticipantId() + " was received by GP. <br> " +
-                                                "CollaboratorSampleId:  " + bspKitQueryResult.getBspSampleId() + " <br> " +
-                                                received.getValue();
+                                        "Kit of participant " + bspKitQueryResult.getBspParticipantId() + " was received by GP. <br> "
+                                                + "CollaboratorSampleId:  " + bspKitQueryResult.getBspSampleId() + " <br> "
+                                                + received.getValue();
                                 notificationUtil.sentNotification(bspKitQueryResult.getNotificationRecipient(), message,
                                         NotificationUtil.UNIVERSAL_NOTIFICATION_TEMPLATE, NotificationUtil.DSM_SUBJECT);
                             } else {
@@ -58,8 +57,7 @@ public class GPReceivedKit {
                             }
                         }
                         updateKitAndExport(kitLabel, bspKitDao, bspKitQueryResult, triggerDDP);
-                    }
-                }, () -> {
+                    }}, () -> {
                     updateKitAndExport(kitLabel, bspKitDao, bspKitQueryResult, true);
                 });
 
@@ -76,15 +74,9 @@ public class GPReceivedKit {
 
         logger.info("Returning info for kit w/ label " + kitLabel + " for " + bspKitQueryResult.getInstanceName());
         logger.info("Kit returned has sample id " + bspSampleId);
-        return Optional.of(new KitInfo(bspKitQueryResult.getBspCollection(),
-                bspOrganism,
-                "U",
-                bspParticipantId,
-                bspSampleId,
-                bspMaterialType,
-                bspReceptacleType,
-                ddpInstance.getName(),
-                bspKitQueryResult.getKitTypeName()));
+        return Optional.of(
+                new KitInfo(bspKitQueryResult.getBspCollection(), bspOrganism, "U", bspParticipantId, bspSampleId, bspMaterialType,
+                        bspReceptacleType, ddpInstance.getName(), bspKitQueryResult.getKitTypeName()));
 
     }
 
@@ -100,8 +92,7 @@ public class GPReceivedKit {
                 new DDPInstanceDao().getDDPInstanceByInstanceName(maybeBspKitQueryResult.getInstanceName()).orElseThrow();
 
         UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.KIT_LABEL,
-                        ESObjectConstants.KIT_LABEL, kitLabel)
-                .export();
+                ESObjectConstants.KIT_LABEL, kitLabel).export();
     }
 
     private static void writeSampleReceivedToES(DDPInstance ddpInstance, BSPKitDto bspKitInfo) {

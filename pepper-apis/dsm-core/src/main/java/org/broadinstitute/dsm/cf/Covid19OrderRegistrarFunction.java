@@ -89,8 +89,8 @@ public class Covid19OrderRegistrarFunction implements BackgroundFunction<Covid19
             if (orderResponse.hasError()) {
                 logger.log(Level.SEVERE, "Trouble placing order for " + orderPayload.getKitLabel() + ":" + orderResponse.getError());
             } else {
-                logger.info(orderPayload.getKitLabel() + " has been placed for " + orderPayload.getParticipantHruid() + ".  CE id is " +
-                        orderResponse.getHandle());
+                logger.info(orderPayload.getKitLabel() + " has been placed for " + orderPayload.getParticipantHruid() + ".  CE id is "
+                        + orderResponse.getHandle());
                 try (Connection conn = dataSource.getConnection()) {
                     DdpKit.updateCEOrdered(conn, true, orderPayload.getKitLabel());
                 }
@@ -145,12 +145,8 @@ public class Covid19OrderRegistrarFunction implements BackgroundFunction<Covid19
 
         @Override
         public String toString() {
-            return "OrderPayload{" +
-                    "participantHruid='" + participantHruid + '\'' +
-                    ", collectionTime='" + collectionTime + '\'' +
-                    ", kitLabel='" + kitLabel + '\'' +
-                    ", externalOrderId='" + externalOrderId + '\'' +
-                    '}';
+            return "OrderPayload{" + "participantHruid='" + participantHruid + '\'' + ", collectionTime='" + collectionTime + '\''
+                    + ", kitLabel='" + kitLabel + '\'' + ", externalOrderId='" + externalOrderId + '\'' + '}';
         }
     }
 }

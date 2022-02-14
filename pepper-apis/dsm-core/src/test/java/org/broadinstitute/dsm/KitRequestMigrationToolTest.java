@@ -9,7 +9,6 @@ import org.broadinstitute.dsm.db.LatestKitRequest;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
-import org.broadinstitute.dsm.util.TestUtil;
 import org.broadinstitute.dsm.util.tools.KitRequestMigrationTool;
 import org.broadinstitute.dsm.util.tools.util.DBUtil;
 import org.junit.AfterClass;
@@ -41,7 +40,8 @@ public class KitRequestMigrationToolTest extends TestHelper {
     @AfterClass
     public static void stopMockServer() {
         TransactionWrapper.reset();
-        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS), cfg.getString(ApplicationConfigConstants.DSM_DB_URL)));
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM,
+                cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS), cfg.getString(ApplicationConfigConstants.DSM_DB_URL)));
         //delete all KitRequests added by the test
         DBTestUtil.deleteAllKitData("66666");
         DBTestUtil.deleteAllKitData("66667");
@@ -55,10 +55,9 @@ public class KitRequestMigrationToolTest extends TestHelper {
 
     @Test
     public void testMigrationTool() {
-        KitRequestMigrationTool.argumentsForTesting("config/test-config.conf", TEST_DDP, "BLOOD",
-                "KitRequestMigration_kits.txt", "txt");
-//        KitRequestMigrationTool.argumentsForTesting("config/test-config.conf", MBC, "SALIVA",
-//                "MBC_Salivakits_06212017.txt", "txt");
+        KitRequestMigrationTool.argumentsForTesting("config/test-config.conf", TEST_DDP, "BLOOD", "KitRequestMigration_kits.txt", "txt");
+        //        KitRequestMigrationTool.argumentsForTesting("config/test-config.conf", MBC, "SALIVA",
+        //                "MBC_Salivakits_06212017.txt", "txt");
         KitRequestMigrationTool.littleMain();
         List<String> strings = new ArrayList<>();
         strings.add(DBConstants.HAS_KIT_REQUEST_ENDPOINTS);

@@ -32,37 +32,31 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Data
-@TableName(
-        name = DBConstants.DDP_TISSUE,
-        alias = DBConstants.DDP_TISSUE_ALIAS,
-        primaryKey = DBConstants.TISSUE_ID,
-        columnPrefix = "")
+@TableName(name = DBConstants.DDP_TISSUE, alias = DBConstants.DDP_TISSUE_ALIAS, primaryKey = DBConstants.TISSUE_ID, columnPrefix = "")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Tissue {
 
-    public static final String SQL_SELECT_TISSUE_LAST_CHANGED = "SELECT t.last_changed FROM ddp_institution inst " +
-            "LEFT JOIN ddp_participant as p on (p.participant_id = inst.participant_id) LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) " +
-            "LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id AND NOT m.deleted <=> 1) LEFT JOIN ddp_onc_history_detail as oD on (m.medical_record_id = oD.medical_record_id) " +
-            "LEFT JOIN ddp_tissue as t on (t.onc_history_detail_id = oD.onc_history_detail_id) WHERE p.participant_id = ?";
+    public static final String SQL_SELECT_TISSUE_LAST_CHANGED = "SELECT t.last_changed FROM ddp_institution inst "
+            + "LEFT JOIN ddp_participant as p on (p.participant_id = inst.participant_id) "
+            + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
+            + "LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id AND NOT m.deleted <=> 1) "
+            + "LEFT JOIN ddp_onc_history_detail as oD on (m.medical_record_id = oD.medical_record_id) "
+            + "LEFT JOIN ddp_tissue as t on (t.onc_history_detail_id = oD.onc_history_detail_id) WHERE p.participant_id = ?";
     private static final Logger logger = LoggerFactory.getLogger(Tissue.class);
     private static final String SQL_SELECT_TISSUE =
             "SELECT tissue_id, onc_history_detail_id, notes, count_received, tissue_type, tissue_site, tumor_type, h_e, "
-                    +
-                    "pathology_report, collaborator_sample_id, block_sent, expected_return, return_date, return_fedex_id, scrolls_received, sk_id, sm_id, "
-                    +
-                    "scrolls_count, uss_count, blocks_count, h_e_count, first_sm_id, sent_gp, last_changed, changed_by, additional_tissue_value_json, shl_work_number, "
-                    +
-                    "tumor_percentage, tissue_sequence, sm.sm_id_value, sm.sm_id_type_id, sm.sm_id_pk, sm.deleted, sm.tissue_id FROM ddp_tissue t "
+                    + "pathology_report, collaborator_sample_id, block_sent, expected_return, return_date, return_fedex_id, "
+                    + "scrolls_received, sk_id, sm_id, "
+                    + "scrolls_count, uss_count, blocks_count, h_e_count, first_sm_id, sent_gp, last_changed, changed_by, "
+                    + "additional_tissue_value_json, shl_work_number, "
+                    + "tumor_percentage, tissue_sequence, sm.sm_id_value, sm.sm_id_type_id, sm.sm_id_pk, sm.deleted, sm.tissue_id "
+                    + "FROM ddp_tissue t "
                     + "LEFT JOIN sm_id sm on (sm.tissue_id = t.tissue_id AND NOT sm.deleted <=> 1 AND NOT t.deleted <=> 1) "
                     + "WHERE NOT (t.deleted <=> 1) AND onc_history_detail_id = ?";
     private static final String SQL_INSERT_TISSUE =
             "INSERT INTO ddp_tissue SET onc_history_detail_id = ?, last_changed = ?, changed_by = ?";
-    @TableName(
-            name = DBConstants.DDP_TISSUE,
-            alias = DBConstants.DDP_TISSUE_ALIAS,
-            primaryKey = DBConstants.TISSUE_ID,
-            columnPrefix = "")
+    @TableName(name = DBConstants.DDP_TISSUE, alias = DBConstants.DDP_TISSUE_ALIAS, primaryKey = DBConstants.TISSUE_ID, columnPrefix = "")
     @ColumnName(DBConstants.TISSUE_ID)
     private long tissueId;
 
@@ -153,13 +147,12 @@ public class Tissue {
     public Tissue() {
     }
 
-    public Tissue(long tissueId, long oncHistoryDetailId, String notes, long countReceived, String tissueType,
-                  String tissueSite, String tumorType, String hE, String pathologyReport, String collaboratorSampleId,
-                  String blockSent, String scrollsReceived, String skId, String smId, String sentGp, String firstSmId,
-                  String additionalValuesJson, String expectedReturn, String returnDate,
-                  String returnFedexId, String shlWorkNumber, String tumorPercentage, String tissueSequence, long scrollsCount,
-                  long ussCount, long blocksCount, long hECount, List<TissueSmId> ussSMIDs, List<TissueSmId> scrollSMIDs,
-                  List<TissueSmId> heSMID) {
+    public Tissue(long tissueId, long oncHistoryDetailId, String notes, long countReceived, String tissueType, String tissueSite,
+                  String tumorType, String hE, String pathologyReport, String collaboratorSampleId, String blockSent,
+                  String scrollsReceived, String skId, String smId, String sentGp, String firstSmId, String additionalValuesJson,
+                  String expectedReturn, String returnDate, String returnFedexId, String shlWorkNumber, String tumorPercentage,
+                  String tissueSequence, long scrollsCount, long ussCount, long blocksCount, long hECount, List<TissueSmId> ussSMIDs,
+                  List<TissueSmId> scrollSMIDs, List<TissueSmId> heSMID) {
         this.tissueId = tissueId;
         this.oncHistoryDetailId = oncHistoryDetailId;
         this.notes = notes;
@@ -197,35 +190,19 @@ public class Tissue {
         if (StringUtils.isBlank(tissueId)) {
             return null;
         }
-        Tissue tissue = new Tissue(
-                rs.getLong(DBConstants.TISSUE_ID),
-                rs.getLong(DBConstants.ONC_HISTORY_DETAIL_ID),
+        Tissue tissue = new Tissue(rs.getLong(DBConstants.TISSUE_ID), rs.getLong(DBConstants.ONC_HISTORY_DETAIL_ID),
                 rs.getString(DBConstants.DDP_TISSUE_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.NOTES),
-                rs.getInt(DBConstants.COUNT_RECEIVED),
-                rs.getString(DBConstants.TISSUE_TYPE),
-                rs.getString(DBConstants.TISSUE_SITE),
-                rs.getString(DBConstants.TUMOR_TYPE),
-                rs.getString(DBConstants.H_E),
-                rs.getString(DBConstants.PATHOLOGY_REPORT),
-                rs.getString(DBConstants.COLLABORATOR_SAMPLE_ID),
-                rs.getString(DBConstants.BLOCK_SENT),
-                rs.getString(DBConstants.SCROLLS_RECEIVED),
-                rs.getString(DBConstants.SK_ID),
-                rs.getString(DBConstants.SM_ID),
-                rs.getString(DBConstants.SENT_GP),
-                rs.getString(DBConstants.FIRST_SM_ID),
-                rs.getString(DBConstants.ADDITIONAL_TISSUE_VALUES),
-                rs.getString(DBConstants.EXPECTED_RETURN),
-                rs.getString(DBConstants.TISSUE_RETURN_DATE),
-                rs.getString(DBConstants.RETURN_FEDEX_ID),
-                rs.getString(DBConstants.SHL_WORK_NUMBER),
-                rs.getString(DBConstants.TUMOR_PERCENTAGE),
-                rs.getString(DBConstants.TISSUE_SEQUENCE),
-                rs.getLong(DBConstants.SCROLLS_COUNT),
-                rs.getLong(DBConstants.USS_COUNT),
-                rs.getLong(DBConstants.BLOCKS_COUNT),
-                rs.getLong(DBConstants.H_E_COUNT),
-                new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+                rs.getInt(DBConstants.COUNT_RECEIVED), rs.getString(DBConstants.TISSUE_TYPE), rs.getString(DBConstants.TISSUE_SITE),
+                rs.getString(DBConstants.TUMOR_TYPE), rs.getString(DBConstants.H_E), rs.getString(DBConstants.PATHOLOGY_REPORT),
+                rs.getString(DBConstants.COLLABORATOR_SAMPLE_ID), rs.getString(DBConstants.BLOCK_SENT),
+                rs.getString(DBConstants.SCROLLS_RECEIVED), rs.getString(DBConstants.SK_ID), rs.getString(DBConstants.SM_ID),
+                rs.getString(DBConstants.SENT_GP), rs.getString(DBConstants.FIRST_SM_ID),
+                rs.getString(DBConstants.ADDITIONAL_TISSUE_VALUES), rs.getString(DBConstants.EXPECTED_RETURN),
+                rs.getString(DBConstants.TISSUE_RETURN_DATE), rs.getString(DBConstants.RETURN_FEDEX_ID),
+                rs.getString(DBConstants.SHL_WORK_NUMBER), rs.getString(DBConstants.TUMOR_PERCENTAGE),
+                rs.getString(DBConstants.TISSUE_SEQUENCE), rs.getLong(DBConstants.SCROLLS_COUNT), rs.getLong(DBConstants.USS_COUNT),
+                rs.getLong(DBConstants.BLOCKS_COUNT), rs.getLong(DBConstants.H_E_COUNT), new ArrayList<>(), new ArrayList<>(),
+                new ArrayList<>());
         return tissue;
     }
 
@@ -335,6 +312,8 @@ public class Tissue {
                     this.scrollSMID.add(tissueSmId);
                     break;
                 }
+                default:
+                    logger.error("Unknown type");
             }
         } catch (SQLException throwables) {
             throwables.printStackTrace();

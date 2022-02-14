@@ -58,8 +58,8 @@ public abstract class BaseParser implements Parser {
     protected abstract Object forString(String value);
 
     protected boolean isBoolean(String value) {
-        return convertBoolean(value).equalsIgnoreCase(Boolean.TRUE.toString()) ||
-                convertBoolean(value).equalsIgnoreCase(Boolean.FALSE.toString());
+        return convertBoolean(value).equalsIgnoreCase(Boolean.TRUE.toString()) || convertBoolean(value).equalsIgnoreCase(
+                Boolean.FALSE.toString());
     }
 
     public String convertBoolean(String value) {

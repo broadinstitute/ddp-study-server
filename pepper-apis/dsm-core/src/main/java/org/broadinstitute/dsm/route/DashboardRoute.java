@@ -61,15 +61,21 @@ public class DashboardRoute extends RequestHandler {
     private static final Logger logger = LoggerFactory.getLogger(DashboardRoute.class);
 
     private static final String SQL_SELECT_KIT_REQUESTS_SENT =
-            "SELECT kit.scan_date, realm.instance_name, request.ddp_instance_id FROM ddp_kit_request request " +
-                    "LEFT JOIN ddp_kit kit on (kit.dsm_kit_request_id = request.dsm_kit_request_id) LEFT JOIN ddp_instance realm on (request.ddp_instance_id = realm.ddp_instance_id) " +
-                    "LEFT JOIN ddp_participant_exit ex on (ex.ddp_participant_id = request.ddp_participant_id and ex.ddp_instance_id = request.ddp_instance_id) " +
-                    "WHERE scan_date IS NOT NULL AND ex.ddp_participant_exit_id IS NULL AND realm.instance_name = ? AND request.kit_type_id = ?";
+            "SELECT kit.scan_date, realm.instance_name, request.ddp_instance_id FROM ddp_kit_request request "
+                    + "LEFT JOIN ddp_kit kit on (kit.dsm_kit_request_id = request.dsm_kit_request_id) "
+                    + "LEFT JOIN ddp_instance realm on (request.ddp_instance_id = realm.ddp_instance_id) "
+                    + "LEFT JOIN ddp_participant_exit ex on (ex.ddp_participant_id = request.ddp_participant_id "
+                    + "and ex.ddp_instance_id = request.ddp_instance_id) "
+                    + "WHERE scan_date IS NOT NULL AND ex.ddp_participant_exit_id IS NULL AND realm.instance_name = ? "
+                    + "AND request.kit_type_id = ?";
     private static final String SQL_SELECT_KIT_REQUESTS_DEACTIVATED =
-            "SELECT kit.receive_date, realm.instance_name, request.ddp_instance_id FROM ddp_kit_request request " +
-                    "LEFT JOIN ddp_kit kit on (kit.dsm_kit_request_id = request.dsm_kit_request_id) LEFT JOIN ddp_instance realm on (request.ddp_instance_id = realm.ddp_instance_id) " +
-                    "LEFT JOIN ddp_participant_exit ex on (ex.ddp_participant_id = request.ddp_participant_id and ex.ddp_instance_id = request.ddp_instance_id) " +
-                    "WHERE receive_date IS NOT NULL AND ex.ddp_participant_exit_id IS NULL AND realm.instance_name = ? AND request.kit_type_id = ?";
+            "SELECT kit.receive_date, realm.instance_name, request.ddp_instance_id FROM ddp_kit_request request "
+                    + "LEFT JOIN ddp_kit kit on (kit.dsm_kit_request_id = request.dsm_kit_request_id) "
+                    + "LEFT JOIN ddp_instance realm on (request.ddp_instance_id = realm.ddp_instance_id) "
+                    + "LEFT JOIN ddp_participant_exit ex on (ex.ddp_participant_id = request.ddp_participant_id "
+                    + "and ex.ddp_instance_id = request.ddp_instance_id) "
+                    + "WHERE receive_date IS NOT NULL AND ex.ddp_participant_exit_id IS NULL AND realm.instance_name = ? "
+                    + "AND request.kit_type_id = ?";
 
     private final KitUtil kitUtil;
 
@@ -113,10 +119,10 @@ public class DashboardRoute extends RequestHandler {
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         try {
             String userIdRequest = UserUtil.getUserId(request);
-            if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest) ||
-                    UserUtil.checkUserAccess(null, userId, "kit_shipping_view", userIdRequest)
-                    || UserUtil.checkUserAccess(null, userId, "mr_view", userIdRequest) ||
-                    UserUtil.checkUserAccess(null, userId, "pt_list_view", userIdRequest)) {
+            if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest)
+                    || UserUtil.checkUserAccess(null, userId, "kit_shipping_view", userIdRequest)
+                    || UserUtil.checkUserAccess(null, userId, "mr_view", userIdRequest)
+                    || UserUtil.checkUserAccess(null, userId, "pt_list_view", userIdRequest)) {
                 String startDate = request.params(RequestParameter.START);
                 if (StringUtils.isNotBlank(startDate)) {
                     String endDate = request.params(RequestParameter.END);
@@ -347,8 +353,8 @@ public class DashboardRoute extends RequestHandler {
 
             if (wrapper.getAbstractionActivities() != null && !wrapper.getAbstractionActivities().isEmpty()) {
                 for (AbstractionActivity activity : wrapper.getAbstractionActivities()) {
-                    if (AbstractionUtil.ACTIVITY_FINAL.equals(activity.getActivity()) &&
-                            AbstractionUtil.STATUS_DONE.equals(activity.getAStatus())) {
+                    if (AbstractionUtil.ACTIVITY_FINAL.equals(activity.getActivity())
+                            && AbstractionUtil.STATUS_DONE.equals(activity.getAStatus())) {
                         incrementCounter(dashboardValues, "abstraction.done");
                         incrementCounterPeriod(dashboardValuesPeriod, "abstraction.done", activity.getLastChanged(), start, end);
                     }
@@ -410,9 +416,10 @@ public class DashboardRoute extends RequestHandler {
                     medicalRecord.getFaxSent2(), medicalRecord.getFaxSent(), medicalRecord.getMrReceived(), start, end,
                     "notRequested", "faxSent", "mrReceived", medicalRecord.isDuplicate());
 
-            // MR ready to request (at least saliva or blood received and mr not flagged as "duplicate" or "problem" or "unable to obtain" and fax sent date is not entered)
-            if (!medicalRecord.isDuplicate() && !medicalRecord.isMrProblem() && !medicalRecord.isUnableObtain() &&
-                    StringUtils.isBlank(medicalRecord.getFaxSent())) {
+            // MR ready to request (at least saliva or blood received and mr not flagged as "duplicate" or "problem" or "unable to obtain"
+            // and fax sent date is not entered)
+            if (!medicalRecord.isDuplicate() && !medicalRecord.isMrProblem() && !medicalRecord.isUnableObtain()
+                    && StringUtils.isBlank(medicalRecord.getFaxSent())) {
                 List<KitRequestShipping> kits = kitRequests.get(medicalRecord.getDdpParticipantId());
                 if (kits != null) {
                     for (KitRequestShipping kit : kits) {

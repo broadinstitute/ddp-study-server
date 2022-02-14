@@ -33,9 +33,8 @@ public class PDFAudit {
                             // ddp without 'standard' consent and release pdfs
                             instance = DDPInstance.getDDPInstanceWithRole(request.getRealm(),
                                     DBConstants.PDF_DOWNLOAD); //the role for release will get checked in makePDF
-                            if (instance != null && StringUtils.isNotBlank(instance.getBaseUrl()) &&
-                                    StringUtils.isNotBlank(instance.getParticipantIndexES())
-                                    && instance.isHasRole()) {
+                            if (instance != null && StringUtils.isNotBlank(instance.getBaseUrl()) && StringUtils.isNotBlank(
+                                    instance.getParticipantIndexES()) && instance.isHasRole()) {
                                 DDPRequestUtil.makeNonStandardPDF(instance, request.getParticipantId(), request.getCreatedBy(),
                                         request.getKitTypeName());
                             }

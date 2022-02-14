@@ -29,21 +29,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Data
-@TableName(
-        name = DBConstants.DDP_PARTICIPANT_DATA,
-        alias = DBConstants.DDP_PARTICIPANT_DATA_ALIAS,
-        primaryKey = DBConstants.PARTICIPANT_DATA_ID,
-        columnPrefix = "")
+@TableName(name = DBConstants.DDP_PARTICIPANT_DATA, alias = DBConstants.DDP_PARTICIPANT_DATA_ALIAS,
+        primaryKey = DBConstants.PARTICIPANT_DATA_ID, columnPrefix = "")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ParticipantData {
 
-    public static final String SQL_SELECT_PARTICIPANT = "SELECT d.participant_data_id, d.ddp_participant_id, d.field_type_id, d.data " +
-            "FROM ddp_participant_data d " +
-            "LEFT JOIN ddp_instance realm on (d.ddp_instance_id = realm.ddp_instance_id) " +
-            "WHERE realm.instance_name = ? ";
-    public static final String SQL_INSERT_PARTICIPANT = "INSERT INTO ddp_participant_data SET " +
-            "ddp_participant_id = ?, ddp_instance_id = ?, field_type_id = ?, data = ?, last_changed = ?, changed_by = ? ";
+    public static final String SQL_SELECT_PARTICIPANT =
+            "SELECT d.participant_data_id, d.ddp_participant_id, d.field_type_id, d.data FROM ddp_participant_data d "
+                    + "LEFT JOIN ddp_instance realm on (d.ddp_instance_id = realm.ddp_instance_id) WHERE realm.instance_name = ? ";
+    public static final String SQL_INSERT_PARTICIPANT = "INSERT INTO ddp_participant_data SET "
+            + "ddp_participant_id = ?, ddp_instance_id = ?, field_type_id = ?, data = ?, last_changed = ?, changed_by = ? ";
     private static final Logger logger = LoggerFactory.getLogger(ParticipantData.class);
     @ColumnName(DBConstants.PARTICIPANT_DATA_ID)
     private long participantDataId;
@@ -70,11 +66,9 @@ public class ParticipantData {
     }
 
     public static ParticipantData getParticipantDataObject(@NonNull ResultSet rs) throws SQLException {
-        ParticipantData participantData = new ParticipantData(
-                rs.getLong(DBConstants.PARTICIPANT_DATA_ID),
-                rs.getString(DBConstants.FIELD_TYPE_ID),
-                rs.getString(DBConstants.DATA)
-        );
+        ParticipantData participantData =
+                new ParticipantData(rs.getLong(DBConstants.PARTICIPANT_DATA_ID), rs.getString(DBConstants.FIELD_TYPE_ID),
+                        rs.getString(DBConstants.DATA));
         return participantData;
     }
 
@@ -115,8 +109,7 @@ public class ParticipantData {
     }
 
     public static String createNewParticipantData(@NonNull String ddpParticipantId, @NonNull String ddpInstanceId,
-                                                  @NonNull String fieldTypeId,
-                                                  @NonNull String data, @NonNull String user) {
+                                                  @NonNull String fieldTypeId, @NonNull String data, @NonNull String user) {
         SimpleResult results = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_PARTICIPANT, Statement.RETURN_GENERATED_KEYS)) {

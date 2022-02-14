@@ -61,31 +61,20 @@ public class ParticipantDataTest {
             String memberType = MEMBER_TYPES[i];
             int randomGeneratedFamilyId = random.nextInt();
             long familyId = random.nextInt(1000) + 1;
-            String collaboratorParticipantId = "STUDY" + "_" + familyId + "_" +
-                    ("SELF".equals(memberType) ? 3 : randomGeneratedFamilyId == 3 ? randomGeneratedFamilyId + 1 : randomGeneratedFamilyId);
+            String collaboratorParticipantId = "STUDY" + "_" + familyId + "_" + ("SELF".equals(memberType) ? 3 :
+                    randomGeneratedFamilyId == 3 ? randomGeneratedFamilyId + 1 : randomGeneratedFamilyId);
             String email =
                     "SELF".equals(memberType) ? "self@mail.com" : MEMBER_TYPES[1 + random.nextInt(MEMBER_TYPES.length - 1)] + "@mail.com";
-            FamilyMemberDetails familyMemberDetails = new FamilyMemberDetails(
-                    "John" + i,
-                    "Doe" + i,
-                    memberType,
-                    familyId,
-                    collaboratorParticipantId);
+            FamilyMemberDetails familyMemberDetails =
+                    new FamilyMemberDetails("John" + i, "Doe" + i, memberType, familyId, collaboratorParticipantId);
             familyMemberDetails.setEmail(email);
             String data = GSON.toJson(familyMemberDetails);
             ParticipantData participantData =
-                    new ParticipantData.Builder()
-                            .withDdpParticipantId(collaboratorParticipantId)
-                            .withDdpInstanceId(i)
-                            .withFieldTypeId("")
-                            .withData(data)
-                            .withLastChanged(System.currentTimeMillis())
-                            .withChangedBy("SYSTEM")
-                            .build();
+                    new ParticipantData.Builder().withDdpParticipantId(collaboratorParticipantId).withDdpInstanceId(i).withFieldTypeId("")
+                            .withData(data).withLastChanged(System.currentTimeMillis()).withChangedBy("SYSTEM").build();
             participantDataList.add(participantData);
         }
         return participantDataList;
     }
-
 
 }

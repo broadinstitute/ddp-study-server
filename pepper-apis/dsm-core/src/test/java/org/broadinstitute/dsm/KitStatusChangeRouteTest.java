@@ -22,7 +22,8 @@ import org.junit.Test;
 public class KitStatusChangeRouteTest extends TestHelper {
 
     private static final String CHECK_KITLABEL =
-            "select count(*) as count from ddp_kit_request request, ddp_kit kit where request.dsm_kit_request_id = kit.dsm_kit_request_id and request.ddp_kit_request_id = ? and kit_label = ?";
+            "select count(*) as count from ddp_kit_request request, ddp_kit kit "
+                    + "where request.dsm_kit_request_id = kit.dsm_kit_request_id and request.ddp_kit_request_id = ? and kit_label = ?";
     private static final String CHECK_TRACKING = "select count(*) as count from ddp_kit_tracking where kit_label = ?";
 
     private static KitStatusChangeRoute route;

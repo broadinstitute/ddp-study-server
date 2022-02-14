@@ -56,8 +56,6 @@ public class LabelSettings {
     /**
      * Read labelSettings form label_settings table
      *
-     * @return List<LabelSettings>
-     * @throws Exception
      */
     public static Collection<LabelSettings> getLabelSettings() {
         List<LabelSettings> labelSettings = new ArrayList<>();

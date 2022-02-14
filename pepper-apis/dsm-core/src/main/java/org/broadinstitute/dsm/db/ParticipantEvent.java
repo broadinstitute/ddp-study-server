@@ -24,12 +24,9 @@ import org.slf4j.LoggerFactory;
 public class ParticipantEvent {
 
     private static final Logger logger = LoggerFactory.getLogger(ParticipantEvent.class);
-    private static String GET_PARTICIPANT_EVENT = "select event " +
-            "        from " +
-            "        ddp_participant_event ev " +
-            "        where " +
-            "        ev.ddp_instance_id = ? " +
-            "        and ev.ddp_participant_id = ?";
+    private static String GET_PARTICIPANT_EVENT =
+            "select event  from ddp_participant_event ev where ev.ddp_instance_id = ? "
+                    + "and ev.ddp_participant_id = ?";
     private final String participantId;
     private final String eventType;
     private final String user;
@@ -52,10 +49,9 @@ public class ParticipantEvent {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        skippedParticipantEvents.add(new ParticipantEvent(
-                                rs.getString(DBConstants.DDP_PARTICIPANT_ID),
-                                rs.getString(DBConstants.EVENT), rs.getString(DBConstants.NAME),
-                                rs.getLong(DBConstants.DATE)));
+                        skippedParticipantEvents.add(
+                                new ParticipantEvent(rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.EVENT),
+                                        rs.getString(DBConstants.NAME), rs.getLong(DBConstants.DATE)));
                     }
                 }
             } catch (Exception ex) {
@@ -97,8 +93,8 @@ public class ParticipantEvent {
                 stmt.setString(5, eventType);
                 int result = stmt.executeUpdate();
                 if (result == 1) {
-                    logger.info("Skip event " + eventType + " for participant w/ ddpParticipantId " + ddpParticipantId + " from " +
-                            instance.getName());
+                    logger.info("Skip event " + eventType + " for participant w/ ddpParticipantId " + ddpParticipantId + " from "
+                            + instance.getName());
                 } else {
                     throw new RuntimeException("Something is wrong w/ ddpParticipantId " + ddpParticipantId);
                 }
@@ -154,4 +150,3 @@ public class ParticipantEvent {
         return skippedEvents;
     }
 }
-

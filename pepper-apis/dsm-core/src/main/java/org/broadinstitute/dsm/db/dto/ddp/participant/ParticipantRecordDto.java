@@ -42,6 +42,7 @@ public class ParticipantRecordDto {
     private String additionalValuesJson;
     private long lastChanged;
     private String changedBy;
+
     public ParticipantRecordDto() {
 
     }

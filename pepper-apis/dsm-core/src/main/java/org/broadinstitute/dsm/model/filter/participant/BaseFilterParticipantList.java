@@ -57,21 +57,18 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
                                                              @NonNull DDPInstance instance) {
         Map<String, String> queryConditions = new HashMap<>();
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
-        ParticipantWrapperPayload.Builder participantWrapperPayload = new ParticipantWrapperPayload.Builder()
-                .withDdpInstanceDto(ddpInstanceDto)
-                .withFrom(from)
-                .withTo(to);
+        ParticipantWrapperPayload.Builder participantWrapperPayload =
+                new ParticipantWrapperPayload.Builder().withDdpInstanceDto(ddpInstanceDto).withFrom(from).withTo(to);
         ElasticSearch elasticSearch = new ElasticSearch();
         if (filters != null && columnNameMap != null && !columnNameMap.isEmpty()) {
             for (Filter filter : filters) {
                 if (filter != null) {
                     String tableAlias = null;
                     if (filter.getParticipantColumn() != null) { // profile.firstName
-                        if (PARTICIPANT_DATA.equals(filter.getParticipantColumn().getTableAlias()) ||
-                                PARENT_PARTICIPANT_LIST.equals(filter.getParentName())) {
+                        if (PARTICIPANT_DATA.equals(filter.getParticipantColumn().getTableAlias()) || PARENT_PARTICIPANT_LIST.equals(
+                                filter.getParentName())) {
                             tableAlias = StringUtils.isNotBlank(filter.getParticipantColumn().getTableAlias())
-                                    ? filter.getParticipantColumn().getTableAlias()
-                                    : filter.getParentName();
+                                    ? filter.getParticipantColumn().getTableAlias() : filter.getParentName();
                             filter.setParentName(tableAlias);
                         } else {
                             tableAlias = StringUtils.isNotBlank(filter.getParentName()) ? filter.getParentName() :
@@ -135,8 +132,8 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
             for (String selectedOption : filter.getSelectedOptions()) {
                 filter.getFilter1().setValue(selectedOption);
                 filter.getFilter2().setName(Util.underscoresToCamelCase(tmpName));
-                String filterQuery = Filter.OR_TRIMMED + Filter.getQueryStringForFiltering(filter,
-                        dbElement).trim().substring(AndOrFilterSeparator.MINIMUM_STEP_FROM_OPERATOR);
+                String filterQuery = Filter.OR_TRIMMED + Filter.getQueryStringForFiltering(filter, dbElement).trim()
+                        .substring(AndOrFilterSeparator.MINIMUM_STEP_FROM_OPERATOR);
                 queryConditions.merge(DBConstants.DDP_PARTICIPANT_DATA_ALIAS, filterQuery,
                         (prev, curr) -> String.join(Filter.SPACE, prev, curr));
             }

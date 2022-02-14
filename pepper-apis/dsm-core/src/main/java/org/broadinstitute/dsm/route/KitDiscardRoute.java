@@ -54,8 +54,8 @@ public class KitDiscardRoute extends RequestHandler {
         String userIdRequest = UserUtil.getUserId(request);
 
         if (RoutePath.RequestMethod.GET.toString().equals(request.requestMethod())) {
-            if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest) ||
-                    userUtil.checkUserAccess(realm, userId, "participant_exit", userIdRequest)) {
+            if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest)
+                    || userUtil.checkUserAccess(realm, userId, "participant_exit", userIdRequest)) {
                 return KitDiscard.getExitedKits(realm);
             } else {
                 response.status(500);
@@ -66,8 +66,8 @@ public class KitDiscardRoute extends RequestHandler {
             String requestBody = request.body();
             KitDiscard kitAction = new Gson().fromJson(requestBody, KitDiscard.class);
             if (request.url().contains(RoutePath.DISCARD_SHOW_UPLOAD)) {
-                if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest) ||
-                        userUtil.checkUserAccess(realm, userId, "participant_exit", userIdRequest)) {
+                if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest)
+                        || userUtil.checkUserAccess(realm, userId, "participant_exit", userIdRequest)) {
                     if (kitAction.getPath() != null) {
                         byte[] bytes = GoogleBucket.downloadFile(null,
                                 ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME),
@@ -93,8 +93,8 @@ public class KitDiscardRoute extends RequestHandler {
             } else {
                 if (StringUtils.isNotBlank(kitAction.getKitDiscardId())) {
                     if (StringUtils.isNotBlank(kitAction.getAction())) {
-                        if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest) ||
-                                userUtil.checkUserAccess(realm, userId, "participant_exit", userIdRequest)) {
+                        if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest)
+                                || userUtil.checkUserAccess(realm, userId, "participant_exit", userIdRequest)) {
                             kitAction.setAction(kitAction.getKitDiscardId(), kitAction.getAction());
                             return new Result(200);
                         } else {

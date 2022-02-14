@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.util.triggerListener;
+package org.broadinstitute.dsm.util.triggerlistener;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -7,10 +7,11 @@ import com.netflix.servo.monitor.MonitorConfig;
 import com.netflix.servo.monitor.NumberGauge;
 import org.broadinstitute.lddp.util.BasicTriggerListener;
 
-public class NotificationTriggerListener extends BasicTriggerListener {
+public class GPNotificationTriggerListener extends BasicTriggerListener {
 
     private static final AtomicInteger jobHealthy = new AtomicInteger(0);
-    private static final NumberGauge jobHealthyGauge = new NumberGauge(MonitorConfig.builder("notification_ok_gauge").build(), jobHealthy);
+    private static final NumberGauge jobHealthyGauge =
+            new NumberGauge(MonitorConfig.builder("gp_notification_ok_gauge").build(), jobHealthy);
 
     //explicitly wire up the metrics using a static initializer
     static {
@@ -19,7 +20,7 @@ public class NotificationTriggerListener extends BasicTriggerListener {
 
     @Override
     public String getName() {
-        return "NOTIFICATION_LISTENER";
+        return "GP_NOTIFICATION_LISTENER";
     }
 
     protected void monitorJobExecution(boolean veto) {

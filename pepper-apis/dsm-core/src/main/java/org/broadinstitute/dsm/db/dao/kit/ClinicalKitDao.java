@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 
 public class ClinicalKitDao {
     private static final Logger logger = LoggerFactory.getLogger(ClinicalKitDao.class);
-    private final static String SQL_GET_CLINICAL_KIT_BASED_ON_SM_ID_VALUE =
+    private static final String SQL_GET_CLINICAL_KIT_BASED_ON_SM_ID_VALUE =
             "SELECT p.ddp_participant_id, accession_number, ddp.instance_name, bsp_organism, bsp_collection, "
                     + "kit_type_name, bsp_material_type, bsp_receptacle_type, ddp.ddp_instance_id "
                     + "FROM sm_id sm "

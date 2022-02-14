@@ -116,7 +116,7 @@ public class NationalDeathIndex {
             line.append(middle);
             String space = "";
             space = String.format("%-9s", space);
-            line.append(space);//ssn
+            line.append(space); //ssn
             space = "";
             line.append(participant.getMonth());
             line.append(participant.getDay());
@@ -126,12 +126,13 @@ public class NationalDeathIndex {
             space = "";
             line.append(controlNumber);
             space = String.format("%-9s", space);
-            line.append(space);//optional stuff and 2 blanks
+            line.append(space); //optional stuff and 2 blanks
             space = "";
             line.append("\n");
             textToPutInTextFile.append(line.toString());
-            sqlValues += "( '" + participant.getDdpParticipantId() + "', '" + controlNumber + "', " + System.currentTimeMillis() + ", '" +
-                    userId + "' ), ";
+            sqlValues +=
+                    "( '" + participant.getDdpParticipantId() + "', '" + controlNumber + "', " + System.currentTimeMillis() + ", '" + userId
+                            + "' ), ";
         }
         String finalStatement = SQL_INSERT_CONTROL_NUMBER + sqlValues;
         SimpleResult result = inTransaction((conn) -> {

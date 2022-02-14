@@ -6,7 +6,7 @@ import java.util.List;
 
 import com.google.gson.JsonObject;
 import org.broadinstitute.dsm.exception.ExternalShipperException;
-import org.broadinstitute.dsm.util.externalShipper.GBFRequestUtil;
+import org.broadinstitute.dsm.util.externalshipper.GBFRequestUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -82,8 +82,8 @@ public class KitDeactivationRoute extends RequestHandler {
                                 if (InstanceSettings.TYPE_ALERT.equals(activation.getType())) {
                                     return new Result(200, activation.getValue());
                                 } else if (InstanceSettings.TYPE_NOTIFICATION.equals(activation.getType())) {
-                                    String message = "Kit for participant " + kitRequest.getParticipantId() + " was activated <br>" +
-                                            activation.getValue();
+                                    String message = "Kit for participant " + kitRequest.getParticipantId() + " was activated <br>"
+                                            + activation.getValue();
                                     notificationUtil.sentNotification(ddpInstance.getNotificationRecipient(), message,
                                             NotificationUtil.UNIVERSAL_NOTIFICATION_TEMPLATE, NotificationUtil.DSM_SUBJECT);
                                 } else {

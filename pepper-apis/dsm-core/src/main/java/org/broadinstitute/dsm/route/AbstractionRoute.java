@@ -43,8 +43,8 @@ public class AbstractionRoute extends RequestHandler {
             String userIdReq = UserUtil.getUserId(request);
             String realm = jsonObject.get(RequestParameter.DDP_REALM).getAsString();
 
-            if (UserUtil.checkUserAccess(realm, userId, "mr_abstracter", userIdReq) ||
-                    UserUtil.checkUserAccess(realm, userId, "mr_qc", userIdReq)) {
+            if (UserUtil.checkUserAccess(realm, userId, "mr_abstracter", userIdReq)
+                    || UserUtil.checkUserAccess(realm, userId, "mr_qc", userIdReq)) {
                 if (StringUtils.isNotBlank(ddpParticipantId)) {
                     String status = null;
                     if (jsonObject.has(RequestParameter.STATUS) && !jsonObject.has(RequestParameter.STATUS)) {
@@ -89,19 +89,18 @@ public class AbstractionRoute extends RequestHandler {
                                             //if qc check if all fields which first and second abstracter disagree are answered by qc
                                             if (AbstractionUtil.ACTIVITY_QC.equals(abstractionActivity.getActivity())) {
                                                 AbstractionQCWrapper wrapper = field.getQcWrapper();
-                                                if (!wrapper.getEquals() && StringUtils.isBlank(fieldValue.getValue()) &&
-                                                        !fieldValue.isNoData()) {
+                                                if (!wrapper.getEquals() && StringUtils.isBlank(fieldValue.getValue())
+                                                        && !fieldValue.isNoData()) {
                                                     submit = false;
                                                     break;
                                                 }
-                                            }
-                                            //if first and second abstracter check if all fields have a value or are set to noData
-                                            else {
+                                            } else {
+                                                //if first and second abstracter check if all fields have a value or are set to noData
                                                 if (!fieldValue.isNoData() && StringUtils.isBlank(fieldValue.getValue())) {
                                                     submit = false;
                                                     break;
-                                                } else if (StringUtils.isNotBlank(fieldValue.getValue()) &&
-                                                        fieldValue.getValue().indexOf(AbstractionUtil.DATE_STRING) > -1) {
+                                                } else if (StringUtils.isNotBlank(fieldValue.getValue())
+                                                        && fieldValue.getValue().indexOf(AbstractionUtil.DATE_STRING) > -1) {
                                                     String jsonValue = fieldValue.getValue();
                                                     if (jsonValue.startsWith("[")) {
                                                         JsonArray array = new JsonParser().parse(jsonValue).getAsJsonArray();
@@ -110,8 +109,8 @@ public class AbstractionRoute extends RequestHandler {
                                                             Set<Map.Entry<String, JsonElement>> entries = j.entrySet();
                                                             for (Map.Entry<String, JsonElement> entry : entries) {
                                                                 String test = entry.getValue().getAsString();
-                                                                if (StringUtils.isNotBlank(test) &&
-                                                                        test.indexOf(AbstractionUtil.DATE_STRING) > -1) {
+                                                                if (StringUtils.isNotBlank(test)
+                                                                        && test.indexOf(AbstractionUtil.DATE_STRING) > -1) {
                                                                     if (!AbstractionUtil.isDateStringSet(test)) {
                                                                         submit = false;
                                                                         break;
@@ -139,8 +138,8 @@ public class AbstractionRoute extends RequestHandler {
                                                                         dateKey.getValue());
                                                             }
                                                             //writing ordered json into db
-                                                            if (StringUtils.isNotBlank(orderJson) &&
-                                                                    !orderJson.equals(fieldValue.getValue())) {
+                                                            if (StringUtils.isNotBlank(orderJson)
+                                                                    && !orderJson.equals(fieldValue.getValue())) {
                                                                 if (AbstractionUtil.ACTIVITY_ABSTRACTION.equals(
                                                                         abstractionActivity.getActivity())) {
                                                                     Patch.patch(String.valueOf(fieldValue.getPrimaryKeyId()), "SYSTEM",
@@ -192,8 +191,9 @@ public class AbstractionRoute extends RequestHandler {
                                                         //save value entered by qc
                                                         AbstractionFinal.insertFinalAbstractionValue(fieldValue, realm);
                                                     } else {
-                                                        //if nothing was entered by qc use abstraction value (in that case abstraction and review are same!)
-                                                        //                                                    if (StringUtils.isNotBlank(wrapper.getAbstraction().getValue())) {
+                                                        //if nothing was entered by qc use abstraction value
+                                                        // (in that case abstraction and review are same!)
+                                                        // if (StringUtils.isNotBlank(wrapper.getAbstraction().getValue())) {
                                                         AbstractionFinal.insertFinalAbstractionValue(wrapper.getAbstraction(),
                                                                 fieldValue.getMedicalRecordAbstractionFieldId(),
                                                                 fieldValue.getParticipantId(), realm);
@@ -205,24 +205,21 @@ public class AbstractionRoute extends RequestHandler {
                                                     AbstractionUtil.ACTIVITY_FINAL, AbstractionUtil.STATUS_DONE);
                                         }
                                         return new Result(200, new GsonBuilder().serializeNulls().create().toJson(abstractionActivity));
-                                    }
-                                    //if abstraction is not done!
-                                    else {
+                                    } else {
+                                        //if abstraction is not done!
                                         if (AbstractionUtil.ACTIVITY_QC.equals(abstractionActivity.getActivity())) {
                                             return new Result(500, "QC not complete");
                                         }
                                         return new Result(500, "Abstraction not complete");
                                     }
                                 }
-                            }
-                            //break lock
-                            else if (AbstractionUtil.STATUS_CLEAR.equals(status)) {
+                            } else if (AbstractionUtil.STATUS_CLEAR.equals(status)) {
+                                //break lock
                                 return new Result(200, new GsonBuilder().serializeNulls().create()
                                         .toJson(AbstractionActivity.changeAbstractionActivity(abstractionActivity, userIdRequest,
                                                 AbstractionUtil.STATUS_CLEAR)));
-                            }
-                            //set abstraction to 'in_progress'
-                            else {
+                            } else {
+                                //set abstraction to 'in_progress'
                                 if (AbstractionUtil.STATUS_NOT_STARTED.equals(abstractionActivity.getAStatus())) {
                                     return new Result(200, new GsonBuilder().serializeNulls().create()
                                             .toJson(AbstractionActivity.startAbstractionActivity(ddpParticipantId, realm, userIdRequest,
@@ -235,7 +232,8 @@ public class AbstractionRoute extends RequestHandler {
                             }
                         }
                     } else {
-                        //getting field values, if abstraction is not done - if it is done values will be in abstractionSummary in the ParticipantWrapper
+                        //getting field values, if abstraction is not done -
+                        // if it is done values will be in abstractionSummary in the ParticipantWrapper
                         return AbstractionWrapper.getAbstractionFieldValue(realm, ddpParticipantId);
                     }
                 }

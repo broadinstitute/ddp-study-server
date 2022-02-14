@@ -3,7 +3,6 @@ package org.broadinstitute.dsm;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
-import org.broadinstitute.dsm.util.TestUtil;
 import org.broadinstitute.dsm.util.tools.MedicalRecordMigrationTool;
 import org.broadinstitute.dsm.util.tools.util.DBUtil;
 import org.junit.AfterClass;

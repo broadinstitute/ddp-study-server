@@ -59,7 +59,8 @@ public class ReceiveKitRequest {
                 }
                 return true;
             }
-        }//no else because if participantData then study manager wouldn't have been able to find the kit request!
+        }
+        //no else because if participantData then study manager wouldn't have been able to find the kit request!
         return false;
     }
 
@@ -86,16 +87,11 @@ public class ReceiveKitRequest {
             throw new RuntimeException("Error setting AT kit to received with id " + participantDataId, results.resultException);
         }
 
-        ParticipantData participantData = new ParticipantData.Builder()
-                .withData(data)
-                .withParticipantDataId((int) participantDataId)
-                .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId())
-                .build();
+        ParticipantData participantData = new ParticipantData.Builder().withData(data).withParticipantDataId((int) participantDataId)
+                .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId()).build();
 
         UpsertPainlessFacade.of(DBConstants.DDP_PARTICIPANT_DATA_ALIAS, participantData, ddpInstanceDto,
-                        ESObjectConstants.PARTICIPANT_DATA_ID,
-                        ESObjectConstants.PARTICIPANT_DATA_ID, participantDataId)
-                .export();
+                ESObjectConstants.PARTICIPANT_DATA_ID, ESObjectConstants.PARTICIPANT_DATA_ID, participantDataId).export();
 
         return true;
     }

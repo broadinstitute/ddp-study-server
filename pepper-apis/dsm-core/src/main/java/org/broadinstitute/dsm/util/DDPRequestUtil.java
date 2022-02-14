@@ -25,7 +25,7 @@ import org.apache.http.util.EntityUtils;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.exception.SurveyNotCreated;
-import org.broadinstitute.dsm.model.PDF.MiscPDFDownload;
+import org.broadinstitute.dsm.model.pdf.MiscPDFDownload;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.model.ddp.PreferredLanguage;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
@@ -185,14 +185,6 @@ public class DDPRequestUtil {
         return null;
     }
 
-    /**
-     * Getting all participants of a ddp back
-     *
-     * @param instance DDPInstance object (information of the ddp like url, token)
-     * @return HashMap<String, DDPParticipant>
-     * Key: (String) ddp_participant_id
-     * Value: DDPParticipant (Information of participant from the ddp)
-     */
     public static Map<String, DDPParticipant> getDDPParticipant(@NonNull DDPInstance instance) {
         Map<String, DDPParticipant> mapDDPParticipantInstitution = new HashMap<>();
         String sendRequest = instance.getBaseUrl() + RoutePath.DDP_PARTICIPANTINSTITUTIONS_PATH;
@@ -278,8 +270,8 @@ public class DDPRequestUtil {
                     byte[] bytes = DDPRequestUtil.getPDFByteArray(pdfRequest, instanceName, hasAuth0Token);
 
                     GoogleBucket.uploadFile(null, gcpName, bucketName,
-                            ddpParticipantId + "/readonly/" + ddpParticipantId + "_" + fileName + "_" + userId + "_" + reason + "_" + time +
-                                    ".pdf",
+                            ddpParticipantId + "/readonly/" + ddpParticipantId + "_" + fileName + "_" + userId + "_" + reason + "_" + time
+                                    + ".pdf",
                             new ByteArrayInputStream(bytes));
                 }
             } catch (Exception e) {

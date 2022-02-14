@@ -229,8 +229,8 @@ public class ElasticSearch implements ElasticSearchable {
         logger.info("Collecting ES data");
         try {
             searchResponse = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
-            sourceAsMap = searchResponse.getHits().getHits().length > 0 ?
-                    searchResponse.getHits().getHits()[0].getSourceAsMap() : new HashMap<>();
+            sourceAsMap = searchResponse.getHits().getHits().length > 0
+                    ? searchResponse.getHits().getHits()[0].getSourceAsMap() : new HashMap<>();
         } catch (Exception e) {
             throw new RuntimeException("Couldn't get participant from ES for instance " + esParticipantsIndex + " by id: " + participantId,
                     e);

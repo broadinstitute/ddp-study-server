@@ -22,10 +22,9 @@ import org.slf4j.LoggerFactory;
 public class ParticipantDataDao implements Dao<ParticipantData> {
 
     public static final String SQL_SELECT_PARTICIPANTS_BY_REALM =
-            "SELECT d.participant_data_id, d.ddp_instance_id, d.ddp_participant_id, d.field_type_id, d.data " +
-                    "FROM ddp_participant_data d " +
-                    "LEFT JOIN ddp_instance realm on (d.ddp_instance_id = realm.ddp_instance_id) " +
-                    "WHERE realm.instance_name = ? ";
+            "SELECT d.participant_data_id, d.ddp_instance_id, d.ddp_participant_id, d.field_type_id, d.data "
+                    + "FROM ddp_participant_data d LEFT JOIN ddp_instance realm on (d.ddp_instance_id = realm.ddp_instance_id) "
+                    + "WHERE realm.instance_name = ? ";
     public static final String PARTICIPANT_DATA_ID = "participant_data_id";
     public static final String DDP_PARTICIPANT_ID = "ddp_participant_id";
     public static final String DDP_INSTANCE_ID = "ddp_instance_id";
@@ -34,44 +33,22 @@ public class ParticipantDataDao implements Dao<ParticipantData> {
     public static final String LAST_CHANGED = "last_changed";
     public static final String CHANGED_BY = "changed_by";
     private static final Logger logger = LoggerFactory.getLogger(ParticipantDataDao.class);
-    private static final String SQL_PARTICIPANT_DATA_BY_PARTICIPANT_ID = "SELECT " +
-            "participant_data_id," +
-            "ddp_participant_id," +
-            "ddp_instance_id," +
-            "field_type_id," +
-            "data," +
-            "last_changed," +
-            "changed_by" +
-            " FROM ddp_participant_data WHERE ddp_participant_id = ?";
-    private static final String SQL_ALL_PARTICIPANT_DATA = "SELECT " +
-            "participant_data_id," +
-            "ddp_participant_id," +
-            "ddp_instance_id," +
-            "field_type_id," +
-            "data," +
-            "last_changed," +
-            "changed_by" +
-            " FROM ddp_participant_data ";
+    private static final String SQL_PARTICIPANT_DATA_BY_PARTICIPANT_ID =
+            "SELECT  participant_data_id, ddp_participant_id, ddp_instance_id, field_type_id, data, last_changed,"
+                    + "changed_by  FROM ddp_participant_data WHERE ddp_participant_id = ?";
+    private static final String SQL_ALL_PARTICIPANT_DATA =
+            "SELECT  participant_data_id, ddp_participant_id, ddp_instance_id, field_type_id, data, last_changed,"
+                    + "changed_by  FROM ddp_participant_data ";
     private static final String BY_INSTANCE_ID = "WHERE ddp_instance_id = ? ";
     private static final String SQL_DELETE_DDP_PARTICIPANT_DATA = "DELETE FROM ddp_participant_data WHERE participant_data_id = ?";
-    private static final String SQL_PARTICIPANT_DATA_BY_ID = "SELECT " +
-            "participant_data_id," +
-            "ddp_participant_id," +
-            "ddp_instance_id," +
-            "field_type_id," +
-            "data," +
-            "last_changed," +
-            "changed_by" +
-            " FROM ddp_participant_data WHERE participant_data_id = ?";
-    private static final String SQL_INSERT_DATA_TO_PARTICIPANT_DATA = "INSERT INTO ddp_participant_data SET " +
-            "ddp_participant_id = ?," +
-            "ddp_instance_id = ?," +
-            "field_type_id = ?," +
-            "data = ?," +
-            "last_changed = ?," +
-            "changed_by = ?";
-    private static final String SQL_UPDATE_DATA_TO_PARTICIPANT_DATA = "UPDATE ddp_participant_data SET data = ?, " +
-            "last_changed = ?, changed_by = ? WHERE participant_data_id = ?";
+    private static final String SQL_PARTICIPANT_DATA_BY_ID =
+            "SELECT  participant_data_id, ddp_participant_id, ddp_instance_id, field_type_id, data, last_changed,"
+                    + "changed_by  FROM ddp_participant_data WHERE participant_data_id = ?";
+    private static final String SQL_INSERT_DATA_TO_PARTICIPANT_DATA =
+            "INSERT INTO ddp_participant_data SET  ddp_participant_id = ?, ddp_instance_id = ?, field_type_id = ?,"
+                    + "data = ?, last_changed = ?, changed_by = ?";
+    private static final String SQL_UPDATE_DATA_TO_PARTICIPANT_DATA =
+            "UPDATE ddp_participant_data SET data = ?,  last_changed = ?, changed_by = ? WHERE participant_data_id = ?";
     private static final String SQL_GET_PARTICIPANT_DATA_BY_PARTICIPANT_IDS = SQL_ALL_PARTICIPANT_DATA + "WHERE ddp_participant_id IN (?)";
 
     @Override
@@ -116,8 +93,7 @@ public class ParticipantDataDao implements Dao<ParticipantData> {
             return execResult;
         });
         if (results.resultException != null) {
-            throw new RuntimeException("Error deleting participant data with "
-                    + id, results.resultException);
+            throw new RuntimeException("Error deleting participant data with " + id, results.resultException);
         }
         return (int) results.resultValue;
     }
@@ -130,15 +106,10 @@ public class ParticipantDataDao implements Dao<ParticipantData> {
                 stmt.setLong(1, id);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                        execResult.resultValue = new ParticipantData.Builder()
-                                .withParticipantDataId(rs.getInt(PARTICIPANT_DATA_ID))
-                                .withDdpParticipantId(rs.getString(DDP_PARTICIPANT_ID))
-                                .withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID))
-                                .withFieldTypeId(rs.getString(FIELD_TYPE_ID))
-                                .withData(rs.getString(DATA))
-                                .withLastChanged(rs.getLong(LAST_CHANGED))
-                                .withChangedBy(rs.getString(CHANGED_BY))
-                                .build();
+                        execResult.resultValue = new ParticipantData.Builder().withParticipantDataId(rs.getInt(PARTICIPANT_DATA_ID))
+                                .withDdpParticipantId(rs.getString(DDP_PARTICIPANT_ID)).withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID))
+                                .withFieldTypeId(rs.getString(FIELD_TYPE_ID)).withData(rs.getString(DATA))
+                                .withLastChanged(rs.getLong(LAST_CHANGED)).withChangedBy(rs.getString(CHANGED_BY)).build();
                     }
                 }
             } catch (SQLException ex) {
@@ -147,8 +118,7 @@ public class ParticipantDataDao implements Dao<ParticipantData> {
             return execResult;
         });
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting participant data with "
-                    + id, results.resultException);
+            throw new RuntimeException("Error getting participant data with " + id, results.resultException);
         }
         return Optional.ofNullable((ParticipantData) results.resultValue);
     }
@@ -185,17 +155,10 @@ public class ParticipantDataDao implements Dao<ParticipantData> {
                 stmt.setString(1, participantId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        participantDataList.add(
-                                new ParticipantData.Builder()
-                                        .withParticipantDataId(rs.getInt(PARTICIPANT_DATA_ID))
-                                        .withDdpParticipantId(rs.getString(DDP_PARTICIPANT_ID))
-                                        .withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID))
-                                        .withFieldTypeId(rs.getString(FIELD_TYPE_ID))
-                                        .withData(rs.getString(DATA))
-                                        .withLastChanged(rs.getLong(LAST_CHANGED))
-                                        .withChangedBy(rs.getString(CHANGED_BY))
-                                        .build()
-                        );
+                        participantDataList.add(new ParticipantData.Builder().withParticipantDataId(rs.getInt(PARTICIPANT_DATA_ID))
+                                .withDdpParticipantId(rs.getString(DDP_PARTICIPANT_ID)).withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID))
+                                .withFieldTypeId(rs.getString(FIELD_TYPE_ID)).withData(rs.getString(DATA))
+                                .withLastChanged(rs.getLong(LAST_CHANGED)).withChangedBy(rs.getString(CHANGED_BY)).build());
                     }
                 }
             } catch (SQLException ex) {
@@ -204,8 +167,7 @@ public class ParticipantDataDao implements Dao<ParticipantData> {
             return execResult;
         });
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting participant data with "
-                    + participantId, results.resultException);
+            throw new RuntimeException("Error getting participant data with " + participantId, results.resultException);
         }
         return participantDataList;
     }
@@ -220,17 +182,11 @@ public class ParticipantDataDao implements Dao<ParticipantData> {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         ArrayList<ParticipantData> value = new ArrayList<>(
-                                List.of(new ParticipantData.Builder()
-                                        .withParticipantDataId(rs.getInt(PARTICIPANT_DATA_ID))
+                                List.of(new ParticipantData.Builder().withParticipantDataId(rs.getInt(PARTICIPANT_DATA_ID))
                                         .withDdpParticipantId(rs.getString(DDP_PARTICIPANT_ID))
-                                        .withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID))
-                                        .withFieldTypeId(rs.getString(FIELD_TYPE_ID))
-                                        .withData(rs.getString(DATA))
-                                        .withLastChanged(rs.getLong(LAST_CHANGED))
-                                        .withChangedBy(rs.getString(CHANGED_BY))
-                                        .build()
-                                )
-                        );
+                                        .withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID)).withFieldTypeId(rs.getString(FIELD_TYPE_ID))
+                                        .withData(rs.getString(DATA)).withLastChanged(rs.getLong(LAST_CHANGED))
+                                        .withChangedBy(rs.getString(CHANGED_BY)).build()));
                         participantDatasByParticipantIds.merge(rs.getString(DDP_PARTICIPANT_ID), value, (preValue, currentValue) -> {
                             preValue.addAll(currentValue);
                             return preValue;
@@ -257,15 +213,10 @@ public class ParticipantDataDao implements Dao<ParticipantData> {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         ArrayList<ParticipantData> value = new ArrayList<>(
-                                List.of(new ParticipantData.Builder()
-                                        .withParticipantDataId(rs.getInt(PARTICIPANT_DATA_ID))
+                                List.of(new ParticipantData.Builder().withParticipantDataId(rs.getInt(PARTICIPANT_DATA_ID))
                                         .withDdpParticipantId(rs.getString(DDP_PARTICIPANT_ID))
-                                        .withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID))
-                                        .withFieldTypeId(rs.getString(FIELD_TYPE_ID))
-                                        .withData(rs.getString(DATA))
-                                        .build()
-                                )
-                        );
+                                        .withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID)).withFieldTypeId(rs.getString(FIELD_TYPE_ID))
+                                        .withData(rs.getString(DATA)).build()));
                         participantDataByRealm.merge(rs.getString(DDP_PARTICIPANT_ID), value, (preValue, currentValue) -> {
                             preValue.addAll(currentValue);
                             return preValue;
@@ -293,17 +244,11 @@ public class ParticipantDataDao implements Dao<ParticipantData> {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         ArrayList<ParticipantData> value = new ArrayList<>(
-                                List.of(new ParticipantData.Builder()
-                                        .withParticipantDataId(rs.getInt(PARTICIPANT_DATA_ID))
+                                List.of(new ParticipantData.Builder().withParticipantDataId(rs.getInt(PARTICIPANT_DATA_ID))
                                         .withDdpParticipantId(rs.getString(DDP_PARTICIPANT_ID))
-                                        .withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID))
-                                        .withFieldTypeId(rs.getString(FIELD_TYPE_ID))
-                                        .withData(rs.getString(DATA))
-                                        .withLastChanged(rs.getLong(LAST_CHANGED))
-                                        .withChangedBy(rs.getString(CHANGED_BY))
-                                        .build()
-                                )
-                        );
+                                        .withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID)).withFieldTypeId(rs.getString(FIELD_TYPE_ID))
+                                        .withData(rs.getString(DATA)).withLastChanged(rs.getLong(LAST_CHANGED))
+                                        .withChangedBy(rs.getString(CHANGED_BY)).build()));
                         participantDatasByParticipantIds.merge(rs.getString(DDP_PARTICIPANT_ID), value, (preValue, currentValue) -> {
                             preValue.addAll(currentValue);
                             return preValue;
@@ -328,17 +273,10 @@ public class ParticipantDataDao implements Dao<ParticipantData> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_ALL_PARTICIPANT_DATA)) {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        participantDataList.add(
-                                new ParticipantData.Builder()
-                                        .withParticipantDataId(rs.getInt(PARTICIPANT_DATA_ID))
-                                        .withDdpParticipantId(rs.getString(DDP_PARTICIPANT_ID))
-                                        .withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID))
-                                        .withFieldTypeId(rs.getString(FIELD_TYPE_ID))
-                                        .withData(rs.getString(DATA))
-                                        .withLastChanged(rs.getLong(LAST_CHANGED))
-                                        .withChangedBy(rs.getString(CHANGED_BY))
-                                        .build()
-                        );
+                        participantDataList.add(new ParticipantData.Builder().withParticipantDataId(rs.getInt(PARTICIPANT_DATA_ID))
+                                .withDdpParticipantId(rs.getString(DDP_PARTICIPANT_ID)).withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID))
+                                .withFieldTypeId(rs.getString(FIELD_TYPE_ID)).withData(rs.getString(DATA))
+                                .withLastChanged(rs.getLong(LAST_CHANGED)).withChangedBy(rs.getString(CHANGED_BY)).build());
                     }
                 }
             } catch (SQLException ex) {
@@ -360,17 +298,10 @@ public class ParticipantDataDao implements Dao<ParticipantData> {
                 stmt.setInt(1, instanceId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        participantDataList.add(
-                                new ParticipantData.Builder()
-                                        .withParticipantDataId(rs.getInt(PARTICIPANT_DATA_ID))
-                                        .withDdpParticipantId(rs.getString(DDP_PARTICIPANT_ID))
-                                        .withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID))
-                                        .withFieldTypeId(rs.getString(FIELD_TYPE_ID))
-                                        .withData(rs.getString(DATA))
-                                        .withLastChanged(rs.getLong(LAST_CHANGED))
-                                        .withChangedBy(rs.getString(CHANGED_BY))
-                                        .build()
-                        );
+                        participantDataList.add(new ParticipantData.Builder().withParticipantDataId(rs.getInt(PARTICIPANT_DATA_ID))
+                                .withDdpParticipantId(rs.getString(DDP_PARTICIPANT_ID)).withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID))
+                                .withFieldTypeId(rs.getString(FIELD_TYPE_ID)).withData(rs.getString(DATA))
+                                .withLastChanged(rs.getLong(LAST_CHANGED)).withChangedBy(rs.getString(CHANGED_BY)).build());
                     }
                 }
             } catch (SQLException ex) {
@@ -393,17 +324,10 @@ public class ParticipantDataDao implements Dao<ParticipantData> {
                 stmt.setInt(1, instanceId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        participantDataList.add(
-                                new ParticipantData.Builder()
-                                        .withParticipantDataId(rs.getInt(PARTICIPANT_DATA_ID))
-                                        .withDdpParticipantId(rs.getString(DDP_PARTICIPANT_ID))
-                                        .withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID))
-                                        .withFieldTypeId(rs.getString(FIELD_TYPE_ID))
-                                        .withData(rs.getString(DATA))
-                                        .withLastChanged(rs.getLong(LAST_CHANGED))
-                                        .withChangedBy(rs.getString(CHANGED_BY))
-                                        .build()
-                        );
+                        participantDataList.add(new ParticipantData.Builder().withParticipantDataId(rs.getInt(PARTICIPANT_DATA_ID))
+                                .withDdpParticipantId(rs.getString(DDP_PARTICIPANT_ID)).withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID))
+                                .withFieldTypeId(rs.getString(FIELD_TYPE_ID)).withData(rs.getString(DATA))
+                                .withLastChanged(rs.getLong(LAST_CHANGED)).withChangedBy(rs.getString(CHANGED_BY)).build());
                     }
                 }
             } catch (SQLException ex) {

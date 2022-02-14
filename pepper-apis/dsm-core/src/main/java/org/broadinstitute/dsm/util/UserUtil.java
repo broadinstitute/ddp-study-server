@@ -29,33 +29,34 @@ import spark.Request;
 
 public class UserUtil {
 
-    public static final String SQL_USER_ROLES_PER_REALM = "SELECT role.name FROM  access_user_role_group roleGroup " +
-            "LEFT JOIN ddp_instance_group gr on (gr.ddp_group_id = roleGroup.group_id) " +
-            "LEFT JOIN access_user user on (roleGroup.user_id = user.user_id) " +
-            "LEFT JOIN ddp_instance realm on (realm.ddp_instance_id = gr.ddp_instance_id) " +
-            "LEFT JOIN access_role role on (role.role_id = roleGroup.role_id) " +
-            "WHERE roleGroup.user_id = ? and instance_name = ?";
+    public static final String SQL_USER_ROLES_PER_REALM = "SELECT role.name FROM  access_user_role_group roleGroup "
+            + "LEFT JOIN ddp_instance_group gr on (gr.ddp_group_id = roleGroup.group_id) "
+            + "LEFT JOIN access_user user on (roleGroup.user_id = user.user_id) "
+            + "LEFT JOIN ddp_instance realm on (realm.ddp_instance_id = gr.ddp_instance_id) "
+            + "LEFT JOIN access_role role on (role.role_id = roleGroup.role_id) " + "WHERE roleGroup.user_id = ? and instance_name = ?";
     public static final String USER_ID = "userId";
     public static final String SHIPPING_MENU = "shipping";
     private static final Logger logger = LoggerFactory.getLogger(UserUtil.class);
     private static final String SQL_SELECT_USER = "SELECT user_id, name FROM access_user";
     private static final String SQL_INSERT_USER = "INSERT INTO access_user (name, email) VALUES (?,?)";
     private static final String SQL_SELECT_USER_ACCESS_ROLE =
-            "SELECT role.name FROM access_user_role_group roleGroup, access_user user, access_role role " +
-                    "WHERE roleGroup.user_id = user.user_id AND roleGroup.role_id = role.role_id AND user.is_active = 1";
-    private static final String SQL_USER_ROLES = "SELECT DISTINCT role.name FROM  access_user_role_group roleGroup " +
-            "LEFT JOIN ddp_instance_group gr on (gr.ddp_group_id = roleGroup.group_id) " +
-            "LEFT JOIN access_user user on (roleGroup.user_id = user.user_id) " +
-            "LEFT JOIN access_role role on (role.role_id = roleGroup.role_id) " +
-            "WHERE roleGroup.user_id = ? ";
+            "SELECT role.name FROM access_user_role_group roleGroup, access_user user, access_role role "
+                    + "WHERE roleGroup.user_id = user.user_id AND roleGroup.role_id = role.role_id AND user.is_active = 1";
+    private static final String SQL_USER_ROLES = "SELECT DISTINCT role.name FROM  access_user_role_group roleGroup "
+            + "LEFT JOIN ddp_instance_group gr on (gr.ddp_group_id = roleGroup.group_id) "
+            + "LEFT JOIN access_user user on (roleGroup.user_id = user.user_id) "
+            + "LEFT JOIN access_role role on (role.role_id = roleGroup.role_id) " + "WHERE roleGroup.user_id = ? ";
     private static final String SQL_SELECT_USER_REALMS =
-            "SELECT DISTINCT realm.instance_name, realm.display_name, (SELECT count(role.name) " +
-                    "FROM ddp_instance realm2, ddp_instance_role inRol, instance_role role " +
-                    "WHERE realm2.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id AND role.name = ? " +
-                    "AND realm2.ddp_instance_id = realm.ddp_instance_id) AS 'has_role' FROM access_user_role_group roleGroup, " +
-                    "access_user user, ddp_group, ddp_instance_group realmGroup, ddp_instance realm, access_role role " +
-                    "WHERE realm.ddp_instance_id = realmGroup.ddp_instance_id AND realmGroup.ddp_group_id = ddp_group.group_id AND ddp_group.group_id = roleGroup.group_id " +
-                    "AND roleGroup.user_id = user.user_id AND role.role_id = roleGroup.role_id AND realm.is_active = 1 AND user.is_active = 1 AND user.user_id = ? ";
+            "SELECT DISTINCT realm.instance_name, realm.display_name, (SELECT count(role.name) "
+                    + "FROM ddp_instance realm2, ddp_instance_role inRol, instance_role role "
+                    + "WHERE realm2.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id "
+                    + "AND role.name = ? "
+                    + "AND realm2.ddp_instance_id = realm.ddp_instance_id) AS 'has_role' FROM access_user_role_group roleGroup, "
+                    + "access_user user, ddp_group, ddp_instance_group realmGroup, ddp_instance realm, access_role role "
+                    + "WHERE realm.ddp_instance_id = realmGroup.ddp_instance_id AND realmGroup.ddp_group_id = ddp_group.group_id "
+                    + "AND ddp_group.group_id = roleGroup.group_id "
+                    + "AND roleGroup.user_id = user.user_id AND role.role_id = roleGroup.role_id AND realm.is_active = 1 "
+                    + "AND user.is_active = 1 AND user.user_id = ? ";
     private static final String NO_USER_ROLE = "NO_USER_ROLE";
     private static final String MAILINGLIST_MENU = "mailingList";
     private static final String MEDICALRECORD_MENU = "medicalRecord";

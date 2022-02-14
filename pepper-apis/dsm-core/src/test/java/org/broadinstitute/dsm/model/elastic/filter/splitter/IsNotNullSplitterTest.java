@@ -6,7 +6,6 @@ import org.junit.Test;
 
 public class IsNotNullSplitterTest {
 
-
     @Test
     public void getNestedInnerProperty() {
         BaseSplitter splitter = new IsNotNullSplitter();
@@ -22,6 +21,4 @@ public class IsNotNullSplitterTest {
         splitter.setFilter(filter);
         assertEquals("kitLabel", splitter.getInnerProperty());
     }
-
-
 }

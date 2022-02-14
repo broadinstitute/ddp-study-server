@@ -113,11 +113,12 @@ public class ParticipantMedicalRecordTool {
         //secrets from vault in a config file
         cfg = cfg.withFallback(ConfigFactory.parseFile(new File(config)));
 
-//        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
-//                cfg.getString("portal.dbSslKeyStorePwd"),
-//                cfg.getString("portal.dbSslTrustStore"),
-//                cfg.getString("portal.dbSslTrustStorePwd"));
-        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS), cfg.getString(ApplicationConfigConstants.DSM_DB_URL)));
+        //        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
+        //                cfg.getString("portal.dbSslKeyStorePwd"),
+        //                cfg.getString("portal.dbSslTrustStore"),
+        //                cfg.getString("portal.dbSslTrustStorePwd"));
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM,
+                cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS), cfg.getString(ApplicationConfigConstants.DSM_DB_URL)));
     }
 
     private static void combineData(@NonNull String realm, @NonNull String datStatDataFile) {
@@ -159,10 +160,6 @@ public class ParticipantMedicalRecordTool {
     /**
      * Extract data from given datStatData file
      *
-     * @param datStatDataFile
-     * @return HashMap<String, DatStatParticipantInstitution>
-     * Key: (String) ddp_institution_id + "_1_INITIAL_BIOPSY"
-     * Value: DatStatParticipantInstitution (datStat information of participant institution)
      */
     private static HashMap<String, DatStatParticipantInstitution> extractDataFromFile(@NonNull String datStatDataFile) {
         try {
@@ -293,16 +290,17 @@ public class ParticipantMedicalRecordTool {
                             String ddpParticipantId = rs.getString(DBConstants.DDP_PARTICIPANT_ID);
                             String ddpInstitutionId = rs.getString(DBConstants.DDP_INSTITUTION_ID);
                             String institutionType = rs.getString(DBConstants.TYPE);
-                            participantMedicalRecord.add(new ParticipantMedicalRecord(rs.getString(DBConstants.INSTANCE_NAME),
-                                    ddpParticipantId, ddpInstitutionId, institutionType, rs.getString(DBConstants.ONC_HISTORY_CREATED),
-                                    rs.getString(DBConstants.ONC_HISTORY_REVIEWED), rs.getString(DBConstants.NAME),
-                                    rs.getString(DBConstants.CONTACT), rs.getString(DBConstants.PHONE),
-                                    rs.getString(DBConstants.FAX), rs.getString(DBConstants.FAX_SENT),
-                                    rs.getString(DBConstants.FAX_CONFIRMED), rs.getString(DBConstants.MR_RECEIVED),
-                                    rs.getString(DBConstants.MR_DOCUMENT), rs.getString(DBConstants.MR_PROBLEM),
-                                    rs.getString(DBConstants.MR_PROBLEM_TEXT), rs.getString(DBConstants.MR_UNABLE_OBTAIN),
-                                    rs.getString(DBConstants.DUPLICATE), rs.getString(DBConstants.NOTES),
-                                    rs.getString(DBConstants.REVIEW_MEDICAL_RECORD)));
+                            participantMedicalRecord.add(
+                                    new ParticipantMedicalRecord(rs.getString(DBConstants.INSTANCE_NAME), ddpParticipantId,
+                                            ddpInstitutionId, institutionType, rs.getString(DBConstants.ONC_HISTORY_CREATED),
+                                            rs.getString(DBConstants.ONC_HISTORY_REVIEWED), rs.getString(DBConstants.NAME),
+                                            rs.getString(DBConstants.CONTACT), rs.getString(DBConstants.PHONE),
+                                            rs.getString(DBConstants.FAX), rs.getString(DBConstants.FAX_SENT),
+                                            rs.getString(DBConstants.FAX_CONFIRMED), rs.getString(DBConstants.MR_RECEIVED),
+                                            rs.getString(DBConstants.MR_DOCUMENT), rs.getString(DBConstants.MR_PROBLEM),
+                                            rs.getString(DBConstants.MR_PROBLEM_TEXT), rs.getString(DBConstants.MR_UNABLE_OBTAIN),
+                                            rs.getString(DBConstants.DUPLICATE), rs.getString(DBConstants.NOTES),
+                                            rs.getString(DBConstants.REVIEW_MEDICAL_RECORD)));
                         }
                     }
                 }
@@ -324,42 +322,41 @@ public class ParticipantMedicalRecordTool {
             for (JsonElement physicianInstitution : physiciansInstitutions) {
                 String physicianInstitutionId = "";
                 String type = "";
-                if (physicianInstitution.getAsJsonObject().get("physicianId") != null &&
-                        !physicianInstitution.getAsJsonObject().get("physicianId").isJsonNull()) {
+                if (physicianInstitution.getAsJsonObject().get("physicianId") != null && !physicianInstitution.getAsJsonObject()
+                        .get("physicianId").isJsonNull()) {
                     physicianInstitutionId = physicianInstitution.getAsJsonObject().get("physicianId").getAsString();
                     type = "PHYSICIAN";
                 }
-                if (physicianInstitution.getAsJsonObject().get("institutionId") != null &&
-                        !physicianInstitution.getAsJsonObject().get("institutionId").isJsonNull()) {
+                if (physicianInstitution.getAsJsonObject().get("institutionId") != null && !physicianInstitution.getAsJsonObject()
+                        .get("institutionId").isJsonNull()) {
                     physicianInstitutionId = physicianInstitution.getAsJsonObject().get("institutionId").getAsString();
                     type = "INSTITUTION";
                 }
                 String instName = "";
-                if (physicianInstitution.getAsJsonObject().get("name") != null &&
-                        !physicianInstitution.getAsJsonObject().get("name").isJsonNull()) {
+                if (physicianInstitution.getAsJsonObject().get("name") != null && !physicianInstitution.getAsJsonObject().get("name")
+                        .isJsonNull()) {
                     instName = physicianInstitution.getAsJsonObject().get("name").getAsString();
                 }
                 String institution = "";
-                if (physicianInstitution.getAsJsonObject().get("institution") != null &&
-                        !physicianInstitution.getAsJsonObject().get("institution").isJsonNull()) {
+                if (physicianInstitution.getAsJsonObject().get("institution") != null && !physicianInstitution.getAsJsonObject()
+                        .get("institution").isJsonNull()) {
                     institution = physicianInstitution.getAsJsonObject().get("institution").getAsString();
                 }
                 String city = "";
-                if (physicianInstitution.getAsJsonObject().get("city") != null &&
-                        !physicianInstitution.getAsJsonObject().get("city").isJsonNull()) {
+                if (physicianInstitution.getAsJsonObject().get("city") != null && !physicianInstitution.getAsJsonObject().get("city")
+                        .isJsonNull()) {
                     city = physicianInstitution.getAsJsonObject().get("city").getAsString();
                 }
                 String instState = "";
-                if (physicianInstitution.getAsJsonObject().get("state") != null &&
-                        !physicianInstitution.getAsJsonObject().get("state").isJsonNull()) {
+                if (physicianInstitution.getAsJsonObject().get("state") != null && !physicianInstitution.getAsJsonObject().get("state")
+                        .isJsonNull()) {
                     instState = physicianInstitution.getAsJsonObject().get("state").getAsString();
                 }
 
                 String key = participant.getParticipantId().concat("_" + physicianInstitutionId).concat("_" + type);
                 logger.info(key);
-                datStatDataHashMap.put(key,
-                        new DatStatParticipantInstitution(participant, new DatStatInstitution(physicianInstitutionId, type,
-                                institution, instName, city, instState)));
+                datStatDataHashMap.put(key, new DatStatParticipantInstitution(participant,
+                        new DatStatInstitution(physicianInstitutionId, type, institution, instName, city, instState)));
             }
         } catch (ClassCastException e) {
             logger.info("No Json in that field " + json);

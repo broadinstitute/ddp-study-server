@@ -36,16 +36,15 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class Util {
 
-    public static final Map<String, BaseGenerator.PropertyInfo> TABLE_ALIAS_MAPPINGS = Map.of(
-            DBConstants.DDP_MEDICAL_RECORD_ALIAS, new BaseGenerator.PropertyInfo(MedicalRecord.class, true),
-            DBConstants.DDP_TISSUE_ALIAS, new BaseGenerator.PropertyInfo(Tissue.class, true),
-            DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS, new BaseGenerator.PropertyInfo(OncHistoryDetail.class, true),
-            DBConstants.DDP_PARTICIPANT_DATA_ALIAS, new BaseGenerator.PropertyInfo(ParticipantData.class, true),
-            DBConstants.DDP_PARTICIPANT_RECORD_ALIAS, new BaseGenerator.PropertyInfo(Participant.class, false),
-            DBConstants.DDP_PARTICIPANT_ALIAS, new BaseGenerator.PropertyInfo(Participant.class, false),
-            DBConstants.DDP_ONC_HISTORY_ALIAS, new BaseGenerator.PropertyInfo(OncHistory.class, false),
-            DBConstants.DDP_KIT_REQUEST_ALIAS, new BaseGenerator.PropertyInfo(KitRequestShipping.class, true)
-    );
+    public static final Map<String, BaseGenerator.PropertyInfo> TABLE_ALIAS_MAPPINGS =
+            Map.of(DBConstants.DDP_MEDICAL_RECORD_ALIAS, new BaseGenerator.PropertyInfo(MedicalRecord.class, true),
+                    DBConstants.DDP_TISSUE_ALIAS, new BaseGenerator.PropertyInfo(Tissue.class, true),
+                    DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS, new BaseGenerator.PropertyInfo(OncHistoryDetail.class, true),
+                    DBConstants.DDP_PARTICIPANT_DATA_ALIAS, new BaseGenerator.PropertyInfo(ParticipantData.class, true),
+                    DBConstants.DDP_PARTICIPANT_RECORD_ALIAS, new BaseGenerator.PropertyInfo(Participant.class, false),
+                    DBConstants.DDP_PARTICIPANT_ALIAS, new BaseGenerator.PropertyInfo(Participant.class, false),
+                    DBConstants.DDP_ONC_HISTORY_ALIAS, new BaseGenerator.PropertyInfo(OncHistory.class, false),
+                    DBConstants.DDP_KIT_REQUEST_ALIAS, new BaseGenerator.PropertyInfo(KitRequestShipping.class, true));
     public static final int FIRST_ELEMENT_INDEX = 0;
     public static final String UNDERSCORE_SEPARATOR = "_";
     public static final String COMMA_SEPARATOR = ",";
@@ -85,9 +84,8 @@ public class Util {
         if (hasNoUnderscores(splittedWords)) {
             return handleAllUppercase(fieldName);
         }
-        List<StringBuilder> words = Arrays.stream(splittedWords)
-                .map(word -> new StringBuilder(word.toLowerCase()))
-                .collect(Collectors.toList());
+        List<StringBuilder> words =
+                Arrays.stream(splittedWords).map(word -> new StringBuilder(word.toLowerCase())).collect(Collectors.toList());
         for (int i = FIRST_ELEMENT_INDEX; i < words.size(); i++) {
             StringBuilder word = words.get(i);
             if (i != FIRST_ELEMENT_INDEX && word.length() > FIRST_ELEMENT_INDEX) {
@@ -178,17 +176,15 @@ public class Util {
     }
 
     public static List<Map<String, Object>> convertObjectListToMapList(Object fieldValue) {
-        return Objects.isNull(fieldValue)
-                ? new ArrayList<>()
-                : ObjectMapperSingleton.instance().convertValue(fieldValue, new TypeReference<List<Map<String, Object>>>() {
-        });
+        return Objects.isNull(fieldValue) ? new ArrayList<>() :
+                ObjectMapperSingleton.instance().convertValue(fieldValue, new TypeReference<List<Map<String, Object>>>() {
+                });
     }
 
     public static Map<String, Object> convertObjectToMap(Object fieldValue) {
-        return Objects.isNull(fieldValue)
-                ? new HashMap<>()
-                : ObjectMapperSingleton.instance().convertValue(fieldValue, new TypeReference<Map<String, Object>>() {
-        });
+        return Objects.isNull(fieldValue) ? new HashMap<>() :
+                ObjectMapperSingleton.instance().convertValue(fieldValue, new TypeReference<Map<String, Object>>() {
+                });
     }
 
     private static Map<String, Object> dynamicFieldsSpecialCase(Object fieldValue) {
@@ -240,9 +236,7 @@ public class Util {
 
     public static String camelCaseToPascalSnakeCase(String camelCase) {
         String[] words = camelCase.split(UPPER_CASE_REGEX.toString());
-        String pascalSnakeCase = Arrays.stream(words)
-                .map(String::toUpperCase)
-                .collect(Collectors.joining(UNDERSCORE_SEPARATOR));
+        String pascalSnakeCase = Arrays.stream(words).map(String::toUpperCase).collect(Collectors.joining(UNDERSCORE_SEPARATOR));
         return pascalSnakeCase;
     }
 

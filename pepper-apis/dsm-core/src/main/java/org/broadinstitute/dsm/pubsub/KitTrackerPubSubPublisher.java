@@ -40,7 +40,7 @@ public class KitTrackerPubSubPublisher {
 
         try {
             ApiFuture<String> futureKitTracker = publisher.publish(pubsubMessage);
-//            String messageId = publisher.publish(pubsubMessage).get();
+            // String messageId = publisher.publish(pubsubMessage).get();
             ApiFutures.addCallback(
                     futureKitTracker,
                     new ApiFutureCallback<String>() {

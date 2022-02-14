@@ -129,7 +129,7 @@ public class TissueSMIDDao {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_SM_ID_VALUE_WITH_ID)) {
                 stmt.setString(1, smIdValue);
-                stmt.setString(2, smIdPk);// added to let updating
+                stmt.setString(2, smIdPk); // added to let updating
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         dbVals.resultValue = false;

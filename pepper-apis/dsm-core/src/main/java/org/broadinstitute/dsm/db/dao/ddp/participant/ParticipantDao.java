@@ -15,8 +15,9 @@ import org.broadinstitute.lddp.db.SimpleResult;
 public class ParticipantDao implements Dao<ParticipantDto> {
 
     private static final String SQL_INSERT_PARTICIPANT =
-            "INSERT INTO ddp_participant (ddp_participant_id, last_version, last_version_date, ddp_instance_id, release_completed, " +
-                    "assignee_id_mr, assignee_id_tissue, last_changed, changed_by) VALUES (?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE last_changed = ?, changed_by = ?";
+            "INSERT INTO ddp_participant (ddp_participant_id, last_version, last_version_date, ddp_instance_id, release_completed, "
+                    + "assignee_id_mr, assignee_id_tissue, last_changed, changed_by) VALUES (?,?,?,?,?,?,?,?,?) "
+                    + "ON DUPLICATE KEY UPDATE last_changed = ?, changed_by = ?";
 
     @Override
     public int create(ParticipantDto participantDto) {

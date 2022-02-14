@@ -128,6 +128,7 @@ public class JWTRouteFilterTest {
                 throw new RuntimeException("Couldn't create token " + e);
             }
         } catch (Exception e) {
+            Assert.fail();
         }
     }
 

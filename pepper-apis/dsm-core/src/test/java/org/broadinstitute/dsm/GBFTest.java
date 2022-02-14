@@ -33,8 +33,8 @@ import org.broadinstitute.dsm.util.DBUtil;
 import org.broadinstitute.dsm.util.EasyPostUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
-import org.broadinstitute.dsm.util.externalShipper.ExternalShipper;
-import org.broadinstitute.dsm.util.externalShipper.GBFRequestUtil;
+import org.broadinstitute.dsm.util.externalshipper.ExternalShipper;
+import org.broadinstitute.dsm.util.externalshipper.GBFRequestUtil;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -42,8 +42,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class
-GBFTest extends TestHelper {
+public class GBFTest extends TestHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(GBFTest.class);
     private String GBF_URL = "https://www.gbfmedical.com/oap/api/";
@@ -52,7 +51,7 @@ GBFTest extends TestHelper {
     @BeforeClass
     public static void before() throws Exception {
         setupDB();
-        ExternalShipper shipper = (ExternalShipper) Class.forName("org.broadinstitute.dsm.util.externalShipper.GBFRequestUtil")
+        ExternalShipper shipper = (ExternalShipper) Class.forName("org.broadinstitute.dsm.util.externalshipper.GBFRequestUtil")
                 .newInstance(); //to get blindTestExecutor instance
     }
 
@@ -77,8 +76,7 @@ GBFTest extends TestHelper {
         if (apiKey != null) {
             Orders orders = new Orders();
             orders.setOrders(new ArrayList<>());
-            Address address = new Address("1st Participant", "415 Main St", null, "Cambridge",
-                    "MA", "02141", "US", "666666667");
+            Address address = new Address("1st Participant", "415 Main St", null, "Cambridge", "MA", "02141", "US", "666666667");
             ShippingInfo shippingInfo = new ShippingInfo(null, "FEDEX_2_DAY", address);
             List<LineItem> lineItems = new ArrayList<>();
             lineItems.add(new LineItem("K-DFC-PROMISE", "1"));
@@ -140,18 +138,14 @@ GBFTest extends TestHelper {
     @Test
     @Ignore
     public void reorderKits() throws Exception {
-        String query = "Select *, from_unixtime(req.created_date/1000) as created_time " +
-                "FROM prod_dsm_db.ddp_kit_request req \n" +
-                "left join ddp_kit kit on \n" +
-                "(req.dsm_kit_request_id = kit.dsm_kit_request_id)\n" +
-                "LEFT JOIN (SELECT subK.kit_type_id, subK.external_name from ddp_kit_request_settings dkc   LEFT JOIN sub_kits_settings subK ON (subK.ddp_kit_request_settings_id = dkc.ddp_kit_request_settings_id)) as subkits ON (subkits.kit_type_id = req.kit_type_id)   " +
-                "where \n" +
-                "req.ddp_instance_id = ? \n" +
-                "and (external_order_status is null or external_order_status = 'NOT FOUND')\n" +
-                "and external_order_number is not null\n" +
-                "and req.kit_type_id = 7\n" +
-                "and from_unixtime(created_date/1000) like \"2021-02-27%\"\n" +
-                "order by created_time DESC\n";
+        String query = "Select *, from_unixtime(req.created_date/1000) as created_time " + "FROM prod_dsm_db.ddp_kit_request req \n"
+                + "left join ddp_kit kit on \n" + "(req.dsm_kit_request_id = kit.dsm_kit_request_id)\n"
+                + "LEFT JOIN (SELECT subK.kit_type_id, subK.external_name from ddp_kit_request_settings dkc   "
+                + "LEFT JOIN sub_kits_settings subK ON (subK.ddp_kit_request_settings_id = dkc.ddp_kit_request_settings_id)) as subkits"
+                + " ON (subkits.kit_type_id = req.kit_type_id)   " + "where \n" + "req.ddp_instance_id = ? \n"
+                + "and (external_order_status is null or external_order_status = 'NOT FOUND')\n" + "and external_order_number is not null\n"
+                + "and req.kit_type_id = 7\n" + "and from_unixtime(created_date/1000) like \"2021-02-27%\"\n"
+                + "order by created_time DESC\n";
         GBFRequestUtil gbf = new GBFRequestUtil();
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(9);
         ArrayList<KitRequest> kitRequests = gbf.getKitRequestsNotDone(9, query);
@@ -168,7 +162,7 @@ GBFTest extends TestHelper {
             List<String> orderNumbers = new ArrayList<>();
             orderNumbers.addAll(Arrays.asList(new String[] {""}));
             //            logger.info("Starting the external shipper job");
-            ExternalShipper shipper = (ExternalShipper) Class.forName("org.broadinstitute.dsm.util.externalShipper.GBFRequestUtil")
+            ExternalShipper shipper = (ExternalShipper) Class.forName("org.broadinstitute.dsm.util.externalshipper.GBFRequestUtil")
                     .newInstance(); //to get blindTestExecutor instance
             //            ArrayList<KitRequest> kitRequests = shipper.getKitRequestsNotDone(9);
             //            shipper.orderStatus(kitRequests);;
@@ -233,15 +227,13 @@ GBFTest extends TestHelper {
             Response gbfResponse = GBFRequestUtil.executePost(Response.class, sendRequest, payload.toString(), apiKey);
 
             GBFRequestUtil gbf = new GBFRequestUtil();
-            String query = "SELECT * " +
-                    "FROM ddp_kit_request req  " +
-                    "LEFT JOIN ddp_kit kit ON (req.dsm_kit_request_id = kit.dsm_kit_request_id)  " +
-                    "LEFT JOIN (SELECT subK.kit_type_id, subK.external_name from ddp_kit_request_settings dkc   LEFT JOIN sub_kits_settings subK ON (subK.ddp_kit_request_settings_id = dkc.ddp_kit_request_settings_id)) as subkits ON (subkits.kit_type_id = req.kit_type_id)   " +
-                    "WHERE " +
-                    "req.ddp_instance_id = ?  " +
-                    "AND external_order_status = 'SHIPPED' " +
-                    "AND external_response is null " +
-                    "ORDER BY external_order_date ASC ";
+            String query = "SELECT * " + "FROM ddp_kit_request req  "
+                    + "LEFT JOIN ddp_kit kit ON (req.dsm_kit_request_id = kit.dsm_kit_request_id)  "
+                    + "LEFT JOIN (SELECT subK.kit_type_id, subK.external_name from ddp_kit_request_settings dkc "
+                    + "LEFT JOIN sub_kits_settings subK ON (subK.ddp_kit_request_settings_id = dkc.ddp_kit_request_settings_id)) "
+                    + "as subkits ON (subkits.kit_type_id = req.kit_type_id)   "
+                    + "WHERE " + "req.ddp_instance_id = ?  " + "AND external_order_status = 'SHIPPED' " + "AND external_response is null "
+                    + "ORDER BY external_order_date ASC ";
 
             ArrayList<KitRequest> kitRequests =
                     gbf.getKitRequestsNotDone(Integer.parseInt(DDPInstance.getDDPInstance("testboston").getDdpInstanceId()), query);
@@ -284,15 +276,10 @@ GBFTest extends TestHelper {
     public void orderGBFKit() throws Exception {
         String externalOrderNumber = "T93CNUCZ8QHBSNRI1DJA";
 
-        String orderLookup = "select \n" +
-                "distinct req.ddp_participant_id\n" +
-                "FROM prod_dsm_db.ddp_kit_request req\n" +
-                "left join ddp_kit kit on\n" +
-                "(req.dsm_kit_request_id = kit.dsm_kit_request_id)\n" +
-                "where\n" +
-                "req.ddp_instance_id = 9\n" +
-                "and\n" +
-                "req.external_order_number = ?";
+        String orderLookup =
+                "select \n" + "distinct req.ddp_participant_id\n" + "FROM prod_dsm_db.ddp_kit_request req\n" + "left join ddp_kit kit on\n"
+                        + "(req.dsm_kit_request_id = kit.dsm_kit_request_id)\n" + "where\n" + "req.ddp_instance_id = 9\n" + "and\n"
+                        + "req.external_order_number = ?";
 
         DDPInstance instance = DDPInstance.getDDPInstanceWithRole("testboston", DBConstants.HAS_KIT_REQUEST_ENDPOINTS);
         ArrayList<KitRequest> kitsToOrder = new ArrayList<>();

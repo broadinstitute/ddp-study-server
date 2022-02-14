@@ -13,7 +13,6 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.util.EasyPostUtil;
-import org.broadinstitute.dsm.util.TestUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,29 +29,21 @@ public class CreateLabelTool {
         cfg = cfg.withValue("portal.port", ConfigValueFactory.fromAnyRef("9999"));
         cfg = cfg.withValue("errorAlert.recipientAddress", ConfigValueFactory.fromAnyRef(""));
 
-//        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
-//                cfg.getString("portal.dbSslKeyStorePwd"),
-//                cfg.getString("portal.dbSslTrustStore"),
-//                cfg.getString("portal.dbSslTrustStorePwd"));
+        //        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
+        //                cfg.getString("portal.dbSslKeyStorePwd"),
+        //                cfg.getString("portal.dbSslTrustStore"),
+        //                cfg.getString("portal.dbSslTrustStorePwd"));
 
         TransactionWrapper.reset();
-        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS), cfg.getString(ApplicationConfigConstants.DSM_DB_URL)));
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM,
+                cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS), cfg.getString(ApplicationConfigConstants.DSM_DB_URL)));
 
         //select the method you want to run!
-//        createEasyPostLabel();
-//        getAddressFromID();
-//        verifyAddress();
+        //        createEasyPostLabel();
+        //        getAddressFromID();
+        //        verifyAddress();
     }
 
-    /**
-     * Method to create label for shipping
-     * <p>
-     * change name and address of participant
-     * change API_KEY__EASYPOST to the key you want to use!
-     * change BILLING_REF to the billing reference or use null if you don't want one
-     *
-     * @throws Exception
-     */
     public static void createEasyPostLabel() {
         String apiKey = "API_KEY__EASYPOST"; //in vault file!
         String billingRef = "BILLING_REF"; // or set to null if you don't want a billing reference

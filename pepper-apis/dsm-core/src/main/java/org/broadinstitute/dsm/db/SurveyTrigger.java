@@ -19,7 +19,8 @@ public class SurveyTrigger {
     private static final Logger logger = LoggerFactory.getLogger(SurveyTrigger.class);
 
     private static final String SQL_SELECT_SURVEY_TRIGGER =
-            "SELECT st.survey_trigger_id, st.note, st.created_date, st.created_by, user.name FROM ddp_survey_trigger st, access_user user WHERE st.created_by = user.user_id";
+            "SELECT st.survey_trigger_id, st.note, st.created_date, st.created_by, user.name "
+                    + "FROM ddp_survey_trigger st, access_user user WHERE st.created_by = user.user_id";
 
     private String surveyTriggerId;
     private String reason;

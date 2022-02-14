@@ -19,13 +19,13 @@ public class ObjectMapperSingleton {
     public static <T> T readValue(String content, TypeReference<?> typeReference) {
         content = StringUtils.isBlank(content) ? "{}" : content;
         return null;
-//        try {
-//            return Helper.objectMapperInstance.readValue(content, typeReference);
-//        } catch (com.fasterxml.jackson.core.JsonParseException e) {
-//            throw new JsonParseException(e.getMessage());
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
+        //        try {
+        //            return Helper.objectMapperInstance.readValue(content, typeReference);
+        //        } catch (com.fasterxml.jackson.core.JsonParseException e) {
+        //            throw new JsonParseException(e.getMessage());
+        //        } catch (IOException e) {
+        //            throw new RuntimeException(e);
+        //        }
     }
 
     public static String writeValueAsString(Object value) {

@@ -24,7 +24,8 @@ public class BSPDummyKitDao implements Dao<ClinicalKitDto> {
 
     private static final String SQL_UPDATE_DUMMY_KIT = "UPDATE ddp_kit SET kit_label = ? where dsm_kit_request_id = ?";
     private static final String SQL_SELECT_RANDOM_PT =
-            "SELECT ddp_participant_id FROM ddp_kit_request req, ddp_kit kit where req.dsm_kit_request_id = kit.dsm_kit_request_id and deactivated_date is null and ddp_instance_id = ? group by ddp_participant_id ORDER BY RAND() LIMIT 1";
+            "SELECT ddp_participant_id FROM ddp_kit_request req, ddp_kit kit where req.dsm_kit_request_id = kit.dsm_kit_request_id "
+                    + "and deactivated_date is null and ddp_instance_id = ? group by ddp_participant_id ORDER BY RAND() LIMIT 1";
     private static final String SQL_SELECT_RANDOM_SUFFIX = " ORDER BY RAND() LIMIT 1";
 
     private static final Logger logger = LoggerFactory.getLogger(BSPDummyKitDao.class);
@@ -57,8 +58,8 @@ public class BSPDummyKitDao implements Dao<ClinicalKitDto> {
         });
         Optional<ElasticSearchParticipantDto> maybeParticipantByParticipantId =
                 ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
-        while (maybeParticipantByParticipantId.isEmpty() ||
-                maybeParticipantByParticipantId.get().getProfile().map(ESProfile::getHruid).isEmpty()) {
+        while (maybeParticipantByParticipantId.isEmpty() || maybeParticipantByParticipantId.get().getProfile().map(ESProfile::getHruid)
+                .isEmpty()) {
             ddpParticipantId = new BSPDummyKitDao().getRandomParticipantIdForStudy(ddpInstance.getDdpInstanceId()).orElseThrow(() -> {
                 throw new RuntimeException("Random participant id was not generated");
             });

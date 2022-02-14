@@ -65,8 +65,7 @@ public class KitDiscard {
     }
 
     public KitDiscard(String realm, String ddpParticipantId, String collaboratorParticipantId, String kitRequestId, String kitDiscardId,
-                      String user,
-                      long exitDate, String kitType, long scanDate, long receivedDate, String kitLabel, String action,
+                      String user, long exitDate, String kitType, long scanDate, long receivedDate, String kitLabel, String action,
                       String pathBSPScreenshot, String pathSampleImage, String note, int changedById, String changedBy, String userConfirm,
                       String discardUser, String discardDate) {
         this.realm = realm;
@@ -97,8 +96,8 @@ public class KitDiscard {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
-                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_OF_EXITED_PARTICIPANTS) +
-                            QueryExtension.BY_INSTANCE_NAME)) {
+                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_OF_EXITED_PARTICIPANTS)
+                            + QueryExtension.BY_INSTANCE_NAME)) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
@@ -106,27 +105,14 @@ public class KitDiscard {
                         String userChanged = users.get(userIdChanged);
                         int userIdConfirm = rs.getInt(DBConstants.USER_CONFIRM);
                         String userConfirm = users.get(userIdConfirm);
-                        exitedKits.add(new KitDiscard(rs.getString(DBConstants.INSTANCE_NAME),
-                                rs.getString(DBConstants.DDP_PARTICIPANT_ID),
-                                rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
-                                rs.getString(DBConstants.DSM_KIT_REQUEST_ID),
-                                rs.getString(DBConstants.KIT_DISCARD_ID),
-                                rs.getString(DBConstants.NAME),
-                                rs.getLong(DBConstants.EXIT_DATE),
-                                rs.getString(DBConstants.KIT_TYPE_NAME),
-                                rs.getLong(DBConstants.DSM_SCAN_DATE),
-                                rs.getLong(DBConstants.DSM_RECEIVE_DATE),
-                                rs.getString(DBConstants.KIT_LABEL),
-                                rs.getString(DBConstants.ACTION),
-                                rs.getString(DBConstants.PATH_SCREENSHOT),
-                                rs.getString(DBConstants.PATH_IMAGE),
-                                rs.getString(DBConstants.NOTE),
-                                userIdChanged,
-                                userChanged,
-                                userConfirm,
-                                rs.getString(DBConstants.DISCARD_BY),
-                                rs.getString(DBConstants.DISCARD_DATE)
-                        ));
+                        exitedKits.add(new KitDiscard(rs.getString(DBConstants.INSTANCE_NAME), rs.getString(DBConstants.DDP_PARTICIPANT_ID),
+                                rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID), rs.getString(DBConstants.DSM_KIT_REQUEST_ID),
+                                rs.getString(DBConstants.KIT_DISCARD_ID), rs.getString(DBConstants.NAME), rs.getLong(DBConstants.EXIT_DATE),
+                                rs.getString(DBConstants.KIT_TYPE_NAME), rs.getLong(DBConstants.DSM_SCAN_DATE),
+                                rs.getLong(DBConstants.DSM_RECEIVE_DATE), rs.getString(DBConstants.KIT_LABEL),
+                                rs.getString(DBConstants.ACTION), rs.getString(DBConstants.PATH_SCREENSHOT),
+                                rs.getString(DBConstants.PATH_IMAGE), rs.getString(DBConstants.NOTE), userIdChanged, userChanged,
+                                userConfirm, rs.getString(DBConstants.DISCARD_BY), rs.getString(DBConstants.DISCARD_DATE)));
                     }
                 }
             } catch (Exception ex) {
@@ -244,9 +230,8 @@ public class KitDiscard {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
-                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_OF_EXITED_PARTICIPANTS) +
-                            QueryExtension.DISCARD_KIT_BY_DISCARD_ID,
-                    ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_OF_EXITED_PARTICIPANTS)
+                            + QueryExtension.DISCARD_KIT_BY_DISCARD_ID, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
                 stmt.setString(1, kitDiscardId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     rs.last();
@@ -257,27 +242,16 @@ public class KitDiscard {
                         String userChanged = users.get(userIdChanged);
                         int userIdConfirm = rs.getInt(DBConstants.USER_CONFIRM);
                         String userConfirm = users.get(userIdConfirm);
-                        dbVals.resultValue = new KitDiscard(rs.getString(DBConstants.INSTANCE_NAME),
-                                rs.getString(DBConstants.DDP_PARTICIPANT_ID),
-                                rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
-                                rs.getString(DBConstants.DSM_KIT_REQUEST_ID),
-                                rs.getString(DBConstants.KIT_DISCARD_ID),
-                                rs.getString(DBConstants.NAME),
-                                rs.getLong(DBConstants.EXIT_DATE),
-                                rs.getString(DBConstants.KIT_TYPE_NAME),
-                                rs.getLong(DBConstants.DSM_SCAN_DATE),
-                                rs.getLong(DBConstants.DSM_RECEIVE_DATE),
-                                rs.getString(DBConstants.KIT_LABEL),
-                                rs.getString(DBConstants.ACTION),
-                                rs.getString(DBConstants.PATH_SCREENSHOT),
-                                rs.getString(DBConstants.PATH_IMAGE),
-                                rs.getString(DBConstants.NOTE),
-                                userIdChanged,
-                                userChanged,
-                                userConfirm,
-                                rs.getString(DBConstants.DISCARD_BY),
-                                rs.getString(DBConstants.DISCARD_DATE)
-                        );
+                        dbVals.resultValue =
+                                new KitDiscard(rs.getString(DBConstants.INSTANCE_NAME), rs.getString(DBConstants.DDP_PARTICIPANT_ID),
+                                        rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID), rs.getString(DBConstants.DSM_KIT_REQUEST_ID),
+                                        rs.getString(DBConstants.KIT_DISCARD_ID), rs.getString(DBConstants.NAME),
+                                        rs.getLong(DBConstants.EXIT_DATE), rs.getString(DBConstants.KIT_TYPE_NAME),
+                                        rs.getLong(DBConstants.DSM_SCAN_DATE), rs.getLong(DBConstants.DSM_RECEIVE_DATE),
+                                        rs.getString(DBConstants.KIT_LABEL), rs.getString(DBConstants.ACTION),
+                                        rs.getString(DBConstants.PATH_SCREENSHOT), rs.getString(DBConstants.PATH_IMAGE),
+                                        rs.getString(DBConstants.NOTE), userIdChanged, userChanged, userConfirm,
+                                        rs.getString(DBConstants.DISCARD_BY), rs.getString(DBConstants.DISCARD_DATE));
                     } else {
                         throw new RuntimeException("Error getting discard kit back. (Got " + count + " row back)");
                     }

@@ -34,15 +34,16 @@ import org.slf4j.LoggerFactory;
 public class Participant {
 
     public static final String SQL_SELECT_PARTICIPANT =
-            "SELECT p.participant_id, p.ddp_participant_id, p.assignee_id_mr, p.assignee_id_tissue, p.ddp_instance_id, " +
-                    "realm.instance_name, realm.base_url, realm.mr_attention_flag_d, realm.tissue_attention_flag_d, realm.auth0_token, realm.notification_recipients, realm.migrated_ddp, " +
-                    "o.onc_history_id, o.created, o.reviewed, " +
-                    "r.cr_sent, r.cr_received, r.notes, r.minimal_mr, r.abstraction_ready, r.additional_values_json, ex.exit_date, ex.exit_by " +
-                    "FROM ddp_participant p LEFT JOIN ddp_instance realm on (p.ddp_instance_id = realm.ddp_instance_id) " +
-                    "LEFT JOIN ddp_onc_history o on (o.participant_id = p.participant_id) " +
-                    "LEFT JOIN ddp_participant_record r on (r.participant_id = p.participant_id) " +
-                    "LEFT JOIN ddp_participant_exit ex on (p.ddp_participant_id = ex.ddp_participant_id AND p.ddp_instance_id = ex.ddp_instance_id) " +
-                    "WHERE realm.instance_name = ? ";
+            "SELECT p.participant_id, p.ddp_participant_id, p.assignee_id_mr, p.assignee_id_tissue, p.ddp_instance_id, "
+                    + "realm.instance_name, realm.base_url, realm.mr_attention_flag_d, realm.tissue_attention_flag_d, "
+                    + "realm.auth0_token, realm.notification_recipients, realm.migrated_ddp, " + "o.onc_history_id, o.created, o.reviewed, "
+                    + "r.cr_sent, r.cr_received, r.notes, r.minimal_mr, r.abstraction_ready, r.additional_values_json, "
+                    + "ex.exit_date, ex.exit_by "
+                    + "FROM ddp_participant p LEFT JOIN ddp_instance realm on (p.ddp_instance_id = realm.ddp_instance_id) "
+                    + "LEFT JOIN ddp_onc_history o on (o.participant_id = p.participant_id) "
+                    + "LEFT JOIN ddp_participant_record r on (r.participant_id = p.participant_id) "
+                    + "LEFT JOIN ddp_participant_exit ex on (p.ddp_participant_id = ex.ddp_participant_id A"
+                    + "ND p.ddp_instance_id = ex.ddp_instance_id) " + "WHERE realm.instance_name = ? ";
     private static final Logger logger = LoggerFactory.getLogger(Participant.class);
     @ColumnName(DBConstants.PARTICIPANT_ID)
     private long participantId;
@@ -50,95 +51,62 @@ public class Participant {
     @ColumnName(DBConstants.DDP_PARTICIPANT_ID)
     private String ddpParticipantId;
 
-    @TableName(
-            name = DBConstants.DDP_PARTICIPANT,
-            alias = DBConstants.DDP_PARTICIPANT_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
-            columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT, alias = DBConstants.DDP_PARTICIPANT_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.ASSIGNEE_ID_MR)
     private String assigneeIdMr;
 
-    @TableName(
-            name = DBConstants.DDP_PARTICIPANT,
-            alias = DBConstants.DDP_PARTICIPANT_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
-            columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT, alias = DBConstants.DDP_PARTICIPANT_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.ASSIGNEE_ID_TISSUE)
     private String assigneeIdTissue;
     private String realm;
 
-    @TableName(
-            name = DBConstants.DDP_ONC_HISTORY,
-            alias = DBConstants.DDP_ONC_HISTORY_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
-            columnPrefix = "")
+    @TableName(name = DBConstants.DDP_ONC_HISTORY, alias = DBConstants.DDP_ONC_HISTORY_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.ONC_HISTORY_CREATED)
     private String createdOncHistory;
 
-    @TableName(
-            name = DBConstants.DDP_ONC_HISTORY,
-            alias = DBConstants.DDP_ONC_HISTORY_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
-            columnPrefix = "")
+    @TableName(name = DBConstants.DDP_ONC_HISTORY, alias = DBConstants.DDP_ONC_HISTORY_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.ONC_HISTORY_REVIEWED)
     private String reviewedOncHistory;
 
-    @TableName(
-            name = DBConstants.DDP_PARTICIPANT_RECORD,
-            alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
-            columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.CR_SENT)
     @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String crSent;
 
-    @TableName(
-            name = DBConstants.DDP_PARTICIPANT_RECORD,
-            alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
-            columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.CR_RECEIVED)
     @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String crReceived;
 
-    @TableName(
-            name = DBConstants.DDP_PARTICIPANT_RECORD,
-            alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
-            columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.NOTES)
     private String notes;
 
-    @TableName(
-            name = DBConstants.DDP_PARTICIPANT_RECORD,
-            alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
-            columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.MINIMAL_MR)
     private boolean minimalMr;
 
-    @TableName(
-            name = DBConstants.DDP_PARTICIPANT_RECORD,
-            alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
-            columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.ABSTRACTION_READY)
     private boolean abstractionReady;
 
-    @TableName(
-            name = DBConstants.DDP_PARTICIPANT_RECORD,
-            alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
-            columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.ADDITIONAL_VALUES_JSON)
     @JsonProperty("dynamicFields")
     @SerializedName("dynamicFields")
     private String additionalValuesJson;
-    @TableName(
-            name = DBConstants.DDP_PARTICIPANT_EXIT,
-            alias = DBConstants.DDP_PARTICIPANT_EXIT_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
-            columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT_EXIT, alias = DBConstants.DDP_PARTICIPANT_EXIT_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.EXIT_DATE)
     private long exitDate;
 
@@ -178,18 +146,17 @@ public class Participant {
                 assigneeTissue = assignees.get(assigneeIdTissue).getName();
             }
         }
-        Participant participant = new Participant(rs.getLong(DBConstants.PARTICIPANT_ID),
-                rs.getString(DBConstants.DDP_PARTICIPANT_ID),
-                assigneeMR, assigneeTissue, realm,
-                rs.getString(DBConstants.ONC_HISTORY_CREATED),
-                rs.getString(DBConstants.ONC_HISTORY_REVIEWED),
-                rs.getString(DBConstants.CR_SENT),
-                rs.getString(DBConstants.CR_RECEIVED),
-                rs.getString(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.NOTES),
-                rs.getBoolean(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.MINIMAL_MR),
-                rs.getBoolean(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ABSTRACTION_READY),
-                rs.getString(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ADDITIONAL_VALUES_JSON),
-                rs.getLong(DBConstants.EXIT_DATE));
+        Participant participant =
+                new Participant(rs.getLong(DBConstants.PARTICIPANT_ID), rs.getString(DBConstants.DDP_PARTICIPANT_ID), assigneeMR,
+                        assigneeTissue, realm, rs.getString(DBConstants.ONC_HISTORY_CREATED),
+                        rs.getString(DBConstants.ONC_HISTORY_REVIEWED), rs.getString(DBConstants.CR_SENT),
+                        rs.getString(DBConstants.CR_RECEIVED),
+                        rs.getString(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.NOTES),
+                        rs.getBoolean(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.MINIMAL_MR),
+                        rs.getBoolean(
+                                DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ABSTRACTION_READY),
+                        rs.getString(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER
+                                + DBConstants.ADDITIONAL_VALUES_JSON), rs.getLong(DBConstants.EXIT_DATE));
         return participant;
     }
 

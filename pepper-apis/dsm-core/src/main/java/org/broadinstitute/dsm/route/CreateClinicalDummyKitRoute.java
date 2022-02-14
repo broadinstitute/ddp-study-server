@@ -45,11 +45,8 @@ public class CreateClinicalDummyKitRoute implements Route {
             return "Please include a kit label as a path parameter";
         }
         logger.info("Got a new Clinical Kit request with kit label " + kitLabel + " and kit type " + kitTypeString);
-        new BookmarkDao().getBookmarkByInstance(CLINICAL_KIT_REALM).ifPresentOrElse(book -> {
-            REALM = (int) book.getValue();
-        }, () -> {
-            throw new RuntimeException("Bookmark doesn't exist for " + CLINICAL_KIT_REALM);
-        });
+        new BookmarkDao().getBookmarkByInstance(CLINICAL_KIT_REALM).ifPresentOrElse(book -> {REALM = (int) book.getValue();}, () -> {
+                throw new RuntimeException("Bookmark doesn't exist for " + CLINICAL_KIT_REALM);});
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(REALM);
         BSPDummyKitDao bspDummyKitDao = new BSPDummyKitDao();
         if (ddpInstance != null) {
@@ -68,8 +65,7 @@ public class CreateClinicalDummyKitRoute implements Route {
             if (kitTypeString.toLowerCase().indexOf(FFPE) == -1) {
                 String participantCollaboratorId =
                         KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
-                                ddpInstance.isMigratedDDP(),
-                                ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId,
+                                ddpInstance.isMigratedDDP(), ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId,
                                 maybeParticipantByParticipantId.get().getProfile().map(ESProfile::getHruid).orElseThrow(), null);
                 String collaboratorSampleId =
                         KitRequestShipping.getCollaboratorSampleId(desiredKitType.getKitId(), participantCollaboratorId,
@@ -78,8 +74,8 @@ public class CreateClinicalDummyKitRoute implements Route {
                 //if instance not null
                 String dsmKitRequestId =
                         KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), kitRequestId, desiredKitType.getKitId(),
-                                ddpParticipantId, participantCollaboratorId, collaboratorSampleId,
-                                USER_ID, "", "", "", false, "", ddpInstance);
+                                ddpParticipantId, participantCollaboratorId, collaboratorSampleId, USER_ID, "", "", "", false, "",
+                                ddpInstance);
                 bspDummyKitDao.updateKitLabel(kitLabel, dsmKitRequestId);
             } else {
                 String smIdType;
@@ -98,8 +94,8 @@ public class CreateClinicalDummyKitRoute implements Route {
                         ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
                 logger.info("found randomOncHistoryDetailId " + randomOncHistoryDetailId);
                 logger.info("found short id " + maybeParticipant.get().getProfile().map(ESProfile::getHruid));
-                while (tries < 10 && (oncHistoryDetail == null || StringUtils.isBlank(oncHistoryDetail.getAccessionNumber()) ||
-                        maybeParticipant.isEmpty() || maybeParticipant.get().getProfile().map(ESProfile::getHruid).isEmpty())) {
+                while (tries < 10 && (oncHistoryDetail == null || StringUtils.isBlank(oncHistoryDetail.getAccessionNumber())
+                        || maybeParticipant.isEmpty() || maybeParticipant.get().getProfile().map(ESProfile::getHruid).isEmpty())) {
                     randomOncHistoryDetailId = bspDummyKitDao.getRandomOncHistoryForStudy(ddpInstance.getName());
                     oncHistoryDetail = OncHistoryDetail.getOncHistoryDetail(randomOncHistoryDetailId, ddpInstance.getName());
                     ddpParticipantId = oncHistoryDetail.getDdpParticipantId();

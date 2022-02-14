@@ -28,20 +28,20 @@ public class EmailRecord {
     private static final Logger logger = LoggerFactory.getLogger(EmailRecord.class);
     private static final String LOG_PREFIX = "EMAIL QUEUE - ";
     private static final int SEC_IN_HOUR = 3600;
-    private static final String SQL_INSERT_EMAIL_RECORD = "INSERT INTO EMAIL_QUEUE (EMAIL_DATE_CREATED, EMAIL_DATE_SCHEDULED, " +
-            "REMINDER_TYPE, EMAIL_RECORD_ID, EMAIL_TEMPLATE, EMAIL_DATA) VALUES (?, ?, ?, ?, ?, ?)";
-    private static final String SQL_RECORDS_TO_PROCESS = "SELECT EMAIL_ID, EMAIL_TEMPLATE, EMAIL_DATA, REMINDER_TYPE FROM EMAIL_QUEUE " +
-            "WHERE EMAIL_DATE_PROCESSED IS NULL AND EMAIL_DATE_SCHEDULED < ? ORDER BY EMAIL_DATE_SCHEDULED";
+    private static final String SQL_INSERT_EMAIL_RECORD = "INSERT INTO EMAIL_QUEUE (EMAIL_DATE_CREATED, EMAIL_DATE_SCHEDULED, "
+            + "REMINDER_TYPE, EMAIL_RECORD_ID, EMAIL_TEMPLATE, EMAIL_DATA) VALUES (?, ?, ?, ?, ?, ?)";
+    private static final String SQL_RECORDS_TO_PROCESS = "SELECT EMAIL_ID, EMAIL_TEMPLATE, EMAIL_DATA, REMINDER_TYPE FROM EMAIL_QUEUE "
+            + "WHERE EMAIL_DATE_PROCESSED IS NULL AND EMAIL_DATE_SCHEDULED < ? ORDER BY EMAIL_DATE_SCHEDULED";
     private static final String SQL_DELETE_EMAIL_REMINDERS_EQUAL_TO_TYPE = "DELETE FROM EMAIL_QUEUE WHERE EMAIL_RECORD_ID = ? AND "
             + "REMINDER_TYPE = ? AND EMAIL_DATE_PROCESSED IS NULL";
     private static final String SQL_DELETE_EMAIL_REMINDERS_NOT_EQUAL_TO_TYPE = "DELETE FROM EMAIL_QUEUE WHERE EMAIL_RECORD_ID = ? AND "
             + "REMINDER_TYPE != ? AND EMAIL_DATE_PROCESSED IS NULL AND REMINDER_TYPE != 'NA'";
     private static final String SQL_DELETE_ALL_UNSENT_EMAILS = "DELETE FROM EMAIL_QUEUE WHERE EMAIL_RECORD_ID = ? AND "
             + "EMAIL_DATE_PROCESSED IS NULL";
-    private static final String SQL_UPDATE_PROCESSED_RECORDS = "UPDATE EMAIL_QUEUE " +
-            "SET EMAIL_DATE_PROCESSED = ? WHERE EMAIL_ID IN (X)";
-    private static final String SQL_RESET_PROCESSED_RECORD = "UPDATE EMAIL_QUEUE " +
-            "SET EMAIL_DATE_PROCESSED = null WHERE EMAIL_ID = ?";
+    private static final String SQL_UPDATE_PROCESSED_RECORDS = "UPDATE EMAIL_QUEUE "
+            + "SET EMAIL_DATE_PROCESSED = ? WHERE EMAIL_ID IN (X)";
+    private static final String SQL_RESET_PROCESSED_RECORD = "UPDATE EMAIL_QUEUE "
+            + "SET EMAIL_DATE_PROCESSED = null WHERE EMAIL_ID = ?";
     private Recipient recipient;
     private Long recordId; //EMAIL_ID PK value in DB table
     private String reminderType;
@@ -76,8 +76,8 @@ public class EmailRecord {
 
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult(0);
-            try (PreparedStatement stmt = conn.prepareStatement((matchReminderType) ?
-                    SQL_DELETE_EMAIL_REMINDERS_EQUAL_TO_TYPE : SQL_DELETE_EMAIL_REMINDERS_NOT_EQUAL_TO_TYPE)) {
+            try (PreparedStatement stmt = conn.prepareStatement((matchReminderType)
+                    ? SQL_DELETE_EMAIL_REMINDERS_EQUAL_TO_TYPE : SQL_DELETE_EMAIL_REMINDERS_NOT_EQUAL_TO_TYPE)) {
                 stmt.setString(1, emailGroupId);
                 stmt.setString(2, reminderType);
                 dbVals.resultValue = stmt.executeUpdate();
@@ -178,12 +178,6 @@ public class EmailRecord {
         }
     }
 
-    /***
-     * Adds one or more rows to the email queue.
-     * @param emailGroupId - could be an email address, altpid, whatever needs to be used to help identify row or group of rows in email
-     *                     queue table
-     *                      so that things like unnecessary reminders can be deleted together
-     */
     private static void add(String immediateEmailTemplate, @NonNull Recipient recipient, String reminderType, JsonElement reminderInfo,
                             @NonNull String emailGroupId) {
         logger.info(LOG_PREFIX + "Adding email record(s)...");

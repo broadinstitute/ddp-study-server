@@ -9,7 +9,7 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-abstract public class MappingGenerator extends BaseGenerator {
+public abstract class MappingGenerator extends BaseGenerator {
 
     public static final String TYPE = "type";
     public static final String NESTED = "nested";

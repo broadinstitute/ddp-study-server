@@ -25,8 +25,7 @@ public class GPNotificationUtil {
     private NotificationUtil notificationUtil;
     private KitUtil kitUtil;
 
-    public GPNotificationUtil(@NonNull Config config, @NonNull NotificationUtil notificationUtil,
-                              @NonNull KitUtil kitUtil) {
+    public GPNotificationUtil(@NonNull Config config, @NonNull NotificationUtil notificationUtil, @NonNull KitUtil kitUtil) {
         this.gpNotificationRecipient = config.getString(ApplicationConfigConstants.EMAIL_GP_RECIPIENT);
         this.frontendUrl = config.getString(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS);
         this.notificationUtil = notificationUtil;
@@ -60,16 +59,16 @@ public class GPNotificationUtil {
             for (KitDDPSummary kitDDPSummary : unsentKits) {
                 if (kitDDPSummary != null) {
                     if (!"0".equals(kitDDPSummary.getKitsNoLabel())) {
-                        message += kitDDPSummary.getRealm() + " has " + kitDDPSummary.getKitsNoLabel() + " unsent " +
-                                kitDDPSummary.getKitType() + " kit requests (with no label yet)<br>";
+                        message += kitDDPSummary.getRealm() + " has " + kitDDPSummary.getKitsNoLabel() + " unsent "
+                                + kitDDPSummary.getKitType() + " kit requests (with no label yet)<br>";
                     }
                     if (!"0".equals(kitDDPSummary.getKitsQueue())) {
-                        message += kitDDPSummary.getRealm() + " has " + kitDDPSummary.getKitsQueue() + " unsent " +
-                                kitDDPSummary.getKitType() + " kit requests @ Queue.<br>";
+                        message += kitDDPSummary.getRealm() + " has " + kitDDPSummary.getKitsQueue() + " unsent "
+                                + kitDDPSummary.getKitType() + " kit requests @ Queue.<br>";
                     }
                     if (!"0".equals(kitDDPSummary.getKitsError())) {
-                        message += kitDDPSummary.getRealm() + " has " + kitDDPSummary.getKitsError() + " unsent " +
-                                kitDDPSummary.getKitType() + " kit requests @ Error.<br>";
+                        message += kitDDPSummary.getRealm() + " has " + kitDDPSummary.getKitsError() + " unsent "
+                                + kitDDPSummary.getKitType() + " kit requests @ Error.<br>";
                     }
                 }
             }

@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.model.PDF;
+package org.broadinstitute.dsm.model.pdf;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -203,8 +203,8 @@ public class DownloadPDF {
                 if (GoogleBucket.bucketExists(credentials, gcpName, bucketName)) {
                     long time = System.currentTimeMillis();
                     GoogleBucket.uploadFile(credentials, gcpName, bucketName,
-                            ddpParticipantId + "/readonly/" + ddpParticipantId + "_" + fileType + "_" + userId + "_download_" + time +
-                                    ".pdf", stream);
+                            ddpParticipantId + "/readonly/" + ddpParticipantId + "_" + fileType + "_" + userId + "_download_"
+                                    + time + ".pdf", stream);
                 }
             } catch (Exception e) {
                 logger.error("Failed to check for GCP bucket " + bucketName, e);

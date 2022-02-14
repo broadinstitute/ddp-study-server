@@ -77,8 +77,8 @@ public class KitStatusChangeRoute extends RequestHandler {
         QueryParamsMap queryParams = request.queryMap();
         String realm = queryParams.get(RoutePath.REALM).value();
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
-        if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest) ||
-                UserUtil.checkUserAccess(null, userId, "kit_receiving", userIdRequest)) {
+        if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest)
+                || UserUtil.checkUserAccess(null, userId, "kit_receiving", userIdRequest)) {
             List<ScanError> scanErrorList = new ArrayList<>();
 
             long currentTime = System.currentTimeMillis();
@@ -197,8 +197,8 @@ public class KitStatusChangeRoute extends RequestHandler {
                     }
                 } else {
                     if (RoutePath.FINAL_SCAN_REQUEST.equals(changeType) || RoutePath.SENT_KIT_REQUEST.equals(changeType)) {
-                        scanErrorList.add(new ScanError(kit, "DSM Label \"" + kit + "\" does not exist or already has a Kit Label.\n" +
-                                UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
+                        scanErrorList.add(new ScanError(kit, "DSM Label \"" + kit + "\" does not exist or already has a Kit Label.\n"
+                                + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
                         throw new RuntimeException("ddp_label " + kit + " does not exist or already has a Kit Label");
                     } else if (RoutePath.TRACKING_SCAN_REQUEST.equals(changeType)) {
                         scanErrorList.add(new ScanError(kit,
@@ -208,8 +208,8 @@ public class KitStatusChangeRoute extends RequestHandler {
                         //try to receive it as AT kit
                         if (!ReceiveKitRequest.receiveATKitRequest(notificationUtil, kit)) {
                             scanErrorList.add(new ScanError(kit,
-                                    "SM-ID \"" + kit + "\" does not exist or was already scanned as received.\n" +
-                                            UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
+                                    "SM-ID \"" + kit + "\" does not exist or was already scanned as received.\n"
+                                            + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
                             logger.warn("SM-ID kit_label " + kit + " does not exist or was already scanned as received");
                         }
                     } else {

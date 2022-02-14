@@ -35,8 +35,8 @@ public class KitUploadRouteTest {
 
     @Test
     public void headerMissingShortId() {
-        String fileContent = "firstName\tlastName\tstreet1\tstreet2\tcity\tstate\tpostalCode\tcountry\n" +
-                "56\tSun\tMaid\t415 Main St\t\tCambridge\tMA\t2142\tUS";
+        String fileContent = "firstName\tlastName\tstreet1\tstreet2\tcity\tstate\tpostalCode\tcountry\n"
+                + "56\tSun\tMaid\t415 Main St\t\tCambridge\tMA\t2142\tUS";
         try {
             route.isFileValid(fileContent, null);
         } catch (FileColumnMissing e) {
@@ -47,8 +47,8 @@ public class KitUploadRouteTest {
 
     @Test
     public void headerMissingFirstNameWithShortId() {
-        String fileContent = "shortId\tlastName\tstreet1\tstreet2\tcity\tstate\tpostalCode\tcountry\n" +
-                "56\tMaid\t415 Main St\t\tCambridge\tMA\t2142\tUS";
+        String fileContent = "shortId\tlastName\tstreet1\tstreet2\tcity\tstate\tpostalCode\tcountry\n"
+                + "56\tMaid\t415 Main St\t\tCambridge\tMA\t2142\tUS";
         try {
             route.isFileValid(fileContent, null);
         } catch (FileColumnMissing e) {
@@ -58,8 +58,8 @@ public class KitUploadRouteTest {
 
     @Test
     public void fileMissingFirstAndLastName() {
-        String fileContent = "shortId\tfirstName\tlastName\tstreet1\tstreet2\tcity\tstate\tpostalCode\tcountry\n" +
-                "56\t415 Main St\t\tCambridge\tMA\t2142\tUS";
+        String fileContent = "shortId\tfirstName\tlastName\tstreet1\tstreet2\tcity\tstate\tpostalCode\tcountry\n"
+                + "56\t415 Main St\t\tCambridge\tMA\t2142\tUS";
         try {
             route.isFileValid(fileContent, "testrealm");
         } catch (UploadLineException e) {
@@ -69,8 +69,8 @@ public class KitUploadRouteTest {
 
     @Test
     public void fileUserNameDoesNotMatch() {
-        String fileContent = "shortId\tfirstName\tlastName\tstreet1\tstreet2\tcity\tstate\tpostalCode\tcountry\n" +
-                "56\tNebula\tGalaxy\t415 Main St\t\tCambridge\tMA\t2142\tUS";
+        String fileContent = "shortId\tfirstName\tlastName\tstreet1\tstreet2\tcity\tstate\tpostalCode\tcountry\n"
+                + "56\tNebula\tGalaxy\t415 Main St\t\tCambridge\tMA\t2142\tUS";
 
         String[] rows = fileContent.split(System.lineSeparator());
         List<String> fieldNamesFromFileHeader = Arrays.asList(rows[0].trim().split(SystemUtil.SEPARATOR));
@@ -84,17 +84,15 @@ public class KitUploadRouteTest {
         esProfile.setFirstName("Mickey");
         esProfile.setLastName("Mouse");
         esProfile.setHruid("");
-        ElasticSearchParticipantDto elasticSearchParticipantDto = new ElasticSearchParticipantDto.Builder()
-                .withProfile(esProfile)
-                .build();
+        ElasticSearchParticipantDto elasticSearchParticipantDto = new ElasticSearchParticipantDto.Builder().withProfile(esProfile).build();
         Assert.assertNotEquals("", route.checkKitUploadNameMatchesToEsName(participantFirstNameFromDoc, participantLastNameFromDoc,
                 elasticSearchParticipantDto));
     }
 
     @Test
     public void fileUserDoesNotBelongToStudy() {
-        String fileContent = "shortId\tfirstName\tlastName\tstreet1\tstreet2\tcity\tstate\tpostalCode\tcountry\n" +
-                "56\tNebula\tGalaxy\t415 Main St\t\tCambridge\tMA\t2142\tUS";
+        String fileContent = "shortId\tfirstName\tlastName\tstreet1\tstreet2\tcity\tstate\tpostalCode\tcountry\n"
+                + "56\tNebula\tGalaxy\t415 Main St\t\tCambridge\tMA\t2142\tUS";
 
         String[] rows = fileContent.split(System.lineSeparator());
         List<String> fieldNamesFromFileHeader = Arrays.asList(rows[0].trim().split(SystemUtil.SEPARATOR));
@@ -120,9 +118,7 @@ public class KitUploadRouteTest {
             esProfile.setLegacyAltPid(shortId);
         }
 
-        ElasticSearchParticipantDto elasticSearchParticipantDto = new ElasticSearchParticipantDto.Builder()
-                .withProfile(esProfile)
-                .build();
+        ElasticSearchParticipantDto elasticSearchParticipantDto = new ElasticSearchParticipantDto.Builder().withProfile(esProfile).build();
         participant.setEsData(elasticSearchParticipantDto);
         return participant;
     }

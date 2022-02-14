@@ -11,25 +11,15 @@ import org.broadinstitute.dsm.model.Filter;
 
 public enum Operator {
 
-    LIKE(Filter.LIKE_TRIMMED),
-    EQUALS(Filter.EQUALS_TRIMMED),
-    GREATER_THAN_EQUALS(Filter.LARGER_EQUALS_TRIMMED),
-    LESS_THAN_EQUALS(Filter.SMALLER_EQUALS_TRIMMED),
-    IS_NOT_NULL(Filter.IS_NOT_NULL_TRIMMED),
-    IS_NULL(Filter.IS_NULL_TRIMMED),
-    DIAMOND_EQUALS(Filter.DIAMOND_EQUALS),
-    MULTIPLE_OPTIONS(Operator.MULTIPLE_OPTIONS_INDICATOR),
-    STR_DATE(Filter.DATE_FORMAT),
-    DATE_GREATER_THAN_EQUALS(Filter.DATE_GREATER),
-    DATE_LESS_THAN_EQUALS(Filter.DATE_LESS),
-    JSON_EXTRACT(Filter.JSON_EXTRACT),
-    JSON_CONTAINS(Filter.JSON_CONTAINS),
-    DATE(Filter.DATE);
+    LIKE(Filter.LIKE_TRIMMED), EQUALS(Filter.EQUALS_TRIMMED), GREATER_THAN_EQUALS(Filter.LARGER_EQUALS_TRIMMED),
+    LESS_THAN_EQUALS(Filter.SMALLER_EQUALS_TRIMMED), IS_NOT_NULL(Filter.IS_NOT_NULL_TRIMMED), IS_NULL(Filter.IS_NULL_TRIMMED),
+    DIAMOND_EQUALS(Filter.DIAMOND_EQUALS), MULTIPLE_OPTIONS(Operator.MULTIPLE_OPTIONS_INDICATOR), STR_DATE(Filter.DATE_FORMAT),
+    DATE_GREATER_THAN_EQUALS(Filter.DATE_GREATER), DATE_LESS_THAN_EQUALS(Filter.DATE_LESS), JSON_EXTRACT(Filter.JSON_EXTRACT),
+    JSON_CONTAINS(Filter.JSON_CONTAINS), DATE(Filter.DATE);
 
     public static final String MULTIPLE_OPTIONS_INDICATOR = "()";
     public static final String UNKNOWN_OPERATOR = "Unknown operator";
-    public static final List<String> IS_NOT_NULL_LIST = Arrays.asList("IS", "NOT",
-            "NULL");
+    public static final List<String> IS_NOT_NULL_LIST = Arrays.asList("IS", "NOT", "NULL");
 
     private String value;
 
@@ -51,13 +41,11 @@ public enum Operator {
         if (isMultipleOptions(splittedFilter)) {
             return MULTIPLE_OPTIONS;
         }
-        Optional<String> maybeOperator = Arrays.stream(splittedFilter)
-                .filter(StringUtils::isNotBlank)
-                .map(Operator::handleSpecialCaseOperators)
-                .filter(word -> Arrays.stream(Operator.values()).anyMatch(op -> op.value.equals(word)) ||
-                        Operator.IS_NOT_NULL_LIST.contains(word))
-                .distinct()
-                .reduce((prev, curr) -> String.join(Filter.SPACE, prev, curr));
+        Optional<String> maybeOperator =
+                Arrays.stream(splittedFilter).filter(StringUtils::isNotBlank).map(Operator::handleSpecialCaseOperators)
+                        .filter(word -> Arrays.stream(Operator.values()).anyMatch(op -> op.value.equals(word))
+                                || Operator.IS_NOT_NULL_LIST.contains(word)).distinct()
+                        .reduce((prev, curr) -> String.join(Filter.SPACE, prev, curr));
         if (maybeOperator.isPresent()) {
             String operator = maybeOperator.get();
             switch (operator) {
@@ -112,15 +100,12 @@ public enum Operator {
         }
         String firstElement = splittedFilter[0];
         String lastElement = splittedFilter[splittedFilter.length - 1];
-        return (Filter.OPEN_PARENTHESIS.equals(firstElement) && Filter.CLOSE_PARENTHESIS.equals(lastElement))
-                || (firstElement.charAt(0) == Filter.OPEN_PARENTHESIS_CHAR && lastElement.charAt(lastElement.length() - 1) ==
-                Filter.CLOSE_PARENTHESIS_CHAR);
+        return (Filter.OPEN_PARENTHESIS.equals(firstElement) && Filter.CLOSE_PARENTHESIS.equals(lastElement)) || (
+                firstElement.charAt(0) == Filter.OPEN_PARENTHESIS_CHAR
+                        && lastElement.charAt(lastElement.length() - 1) == Filter.CLOSE_PARENTHESIS_CHAR);
     }
 
     private static String[] cleanFromEmptySpaces(String[] splittedFilter) {
-        return Arrays.stream(splittedFilter)
-                .filter(StringUtils::isNotBlank)
-                .collect(Collectors.toList())
-                .toArray(new String[] {});
+        return Arrays.stream(splittedFilter).filter(StringUtils::isNotBlank).collect(Collectors.toList()).toArray(new String[] {});
     }
 }

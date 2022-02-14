@@ -19,19 +19,21 @@ public class KitRequestExternal extends KitRequest {
     private static final Logger logger = LoggerFactory.getLogger(KitRequestExternal.class);
 
     private static final String SQL_UPDATE_KIT_EXTERNAL_SHIPPER =
-            "UPDATE ddp_kit SET  tracking_to_id = ?, tracking_return_id = ?, kit_label = ?, kit_complete = 1, scan_date = ?, scan_by = ? " +
-                    "WHERE dsm_kit_request_id = (SELECT request.dsm_kit_request_id FROM ddp_kit_request request LEFT JOIN (SELECT * from (SELECT kit.dsm_kit_request_id, kit.kit_complete " +
-                    "FROM ddp_kit kit INNER JOIN(SELECT dsm_kit_request_id, MAX(dsm_kit_id) AS kit_id FROM ddp_kit GROUP BY dsm_kit_request_id) groupedKit " +
-                    "ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id AND kit.dsm_kit_id = groupedKit.kit_id)as wtf) as kit ON kit.dsm_kit_request_id = request.dsm_kit_request_id " +
-                    "WHERE request.dsm_kit_request_id = ? limit 1)";
+            "UPDATE ddp_kit SET  tracking_to_id = ?, tracking_return_id = ?, kit_label = ?, kit_complete = 1, scan_date = ?, scan_by = ? "
+                    + "WHERE dsm_kit_request_id = (SELECT request.dsm_kit_request_id FROM ddp_kit_request request "
+                    + "LEFT JOIN (SELECT * from (SELECT kit.dsm_kit_request_id, kit.kit_complete "
+                    + "FROM ddp_kit kit INNER JOIN(SELECT dsm_kit_request_id, MAX(dsm_kit_id) AS kit_id "
+                    + "FROM ddp_kit GROUP BY dsm_kit_request_id) groupedKit "
+                    + "ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id AND kit.dsm_kit_id = groupedKit.kit_id)as wtf) "
+                    + "as kit ON kit.dsm_kit_request_id = request.dsm_kit_request_id " + "WHERE request.dsm_kit_request_id = ? limit 1)";
     private static final String SQL_UPDATE_KIT_REQUEST_EXTERNAL_SHIPPER_STATUS =
-            "UPDATE ddp_kit_request SET external_order_status = ?, external_order_date = ? WHERE dsm_kit_request_id = ? AND NOT external_order_status <=> ?";
+            "UPDATE ddp_kit_request SET external_order_status = ?, external_order_date = ? WHERE dsm_kit_request_id = ? "
+                    + "AND NOT external_order_status <=> ?";
     private static final String SQL_UPDATE_KIT_REQUEST_EXTERNAL_SHIPPER_RESPONSE =
             "UPDATE ddp_kit_request SET external_response = ? WHERE dsm_kit_request_id = ?";
 
     public KitRequestExternal(long dsmKitRequestId, String participantId, String shortId, String shippingId, String externalOrderNumber,
-                              DDPParticipant participant,
-                              String externalOrderStatus, String externalKitName) {
+                              DDPParticipant participant, String externalOrderStatus, String externalKitName) {
         super(dsmKitRequestId, participantId, shortId, shippingId, externalOrderNumber, participant, externalOrderStatus, externalKitName,
                 null);
     }
@@ -80,8 +82,7 @@ public class KitRequestExternal extends KitRequest {
 
     // update kit request with response of external shipper
     public static void updateKitRequestResponse(@NonNull Connection conn, String trackingIdTo, String trackingIdReturn, String kitLabel,
-                                                long sentDate,
-                                                String sentBy, String dsmKitRequestId, int ddpInstanceId) {
+                                                long sentDate, String sentBy, String dsmKitRequestId, int ddpInstanceId) {
         try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_KIT_EXTERNAL_SHIPPER)) {
             stmt.setString(1, trackingIdTo);
             stmt.setString(2, trackingIdReturn);
@@ -108,8 +109,7 @@ public class KitRequestExternal extends KitRequest {
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceId(ddpInstanceId).orElseThrow();
 
         UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_REQUEST_ID,
-                        ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId)
-                .export();
+                ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId).export();
 
     }
 }

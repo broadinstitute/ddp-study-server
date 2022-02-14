@@ -31,7 +31,8 @@ public class AbstractionWrapper {
     private static final Logger logger = LoggerFactory.getLogger(AbstractionWrapper.class);
 
     private static final String SQL_CREATE_MEDICAL_RECORD_ABSTRACTION =
-            "INSERT INTO $table SET participant_id = ?, medical_record_abstraction_field_id = ?, last_changed = ?, changed_by = ?, $colName = ?";
+            "INSERT INTO $table SET participant_id = ?, medical_record_abstraction_field_id = ?, last_changed = ?, "
+                    + "changed_by = ?, $colName = ?";
 
     private Collection<AbstractionGroup> abstraction;
     private Collection<AbstractionGroup> review;
@@ -101,8 +102,8 @@ public class AbstractionWrapper {
                         throw new RuntimeException("Error adding new medical record abstraction value ", e);
                     }
                 } else {
-                    throw new RuntimeException("Error adding new medical record abstraction value for participant w/ id " + participantId +
-                            " it was updating " + result + " rows");
+                    throw new RuntimeException("Error adding new medical record abstraction value for participant w/ id "
+                            + participantId + " it was updating " + result + " rows");
                 }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;

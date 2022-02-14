@@ -16,12 +16,17 @@ import org.broadinstitute.lddp.db.SimpleResult;
 public class ParticipantStatus {
 
     private static final String SQL_SELECT_MR_STATUS =
-            "SELECT UNIX_TIMESTAMP(str_to_date(min(med.fax_sent), '%Y-%m-%d')) as mrRequested, UNIX_TIMESTAMP(str_to_date(min(med.mr_received), '%Y-%m-%d')) as mrReceived, " +
-                    "UNIX_TIMESTAMP(str_to_date(min(onc.fax_sent), '%Y-%m-%d')) as tissueRequested, UNIX_TIMESTAMP(str_to_date(min(onc.tissue_received), '%Y-%m-%d')) as tissueReceived, " +
-                    "UNIX_TIMESTAMP(str_to_date(min(tis.sent_gp), '%Y-%m-%d')) as tissueSent FROM ddp_medical_record med " +
-                    "LEFT JOIN ddp_institution inst on (med.institution_id = inst.institution_id) LEFT JOIN ddp_participant as part on (part.participant_id = inst.participant_id) " +
-                    "LEFT JOIN ddp_onc_history_detail onc on (med.medical_record_id = onc.medical_record_id) LEFT JOIN ddp_tissue tis on (tis.onc_history_detail_id = onc.onc_history_detail_id) " +
-                    "WHERE part.ddp_participant_id = ? AND part.ddp_instance_id = ? AND NOT med.deleted <=> 1 GROUP BY ddp_participant_id";
+            "SELECT UNIX_TIMESTAMP(str_to_date(min(med.fax_sent), '%Y-%m-%d')) as mrRequested, "
+                    + "UNIX_TIMESTAMP(str_to_date(min(med.mr_received), '%Y-%m-%d')) as mrReceived, "
+                    + "UNIX_TIMESTAMP(str_to_date(min(onc.fax_sent), '%Y-%m-%d')) as tissueRequested, "
+                    + "UNIX_TIMESTAMP(str_to_date(min(onc.tissue_received), '%Y-%m-%d')) as tissueReceived, "
+                    + "UNIX_TIMESTAMP(str_to_date(min(tis.sent_gp), '%Y-%m-%d')) as tissueSent FROM ddp_medical_record med "
+                    + "LEFT JOIN ddp_institution inst on (med.institution_id = inst.institution_id) "
+                    + "LEFT JOIN ddp_participant as part on (part.participant_id = inst.participant_id) "
+                    + "LEFT JOIN ddp_onc_history_detail onc on (med.medical_record_id = onc.medical_record_id) "
+                    + "LEFT JOIN ddp_tissue tis on (tis.onc_history_detail_id = onc.onc_history_detail_id) "
+                    + "WHERE part.ddp_participant_id = ? AND part.ddp_instance_id = ? AND NOT med.deleted <=> 1 "
+                    + "GROUP BY ddp_participant_id";
 
     private Long mrRequested;
     private Long mrReceived;

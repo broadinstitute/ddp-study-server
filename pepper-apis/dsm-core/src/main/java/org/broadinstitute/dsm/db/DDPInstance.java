@@ -25,42 +25,50 @@ import org.slf4j.LoggerFactory;
 public class DDPInstance {
 
     public static final String SQL_SELECT_ALL_ACTIVE_REALMS =
-            "SELECT ddp_instance_id, instance_name, base_url, collaborator_id_prefix, es_participant_index, es_activity_definition_index, es_users_index, " +
-                    "mr_attention_flag_d, tissue_attention_flag_d, auth0_token, notification_recipients, migrated_ddp, billing_reference  FROM ddp_instance WHERE is_active = 1";
+            "SELECT ddp_instance_id, instance_name, base_url, collaborator_id_prefix, es_participant_index, es_activity_definition_index, "
+                    + "es_users_index, mr_attention_flag_d, tissue_attention_flag_d, auth0_token, notification_recipients, migrated_ddp, "
+                    + "billing_reference  FROM ddp_instance WHERE is_active = 1";
     public static final String SQL_SELECT_GROUP =
-            "SELECT ddp_group_id from ddp_instance_group g LEFT JOIN ddp_instance realm ON (g.ddp_instance_id = realm.ddp_instance_id) WHERE instance_name =?";
+            "SELECT ddp_group_id from ddp_instance_group g LEFT JOIN ddp_instance realm ON (g.ddp_instance_id = realm.ddp_instance_id) "
+                    + "WHERE instance_name =?";
     public static final String BY_BASE_URL = " and base_url like \"%dsm/studies/%1\"";
     private static final Logger logger = LoggerFactory.getLogger(DDPInstance.class);
     private static final String SQL_SELECT_INSTANCE_WITH_ROLE =
-            "SELECT ddp_instance_id, instance_name, base_url, collaborator_id_prefix, migrated_ddp, billing_reference, " +
-                    "es_participant_index, es_activity_definition_index,  es_users_index,   (SELECT count(role.name) " +
-                    "FROM ddp_instance realm, ddp_instance_role inRol, instance_role role WHERE realm.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id AND role.name = ? " +
-                    "AND realm.ddp_instance_id = main.ddp_instance_id) AS 'has_role', mr_attention_flag_d, tissue_attention_flag_d, auth0_token, notification_recipients FROM ddp_instance main " +
-                    "WHERE is_active = 1";
+            "SELECT ddp_instance_id, instance_name, base_url, collaborator_id_prefix, migrated_ddp, billing_reference, "
+                    + "es_participant_index, es_activity_definition_index,  es_users_index,   (SELECT count(role.name) "
+                    + "FROM ddp_instance realm, ddp_instance_role inRol, instance_role role "
+                    + "WHERE realm.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id "
+                    + "AND role.name = ? AND realm.ddp_instance_id = main.ddp_instance_id) AS 'has_role', mr_attention_flag_d, "
+                    + "tissue_attention_flag_d, auth0_token, notification_recipients FROM ddp_instance main "
+                    + "WHERE is_active = 1";
     private static final String SQL_SELECT_INSTANCE_WITH_KIT_BEHAVIOR =
-            "SELECT main.ddp_instance_id, instance_name, base_url, collaborator_id_prefix, migrated_ddp, billing_reference, " +
-                    "es_participant_index, es_activity_definition_index, es_users_index, mr_attention_flag_d, tissue_attention_flag_d, auth0_token, notification_recipients, kit_behavior_change  " +
-                    "FROM ddp_instance main, instance_settings setting WHERE main.ddp_instance_id = setting.ddp_instance_id " +
-                    "AND main.is_active = 1 AND setting.kit_behavior_change IS NOT NULL";
+            "SELECT main.ddp_instance_id, instance_name, base_url, collaborator_id_prefix, migrated_ddp, billing_reference, "
+                    + "es_participant_index, es_activity_definition_index, es_users_index, mr_attention_flag_d, tissue_attention_flag_d, "
+                    + "auth0_token, notification_recipients, kit_behavior_change  "
+                    + "FROM ddp_instance main, instance_settings setting WHERE main.ddp_instance_id = setting.ddp_instance_id "
+                    + "AND main.is_active = 1 AND setting.kit_behavior_change IS NOT NULL";
     private static final String SQL_SELECT_ACTIVE_REALMS_WITH_ROLE_INFORMATION_BY_PARTICIPANT_ID =
-            "SELECT main.ddp_instance_id, main.instance_name, main.base_url, " +
-                    "main.collaborator_id_prefix, main.migrated_ddp, main.billing_reference, main.es_participant_index, main.es_activity_definition_index, es_users_index,   (SELECT count(role.name) " +
-                    "FROM ddp_instance realm, ddp_instance_role inRol, instance_role role WHERE realm.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id " +
-                    "AND role.name = ? AND realm.ddp_instance_id = main.ddp_instance_id) as 'has_role', mr_attention_flag_d, tissue_attention_flag_d, auth0_token, notification_recipients " +
-                    "FROM ddp_instance main, ddp_participant part WHERE main.ddp_instance_id = part.ddp_instance_id AND main.is_active = 1 and part.participant_id = ?";
+            "SELECT main.ddp_instance_id, main.instance_name, main.base_url, "
+                    + "main.collaborator_id_prefix, main.migrated_ddp, main.billing_reference, main.es_participant_index, "
+                    + "main.es_activity_definition_index, es_users_index,   (SELECT count(role.name) "
+                    + "FROM ddp_instance realm, ddp_instance_role inRol, instance_role role "
+                    + "WHERE realm.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id "
+                    + "AND role.name = ? AND realm.ddp_instance_id = main.ddp_instance_id) as 'has_role', mr_attention_flag_d, "
+                    + "tissue_attention_flag_d, auth0_token, notification_recipients "
+                    + "FROM ddp_instance main, ddp_participant part WHERE main.ddp_instance_id = part.ddp_instance_id "
+                    + "AND main.is_active = 1 and part.participant_id = ?";
     private static final String SQL_SELECT_ACTIVE_REALMS_WITH_ROLE_INFORMATION_BY_DDP_PARTICIPANT_ID_REALM =
-            "SELECT main.ddp_instance_id, main.instance_name, main.base_url, " +
-                    "main.collaborator_id_prefix, main.migrated_ddp, main.billing_reference, main.es_participant_index, main.es_activity_definition_index, es_users_index, " +
-                    "(SELECT count(role.name) FROM ddp_instance realm, ddp_instance_role inRol, instance_role role WHERE realm.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id " +
-                    "AND role.name = ? AND realm.ddp_instance_id = main.ddp_instance_id) as 'has_role', mr_attention_flag_d, tissue_attention_flag_d, auth0_token, notification_recipients " +
-                    "FROM ddp_instance main, ddp_participant part WHERE main.ddp_instance_id = part.ddp_instance_id AND main.is_active = 1 AND part.ddp_participant_id = ? AND main.instance_name = ?";
+            "SELECT main.ddp_instance_id, main.instance_name, main.base_url, "
+                    + "main.collaborator_id_prefix, main.migrated_ddp, main.billing_reference, main.es_participant_index, "
+                    + "main.es_activity_definition_index, es_users_index, "
+                    + "(SELECT count(role.name) FROM ddp_instance realm, ddp_instance_role inRol, instance_role role "
+                    + "WHERE realm.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id "
+                    + "AND role.name = ? AND realm.ddp_instance_id = main.ddp_instance_id) as 'has_role', mr_attention_flag_d, "
+                    + "tissue_attention_flag_d, auth0_token, notification_recipients "
+                    + "FROM ddp_instance main, ddp_participant part WHERE main.ddp_instance_id = part.ddp_instance_id "
+                    + "AND main.is_active = 1 AND part.ddp_participant_id = ? AND main.instance_name = ?";
     private static final String SQL_SELECT_STUDY_GUID_BY_INSTANCE_NAME =
-            "SELECT " +
-                    "study_guid " +
-                    "FROM " +
-                    "ddp_instance " +
-                    "WHERE " +
-                    "instance_name = ?";
+            "SELECT  study_guid  FROM  ddp_instance  WHERE  instance_name = ?";
 
     private final String ddpInstanceId;
     private final String name;
@@ -375,17 +383,12 @@ public class DDPInstance {
             notificationRecipient = notificationRecipient.replaceAll("\\s", "");
             recipients = Arrays.asList(notificationRecipient.split(","));
         }
-        return new DDPInstance(rs.getString(DBConstants.DDP_INSTANCE_ID),
-                rs.getString(DBConstants.INSTANCE_NAME),
-                rs.getString(DBConstants.BASE_URL), rs.getString(DBConstants.COLLABORATOR_ID_PREFIX),
-                rs.getBoolean(DBConstants.HAS_ROLE), rs.getInt(DBConstants.DAYS_MR_ATTENTION_NEEDED),
-                rs.getInt(DBConstants.DAYS_TISSUE_ATTENTION_NEEDED),
-                rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN),
-                recipients, rs.getBoolean(DBConstants.MIGRATED_DDP),
-                rs.getString(DBConstants.BILLING_REFERENCE),
-                rs.getString(DBConstants.ES_PARTICIPANT_INDEX),
-                rs.getString(DBConstants.ES_ACTIVITY_DEFINITION_INDEX),
-                rs.getString(DBConstants.ES_USERS_INDEX));
+        return new DDPInstance(rs.getString(DBConstants.DDP_INSTANCE_ID), rs.getString(DBConstants.INSTANCE_NAME),
+                rs.getString(DBConstants.BASE_URL), rs.getString(DBConstants.COLLABORATOR_ID_PREFIX), rs.getBoolean(DBConstants.HAS_ROLE),
+                rs.getInt(DBConstants.DAYS_MR_ATTENTION_NEEDED), rs.getInt(DBConstants.DAYS_TISSUE_ATTENTION_NEEDED),
+                rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN), recipients, rs.getBoolean(DBConstants.MIGRATED_DDP),
+                rs.getString(DBConstants.BILLING_REFERENCE), rs.getString(DBConstants.ES_PARTICIPANT_INDEX),
+                rs.getString(DBConstants.ES_ACTIVITY_DEFINITION_INDEX), rs.getString(DBConstants.ES_USERS_INDEX));
     }
 
     private static DDPInstance getDDPInstanceFormResultSet(@NonNull ResultSet rs) throws SQLException {
@@ -395,17 +398,12 @@ public class DDPInstance {
             notificationRecipient = notificationRecipient.replaceAll("\\s", "");
             recipients = Arrays.asList(notificationRecipient.split(","));
         }
-        return new DDPInstance(rs.getString(DBConstants.DDP_INSTANCE_ID),
-                rs.getString(DBConstants.INSTANCE_NAME),
-                rs.getString(DBConstants.BASE_URL), rs.getString(DBConstants.COLLABORATOR_ID_PREFIX),
-                false, rs.getInt(DBConstants.DAYS_MR_ATTENTION_NEEDED),
-                rs.getInt(DBConstants.DAYS_TISSUE_ATTENTION_NEEDED),
-                rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN),
-                recipients, rs.getBoolean(DBConstants.MIGRATED_DDP),
-                rs.getString(DBConstants.BILLING_REFERENCE),
-                rs.getString(DBConstants.ES_PARTICIPANT_INDEX),
-                rs.getString(DBConstants.ES_ACTIVITY_DEFINITION_INDEX),
-                rs.getString(DBConstants.ES_USERS_INDEX));
+        return new DDPInstance(rs.getString(DBConstants.DDP_INSTANCE_ID), rs.getString(DBConstants.INSTANCE_NAME),
+                rs.getString(DBConstants.BASE_URL), rs.getString(DBConstants.COLLABORATOR_ID_PREFIX), false,
+                rs.getInt(DBConstants.DAYS_MR_ATTENTION_NEEDED), rs.getInt(DBConstants.DAYS_TISSUE_ATTENTION_NEEDED),
+                rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN), recipients, rs.getBoolean(DBConstants.MIGRATED_DDP),
+                rs.getString(DBConstants.BILLING_REFERENCE), rs.getString(DBConstants.ES_PARTICIPANT_INDEX),
+                rs.getString(DBConstants.ES_ACTIVITY_DEFINITION_INDEX), rs.getString(DBConstants.ES_USERS_INDEX));
     }
 
     //assumption: base url of pepper studies will always end like: dsm/studies/<STUDYNAME>

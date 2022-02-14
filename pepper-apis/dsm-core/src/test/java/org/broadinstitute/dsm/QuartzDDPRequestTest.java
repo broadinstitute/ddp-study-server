@@ -22,7 +22,7 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.TestUtil;
 import org.broadinstitute.dsm.util.tools.util.DBUtil;
-import org.broadinstitute.dsm.util.triggerListener.DDPRequestTriggerListener;
+import org.broadinstitute.dsm.util.triggerlistener.DDPRequestTriggerListener;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.lddp.util.BasicTriggerListener;
 import org.junit.AfterClass;
@@ -129,7 +129,7 @@ public class QuartzDDPRequestTest extends TestHelper {
 
                 // wait for trigger to finish repeats
                 try {
-                    Thread.sleep(180L * 1000L);//2 min
+                    Thread.sleep(180L * 1000L); //2 min
                     logger.info("Enough testing going to stop scheduler ...");
                     scheduler.shutdown(true);
                 } catch (Exception e) {
@@ -202,7 +202,7 @@ public class QuartzDDPRequestTest extends TestHelper {
         mockDDP.when(
                         request().withPath("/ddp/kitrequests/fake0005-d034-4d8c-acbf-00391050115e"))
                 .respond(response().withStatusCode(200)
-                        .withBody(message4));// no new participants are added --> empty json !
+                        .withBody(message4)); // no new participants are added --> empty json !
         String messageParticipant1 = TestUtil.readFile("ddpResponses/ParticipantsWithId.json");
         mockDDP.when(
                         request().withPath("/ddp/participants/FAKE_PARTICIPANT1"))

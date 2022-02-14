@@ -14,9 +14,7 @@ public class DateGreaterSplitter extends GreaterThanEqualsSplitter {
 
 class DateSplitterHelper {
     public static String[] splitter(String filter) {
-        return new String[] {filter.split(Filter.DATE_FORMAT)[1]
-                .replace(Filter.OPEN_PARENTHESIS, StringUtils.EMPTY)
-                .replace(Filter.CLOSE_PARENTHESIS, StringUtils.EMPTY)
-                .split(Util.COMMA_SEPARATOR)[0]};
+        return new String[] {filter.split(Filter.DATE_FORMAT)[1].replace(Filter.OPEN_PARENTHESIS, StringUtils.EMPTY)
+                .replace(Filter.CLOSE_PARENTHESIS, StringUtils.EMPTY).split(Util.COMMA_SEPARATOR)[0]};
     }
 }

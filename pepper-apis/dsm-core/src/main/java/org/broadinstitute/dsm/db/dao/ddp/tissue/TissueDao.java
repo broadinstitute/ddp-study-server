@@ -20,18 +20,20 @@ import org.broadinstitute.lddp.db.SimpleResult;
 public class TissueDao implements Dao<Tissue> {
 
 
-    private static final String SQL_SELECT_TISSUES_BY_STUDY = "SELECT p.ddp_participant_id, " +
-            "tissue_id, t.onc_history_detail_id, t.notes, count_received, tissue_type, tissue_site, tumor_type, h_e, pathology_report, " +
-            "collaborator_sample_id, " +
-            "block_sent, scrolls_received, sk_id, sm_id, sent_gp, first_sm_id, additional_tissue_value_json, expected_return, return_date, " +
-            "return_fedex_id, shl_work_number, tumor_percentage, tissue_sequence, scrolls_count, uss_count, h_e_count, blocks_count " +
-            "FROM ddp_onc_history_detail oD " +
-            "LEFT JOIN ddp_medical_record m on (oD.medical_record_id = m.medical_record_id AND NOT oD.deleted <=> 1 AND NOT m.deleted <=> 1) " +
-            "LEFT JOIN ddp_institution inst on (inst.institution_id = m.institution_id) " +
-            "LEFT JOIN ddp_participant p on (p.participant_id = inst.participant_id) " +
-            "LEFT JOIN ddp_instance realm on (p.ddp_instance_id = realm.ddp_instance_id) " +
-            "LEFT JOIN ddp_tissue t on (oD.onc_history_detail_id = t.onc_history_detail_id AND NOT t.deleted <=> 1) " +
-            "WHERE realm.instance_name = ? ";
+    private static final String SQL_SELECT_TISSUES_BY_STUDY = "SELECT p.ddp_participant_id, "
+            + "tissue_id, t.onc_history_detail_id, t.notes, count_received, tissue_type, tissue_site, tumor_type, h_e, pathology_report, "
+            + "collaborator_sample_id, "
+            + "block_sent, scrolls_received, sk_id, sm_id, sent_gp, first_sm_id, additional_tissue_value_json, expected_return, "
+            + "return_date, return_fedex_id, shl_work_number, tumor_percentage, tissue_sequence, scrolls_count, uss_count, h_e_count, "
+            + "blocks_count "
+            + "FROM ddp_onc_history_detail oD "
+            + "LEFT JOIN ddp_medical_record m on (oD.medical_record_id = m.medical_record_id AND NOT oD.deleted <=> 1 "
+            + "AND NOT m.deleted <=> 1) "
+            + "LEFT JOIN ddp_institution inst on (inst.institution_id = m.institution_id) "
+            + "LEFT JOIN ddp_participant p on (p.participant_id = inst.participant_id) "
+            + "LEFT JOIN ddp_instance realm on (p.ddp_instance_id = realm.ddp_instance_id) "
+            + "LEFT JOIN ddp_tissue t on (oD.onc_history_detail_id = t.onc_history_detail_id AND NOT t.deleted <=> 1) "
+            + "WHERE realm.instance_name = ? ";
 
     @Override
     public int create(Tissue tissue) {
@@ -73,8 +75,7 @@ public class TissueDao implements Dao<Tissue> {
             return execResult;
         });
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting tissues for "
-                    + study, results.resultException);
+            throw new RuntimeException("Error getting tissues for " + study, results.resultException);
         }
         return tissues;
     }

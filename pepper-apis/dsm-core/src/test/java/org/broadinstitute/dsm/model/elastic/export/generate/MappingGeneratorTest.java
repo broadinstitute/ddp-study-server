@@ -23,8 +23,7 @@ public class MappingGeneratorTest {
 
 
     public static GeneratorPayload getGeneratorPayload(String columnName, Object value, int recordId) {
-        return new GeneratorPayload(new NameValue(columnName, value),
-                recordId) {
+        return new GeneratorPayload(new NameValue(columnName, value), recordId) {
             @Override
             public String getCamelCaseFieldName() {
                 return Util.underscoresToCamelCase(columnName);
@@ -34,8 +33,9 @@ public class MappingGeneratorTest {
 
     @Test
     public void generateTextType() {
-        Map<String, Object> objectMap = TestCollectionMappingGenerator.of(getGeneratorPayload(TestPatchUtil.MEDICAL_RECORD_COLUMN, "value"
-                , 0)).generate();
+        Map<String, Object> objectMap =
+                TestCollectionMappingGenerator.of(getGeneratorPayload(TestPatchUtil.MEDICAL_RECORD_COLUMN,
+                        "value", 0)).generate();
         Assert.assertEquals(objectMap.keySet().stream().findFirst().get(), PROPERTIES);
         String type = extractDeepestLeveleValue(objectMap, TestPatchUtil.MEDICAL_RECORD_COLUMN);
         Assert.assertEquals("text", type);
@@ -43,8 +43,9 @@ public class MappingGeneratorTest {
 
     @Test
     public void generateTextTypeWithFields() {
-        Map<String, Object> objectMap = TestCollectionMappingGenerator.of(getGeneratorPayload(TestPatchUtil.MEDICAL_RECORD_COLUMN, "value"
-                , 0)).generate();
+        Map<String, Object> objectMap =
+                TestCollectionMappingGenerator.of(getGeneratorPayload(TestPatchUtil.MEDICAL_RECORD_COLUMN,
+                        "value", 0)).generate();
         Assert.assertEquals(objectMap.keySet().stream().findFirst().get(), PROPERTIES);
         String type = extractKeywordType(objectMap, TestPatchUtil.MEDICAL_RECORD_COLUMN);
         Assert.assertEquals("keyword", type);
@@ -52,8 +53,8 @@ public class MappingGeneratorTest {
 
     @Test
     public void generateBooleanType() {
-        Map<String, Object> objectMap = TestCollectionMappingGenerator.of(getGeneratorPayload(TestPatchUtil.MR_PROBLEM, true,
-                0)).generate();
+        Map<String, Object> objectMap =
+                TestCollectionMappingGenerator.of(getGeneratorPayload(TestPatchUtil.MR_PROBLEM, true, 0)).generate();
         Assert.assertEquals(objectMap.keySet().stream().findFirst().get(), PROPERTIES);
         String type = extractDeepestLeveleValue(objectMap, TestPatchUtil.MR_PROBLEM);
         Assert.assertEquals("boolean", type);
@@ -79,9 +80,9 @@ public class MappingGeneratorTest {
     public void generateMapping() {
         MappingGenerator generator = TestCollectionMappingGenerator.of(getGeneratorPayload(TestPatchUtil.DATE_FIELD, "2021-10-30", 100));
         Map<String, Object> resultMap = generator.generate();
-        Map<String, Object> dsmLevelProperty = Map.of(generator.getPropertyName(), Map.of(
-                MappingGenerator.TYPE, MappingGenerator.NESTED,
-                PROPERTIES, Map.of(Util.underscoresToCamelCase(TestPatchUtil.DATE_FIELD), Map.of(MappingGenerator.TYPE, "date"))));
+        Map<String, Object> dsmLevelProperty = Map.of(generator.getPropertyName(),
+                Map.of(MappingGenerator.TYPE, MappingGenerator.NESTED, PROPERTIES,
+                        Map.of(Util.underscoresToCamelCase(TestPatchUtil.DATE_FIELD), Map.of(MappingGenerator.TYPE, "date"))));
         Map<String, Object> dsmLevelProperties = Map.of(PROPERTIES, dsmLevelProperty);
         Map<String, Object> dsmLevel = Map.of(MappingGenerator.DSM_OBJECT, dsmLevelProperties);
         Map<String, Object> topLevel = Map.of(PROPERTIES, dsmLevel);
@@ -106,38 +107,17 @@ public class MappingGeneratorTest {
 
 
     private String extractDeepestLeveleValue(Map<String, Object> objectMap, String field) {
-        return (String)
-                ((Map)
-                        ((Map)
-                                getMedicalRecordProperty(objectMap)
-                                        .get(PROPERTIES))
-                                .get(Util.underscoresToCamelCase(field)))
-                        .get("type");
+        return (String) ((Map) ((Map) getMedicalRecordProperty(objectMap).get(PROPERTIES)).get(Util.underscoresToCamelCase(field))).get(
+                "type");
     }
 
     private String extractKeywordType(Map<String, Object> objectMap, String field) {
-        return (String)
-                ((Map)
-                        ((Map)
-                                ((Map)
-                                        ((Map)
-                                                getMedicalRecordProperty(objectMap)
-                                                        .get(PROPERTIES))
-                                                .get(Util.underscoresToCamelCase(field)))
-                                        .get("fields"))
-                                .get("keyword"))
-                        .get("type");
+        return (String) ((Map) ((Map) ((Map) ((Map) getMedicalRecordProperty(objectMap).get(PROPERTIES)).get(
+                Util.underscoresToCamelCase(field))).get("fields")).get("keyword")).get("type");
     }
 
     private Map getMedicalRecordProperty(Map<String, Object> objectMap) {
-        return (Map)
-                ((Map)
-                        ((Map)
-                                ((Map) objectMap
-                                        .get(PROPERTIES))
-                                        .get(BaseGenerator.DSM_OBJECT))
-                                .get(PROPERTIES))
-                        .get("medicalRecord");
+        return (Map) ((Map) ((Map) ((Map) objectMap.get(PROPERTIES)).get(BaseGenerator.DSM_OBJECT)).get(PROPERTIES)).get("medicalRecord");
     }
 
 
