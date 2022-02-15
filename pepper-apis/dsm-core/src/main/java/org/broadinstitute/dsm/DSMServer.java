@@ -53,6 +53,7 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.util.ConfigUtil;
+import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.dsm.careevolve.Provider;
 import org.broadinstitute.dsm.jetty.JettyConfig;
 import org.broadinstitute.dsm.jobs.DDPEventJob;
@@ -478,11 +479,10 @@ public class DSMServer {
 
         //setup the mysql transaction/connection utility
         TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, maxConnections, dbUrl));
-        updateDB(dbUrl);
-        //make sure we can connect to DB
-        if (!Utility.dbCheck()) {
-            throw new RuntimeException("DB connection error.");
-        }
+
+        logger.info("Running DB update...");
+        LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.DSM);
+        LiquibaseUtil.releaseResources();
 
         logger.info("DB setup complete.");
     }
@@ -686,21 +686,6 @@ public class DSMServer {
         }
 
         logger.info("Pubsub setup complete");
-    }
-
-    protected void updateDB(@NonNull String dbUrl) {
-        logger.info("Running DB update...");
-
-        try (Connection conn = DriverManager.getConnection(
-                dbUrl + "&sessionVariables=innodb_strict_mode=on,tx_isolation='READ-COMMITTED',sql_mode='TRADITIONAL'")) {
-            Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(conn));
-
-            Liquibase liquibase = new liquibase.Liquibase("master-changelog.xml", new ClassLoaderResourceAccessor(), database);
-
-            liquibase.update(new Contexts());
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to run DB update.", e);
-        }
     }
 
     private void setupShippingRoutes(@NonNull NotificationUtil notificationUtil, @NonNull Auth0Util auth0Util, @NonNull UserUtil userUtil) {

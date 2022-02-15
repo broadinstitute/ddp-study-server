@@ -148,11 +148,6 @@ public class TestHelper {
             TransactionWrapper.reset();
             TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM,
                     cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS), cfg.getString(ApplicationConfigConstants.DSM_DB_URL)));
-            if (!Utility.dbCheck()) {
-                throw new RuntimeException("DB connection error.");
-            } else {
-                logger.info("DB setup complete.");
-            }
         }
         //
         //        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
