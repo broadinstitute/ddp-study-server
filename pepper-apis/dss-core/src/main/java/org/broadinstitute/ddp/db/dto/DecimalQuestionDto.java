@@ -9,16 +9,23 @@ import java.util.Set;
 
 public final class DecimalQuestionDto extends QuestionDto implements Serializable {
     private final Long placeholderTemplateId;
+    private final Integer scale;
 
     @JdbiConstructor
     public DecimalQuestionDto(@Nested QuestionDto questionDto,
-                              @ColumnName("placeholder_template_id") Long placeholderTemplateId) {
+                              @ColumnName("placeholder_template_id") Long placeholderTemplateId,
+                              @ColumnName("scale") Integer scale) {
         super(questionDto);
         this.placeholderTemplateId = placeholderTemplateId;
+        this.scale = scale;
     }
 
     public Long getPlaceholderTemplateId() {
         return placeholderTemplateId;
+    }
+
+    public Integer getScale() {
+        return scale;
     }
 
     @Override
