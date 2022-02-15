@@ -6,7 +6,6 @@ import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 
 import javax.validation.Valid;
-import java.math.BigInteger;
 import java.util.List;
 
 public final class DecimalQuestionDef extends QuestionDef {
@@ -15,7 +14,7 @@ public final class DecimalQuestionDef extends QuestionDef {
     private Template placeholderTemplate;
 
     @SerializedName("scale")
-    private BigInteger scale;
+    private Integer scale;
 
     public static Builder builder() {
         return new Builder();
@@ -30,7 +29,7 @@ public final class DecimalQuestionDef extends QuestionDef {
     public DecimalQuestionDef(String stableId, Template promptTemplate, Template placeholderTemplate,
                               boolean isRestricted, boolean hideNumber, boolean writeOnce,
                               Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
-                              List<RuleDef> validations, BigInteger scale) {
+                              List<RuleDef> validations, Integer scale) {
         super(QuestionType.DECIMAL, stableId, isRestricted, promptTemplate,
                 additionalInfoHeaderTemplate, additionalInfoFooterTemplate, validations, hideNumber, writeOnce);
         this.placeholderTemplate = placeholderTemplate;
@@ -41,13 +40,13 @@ public final class DecimalQuestionDef extends QuestionDef {
         return placeholderTemplate;
     }
 
-    public BigInteger getScale() {
+    public Integer getScale() {
         return scale;
     }
 
     public static final class Builder extends AbstractQuestionBuilder<Builder> {
         private Template placeholderTemplate;
-        private BigInteger scale;
+        private Integer scale;
 
         private Builder() {
             // Use static factories.
@@ -63,7 +62,7 @@ public final class DecimalQuestionDef extends QuestionDef {
             return self();
         }
 
-        public Builder setScale(BigInteger scale) {
+        public Builder setScale(Integer scale) {
             this.scale = scale;
             return self();
         }

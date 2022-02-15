@@ -7,7 +7,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DecimalAnswer;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 
-import java.math.BigInteger;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
@@ -17,14 +16,14 @@ public final class DecimalQuestion extends Question<DecimalAnswer> {
     private String placeholderText;
 
     @SerializedName("scale")
-    private BigInteger scale;
+    private Integer scale;
 
     private transient Long placeholderTemplateId;
 
     public DecimalQuestion(String stableId, long promptTemplateId, Long placeholderTemplateId,
                            boolean isRestricted, boolean isDeprecated, Boolean readonly, Long tooltipTemplateId,
                            Long additionalInfoHeaderTemplateId, Long additionalInfoFooterTemplateId,
-                           List<DecimalAnswer> answers, List<Rule<DecimalAnswer>> validations, BigInteger scale) {
+                           List<DecimalAnswer> answers, List<Rule<DecimalAnswer>> validations, Integer scale) {
         super(QuestionType.DECIMAL, stableId, promptTemplateId, isRestricted, isDeprecated, readonly, tooltipTemplateId,
                 additionalInfoHeaderTemplateId, additionalInfoFooterTemplateId, answers, validations);
         this.placeholderTemplateId = placeholderTemplateId;
@@ -35,7 +34,7 @@ public final class DecimalQuestion extends Question<DecimalAnswer> {
         return placeholderTemplateId;
     }
 
-    public BigInteger getScale() {
+    public Integer getScale() {
         return scale;
     }
 
