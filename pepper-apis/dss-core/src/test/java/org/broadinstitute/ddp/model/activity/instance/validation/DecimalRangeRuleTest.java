@@ -24,7 +24,7 @@ public class DecimalRangeRuleTest {
 
     @BeforeClass
     public static void setup() {
-        unused = new DecimalQuestion("sid", 1L, 2L, false, false, false, null, null, null, List.of(), List.of());
+        unused = new DecimalQuestion("sid", 1L, 2L, false, false, false, null, null, null, List.of(), List.of(), 0);
     }
 
     @Test
