@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gson.Gson;
-import org.broadinstitute.dsm.model.bsp.BSPKitRegistration;
+import org.broadinstitute.dsm.model.gp.bsp.BSPKitRegistration;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 import spark.Request;

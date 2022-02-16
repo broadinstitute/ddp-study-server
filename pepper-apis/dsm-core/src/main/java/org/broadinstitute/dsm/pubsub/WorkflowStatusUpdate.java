@@ -9,7 +9,7 @@ import com.google.gson.JsonObject;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
-import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDataDto;
+import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.export.ExportToES;
 import org.broadinstitute.dsm.export.WorkflowForES;
@@ -41,7 +41,7 @@ public class WorkflowStatusUpdate {
         String ddpParticipantId = attributesMap.get(PARTICIPANT_GUID);
         DDPInstance instance = DDPInstance.getDDPInstanceByGuid(studyGuid);
 
-        List<ParticipantDataDto> participantDatas = participantDataDao.getParticipantDataByParticipantId(ddpParticipantId);
+        List<ParticipantData> participantDatas = participantDataDao.getParticipantDataByParticipantId(ddpParticipantId);
         Optional<FieldSettingsDto> fieldSetting =
                 fieldSettingsDao.getFieldSettingByColumnNameAndInstanceId(Integer.parseInt(instance.getDdpInstanceId()), workflow);
         if (fieldSetting.isEmpty()) {
@@ -64,7 +64,7 @@ public class WorkflowStatusUpdate {
     }
 
     public static void exportToESifNecessary(String workflow, String status, String ddpParticipantId,
-                                             DDPInstance instance, FieldSettingsDto setting, List<ParticipantDataDto> participantDatas) {
+                                             DDPInstance instance, FieldSettingsDto setting, List<ParticipantData> participantDatas) {
         String actions = setting.getActions();
         if (actions == null) {
             return;
@@ -84,8 +84,8 @@ public class WorkflowStatusUpdate {
         }
     }
 
-    private static Optional<WorkflowForES.StudySpecificData> getProbandStudySpecificData(List<ParticipantDataDto> participantDatas) {
-        for (ParticipantDataDto participantData : participantDatas) {
+    private static Optional<WorkflowForES.StudySpecificData> getProbandStudySpecificData(List<ParticipantData> participantDatas) {
+        for (ParticipantData participantData : participantDatas) {
             String data = participantData.getData().orElse(null);
             if (data == null) {
                 continue;
@@ -108,7 +108,7 @@ public class WorkflowStatusUpdate {
         dataJsonObject.addProperty(workflow, status);
         int participantDataId;
         participantDataId = participantDataDao.create(
-                new ParticipantDataDto.Builder()
+                new ParticipantData.Builder()
                         .withDdpParticipantId(ddpParticipantId)
                         .withDdpInstanceId(setting.getDdpInstanceId())
                         .withFieldTypeId(setting.getFieldType())
@@ -120,20 +120,20 @@ public class WorkflowStatusUpdate {
         return participantDataId;
     }
 
-    public static void updateProbandStatusInDB(String workflow, String status, ParticipantDataDto participantDataDto, String studyGuid) {
-        String oldData = participantDataDto.getData().orElse(null);
+    public static void updateProbandStatusInDB(String workflow, String status, ParticipantData participantData, String studyGuid) {
+        String oldData = participantData.getData().orElse(null);
         if (oldData == null) {
             return;
         }
         JsonObject dataJsonObject = gson.fromJson(oldData, JsonObject.class);
-        if ((participantDataDto.getFieldTypeId().orElse("").contains("GROUP") || isProband(gson.fromJson(dataJsonObject, Map.class)))) {
+        if ((participantData.getFieldTypeId().orElse("").contains("GROUP") || isProband(gson.fromJson(dataJsonObject, Map.class)))) {
             dataJsonObject.addProperty(workflow, status);
             participantDataDao.updateParticipantDataColumn(
-                    new ParticipantDataDto.Builder()
-                            .withParticipantDataId(participantDataDto.getParticipantDataId())
-                            .withDdpParticipantId(participantDataDto.getDdpParticipantId().orElse(""))
-                            .withDdpInstanceId(participantDataDto.getDdpInstanceId())
-                            .withFieldTypeId(participantDataDto.getFieldTypeId().orElse(""))
+                    new ParticipantData.Builder()
+                            .withParticipantDataId(participantData.getParticipantDataId())
+                            .withDdpParticipantId(participantData.getDdpParticipantId().orElse(""))
+                            .withDdpInstanceId(participantData.getDdpInstanceId())
+                            .withFieldTypeId(participantData.getFieldTypeId().orElse(""))
                             .withData(dataJsonObject.toString())
                             .withLastChanged(System.currentTimeMillis())
                             .withChangedBy(DSS)

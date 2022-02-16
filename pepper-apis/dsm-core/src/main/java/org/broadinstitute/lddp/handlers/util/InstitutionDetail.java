@@ -6,6 +6,7 @@ public class InstitutionDetail extends Institution {
     private String streetAddress;
     private String city;
     private String state;
+
     public InstitutionDetail() {
     }
 

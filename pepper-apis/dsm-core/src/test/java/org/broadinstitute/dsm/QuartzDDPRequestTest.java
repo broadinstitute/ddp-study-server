@@ -22,7 +22,7 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.TestUtil;
 import org.broadinstitute.dsm.util.tools.util.DBUtil;
-import org.broadinstitute.dsm.util.triggerListener.DDPRequestTriggerListener;
+import org.broadinstitute.dsm.util.triggerlistener.DDPRequestTriggerListener;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.lddp.util.BasicTriggerListener;
 import org.junit.AfterClass;
@@ -96,11 +96,13 @@ public class QuartzDDPRequestTest extends TestHelper {
     @Test
     public void quartzKitRequestTest() throws Exception {
         String roleId = DBTestUtil.getQueryDetail("SELECT * from instance_role where name = ?", "pdf_download_consent", "instance_role_id");
-        String secondRoleId = DBTestUtil.getQueryDetail("SELECT * from instance_role where name = ?", "pdf_download_release",
-                "instance_role_id");
+        String secondRoleId =
+                DBTestUtil.getQueryDetail("SELECT * from instance_role where name = ?", "pdf_download_release", "instance_role_id");
         try {
-            DBTestUtil.executeQuery("INSERT INTO ddp_instance_role SET ddp_instance_id = " + INSTANCE_ID + ", instance_role_id = " + roleId);
-            DBTestUtil.executeQuery("INSERT INTO ddp_instance_role SET ddp_instance_id = " + INSTANCE_ID + ", instance_role_id = " + secondRoleId);
+            DBTestUtil.executeQuery(
+                    "INSERT INTO ddp_instance_role SET ddp_instance_id = " + INSTANCE_ID + ", instance_role_id = " + roleId);
+            DBTestUtil.executeQuery(
+                    "INSERT INTO ddp_instance_role SET ddp_instance_id = " + INSTANCE_ID + ", instance_role_id = " + secondRoleId);
             settingUpMock();
 
             JobDetail job = JobBuilder.newJob(DDPRequestJob.class)
@@ -127,7 +129,7 @@ public class QuartzDDPRequestTest extends TestHelper {
 
                 // wait for trigger to finish repeats
                 try {
-                    Thread.sleep(180L * 1000L);//2 min
+                    Thread.sleep(180L * 1000L); //2 min
                     logger.info("Enough testing going to stop scheduler ...");
                     scheduler.shutdown(true);
                 } catch (Exception e) {
@@ -141,8 +143,10 @@ public class QuartzDDPRequestTest extends TestHelper {
             logger.error(e.getMessage());
             Assert.fail();
         } finally {
-            DBTestUtil.executeQuery("DELETE FROM ddp_instance_role WHERE ddp_instance_id = " + INSTANCE_ID + " and instance_role_id = " + roleId);
-            DBTestUtil.executeQuery("DELETE FROM ddp_instance_role WHERE ddp_instance_id = " + INSTANCE_ID + " and instance_role_id = " + secondRoleId);
+            DBTestUtil.executeQuery(
+                    "DELETE FROM ddp_instance_role WHERE ddp_instance_id = " + INSTANCE_ID + " and instance_role_id = " + roleId);
+            DBTestUtil.executeQuery(
+                    "DELETE FROM ddp_instance_role WHERE ddp_instance_id = " + INSTANCE_ID + " and instance_role_id = " + secondRoleId);
         }
     }
 
@@ -151,8 +155,8 @@ public class QuartzDDPRequestTest extends TestHelper {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try {
-                try (PreparedStatement stmt = conn.prepareStatement(LatestKitRequest.SQL_SELECT_LATEST_KIT_REQUESTS + " and site"
-                        + ".instance_name = '" + TEST_DDP + "'")) {
+                try (PreparedStatement stmt = conn.prepareStatement(
+                        LatestKitRequest.SQL_SELECT_LATEST_KIT_REQUESTS + " and site.instance_name = '" + TEST_DDP + "'")) {
                     stmt.setString(1, DBConstants.HAS_KIT_REQUEST_ENDPOINTS);
                     stmt.setString(2, DBConstants.PDF_DOWNLOAD_CONSENT);
                     stmt.setString(3, DBConstants.PDF_DOWNLOAD_RELEASE);
@@ -175,49 +179,49 @@ public class QuartzDDPRequestTest extends TestHelper {
         // Mock Angio Server
         if (StringUtils.isNotBlank(last)) {
             mockDDP.when(
-                    request().withPath("/ddp/kitrequests/" + last))
+                            request().withPath("/ddp/kitrequests/" + last))
                     .respond(response().withStatusCode(200)
                             .withBody(message));
         } else {
             mockDDP.when(
-                    request().withPath("/ddp/kitrequests"))
+                            request().withPath("/ddp/kitrequests"))
                     .respond(response().withStatusCode(200)
                             .withBody(message));
         }
         String message2 = TestUtil.readFile("ddpResponses/forQuartzJob/Kitrequests_2.json");
         mockDDP.when(
-                request().withPath("/ddp/kitrequests/fake0002-d034-4d8c-acbf-00391050115e"))
+                        request().withPath("/ddp/kitrequests/fake0002-d034-4d8c-acbf-00391050115e"))
                 .respond(response().withStatusCode(200)
                         .withBody(message2));
         String message3 = TestUtil.readFile("ddpResponses/forQuartzJob/Kitrequests_3.json");
         mockDDP.when(
-                request().withPath("/ddp/kitrequests/fake0003-d034-4d8c-acbf-00391050115e"))
+                        request().withPath("/ddp/kitrequests/fake0003-d034-4d8c-acbf-00391050115e"))
                 .respond(response().withStatusCode(200)
                         .withBody(message3));
         String message4 = TestUtil.readFile("ddpResponses/forQuartzJob/Kitrequests_4.json");
         mockDDP.when(
-                request().withPath("/ddp/kitrequests/fake0005-d034-4d8c-acbf-00391050115e"))
+                        request().withPath("/ddp/kitrequests/fake0005-d034-4d8c-acbf-00391050115e"))
                 .respond(response().withStatusCode(200)
-                        .withBody(message4));// no new participants are added --> empty json !
+                        .withBody(message4)); // no new participants are added --> empty json !
         String messageParticipant1 = TestUtil.readFile("ddpResponses/ParticipantsWithId.json");
         mockDDP.when(
-                request().withPath("/ddp/participants/FAKE_PARTICIPANT1"))
+                        request().withPath("/ddp/participants/FAKE_PARTICIPANT1"))
                 .respond(response().withStatusCode(200)
                         .withBody(messageParticipant1));
         mockDDP.when(
-                request().withPath("/ddp/participants/FAKE_PARTICIPANT2"))
+                        request().withPath("/ddp/participants/FAKE_PARTICIPANT2"))
                 .respond(response().withStatusCode(200)
                         .withBody(messageParticipant1));
         mockDDP.when(
-                request().withPath("/ddp/participants/FAKE_PARTICIPANT3"))
+                        request().withPath("/ddp/participants/FAKE_PARTICIPANT3"))
                 .respond(response().withStatusCode(200)
                         .withBody(messageParticipant1));
         mockDDP.when(
-                request().withPath("/ddp/participants/FAKE_PARTICIPANT4"))
+                        request().withPath("/ddp/participants/FAKE_PARTICIPANT4"))
                 .respond(response().withStatusCode(200)
                         .withBody(messageParticipant1));
         mockDDP.when(
-                request().withPath("/ddp/participants/FAKE_PARTICIPANT5"))
+                        request().withPath("/ddp/participants/FAKE_PARTICIPANT5"))
                 .respond(response().withStatusCode(200)
                         .withBody(messageParticipant1));
 
@@ -226,56 +230,56 @@ public class QuartzDDPRequestTest extends TestHelper {
                 DBTestUtil.getQueryDetail(DBUtil.GET_REALM_QUERY, TEST_DDP, "ddp_instance_id"), "value");
         String institutionRequest1 = TestUtil.readFile("ddpResponses/forQuartzJob/Institutionrequests_1.json");
         mockDDP.when(
-                request().withPath("/ddp/institutionrequests/" + maxParticipant))
+                        request().withPath("/ddp/institutionrequests/" + maxParticipant))
                 .respond(response().withStatusCode(200).withBody(institutionRequest1));
         String institutionRequest2 = TestUtil.readFile("ddpResponses/forQuartzJob/Institutionrequests_2.json");
         mockDDP.when(
-                request().withPath("/ddp/institutionrequests/66666666"))
+                        request().withPath("/ddp/institutionrequests/66666666"))
                 .respond(response().withStatusCode(200).withBody(institutionRequest2));
         String institutionRequest3 = TestUtil.readFile("ddpResponses/forQuartzJob/Institutionrequests_3.json");
         mockDDP.when(
-                request().withPath("/ddp/institutionrequests/70000000"))
+                        request().withPath("/ddp/institutionrequests/70000000"))
                 .respond(response().withStatusCode(200).withBody(institutionRequest3));
         mockDDP.when(
-                request().withPath("/ddp/institutionrequests/80000000"))
+                        request().withPath("/ddp/institutionrequests/80000000"))
                 .respond(response().withStatusCode(200).withBody("[]"));
 
         File file = TestUtil.getResouresFile("Consent.pdf");
         byte[] bytes = Files.readAllBytes(Paths.get(file.getPath()));
         mockDDP.when(
-                request().withPath("/ddp/participants/FAKE_PARTICIPANT1/consentpdf"))
+                        request().withPath("/ddp/participants/FAKE_PARTICIPANT1/consentpdf"))
                 .respond(response().withStatusCode(200).withBody(bytes));
 
         mockDDP.when(
-                request().withPath("/ddp/participants/FAKE_PARTICIPANT1/releasepdf"))
+                        request().withPath("/ddp/participants/FAKE_PARTICIPANT1/releasepdf"))
                 .respond(response().withStatusCode(200).withBody(bytes));
         mockDDP.when(
-                request().withPath("/ddp/participants/FAKE_PARTICIPANT2/consentpdf"))
-                .respond(response().withStatusCode(200).withBody(bytes));
-
-        mockDDP.when(
-                request().withPath("/ddp/participants/FAKE_PARTICIPANT2/releasepdf"))
-                .respond(response().withStatusCode(200).withBody(bytes));
-        mockDDP.when(
-                request().withPath("/ddp/participants/FAKE_PARTICIPANT3/consentpdf"))
+                        request().withPath("/ddp/participants/FAKE_PARTICIPANT2/consentpdf"))
                 .respond(response().withStatusCode(200).withBody(bytes));
 
         mockDDP.when(
-                request().withPath("/ddp/participants/FAKE_PARTICIPANT3/releasepdf"))
+                        request().withPath("/ddp/participants/FAKE_PARTICIPANT2/releasepdf"))
                 .respond(response().withStatusCode(200).withBody(bytes));
         mockDDP.when(
-                request().withPath("/ddp/participants/FAKE_PARTICIPANT4/consentpdf"))
-                .respond(response().withStatusCode(200).withBody(bytes));
-
-        mockDDP.when(
-                request().withPath("/ddp/participants/FAKE_PARTICIPANT4/releasepdf"))
-                .respond(response().withStatusCode(200).withBody(bytes));
-        mockDDP.when(
-                request().withPath("/ddp/participants/FAKE_PARTICIPANT5/consentpdf"))
+                        request().withPath("/ddp/participants/FAKE_PARTICIPANT3/consentpdf"))
                 .respond(response().withStatusCode(200).withBody(bytes));
 
         mockDDP.when(
-                request().withPath("/ddp/participants/FAKE_PARTICIPANT5/releasepdf"))
+                        request().withPath("/ddp/participants/FAKE_PARTICIPANT3/releasepdf"))
+                .respond(response().withStatusCode(200).withBody(bytes));
+        mockDDP.when(
+                        request().withPath("/ddp/participants/FAKE_PARTICIPANT4/consentpdf"))
+                .respond(response().withStatusCode(200).withBody(bytes));
+
+        mockDDP.when(
+                        request().withPath("/ddp/participants/FAKE_PARTICIPANT4/releasepdf"))
+                .respond(response().withStatusCode(200).withBody(bytes));
+        mockDDP.when(
+                        request().withPath("/ddp/participants/FAKE_PARTICIPANT5/consentpdf"))
+                .respond(response().withStatusCode(200).withBody(bytes));
+
+        mockDDP.when(
+                        request().withPath("/ddp/participants/FAKE_PARTICIPANT5/releasepdf"))
                 .respond(response().withStatusCode(200).withBody(bytes));
         logger.info("Finished setting up mock server! Now quartz can start ...");
     }

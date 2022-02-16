@@ -27,6 +27,7 @@ public class DBConstants {
     public static final String DDP_ONC_HISTORY_ALIAS = "o";
     public static final String DDP_ONC_HISTORY_DETAIL_ALIAS = "oD";
     public static final String DDP_TISSUE_ALIAS = "t";
+    public static final String SM_ID_ALIAS = "sm";
     public static final String DDP_KIT_REQUEST_ALIAS = "k";
     public static final String DDP_ABSTRACTION_ALIAS = "a";
     public static final String DRUG_ALIAS = "d";
@@ -46,11 +47,14 @@ public class DBConstants {
     public static final String CARRIER_USERNAME = "carrier_username";
     public static final String CARRIER_PASSWORD = "carrier_password";
     public static final String CARRIER_ACCESSKEY = "carrier_accesskey";
+    public static final String BSP_COLLECTION = "bsp_collection";
+    public static final String BSP_ORGANISM = "bsp_organism";
 
     //kit request
     public static final String DSM_KIT_ID = "dsm_kit_id";
     public static final String KIT_TYPE_NAME = "kit_type_name";
     public static final String DSM_LABEL = "ddp_label";
+    public static final String LABEL_URL_TO = "label_url_to";
     public static final String KIT_TYPE_ID = "kit_type_id";
     public static final String LAST_KIT = "last_kit";
     public static final String DSM_KIT_REQUEST_ID = "dsm_kit_request_id";
@@ -59,9 +63,10 @@ public class DBConstants {
     public static final String UPS_RETURN_STATUS = "ups_return_status";
     public static final String UPS_TRACKING_DATE = "ups_tracking_date";
     public static final String UPS_RETURN_DATE = "ups_return_date";
+    public static final String SAMPLE_TYPE = "sample_type";
     public static final String DDP_KIT_REQUEST_TABLE_ABBR = "req.";
-
-
+    public static final String BSP_MATERIAL_TYPE = "bsp_material_type";
+    public static final String BSP_RECEPTABLE_TYPE = "bsp_receptacle_type";
     public static final String DSM_LABEL_TO = "label_url_to";
     public static final String DSM_LABEL_RETURN = "label_url_return";
     public static final String DSM_CARRIER_TO = "carrierTo";
@@ -129,6 +134,9 @@ public class DBConstants {
     public static final String EASYPOST_SHIPMENT_DATE = "easypost_shipment_date";
     public static final String CARE_EVOLVE = "CE_order";
     public static final String DDP_KIT_TABLE_ABBR = "kit.";
+
+    public static final String ONC_HISTORY_ID = "onc_history_id";
+
 
     //carrier service
     public static final String CARRIER = "carrier";
@@ -204,13 +212,12 @@ public class DBConstants {
     public static final String ACCESSION_NUMBER = "accession_number";
     public static final String FACILITY = "facility";
     public static final String REQUEST = "request";
-    public static final String ADDITIONAL_VALUES = "additional_values_json";
+    public static final String ADDITIONAL_VALUES_JSON = "additional_values_json";
     public static final String COLUMN_NAME = "column_name";
     public static final String COLUMN_DISPLAY = "column_display";
     public static final String TISSUE_RECEIVED = "tissue_received";
     public static final String TISSUE_PROBLEM_OPTION = "tissue_problem_option";
     public static final String GENDER = "gender";
-    public static final String TDELETED = "tDeleted";
     public static final String DESTRUCTION_POLICY = "destruction_policy";
     public static final String UNABLE_OBTAIN_TISSUE = "unable_obtain_tissue";
 
@@ -241,7 +248,9 @@ public class DBConstants {
     public static final String SCROLLS_COUNT = "scrolls_count";
     public static final String H_E_COUNT = "h_e_count";
     public static final String BLOCKS_COUNT = "blocks_count";
-
+    public static final String USS_SMIDS = "uss_sm_ids";
+    public static final String SCROLL_SMIDS = "scrolls_sm_ids";
+    public static final String HE_SMIDS = "he_sm_ids";
 
     //field_settings
     public static final String FIELD_SETTING_ID = "field_settings_id";
@@ -480,5 +489,20 @@ public class DBConstants {
     //access_user
     public static final String PHONE_NUMBER = "phone_number";
 
+    //sm_id table
+    public static final String SM_ID_TABLE = "sm_id";
+    public static final String SM_ID_TABLE_ALIAS = "sm";
+    public static final String SM_ID_PK = "sm_id_pk";
+    public static final String SM_ID_TYPE_ID = "sm_id_type_id";
+    public static final String SM_ID_VALUE = "sm_id_value";
+    public static final String SM_ID_TISSUE_ID = "tissue_id";
 
+    //sm_id_type table
+    public static final String SM_ID_TYPE_TABLE = "sm_id_type";
+    public static final String SM_ID_TYPE_TABLE_ALIAS = "smt";
+    public static final String SM_ID_TYPE = "sm_id_type";
+
+    public static final String LABEL_URL_RETURN = "label_url_return";
+
+    public static final String PARTICIPANT_RECORD_ID = "participant_record_id";
 }

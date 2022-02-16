@@ -24,22 +24,22 @@ public class PDFAudit {
                 try {
                     for (KitRequestShipping request : kitRequests) {
                         // ddp with 'standard' consent and release pdfs
-                        DDPInstance instance = DDPInstance.getDDPInstanceWithRole(request.getRealm(), DBConstants.PDF_DOWNLOAD_CONSENT);
-                        //the role for release will get checked in makePDF
+                        DDPInstance instance = DDPInstance.getDDPInstanceWithRole(request.getRealm(),
+                                DBConstants.PDF_DOWNLOAD_CONSENT); //the role for release will get checked in makePDF
                         if (instance != null && StringUtils.isNotBlank(instance.getBaseUrl()) && instance.isHasRole()) {
                             DDPRequestUtil.makeStandardPDF(instance, request.getParticipantId(), request.getCreatedBy(),
-                                    request.getKitType());
+                                    request.getKitTypeName());
                         } else {
                             // ddp without 'standard' consent and release pdfs
-                            instance = DDPInstance.getDDPInstanceWithRole(request.getRealm(), DBConstants.PDF_DOWNLOAD); //the role for
-                            // release will get checked in makePDF
-                            if (instance != null && StringUtils.isNotBlank(instance.getBaseUrl()) && StringUtils.isNotBlank(instance.getParticipantIndexES())
-                                    && instance.isHasRole()) {
+                            instance = DDPInstance.getDDPInstanceWithRole(request.getRealm(),
+                                    DBConstants.PDF_DOWNLOAD); //the role for release will get checked in makePDF
+                            if (instance != null && StringUtils.isNotBlank(instance.getBaseUrl()) && StringUtils.isNotBlank(
+                                    instance.getParticipantIndexES()) && instance.isHasRole()) {
                                 DDPRequestUtil.makeNonStandardPDF(instance, request.getParticipantId(), request.getCreatedBy(),
-                                        request.getKitType());
+                                        request.getKitTypeName());
                             }
                         }
-                        newAuditKit = Math.max(newAuditKit, Integer.parseInt(request.getDsmKitRequestId()));
+                        newAuditKit = Math.max(newAuditKit, request.getDsmKitRequestId());
                     }
                 } catch (Exception e) {
                     logger.error("PDF audit failed ", e);

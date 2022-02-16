@@ -48,7 +48,7 @@ public class DisplaySettingsRoute extends RequestHandler {
 
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
-        if (PatchUtil.getColumnNameMap() == null) {
+        if (patchUtil.getColumnNameMap() == null) {
             throw new RuntimeException("ColumnNameMap is null!");
         }
         QueryParamsMap queryParams = request.queryMap();
@@ -60,12 +60,12 @@ public class DisplaySettingsRoute extends RequestHandler {
         if (StringUtils.isBlank(ddpGroupId)) {
             logger.error("GroupId is empty");
         }
-        String userIdRequest = UserUtil.getUserId(request);//gets checked in UserUtil
+        String userIdRequest = UserUtil.getUserId(request);
         if (!userId.equals(userIdRequest)) {
             throw new RuntimeException("User id was not equal. User Id in token " + userId + " user Id in request " + userIdRequest);
         }
-        if (UserUtil.checkUserAccess(realm, userId, "mr_view", userIdRequest) || UserUtil.checkUserAccess(realm, userId, "pt_list_view",
-                userIdRequest)) {
+        if (UserUtil.checkUserAccess(realm, userId, "mr_view", userIdRequest)
+                || UserUtil.checkUserAccess(realm, userId, "pt_list_view", userIdRequest)) {
             String parent = queryParams.get("parent").value();
             if (StringUtils.isBlank(parent)) {
                 logger.error("Parent is empty");
@@ -83,7 +83,7 @@ public class DisplaySettingsRoute extends RequestHandler {
                 displaySettings.put("drugs", Drug.getDrugList());
                 displaySettings.put("cancers", Cancer.getCancers());
                 displaySettings.put("activityDefinitions", ElasticSearchUtil.getActivityDefinitions(instance));
-                displaySettings.put("filters", ViewFilter.getAllFilters(userIdRequest, PatchUtil.getColumnNameMap(), parent, ddpGroupId,
+                displaySettings.put("filters", ViewFilter.getAllFilters(userIdRequest, patchUtil.getColumnNameMap(), parent, ddpGroupId,
                         instance.getDdpInstanceId()));
                 displaySettings.put("abstractionFields", AbstractionUtil.getFormControls(realm));
                 InstanceSettingsDto instanceSettingsDto = instanceSettings.getInstanceSettings(realm);
@@ -100,8 +100,8 @@ public class DisplaySettingsRoute extends RequestHandler {
                         displaySettings.put("preferredLanguages", preferredLanguages);
                     }
                 }
-                if (DDPInstanceDao.getRole(instance.getName(), DBConstants.KIT_REQUEST_ACTIVATED)) { //only needed if study is shipping
-                    // samples per DSM
+                if (DDPInstanceDao.getRole(instance.getName(),
+                        DBConstants.KIT_REQUEST_ACTIVATED)) { //only needed if study is shipping samples per DSM
                     Map<Integer, KitRequestSettings> kitRequestSettingsMap =
                             KitRequestSettings.getKitRequestSettings(instance.getDdpInstanceId());
                     if (kitRequestSettingsMap != null) {
