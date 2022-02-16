@@ -67,7 +67,7 @@ public class ParticipantData {
                 participantData.getDdpInstanceId(),
                 participantData.getFieldTypeId().orElse(StringUtils.EMPTY),
                 ObjectMapperSingleton.readValue(participantData.getData().orElse(StringUtils.EMPTY), new TypeReference<Map<String,
-                        Object>>() {
+                        String>>() {
                 })
         );
     }
@@ -171,7 +171,7 @@ public class ParticipantData {
                 .filter(participantDataDto -> {
                     Map<String, String> pDataMap = ObjectMapperSingleton.readValue(participantDataDto.getData().orElse(StringUtils.EMPTY),
                             new TypeReference<Map<String,
-                                    Object>>() {
+                                    String>>() {
                             });
                     return FamilyMemberConstants.MEMBER_TYPE_SELF.equals(pDataMap.get(FamilyMemberConstants.MEMBER_TYPE));
                 })
