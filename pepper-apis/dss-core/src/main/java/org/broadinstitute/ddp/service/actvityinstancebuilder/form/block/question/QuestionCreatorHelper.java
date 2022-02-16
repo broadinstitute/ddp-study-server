@@ -226,7 +226,8 @@ public class QuestionCreatorHelper {
                 ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, questionDef.getAdditionalInfoFooterTemplate()),
                 questionCreator.getAnswers(ctx, questionDef.getStableId()),
-                questionCreator.getValidationRules(ctx, questionDef)
+                questionCreator.getValidationRules(ctx, questionDef),
+                questionDef.getScale()
         );
     }
 

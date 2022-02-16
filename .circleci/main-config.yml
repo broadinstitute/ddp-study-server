@@ -122,9 +122,6 @@ commands:
           command: |
             shopt  -s extglob # We are going to use Bash extended glob patterns
             case "${CIRCLE_BRANCH}" in
-            DSMMavenRefactor*) # REMOVE WHEN DONE
-              DEPLOY_ENV=dev
-            ;;
             ?(*_)develop)
               DEPLOY_ENV=dev
             ;;
@@ -773,12 +770,16 @@ jobs:
         type: string
         default: *api-spec-path
     steps:
-      - checkout
-      - run:
-          name: Build docs
-          command: |
-            cd << parameters.spec_dir >>
-            ./build.sh documentation
+      - run: echo "Doing build-api-docs-job << pipeline.parameters.api-docs >>"
+      - when:
+          condition: << pipeline.parameters.api-docs >>
+          steps:
+            - checkout
+            - run:
+                name: Build docs
+                command: |
+                  cd << parameters.spec_dir >>
+                  ./build.sh documentation
 
   dsm-compile-and-run-tests-job:
     executor:
@@ -789,38 +790,42 @@ jobs:
         type: string
         default: *pepper_apis_path
     steps:
-      - run:
-          name: Remove directory << parameters.pepper_apis_path >> for checkout of files
-          command: |
-            rmdir << parameters.pepper_apis_path >>
-      - checkout:
-          path: *repo_path
-      - setup-shared-env
-      - run-maven-with-pepper-options:
-          module: dsm-core
-          phase: install
-          skip_tests: true
-          skip_checkstyle: false
-          config_file_path: ''
-          additional_options: -am
-          restore_m2_cache: true
-          save_m2_cache: false
-      - render-configs
-      - create-test-dbs
-      - restore-ddp-cache
-      - run-maven-with-pepper-options:
-          module: dsm-core
-          phase: validate #NOTE: NOT RUNNING TESTS YET!
-          skip_tests: false
-          config_file_path: ''
-          skip_checkstyle: true
-          restore_m2_cache: false
-          save_m2_cache: true    #REMOVE WHEN DONE
-      - save-ddp-cache
-      - persist_to_workspace:
-          root: *root_path
-          paths:
-            - repo
+      - run: echo 'Doing dsm-compile-and-run-tests-job << pipeline.parameters.dsm >>'
+      - when:
+          condition: << pipeline.parameters.dsm >>
+          steps:
+            - run:
+                name: Remove directory << parameters.pepper_apis_path >> for checkout of files
+                command: |
+                  rmdir << parameters.pepper_apis_path >>
+            - checkout:
+                path: *repo_path
+            - setup-shared-env
+            - run-maven-with-pepper-options:
+                module: dsm-core
+                phase: install
+                skip_tests: true
+                skip_checkstyle: false
+                config_file_path: ''
+                additional_options: -am
+                restore_m2_cache: true
+                save_m2_cache: false
+            - render-configs
+            - create-test-dbs
+            - restore-ddp-cache
+            - run-maven-with-pepper-options:
+                module: dsm-core
+                phase: validate #NOTE: NOT RUNNING TESTS YET!
+                skip_tests: false
+                config_file_path: ''
+                skip_checkstyle: true
+                restore_m2_cache: false
+                save_m2_cache: true    #REMOVE WHEN DONE
+            - save-ddp-cache
+            - persist_to_workspace:
+                root: *root_path
+                paths:
+                  - repo
 
   dss-compile-and-run-test-suite-job:
     description: Job that runs DSS tests that cannot be done in parallel
@@ -835,26 +840,30 @@ jobs:
         type: string
         default: *pepper_apis_path
     steps:
-      - run:
-          name: Remove directory << parameters.pepper_apis_path >> to allow checkout of code
-          command: |
-            rmdir << parameters.pepper_apis_path >>
-      - checkout:
-          path: *repo_path
-      - setup-shared-env
-      - compile-all-jars:
-          restore_m2_cache: true
-      - render-configs
-      - create-test-dbs
-      - restore-ddp-cache
-      - run-maven-with-pepper-options:
-          module: dss-core
-          phase: test
-          skip_tests: false
-          skip_checkstyle: true
-          additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
-          restore_m2_cache: false
-      - save-ddp-cache
+      - run: echo "Doing dss-compile-and-run-test-suite-job << pipeline.parameters.dss >>"
+      - when:
+          condition: << pipeline.parameters.dss >>
+          steps:
+            - run:
+                name: Remove directory << parameters.pepper_apis_path >> to allow checkout of code
+                command: |
+                  rmdir << parameters.pepper_apis_path >>
+            - checkout:
+                path: *repo_path
+            - setup-shared-env
+            - compile-all-jars:
+                restore_m2_cache: true
+            - render-configs
+            - create-test-dbs
+            - restore-ddp-cache
+            - run-maven-with-pepper-options:
+                module: dss-core
+                phase: test
+                skip_tests: false
+                skip_checkstyle: true
+                additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
+                restore_m2_cache: false
+            - save-ddp-cache
 
   dss-parallel-compile-and-test-job:
     description: Job that runs DSS tests that CAN be done in parallel
@@ -870,43 +879,47 @@ jobs:
         type: string
         default: *pepper_apis_path
     steps:
-      - run:
-          name: Remove directory << parameters.pepper_apis_path >> to allow checkout of code
-          command: |
-            rmdir << parameters.pepper_apis_path >>
-      - checkout:
-          path: *repo_path
-      - setup-shared-env
-      - render-configs
-      - run-maven-with-pepper-options: # Build stuff first so we can setup everything
-          phase: install
-          module: dss-core
-          restore_m2_cache: true
-          skip_checkstyle: true
-          skip_tests: true
-          additional_options: -am
-      - create-test-dbs
-      - start-ddp-test-server # starts DDP server. And execute Liquibase DB population
-      - compute-parallel-test-split
-      - restore-ddp-cache
-      - run-maven-with-pepper-options: # Running the tests. Only those assigned to this parallel job!
-          phase: test
-          skip_tests: false
-          module: dss-core
-          additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH -DcachingDisabled=true'
-          save_m2_cache: true
-      - save-ddp-cache
-      - run:
-          name: 'Check node index to save workspace only once'
-          command: |
-            if [[ "$CIRCLE_NODE_INDEX" -ne 0 ]]; then
-              echo "Skip persist workspace on this node";
-              circleci step halt;
-            fi
-      - persist_to_workspace:
-          root: *root_path
-          paths:
-            - repo
+      - run: echo "Doing dss-parallel-compile-and-test-job << pipeline.parameters.dss >>"
+      - when:
+          condition: << pipeline.parameters.dss >>
+          steps:
+            - run:
+                name: Remove directory << parameters.pepper_apis_path >> to allow checkout of code
+                command: |
+                  rmdir << parameters.pepper_apis_path >>
+            - checkout:
+                path: *repo_path
+            - setup-shared-env
+            - render-configs
+            - run-maven-with-pepper-options: # Build stuff first so we can setup everything
+                phase: install
+                module: dss-core
+                restore_m2_cache: true
+                skip_checkstyle: true
+                skip_tests: true
+                additional_options: -am
+            - create-test-dbs
+            - start-ddp-test-server # starts DDP server. And execute Liquibase DB population
+            - compute-parallel-test-split
+            - restore-ddp-cache
+            - run-maven-with-pepper-options: # Running the tests. Only those assigned to this parallel job!
+                phase: test
+                skip_tests: false
+                module: dss-core
+                additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH -DcachingDisabled=true'
+                save_m2_cache: true
+            - save-ddp-cache
+            - run:
+                name: 'Check node index to save workspace only once'
+                command: |
+                  if [[ "$CIRCLE_NODE_INDEX" -ne 0 ]]; then
+                    echo "Skip persist workspace on this node";
+                    circleci step halt;
+                  fi
+            - persist_to_workspace:
+                root: *root_path
+                paths:
+                  - repo
 
   dss-store-jar-job:
     description: Build DSS specific jars and store them in buckets
@@ -1018,7 +1031,6 @@ jobs:
           module: dsm-server
       - deploy-dsm-jar
 
-
   build-deploy-docs-job:
     executor:
       name: build-deploy-executor
@@ -1067,6 +1079,10 @@ parameters:
     type: boolean
     default: false
 
+  test_parallelism:
+    type: integer
+    default: 1
+
   api-docs:
     type: boolean
     default: false
@@ -1079,35 +1095,15 @@ parameters:
 workflows:
   version: 2
 
-  # Run all tests on DSS project
-  dss-build-test-workflow:
+  # Triggered from a local script to test PR changes
+  combined-build-test-workflow:
     when:
-      and:
-        - equal: ["build-test", << pipeline.parameters.action >>]
-        - << pipeline.parameters.dss >>
+      equal: ["build-test", << pipeline.parameters.action >>]
     jobs:
       - dss-compile-and-run-test-suite-job
       - dss-parallel-compile-and-test-job:
-          parallelism: *test_parallelism
-
-  # Run tests on DSM
-  dsm-build-test-workflow:
-    when:
-      and:
-        - equal: ["build-test", << pipeline.parameters.action >>]
-        - << pipeline.parameters.dsm >>
-    jobs:
+          parallelism: << pipeline.parameters.test_parallelism >> # the caller of this workflow will tell us the parallelism
       - dsm-compile-and-run-tests-job
-
-  # Build API docs (we never really store)
-  api-docs-build-test-workflow:
-    when:
-      and:
-        - or:
-            - equal: ["build-test", << pipeline.parameters.action >>]
-            - equal: ["build-test-store", << pipeline.parameters.action >>]
-        - << pipeline.parameters.api-docs >>
-    jobs:
       - build-api-docs-job
 
   # Build and deploy API docs
