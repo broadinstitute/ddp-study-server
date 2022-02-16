@@ -213,7 +213,7 @@ public interface ValidationDao extends SqlObject {
                 return DateFieldRequiredRule.of(dto.getRuleType(), dto.getId(), message, hint, dto.isAllowSave());
             case DATE_RANGE:
                 var dateRangeDto = (DateRangeRuleDto) dto;
-                LocalDate endDate = dateRangeDto.shouldUseTodayAsEnd()
+                LocalDate endDate = dateRangeDto.isUseTodayAsEnd()
                         ? LocalDate.now(ZoneOffset.UTC) : dateRangeDto.getEndDate();
                 return DateRangeRule.of(dto.getId(), message, hint, dto.isAllowSave(),
                         dateRangeDto.getStartDate(), endDate);
@@ -519,7 +519,7 @@ public interface ValidationDao extends SqlObject {
             case DATE_RANGE:
                 var dateRangeDto = (DateRangeRuleDto) dto;
                 ruleDef = new DateRangeRuleDef(hintTmpl, dateRangeDto.getStartDate(), dateRangeDto.getEndDate(),
-                        dateRangeDto.shouldUseTodayAsEnd());
+                        dateRangeDto.isUseTodayAsEnd());
                 break;
             case INT_RANGE:
                 var intRangeDto = (IntRangeRuleDto) dto;
