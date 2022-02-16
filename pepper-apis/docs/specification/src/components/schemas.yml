@@ -613,7 +613,6 @@ AnswerSubmission.Decimal:
     - type: object
       required:
         - value
-        - precision
         - scale
       properties:
         value:
@@ -1210,7 +1209,12 @@ Error.ActivityAnswersPatchInvalid:
               rules:
                 type: array
                 items:
-                  $ref: '#/ValidationType'
+                  type: object
+                  properties:
+                    ruleType:
+                      $ref: '#/ValidationType'
+                    message:
+                      type: string
 Error.ActivityAnswersPatchNotFound:
   allOf:
     - $ref: '#/Error'
@@ -1778,11 +1782,6 @@ Question.Decimal:
       required:
         - answers
       properties:
-        precision:
-          type: integer
-          description: the total number of digits allowed in the number, including digits on both sides of the decimal point
-          minimum: 0
-          default: 0
         scale:
           type: integer
           description: the number of digits allowed to the right of the decimal point.

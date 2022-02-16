@@ -879,7 +879,8 @@ public interface QuestionDao extends SqlObject {
                 dto.getAdditionalInfoHeaderTemplateId(),
                 dto.getAdditionalInfoFooterTemplateId(),
                 answers,
-                rules);
+                rules,
+                dto.getScale());
     }
 
     /**
@@ -1380,7 +1381,7 @@ public interface QuestionDao extends SqlObject {
             placeholderTemplateId = templateDao.insertTemplate(questionDef.getPlaceholderTemplate(), revisionId);
         }
 
-        int numInserted = getJdbiDecimalQuestion().insert(questionDef.getQuestionId(), placeholderTemplateId);
+        int numInserted = getJdbiDecimalQuestion().insert(questionDef.getQuestionId(), placeholderTemplateId, questionDef.getScale());
         if (numInserted != 1) {
             throw new DaoException("Inserted " + numInserted + " for decimal question " + questionDef.getStableId());
         }
