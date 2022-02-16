@@ -15,7 +15,15 @@ public class DsmStudyParticipant {
     private String country;
     private String shortId;
     private String legacyShortId;
+
+    /**
+     * Report the validation status of the mailing address.
+     * “0” for an address that EasyPost says is invalid.
+     * “1” for an address that EasyPost says is valid and contains suggested EasyPost corrections.
+     * “2” for an address that EasyPost says is valid but does not contain EasyPost suggested corrections.
+     */
     private String validAddress;
+
     private String city;
     private String postalCode;
     private String street1;
