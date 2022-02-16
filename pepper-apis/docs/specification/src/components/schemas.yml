@@ -1866,6 +1866,16 @@ Question.Matrix:
           enum:
             - MULTIPLE
             - SINGLE
+        renderModal:
+          type: boolean
+          default: false
+          description: When true, matrix question is wrapped inside a modal.
+        modal:
+          type: string
+          description: Button label that opens modal.
+        modalTitle:
+          type: string
+          description: Modal title label.
         groups:
           type: array
           description: A list of groups used in the `matrixOptions` values. If there are no options which explicity request grouping, this will be an empty array.
