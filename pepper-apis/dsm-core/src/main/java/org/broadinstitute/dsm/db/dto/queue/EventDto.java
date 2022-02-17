@@ -10,7 +10,7 @@ public class EventDto {
     private String ddpParticipantId;
     private Boolean eventTriggered;
 
-    private EventDto(Builder builder) {
+    private EventDto(EventDto.Builder builder) {
         this.eventId = builder.eventId;
         this.eventDateCreated = builder.eventDateCreated;
         this.eventType = builder.eventType;
@@ -34,32 +34,32 @@ public class EventDto {
             this.ddpInstanceId = ddpInstanceId;
         }
 
-        public Builder withEventId(int eventId) {
+        public EventDto.Builder withEventId(int eventId) {
             this.eventId = eventId;
             return this;
         }
 
-        public Builder withEventDateCreated(long eventDateCreated) {
+        public EventDto.Builder withEventDateCreated(long eventDateCreated) {
             this.eventDateCreated = eventDateCreated;
             return this;
         }
 
-        public Builder withEventType(String eventType) {
+        public EventDto.Builder withEventType(String eventType) {
             this.eventType = eventType;
             return this;
         }
 
-        public Builder withDsmKitRequestId(int dsmKitRequestId) {
+        public EventDto.Builder withDsmKitRequestId(int dsmKitRequestId) {
             this.dsmKitRequestId = dsmKitRequestId;
             return this;
         }
 
-        public Builder withDdpParticipantId(String ddpParticipantId) {
+        public EventDto.Builder withDdpParticipantId(String ddpParticipantId) {
             this.ddpParticipantId = ddpParticipantId;
             return this;
         }
 
-        public Builder withEventTriggered(Boolean eventTriggered) {
+        public EventDto.Builder withEventTriggered(Boolean eventTriggered) {
             this.eventTriggered = eventTriggered;
             return this;
         }

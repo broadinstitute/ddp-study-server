@@ -10,7 +10,6 @@ import org.broadinstitute.dsm.util.PDFAudit;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,8 +22,6 @@ public class DDPRequestJob implements Job {
      * adding them to dsm table ddp_kit_request
      * and requesting data for medical records
      *
-     * @param context JobExecutionContext
-     * @throws JobExecutionException
      */
     public void execute(JobExecutionContext context) {
         JobDataMap dataMap = context.getJobDetail().getJobDataMap();

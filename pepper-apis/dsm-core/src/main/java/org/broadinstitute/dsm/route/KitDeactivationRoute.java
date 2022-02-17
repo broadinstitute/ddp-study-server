@@ -10,6 +10,8 @@ import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.InstanceSettings;
 import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.settings.InstanceSettingsDto;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.security.RequestHandler;
@@ -44,11 +46,13 @@ public class KitDeactivationRoute extends RequestHandler {
             boolean deactivate = request.url().toLowerCase().contains("deactivate");
             KitRequestShipping kitRequest = KitRequestShipping.getKitRequest(kitRequestId);
             String realm = kitRequest.getRealm();
+            DDPInstanceDto ddpInstanceByInstanceName = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElse(null);
             if (UserUtil.checkUserAccess(realm, userId, "kit_deactivation", userIdRequest)) {
                 if (deactivate) {
                     JsonObject jsonObject = new JsonParser().parse(request.body()).getAsJsonObject();
                     String reason = jsonObject.get("reason").getAsString();
-                    KitRequestShipping.deactivateKitRequest(kitRequestId, reason, DSMServer.getDDPEasypostApiKey(realm), userIdRequest);
+                    KitRequestShipping.deactivateKitRequest(Long.parseLong(kitRequestId), reason,
+                            DSMServer.getDDPEasypostApiKey(realm), userIdRequest, ddpInstanceByInstanceName);
                 } else {
                     QueryParamsMap queryParams = request.queryMap();
                     boolean activateAnyway = false;
@@ -56,14 +60,17 @@ public class KitDeactivationRoute extends RequestHandler {
                         activateAnyway = queryParams.get("activate").booleanValue();
                     }
                     if (activateAnyway) {
-                        KitRequestShipping.reactivateKitRequest(kitRequestId, KitUtil.IGNORE_AUTO_DEACTIVATION);
+                        KitRequestShipping.reactivateKitRequest(kitRequestId, KitUtil.IGNORE_AUTO_DEACTIVATION,
+                                ddpInstanceByInstanceName);
                     } else {
                         DDPInstance ddpInstance = DDPInstance.getDDPInstance(realm);
                         InstanceSettings instanceSettings = new InstanceSettings();
                         InstanceSettingsDto instanceSettingsDto = instanceSettings.getInstanceSettings(realm);
                         Value activation = instanceSettingsDto
                                 .getKitBehaviorChange()
-                                .map(kitBehavior -> kitBehavior.stream().filter(o -> o.getName().equals(InstanceSettings.INSTANCE_SETTING_ACTIVATION)).findFirst().orElse(null))
+                                .map(kitBehavior -> kitBehavior.stream()
+                                        .filter(o -> o.getName().equals(InstanceSettings.INSTANCE_SETTING_ACTIVATION)).findFirst()
+                                        .orElse(null))
                                 .orElse(null);
 
                         if (activation != null && StringUtils.isNotBlank(ddpInstance.getParticipantIndexES())) {
@@ -75,18 +82,18 @@ public class KitDeactivationRoute extends RequestHandler {
                                 if (InstanceSettings.TYPE_ALERT.equals(activation.getType())) {
                                     return new Result(200, activation.getValue());
                                 } else if (InstanceSettings.TYPE_NOTIFICATION.equals(activation.getType())) {
-                                    String message =
-                                            "Kit for participant " + kitRequest.getParticipantId() + " was activated <br>" + activation.getValue();
+                                    String message = "Kit for participant " + kitRequest.getParticipantId() + " was activated <br>"
+                                            + activation.getValue();
                                     notificationUtil.sentNotification(ddpInstance.getNotificationRecipient(), message,
                                             NotificationUtil.UNIVERSAL_NOTIFICATION_TEMPLATE, NotificationUtil.DSM_SUBJECT);
                                 } else {
                                     logger.error("Instance settings behavior for kit was not known " + activation.getType());
                                 }
                             } else {
-                                KitRequestShipping.reactivateKitRequest(kitRequestId);
+                                KitRequestShipping.reactivateKitRequest(kitRequestId, ddpInstanceByInstanceName);
                             }
                         } else {
-                            KitRequestShipping.reactivateKitRequest(kitRequestId);
+                            KitRequestShipping.reactivateKitRequest(kitRequestId, ddpInstanceByInstanceName);
                         }
                     }
 

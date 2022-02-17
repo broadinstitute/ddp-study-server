@@ -20,10 +20,11 @@ public class UserSettings {
 
     private static final Logger logger = LoggerFactory.getLogger(UserSettings.class);
 
-    private static final String SQL_UPDATE_USER_SETTINGS = "UPDATE user_settings SET rows_on_page = ?, rows_set_0 = ?, rows_set_1 = ?, "
-            + "rows_set_2 = ?, date_format = ? WHERE user_id = ?";
-    private static final String SQL_SELECT_USER_SETTINGS = "SELECT rows_on_page, rows_set_0, rows_set_1, rows_set_2, date_format FROM "
-            + "user_settings settings, access_user user WHERE user.user_id = settings.user_id AND user.is_active = 1";
+    private static final String SQL_UPDATE_USER_SETTINGS =
+            "UPDATE user_settings SET rows_on_page = ?, rows_set_0 = ?, rows_set_1 = ?, rows_set_2 = ?, date_format = ? WHERE user_id = ?";
+    private static final String SQL_SELECT_USER_SETTINGS =
+            "SELECT rows_on_page, rows_set_0, rows_set_1, rows_set_2, date_format FROM user_settings settings, access_user user "
+                    + "WHERE user.user_id = settings.user_id AND user.is_active = 1";
     private static final String SQL_INSERT_USER_SETTINGS = "INSERT INTO user_settings SET user_id = ?";
 
     private static final String USER_ID = "userId";
@@ -60,7 +61,8 @@ public class UserSettings {
                 if (result == 1) {
                     logger.info("Updated user settings for user w/ userID " + userId);
                 } else {
-                    throw new RuntimeException("Error updating user settings for user w/ userID " + userId + " it was updating " + result + " rows");
+                    throw new RuntimeException(
+                            "Error updating user settings for user w/ userID " + userId + " it was updating " + result + " rows");
                 }
             } catch (SQLException e) {
                 dbVals.resultException = e;

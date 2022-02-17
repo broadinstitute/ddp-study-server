@@ -20,8 +20,9 @@ public class AnswerValidationError extends ApiError {
         for (Map.Entry<String, List<Rule>> entry: failedRulesByQuestion.entrySet()) {
             String questionStableId = entry.getKey();
             List<Rule> failedRules = entry.getValue();
-            List<RuleType> failedRulesTypes = failedRules.stream().map(rule -> rule.getRuleType()).collect(Collectors.toList());
-            violations.add(new Violation(questionStableId, failedRulesTypes));
+            List<ViolatedRule> violatedRules = failedRules.stream().map(rule ->
+                    (new ViolatedRule(rule.getRuleType(), rule.getMessage()))).collect(Collectors.toList());
+            violations.add(new Violation(questionStableId, violatedRules));
         }
     }
 
@@ -29,17 +30,41 @@ public class AnswerValidationError extends ApiError {
         return violations;
     }
 
+    public static class ViolatedRule {
+
+        @SerializedName("ruleType")
+        private RuleType ruleType;
+        @SerializedName("message")
+        private String message;
+
+        /**
+         * Instantiate ViolatedRule object.
+         */
+        public ViolatedRule(RuleType ruleType, String message) {
+            this.ruleType = ruleType;
+            this.message = message;
+        }
+
+        public RuleType getRuleType() {
+            return ruleType;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+    }
+
     public static class Violation {
 
         @SerializedName("stableId")
         private String stableId;
         @SerializedName("rules")
-        private List<RuleType> rules;
+        private List<ViolatedRule> rules;
 
         /**
          * Instantiate Violation object.
          */
-        public Violation(String stableId, List<RuleType> rules) {
+        public Violation(String stableId, List<ViolatedRule> rules) {
             this.stableId = stableId;
             this.rules = rules;
         }
@@ -48,7 +73,7 @@ public class AnswerValidationError extends ApiError {
             return stableId;
         }
 
-        public List<RuleType> getRules() {
+        public List<ViolatedRule> getRules() {
             return rules;
         }
 

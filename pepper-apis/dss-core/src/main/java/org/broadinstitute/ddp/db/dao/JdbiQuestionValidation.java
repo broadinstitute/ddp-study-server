@@ -12,6 +12,7 @@ import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.validation.AgeRangeRuleDto;
 import org.broadinstitute.ddp.db.dto.validation.DateRangeRuleDto;
 import org.broadinstitute.ddp.db.dto.validation.IntRangeRuleDto;
+import org.broadinstitute.ddp.db.dto.validation.DecimalRangeRuleDto;
 import org.broadinstitute.ddp.db.dto.validation.LengthRuleDto;
 import org.broadinstitute.ddp.db.dto.validation.NumOptionsSelectedRuleDto;
 import org.broadinstitute.ddp.db.dto.validation.RegexRuleDto;
@@ -34,6 +35,7 @@ import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 @RegisterConstructorMapper(AgeRangeRuleDto.class)
 @RegisterConstructorMapper(DateRangeRuleDto.class)
 @RegisterConstructorMapper(IntRangeRuleDto.class)
+@RegisterConstructorMapper(DecimalRangeRuleDto.class)
 @RegisterConstructorMapper(LengthRuleDto.class)
 @RegisterConstructorMapper(NumOptionsSelectedRuleDto.class)
 @RegisterConstructorMapper(RegexRuleDto.class)
@@ -94,6 +96,9 @@ public interface JdbiQuestionValidation extends SqlObject {
                 case INT_RANGE:
                     ruleDto = view.getRow(IntRangeRuleDto.class);
                     break;
+                case DECIMAL_RANGE:
+                    ruleDto = view.getRow(DecimalRangeRuleDto.class);
+                    break;
                 case LENGTH:
                     ruleDto = view.getRow(LengthRuleDto.class);
                     break;
@@ -108,7 +113,8 @@ public interface JdbiQuestionValidation extends SqlObject {
                 case YEAR_REQUIRED:     // fall-through
                 case COMPLETE:          // fall-through
                 case REQUIRED:          // fall-through
-                case UNIQUE:
+                case UNIQUE:            // fall-through
+                case UNIQUE_VALUE:
                     ruleDto = view.getRow(RuleDto.class);
                     break;
                 default:

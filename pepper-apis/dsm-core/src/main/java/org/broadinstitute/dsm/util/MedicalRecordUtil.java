@@ -17,40 +17,40 @@ import org.slf4j.LoggerFactory;
 
 public class MedicalRecordUtil {
 
-    public static final String SYSTEM = "SYSTEM";
     public static final String NOT_SPECIFIED = "NOT_SPECIFIED";
     public static final String OTHER = "OTHER";
     private static final Logger logger = LoggerFactory.getLogger(MedicalRecordUtil.class);
-    private static final String SQL_UPDATE_PARTICIPANT = "UPDATE ddp_participant SET last_version = ?, last_version_date = ?, "
-            + "last_changed = ?, changed_by = ? WHERE ddp_participant_id = ? " +
-            "AND ddp_instance_id = ? AND last_version != ?";
-    private static final String SQL_INSERT_INSTITUTION = "INSERT INTO ddp_institution (ddp_institution_id, type, participant_id, "
-            + "last_changed) VALUES (?, ?, (SELECT participant_id " +
-            "FROM ddp_participant WHERE ddp_participant_id = ? and ddp_instance_id = ?), ?) ON DUPLICATE KEY UPDATE last_changed = ?";
-    private static final String SQL_INSERT_INSTITUTION_BY_PARTICIPANT = "INSERT INTO ddp_institution (ddp_institution_id, type, "
-            + "participant_id, last_changed) values (?, ?, ?, ?) " +
-            "ON DUPLICATE KEY UPDATE last_changed = ?";
-    private static final String SQL_INSERT_MEDICAL_RECORD = "INSERT INTO ddp_medical_record SET institution_id = ?, last_changed = ?, "
-            + "changed_by = ?";
-    private static final String SQL_SELECT_PARTICIPANT_EXISTS = "SELECT count(ddp_participant_id) as participantCount FROM "
-            + "ddp_participant WHERE ddp_participant_id = ? AND ddp_instance_id = ?";
-    private static final String SQL_SELECT_PARTICIPANT_LAST_VERSION = "SELECT last_version FROM ddp_participant WHERE ddp_participant_id "
-            + "= ? AND ddp_instance_id = ?";
-    private static final String SQL_SELECT_MEDICAL_RECORD_ID_FOR_PARTICIPANT = "SELECT rec.medical_record_id FROM ddp_institution inst, "
-            + "ddp_participant part, ddp_medical_record rec " +
-            "WHERE part.participant_id = inst.participant_id AND rec.institution_id = inst.institution_id AND NOT rec.deleted <=> 1 AND "
-            + "part.ddp_participant_id = ? AND inst.ddp_institution_id = ? AND part.ddp_instance_id = ? AND inst.type = ?";
-    private static final String SQL_SELECT_MEDICAL_RECORD_ID_AND_TYPE_FOR_PARTICIPANT = "SELECT rec.medical_record_id, inst.type FROM "
-            + "ddp_institution inst, ddp_participant part, ddp_medical_record rec " +
-            "WHERE part.participant_id = inst.participant_id AND rec.institution_id = inst.institution_id AND NOT rec.deleted <=> 1 AND "
-            + "part.participant_id = ? AND inst.type = ?";
+    private static final String SQL_UPDATE_PARTICIPANT =
+            "UPDATE ddp_participant SET last_version = ?, last_version_date = ?, last_changed = ?, changed_by = ? "
+                    + "WHERE ddp_participant_id = ? AND ddp_instance_id = ? AND last_version != ?";
+    private static final String SQL_INSERT_INSTITUTION =
+            "INSERT INTO ddp_institution (ddp_institution_id, type, participant_id, last_changed) VALUES (?, ?, (SELECT participant_id "
+                    + "FROM ddp_participant WHERE ddp_participant_id = ? and ddp_instance_id = ?), ?) ON DUPLICATE "
+                    + "KEY UPDATE last_changed = ?";
+    private static final String SQL_INSERT_INSTITUTION_BY_PARTICIPANT =
+            "INSERT INTO ddp_institution (ddp_institution_id, type, participant_id, last_changed) values (?, ?, ?, ?) "
+                    + "ON DUPLICATE KEY UPDATE last_changed = ?";
+    private static final String SQL_INSERT_MEDICAL_RECORD =
+            "INSERT INTO ddp_medical_record SET institution_id = ?, last_changed = ?, changed_by = ?";
+    private static final String SQL_SELECT_PARTICIPANT_EXISTS = "SELECT count(ddp_participant_id) as participantCount FROM ddp_participant "
+            + "WHERE ddp_participant_id = ? AND ddp_instance_id = ?";
+    private static final String SQL_SELECT_PARTICIPANT_LAST_VERSION = "SELECT last_version FROM ddp_participant "
+            + "WHERE ddp_participant_id = ? AND ddp_instance_id = ?";
+    private static final String SQL_SELECT_MEDICAL_RECORD_ID_FOR_PARTICIPANT = "SELECT rec.medical_record_id "
+            + "FROM ddp_institution inst, ddp_participant part, ddp_medical_record rec "
+            + "WHERE part.participant_id = inst.participant_id AND rec.institution_id = inst.institution_id AND NOT rec.deleted <=> 1 "
+            + "AND part.ddp_participant_id = ? AND inst.ddp_institution_id = ? AND part.ddp_instance_id = ? AND inst.type = ?";
+    private static final String SQL_SELECT_MEDICAL_RECORD_ID_AND_TYPE_FOR_PARTICIPANT = "SELECT rec.medical_record_id, inst.type "
+            + "FROM ddp_institution inst, ddp_participant part, ddp_medical_record rec "
+            + "WHERE part.participant_id = inst.participant_id AND rec.institution_id = inst.institution_id AND NOT rec.deleted <=> 1 "
+            + "AND part.participant_id = ? AND inst.type = ?";
 
     public static void writeNewMedicalRecordIntoDb(Connection conn, String query, String id) {
         if (conn != null) {
             try (PreparedStatement insertNewRecord = conn.prepareStatement(query)) {
                 insertNewRecord.setString(1, id);
                 insertNewRecord.setLong(2, System.currentTimeMillis());
-                insertNewRecord.setString(3, SYSTEM);
+                insertNewRecord.setString(3, SystemUtil.SYSTEM);
                 int result = insertNewRecord.executeUpdate();
                 if (result > 1) { // 0 or 1 is good
                     throw new RuntimeException("Error updating row");
@@ -71,9 +71,9 @@ public class MedicalRecordUtil {
                 insertNewRecord.setString(1, id);
                 insertNewRecord.setString(2, instanceId);
                 insertNewRecord.setLong(3, currentMilli);
-                insertNewRecord.setString(4, SYSTEM);
+                insertNewRecord.setString(4, SystemUtil.SYSTEM);
                 insertNewRecord.setLong(5, currentMilli);
-                insertNewRecord.setString(6, SYSTEM);
+                insertNewRecord.setString(6, SystemUtil.SYSTEM);
                 int result = insertNewRecord.executeUpdate();
                 // 1 (inserted) or 2 (updated) is good
                 if (result == 2) {

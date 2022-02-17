@@ -55,6 +55,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
@@ -550,6 +551,10 @@ public class BrainRename implements CustomTask {
             case NUMERIC:
                 var numQuestion = (NumericQuestionDef) question;
                 templates.add(numQuestion.getPlaceholderTemplate());
+                break;
+            case DECIMAL:
+                var decQuestion = (DecimalQuestionDef) question;
+                templates.add(decQuestion.getPlaceholderTemplate());
                 break;
             case PICKLIST:
                 var picklistQuestion = (PicklistQuestionDef) question;

@@ -1,11 +1,11 @@
 package org.broadinstitute.dsm.route;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import javax.servlet.http.HttpServletRequest;
 
 import org.broadinstitute.dsm.db.NationalDeathIndex;
 import org.broadinstitute.dsm.exception.FileColumnMissing;
@@ -67,7 +67,8 @@ public class NDIRoute extends RequestHandler {
                                         }
                                     }
                                     if (obj.get(FIRST_NAME).length() == 0 || obj.get(LAST_NAME).length() == 0 || obj.get(YEAR).length() == 0
-                                            || obj.get(MONTH).length() == 0 || obj.get(DAY).length() == 0 || obj.get(PARTICIPANT_ID).length() == 0) {
+                                            || obj.get(MONTH).length() == 0 || obj.get(DAY).length() == 0
+                                            || obj.get(PARTICIPANT_ID).length() == 0) {
                                         throw new FileWrongFormat("A mandatory column was empty! Error in line " + (rowIndex + 1));
                                     }
                                     if (obj.get(MIDDLE).length() > 1) {

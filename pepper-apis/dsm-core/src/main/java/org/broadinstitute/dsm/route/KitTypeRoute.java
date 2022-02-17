@@ -27,8 +27,8 @@ public class KitTypeRoute extends RequestHandler {
         if (StringUtils.isNotBlank(realm)) {
             String userIdRequest = UserUtil.getUserId(request);
             if (request.url().contains(RoutePath.KIT_TYPE)) {
-                if (UserUtil.checkUserAccess(realm, userId, "kit_shipping", userIdRequest) || UserUtil.checkUserAccess(realm, userId,
-                        "kit_shipping_view", userIdRequest)) {
+                if (UserUtil.checkUserAccess(realm, userId, "kit_shipping", userIdRequest)
+                        || UserUtil.checkUserAccess(realm, userId, "kit_shipping_view", userIdRequest)) {
                     return KitType.getKitTypes(realm, userIdRequest);
                 } else {
                     response.status(500);
@@ -36,8 +36,8 @@ public class KitTypeRoute extends RequestHandler {
                 }
             } else {
                 if (request.url().contains(RoutePath.UPLOAD_REASONS)) {
-                    if (UserUtil.checkUserAccess(realm, userId, "kit_upload", userIdRequest) || UserUtil.checkUserAccess(realm, userId,
-                            "kit_shipping_view", userIdRequest)) {
+                    if (UserUtil.checkUserAccess(realm, userId, "kit_upload", userIdRequest)
+                            || UserUtil.checkUserAccess(realm, userId, "kit_shipping_view", userIdRequest)) {
                         return KitType.getUploadReasons(realm);
                     } else {
                         response.status(500);

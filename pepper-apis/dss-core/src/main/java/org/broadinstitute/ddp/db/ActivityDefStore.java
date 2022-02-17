@@ -51,7 +51,7 @@ import org.jdbi.v3.core.Handle;
  */
 public class ActivityDefStore {
 
-    private static ActivityDefStore instance;
+    private static volatile ActivityDefStore instance;
     private static final Object lockVar = "lock";
 
     private TreeWalkInterpreter interpreter;

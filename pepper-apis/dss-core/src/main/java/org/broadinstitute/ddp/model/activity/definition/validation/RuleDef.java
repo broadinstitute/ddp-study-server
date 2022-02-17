@@ -77,6 +77,8 @@ public abstract class RuleDef {
                     return ctx.deserialize(elem, CompleteRuleDef.class);
                 case UNIQUE:
                     return ctx.deserialize(elem, UniqueRuleDef.class);
+                case UNIQUE_VALUE:
+                    return ctx.deserialize(elem, UniqueValueRuleDef.class);
                 case DATE_RANGE:
                     return ctx.deserialize(elem, DateRangeRuleDef.class);
                 case DAY_REQUIRED:
@@ -85,6 +87,8 @@ public abstract class RuleDef {
                     return ctx.deserialize(elem, DateFieldRequiredRuleDef.class);
                 case INT_RANGE:
                     return ctx.deserialize(elem, IntRangeRuleDef.class);
+                case DECIMAL_RANGE:
+                    return ctx.deserialize(elem, DecimalRangeRuleDef.class);
                 case LENGTH:
                     return ctx.deserialize(elem, LengthRuleDef.class);
                 case NUM_OPTIONS_SELECTED:

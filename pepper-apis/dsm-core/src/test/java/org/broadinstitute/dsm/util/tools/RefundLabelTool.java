@@ -13,14 +13,6 @@ public class RefundLabelTool {
         refundEasyPostLabel();
     }
 
-    /**
-     * Method to refund label for shipping
-     * <p>
-     * change API_KEY__EASYPOST to the key you want to use!
-     * change EASYPOST_TO_ID
-     *
-     * @throws Exception
-     */
     public static void refundEasyPostLabel() {
         String apiKey = "API_KEY__EASYPOST";
         String shipmentId = "EASYPOST_TO_ID";

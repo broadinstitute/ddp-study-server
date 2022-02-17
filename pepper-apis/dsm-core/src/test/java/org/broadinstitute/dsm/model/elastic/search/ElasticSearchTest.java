@@ -17,13 +17,13 @@ public class ElasticSearchTest {
 
     private static ESProfile esProfileGeneratorWithGuid() {
         ESProfile esProfile = new ESProfile();
-        esProfile.setParticipantGuid(ParticipantWrapperTest.randomGuidGenerator());
+        esProfile.setGuid(ParticipantWrapperTest.randomGuidGenerator());
         return esProfile;
     }
 
     private static ESProfile esProfileGeneratorWithLegacyAltPid() {
         ESProfile esProfile = new ESProfile();
-        esProfile.setParticipantLegacyAltPid(ParticipantWrapperTest.randomLegacyAltPidGenerator());
+        esProfile.setLegacyAltPid(ParticipantWrapperTest.randomLegacyAltPidGenerator());
         return esProfile;
     }
 
@@ -34,7 +34,7 @@ public class ElasticSearchTest {
                 .withProfile(profile)
                 .build();
         String participantId = elasticSearchParticipantDto.getParticipantId();
-        Assert.assertEquals(profile.getParticipantGuid(), participantId);
+        Assert.assertEquals(profile.getGuid(), participantId);
     }
 
     @Test
@@ -44,7 +44,7 @@ public class ElasticSearchTest {
                 .withProfile(esProfileWithLegacyAltPid)
                 .build();
         String participantId = elasticSearchParticipantDto.getParticipantId();
-        Assert.assertEquals(esProfileWithLegacyAltPid.getParticipantLegacyAltPid(), participantId);
+        Assert.assertEquals(esProfileWithLegacyAltPid.getLegacyAltPid(), participantId);
     }
 
     @Test
@@ -86,7 +86,7 @@ public class ElasticSearchTest {
                 .withAddress(esAddress)
                 .build();
         Map<String, Object> esMap = GSON.fromJson(GSON.toJson(elasticSearchParticipantDto), Map.class);
-        Optional<ElasticSearchParticipantDto> maybeElasticSearchParticipantDto = ElasticSearch.parseSourceMap(esMap);
+        Optional<ElasticSearchParticipantDto> maybeElasticSearchParticipantDto = new ElasticSearch().parseSourceMap(esMap);
         try {
             ElasticSearchParticipantDto esParticipantDto = maybeElasticSearchParticipantDto.get();
             Assert.assertEquals("Tommy", esParticipantDto.getProfile().map(ESProfile::getFirstName).orElse(""));
@@ -96,6 +96,4 @@ public class ElasticSearchTest {
             Assert.fail();
         }
     }
-
-
 }

@@ -90,16 +90,17 @@ public class MiscUtil {
      */
     public static String calculateSHA1(File file) throws Exception  {
         MessageDigest digest = MessageDigest.getInstance("SHA-1");
-        InputStream fis = new FileInputStream(file);
-        int numBytesRead = 0;
-        byte[] buffer = new byte[8192];
-        while (numBytesRead != -1) {
-            numBytesRead = fis.read(buffer);
-            if (numBytesRead > 0) {
-                digest.update(buffer, 0, numBytesRead);
+        try (InputStream fis = new FileInputStream(file)) {
+            int numBytesRead = 0;
+            byte[] buffer = new byte[8192];
+            while (numBytesRead != -1) {
+                numBytesRead = fis.read(buffer);
+                if (numBytesRead > 0) {
+                    digest.update(buffer, 0, numBytesRead);
+                }
             }
+            return Hex.encodeHexString(digest.digest());
         }
-        return new String(Hex.encodeHexString(digest.digest()));
     }
 
     /**

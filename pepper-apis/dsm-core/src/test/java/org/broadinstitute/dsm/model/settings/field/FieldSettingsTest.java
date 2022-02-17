@@ -17,14 +17,17 @@ import org.junit.Test;
 public class FieldSettingsTest {
 
     public static final String REGISTRATION_STATUS = "REGISTRATION_STATUS";
-    private static final String acceptanceStatusPossibleValue = "[{\"value\":\"ACCEPTED\",\"name\":\"Accepted\",default:true},"
-            + "{\"value\":\"IN_REVIEW\",\"name\":\"In Review\"},{\"name\":\"More Info Needed\",\"value\":\"MORE_INFO_NEEDED\"},"
-            + "{\"name\":\"Not Accepted\",\"value\":\"NOT_ACCEPTED\"},{\"name\":\"Waitlist\",\"value\":\"WAITLIST\"},"
-            + "{\"name\":\"Pre-review\",\"value\":\"PRE_REVIEW\"}]";
-    private static final String activePossibleValue = "[{\"value\":\"ACTIVE\",\"name\":\"Active\"},{\"value\":\"HOLD\","
-            + "\"name\":\"HOLD\"},{\"value\":\"INACTIVE\",\"name\":\"Inactive\"}]";
-    private static final String ethnicityPossibleValue = "[{\"name\":\"Hispanic\",\"value\":\"HISPANIC\",default:true},{\"name\":\"Not "
-            + "Hispanic\",\"value\":\"NOT_HISPANIC\"},{\"name\":\"Unknown or Not Reported\",\"value\":\"UNKNOWN\"}]";
+    private static final String acceptanceStatusPossibleValue =
+            "[{\"value\":\"ACCEPTED\",\"name\":\"Accepted\",default:true},{\"value\":\"IN_REVIEW\",\"name\":\"In Review\"},"
+                    + "{\"name\":\"More Info Needed\",\"value\":\"MORE_INFO_NEEDED\"},"
+                    + "{\"name\":\"Not Accepted\",\"value\":\"NOT_ACCEPTED\"},{\"name\":\"Waitlist\",\"value\":\"WAITLIST\"},"
+                    + "{\"name\":\"Pre-review\",\"value\":\"PRE_REVIEW\"}]";
+    private static final String activePossibleValue =
+            "[{\"value\":\"ACTIVE\",\"name\":\"Active\"},{\"value\":\"HOLD\",\"name\":\"HOLD\"},"
+                    + "{\"value\":\"INACTIVE\",\"name\":\"Inactive\"}]";
+    private static final String ethnicityPossibleValue =
+            "[{\"name\":\"Hispanic\",\"value\":\"HISPANIC\",default:true},{\"name\":\"Not Hispanic\",\"value\":\"NOT_HISPANIC\"},"
+                    + "{\"name\":\"Unknown or Not Reported\",\"value\":\"UNKNOWN\"}]";
     private static final String actions = "[{\"name\":\"REGISTRATION_STATUS\",\"type\":\"ELASTIC_EXPORT.workflows\"}]";
     private static final String acceptanceStatusColumnName = "ACCEPTANCE_STATUS";
     private static final String activeColumnName = "ACTIVE";
@@ -89,10 +92,8 @@ public class FieldSettingsTest {
     @Test
     public void isColumnExportable() {
         instanceId = ddpInstanceDao.create(new DDPInstanceDto.Builder().build());
-        FieldSettingsDto fieldSettingsDto = new FieldSettingsDto.Builder(instanceId)
-                .withActions(actions)
-                .withColumnName(REGISTRATION_STATUS)
-                .build();
+        FieldSettingsDto fieldSettingsDto =
+                new FieldSettingsDto.Builder(instanceId).withActions(actions).withColumnName(REGISTRATION_STATUS).build();
         fieldSettingsId = FieldSettingsDao.of().create(fieldSettingsDto);
         Assert.assertTrue(fieldSettings.isColumnExportable(instanceId, REGISTRATION_STATUS));
     }

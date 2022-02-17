@@ -5,26 +5,39 @@ import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.NonNull;
+import org.broadinstitute.dsm.db.structure.DbDateConversion;
+import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class OncHistory {
 
     private static final Logger logger = LoggerFactory.getLogger(OncHistory.class);
 
-    private static final String SQL_UPDATE_ONC_HISTORY = "UPDATE ddp_onc_history SET created = ?, last_changed = ?, changed_by = ? WHERE "
-            + "participant_id = ? AND created IS NULL";
+    private static final String SQL_UPDATE_ONC_HISTORY =
+            "UPDATE ddp_onc_history SET created = ?, last_changed = ?, changed_by = ? WHERE participant_id = ? AND created IS NULL";
 
-    private final String participantId;
-    private final String created;
-    private final String reviewed;
-    private final String changedBy;
+    private long participantId;
 
-    public OncHistory(String participantId, String created, String reviewed, String changedBy) {
+    @DbDateConversion(SqlDateConverter.STRING_DAY)
+    private String created;
+
+    @DbDateConversion(SqlDateConverter.STRING_DAY)
+    private String reviewed;
+    private String changedBy;
+
+    public OncHistory() {
+    }
+
+    public OncHistory(long participantId, String created, String reviewed, String changedBy) {
         this.participantId = participantId;
         this.created = created;
         this.reviewed = reviewed;
@@ -49,7 +62,8 @@ public class OncHistory {
                     logger.info("OncHistory was already set");
                     dbVals.resultValue = null;
                 } else {
-                    throw new RuntimeException("Error setting oncHistoryDetails of participant " + participantId + " it was updating " + result + " rows");
+                    throw new RuntimeException(
+                            "Error setting oncHistoryDetails of participant " + participantId + " it was updating " + result + " rows");
                 }
             } catch (SQLException e) {
                 dbVals.resultException = e;
@@ -63,7 +77,7 @@ public class OncHistory {
         return new NameValue("createdOncHistory", results.resultValue);
     }
 
-    public String getParticipantId() {
+    public long getParticipantId() {
         return participantId;
     }
 

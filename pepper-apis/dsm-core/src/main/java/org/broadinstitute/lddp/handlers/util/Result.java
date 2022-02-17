@@ -32,7 +32,9 @@ public class Result {
             } else {
                 if (this.body != null) {
                     return this.body.equals(result.body);
-                } else return result.body == null;
+                } else {
+                    return result.body == null;
+                }
 
             }
         } else {
