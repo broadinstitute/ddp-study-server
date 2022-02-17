@@ -1,14 +1,14 @@
 package org.broadinstitute.dsm.route;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Optional;
-import javax.servlet.http.HttpServletResponse;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.model.PDF.DownloadPDF;
-import org.broadinstitute.dsm.model.PDF.MiscPDFDownload;
+import org.broadinstitute.dsm.model.pdf.DownloadPDF;
+import org.broadinstitute.dsm.model.pdf.MiscPDFDownload;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;

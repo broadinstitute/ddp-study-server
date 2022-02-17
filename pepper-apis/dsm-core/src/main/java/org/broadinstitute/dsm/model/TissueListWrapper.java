@@ -28,7 +28,8 @@ public class TissueListWrapper {
         boolean hasESData = instance.getParticipantIndexES() != null;
         if (filters != null && filters.containsKey("ES") && hasESData) {
             participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(instance, filters.get("ES"));
-        } else if ((filters == null || !filters.containsKey("ES")) || (filters.containsKey("ES") && participantESData == null) || !hasESData) {
+        } else if ((filters == null || !filters.containsKey("ES")) || (filters.containsKey("ES") && participantESData == null)
+                || !hasESData) {
             participantESData = ElasticSearchUtil.getESData(instance);
         }
         List<TissueListWrapper> results = new ArrayList<>();

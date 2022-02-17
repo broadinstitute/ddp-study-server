@@ -68,12 +68,12 @@ public class UPSActivity {
         Instant eventTime = null;
         String dateTime = getDateTimeString();
         if (dateTime != null) {
-            eventTime = DateTimeFormatter.ofPattern("yyyyMMdd HHmmss").withZone(ZoneId.of("America/New_York")).parse(dateTime,
-                    Instant::from);
+            eventTime =
+                    DateTimeFormatter.ofPattern("yyyyMMdd HHmmss").withZone(ZoneId.of("America/New_York")).parse(dateTime, Instant::from);
         } else if (StringUtils.isNotBlank(this.getDateTime())) {
             dateTime = this.getDateTime();
-            eventTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("America/New_York")).parse(dateTime,
-                    Instant::from);
+            eventTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("America/New_York"))
+                    .parse(dateTime, Instant::from);
         }
 
         return eventTime;

@@ -80,7 +80,7 @@ public class DdpKit {
             stmt.setBoolean(1, ordered);
             stmt.setString(2, kitLabel);
             int r = stmt.executeUpdate();
-            if (r != 1) {//number of subkits
+            if (r != 1) { //number of subkits
                 throw new RuntimeException("Update query for CE order flag updated " + r + " rows! with dsm kit " + kitLabel);
             }
         } catch (Exception e) {
