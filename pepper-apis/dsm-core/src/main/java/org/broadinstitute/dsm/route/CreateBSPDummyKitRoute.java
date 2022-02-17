@@ -23,7 +23,8 @@ public class CreateBSPDummyKitRoute implements Route {
         logger.info("Got Mercury Test request");
         String kitLabel = request.params(RequestParameter.LABEL);
         if (StringUtils.isBlank(kitLabel)) {
-            response.status(500);// return bad request
+            // return bad request
+            response.status(500);
             logger.error("Bad request from Mercury! Should include a kitlabel");
             return null;
         }
@@ -37,16 +38,17 @@ public class CreateBSPDummyKitRoute implements Route {
             int kitTypeId = (int) DBUtil.getBookmark(DUMMY_KIT_TYPE_NAME);
             logger.info("Found kit type for Mercury Dummy Endpoint " + kitTypeId);
             String ddpParticipantId = new BSPDummyKitDao().getRandomParticipantForStudy(mockDdpInstance);
-            String participantCollaboratorId = KitRequestShipping.getCollaboratorParticipantId(mockDdpInstance.getBaseUrl(),
-                    mockDdpInstance.getDdpInstanceId(), mockDdpInstance.isMigratedDDP(),
-                    mockDdpInstance.getCollaboratorIdPrefix(), ddpParticipantId, "", null);
-            String collaboratorSampleId = KitRequestShipping.getCollaboratorSampleId(kitTypeId, participantCollaboratorId,
-                    DUMMY_KIT_TYPE_NAME);
+            String participantCollaboratorId =
+                    KitRequestShipping.getCollaboratorParticipantId(mockDdpInstance.getBaseUrl(), mockDdpInstance.getDdpInstanceId(),
+                            mockDdpInstance.isMigratedDDP(),
+                            mockDdpInstance.getCollaboratorIdPrefix(), ddpParticipantId, "", null);
+            String collaboratorSampleId =
+                    KitRequestShipping.getCollaboratorSampleId(kitTypeId, participantCollaboratorId, DUMMY_KIT_TYPE_NAME);
             if (ddpParticipantId != null) {
                 //if instance not null
                 String dsmKitRequestId = KitRequestShipping.writeRequest(mockDdpInstance.getDdpInstanceId(), mercuryKitRequestId, kitTypeId,
                         ddpParticipantId, participantCollaboratorId, collaboratorSampleId,
-                        USER_ID, "", "", "", false, "");
+                        USER_ID, "", "", "", false, "", null);
                 new BSPDummyKitDao().updateKitLabel(kitLabel, dsmKitRequestId);
             }
             logger.info("Returning 200 to Mercury");

@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.export.parse;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class ValueParser extends BaseParser {
 
     @Override
@@ -14,6 +16,9 @@ public class ValueParser extends BaseParser {
 
     @Override
     protected Object forDate(String value) {
+        if (StringUtils.isBlank(value)) {
+            return null;
+        }
         return value;
     }
 

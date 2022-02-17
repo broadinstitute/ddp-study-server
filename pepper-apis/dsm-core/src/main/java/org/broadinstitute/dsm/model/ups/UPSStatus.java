@@ -25,10 +25,7 @@ public class UPSStatus {
      * based on shipping history.
      */
     public boolean isOnItsWay() {
-        return IN_TRANSIT_TYPE.equals(type) ||
-                OUT_FOR_DELIVERY_TYPE.equals(type) ||
-                isDelivery() ||
-                isPickup();
+        return IN_TRANSIT_TYPE.equals(type) || OUT_FOR_DELIVERY_TYPE.equals(type) || isDelivery() || isPickup();
     }
 
     public boolean isDelivery() {

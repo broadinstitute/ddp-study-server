@@ -20,8 +20,8 @@ public class LabelSettingRoute extends RequestHandler {
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         String userIdRequest = UserUtil.getUserId(request);
         if (RoutePath.RequestMethod.GET.toString().equals(request.requestMethod())) {
-            if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest) || UserUtil.checkUserAccess(null, userId,
-                    "kit_shipping_view", userIdRequest)) {
+            if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest)
+                    || UserUtil.checkUserAccess(null, userId, "kit_shipping_view", userIdRequest)) {
                 return LabelSettings.getLabelSettings();
             } else {
                 response.status(500);

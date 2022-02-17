@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.util;
 
+import javax.servlet.http.Cookie;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -9,7 +10,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
-import javax.servlet.http.Cookie;
 
 import com.google.gson.GsonBuilder;
 import com.typesafe.config.Config;
@@ -137,8 +137,8 @@ public class TestUtil {
     public Map<String, String> buildHeaders(String secret) {
         int cookieAgeInSeconds = 60;
         Map<String, String> claims = new HashMap<>();
-        String jwtToken = new SecurityHelper().createToken(secret, cookieAgeInSeconds + (System.currentTimeMillis() / 1000) + (60 * 5),
-                claims);
+        String jwtToken =
+                new SecurityHelper().createToken(secret, cookieAgeInSeconds + (System.currentTimeMillis() / 1000) + (60 * 5), claims);
 
         Map<String, String> authHeaders = new HashMap<>();
         authHeaders.put("Authorization", "Bearer " + jwtToken);

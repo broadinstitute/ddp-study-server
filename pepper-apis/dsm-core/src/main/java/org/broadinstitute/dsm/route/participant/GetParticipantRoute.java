@@ -35,8 +35,8 @@ public class GetParticipantRoute extends RequestHandler {
             throw new IllegalArgumentException("realm cannot be empty");
         }
 
-        if (!UserUtil.checkUserAccess(realm, userId, "mr_view", requestUserId) && !UserUtil.checkUserAccess(realm, userId, "pt_list_view"
-                , requestUserId)) {
+        if (!UserUtil.checkUserAccess(realm, userId, "mr_view", requestUserId)
+                && !UserUtil.checkUserAccess(realm, userId, "pt_list_view", requestUserId)) {
             response.status(500);
             return UserErrorMessages.NO_RIGHTS;
         }

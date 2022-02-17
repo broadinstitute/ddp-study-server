@@ -57,15 +57,18 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
     private static AtomicLong minEpochForNextError = new AtomicLong(0L);
     private static String GCP_SERVICE;
     private static String ROOT_PACKAGE;
-    final String JOB_ERROR_MESSAGE = String.format("This looks like a job error. Job error reporting is " +
-            "throttled so you will only see 1 per %s minutes.", JOB_DELAY);
-    final String NON_JOB_ERROR_MESSAGE = String.format("This does NOT look like a job error. " +
-            "Non-job error reporting is throttled so you will only see 1 per %s minutes.", NON_JOB_DELAY);
+    final String JOB_ERROR_MESSAGE =
+            String.format("This looks like a job error. Job error reporting is throttled so you will only see 1 per %s minutes.",
+                    JOB_DELAY);
+    final String NON_JOB_ERROR_MESSAGE = String.format(
+            "This does NOT look like a job error. Non-job error reporting is throttled so you will only see 1 per %s minutes.",
+            NON_JOB_DELAY);
+
     public SlackAppender() {
     }
 
-    public static synchronized void configure(String scheduler, String appEnv, URI slackHookUri, String slackChannel,
-                                              String gcpServiceName, String rootPackage) {
+    public static synchronized void configure(String scheduler, String appEnv, URI slackHookUri, String slackChannel, String gcpServiceName,
+                                              String rootPackage) {
         if (!configured) {
             SlackAppender.appEnv = appEnv;
             slackHookUrl = slackHookUri;
@@ -90,14 +93,10 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
                 String linkToGcpLog = buildLinkToGcpLog();
                 String errorMessageAndLocation = getErrorMessageAndLocation(event);
                 if (jobError && currentEpoch >= minEpochForNextJobError.get()) {
-                    this.sendSlackNotification(
-                            buildMessage(errorMessageAndLocation, linkToGcpError, JOB_ERROR_MESSAGE, linkToGcpLog)
-                    );
+                    this.sendSlackNotification(buildMessage(errorMessageAndLocation, linkToGcpError, JOB_ERROR_MESSAGE, linkToGcpLog));
                     minEpochForNextJobError.set(currentEpoch + JOB_DELAY * 60L);
                 } else if (!jobError && currentEpoch >= minEpochForNextError.get()) {
-                    this.sendSlackNotification(
-                            buildMessage(errorMessageAndLocation, linkToGcpError, NON_JOB_ERROR_MESSAGE, linkToGcpLog)
-                    );
+                    this.sendSlackNotification(buildMessage(errorMessageAndLocation, linkToGcpError, NON_JOB_ERROR_MESSAGE, linkToGcpLog));
                     minEpochForNextError.set(currentEpoch + NON_JOB_DELAY * 60L);
                 }
             } catch (Exception e) {
@@ -124,24 +123,13 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
 
         StringBuilder gcpLogUriWithParameters = new StringBuilder(gcpLogUri.toString());
         LocalDateTime currentDateTime = LocalDateTime.now();
-        String minuteTimeRange = currentDateTime.withNano(0).minusHours(4).minusSeconds(30).toInstant(ZoneOffset.UTC)
-                + urlEncodedSlash
+        String minuteTimeRange = currentDateTime.withNano(0).minusHours(4).minusSeconds(30).toInstant(ZoneOffset.UTC) + urlEncodedSlash
                 + currentDateTime.withNano(0).minusHours(4).plusSeconds(30).toInstant(ZoneOffset.UTC);
 
-        gcpLogUriWithParameters
-                .append(urlQuerySeparator)
-                .append("query=")
-                .append("resource.type")
-                .append(urlEncodedEqualSign)
-                .append(String.format("\"%s\"", GCP_RESOURCE_TYPE))
-                .append(urlEncodedNewLine)
-                .append("resource.labels.module_id")
-                .append(urlEncodedEqualSign)
-                .append(String.format("\"%s\"", GCP_SERVICE))
-                .append(urlQuerySeparator)
-                .append("timeRange")
-                .append("=")
-                .append(minuteTimeRange);
+        gcpLogUriWithParameters.append(urlQuerySeparator).append("query=").append("resource.type").append(urlEncodedEqualSign)
+                .append(String.format("\"%s\"", GCP_RESOURCE_TYPE)).append(urlEncodedNewLine).append("resource.labels.module_id")
+                .append(urlEncodedEqualSign).append(String.format("\"%s\"", GCP_SERVICE)).append(urlQuerySeparator).append("timeRange")
+                .append("=").append(minuteTimeRange);
         return gcpLogUriWithParameters.toString();
     }
 
@@ -149,15 +137,11 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
         StringBuilder errorCauseAndPlace = new StringBuilder();
         IThrowableProxy error = event.getThrowableProxy();
 
-        String developerDefinedCodeErrorLocation = Arrays.stream(error.getStackTraceElementProxyArray())
-                .map(StackTraceElementProxy::toString)
-                .filter(s -> s.contains(ROOT_PACKAGE))
-                .collect(Collectors.joining(System.lineSeparator()));
+        String developerDefinedCodeErrorLocation =
+                Arrays.stream(error.getStackTraceElementProxyArray()).map(StackTraceElementProxy::toString)
+                        .filter(s -> s.contains(ROOT_PACKAGE)).collect(Collectors.joining(System.lineSeparator()));
 
-        errorCauseAndPlace
-                .append(error.toString())
-                .append(System.lineSeparator())
-                .append(developerDefinedCodeErrorLocation)
+        errorCauseAndPlace.append(error.toString()).append(System.lineSeparator()).append(developerDefinedCodeErrorLocation)
                 .append(System.lineSeparator());
 
         return errorCauseAndPlace.toString();
@@ -165,11 +149,9 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
 
     private void sendSlackNotification(String note) {
         SlackMessagePayload payload = buildSlackMessageWithPayload(note);
-        HttpRequest httpRequest = HttpRequest.newBuilder()
-                .uri(slackHookUrl)
-                .POST(HttpRequest.BodyPublishers.ofString(new Gson().toJson(payload)))
-                .header(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType())
-                .build();
+        HttpRequest httpRequest =
+                HttpRequest.newBuilder().uri(slackHookUrl).POST(HttpRequest.BodyPublishers.ofString(new Gson().toJson(payload)))
+                        .header(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType()).build();
 
         try {
             HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
@@ -177,24 +159,16 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
                 throw new IOException("Could not post " + payload + " to slack.  Hook returned " + response.body());
             }
         } catch (IOException | InterruptedException e) {
-            logger.warn("Could not post error message to slack room " + slackChannel + " with hook " + slackHookUrl
-                    + "\n" + ExceptionUtils.getStackTrace(e));
+            logger.warn("Could not post error message to slack room " + slackChannel + " with hook " + slackHookUrl + "\n"
+                    + ExceptionUtils.getStackTrace(e));
         }
     }
 
     String buildMessage(String exceptionWithLocation, String linkToGcpError, String defaultErrorMessage, String linkToGcpLog) {
         StringBuilder prettifiedErrorMessage = new StringBuilder();
-        prettifiedErrorMessage
-                .append(exceptionWithLocation)
-                .append(System.lineSeparator())
-                .append(System.lineSeparator())
-                .append(linkToGcpError)
-                .append(System.lineSeparator())
-                .append(System.lineSeparator())
-                .append(linkToGcpLog)
-                .append(System.lineSeparator())
-                .append(System.lineSeparator())
-                .append(defaultErrorMessage);
+        prettifiedErrorMessage.append(exceptionWithLocation).append(System.lineSeparator()).append(System.lineSeparator())
+                .append(linkToGcpError).append(System.lineSeparator()).append(System.lineSeparator()).append(linkToGcpLog)
+                .append(System.lineSeparator()).append(System.lineSeparator()).append(defaultErrorMessage);
         return prettifiedErrorMessage.toString();
     }
 

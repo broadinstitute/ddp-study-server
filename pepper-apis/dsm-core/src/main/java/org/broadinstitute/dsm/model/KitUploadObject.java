@@ -76,19 +76,9 @@ public class KitUploadObject extends KitRequest {
 
     @Override
     public String toString() {
-        return "KitUploadObject{" +
-                "ddpParticipantId='" + getParticipantId() + '\'' +
-                ", externalOrderNumber='" + getExternalOrderNumber() + '\'' +
-                ", shortId='" + getShortId() + '\'' +
-                ", firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
-                ", street1='" + street1 + '\'' +
-                ", street2='" + street2 + '\'' +
-                ", city='" + city + '\'' +
-                ", state='" + state + '\'' +
-                ", postalCode='" + postalCode + '\'' +
-                ", country='" + country + '\'' +
-                ", phoneNumber='" + phoneNumber + '\'' +
-                '}';
+        return "KitUploadObject{" + "ddpParticipantId='" + getParticipantId() + '\'' + ", externalOrderNumber='" + getExternalOrderNumber()
+                + '\'' + ", shortId='" + getShortId() + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\''
+                + ", street1='" + street1 + '\'' + ", street2='" + street2 + '\'' + ", city='" + city + '\'' + ", state='" + state + '\''
+                + ", postalCode='" + postalCode + '\'' + ", country='" + country + '\'' + ", phoneNumber='" + phoneNumber + '\'' + '}';
     }
 }
