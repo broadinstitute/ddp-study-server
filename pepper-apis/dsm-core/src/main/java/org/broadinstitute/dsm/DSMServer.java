@@ -612,7 +612,13 @@ public class DSMServer {
 
         AuthenticationRoute authenticationRoute = new AuthenticationRoute(auth0Util,
                 jwtSecret, cookieSalt, cookieName, userUtil,
-                cfg.getString("portal.environment"));
+                cfg.getString("portal.environment"),
+                cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN),
+                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_SECRET),
+                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_KEY),
+                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL),
+                cfg.getString(ApplicationConfigConstants.AUTH0_AUDIENCE)
+                );
         post(UI_ROOT + RoutePath.AUTHENTICATION_REQUEST, authenticationRoute, new JsonTransformer());
 
         KitUtil kitUtil = new KitUtil();
@@ -623,7 +629,7 @@ public class DSMServer {
         setupExternalShipperLookup(cfg.getString(ApplicationConfigConstants.EXTERNAL_SHIPPER));
         GBFRequestUtil gbfRequestUtil = new GBFRequestUtil();
 
-        setupShippingRoutes(notificationUtil, auth0Util, userUtil);
+        setupShippingRoutes(notificationUtil, auth0Util, userUtil, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN));
 
         setupMedicalRecordRoutes(cfg, notificationUtil, patchUtil);
 
@@ -732,7 +738,7 @@ public class DSMServer {
         }
     }
 
-    private void setupShippingRoutes(@NonNull NotificationUtil notificationUtil, @NonNull Auth0Util auth0Util, @NonNull UserUtil userUtil) {
+    private void setupShippingRoutes(@NonNull NotificationUtil notificationUtil, @NonNull Auth0Util auth0Util, @NonNull UserUtil userUtil, @NonNull String auth0Domain) {
         get(UI_ROOT + RoutePath.KIT_REQUESTS_PATH, new KitRequestRoute(), new JsonTransformer());
 
         KitStatusChangeRoute kitStatusChangeRoute = new KitStatusChangeRoute(notificationUtil);
@@ -763,7 +769,7 @@ public class DSMServer {
 
         get(UI_ROOT + RoutePath.SEARCH_KIT, new KitSearchRoute(), new JsonTransformer());
 
-        KitDiscardRoute kitDiscardRoute = new KitDiscardRoute(auth0Util, userUtil);
+        KitDiscardRoute kitDiscardRoute = new KitDiscardRoute(auth0Util, userUtil, auth0Domain);
         get(UI_ROOT + RoutePath.DISCARD_SAMPLES, kitDiscardRoute, new JsonTransformer());
         patch(UI_ROOT + RoutePath.DISCARD_SAMPLES, kitDiscardRoute, new JsonTransformer());
         post(UI_ROOT + RoutePath.DISCARD_UPLOAD, kitDiscardRoute, new JsonTransformer());

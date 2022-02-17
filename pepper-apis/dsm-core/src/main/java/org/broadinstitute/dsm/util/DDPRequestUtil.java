@@ -1,19 +1,5 @@
 package org.broadinstitute.dsm.util;
 
-import static org.apache.http.client.fluent.Request.Get;
-
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
 import lombok.NonNull;
@@ -32,15 +18,16 @@ import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
-import org.broadinstitute.lddp.handlers.util.ParticipantInstitutionInfo;
-import org.broadinstitute.lddp.handlers.util.ParticipantSurveyInfo;
-import org.broadinstitute.lddp.handlers.util.Result;
-import org.broadinstitute.lddp.handlers.util.SimpleFollowUpSurvey;
-import org.broadinstitute.lddp.handlers.util.SurveyInfo;
+import org.broadinstitute.lddp.handlers.util.*;
 import org.broadinstitute.lddp.security.Auth0Util;
 import org.broadinstitute.lddp.util.GoogleBucket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.*;
+import java.util.*;
+
+import static org.apache.http.client.fluent.Request.Get;
 
 public class DDPRequestUtil {
 
@@ -356,4 +343,24 @@ public class DDPRequestUtil {
         }
         return responseCode;
     }
+
+    public static <T> T  postRequestWithResponse(Class<T> responseClass, String sendRequest, Object objectToPost, String name, Map<String, String> header) {
+        logger.info("Requesting data from " + name + " w/ " + sendRequest);
+        org.apache.http.client.fluent.Request request = SecurityUtil.createPostRequestWithHeaderNoToken(sendRequest, header, objectToPost);
+
+        T objects = null;
+        try {
+            if (blindTrustEverythingExecutor != null) {
+                objects = blindTrustEverythingExecutor.execute(request).handleResponse(res -> getResponse(res, responseClass, sendRequest));
+            }
+            else {
+                objects = request.execute().handleResponse(res -> getResponse(res, responseClass, sendRequest));
+            }
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        return objects;
+    }
+
 }

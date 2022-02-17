@@ -3,18 +3,23 @@ package org.broadinstitute.dsm.util;
 import static org.apache.http.client.fluent.Request.Get;
 import static org.apache.http.client.fluent.Request.Post;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.auth0.jwt.interfaces.Claim;
 import com.google.gson.GsonBuilder;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.TrustStrategy;
 import org.broadinstitute.dsm.DSMServer;
@@ -115,6 +120,18 @@ public class SecurityUtil {
         return addBodyToRequest(objectToPost, request);
     }
 
+    public static org.apache.http.client.fluent.Request createPostRequestWithHeaderNoToken(@NonNull String requestString,
+                                                                                           Map<String, String> headers,
+                                                                                           Object objectToPost) {
+        org.apache.http.client.fluent.Request request = Post(requestString);
+        if (headers != null) {
+            for (Map.Entry<String, String> headerEntry : headers.entrySet()) {
+                request = request.addHeader(headerEntry.getKey(), headerEntry.getValue());
+            }
+        }
+        return addBodyToRequest(objectToPost, request, ContentType.APPLICATION_FORM_URLENCODED);
+    }
+
     public static org.apache.http.client.fluent.Request createPostRequestWithHeader(@NonNull String requestString,
                                                                                     @NonNull String bearer,
                                                                                     Object objectToPost) {
@@ -140,6 +157,43 @@ public class SecurityUtil {
             request.bodyString(content, ContentType.APPLICATION_JSON);
         }
         return request;
+    }
+
+    private static org.apache.http.client.fluent.Request addBodyToRequest(Object objectToPost,
+                                                                          org.apache.http.client.fluent.Request request, ContentType contentType) {
+        if (objectToPost != null) {
+            String content = null;
+            if (!(objectToPost instanceof String)) {
+                content = createPostData((List<BasicNameValuePair>) objectToPost);
+            }
+            else {
+                content = (String) objectToPost;
+            }
+            request.bodyString(content, contentType);
+        }
+        return request;
+    }
+
+    private static String createPostData(List<BasicNameValuePair> params)  {
+        StringBuilder result = new StringBuilder();
+        boolean first = true;
+        int i=0;
+        try {
+            for (NameValuePair pair : params) {
+                if (first)
+                    first = false;
+                else
+                    result.append("&");
+                result.append(URLEncoder.encode(pair.getName(), "UTF-8"));
+                result.append("=");
+                result.append(URLEncoder.encode(pair.getValue(), "UTF-8"));
+                i+=1;
+            }
+        }
+        catch (UnsupportedEncodingException e) {
+            throw new RuntimeException("Unsupported encoding in the object for name: " + params.get(i).getName(), e);
+        }
+        return result.toString();
     }
 
     public static HttpClient buildHttpClient() throws Exception {
