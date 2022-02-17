@@ -4,8 +4,12 @@
         xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
-    <changeSet author="simone" id="DDP-2860_11302018">
-        <sql>INSERT INTO bookmark (value, instance)
-             values ((SELECT MAX(dsm_kit_request_id) FROM ddp_kit_request), 'pdf_audit_kit')</sql>
+
+    <changeSet id="readonlyColumn" author="ikhaladz">
+        <addColumn tableName="field_settings">
+            <column name="readonly" type="boolean"
+                    defaultValueBoolean="false"/>
+        </addColumn>
     </changeSet>
+
 </databaseChangeLog>

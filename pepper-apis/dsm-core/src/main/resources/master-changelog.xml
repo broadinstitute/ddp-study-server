@@ -1,6 +1,6 @@
 <databaseChangeLog
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
     <include file="liquibase/000-initialDB.xml" relativeToChangelogFile="true"/>
@@ -48,4 +48,30 @@
     <include file="liquibase/043-updateDB.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/044-updateDB.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/046-updateDB.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/047-updateDB.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/048-updateDB.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/049-updateDB.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/050-updateDB.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/DDP-6141_rgp_family_id_counter.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/DDP-4702_AT-form.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/DDP-5782_RGP-form.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/DDP-6426_at-status-possible-values.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/DDP-5730_default-column-fields.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/DDP-6446_AT-form.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/DDP-6451_at-genomic-id-counter.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/DDP-6006_RGP-form.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/tab_grouped-column-display-fix.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/DDP-6489-family-notes-field.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/DDP-6238_users-phoneNumbers.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/DDP-6504_hide-samples-tab.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/rgp/DDP-6504_hide-sample-information-tab.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/DDP-6586.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/CMI/DDP-6586_update_has_address_tab_to_true_for_pancan.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/DDP-6574_update_event_queue.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/circadia/DDP-6577_circadia-form.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/circadia/DDP-6574_email-events.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/circadia/DDP-6574_dynamic-form-action.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/circadia/DDP-6688_DLMO-form.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/circadia/DDP-6796_add-instance-setting-for-computed-object.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/circadia/DDP-6797_set-has-computed-object-for-circadia-to-true.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
