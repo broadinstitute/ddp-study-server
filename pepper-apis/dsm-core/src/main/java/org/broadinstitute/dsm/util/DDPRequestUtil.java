@@ -225,7 +225,7 @@ public class DDPRequestUtil {
                                         @NonNull boolean hasAuth0Token, @NonNull String pdfEndpoint, @NonNull long time,
                                         @NonNull String userId, @NonNull String reason) {
         String fileName = pdfEndpoint.replace("/", "").replace("pdf", "");
-        String gcpName = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
+        String gcpName = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
         if (StringUtils.isNotBlank(gcpName)) {
             String bucketName = gcpName + "_dsm_" + instanceName.toLowerCase();
             try {

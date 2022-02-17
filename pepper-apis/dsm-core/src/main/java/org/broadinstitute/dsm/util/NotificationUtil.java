@@ -134,7 +134,7 @@ public class NotificationUtil {
         mapy.put(":subject", subject);
         Recipient emailRecipient = new Recipient(recipient);
         if (EMAIL_TYPE.equals(recordId)) {
-            emailRecipient.setUrl(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS) + KITREQUEST_LINK);
+            emailRecipient.setUrl(DSMConfig.getSqlFromConfig(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS) + KITREQUEST_LINK);
         }
         emailRecipient.setSurveyLinks(mapy);
         queueCurrentAndFutureEmails(recordId, emailRecipient, recordId);

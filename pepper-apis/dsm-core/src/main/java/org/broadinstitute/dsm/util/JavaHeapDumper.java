@@ -36,7 +36,7 @@ public class JavaHeapDumper {
     }
 
     public void dumpHeapToBucket(String bucketName, final String fileName) throws IOException {
-        String gcpName = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
+        String gcpName = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
         dumpHeapToLocalFile(DEFAULT_LOCAL_PATH + "/" + fileName);
         File localDumpFile = Paths.get(DEFAULT_LOCAL_PATH, fileName).toFile();
         if (localDumpFile.exists()) {
@@ -46,7 +46,7 @@ public class JavaHeapDumper {
         }
         try (FileInputStream localDumpFileStream = new FileInputStream(localDumpFile)) {
             String credentials = null;
-            String tmp = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS);
+            String tmp = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS);
             if (StringUtils.isNotBlank(tmp) && new File(tmp).exists()) {
                 credentials = tmp;
             }

@@ -231,9 +231,8 @@ public class GBFTest extends TestHelper {
                     + "LEFT JOIN ddp_kit kit ON (req.dsm_kit_request_id = kit.dsm_kit_request_id)  "
                     + "LEFT JOIN (SELECT subK.kit_type_id, subK.external_name from ddp_kit_request_settings dkc "
                     + "LEFT JOIN sub_kits_settings subK ON (subK.ddp_kit_request_settings_id = dkc.ddp_kit_request_settings_id)) "
-                    + "as subkits ON (subkits.kit_type_id = req.kit_type_id)   "
-                    + "WHERE " + "req.ddp_instance_id = ?  " + "AND external_order_status = 'SHIPPED' " + "AND external_response is null "
-                    + "ORDER BY external_order_date ASC ";
+                    + "as subkits ON (subkits.kit_type_id = req.kit_type_id)   " + "WHERE " + "req.ddp_instance_id = ?  "
+                    + "AND external_order_status = 'SHIPPED' " + "AND external_response is null " + "ORDER BY external_order_date ASC ";
 
             ArrayList<KitRequest> kitRequests =
                     gbf.getKitRequestsNotDone(Integer.parseInt(DDPInstance.getDDPInstance("testboston").getDdpInstanceId()), query);

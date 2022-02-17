@@ -32,7 +32,7 @@ public class ManualFilterTissueList extends BaseFilterTissueList {
         if (Objects.isNull(queryParamsMap)) {
             return wrapperList;
         }
-        prepareNeccesaryData(queryParamsMap);
+        prepareNecessaryData(queryParamsMap);
         if (!queryParamsMap.hasKey(RoutePath.REALM)) {
             throw new NoSuchElementException("realm is necessary");
         }
