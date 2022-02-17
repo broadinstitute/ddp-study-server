@@ -45,9 +45,9 @@ public class ExistingRecordPatch extends BasePatch {
 
     @Override
     public Object patchNameValuePairs() {
-        ESProfile profile = ElasticSearchUtil.getParticipantProfileByGuidOrAltPid(ddpInstance.getParticipantIndexES(),
-                patch.getDdpParticipantId())
-                .orElse(null);
+        ESProfile profile =
+                ElasticSearchUtil.getParticipantProfileByGuidOrAltPid(ddpInstance.getParticipantIndexES(), patch.getDdpParticipantId())
+                        .orElse(null);
         if (profile == null) {
             logger.error("Unable to find ES profile for participant with guid/altpid: {}, continuing w/ patch", patch.getParentId());
         }
@@ -80,6 +80,7 @@ public class ExistingRecordPatch extends BasePatch {
         UserDto userDto = new UserDao().getUserByEmail(patch.getUser()).orElseThrow();
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty(nameValue.getValue().toString(), nameValue.getValue().toString());
+
         JsonArray questionArray = new JsonArray();
         questionArray.add(jsonObject.get("questions").toString());
         boolean writeBack = false;
@@ -125,7 +126,7 @@ public class ExistingRecordPatch extends BasePatch {
                 writeFamilyMemberWorklow(patch, ddpInstance, profile, pData);
             } else {
                 Map<String, Object> esMap = ElasticSearchUtil
-                        .getObjectsMap(ddpInstance.getParticipantIndexES(), profile.getParticipantGuid(),
+                        .getObjectsMap(ddpInstance.getParticipantIndexES(), profile.getGuid(),
                                 ESObjectConstants.WORKFLOWS);
                 if (Objects.isNull(esMap) || esMap.isEmpty()) {
                     return;
@@ -150,15 +151,15 @@ public class ExistingRecordPatch extends BasePatch {
             }
             // Use participant guid here to avoid multiple ES lookups.
             ElasticSearchUtil.writeWorkflow(WorkflowForES.createInstanceWithStudySpecificData(ddpInstance,
-                    profile.getParticipantGuid(), columnName, columnValue, new WorkflowForES.StudySpecificData(
+                    profile.getGuid(), columnName, columnValue, new WorkflowForES.StudySpecificData(
                             pData.get(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID),
                             pData.get(FamilyMemberConstants.FIRSTNAME),
                             pData.get(FamilyMemberConstants.LASTNAME))), false);
         });
     }
 
-    private void removeFamilyMemberWorkflowData(DDPInstance ddpInstance, ESProfile profile, Map<String, String> pData, Map<String,
-            Object> esMap) throws
+    private void removeFamilyMemberWorkflowData(DDPInstance ddpInstance, ESProfile profile, Map<String, String> pData,
+                                                Map<String, Object> esMap) throws
             IOException {
         logger.info("Email in patch data does not match participant profile email, will remove workflows");
         CopyOnWriteArrayList<Map<String, Object>> workflowsList =
@@ -177,14 +178,14 @@ public class ExistingRecordPatch extends BasePatch {
         if (startingSize != workflowsList.size()) {
             esMap.put(ESObjectConstants.WORKFLOWS, workflowsList);
             // Use participant guid here to avoid another ES lookup.
-            ElasticSearchUtil.updateRequest(profile.getParticipantGuid(), ddpInstance.getParticipantIndexES(), esMap);
+            ElasticSearchUtil.updateRequest(profile.getGuid(), ddpInstance.getParticipantIndexES(), esMap);
         }
     }
 
     private void writeESWorkflowElseTriggerParticipantEvent(Patch patch, DDPInstance ddpInstance, ESProfile profile, NameValue nameValue) {
         for (Value action : patch.getActions()) {
             if (hasProfileAndESWorkflowType(profile, action)) {
-                writeESWorkflow(patch, nameValue, action, ddpInstance, profile.getParticipantGuid());
+                writeESWorkflow(patch, nameValue, action, ddpInstance, profile.getGuid());
             } else if (EventTypeDao.EVENT.equals(action.getType())) {
                 triggerParticipantEvent(ddpInstance, patch, action);
             }

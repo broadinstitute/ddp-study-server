@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.route;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
+import javax.servlet.http.HttpServletRequest;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -9,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import javax.servlet.http.HttpServletRequest;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -227,9 +227,8 @@ public class TriggerSurveyRoute extends RequestHandler {
     private long addTriggerCommentIntoDB(@NonNull String userId, @NonNull String reason, @NonNull long currentTime) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt =
-                         conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.INSERT_SURVEY_TRIGGER),
-                                 Statement.RETURN_GENERATED_KEYS)) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.INSERT_SURVEY_TRIGGER), Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, reason);
                 stmt.setLong(2, currentTime);
                 stmt.setString(3, userId);

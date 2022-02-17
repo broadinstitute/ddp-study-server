@@ -16,7 +16,7 @@ import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.Participant;
-import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDataDto;
+import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,13 +35,13 @@ public class ParticipantWrapperDto {
     private List<AbstractionActivity> abstractionActivities;
     private List<AbstractionGroup> abstractionSummary;
     private List<ElasticSearchParticipantDto> proxyData;
-    private List<ParticipantDataDto> participantData;
+    private List<ParticipantData> participantData;
 
     public ParticipantWrapperDto(ElasticSearchParticipantDto esData, Participant participant, List<MedicalRecord> medicalRecords,
                                  List<OncHistoryDetail> oncHistoryDetails, List<KitRequestShipping> kits,
                                  List<AbstractionActivity> abstractionActivities,
                                  List<AbstractionGroup> abstractionSummary, List<ElasticSearchParticipantDto> proxyData,
-                                 List<ParticipantDataDto> participantData) {
+                                 List<ParticipantData> participantData) {
         this.esData = esData;
         this.participant = participant;
         this.medicalRecords = medicalRecords;

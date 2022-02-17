@@ -51,8 +51,9 @@ public class AbstractionPatch extends BasePatch {
     @Override
     Optional<Object> processEachNameValue(NameValue nameValue) {
         if (StringUtils.isBlank(primaryKeyId)) {
-            primaryKeyId = AbstractionWrapper.createNewAbstractionFieldValue(patch.getParentId(), patch.getFieldId(), patch.getUser(),
-                    nameValue, dbElement);
+            primaryKeyId =
+                    AbstractionWrapper.createNewAbstractionFieldValue(patch.getParentId(), patch.getFieldId(), patch.getUser(), nameValue,
+                            dbElement);
         }
         Patch.patch(primaryKeyId, patch.getUser(), nameValue, dbElement);
         return Optional.ofNullable(primaryKeyId);

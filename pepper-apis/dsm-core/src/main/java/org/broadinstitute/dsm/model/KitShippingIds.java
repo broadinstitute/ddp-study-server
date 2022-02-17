@@ -25,11 +25,11 @@ public class KitShippingIds {
         this.easyPostShipmentReturnId = easyPostShipmentReturnId;
     }
 
-    public static KitShippingIds getKitShippingIds(@NonNull String kitRequestId, @NonNull String easypostApiKey) {
+    public static KitShippingIds getKitShippingIds(@NonNull long kitRequestId, @NonNull String easypostApiKey) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(KitRequestShipping.SQL_SELECT_KIT)) {
-                stmt.setString(1, kitRequestId);
+                stmt.setLong(1, kitRequestId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     int numRows = 0;
                     while (rs.next()) {

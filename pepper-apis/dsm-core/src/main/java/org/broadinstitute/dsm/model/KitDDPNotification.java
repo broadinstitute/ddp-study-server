@@ -32,8 +32,8 @@ public class KitDDPNotification {
     private final String uploadReason;
     private final String ddpKitRequestId;
 
-    public KitDDPNotification(String participantId, String dsmKitRequestId, String ddpInstanceId, String instanceName,
-                              String baseUrl, String eventName, String eventType, long date, boolean hasAuth0Token, String uploadReason,
+    public KitDDPNotification(String participantId, String dsmKitRequestId, String ddpInstanceId, String instanceName, String baseUrl,
+                              String eventName, String eventType, long date, boolean hasAuth0Token, String uploadReason,
                               String ddpKitRequestId) {
         this.participantId = participantId;
         this.dsmKitRequestId = dsmKitRequestId;
@@ -57,19 +57,14 @@ public class KitDDPNotification {
                     rs.last();
                     int count = rs.getRow();
                     rs.beforeFirst();
-                    if (count == expectedCount && rs.next()) { //if row is 0 the ddp/kit type combination does not trigger a participant
-                        // event
+                    if (count == expectedCount
+                            && rs.next()) { //if row is 0 the ddp/kit type combination does not trigger a participant event
                         dbVals.resultValue = new KitDDPNotification(rs.getString(DBConstants.DDP_PARTICIPANT_ID),
-                                rs.getString(DBConstants.DSM_KIT_REQUEST_ID),
-                                rs.getString(DBConstants.DDP_INSTANCE_ID),
-                                rs.getString(DBConstants.INSTANCE_NAME),
-                                rs.getString(DBConstants.BASE_URL),
-                                rs.getString(DBConstants.EVENT_NAME),
-                                rs.getString(DBConstants.EVENT_TYPE),
-                                rs.getLong(DBConstants.DSM_RECEIVE_DATE),
-                                rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN),
-                                rs.getString(DBConstants.UPLOAD_REASON),
-                                rs.getString(DBConstants.DDP_KIT_REQUEST_ID));
+                                rs.getString(DBConstants.DSM_KIT_REQUEST_ID), rs.getString(DBConstants.DDP_INSTANCE_ID),
+                                rs.getString(DBConstants.INSTANCE_NAME), rs.getString(DBConstants.BASE_URL),
+                                rs.getString(DBConstants.EVENT_NAME), rs.getString(DBConstants.EVENT_TYPE),
+                                rs.getLong(DBConstants.DSM_RECEIVE_DATE), rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN),
+                                rs.getString(DBConstants.UPLOAD_REASON), rs.getString(DBConstants.DDP_KIT_REQUEST_ID));
 
                     }
                 }
@@ -101,13 +96,10 @@ public class KitDDPNotification {
                 if (count == expectedCount && rs.next()) { //if row is 0 the ddp/kit type combination does not trigger a participant event
                     result = new KitDDPNotification(rs.getString(DBConstants.DDP_PARTICIPANT_ID),
                             rs.getString(DBConstants.DSM_KIT_REQUEST_ID), rs.getString(DBConstants.DDP_INSTANCE_ID),
-                            rs.getString(DBConstants.INSTANCE_NAME),
-                            rs.getString(DBConstants.BASE_URL),
-                            rs.getString(DBConstants.EVENT_NAME),
-                            rs.getString(DBConstants.EVENT_TYPE), rs.getLong(DBConstants.DSM_RECEIVE_DATE),
-                            rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN),
-                            rs.getString(DBConstants.UPLOAD_REASON),
-                            rs.getString(DBConstants.DDP_KIT_REQUEST_ID));
+                            rs.getString(DBConstants.INSTANCE_NAME), rs.getString(DBConstants.BASE_URL),
+                            rs.getString(DBConstants.EVENT_NAME), rs.getString(DBConstants.EVENT_TYPE),
+                            rs.getLong(DBConstants.DSM_RECEIVE_DATE), rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN),
+                            rs.getString(DBConstants.UPLOAD_REASON), rs.getString(DBConstants.DDP_KIT_REQUEST_ID));
                 }
             }
         } catch (Exception ex) {

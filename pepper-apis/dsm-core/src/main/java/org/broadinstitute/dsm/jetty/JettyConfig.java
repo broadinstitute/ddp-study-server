@@ -1,10 +1,10 @@
 package org.broadinstitute.dsm.jetty;
 
-import java.io.IOException;
 import javax.servlet.Filter;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.server.Server;
@@ -80,7 +80,7 @@ public class JettyConfig {
      * the source IP properly in the appengine environment
      */
     public static class JettyCustomRemoteAddrHeaderHandler extends SessionHandler {
-        private Filter filter;
+        private javax.servlet.Filter filter;
         private String preferredIPSourceHeader;
 
         public JettyCustomRemoteAddrHeaderHandler(Filter filter, String preferredIPSourceHeader) {

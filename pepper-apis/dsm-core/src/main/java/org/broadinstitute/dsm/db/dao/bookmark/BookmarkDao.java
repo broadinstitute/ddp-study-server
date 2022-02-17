@@ -14,24 +14,16 @@ import org.broadinstitute.lddp.db.SimpleResult;
 
 public class BookmarkDao implements Dao<BookmarkDto> {
 
-    private static final String SQL_GET_BOOKMARK_BY_INSTANCE_NAME = "SELECT " +
-            "bookmark_id, " +
-            "value, " +
-            "instance " +
-            "FROM bookmark WHERE instance = ?";
+    private static final String SQL_GET_BOOKMARK_BY_INSTANCE_NAME =
+            "SELECT bookmark_id, value, instance FROM bookmark WHERE instance = ?";
 
-    private static final String SQL_UPDATE_BOOKMARK = "UPDATE " +
-            "bookmark SET value = ?, instance = ? WHERE bookmark_id = ?";
+    private static final String SQL_UPDATE_BOOKMARK = "UPDATE bookmark SET value = ?, instance = ? WHERE bookmark_id = ?";
 
-    private static final String SQL_UPDATE_BOOKMARK_VALUE_BY_BOOKMARK_ID = "UPDATE " +
-            "bookmark SET value = ? WHERE bookmark_id = ?";
+    private static final String SQL_UPDATE_BOOKMARK_VALUE_BY_BOOKMARK_ID = "UPDATE bookmark SET value = ? WHERE bookmark_id = ?";
 
-    private static final String SQL_INSERT_BOOKMARK = "INSERT INTO bookmark SET " +
-            "value = ?," +
-            "instance = ? ";
+    private static final String SQL_INSERT_BOOKMARK = "INSERT INTO bookmark SET value = ?, instance = ? ";
 
-    private static final String SQL_DELETE_BOOKMARK_BY_ID = "DELETE FROM bookmark " +
-            "WHERE bookmark_id = ?";
+    private static final String SQL_DELETE_BOOKMARK_BY_ID = "DELETE FROM bookmark WHERE bookmark_id = ?";
 
     @Override
     public int create(BookmarkDto bookmarkDto) {
@@ -88,9 +80,7 @@ public class BookmarkDao implements Dao<BookmarkDto> {
                 stmt.setString(1, instanceName);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                        dbVals.resultValue = new BookmarkDto.Builder(rs.getLong(2), rs.getString(3))
-                                .withBookmarkId(rs.getInt(1))
-                                .build();
+                        dbVals.resultValue = new BookmarkDto.Builder(rs.getLong(2), rs.getString(3)).withBookmarkId(rs.getInt(1)).build();
                     }
                 } catch (SQLException e) {
                     throw new RuntimeException("Error getting bookmark with instance: " + instanceName, e);

@@ -10,7 +10,7 @@ import lombok.NonNull;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.kit.BSPKitDto;
-import org.broadinstitute.dsm.model.BSPKit;
+import org.broadinstitute.dsm.model.gp.BSPKit;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
@@ -29,42 +29,25 @@ public class BSPKitDao implements Dao<BSPKitDto> {
     public final String MATERIAL_TYPE = "bsp_material_type";
     public final String RECEPTACLE_TYPE = "bsp_receptacle_type";
     public final String PARTICIPANT_EXIT = "ddp_participant_exit_id";
-    public final String SQL_UPDATE_KIT_RECEIVED = "UPDATE ddp_kit kit INNER JOIN( SELECT dsm_kit_request_id, MAX(dsm_kit_id) AS kit_id " +
-            "FROM ddp_kit GROUP BY dsm_kit_request_id) groupedKit ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id " +
-            "AND kit.dsm_kit_id = groupedKit.kit_id SET receive_date = ?, receive_by = ? WHERE kit.receive_date IS NULL AND kit.kit_label"
-            + " = ?";
-    private final String GET_BSP_RESPONSE_INFORMATION_FOR_KIT = "select " +
-            "        realm.instance_name, " +
-            "        realm.base_url, " +
-            "        request.bsp_collaborator_sample_id, " +
-            "        request.bsp_collaborator_participant_id, " +
-            "        realm.bsp_group, " +
-            "        realm.bsp_collection, " +
-            "        realm.bsp_organism, " +
-            "        realm.notification_recipients, " +
-            "        request.ddp_participant_id, " +
-            "        kt.kit_type_name, " +
-            "        kt.bsp_material_type, " +
-            "        kt.bsp_receptacle_type, " +
-            "        (select count(role.name) " +
-            "            from ddp_instance realm2, " +
-            "            ddp_instance_role inRol, " +
-            "            instance_role role " +
-            "            where realm2.ddp_instance_id = inRol.ddp_instance_id " +
-            "            and inRol.instance_role_id = role.instance_role_id " +
-            "            and role.name = ? " +
-            "            and realm2.ddp_instance_id = realm.ddp_instance_id) as 'has_role', " +
-            "        ex.ddp_participant_exit_id, " +
-            "        kit.deactivated_date " +
-            "        from " +
-            "  ddp_kit_request request " +
-            "  left join ddp_instance realm on request.ddp_instance_id = realm.ddp_instance_id " +
-            "  left join ddp_kit kit on request.dsm_kit_request_id = kit.dsm_kit_request_id " +
-            "  left join kit_type kt on request.kit_type_id = kt.kit_type_id " +
-            "  left join ddp_participant_exit ex on (request.ddp_participant_id = ex.ddp_participant_id and " +
-            "   request.ddp_instance_id = ex.ddp_instance_id) " +
-            "        where " +
-            "  kit.kit_label = ?";
+    public final String SQL_UPDATE_KIT_RECEIVED = "UPDATE ddp_kit kit INNER JOIN( SELECT dsm_kit_request_id, MAX(dsm_kit_id) AS kit_id "
+            + "FROM ddp_kit GROUP BY dsm_kit_request_id) groupedKit ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id "
+            + "AND kit.dsm_kit_id = groupedKit.kit_id SET receive_date = ?, receive_by = ? "
+            + "WHERE kit.receive_date IS NULL AND kit.kit_label = ?";
+    private final String GET_BSP_RESPONSE_INFORMATION_FOR_KIT =
+            "select  realm.instance_name,  realm.base_url,  request.bsp_collaborator_sample_id, "
+                    + "        request.bsp_collaborator_participant_id,  realm.bsp_group,  realm.bsp_collection, "
+                    + "        realm.bsp_organism,  realm.notification_recipients,  request.ddp_participant_id, "
+                    + "        kt.kit_type_name,  kt.bsp_material_type,  kt.bsp_receptacle_type, "
+                    + "        (select count(role.name)      from ddp_instance realm2, "
+                    + "    ddp_instance_role inRol,      instance_role role " + "    where realm2.ddp_instance_id = inRol.ddp_instance_id "
+                    + "    and inRol.instance_role_id = role.instance_role_id      and role.name = ? "
+                    + "    and realm2.ddp_instance_id = realm.ddp_instance_id) as 'has_role', "
+                    + "        ex.ddp_participant_exit_id,  kit.deactivated_date  from "
+                    + "  ddp_kit_request request    left join ddp_instance realm on request.ddp_instance_id = realm.ddp_instance_id "
+                    + "  left join ddp_kit kit on request.dsm_kit_request_id = kit.dsm_kit_request_id "
+                    + "  left join kit_type kt on request.kit_type_id = kt.kit_type_id "
+                    + "  left join ddp_participant_exit ex on (request.ddp_participant_id = ex.ddp_participant_id and "
+                    + "   request.ddp_instance_id = ex.ddp_instance_id)  where    kit.kit_label = ?";
     private final String BSP = "BSP";
     Logger logger = LoggerFactory.getLogger(BSPKitDao.class);
 
@@ -94,21 +77,14 @@ public class BSPKitDao implements Dao<BSPKitDto> {
                         int numRows = 0;
                         while (rs.next()) {
                             numRows++;
-                            dbVals.resultValue = new BSPKitDto(
-                                    rs.getString(INSTANCE_NAME),
-                                    rs.getString(BASE_URL),
-                                    rs.getString(BSP_SAMPLE_ID),
-                                    rs.getString(BSP_PARTICIPANT_ID),
-                                    rs.getString(BSP_ORGANISM),
-                                    rs.getString(BSP_COLLECTION),
-                                    rs.getString(DDP_PARTICIPANT_ID),
-                                    rs.getString(MATERIAL_TYPE),
-                                    rs.getString(RECEPTACLE_TYPE),
-                                    rs.getBoolean(DBConstants.HAS_ROLE),
-                                    rs.getString(PARTICIPANT_EXIT),
-                                    rs.getString(DBConstants.DSM_DEACTIVATED_DATE),
-                                    rs.getString(DBConstants.NOTIFICATION_RECIPIENT)
-                            );
+                            dbVals.resultValue =
+                                    new BSPKitDto(rs.getString(INSTANCE_NAME), rs.getString(BASE_URL), rs.getString(BSP_SAMPLE_ID),
+                                            rs.getString(BSP_PARTICIPANT_ID), rs.getString(BSP_ORGANISM), rs.getString(BSP_COLLECTION),
+                                            rs.getString(DDP_PARTICIPANT_ID), rs.getString(MATERIAL_TYPE), rs.getString(RECEPTACLE_TYPE),
+                                            rs.getBoolean(DBConstants.HAS_ROLE), rs.getString(PARTICIPANT_EXIT),
+                                            rs.getString(DBConstants.DSM_DEACTIVATED_DATE),
+                                            rs.getString(DBConstants.NOTIFICATION_RECIPIENT),
+                                            rs.getString("kt." + DBConstants.KIT_TYPE_NAME));
                         }
                         if (numRows > 1) {
                             throw new RuntimeException("Found " + numRows + " kits for kit label " + kitLabel);
@@ -138,7 +114,11 @@ public class BSPKitDao implements Dao<BSPKitDto> {
                 if (result > 1) { // 1 row or 0 row updated is perfect
                     throw new RuntimeException("Error updating kit w/label " + kitLabel + " (was updating " + result + " rows)");
                 }
-                firstTimeReceived = result == 1;
+                if (result == 1) {
+                    firstTimeReceived = true;
+                } else {
+                    firstTimeReceived = false;
+                }
             } catch (Exception e) {
                 logger.error("Failed to set kit w/ label " + kitLabel + " as received ", e);
             }

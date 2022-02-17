@@ -1,2 +1,6 @@
-[{"rightValue":"FAKE_DSM_LABEL_UID_3",
-  "leftValue":"FAKE_DSM_LABEL_UID_3"}]
+[
+  {
+    "rightValue": "FAKE_DSM_LABEL_UID_3",
+    "leftValue": "FAKE_DSM_LABEL_UID_3"
+  }
+]

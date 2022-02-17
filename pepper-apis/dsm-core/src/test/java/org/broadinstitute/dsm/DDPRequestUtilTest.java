@@ -14,7 +14,9 @@ import org.junit.Test;
 import org.mockserver.matchers.MatchType;
 import org.mockserver.model.JsonBody;
 
+
 public class DDPRequestUtilTest extends TestHelper {
+
 
     @BeforeClass
     public static void first() throws Exception {
@@ -31,11 +33,11 @@ public class DDPRequestUtilTest extends TestHelper {
     @Test
     public void triggerFollowUpSurvey() throws Exception {
         mockDDP.when(
-                request().withMethod("POST").withPath("/ddp/followupsurvey/test-consent").withBody(
-                        JsonBody.json("{\"participantId\": \"SURVEY_PARTICIPANT\"}",
-                                MatchType.STRICT
-                        )
-                ))
+                        request().withMethod("POST").withPath("/ddp/followupsurvey/test-consent").withBody(
+                                JsonBody.json("{\"participantId\": \"SURVEY_PARTICIPANT\"}",
+                                        MatchType.STRICT
+                                )
+                        ))
                 .respond(response().withStatusCode(200));
 
         FollowUpSurvey survey = new FollowUpSurvey("SURVEY_PARTICIPANT");
@@ -51,11 +53,11 @@ public class DDPRequestUtilTest extends TestHelper {
     @Test
     public void triggerSimpleFollowUpSurvey() throws Exception {
         mockDDP.when(
-                request().withMethod("POST").withPath("/ddp/followupsurvey/test-consent").withBody(
-                        JsonBody.json("{\"participantId\": \"SURVEY_PARTICIPANT\"}",
-                                MatchType.STRICT
-                        )
-                ))
+                        request().withMethod("POST").withPath("/ddp/followupsurvey/test-consent").withBody(
+                                JsonBody.json("{\"participantId\": \"SURVEY_PARTICIPANT\"}",
+                                        MatchType.STRICT
+                                )
+                        ))
                 .respond(response().withStatusCode(200));
 
         SimpleFollowUpSurvey survey = new SimpleFollowUpSurvey("SURVEY_PARTICIPANT");

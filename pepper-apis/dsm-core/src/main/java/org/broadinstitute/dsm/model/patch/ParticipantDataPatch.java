@@ -41,8 +41,9 @@ public class ParticipantDataPatch extends BasePatch {
     @Override
     Optional<Object> processEachNameValue(NameValue nameValue) {
         if (participantDataId == null) {
-            participantDataId = ParticipantData.createNewParticipantData(patch.getParentId(), ddpInstance.getDdpInstanceId(),
-                    patch.getFieldId(), String.valueOf(nameValue.getValue()), patch.getUser());
+            participantDataId =
+                    ParticipantData.createNewParticipantData(patch.getParentId(), ddpInstance.getDdpInstanceId(), patch.getFieldId(),
+                            String.valueOf(nameValue.getValue()), patch.getUser());
             resultMap.put(ESObjectConstants.PARTICIPANT_DATA_ID, participantDataId);
         } else if (participantDataId != null) {
             Patch.patch(participantDataId, patch.getUser(), nameValue, dbElement);
@@ -53,7 +54,7 @@ public class ParticipantDataPatch extends BasePatch {
                     .orElseThrow(() -> new RuntimeException("Unable to find ES profile for participant: " + patch.getParentId()));
             for (Value action : patch.getActions()) {
                 if (hasProfileAndESWorkflowType(profile, action)) {
-                    writeESWorkflow(patch, nameValue, action, ddpInstance, profile.getParticipantGuid());
+                    writeESWorkflow(patch, nameValue, action, ddpInstance, profile.getGuid());
                 } else if (EventTypeDao.EVENT.equals(action.getType())) {
                     triggerParticipantEvent(ddpInstance, patch, action);
                 }

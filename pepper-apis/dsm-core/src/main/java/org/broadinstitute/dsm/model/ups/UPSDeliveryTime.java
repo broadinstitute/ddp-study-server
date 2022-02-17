@@ -3,8 +3,7 @@ package org.broadinstitute.dsm.model.ups;
 import lombok.Data;
 
 @Data
-public
-class UPSDeliveryTime {
+public class UPSDeliveryTime {
     String startTime;
     String endTime;
     String type;

@@ -13,7 +13,7 @@ import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDataDto;
+import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.util.DBTestUtil;
@@ -27,7 +27,7 @@ public class UpdateWorkflowStatusTest {
     public static final String UPDATE_WORKFLOW_TEST = "Update workflow test";
     public static final String RGP = "RGP";
     private static final String participantId = "RBMJW6ZIXVXBMXUX6M3Q";
-    private static final Map<String, String> participantData = new HashMap<>();
+    private static final Map<String, String> testParticipantData = new HashMap<>();
     private static final DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
     private static final FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
     private static final UserDao userDao = new UserDao();
@@ -35,7 +35,7 @@ public class UpdateWorkflowStatusTest {
     private static Gson gson;
     private static UserDto userDto;
     private static int participantDataId;
-    private static ParticipantDataDto participantDataDto;
+    private static ParticipantData participantData;
     private static DDPInstanceDto ddpInstanceDto;
 
     @BeforeClass
@@ -54,28 +54,28 @@ public class UpdateWorkflowStatusTest {
     }
 
     private static void createDataForParticipant() {
-        participantData.put("REGISTRATION_STATUS", "REGISTERED");
-        participantData.put("MEMBER_TYPE", "SELF");
+        testParticipantData.put("REGISTRATION_STATUS", "REGISTERED");
+        testParticipantData.put("MEMBER_TYPE", "SELF");
     }
 
     private static void createParticipantData() {
-        participantDataDto =
-                new ParticipantDataDto.Builder()
+        participantData =
+                new ParticipantData.Builder()
                         .withDdpParticipantId(participantId)
                         .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId())
                         .withFieldTypeId(UPDATE_WORKFLOW_TEST)
-                        .withData(gson.toJson(participantData))
+                        .withData(gson.toJson(testParticipantData))
                         .withLastChanged(System.currentTimeMillis())
                         .withChangedBy(userDto.getEmail().orElse(""))
                         .build();
-        participantDataId = participantDataDao.create(participantDataDto);
-        participantDataDto =
-                new ParticipantDataDto.Builder()
+        participantDataId = participantDataDao.create(participantData);
+        participantData =
+                new ParticipantData.Builder()
                         .withParticipantDataId(participantDataId)
                         .withDdpParticipantId(participantId)
                         .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId())
                         .withFieldTypeId(UPDATE_WORKFLOW_TEST)
-                        .withData(gson.toJson(participantData))
+                        .withData(gson.toJson(testParticipantData))
                         .withLastChanged(System.currentTimeMillis())
                         .withChangedBy(userDto.getEmail().orElse(""))
                         .build();
@@ -94,7 +94,7 @@ public class UpdateWorkflowStatusTest {
     public void testUpdateProbandStatusInDB() {
         String workflow = "REGISTRATION_STATUS";
         String status = "ENROLLED";
-        WorkflowStatusUpdate.updateProbandStatusInDB(workflow, status, participantDataDto, RGP);
+        WorkflowStatusUpdate.updateProbandStatusInDB(workflow, status, participantData, RGP);
         String data = participantDataDao.get(participantDataId).orElseThrow().getData().orElse("");
         JsonObject dataJsonObject = gson.fromJson(data, JsonObject.class);
         Assert.assertEquals(status, dataJsonObject.get(workflow).getAsString());
@@ -108,8 +108,8 @@ public class UpdateWorkflowStatusTest {
         Optional<FieldSettingsDto> fieldSetting = fieldSettingsDao
                 .getFieldSettingByColumnNameAndInstanceId(16, workflow);
         if (fieldSetting.isPresent()) {
-            int participantDataId = WorkflowStatusUpdate.addNewParticipantDataWithStatus(workflow, status, ddpParticipantId,
-                    fieldSetting.get());
+            int participantDataId =
+                    WorkflowStatusUpdate.addNewParticipantDataWithStatus(workflow, status, ddpParticipantId, fieldSetting.get());
             String data = participantDataDao.get(participantDataId).orElseThrow().getData().orElse("");
             JsonObject dataJsonObject = gson.fromJson(data, JsonObject.class);
             Assert.assertEquals(status, dataJsonObject.get(workflow).getAsString());
