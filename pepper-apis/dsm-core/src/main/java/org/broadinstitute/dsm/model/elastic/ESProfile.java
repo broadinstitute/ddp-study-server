@@ -7,16 +7,16 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 @Data
 public class ESProfile {
     @SerializedName(ESObjectConstants.GUID)
-    private String participantGuid;
+    private String guid;
 
     @SerializedName(ESObjectConstants.HRUID)
     private String hruid;
 
     @SerializedName(ESObjectConstants.LEGACY_ALTPID)
-    private String participantLegacyAltPid;
+    private String legacyAltPid;
 
     @SerializedName(ESObjectConstants.LEGACY_SHORTID)
-    private String participantLegacyShortId;
+    private String legacyShortId;
 
     @SerializedName(ESObjectConstants.FIRST_NAME)
     private String firstName;

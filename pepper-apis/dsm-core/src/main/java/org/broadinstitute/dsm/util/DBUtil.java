@@ -74,7 +74,8 @@ public class DBUtil {
         }
     }
 
-    public static void updateBookmark(Connection conn, long value, String bookmarkName) {//writeBookmarkIntoDb
+    public static void updateBookmark(Connection conn, long value, String bookmarkName) {
+        //writeBookmarkIntoDb
         if (conn != null) {
             try (PreparedStatement updateBookmark = conn.prepareStatement(SQL_UPDATE_BOOKMARK)) {
                 updateBookmark.setLong(1, value);
@@ -102,8 +103,12 @@ public class DBUtil {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement selectKitRequest = conn.prepareStatement(query)) {
                 selectKitRequest.setString(1, externalOrderNumber);
-                try (ResultSet rs = selectKitRequest.executeQuery()) {
-                    dbVals.resultValue = rs.next();
+                try (ResultSet rs = selectKitRequest.executeQuery();) {
+                    if (rs.next()) {
+                        dbVals.resultValue = true;
+                    } else {
+                        dbVals.resultValue = false;
+                    }
 
                 } catch (Exception e) {
                     throw new RuntimeException("Error getting values from db", e);

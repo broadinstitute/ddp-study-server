@@ -16,7 +16,7 @@ public class EventTypeDto {
     private String eventType;
     private int hours;
 
-    private EventTypeDto(Builder builder) {
+    private EventTypeDto(EventTypeDto.Builder builder) {
         this.eventTypeId = builder.eventTypeId;
         this.ddpInstanceId = builder.ddpInstanceId;
         this.instanceName = builder.instanceName;
@@ -46,47 +46,47 @@ public class EventTypeDto {
             this.ddpInstanceId = ddpInstanceId;
         }
 
-        public Builder withEventTypeId(int eventTypeId) {
+        public EventTypeDto.Builder withEventTypeId(int eventTypeId) {
             this.eventTypeId = eventTypeId;
             return this;
         }
 
-        public Builder withInstanceName(String instanceName) {
+        public EventTypeDto.Builder withInstanceName(String instanceName) {
             this.instanceName = instanceName;
             return this;
         }
 
-        public Builder withBaseUrl(String baseUrl) {
+        public EventTypeDto.Builder withBaseUrl(String baseUrl) {
             this.baseUrl = baseUrl;
             return this;
         }
 
-        public Builder withAuth0Token(Boolean auth0Token) {
+        public EventTypeDto.Builder withAuth0Token(Boolean auth0Token) {
             this.auth0Token = auth0Token;
             return this;
         }
 
-        public Builder withEventName(String eventName) {
+        public EventTypeDto.Builder withEventName(String eventName) {
             this.eventName = eventName;
             return this;
         }
 
-        public Builder withEventDescription(String eventDescription) {
+        public EventTypeDto.Builder withEventDescription(String eventDescription) {
             this.eventDescription = eventDescription;
             return this;
         }
 
-        public Builder withKitTypeId(int kitTypeId) {
+        public EventTypeDto.Builder withKitTypeId(int kitTypeId) {
             this.kitTypeId = kitTypeId;
             return this;
         }
 
-        public Builder withEventType(String eventType) {
+        public EventTypeDto.Builder withEventType(String eventType) {
             this.eventType = eventType;
             return this;
         }
 
-        public Builder withHours(int hours) {
+        public EventTypeDto.Builder withHours(int hours) {
             this.hours = hours;
             return this;
         }

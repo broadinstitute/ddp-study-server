@@ -73,21 +73,24 @@ public class Covid19OrderRegistrarFunction implements BackgroundFunction<Covid19
 
         Covid19OrderRegistrar orderRegistrar = new Covid19OrderRegistrar(careEvolveOrderEndpoint, careEvolveAccount, provider, 0, 0);
 
-        Map<String, Map<String, Object>> esData = ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(),
-                ddpInstance.getParticipantIndexES(), esClient, orderPayload.getParticipantHruid());
+        Map<String, Map<String, Object>> esData =
+                ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES(), esClient,
+                        orderPayload.getParticipantHruid());
 
         if (esData.size() == 1) {
             JsonObject participantJsonData = new JsonParser().parse(new Gson().toJson(esData.values().iterator().next())).getAsJsonObject();
             Patient cePatient = Covid19OrderRegistrar.fromElasticData(participantJsonData);
             System.out.println(cePatient);
 
-            OrderResponse orderResponse = orderRegistrar.orderTest(auth, cePatient, orderPayload.getKitLabel(),
-                    orderPayload.getExternalOrderId(), orderPayload.getCollectionTime());
+            OrderResponse orderResponse =
+                    orderRegistrar.orderTest(auth, cePatient, orderPayload.getKitLabel(), orderPayload.getExternalOrderId(),
+                            orderPayload.getCollectionTime());
 
             if (orderResponse.hasError()) {
                 logger.log(Level.SEVERE, "Trouble placing order for " + orderPayload.getKitLabel() + ":" + orderResponse.getError());
             } else {
-                logger.info(orderPayload.getKitLabel() + " has been placed for " + orderPayload.getParticipantHruid() + ".  CE id is " + orderResponse.getHandle());
+                logger.info(orderPayload.getKitLabel() + " has been placed for " + orderPayload.getParticipantHruid() + ".  CE id is "
+                        + orderResponse.getHandle());
                 try (Connection conn = dataSource.getConnection()) {
                     DdpKit.updateCEOrdered(conn, true, orderPayload.getKitLabel());
                 }
@@ -142,12 +145,8 @@ public class Covid19OrderRegistrarFunction implements BackgroundFunction<Covid19
 
         @Override
         public String toString() {
-            return "OrderPayload{" +
-                    "participantHruid='" + participantHruid + '\'' +
-                    ", collectionTime='" + collectionTime + '\'' +
-                    ", kitLabel='" + kitLabel + '\'' +
-                    ", externalOrderId='" + externalOrderId + '\'' +
-                    '}';
+            return "OrderPayload{" + "participantHruid='" + participantHruid + '\'' + ", collectionTime='" + collectionTime + '\''
+                    + ", kitLabel='" + kitLabel + '\'' + ", externalOrderId='" + externalOrderId + '\'' + '}';
         }
     }
 }

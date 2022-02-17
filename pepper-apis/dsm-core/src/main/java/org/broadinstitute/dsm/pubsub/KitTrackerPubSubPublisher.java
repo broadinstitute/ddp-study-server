@@ -40,7 +40,7 @@ public class KitTrackerPubSubPublisher {
 
         try {
             ApiFuture<String> futureKitTracker = publisher.publish(pubsubMessage);
-//            String messageId = publisher.publish(pubsubMessage).get();
+            // String messageId = publisher.publish(pubsubMessage).get();
             ApiFutures.addCallback(
                     futureKitTracker,
                     new ApiFutureCallback<String>() {
@@ -72,7 +72,7 @@ public class KitTrackerPubSubPublisher {
                     publisher.shutdown();
                     publisher.awaitTermination(1, TimeUnit.MINUTES);
                 } catch (Exception e) {
-                    //TODO DSM 
+                    //TODO DSM
                 }
             }
         }

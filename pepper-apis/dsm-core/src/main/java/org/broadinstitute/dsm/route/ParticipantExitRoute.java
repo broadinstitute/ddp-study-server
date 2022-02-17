@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.route;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.JsonObject;
@@ -13,6 +14,8 @@ import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitDiscard;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.ParticipantExit;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.exception.ParticipantNotExist;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -58,13 +61,15 @@ public class ParticipantExitRoute extends RequestHandler {
                     List<KitRequestShipping> kitRequests = KitRequestShipping.getKitRequestsByParticipant(realm, ddpParticipantId, true);
                     List<KitDiscard> kitsNeedAction = new ArrayList<>();
                     logger.info("Found " + kitRequests.size() + " kit requests");
+                    Optional<DDPInstanceDto> maybeInstance = new DDPInstanceDao().getDDPInstanceByInstanceName(realm);
                     for (KitRequestShipping kit : kitRequests) {
                         if (kit.getScanDate() != 0 && kit.getReceiveDate() == 0) {
                             String discardId = KitDiscard.addKitToDiscard(kit.getDsmKitRequestId(), KitDiscard.HOLD);
-                            kitsNeedAction.add(new KitDiscard(discardId, kit.getKitType(), KitDiscard.HOLD));
+                            kitsNeedAction.add(new KitDiscard(discardId, kit.getKitTypeName(), KitDiscard.HOLD));
                         } else {
                             //refund label of kits which are not sent yet
-                            KitRequestShipping.refundKit(kit.getDsmKitRequestId(), DSMServer.getDDPEasypostApiKey(realm));
+                            KitRequestShipping.refundKit(kit.getDsmKitRequestId(), DSMServer.getDDPEasypostApiKey(realm),
+                                    maybeInstance.orElse(null));
                         }
                     }
                     return kitsNeedAction;

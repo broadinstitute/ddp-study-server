@@ -9,9 +9,8 @@ import java.util.OptionalInt;
 
 import com.google.gson.Gson;
 import lombok.Setter;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
-import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDataDto;
+import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.model.bookmark.Bookmark;
 
 @Setter
@@ -63,19 +62,15 @@ public class AddFamilyMemberPayload {
         }
         DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
         String collaboratorIdPrefix = ddpInstanceDao.getCollaboratorIdPrefixByStudyGuid(this.realm).orElseThrow();
-        return collaboratorIdPrefix +
-                "_" +
-                getOrGenerateFamilyId() +
-                "_" +
-                this.data.getSubjectId();
+        return collaboratorIdPrefix + "_" + getOrGenerateFamilyId() + "_" + this.data.getSubjectId();
     }
 
-    public long getFamilyId(List<ParticipantDataDto> participantDataDtos) throws NoSuchFieldException {
+    public long getFamilyId(List<ParticipantData> participantData) throws NoSuchFieldException {
         String familyId = null;
-        for (ParticipantDataDto pDataDto : Objects.requireNonNull(participantDataDtos)) {
+        for (ParticipantData pDataDto : Objects.requireNonNull(participantData)) {
             Map<String, String> pDataMap = new Gson().fromJson(pDataDto.getData().orElse(""), Map.class);
             familyId = pDataMap.get(FamilyMemberConstants.FAMILY_ID);
-            if (StringUtils.isNumeric(familyId)) {
+            if (org.apache.commons.lang3.StringUtils.isNumeric(familyId)) {
                 break;
             }
         }
@@ -86,8 +81,9 @@ public class AddFamilyMemberPayload {
     }
 
     public long getOrGenerateFamilyId() {
-        ParticipantData participantData = new ParticipantData();
-        List<ParticipantDataDto> participantDataByParticipantId = participantData.getParticipantDataByParticipantId(this.participantId);
+        org.broadinstitute.dsm.model.participant.data.ParticipantData participantData =
+                new org.broadinstitute.dsm.model.participant.data.ParticipantData();
+        List<ParticipantData> participantDataByParticipantId = participantData.getParticipantDataByParticipantId(this.participantId);
         long familyId;
         try {
             familyId = getFamilyId(participantDataByParticipantId);

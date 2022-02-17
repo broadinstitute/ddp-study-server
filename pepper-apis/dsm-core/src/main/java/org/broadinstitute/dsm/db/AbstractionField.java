@@ -23,13 +23,15 @@ import org.broadinstitute.lddp.db.SimpleResult;
 @Data
 public class AbstractionField {
 
-    private static final String SQL_INSERT_FORM_FIELD = "INSERT INTO medical_record_abstraction_field SET display_name = ?, type = ?, "
-            + "additional_type = ?, possible_values = ?, help_text = ?, medical_record_abstraction_group_id = ?, ddp_instance_id = "
-            + "(SELECT ddp_instance_id from ddp_instance where instance_name = ?), order_number = ?";
-    private static final String SQL_DELETE_FORM_FIELD = "UPDATE medical_record_abstraction_field SET deleted = 1 WHERE "
-            + "medical_record_abstraction_field_id = ?";
-    private static final String SQL_UPDATE_FORM_FIELD = "UPDATE medical_record_abstraction_field SET display_name = ?, type = ?, "
-            + "additional_type = ?, possible_values = ?, help_text = ?, order_number = ? WHERE medical_record_abstraction_field_id = ?";
+    private static final String SQL_INSERT_FORM_FIELD =
+            "INSERT INTO medical_record_abstraction_field SET display_name = ?, type = ?, additional_type = ?, "
+                    + "possible_values = ?, help_text = ?, medical_record_abstraction_group_id = ?, ddp_instance_id = ("
+                    + "SELECT ddp_instance_id from ddp_instance where instance_name = ?), order_number = ?";
+    private static final String SQL_DELETE_FORM_FIELD =
+            "UPDATE medical_record_abstraction_field SET deleted = 1 WHERE medical_record_abstraction_field_id = ?";
+    private static final String SQL_UPDATE_FORM_FIELD =
+            "UPDATE medical_record_abstraction_field SET display_name = ?, type = ?, additional_type = ?, "
+                    + "possible_values = ?, help_text = ?, order_number = ? WHERE medical_record_abstraction_field_id = ?";
 
     @ColumnName(DBConstants.MEDICAL_RECORD_ABSTRACTION_FIELD_ID)
     private final int medicalRecordAbstractionFieldId;

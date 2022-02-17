@@ -65,8 +65,7 @@ public class KitDiscard {
     }
 
     public KitDiscard(String realm, String ddpParticipantId, String collaboratorParticipantId, String kitRequestId, String kitDiscardId,
-                      String user,
-                      long exitDate, String kitType, long scanDate, long receivedDate, String kitLabel, String action,
+                      String user, long exitDate, String kitType, long scanDate, long receivedDate, String kitLabel, String action,
                       String pathBSPScreenshot, String pathSampleImage, String note, int changedById, String changedBy, String userConfirm,
                       String discardUser, String discardDate) {
         this.realm = realm;
@@ -96,8 +95,9 @@ public class KitDiscard {
         List<KitDiscard> exitedKits = new ArrayList();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt =
-                         conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_OF_EXITED_PARTICIPANTS) + QueryExtension.BY_INSTANCE_NAME)) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_OF_EXITED_PARTICIPANTS)
+                            + QueryExtension.BY_INSTANCE_NAME)) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
@@ -105,27 +105,14 @@ public class KitDiscard {
                         String userChanged = users.get(userIdChanged);
                         int userIdConfirm = rs.getInt(DBConstants.USER_CONFIRM);
                         String userConfirm = users.get(userIdConfirm);
-                        exitedKits.add(new KitDiscard(rs.getString(DBConstants.INSTANCE_NAME),
-                                rs.getString(DBConstants.DDP_PARTICIPANT_ID),
-                                rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
-                                rs.getString(DBConstants.DSM_KIT_REQUEST_ID),
-                                rs.getString(DBConstants.KIT_DISCARD_ID),
-                                rs.getString(DBConstants.NAME),
-                                rs.getLong(DBConstants.EXIT_DATE),
-                                rs.getString(DBConstants.KIT_TYPE_NAME),
-                                rs.getLong(DBConstants.DSM_SCAN_DATE),
-                                rs.getLong(DBConstants.DSM_RECEIVE_DATE),
-                                rs.getString(DBConstants.KIT_LABEL),
-                                rs.getString(DBConstants.ACTION),
-                                rs.getString(DBConstants.PATH_SCREENSHOT),
-                                rs.getString(DBConstants.PATH_IMAGE),
-                                rs.getString(DBConstants.NOTE),
-                                userIdChanged,
-                                userChanged,
-                                userConfirm,
-                                rs.getString(DBConstants.DISCARD_BY),
-                                rs.getString(DBConstants.DISCARD_DATE)
-                        ));
+                        exitedKits.add(new KitDiscard(rs.getString(DBConstants.INSTANCE_NAME), rs.getString(DBConstants.DDP_PARTICIPANT_ID),
+                                rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID), rs.getString(DBConstants.DSM_KIT_REQUEST_ID),
+                                rs.getString(DBConstants.KIT_DISCARD_ID), rs.getString(DBConstants.NAME), rs.getLong(DBConstants.EXIT_DATE),
+                                rs.getString(DBConstants.KIT_TYPE_NAME), rs.getLong(DBConstants.DSM_SCAN_DATE),
+                                rs.getLong(DBConstants.DSM_RECEIVE_DATE), rs.getString(DBConstants.KIT_LABEL),
+                                rs.getString(DBConstants.ACTION), rs.getString(DBConstants.PATH_SCREENSHOT),
+                                rs.getString(DBConstants.PATH_IMAGE), rs.getString(DBConstants.NOTE), userIdChanged, userChanged,
+                                userConfirm, rs.getString(DBConstants.DISCARD_BY), rs.getString(DBConstants.DISCARD_DATE)));
                     }
                 }
             } catch (Exception ex) {
@@ -143,8 +130,8 @@ public class KitDiscard {
     public static boolean setConfirmed(@NonNull String kitDiscardId, @NonNull Integer userId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt =
-                         conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.SET_USER_CONFIRMED))) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.SET_USER_CONFIRMED))) {
                 stmt.setInt(1, userId);
                 stmt.setString(2, APPROVED);
                 stmt.setString(3, kitDiscardId);
@@ -188,8 +175,8 @@ public class KitDiscard {
                 stmt.setString(3, kitDiscardId);
                 int result = stmt.executeUpdate();
                 if (result != 1) {
-                    throw new RuntimeException("Error updating discard kit " + kitDiscardId + " discarded. It was updating " + result +
-                            " rows");
+                    throw new RuntimeException(
+                            "Error updating discard kit " + kitDiscardId + " discarded. It was updating " + result + " rows");
                 }
             } catch (Exception e) {
                 dbVals.resultException = e;
@@ -204,14 +191,13 @@ public class KitDiscard {
         }
     }
 
-    public static String addKitToDiscard(@NonNull String kitRequestId, @NonNull String action) {
+    public static String addKitToDiscard(@NonNull long kitRequestId, @NonNull String action) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt =
-                         conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.INSERT_KIT_DISCARD),
-                                 Statement.RETURN_GENERATED_KEYS)) {
+            try (PreparedStatement stmt = conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.INSERT_KIT_DISCARD),
+                    Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, action);
-                stmt.setString(2, kitRequestId);
+                stmt.setLong(2, kitRequestId);
                 int result = stmt.executeUpdate();
                 if (result == 1) {
                     try (ResultSet rs = stmt.getGeneratedKeys()) {
@@ -224,7 +210,8 @@ public class KitDiscard {
                         throw new RuntimeException("Error getting id of new discard sample ", e);
                     }
                 } else {
-                    throw new RuntimeException("Error inserting discard kit w/ dsm_kit_id " + kitRequestId + " it was updating " + result + " rows");
+                    throw new RuntimeException(
+                            "Error inserting discard kit w/ dsm_kit_id " + kitRequestId + " it was updating " + result + " rows");
                 }
             } catch (Exception e) {
                 dbVals.resultException = e;
@@ -242,9 +229,9 @@ public class KitDiscard {
         Map<Integer, String> users = UserUtil.getUserMap();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt =
-                         conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_OF_EXITED_PARTICIPANTS) + QueryExtension.DISCARD_KIT_BY_DISCARD_ID,
-                    ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_OF_EXITED_PARTICIPANTS)
+                            + QueryExtension.DISCARD_KIT_BY_DISCARD_ID, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
                 stmt.setString(1, kitDiscardId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     rs.last();
@@ -255,27 +242,16 @@ public class KitDiscard {
                         String userChanged = users.get(userIdChanged);
                         int userIdConfirm = rs.getInt(DBConstants.USER_CONFIRM);
                         String userConfirm = users.get(userIdConfirm);
-                        dbVals.resultValue = new KitDiscard(rs.getString(DBConstants.INSTANCE_NAME),
-                                rs.getString(DBConstants.DDP_PARTICIPANT_ID),
-                                rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
-                                rs.getString(DBConstants.DSM_KIT_REQUEST_ID),
-                                rs.getString(DBConstants.KIT_DISCARD_ID),
-                                rs.getString(DBConstants.NAME),
-                                rs.getLong(DBConstants.EXIT_DATE),
-                                rs.getString(DBConstants.KIT_TYPE_NAME),
-                                rs.getLong(DBConstants.DSM_SCAN_DATE),
-                                rs.getLong(DBConstants.DSM_RECEIVE_DATE),
-                                rs.getString(DBConstants.KIT_LABEL),
-                                rs.getString(DBConstants.ACTION),
-                                rs.getString(DBConstants.PATH_SCREENSHOT),
-                                rs.getString(DBConstants.PATH_IMAGE),
-                                rs.getString(DBConstants.NOTE),
-                                userIdChanged,
-                                userChanged,
-                                userConfirm,
-                                rs.getString(DBConstants.DISCARD_BY),
-                                rs.getString(DBConstants.DISCARD_DATE)
-                        );
+                        dbVals.resultValue =
+                                new KitDiscard(rs.getString(DBConstants.INSTANCE_NAME), rs.getString(DBConstants.DDP_PARTICIPANT_ID),
+                                        rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID), rs.getString(DBConstants.DSM_KIT_REQUEST_ID),
+                                        rs.getString(DBConstants.KIT_DISCARD_ID), rs.getString(DBConstants.NAME),
+                                        rs.getLong(DBConstants.EXIT_DATE), rs.getString(DBConstants.KIT_TYPE_NAME),
+                                        rs.getLong(DBConstants.DSM_SCAN_DATE), rs.getLong(DBConstants.DSM_RECEIVE_DATE),
+                                        rs.getString(DBConstants.KIT_LABEL), rs.getString(DBConstants.ACTION),
+                                        rs.getString(DBConstants.PATH_SCREENSHOT), rs.getString(DBConstants.PATH_IMAGE),
+                                        rs.getString(DBConstants.NOTE), userIdChanged, userChanged, userConfirm,
+                                        rs.getString(DBConstants.DISCARD_BY), rs.getString(DBConstants.DISCARD_DATE));
                     } else {
                         throw new RuntimeException("Error getting discard kit back. (Got " + count + " row back)");
                     }
@@ -296,14 +272,14 @@ public class KitDiscard {
     public void setAction(@NonNull String kitDiscardId, @NonNull String action) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt =
-                         conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.UPDATE_KIT_DISCARD_ACTION))) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.UPDATE_KIT_DISCARD_ACTION))) {
                 stmt.setString(1, action);
                 stmt.setString(2, kitDiscardId);
                 int result = stmt.executeUpdate();
                 if (result != 1) {
-                    throw new RuntimeException("Error updating discard kit " + kitDiscardId + " action. It was updating " + result + " "
-                            + "rows");
+                    throw new RuntimeException(
+                            "Error updating discard kit " + kitDiscardId + " action. It was updating " + result + " rows");
                 }
             } catch (Exception e) {
                 dbVals.resultException = e;
@@ -321,16 +297,16 @@ public class KitDiscard {
     public void setKitDiscarded(@NonNull String kitDiscardId, @NonNull String userId, @NonNull String discardDate) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt =
-                         conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.UPDATE_KIT_DISCARDED))) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.UPDATE_KIT_DISCARDED))) {
                 stmt.setString(1, userId);
                 stmt.setString(2, discardDate);
                 stmt.setString(3, DESTROYED);
                 stmt.setString(4, kitDiscardId);
                 int result = stmt.executeUpdate();
                 if (result != 1) {
-                    throw new RuntimeException("Error updating discard kit " + kitDiscardId + " discarded. It was updating " + result +
-                            " rows");
+                    throw new RuntimeException(
+                            "Error updating discard kit " + kitDiscardId + " discarded. It was updating " + result + " rows");
                 }
             } catch (Exception e) {
                 dbVals.resultException = e;
