@@ -14,16 +14,10 @@ import org.broadinstitute.lddp.db.SimpleResult;
 
 public class ParticipantRecordDao implements Dao<ParticipantRecordDto> {
 
-    private static final String SQL_INSERT_PARTICIPANT = "INSERT INTO ddp_participant_record SET " +
-            "participant_id = ?, " +
-            "cr_sent = ?, " +
-            "cr_received = ?, " +
-            "notes = ?, " +
-            "minimal_mr = ?, " +
-            "abstraction_ready = ?, " +
-            "additional_values_json = ?, " +
-            "last_changed = ?, " +
-            "changed_by = ? ON DUPLICATE KEY UPDATE last_changed = ?, changed_by = ?";
+    private static final String SQL_INSERT_PARTICIPANT =
+            "INSERT INTO ddp_participant_record SET participant_id = ?, cr_sent = ?, cr_received = ?, notes = ?, "
+                    + "minimal_mr = ?, abstraction_ready = ?, additional_values_json = ?, last_changed = ?, "
+                    + "changed_by = ? ON DUPLICATE KEY UPDATE last_changed = ?, changed_by = ?";
 
     @Override
     public int create(ParticipantRecordDto participantRecordDto) {
@@ -53,7 +47,8 @@ public class ParticipantRecordDao implements Dao<ParticipantRecordDto> {
             return dbVals;
         });
         if (simpleResult.resultException != null) {
-            throw new RuntimeException("Error inserting participant record for participant id: " + participantRecordDto.getParticipantId(), simpleResult.resultException);
+            throw new RuntimeException("Error inserting participant record for participant id: " + participantRecordDto.getParticipantId(),
+                    simpleResult.resultException);
         }
         return (int) simpleResult.resultValue;
     }

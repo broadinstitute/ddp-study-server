@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.util;
 
+import javax.management.MBeanServer;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -7,7 +8,6 @@ import java.lang.management.ManagementFactory;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import javax.management.MBeanServer;
 
 import com.sun.management.HotSpotDiagnosticMXBean;
 import org.apache.commons.lang3.StringUtils;
@@ -46,11 +46,9 @@ public class JavaHeapDumper {
         }
         try (FileInputStream localDumpFileStream = new FileInputStream(localDumpFile)) {
             String credentials = null;
-            if (StringUtils.isNotBlank(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS))) {
-                String tmp = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS);
-                if (StringUtils.isNotBlank(tmp) && new File(tmp).exists()) {
-                    credentials = tmp;
-                }
+            String tmp = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS);
+            if (StringUtils.isNotBlank(tmp) && new File(tmp).exists()) {
+                credentials = tmp;
             }
             GoogleBucket.uploadFile(credentials, gcpName, bucketName, DEFAULT_BUCKET_PATH + "/" + fileName,
                     localDumpFileStream);

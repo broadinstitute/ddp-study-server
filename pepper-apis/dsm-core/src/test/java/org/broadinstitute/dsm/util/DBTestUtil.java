@@ -31,65 +31,72 @@ import org.broadinstitute.lddp.db.SimpleResult;
 public class DBTestUtil {
 
     public static final String CHECK_KIT_REQUEST = "select * from ddp_kit_request req where req.ddp_participant_id = ?";
-    public static final String CHECK_KIT = "select * from ddp_kit_request req, ddp_kit kit where req.dsm_kit_request_id = kit"
-            + ".dsm_kit_request_id and req.ddp_participant_id = ?";
-    public static final String CHECK_KIT_BY_TYPE = "select * from ddp_kit_request req, ddp_kit kit where req.dsm_kit_request_id = kit"
-            + ".dsm_kit_request_id and req.ddp_participant_id = ? and req.kit_type_id = ? order by dsm_kit_id desc";
+    public static final String CHECK_KIT =
+            "select * from ddp_kit_request req, ddp_kit kit where req.dsm_kit_request_id = kit.dsm_kit_request_id"
+                    + " and req.ddp_participant_id = ?";
+    public static final String CHECK_KIT_BY_TYPE =
+            "select * from ddp_kit_request req, ddp_kit kit where req.dsm_kit_request_id = kit.dsm_kit_request_id "
+                    + "and req.ddp_participant_id = ? and req.kit_type_id = ? order by dsm_kit_id desc";
     public static final String CHECK_KITREQUEST = "select * from ddp_kit_request req where req.ddp_kit_request_id = ?";
     public static final String CHECK_PARTICIPANT = "select * from ddp_participant where ddp_participant_id = ?";
     public static final String CHECK_INSTITUTION = "select * from ddp_institution where ddp_institution_id = ?";
     public static final String SELECT_MAXPARTICIPANT = "SELECT value from bookmark WHERE instance = ?";
-    public static final String SELECT_KITREQUEST_BY_PARTICIPANT_QUERY = "SELECT dsm_kit_request_id FROM ddp_kit_request WHERE "
-            + "ddp_participant_id = ?";
+    public static final String SELECT_KITREQUEST_BY_PARTICIPANT_QUERY =
+            "SELECT dsm_kit_request_id FROM ddp_kit_request WHERE ddp_participant_id = ?";
     public static final String SELECT_KIT_BY_KITREQUEST_QUERY = "SELECT dsm_kit_id FROM ddp_kit WHERE dsm_kit_request_id = ?";
     public static final String DELETE_KITREQUEST = "DELETE FROM ddp_kit_request WHERE dsm_kit_request_id = ?";
     public static final String DELETE_KIT_QUERY = "DELETE FROM ddp_kit WHERE dsm_kit_id = ?";
     public static final String DELETE_TISSUE = "delete from ddp_tissue where onc_history_detail_id = ?";
     public static final String DELETE_ONC_HISTROY_DETAIL = "delete from ddp_onc_history_detail where onc_history_detail_id = ? ";
-    public static final String SELECT_ONC_HISTORY_DETAIL = "select onc_history_detail_id from ddp_onc_history_detail where "
-            + "medical_record_id = ? ";
+    public static final String SELECT_ONC_HISTORY_DETAIL =
+            "select onc_history_detail_id from ddp_onc_history_detail where medical_record_id = ? ";
     public static final String SELECT_UNSENT_EMAILS = "SELECT EMAIL_ID FROM EMAIL_QUEUE where EMAIL_DATE_PROCESSED is null";
     public static final String DELETE_UNSENT_EMAILS = "DELETE FROM EMAIL_QUEUE where EMAIL_ID = ?";
-    public static final String UPDATE_KIT_SENT = "update ddp_kit set test_result = '[{\"isCorrected\":false,"
-            + "\"result\":\"UNSATISFACTORY_12\",\"timeCompleted\":\"2020-09-03T12:08:21.657Z\"}]', kit_complete = 1, scan_date = ?, "
-            + "scan_by = ?, kit_label = ? where dsm_kit_request_id = ( select dsm_kit_request_id from ddp_kit_request where ddp_label = "
-            + "?) and deactivated_date is null";
-    public static final String UPDATE_KIT_SENT_UPS = "update ddp_kit set test_result = '[{\"isCorrected\":false,"
-            + "\"result\":\"UNSATISFACTORY_12\",\"timeCompleted\":\"2020-09-03T12:08:21.657Z\"}]', kit_complete = 1, scan_date = ?, "
-            + "scan_by = ?, kit_label = ?, ups_tracking_status = ?, ups_return_status = ?, ups_tracking_date = ?, ups_return_date = ? "
-            + "where dsm_kit_request_id = ( select dsm_kit_request_id from ddp_kit_request where ddp_label = ?) and deactivated_date is "
-            + "null";
-    public static final String UPDATE_KIT_RECEIVED = "update ddp_kit set test_result = '[{\"isCorrected\":false,"
-            + "\"result\":\"UNSATISFACTORY_12\",\"timeCompleted\":\"2020-09-03T12:08:21.657Z\"}]', kit_complete = 1, scan_date = ?, "
-            + "scan_by = ?, kit_label = ?, ups_tracking_status = ?, ups_return_status = ?, ups_tracking_date = ?, ups_return_date = ?, "
-            + "receive_date = ?, receive_by = 'TEST' where dsm_kit_request_id = ( select dsm_kit_request_id from ddp_kit_request where "
-            + "ddp_label = ?) and deactivated_date is null";
+    public static final String UPDATE_KIT_SENT =
+            "update ddp_kit set test_result = '[{\"isCorrected\":false,\"result\":\"UNSATISFACTORY_12\","
+                    + "\"timeCompleted\":\"2020-09-03T12:08:21.657Z\"}]', kit_complete = 1, scan_date = ?, scan_by = ?, "
+                    + "kit_label = ? where dsm_kit_request_id = ( select dsm_kit_request_id "
+                    + "from ddp_kit_request where ddp_label = ?) and deactivated_date is null";
+    public static final String UPDATE_KIT_SENT_UPS =
+            "update ddp_kit set test_result = '[{\"isCorrected\":false,\"result\":\"UNSATISFACTORY_12\","
+                    + "\"timeCompleted\":\"2020-09-03T12:08:21.657Z\"}]', kit_complete = 1, scan_date = ?, scan_by = ?, "
+                    + "kit_label = ?, ups_tracking_status = ?, ups_return_status = ?, ups_tracking_date = ?, ups_return_date = ? "
+                    + "where dsm_kit_request_id = ( select dsm_kit_request_id from ddp_kit_request where ddp_label = ?) "
+                    + "and deactivated_date is null";
+    public static final String UPDATE_KIT_RECEIVED =
+            "update ddp_kit set test_result = '[{\"isCorrected\":false,\"result\":\"UNSATISFACTORY_12\","
+                    + "\"timeCompleted\":\"2020-09-03T12:08:21.657Z\"}]', kit_complete = 1, scan_date = ?, scan_by = ?, "
+                    + "kit_label = ?, ups_tracking_status = ?, ups_return_status = ?, ups_tracking_date = ?, ups_return_date = ?,"
+                    + " receive_date = ?, receive_by = 'TEST' where dsm_kit_request_id = ( select dsm_kit_request_id "
+                    + "from ddp_kit_request where ddp_label = ?) and deactivated_date is null";
     public static final String SQL_INSERT_UPS_SHIPMENT = "INSERT INTO ups_shipment (dsm_kit_request_id) values (?)";
     public static final String SQL_INSERT_UPS_PACKAGE = "INSERT INTO ups_package (ups_shipment_id, tracking_number) values (?,?)";
-    public static final String SQL_INSERT_UPS_ACTIVITY = "INSERT INTO ups_activity (ups_package_id, ups_location, ups_status_type, "
-            + "ups_status_description, ups_status_code,ups_activity_date_time) values (?,?,?,?,?,?)";
-    public static final String SELECT_GENERIC_DRUG_ROWS = "SELECT generic_name FROM drug_list WHERE ( length(brand_name) < 1 or "
-            + "brand_name is null) ORDER BY generic_name asc";
-    public static final String SELECT_DISTINCT_GENERICS_FROM_BRAND_ROWS = "SELECT distinct generic_name FROM drug_list WHERE length"
-            + "(brand_name) > 1 ORDER BY generic_name asc";
+    public static final String SQL_INSERT_UPS_ACTIVITY =
+            "INSERT INTO ups_activity (ups_package_id, ups_location, ups_status_type, ups_status_description, ups_status_code,"
+                    + "ups_activity_date_time) values (?,?,?,?,?,?)";
+    public static final String SELECT_GENERIC_DRUG_ROWS =
+            "SELECT generic_name FROM drug_list WHERE ( length(brand_name) < 1 or brand_name is null) ORDER BY generic_name asc";
+    public static final String SELECT_DISTINCT_GENERICS_FROM_BRAND_ROWS =
+            "SELECT distinct generic_name FROM drug_list WHERE length(brand_name) > 1 ORDER BY generic_name asc";
     public static final String DELETE_ALL_NDI_ADDED = "DELETE FROM ddp_ndi WHERE ndi_id = ?";
-    public static final String SQL_INSERT_KIT_REQUEST = "INSERT INTO ddp_kit_request " +
-            "(ddp_instance_id, ddp_kit_request_id, kit_type_id, ddp_participant_id, bsp_collaborator_participant_id, "
-            + "bsp_collaborator_sample_id, " +
-            "ddp_label, created_by, created_date, external_order_number, upload_reason, external_order_date, external_order_status) " +
-            "values (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    public static final String SQL_INSERT_KIT_REQUEST = "INSERT INTO ddp_kit_request "
+            + "(ddp_instance_id, ddp_kit_request_id, kit_type_id, ddp_participant_id, bsp_collaborator_participant_id, "
+            + "bsp_collaborator_sample_id, "
+            + "ddp_label, created_by, created_date, external_order_number, upload_reason, external_order_date, external_order_status) "
+            + "values (?,?,?,?,?,?,?,?,?,?,?,?,?)";
     public static final long WEEK = 7 * 24 * 60 * 60 * 1000;
     private static final String SELECT_PARTICIPANT_QUERY = "SELECT participant_id FROM ddp_participant WHERE last_version = ?";
     private static final String SELECT_PARTICIPANT_QUERY_2 = "SELECT participant_id FROM ddp_participant WHERE ddp_participant_id = ?";
     private static final String SELECT_INSTITUTION_QUERY = "SELECT institution_id FROM ddp_institution WHERE participant_id = ? LIMIT 1";
     private static final String SELECT_ONCHISTORY_QUERY = "SELECT onc_history_id FROM ddp_onc_history WHERE participant_id = ?";
-    private static final String SELECT_PARTICIPANTRECORD_QUERY = "SELECT participant_record_id FROM ddp_participant_record WHERE "
-            + "participant_id = ?";
-    private static final String SELECT_PARTICIPANTEXIT_QUERY = "SELECT ddp_participant_exit_id FROM ddp_participant_exit WHERE "
-            + "ddp_participant_id = (select ddp_participant_id from ddp_participant where participant_id = ?)";
+    private static final String SELECT_PARTICIPANTRECORD_QUERY =
+            "SELECT participant_record_id FROM ddp_participant_record WHERE participant_id = ?";
+    private static final String SELECT_PARTICIPANTEXIT_QUERY =
+            "SELECT ddp_participant_exit_id FROM ddp_participant_exit WHERE ddp_participant_id = (select ddp_participant_id "
+                    + "from ddp_participant where participant_id = ?)";
     private static final String SELECT_MEDICALRECORD_QUERY = "SELECT medical_record_id FROM ddp_medical_record WHERE institution_id = ?";
-    private static final String SELECT_MEDICALRECORDLOG_QUERY = "SELECT medical_record_log_id FROM ddp_medical_record_log WHERE "
-            + "medical_record_id = ?";
+    private static final String SELECT_MEDICALRECORDLOG_QUERY =
+            "SELECT medical_record_log_id FROM ddp_medical_record_log WHERE medical_record_id = ?";
     private static final String DELETE_PARTICIPANT_QUERY = "DELETE FROM ddp_participant WHERE participant_id = ?";
     private static final String DELETE_INSTITUTION_QUERY = "DELETE FROM ddp_institution WHERE institution_id = ?";
     private static final String DELETE_ONCHISTORY_QUERY = "DELETE FROM ddp_onc_history WHERE onc_history_id = ?";
@@ -107,12 +114,7 @@ public class DBTestUtil {
     private static final String SQL_INSERT_USER = "INSERT INTO access_user (user_id, name, email, is_active) VALUES (?, ?, ?, ?)";
     private static final String SQL_DELETE_USER_BY_ID = "DELETE FROM access_user WHERE user_id = ?";
     private static final String SQL_DELETE_MESSAGE_BY_USER_ID =
-            "DELETE FROM " +
-                    "message " +
-                    "WHERE " +
-                    "user_id = ? " +
-                    "ORDER BY published_at DESC " +
-                    "LIMIT 1";
+            "DELETE FROM " + "message " + "WHERE " + "user_id = ? " + "ORDER BY published_at DESC " + "LIMIT 1";
 
     public static void deleteAllParticipantData(String participantMaxVersionId) {
         deleteAllParticipantData(participantMaxVersionId, false);
@@ -139,14 +141,13 @@ public class DBTestUtil {
                         if (StringUtils.isNotBlank(medicalRecordId)) {
                             String medicalRecordLogId;
                             do {
-                                medicalRecordLogId = getQueryDetail(SELECT_MEDICALRECORDLOG_QUERY, medicalRecordId,
-                                        "medical_record_log_id");
+                                medicalRecordLogId =
+                                        getQueryDetail(SELECT_MEDICALRECORDLOG_QUERY, medicalRecordId, "medical_record_log_id");
                                 executeQuery(DELETE_EMAIL_QUERY, "MR_ID_" + medicalRecordId);
                                 if (StringUtils.isNotBlank(medicalRecordLogId)) {
                                     executeQuery(DELETE_MEDICALRECORDLOG_QUERY, medicalRecordLogId);
                                 }
-                            }
-                            while (medicalRecordLogId != null);
+                            } while (medicalRecordLogId != null);
 
                             String oncHistoryDetailId;
                             do {
@@ -155,15 +156,13 @@ public class DBTestUtil {
                                     executeQuery(DELETE_TISSUE, oncHistoryDetailId);
                                     executeQuery(DELETE_ONC_HISTROY_DETAIL, oncHistoryDetailId);
                                 }
-                            }
-                            while (oncHistoryDetailId != null);
+                            } while (oncHistoryDetailId != null);
 
                             executeQuery(DELETE_MEDICALRECORD_QUERY, medicalRecordId);
                         }
                         executeQuery(DELETE_INSTITUTION_QUERY, institutionId);
                     }
-                }
-                while (institutionId != null);
+                } while (institutionId != null);
 
                 if (StringUtils.isNotBlank(oncHistoryId)) {
                     executeQuery(DELETE_ONCHISTORY_QUERY, oncHistoryId);
@@ -178,8 +177,7 @@ public class DBTestUtil {
                 executeQuery(DELETE_EMAIL_QUERY, participantId);
                 executeQuery(DELETE_PARTICIPANT_EVENT_QUERY, participantId);
             }
-        }
-        while (participantId != null);
+        } while (participantId != null);
     }
 
     public static void deleteAbstractionData(@NonNull String ddpParticipantId) {
@@ -198,13 +196,12 @@ public class DBTestUtil {
                                                             @NonNull String participantId) {
         String abstractionActivityId;
         do {
-            abstractionActivityId = getQueryDetail(SQL_SELECT_PK_FROM_TABLE.replace("%PK", pkName).replace("%TABLE", tableName),
-                    participantId, pkName);
+            abstractionActivityId =
+                    getQueryDetail(SQL_SELECT_PK_FROM_TABLE.replace("%PK", pkName).replace("%TABLE", tableName), participantId, pkName);
             if (StringUtils.isNotBlank(abstractionActivityId)) {
                 executeQuery(SQL_DELETE_PK_FROM_TABLE.replace("%PK", pkName).replace("%TABLE", tableName), abstractionActivityId);
             }
-        }
-        while (abstractionActivityId != null);
+        } while (abstractionActivityId != null);
     }
 
     public static void deleteNdiAdded(String ndiId) {
@@ -224,21 +221,19 @@ public class DBTestUtil {
                     if (StringUtils.isNotBlank(kitId)) {
                         executeQuery(DELETE_KIT_QUERY, kitId);
                     }
-                }
-                while (kitId != null);
+                } while (kitId != null);
                 executeQuery(DELETE_KITREQUEST, kitRequestId);
                 executeQuery(DELETE_EVENT_QUERY, kitRequestId);
                 executeQuery(DELETE_DISCARD_QUERY, kitRequestId);
             }
-        }
-        while (kitRequestId != null);
+        } while (kitRequestId != null);
     }
 
     public static void deleteAllFieldSettings(String realm) {
         DDPInstance instance = DDPInstance.getDDPInstance(realm);
-        String query = "DELETE FROM field_settings WHERE field_settings_id <> 0 AND field_settings_id IN " +
-                "( SELECT something.field_settings_id FROM (SELECT * from field_settings) as something WHERE " +
-                "something.ddp_instance_id = ?)";
+        String query = "DELETE FROM field_settings WHERE field_settings_id <> 0 AND field_settings_id IN "
+                + "( SELECT something.field_settings_id FROM (SELECT * from field_settings) as something WHERE "
+                + "something.ddp_instance_id = ?)";
         executeQuery(query, instance.getDdpInstanceId());
     }
 
@@ -277,105 +272,64 @@ public class DBTestUtil {
 
     public static void createTestData(@NonNull String realm, @NonNull String participantId, @NonNull String institutionId,
                                       String lastVersion, boolean addFakeData, String shortId) {
-        String insertParticipant = "insert ignore into " +
-                "ddp_participant" +
-                "(ddp_participant_id," +
-                "last_version, " +
-                "last_version_date, " +
-                "ddp_instance_id, " +
-                "release_completed, " +
-                "last_changed, changed_by) " +
-                "values " +
-                "(\"" + participantId + "\", " + lastVersion + ", \"2017-02-07T18:07:02Z\", " + DBTestUtil.getQueryDetail(DBUtil.GET_REALM_QUERY, realm, "ddp_instance_id") + ", 1, " + System.currentTimeMillis() + " , \"SYSTEM\")";
+        String insertParticipant =
+                "insert ignore into " + "ddp_participant" + "(ddp_participant_id," + "last_version, " + "last_version_date, "
+                        + "ddp_instance_id, " + "release_completed, " + "last_changed, changed_by) " + "values " + "(\"" + participantId
+                        + "\", " + lastVersion + ", \"2017-02-07T18:07:02Z\", " + DBTestUtil.getQueryDetail(DBUtil.GET_REALM_QUERY, realm,
+                        "ddp_instance_id") + ", 1, " + System.currentTimeMillis() + " , \"SYSTEM\")";
         executeQueryReturnKey(insertParticipant);
 
-        String insertInstitution1 = "insert ignore into " +
-                "ddp_institution " +
-                "(ddp_institution_id, " +
-                "type, " +
-                "participant_id, " +
-                "last_changed) " +
-                "values (\"" + institutionId + "\", \"PHYSICIAN\", ( " +
-                "select participant_id " +
-                "from " +
-                "ddp_participant " +
-                "where " +
-                "ddp_participant_id = \"" + participantId + "\" AND ddp_instance_id = " + DBTestUtil.getQueryDetail(DBUtil.GET_REALM_QUERY, realm, "ddp_instance_id") + "), " + System.currentTimeMillis() + ")";
+        String insertInstitution1 =
+                "insert ignore into " + "ddp_institution " + "(ddp_institution_id, " + "type, " + "participant_id, " + "last_changed) "
+                        + "values (\"" + institutionId + "\", \"PHYSICIAN\", ( " + "select participant_id " + "from " + "ddp_participant "
+                        + "where " + "ddp_participant_id = \"" + participantId + "\" AND ddp_instance_id = " + DBTestUtil.getQueryDetail(
+                        DBUtil.GET_REALM_QUERY, realm, "ddp_instance_id") + "), " + System.currentTimeMillis() + ")";
         int institutionId1 = executeQueryReturnKey(insertInstitution1);
 
         if (!addFakeData) {
-            String insertInstitution2 = "insert ignore into " +
-                    "ddp_institution " +
-                    "(ddp_institution_id, " +
-                    "type, " +
-                    "participant_id, " +
-                    "last_changed) " +
-                    "values (\"FAKE_DDP_INSTITUTION_ID\", \"INSTITUTION\", ( " +
-                    "select participant_id " +
-                    "from " +
-                    "ddp_participant " +
-                    "where " +
-                    "ddp_participant_id = \"" + participantId + "\"), " + System.currentTimeMillis() + ")";
+            String insertInstitution2 =
+                    "insert ignore into " + "ddp_institution " + "(ddp_institution_id, " + "type, " + "participant_id, " + "last_changed) "
+                            + "values (\"FAKE_DDP_INSTITUTION_ID\", \"INSTITUTION\", ( " + "select participant_id " + "from "
+                            + "ddp_participant " + "where " + "ddp_participant_id = \"" + participantId + "\"), "
+                            + System.currentTimeMillis() + ")";
             int institutionId2 = executeQueryReturnKey(insertInstitution2);
 
-            String medicalRecord2 = "insert ignore into " +
-                    "ddp_medical_record " +
-                    "set " +
-                    "institution_id = " + institutionId2 + ", " +
-                    "last_changed = " + System.currentTimeMillis();
+            String medicalRecord2 =
+                    "insert ignore into " + "ddp_medical_record " + "set " + "institution_id = " + institutionId2 + ", " + "last_changed = "
+                            + System.currentTimeMillis();
             int medicalRecord2Id = executeQueryReturnKey(medicalRecord2);
         }
 
-        String oncHistory = " insert ignore into " +
-                "ddp_onc_history " +
-                "set " +
-                "participant_id = ( " +
-                "select participant_id " +
-                "from " +
-                "ddp_participant " +
-                "where " +
-                "ddp_participant_id = \"" + participantId + "\"), " +
-                "last_changed = " + System.currentTimeMillis();
+        String oncHistory =
+                " insert ignore into " + "ddp_onc_history " + "set " + "participant_id = ( " + "select participant_id " + "from "
+                        + "ddp_participant " + "where " + "ddp_participant_id = \"" + participantId + "\"), " + "last_changed = "
+                        + System.currentTimeMillis();
         executeQueryReturnKey(oncHistory);
 
-        String participantRecord = " insert ignore into " +
-                "ddp_participant_record " +
-                "set " +
-                "participant_id = ( " +
-                "select participant_id " +
-                "from " +
-                "ddp_participant " +
-                "where " +
-                "ddp_participant_id = \"" + participantId + "\"), " +
-                "last_changed = " + System.currentTimeMillis() + ", notes = \"Pt created by Unit Test\"";
+        String participantRecord =
+                " insert ignore into " + "ddp_participant_record " + "set " + "participant_id = ( " + "select participant_id " + "from "
+                        + "ddp_participant " + "where " + "ddp_participant_id = \"" + participantId + "\"), " + "last_changed = "
+                        + System.currentTimeMillis() + ", notes = \"Pt created by Unit Test\"";
         executeQueryReturnKey(participantRecord);
 
-        String medicalRecord1 = "insert ignore into " +
-                "ddp_medical_record " +
-                "set " +
-                "institution_id = " + institutionId1 + ", " +
-                "last_changed = " + System.currentTimeMillis();
+        String medicalRecord1 =
+                "insert ignore into " + "ddp_medical_record " + "set " + "institution_id = " + institutionId1 + ", " + "last_changed = "
+                        + System.currentTimeMillis();
         int medicalRecord1Id = executeQueryReturnKey(medicalRecord1);
 
-        String oncHistoryDetail1 = "insert ignore into " +
-                "ddp_onc_history_detail " +
-                "set " +
-                "medical_record_id = " + medicalRecord1Id + ", " +
-                "last_changed = " + System.currentTimeMillis();
+        String oncHistoryDetail1 =
+                "insert ignore into " + "ddp_onc_history_detail " + "set " + "medical_record_id = " + medicalRecord1Id + ", "
+                        + "last_changed = " + System.currentTimeMillis();
         int oncHistoryDetail1Id = executeQueryReturnKey(oncHistoryDetail1);
         int oncHistoryDetail2Id = executeQueryReturnKey(oncHistoryDetail1);
 
-        String tissue1 = "insert ignore into " +
-                "ddp_tissue " +
-                "set " +
-                "onc_history_detail_id = " + oncHistoryDetail1Id + ", " +
-                "last_changed = " + System.currentTimeMillis();
+        String tissue1 =
+                "insert ignore into " + "ddp_tissue " + "set " + "onc_history_detail_id = " + oncHistoryDetail1Id + ", " + "last_changed = "
+                        + System.currentTimeMillis();
 
-        String tissue2 = "insert ignore into " +
-                "ddp_tissue " +
-                "set " +
-                "onc_history_detail_id = " + oncHistoryDetail2Id + ", " +
-                "last_changed = " + System.currentTimeMillis();
+        String tissue2 =
+                "insert ignore into " + "ddp_tissue " + "set " + "onc_history_detail_id = " + oncHistoryDetail2Id + ", " + "last_changed = "
+                        + System.currentTimeMillis();
         int tissueId1 = executeQueryReturnKey(tissue1);
         int tissueId2 = executeQueryReturnKey(tissue1);
         int tissueId3 = executeQueryReturnKey(tissue2);
@@ -395,9 +349,10 @@ public class DBTestUtil {
                 values.add(String.valueOf(System.currentTimeMillis()));
                 values.add("UNIT-TEST");
                 values.add(String.valueOf(medicalRecord1Id));
-                executeQueryWStrings("UPDATE ddp_medical_record SET name = ?, contact = ?, phone = ?, fax = ?, fax_sent = ?, fax_sent_by "
-                        + "= ?, fax_confirmed = ?, mr_received = ?, notes = ?," +
-                        "last_changed = ?, changed_by = ? WHERE medical_record_id = ?", values);
+                executeQueryWStrings(
+                        "UPDATE ddp_medical_record SET name = ?, contact = ?, phone = ?, fax = ?, fax_sent = ?, "
+                                + "fax_sent_by = ?, fax_confirmed = ?, mr_received = ?, notes = ?,"
+                                + "last_changed = ?, changed_by = ? WHERE medical_record_id = ?", values);
             } else {
                 values.add("Institution " + lastVersion);
                 values.add("Dr. " + lastVersion);
@@ -410,9 +365,10 @@ public class DBTestUtil {
                 values.add(String.valueOf(System.currentTimeMillis()));
                 values.add("UNIT-TEST");
                 values.add(String.valueOf(medicalRecord1Id));
-                executeQueryWStrings("UPDATE ddp_medical_record SET name = ?, contact = ?, phone = ?, fax = ?, fax_sent = ?, fax_sent_by "
-                        + "= ?, fax_confirmed = ?, notes = ?," +
-                        "last_changed = ?, changed_by = ? WHERE medical_record_id = ?", values);
+                executeQueryWStrings(
+                        "UPDATE ddp_medical_record SET name = ?, contact = ?, phone = ?, fax = ?, fax_sent = ?, "
+                                + "fax_sent_by = ?, fax_confirmed = ?, notes = ?,"
+                                + "last_changed = ?, changed_by = ? WHERE medical_record_id = ?", values);
             }
 
             if (ThreadLocalRandom.current().nextInt(1, 2 + 1) == 1) {
@@ -433,10 +389,11 @@ public class DBTestUtil {
                 values.add(String.valueOf(System.currentTimeMillis()));
                 values.add("UNIT-TEST");
                 values.add(String.valueOf(oncHistoryDetail1Id));
-                executeQueryWStrings("UPDATE ddp_onc_history_detail SET date_px = ?, type_px = ?, location_px = ?, histology = ?, "
-                        + "accession_number = ?, " +
-                        "facility = ?, phone= ?, fax = ?, fax_sent = ?, fax_sent_by = ?, fax_confirmed = ?, notes = ?, request = ?," +
-                        "last_changed = ?, changed_by = ? WHERE onc_history_detail_id = ?", values);
+                executeQueryWStrings(
+                        "UPDATE ddp_onc_history_detail SET date_px = ?, type_px = ?, location_px = ?, histology = ?, "
+                                + "accession_number = ?, "
+                                + "facility = ?, phone= ?, fax = ?, fax_sent = ?, fax_sent_by = ?, fax_confirmed = ?, notes = ?, "
+                                + "request = ?, last_changed = ?, changed_by = ? WHERE onc_history_detail_id = ?", values);
             } else {
                 values = new ArrayList<>();
                 values.add("2019-" + ThreadLocalRandom.current().nextInt(1, 12 + 1) + "-" + ThreadLocalRandom.current().nextInt(1, 27 + 1));
@@ -452,10 +409,10 @@ public class DBTestUtil {
                 values.add(String.valueOf(System.currentTimeMillis()));
                 values.add("UNIT-TEST");
                 values.add(String.valueOf(oncHistoryDetail1Id));
-                executeQueryWStrings("UPDATE ddp_onc_history_detail SET date_px = ?, type_px = ?, location_px = ?, histology = ?, "
-                        + "accession_number = ?, " +
-                        "facility = ?, phone= ?, fax = ?, notes = ?, request = ?," +
-                        "last_changed = ?, changed_by = ? WHERE onc_history_detail_id = ?", values);
+                executeQueryWStrings(
+                        "UPDATE ddp_onc_history_detail SET date_px = ?, type_px = ?, location_px = ?, histology = ?, accession_number = ?, "
+                                + "facility = ?, phone= ?, fax = ?, notes = ?, request = ?,"
+                                + "last_changed = ?, changed_by = ? WHERE onc_history_detail_id = ?", values);
             }
 
             values = new ArrayList<>();
@@ -476,11 +433,12 @@ public class DBTestUtil {
             values.add(String.valueOf(System.currentTimeMillis()));
             values.add("UNIT-TEST");
             values.add(String.valueOf(oncHistoryDetail2Id));
-            executeQueryWStrings("UPDATE ddp_onc_history_detail SET date_px = ?, type_px = ?, location_px = ?, histology = ?, "
-                    + "accession_number = ?, " +
-                    "facility = ?, phone= ?, fax = ?, fax_sent = ?, fax_sent_by = ?, fax_confirmed = ?, tissue_received = ?, notes = ?, "
-                    + "request = ?, " +
-                    "last_changed = ?, changed_by = ? WHERE onc_history_detail_id = ?", values);
+            executeQueryWStrings(
+                    "UPDATE ddp_onc_history_detail SET date_px = ?, type_px = ?, location_px = ?, histology = ?, "
+                            + "accession_number = ?, "
+                            + "facility = ?, phone= ?, fax = ?, fax_sent = ?, fax_sent_by = ?, fax_confirmed = ?, "
+                            + "tissue_received = ?, notes = ?, request = ?, "
+                            + "last_changed = ?, changed_by = ? WHERE onc_history_detail_id = ?", values);
 
             if (ThreadLocalRandom.current().nextInt(1, 2 + 1) == 1) {
                 values = new ArrayList<>();
@@ -495,18 +453,18 @@ public class DBTestUtil {
                 values.add("SHL-" + ThreadLocalRandom.current().nextInt(1, 300 + 1));
                 values.add("2019-" + ThreadLocalRandom.current().nextInt(1, 12 + 1) + "-" + ThreadLocalRandom.current().nextInt(1, 27 + 1));
                 values.add("2019-" + ThreadLocalRandom.current().nextInt(1, 12 + 1) + "-" + ThreadLocalRandom.current().nextInt(1, 27 + 1));
-                values.add("SK-" + System.currentTimeMillis());
-                values.add("SM-" + System.currentTimeMillis());
-                values.add("F-SM-" + System.currentTimeMillis());
-                values.add("ASCProject_" + shortId + "_" + System.currentTimeMillis());
+                values.add("SK-" + String.valueOf(System.currentTimeMillis()));
+                values.add("SM-" + String.valueOf(System.currentTimeMillis()));
+                values.add("F-SM-" + String.valueOf(System.currentTimeMillis()));
+                values.add("ASCProject_" + shortId + "_" + String.valueOf(System.currentTimeMillis()));
                 values.add(String.valueOf(System.currentTimeMillis()));
                 values.add("UNIT-TEST");
                 values.add(String.valueOf(tissueId3));
-                executeQueryWStrings("UPDATE ddp_tissue SET notes = ?, h_e_count = ?, scrolls_count = ?, blocks_count = ?, uss_count = ?,"
-                        + " " +
-                        "tissue_type = ?, tumor_type= ?, block_sent = ?, shl_work_number = ?, scrolls_received = ?, sent_gp = ?, sk_id = "
-                        + "?, sm_id = ?, first_sm_id = ?, " +
-                        "collaborator_sample_id = ?, last_changed = ?, changed_by = ? WHERE tissue_id = ?", values);
+                executeQueryWStrings("UPDATE ddp_tissue SET notes = ?, h_e_count = ?, scrolls_count = ?, blocks_count = ?, "
+                        + "uss_count = ?, "
+                        + "tissue_type = ?, tumor_type= ?, block_sent = ?, shl_work_number = ?, scrolls_received = ?, sent_gp = ?, "
+                        + "sk_id = ?, sm_id = ?, first_sm_id = ?, "
+                        + "collaborator_sample_id = ?, last_changed = ?, changed_by = ? WHERE tissue_id = ?", values);
             } else {
                 values = new ArrayList<>();
                 values.add("Tissue created by Unit Test");
@@ -516,16 +474,16 @@ public class DBTestUtil {
                 values.add("slide");
                 values.add("recurrent");
                 values.add("2019-" + ThreadLocalRandom.current().nextInt(1, 12 + 1) + "-" + ThreadLocalRandom.current().nextInt(1, 27 + 1));
-                values.add("SK-" + System.currentTimeMillis());
-                values.add("SM-" + System.currentTimeMillis());
-                values.add("F-SM-" + System.currentTimeMillis());
-                values.add("ASCProject_" + shortId + "_" + System.currentTimeMillis());
+                values.add("SK-" + String.valueOf(System.currentTimeMillis()));
+                values.add("SM-" + String.valueOf(System.currentTimeMillis()));
+                values.add("F-SM-" + String.valueOf(System.currentTimeMillis()));
+                values.add("ASCProject_" + shortId + "_" + String.valueOf(System.currentTimeMillis()));
                 values.add(String.valueOf(System.currentTimeMillis()));
                 values.add("UNIT-TEST");
                 values.add(String.valueOf(tissueId3));
-                executeQueryWStrings("UPDATE ddp_tissue SET notes = ?, h_e_count = ?, scrolls_count = ?, uss_count = ?, " +
-                        "tissue_type = ?, tumor_type= ?, sent_gp = ?, sk_id = ?, sm_id = ?, first_sm_id = ?, " +
-                        "collaborator_sample_id = ?, last_changed = ?, changed_by = ? WHERE tissue_id = ?", values);
+                executeQueryWStrings("UPDATE ddp_tissue SET notes = ?, h_e_count = ?, scrolls_count = ?, uss_count = ?, "
+                        + "tissue_type = ?, tumor_type= ?, sent_gp = ?, sk_id = ?, sm_id = ?, first_sm_id = ?, "
+                        + "collaborator_sample_id = ?, last_changed = ?, changed_by = ? WHERE tissue_id = ?", values);
             }
         }
     }
@@ -548,8 +506,7 @@ public class DBTestUtil {
             return dbVals;
         });
         if (results.resultException != null) {
-            throw new RuntimeException("Error inserting user with "
-                    + userDto.getId(), results.resultException);
+            throw new RuntimeException("Error inserting user with " + userDto.getId(), results.resultException);
         }
     }
 
@@ -568,8 +525,7 @@ public class DBTestUtil {
             return dbVals;
         });
         if (results.resultException != null) {
-            throw new RuntimeException("Error deleting user with "
-                    + userId, results.resultException);
+            throw new RuntimeException("Error deleting user with " + userId, results.resultException);
         }
     }
 
@@ -858,7 +814,7 @@ public class DBTestUtil {
                     insertKit.setInt(1, kitRequestKey);
                     insertKit.setString(2, testShipment != null ? "FAKE_URL_TO_LABEL" + suffix : null);
                     insertKit.setString(3, testShipment != null ? "FAKE_URL_RETURN_LABEL" + suffix : null);
-                    insertKit.setString(4, testShipment); //test shipping
+                    insertKit.setString(4, testShipment != null ? testShipment : null); //test shipping
                     insertKit.setString(5, testShipment != null ? "FAKE_RETURN_ID" + suffix : null);
                     insertKit.setString(6, testShipment != null ? "FAKE_TRACKING_TO_ID" + suffix : null);
                     insertKit.setString(7, testShipment != null ? "FAKE_TRACKING_RETURN_ID" + suffix : null);
@@ -871,8 +827,8 @@ public class DBTestUtil {
                 }
                 if (kitRequestKey != -1) {
                     //add ups shipment
-                    PreparedStatement insertShipment = conn.prepareStatement(SQL_INSERT_UPS_SHIPMENT,
-                            PreparedStatement.RETURN_GENERATED_KEYS);
+                    PreparedStatement insertShipment =
+                            conn.prepareStatement(SQL_INSERT_UPS_SHIPMENT, PreparedStatement.RETURN_GENERATED_KEYS);
                     insertShipment.setInt(1, kitRequestKey);
                     insertShipment.executeUpdate();
 
@@ -899,22 +855,22 @@ public class DBTestUtil {
         ResultSet insertPackageRS = insertPackage.getGeneratedKeys();
         if (insertPackageRS.next()) {
             int packageId = insertPackageRS.getInt(1);
-            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"\",\"stateProvince\":\"\",\"postalCode\":\"\"}}",
-                    "M", "Shipper created a label, UPS has not received the package yet.", "MP", "2021-04-01 19:16:57");
-            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"Lakewood\",\"stateProvince\":\"NJ\",\"postalCode\":\"\"}}",
-                    "I", "Origin Scan", "OR", "2021-04-01 18:23:46");
-            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"\",\"stateProvince\":\"\",\"postalCode\":\"\"}}",
-                    "I", "Departed from Facility.", "DP", "2021-04-01 22:54:00");
-            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"\",\"stateProvince\":\"\",\"postalCode\":\"\"}}",
-                    "I", "Arrived at Facility", "AR", "2021-04-02 21:48:00");
-            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"\",\"stateProvince\":\"\",\"postalCode\":\"\"}}",
-                    "I", "Processing at UPS Facility", "DS", "2021-04-03 02:05:37");
-            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"\",\"stateProvince\":\"\",\"postalCode\":\"\"}}",
-                    "I", "Package transferred to post office", "LX", "2021-04-03 11:30:59");
-            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"\",\"stateProvince\":\"\",\"postalCode\":\"\"}}",
-                    "I", "Received by the local post office", "YH", "2021-04-03 13:12:00");
-            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"\",\"stateProvince\":\"\",\"postalCode\":\"\"}}",
-                    "D", "Delivered by Local Post Office", "YC", "2021-04-04 12:56:00");
+            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"\",\"stateProvince\":\"\",\"postalCode\":\"\"}}", "M",
+                    "Shipper created a label, UPS has not received the package yet.", "MP", "2021-04-01 19:16:57");
+            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"Lakewood\",\"stateProvince\":\"NJ\",\"postalCode\":\"\"}}", "I",
+                    "Origin Scan", "OR", "2021-04-01 18:23:46");
+            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"\",\"stateProvince\":\"\",\"postalCode\":\"\"}}", "I",
+                    "Departed from Facility.", "DP", "2021-04-01 22:54:00");
+            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"\",\"stateProvince\":\"\",\"postalCode\":\"\"}}", "I",
+                    "Arrived at Facility", "AR", "2021-04-02 21:48:00");
+            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"\",\"stateProvince\":\"\",\"postalCode\":\"\"}}", "I",
+                    "Processing at UPS Facility", "DS", "2021-04-03 02:05:37");
+            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"\",\"stateProvince\":\"\",\"postalCode\":\"\"}}", "I",
+                    "Package transferred to post office", "LX", "2021-04-03 11:30:59");
+            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"\",\"stateProvince\":\"\",\"postalCode\":\"\"}}", "I",
+                    "Received by the local post office", "YH", "2021-04-03 13:12:00");
+            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"\",\"stateProvince\":\"\",\"postalCode\":\"\"}}", "D",
+                    "Delivered by Local Post Office", "YC", "2021-04-04 12:56:00");
         }
     }
 
@@ -972,14 +928,13 @@ public class DBTestUtil {
 
     public static List<String> getStringList(String query, String returnColumn, String dbName) {
         List<String> list = new ArrayList<>();
-        //TODO DSM add back in
-//        SimpleResult results = inTransaction((conn) -> {
-//            return getSimpleResult(conn, query, returnColumn, list);
-//        }, dbName);
-
-//        if (results.resultException != null) {
-//            throw new RuntimeException("Error getting data ", results.resultException);
-//        }
+        //        SimpleResult results = inTransaction((conn) -> {
+        //            return getSimpleResult(conn, query, returnColumn, list);
+        //        }, dbName);
+        //
+        //        if (results.resultException != null) {
+        //            throw new RuntimeException("Error getting data ", results.resultException);
+        //        }
         return list;
     }
 
@@ -1012,8 +967,7 @@ public class DBTestUtil {
         String possibleValues = new GsonBuilder().create().toJson(possibleValuesList, ArrayList.class);
         List<String> strings = new ArrayList<>();
         strings.add(TestHelper.TEST_DDP);
-        String instanceId = getStringFromQuery("SELECT * FROM ddp_instance where instance_name = ?; ",
-                strings, "ddp_instance_id");
+        String instanceId = getStringFromQuery("SELECT * FROM ddp_instance where instance_name = ?; ", strings, "ddp_instance_id");
         List<String> strings2 = new ArrayList<>();
         strings2.add(instanceId);
         strings2.add(name);
@@ -1026,24 +980,10 @@ public class DBTestUtil {
             strings2.add(null);
         }
 
-        executeQueryReturnKeyWStrings("INSERT INTO `field_settings`" +
-                "(" +
-                "`ddp_instance_id`," +
-                "`column_name`," +
-                "`column_display`," +
-                "`field_type`," +
-                "`display_type`," +
-                "`possible_values`" +
-                ")" +
-                "VALUES" +
-                "(" +
-                "?," +
-                "?," +
-                "?," +
-                "?," +
-                "?," +
-                "?" +
-                ");", strings2);
+        executeQueryReturnKeyWStrings(
+                "INSERT INTO `field_settings`" + "(" + "`ddp_instance_id`," + "`column_name`," + "`column_display`," + "`field_type`,"
+                        + "`display_type`," + "`possible_values`" + ")" + "VALUES" + "(" + "?," + "?," + "?," + "?," + "?," + "?" + ");",
+                strings2);
 
     }
 
@@ -1059,10 +999,9 @@ public class DBTestUtil {
      * @param expectedDeleted        Expected deleted field value
      * @throws RuntimeException Throws an exception if any of the fields don't match the specified values
      */
-    public static void checkSettingMatch(@NonNull String settingId, @NonNull String expectedFieldType,
-                                         @NonNull String expectedColumnName, @NonNull String expectedColumnDisplay,
-                                         @NonNull String expectedDisplayType, List<Value> expectedPossibleValues,
-                                         boolean expectedDeleted) throws RuntimeException {
+    public static void checkSettingMatch(@NonNull String settingId, @NonNull String expectedFieldType, @NonNull String expectedColumnName,
+                                         @NonNull String expectedColumnDisplay, @NonNull String expectedDisplayType,
+                                         List<Value> expectedPossibleValues, boolean expectedDeleted) throws RuntimeException {
 
         String columnQuery = "SELECT * FROM field_settings WHERE field_settings_id = ?";
         String fieldType = getQueryDetail(columnQuery, settingId, "field_type");
@@ -1109,48 +1048,55 @@ public class DBTestUtil {
      */
     public static void checkSettingMatch(@NonNull FieldSettings setting, @NonNull String expectedFieldType,
                                          @NonNull String expectedColumnDisplay, @NonNull String expectedColumnName,
-                                         @NonNull String expectedDisplayType, List<Value> expectedPossibleValues,
-                                         boolean expectedDeleted, @NonNull String fieldDescription) throws RuntimeException {
+                                         @NonNull String expectedDisplayType, List<Value> expectedPossibleValues, boolean expectedDeleted,
+                                         @NonNull String fieldDescription) throws RuntimeException {
         if (!expectedFieldType.equals(setting.getFieldType())) {
-            throw new RuntimeException("checkSettingsMatch: field_type for " + fieldDescription + " was " +
-                    setting.getFieldType() + " instead of " + expectedFieldType);
+            throw new RuntimeException(
+                    "checkSettingsMatch: field_type for " + fieldDescription + " was " + setting.getFieldType() + " instead of "
+                            + expectedFieldType);
         }
         if (!expectedColumnName.equals(setting.getColumnName())) {
-            throw new RuntimeException("checkSettingsMatch: column_name for " + fieldDescription + " was " +
-                    setting.getColumnName() + " instead of " + expectedColumnName);
+            throw new RuntimeException(
+                    "checkSettingsMatch: column_name for " + fieldDescription + " was " + setting.getColumnName() + " instead of "
+                            + expectedColumnName);
         }
         if (!expectedColumnDisplay.equals(setting.getColumnDisplay())) {
-            throw new RuntimeException("checkSettingsMatch: column_display for " + fieldDescription + " was " +
-                    setting.getColumnDisplay() + " instead of " + expectedColumnDisplay);
+            throw new RuntimeException(
+                    "checkSettingsMatch: column_display for " + fieldDescription + " was " + setting.getColumnDisplay() + " instead of "
+                            + expectedColumnDisplay);
         }
         if (!expectedDisplayType.equals(setting.getDisplayType())) {
-            throw new RuntimeException("checkSettingsMatch: display_type for " + fieldDescription + " was " +
-                    setting.getDisplayType() + " instead of " + expectedDisplayType);
+            throw new RuntimeException(
+                    "checkSettingsMatch: display_type for " + fieldDescription + " was " + setting.getDisplayType() + " instead of "
+                            + expectedDisplayType);
         }
         if (expectedDeleted != setting.isDeleted()) {
-            throw new RuntimeException("checkSettingsMatch: deleted for " + fieldDescription + " was " +
-                    setting.isDeleted() + " instead of " + expectedDeleted);
+            throw new RuntimeException(
+                    "checkSettingsMatch: deleted for " + fieldDescription + " was " + setting.isDeleted() + " instead of "
+                            + expectedDeleted);
         }
         if (expectedPossibleValues == null || expectedPossibleValues.isEmpty()) {
             //If we aren't expecting any possible values, make sure there aren't any
             if (setting.getPossibleValues() != null && !setting.getPossibleValues().isEmpty()) {
-                throw new RuntimeException("checkSettingsMatch: possible_values for " + fieldDescription + " had " +
-                        setting.getPossibleValues().size() + " elements instead of being empty");
+                throw new RuntimeException(
+                        "checkSettingsMatch: possible_values for " + fieldDescription + " had " + setting.getPossibleValues().size()
+                                + " elements instead of being empty");
             }
         } else if (setting.getPossibleValues() == null || setting.getPossibleValues().isEmpty()) {
             //If we are expecting possible values, make sure there are some
-            throw new RuntimeException("checkSettingsMatch: possible_values for " + fieldDescription + " was empty " +
-                    " instead of having " + expectedPossibleValues.size() + " elements");
+            throw new RuntimeException("checkSettingsMatch: possible_values for " + fieldDescription + " was empty " + " instead of having "
+                    + expectedPossibleValues.size() + " elements");
         } else if (expectedPossibleValues.size() != setting.getPossibleValues().size()) {
             //The number of settings should match
-            throw new RuntimeException("checkSettingsMatch: possible_values for " + fieldDescription + " had " +
-                    setting.getPossibleValues().size() + " elements instead of " + expectedPossibleValues.size());
+            throw new RuntimeException(
+                    "checkSettingsMatch: possible_values for " + fieldDescription + " had " + setting.getPossibleValues().size()
+                            + " elements instead of " + expectedPossibleValues.size());
         } else {
             //Make sure the actual settings match
             for (Value v : expectedPossibleValues) {
                 if (!setting.getPossibleValues().contains(v)) {
-                    throw new RuntimeException("checkSettingsMatch: possible_values for " + fieldDescription +
-                            " was missing the value " + v.getValue());
+                    throw new RuntimeException(
+                            "checkSettingsMatch: possible_values for " + fieldDescription + " was missing the value " + v.getValue());
                 }
             }
         }
@@ -1171,8 +1117,7 @@ public class DBTestUtil {
             return dbVals;
         });
         if (results.resultException != null) {
-            throw new RuntimeException("Error deleting message with user id: "
-                    + userId, results.resultException);
+            throw new RuntimeException("Error deleting message with user id: " + userId, results.resultException);
         }
     }
 

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <databaseChangeLog
-        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
     <changeSet id="DDP-3730_tissueFields" author="pegah">
@@ -30,9 +30,13 @@
         <addUniqueConstraint tableName="ddp_tissue" columnNames="collaborator_sample_id"></addUniqueConstraint>
     </changeSet>
     <changeSet id="05112019_nullCollaboratorSampleId" author="pegah">
-        <sql>UPDATE ddp_tissue set collaborator_sample_id = NULL WHERE tissue_id &lt;&gt; 0 AND tissue_id in
-            (SELECT tissue_id FROM (SELECT * from ddp_tissue) as something
-            WHERE something.collaborator_sample_id = '');
+        <sql>UPDATE ddp_tissue
+             set collaborator_sample_id = NULL
+             WHERE tissue_id &lt;&gt; 0
+               AND tissue_id in
+                   (SELECT tissue_id
+                    FROM (SELECT * from ddp_tissue) as something
+                    WHERE something.collaborator_sample_id = '');
         </sql>
     </changeSet>
     <changeSet id="02122019_MrUnableObtainText" author="pegah">

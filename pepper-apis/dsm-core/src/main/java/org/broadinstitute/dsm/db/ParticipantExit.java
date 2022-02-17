@@ -23,13 +23,11 @@ public class ParticipantExit {
 
     private static final Logger logger = LoggerFactory.getLogger(ParticipantExit.class);
 
-    private static final String SQL_SELECT_EXITED_PT = "SELECT realm.instance_name, ex.ddp_participant_id, u.name, ex.exit_date, ex"
-            + ".in_ddp " +
-            "FROM ddp_participant_exit ex, ddp_instance realm, access_user u WHERE ex.ddp_instance_id = realm.ddp_instance_id " +
-            "AND ex.exit_by = u.user_id AND realm.instance_name = ?";
-    private static final String SQL_INSERT_EXIT_PT = "INSERT INTO ddp_participant_exit (ddp_instance_id, ddp_participant_id, exit_date, "
-            + "exit_by, in_ddp) " +
-            "VALUES (?,?,?,?,?)";
+    private static final String SQL_SELECT_EXITED_PT = "SELECT realm.instance_name, ex.ddp_participant_id, u.name, ex.exit_date, ex.in_ddp "
+            + "FROM ddp_participant_exit ex, ddp_instance realm, access_user u WHERE ex.ddp_instance_id = realm.ddp_instance_id "
+            + "AND ex.exit_by = u.user_id AND realm.instance_name = ?";
+    private static final String SQL_INSERT_EXIT_PT =
+            "INSERT INTO ddp_participant_exit (ddp_instance_id, ddp_participant_id, exit_date, exit_by, in_ddp) " + "VALUES (?,?,?,?,?)";
 
     private final String realm;
     private final String participantId;
@@ -61,10 +59,10 @@ public class ParticipantExit {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         String ddpParticipantId = rs.getString(DBConstants.DDP_PARTICIPANT_ID);
-                        exitedParticipants.put(ddpParticipantId, new ParticipantExit(rs.getString(DBConstants.INSTANCE_NAME),
-                                ddpParticipantId,
-                                rs.getString(DBConstants.NAME), rs.getLong(DBConstants.EXIT_DATE),
-                                rs.getBoolean(DBConstants.IN_DDP)));
+                        exitedParticipants.put(ddpParticipantId,
+                                new ParticipantExit(rs.getString(DBConstants.INSTANCE_NAME), ddpParticipantId,
+                                        rs.getString(DBConstants.NAME), rs.getLong(DBConstants.EXIT_DATE),
+                                        rs.getBoolean(DBConstants.IN_DDP)));
                     }
                 }
             } catch (Exception ex) {
@@ -87,11 +85,11 @@ public class ParticipantExit {
         DDPInstance instance = DDPInstance.getDDPInstance(realm);
         if (!instance.isHasRole()) {
             if (StringUtils.isNotBlank(instance.getParticipantIndexES())) {
-                Map<String, Map<String, Object>> participantsESData = ElasticSearchUtil.getDDPParticipantsFromES(realm,
-                        instance.getParticipantIndexES());
+                Map<String, Map<String, Object>> participantsESData =
+                        ElasticSearchUtil.getDDPParticipantsFromES(realm, instance.getParticipantIndexES());
                 for (ParticipantExit exitParticipant : exitedParticipants) {
-                    DDPParticipant ddpParticipant = ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData,
-                            exitParticipant.getParticipantId());
+                    DDPParticipant ddpParticipant =
+                            ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData, exitParticipant.getParticipantId());
                     if (ddpParticipant != null) {
                         exitParticipant.setShortId(ddpParticipant.getShortId());
                         exitParticipant.setLegacyShortId(ddpParticipant.getLegacyShortId());

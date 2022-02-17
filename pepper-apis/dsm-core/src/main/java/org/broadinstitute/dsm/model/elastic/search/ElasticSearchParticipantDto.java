@@ -1,9 +1,11 @@
 package org.broadinstitute.dsm.model.elastic.search;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.ESActivities;
@@ -13,12 +15,14 @@ import org.broadinstitute.dsm.model.elastic.ESDsm;
 import org.broadinstitute.dsm.model.elastic.ESProfile;
 
 @Setter
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ElasticSearchParticipantDto {
 
     private ESAddress address;
     private List<Object> medicalProviders;
     private List<Object> invitations;
     private List<ESActivities> activities;
+    private List<String> governedUsers;
     private ESComputed computed;
     private Long statusTimestamp;
     private ESProfile profile;
@@ -29,7 +33,10 @@ public class ElasticSearchParticipantDto {
     private ESDsm dsm;
     private String ddp;
 
-    private ElasticSearchParticipantDto(Builder builder) {
+    public ElasticSearchParticipantDto() {
+    }
+
+    private ElasticSearchParticipantDto(ElasticSearchParticipantDto.Builder builder) {
         this.address = builder.address;
         this.medicalProviders = builder.medicalProviders;
         this.invitations = builder.invitations;
@@ -42,22 +49,23 @@ public class ElasticSearchParticipantDto {
         this.status = builder.status;
         this.dsm = builder.dsm;
         this.computed = builder.computed;
+        this.governedUsers = builder.governedUsers;
     }
 
     public Optional<ESAddress> getAddress() {
         return Optional.ofNullable(address);
     }
 
-    public Optional<List<Object>> getMedicalProviders() {
-        return Optional.ofNullable(medicalProviders);
+    public List<Object> getMedicalProviders() {
+        return medicalProviders == null ? Collections.emptyList() : medicalProviders;
     }
 
-    public Optional<List<Object>> getInvitations() {
-        return Optional.ofNullable(invitations);
+    public List<Object> getInvitations() {
+        return invitations == null ? Collections.emptyList() : invitations;
     }
 
-    public Optional<List<ESActivities>> getActivities() {
-        return Optional.ofNullable(activities);
+    public List<ESActivities> getActivities() {
+        return activities == null ? Collections.emptyList() : activities;
     }
 
     public Optional<Long> getStatusTimestamp() {
@@ -68,16 +76,16 @@ public class ElasticSearchParticipantDto {
         return Optional.ofNullable(profile);
     }
 
-    public Optional<List<Object>> getFiles() {
-        return Optional.ofNullable(files);
+    public List<Object> getFiles() {
+        return files == null ? Collections.emptyList() : files;
     }
 
-    public Optional<List<String>> getProxies() {
-        return Optional.ofNullable(proxies);
+    public List<String> getProxies() {
+        return proxies == null ? Collections.emptyList() : proxies;
     }
 
-    public Optional<List<Map<String, Object>>> getWorkflows() {
-        return Optional.ofNullable(workflows);
+    public List<Map<String, Object>> getWorkflows() {
+        return workflows == null ? Collections.emptyList() : workflows;
     }
 
     public Optional<String> getStatus() {
@@ -92,11 +100,15 @@ public class ElasticSearchParticipantDto {
         return Optional.ofNullable(computed);
     }
 
+    public List<String> getGovernedUsers() {
+        return governedUsers == null ? Collections.emptyList() : governedUsers;
+    }
+
     public String getParticipantId() {
-        return getProfile().map(esProfile -> StringUtils.isNotBlank(esProfile.getParticipantGuid())
-                ? esProfile.getParticipantGuid()
-                : esProfile.getParticipantLegacyAltPid())
-                .orElse("");
+        return getProfile().map(esProfile -> StringUtils.isNotBlank(esProfile.getGuid())
+                        ? esProfile.getGuid()
+                        : esProfile.getLegacyAltPid())
+                .orElse(StringUtils.EMPTY);
     }
 
     public static class Builder {
@@ -105,6 +117,7 @@ public class ElasticSearchParticipantDto {
         private List<Object> invitations;
         private ESComputed computed;
         private List<ESActivities> activities;
+        private List<String> governedUsers;
         private Long statusTimeStamp;
         private ESProfile profile;
         private List<Object> files;
@@ -173,6 +186,11 @@ public class ElasticSearchParticipantDto {
 
         public Builder withComputed(ESComputed computed) {
             this.computed = computed;
+            return this;
+        }
+
+        public Builder withGovernedUsers(List<String> governedUsers) {
+            this.governedUsers = governedUsers;
             return this;
         }
 

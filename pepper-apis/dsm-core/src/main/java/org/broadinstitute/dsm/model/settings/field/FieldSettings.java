@@ -37,7 +37,8 @@ public class FieldSettings {
         return defaultOptions;
     }
 
-    public Map<String, String> getColumnsWithDefaultOptionsFilteredByElasticExportWorkflow(@NonNull List<FieldSettingsDto> fieldSettingsDtos) {
+    public Map<String, String> getColumnsWithDefaultOptionsFilteredByElasticExportWorkflow(
+            @NonNull List<FieldSettingsDto> fieldSettingsDtos) {
         Map<String, String> defaultOptionsFileredByElasticExportWorkflow = new HashMap<>();
         for (FieldSettingsDto fieldSettingsDto : fieldSettingsDtos) {
             if (isDefaultValue(fieldSettingsDto.getPossibleValues()) && isElasticExportWorkflowType(fieldSettingsDto.getActions())) {

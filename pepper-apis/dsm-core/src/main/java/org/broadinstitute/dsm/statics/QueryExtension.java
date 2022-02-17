@@ -19,17 +19,19 @@ public class QueryExtension {
 
     public static final String BY_REALM_AND_TYPE = " and request.instance_name = ? and request.kit_type_name = ?";
 
-    public static final String KIT_NOT_COMPLETE_NO_ERROR = " and not (kit.kit_complete <=> 1) and not (kit.error <=> 1) and kit"
-            + ".label_url_to is not null and kit.deactivated_date is null";
+    public static final String KIT_NOT_COMPLETE_NO_ERROR =
+            " and not (kit.kit_complete <=> 1) and not (kit.error <=> 1) and kit.label_url_to is not null and kit.deactivated_date is null";
     public static final String KIT_COMPLETE = " and kit.kit_complete = 1 and kit.deactivated_date is null";
-    public static final String KIT_NOT_COMPLETE_HAS_ERROR = " and not (kit.kit_complete <=> 1) and kit.error = 1 and kit.deactivated_date"
-            + " is null";
+    public static final String KIT_NOT_COMPLETE_HAS_ERROR =
+            " and not (kit.kit_complete <=> 1) and kit.error = 1 and kit.deactivated_date is null";
     public static final String KIT_RECEIVED = " and kit.receive_date is not null and kit.deactivated_date is null";
-    public static final String KIT_NO_LABEL = " and kit.easypost_to_id is null and kit.deactivated_date is null and not (kit.error <=> 1)"
-            + " and not (kit.kit_complete <=> 1) and not (kit.needs_approval <=> 1)";
+    public static final String KIT_NO_LABEL =
+            " and kit.easypost_to_id is null and kit.deactivated_date is null and not (kit.error <=> 1) and not (kit.kit_complete <=> 1) "
+                    + "and not (kit.needs_approval <=> 1)";
     public static final String KIT_LABEL_NOT_TRIGGERED = " and kit.label_date is null";
-    public static final String KIT_LABEL_TRIGGERED = " and kit.easypost_to_id is null and kit.deactivated_date is null and kit.label_date"
-            + " is not null and not (kit.error <=> 1) and not (kit.kit_complete <=> 1)";
+    public static final String KIT_LABEL_TRIGGERED =
+            " and kit.easypost_to_id is null and kit.deactivated_date is null and kit.label_date is not null and not (kit.error <=> 1) "
+                    + "and not (kit.kit_complete <=> 1)";
     public static final String KIT_DEACTIVATED = " and kit.deactivated_date is not null";
     public static final String KIT_BY_KIT_REQUEST_ID = " and kit.dsm_kit_request_id = ?";
     public static final String KIT_WAITING = " and kit.needs_approval = 1 and authorization is null";

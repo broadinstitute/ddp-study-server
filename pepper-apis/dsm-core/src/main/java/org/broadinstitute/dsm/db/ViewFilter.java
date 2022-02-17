@@ -38,35 +38,32 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Data
-@TableName(
-        name = DBConstants.VIEW_FILTERS,
-        alias = "",
-        primaryKey = DBConstants.FILTER_ID,
-        columnPrefix = "")
+@TableName(name = DBConstants.VIEW_FILTERS, alias = "", primaryKey = DBConstants.FILTER_ID, columnPrefix = "")
 public class ViewFilter {
     public static final Logger logger = LoggerFactory.getLogger(ViewFilter.class);
 
-    public static final String SQL_INSERT_VIEW = "INSERT INTO view_filters (view_columns, display_name, created_by, shared, query_items, "
-            + "parent,  quick_filter_name, ddp_group_id, changed_by, last_changed, deleted) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    public static final String SQL_INSERT_VIEW =
+            "INSERT INTO view_filters (view_columns, display_name, created_by, shared, query_items, parent,  quick_filter_name, "
+                    + "ddp_group_id, changed_by, last_changed, deleted) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     public static final String SQL_CHECK_VIEW_NAME = "SELECT * FROM view_filters WHERE (display_name = ? ) and deleted <=> 0 ";
-    public static final String SQL_SELECT_USER_FILTERS = "SELECT * FROM view_filters WHERE (created_by = ? OR (created_by = 'System' AND "
-            + "ddp_group_id = ? )" +
-            "OR (shared = 1 AND ddp_group_id = ? ) OR (ddp_group_id is NULL AND ddp_realm_id LIKE '%#%') ) AND deleted <> 1 ";
-    public static final String SQL_SELECT_QUERY_ITEMS = "SELECT query_items, quick_filter_name FROM view_filters WHERE display_name = ? "
-            + "AND parent = ? AND deleted <> 1";
-    public static final String SQL_GET_DEFAULT_FILTER = "SELECT display_name from view_filters WHERE default_users LIKE '%#%' AND parent "
-            + "= ? AND deleted <> 1";
-    public static final String SQL_SELECT_DEFAULT_FILTER_USERS = "SELECT default_users FROM view_filters WHERE display_name = ? AND "
-            + "parent = ? AND deleted <> 1";
-    public static final String SQL_UPDATE_DEFAULT_FILTER = "UPDATE view_filters SET default_users = ? WHERE display_name = ? AND parent ="
-            + " ? AND deleted <> 1";
+    public static final String SQL_SELECT_USER_FILTERS =
+            "SELECT * FROM view_filters WHERE (created_by = ? OR (created_by = 'System' AND ddp_group_id = ? )"
+                    + "OR (shared = 1 AND ddp_group_id = ? ) OR (ddp_group_id is NULL AND ddp_realm_id LIKE '%#%') ) AND deleted <> 1 ";
+    public static final String SQL_SELECT_QUERY_ITEMS =
+            "SELECT query_items, quick_filter_name FROM view_filters WHERE display_name = ? AND parent = ? AND deleted <> 1";
+    public static final String SQL_GET_DEFAULT_FILTER =
+            "SELECT display_name from view_filters WHERE default_users LIKE '%#%' AND parent = ? AND deleted <> 1";
+    public static final String SQL_SELECT_DEFAULT_FILTER_USERS =
+            "SELECT default_users FROM view_filters WHERE display_name = ? AND parent = ? AND deleted <> 1";
+    public static final String SQL_UPDATE_DEFAULT_FILTER =
+            "UPDATE view_filters SET default_users = ? WHERE display_name = ? AND parent = ? AND deleted <> 1";
     public static final String SQL_AND_PARENT = " AND parent = ? ";
 
     public static final String DESTROYING_FILTERS = "destruction";
-    public static final String DESTRUCTION_QUEUE_QUERY = " AND oD.request <> 'received' AND oD.request <> 'no' AND oD.request <> 'hold' "
-            + "AND oD.request <> 'returned' AND oD.date_px IS NOT NULL AND oD.destruction_policy IS NOT NULL " +
-            "AND oD.destruction_policy <> 'indefinitely' AND oD.destruction_policy <> ''";
+    public static final String DESTRUCTION_QUEUE_QUERY =
+            " AND oD.request <> 'received' AND oD.request <> 'no' AND oD.request <> 'hold' AND oD.request <> 'returned' "
+                    + "AND oD.date_px IS NOT NULL AND oD.destruction_policy IS NOT NULL "
+                    + "AND oD.destruction_policy <> 'indefinitely' AND oD.destruction_policy <> ''";
 
     public static final String QUERIES_FOR_DIFFERENT_TABLES_DELIMITER = "";
 
@@ -94,14 +91,17 @@ public class ViewFilter {
     private Integer[] realmId;
     private String userId;
 
-    public ViewFilter(String filterName, String parent) {
-        this(filterName, null, null, null, null, null, null, parent, null,
-                null, null, null, null);
+    public ViewFilter() {
+
     }
 
-    public ViewFilter(String filterName, Map<String, List<String>> columns,
-                      String id, String fDeleted, Boolean shared, String userId, Filter[] filters, String parent, String icon,
-                      String quickFilterName, String queryItems, String filterQuery, Integer[] realmId) {
+    public ViewFilter(String filterName, String parent) {
+        this(filterName, null, null, null, null, null, null, parent, null, null, null, null, null);
+    }
+
+    public ViewFilter(String filterName, Map<String, List<String>> columns, String id, String fDeleted, Boolean shared, String userId,
+                      Filter[] filters, String parent, String icon, String quickFilterName, String queryItems, String filterQuery,
+                      Integer[] realmId) {
         this.userId = userId;
         this.fDeleted = fDeleted;
         this.filterName = filterName;
@@ -138,8 +138,8 @@ public class ViewFilter {
         return results;
     }
 
-    public static Object saveFilter(@NonNull String filterViewToSave, String userId,
-                                    @NonNull Map<String, DBElement> columnNameMap, @NonNull String ddpGroupId) {
+    public static Object saveFilter(@NonNull String filterViewToSave, String userId, @NonNull Map<String, DBElement> columnNameMap,
+                                    @NonNull String ddpGroupId) {
         ViewFilter viewFilter = new Gson().fromJson(filterViewToSave, ViewFilter.class);
         if (viewFilter == null) {
             throw new RuntimeException("The request for saving filter doesn't have a ViewFilter");
@@ -248,12 +248,15 @@ public class ViewFilter {
     public static void addQueryCondition(@NonNull Map<String, String> queryConditions, DBElement dbElement, Filter filter) {
         if (dbElement != null) {
             String queryCondition = "";
-            String tmp = StringUtils.isNotBlank(filter.getParentName()) ? filter.getParentName() :
-                    filter.getParticipantColumn().getTableAlias();
-            if (queryConditions.containsKey(tmp)) {
-                queryCondition = queryConditions.get(tmp);
+            // String propertyName = StringUtils.isNotBlank(filter.getParentName()) ? filter.getParentName() : filter
+            // .getParticipantColumn().getTableAlias();
+            String propertyName =
+                    StringUtils.isNotBlank(filter.getParticipantColumn().getTableAlias()) ? filter.getParticipantColumn().getTableAlias() :
+                            filter.getParentName();
+            if (queryConditions.containsKey(propertyName)) {
+                queryCondition = queryConditions.get(propertyName);
             }
-            queryConditions.put(tmp, queryCondition.concat(Filter.getQueryStringForFiltering(filter, dbElement)));
+            queryConditions.put(propertyName, queryCondition.concat(Filter.getQueryStringForFiltering(filter, dbElement)));
         } else {
             String queryCondition = "";
             if (queryConditions.containsKey("ES")) {
@@ -263,9 +266,8 @@ public class ViewFilter {
         }
     }
 
-    public static List<ViewFilter> getAllFilters(@NonNull String userId,
-                                                 @NonNull Map<String, DBElement> columnNameMap,
-                                                 String parent, @NonNull String ddpGroupId, String realm) {
+    public static List<ViewFilter> getAllFilters(@NonNull String userId, @NonNull Map<String, DBElement> columnNameMap, String parent,
+                                                 @NonNull String ddpGroupId, String realm) {
         List<ViewFilter> viewFilterList = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -325,19 +327,10 @@ public class ViewFilter {
                 }
             }
         }
-        ViewFilter filter = new ViewFilter(
-                rs.getString(DBConstants.DISPLAY_NAME_FILTER),
-                columnMap,
-                rs.getString(DBConstants.FILTER_ID),
-                rs.getString(DBConstants.DELETED),
-                rs.getBoolean(DBConstants.SHARED_FILTER),
-                rs.getString(DBConstants.CREATED_BY),
-                null,
-                rs.getString(DBConstants.FILTER_PARENT),
-                rs.getString(DBConstants.FILTER_ICON),
-                rs.getString(DBConstants.QUICK_FILTER_NAME),
-                parseToFrontEndQuery(rs.getString(DBConstants.QUERY_ITEMS)),
-                null,
+        ViewFilter filter = new ViewFilter(rs.getString(DBConstants.DISPLAY_NAME_FILTER), columnMap, rs.getString(DBConstants.FILTER_ID),
+                rs.getString(DBConstants.DELETED), rs.getBoolean(DBConstants.SHARED_FILTER), rs.getString(DBConstants.CREATED_BY), null,
+                rs.getString(DBConstants.FILTER_PARENT), rs.getString(DBConstants.FILTER_ICON), rs.getString(DBConstants.QUICK_FILTER_NAME),
+                parseToFrontEndQuery(rs.getString(DBConstants.QUERY_ITEMS)), null,
                 new Gson().fromJson(rs.getString(DBConstants.FILTER_REALM_ID), Integer[].class));
         if (!rs.getString(DBConstants.CREATED_BY).contains("System")) {
             String queryToParse = rs.getString(DBConstants.QUERY_ITEMS);
@@ -358,7 +351,7 @@ public class ViewFilter {
         loop:
         for (TissueList tissueList : views) {
             if (tissueList.getOncHistoryDetails() != null) {
-                String dateString = tissueList.getOncHistoryDetails().getDatePX();
+                String dateString = tissueList.getOncHistoryDetails().getDatePx();
                 int len = dateString.length();
                 int destructionPolicy = 1000;
                 if (!tissueList.getOncHistoryDetails().getDestructionPolicy().equals("indefinitely")) {
@@ -380,6 +373,8 @@ public class ViewFilter {
                         dateTimeFormatter = SystemUtil.FULL_DATE;
                         break;
                     }
+                    default:
+                        logger.error("Unknown date format length");
                 }
                 if (dateTimeFormatter == null) {
                     logger.warn("The date px " + dateString + " has an unknown format!");
@@ -486,21 +481,21 @@ public class ViewFilter {
                 if (StringUtils.isNotBlank(word)) {
                     switch (state) {
                         case 0:
-                            if (word.equals("(")) {// beginning of an options query
+                            if (word.equals("(")) { // beginning of an options query
                                 state = 2;
                                 break;
-                            } else if (word.equals(Filter.JSON_EXTRACT)) {// beginning of an additional fields query
+                            } else if (word.equals(Filter.JSON_EXTRACT)) { // beginning of an additional fields query
                                 type = Filter.ADDITIONAL_VALUES;
                                 state = 16;
                                 break;
                             } else if (word.equals(Filter.NOT)) {
                                 state = 24;
                                 break;
-                            } else if (word.equals(Filter.JSON_CONTAINS)) {// type is JSONARRAY
+                            } else if (word.equals(Filter.JSON_CONTAINS)) { // type is JSONARRAY
                                 type = Filter.JSON_ARRAY;
                                 range = false;
                                 state = 27;
-                            } else {// beginning of other types of query
+                            } else { // beginning of other types of query
                                 tableName = word.substring(0, word.indexOf(Filter.DB_NAME_DELIMITER));
                                 columnName = word.substring(word.indexOf(Filter.DB_NAME_DELIMITER) + 1);
                                 state = 1;
@@ -510,10 +505,11 @@ public class ViewFilter {
                             if (word.equals(Filter.EQUALS_TRIMMED)) { // exact match selected in the frontend
                                 exact = true;
                                 range = false;
+                                f1 = true;
                                 state = 3;
                                 break;
-                            } else if (word.equals(Filter.SMALLER_EQUALS_TRIMMED) || word.equals(Filter.LARGER_EQUALS_TRIMMED)) { //
-                                // range selected in the frontend
+                            } else if (word.equals(Filter.SMALLER_EQUALS_TRIMMED) || word.equals(
+                                    Filter.LARGER_EQUALS_TRIMMED)) { // range selected in the frontend
                                 exact = false;
                                 range = true;
                                 state = 4;
@@ -528,8 +524,8 @@ public class ViewFilter {
                                 range = false;
                                 state = 5;
                                 break;
-                            } else if (word.toUpperCase().equals(Filter.LIKE_TRIMMED)) { // either checkbox or exact match not selected
-                                // in the frontend
+                            } else if (word.toUpperCase()
+                                    .equals(Filter.LIKE_TRIMMED)) { // either checkbox or exact match not selected in the frontend
                                 exact = false;
                                 range = false;
                                 state = 8;
@@ -590,7 +586,7 @@ public class ViewFilter {
                                 } else if (longWord && tempValue.contains(Filter.SINGLE_QUOTE)) {
                                     value += trimValue(tempValue) + Filter.SPACE;
                                     longWord = false;
-                                    value = value.substring(0, value.length() - 1);//remove the last added space
+                                    value = value.substring(0, value.length() - 1); //remove the last added space
                                     state = 11;
                                     break;
                                 } else if (longWord) {
@@ -620,15 +616,15 @@ public class ViewFilter {
                                 state = 6;
                                 break;
 
-                            }//if query contains "IS NULL" then empty was selected
-                            else if (word.toUpperCase().equals(Filter.NULL)) {
+                            } else if (word.toUpperCase().equals(Filter.NULL)) {
+                                //if query contains "IS NULL" then empty was selected
                                 notEmpty = false;
                                 empty = true;
                                 state = 10;
                                 break;
                             }
                             break;
-                        case 6:// query contains "IS NOT NULL" so not empty was selected in the frontend
+                        case 6: // query contains "IS NOT NULL" so not empty was selected in the frontend
                             if (word.toUpperCase().equals(Filter.NULL)) {
                                 notEmpty = true;
                                 empty = false;
@@ -639,10 +635,10 @@ public class ViewFilter {
                         case 7:
                             break;
 
-                        case 8:// query contained word "LIKE", exact match is false then
+                        case 8: // query contained word "LIKE", exact match is false then
                             exact = false;
-                            if (word.equals("'1'") || (word.equals("1") && (Filter.CHECKBOX.equals(type)))) {// check boxes are either 1
-                                // or 0
+                            if (word.equals("'1'") || (word.equals("1") && (Filter.CHECKBOX.equals(
+                                    type)))) { // check boxes are either 1 or 0
                                 if (StringUtils.isNotBlank(type)) {
                                     filter2 = new NameValue(columnName, true);
                                 } else {
@@ -651,7 +647,7 @@ public class ViewFilter {
                                 type = Filter.CHECKBOX;
                                 state = 9;
                                 break;
-                            } else {// "LIKE %?% query
+                            } else { // "LIKE %?% query
                                 value = word;
                                 if (value.contains(Filter.PERCENT_SIGN)) {
                                     exact = false;
@@ -696,10 +692,10 @@ public class ViewFilter {
                             state = 15;
                             break;
                         case 15:
-                            if (word.equals(Filter.OR_TRIMMED)) {// look for another selected option
+                            if (word.equals(Filter.OR_TRIMMED)) { // look for another selected option
                                 state = 2;
                                 break;
-                            } else if (word.equals(Filter.CLOSE_PARENTHESIS)) {// end of selected options
+                            } else if (word.equals(Filter.CLOSE_PARENTHESIS)) { // end of selected options
                                 state = 13;
                                 break;
                             }
@@ -720,7 +716,7 @@ public class ViewFilter {
 
                             break;
                         case 18:
-                            if (word.equals(",")) {// need to look for the path in the query since it is a MySQL json query
+                            if (word.equals(",")) { // need to look for the path in the query since it is a MySQL json query
                                 state = 19;
                             }
                             break;
@@ -866,19 +862,21 @@ public class ViewFilter {
                             break;
                         case 40:
                             break;
-
+                        default:
+                            logger.error("Unknown state " +  state);
                     }
                 }
             }
-            if (state != 7 && state != 9 && state != 10 && state != 11 && state != 13 && state != 22 && state != 25 && state != 37 && state != 40) {// terminal states
+            if (state != 7 && state != 9 && state != 10 && state != 11 && state != 13 && state != 22 && state != 25 && state != 37
+                    && state != 40) { // terminal states
                 throw new RuntimeException("Query parsing ended in bad state: " + state);
             }
             String columnKey = columnName;
             if (StringUtils.isNotBlank(tableName)) {
                 columnKey = tableName.concat(DBConstants.ALIAS_DELIMITER).concat(columnName);
             }
-            columnName = PatchUtil.getDataBaseMap().containsKey(columnKey) ? PatchUtil.getDataBaseMap().get(columnKey) : columnName;// to
-            // change from dbName to column name
+            columnName = PatchUtil.getDataBaseMap().containsKey(columnKey) ? PatchUtil.getDataBaseMap().get(columnKey) :
+                    columnName; // to change from dbName to column name
             if (filters.containsKey(columnName) && (type == null || !type.equals(Filter.ADDITIONAL_VALUES))) {
                 // this is not the first time that field is in the query -> all related to the same filter
                 Filter filter = filters.get(columnName);
@@ -929,18 +927,17 @@ public class ViewFilter {
                 if (Filter.ADDITIONAL_VALUES.equals(filter.type)) {
                     filter.setParticipantColumn(new ParticipantColumn(path, tableName));
                 } else if (Filter.TEXT.equals(filter.type) || Filter.BOOLEAN.equals(filter.type) || Filter.NUMBER.equals(filter.type)) {
-                    if (Filter.NUMBER.equals(filter.type)
-                            && condition.contains(Filter.SMALLER_EQUALS_TRIMMED) && !arrayContains(conditions,
+                    if (Filter.NUMBER.equals(filter.type) && condition.contains(Filter.SMALLER_EQUALS_TRIMMED) && !arrayContains(conditions,
                             Filter.LARGER_EQUALS_TRIMMED)) {
                         filter.setFilter2(new NameValue(columnName, value));
                     } else {
                         filter.setFilter1(new NameValue(columnName, value));
                     }
                 } else if (!Filter.CHECKBOX.equals(filter.type)) {
-                    if (f1) {// first in range
+                    if (f1) { // first in range
                         filter.setFilter1(new NameValue(columnName, value));
                     }
-                    if (path != null && !f2) {//additional field
+                    if (path != null && !f2) { //additional field
                         filter.setFilter2(new NameValue(path, ""));
                     }
                     if (f1 && !f2 && Filter.DATE.equals(filter.type) && filter.isRange()) {
@@ -948,21 +945,21 @@ public class ViewFilter {
                         filter.setFilter2(new NameValue(filter.getFilter1().getName(),
                                 LocalDateTime.now().plusYears(10).format(DateTimeFormatter.ISO_LOCAL_DATE)));
                     }
-                    if (f2) {// maximum set in a range filter
+                    if (f2) { // maximum set in a range filter
                         if (filter.getFilter1() == null) {
                             filter.setFilter1(new NameValue(columnName, null));
                         }
                         filter.setFilter2(new NameValue(columnName, value));
-                    } else if (StringUtils.isBlank(value)) {// no values
+                    } else if (StringUtils.isBlank(value)) { // no values
                         filter.setFilter1(new NameValue(columnName, null));
                         filter.setFilter2(new NameValue(columnName, null));
                     }
                 } else {
                     if (filter1 != null && !f2) {
-                        filter1.setName(columnName);// to change from dbName to column name
+                        filter1.setName(columnName); // to change from dbName to column name
                         filter.setFilter1(filter1);
                     } else if (filter2 != null || f2) {
-                        filter2.setName(columnName);// to change from dbName to column name
+                        filter2.setName(columnName); // to change from dbName to column name
                         filter.setFilter2(filter2);
                     }
                 }
@@ -972,8 +969,8 @@ public class ViewFilter {
         String newQuery = parseToFrontEndQuery(str);
         Filter[] a = new Filter[filters.size()];
         ViewFilter result = new ViewFilter(viewFilter.filterName, viewFilter.columns, viewFilter.id, viewFilter.fDeleted, viewFilter.shared,
-                viewFilter.userId, filters.values().toArray(a), viewFilter.parent,
-                viewFilter.icon, viewFilter.quickFilterName, newQuery, null, viewFilter.realmId);
+                viewFilter.userId, filters.values().toArray(a), viewFilter.parent, viewFilter.icon, viewFilter.quickFilterName, newQuery,
+                null, viewFilter.realmId);
         return result;
     }
 
@@ -1046,7 +1043,7 @@ public class ViewFilter {
                     LocalDateTime today = LocalDateTime.now();     //Today
                     LocalDateTime tomorrow = today.plusDays(numberOfDays);
                     date = getDate(tomorrow);
-                    queryWords[i + 1] = "";// today
+                    queryWords[i + 1] = ""; // today
                     queryWords[i + 2] = "";
                 }
                 queryWords[i] = "'" + date + "'";
@@ -1061,8 +1058,8 @@ public class ViewFilter {
         for (int i = 0; i < words.length; i++) {
             String word = words[i];
             if (PatchUtil.getColumnNameMap().containsKey(word)) {
-                words[i] =
-                        PatchUtil.getColumnNameMap().get(word).tableAlias + DBConstants.ALIAS_DELIMITER + PatchUtil.getColumnNameMap().get(word).columnName;
+                words[i] = PatchUtil.getColumnNameMap().get(word).tableAlias + DBConstants.ALIAS_DELIMITER + PatchUtil.getColumnNameMap()
+                        .get(word).columnName;
             } else if (word.contains("'") && (word.charAt(0) == '\'' || word.charAt(word.length() - 1) == '\'')) {
                 String temp = word.replace("'", "");
                 if (isValidDate(temp, true)) {
@@ -1111,9 +1108,8 @@ public class ViewFilter {
 
     public static Object setDefaultFilter(String filterName, String userMail, String parent) {
         String defaultUsers = null;
-        if (StringUtils.isNotBlank(filterName))
-        //get all default users of the new default filter
-        {
+        if (StringUtils.isNotBlank(filterName)) {
+            //get all default users of the new default filter
             defaultUsers = getDefaultUsers(filterName, parent);
         }
 
@@ -1227,4 +1223,3 @@ public class ViewFilter {
         return getDate(tomorrow);
     }
 }
-

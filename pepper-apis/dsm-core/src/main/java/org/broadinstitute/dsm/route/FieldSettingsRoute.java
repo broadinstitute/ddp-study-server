@@ -31,8 +31,8 @@ public class FieldSettingsRoute extends RequestHandler {
         String userIdRequest = UserUtil.getUserId(request);
         if (StringUtils.isNotBlank(realm)) {
             if (RoutePath.RequestMethod.GET.toString().equals(request.requestMethod())) {
-                if (UserUtil.checkUserAccess(realm, userId, "mr_view", userIdRequest) || UserUtil.checkUserAccess(realm, userId,
-                        "pt_list_view", userIdRequest)) {
+                if (UserUtil.checkUserAccess(realm, userId, "mr_view", userIdRequest)
+                        || UserUtil.checkUserAccess(realm, userId, "pt_list_view", userIdRequest)) {
                     return FieldSettings.getFieldSettings(realm);
                 } else {
                     response.status(500);
