@@ -60,13 +60,8 @@ public class KitStatusChangeRoute extends RequestHandler {
         Map<String, Object> nameValuesMap = new HashMap<>();
         ElasticSearchDataUtil.setCurrentStrictYearMonthDay(nameValuesMap, ESObjectConstants.SENT);
         if (ddpInstance != null && kitRequest.getDdpKitRequestId() != null && kitRequest.getDdpParticipantId() != null) {
-            ElasticSearchUtil.writeSample(
-                    ddpInstance,
-                    kitRequest.getDdpKitRequestId(),
-                    kitRequest.getDdpParticipantId(),
-                    ESObjectConstants.SAMPLES,
-                    ESObjectConstants.KIT_REQUEST_ID, nameValuesMap
-            );
+            ElasticSearchUtil.writeSample(ddpInstance, kitRequest.getDdpKitRequestId(), kitRequest.getDdpParticipantId(),
+                    ESObjectConstants.SAMPLES, ESObjectConstants.KIT_REQUEST_ID, nameValuesMap);
         }
     }
 
@@ -77,8 +72,8 @@ public class KitStatusChangeRoute extends RequestHandler {
         QueryParamsMap queryParams = request.queryMap();
         String realm = queryParams.get(RoutePath.REALM).value();
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
-        if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest)
-                || UserUtil.checkUserAccess(null, userId, "kit_receiving", userIdRequest)) {
+        if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest) || UserUtil.checkUserAccess(null, userId, "kit_receiving",
+                userIdRequest)) {
             List<ScanError> scanErrorList = new ArrayList<>();
 
             long currentTime = System.currentTimeMillis();
@@ -145,8 +140,7 @@ public class KitStatusChangeRoute extends RequestHandler {
     }
 
     private void updateKit(@NonNull String changeType, @NonNull String kit, String addValue, long currentTime,
-                           @NonNull List<ScanError> scanErrorList, @NonNull String userId,
-                           DDPInstanceDto ddpInstanceDto) {
+                           @NonNull List<ScanError> scanErrorList, @NonNull String userId, DDPInstanceDto ddpInstanceDto) {
         KitRequestShipping kitRequestShipping = new KitRequestShipping();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -185,13 +179,11 @@ public class KitStatusChangeRoute extends RequestHandler {
                             EventUtil.triggerDDP(conn, kitDDPNotification);
                         }
                         UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, "ddpLabel",
-                                        "ddpLabel", kit)
-                                .export();
+                                "ddpLabel", kit).export();
                     } else if (RoutePath.TRACKING_SCAN_REQUEST.equals(changeType)) {
                         logger.info("Added tracking for kit w/ kit_label " + kit);
                         UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, "kitLabel",
-                                        "kitLabel", addValue)
-                                .export();
+                                "kitLabel", addValue).export();
                     } else if (RoutePath.RECEIVED_KIT_REQUEST.equals(changeType)) {
                         logger.info("Updated kitRequest w/ SM-ID kit_label " + kit);
                     }

@@ -66,8 +66,7 @@ public class KitDDPSummary {
                                 if (showOnlyKitsWithNoExtraRole) {
                                     if (rs.getString(DBConstants.REQUIRED_ROLE) == null) {
                                         if (!"0".equals(noLabel) || !"0".equals(queue) || !"0".equals(error)) {
-                                            kits.add(new KitDDPSummary(realm,
-                                                    rs.getString(DBConstants.KIT_TYPE_NAME),
+                                            kits.add(new KitDDPSummary(realm, rs.getString(DBConstants.KIT_TYPE_NAME),
                                                     rs.getString(DBConstants.KIT_REQUEST_NO_LABEL_COUNT),
                                                     rs.getLong(DBConstants.KIT_REQUEST_NO_LABEL_OLDEST_DATE),
                                                     rs.getString(DBConstants.KIT_REQUEST_QUEUE_COUNT),
@@ -76,8 +75,7 @@ public class KitDDPSummary {
                                     }
                                 } else {
                                     if (!"0".equals(noLabel) || !"0".equals(queue) || !"0".equals(error)) {
-                                        kits.add(new KitDDPSummary(realm,
-                                                rs.getString(DBConstants.KIT_TYPE_NAME),
+                                        kits.add(new KitDDPSummary(realm, rs.getString(DBConstants.KIT_TYPE_NAME),
                                                 rs.getString(DBConstants.KIT_REQUEST_NO_LABEL_COUNT),
                                                 rs.getLong(DBConstants.KIT_REQUEST_NO_LABEL_OLDEST_DATE),
                                                 rs.getString(DBConstants.KIT_REQUEST_QUEUE_COUNT),

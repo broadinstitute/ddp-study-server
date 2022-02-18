@@ -29,11 +29,11 @@ public class CreateClinicalDummyKitRoute implements Route {
     private static final String USER_ID = "MERCURY";
     private static String CLINICAL_KIT_REALM = "CLINICAL_KIT_REALM";
     private static String CLINICAL_KIT_PREFIX = "CLINICALKIT_";
-    private final String FFPE_USER = "ffpe-dummy-kit-creator";
-    private final String FFPE = "ffpe";
-    private final String FFPE_SCROLL = "ffpe-scroll";
-    private final String FFPE_SECTION = "ffpe-section";
-    private int REALM;
+    private final String ffpeUser = "ffpe-dummy-kit-creator";
+    private final String ffpe = "ffpe";
+    private final String ffpeScroll = "ffpe-scroll";
+    private final String ffpeSection = "ffpe-section";
+    private int realm;
 
     @Override
     public Object handle(Request request, Response response) {
@@ -45,9 +45,12 @@ public class CreateClinicalDummyKitRoute implements Route {
             return "Please include a kit label as a path parameter";
         }
         logger.info("Got a new Clinical Kit request with kit label " + kitLabel + " and kit type " + kitTypeString);
-        new BookmarkDao().getBookmarkByInstance(CLINICAL_KIT_REALM).ifPresentOrElse(book -> {REALM = (int) book.getValue();}, () -> {
-                throw new RuntimeException("Bookmark doesn't exist for " + CLINICAL_KIT_REALM);});
-        DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(REALM);
+        new BookmarkDao().getBookmarkByInstance(CLINICAL_KIT_REALM).ifPresentOrElse(book -> {
+            realm = (int) book.getValue();
+        }, () -> {
+            throw new RuntimeException("Bookmark doesn't exist for " + CLINICAL_KIT_REALM);
+        });
+        DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(realm);
         BSPDummyKitDao bspDummyKitDao = new BSPDummyKitDao();
         if (ddpInstance != null) {
             String kitRequestId = CLINICAL_KIT_PREFIX + KitRequestShipping.createRandom(20);
@@ -62,7 +65,7 @@ public class CreateClinicalDummyKitRoute implements Route {
                 throw new RuntimeException("PT not found " + ddpParticipantId);
             }
 
-            if (kitTypeString.toLowerCase().indexOf(FFPE) == -1) {
+            if (kitTypeString.toLowerCase().indexOf(ffpe) == -1) {
                 String participantCollaboratorId =
                         KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
                                 ddpInstance.isMigratedDDP(), ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId,
@@ -79,9 +82,9 @@ public class CreateClinicalDummyKitRoute implements Route {
                 bspDummyKitDao.updateKitLabel(kitLabel, dsmKitRequestId);
             } else {
                 String smIdType;
-                if (kitTypeString.equalsIgnoreCase(FFPE_SCROLL)) {
+                if (kitTypeString.equalsIgnoreCase(ffpeScroll)) {
                     smIdType = TissueSmId.SCROLLS;
-                } else if (kitTypeString.equalsIgnoreCase(FFPE_SECTION)) {
+                } else if (kitTypeString.equalsIgnoreCase(ffpeSection)) {
                     smIdType = TissueSmId.USS;
                 } else {
                     throw new RuntimeException("The FFPE kit type does not match any of the valid types " + kitTypeString);
@@ -112,11 +115,11 @@ public class CreateClinicalDummyKitRoute implements Route {
                 String tissueId;
 
                 if (tissueIds.isEmpty()) {
-                    tissueId = Tissue.createNewTissue(randomOncHistoryDetailId, FFPE_USER);
+                    tissueId = Tissue.createNewTissue(randomOncHistoryDetailId, ffpeUser);
                 } else {
                     tissueId = String.valueOf(tissueIds.get(new Random().nextInt(tissueIds.size())).getTissueId());
                 }
-                new TissueSMIDDao().createNewSMIDForTissueWithValue(tissueId, FFPE_USER, smIdType, kitLabel);
+                new TissueSMIDDao().createNewSMIDForTissueWithValue(tissueId, ffpeUser, smIdType, kitLabel);
             }
             logger.info("Kit added successfully");
             response.status(200);

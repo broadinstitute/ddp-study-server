@@ -52,6 +52,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.dsm.careevolve.Provider;
@@ -459,7 +460,6 @@ public class DSMServer {
             bootTimeoutSeconds = config.getInt(ApplicationConfigConstants.BOOT_TIMEOUT);
         }
 
-
         logger.info("Using port {}", port);
         port(port);
 
@@ -624,7 +624,7 @@ public class DSMServer {
             @Override
             public Object handle(Request request, Response response) throws Exception {
                 logger.info("Received request to create java heap dump");
-                String gcpName = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
+                String gcpName = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
                 heapDumper.dumpHeapToBucket(gcpName + "_dsm_heapdumps");
                 return null;
             }
