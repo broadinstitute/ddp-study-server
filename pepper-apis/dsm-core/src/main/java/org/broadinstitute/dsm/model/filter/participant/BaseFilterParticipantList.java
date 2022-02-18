@@ -90,6 +90,11 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
             }
         }
 
+        if (StringUtils.isNotBlank(ddpInstanceDto.getQueryItems())) {
+            //if a base/pre filter is set for the selected study -> always apply that filter, no matter what user is querying for!
+            addEsPreFilterQueryCondition(queryConditions, ddpInstanceDto.getQueryItems());
+        }
+
         if (!queryConditions.isEmpty()) {
             // combine queries
             Map<String, String> mergeConditions = new HashMap<>();
@@ -136,6 +141,14 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
         } else {
             queryConditions.put(DBConstants.DDP_PARTICIPANT_DATA_ALIAS, Filter.getQueryStringForFiltering(filter, dbElement));
         }
+    }
+
+    private void addEsPreFilterQueryCondition(Map<String, String> queryConditions, String preFilter) {
+        String queryCondition = "";
+        if (queryConditions.containsKey("ES")) {
+            queryCondition = queryConditions.get("ES");
+        }
+        queryConditions.put("ES", queryCondition.concat(preFilter));
     }
 
 }
