@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.db.dto;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -30,7 +31,7 @@ public final class FileQuestionDto extends QuestionDto implements Serializable, 
                 .filter(StringUtils::isNotBlank)
                 .map(types -> types.split(","))
                 .map(Arrays::stream)
-                .map(x -> x.collect(Collectors.toSet()))
+                .map(x -> x.collect(Collectors.toCollection(LinkedHashSet::new)))
                 .orElse(null);
     }
 }
