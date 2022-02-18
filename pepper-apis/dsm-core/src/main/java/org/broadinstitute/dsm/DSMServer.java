@@ -15,8 +15,6 @@ import static spark.Spark.threadPool;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
@@ -41,17 +39,12 @@ import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import liquibase.Contexts;
-import liquibase.Liquibase;
-import liquibase.database.Database;
-import liquibase.database.DatabaseFactory;
-import liquibase.database.jvm.JdbcConnection;
-import liquibase.resource.ClassLoaderResourceAccessor;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.dsm.careevolve.Provider;
@@ -122,6 +115,7 @@ import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
+import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.EventUtil;
 import org.broadinstitute.dsm.util.JWTRouteFilter;
 import org.broadinstitute.dsm.util.JavaHeapDumper;
@@ -213,6 +207,8 @@ public class DSMServer {
                     System.setProperty("GOOGLE_APPLICATION_CREDENTIALS", cfg.getString("portal.googleProjectCredentials"));
                 }
             }
+
+            new DSMConfig(cfg);
 
             String preferredSourceIPHeader = null;
             if (cfg.hasPath(ApplicationConfigConstants.PREFERRED_SOURCE_IP_HEADER)) {
@@ -456,7 +452,6 @@ public class DSMServer {
             bootTimeoutSeconds = config.getInt(ApplicationConfigConstants.BOOT_TIMEOUT);
         }
 
-
         logger.info("Using port {}", port);
         port(port);
 
@@ -481,8 +476,8 @@ public class DSMServer {
         TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, maxConnections, dbUrl));
 
         logger.info("Running DB update...");
-        LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.DSM);
-        LiquibaseUtil.releaseResources();
+//        LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.DSM);
+//        LiquibaseUtil.releaseResources();
 
         logger.info("DB setup complete.");
     }
@@ -512,7 +507,7 @@ public class DSMServer {
         EventUtil eventUtil = new EventUtil();
         NotificationUtil notificationUtil = new NotificationUtil(cfg);
 
-        setupPubSub(cfg, notificationUtil);
+//        setupPubSub(cfg, notificationUtil);
 
         get(API_ROOT + RoutePath.BSP_KIT_QUERY_PATH, new BSPKitRoute(notificationUtil), new JsonTransformer());
         get(API_ROOT + RoutePath.BSP_KIT_REGISTERED, new BSPKitRegisteredRoute(), new JsonTransformer());
@@ -592,7 +587,6 @@ public class DSMServer {
 
         KitUtil kitUtil = new KitUtil();
 
-        DDPRequestUtil ddpRequestUtil = new DDPRequestUtil();
         PatchUtil patchUtil = new PatchUtil();
 
         setupExternalShipperLookup(cfg.getString(ApplicationConfigConstants.EXTERNAL_SHIPPER));
@@ -621,7 +615,7 @@ public class DSMServer {
             @Override
             public Object handle(Request request, Response response) throws Exception {
                 logger.info("Received request to create java heap dump");
-                String gcpName = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
+                String gcpName = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
                 heapDumper.dumpHeapToBucket(gcpName + "_dsm_heapdumps");
                 return null;
             }

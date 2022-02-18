@@ -34,6 +34,7 @@ public class DDPInstanceDto {
     String esParticipantIndex;
     String esActivityDefinitionIndex;
     String esUsersIndex;
+    Integer studyPreFilter;
 
     private DDPInstanceDto(Builder builder) {
         Class<DDPInstanceDto> ddpInstanceDtoClazz = DDPInstanceDto.class;
@@ -78,6 +79,7 @@ public class DDPInstanceDto {
         String esParticipantIndex;
         String esActivityDefinitionIndex;
         String esUsersIndex;
+        Integer studyPreFilter;
 
         public Builder() {
         }
@@ -179,6 +181,11 @@ public class DDPInstanceDto {
 
         public Builder withEsUsersIndex(String esUsersIndex) {
             this.esUsersIndex = esUsersIndex;
+            return this;
+        }
+
+        public Builder withStudyPreFilter(int studyPreFilter) {
+            this.studyPreFilter = studyPreFilter;
             return this;
         }
 

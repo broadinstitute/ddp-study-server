@@ -74,4 +74,5 @@
     <include file="liquibase/circadia/DDP-6688_DLMO-form.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/circadia/DDP-6796_add-instance-setting-for-computed-object.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/circadia/DDP-6797_set-has-computed-object-for-circadia-to-true.xml" relativeToChangelogFile="true"/>
+<!--    <include file="liquibase/DDP-7344-preFilter.xml" relativeToChangelogFile="true"/>-->
 </databaseChangeLog>
