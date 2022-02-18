@@ -20,8 +20,8 @@ public class KitRequestRoute extends RequestHandler {
 
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
-        if (UserUtil.checkUserAccess(null, userId, "kit_shipping", null) || UserUtil.checkUserAccess(null, userId, "kit_shipping_view",
-                null)) {
+        if (UserUtil.checkUserAccess(null, userId, "kit_shipping", null)
+                || UserUtil.checkUserAccess(null, userId, "kit_shipping_view", null)) {
             logger.info("Getting list of kit requests");
             QueryParamsMap queryParams = request.queryMap();
 

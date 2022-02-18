@@ -59,7 +59,6 @@ public class Utility {
      *
      * @param sql sql string
      * @return count count of rows
-     * @
      */
     public static int getCountInTable(@NonNull String sql) {
         SimpleResult results = inTransaction((conn) -> {

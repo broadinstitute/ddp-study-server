@@ -40,8 +40,8 @@ public class AbstractionFormControlRoute extends RequestHandler {
             } else if (RoutePath.RequestMethod.PATCH.toString().equals(request.requestMethod())) {
                 if (UserUtil.checkUserAccess(realm, userId, "mr_abstraction_admin", null)) {
                     String requestBody = request.body();
-                    AbstractionGroup[] receivedAbstractionGroups = new GsonBuilder().create().fromJson(requestBody,
-                            AbstractionGroup[].class);
+                    AbstractionGroup[] receivedAbstractionGroups =
+                            new GsonBuilder().create().fromJson(requestBody, AbstractionGroup[].class);
                     AbstractionGroup.saveFormControls(realm, receivedAbstractionGroups);
                     return new Result(200);
                 } else {

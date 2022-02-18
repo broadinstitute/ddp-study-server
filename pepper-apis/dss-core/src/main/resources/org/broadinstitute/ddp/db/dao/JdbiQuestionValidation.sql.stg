@@ -7,8 +7,8 @@ select q.question_id,
        v.correction_hint_template_id,
        v.revision_id,
        v.allow_save,
-       coalesce(arv.min_age, irv.min, lv.min_length, nosv.min_selections) as min,
-       coalesce(arv.max_age, irv.max, lv.max_length, nosv.max_selections) as max,
+       coalesce(arv.min_age, irv.min, decrv.min, lv.min_length, nosv.min_selections) as min,
+       coalesce(arv.max_age, irv.max, decrv.max, lv.max_length, nosv.max_selections) as max,
        drv.start_date,
        drv.end_date,
        drv.use_today_as_end,
@@ -21,6 +21,7 @@ select q.question_id,
   left join age_range_validation as arv on arv.validation_id = v.validation_id
   left join date_range_validation as drv on drv.validation_id = v.validation_id
   left join int_range_validation as irv on irv.validation_id = v.validation_id
+  left join decimal_range_validation as decrv on decrv.validation_id = v.validation_id
   left join length_validation as lv on lv.validation_id = v.validation_id
   left join num_options_selected_validation as nosv on nosv.validation_id = v.validation_id
   left join regex_validation as rv on rv.validation_id = v.validation_id

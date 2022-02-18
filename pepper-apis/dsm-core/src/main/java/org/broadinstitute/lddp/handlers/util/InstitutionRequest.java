@@ -7,6 +7,7 @@ public class InstitutionRequest {
     private String participantId; //UUID (alt pid)
     private String lastUpdated; //last updated date for institution survey
     private ArrayList<Institution> institutions; //institutions
+
     public InstitutionRequest() {
     }
 

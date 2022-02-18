@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -74,6 +75,9 @@ public interface AnswerSql extends SqlObject {
     @SqlUpdate("insert into numeric_answer (answer_id, int_value) values (:answerId, :value)")
     int insertNumericIntValue(@Bind("answerId") long answerId, @Bind("value") Long value);
 
+    @SqlUpdate("insert into decimal_answer (answer_id, decimal_value) values (:answerId, :value)")
+    int insertDecimalValue(@Bind("answerId") long answerId, @Bind("value") BigDecimal value);
+
     @GetGeneratedKeys
     @SqlUpdate("insert into picklist_option__answer (answer_id, picklist_option_id, detail_text)"
             + " values (:answerId, :optionId, :detailText)")
@@ -146,6 +150,9 @@ public interface AnswerSql extends SqlObject {
 
     @SqlUpdate("update numeric_answer set int_value = :value where answer_id = :answerId")
     int updateNumericIntValueById(@Bind("answerId") long answerId, @Bind("value") Long value);
+
+    @SqlUpdate("update decimal_answer set decimal_value = :value where answer_id = :answerId")
+    int updateDecimalValueById(@Bind("answerId") long answerId, @Bind("value") BigDecimal value);
 
     @SqlUpdate("update text_answer set answer = :value where answer_id = :answerId")
     int updateTextValueById(@Bind("answerId") long answerId, @Bind("value") String value);

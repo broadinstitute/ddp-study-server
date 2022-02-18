@@ -12,6 +12,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.commons.dbcp2.PoolableConnection;
 import org.apache.commons.dbcp2.PoolingDataSource;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.cf.CFUtil;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.DdpKit;
@@ -43,11 +44,8 @@ public class Covid19OrderRegistrarTest {
     @BeforeClass
     public static void beforeClass() throws Exception {
         cfg = ConfigFactory.load();
-        //TODO DSM add back in
-//        TransactionWrapper.init(20, cfg.getString("portal.dbUrl"), cfg, true);
-
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, 20, cfg.getString("portal.dbUrl")));
         // todo pull this out to a file, refresh from secret manager
-
     }
 
     @Ignore
@@ -82,8 +80,9 @@ public class Covid19OrderRegistrarTest {
 
         Covid19OrderRegistrar orderRegistrar = new Covid19OrderRegistrar(careEvolveOrderEndpoint, careEvolveAccount, provider, 0, 0);
 
-        Map<String, Map<String, Object>> esData = ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(),
-                ddpInstance.getParticipantIndexES(), esClient, participantHruid);
+        Map<String, Map<String, Object>> esData =
+                ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES(), esClient,
+                        participantHruid);
 
         if (esData.size() == 1) {
             JsonObject participantJsonData = new JsonParser().parse(new Gson().toJson(esData.values().iterator().next())).getAsJsonObject();
