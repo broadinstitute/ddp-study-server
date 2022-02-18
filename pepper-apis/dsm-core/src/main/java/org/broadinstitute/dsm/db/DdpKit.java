@@ -30,7 +30,7 @@ public class DdpKit {
     UPSShipment shipment;
 
     public DdpKit(String dsmKitRequestId, String kitLabel, String trackingToId, String trackingReturnId, String error,
-                  String message, String receiveDate, String bspCollaboratodId, String externalOrderNumber,
+                  String message, String receiveDate, String bspCollaboratorId, String externalOrderNumber,
                   boolean ceOrdered, String ddpInstanceId,
                   String upsTrackingStatus, String upsTrackingDate, String upsReturnStatus, String upsReturnDate, UPSShipment shipment) {
         this.dsmKitRequestId = dsmKitRequestId;
@@ -44,7 +44,7 @@ public class DdpKit {
         this.upsTrackingDate = upsTrackingDate;
         this.upsReturnStatus = upsReturnStatus;
         this.upsReturnDate = upsReturnDate;
-        this.hruid = bspCollaboratodId;
+        this.hruid = bspCollaboratorId;
         this.externalOrderNumber = externalOrderNumber;
         this.ceOrdered = ceOrdered;
         this.ddpInstanceId = ddpInstanceId;
