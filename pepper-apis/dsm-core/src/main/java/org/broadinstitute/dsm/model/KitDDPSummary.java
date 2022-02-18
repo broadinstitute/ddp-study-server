@@ -10,9 +10,9 @@ import java.util.Collection;
 import java.util.List;
 
 import lombok.Getter;
-import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +47,7 @@ public class KitDDPSummary {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
-                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_UNSENT_KIT_REQUESTS_FOR_REALM))) {
+                    DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_UNSENT_KIT_REQUESTS_FOR_REALM))) {
                 stmt.setString(1, DBConstants.KIT_REQUEST_ACTIVATED);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {

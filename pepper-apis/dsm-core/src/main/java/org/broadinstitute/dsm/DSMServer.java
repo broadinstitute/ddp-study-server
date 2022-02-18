@@ -122,6 +122,7 @@ import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
+import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.EventUtil;
 import org.broadinstitute.dsm.util.JWTRouteFilter;
 import org.broadinstitute.dsm.util.JavaHeapDumper;
@@ -213,6 +214,8 @@ public class DSMServer {
                     System.setProperty("GOOGLE_APPLICATION_CREDENTIALS", cfg.getString("portal.googleProjectCredentials"));
                 }
             }
+
+            new DSMConfig(cfg);
 
             String preferredSourceIPHeader = null;
             if (cfg.hasPath(ApplicationConfigConstants.PREFERRED_SOURCE_IP_HEADER)) {

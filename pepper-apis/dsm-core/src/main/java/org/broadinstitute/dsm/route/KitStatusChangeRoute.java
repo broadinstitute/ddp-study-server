@@ -14,7 +14,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import lombok.NonNull;
-import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
@@ -30,6 +29,7 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
+import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.ElasticSearchDataUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.EventUtil;
@@ -114,10 +114,10 @@ public class KitStatusChangeRoute extends RequestHandler {
                 addValue = scan.getAsJsonObject().get("leftValue").getAsString();
                 kit = scan.getAsJsonObject().get("rightValue").getAsString();
                 //check if ddp_label is blood kit
-                if (checkKitLabel(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_TYPE_NEED_TRACKING_BY_DDP_LABEL), kit)) {
+                if (checkKitLabel(DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_TYPE_NEED_TRACKING_BY_DDP_LABEL), kit)) {
                     //check if kit_label is in tracking table
                     if (checkKitLabel(
-                            ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_FOUND_IF_KIT_LABEL_ALREADY_EXISTS_IN_TRACKING_TABLE),
+                            DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_FOUND_IF_KIT_LABEL_ALREADY_EXISTS_IN_TRACKING_TABLE),
                             addValue)) {
                         updateKit(changeType, kit, addValue, currentTime, scanErrorList, userId, ddpInstanceDto);
                         KitRequestDao kitRequestDao = new KitRequestDao();
@@ -152,12 +152,12 @@ public class KitStatusChangeRoute extends RequestHandler {
             SimpleResult dbVals = new SimpleResult();
             String query = null;
             if (RoutePath.FINAL_SCAN_REQUEST.equals(changeType) || RoutePath.SENT_KIT_REQUEST.equals(changeType)) {
-                query = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.UPDATE_KIT_REQUEST);
+                query = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.UPDATE_KIT_REQUEST);
                 kitRequestShipping.setScanDate(currentTime);
                 kitRequestShipping.setKitLabel(addValue);
                 kitRequestShipping.setDdpLabel(kit);
             } else if (RoutePath.TRACKING_SCAN_REQUEST.equals(changeType)) {
-                query = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.INSERT_KIT_TRACKING);
+                query = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.INSERT_KIT_TRACKING);
                 //add value is value for tracking_id in ddp_kit_tracking and is considered as trackingReturnId in KitRequestShipping
                 kitRequestShipping.setScanDate(currentTime);
                 kitRequestShipping.setTrackingReturnId(addValue);
@@ -179,8 +179,8 @@ public class KitStatusChangeRoute extends RequestHandler {
                     if (RoutePath.FINAL_SCAN_REQUEST.equals(changeType) || RoutePath.SENT_KIT_REQUEST.equals(changeType)) {
                         logger.info("Updated kitRequests w/ ddp_label " + kit);
                         KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(
-                                ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_SENT_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL),
-                                kit, 1);
+                                DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_SENT_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL), kit,
+                                1);
                         if (kitDDPNotification != null) {
                             EventUtil.triggerDDP(conn, kitDDPNotification);
                         }

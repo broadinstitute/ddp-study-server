@@ -199,7 +199,7 @@ public class UserUtil {
                     instanceRole = DBConstants.KIT_REQUEST_ACTIVATED;
                     getList(conn, query, instanceRole, userId, listOfRealms);
                 } else if (PDF_DOWNLOAD_MENU.equals(menu)) {
-                    query = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_ALLOWED_REALMS_FOR_USER_ROLE_STARTS_LIKE);
+                    query = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_ALLOWED_REALMS_FOR_USER_ROLE_STARTS_LIKE);
                     query = query.replace("%1", DBConstants.PDF_DOWNLOAD);
                     query = query + QueryExtension.BY_ROLE_NAME;
                     query = query.replace("%1", DBConstants.PDF_DOWNLOAD);
