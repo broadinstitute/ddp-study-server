@@ -101,6 +101,17 @@ public class DDPRequestUtil {
         return responseCode;
     }
 
+    // make a post request
+    public static Integer postRequest(String sendRequest, Object objectToPost, String name, boolean auth0Token, Auth0Util auth0Util)
+            throws IOException, RuntimeException {
+        logger.info("Requesting data from " + name + " w/ " + sendRequest);
+        org.apache.http.client.fluent.Request request =
+                SecurityUtil.createPostRequestWithHeader(sendRequest, name, auth0Token, objectToPost, auth0Util);
+
+        int responseCode = request.execute().handleResponse(res -> getResponseCode(res, sendRequest));
+        return responseCode;
+    }
+
     private static Integer getResponseCode(HttpResponse res, String sendRequest) {
         int responseCodeInt = res.getStatusLine().getStatusCode();
         if (responseCodeInt != HttpStatusCodes.STATUS_CODE_OK) {
@@ -298,16 +309,5 @@ public class DDPRequestUtil {
             return Arrays.asList(list.clone());
         }
         return null;
-    }
-
-    // make a post request
-    public static Integer postRequest(String sendRequest, Object objectToPost, String name, boolean auth0Token, Auth0Util auth0Util)
-            throws IOException, RuntimeException {
-        logger.info("Requesting data from " + name + " w/ " + sendRequest);
-        org.apache.http.client.fluent.Request request =
-                SecurityUtil.createPostRequestWithHeader(sendRequest, name, auth0Token, objectToPost, auth0Util);
-
-        int responseCode = request.execute().handleResponse(res -> getResponseCode(res, sendRequest));
-        return responseCode;
     }
 }

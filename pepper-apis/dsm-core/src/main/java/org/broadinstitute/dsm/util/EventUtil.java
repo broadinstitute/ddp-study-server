@@ -82,20 +82,6 @@ public class EventUtil {
         }
     }
 
-    public static void triggerDDPWithTestResult(Connection conn, @NonNull KitDDPNotification kitDDPNotification,
-                                                @Nonnull TestBostonResult result) {
-        Collection<String> events =
-                ParticipantEvent.getParticipantEvent(kitDDPNotification.getParticipantId(), kitDDPNotification.getDdpInstanceId());
-        if (!events.contains(kitDDPNotification.getEventName())) {
-            EventUtil.triggerDDPWithTestResult(conn, kitDDPNotification.getEventName(), kitDDPNotification, result);
-        } else {
-            logger.info("Participant direct event was added in the participant_event table. DDP will not get triggered");
-            //to add these events also to the event table, but without triggering the ddp and flag EVENT_TRIGGERED = false
-            addEvent(conn, kitDDPNotification.getEventName(), kitDDPNotification.getDdpInstanceId(),
-                    kitDDPNotification.getDsmKitRequestId(), false);
-        }
-    }
-
     private static void triggerDDP(Connection conn, @NonNull String eventType, @NonNull KitDDPNotification kitInfo) {
         try {
             KitEvent event = new KitEvent(kitInfo.getParticipantId(), eventType, kitInfo.getDate() / 1000, kitInfo.getUploadReason(),
@@ -144,6 +130,57 @@ public class EventUtil {
         }
     }
 
+    private static void triggerDDP(Connection conn, @NonNull String eventType, @NonNull KitDDPNotification kitInfo, Auth0Util auth0Util) {
+        try {
+            KitEvent event = new KitEvent(kitInfo.getParticipantId(), eventType, kitInfo.getDate() / 1000, kitInfo.getUploadReason(),
+                    kitInfo.getDdpKitRequestId());
+            String sendRequest = kitInfo.getBaseUrl() + RoutePath.DDP_PARTICIPANT_EVENT_PATH + "/" + kitInfo.getParticipantId();
+            DDPRequestUtil.postRequest(sendRequest, event, kitInfo.getInstanceName(), kitInfo.isHasAuth0Token(), auth0Util);
+            addEvent(conn, eventType, kitInfo.getDdpInstanceId(), kitInfo.getDsmKitRequestId());
+        } catch (IOException e) {
+            logger.error(
+                    "Failed to trigger " + kitInfo.getInstanceName() + " to notify participant " + kitInfo.getParticipantId() + " about "
+                            + eventType + " for dsm_kit_request_id " + kitInfo.getDsmKitRequestId());
+            e.printStackTrace();
+            //to add these events also to the event table, but without triggering the ddp and flag EVENT_TRIGGERED = false
+            addEvent(conn, eventType, kitInfo.getDdpInstanceId(), kitInfo.getDsmKitRequestId(), false);
+        } catch (RuntimeException e) {
+            logger.error(
+                    "Failed to trigger " + kitInfo.getInstanceName() + " to notify participant " + kitInfo.getParticipantId() + " about "
+                            + eventType + " for dsm_kit_request_id " + kitInfo.getDsmKitRequestId());
+            e.printStackTrace();
+            //to add these events also to the event table, but without triggering the ddp and flag EVENT_TRIGGERED = false
+            addEvent(conn, eventType, kitInfo.getDdpInstanceId(), kitInfo.getDsmKitRequestId(), false);
+        }
+    }
+
+    public static void triggerDDP(Connection conn, @NonNull KitDDPNotification kitDDPNotification, Auth0Util auth0Util) {
+        Collection<String> events =
+                ParticipantEvent.getParticipantEvent(conn, kitDDPNotification.getParticipantId(), kitDDPNotification.getDdpInstanceId());
+        if (!events.contains(kitDDPNotification.getEventName())) {
+            EventUtil.triggerDDP(conn, kitDDPNotification.getEventName(), kitDDPNotification, auth0Util);
+        } else {
+            logger.info("Participant direct event was added in the participant_event table. DDP will not get triggered");
+            //to add these events also to the event table, but without triggering the ddp and flag EVENT_TRIGGERED = false
+            addEvent(conn, kitDDPNotification.getEventName(), kitDDPNotification.getDdpInstanceId(),
+                    kitDDPNotification.getDsmKitRequestId(), false);
+        }
+    }
+
+    public static void triggerDDPWithTestResult(Connection conn, @NonNull KitDDPNotification kitDDPNotification,
+                                                @Nonnull TestBostonResult result) {
+        Collection<String> events =
+                ParticipantEvent.getParticipantEvent(kitDDPNotification.getParticipantId(), kitDDPNotification.getDdpInstanceId());
+        if (!events.contains(kitDDPNotification.getEventName())) {
+            EventUtil.triggerDDPWithTestResult(conn, kitDDPNotification.getEventName(), kitDDPNotification, result);
+        } else {
+            logger.info("Participant direct event was added in the participant_event table. DDP will not get triggered");
+            //to add these events also to the event table, but without triggering the ddp and flag EVENT_TRIGGERED = false
+            addEvent(conn, kitDDPNotification.getEventName(), kitDDPNotification.getDdpInstanceId(),
+                    kitDDPNotification.getDsmKitRequestId(), false);
+        }
+    }
+
     private static void triggerDDPWithTestResult(Connection conn, @NonNull String eventType, @NonNull KitDDPNotification kitInfo,
                                                  @Nonnull TestBostonResult result) {
         try {
@@ -189,43 +226,6 @@ public class EventUtil {
             }
         } catch (SQLException e) {
             logger.error("Error inserting event ", e);
-        }
-    }
-
-    private static void triggerDDP(Connection conn, @NonNull String eventType, @NonNull KitDDPNotification kitInfo, Auth0Util auth0Util) {
-        try {
-            KitEvent event = new KitEvent(kitInfo.getParticipantId(), eventType, kitInfo.getDate() / 1000, kitInfo.getUploadReason(),
-                    kitInfo.getDdpKitRequestId());
-            String sendRequest = kitInfo.getBaseUrl() + RoutePath.DDP_PARTICIPANT_EVENT_PATH + "/" + kitInfo.getParticipantId();
-            DDPRequestUtil.postRequest(sendRequest, event, kitInfo.getInstanceName(), kitInfo.isHasAuth0Token(), auth0Util);
-            addEvent(conn, eventType, kitInfo.getDdpInstanceId(), kitInfo.getDsmKitRequestId());
-        } catch (IOException e) {
-            logger.error(
-                    "Failed to trigger " + kitInfo.getInstanceName() + " to notify participant " + kitInfo.getParticipantId() + " about "
-                            + eventType + " for dsm_kit_request_id " + kitInfo.getDsmKitRequestId());
-            e.printStackTrace();
-            //to add these events also to the event table, but without triggering the ddp and flag EVENT_TRIGGERED = false
-            addEvent(conn, eventType, kitInfo.getDdpInstanceId(), kitInfo.getDsmKitRequestId(), false);
-        } catch (RuntimeException e) {
-            logger.error(
-                    "Failed to trigger " + kitInfo.getInstanceName() + " to notify participant " + kitInfo.getParticipantId() + " about "
-                            + eventType + " for dsm_kit_request_id " + kitInfo.getDsmKitRequestId());
-            e.printStackTrace();
-            //to add these events also to the event table, but without triggering the ddp and flag EVENT_TRIGGERED = false
-            addEvent(conn, eventType, kitInfo.getDdpInstanceId(), kitInfo.getDsmKitRequestId(), false);
-        }
-    }
-
-    public static void triggerDDP(Connection conn, @NonNull KitDDPNotification kitDDPNotification, Auth0Util auth0Util) {
-        Collection<String> events =
-                ParticipantEvent.getParticipantEvent(conn, kitDDPNotification.getParticipantId(), kitDDPNotification.getDdpInstanceId());
-        if (!events.contains(kitDDPNotification.getEventName())) {
-            EventUtil.triggerDDP(conn, kitDDPNotification.getEventName(), kitDDPNotification, auth0Util);
-        } else {
-            logger.info("Participant direct event was added in the participant_event table. DDP will not get triggered");
-            //to add these events also to the event table, but without triggering the ddp and flag EVENT_TRIGGERED = false
-            addEvent(conn, kitDDPNotification.getEventName(), kitDDPNotification.getDdpInstanceId(),
-                    kitDDPNotification.getDsmKitRequestId(), false);
         }
     }
 
