@@ -11,7 +11,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.join.ScoreMode;
-import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.elastic.ESProfile;
@@ -19,6 +18,7 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
+import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.elasticsearch.action.delete.DeleteRequest;
@@ -840,9 +840,9 @@ public class ElasticSearchTest extends TestHelper {
     @Test
     public void testRemoveWorkflowIfNoDataOrWrongSubject() throws Exception {
         try (RestHighLevelClient client = ElasticSearchUtil.getClientForElasticsearchCloud(
-                ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_URL),
-                ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_USERNAME),
-                ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_PASSWORD))) {
+                DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_URL),
+                DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_USERNAME),
+                DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_PASSWORD))) {
             String ddpParticipantId = "TZYO5WQ7N58HX4WSJJG0";
             String collaboratorParticipantId = "RGP_2046_3";
             DDPInstance ddpInstance =

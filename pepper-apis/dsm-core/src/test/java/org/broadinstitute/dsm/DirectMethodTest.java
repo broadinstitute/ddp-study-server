@@ -167,8 +167,7 @@ public class DirectMethodTest extends TestHelper {
         List<String> strings = new ArrayList<>();
         strings.add(TEST_DDP);
         String stringFromQuery = DBTestUtil.getStringFromQuery("select count(*) from field_settings "
-                        + "where ddp_instance_id = (select ddp_instance_id from ddp_instance where instance_name = ?) "
-                        + "and not (deleted <=> 1)",
+                        + "where ddp_instance_id = (select ddp_instance_id from ddp_instance where instance_name = ?) " + "and not (deleted <=> 1)",
                 strings, "count(*)");
 
         Assert.assertEquals("saveFieldSettingsTest: wrong number of field settings returned", 2, Integer.parseInt(stringFromQuery));
@@ -311,8 +310,7 @@ public class DirectMethodTest extends TestHelper {
         Assert.assertEquals(DBTestUtil.getStringFromQuery(
                 "select count(*) from ddp_medical_record mr, ddp_institution inst, ddp_participant pat "
                         + "where mr.institution_id = inst.institution_id and inst.participant_id = pat.participant_id "
-                        + "and pat.participant_id = ? ",
-                strings, "count(*)"), String.valueOf(medicalRecords.size()));
+                        + "and pat.participant_id = ? ", strings, "count(*)"), String.valueOf(medicalRecords.size()));
     }
 
     @Test
@@ -355,8 +353,7 @@ public class DirectMethodTest extends TestHelper {
         //check that the participant is in the exit table
         Assert.assertEquals("1", DBTestUtil.getStringFromQuery(
                 "select count(*) from ddp_participant_exit where ddp_instance_id = (select ddp_instance_id "
-                        + "from ddp_instance where instance_name = ?) and ddp_participant_id = ?",
-                strings, "count(*)"));
+                        + "from ddp_instance where instance_name = ?) and ddp_participant_id = ?", strings, "count(*)"));
 
         //get list of exit participants for the test ddp
         Collection<ParticipantExit> exitedParticipants = ParticipantExit.getExitedParticipants(TEST_DDP).values();

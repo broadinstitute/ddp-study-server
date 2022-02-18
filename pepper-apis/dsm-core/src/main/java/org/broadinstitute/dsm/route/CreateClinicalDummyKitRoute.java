@@ -48,8 +48,8 @@ public class CreateClinicalDummyKitRoute implements Route {
         new BookmarkDao().getBookmarkByInstance(CLINICAL_KIT_REALM).ifPresentOrElse(book -> {
             realm = (int) book.getValue();
         }, () -> {
-            throw new RuntimeException("Bookmark doesn't exist for " + CLINICAL_KIT_REALM);
-        });
+                throw new RuntimeException("Bookmark doesn't exist for " + CLINICAL_KIT_REALM);
+            });
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(realm);
         BSPDummyKitDao bspDummyKitDao = new BSPDummyKitDao();
         if (ddpInstance != null) {

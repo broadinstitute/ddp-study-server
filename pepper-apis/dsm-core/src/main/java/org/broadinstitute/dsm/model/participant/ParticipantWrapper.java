@@ -180,7 +180,7 @@ public class ParticipantWrapper {
     }
 
     Map<String, List<ElasticSearchParticipantDto>> getProxiesWithParticipantIdsFromElasticList(String esUsersIndex,
-                                                                                               List<ElasticSearchParticipantDto> elasticSearchParticipantDtos) {
+                                                      List<ElasticSearchParticipantDto> elasticSearchParticipantDtos) {
         Map<String, List<String>> proxiesIdsFromElasticList = getProxiesIdsFromElasticList(elasticSearchParticipantDtos);
         return getProxiesWithParticipantIdsByProxiesIds(esUsersIndex, proxiesIdsFromElasticList);
     }
@@ -242,9 +242,11 @@ public class ParticipantWrapper {
 
     void sortBySelfElseById(Collection<List<ParticipantData>> participantDatas) {
         participantDatas.forEach(pDataList -> pDataList.sort((o1, o2) -> {
-            Map<String, String> pData = new Gson().fromJson(o1.getData().orElse(StringUtils.EMPTY), new TypeToken<Map<String, String>>() {
+            Map<String, String> participantData = new Gson().fromJson(o1.getData().orElse(StringUtils.EMPTY),
+                    new TypeToken<Map<String, String>>() {
             }.getType());
-            if (Objects.nonNull(pData) && FamilyMemberConstants.MEMBER_TYPE_SELF.equals(pData.get(FamilyMemberConstants.MEMBER_TYPE))) {
+            if (Objects.nonNull(participantData)
+                    && FamilyMemberConstants.MEMBER_TYPE_SELF.equals(participantData.get(FamilyMemberConstants.MEMBER_TYPE))) {
                 return -1;
             }
             return o1.getParticipantDataId() - o2.getParticipantDataId();
@@ -264,7 +266,7 @@ public class ParticipantWrapper {
     }
 
     Map<String, List<ElasticSearchParticipantDto>> getProxiesWithParticipantIdsByProxiesIds(String esUsersIndex,
-                                                                                            Map<String, List<String>> proxiesIdsByParticipantIds) {
+                                                      Map<String, List<String>> proxiesIdsByParticipantIds) {
         Map<String, List<ElasticSearchParticipantDto>> proxiesByParticipantIds = new HashMap<>();
         List<String> proxiesIds = proxiesIdsByParticipantIds.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
         List<ElasticSearchParticipantDto> participantsByIds =

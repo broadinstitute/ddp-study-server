@@ -15,7 +15,6 @@ import java.util.Map;
 
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.db.UserSettings;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;

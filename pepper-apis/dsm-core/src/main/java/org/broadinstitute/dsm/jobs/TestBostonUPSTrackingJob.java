@@ -227,11 +227,11 @@ public class TestBostonUPSTrackingJob implements BackgroundFunction<PubsubMessag
         UPSPackage upsPackageReturn = new UPSPackage(kit.getTrackingReturnId(), null, insertedShipmentId, returnKitPackageId, null, null);
 
         UPSKit kitShipping =
-                new UPSKit(upsPackageShipping, kit.getKitLabel(), kit.getCE_order(), kit.getDsmKitRequestId(), kit.getExternalOrderNumber(),
+                new UPSKit(upsPackageShipping, kit.getKitLabel(), kit.getCeOrder(), kit.getDsmKitRequestId(), kit.getExternalOrderNumber(),
                         kit.getTrackingToId(), kit.getTrackingReturnId(), kit.getDdpInstanceId(), kit.getHruid(),
                         gbfShippedTriggerDSSDelivered);
         UPSKit kitReturn =
-                new UPSKit(upsPackageReturn, kit.getKitLabel(), kit.getCE_order(), kit.getDsmKitRequestId(), kit.getExternalOrderNumber(),
+                new UPSKit(upsPackageReturn, kit.getKitLabel(), kit.getCeOrder(), kit.getDsmKitRequestId(), kit.getExternalOrderNumber(),
                         kit.getTrackingToId(), kit.getTrackingReturnId(), kit.getDdpInstanceId(), kit.getHruid(),
                         gbfShippedTriggerDSSDelivered);
         getUPSUpdate(dataSource, kitShipping, cfg);
@@ -462,7 +462,7 @@ public class TestBostonUPSTrackingJob implements BackgroundFunction<PubsubMessag
                 }
 
             } else { // this is a return
-                if (earliestInTransitTime != null && !kit.getCE_order()) {
+                if (earliestInTransitTime != null && !kit.getCeOrder()) {
                     // if we have the first date of an inbound event, create an order in CE
                     // using the earliest date of inbound event
 

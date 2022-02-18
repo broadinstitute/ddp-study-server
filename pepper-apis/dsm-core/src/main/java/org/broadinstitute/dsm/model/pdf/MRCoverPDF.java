@@ -23,8 +23,8 @@ import org.broadinstitute.dsm.files.RequestPDFProcessor;
 import org.broadinstitute.dsm.util.SystemUtil;
 
 public class MRCoverPDF {
-    private final String JSON_START_DATE = "startDate";
-    private final String JSON_END_DATE = "endDate";
+    private final String jsonStartDate = "startDate";
+    private final String jsonEndDate = "endDate";
     private DownloadPDF originalDownloadPDF;
 
     public MRCoverPDF(@NonNull DownloadPDF downloadPDF) {
@@ -36,16 +36,16 @@ public class MRCoverPDF {
         Set keySet = jsonObject.keySet();
         String startDate = null;
         String endDate = null;
-        if (keySet.contains(JSON_START_DATE)) {
-            startDate = jsonObject.get(JSON_START_DATE).getAsString();
+        if (keySet.contains(jsonStartDate)) {
+            startDate = jsonObject.get(jsonStartDate).getAsString();
             if (!"0/0".equals(startDate) && !startDate.contains("/") && startDate.contains("-")) {
                 startDate = SystemUtil.changeDateFormat(SystemUtil.DATE_FORMAT, SystemUtil.US_DATE_FORMAT, startDate);
             } else if (StringUtils.isNotBlank(startDate) && startDate.startsWith("0/") && !startDate.equals("0/0")) {
                 startDate = "01/" + startDate.split("/")[1];
             }
         }
-        if (keySet.contains(JSON_END_DATE)) {
-            endDate = jsonObject.get(JSON_END_DATE).getAsString();
+        if (keySet.contains(jsonEndDate)) {
+            endDate = jsonObject.get(jsonEndDate).getAsString();
             endDate = SystemUtil.changeDateFormat(SystemUtil.DATE_FORMAT, SystemUtil.US_DATE_FORMAT, endDate);
         }
         if (StringUtils.isBlank(originalDownloadPDF.getMedicalRecordId())) {

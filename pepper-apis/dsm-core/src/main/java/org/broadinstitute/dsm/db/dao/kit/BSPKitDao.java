@@ -18,17 +18,6 @@ import org.slf4j.LoggerFactory;
 
 public class BSPKitDao implements Dao<BSPKitDto> {
 
-
-    public final String BASE_URL = "base_url";
-    public final String BSP_SAMPLE_ID = "bsp_collaborator_sample_id";
-    public final String BSP_PARTICIPANT_ID = "bsp_collaborator_participant_id";
-    public final String INSTANCE_NAME = "instance_name";
-    public final String BSP_COLLECTION = "bsp_collection";
-    public final String BSP_ORGANISM = "bsp_organism";
-    public final String DDP_PARTICIPANT_ID = "ddp_participant_id";
-    public final String MATERIAL_TYPE = "bsp_material_type";
-    public final String RECEPTACLE_TYPE = "bsp_receptacle_type";
-    public final String PARTICIPANT_EXIT = "ddp_participant_exit_id";
     public final String SQL_UPDATE_KIT_RECEIVED = "UPDATE ddp_kit kit INNER JOIN( SELECT dsm_kit_request_id, MAX(dsm_kit_id) AS kit_id "
             + "FROM ddp_kit GROUP BY dsm_kit_request_id) groupedKit ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id "
             + "AND kit.dsm_kit_id = groupedKit.kit_id SET receive_date = ?, receive_by = ? "
@@ -48,7 +37,9 @@ public class BSPKitDao implements Dao<BSPKitDto> {
                     + "  left join kit_type kt on request.kit_type_id = kt.kit_type_id "
                     + "  left join ddp_participant_exit ex on (request.ddp_participant_id = ex.ddp_participant_id and "
                     + "   request.ddp_instance_id = ex.ddp_instance_id)  where    kit.kit_label = ?";
-    private final String BSP = "BSP";
+
+    private final String bsp = "BSP";
+
     Logger logger = LoggerFactory.getLogger(BSPKitDao.class);
 
     @Override
@@ -78,10 +69,14 @@ public class BSPKitDao implements Dao<BSPKitDto> {
                         while (rs.next()) {
                             numRows++;
                             dbVals.resultValue =
-                                    new BSPKitDto(rs.getString(INSTANCE_NAME), rs.getString(BASE_URL), rs.getString(BSP_SAMPLE_ID),
-                                            rs.getString(BSP_PARTICIPANT_ID), rs.getString(BSP_ORGANISM), rs.getString(BSP_COLLECTION),
-                                            rs.getString(DDP_PARTICIPANT_ID), rs.getString(MATERIAL_TYPE), rs.getString(RECEPTACLE_TYPE),
-                                            rs.getBoolean(DBConstants.HAS_ROLE), rs.getString(PARTICIPANT_EXIT),
+                                    new BSPKitDto(rs.getString(DBConstants.INSTANCE_NAME), rs.getString(DBConstants.BASE_URL),
+                                            rs.getString(DBConstants.BSP_COLLABORATOR_PARTICIPANT_ID),
+                                            rs.getString(DBConstants.BSP_COLLABORATOR_PARTICIPANT_ID),
+                                            rs.getString(DBConstants.BSP_ORGANISM),
+                                            rs.getString(DBConstants.BSP_COLLECTION),
+                                            rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.BSP_MATERIAL_TYPE),
+                                            rs.getString(DBConstants.BSP_RECEPTABLE_TYPE),
+                                            rs.getBoolean(DBConstants.HAS_ROLE), rs.getString(DBConstants.PARTICIPANT_EXIT),
                                             rs.getString(DBConstants.DSM_DEACTIVATED_DATE),
                                             rs.getString(DBConstants.NOTIFICATION_RECIPIENT),
                                             rs.getString("kt." + DBConstants.KIT_TYPE_NAME));
@@ -108,7 +103,7 @@ public class BSPKitDao implements Dao<BSPKitDto> {
             boolean firstTimeReceived = false;
             try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_KIT_RECEIVED)) {
                 stmt.setLong(1, System.currentTimeMillis());
-                stmt.setString(2, BSP);
+                stmt.setString(2, bsp);
                 stmt.setString(3, kitLabel);
                 int result = stmt.executeUpdate();
                 if (result > 1) { // 1 row or 0 row updated is perfect
