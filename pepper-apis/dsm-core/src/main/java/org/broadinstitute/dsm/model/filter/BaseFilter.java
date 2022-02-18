@@ -34,7 +34,7 @@ public class BaseFilter {
         this.jsonBody = jsonBody;
     }
 
-    protected void prepareNeccesaryData(QueryParamsMap queryParamsMap) {
+    protected void prepareNecessaryData(QueryParamsMap queryParamsMap) {
         parent = Objects.requireNonNull(queryParamsMap).get(DBConstants.FILTER_PARENT).value();
         if (StringUtils.isBlank(parent)) {
             throw new RuntimeException("parent is necessary");

@@ -537,7 +537,6 @@ public class KitRequestShipping extends KitRequest {
     /**
      * Read KitRequests form ddp_kit_request
      * request participants information from ddp
-     *
      */
     public static List<KitRequestShipping> getKitRequestsByRealm(@NonNull String realm, String target, String kitType) {
         if (StringUtils.isNotBlank(realm) && StringUtils.isNotBlank(kitType)) {
