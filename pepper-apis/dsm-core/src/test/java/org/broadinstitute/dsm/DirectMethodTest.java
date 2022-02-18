@@ -167,7 +167,8 @@ public class DirectMethodTest extends TestHelper {
         List<String> strings = new ArrayList<>();
         strings.add(TEST_DDP);
         String stringFromQuery = DBTestUtil.getStringFromQuery("select count(*) from field_settings "
-                        + "where ddp_instance_id = (select ddp_instance_id from ddp_instance where instance_name = ?) " + "and not (deleted <=> 1)",
+                        + "where ddp_instance_id = (select ddp_instance_id from ddp_instance where instance_name = ?) "
+                        + "and not (deleted <=> 1)",
                 strings, "count(*)");
 
         Assert.assertEquals("saveFieldSettingsTest: wrong number of field settings returned", 2, Integer.parseInt(stringFromQuery));

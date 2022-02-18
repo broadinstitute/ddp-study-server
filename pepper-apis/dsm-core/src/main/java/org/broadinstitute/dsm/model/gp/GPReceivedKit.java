@@ -33,7 +33,7 @@ public class GPReceivedKit {
         BSPKitDao bspKitDao = new BSPKitDao();
         InstanceSettingsDto instanceSettingsDto = instanceSettings.getInstanceSettings(bspKitQueryResult.getInstanceName());
         instanceSettingsDto.getKitBehaviorChange().flatMap(
-                        kitBehavior -> kitBehavior.stream().filter(o -> o.getName().equals(InstanceSettings.INSTANCE_SETTING_RECEIVED)).findFirst())
+                kitBehavior -> kitBehavior.stream().filter(o -> o.getName().equals(InstanceSettings.INSTANCE_SETTING_RECEIVED)).findFirst())
                 .ifPresentOrElse(received -> {
                     Map<String, Map<String, Object>> participants = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance,
                             ElasticSearchUtil.BY_GUID + bspKitQueryResult.getDdpParticipantId());
@@ -59,8 +59,8 @@ public class GPReceivedKit {
                         updateKitAndExport(kitLabel, bspKitDao, bspKitQueryResult, triggerDDP);
                     }
                 }, () -> {
-                    updateKitAndExport(kitLabel, bspKitDao, bspKitQueryResult, true);
-                });
+                        updateKitAndExport(kitLabel, bspKitDao, bspKitQueryResult, true);
+                    });
 
         String bspParticipantId = bspKitQueryResult.getBspParticipantId();
         String bspSampleId = bspKitQueryResult.getBspSampleId();

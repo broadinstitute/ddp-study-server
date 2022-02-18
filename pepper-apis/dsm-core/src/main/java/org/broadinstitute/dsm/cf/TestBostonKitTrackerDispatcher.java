@@ -70,7 +70,8 @@ public class TestBostonKitTrackerDispatcher implements BackgroundFunction<Pubsub
                         + "  GROUP BY ups_package_id  ) lastActivity ON pac.ups_package_id = lastActivity.ups_package_id INNER JOIN  "
                         + " ups_activity ac ON   lastActivity.ups_package_id = ac.ups_package_id  "
                         + " AND lastActivity.maxId = ac.ups_activity_id    ))";
-        String SQL_AVOID_DELIVERED = " and (tracking_to_id is not null or tracking_return_id is not null ) and kit.test_result is null "
+        final String SQL_AVOID_DELIVERED = " and (tracking_to_id is not null or tracking_return_id is not null ) and kit.test_result is "
+                + "null "
                 + " and ( ups_status_description is null or ups_status_description not like \"%Delivered%\") "
                 + " and from_unixtime(created_date/1000) > NOW() - INTERVAL 360 DAY"
                 + " and (kit.ups_tracking_status is null or kit.ups_tracking_status not like \"%Delivered%\" "

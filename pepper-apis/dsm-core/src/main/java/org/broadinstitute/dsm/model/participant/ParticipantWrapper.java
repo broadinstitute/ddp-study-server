@@ -244,7 +244,7 @@ public class ParticipantWrapper {
         participantDatas.forEach(pDataList -> pDataList.sort((o1, o2) -> {
             Map<String, String> participantData = new Gson().fromJson(o1.getData().orElse(StringUtils.EMPTY),
                     new TypeToken<Map<String, String>>() {
-            }.getType());
+                }.getType());
             if (Objects.nonNull(participantData)
                     && FamilyMemberConstants.MEMBER_TYPE_SELF.equals(participantData.get(FamilyMemberConstants.MEMBER_TYPE))) {
                 return -1;

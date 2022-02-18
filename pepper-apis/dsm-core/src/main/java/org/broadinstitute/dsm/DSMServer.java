@@ -624,7 +624,7 @@ public class DSMServer {
         String projectId = cfg.getString(GCP_PATH_TO_PUBSUB_PROJECT_ID);
         String subscriptionId = cfg.getString(GCP_PATH_TO_PUBSUB_SUB);
         String dsmToDssSubscriptionId = cfg.getString(GCP_PATH_TO_DSS_TO_DSM_SUB);
-        String DSMtasksSubscriptionId = cfg.getString(GCP_PATH_TO_DSM_TASKS_SUB);
+        String dsmTasksSubscriptionId = cfg.getString(GCP_PATH_TO_DSM_TASKS_SUB);
 
         logger.info("Setting up pubsub for {}/{}", projectId, subscriptionId);
 
@@ -671,7 +671,7 @@ public class DSMServer {
         }
 
         try {
-            DSMtasksSubscription.subscribeDSMtasks(projectId, DSMtasksSubscriptionId);
+            DSMtasksSubscription.subscribeDSMtasks(projectId, dsmTasksSubscriptionId);
         } catch (Exception e) {
             e.printStackTrace();
         }

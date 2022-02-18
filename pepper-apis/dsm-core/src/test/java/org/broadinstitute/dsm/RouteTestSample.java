@@ -477,7 +477,7 @@ public class RouteTestSample extends TestHelper {
     }
 
     @Test
-    public void TestRollbackOfAddingKitRequest() {
+    public void testRollbackOfAddingKitRequest() {
         DBTestUtil.deleteAllKitData(FAKE_DDP_PARTICIPANT_ID);
         DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"), "", 1, INSTANCE_ID);
         //change table, so that insert of kit fails
@@ -1102,7 +1102,8 @@ public class RouteTestSample extends TestHelper {
                         + "and req.kit_type_id = kt.kit_type_id) as request left join (select * "
                         + "from (SELECT kit.dsm_kit_request_id, kit.error, kit.message, kit.deactivated_date "
                         + "FROM ddp_kit kit INNER JOIN( SELECT dsm_kit_request_id, MAX(dsm_kit_id) AS kit_id "
-                        + "FROM ddp_kit GROUP BY dsm_kit_request_id) groupedKit " + "ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id "
+                        + "FROM ddp_kit GROUP BY dsm_kit_request_id) groupedKit "
+                        + "ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id "
                         + "AND kit.dsm_kit_id = groupedKit.kit_id LEFT JOIN ddp_kit_tracking tracking "
                         + "ON (kit.kit_label = tracking.kit_label))as wtf) as kit "
                         + "on kit.dsm_kit_request_id = request.dsm_kit_request_id where request.dsm_kit_request_id = ?", kitRequestId,
