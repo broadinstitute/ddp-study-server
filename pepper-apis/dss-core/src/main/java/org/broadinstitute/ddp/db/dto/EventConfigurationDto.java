@@ -5,6 +5,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import lombok.AllArgsConstructor;
+import lombok.Value;
+import lombok.experimental.Accessors;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
@@ -17,328 +20,96 @@ import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 /**
  * A DTO representing the event configuration, left joined with possible trigger and action configuration info
  */
+@Value
+@AllArgsConstructor
 public class EventConfigurationDto {
-    private long eventConfigurationId;
-    private EventTriggerType eventTriggerType;
-    private EventActionType eventActionType;
-    private Integer postDelaySeconds;
-    private boolean dispatchToHousekeeping;
-    private String preconditionExpression;
-    private String cancelExpression;
-    private Integer maxOccurrencesPerUser;
-    private int executionOrder;
-    private String label;
-    private String gcpTopic; // FIXME should not be a base field of EventAction
+    long eventConfigurationId;
+    String label;
+    EventTriggerType eventTriggerType;
+    EventActionType eventActionType;
+    Integer postDelaySeconds;
+
+    @Accessors(fluent = true)
+    boolean dispatchToHousekeeping;
+    String preconditionExpression;
+    String cancelExpression;
+    Integer maxOccurrencesPerUser;
+    int executionOrder;
+    String gcpTopic; // FIXME should not be a base field of EventAction
 
     /**
      * Triggers
      **/
     /* ACTIVITY_STATUS */
-    private InstanceStatusType instanceStatusType;
-    private Long activityStatusTriggerStudyActivityId;
-
-    /* CONSENT_SUSPENDED */
-    // No sub-table
+    InstanceStatusType instanceStatusType;
+    Long activityStatusTriggerStudyActivityId;
 
     /* WORKFLOW_STATE */
-    private Long workflowStateId;
-    private Boolean triggerAutomatically;
-
-    /* JOIN_MAILING_LIST */
-    // No sub-table
+    Long workflowStateId;
+    Boolean triggerAutomatically;
 
     /* DSM_NOTIFICATION */
-    private DsmNotificationEventType dsmNotificationEventType;
-
-    /* MEDICAL_UPDATE */
-    // No sub-table
-
-    /* USER_NOT_IN_STUDY */
-    // No sub-table
-
-    /* USER_REGISTERED */
-    // No sub-table
+    DsmNotificationEventType dsmNotificationEventType;
 
     /* USER_STATUS_CHANGE */
-    private EnrollmentStatusType userStatusChangedTargetStatusType;
+    EnrollmentStatusType userStatusChangedTargetStatusType;
 
-    /* EXIT_REQUEST */
-    // No sub-table
+    /* UPDATE_USER_STATUS */
+    EnrollmentStatusType updateUserStatusTargetStatusType;
 
     /**
      * Actions
      **/
     /* ANNOUNCEMENT */
-    private Long announcementMsgTemplateId;
-    private Boolean isAnnouncementPermanent;
-    private Boolean createAnnouncementForProxies;
+    Long announcementMsgTemplateId;
+
+    @Accessors(fluent = true)
+    Boolean isAnnouncementPermanent;
+
+    @Accessors(fluent = true)
+    Boolean shouldCreateAnnouncementForProxies;
 
     /* NOTIFICATION */
     // Currently, notification templates are not needed yet in event configuration
     // but is used in queued notification instead.
-    private NotificationType notificationType;
-    private NotificationServiceType notificationServiceType;
-    private Long linkedActivityId;
-    private List<PdfAttachment> notificationPdfAttachments = new ArrayList<>();
+    NotificationType notificationType;
+    NotificationServiceType notificationServiceType;
+    Long linkedActivityId;
 
     /* PDF_GENERATION */
-    private Long pdfGenerationDocumentConfigurationId;
+    Long pdfGenerationDocumentConfigurationId;
 
     /* ACTIVITY_INSTANCE_CREATION */
-    private Long activityInstanceCreationStudyActivityId;
-    private boolean createFromAnswer;
-    private String sourceQuestionStableId;
-    private String targetQuestionStableId;
-
-    /* USER_ENROLLED */
-    // No sub-table
+    Long activityInstanceCreationStudyActivityId;
 
     /* COPY_ANSWER */
-    private Long copyActionCopyConfigurationId;
+    Long copyActionCopyConfigurationId;
 
     /* CREATE_INVITATION */
-    private Long contactEmailQuestionStableCodeId;
-    private String contactEmailQuestionStableId;
-    private Boolean markExistingInvitationsAsVoided;
+    Long contactEmailQuestionStableCodeId;
+    String contactEmailQuestionStableId;
+
+    @Accessors(fluent = true)
+    Boolean shouldMarkExistingInvitationsAsVoided;
+
+    String customWorkflowName;
+    String customWorkflowStatus;
+
+    @Accessors(fluent = true)
+    boolean createFromAnswer;
+    String sourceQuestionStableId;
+    String targetQuestionStableId;
+
+    List<PdfAttachment> notificationPdfAttachments = new ArrayList<>();
 
     /* MARK_ACTIVITIES_READ_ONLY, HIDE_ACTIVITIES */
-    private Set<Long> targetActivityIds = new HashSet<>();
-
-    /* REVOKE_PROXIES */
-    // No sub-table
-
-    /* UPDATE_USER_STATUS */
-    EnrollmentStatusType updateUserStatusTargetStatusType;
-
-    private String customWorkflowName;
-    private String customWorkflowStatus;
-
-
-    public EventConfigurationDto(long eventConfigurationId,
-                                 String label,
-                                 EventTriggerType eventTriggerType,
-                                 EventActionType eventActionType,
-                                 int postDelaySeconds,
-                                 boolean dispatchToHousekeeping,
-                                 String preconditionExpression,
-                                 String cancelExpression,
-                                 Integer maxOccurrencesPerUser,
-                                 int executionOrder,
-                                 String gcpTopic,
-                                 InstanceStatusType instanceStatusType,
-                                 Long activityStatusTriggerStudyActivityId,
-                                 Long workflowStateId,
-                                 Boolean triggerAutomatically,
-                                 DsmNotificationEventType dsmNotificationEventType,
-                                 EnrollmentStatusType userStatusChangedTargetStatusType,
-                                 EnrollmentStatusType updateUserStatusTargetStatusType,
-                                 Long announcementMsgTemplateId,
-                                 Boolean announcementIsPermanent,
-                                 Boolean announcementCreateForProxies,
-                                 NotificationType notificationType,
-                                 NotificationServiceType notificationServiceType,
-                                 Long linkedActivityId,
-                                 Long pdfGenerationDocumentConfigurationId,
-                                 Long activityInstanceCreationStudyActivityId,
-                                 Long copyActionCopyConfigurationId,
-                                 Long contactEmailQuestionStableCodeId,
-                                 String contactEmailQuestionStableId,
-                                 Boolean markExistingInvitationsAsVoided,
-                                 String customWorkflowName,
-                                 String customWorkflowStatus,
-                                 boolean createFromAnswer,
-                                 String sourceQuestionStableId,
-                                 String targetQuestionStableId) {
-        this.eventConfigurationId = eventConfigurationId;
-        this.label = label;
-        this.eventTriggerType = eventTriggerType;
-        this.eventActionType = eventActionType;
-        this.postDelaySeconds = postDelaySeconds;
-        this.dispatchToHousekeeping = dispatchToHousekeeping;
-        this.preconditionExpression = preconditionExpression;
-        this.cancelExpression = cancelExpression;
-        this.maxOccurrencesPerUser = maxOccurrencesPerUser;
-        this.executionOrder = executionOrder;
-        this.gcpTopic = gcpTopic;
-        this.instanceStatusType = instanceStatusType;
-        this.activityStatusTriggerStudyActivityId = activityStatusTriggerStudyActivityId;
-        this.workflowStateId = workflowStateId;
-        this.triggerAutomatically = triggerAutomatically;
-        this.dsmNotificationEventType = dsmNotificationEventType;
-        this.userStatusChangedTargetStatusType = userStatusChangedTargetStatusType;
-        this.updateUserStatusTargetStatusType = updateUserStatusTargetStatusType;
-        this.announcementMsgTemplateId = announcementMsgTemplateId;
-        this.isAnnouncementPermanent = announcementIsPermanent;
-        this.createAnnouncementForProxies = announcementCreateForProxies;
-        this.notificationType = notificationType;
-        this.notificationServiceType = notificationServiceType;
-        this.linkedActivityId = linkedActivityId;
-        this.pdfGenerationDocumentConfigurationId = pdfGenerationDocumentConfigurationId;
-        this.activityInstanceCreationStudyActivityId = activityInstanceCreationStudyActivityId;
-        this.copyActionCopyConfigurationId = copyActionCopyConfigurationId;
-        this.contactEmailQuestionStableCodeId = contactEmailQuestionStableCodeId;
-        this.contactEmailQuestionStableId = contactEmailQuestionStableId;
-        this.markExistingInvitationsAsVoided = markExistingInvitationsAsVoided;
-        this.customWorkflowName = customWorkflowName;
-        this.customWorkflowStatus = customWorkflowStatus;
-        this.createFromAnswer = createFromAnswer;
-        this.sourceQuestionStableId = sourceQuestionStableId;
-        this.targetQuestionStableId = targetQuestionStableId;
-    }
-
-    public long getEventConfigurationId() {
-        return eventConfigurationId;
-    }
-
-    public String getLabel() {
-        return label;
-    }
-
-    public EventTriggerType getEventTriggerType() {
-        return eventTriggerType;
-    }
-
-    public EventActionType getEventActionType() {
-        return eventActionType;
-    }
-
-    public int getPostDelaySeconds() {
-        return postDelaySeconds;
-    }
-
-    public boolean dispatchToHousekeeping() {
-        return dispatchToHousekeeping;
-    }
-
-    public String getPreconditionExpression() {
-        return preconditionExpression;
-    }
-
-    public String getCancelExpression() {
-        return cancelExpression;
-    }
-
-    public Integer getMaxOccurrencesPerUser() {
-        return maxOccurrencesPerUser;
-    }
-
-    public int getExecutionOrder() {
-        return executionOrder;
-    }
-
-    public String getGcpTopic() {
-        return gcpTopic;
-    }
-
-    public InstanceStatusType getInstanceStatusType() {
-        return instanceStatusType;
-    }
-
-    public Long getActivityStatusTriggerStudyActivityId() {
-        return activityStatusTriggerStudyActivityId;
-    }
-
-    public Long getWorkflowStateId() {
-        return workflowStateId;
-    }
-
-    public Boolean getTriggerAutomatically() {
-        return triggerAutomatically;
-    }
-
-    public DsmNotificationEventType getDsmNotificationEventType() {
-        return dsmNotificationEventType;
-    }
-
-    public EnrollmentStatusType getUserStatusChangedTargetStatusType() {
-        return userStatusChangedTargetStatusType;
-    }
-
-    public EnrollmentStatusType getUpdateUserStatusTargetStatusType() {
-        return updateUserStatusTargetStatusType;
-    }
-
-    public Long getAnnouncementMsgTemplateId() {
-        return announcementMsgTemplateId;
-    }
-
-    public Boolean isAnnouncementPermanent() {
-        return isAnnouncementPermanent;
-    }
-
-    public Boolean shouldCreateAnnouncementForProxies() {
-        return createAnnouncementForProxies;
-    }
-
-    public NotificationType getNotificationType() {
-        return notificationType;
-    }
-
-    public NotificationServiceType getNotificationServiceType() {
-        return notificationServiceType;
-    }
-
-    public Long getLinkedActivityId() {
-        return linkedActivityId;
-    }
-
-    public Long getActivityInstanceCreationStudyActivityId() {
-        return activityInstanceCreationStudyActivityId;
-    }
-
-    public boolean getCreateFromAnswer() {
-        return createFromAnswer;
-    }
-
-    public String getSourceQuestionStableId() {
-        return sourceQuestionStableId;
-    }
-
-    public String getTargetQuestionStableId() {
-        return targetQuestionStableId;
-    }
-
-    public Long getCopyActionCopyConfigurationId() {
-        return copyActionCopyConfigurationId;
-    }
-
-    public Long getPdfGenerationDocumentConfigurationId() {
-        return pdfGenerationDocumentConfigurationId;
-    }
+    Set<Long> targetActivityIds = new HashSet<>();
 
     public void addNotificationPdfAttachment(Long pdfDocumentConfigurationId, Boolean alwaysGenerate) {
         notificationPdfAttachments.add(new PdfAttachment(pdfDocumentConfigurationId, alwaysGenerate));
     }
 
-    public List<PdfAttachment> getNotificationPdfAttachments() {
-        return notificationPdfAttachments;
-    }
-
-    public Long getContactEmailQuestionStableCodeId() {
-        return contactEmailQuestionStableCodeId;
-    }
-
-    public String getContactEmailQuestionStableId() {
-        return contactEmailQuestionStableId;
-    }
-
-    public Boolean shouldMarkExistingInvitationsAsVoided() {
-        return markExistingInvitationsAsVoided;
-    }
-
     public void addTargetActivityId(long activityId) {
         targetActivityIds.add(activityId);
-    }
-
-    public Set<Long> getTargetActivityIds() {
-        return targetActivityIds;
-    }
-
-    public String getCustomWorkflowName() {
-        return customWorkflowName;
-    }
-
-    public String getCustomWorkflowStatus() {
-        return customWorkflowStatus;
     }
 }
