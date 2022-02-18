@@ -48,7 +48,7 @@ public class GetInstitutionSuggestionsRouteTest extends IntegrationTestSuite.Tes
                     );
                     JdbiInstitution jdbiInstitution = handle.attach(JdbiInstitution.class);
                     jdbiInstitution.insert(
-                            new InstitutionDto(
+                            new InstitutionDto(0,
                                     NewInstitutionTestData.GUID,
                                     testCityId,
                                     NewInstitutionTestData.NAME
@@ -56,7 +56,7 @@ public class GetInstitutionSuggestionsRouteTest extends IntegrationTestSuite.Tes
                     );
 
                     for (int i = 0; i < GetInstitutionSuggestionsRoute.LIMIT + limitPadding; i++) {
-                        long id = jdbiInstitution.insert(new InstitutionDto(
+                        long id = jdbiInstitution.insert(new InstitutionDto(0,
                                 String.format("%s_limit_%d", NewInstitutionTestData.GUID, i),
                                 testCityId,
                                 String.format("%s limit %d", NewInstitutionTestData.NAME, i)));
