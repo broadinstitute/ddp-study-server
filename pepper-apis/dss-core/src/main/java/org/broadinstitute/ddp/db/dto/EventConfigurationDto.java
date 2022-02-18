@@ -16,12 +16,14 @@ import org.broadinstitute.ddp.model.event.NotificationServiceType;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.broadinstitute.ddp.model.event.PdfAttachment;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.jdbi.v3.core.mapper.reflect.ColumnName;
+import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 /**
  * A DTO representing the event configuration, left joined with possible trigger and action configuration info
  */
 @Value
-@AllArgsConstructor
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class EventConfigurationDto {
     long eventConfigurationId;
     String label;
@@ -30,6 +32,7 @@ public class EventConfigurationDto {
     Integer postDelaySeconds;
 
     @Accessors(fluent = true)
+    @ColumnName("dispatch_to_housekeeping")
     boolean dispatchToHousekeeping;
     String preconditionExpression;
     String cancelExpression;
@@ -64,9 +67,11 @@ public class EventConfigurationDto {
     Long announcementMsgTemplateId;
 
     @Accessors(fluent = true)
+    @ColumnName("announcement_is_permanent")
     Boolean isAnnouncementPermanent;
 
     @Accessors(fluent = true)
+    @ColumnName("announcement_create_for_proxies")
     Boolean shouldCreateAnnouncementForProxies;
 
     /* NOTIFICATION */
@@ -90,6 +95,7 @@ public class EventConfigurationDto {
     String contactEmailQuestionStableId;
 
     @Accessors(fluent = true)
+    @ColumnName("mark_existing_invitations_as_voided")
     Boolean shouldMarkExistingInvitationsAsVoided;
 
     String customWorkflowName;
