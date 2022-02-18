@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.db.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Value;
+import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
@@ -30,5 +31,17 @@ public class FormBlockDto {
                     rs.getString("shown_expression_text"),
                     rs.getString("enabled_expression_text"));
         }
+    }
+
+    public BlockType getType() {
+        return blockDto.getType();
+    }
+
+    public long getId() {
+        return blockDto.getId();
+    }
+
+    public String getGuid() {
+        return blockDto.getGuid();
     }
 }
