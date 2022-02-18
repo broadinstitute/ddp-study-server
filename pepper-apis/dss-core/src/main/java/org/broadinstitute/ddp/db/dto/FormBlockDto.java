@@ -1,58 +1,24 @@
 package org.broadinstitute.ddp.db.dto;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import org.broadinstitute.ddp.model.activity.types.BlockType;
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
  * A wrapper data object around a block and its optional conditional expression.
  */
+@Value
+@AllArgsConstructor
 public class FormBlockDto {
-
-    private final Long sectionId;
-    private final Long parentBlockId;
-    private final BlockDto blockDto;
-    private final String shownExpr;
-    private final String enabledExpr;
-
-    public FormBlockDto(Long sectionId, Long parentBlockId, BlockDto blockDto, String shownExpr, String enabledExpr) {
-        this.sectionId = sectionId;
-        this.parentBlockId = parentBlockId;
-        this.blockDto = blockDto;
-        this.shownExpr = shownExpr;
-        this.enabledExpr = enabledExpr;
-    }
-
-    public Long getSectionId() {
-        return sectionId;
-    }
-
-    public Long getParentBlockId() {
-        return parentBlockId;
-    }
-
-    public BlockType getType() {
-        return blockDto.getType();
-    }
-
-    public long getId() {
-        return blockDto.getId();
-    }
-
-    public String getGuid() {
-        return blockDto.getGuid();
-    }
-
-    public String getShownExpr() {
-        return shownExpr;
-    }
-
-    public String getEnabledExpr() {
-        return enabledExpr;
-    }
+    Long sectionId;
+    Long parentBlockId;
+    BlockDto blockDto;
+    String shownExpr;
+    String enabledExpr;
 
     public static class FormBlockDtoMapper implements RowMapper<FormBlockDto> {
         @Override
