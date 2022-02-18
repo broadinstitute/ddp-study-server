@@ -5,7 +5,6 @@ import java.util.Objects;
 
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.ViewFilter;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -26,7 +25,6 @@ public class BaseFilter {
     protected String jsonBody;
     protected String parent;
     protected String realm;
-    protected DDPInstance ddpInstance;
     protected int from;
     protected int to;
 
@@ -43,7 +41,6 @@ public class BaseFilter {
         if (StringUtils.isBlank(realm)) {
             throw new RuntimeException("realm is necessary");
         }
-        ddpInstance = DDPInstance.getDDPInstance(realm);
         filterQuery = "";
         quickFilterName = "";
         Filter[] savedFilters = new Gson().fromJson(queryParamsMap.get(RequestParameter.FILTERS).value(), Filter[].class);

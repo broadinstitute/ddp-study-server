@@ -6,9 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.google.gson.Gson;
-import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.ViewFilter;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -31,7 +29,6 @@ import org.slf4j.LoggerFactory;
 public abstract class BaseFilterParticipantList extends BaseFilter implements Filterable<ParticipantWrapperResult> {
 
     public static final String PARTICIPANT_DATA = "participantData";
-    public static final String OPTIONS = "OPTIONS";
     protected static final Gson GSON = new Gson();
     private static final Logger logger = LoggerFactory.getLogger(BaseFilterParticipantList.class);
 
@@ -53,8 +50,7 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
         }
     }
 
-    protected ParticipantWrapperResult filterParticipantList(Filter[] filters, Map<String, DBElement> columnNameMap,
-                                                             @NonNull DDPInstance instance) {
+    protected ParticipantWrapperResult filterParticipantList(Filter[] filters, Map<String, DBElement> columnNameMap) {
         Map<String, String> queryConditions = new HashMap<>();
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
         ParticipantWrapperPayload.Builder participantWrapperPayload =
