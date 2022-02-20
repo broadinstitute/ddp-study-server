@@ -18,8 +18,6 @@ public abstract class QuestionRecord {
     @SerializedName("stableId")
     private String stableId;
 
-    private transient Object questionAnswer;
-
     QuestionRecord(QuestionType questionType, String stableId) {
         this.questionType = questionType;
         this.stableId = stableId;
@@ -32,7 +30,6 @@ public abstract class QuestionRecord {
         public JsonElement serialize(QuestionRecord record, Type typeOfSrc, JsonSerializationContext context) {
             JsonElement recordElement = gson.toJsonTree(record);
             JsonObject recordObject = recordElement.getAsJsonObject();
-            //check question_type and try to get answer by casting !!!
             Object questionAnswer = null;
             if (record instanceof SimpleQuestionRecord) {
                 questionAnswer = ((SimpleQuestionRecord) record).getAnswer();
