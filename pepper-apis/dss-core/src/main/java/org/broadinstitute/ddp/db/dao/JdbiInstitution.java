@@ -29,12 +29,12 @@ public interface JdbiInstitution extends SqlObject {
 
     @SqlQuery("getSuggestionsByNamePattern")
     @UseStringTemplateSqlLocator
-    @RegisterRowMapper(InstitutionSuggestionDto.InstitutionSuggestionDtoMapper.class)
+    @RegisterConstructorMapper(InstitutionSuggestionDto.class)
     List<InstitutionSuggestionDto> getSuggestionsByNamePattern(@Bind("namePattern") String namePattern);
 
     @SqlQuery("getLimitedSuggestionsByAnchoredAndFreeNamePatterns")
     @UseStringTemplateSqlLocator
-    @RegisterRowMapper(InstitutionSuggestionDto.InstitutionSuggestionDtoMapper.class)
+    @RegisterConstructorMapper(InstitutionSuggestionDto.class)
     Stream<InstitutionSuggestionDto> getLimitedSuggestionsByNamePatterns(@Bind("anchored") String anchoredPattern,
                                                                          @Bind("free") String freePattern,
                                                                          @Bind("limit") int limit);
