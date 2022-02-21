@@ -1,56 +1,30 @@
 package org.broadinstitute.ddp.db.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.broadinstitute.ddp.model.activity.types.ListStyleHint;
 import org.broadinstitute.ddp.model.activity.types.PresentationHint;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
+@Value
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class BlockGroupHeaderDto {
+    @ColumnName("block_group_header_id")
+    long id;
 
-    private long id;
-    private long blockId;
-    private ListStyleHint listStyleHint;
-    private PresentationHint presentationHint;
-    private Long titleTemplateId;
-    private long revisionId;
+    @ColumnName("block_id")
+    long blockId;
 
-    @JdbiConstructor
-    public BlockGroupHeaderDto(
-            @ColumnName("block_group_header_id") long id,
-            @ColumnName("block_id") long blockId,
-            @ColumnName("list_style_hint_code") ListStyleHint listStyleHint,
-            @ColumnName("presentation_hint_code") PresentationHint presentationHint,
-            @ColumnName("title_template_id") Long titleTemplateId,
-            @ColumnName("revision_id") long revisionId) {
-        this.id = id;
-        this.blockId = blockId;
-        this.listStyleHint = listStyleHint;
-        this.presentationHint = presentationHint;
-        this.titleTemplateId = titleTemplateId;
-        this.revisionId = revisionId;
-    }
+    @ColumnName("list_style_hint_code")
+    ListStyleHint listStyleHint;
 
-    public long getId() {
-        return id;
-    }
+    @ColumnName("presentation_hint_code")
+    PresentationHint presentationHint;
 
-    public long getBlockId() {
-        return blockId;
-    }
+    @ColumnName("title_template_id")
+    Long titleTemplateId;
 
-    public ListStyleHint getListStyleHint() {
-        return listStyleHint;
-    }
-
-    public PresentationHint getPresentationHint() {
-        return presentationHint;
-    }
-
-    public Long getTitleTemplateId() {
-        return titleTemplateId;
-    }
-
-    public long getRevisionId() {
-        return revisionId;
-    }
+    @ColumnName("revision_id")
+    long revisionId;
 }
