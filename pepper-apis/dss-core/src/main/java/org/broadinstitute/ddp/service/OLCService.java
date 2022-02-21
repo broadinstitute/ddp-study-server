@@ -69,12 +69,13 @@ public class OLCService {
         int indexOfTargetPaddingChar = targetPrecision.getCodeLength();
 
         // can convert a MORE precise OLC to anything other than MOST precise
-        // otherwise, all other precisions have padding so we need to make sure the padding is at
+        // otherwise, all other precisions have padding, so we need to make sure the padding is at
         // least as long as (if not longer than) the target valid char length we want
         if (indexOfPaddingChar == -1) {
             return targetPrecision != OLCPrecision.MOST;
-        } else
+        } else {
             return indexOfPaddingChar >= indexOfTargetPaddingChar;
+        }
     }
 
     /**
