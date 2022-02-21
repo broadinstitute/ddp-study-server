@@ -52,9 +52,9 @@ public class QuestionDto implements Serializable {
         this.additionalInfoFooterTemplateId = additionalInfoFooterTemplateId;
         this.activityId = activityId;
         this.isRestricted = isRestricted;
-        this.isDeprecated = isDeprecated == null ? false : isDeprecated;
-        this.hideNumber = hideNumber == null ? false : hideNumber;
-        this.writeOnce = writeOnce == null ? false : writeOnce;
+        this.isDeprecated = isDeprecated != null && isDeprecated;
+        this.hideNumber = hideNumber != null && hideNumber;
+        this.writeOnce = writeOnce != null && writeOnce;
         this.revisionId = revisionId;
         this.revisionStart = revisionStart;
         this.revisionEnd = revisionEnd;

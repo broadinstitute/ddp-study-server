@@ -14,6 +14,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
@@ -69,35 +71,18 @@ import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
+@Slf4j
+@AllArgsConstructor
 public class PutFormAnswersRoute implements Route {
-
-    private static final Logger LOG = LoggerFactory.getLogger(PutFormAnswersRoute.class);
-
     private final WorkflowService workflowService;
     private final ActivityInstanceService actInstService;
     private final ActivityValidationService actValidationService;
     private final PexInterpreter interpreter;
     private final AddressService addressService;
-
-    public PutFormAnswersRoute(
-            WorkflowService workflowService,
-            ActivityInstanceService actInstService,
-            ActivityValidationService actValidationService,
-            PexInterpreter interpreter,
-            AddressService addressService
-    ) {
-        this.workflowService = workflowService;
-        this.actInstService = actInstService;
-        this.actValidationService = actValidationService;
-        this.interpreter = interpreter;
-        this.addressService = addressService;
-    }
 
     @Override
     public Object handle(Request request, Response response) {
@@ -109,7 +94,7 @@ public class PutFormAnswersRoute implements Route {
         String operatorGuid = StringUtils.defaultIfBlank(ddpAuth.getOperator(), userGuid);
         boolean isStudyAdmin = ddpAuth.hasAdminAccessToStudy(studyGuid);
 
-        LOG.info("Completing form for user {}, operator {} (isStudyAdmin={}), activity instance {}, study {}",
+        log.info("Completing form for user {}, operator {} (isStudyAdmin={}), activity instance {}, study {}",
                 userGuid, operatorGuid, isStudyAdmin, instanceGuid, studyGuid);
 
         PutAnswersResponse resp = TransactionWrapper.withTxn(
@@ -136,12 +121,12 @@ public class PutFormAnswersRoute implements Route {
                         if (parentInstanceDto != null && ActivityInstanceUtil.isInstanceReadOnly(parentActivityDef, parentInstanceDto)) {
                             String msg = "Parent activity instance " + parentInstanceDto.getGuid()
                                     + " is read-only, cannot update child instance " + instanceGuid;
-                            LOG.info(msg);
+                            log.info(msg);
                             throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, msg));
                         }
                         if (ActivityInstanceUtil.isInstanceReadOnly(activityDef, instanceDto)) {
                             String msg = "Activity instance " + instanceGuid + " is read-only, cannot update activity";
-                            LOG.info(msg);
+                            log.info(msg);
                             throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, msg));
                         }
                     }
@@ -151,7 +136,7 @@ public class PutFormAnswersRoute implements Route {
                             studyGuid, instanceGuid, preferredUserLangDto, instanceSummary);
                     if (!form.isComplete()) {
                         String msg = "The status cannot be set to COMPLETE because the question requirements are not met";
-                        LOG.info(msg);
+                        log.info(msg);
                         throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, msg));
                     }
 
@@ -171,8 +156,8 @@ public class PutFormAnswersRoute implements Route {
                     if (!validationFailures.isEmpty()) {
                         String msg = "Activity validation failed";
                         List<String> validationErrorSummaries = validationFailures
-                                .stream().map(failure -> failure.getErrorMessage()).collect(Collectors.toList());
-                        LOG.info(msg + ", reasons: {}", validationErrorSummaries);
+                                .stream().map(ActivityValidationFailure::getErrorMessage).collect(Collectors.toList());
+                        log.info(msg + ", reasons: {}", validationErrorSummaries);
                         throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.ACTIVITY_VALIDATION, msg));
                     }
 
@@ -185,7 +170,7 @@ public class PutFormAnswersRoute implements Route {
                         if (formActivitySettingDto.get().shouldSnapshotAddressOnSubmit()) {
                             var address = addressService.snapshotAddress(handle, userGuid, operatorGuid, form.getInstanceId());
                             if (address != null) {
-                                LOG.info("Default address is snapshotted with guid {}, for user {}, activity instance {}",
+                                log.info("Default address is snapshotted with guid {}, for user {}, activity instance {}",
                                         address.getGuid(), userGuid, instanceGuid);
                             } else {
                                 String errorMsg = format("Default mail address is not found, therefore the snapshotting is not possible. "
@@ -218,7 +203,7 @@ public class PutFormAnswersRoute implements Route {
                     WorkflowResponse workflowResp = workflowService
                             .suggestNextState(handle, operatorGuid, userGuid, studyGuid, fromState)
                             .map(nextState -> {
-                                LOG.info("Suggesting user {} to next state {}", userGuid, nextState);
+                                log.info("Suggesting user {} to next state {}", userGuid, nextState);
                                 return workflowService.buildStateResponse(handle, userGuid, nextState);
                             })
                             .orElse(WorkflowResponse.unknown());
@@ -263,14 +248,13 @@ public class PutFormAnswersRoute implements Route {
                                           String instanceGuid,
                                           LanguageDto preferredLangDto,
                                           UserActivityInstanceSummary instanceSummary) {
-        long langCodeId = preferredLangDto.getId();
         String isoLangCode = preferredLangDto.getIsoCode();
         Optional<ActivityInstance> activityInstance = actInstService.buildInstanceFromDefinition(
                 handle, userGuid, operatorGuid, studyGuid, instanceGuid, isoLangCode, instanceSummary);
         if (activityInstance.isEmpty()) {
             String msg = format("Could not find activity instance %s for user %s using language %s",
                     instanceGuid, userGuid, isoLangCode);
-            LOG.warn(msg);
+            log.warn(msg);
             throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
         }
         return (FormInstance) activityInstance.get();
@@ -319,7 +303,7 @@ public class PutFormAnswersRoute implements Route {
                     if (!childForm.isComplete()) {
                         String msg = "Status for instance " + instanceGuid + " cannot be set to COMPLETE because the"
                                 + " question requirements are not met for child instance " + childInstanceDto.getGuid();
-                        LOG.info(msg);
+                        log.info(msg);
                         throw ResponseUtil.haltError(response, 422,
                                 new ApiError(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, msg));
                     }
@@ -337,7 +321,7 @@ public class PutFormAnswersRoute implements Route {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
         handle.attach(AnswerDao.class).deleteAnswers(answerIdsToDelete);
-        LOG.info("Deleted {} hidden answers for user {} and activity instance {}",
+        log.info("Deleted {} hidden answers for user {} and activity instance {}",
                 answerIdsToDelete.size(), userGuid, form.getGuid());
     }
 
@@ -371,7 +355,7 @@ public class PutFormAnswersRoute implements Route {
                 boolean isFirstInstance = (i == 0);
                 boolean canDelete = ActivityInstanceUtil.computeCanDelete(
                         childActivity.canDeleteInstances(),
-                        childActivity.getCanDeleteFirstInstance(),
+                        childActivity.canDeleteFirstInstance(),
                         isFirstInstance);
                 if (canDelete) {
                     // Should delete the instance and all its answers.
@@ -383,11 +367,11 @@ public class PutFormAnswersRoute implements Route {
             }
 
             DBUtils.checkDelete(deletableInstanceIds.size(), instanceDao.deleteAllByIds(deletableInstanceIds));
-            LOG.info("Deleted {} hidden child instances for user {}, parent instance {}, child activity {}",
+            log.info("Deleted {} hidden child instances for user {}, parent instance {}, child activity {}",
                     deletableInstanceIds.size(), userGuid, form.getGuid(), childActivity.getActivityCode());
 
             answerDao.deleteAllByInstanceIds(deleteOnlyAnswers);
-            LOG.info("Cleared answers for {} hidden child instances for user {}, parent instance {}, child activity {}",
+            log.info("Cleared answers for {} hidden child instances for user {}, parent instance {}, child activity {}",
                     deleteOnlyAnswers.size(), userGuid, form.getGuid(), childActivity.getActivityCode());
         }
     }
@@ -417,7 +401,7 @@ public class PutFormAnswersRoute implements Route {
                         .orElse(false);
                 if (!isVerified) {
                     String msg = "Address needs to be verified";
-                    LOG.info(msg);
+                    log.info(msg);
                     throw ResponseUtil.haltError(422, new ApiError(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, msg));
                 }
             }
@@ -427,7 +411,7 @@ public class PutFormAnswersRoute implements Route {
                         .orElse(false);
                 if (!hasPhone) {
                     String msg = "Address requires a phone number";
-                    LOG.info(msg);
+                    log.info(msg);
                     throw ResponseUtil.haltError(422, new ApiError(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, msg));
                 }
             }

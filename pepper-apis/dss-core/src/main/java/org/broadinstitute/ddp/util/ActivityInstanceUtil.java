@@ -80,7 +80,7 @@ public class ActivityInstanceUtil {
                 instanceDto.getCreatedAtMillis(),
                 instanceDto.getStatusType().name(),
                 activityDef.isWriteOnce(),
-                instanceDto.getReadonly());
+                instanceDto.getIsReadonly());
     }
 
     /**
@@ -95,7 +95,7 @@ public class ActivityInstanceUtil {
         ActivityInstanceDto activityInstanceDto = jdbiActivityInstance.getByActivityInstanceGuid(activityInstanceGuid)
                 .orElseThrow(IllegalArgumentException::new);
         // is_readonly flag in the activity instance overrides everything
-        Boolean isReadonly = activityInstanceDto.getReadonly();
+        Boolean isReadonly = activityInstanceDto.getIsReadonly();
         if (isReadonly != null) {
             return isReadonly;
         }
@@ -104,7 +104,7 @@ public class ActivityInstanceUtil {
         JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
         ActivityDto activityDto = jdbiActivity.queryActivityById(studyActivityId);
 
-        return computeReadonly(activityDto.isWriteOnce(), activityDto.getEditTimeoutSec(),
+        return computeReadonly(activityDto.writeOnce(), activityDto.getEditTimeoutSec(),
                 activityInstanceDto.getStatusType(), activityInstanceDto.getCreatedAtMillis());
     }
 
