@@ -39,6 +39,7 @@ import org.broadinstitute.ddp.model.activity.definition.validation.RegexRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.UniqueRuleDef;
+import org.broadinstitute.ddp.model.activity.definition.validation.CompareRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.UniqueValueRuleDef;
 import org.broadinstitute.ddp.model.activity.instance.validation.AgeRangeRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.CompleteRule;
@@ -74,6 +75,9 @@ public interface ValidationDao extends SqlObject {
     JdbiRegexValidation getJdbiRegexValidation();
 
     @CreateSqlObject
+    JdbiComparisonValidation getJdbiComparisonValidation();
+
+    @CreateSqlObject
     JdbiLengthValidation getJdbiLengthValidation();
 
     @CreateSqlObject
@@ -95,6 +99,9 @@ public interface ValidationDao extends SqlObject {
     JdbiQuestionValidation getJdbiQuestionValidation();
 
     @CreateSqlObject
+    JdbiQuestion getJdbiQuestion();
+
+    @CreateSqlObject
     JdbiRevision getJdbiRevision();
 
     @CreateSqlObject
@@ -103,14 +110,13 @@ public interface ValidationDao extends SqlObject {
     @CreateSqlObject
     JdbiI18nValidationMsgTrans getJdbiI18nValidationMsgTrans();
 
-
     /**
      * Create new validation rules for given question by inserting common data and then rule specific data.
      *
      * @param question   the associated question with validations
      * @param revisionId the revision to use, will be shared by all created data
      */
-    default void insertValidations(QuestionDef question, long revisionId) {
+    default void insertValidations(long activityId, QuestionDef question, long revisionId) {
         long questionId = question.getQuestionId();
         for (RuleDef rule : question.getValidations()) {
             if (rule instanceof RequiredRuleDef) {
@@ -137,6 +143,8 @@ public interface ValidationDao extends SqlObject {
                 insert(questionId, (UniqueRuleDef) rule, revisionId);
             } else if (rule instanceof UniqueValueRuleDef) {
                 insert(questionId, (UniqueValueRuleDef) rule, revisionId);
+            } else if (rule instanceof CompareRuleDef) {
+                insert(questionId, (CompareRuleDef) rule, activityId, revisionId);
             } else {
                 throw new DaoException("Unknown validation rule type " + rule.getRuleType());
             }
@@ -371,6 +379,25 @@ public interface ValidationDao extends SqlObject {
      */
     default void insert(long questionId, UniqueValueRuleDef rule, long revisionId) {
         insertBaseRule(questionId, rule, revisionId);
+    }
+
+    /**
+     * Create a compare value validation rule with scope: same question answers among all participants of the study
+     *
+     * @param questionId the associated question
+     * @param rule       the rule definition
+     * @param revisionId the revision to use, will be shared by all created data
+     */
+    default void insert(long questionId, CompareRuleDef rule, long activityId, long revisionId) {
+        insertBaseRule(questionId, rule, revisionId);
+
+        //TODO: Find question id by studyId & stableId (do we have to?)
+        final Optional<Long> referencedQuestionId = getJdbiQuestion().findIdByStableId(rule.getValueStableId());
+        if (referencedQuestionId.isEmpty()) {
+            throw new DaoException("Referenced question " + rule.getValueStableId() + " doesn't exist");
+        }
+
+        getJdbiComparisonValidation().insert(rule.getRuleId(), referencedQuestionId.get(), rule.getComparison());
     }
 
     /**

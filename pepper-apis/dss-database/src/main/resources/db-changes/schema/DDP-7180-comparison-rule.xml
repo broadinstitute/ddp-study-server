@@ -11,6 +11,8 @@
                 <constraints primaryKey="true" primaryKeyName="comparison_validation_pk"/>
             </column>
 
+            <column name="reference_question_id" type="bigint" />
+
             <column name="comparison_validation_type"
                     type="enum('EQUAL', 'NOT_EQUAL', 'LESS', 'GREATER', 'LESS_OR_EQUAL', 'GREATER_OR_EQUAL')" />
         </createTable>
@@ -18,6 +20,10 @@
         <addForeignKeyConstraint baseTableName="comparison_validation" baseColumnNames="validation_id"
                                  referencedTableName="validation" referencedColumnNames="validation_id"
                                  constraintName="comparison_validation_fk" onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint baseTableName="comparison_validation" baseColumnNames="reference_question_id"
+                                 referencedTableName="question" referencedColumnNames="question_id"
+                                 constraintName="comparison_validation_reference_question_id_fk" onDelete="CASCADE"/>
     </changeSet>
 
     <changeSet author="Dmitrii Eliseev" id="20220211-add-comparison-validation-type">

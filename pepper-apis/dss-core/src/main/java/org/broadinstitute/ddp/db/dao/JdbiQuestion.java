@@ -91,6 +91,10 @@ public interface JdbiQuestion extends SqlObject {
     Optional<Long> findIdByStableIdAndInstanceGuid(@Bind("stableId") String stableId,
                                                    @Bind("instanceGuid") String instanceGuid);
 
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryQuestionIdByStableId")
+    Optional<Long> findIdByStableId(@Bind("stableId") String stableId);
+
     default Optional<QuestionDto> findDtoByStableIdAndInstanceGuid(String stableId, String instanceGuid) {
         return findIdByStableIdAndInstanceGuid(stableId, instanceGuid)
                 .flatMap(this::findQuestionDtoById);

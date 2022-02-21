@@ -48,6 +48,13 @@ select q.question_id
    and (rev.end_date is null or ai.created_at \< rev.end_date)
 >>
 
+queryQuestionIdByStableId() ::= <<
+select q.question_id
+  from question as q
+  join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id
+ where qsc.stable_id = :stableId
+>>
+
 select_all_question_dtos() ::= <<
 select qt.question_type_code as question_type,
        qsc.stable_id,

@@ -18,7 +18,7 @@ public class CompareRuleDef extends RuleDef {
     ComparisonType comparison;
 
     public CompareRuleDef(final Template hintTemplate, final String valueStableId, final ComparisonType comparison) {
-        super(RuleType.COMPARE, hintTemplate);
+        super(RuleType.COMPARISON, hintTemplate);
         
         this.valueStableId = valueStableId;
         this.comparison = comparison;
