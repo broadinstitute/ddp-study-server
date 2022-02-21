@@ -39,7 +39,7 @@ public interface JdbiFormSectionBlock extends SqlObject {
                       @Bind("revisionId") long revisionId);
 
 
-    @SqlQuery("select * from form_section__block as fsb"
+    @SqlQuery("select fsb.* from form_section__block as fsb"
             + " join revision as rev on rev.revision_id = fsb.revision_id"
             + " where fsb.form_section_id = :sectionId and rev.end_date is null"
             + " order by fsb.display_order asc")
