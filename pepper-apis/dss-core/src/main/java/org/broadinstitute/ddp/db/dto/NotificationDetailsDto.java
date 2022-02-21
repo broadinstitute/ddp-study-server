@@ -3,99 +3,50 @@ package org.broadinstitute.ddp.db.dto;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
+@Value
+@RequiredArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class NotificationDetailsDto {
+    @ColumnName("notification_type")
+    NotificationType notificationType;
 
-    private NotificationType notificationType;
-    private NotificationServiceType serviceType;
-    private Long linkedActivityId;
-    private String toEmailAddress;
-    private String webBaseUrl;
-    private String apiKey;
-    private String studyFromName;
-    private String studyFromEmail;
-    private String defaultSalutation;
-    private String participantFirstName;
-    private String participantLastName;
-    private List<NotificationTemplateSubstitutionDto> templateSubstitutions = new ArrayList<>();
+    @ColumnName("service_type")
+    NotificationServiceType serviceType;
 
-    @JdbiConstructor
-    public NotificationDetailsDto(
-            @ColumnName("notification_type") NotificationType notificationType,
-            @ColumnName("service_type") NotificationServiceType serviceType,
-            @ColumnName("linked_activity_id") Long linkedActivityId,
-            @ColumnName("to_email_address") String toEmailAddress,
-            @ColumnName("study_web_base_url") String webBaseUrl,
-            @ColumnName("sendgrid_api_key") String apiKey,
-            @ColumnName("sendgrid_from_name") String studyFromName,
-            @ColumnName("sendgrid_from_email") String studyFromEmail,
-            @ColumnName("sendgrid_default_salutation") String defaultSalutation,
-            @ColumnName("participant_first_name") String participantFirstName,
-            @ColumnName("participant_last_name") String participantLastName) {
-        this.notificationType = notificationType;
-        this.serviceType = serviceType;
-        this.linkedActivityId = linkedActivityId;
-        this.toEmailAddress = toEmailAddress;
-        this.webBaseUrl = webBaseUrl;
-        this.apiKey = apiKey;
-        this.studyFromName = studyFromName;
-        this.studyFromEmail = studyFromEmail;
-        this.defaultSalutation = defaultSalutation;
-        this.participantFirstName = participantFirstName;
-        this.participantLastName = participantLastName;
-    }
+    @ColumnName("linked_activity_id")
+    Long linkedActivityId;
 
-    public NotificationType getNotificationType() {
-        return notificationType;
-    }
+    @ColumnName("to_email_address")
+    String toEmailAddress;
 
-    public NotificationServiceType getServiceType() {
-        return serviceType;
-    }
+    @ColumnName("study_web_base_url")
+    String webBaseUrl;
 
-    public Long getLinkedActivityId() {
-        return linkedActivityId;
-    }
+    @ColumnName("sendgrid_api_key")
+    String apiKey;
 
-    public String getToEmailAddress() {
-        return toEmailAddress;
-    }
+    @ColumnName("sendgrid_from_name")
+    String studyFromName;
 
-    public String getWebBaseUrl() {
-        return webBaseUrl;
-    }
+    @ColumnName("sendgrid_from_email")
+    String studyFromEmail;
 
-    public String getApiKey() {
-        return apiKey;
-    }
+    @ColumnName("sendgrid_default_salutation")
+    String defaultSalutation;
 
-    public String getStudyFromName() {
-        return studyFromName;
-    }
+    @ColumnName("participant_first_name")
+    String participantFirstName;
 
-    public String getStudyFromEmail() {
-        return studyFromEmail;
-    }
-
-    public String getDefaultSalutation() {
-        return defaultSalutation;
-    }
-
-    public String getParticipantFirstName() {
-        return participantFirstName;
-    }
-
-    public String getParticipantLastName() {
-        return participantLastName;
-    }
-
-    public List<NotificationTemplateSubstitutionDto> getTemplateSubstitutions() {
-        return templateSubstitutions;
-    }
+    @ColumnName("participant_last_name")
+    String participantLastName;
+    
+    List<NotificationTemplateSubstitutionDto> templateSubstitutions = new ArrayList<>();
 
     public void addTemplateSubstitution(NotificationTemplateSubstitutionDto substitution) {
         if (substitution != null) {
