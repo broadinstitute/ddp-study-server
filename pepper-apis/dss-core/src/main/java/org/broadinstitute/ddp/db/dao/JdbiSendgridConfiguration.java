@@ -1,14 +1,14 @@
 package org.broadinstitute.ddp.db.dao;
 
-import java.util.Optional;
-
 import org.broadinstitute.ddp.db.dto.SendgridConfigurationDto;
 import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
+import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+
+import java.util.Optional;
 
 public interface JdbiSendgridConfiguration extends SqlObject {
 
@@ -38,7 +38,7 @@ public interface JdbiSendgridConfiguration extends SqlObject {
                     + " from sendgrid_configuration sc, umbrella_study us"
                     + " where sc.umbrella_study_id = us.umbrella_study_id and us.guid = :umbrellaStudyGuid"
     )
-    @RegisterRowMapper(SendgridConfigurationDto.SendgridConfigurationDtoMapper.class)
+    @RegisterConstructorMapper(SendgridConfigurationDto.class)
     Optional<SendgridConfigurationDto> findByStudyGuid(@Bind("umbrellaStudyGuid") String umbrellaStudyGuid);
 
     @SqlUpdate(
