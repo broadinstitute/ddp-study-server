@@ -9,7 +9,7 @@ import org.broadinstitute.ddp.model.activity.types.RuleType;
 import javax.validation.constraints.NotNull;
 
 @Value
-public class CompareRuleDef extends RuleDef {
+public class ComparisonRuleDef extends RuleDef {
     @NotNull
     @SerializedName("valueStableId")
     String valueStableId;
@@ -17,7 +17,7 @@ public class CompareRuleDef extends RuleDef {
     @SerializedName("comparison")
     ComparisonType comparison;
 
-    public CompareRuleDef(final Template hintTemplate, final String valueStableId, final ComparisonType comparison) {
+    public ComparisonRuleDef(final Template hintTemplate, final String valueStableId, final ComparisonType comparison) {
         super(RuleType.COMPARISON, hintTemplate);
         
         this.valueStableId = valueStableId;

@@ -23,6 +23,7 @@ import org.broadinstitute.ddp.db.dto.validation.DecimalRangeRuleDto;
 import org.broadinstitute.ddp.db.dto.validation.LengthRuleDto;
 import org.broadinstitute.ddp.db.dto.validation.NumOptionsSelectedRuleDto;
 import org.broadinstitute.ddp.db.dto.validation.RegexRuleDto;
+import org.broadinstitute.ddp.db.dto.validation.ComparisonRuleDto;
 import org.broadinstitute.ddp.db.dto.validation.RuleDto;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
@@ -39,21 +40,9 @@ import org.broadinstitute.ddp.model.activity.definition.validation.RegexRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.UniqueRuleDef;
-import org.broadinstitute.ddp.model.activity.definition.validation.CompareRuleDef;
+import org.broadinstitute.ddp.model.activity.definition.validation.ComparisonRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.UniqueValueRuleDef;
-import org.broadinstitute.ddp.model.activity.instance.validation.AgeRangeRule;
-import org.broadinstitute.ddp.model.activity.instance.validation.CompleteRule;
-import org.broadinstitute.ddp.model.activity.instance.validation.DateFieldRequiredRule;
-import org.broadinstitute.ddp.model.activity.instance.validation.DateRangeRule;
-import org.broadinstitute.ddp.model.activity.instance.validation.IntRangeRule;
-import org.broadinstitute.ddp.model.activity.instance.validation.DecimalRangeRule;
-import org.broadinstitute.ddp.model.activity.instance.validation.LengthRule;
-import org.broadinstitute.ddp.model.activity.instance.validation.NumOptionsSelectedRule;
-import org.broadinstitute.ddp.model.activity.instance.validation.RegexRule;
-import org.broadinstitute.ddp.model.activity.instance.validation.RequiredRule;
-import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
-import org.broadinstitute.ddp.model.activity.instance.validation.UniqueRule;
-import org.broadinstitute.ddp.model.activity.instance.validation.UniqueValueRule;
+import org.broadinstitute.ddp.model.activity.instance.validation.*;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
@@ -143,8 +132,8 @@ public interface ValidationDao extends SqlObject {
                 insert(questionId, (UniqueRuleDef) rule, revisionId);
             } else if (rule instanceof UniqueValueRuleDef) {
                 insert(questionId, (UniqueValueRuleDef) rule, revisionId);
-            } else if (rule instanceof CompareRuleDef) {
-                insert(questionId, (CompareRuleDef) rule, activityId, revisionId);
+            } else if (rule instanceof ComparisonRuleDef) {
+                insert(questionId, (ComparisonRuleDef) rule, activityId, revisionId);
             } else {
                 throw new DaoException("Unknown validation rule type " + rule.getRuleType());
             }
@@ -237,6 +226,11 @@ public interface ValidationDao extends SqlObject {
                 var decimalRangeDto = (DecimalRangeRuleDto) dto;
                 return DecimalRangeRule.of(dto.getId(), message, hint, dto.isAllowSave(),
                         decimalRangeDto.getMin(), decimalRangeDto.getMax());
+            case COMPARISON:
+                //TODO: Inject the real reference question's answer value
+                var comparisonRule = (ComparisonRuleDto) dto;
+                return ComparisonRule.of(dto.getId(), message, hint, dto.isAllowSave(),
+                        comparisonRule.getReferenceQuestionId(), comparisonRule.getType());
             default:
                 throw new DaoException("Unknown validation rule type " + dto.getRuleType());
         }
@@ -388,7 +382,7 @@ public interface ValidationDao extends SqlObject {
      * @param rule       the rule definition
      * @param revisionId the revision to use, will be shared by all created data
      */
-    default void insert(long questionId, CompareRuleDef rule, long activityId, long revisionId) {
+    default void insert(long questionId, ComparisonRuleDef rule, long activityId, long revisionId) {
         insertBaseRule(questionId, rule, revisionId);
 
         //TODO: Find question id by studyId & stableId (do we have to?)
