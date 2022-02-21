@@ -46,7 +46,7 @@ public interface JdbiFormSectionBlock extends SqlObject {
     @RegisterConstructorMapper(SectionBlockMembershipDto.class)
     List<SectionBlockMembershipDto> getOrderedActiveMemberships(long sectionId);
 
-    @SqlQuery("select * from form_section__block as fsb"
+    @SqlQuery("select fsb.* from form_section__block as fsb"
             + " join revision as rev on rev.revision_id = fsb.revision_id"
             + " where fsb.block_id = :blockId and rev.end_date is null")
     @RegisterConstructorMapper(SectionBlockMembershipDto.class)
