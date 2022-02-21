@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.google.maps.model.GeocodingResult;
 import com.google.openlocationcode.OpenLocationCode;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.client.GoogleMapsClient;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
@@ -21,11 +22,11 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class OLCService {
 
     public static final OLCPrecision DEFAULT_OLC_PRECISION = OLCPrecision.MOST;
 
-    private static final Logger LOG = LoggerFactory.getLogger(OLCService.class);
     private static final int PRECISION_DELIMITER = 8;
     private static final int FULL_PLUS_CODE_LENGTH = 11;
 
@@ -91,13 +92,13 @@ public class OLCService {
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
 
         if (!studyDto.isPublicDataSharingEnabled()) {
-            LOG.error("Study " + studyGuid + " does not allow location sharing.");
+            log.error("Study " + studyGuid + " does not allow location sharing.");
             return null;
         }
 
         OLCPrecision precision = studyDto.getOlcPrecision();
         if (precision == null) {
-            LOG.error("Study " + studyGuid + " has location sharing enabled but no plus code precision set in database.");
+            log.error("Study " + studyGuid + " has location sharing enabled but no plus code precision set in database.");
             return null;
         }
 
@@ -130,14 +131,14 @@ public class OLCService {
         var res = maps.lookupGeocode(fullAddress);
         if (res.getStatusCode() != 200) {
             var e = res.hasThrown() ? res.getThrown() : res.getError();
-            LOG.warn("Location: " + fullAddress + " could not be found on google maps services", e);
+            log.warn("Location: " + fullAddress + " could not be found on google maps services", e);
             return null;
         }
         GeocodingResult[] results = res.getBody();
 
         String plusCode;
         if (results.length != 1) {
-            LOG.warn("Address: " + fullAddress + " had " + results.length + " results so we could not support assigning a pluscode");
+            log.warn("Address: " + fullAddress + " had " + results.length + " results so we could not support assigning a pluscode");
             return null;
         } else if (results[0].plusCode == null) {
             double lat = results[0].geometry.location.lat;
