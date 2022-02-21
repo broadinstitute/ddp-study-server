@@ -5,7 +5,7 @@ import java.util.Optional;
 
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
+import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -23,21 +23,21 @@ public interface JdbiActivityVersion extends SqlObject {
             + " join revision as rev on rev.revision_id = av.revision_id"
             + " where av.study_activity_id = :activityId"
             + " order by rev.start_date asc")
-    @RegisterRowMapper(ActivityVersionDto.ActivityVersionDtoMapper.class)
+    @RegisterConstructorMapper(ActivityVersionDto.class)
     List<ActivityVersionDto> findAllVersionsInAscendingOrder(@Bind("activityId") long activityId);
 
     @SqlQuery("select av.*, rev.start_date, rev.end_date"
             + " from activity_version as av"
             + " join revision as rev on rev.revision_id = av.revision_id"
             + " where av.study_activity_id = :activityId and rev.end_date is null")
-    @RegisterRowMapper(ActivityVersionDto.ActivityVersionDtoMapper.class)
+    @RegisterConstructorMapper(ActivityVersionDto.class)
     Optional<ActivityVersionDto> getActiveVersion(long activityId);
 
     @SqlQuery("select av.*, rev.start_date, rev.end_date"
             + " from activity_version as av"
             + " join revision as rev on rev.revision_id = av.revision_id"
             + " where av.activity_version_id = :versionId")
-    @RegisterRowMapper(ActivityVersionDto.ActivityVersionDtoMapper.class)
+    @RegisterConstructorMapper(ActivityVersionDto.class)
     Optional<ActivityVersionDto> findById(@Bind("versionId") long versionId);
 
     // study-builder
@@ -48,7 +48,7 @@ public interface JdbiActivityVersion extends SqlObject {
             + " where act.study_id = :studyId"
             + "   and act.study_activity_code = :activityCode"
             + "   and ver.version_tag = :versionTag")
-    @RegisterRowMapper(ActivityVersionDto.ActivityVersionDtoMapper.class)
+    @RegisterConstructorMapper(ActivityVersionDto.class)
     Optional<ActivityVersionDto> findByActivityCodeAndVersionTag(@Bind("studyId") long studyId,
                                                                  @Bind("activityCode") String activityCode,
                                                                  @Bind("versionTag") String versionTag);
@@ -59,7 +59,7 @@ public interface JdbiActivityVersion extends SqlObject {
             + " join revision as rev on rev.revision_id = ver.revision_id"
             + " where ver.study_activity_id = :activityId"
             + "   and ver.version_tag = :versionTag")
-    @RegisterRowMapper(ActivityVersionDto.ActivityVersionDtoMapper.class)
+    @RegisterConstructorMapper(ActivityVersionDto.class)
     Optional<ActivityVersionDto> findByActivityIdAndVersionTag(@Bind("activityId") long activityId,
                                                                @Bind("versionTag") String versionTag);
 
@@ -70,7 +70,7 @@ public interface JdbiActivityVersion extends SqlObject {
             + " where ai.activity_instance_guid = :instanceGuid"
             + "   and rev.start_date <= ai.created_at"
             + "   and (rev.end_date is null or ai.created_at < rev.end_date)")
-    @RegisterRowMapper(ActivityVersionDto.ActivityVersionDtoMapper.class)
+    @RegisterConstructorMapper(ActivityVersionDto.class)
     Optional<ActivityVersionDto> findByInstanceGuid(@Bind("instanceGuid") String instanceGuid);
 
     @SqlUpdate("update activity_version set revision_id = :revisionId where activity_version_id = :versionId")

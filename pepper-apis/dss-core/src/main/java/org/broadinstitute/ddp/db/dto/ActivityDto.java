@@ -1,224 +1,82 @@
 package org.broadinstitute.ddp.db.dto;
 
-import java.util.Objects;
-
+import lombok.AllArgsConstructor;
+import lombok.Value;
+import lombok.experimental.Accessors;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
+@Value
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class ActivityDto {
+    @ColumnName("study_activity_id")
+    long activityId;
 
-    private final long activityId;
-    private final long activityTypeId;
-    private final long studyId;
-    private final Long parentActivityId;
-    private final String parentActivityCode;
-    private final int displayOrder;
-    private final boolean writeOnce;
-    private final boolean instantiateUponRegistration;
-    private final Integer maxInstancesPerUser;
-    private final Long editTimeoutSec;
-    private final boolean allowOndemandTrigger;
-    private final boolean excludeFromDisplay;
-    private final boolean allowUnauthenticated;
-    private final boolean isFollowup;
-    private final boolean excludeStatusIconFromDisplay;
-    private final boolean hideExistingInstancesOnCreation;
-    private final boolean createOnParentCreation;
-    private final boolean canDeleteInstances;
-    private final Boolean canDeleteFirstInstance;
-    private final boolean showActivityStatus;
-    private String activityCode;
+    @ColumnName("activity_type_id")
+    long activityTypeId;
 
-    @JdbiConstructor
-    public ActivityDto(
-            @ColumnName("study_activity_id") long activityId,
-            @ColumnName("activity_type_id") long activityTypeId,
-            @ColumnName("study_id") long studyId,
-            @ColumnName("study_activity_code") String activityCode,
-            @ColumnName("parent_activity_id") Long parentActivityId,
-            @ColumnName("parent_activity_code") String parentActivityCode,
-            @ColumnName("display_order") int displayOrder,
-            @ColumnName("is_write_once") boolean writeOnce,
-            @ColumnName("instantiate_upon_registration") boolean instantiateUponRegistration,
-            @ColumnName("max_instances_per_user") Integer maxInstancesPerUser,
-            @ColumnName("edit_timeout_sec") Long editTimeoutSec,
-            @ColumnName("allow_ondemand_trigger") boolean allowOndemandTrigger,
-            @ColumnName("exclude_from_display") boolean excludeFromDisplay,
-            @ColumnName("allow_unauthenticated") boolean allowUnauthenticated,
-            @ColumnName("is_followup") boolean isFollowup,
-            @ColumnName("exclude_status_icon_from_display") boolean excludeStatusIconFromDisplay,
-            @ColumnName("hide_existing_instances_on_creation") boolean hideExistingInstancesOnCreation,
-            @ColumnName("create_on_parent_creation") boolean createOnParentCreation,
-            @ColumnName("can_delete_instances") boolean canDeleteInstances,
-            @ColumnName("can_delete_first_instance") Boolean canDeleteFirstInstance,
-            @ColumnName("show_activity_status") boolean showActivityStatus
-    ) {
-        this.activityId = activityId;
-        this.activityTypeId = activityTypeId;
-        this.studyId = studyId;
-        this.activityCode = activityCode;
-        this.parentActivityId = parentActivityId;
-        this.parentActivityCode = parentActivityCode;
-        this.displayOrder = displayOrder;
-        this.writeOnce = writeOnce;
-        this.instantiateUponRegistration = instantiateUponRegistration;
-        this.maxInstancesPerUser = maxInstancesPerUser;
-        this.editTimeoutSec = editTimeoutSec;
-        this.allowOndemandTrigger = allowOndemandTrigger;
-        this.excludeFromDisplay = excludeFromDisplay;
-        this.allowUnauthenticated = allowUnauthenticated;
-        this.isFollowup = isFollowup;
-        this.excludeStatusIconFromDisplay = excludeStatusIconFromDisplay;
-        this.hideExistingInstancesOnCreation = hideExistingInstancesOnCreation;
-        this.createOnParentCreation = createOnParentCreation;
-        this.canDeleteInstances = canDeleteInstances;
-        this.canDeleteFirstInstance = canDeleteFirstInstance;
-        this.showActivityStatus = showActivityStatus;
-    }
+    @ColumnName("study_id")
+    long studyId;
 
-    public long getActivityId() {
-        return activityId;
-    }
+    @ColumnName("study_activity_code")
+    String activityCode;
 
-    public long getActivityTypeId() {
-        return activityTypeId;
-    }
+    @ColumnName("parent_activity_id")
+    Long parentActivityId;
 
-    public long getStudyId() {
-        return studyId;
-    }
+    @ColumnName("parent_activity_code")
+    String parentActivityCode;
 
-    public String getActivityCode() {
-        return activityCode;
-    }
+    @ColumnName("display_order")
+    int displayOrder;
 
-    public void setActivityCode(String activityCode) {
-        this.activityCode = activityCode;
-    }
+    @Accessors(fluent = true)
+    @ColumnName("is_write_once")
+    boolean writeOnce;
 
-    public Long getParentActivityId() {
-        return parentActivityId;
-    }
+    @Accessors(fluent = true)
+    @ColumnName("instantiate_upon_registration")
+    boolean instantiateUponRegistration;
 
-    public String getParentActivityCode() {
-        return parentActivityCode;
-    }
+    @ColumnName("max_instances_per_user")
+    Integer maxInstancesPerUser;
 
-    public int getDisplayOrder() {
-        return displayOrder;
-    }
+    @ColumnName("edit_timeout_sec")
+    Long editTimeoutSec;
 
-    public boolean isWriteOnce() {
-        return writeOnce;
-    }
+    @ColumnName("allow_ondemand_trigger")
+    boolean onDemandTriggerAllowed;
 
-    public boolean isInstantiateUponRegistration() {
-        return instantiateUponRegistration;
-    }
+    @Accessors(fluent = true)
+    @ColumnName("exclude_from_display")
+    boolean shouldExcludeFromDisplay;
 
-    public Integer getMaxInstancesPerUser() {
-        return maxInstancesPerUser;
-    }
+    @ColumnName("allow_unauthenticated")
+    boolean unauthenticatedAllowed;
 
-    public Long getEditTimeoutSec() {
-        return editTimeoutSec;
-    }
+    @ColumnName("is_followup")
+    boolean isFollowup;
 
-    public boolean isOndemandTriggerAllowed() {
-        return allowOndemandTrigger;
-    }
+    @Accessors(fluent = true)
+    @ColumnName("exclude_status_icon_from_display")
+    boolean shouldExcludeStatusIconFromDisplay;
 
-    public boolean shouldExcludeFromDisplay() {
-        return excludeFromDisplay;
-    }
+    @Accessors(fluent = true)
+    @ColumnName("hide_existing_instances_on_creation")
+    boolean hideExistingInstancesOnCreation;
 
-    public boolean isUnauthenticatedAllowed() {
-        return allowUnauthenticated;
-    }
+    @ColumnName("create_on_parent_creation")
+    boolean createOnParentCreation;
 
-    public boolean isFollowup() {
-        return isFollowup;
-    }
+    @Accessors(fluent = true)
+    @ColumnName("can_delete_instances")
+    boolean canDeleteInstances;
 
-    public boolean shouldExcludeStatusIconFromDisplay() {
-        return excludeStatusIconFromDisplay;
-    }
+    @Accessors(fluent = true)
+    @ColumnName("can_delete_first_instance")
+    Boolean canDeleteFirstInstance;
 
-    public boolean isHideExistingInstancesOnCreation() {
-        return hideExistingInstancesOnCreation;
-    }
-
-    public boolean isCreateOnParentCreation() {
-        return createOnParentCreation;
-    }
-
-    public boolean canDeleteInstances() {
-        return canDeleteInstances;
-    }
-
-    public Boolean getCanDeleteFirstInstance() {
-        return canDeleteFirstInstance;
-    }
-
-    public boolean showActivityStatus() {
-        return showActivityStatus;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        ActivityDto that = (ActivityDto) o;
-        return activityId == that.activityId
-                && activityTypeId == that.activityTypeId
-                && studyId == that.studyId
-                && Objects.equals(activityCode, that.activityCode)
-                && Objects.equals(parentActivityId, that.parentActivityId)
-                && Objects.equals(parentActivityCode, that.parentActivityCode)
-                && displayOrder == that.displayOrder
-                && writeOnce == that.writeOnce
-                && instantiateUponRegistration == that.instantiateUponRegistration
-                && Objects.equals(maxInstancesPerUser, that.maxInstancesPerUser)
-                && Objects.equals(editTimeoutSec, that.editTimeoutSec)
-                && allowOndemandTrigger == that.allowOndemandTrigger
-                && excludeFromDisplay == that.excludeFromDisplay
-                && allowUnauthenticated == that.allowUnauthenticated
-                && isFollowup == that.isFollowup
-                && excludeStatusIconFromDisplay == that.excludeStatusIconFromDisplay
-                && hideExistingInstancesOnCreation == that.hideExistingInstancesOnCreation
-                && createOnParentCreation == that.createOnParentCreation
-                && canDeleteInstances == that.canDeleteInstances
-                && showActivityStatus == that.showActivityStatus
-                && Objects.equals(canDeleteFirstInstance, that.canDeleteFirstInstance);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(
-                activityId,
-                activityTypeId,
-                studyId,
-                activityCode,
-                parentActivityId,
-                parentActivityCode,
-                displayOrder,
-                writeOnce,
-                instantiateUponRegistration,
-                maxInstancesPerUser,
-                editTimeoutSec,
-                allowOndemandTrigger,
-                excludeFromDisplay,
-                allowUnauthenticated,
-                isFollowup,
-                excludeStatusIconFromDisplay,
-                hideExistingInstancesOnCreation,
-                createOnParentCreation,
-                canDeleteInstances,
-                canDeleteFirstInstance,
-                showActivityStatus);
-    }
+    @Accessors(fluent = true)
+    @ColumnName("show_activity_status")
+    boolean showActivityStatus;
 }

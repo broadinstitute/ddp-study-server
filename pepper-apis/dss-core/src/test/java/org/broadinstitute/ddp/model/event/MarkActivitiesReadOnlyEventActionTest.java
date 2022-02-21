@@ -62,8 +62,8 @@ public class MarkActivitiesReadOnlyEventActionTest extends TxnAwareBaseTest {
             action.doAction(null, handle, signal);
 
             var jdbiInstance = handle.attach(JdbiActivityInstance.class);
-            assertTrue(jdbiInstance.getByActivityInstanceId(instance1.getId()).get().getReadonly());
-            assertTrue(jdbiInstance.getByActivityInstanceId(instance2.getId()).get().getReadonly());
+            assertTrue(jdbiInstance.getByActivityInstanceId(instance1.getId()).get().getIsReadonly());
+            assertTrue(jdbiInstance.getByActivityInstanceId(instance2.getId()).get().getIsReadonly());
 
             handle.rollback();
         });
@@ -84,8 +84,8 @@ public class MarkActivitiesReadOnlyEventActionTest extends TxnAwareBaseTest {
             action.doAction(null, handle, signal);
 
             var jdbiInstance = handle.attach(JdbiActivityInstance.class);
-            assertTrue(jdbiInstance.getByActivityInstanceId(instance1.getId()).get().getReadonly());
-            assertTrue(jdbiInstance.getByActivityInstanceId(instance2.getId()).get().getReadonly());
+            assertTrue(jdbiInstance.getByActivityInstanceId(instance1.getId()).get().getIsReadonly());
+            assertTrue(jdbiInstance.getByActivityInstanceId(instance2.getId()).get().getIsReadonly());
 
             handle.rollback();
         });
@@ -107,8 +107,8 @@ public class MarkActivitiesReadOnlyEventActionTest extends TxnAwareBaseTest {
             action.doAction(null, handle, signal);
 
             var jdbiInstance = handle.attach(JdbiActivityInstance.class);
-            assertTrue(jdbiInstance.getByActivityInstanceId(instance1.getId()).get().getReadonly());
-            assertNull(jdbiInstance.getByActivityInstanceId(instance2.getId()).get().getReadonly());
+            assertTrue(jdbiInstance.getByActivityInstanceId(instance1.getId()).get().getIsReadonly());
+            assertNull(jdbiInstance.getByActivityInstanceId(instance2.getId()).get().getIsReadonly());
 
             handle.rollback();
         });
