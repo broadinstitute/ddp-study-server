@@ -11,7 +11,7 @@ import java.util.Set;
 
 @Data
 @AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
-public final class MatrixRowDto implements TimestampRevisioned, Serializable {
+public final class MatrixRowDto implements Serializable {
     @ColumnName("matrix_row_id")
     private final long id;
 

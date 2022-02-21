@@ -19,8 +19,6 @@ import org.broadinstitute.ddp.model.address.OLCPrecision;
 import org.broadinstitute.ddp.model.study.ParticipantInfo;
 import org.broadinstitute.ddp.model.study.StudyParticipantsInfo;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Slf4j
 public class OLCService {
@@ -71,15 +69,12 @@ public class OLCService {
         int indexOfTargetPaddingChar = targetPrecision.getCodeLength();
 
         // can convert a MORE precise OLC to anything other than MOST precise
+        // otherwise, all other precisions have padding so we need to make sure the padding is at
+        // least as long as (if not longer than) the target valid char length we want
         if (indexOfPaddingChar == -1) {
             return targetPrecision != OLCPrecision.MOST;
-        } else if (indexOfPaddingChar >= indexOfTargetPaddingChar) {
-            // otherwise, all other precisions have padding so we need to make sure the padding is at
-            // least as long as (if not longer than) the target valid char length we want
-            return true;
-        } else {
-            return false;
-        }
+        } else
+            return indexOfPaddingChar >= indexOfTargetPaddingChar;
     }
 
     /**

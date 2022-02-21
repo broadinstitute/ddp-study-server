@@ -14,7 +14,7 @@ import java.util.Set;
 
 @Data
 @AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
-public final class PicklistOptionDto implements TimestampRevisioned, Serializable {
+public final class PicklistOptionDto implements Serializable {
     @ColumnName("picklist_option_id")
     private final long id;
 

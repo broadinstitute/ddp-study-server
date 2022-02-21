@@ -9,7 +9,7 @@ import java.io.Serializable;
 
 @Value
 @AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
-public class MatrixGroupDto implements TimestampRevisioned, Serializable {
+public class MatrixGroupDto implements Serializable {
     @ColumnName("matrix_group_id")
     long id;
 

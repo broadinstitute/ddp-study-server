@@ -9,7 +9,7 @@ import java.io.Serializable;
 
 @Value
 @AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
-public class PicklistGroupDto implements TimestampRevisioned, Serializable {
+public class PicklistGroupDto implements Serializable {
     @ColumnName("picklist_group_id")
     long id;
 
