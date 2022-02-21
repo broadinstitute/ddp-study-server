@@ -361,7 +361,7 @@ public class ActivityInstanceService {
                     summaryDto.getCreatedAtMillis(),
                     statusTypeCode,
                     def.isWriteOnce(),
-                    summaryDto.getReadonly());
+                    summaryDto.getIsReadonly());
 
             boolean isFirstInstance = StringUtils.isBlank(summaryDto.getPreviousInstanceGuid());
             boolean canDelete = ActivityInstanceUtil.computeCanDelete(

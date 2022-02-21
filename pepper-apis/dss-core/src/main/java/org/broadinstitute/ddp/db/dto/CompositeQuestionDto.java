@@ -3,18 +3,19 @@ package org.broadinstitute.ddp.db.dto;
 import java.io.Serializable;
 import java.util.Set;
 
+import lombok.Getter;
 import org.broadinstitute.ddp.model.activity.types.OrientationType;
 import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
+@Getter
 public final class CompositeQuestionDto extends QuestionDto implements Serializable {
-
-    private boolean allowMultiple;
-    private boolean unwrapOnExport;
-    private Long addButtonTemplateId;
-    private Long additionalItemTemplateId;
-    private OrientationType childOrientation;
+    private final boolean allowMultiple;
+    private final boolean unwrapOnExport;
+    private final Long addButtonTemplateId;
+    private final Long additionalItemTemplateId;
+    private final OrientationType childOrientation;
 
     @JdbiConstructor
     public CompositeQuestionDto(@Nested QuestionDto questionDto,
@@ -29,26 +30,6 @@ public final class CompositeQuestionDto extends QuestionDto implements Serializa
         this.addButtonTemplateId = addButtonTemplateId;
         this.additionalItemTemplateId = additionalItemTemplateId;
         this.childOrientation = childOrientation;
-    }
-
-    public boolean isAllowMultiple() {
-        return allowMultiple;
-    }
-
-    public boolean isUnwrapOnExport() {
-        return unwrapOnExport;
-    }
-
-    public Long getAddButtonTemplateId() {
-        return addButtonTemplateId;
-    }
-
-    public Long getAdditionalItemTemplateId() {
-        return additionalItemTemplateId;
-    }
-
-    public OrientationType getChildOrientation() {
-        return childOrientation;
     }
 
     @Override
