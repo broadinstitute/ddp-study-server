@@ -1,19 +1,19 @@
 package org.broadinstitute.ddp.db.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.experimental.Accessors;
+import org.jdbi.v3.core.mapper.reflect.ColumnName;
+import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.Accessors;
-import org.jdbi.v3.core.mapper.reflect.ColumnName;
-import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
-
 @Data
-@RequiredArgsConstructor(onConstructor = @__(@JdbiConstructor))
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public final class PicklistOptionDto implements TimestampRevisioned, Serializable {
     @ColumnName("picklist_option_id")
     private final long id;
