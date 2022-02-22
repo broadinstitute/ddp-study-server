@@ -229,8 +229,16 @@ public interface ValidationDao extends SqlObject {
             case COMPARISON:
                 //TODO: Inject the real reference question's answer value
                 var comparisonRule = (ComparisonRuleDto) dto;
-                return ComparisonRule.of(dto.getId(), message, hint, dto.isAllowSave(),
-                        comparisonRule.getReferenceQuestionId(), comparisonRule.getType());
+
+                return ComparisonRule.builder()
+                        .id(dto.getId())
+                        .message(message)
+                        .correctionHint(hint)
+                        .allowSave(dto.isAllowSave())
+                        .referenceQuestionId(comparisonRule.getReferenceQuestionId())
+                        .comparisonType(comparisonRule.getType())
+                        .type(dto.getRuleType())
+                        .build();
             default:
                 throw new DaoException("Unknown validation rule type " + dto.getRuleType());
         }
