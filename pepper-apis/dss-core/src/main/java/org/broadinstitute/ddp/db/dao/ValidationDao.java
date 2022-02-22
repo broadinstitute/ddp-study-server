@@ -393,15 +393,22 @@ public interface ValidationDao extends SqlObject {
     default void insert(long questionId, ComparisonRuleDef rule, long revisionId) {
         insertBaseRule(questionId, rule, revisionId);
 
-        final Optional<QuestionDto> questionDto = getJdbiQuestion().findQuestionDtoById(questionId);
-        if (questionDto.isEmpty()) {
+        final Optional<QuestionDto> originalQuestion = getJdbiQuestion().findQuestionDtoById(questionId);
+        if (originalQuestion.isEmpty()) {
             throw new DaoException("Question " + questionId + " doesn't exist");
         }
 
         final Optional<QuestionDto> referencedQuestion = getJdbiQuestion()
-                .findDtoByActivityIdAndQuestionStableId(questionDto.get().getActivityId(), rule.getValueStableId());
+                .findDtoByActivityIdAndQuestionStableId(originalQuestion.get().getActivityId(), rule.getValueStableId());
         if (referencedQuestion.isEmpty()) {
             throw new DaoException("Referenced question " + rule.getValueStableId() + " doesn't exist");
+        }
+
+        if (referencedQuestion.get().getType() != originalQuestion.get().getType()) {
+            throw new DaoException(String.format(
+                    "Referenced question must have the same type as original: %s (actual: %s)",
+                    originalQuestion.get().getType(),
+                    referencedQuestion.get().getType()));
         }
 
         getJdbiComparisonValidation().insert(rule.getRuleId(), referencedQuestion.get().getId(), rule.getComparison());
