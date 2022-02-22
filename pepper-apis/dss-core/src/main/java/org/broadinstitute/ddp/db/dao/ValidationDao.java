@@ -229,7 +229,6 @@ public interface ValidationDao extends SqlObject {
                 return DecimalRangeRule.of(dto.getId(), message, hint, dto.isAllowSave(),
                         decimalRangeDto.getMin(), decimalRangeDto.getMax());
             case COMPARISON:
-                //TODO: Inject the real reference question's answer value
                 var comparisonRule = (ComparisonRuleDto) dto;
 
                 return ComparisonRule.builder()
@@ -240,6 +239,7 @@ public interface ValidationDao extends SqlObject {
                         .referenceQuestionId(comparisonRule.getReferenceQuestionId())
                         .comparisonType(comparisonRule.getType())
                         .type(dto.getRuleType())
+                        .referencedAnswer(null) //TODO: Inject the real reference question's answer value
                         .build();
             default:
                 throw new DaoException("Unknown validation rule type " + dto.getRuleType());
