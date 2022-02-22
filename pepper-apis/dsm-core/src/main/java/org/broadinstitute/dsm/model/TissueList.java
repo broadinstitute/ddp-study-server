@@ -43,8 +43,8 @@ public class TissueList {
     private Tissue tissue;
     private String ddpParticipantId;
 
-    public TissueList(OncHistoryDetail OncHistoryDetails, Tissue tissue, String ddpParticipantId) {
-        this.oncHistoryDetails = OncHistoryDetails;
+    public TissueList(OncHistoryDetail oncHistoryDetail, Tissue tissue, String ddpParticipantId) {
+        this.oncHistoryDetails = oncHistoryDetail;
         this.tissue = tissue;
         this.ddpParticipantId = ddpParticipantId;
 

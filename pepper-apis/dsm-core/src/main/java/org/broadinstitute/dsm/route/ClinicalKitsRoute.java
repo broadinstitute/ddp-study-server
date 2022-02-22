@@ -22,9 +22,7 @@ import spark.Route;
 
 public class ClinicalKitsRoute implements Route {
     private static final Logger logger = LoggerFactory.getLogger(ClinicalKitsRoute.class);
-    private String FIRSTNAME = "firstName";
-    private String LASTNAME = "lastName";
-    private String DATE_OF_BIRtH = "dateOfBirth";
+
     private NotificationUtil notificationUtil;
 
     public ClinicalKitsRoute(@NonNull NotificationUtil notificationUtil) {
