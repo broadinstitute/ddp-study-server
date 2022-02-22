@@ -4,12 +4,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTVerifier;
-import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.security.JWTConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -29,7 +27,7 @@ public class JWTRouteFilter {
     // todo arz refactor this with ddp backend core jwt util
     public static final String DDP_ROLES_CLAIM = "org.broadinstitute.ddp.roles";
     private static final Logger logger = LoggerFactory.getLogger(JWTRouteFilter.class);
-    private final String jwtSecret;
+    private final String auth0Domain;
     private final Collection<String> expectedRoles = new HashSet<>();
 
     /**
@@ -43,11 +41,11 @@ public class JWTRouteFilter {
      *                     must be present in the roles claim in the token.
      *                     If empty or null, the roles claim is not checked.
      */
-    public JWTRouteFilter(String jwtSecret, Collection<String> allowedRoles) {
+    public JWTRouteFilter(String jwtSecret, Collection<String> allowedRoles, String auth0Domain) {
+        this.auth0Domain = auth0Domain;
         if (StringUtils.isBlank(jwtSecret)) {
             throw new IllegalArgumentException("jwtSecret is required");
         }
-        this.jwtSecret = jwtSecret;
         if (allowedRoles != null && !allowedRoles.isEmpty()) {
             this.expectedRoles.addAll(allowedRoles);
         }
@@ -69,11 +67,10 @@ public class JWTRouteFilter {
                         String jwtToken = parsedAuthHeader[1].trim();
                         if (StringUtils.isNotBlank(jwtToken)) {
                             try {
-                                Algorithm algorithm = Algorithm.HMAC256(jwtSecret);
-                                JWTVerifier verifier = JWT.require(algorithm).build(); //Reusable verifier instance
-                                DecodedJWT jwt = verifier.verify(jwtToken);
 
-                                Map<String, Claim> verifiedClaims = jwt.getClaims();
+                                DecodedJWT validToken = JWTConverter.verifyDDPToken(jwtToken, auth0Domain);
+                                Map<String, Claim> verifiedClaims =validToken.getClaims();
+
                                 if (verifiedClaims != null) {
                                     if (!expectedRoles.isEmpty()) {
                                         if (verifiedClaims.containsKey(DDP_ROLES_CLAIM)) {
