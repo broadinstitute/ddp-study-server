@@ -43,8 +43,8 @@ public class TestBostonKitTrackerDispatcher implements BackgroundFunction<Pubsub
     private static final Logger logger = LoggerFactory.getLogger(TestBostonKitTrackerDispatcher.class.getName());
     private final InstanceSettings instanceSettings;
     KitTrackerPubSubPublisher kitTrackerPubSubPublisher = new KitTrackerPubSubPublisher();
-    private String STUDY_MANAGER_SCHEMA = System.getenv("STUDY_MANAGER_SCHEMA") + ".";
-    private int LOOKUP_CHUNK_SIZE;
+    private String studyManagerSchema = System.getenv("STUDY_MANAGER_SCHEMA") + ".";
+    private int lookupChunkSize;
 
     public TestBostonKitTrackerDispatcher() {
         instanceSettings = new InstanceSettings();
@@ -57,11 +57,11 @@ public class TestBostonKitTrackerDispatcher implements BackgroundFunction<Pubsub
         PoolingDataSource<PoolableConnection> dataSource = CFUtil.createDataSource(2, dbUrl);
         String data = new String(Base64.getDecoder().decode(pubsubMessage.getData()));
         final String SQL_SELECT_KITS_WITH_LATEST_ACTIVITY =
-                "SELECT * FROM " + STUDY_MANAGER_SCHEMA + "ddp_kit kit LEFT JOIN  " + STUDY_MANAGER_SCHEMA
+                "SELECT * FROM " + studyManagerSchema + "ddp_kit kit LEFT JOIN  " + studyManagerSchema
                         + "ddp_kit_request req  ON (kit.dsm_kit_request_id = req.dsm_kit_request_id)  left join    "
-                        + STUDY_MANAGER_SCHEMA + "ups_shipment shipment on (shipment.dsm_kit_request_id = kit.dsm_kit_request_id) "
-                        + " left join  " + STUDY_MANAGER_SCHEMA + "ups_package pack on ( pack.ups_shipment_id = shipment.ups_shipment_id) "
-                        + " left join  " + STUDY_MANAGER_SCHEMA
+                        + studyManagerSchema + "ups_shipment shipment on (shipment.dsm_kit_request_id = kit.dsm_kit_request_id) "
+                        + " left join  " + studyManagerSchema + "ups_package pack on ( pack.ups_shipment_id = shipment.ups_shipment_id) "
+                        + " left join  " + studyManagerSchema
                         + "ups_activity activity on (pack.ups_package_id = activity.ups_package_id) "
                         + " WHERE req.ddp_instance_id = ? and ( kit_label not like \"%\\\\_1\") and kit.dsm_kit_request_id > ? "
                         + " and (shipment.ups_shipment_id is null or activity.ups_activity_id is null  or  activity.ups_activity_id in  "
@@ -70,15 +70,16 @@ public class TestBostonKitTrackerDispatcher implements BackgroundFunction<Pubsub
                         + "  GROUP BY ups_package_id  ) lastActivity ON pac.ups_package_id = lastActivity.ups_package_id INNER JOIN  "
                         + " ups_activity ac ON   lastActivity.ups_package_id = ac.ups_package_id  "
                         + " AND lastActivity.maxId = ac.ups_activity_id    ))";
-        String SQL_AVOID_DELIVERED = " and (tracking_to_id is not null or tracking_return_id is not null ) and kit.test_result is null "
+        final String SQL_AVOID_DELIVERED = " and (tracking_to_id is not null or tracking_return_id is not null ) and kit.test_result is "
+                + "null "
                 + " and ( ups_status_description is null or ups_status_description not like \"%Delivered%\") "
                 + " and from_unixtime(created_date/1000) > NOW() - INTERVAL 360 DAY"
                 + " and (kit.ups_tracking_status is null or kit.ups_tracking_status not like \"%Delivered%\" "
                 + "or kit.ups_return_status is null or kit.ups_return_status not like \"%Delivered%\") "
                 + " order by kit.dsm_kit_request_id ASC LIMIT ?";
         logger.info("Starting the UPS lookup job");
-        LOOKUP_CHUNK_SIZE = new JsonParser().parse(data).getAsJsonObject().get("size").getAsInt();
-        logger.info("The chunk size for each cloud function is " + LOOKUP_CHUNK_SIZE);
+        lookupChunkSize = new JsonParser().parse(data).getAsJsonObject().get("size").getAsInt();
+        logger.info("The chunk size for each cloud function is " + lookupChunkSize);
         JsonArray subsetOfKits = new JsonArray();
         String project = cfg.getString(ApplicationConfigConstants.PUBSUB_PROJECT_ID);
         String topicId = cfg.getString(ApplicationConfigConstants.PUBSUB_TOPIC_ID);
@@ -96,9 +97,9 @@ public class TestBostonKitTrackerDispatcher implements BackgroundFunction<Pubsub
                         try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KITS_WITH_LATEST_ACTIVITY + SQL_AVOID_DELIVERED)) {
                             stmt.setString(1, ddpInstance.getDdpInstanceId());
                             stmt.setInt(2, lastKitId);
-                            stmt.setInt(3, LOOKUP_CHUNK_SIZE);
+                            stmt.setInt(3, lookupChunkSize);
                             subsetOfKits = new JsonArray();
-                            stmt.setFetchSize(LOOKUP_CHUNK_SIZE);
+                            stmt.setFetchSize(lookupChunkSize);
                             try (ResultSet rs = stmt.executeQuery()) {
                                 while (rs.next()) {
                                     String shipmentId = rs.getString(DBConstants.UPS_SHIPMENT_ID);
@@ -166,13 +167,13 @@ public class TestBostonKitTrackerDispatcher implements BackgroundFunction<Pubsub
         final String SQL_SELECT_INSTANCE_WITH_ROLE =
                 "SELECT ddp_instance_id, instance_name, base_url, collaborator_id_prefix, migrated_ddp, billing_reference, "
                         + "es_participant_index, es_activity_definition_index,  es_users_index, (SELECT count(role.name)  FROM "
-                        + STUDY_MANAGER_SCHEMA + "ddp_instance realm, " + STUDY_MANAGER_SCHEMA + "ddp_instance_role inRol, "
-                        + STUDY_MANAGER_SCHEMA
+                        + studyManagerSchema + "ddp_instance realm, " + studyManagerSchema + "ddp_instance_role inRol, "
+                        + studyManagerSchema
                         + "instance_role role WHERE realm.ddp_instance_id = inRol.ddp_instance_id "
                         + "AND inRol.instance_role_id = role.instance_role_id AND role.name = ? "
                         + "AND realm.ddp_instance_id = main.ddp_instance_id) AS 'has_role', mr_attention_flag_d, "
                         + "tissue_attention_flag_d, auth0_token, notification_recipients FROM  "
-                        + STUDY_MANAGER_SCHEMA + "ddp_instance main  WHERE is_active = 1";
+                        + studyManagerSchema + "ddp_instance main  WHERE is_active = 1";
 
         List<DDPInstance> ddpInstances = new ArrayList<>();
         try (PreparedStatement statement = conn.prepareStatement(SQL_SELECT_INSTANCE_WITH_ROLE)) {

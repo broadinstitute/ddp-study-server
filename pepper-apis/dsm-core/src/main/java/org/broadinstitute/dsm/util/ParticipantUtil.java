@@ -79,13 +79,13 @@ public class ParticipantUtil {
         return applicantEmail != null && applicantEmail.equalsIgnoreCase(currentParticipantEmail);
     }
 
-    public static String getParticipantEmailById(String esParticipantIndex, String pId) {
-        if (StringUtils.isBlank(esParticipantIndex) || StringUtils.isBlank(pId)) {
+    public static String getParticipantEmailById(String esParticipantIndex, String participantId) {
+        if (StringUtils.isBlank(esParticipantIndex) || StringUtils.isBlank(participantId)) {
             throw new IllegalArgumentException();
         }
         StringBuilder email = new StringBuilder();
         ElasticSearchParticipantDto elasticSearchParticipantDto =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(esParticipantIndex, pId)
+                ElasticSearchUtil.getParticipantESDataByParticipantId(esParticipantIndex, participantId)
                         .orElse(new ElasticSearchParticipantDto.Builder().build());
         email.append(elasticSearchParticipantDto.getProfile()
                 .map(ESProfile::getEmail)

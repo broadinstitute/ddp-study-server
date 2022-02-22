@@ -16,7 +16,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.SurveyTrigger;
 import org.broadinstitute.dsm.exception.SurveyNotCreated;
@@ -30,6 +29,7 @@ import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
+import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -228,7 +228,7 @@ public class TriggerSurveyRoute extends RequestHandler {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
-                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.INSERT_SURVEY_TRIGGER), Statement.RETURN_GENERATED_KEYS)) {
+                    DSMConfig.getSqlFromConfig(ApplicationConfigConstants.INSERT_SURVEY_TRIGGER), Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, reason);
                 stmt.setLong(2, currentTime);
                 stmt.setString(3, userId);

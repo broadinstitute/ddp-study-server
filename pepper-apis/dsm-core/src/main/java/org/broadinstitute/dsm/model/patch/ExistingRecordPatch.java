@@ -116,14 +116,14 @@ public class ExistingRecordPatch extends BasePatch {
             return;
         }
         try {
-            Map<String, String> pData = GSON.fromJson(nameValue.getValue().toString(), Map.class);
+            Map<String, String> participantDataMap = GSON.fromJson(nameValue.getValue().toString(), Map.class);
             org.broadinstitute.dsm.model.participant.data.ParticipantData participantData =
                     new org.broadinstitute.dsm.model.participant.data.ParticipantData(Integer.parseInt(patch.getId()),
                             patch.getParentId(), Integer.parseInt(ddpInstance.getDdpInstanceId()), patch.getFieldId(),
-                            pData);
+                            participantDataMap);
 
             if (participantData.hasFamilyMemberApplicantEmail(profile)) {
-                writeFamilyMemberWorklow(patch, ddpInstance, profile, pData);
+                writeFamilyMemberWorklow(patch, ddpInstance, profile, participantDataMap);
             } else {
                 Map<String, Object> esMap = ElasticSearchUtil
                         .getObjectsMap(ddpInstance.getParticipantIndexES(), profile.getGuid(),
@@ -131,18 +131,18 @@ public class ExistingRecordPatch extends BasePatch {
                 if (Objects.isNull(esMap) || esMap.isEmpty()) {
                     return;
                 }
-                removeFamilyMemberWorkflowData(ddpInstance, profile, pData, esMap);
+                removeFamilyMemberWorkflowData(ddpInstance, profile, participantDataMap, esMap);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void writeFamilyMemberWorklow(Patch patch, DDPInstance ddpInstance, ESProfile profile, Map<String, String> pData) {
+    private void writeFamilyMemberWorklow(Patch patch, DDPInstance ddpInstance, ESProfile profile, Map<String, String> participantDataMap) {
         logger.info("Email in patch data matches participant profile email, will update workflows");
         int ddpInstanceIdByGuid = Integer.parseInt(ddpInstance.getDdpInstanceId());
         FieldSettings fieldSettings = new FieldSettings();
-        pData.forEach((columnName, columnValue) -> {
+        participantDataMap.forEach((columnName, columnValue) -> {
             if (!fieldSettings.isColumnExportable(ddpInstanceIdByGuid, columnName)) {
                 return;
             }
@@ -152,13 +152,13 @@ public class ExistingRecordPatch extends BasePatch {
             // Use participant guid here to avoid multiple ES lookups.
             ElasticSearchUtil.writeWorkflow(WorkflowForES.createInstanceWithStudySpecificData(ddpInstance,
                     profile.getGuid(), columnName, columnValue, new WorkflowForES.StudySpecificData(
-                            pData.get(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID),
-                            pData.get(FamilyMemberConstants.FIRSTNAME),
-                            pData.get(FamilyMemberConstants.LASTNAME))), false);
+                            participantDataMap.get(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID),
+                            participantDataMap.get(FamilyMemberConstants.FIRSTNAME),
+                            participantDataMap.get(FamilyMemberConstants.LASTNAME))), false);
         });
     }
 
-    private void removeFamilyMemberWorkflowData(DDPInstance ddpInstance, ESProfile profile, Map<String, String> pData,
+    private void removeFamilyMemberWorkflowData(DDPInstance ddpInstance, ESProfile profile, Map<String, String> participantDataMap,
                                                 Map<String, Object> esMap) throws
             IOException {
         logger.info("Email in patch data does not match participant profile email, will remove workflows");
@@ -171,7 +171,7 @@ public class ExistingRecordPatch extends BasePatch {
             if (Objects.isNull(collaboratorParticipantId)) {
                 return;
             }
-            if (collaboratorParticipantId.equals(pData.get(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID))) {
+            if (collaboratorParticipantId.equals(participantDataMap.get(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID))) {
                 workflowsList.remove(workflow);
             }
         });

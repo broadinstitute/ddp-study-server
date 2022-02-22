@@ -57,10 +57,10 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
     private static AtomicLong minEpochForNextError = new AtomicLong(0L);
     private static String GCP_SERVICE;
     private static String ROOT_PACKAGE;
-    final String JOB_ERROR_MESSAGE =
+    final String jobErrorMessage =
             String.format("This looks like a job error. Job error reporting is throttled so you will only see 1 per %s minutes.",
                     JOB_DELAY);
-    final String NON_JOB_ERROR_MESSAGE = String.format(
+    final String nonJobErrorMessage = String.format(
             "This does NOT look like a job error. Non-job error reporting is throttled so you will only see 1 per %s minutes.",
             NON_JOB_DELAY);
 
@@ -93,10 +93,10 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
                 String linkToGcpLog = buildLinkToGcpLog();
                 String errorMessageAndLocation = getErrorMessageAndLocation(event);
                 if (jobError && currentEpoch >= minEpochForNextJobError.get()) {
-                    this.sendSlackNotification(buildMessage(errorMessageAndLocation, linkToGcpError, JOB_ERROR_MESSAGE, linkToGcpLog));
+                    this.sendSlackNotification(buildMessage(errorMessageAndLocation, linkToGcpError, jobErrorMessage, linkToGcpLog));
                     minEpochForNextJobError.set(currentEpoch + JOB_DELAY * 60L);
                 } else if (!jobError && currentEpoch >= minEpochForNextError.get()) {
-                    this.sendSlackNotification(buildMessage(errorMessageAndLocation, linkToGcpError, NON_JOB_ERROR_MESSAGE, linkToGcpLog));
+                    this.sendSlackNotification(buildMessage(errorMessageAndLocation, linkToGcpError, nonJobErrorMessage, linkToGcpLog));
                     minEpochForNextError.set(currentEpoch + NON_JOB_DELAY * 60L);
                 }
             } catch (Exception e) {

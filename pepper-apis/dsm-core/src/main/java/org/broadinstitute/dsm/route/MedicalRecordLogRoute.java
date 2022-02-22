@@ -65,9 +65,6 @@ public class MedicalRecordLogRoute extends RequestHandler {
 
     /**
      * Read logs form ddp_medical_record_log table
-     *
-     * @return List<MedicalRecordLog>
-     * @throws Exception
      */
     public Collection<MedicalRecordLog> getMedicalRecordLogs(@NonNull String medicalRecordId) {
         List<MedicalRecordLog> logs = new ArrayList<>();
