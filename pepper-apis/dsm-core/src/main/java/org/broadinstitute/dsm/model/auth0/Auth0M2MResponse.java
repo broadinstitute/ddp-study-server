@@ -13,5 +13,10 @@ public class Auth0M2MResponse {
     @SerializedName("expires_in")
     private String expiresIn;
 
+    @SerializedName("error")
+    private String error;
+    @SerializedName("error_description")
+    private String errorDescription;
+
 
 }

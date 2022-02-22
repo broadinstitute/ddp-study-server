@@ -7,6 +7,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Executor;
+import org.apache.http.client.fluent.Response;
 import org.apache.http.util.EntityUtils;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -354,7 +355,8 @@ public class DDPRequestUtil {
                 objects = blindTrustEverythingExecutor.execute(request).handleResponse(res -> getResponse(res, responseClass, sendRequest));
             }
             else {
-                objects = request.execute().handleResponse(res -> getResponse(res, responseClass, sendRequest));
+                Response response = request.execute();
+                objects = response.handleResponse(res -> getResponse(res, responseClass, sendRequest));
             }
         }
         catch (IOException e) {

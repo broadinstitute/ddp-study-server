@@ -2,8 +2,6 @@ package org.broadinstitute.dsm.util;
 
 import static org.apache.http.client.fluent.Request.Get;
 import static org.apache.http.client.fluent.Request.Post;
-
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
@@ -30,12 +28,17 @@ import spark.Request;
 public class SecurityUtil {
 
     public static final String CLAIM_ISSUER = "iss";
-    public static final String SIGNER = "org.broadinstitute.kdux";
+    public static final String USER_ID = "USER_ID";
+    public static final String SIGNER = "";
 
-    private static String secret;
+    private static String auth0Domain;
+    private static String auth0Namespace;
+    private static String auth0Signer;
 
-    public SecurityUtil(@NonNull String secret) {
-        SecurityUtil.secret = secret;
+    public SecurityUtil(@NonNull String auth0Domain, @NonNull String auth0Namespace, @NonNull String auth0Signer) {
+        SecurityUtil.auth0Domain = auth0Domain;
+        SecurityUtil.auth0Namespace = auth0Namespace;
+        SecurityUtil.auth0Signer = auth0Signer;
     }
 
     /**
@@ -164,7 +167,7 @@ public class SecurityUtil {
         if (objectToPost != null) {
             String content = null;
             if (!(objectToPost instanceof String)) {
-                content = createPostData((List<BasicNameValuePair>) objectToPost);
+                content = createPostData((List<BasicNameValuePair>) objectToPost, contentType);
             }
             else {
                 content = (String) objectToPost;
@@ -174,24 +177,17 @@ public class SecurityUtil {
         return request;
     }
 
-    private static String createPostData(List<BasicNameValuePair> params)  {
+    private static String createPostData(List<BasicNameValuePair> params, ContentType contentType)  {
         StringBuilder result = new StringBuilder();
         boolean first = true;
-        int i=0;
-        try {
-            for (NameValuePair pair : params) {
-                if (first)
-                    first = false;
-                else
-                    result.append("&");
-                result.append(URLEncoder.encode(pair.getName(), "UTF-8"));
-                result.append("=");
-                result.append(URLEncoder.encode(pair.getValue(), "UTF-8"));
-                i+=1;
-            }
-        }
-        catch (UnsupportedEncodingException e) {
-            throw new RuntimeException("Unsupported encoding in the object for name: " + params.get(i).getName(), e);
+        for (NameValuePair pair : params) {
+            if (first)
+                first = false;
+            else
+                result.append("&");
+            result.append(URLEncoder.encode(pair.getName(), contentType.getCharset()));
+            result.append("=");
+            result.append(URLEncoder.encode(pair.getValue(), contentType.getCharset()));
         }
         return result.toString();
     }
@@ -214,8 +210,8 @@ public class SecurityUtil {
     public static String getUserId(@NonNull Request request) {
         String userId = null;
         Map<String, Claim> claims = getClaims(request);
-        if (claims != null && !claims.isEmpty() && claims.containsKey("USER_ID")) {
-            Object userIdObj = claims.get("USER_ID").asString();
+        if (claims != null && !claims.isEmpty() && claims.containsKey(auth0Namespace + USER_ID)) {
+            Object userIdObj = claims.get(auth0Namespace + USER_ID).asString();
             if (userIdObj != null) {
                 userId = (String) userIdObj;
             }
@@ -229,7 +225,7 @@ public class SecurityUtil {
             if (header.contains("Bearer ")) {
                 String token = header.replaceFirst("Bearer ", "");
                 if (StringUtils.isNotBlank(token)) {
-                    return SecurityHelper.verifyAndGetClaims(secret, token);
+                    return SecurityHelper.verifyAndGetClaims(token, auth0Domain, auth0Signer);
                 }
             }
         }

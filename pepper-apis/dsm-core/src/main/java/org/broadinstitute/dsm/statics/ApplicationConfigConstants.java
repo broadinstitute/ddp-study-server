@@ -52,6 +52,8 @@ public class ApplicationConfigConstants {
     public static final String AUTH0_DOMAIN = "auth0.domain";
     public static final String AUTH0_AUDIENCE = "auth0.audience";
     public static final String AUTH0_CLAIM_NAMESPACE = "auth0.claimNamespace";
+    public static final String AUTH0_SIGNER = "auth0.account";
+
 
     //quartz
     public static final String QUARTZ_ENABLE_JOBS = "quartz.enableJobs";

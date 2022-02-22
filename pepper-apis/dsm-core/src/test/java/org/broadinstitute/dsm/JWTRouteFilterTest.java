@@ -40,6 +40,7 @@ public class JWTRouteFilterTest {
 
     public static final long THIRTY_MIN_IN_SECONDS = 30 * 60 * 60;
     private static final String BEARER = "Bearer";
+    private static final String auth0Domain = "";
     private static final String AUTHORIZATION = "Authorization";
 
     public static long getCurrentUnixUTCTime() {
@@ -53,7 +54,7 @@ public class JWTRouteFilterTest {
         Request req = mock(Request.class);
         when(req.headers(AUTHORIZATION)).thenReturn(token);
 
-        Assert.assertTrue(new JWTRouteFilter(secret, null).isAccessAllowed(req));
+        Assert.assertTrue(new JWTRouteFilter(secret, null, auth0Domain).isAccessAllowed(req));
 
         verify(req, times(1)).headers(AUTHORIZATION);
     }
@@ -65,7 +66,7 @@ public class JWTRouteFilterTest {
         Request req = Mockito.mock(Request.class);
         when(req.headers(AUTHORIZATION)).thenReturn(token);
 
-        Assert.assertFalse("Two tokens signed with different secrets should fail", new JWTRouteFilter("def", null).isAccessAllowed(req));
+        Assert.assertFalse("Two tokens signed with different secrets should fail", new JWTRouteFilter("def", null, auth0Domain).isAccessAllowed(req));
         verify(req, times(1)).headers(AUTHORIZATION);
     }
 
@@ -81,8 +82,9 @@ public class JWTRouteFilterTest {
         String ddpSecret = cfg.getString("portal.jwtDdpSecret");
         String monitoringSecret = cfg.getString("portal.jwtMonitoringSecret");
 
+        //todo Pegah check how to change
         System.out.println("monitoring token: " + SecurityHelper.createMonitoringToken(monitoringSecret, SecurityHelper.MONITORING_SYSTEM));
-
+        //todo Pegah we should inform bsp and ddp of our new token and then change this
         String bspToken = SecurityHelper.createToken(bspSecret, getCurrentUnixUTCTime() + THIRTY_MIN_IN_SECONDS, new HashMap<>());
         System.out.println("Token for bsp: " + bspToken);
 
@@ -139,7 +141,7 @@ public class JWTRouteFilterTest {
         Request req = Mockito.mock(Request.class);
         when(req.headers(AUTHORIZATION)).thenReturn(null);
 
-        Assert.assertFalse("Empty token should fail", new JWTRouteFilter("foo", null).isAccessAllowed(req));
+        Assert.assertFalse("Empty token should fail", new JWTRouteFilter("foo", null, auth0Domain).isAccessAllowed(req));
         verify(req, times(1)).headers(AUTHORIZATION);
     }
 
@@ -150,7 +152,7 @@ public class JWTRouteFilterTest {
         Request req = mock(Request.class);
         when(req.headers(AUTHORIZATION)).thenReturn(corruptToken);
 
-        Assert.assertFalse("Corrupt token should fail", new JWTRouteFilter("foo", null).isAccessAllowed(req));
+        Assert.assertFalse("Corrupt token should fail", new JWTRouteFilter("foo", null, auth0Domain).isAccessAllowed(req));
         verify(req, times(1)).headers(AUTHORIZATION);
     }
 
@@ -163,9 +165,9 @@ public class JWTRouteFilterTest {
         Request req = Mockito.mock(Request.class);
         when(req.headers(AUTHORIZATION)).thenReturn(token);
 
-        Assert.assertTrue("Checking signature without a role should pass.", new JWTRouteFilter(secret, null).isAccessAllowed(req));
+        Assert.assertTrue("Checking signature without a role should pass.", new JWTRouteFilter(secret, null, auth0Domain).isAccessAllowed(req));
         Assert.assertFalse("Checking signature with the wrong role should fail",
-                new JWTRouteFilter(secret, Arrays.asList("bubs")).isAccessAllowed(req));
+                new JWTRouteFilter(secret, Arrays.asList("bubs"), auth0Domain).isAccessAllowed(req));
         verify(req, times(2)).headers(AUTHORIZATION);
     }
 
@@ -177,7 +179,7 @@ public class JWTRouteFilterTest {
         when(req.headers(AUTHORIZATION)).thenReturn(token);
         try {
             Thread.sleep(1000);
-            Assert.assertFalse("Token is expired, should not be considered valid", new JWTRouteFilter(secret, null).isAccessAllowed(req));
+            Assert.assertFalse("Token is expired, should not be considered valid", new JWTRouteFilter(secret, null, auth0Domain).isAccessAllowed(req));
         } catch (InterruptedException e) {
             Assert.fail("Sleep interrupted, cannot wait for token to expire.");
         }
@@ -186,11 +188,14 @@ public class JWTRouteFilterTest {
 
     @Test
     public void checkTokenClaims() {
+        Config cfg = ConfigFactory.load();
+        //secrets from vault in a config file
+        cfg = cfg.withFallback(ConfigFactory.parseFile(new File(System.getenv("TEST_CONFIG_FILE"))));
         Map<String, String> claims = new HashMap<>();
         claims.put("USER_ID", "1");
         String jwtToken = new SecurityHelper().createToken("secret",
                 getCurrentUnixUTCTime() + (System.currentTimeMillis() / 1000) + (60 * 5), claims);
-        Map<String, Claim> claimsFromToken = SecurityHelper.verifyAndGetClaims("secret", jwtToken);
+        Map<String, Claim> claimsFromToken = SecurityHelper.verifyAndGetClaims("secret", jwtToken, cfg.getString("auth0.account"));
         String userId = claimsFromToken.get("USER_ID").asString();
         Assert.assertNotNull(userId);
         Assert.assertEquals("1", userId);

@@ -508,6 +508,8 @@ public class DSMServer {
 
         //BSP route
         String bspSecret = cfg.getString(ApplicationConfigConstants.BSP_SECRET);
+        String auth0Domain = cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN);
+        String auth0claimNameSpace = cfg.getString(ApplicationConfigConstants.AUTH0_CLAIM_NAMESPACE);
 
         if (StringUtils.isBlank(bspSecret)) {
             throw new RuntimeException("No secret supplied for BSP endpoint, system exiting.");
@@ -518,13 +520,13 @@ public class DSMServer {
         afterAfter((req, res) -> MDC.clear());
 
         before(API_ROOT + RoutePath.BSP_KIT_QUERY_PATH, (req, res) -> {
-            if (!new JWTRouteFilter(bspSecret, null).isAccessAllowed(req)) {
+            if (!new JWTRouteFilter(bspSecret, null, auth0Domain).isAccessAllowed(req)) {
                 halt(404);
             }
             res.header(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
         });
         before(API_ROOT + RoutePath.CLINICAL_KIT_ENDPOINT, (req, res) -> {
-            if (!new JWTRouteFilter(bspSecret, null).isAccessAllowed(req)) {
+            if (!new JWTRouteFilter(bspSecret, null, auth0Domain).isAccessAllowed(req)) {
                 halt(404);
             }
             res.header(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
@@ -554,7 +556,9 @@ public class DSMServer {
         String jwtSecret = cfg.getString(ApplicationConfigConstants.BROWSER_JWT_SECRET);
         String cookieSalt = cfg.getString(ApplicationConfigConstants.BROWSER_COOKIE_SALT);
         String cookieName = cfg.getString(ApplicationConfigConstants.BROWSER_COOKIE_NAME);
-        new SecurityUtil(jwtSecret);
+        String auth0Signer = cfg.getString(ApplicationConfigConstants.AUTH0_SIGNER);
+
+        new SecurityUtil(auth0Domain, auth0claimNameSpace, auth0Signer);
 
         // path is: /app/drugs (this gets the list of display names)
         DrugRoute drugRoute = new DrugRoute();
@@ -597,9 +601,8 @@ public class DSMServer {
 
                     boolean isTokenValid = false;
                     if (StringUtils.isNotBlank(tokenFromHeader)) {
-                        isTokenValid = new CookieUtil().isCookieValid(req.cookie(cookieName), cookieSalt.getBytes(), tokenFromHeader,
-                                jwtSecret);
-                        isTokenValid = new JWTRouteFilter(jwtSecret, null).isAccessAllowed(req);
+                        isTokenValid = new CookieUtil().isCookieValid(req.cookie(cookieName), cookieSalt.getBytes(), tokenFromHeader, auth0Domain);
+                        isTokenValid = new JWTRouteFilter(jwtSecret, null, auth0Domain).isAccessAllowed(req);
 
                     }
                     if (!isTokenValid) {
@@ -617,7 +620,7 @@ public class DSMServer {
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_SECRET),
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_KEY),
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL),
-                cfg.getString(ApplicationConfigConstants.AUTH0_AUDIENCE)
+                cfg.getString(ApplicationConfigConstants.AUTH0_CLAIM_NAMESPACE)
                 );
         post(UI_ROOT + RoutePath.AUTHENTICATION_REQUEST, authenticationRoute, new JsonTransformer());
 

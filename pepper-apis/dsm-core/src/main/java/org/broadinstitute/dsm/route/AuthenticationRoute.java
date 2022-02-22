@@ -143,6 +143,9 @@ public class AuthenticationRoute implements Route {
         catch (Exception e) {
             throw new RuntimeException("couldn't get response from Auth0 for user " + claims.get("USER_EMAIL"), e);
         }
+        if(response.getError() != null){
+            throw new RuntimeException("Got Auth0 M2M error "+response.getError()+" : "+response.getErrorDescription());
+        }
         return response.getAccessToken();
     }
 
