@@ -439,19 +439,19 @@ public class ElasticSearchTest extends TestHelper {
 
     @Test
     public void testSearchParticipantById() {
-        String pIdToFilter = "WUKIOQNKXJZGCAXCSYGB";
+        String participantIdToFilter = "WUKIOQNKXJZGCAXCSYGB";
         String fetchedPid = "";
         try (RestHighLevelClient client = ElasticSearchUtil.getClientForElasticsearchCloud(cfg.getString("elasticSearch.url"),
                 cfg.getString("elasticSearch.username"), cfg.getString("elasticSearch.password"))) {
             Optional<ElasticSearchParticipantDto> esObject =
-                    ElasticSearchUtil.fetchESDataByParticipantId("participants_structured.rgp.rgp", pIdToFilter, client);
+                    ElasticSearchUtil.fetchESDataByParticipantId("participants_structured.rgp.rgp", participantIdToFilter, client);
             fetchedPid = esObject.orElse(new ElasticSearchParticipantDto.Builder().build()).getProfile().map(ESProfile::getLegacyAltPid)
                     .orElse("");
         } catch (IOException e) {
             Assert.fail();
             e.printStackTrace();
         }
-        Assert.assertEquals(pIdToFilter, fetchedPid);
+        Assert.assertEquals(participantIdToFilter, fetchedPid);
     }
 
     @Test

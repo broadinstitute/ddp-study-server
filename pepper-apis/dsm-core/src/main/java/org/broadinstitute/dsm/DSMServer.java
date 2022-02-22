@@ -44,8 +44,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.util.ConfigManager;
-import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.dsm.careevolve.Provider;
 import org.broadinstitute.dsm.jetty.JettyConfig;
@@ -114,7 +112,6 @@ import org.broadinstitute.dsm.security.JWTConverter;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
-import org.broadinstitute.dsm.util.DDPRequestUtil;
 import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.EventUtil;
 import org.broadinstitute.dsm.util.JWTRouteFilter;
@@ -627,7 +624,7 @@ public class DSMServer {
         String projectId = cfg.getString(GCP_PATH_TO_PUBSUB_PROJECT_ID);
         String subscriptionId = cfg.getString(GCP_PATH_TO_PUBSUB_SUB);
         String dsmToDssSubscriptionId = cfg.getString(GCP_PATH_TO_DSS_TO_DSM_SUB);
-        String DSMtasksSubscriptionId = cfg.getString(GCP_PATH_TO_DSM_TASKS_SUB);
+        String dsmTasksSubscriptionId = cfg.getString(GCP_PATH_TO_DSM_TASKS_SUB);
 
         logger.info("Setting up pubsub for {}/{}", projectId, subscriptionId);
 
@@ -674,7 +671,7 @@ public class DSMServer {
         }
 
         try {
-            DSMtasksSubscription.subscribeDSMtasks(projectId, DSMtasksSubscriptionId);
+            DSMtasksSubscription.subscribeDSMtasks(projectId, dsmTasksSubscriptionId);
         } catch (Exception e) {
             e.printStackTrace();
         }

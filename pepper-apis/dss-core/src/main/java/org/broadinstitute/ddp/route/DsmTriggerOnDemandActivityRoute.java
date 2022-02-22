@@ -5,6 +5,7 @@ import static org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import java.time.Instant;
 import java.util.Set;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -23,15 +24,11 @@ import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
+@Slf4j
 public class DsmTriggerOnDemandActivityRoute extends ValidatedJsonInputRoute<TriggerActivityPayload> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(DsmTriggerOnDemandActivityRoute.class);
-
     @Override
     protected int getValidationErrorStatus() {
         return HttpStatus.SC_BAD_REQUEST;
@@ -43,7 +40,7 @@ public class DsmTriggerOnDemandActivityRoute extends ValidatedJsonInputRoute<Tri
         String activityCode = request.params(PathParam.ACTIVITY_CODE);
         String participantGuidOrLegacyAltPid = payload.getParticipantGuid();
 
-        LOG.info("Attempting to trigger on-demand activity for study guid {}, activity code {}, participant guid {}",
+        log.info("Attempting to trigger on-demand activity for study guid {}, activity code {}, participant guid {}",
                 studyGuid, activityCode, participantGuidOrLegacyAltPid);
 
         TransactionWrapper.useTxn(handle -> {
@@ -51,7 +48,7 @@ public class DsmTriggerOnDemandActivityRoute extends ValidatedJsonInputRoute<Tri
                     .getIdByGuid(studyGuid)
                     .orElseGet(() -> {
                         ApiError err = new ApiError(ErrorCodes.STUDY_NOT_FOUND, "Could not find study with guid " + studyGuid);
-                        LOG.warn(err.getMessage());
+                        log.warn(err.getMessage());
                         ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, err);
                         return -1L;     // Not reached
                     });
@@ -61,7 +58,7 @@ public class DsmTriggerOnDemandActivityRoute extends ValidatedJsonInputRoute<Tri
                     .orElseGet(() -> {
                         ApiError err = new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, String.format(
                                 "Could not find activity with code %s for study with guid %s", activityCode, studyGuid));
-                        LOG.warn(err.getMessage());
+                        log.warn(err.getMessage());
                         ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, err);
                         return null;    // Not reached
                     });
@@ -70,7 +67,7 @@ public class DsmTriggerOnDemandActivityRoute extends ValidatedJsonInputRoute<Tri
             if (user == null) {
                 ApiError err = new ApiError(ErrorCodes.USER_NOT_FOUND, String.format(
                         "Could not find participant with guid %s", participantGuidOrLegacyAltPid));
-                LOG.warn(err.getMessage());
+                log.warn(err.getMessage());
                 ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, err);
                 return;
             }
@@ -82,13 +79,13 @@ public class DsmTriggerOnDemandActivityRoute extends ValidatedJsonInputRoute<Tri
             if (activityDto.getMaxInstancesPerUser() != null && instanceCount >= activityDto.getMaxInstancesPerUser()) {
                 ApiError err = new ApiError(ErrorCodes.TOO_MANY_INSTANCES, String.format(
                         "Exceeded maximum number of allowed activity instances for participant %s", participantGuid));
-                LOG.warn(err.getMessage());
+                log.warn(err.getMessage());
                 ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR, err);
                 return;
             }
 
             ActivityInstanceDao instanceDao = handle.attach(ActivityInstanceDao.class);
-            if (activityDto.isHideExistingInstancesOnCreation()) {
+            if (activityDto.hideExistingInstancesOnCreation()) {
                 //hide existing instances
                 instanceDao.bulkUpdateIsHiddenByActivityIds(user.getId(), true, Set.of(activityDto.getActivityId()));
             }
@@ -98,11 +95,11 @@ public class DsmTriggerOnDemandActivityRoute extends ValidatedJsonInputRoute<Tri
             if (instanceDto == null || StringUtils.isBlank(instanceDto.getGuid())) {
                 ApiError err = new ApiError(ErrorCodes.SERVER_ERROR, String.format(
                         "Unable to create activity instance for participant %s", participantGuid));
-                LOG.error(err.getMessage());
+                log.error(err.getMessage());
                 ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR, err);
             } else {
                 handle.attach(DataExportDao.class).queueDataSync(user.getId(), studyId);
-                LOG.info("Created on-demand activity instance {} for study guid {}, activity code {}, participant guid {}",
+                log.info("Created on-demand activity instance {} for study guid {}, activity code {}, participant guid {}",
                         instanceDto.getGuid(), studyGuid, activityCode, participantGuid);
             }
         });

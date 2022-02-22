@@ -67,9 +67,9 @@ public class AddFamilyMemberPayload {
 
     public long getFamilyId(List<ParticipantData> participantData) throws NoSuchFieldException {
         String familyId = null;
-        for (ParticipantData pDataDto : Objects.requireNonNull(participantData)) {
-            Map<String, String> pDataMap = new Gson().fromJson(pDataDto.getData().orElse(""), Map.class);
-            familyId = pDataMap.get(FamilyMemberConstants.FAMILY_ID);
+        for (ParticipantData participantDataDto : Objects.requireNonNull(participantData)) {
+            Map<String, String> participantDataMap = new Gson().fromJson(participantDataDto.getData().orElse(""), Map.class);
+            familyId = participantDataMap.get(FamilyMemberConstants.FAMILY_ID);
             if (org.apache.commons.lang3.StringUtils.isNumeric(familyId)) {
                 break;
             }

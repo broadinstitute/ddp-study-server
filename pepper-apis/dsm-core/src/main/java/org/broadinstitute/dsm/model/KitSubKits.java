@@ -40,10 +40,6 @@ public class KitSubKits {
 
     /**
      * Getting all kit types
-     *
-     * @return HashMap<String, KitType>
-     * Key: (String) kit_type_name + _ + instance_id from table kit_type
-     * Value: KitType (Information of kitType like customJson)
      */
     public static List<KitSubKits> getSubKits(@NonNull String realm, @NonNull String kitType) {
         List<KitSubKits> subKits = new ArrayList<>();

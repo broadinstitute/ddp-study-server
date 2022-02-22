@@ -1,6 +1,6 @@
 <databaseChangeLog
-        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
     <include file="liquibase/000-initialDB.xml" relativeToChangelogFile="true"/>
@@ -74,5 +74,9 @@
     <include file="liquibase/circadia/DDP-6688_DLMO-form.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/circadia/DDP-6796_add-instance-setting-for-computed-object.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/circadia/DDP-6797_set-has-computed-object-for-circadia-to-true.xml" relativeToChangelogFile="true"/>
-<!--    <include file="liquibase/DDP-7344-preFilter.xml" relativeToChangelogFile="true"/>-->
+    <include file="liquibase/circadia/DDP-6688_DLMO-events.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/CMI/DDP-6034_SMIDS.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/rgp/DDP-7423_Data-Sharing-Field.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/DDP-7431_kit_upload_permission.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/rgp/DDP-7458_Sqr-Project-Field.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
