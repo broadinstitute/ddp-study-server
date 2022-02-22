@@ -67,10 +67,10 @@ public class RouteInfoTest extends TestHelper {
     }
 
     private static void setupMock() throws Exception {
-        setupDDPMRRoutes();
+        setupDdpMrRoutes();
     }
 
-    private static void setupDDPMRRoutes() throws Exception {
+    private static void setupDdpMrRoutes() throws Exception {
         String messageParticipant = TestUtil.readFile("ddpResponses/ParticipantInstitutions.json");
         mockDDP.when(request().withPath("/dsm/studies/migratedDDP/ddp/participantinstitutions"))
                 .respond(response().withStatusCode(200).withBody(messageParticipant));

@@ -349,15 +349,15 @@ public class RouteTestAbstraction extends TestHelper {
         int count = 0;
         for (AbstractionGroup group : abstractionWrapper.getAbstraction()) {
             count += group.getFields().size();
-            for (AbstractionGroup rGroup : abstractionWrapper.getReview()) {
-                if (rGroup.getDisplayName().equals(group.getDisplayName())) {
-                    Assert.assertEquals(rGroup.getFields().size(), group.getFields().size());
+            for (AbstractionGroup abstractionGroup : abstractionWrapper.getReview()) {
+                if (abstractionGroup.getDisplayName().equals(group.getDisplayName())) {
+                    Assert.assertEquals(abstractionGroup.getFields().size(), group.getFields().size());
                     break;
                 }
             }
-            for (AbstractionGroup qGroup : abstractionWrapper.getQc()) {
-                if (qGroup.getDisplayName().equals(group.getDisplayName())) {
-                    Assert.assertEquals(qGroup.getFields().size(), group.getFields().size());
+            for (AbstractionGroup abstractionGroup : abstractionWrapper.getQc()) {
+                if (abstractionGroup.getDisplayName().equals(group.getDisplayName())) {
+                    Assert.assertEquals(abstractionGroup.getFields().size(), group.getFields().size());
                     break;
                 }
             }

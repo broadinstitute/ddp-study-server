@@ -169,11 +169,12 @@ public class ParticipantData {
             List<org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData> participantDataList) {
         return Objects.requireNonNull(participantDataList).stream()
                 .filter(participantDataDto -> {
-                    Map<String, String> pDataMap = ObjectMapperSingleton.readValue(participantDataDto.getData().orElse(StringUtils.EMPTY),
+                    Map<String, String> participantDataMap = ObjectMapperSingleton.readValue(participantDataDto.getData()
+                                    .orElse(StringUtils.EMPTY),
                             new TypeReference<Map<String,
                                     String>>() {
                             });
-                    return FamilyMemberConstants.MEMBER_TYPE_SELF.equals(pDataMap.get(FamilyMemberConstants.MEMBER_TYPE));
+                    return FamilyMemberConstants.MEMBER_TYPE_SELF.equals(participantDataMap.get(FamilyMemberConstants.MEMBER_TYPE));
                 })
                 .findFirst();
     }
