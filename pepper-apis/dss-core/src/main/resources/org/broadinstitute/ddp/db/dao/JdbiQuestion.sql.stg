@@ -29,6 +29,13 @@ where qsc.umbrella_study_id = :studyId
   and rev.end_date is null
 >>
 
+queryDtoByActivityIdAndQuestionStableId() ::= <<
+<all_questions_select()>
+where q.study_activity_id = :activityId
+  and qsc.stable_id = :questionStableId
+  and rev.end_date is null
+>>
+
 queryLatestDtosByStudyIdAndQuestionStableIds(questionStableIds) ::= <<
 <all_questions_select()>
 where qsc.umbrella_study_id = :studyId
@@ -46,13 +53,6 @@ select q.question_id
    and ai.activity_instance_guid = :instanceGuid
    and rev.start_date \<= ai.created_at
    and (rev.end_date is null or ai.created_at \< rev.end_date)
->>
-
-queryQuestionIdByStableId() ::= <<
-select q.question_id
-  from question as q
-  join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id
- where qsc.stable_id = :stableId
 >>
 
 select_all_question_dtos() ::= <<

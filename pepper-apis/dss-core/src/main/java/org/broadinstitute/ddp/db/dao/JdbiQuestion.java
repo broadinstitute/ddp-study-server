@@ -61,6 +61,13 @@ public interface JdbiQuestion extends SqlObject {
                 @Bind("hideNumber") boolean hideNumber, @Bind("isDeprecated") boolean isDeprecated,
                 @Bind("isWriteOnce") boolean isWriteOnce);
 
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryDtoByActivityIdAndQuestionStableId")
+    @RegisterConstructorMapper(QuestionDto.class)
+    Optional<QuestionDto> findDtoByActivityIdAndQuestionStableId(
+            @Bind("activityId") long activityId,
+            @Bind("questionStableId") String questionStableId);
+
     // study-builder
     @UseStringTemplateSqlLocator
     @SqlQuery("queryLatestDtoByStudyIdAndQuestionStableId")
@@ -90,10 +97,6 @@ public interface JdbiQuestion extends SqlObject {
     @SqlQuery("queryQuestionIdByStableIdAndInstanceGuid")
     Optional<Long> findIdByStableIdAndInstanceGuid(@Bind("stableId") String stableId,
                                                    @Bind("instanceGuid") String instanceGuid);
-
-    @UseStringTemplateSqlLocator
-    @SqlQuery("queryQuestionIdByStableId")
-    Optional<Long> findIdByStableId(@Bind("stableId") String stableId);
 
     default Optional<QuestionDto> findDtoByStableIdAndInstanceGuid(String stableId, String instanceGuid) {
         return findIdByStableIdAndInstanceGuid(stableId, instanceGuid)

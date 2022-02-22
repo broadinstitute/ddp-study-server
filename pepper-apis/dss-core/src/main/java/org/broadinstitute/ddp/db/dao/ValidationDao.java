@@ -105,7 +105,7 @@ public interface ValidationDao extends SqlObject {
      * @param question   the associated question with validations
      * @param revisionId the revision to use, will be shared by all created data
      */
-    default void insertValidations(long activityId, QuestionDef question, long revisionId) {
+    default void insertValidations(QuestionDef question, long revisionId) {
         long questionId = question.getQuestionId();
         for (RuleDef rule : question.getValidations()) {
             if (rule instanceof RequiredRuleDef) {
@@ -133,7 +133,7 @@ public interface ValidationDao extends SqlObject {
             } else if (rule instanceof UniqueValueRuleDef) {
                 insert(questionId, (UniqueValueRuleDef) rule, revisionId);
             } else if (rule instanceof ComparisonRuleDef) {
-                insert(questionId, (ComparisonRuleDef) rule, activityId, revisionId);
+                insert(questionId, (ComparisonRuleDef) rule, revisionId);
             } else {
                 throw new DaoException("Unknown validation rule type " + rule.getRuleType());
             }
@@ -382,16 +382,21 @@ public interface ValidationDao extends SqlObject {
      * @param rule       the rule definition
      * @param revisionId the revision to use, will be shared by all created data
      */
-    default void insert(long questionId, ComparisonRuleDef rule, long activityId, long revisionId) {
+    default void insert(long questionId, ComparisonRuleDef rule, long revisionId) {
         insertBaseRule(questionId, rule, revisionId);
 
-        //TODO: Find question id by studyId & stableId (do we have to?)
-        final Optional<Long> referencedQuestionId = getJdbiQuestion().findIdByStableId(rule.getValueStableId());
-        if (referencedQuestionId.isEmpty()) {
+        final Optional<QuestionDto> questionDto = getJdbiQuestion().findQuestionDtoById(questionId);
+        if (questionDto.isEmpty()) {
+            throw new DaoException("Question " + questionId + " doesn't exist");
+        }
+
+        final Optional<QuestionDto> referencedQuestion = getJdbiQuestion()
+                .findDtoByActivityIdAndQuestionStableId(questionDto.get().getActivityId(), rule.getValueStableId());
+        if (referencedQuestion.isEmpty()) {
             throw new DaoException("Referenced question " + rule.getValueStableId() + " doesn't exist");
         }
 
-        getJdbiComparisonValidation().insert(rule.getRuleId(), referencedQuestionId.get(), rule.getComparison());
+        getJdbiComparisonValidation().insert(rule.getRuleId(), referencedQuestion.get().getId(), rule.getComparison());
     }
 
     /**

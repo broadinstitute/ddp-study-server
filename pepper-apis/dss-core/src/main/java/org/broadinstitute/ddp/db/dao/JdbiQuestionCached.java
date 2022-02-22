@@ -74,6 +74,11 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
     }
 
     @Override
+    public Optional<QuestionDto> findDtoByActivityIdAndQuestionStableId(long activityId, String questionStableId) {
+        return delegate.findDtoByActivityIdAndQuestionStableId(activityId, questionStableId);
+    }
+
+    @Override
     public List<String> getActivityCodesByActivityInstanceSelectQuestionId(Long questionId) {
         return delegate.getActivityCodesByActivityInstanceSelectQuestionId(questionId);
     }
@@ -141,11 +146,6 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
 
             return Optional.ofNullable(questionId);
         }
-    }
-
-    @Override
-    public Optional<Long> findIdByStableId(String stableId) {
-        return delegate.findIdByStableId(stableId);
     }
 
     @Override

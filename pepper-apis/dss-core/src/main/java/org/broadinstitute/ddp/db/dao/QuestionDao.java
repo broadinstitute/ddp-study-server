@@ -1132,7 +1132,7 @@ public interface QuestionDao extends SqlObject {
                 question.isWriteOnce());
         question.setQuestionId(questionId);
 
-        getValidationDao().insertValidations(activityId, question, revisionId);
+        getValidationDao().insertValidations(question, revisionId);
         LOG.info("Inserted {} validations for {}", question.getValidations().size(), question.getStableId());
     }
 
