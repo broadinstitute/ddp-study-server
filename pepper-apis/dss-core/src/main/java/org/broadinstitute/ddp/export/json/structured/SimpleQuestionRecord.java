@@ -12,4 +12,8 @@ public final class SimpleQuestionRecord extends QuestionRecord {
         super(questionType, stableId);
         this.answer = answer;
     }
+
+    public Object getAnswer() {
+        return answer;
+    }
 }

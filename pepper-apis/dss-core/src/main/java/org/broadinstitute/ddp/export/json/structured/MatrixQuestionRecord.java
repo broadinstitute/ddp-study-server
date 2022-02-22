@@ -30,4 +30,8 @@ public final class MatrixQuestionRecord extends QuestionRecord {
             }
         }
     }
+
+    public Map<String, String> getSelected() {
+        return selected;
+    }
 }
