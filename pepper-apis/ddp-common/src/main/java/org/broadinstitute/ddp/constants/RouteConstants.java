@@ -30,7 +30,7 @@ public class RouteConstants {
 
         public static final String REGISTRATION = BASE + "/register";
         public static final String TEMP_USERS = BASE + "/temporary-users";
-        public static final String ACTIVITY_INSTANCE_STATUS_TYPE_LIST = BASE + "/activity-instance-status-types";
+        public static final String ACTIVITY_INSTANCE_STATUS_TYPE_LIST = BASE  + "/activity-instance-status-types";
 
         public static final String SENDGRID_EVENT = BASE + "/sendgrid-event";
         public static final String AUTH0_LOG_EVENT = BASE + "/auth0-log-event";
@@ -38,6 +38,7 @@ public class RouteConstants {
         public static final String ADMIN_BASE = BASE + "/admin";
         public static final String ADMIN_STUDY_PARTICIPANTS =
                 fmt(ADMIN_BASE + "/studies/%s/participants", PathParam.STUDY_GUID);
+
         public static final String ADMIN_STUDY_PARTICIPANTS_LOOKUP =
                 fmt(ADMIN_BASE + "/studies/%s/participants-lookup", PathParam.STUDY_GUID);
         public static final String ADMIN_STUDY_PARTICIPANT_LOOKUP_BY_GUID =
