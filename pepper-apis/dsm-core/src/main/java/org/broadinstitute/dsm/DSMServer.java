@@ -44,7 +44,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.dsm.careevolve.Provider;
 import org.broadinstitute.dsm.jetty.JettyConfig;
 import org.broadinstitute.dsm.jobs.DDPEventJob;

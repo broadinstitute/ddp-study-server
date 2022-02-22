@@ -207,11 +207,6 @@ public class EventUtil {
         addEvent(conn, type, instanceID, requestId, trigger, SQL_INSERT_EVENT);
     }
 
-    public static void addPTEvent(Connection conn, @NonNull String type, @NonNull String instanceID, @NonNull String requestId,
-                                  boolean trigger) {
-        addEvent(conn, type, instanceID, requestId, trigger, SQL_INSERT_PT_EVENT);
-    }
-
     public static void addEvent(Connection conn, @NonNull String type, @NonNull String instanceID, @NonNull String requestId,
                                 boolean trigger, String query) {
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -227,6 +222,11 @@ public class EventUtil {
         } catch (SQLException e) {
             logger.error("Error inserting event ", e);
         }
+    }
+
+    public static void addPTEvent(Connection conn, @NonNull String type, @NonNull String instanceID, @NonNull String requestId,
+                                  boolean trigger) {
+        addEvent(conn, type, instanceID, requestId, trigger, SQL_INSERT_PT_EVENT);
     }
 
     public void triggerReminder() {

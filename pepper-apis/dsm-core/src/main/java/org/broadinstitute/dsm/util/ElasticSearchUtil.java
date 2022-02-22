@@ -174,17 +174,6 @@ public class ElasticSearchUtil {
         return getClientForElasticsearchCloud(baseUrl, userName, password, proxy);
     }
 
-    public static RestHighLevelClient getClientForElasticsearchCloudCF(@NonNull String baseUrl,
-                                                                       @NonNull String userName,
-                                                                       @NonNull String password,
-                                                                       String proxy) throws MalformedURLException {
-        final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-        credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(userName, password));
-
-        URL url = new URL(baseUrl);
-        return getClientForElasticsearchCloud(baseUrl, userName, password, proxy);
-    }
-
     public static RestHighLevelClient getClientForElasticsearchCloud(@NonNull String baseUrl,
                                                                      @NonNull String userName,
                                                                      @NonNull String password,
