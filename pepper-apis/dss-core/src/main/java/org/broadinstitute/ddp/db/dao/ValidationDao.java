@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.DaoException;
@@ -44,6 +45,7 @@ import org.broadinstitute.ddp.model.activity.definition.validation.ComparisonRul
 import org.broadinstitute.ddp.model.activity.definition.validation.UniqueValueRuleDef;
 import org.broadinstitute.ddp.model.activity.instance.validation.*;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
+import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
@@ -409,6 +411,16 @@ public interface ValidationDao extends SqlObject {
                     "Referenced question must have the same type as original: %s (actual: %s)",
                     originalQuestion.get().getType(),
                     referencedQuestion.get().getType()));
+        }
+
+        if (!referencedQuestion.get().getType().isComparable()) {
+            throw new DaoException(String.format(
+                    "Only comparable type questions might be compared. Comparable types are: %s. (actual: %s)",
+                    Stream.of(QuestionType.values())
+                            .filter(QuestionType::isComparable)
+                            .map(Enum::name)
+                            .collect(Collectors.joining(",")),
+                    originalQuestion.get().getType()));
         }
 
         getJdbiComparisonValidation().insert(rule.getRuleId(), referencedQuestion.get().getId(), rule.getComparison());

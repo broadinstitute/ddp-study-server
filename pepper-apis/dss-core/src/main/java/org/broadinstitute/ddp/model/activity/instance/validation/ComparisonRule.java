@@ -18,6 +18,7 @@ public class ComparisonRule extends Rule<Answer> {
 
     @Override
     public boolean validate(Question<Answer> question, Answer answer) {
+
         //TODO: Write validation
         return true;
     }
