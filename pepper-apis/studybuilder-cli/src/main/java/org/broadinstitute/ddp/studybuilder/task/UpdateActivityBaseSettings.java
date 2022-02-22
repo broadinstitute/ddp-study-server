@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import com.google.common.base.Functions;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
@@ -24,8 +25,6 @@ import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * General task to update basic activity configuration such as display order, max instances per user, and other flags.
@@ -33,10 +32,8 @@ import org.slf4j.LoggerFactory;
  * will be read to lookup the latest text to update to. If new text in a new language is added, those will be inserted
  * as well. This task will do this for all activities in the study.
  */
+@Slf4j
 public class UpdateActivityBaseSettings implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(UpdateActivityBaseSettings.class);
-
     private Path cfgPath;
     private Config studyCfg;
     private Config varsCfg;
@@ -62,7 +59,7 @@ public class UpdateActivityBaseSettings implements CustomTask {
 
             long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
             ActivityVersionDto versionDto = jdbiActVersion.findByActivityIdAndVersionTag(activityId, versionTag).orElseThrow();
-            LOG.info("Working on activity {} version {} (revisionId={})...", activityCode, versionTag, versionDto.getRevId());
+            log.info("Working on activity {} version {} (revisionId={})...", activityCode, versionTag, versionDto.getRevId());
 
             compareBasicSettings(handle, definition, activityId);
             compareNamingDetails(handle, definition, activityId, versionDto);
@@ -103,22 +100,22 @@ public class UpdateActivityBaseSettings implements CustomTask {
             jdbiActivity.updateActivity(
                     latestDto.getActivityId(),
                     latestDto.getDisplayOrder(),
-                    latestDto.isWriteOnce(),
-                    latestDto.isInstantiateUponRegistration(),
+                    latestDto.writeOnce(),
+                    latestDto.instantiateUponRegistration(),
                     latestDto.getMaxInstancesPerUser(),
                     latestDto.getEditTimeoutSec(),
-                    latestDto.isOndemandTriggerAllowed(),
+                    latestDto.isOnDemandTriggerAllowed(),
                     latestDto.shouldExcludeFromDisplay(),
                     latestDto.isUnauthenticatedAllowed(),
                     latestDto.isFollowup(),
                     latestDto.shouldExcludeStatusIconFromDisplay(),
-                    latestDto.isHideExistingInstancesOnCreation(),
+                    latestDto.hideExistingInstancesOnCreation(),
                     latestDto.isCreateOnParentCreation(),
                     latestDto.canDeleteInstances(),
-                    latestDto.getCanDeleteFirstInstance());
-            LOG.info("Updated basic settings");
+                    latestDto.canDeleteFirstInstance());
+            log.info("Updated basic settings");
         } else {
-            LOG.info("No changes to basic settings");
+            log.info("No changes to basic settings");
         }
     }
 
@@ -141,13 +138,13 @@ public class UpdateActivityBaseSettings implements CustomTask {
         }
 
         activityI18nDao.updateDetails(updatedDetails);
-        LOG.info("Updated naming details for {} languages: {}", updatedDetails.size(),
+        log.info("Updated naming details for {} languages: {}", updatedDetails.size(),
                 updatedDetails.stream().map(ActivityI18nDetail::getIsoLangCode).collect(Collectors.toList()));
 
         // Only new naming details are left, if any.
         List<ActivityI18nDetail> newDetails = List.copyOf(latestDetails.values());
         activityI18nDao.insertDetails(newDetails);
-        LOG.info("Created naming details for {} languages: {}", newDetails.size(),
+        log.info("Created naming details for {} languages: {}", newDetails.size(),
                 newDetails.stream().map(ActivityI18nDetail::getIsoLangCode).collect(Collectors.toList()));
     }
 
@@ -217,13 +214,13 @@ public class UpdateActivityBaseSettings implements CustomTask {
         }
 
         activityI18nDao.updateSummaries(updatedSummaries);
-        LOG.info("Updated {} status summaries: {}", updatedSummaries.size(),
+        log.info("Updated {} status summaries: {}", updatedSummaries.size(),
                 updatedSummaries.stream().map(this::statusSummaryKey).collect(Collectors.toList()));
 
         // Only new status summaries are left, if any.
         List<SummaryTranslation> newSummaries = List.copyOf(latestSummaries.values());
         activityI18nDao.insertSummaries(activityId, newSummaries);
-        LOG.info("Created {} status summaries: {}", newSummaries.size(),
+        log.info("Created {} status summaries: {}", newSummaries.size(),
                 newSummaries.stream().map(this::statusSummaryKey).collect(Collectors.toList()));
     }
 

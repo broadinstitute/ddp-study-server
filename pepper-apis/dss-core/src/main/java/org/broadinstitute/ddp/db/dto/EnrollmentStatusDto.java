@@ -1,66 +1,35 @@
 package org.broadinstitute.ddp.db.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
+import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
+@Value
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class EnrollmentStatusDto {
-    private long userStudyEnrollmentId;
-    private long userId;
-    private String userGuid;
-    private long studyId;
-    private String studyGuid;
-    private EnrollmentStatusType enrollmentStatus;
-    private long validFromMillis;
-    private Long validToMillis;
+    @ColumnName("user_study_enrollment_id")
+    long userStudyEnrollmentId;
 
-    public EnrollmentStatusDto(
-            @ColumnName("user_study_enrollment_id") long userStudyEnrollmentId,
-            @ColumnName("user_id") long userId,
-            @ColumnName("user_guid") String userGuid,
-            @ColumnName("study_id") long studyId,
-            @ColumnName("study_guid") String studyGuid,
-            @ColumnName("enrollment_status") EnrollmentStatusType enrollmentStatus,
-            @ColumnName("valid_from_millis") long validFromMillis,
-            @ColumnName("valid_to_millis") Long validToMillis) {
-        this.userStudyEnrollmentId = userStudyEnrollmentId;
-        this.userId = userId;
-        this.studyId = studyId;
-        this.enrollmentStatus = enrollmentStatus;
-        this.validFromMillis = validFromMillis;
-        this.userGuid = userGuid;
-        this.studyGuid = studyGuid;
-        this.validToMillis = validToMillis;
-    }
+    @ColumnName("user_id")
+    long userId;
 
-    public long getUserId() {
-        return userId;
-    }
+    @ColumnName("user_guid")
+    String userGuid;
 
-    public long getStudyId() {
-        return studyId;
-    }
+    @ColumnName("study_id")
+    long studyId;
+    
+    @ColumnName("study_guid")
+    String studyGuid;
 
-    public EnrollmentStatusType getEnrollmentStatus() {
-        return enrollmentStatus;
-    }
+    @ColumnName("enrollment_status")
+    EnrollmentStatusType enrollmentStatus;
 
-    public long getValidFromMillis() {
-        return validFromMillis;
-    }
+    @ColumnName("valid_from_millis")
+    long validFromMillis;
 
-    public Long getValidToMillis() {
-        return validToMillis;
-    }
-
-    public long getUserStudyEnrollmentId() {
-        return userStudyEnrollmentId;
-    }
-
-    public String getUserGuid() {
-        return userGuid;
-    }
-
-    public String getStudyGuid() {
-        return studyGuid;
-    }
+    @ColumnName("valid_to_millis")
+    Long validToMillis;
 }
