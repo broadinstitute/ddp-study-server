@@ -24,7 +24,7 @@ get:
       schema:
         type: string
     - in: path
-      name: stableId
+      name: questionStableId
       required: true
       description: the activity instance select question's unique identifier
       schema:
