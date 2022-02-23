@@ -1,6 +1,9 @@
 package org.broadinstitute.dsm.model.patch;
 
+import java.util.Objects;
+
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.util.NotificationUtil;
 
 public class PatchFactory {
@@ -27,7 +30,15 @@ public class PatchFactory {
         if (patcher instanceof NullPatch) {
             throw new RuntimeException("Id and parentId was null");
         }
+        patcher.setElasticSearchExportable(isElasticSearchExportable(patch));
         return patcher;
+    }
+
+    private static boolean isElasticSearchExportable(Patch patch) {
+        if (Objects.isNull(patch.getTableAlias())) {
+            return false;
+        }
+        return Util.TABLE_ALIAS_MAPPINGS.containsKey(patch.getTableAlias());
     }
 
     private static boolean isExistingRecord(Patch patch) {

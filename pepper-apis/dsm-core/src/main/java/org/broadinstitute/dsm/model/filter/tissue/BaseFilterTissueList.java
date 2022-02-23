@@ -99,7 +99,8 @@ public abstract class BaseFilterTissueList extends BaseFilter implements Filtera
             String query = " ";
             for (String filter : tableFilters) {
                 if (StringUtils.isNotBlank(filter)) {
-                    if (!filter.contains(ElasticSearchUtil.PROFILE + DBConstants.ALIAS_DELIMITER) && !filter.contains(ElasticSearchUtil.DATA + DBConstants.ALIAS_DELIMITER)) {
+                    if (!filter.contains(ElasticSearchUtil.PROFILE + DBConstants.ALIAS_DELIMITER) && !filter.contains(
+                            ElasticSearchUtil.DATA + DBConstants.ALIAS_DELIMITER)) {
                         query += "AND " + filter + " ";
                     } else {
                         if (filters == null) {

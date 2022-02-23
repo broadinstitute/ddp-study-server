@@ -13,13 +13,12 @@ import spark.QueryParamsMap;
 
 public class EmptyFilterParticipantList extends BaseFilterParticipantList {
 
-
     @Override
     public ParticipantWrapperResult filter(QueryParamsMap queryParamsMap) {
         if (!Objects.requireNonNull(queryParamsMap).hasKey(RoutePath.REALM)) {
             throw new RuntimeException("realm is necessary");
         }
-        prepareNeccesaryData(queryParamsMap);
+        prepareNecessaryData(queryParamsMap);
         String realm = queryParamsMap.get(RoutePath.REALM).value();
         DDPInstanceDto ddpInstanceByGuid = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
         ParticipantWrapperPayload participantWrapperPayload = new ParticipantWrapperPayload.Builder()

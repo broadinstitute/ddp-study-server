@@ -1,12 +1,12 @@
 package org.broadinstitute.lddp.security;
 
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import javax.servlet.http.Cookie;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Base64;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
-import javax.servlet.http.Cookie;
 
 /**
  * To avoid the problem of token theft, whereby a nefarious user could
@@ -14,7 +14,7 @@ import javax.servlet.http.Cookie;
  * want against the server side outside of the browser, whenever we hand out a
  * jwt token, we also use a secure, http only cookie, whose
  * value is a hash of the salted jwt token.
-
+ *
  * <p>On every route other than the auth route, we check to ensure that
  * the cookie matches the jwt token.</p>
  */

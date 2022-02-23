@@ -3,11 +3,13 @@ package org.broadinstitute.dsm.model.elastic.export.generate;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MappingGenerator extends BaseGenerator {
+public abstract class MappingGenerator extends BaseGenerator {
 
     public static final String TYPE = "type";
     public static final String NESTED = "nested";
@@ -18,20 +20,27 @@ public class MappingGenerator extends BaseGenerator {
         super(parser, generatorPayload);
     }
 
+    public MappingGenerator() {
+    }
 
     @Override
     public Map<String, Object> generate() {
         logger.info("preparing mapping to upsert");
-        String propertyName = getOuterPropertyByAlias().getPropertyName();
-        Map<String, Object> mappedField = buildMappedField();
-        Map<String, Object> objectLevel = Map.of(propertyName, mappedField);
-        Map<String, Object> dsmLevelProperties = Map.of(PROPERTIES, objectLevel);
-        Map<String, Map<String, Object>> dsmLevel = Map.of(DSM_OBJECT, dsmLevelProperties);
-        return Map.of(PROPERTIES, dsmLevel);
+        return getCompleteMap(construct());
     }
 
-    private Map<String, Object> buildMappedField() {
-        return (Map<String, Object>) constructByPropertyType();
+    @Override
+    protected Object parseElement() {
+        parser.setFieldName(getFieldName());
+        return parser.parse(getFieldName());
+    }
+
+    public Map<String, Object> getCompleteMap(Object propertyMap) {
+        String propertyName = getPropertyName();
+        Map<String, Object> objectLevel = new HashMap<>(Map.of(propertyName, propertyMap));
+        Map<String, Object> dsmLevelProperties = new HashMap<>(Map.of(PROPERTIES, objectLevel));
+        Map<String, Map<String, Object>> dsmLevel = new HashMap<>(Map.of(DSM_OBJECT, dsmLevelProperties));
+        return new HashMap<>(Map.of(PROPERTIES, dsmLevel));
     }
 
     @Override
@@ -39,38 +48,12 @@ public class MappingGenerator extends BaseGenerator {
         Map<String, Object> resultMap = new HashMap<>();
         Map<String, Object> fieldsByValues = parseJsonToMapFromValue();
         for (Map.Entry<String, Object> entry : fieldsByValues.entrySet()) {
-            Object eachType = parser.parse(String.valueOf(entry.getValue()));
-            resultMap.put(entry.getKey(), eachType);
+            parser.setFieldName(entry.getKey());
+            Object eachType = parser.parse(entry.getKey());
+            resultMap.put(Util.underscoresToCamelCase(entry.getKey()), eachType);
         }
-        return resultMap;
+        Map<String, Object> returnMap =
+                new HashMap<>(Map.of(ESObjectConstants.DYNAMIC_FIELDS, new HashMap<>(Map.of(PROPERTIES, resultMap))));
+        return returnMap;
     }
-
-    @Override
-    protected Object parseSingleElement() {
-        return getFieldWithElement();
-    }
-
-    @Override
-    protected Map<String, Object> getElementWithId(Object type) {
-        return Map.of(
-                ID, Map.of(TYPE, TYPE_KEYWORD),
-                getDBElement().getColumnName(), type
-        );
-    }
-
-    @Override
-    protected Map<String, Object> getElement(Object type) {
-        return Map.of(getDBElement().getColumnName(), type);
-    }
-
-    @Override
-    protected Object constructSingleElement() {
-        return Map.of(PROPERTIES, collect());
-    }
-
-    @Override
-    protected Object constructCollection() {
-        return Map.of(TYPE, NESTED, PROPERTIES, collect());
-    }
-
 }

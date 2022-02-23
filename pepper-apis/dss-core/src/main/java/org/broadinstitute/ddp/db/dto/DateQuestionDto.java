@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import org.broadinstitute.ddp.model.activity.definition.question.DatePicklistDef;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
@@ -13,13 +15,15 @@ import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
+@Getter
 public final class DateQuestionDto extends QuestionDto implements Serializable {
+    private final DateRenderMode renderMode;
 
-    private DateRenderMode renderMode;
-    private boolean displayCalendar;
-    private Long placeholderTemplateId;
-    private DatePicklistDef picklistDef;
-    private List<DateFieldType> fields;
+    @Accessors(fluent = true)
+    private final boolean shouldDisplayCalendar;
+    private final Long placeholderTemplateId;
+    private final DatePicklistDef picklistDef;
+    private final List<DateFieldType> fields;
 
     @JdbiConstructor
     public DateQuestionDto(@Nested QuestionDto questionDto,
@@ -30,7 +34,7 @@ public final class DateQuestionDto extends QuestionDto implements Serializable {
                            @ColumnName("placeholder_template_id") Long placeholderTemplateId) {
         super(questionDto);
         this.renderMode = renderMode;
-        this.displayCalendar = displayCalendar;
+        this.shouldDisplayCalendar = displayCalendar;
         this.placeholderTemplateId = placeholderTemplateId;
         this.picklistDef = picklistDef;
         if (dateFields == null || dateFields.isBlank()) {
@@ -40,26 +44,6 @@ public final class DateQuestionDto extends QuestionDto implements Serializable {
                     .map(DateFieldType::valueOf)
                     .collect(Collectors.toList());
         }
-    }
-
-    public DateRenderMode getRenderMode() {
-        return renderMode;
-    }
-
-    public boolean shouldDisplayCalendar() {
-        return displayCalendar;
-    }
-
-    public Long getPlaceholderTemplateId() {
-        return placeholderTemplateId;
-    }
-
-    public DatePicklistDef getPicklistDef() {
-        return picklistDef;
-    }
-
-    public List<DateFieldType> getFields() {
-        return fields;
     }
 
     @Override

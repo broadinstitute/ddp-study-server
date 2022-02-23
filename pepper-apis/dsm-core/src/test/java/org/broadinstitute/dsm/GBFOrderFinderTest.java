@@ -36,55 +36,34 @@ public class GBFOrderFinderTest extends TestHelper {
 
     private static final String UPS_STATUS_DATE_FORMAT = "yyyyMMdd HHmmss";
 
-    private static final String MARK_KIT_DELIVERED_AT = "update ddp_kit\n" +
-            "set\n" +
-            "ups_tracking_status = 'D Fake Delivered',\n" +
-            "ups_tracking_date = ?\n" +
-            "where\n" +
-            "dsm_kit_request_id in (select req.dsm_kit_request_id from ddp_kit_request req where req.external_order_number = ?)";
+    private static final String MARK_KIT_DELIVERED_AT =
+            "update ddp_kit\n" + "set\n" + "ups_tracking_status = 'D Fake Delivered',\n" + "ups_tracking_date = ?\n" + "where\n"
+                    + "dsm_kit_request_id in (select req.dsm_kit_request_id from ddp_kit_request req where req.external_order_number = ?)";
 
-    private static final String MARK_KIT_RETURNED = "update ddp_kit\n" +
-            "set\n" +
-            "ups_return_status = 'D Fake Delivered'\n" +
-            "where\n" +
-            "dsm_kit_request_id in (select req.dsm_kit_request_id from ddp_kit_request req where req.external_order_number = ?)";
+    private static final String MARK_KIT_RETURNED = "update ddp_kit\n" + "set\n" + "ups_return_status = 'D Fake Delivered'\n" + "where\n"
+            + "dsm_kit_request_id in (select req.dsm_kit_request_id from ddp_kit_request req where req.external_order_number = ?)";
 
-    private static final String INSERT_KIT_REQUEST = "insert into ddp_kit_request(ddp_instance_id,kit_type_id,ddp_participant_id,"
-            + "external_order_number,ddp_label)\n" +
-            "    (select distinct i.ddp_instance_id, subkit.kit_type_id, ?,?,concat(?,'_',kt.kit_type_name)\n" +
-            "     from ddp_instance i,\n" +
-            "          ddp_kit_request_settings s,\n" +
-            "          sub_kits_settings subkit,\n" +
-            "          kit_type kt\n" +
-            "     where i.instance_name = ? \n" +
-            "       and kt.kit_type_id = subkit.kit_type_id\n" +
-            "       and s.ddp_instance_id = i.ddp_instance_id\n" +
-            "       and s.ddp_kit_request_settings_id = subkit.ddp_kit_request_settings_id\n" +
-            "    )";
+    private static final String INSERT_KIT_REQUEST =
+            "insert into ddp_kit_request(ddp_instance_id,kit_type_id,ddp_participant_id,external_order_number,ddp_label)\n"
+                    + "    (select distinct i.ddp_instance_id, subkit.kit_type_id, ?,?,concat(?,'_',kt.kit_type_name)\n"
+                    + "     from ddp_instance i,\n" + "          ddp_kit_request_settings s,\n" + "          sub_kits_settings subkit,\n"
+                    + "          kit_type kt\n" + "     where i.instance_name = ? \n" + "       and kt.kit_type_id = subkit.kit_type_id\n"
+                    + "       and s.ddp_instance_id = i.ddp_instance_id\n"
+                    + "       and s.ddp_kit_request_settings_id = subkit.ddp_kit_request_settings_id\n" + "    )";
 
     private static final String INSERT_KIT = "insert into ddp_kit(dsm_kit_request_id, kit_label) values (?,?)";
 
-    private static final String DELETE_KITS = "delete from ddp_kit_request\n" +
-            "where\n" +
-            "external_order_number like ?\n" +
-            "and\n" +
-            "ddp_instance_id = (select i.ddp_instance_id from ddp_instance i where i.instance_name = ?)";
+    private static final String DELETE_KITS = "delete from ddp_kit_request\n" + "where\n" + "external_order_number like ?\n" + "and\n"
+            + "ddp_instance_id = (select i.ddp_instance_id from ddp_instance i where i.instance_name = ?)";
 
-    private static final String DELETE_KIT_REQUESTS = "delete from ddp_kit\n" +
-            "where\n" +
-            "dsm_kit_request_id in\n" +
-            "(select dsm_kit_request_id from ddp_kit_request\n" +
-            "where\n" +
-            "external_order_number like ?\n" +
-            "and\n" +
-            "ddp_instance_id = (select i.ddp_instance_id from ddp_instance i where i.instance_name = ?))\n";
+    private static final String DELETE_KIT_REQUESTS =
+            "delete from ddp_kit\n" + "where\n" + "dsm_kit_request_id in\n" + "(select dsm_kit_request_id from ddp_kit_request\n"
+                    + "where\n" + "external_order_number like ?\n" + "and\n"
+                    + "ddp_instance_id = (select i.ddp_instance_id from ddp_instance i where i.instance_name = ?))\n";
 
-    private static final String SET_TRANSMISSION_DATES = "\n" +
-            "update ddp_kit_request set order_transmitted_at = now()\n" +
-            "where\n" +
-            "order_transmitted_at is null\n" +
-            "and\n" +
-            "ddp_instance_id = (select i.ddp_instance_id from ddp_instance i where i.instance_name = ?)\n";
+    private static final String SET_TRANSMISSION_DATES =
+            "\n" + "update ddp_kit_request set order_transmitted_at = now()\n" + "where\n" + "order_transmitted_at is null\n" + "and\n"
+                    + "ddp_instance_id = (select i.ddp_instance_id from ddp_instance i where i.instance_name = ?)\n";
 
     @BeforeClass
     public static void setUp() {
@@ -283,8 +262,8 @@ public class GBFOrderFinderTest extends TestHelper {
                 Collection<SimpleKitOrder> kitsToOrder = finder.findKitsToOrder("testboston", conn);
                 for (SimpleKitOrder simpleKitOrder : kitsToOrder) {
                     // if the kit was returned long after delivery, a new kit should not be ordered
-                    markOrderDeliveredToRecipientAt(conn, simpleKitOrder.getExternalKitOrderNumber(), Instant.now().minus(daysPrior,
-                            ChronoUnit.DAYS));
+                    markOrderDeliveredToRecipientAt(conn, simpleKitOrder.getExternalKitOrderNumber(),
+                            Instant.now().minus(daysPrior, ChronoUnit.DAYS));
                     markOrderAsReturned(conn, simpleKitOrder.getExternalKitOrderNumber());
                 }
                 String secondKit = createTestKit(conn);

@@ -23,15 +23,15 @@ public class DdpKit {
     String upsTrackingDate;
     String upsReturnStatus;
     String upsReturnDate;
-    String HRUID;
+    String hruid;
     String externalOrderNumber;
-    boolean CEOrdered;
+    boolean ceOrdered;
     String ddpInstanceId;
     UPSShipment shipment;
 
     public DdpKit(String dsmKitRequestId, String kitLabel, String trackingToId, String trackingReturnId, String error,
-                  String message, String receiveDate, String bspCollaboratodId, String externalOrderNumber,
-                  boolean CEOrdered, String ddpInstanceId,
+                  String message, String receiveDate, String bspCollaboratorId, String externalOrderNumber,
+                  boolean ceOrdered, String ddpInstanceId,
                   String upsTrackingStatus, String upsTrackingDate, String upsReturnStatus, String upsReturnDate, UPSShipment shipment) {
         this.dsmKitRequestId = dsmKitRequestId;
         this.kitLabel = kitLabel;
@@ -44,13 +44,12 @@ public class DdpKit {
         this.upsTrackingDate = upsTrackingDate;
         this.upsReturnStatus = upsReturnStatus;
         this.upsReturnDate = upsReturnDate;
-        this.HRUID = bspCollaboratodId;
+        this.hruid = bspCollaboratorId;
         this.externalOrderNumber = externalOrderNumber;
-        this.CEOrdered = CEOrdered;
+        this.ceOrdered = ceOrdered;
         this.ddpInstanceId = ddpInstanceId;
         this.shipment = shipment;
     }
-
 
     public static boolean hasKitBeenOrderedInCE(Connection conn, String kitLabel) {
         String query = "select k.ce_order from ddp_kit k where k.kit_label = ?";
@@ -80,13 +79,12 @@ public class DdpKit {
             stmt.setBoolean(1, ordered);
             stmt.setString(2, kitLabel);
             int r = stmt.executeUpdate();
-            if (r != 1) {//number of subkits
+            if (r != 1) { //number of subkits
                 throw new RuntimeException("Update query for CE order flag updated " + r + " rows! with dsm kit " + kitLabel);
             }
         } catch (Exception e) {
             throw new RuntimeException("Could not update ce_ordered status for " + kitLabel, e);
         }
     }
-
 
 }

@@ -15,8 +15,8 @@ import spark.Request;
 /**
  * Utility for "before" filter that will halt with a 404
  * if the proper jwt token is not present.
- * <p>
- * We should halt with a 404 instead of a 401/404
+ *
+ * <p>We should halt with a 404 instead of a 401/404
  * because we don't want to "leak" the fact
  * that any given route actually exists.
  */

@@ -1,31 +1,15 @@
 package org.broadinstitute.ddp.db.dto;
 
-import java.sql.Blob;
-
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 
+import java.sql.Blob;
+
+@Value
+@AllArgsConstructor
 public class IconBlobDto {
-
-    private FormType formType;
-    private String statusTypeCode;
-    private Blob iconBlob;
-
-    public IconBlobDto(FormType formType, String statusTypeCode, Blob iconBlob) {
-        this.formType = formType;
-        this.statusTypeCode = statusTypeCode;
-        this.iconBlob = iconBlob;
-    }
-
-    public FormType getFormType() {
-        return formType;
-    }
-
-    public String getStatusTypeCode() {
-        return statusTypeCode;
-    }
-
-    public Blob getIconBlob() {
-        return iconBlob;
-    }
-
+    FormType formType;
+    String statusTypeCode;
+    Blob iconBlob;
 }

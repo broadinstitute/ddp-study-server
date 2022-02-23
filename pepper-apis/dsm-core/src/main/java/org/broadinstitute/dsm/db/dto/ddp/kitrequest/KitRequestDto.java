@@ -12,7 +12,7 @@ public class KitRequestDto {
     private int ddpInstanceId;
     private String ddpKitRequestId;
     private int kitTypeId;
-    private String bspCollaboratorParticipnatId;
+    private String bspCollaboratorParticipantId;
     private String bspCollaboratorSampleId;
     private String ddpParticipantId;
     private String ddpLabel;
@@ -23,14 +23,14 @@ public class KitRequestDto {
     private String externalOrderStatus;
     private String externalResponse;
     private String uploadReason;
-    private Timestamp orderTransmitted_at;
+    private Timestamp orderTransmittedAt;
 
     public KitRequestDto(
             int dsmKitRequestId,
             int ddpInstanceId,
             String ddpKitRequestId,
             int kitTypeId,
-            String bspCollaboratorParticipnatId,
+            String bspCollaboratorParticipantId,
             String bspCollaboratorSampleId,
             String ddpParticipantId,
             String ddpLabel,
@@ -41,12 +41,12 @@ public class KitRequestDto {
             String externalOrderStatus,
             String externalResponse,
             String uploadReason,
-            Timestamp orderTransmitted_at) {
+            Timestamp orderTransmittedAt) {
         this.dsmKitRequestId = dsmKitRequestId;
         this.ddpInstanceId = ddpInstanceId;
         this.ddpKitRequestId = ddpKitRequestId;
         this.kitTypeId = kitTypeId;
-        this.bspCollaboratorParticipnatId = bspCollaboratorParticipnatId;
+        this.bspCollaboratorParticipantId = bspCollaboratorParticipantId;
         this.bspCollaboratorSampleId = bspCollaboratorSampleId;
         this.ddpParticipantId = ddpParticipantId;
         this.ddpLabel = ddpLabel;
@@ -57,7 +57,7 @@ public class KitRequestDto {
         this.externalOrderStatus = externalOrderStatus;
         this.externalResponse = externalResponse;
         this.uploadReason = uploadReason;
-        this.orderTransmitted_at = orderTransmitted_at;
+        this.orderTransmittedAt = orderTransmittedAt;
     }
 
     public boolean hasUploadReason() {

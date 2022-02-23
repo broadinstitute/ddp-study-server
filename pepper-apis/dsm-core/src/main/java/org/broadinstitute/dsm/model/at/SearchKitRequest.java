@@ -23,11 +23,11 @@ import org.slf4j.LoggerFactory;
 
 public class SearchKitRequest {
 
-    public static final String SQL_SELECT_KIT_REQUEST = "SELECT participant_data_id, ddp_participant_id, data, JSON_EXTRACT(data,'$"
-            + ".GENOME_STUDY_KIT_TRACKING_NUMBER'), " +
-            "JSON_EXTRACT(data,'$.GENOME_STUDY_SPIT_KIT_BARCODE'), JSON_EXTRACT(data,'$.GENOME_STUDY_CPT_ID'), JSON_EXTRACT(data,'$"
-            + ".GENOME_STUDY_DATE_RECEIVED') " +
-            "FROM ddp_participant_data where ";
+    public static final String SQL_SELECT_KIT_REQUEST =
+            "SELECT participant_data_id, ddp_participant_id, data, JSON_EXTRACT(data,'$.GENOME_STUDY_KIT_TRACKING_NUMBER'), "
+                    + "JSON_EXTRACT(data,'$.GENOME_STUDY_SPIT_KIT_BARCODE'), JSON_EXTRACT(data,'$.GENOME_STUDY_CPT_ID'), "
+                    + "JSON_EXTRACT(data,'$.GENOME_STUDY_DATE_RECEIVED') "
+                    + "FROM ddp_participant_data where ";
     private static final Logger logger = LoggerFactory.getLogger(SearchKitRequest.class);
     private static final String SHORT_ID = "SHORT_ID";
     private static final String SEARCH_TRACKING_NUMBER = "TRACKING_NUMBER";
@@ -41,12 +41,12 @@ public class SearchKitRequest {
     public static ParticipantData findATKitRequest(@NonNull String mfBarcode) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KIT_REQUEST.concat(MF_BARCODE + " like \"%" + mfBarcode +
-                    "%\""))) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    SQL_SELECT_KIT_REQUEST.concat(MF_BARCODE + " like \"%" + mfBarcode + "%\""))) {
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                        dbVals.resultValue = new ParticipantData(rs.getString(DBConstants.PARTICIPANT_DATA_ID), null,
-                                rs.getString(DBConstants.DATA));
+                        dbVals.resultValue =
+                                new ParticipantData(rs.getLong(DBConstants.PARTICIPANT_DATA_ID), null, rs.getString(DBConstants.DATA));
                     }
                 }
             } catch (SQLException ex) {
@@ -88,8 +88,9 @@ public class SearchKitRequest {
                         trackingId = removeApostrophe(trackingId);
                         mfBarcode = removeApostrophe(mfBarcode);
                         receivedDate = removeApostrophe(receivedDate);
-                        kitRequests.put(ddpParticipantId, new KitRequestShipping(ddpParticipantId, bspParticipantId, mfBarcode, "AT",
-                                trackingId, receivedDate, "hruid", "gender"));
+                        kitRequests.put(ddpParticipantId,
+                                new KitRequestShipping(ddpParticipantId, bspParticipantId, mfBarcode, "AT", trackingId, receivedDate,
+                                        "hruid", "gender"));
                     }
                 }
             } catch (SQLException ex) {
@@ -107,8 +108,8 @@ public class SearchKitRequest {
         if (!kitRequests.isEmpty()) {
             DDPInstance ddpInstance = DDPInstance.getDDPInstance("atcp");
             kitRequests.forEach((ddpParticipantId, kitRequestShipping) -> {
-                Map<String, Map<String, Object>> participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance,
-                        ElasticSearchUtil.BY_GUID + ddpParticipantId);
+                Map<String, Map<String, Object>> participantESData =
+                        ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance, ElasticSearchUtil.BY_GUID + ddpParticipantId);
                 if (participantESData == null || participantESData.isEmpty()) {
                     participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance,
                             ElasticSearchUtil.BY_LEGACY_ALTPID + ddpParticipantId);
@@ -125,8 +126,8 @@ public class SearchKitRequest {
                             for (Map<String, Object> activity : activities) {
                                 Object activityCode = activity.get("activityCode");
                                 if ("GENOME_STUDY".equals(activityCode)) {
-                                    List<Map<String, Object>> questionsAnswers = (List<Map<String, Object>>) activity.get(
-                                            "questionsAnswers");
+                                    List<Map<String, Object>> questionsAnswers =
+                                            (List<Map<String, Object>>) activity.get("questionsAnswers");
                                     if (questionsAnswers != null) {
                                         for (Map<String, Object> questionsAnswer : questionsAnswers) {
                                             Object stableId = questionsAnswer.get("stableId");

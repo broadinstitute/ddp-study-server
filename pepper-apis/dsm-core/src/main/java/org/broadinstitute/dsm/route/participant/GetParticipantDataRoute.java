@@ -20,13 +20,14 @@ public class GetParticipantDataRoute extends RequestHandler {
         if (!queryParamsMap.hasKey(UserUtil.USER_ID) && !queryParamsMap.get(UserUtil.USER_ID).hasValue()) {
             throw new NoSuchElementException("User id is not provided");
         }
-        String uId = queryParamsMap.get(UserUtil.USER_ID).value();
+        String userIdFromRequest = queryParamsMap.get(UserUtil.USER_ID).value();
 
-        if (!uId.equals(userId)) {
-            throw new RuntimeException("User id was not equal. User id in token " + userId + " user id in request " + uId);
+        if (!userIdFromRequest.equals(userId)) {
+            throw new RuntimeException("User id was not equal. User id in token " + userId + " user id in request " + userIdFromRequest);
         }
 
-        if (!queryParamsMap.hasKey(ParticipantUtil.DDP_PARTICIPANT_ID) && !queryParamsMap.get(ParticipantUtil.DDP_PARTICIPANT_ID).hasValue()) {
+        if (!queryParamsMap.hasKey(ParticipantUtil.DDP_PARTICIPANT_ID)
+                && !queryParamsMap.get(ParticipantUtil.DDP_PARTICIPANT_ID).hasValue()) {
             throw new NoSuchElementException("Participant Id is not provided");
         }
         String ddpParticipantId = queryParamsMap.get(ParticipantUtil.DDP_PARTICIPANT_ID).value();

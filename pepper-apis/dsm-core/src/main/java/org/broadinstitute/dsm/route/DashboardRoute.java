@@ -16,7 +16,6 @@ import java.util.Set;
 import com.google.gson.Gson;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.db.AbstractionActivity;
 import org.broadinstitute.dsm.db.AbstractionFinal;
 import org.broadinstitute.dsm.db.AbstractionGroup;
@@ -44,6 +43,7 @@ import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.AbstractionUtil;
+import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
@@ -60,20 +60,22 @@ public class DashboardRoute extends RequestHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(DashboardRoute.class);
 
-    private static final String SQL_SELECT_KIT_REQUESTS_SENT = "SELECT kit.scan_date, realm.instance_name, request.ddp_instance_id FROM "
-            + "ddp_kit_request request " +
-            "LEFT JOIN ddp_kit kit on (kit.dsm_kit_request_id = request.dsm_kit_request_id) LEFT JOIN ddp_instance realm on (request"
-            + ".ddp_instance_id = realm.ddp_instance_id) " +
-            "LEFT JOIN ddp_participant_exit ex on (ex.ddp_participant_id = request.ddp_participant_id and ex.ddp_instance_id = request"
-            + ".ddp_instance_id) " +
-            "WHERE scan_date IS NOT NULL AND ex.ddp_participant_exit_id IS NULL AND realm.instance_name = ? AND request.kit_type_id = ?";
-    private static final String SQL_SELECT_KIT_REQUESTS_DEACTIVATED = "SELECT kit.receive_date, realm.instance_name, request"
-            + ".ddp_instance_id FROM ddp_kit_request request " +
-            "LEFT JOIN ddp_kit kit on (kit.dsm_kit_request_id = request.dsm_kit_request_id) LEFT JOIN ddp_instance realm on (request"
-            + ".ddp_instance_id = realm.ddp_instance_id) " +
-            "LEFT JOIN ddp_participant_exit ex on (ex.ddp_participant_id = request.ddp_participant_id and ex.ddp_instance_id = request"
-            + ".ddp_instance_id) " +
-            "WHERE receive_date IS NOT NULL AND ex.ddp_participant_exit_id IS NULL AND realm.instance_name = ? AND request.kit_type_id = ?";
+    private static final String SQL_SELECT_KIT_REQUESTS_SENT =
+            "SELECT kit.scan_date, realm.instance_name, request.ddp_instance_id FROM ddp_kit_request request "
+                    + "LEFT JOIN ddp_kit kit on (kit.dsm_kit_request_id = request.dsm_kit_request_id) "
+                    + "LEFT JOIN ddp_instance realm on (request.ddp_instance_id = realm.ddp_instance_id) "
+                    + "LEFT JOIN ddp_participant_exit ex on (ex.ddp_participant_id = request.ddp_participant_id "
+                    + "and ex.ddp_instance_id = request.ddp_instance_id) "
+                    + "WHERE scan_date IS NOT NULL AND ex.ddp_participant_exit_id IS NULL AND realm.instance_name = ? "
+                    + "AND request.kit_type_id = ?";
+    private static final String SQL_SELECT_KIT_REQUESTS_DEACTIVATED =
+            "SELECT kit.receive_date, realm.instance_name, request.ddp_instance_id FROM ddp_kit_request request "
+                    + "LEFT JOIN ddp_kit kit on (kit.dsm_kit_request_id = request.dsm_kit_request_id) "
+                    + "LEFT JOIN ddp_instance realm on (request.ddp_instance_id = realm.ddp_instance_id) "
+                    + "LEFT JOIN ddp_participant_exit ex on (ex.ddp_participant_id = request.ddp_participant_id "
+                    + "and ex.ddp_instance_id = request.ddp_instance_id) "
+                    + "WHERE receive_date IS NOT NULL AND ex.ddp_participant_exit_id IS NULL AND realm.instance_name = ? "
+                    + "AND request.kit_type_id = ?";
 
     private final KitUtil kitUtil;
 
@@ -84,10 +86,10 @@ public class DashboardRoute extends RequestHandler {
     public static List<ParticipantWrapperDto> addAllData(List<String> baseList, Map<String, Map<String, Object>> esDataMap,
                                                          Map<String, Participant> participantMap,
                                                          Map<String, List<MedicalRecord>> medicalRecordMap,
-                                                         Map<String, List<OncHistoryDetail>> oncHistoryMap, Map<String,
-            List<KitRequestShipping>> kitRequestMap,
-                                                         Map<String, List<AbstractionActivity>> abstractionActivityMap, Map<String,
-            List<AbstractionGroup>> abstractionSummary,
+                                                         Map<String, List<OncHistoryDetail>> oncHistoryMap,
+                                                         Map<String, List<KitRequestShipping>> kitRequestMap,
+                                                         Map<String, List<AbstractionActivity>> abstractionActivityMap,
+                                                         Map<String, List<AbstractionGroup>> abstractionSummary,
                                                          Map<String, Map<String, Object>> proxyData,
                                                          Map<String, List<ParticipantData>> participantData) {
         Gson gson = new Gson();
@@ -117,10 +119,10 @@ public class DashboardRoute extends RequestHandler {
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         try {
             String userIdRequest = UserUtil.getUserId(request);
-            if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest) || UserUtil.checkUserAccess(null, userId,
-                    "kit_shipping_view", userIdRequest)
-                    || UserUtil.checkUserAccess(null, userId, "mr_view", userIdRequest) || UserUtil.checkUserAccess(null, userId,
-                    "pt_list_view", userIdRequest)) {
+            if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest)
+                    || UserUtil.checkUserAccess(null, userId, "kit_shipping_view", userIdRequest)
+                    || UserUtil.checkUserAccess(null, userId, "mr_view", userIdRequest)
+                    || UserUtil.checkUserAccess(null, userId, "pt_list_view", userIdRequest)) {
                 String startDate = request.params(RequestParameter.START);
                 if (StringUtils.isNotBlank(startDate)) {
                     String endDate = request.params(RequestParameter.END);
@@ -185,8 +187,8 @@ public class DashboardRoute extends RequestHandler {
             kitCounter = new DashboardInformation.KitCounter(kitType.getName(), getNameValueList(kits));
             receivedMap.add(kitCounter);
 
-            Integer count =
-                    getCountOfDeactivatedKits(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_DASHBOARD_INFORMATION_OF_KIT_REQUESTS_DEACTIVATED),
+            Integer count = getCountOfDeactivatedKits(
+                    DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_DASHBOARD_INFORMATION_OF_KIT_REQUESTS_DEACTIVATED),
                     realm, kitTypeId, DBConstants.KITREQUEST_COUNT);
             deactivatedMap.add(new NameValue(kitType.getName(), count));
         }
@@ -328,7 +330,7 @@ public class DashboardRoute extends RequestHandler {
             }
 
             if (wrapper.getParticipant() != null) {
-                if (wrapper.getParticipant().isMinimalMR()) {
+                if (wrapper.getParticipant().isMinimalMr()) {
                     incrementCounter(dashboardValues, "minimalMR");
                 }
             }
@@ -351,7 +353,8 @@ public class DashboardRoute extends RequestHandler {
 
             if (wrapper.getAbstractionActivities() != null && !wrapper.getAbstractionActivities().isEmpty()) {
                 for (AbstractionActivity activity : wrapper.getAbstractionActivities()) {
-                    if (AbstractionUtil.ACTIVITY_FINAL.equals(activity.getActivity()) && AbstractionUtil.STATUS_DONE.equals(activity.getAStatus())) {
+                    if (AbstractionUtil.ACTIVITY_FINAL.equals(activity.getActivity())
+                            && AbstractionUtil.STATUS_DONE.equals(activity.getAStatus())) {
                         incrementCounter(dashboardValues, "abstraction.done");
                         incrementCounterPeriod(dashboardValuesPeriod, "abstraction.done", activity.getLastChanged(), start, end);
                     }
@@ -391,7 +394,7 @@ public class DashboardRoute extends RequestHandler {
                 incrementCounter(dashboardValuesDetailed, "unableToObtainMedicalRecord");
                 foundAtPT.add("unableToObtainMedicalRecord");
             }
-            if (medicalRecord.isFollowUpRequired()) {
+            if (medicalRecord.isFollowupRequired()) {
                 incrementCounter(dashboardValuesDetailed, "followupRequiredMedicalRecord");
                 foundAtPT.add("followupRequiredMedicalRecord");
                 if (medicalRecord.getFollowUps() == null || medicalRecord.getFollowUps().length == 0) {
@@ -413,9 +416,10 @@ public class DashboardRoute extends RequestHandler {
                     medicalRecord.getFaxSent2(), medicalRecord.getFaxSent(), medicalRecord.getMrReceived(), start, end,
                     "notRequested", "faxSent", "mrReceived", medicalRecord.isDuplicate());
 
-            // MR ready to request (at least saliva or blood received and mr not flagged as "duplicate" or "problem" or "unable to
-            // obtain" and fax sent date is not entered)
-            if (!medicalRecord.isDuplicate() && !medicalRecord.isMrProblem() && !medicalRecord.isUnableObtain() && StringUtils.isBlank(medicalRecord.getFaxSent())) {
+            // MR ready to request (at least saliva or blood received and mr not flagged as "duplicate" or "problem" or "unable to obtain"
+            // and fax sent date is not entered)
+            if (!medicalRecord.isDuplicate() && !medicalRecord.isMrProblem() && !medicalRecord.isUnableObtain()
+                    && StringUtils.isBlank(medicalRecord.getFaxSent())) {
                 List<KitRequestShipping> kits = kitRequests.get(medicalRecord.getDdpParticipantId());
                 if (kits != null) {
                     for (KitRequestShipping kit : kits) {
@@ -449,7 +453,7 @@ public class DashboardRoute extends RequestHandler {
                                      long start, long end) {
 
         for (OncHistoryDetail oncHistoryDetail : oncHistoryDetailList) {
-            if (oncHistoryDetail.isUnableToObtain()) {
+            if (oncHistoryDetail.isUnableObtainTissue()) {
                 incrementCounter(dashboardValuesDetailed, "unableToObtainTissue");
                 foundAtPT.add("unableToObtainTissue");
             }
@@ -476,7 +480,7 @@ public class DashboardRoute extends RequestHandler {
                     incrementCounter(dashboardValuesDetailed, "request.request");
                     foundAtPT.add("request.request");
                     //count where tissue request is set to request but fax is not sent out yet
-                    if (StringUtils.isBlank(oncHistoryDetail.getTFaxSent())) {
+                    if (StringUtils.isBlank(oncHistoryDetail.getFaxSent())) {
                         incrementCounter(dashboardValuesDetailed, "tFaxNotSent");
                         foundAtPT.add("tFaxNotSent");
                     }
@@ -513,8 +517,8 @@ public class DashboardRoute extends RequestHandler {
                 }
             }
             countRequestsReceive(dashboardValuesDetailed, dashboardValuesPeriodDetailed, foundAtPT, foundAtPtPeriod,
-                    oncHistoryDetail.getTFaxSent3(),
-                    oncHistoryDetail.getTFaxSent2(), oncHistoryDetail.getTFaxSent(), oncHistoryDetail.getTissueReceived(),
+                    oncHistoryDetail.getFaxSent3(),
+                    oncHistoryDetail.getFaxSent2(), oncHistoryDetail.getFaxSent(), oncHistoryDetail.getTissueReceived(),
                     start, end, null, "tFaxSent", "tissueReceived", false);
         }
     }
@@ -525,24 +529,24 @@ public class DashboardRoute extends RequestHandler {
                            long start, long end) {
         for (KitRequestShipping kit : kits) {
             if (kit.getScanDate() != 0) {
-                incrementCounter(dashboardValuesDetailed, "kit." + kit.getKitType() + ".sent", foundAtPT);
-                incrementCounterPeriod(dashboardValuesPeriodDetailed, "kit." + kit.getKitType() + ".sent", kit.getScanDate(), start, end,
-                        foundAtPtPeriod);
+                incrementCounter(dashboardValuesDetailed, "kit." + kit.getKitTypeName() + ".sent", foundAtPT);
+                incrementCounterPeriod(dashboardValuesPeriodDetailed, "kit." + kit.getKitTypeName() + ".sent", kit.getScanDate(), start,
+                        end, foundAtPtPeriod);
             } else if (kit.getDeactivatedDate() == 0) {
-                incrementCounter(dashboardValuesDetailed, "kit." + kit.getKitType() + ".waiting", foundAtPT);
+                incrementCounter(dashboardValuesDetailed, "kit." + kit.getKitTypeName() + ".waiting", foundAtPT);
             }
             if (kit.getReceiveDate() != 0) {
-                incrementCounter(dashboardValuesDetailed, "kit." + kit.getKitType() + ".received", foundAtPT);
-                incrementCounterPeriod(dashboardValuesPeriodDetailed, "kit." + kit.getKitType() + ".received", kit.getReceiveDate(),
+                incrementCounter(dashboardValuesDetailed, "kit." + kit.getKitTypeName() + ".received", foundAtPT);
+                incrementCounterPeriod(dashboardValuesPeriodDetailed, "kit." + kit.getKitTypeName() + ".received", kit.getReceiveDate(),
                         start, end, foundAtPtPeriod);
             }
             if (kit.getDeactivatedDate() != 0) {
-                incrementCounter(dashboardValuesDetailed, "kit." + kit.getKitType() + ".deactivated", foundAtPT);
-                incrementCounterPeriod(dashboardValuesPeriodDetailed, "kit." + kit.getKitType() + ".deactivated",
+                incrementCounter(dashboardValuesDetailed, "kit." + kit.getKitTypeName() + ".deactivated", foundAtPT);
+                incrementCounterPeriod(dashboardValuesPeriodDetailed, "kit." + kit.getKitTypeName() + ".deactivated",
                         kit.getDeactivatedDate(), start, end, foundAtPtPeriod);
             }
             if (StringUtils.isNotBlank(kit.getEasypostShipmentStatus())) {
-                incrementCounter(dashboardValuesDetailed, "kit." + kit.getKitType() + "." + kit.getEasypostShipmentStatus(), foundAtPT);
+                incrementCounter(dashboardValuesDetailed, "kit." + kit.getKitTypeName() + "." + kit.getEasypostShipmentStatus(), foundAtPT);
             }
         }
     }
@@ -684,8 +688,8 @@ public class DashboardRoute extends RequestHandler {
                                                    @NonNull int kitTypeId, @NonNull String kitTypeName) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt =
-                         conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_DASHBOARD_INFORMATION_OF_KIT_REQUESTS),
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_DASHBOARD_INFORMATION_OF_KIT_REQUESTS),
                     ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
                 stmt.setString(1, realm);
                 stmt.setInt(2, kitTypeId);
@@ -813,7 +817,7 @@ public class DashboardRoute extends RequestHandler {
                                                  @NonNull String query, HashMap<String, SummaryKitType> summaryKitTypeMonth) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(ConfigUtil.getSqlFromConfig(query))) {
+            try (PreparedStatement stmt = conn.prepareStatement(DSMConfig.getSqlFromConfig(query))) {
                 stmt.setString(1, realm);
                 stmt.setInt(2, kitType.getKitId());
                 try (ResultSet rs = stmt.executeQuery()) {

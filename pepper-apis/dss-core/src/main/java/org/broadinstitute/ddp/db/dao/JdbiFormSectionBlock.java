@@ -1,12 +1,5 @@
 package org.broadinstitute.ddp.db.dao;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.db.dto.FormBlockDto;
 import org.broadinstitute.ddp.db.dto.SectionBlockMembershipDto;
@@ -14,6 +7,7 @@ import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
 import org.jdbi.v3.core.statement.Query;
 import org.jdbi.v3.sqlobject.SqlObject;
+import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
@@ -24,6 +18,13 @@ import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.stringtemplate4.StringTemplateSqlLocator;
+
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.Collections;
 
 public interface JdbiFormSectionBlock extends SqlObject {
 
@@ -38,17 +39,17 @@ public interface JdbiFormSectionBlock extends SqlObject {
                       @Bind("revisionId") long revisionId);
 
 
-    @SqlQuery("select * from form_section__block as fsb"
+    @SqlQuery("select fsb.* from form_section__block as fsb"
             + " join revision as rev on rev.revision_id = fsb.revision_id"
             + " where fsb.form_section_id = :sectionId and rev.end_date is null"
             + " order by fsb.display_order asc")
-    @RegisterRowMapper(SectionBlockMembershipDto.SectionBlockMembershipDtoMapper.class)
+    @RegisterConstructorMapper(SectionBlockMembershipDto.class)
     List<SectionBlockMembershipDto> getOrderedActiveMemberships(long sectionId);
 
-    @SqlQuery("select * from form_section__block as fsb"
+    @SqlQuery("select fsb.* from form_section__block as fsb"
             + " join revision as rev on rev.revision_id = fsb.revision_id"
             + " where fsb.block_id = :blockId and rev.end_date is null")
-    @RegisterRowMapper(SectionBlockMembershipDto.SectionBlockMembershipDtoMapper.class)
+    @RegisterConstructorMapper(SectionBlockMembershipDto.class)
     Optional<SectionBlockMembershipDto> getActiveMembershipByBlockId(long blockId);
 
     @SqlUpdate("update form_section__block set revision_id = :revisionId where form_section__block_id = :membershipId")

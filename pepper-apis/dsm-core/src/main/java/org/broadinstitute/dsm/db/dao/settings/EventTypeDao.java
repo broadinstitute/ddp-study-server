@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.sun.istack.NotNull;
 import lombok.NonNull;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.settings.EventTypeDto;
@@ -25,19 +26,13 @@ public class EventTypeDao implements Dao<EventTypeDto> {
     public static final String EVENT_NAME = "event_name";
     public static final String EVENT_TYPE = "event_type";
     private static final Logger logger = LoggerFactory.getLogger(EventTypeDao.class);
-    private static String GET_EVENT_TYPE = "SELECT " +
-            "eve.event_name, eve.event_type, " +
-            "realm.ddp_instance_id, realm.instance_name, realm.base_url, realm.auth0_token " +
-            "FROM " +
-            "event_type eve, " +
-            "ddp_instance realm ";
-    private static String GET_EVENT_TYPE_BY_INSTANCE_NAME = GET_EVENT_TYPE +
-            "WHERE eve.ddp_instance_id = realm.ddp_instance_id " +
-            "AND realm.instance_name = ?";
-    private static String GET_EVENT_TYPE_BY_EVENT_NAME_AND_INSTANCE_ID = GET_EVENT_TYPE +
-            "WHERE eve.ddp_instance_id = realm.ddp_instance_id " +
-            "AND eve.event_name = ? " +
-            "AND realm.ddp_instance_id = ?";
+    private static String GET_EVENT_TYPE =
+            "SELECT eve.event_name, eve.event_type, realm.ddp_instance_id, realm.instance_name, realm.base_url, realm.auth0_token "
+                    + "FROM event_type eve, ddp_instance realm ";
+    private static String GET_EVENT_TYPE_BY_INSTANCE_NAME =
+            GET_EVENT_TYPE + "WHERE eve.ddp_instance_id = realm.ddp_instance_id AND realm.instance_name = ?";
+    private static String GET_EVENT_TYPE_BY_EVENT_NAME_AND_INSTANCE_ID =
+            GET_EVENT_TYPE + "WHERE eve.ddp_instance_id = realm.ddp_instance_id AND eve.event_name = ? AND realm.ddp_instance_id = ?";
 
     @Override
     public int create(EventTypeDto eventTypeDto) {
@@ -62,14 +57,11 @@ public class EventTypeDao implements Dao<EventTypeDto> {
                 stmt.setString(1, instanceName);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        eventTypeList.add(new EventTypeDto.Builder(rs.getString(DBConstants.DDP_INSTANCE_ID))
-                                .withEventName(rs.getString(EVENT_NAME))
-                                .withEventType(rs.getString(EVENT_TYPE))
-                                .withInstanceName(rs.getString(DBConstants.INSTANCE_NAME))
-                                .withBaseUrl(rs.getString(DBConstants.BASE_URL))
-                                .withAuth0Token(rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN))
-                                .build()
-                        );
+                        eventTypeList.add(
+                                new EventTypeDto.Builder(rs.getString(DBConstants.DDP_INSTANCE_ID)).withEventName(rs.getString(EVENT_NAME))
+                                        .withEventType(rs.getString(EVENT_TYPE)).withInstanceName(rs.getString(DBConstants.INSTANCE_NAME))
+                                        .withBaseUrl(rs.getString(DBConstants.BASE_URL))
+                                        .withAuth0Token(rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN)).build());
                     }
                 }
             } catch (Exception ex) {
@@ -83,7 +75,7 @@ public class EventTypeDao implements Dao<EventTypeDto> {
         return eventTypeList;
     }
 
-    public Optional<EventTypeDto> getEventTypeByEventTypeAndInstanceId(@NonNull String eventType, @NonNull String instanceId) {
+    public Optional<EventTypeDto> getEventTypeByEventTypeAndInstanceId(@NotNull String eventType, @NonNull String instanceId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(GET_EVENT_TYPE_BY_EVENT_NAME_AND_INSTANCE_ID,
@@ -96,13 +88,11 @@ public class EventTypeDao implements Dao<EventTypeDto> {
                     rs.beforeFirst();
                     if (count == 1) {
                         if (rs.next()) { //if row is 0 the ddp/kit type combination does not trigger a participant event
-                            dbVals.resultValue = new EventTypeDto.Builder(rs.getString(DBConstants.DDP_INSTANCE_ID))
-                                    .withEventName(rs.getString(EVENT_NAME))
-                                    .withEventType(rs.getString(EVENT_TYPE))
+                            dbVals.resultValue = new EventTypeDto.Builder(rs.getString(DBConstants.DDP_INSTANCE_ID)).withEventName(
+                                            rs.getString(EVENT_NAME)).withEventType(rs.getString(EVENT_TYPE))
                                     .withInstanceName(rs.getString(DBConstants.INSTANCE_NAME))
                                     .withBaseUrl(rs.getString(DBConstants.BASE_URL))
-                                    .withAuth0Token(rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN))
-                                    .build();
+                                    .withAuth0Token(rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN)).build();
                         }
                     }
                 }

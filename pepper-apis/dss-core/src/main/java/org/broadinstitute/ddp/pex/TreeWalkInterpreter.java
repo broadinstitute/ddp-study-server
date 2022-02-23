@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.pex;
 import static java.lang.String.format;
 import static org.broadinstitute.ddp.pex.RetrievedActivityInstanceType.LATEST;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -597,6 +598,8 @@ public class TreeWalkInterpreter implements PexInterpreter {
                     return applyDateAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
                 case NUMERIC:
                     return applyNumericAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
+                case DECIMAL:
+                    return applyDecimalAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
                 default:
                     throw new PexUnsupportedException("Question " + stableId + " with type "
                             + questionType + " is currently not supported");
@@ -637,6 +640,8 @@ public class TreeWalkInterpreter implements PexInterpreter {
                     return applyChildDateAnswerPredicate(ictx, predicateCtx, userGuid, childAnswers);
                 case NUMERIC:
                     return applyChildNumericAnswerPredicate(ictx, predicateCtx, userGuid, childAnswers);
+                case DECIMAL:
+                    return applyChildDecimalAnswerPredicate(ictx, predicateCtx, userGuid, childAnswers);
                 case BOOLEAN: // Boolean child question type is not supported right now.
                 default:
                     throw new PexUnsupportedException("Child question " + stableId + " with type "
@@ -975,7 +980,33 @@ public class TreeWalkInterpreter implements PexInterpreter {
         }
     }
 
+    private Object applyDecimalAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
+                                               String userGuid, long studyId, String activityCode, String instanceGuid, String stableId) {
+        if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            BigDecimal value = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestDecimalAnswer(ictx, userGuid, activityCode, stableId, studyId)
+                    : fetcher.findSpecificDecimalAnswer(ictx, activityCode, instanceGuid, stableId);
+            if (value == null) {
+                String msg = String.format("User %s does not have numeric answer for question %s", userGuid, stableId);
+                throw new PexFetchException(msg);
+            } else {
+                return value;
+            }
+        } else {
+            throw new PexUnsupportedException("Invalid predicate used on numeric answer set query: " + predicateCtx.getText());
+        }
+    }
+
     private Object applyChildNumericAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
+                                                    String userGuid, List<Answer> childAnswers) {
+        if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            throw new PexUnsupportedException("Getting numeric answer value of child question is currently not supported");
+        } else {
+            throw new PexUnsupportedException("Invalid predicate used on numeric answer set query: " + predicateCtx.getText());
+        }
+    }
+
+    private Object applyChildDecimalAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
                                                     String userGuid, List<Answer> childAnswers) {
         if (predicateCtx instanceof PexParser.ValueQueryContext) {
             throw new PexUnsupportedException("Getting numeric answer value of child question is currently not supported");

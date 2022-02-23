@@ -1,49 +1,26 @@
 package org.broadinstitute.ddp.db.dto;
 
-import static org.broadinstitute.ddp.constants.SqlConstants.ActivityInstanceStatusTable.ID;
-import static org.broadinstitute.ddp.constants.SqlConstants.ActivityInstanceStatusTable.INSTANCE_ID;
-import static org.broadinstitute.ddp.constants.SqlConstants.ActivityInstanceStatusTable.OPERATOR_ID;
-import static org.broadinstitute.ddp.constants.SqlConstants.ActivityInstanceStatusTable.UPDATED_AT;
-import static org.broadinstitute.ddp.constants.SqlConstants.ActivityInstanceStatusTypeTable.ACTIVITY_STATUS_TYPE_CODE;
-
-import java.beans.ConstructorProperties;
-
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.jdbi.v3.core.mapper.reflect.ColumnName;
+import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
+@Value
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class ActivityInstanceStatusDto {
+    @ColumnName("activity_instance_status_id")
+    long id;
 
-    private long id;
-    private long instanceId;
-    private long operatorId;
-    private long updatedAt;
-    private InstanceStatusType type;
+    @ColumnName("activity_instance_id")
+    long instanceId;
 
-    @ConstructorProperties({ID, INSTANCE_ID, OPERATOR_ID, UPDATED_AT, ACTIVITY_STATUS_TYPE_CODE})
-    public ActivityInstanceStatusDto(long id, long instanceId, long operatorId, long updatedAt, InstanceStatusType type) {
-        this.id = id;
-        this.instanceId = instanceId;
-        this.operatorId = operatorId;
-        this.updatedAt = updatedAt;
-        this.type = type;
-    }
+    @ColumnName("operator_id")
+    long operatorId;
 
-    public long getId() {
-        return id;
-    }
+    @ColumnName("updated_at")
+    long updatedAt;
 
-    public long getInstanceId() {
-        return instanceId;
-    }
-
-    public long getOperatorId() {
-        return operatorId;
-    }
-
-    public long getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public InstanceStatusType getType() {
-        return type;
-    }
+    @ColumnName("activity_instance_status_type_code")
+    InstanceStatusType type;
 }
