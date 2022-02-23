@@ -1,30 +1,19 @@
 package org.broadinstitute.ddp.db.dto;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
+@Value
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class NotificationTemplateSubstitutionDto {
-
     @SerializedName("variableName")
-    private final String variableName;
+    @ColumnName("substitution_variable_name")
+    String variableName;
 
     @SerializedName("value")
-    private final String value;
-
-    @JdbiConstructor
-    public NotificationTemplateSubstitutionDto(
-            @ColumnName("substitution_variable_name") String variableName,
-            @ColumnName("substitution_value") String value) {
-        this.variableName = variableName;
-        this.value = value;
-    }
-
-    public String getVariableName() {
-        return variableName;
-    }
-
-    public String getValue() {
-        return value;
-    }
+    @ColumnName("substitution_value")
+    String value;
 }

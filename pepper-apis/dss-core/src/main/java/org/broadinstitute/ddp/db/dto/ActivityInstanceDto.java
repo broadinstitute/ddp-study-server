@@ -1,158 +1,69 @@
 package org.broadinstitute.ddp.db.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
+@Value
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class ActivityInstanceDto {
+    @ColumnName("activity_instance_id")
+    long id;
 
-    private long id;
-    private String guid;
-    private long studyId;
-    private long activityId;
-    private String activityCode;
-    private Long parentInstanceId;
-    private String parentInstanceGuid;
-    private Long parentActivityId;
-    private String parentActivityCode;
-    private long participantId;
-    private long createdAtMillis;
-    private Boolean isReadonly;
-    private boolean isHidden;
-    private InstanceStatusType statusType;
-    private ActivityType activityType;
-    private Long onDemandTriggerId;
-    private long submissionId;
-    private String sessionId;
-    private Long firstCompletedAt;
-    private boolean allowUnauthenticated;
-    private int sectionIndex;
+    @ColumnName("activity_instance_guid")
+    String guid;
 
-    @JdbiConstructor
-    public ActivityInstanceDto(
-            @ColumnName("activity_instance_id") long id,
-            @ColumnName("activity_instance_guid") String guid,
-            @ColumnName("study_id") long studyId,
-            @ColumnName("study_activity_id") long activityId,
-            @ColumnName("study_activity_code") String activityCode,
-            @ColumnName("parent_instance_id") Long parentInstanceId,
-            @ColumnName("parent_instance_guid") String parentInstanceGuid,
-            @ColumnName("parent_activity_id") Long parentActivityId,
-            @ColumnName("parent_activity_code") String parentActivityCode,
-            @ColumnName("participant_id") long participantId,
-            @ColumnName("created_at") long createdAtMillis,
-            @ColumnName("first_completed_at") Long firstCompletedAt,
-            @ColumnName("is_readonly") Boolean isReadonly,
-            @ColumnName("is_hidden") boolean isHidden,
-            @ColumnName("activity_instance_status_type") InstanceStatusType statusType,
-            @ColumnName("activity_type") ActivityType activityType,
-            @ColumnName("ondemand_trigger_id") Long onDemandTriggerId,
-            @ColumnName("allow_unauthenticated") boolean allowUnauthenticated,
-            @ColumnName("section_index") int sectionIndex
-    ) {
-        this.id = id;
-        this.guid = guid;
-        this.studyId = studyId;
-        this.activityId = activityId;
-        this.activityCode = activityCode;
-        this.parentInstanceId = parentInstanceId;
-        this.parentInstanceGuid = parentInstanceGuid;
-        this.parentActivityId = parentActivityId;
-        this.parentActivityCode = parentActivityCode;
-        this.participantId = participantId;
-        this.createdAtMillis = createdAtMillis;
-        this.firstCompletedAt = firstCompletedAt;
-        this.isReadonly = isReadonly;
-        this.isHidden = isHidden;
-        this.statusType = statusType;
-        this.activityType = activityType;
-        this.onDemandTriggerId = onDemandTriggerId;
-        this.allowUnauthenticated = allowUnauthenticated;
-        this.sectionIndex = sectionIndex;
-    }
+    @ColumnName("study_id")
+    long studyId;
 
-    public long getId() {
-        return id;
-    }
+    @ColumnName("study_activity_id")
+    long activityId;
 
-    public String getGuid() {
-        return guid;
-    }
+    @ColumnName("study_activity_code")
+    String activityCode;
 
-    public long getStudyId() {
-        return studyId;
-    }
+    @ColumnName("parent_instance_id")
+    Long parentInstanceId;
 
-    public long getActivityId() {
-        return activityId;
-    }
+    @ColumnName("parent_instance_guid")
+    String parentInstanceGuid;
 
-    public String getActivityCode() {
-        return activityCode;
-    }
+    @ColumnName("parent_activity_id")
+    Long parentActivityId;
 
-    public Long getParentInstanceId() {
-        return parentInstanceId;
-    }
+    @ColumnName("parent_activity_code")
+    String parentActivityCode;
 
-    public String getParentInstanceGuid() {
-        return parentInstanceGuid;
-    }
+    @ColumnName("participant_id")
+    long participantId;
 
-    public Long getParentActivityId() {
-        return parentActivityId;
-    }
+    @ColumnName("created_at")
+    long createdAtMillis;
 
-    public String getParentActivityCode() {
-        return parentActivityCode;
-    }
+    @ColumnName("first_completed_at")
+    Long firstCompletedAt;
 
-    public long getParticipantId() {
-        return participantId;
-    }
+    @ColumnName("is_readonly")
+    Boolean isReadonly;
 
-    public long getCreatedAtMillis() {
-        return createdAtMillis;
-    }
+    @ColumnName("is_hidden")
+    boolean isHidden;
 
-    public Long getFirstCompletedAt() {
-        return firstCompletedAt;
-    }
+    @ColumnName("activity_instance_status_type")
+    InstanceStatusType statusType;
 
-    public Boolean getReadonly() {
-        return isReadonly;
-    }
+    @ColumnName("activity_type")
+    ActivityType activityType;
 
-    public boolean isHidden() {
-        return isHidden;
-    }
+    @ColumnName("ondemand_trigger_id")
+    Long onDemandTriggerId;
 
-    public InstanceStatusType getStatusType() {
-        return statusType;
-    }
+    @ColumnName("allow_unauthenticated")
+    boolean allowUnauthenticated;
 
-    public ActivityType getActivityType() {
-        return activityType;
-    }
-
-    public Long getOnDemandTriggerId() {
-        return onDemandTriggerId;
-    }
-
-    public long getSubmissionId() {
-        return submissionId;
-    }
-
-    public String getSessionId() {
-        return sessionId;
-    }
-
-    public boolean isAllowUnauthenticated() {
-        return allowUnauthenticated;
-    }
-
-    public int getSectionIndex() {
-        return sectionIndex;
-    }
+    @ColumnName("section_index")
+    int sectionIndex;
 }

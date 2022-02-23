@@ -10,7 +10,7 @@ import spark.QueryParamsMap;
 public class SavedFilterParticipantList extends BaseFilterParticipantList {
     @Override
     public ParticipantWrapperResult filter(QueryParamsMap queryParamsMap) {
-        prepareNeccesaryData(queryParamsMap);
+        prepareNecessaryData(queryParamsMap);
         ParticipantWrapperResult participantWrapperResult = new ParticipantWrapperResult();
         if (StringUtils.isBlank(queryParamsMap.get(RequestParameter.FILTERS).value())) {
             return participantWrapperResult;

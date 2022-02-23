@@ -1,34 +1,21 @@
 package org.broadinstitute.ddp.db.dto;
 
-import java.io.Serializable;
-
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
+import java.io.Serializable;
+
+@Value
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class UmbrellaDto implements Serializable {
+    @ColumnName("umbrella_id")
+    long id;
 
-    private long id;
-    private String name;
-    private String guid;
+    @ColumnName("umbrella_name")
+    String name;
 
-    @JdbiConstructor
-    public UmbrellaDto(@ColumnName("umbrella_id") long id,
-                       @ColumnName("umbrella_name") String name,
-                       @ColumnName("umbrella_guid") String guid) {
-        this.id = id;
-        this.name = name;
-        this.guid = guid;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getGuid() {
-        return guid;
-    }
+    @ColumnName("umbrella_guid")
+    String guid;
 }

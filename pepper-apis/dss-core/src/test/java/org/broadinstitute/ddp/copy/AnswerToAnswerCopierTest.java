@@ -69,9 +69,9 @@ public class AnswerToAnswerCopierTest extends TxnAwareBaseTest {
     public void testCopy_noSourceAnswer() {
         TransactionWrapper.useTxn(handle -> {
             var sourceInstance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, null, null, 1L, "a", "a", false, 0, null);
-            var sourceQuestion = new QuestionDto(QuestionType.TEXT, 1L, "q1", 1L, 1L, 1L, 1L, false, false, false, false, 1L, 1L, 1L);
+            var sourceQuestion = new QuestionDto(QuestionType.TEXT, 1L, "q1", 1L, null, 1L, 1L, 1L, false, false, false, false, 1L, 1L, 1L);
             var targetInstance = new FormResponse(2L, "b", testData.getUserId(), false, 2L, 2L, null, null, 2L, "b", "b", false, 0, null);
-            var targetQuestion = new QuestionDto(QuestionType.TEXT, 2L, "q2", 2L, 2L, 2L, 2L, false, false, false, false, 2L, 2L, 2L);
+            var targetQuestion = new QuestionDto(QuestionType.TEXT, 2L, "q2", 2L, null, 2L, 2L, 2L, false, false, false, false, 2L, 2L, 2L);
 
             new AnswerToAnswerCopier(handle, testData.getUserId())
                     .copy(sourceInstance, sourceQuestion, targetInstance, targetQuestion);
@@ -472,7 +472,7 @@ public class AnswerToAnswerCopierTest extends TxnAwareBaseTest {
     }
 
     private QuestionDto newDummyQuestion(QuestionType type, String stableId) {
-        return new QuestionDto(type, 1L, stableId, 1L, 1L, 1L, 1L, false, false, false, false, 1L, 1L, 1L);
+        return new QuestionDto(type, 1L, stableId, 1L, null, 1L, 1L, 1L, false, false, false, false, 1L, 1L, 1L);
     }
 
     private FormResponse createInstance(Handle handle, long activityId) {

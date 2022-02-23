@@ -15,7 +15,7 @@ public class UPSKit {
     // the two shipments differ in tracking id
     UPSPackage upsPackage; // package with tracking_to_id
     String kitLabel;
-    Boolean CE_order;
+    Boolean ceOrder;
     String dsmKitRequestId;
     String externalOrderNumber;
     String trackingToId;
@@ -24,11 +24,11 @@ public class UPSKit {
     String hruid;
     boolean gbfShippedTriggerDSSDelivered;
 
-    public UPSKit(@NonNull UPSPackage upsPackage, String kitLabel, Boolean CE_order, String dsmKitRequestId, String externalOrderNumber,
+    public UPSKit(@NonNull UPSPackage upsPackage, String kitLabel, Boolean ceOrder, String dsmKitRequestId, String externalOrderNumber,
                   String trackingToId, String trackingReturnId, String ddpInstanceId, String hruid, boolean gbfShippedTriggerDSSDelivered) {
         this.upsPackage = upsPackage;
         this.kitLabel = kitLabel;
-        this.CE_order = CE_order;
+        this.ceOrder = ceOrder;
         this.dsmKitRequestId = dsmKitRequestId;
         this.externalOrderNumber = externalOrderNumber;
         this.trackingToId = trackingToId;

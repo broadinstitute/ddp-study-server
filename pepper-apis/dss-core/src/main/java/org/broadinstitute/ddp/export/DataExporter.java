@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.opencsv.CSVWriter;
 import com.typesafe.config.Config;
 import org.apache.commons.collections4.CollectionUtils;
@@ -127,6 +126,7 @@ import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.service.OLCService;
 import org.broadinstitute.ddp.service.PdfService;
 import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
+import org.broadinstitute.ddp.util.GsonUtil;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.update.UpdateRequest;
@@ -170,7 +170,7 @@ public class DataExporter {
 
     public DataExporter(Config cfg) {
         this.cfg = cfg;
-        this.gson = new GsonBuilder().serializeNulls().create();
+        this.gson = GsonUtil.standardGson();
         this.pdfService = new PdfService();
         this.fileService = FileUploadService.fromConfig(cfg);
         this.addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
