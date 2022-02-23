@@ -29,7 +29,7 @@ public class SavedFiltersTissueList extends BaseFilterTissueList {
 
     @Override
     public List<TissueListWrapper> filter(QueryParamsMap queryParamsMap) {
-        prepareNeccesaryData(queryParamsMap);
+        prepareNecessaryData(queryParamsMap);
         String filterName = Objects.requireNonNull(queryParamsMap).get(RequestParameter.FILTER_NAME).value();
         if (!queryParamsMap.hasKey(RoutePath.REALM)) {
             throw new NoSuchElementException("realm is necessary");

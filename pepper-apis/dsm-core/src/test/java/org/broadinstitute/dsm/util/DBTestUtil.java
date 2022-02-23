@@ -488,14 +488,14 @@ public class DBTestUtil {
         }
     }
 
-    public static void insertUser(@NonNull UserDto userDto, int is_active) {
+    public static void insertUser(@NonNull UserDto userDto, int isActive) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_USER)) {
                 stmt.setInt(1, userDto.getId());
                 stmt.setString(2, userDto.getName().orElse(""));
                 stmt.setString(3, userDto.getEmail().orElse(""));
-                stmt.setInt(4, is_active);
+                stmt.setInt(4, isActive);
                 int result = stmt.executeUpdate();
                 if (result != 1) {
                     throw new RuntimeException("Error adding new user, it was adding " + result + " rows");

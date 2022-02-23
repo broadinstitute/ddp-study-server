@@ -45,8 +45,8 @@ import org.slf4j.LoggerFactory;
 public class GBFTest extends TestHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(GBFTest.class);
-    private String GBF_URL = "https://www.gbfmedical.com/oap/api/";
-    private String ORDER_NUMBER = "WEB123ABC4D5";
+    private String gbfUrl = "https://www.gbfmedical.com/oap/api/";
+    private String orderNumber = "WEB123ABC4D5";
 
     @BeforeClass
     public static void before() throws Exception {
@@ -80,14 +80,14 @@ public class GBFTest extends TestHelper {
             ShippingInfo shippingInfo = new ShippingInfo(null, "FEDEX_2_DAY", address);
             List<LineItem> lineItems = new ArrayList<>();
             lineItems.add(new LineItem("K-DFC-PROMISE", "1"));
-            Order order = new Order(ORDER_NUMBER, "C7037154", "00001", shippingInfo, lineItems);
+            Order order = new Order(orderNumber, "C7037154", "00001", shippingInfo, lineItems);
             orders.getOrders().add(order);
 
             String orderXml = GBFRequestUtil.orderXmlToString(Orders.class, orders);
             JsonObject payload = new JsonObject();
             payload.addProperty("orderXml", orderXml);
             payload.addProperty("test", true);
-            String sendRequest = GBF_URL + GBFRequestUtil.ORDER_ENDPOINT;
+            String sendRequest = gbfUrl + GBFRequestUtil.ORDER_ENDPOINT;
             Response gbfResponse = GBFRequestUtil.executePost(Response.class, sendRequest, payload.toString(), apiKey);
             Assert.assertNotNull(gbfResponse);
             Assert.assertTrue(gbfResponse.isSuccess());
@@ -103,7 +103,7 @@ public class GBFTest extends TestHelper {
             JsonObject payload = new JsonObject();
             payload.addProperty("startDate", SystemUtil.getDateFormatted(start));
             payload.addProperty("endDate", SystemUtil.getDateFormatted(end));
-            String sendRequest = GBF_URL + GBFRequestUtil.CONFIRM_ENDPOINT;
+            String sendRequest = gbfUrl + GBFRequestUtil.CONFIRM_ENDPOINT;
             Response gbfResponse = GBFRequestUtil.executePost(Response.class, sendRequest, payload.toString(), apiKey);
             Assert.assertNotNull(gbfResponse);
             Assert.assertTrue(StringUtils.isNotBlank(gbfResponse.getXML()));
@@ -113,7 +113,7 @@ public class GBFTest extends TestHelper {
         apiKey = getApiKey();
         if (apiKey != null) {
             List<String> orderNumbers = new ArrayList<>();
-            orderNumbers.add(ORDER_NUMBER);
+            orderNumbers.add(orderNumber);
             JsonObject payload = new JsonObject();
             JsonArray orderNumbersJson = new JsonArray();
             for (String orderNumber : orderNumbers) {
@@ -121,7 +121,7 @@ public class GBFTest extends TestHelper {
             }
             payload.add("orderNumbers", orderNumbersJson);
 
-            String sendRequest = GBF_URL + GBFRequestUtil.STATUS_ENDPOINT;
+            String sendRequest = gbfUrl + GBFRequestUtil.STATUS_ENDPOINT;
             Response gbfResponse = GBFRequestUtil.executePost(Response.class, sendRequest, payload.toString(), apiKey);
 
             Assert.assertNotNull(gbfResponse);
@@ -174,7 +174,7 @@ public class GBFTest extends TestHelper {
             }
             payload.add("orderNumbers", orderNumbersJson);
 
-            String sendRequest = GBF_URL + GBFRequestUtil.STATUS_ENDPOINT;
+            String sendRequest = gbfUrl + GBFRequestUtil.STATUS_ENDPOINT;
             Response gbfResponse = GBFRequestUtil.executePost(Response.class, sendRequest, payload.toString(), apiKey);
 
             Assert.assertNotNull(gbfResponse);
@@ -200,7 +200,7 @@ public class GBFTest extends TestHelper {
             JsonObject payload = new JsonObject();
             payload.addProperty("startDate", SystemUtil.getDateFormatted(start));
             payload.addProperty("endDate", SystemUtil.getDateFormatted(end));
-            String sendRequest = GBF_URL + GBFRequestUtil.CONFIRM_ENDPOINT;
+            String sendRequest = gbfUrl + GBFRequestUtil.CONFIRM_ENDPOINT;
             Response gbfResponse = GBFRequestUtil.executePost(Response.class, sendRequest, payload.toString(), apiKey);
             Assert.assertNotNull(gbfResponse);
             Assert.assertTrue(StringUtils.isNotBlank(gbfResponse.getXML()));
@@ -223,7 +223,7 @@ public class GBFTest extends TestHelper {
             JsonObject payload = new JsonObject();
             payload.addProperty("startDate", SystemUtil.getDateFormatted(start));
             payload.addProperty("endDate", SystemUtil.getDateFormatted(end));
-            String sendRequest = GBF_URL + GBFRequestUtil.CONFIRM_ENDPOINT;
+            String sendRequest = gbfUrl + GBFRequestUtil.CONFIRM_ENDPOINT;
             Response gbfResponse = GBFRequestUtil.executePost(Response.class, sendRequest, payload.toString(), apiKey);
 
             GBFRequestUtil gbf = new GBFRequestUtil();
@@ -231,9 +231,8 @@ public class GBFTest extends TestHelper {
                     + "LEFT JOIN ddp_kit kit ON (req.dsm_kit_request_id = kit.dsm_kit_request_id)  "
                     + "LEFT JOIN (SELECT subK.kit_type_id, subK.external_name from ddp_kit_request_settings dkc "
                     + "LEFT JOIN sub_kits_settings subK ON (subK.ddp_kit_request_settings_id = dkc.ddp_kit_request_settings_id)) "
-                    + "as subkits ON (subkits.kit_type_id = req.kit_type_id)   "
-                    + "WHERE " + "req.ddp_instance_id = ?  " + "AND external_order_status = 'SHIPPED' " + "AND external_response is null "
-                    + "ORDER BY external_order_date ASC ";
+                    + "as subkits ON (subkits.kit_type_id = req.kit_type_id)   " + "WHERE " + "req.ddp_instance_id = ?  "
+                    + "AND external_order_status = 'SHIPPED' " + "AND external_response is null " + "ORDER BY external_order_date ASC ";
 
             ArrayList<KitRequest> kitRequests =
                     gbf.getKitRequestsNotDone(Integer.parseInt(DDPInstance.getDDPInstance("testboston").getDdpInstanceId()), query);

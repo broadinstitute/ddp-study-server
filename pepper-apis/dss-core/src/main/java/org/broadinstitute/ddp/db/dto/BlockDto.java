@@ -1,46 +1,20 @@
 package org.broadinstitute.ddp.db.dto;
 
-import static org.broadinstitute.ddp.constants.SqlConstants.BlockTable;
-import static org.broadinstitute.ddp.constants.SqlConstants.BlockTypeTable;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
-import org.jdbi.v3.core.mapper.RowMapper;
-import org.jdbi.v3.core.statement.StatementContext;
+import org.jdbi.v3.core.mapper.reflect.ColumnName;
+import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
+@Value
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class BlockDto {
+    @ColumnName("block_type_code")
+    BlockType type;
 
-    private BlockType type;
-    private long id;
-    private String guid;
+    @ColumnName("block_id")
+    long id;
 
-    public BlockDto(BlockType type, long id, String guid) {
-        this.type = type;
-        this.id = id;
-        this.guid = guid;
-    }
-
-    public BlockType getType() {
-        return type;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public String getGuid() {
-        return guid;
-    }
-
-    public static class BlockDtoMapper implements RowMapper<BlockDto> {
-        @Override
-        public BlockDto map(ResultSet rs, StatementContext ctx) throws SQLException {
-            return new BlockDto(
-                    BlockType.valueOf(rs.getString(BlockTypeTable.CODE)),
-                    rs.getLong(BlockTable.ID),
-                    rs.getString(BlockTable.GUID));
-        }
-    }
+    @ColumnName("block_guid")
+    String guid;
 }

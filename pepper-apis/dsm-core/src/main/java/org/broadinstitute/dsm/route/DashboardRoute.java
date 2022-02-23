@@ -16,7 +16,6 @@ import java.util.Set;
 import com.google.gson.Gson;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.db.AbstractionActivity;
 import org.broadinstitute.dsm.db.AbstractionFinal;
 import org.broadinstitute.dsm.db.AbstractionGroup;
@@ -44,6 +43,7 @@ import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.AbstractionUtil;
+import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
@@ -188,7 +188,7 @@ public class DashboardRoute extends RequestHandler {
             receivedMap.add(kitCounter);
 
             Integer count = getCountOfDeactivatedKits(
-                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_DASHBOARD_INFORMATION_OF_KIT_REQUESTS_DEACTIVATED),
+                    DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_DASHBOARD_INFORMATION_OF_KIT_REQUESTS_DEACTIVATED),
                     realm, kitTypeId, DBConstants.KITREQUEST_COUNT);
             deactivatedMap.add(new NameValue(kitType.getName(), count));
         }
@@ -689,7 +689,7 @@ public class DashboardRoute extends RequestHandler {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
-                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_DASHBOARD_INFORMATION_OF_KIT_REQUESTS),
+                    DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_DASHBOARD_INFORMATION_OF_KIT_REQUESTS),
                     ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
                 stmt.setString(1, realm);
                 stmt.setInt(2, kitTypeId);
@@ -817,7 +817,7 @@ public class DashboardRoute extends RequestHandler {
                                                  @NonNull String query, HashMap<String, SummaryKitType> summaryKitTypeMonth) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(ConfigUtil.getSqlFromConfig(query))) {
+            try (PreparedStatement stmt = conn.prepareStatement(DSMConfig.getSqlFromConfig(query))) {
                 stmt.setString(1, realm);
                 stmt.setInt(2, kitType.getKitId());
                 try (ResultSet rs = stmt.executeQuery()) {

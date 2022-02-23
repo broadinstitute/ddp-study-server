@@ -1,33 +1,19 @@
 package org.broadinstitute.ddp.db.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
+@Value
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class FormSectionDto {
+    @ColumnName("form_section_id")
+    long id;
 
-    private long id;
-    private String sectionCode;
-    private Long nameTemplateId;
+    @ColumnName("form_section_code")
+    String sectionCode;
 
-    @JdbiConstructor
-    public FormSectionDto(
-            @ColumnName("form_section_id") long id,
-            @ColumnName("form_section_code") String sectionCode,
-            @ColumnName("name_template_id") Long nameTemplateId) {
-        this.id = id;
-        this.sectionCode = sectionCode;
-        this.nameTemplateId = nameTemplateId;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public String getSectionCode() {
-        return sectionCode;
-    }
-
-    public Long getNameTemplateId() {
-        return nameTemplateId;
-    }
+    @ColumnName("name_template_id")
+    Long nameTemplateId;
 }

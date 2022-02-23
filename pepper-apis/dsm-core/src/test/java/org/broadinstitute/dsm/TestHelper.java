@@ -27,7 +27,6 @@ import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.TestUtil;
 import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.dsm.util.externalshipper.GBFRequestUtil;
-import org.broadinstitute.lddp.util.Utility;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.Assert;
 import org.mockserver.integration.ClientAndServer;
@@ -148,11 +147,6 @@ public class TestHelper {
             TransactionWrapper.reset();
             TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM,
                     cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS), cfg.getString(ApplicationConfigConstants.DSM_DB_URL)));
-            if (!Utility.dbCheck()) {
-                throw new RuntimeException("DB connection error.");
-            } else {
-                logger.info("DB setup complete.");
-            }
         }
         //
         //        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
@@ -390,25 +384,25 @@ public class TestHelper {
     }
 
     public static String randomStringGenerator(int length, boolean includeLetters, boolean includeSpace, boolean includeNumbers) {
-        String AlphaNumericString = "";
+        String alphaNumericString = "";
 
         if (includeLetters) {
-            AlphaNumericString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" + "abcdefghijklmnopqrstuvxyz";
+            alphaNumericString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" + "abcdefghijklmnopqrstuvxyz";
         }
         if (includeSpace) {
-            AlphaNumericString += " ";
+            alphaNumericString += " ";
         }
 
         if (includeNumbers) {
-            AlphaNumericString += "0123456789";
+            alphaNumericString += "0123456789";
         }
 
         // create StringBuffer size of output
         StringBuilder sb = new StringBuilder(length);
 
         for (int i = 0; i < length; i++) {
-            int index = (int) (AlphaNumericString.length() * Math.random());
-            sb.append(AlphaNumericString.charAt(index));
+            int index = (int) (alphaNumericString.length() * Math.random());
+            sb.append(alphaNumericString.charAt(index));
         }
 
         return sb.toString();
