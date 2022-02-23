@@ -3,17 +3,15 @@ package org.broadinstitute.ddp.db.dto;
 import java.io.Serializable;
 import java.util.Set;
 
+import lombok.Value;
 import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
-/**
- * DTO class to represent boolean question that includes all base question data.
- */
-public final class BooleanQuestionDto extends QuestionDto implements Serializable {
-
-    private long trueTemplateId;
-    private long falseTemplateId;
+@Value
+public class BooleanQuestionDto extends QuestionDto implements Serializable {
+    long trueTemplateId;
+    long falseTemplateId;
 
     @JdbiConstructor
     public BooleanQuestionDto(@Nested QuestionDto questionDto,
@@ -22,14 +20,6 @@ public final class BooleanQuestionDto extends QuestionDto implements Serializabl
         super(questionDto);
         this.trueTemplateId = trueTemplateId;
         this.falseTemplateId = falseTemplateId;
-    }
-
-    public long getTrueTemplateId() {
-        return trueTemplateId;
-    }
-
-    public long getFalseTemplateId() {
-        return falseTemplateId;
     }
 
     @Override

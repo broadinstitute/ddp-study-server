@@ -1,17 +1,17 @@
 package org.broadinstitute.ddp.db.dto;
 
+import org.broadinstitute.ddp.model.user.User;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.broadinstitute.ddp.model.user.User;
+public final class UserActivityInstanceSummary {
+    private final User participantUser;
+    private final List<ActivityInstanceDto> activityInstanceDtos;
 
-public class UserActivityInstanceSummary {
-    private User participantUser;
-    private List<ActivityInstanceDto> activityInstanceDtos;
-
-    public UserActivityInstanceSummary(User participantUser, List<ActivityInstanceDto> dtos) {
+    public UserActivityInstanceSummary(final User participantUser, final List<ActivityInstanceDto> dtos) {
         this.participantUser = participantUser;
         this.activityInstanceDtos = new ArrayList<>(dtos);
     }
@@ -31,8 +31,7 @@ public class UserActivityInstanceSummary {
     public Optional<ActivityInstanceDto> getLatestActivityInstance(String activityCode) {
         return activityInstanceDtos.stream()
                 .filter(ai -> ai.getActivityCode().equals(activityCode))
-                .sorted((a, b) -> Long.compare(b.getCreatedAtMillis(), a.getCreatedAtMillis()))
-                .findFirst();
+                .min((a, b) -> Long.compare(b.getCreatedAtMillis(), a.getCreatedAtMillis()));
     }
 
 }

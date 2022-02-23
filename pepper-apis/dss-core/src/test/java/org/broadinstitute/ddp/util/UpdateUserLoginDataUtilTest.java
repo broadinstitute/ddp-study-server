@@ -41,7 +41,8 @@ public class UpdateUserLoginDataUtilTest extends TxnAwareBaseTest {
             null,
             null,
             0,
-            0
+            0,
+                null
         );
     }
 

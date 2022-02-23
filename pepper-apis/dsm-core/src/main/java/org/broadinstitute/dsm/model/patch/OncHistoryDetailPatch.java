@@ -73,7 +73,7 @@ public class OncHistoryDetailPatch extends BasePatch {
     Object handleSingleNameValue() {
         if (Patch.patch(oncHistoryDetailId, patch.getUser(), patch.getNameValue(), dbElement)) {
             nameValues.addAll(setWorkflowRelatedFields(patch));
-            exportToESWithId(mrID.toString(), patch.getNameValue());
+            exportToESWithId(oncHistoryDetailId, patch.getNameValue());
             //set oncHistoryDetails created if it is a oncHistoryDetails value without a ID, otherwise created should already be set
             if (dbElement.getTableName().equals(DBConstants.DDP_ONC_HISTORY_DETAIL)) {
                 NameValue oncHistoryCreated = OncHistory.setOncHistoryCreated(patch.getParentId(), patch.getUser());
@@ -89,7 +89,7 @@ public class OncHistoryDetailPatch extends BasePatch {
     @Override
     Optional<Object> processEachNameValue(NameValue nameValue) {
         Patch.patch(oncHistoryDetailId, patch.getUser(), nameValue, dbElement);
-        exportToESWithId(mrID.toString(), nameValue);
+        exportToESWithId(oncHistoryDetailId, nameValue);
         return Optional.empty();
     }
 

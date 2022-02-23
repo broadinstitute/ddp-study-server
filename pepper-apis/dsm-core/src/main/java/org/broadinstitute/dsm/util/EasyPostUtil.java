@@ -98,11 +98,14 @@ public class EasyPostUtil {
         for (Rate availableRate : shipment.getRates()) {
             if ("FedEx".equals(availableRate.getCarrier()) && "FIRST_OVERNIGHT".equals(availableRate.getService())) {
                 express = String.valueOf(availableRate.getRate());
-                logger.debug("Express rate is available. Carrier: " + availableRate.getCarrier() + ", service: " + availableRate.getService() + " " + availableRate.getRate());
+                logger.debug(
+                        "Express rate is available. Carrier: " + availableRate.getCarrier() + ", service: " + availableRate.getService()
+                                + " " + availableRate.getRate());
             }
             if (carrier.equals(availableRate.getCarrier()) && service.equals(availableRate.getService())) {
                 normal = String.valueOf(availableRate.getRate());
-                logger.debug("Normal label was Carrier: " + availableRate.getCarrier() + ", service: " + availableRate.getService() + " " + availableRate.getRate());
+                logger.debug("Normal label was Carrier: " + availableRate.getCarrier() + ", service: " + availableRate.getService()
+                        + " " + availableRate.getRate());
             }
         }
         return new EasypostLabelRate(express, normal);
@@ -164,7 +167,8 @@ public class EasyPostUtil {
                     }
                 } else if (carrier.equals(availableRate.getCarrier()) && service.equals(availableRate.getService())) {
                     rate = availableRate;
-                    logger.debug("Requested rate is available. Carrier: " + availableRate.getCarrier() + ", service: " + availableRate.getService() + " " + availableRate.getRate());
+                    logger.debug("Requested rate is available. Carrier: " + availableRate.getCarrier() + ", service: "
+                            + availableRate.getService() + " " + availableRate.getRate());
                 }
             }
             if (rate != null) {

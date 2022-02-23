@@ -10,6 +10,7 @@ public enum QuestionType {
     DATE,
     FILE,
     NUMERIC,
+    DECIMAL,
     PICKLIST,
     TEXT,
     ACTIVITY_INSTANCE_SELECT,

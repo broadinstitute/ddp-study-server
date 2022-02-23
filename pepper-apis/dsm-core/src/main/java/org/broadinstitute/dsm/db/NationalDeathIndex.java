@@ -20,8 +20,8 @@ public class NationalDeathIndex {
     private static final Logger logger = LoggerFactory.getLogger(NationalDeathIndex.class);
 
     private static final String SQL_SELECT_LAST_CONTROL_NUMBER = "SELECT ndi_control_number FROM ddp_ndi  order by ndi_id desc limit 1";
-    private static final String SQL_INSERT_CONTROL_NUMBER = "INSERT INTO ddp_ndi (ddp_participant_id, ndi_control_number, last_changed, "
-            + "changed_by) VALUES ";
+    private static final String SQL_INSERT_CONTROL_NUMBER =
+            "INSERT INTO ddp_ndi (ddp_participant_id, ndi_control_number, last_changed, changed_by) VALUES ";
     private static final String FIRST_NDI = "0000000000";
     private static final String LAST_NDI = "zzzzzzzzzz";
     private static final int LAST_NAME_MAX_LENGHT = 20;
@@ -116,7 +116,7 @@ public class NationalDeathIndex {
             line.append(middle);
             String space = "";
             space = String.format("%-9s", space);
-            line.append(space);//ssn
+            line.append(space); //ssn
             space = "";
             line.append(participant.getMonth());
             line.append(participant.getDay());
@@ -126,11 +126,13 @@ public class NationalDeathIndex {
             space = "";
             line.append(controlNumber);
             space = String.format("%-9s", space);
-            line.append(space);//optional stuff and 2 blanks
+            line.append(space); //optional stuff and 2 blanks
             space = "";
             line.append("\n");
             textToPutInTextFile.append(line.toString());
-            sqlValues += "( '" + participant.getDdpParticipantId() + "', '" + controlNumber + "', " + System.currentTimeMillis() + ", '" + userId + "' ), ";
+            sqlValues +=
+                    "( '" + participant.getDdpParticipantId() + "', '" + controlNumber + "', " + System.currentTimeMillis() + ", '" + userId
+                            + "' ), ";
         }
         String finalStatement = SQL_INSERT_CONTROL_NUMBER + sqlValues;
         SimpleResult result = inTransaction((conn) -> {

@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.google.gson.Gson;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.Util;
@@ -35,25 +35,23 @@ import org.slf4j.LoggerFactory;
 public class ElasticSearch implements ElasticSearchable {
 
     private static final Logger logger = LoggerFactory.getLogger(ElasticSearch.class);
-    private static final Gson GSON = new Gson();
-
     List<ElasticSearchParticipantDto> esParticipants;
     long totalCount;
+    private Deserializer deserializer;
+
 
     public ElasticSearch() {
+        this.deserializer = new SourceMapDeserializer();
     }
 
     public ElasticSearch(List<ElasticSearchParticipantDto> esParticipants, long totalCount) {
+        this();
         this.esParticipants = esParticipants;
         this.totalCount = totalCount;
     }
 
-    public static Optional<ElasticSearchParticipantDto> parseSourceMap(Map<String, Object> sourceMap) {
-        if (sourceMap == null) {
-            return Optional.of(new ElasticSearchParticipantDto.Builder().build());
-        }
-        ElasticSearchParticipantDto elasticSearchParticipantDto = GSON.fromJson(GSON.toJson(sourceMap), ElasticSearchParticipantDto.class);
-        return Optional.of(elasticSearchParticipantDto);
+    public void setDeserializer(Deserializer deserializer) {
+        this.deserializer = deserializer;
     }
 
     public List<ElasticSearchParticipantDto> getEsParticipants() {
@@ -65,6 +63,16 @@ public class ElasticSearch implements ElasticSearchable {
 
     public long getTotalCount() {
         return totalCount;
+    }
+
+    public Optional<ElasticSearchParticipantDto> parseSourceMap(Map<String, Object> sourceMap) {
+        if (sourceMap == null) {
+            return Optional.of(new ElasticSearchParticipantDto.Builder().build());
+        }
+        Optional<ElasticSearchParticipantDto> deserializedSourceMap = deserializer.deserialize(sourceMap);
+        return deserializedSourceMap.isPresent()
+                ? deserializedSourceMap
+                : Optional.of(new ElasticSearchParticipantDto.Builder().build());
     }
 
     public List<ElasticSearchParticipantDto> parseSourceMaps(SearchHit[] searchHits) {
@@ -164,7 +172,7 @@ public class ElasticSearch implements ElasticSearchable {
     }
 
     @Override
-    public ElasticSearch getParticipantsByRangeAndFilter(String esParticipantsIndex, int from, int to, String filter) {
+    public ElasticSearch getParticipantsByRangeAndFilter(String esParticipantsIndex, int from, int to, AbstractQueryBuilder queryBuilder) {
         if (to <= 0) {
             throw new IllegalArgumentException("incorrect from/to range");
         }
@@ -174,8 +182,7 @@ public class ElasticSearch implements ElasticSearchable {
             int scrollSize = to - from;
             SearchRequest searchRequest = new SearchRequest(Objects.requireNonNull(esParticipantsIndex));
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-            AbstractQueryBuilder<? extends AbstractQueryBuilder<?>> esQuery = ElasticSearchUtil.createESQuery(filter);
-            searchSourceBuilder.query(esQuery).sort(ElasticSearchUtil.PROFILE_CREATED_AT, SortOrder.ASC);
+            searchSourceBuilder.query(queryBuilder).sort(ElasticSearchUtil.PROFILE_CREATED_AT, SortOrder.ASC);
             searchSourceBuilder.size(scrollSize);
             searchSourceBuilder.from(from);
             searchRequest.source(searchSourceBuilder);
@@ -222,9 +229,11 @@ public class ElasticSearch implements ElasticSearchable {
         logger.info("Collecting ES data");
         try {
             searchResponse = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
-            sourceAsMap = searchResponse.getHits().getHits()[0].getSourceAsMap();
+            sourceAsMap = searchResponse.getHits().getHits().length > 0
+                    ? searchResponse.getHits().getHits()[0].getSourceAsMap() : new HashMap<>();
         } catch (Exception e) {
-            throw new RuntimeException("Couldn't get participant from ES for instance " + esParticipantsIndex + " by short id: " + participantId, e);
+            throw new RuntimeException("Couldn't get participant from ES for instance " + esParticipantsIndex + " by id: " + participantId,
+                    e);
         }
         return parseSourceMap(sourceAsMap).orElseThrow();
     }

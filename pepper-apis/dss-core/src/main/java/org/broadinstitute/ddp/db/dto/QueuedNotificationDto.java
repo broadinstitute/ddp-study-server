@@ -1,15 +1,15 @@
 package org.broadinstitute.ddp.db.dto;
 
-import java.util.List;
-
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
-public class QueuedNotificationDto extends QueuedEventDto {
+import java.util.List;
+import java.util.stream.Stream;
 
-    private NotificationDetailsDto notificationDetailsDto;
+public final class QueuedNotificationDto extends QueuedEventDto {
+    private final NotificationDetailsDto notificationDetailsDto;
 
     @JdbiConstructor
     public QueuedNotificationDto(
@@ -68,8 +68,6 @@ public class QueuedNotificationDto extends QueuedEventDto {
     }
 
     public void addTemplateSubstitutions(NotificationTemplateSubstitutionDto... substitutions) {
-        for (NotificationTemplateSubstitutionDto substitution : substitutions) {
-            notificationDetailsDto.addTemplateSubstitution(substitution);
-        }
+        Stream.of(substitutions).forEach(notificationDetailsDto::addTemplateSubstitution);
     }
 }

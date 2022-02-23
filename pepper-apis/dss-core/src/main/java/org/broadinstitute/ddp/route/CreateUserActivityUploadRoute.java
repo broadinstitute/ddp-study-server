@@ -3,6 +3,8 @@ package org.broadinstitute.ddp.route;
 import static org.broadinstitute.ddp.service.FileUploadService.AuthorizeResultType.FILE_SIZE_EXCEEDS_MAXIMUM;
 import static org.broadinstitute.ddp.service.FileUploadService.AuthorizeResultType.MIME_TYPE_NOT_ALLOWED;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -30,20 +32,13 @@ import org.broadinstitute.ddp.util.QuestionUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
+@Slf4j
+@AllArgsConstructor
 public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<CreateUserActivityUploadPayload> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(CreateUserActivityUploadRoute.class);
-
     private final FileUploadService service;
-
-    public CreateUserActivityUploadRoute(FileUploadService service) {
-        this.service = service;
-    }
 
     @Override
     protected int getValidationErrorStatus() {
@@ -60,7 +55,7 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
         String operatorGuid = StringUtils.defaultIfBlank(ddpAuth.getOperator(), userGuid);
         boolean isStudyAdmin = ddpAuth.hasAdminAccessToStudy(studyGuid);
 
-        LOG.info("Authorizing file upload URL for user {}, operator {} (isStudyAdmin={}), activity instance {}, study {}",
+        log.info("Authorizing file upload URL for user {}, operator {} (isStudyAdmin={}), activity instance {}, study {}",
                 userGuid, operatorGuid, isStudyAdmin, instanceGuid, studyGuid);
 
         FileUploadService.AuthorizeResult result = TransactionWrapper.withTxn(handle -> {
@@ -78,10 +73,10 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
 
             boolean isInstanceReadOnly = ActivityInstanceUtil.isReadonly(
                     activityDef.getEditTimeoutSec(), instanceDto.getCreatedAtMillis(),
-                    instanceDto.getStatusType().name(), activityDef.isWriteOnce(), instanceDto.getReadonly());
+                    instanceDto.getStatusType().name(), activityDef.isWriteOnce(), instanceDto.getIsReadonly());
             if (!isStudyAdmin && isInstanceReadOnly) {
                 String msg = "Activity instance " + instanceGuid + " is read-only, no file upload will be authorized";
-                LOG.warn(msg);
+                log.warn(msg);
                 throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY,
                         new ApiError(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, msg));
             }
@@ -91,11 +86,11 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
             FileQuestionDef fileQuestionDef;
             if (questionDef == null) {
                 String msg = "Could not find question with stable id " + questionStableId;
-                LOG.warn(msg);
+                log.warn(msg);
                 throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.QUESTION_NOT_FOUND, msg));
             } else if (questionDef.getQuestionType() != QuestionType.FILE) {
                 String msg = "Question " + questionStableId + " does not support file uploads";
-                LOG.warn(msg);
+                log.warn(msg);
                 throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(ErrorCodes.NOT_SUPPORTED, msg));
             } else {
                 fileQuestionDef = (FileQuestionDef) questionDef;
@@ -104,7 +99,7 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
             boolean isQuestionReadOnly = QuestionUtil.isReadonly(handle, questionDef, instanceDto);
             if (!isStudyAdmin && isQuestionReadOnly) {
                 String msg = "Question " + questionStableId + " is read-only, no file upload will be authorized";
-                LOG.warn(msg);
+                log.warn(msg);
                 throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY,
                         new ApiError(ErrorCodes.QUESTION_IS_READONLY, msg));
             }
@@ -133,12 +128,12 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
             } else if (result.getAuthorizeResultType() == MIME_TYPE_NOT_ALLOWED) {
                 msg = "Mime type not belongs to allowed list: " + result.getFileUploadSettings().getMimeTypes();
             }
-            LOG.warn(msg);
+            log.warn(msg);
             throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
         }
 
         FileUpload upload = result.getFileUpload();
-        LOG.info("Authorized file upload with id={} for bucket={} blobName={}",
+        log.info("Authorized file upload with id={} for bucket={} blobName={}",
                 upload.getId(), service.getUploadsBucket(), upload.getBlobName());
 
         response.status(HttpStatus.SC_CREATED);

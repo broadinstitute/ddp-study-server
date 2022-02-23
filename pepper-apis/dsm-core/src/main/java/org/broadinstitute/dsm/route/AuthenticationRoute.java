@@ -84,8 +84,9 @@ public class AuthenticationRoute implements Route {
                 long auth0Expiration = auth0UserInfo.getTokenExpiration();
                 int cookieAgeInSeconds = new Long(auth0Expiration - new Double(System.currentTimeMillis() / 1000d).intValue()).intValue();
 
-                String jwtToken = new SecurityHelper().createToken(jwtSecret,
-                        cookieAgeInSeconds + (System.currentTimeMillis() / 1000) + (60 * 5), claims);
+                String jwtToken =
+                        new SecurityHelper().createToken(jwtSecret, cookieAgeInSeconds + (System.currentTimeMillis() / 1000) + (60 * 5),
+                                claims);
 
                 DSMToken authResponse = new DSMToken(jwtToken);
                 return authResponse;

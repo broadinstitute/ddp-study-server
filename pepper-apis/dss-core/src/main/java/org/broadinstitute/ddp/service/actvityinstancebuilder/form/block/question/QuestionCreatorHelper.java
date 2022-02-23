@@ -11,6 +11,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuesti
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
@@ -23,6 +24,7 @@ import org.broadinstitute.ddp.model.activity.instance.question.DatePicklistQuest
 import org.broadinstitute.ddp.model.activity.instance.question.DateQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.FileQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.NumericQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.DecimalQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistGroup;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
@@ -203,6 +205,29 @@ public class QuestionCreatorHelper {
                         ctx, questionDef.getAdditionalInfoFooterTemplate()),
                 questionCreator.getAnswers(ctx, questionDef.getStableId()),
                 questionCreator.getValidationRules(ctx, questionDef)
+        );
+    }
+
+    DecimalQuestion createDecimalQuestion(AIBuilderContext ctx, DecimalQuestionDef questionDef) {
+        QuestionCreator questionCreator = ctx.getAIBuilderFactory().getQuestionCreator();
+        return new DecimalQuestion(
+                questionDef.getStableId(),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getPromptTemplate()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getPlaceholderTemplate()),
+                questionDef.isRestricted(),
+                questionDef.isDeprecated(),
+                isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getTooltipTemplate()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getAdditionalInfoHeaderTemplate()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                questionCreator.getAnswers(ctx, questionDef.getStableId()),
+                questionCreator.getValidationRules(ctx, questionDef),
+                questionDef.getScale()
         );
     }
 

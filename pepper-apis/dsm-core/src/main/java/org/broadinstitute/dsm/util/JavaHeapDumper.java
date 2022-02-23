@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.util;
 
+import javax.management.MBeanServer;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -7,11 +8,9 @@ import java.lang.management.ManagementFactory;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import javax.management.MBeanServer;
 
 import com.sun.management.HotSpotDiagnosticMXBean;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.lddp.util.GoogleBucket;
 import org.slf4j.Logger;
@@ -36,7 +35,7 @@ public class JavaHeapDumper {
     }
 
     public void dumpHeapToBucket(String bucketName, final String fileName) throws IOException {
-        String gcpName = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
+        String gcpName = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
         dumpHeapToLocalFile(DEFAULT_LOCAL_PATH + "/" + fileName);
         File localDumpFile = Paths.get(DEFAULT_LOCAL_PATH, fileName).toFile();
         if (localDumpFile.exists()) {
@@ -46,11 +45,9 @@ public class JavaHeapDumper {
         }
         try (FileInputStream localDumpFileStream = new FileInputStream(localDumpFile)) {
             String credentials = null;
-            if (StringUtils.isNotBlank(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS))) {
-                String tmp = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS);
-                if (StringUtils.isNotBlank(tmp) && new File(tmp).exists()) {
-                    credentials = tmp;
-                }
+            String tmp = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS);
+            if (StringUtils.isNotBlank(tmp) && new File(tmp).exists()) {
+                credentials = tmp;
             }
             GoogleBucket.uploadFile(credentials, gcpName, bucketName, DEFAULT_BUCKET_PATH + "/" + fileName,
                     localDumpFileStream);

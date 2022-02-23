@@ -29,19 +29,19 @@ import org.slf4j.LoggerFactory;
  */
 @Data
 public class FieldSettings {
-    public static final String GET_FIELD_SETTINGS = "SELECT setting.field_settings_id, setting.column_name, setting.max_length, " +
-            "setting.column_display, setting.field_type, setting.display_type, setting.possible_values, setting.order_number, actions, "
-            + "readonly " +
-            "FROM field_settings setting, ddp_instance realm WHERE " +
-            "realm.ddp_instance_id = setting.ddp_instance_id AND NOT (setting.deleted <=>1) AND realm.instance_name=? ORDER BY "
-            + "order_number asc";
-    public static final String UPDATE_FIELD_SETTINGS_TABLE = "UPDATE field_settings SET column_name = ?, " +
-            "column_display = ?, deleted = ?, field_type = ?, display_type = ?, possible_values = ?, " +
-            "max_length = ?, readonly = ?, changed_by = ?, last_changed = ? WHERE field_settings_id = ?";
-    public static final String INSERT_FIELD_SETTINGS = "INSERT INTO field_settings SET column_name = ?, " +
-            "column_display = ?, field_type = ?, display_type = ?, possible_values = ?, ddp_instance_id = (SELECT ddp_instance_id FROM "
-            + "ddp_instance " +
-            "WHERE instance_name = ?), max_length = ?, readonly = ?, changed_by = ?, last_changed = ?";
+    public static final String GET_FIELD_SETTINGS = "SELECT setting.field_settings_id, setting.column_name, setting.max_length, "
+            + "setting.column_display, setting.field_type, setting.display_type, setting.possible_values, setting.order_number, actions, "
+            + "readonly "
+            + "FROM field_settings setting, ddp_instance realm WHERE "
+            + "realm.ddp_instance_id = setting.ddp_instance_id AND NOT (setting.deleted <=>1) AND realm.instance_name=? "
+            + "ORDER BY order_number asc";
+    public static final String UPDATE_FIELD_SETTINGS_TABLE = "UPDATE field_settings SET column_name = ?, "
+            + "column_display = ?, deleted = ?, field_type = ?, display_type = ?, possible_values = ?, "
+            + "max_length = ?, readonly = ?, changed_by = ?, last_changed = ? WHERE field_settings_id = ?";
+    public static final String INSERT_FIELD_SETTINGS = "INSERT INTO field_settings SET column_name = ?, "
+            + "column_display = ?, field_type = ?, display_type = ?, possible_values = ?, ddp_instance_id = ("
+            + "SELECT ddp_instance_id FROM ddp_instance "
+            + "WHERE instance_name = ?), max_length = ?, readonly = ?, changed_by = ?, last_changed = ?";
 
     private static final Logger logger = LoggerFactory.getLogger(FieldSettings.class);
     private final String fieldSettingId; //Value of field_settings_id for the setting
@@ -88,11 +88,11 @@ public class FieldSettings {
                         List<Value> actionValues = getValueListFromJsonString(rs, DBConstants.ACTIONS);
                         String type = rs.getString(DBConstants.FIELD_TYPE);
                         Integer maxLength = (Integer) rs.getObject(DBConstants.MAX_LENGTH);
-                        FieldSettings setting = new FieldSettings(rs.getString(DBConstants.FIELD_SETTING_ID),
-                                rs.getString(DBConstants.COLUMN_NAME), rs.getString(DBConstants.COLUMN_DISPLAY),
-                                type, rs.getString(DBConstants.DISPLAY_TYPE), possibleValues,
-                                rs.getInt(DBConstants.ORDER_NUMBER), actionValues, rs.getBoolean(DBConstants.READONLY),
-                                maxLength);
+                        FieldSettings setting =
+                                new FieldSettings(rs.getString(DBConstants.FIELD_SETTING_ID), rs.getString(DBConstants.COLUMN_NAME),
+                                        rs.getString(DBConstants.COLUMN_DISPLAY), type, rs.getString(DBConstants.DISPLAY_TYPE),
+                                        possibleValues, rs.getInt(DBConstants.ORDER_NUMBER), actionValues,
+                                        rs.getBoolean(DBConstants.READONLY), maxLength);
                         if (fieldSettingsList.containsKey(type)) {
                             // If we have already found settings with this field_type, add this
                             // setting to the list of settings with this field_type
@@ -127,8 +127,8 @@ public class FieldSettings {
      * @param realm              Realm
      * @param fieldSettingsLists Map of fields type names to lists of fields
      */
-    public static void saveFieldSettings(@NonNull String realm,
-                                         @NonNull Map<String, Collection<FieldSettings>> fieldSettingsLists, @NonNull String userId) {
+    public static void saveFieldSettings(@NonNull String realm, @NonNull Map<String, Collection<FieldSettings>> fieldSettingsLists,
+                                         @NonNull String userId) {
         //Settings are organized by type, so need to go through each list of settings
         for (String settingType : fieldSettingsLists.keySet()) {
             Collection<FieldSettings> settingsOfType = fieldSettingsLists.get(settingType);
@@ -163,8 +163,7 @@ public class FieldSettings {
             }
             if (failedSettings.size() > 0) {
                 // Throw exception if any of the settings failed
-                throw new RuntimeException("Error saving " + failedSettings.size() + " out of " + totalSettings +
-                        "settings");
+                throw new RuntimeException("Error saving " + failedSettings.size() + " out of " + totalSettings + "settings");
             }
         }
     }
@@ -200,7 +199,8 @@ public class FieldSettings {
                 if (result == 1) {
                     logger.info("Updated field setting with id " + fieldSettingId);
                 } else {
-                    throw new RuntimeException("Error updating field setting with id " + fieldSettingId + ": it was updating " + result + " rows");
+                    throw new RuntimeException(
+                            "Error updating field setting with id " + fieldSettingId + ": it was updating " + result + " rows");
                 }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;

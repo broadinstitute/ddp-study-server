@@ -22,8 +22,6 @@ public class GPNotificationJob implements Job {
      * adding notification into EMAIL_QUEUE
      * which then gets send by next run of NotificationJob
      *
-     * @param context JobExecutionContext
-     * @throws JobExecutionException
      */
     public void execute(JobExecutionContext context) throws JobExecutionException {
         try {

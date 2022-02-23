@@ -20,10 +20,10 @@ public class UserDao implements Dao<UserDto> {
     public static final String PHONE_NUMBER = "phone_number";
     private static final String SQL_INSERT_USER = "INSERT INTO access_user (name, email) VALUES (?,?)";
     private static final String SQL_DELETE_USER_BY_ID = "DELETE FROM access_user WHERE user_id = ?";
-    private static final String SQL_SELECT_USER_BY_EMAIL = "SELECT user.user_id, user.name, user.email, user.phone_number FROM "
-            + "access_user user WHERE user.email = ?";
-    private static final String SQL_SELECT_USER_BY_ID = "SELECT user.user_id, user.name, user.email, user.phone_number FROM access_user "
-            + "user WHERE user.user_id = ?";
+    private static final String SQL_SELECT_USER_BY_EMAIL =
+            "SELECT user.user_id, user.name, user.email, user.phone_number FROM access_user user WHERE user.email = ?";
+    private static final String SQL_SELECT_USER_BY_ID =
+            "SELECT user.user_id, user.name, user.email, user.phone_number FROM access_user user WHERE user.user_id = ?";
 
     public Optional<UserDto> getUserByEmail(@NonNull String email) {
         SimpleResult results = inTransaction((conn) -> {

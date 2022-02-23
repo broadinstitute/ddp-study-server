@@ -11,7 +11,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.join.ScoreMode;
-import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.elastic.ESProfile;
@@ -19,6 +18,7 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
+import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.elasticsearch.action.delete.DeleteRequest;
@@ -58,12 +58,7 @@ public class ElasticSearchTest extends TestHelper {
     private static void updateES(String index, String ddpParticipantId, Map<String, Object> jsonMap) throws Exception {
         try (RestHighLevelClient client = ElasticSearchUtil.getClientForElasticsearchCloud(cfg.getString("elasticSearch.url"),
                 cfg.getString("elasticSearch.username"), cfg.getString("elasticSearch.password"))) {
-            UpdateRequest updateRequest = new UpdateRequest()
-                    .index(index)
-                    .type("_doc")
-                    .id(ddpParticipantId)
-                    .doc(jsonMap)
-                    .docAsUpsert(true);
+            UpdateRequest updateRequest = new UpdateRequest().index(index).type("_doc").id(ddpParticipantId).doc(jsonMap).docAsUpsert(true);
 
             UpdateResponse updateResponse = client.update(updateRequest, RequestOptions.DEFAULT);
         }
@@ -201,7 +196,8 @@ public class ElasticSearchTest extends TestHelper {
         activityAnswer("participants_structured.cmi.cmi-brain", "PREQUAL", "PREQUAL_SELF_DESCRIBE", "DIAGNOSED");
     }
 
-    public Map<String, Map<String, Object>> activityAnswer(String index, String activityCode, String stableId, String answer) throws Exception {
+    public Map<String, Map<String, Object>> activityAnswer(String index, String activityCode, String stableId, String answer)
+            throws Exception {
         Map<String, Map<String, Object>> esData = new HashMap<>();
         try (RestHighLevelClient client = ElasticSearchUtil.getClientForElasticsearchCloud(cfg.getString("elasticSearch.url"),
                 cfg.getString("elasticSearch.username"), cfg.getString("elasticSearch.password"))) {
@@ -214,8 +210,8 @@ public class ElasticSearchTest extends TestHelper {
                 BoolQueryBuilder activityAnswer = new BoolQueryBuilder();
                 activityAnswer.must(QueryBuilders.matchQuery("activities.questionsAnswers.stableId", stableId));
                 activityAnswer.must(QueryBuilders.matchQuery("activities.questionsAnswers.answer", answer));
-                NestedQueryBuilder queryActivityAnswer = QueryBuilders.nestedQuery("activities.questionsAnswers", activityAnswer,
-                        ScoreMode.Avg);
+                NestedQueryBuilder queryActivityAnswer =
+                        QueryBuilders.nestedQuery("activities.questionsAnswers", activityAnswer, ScoreMode.Avg);
 
                 BoolQueryBuilder queryBuilder = new BoolQueryBuilder();
                 queryBuilder.must(QueryBuilders.matchQuery("activities.activityCode", activityCode).operator(Operator.AND));
@@ -255,18 +251,26 @@ public class ElasticSearchTest extends TestHelper {
         Map<String, Map<String, Object>> answerMap2Copy = new HashMap<>(answerMap2);
 
         answerMap1.forEach((key, value) -> {
-            orCopy.remove(key);
+            if (orCopy.containsKey(key)) {
+                orCopy.remove(key);
+            }
         });
         answerMap2.forEach((key, value) -> {
-            orCopy.remove(key);
+            if (orCopy.containsKey(key)) {
+                orCopy.remove(key);
+            }
         });
 
         or.forEach((key, value) -> {
-            answerMap1Copy.remove(key);
+            if (answerMap1Copy.containsKey(key)) {
+                answerMap1Copy.remove(key);
+            }
         });
 
         or.forEach((key, value) -> {
-            answerMap2Copy.remove(key);
+            if (answerMap2Copy.containsKey(key)) {
+                answerMap2Copy.remove(key);
+            }
         });
 
         Assert.assertEquals(0, orCopy.size());
@@ -290,8 +294,8 @@ public class ElasticSearchTest extends TestHelper {
                 orAnswers.should(QueryBuilders.matchQuery("activities.questionsAnswers.answer", answer1));
                 orAnswers.should(QueryBuilders.matchQuery("activities.questionsAnswers.answer", answer2));
                 activityAnswer.must(orAnswers);
-                NestedQueryBuilder queryActivityAnswer = QueryBuilders.nestedQuery("activities.questionsAnswers", activityAnswer,
-                        ScoreMode.Avg);
+                NestedQueryBuilder queryActivityAnswer =
+                        QueryBuilders.nestedQuery("activities.questionsAnswers", activityAnswer, ScoreMode.Avg);
 
                 BoolQueryBuilder queryBuilder = new BoolQueryBuilder();
                 queryBuilder.must(QueryBuilders.matchQuery("activities.activityCode", activityCode).operator(Operator.AND));
@@ -317,8 +321,8 @@ public class ElasticSearchTest extends TestHelper {
         orActivityAndAnotherAnswers("participants_structured.cmi.angio", "ANGIOABOUTYOU", "COUNTRY", "US", "CA");
     }
 
-    public Map<String, Map<String, Object>> orActivityAndAnotherAnswers(String index, String activityCode, String stableId,
-                                                                        String answer1, String answer2) throws Exception {
+    public Map<String, Map<String, Object>> orActivityAndAnotherAnswers(String index, String activityCode, String stableId, String answer1,
+                                                                        String answer2) throws Exception {
         Map<String, Map<String, Object>> esData = new HashMap<>();
         try (RestHighLevelClient client = ElasticSearchUtil.getClientForElasticsearchCloud(cfg.getString("elasticSearch.url"),
                 cfg.getString("elasticSearch.username"), cfg.getString("elasticSearch.password"))) {
@@ -334,8 +338,8 @@ public class ElasticSearchTest extends TestHelper {
                 orAnswers.should(QueryBuilders.matchQuery("activities.questionsAnswers.answer", answer1));
                 orAnswers.should(QueryBuilders.matchQuery("activities.questionsAnswers.answer", answer2));
                 activityAnswer.must(orAnswers);
-                NestedQueryBuilder queryActivityAnswer = QueryBuilders.nestedQuery("activities.questionsAnswers", activityAnswer,
-                        ScoreMode.Avg);
+                NestedQueryBuilder queryActivityAnswer =
+                        QueryBuilders.nestedQuery("activities.questionsAnswers", activityAnswer, ScoreMode.Avg);
 
                 BoolQueryBuilder queryBuilder = new BoolQueryBuilder();
                 queryBuilder.must(QueryBuilders.matchQuery("activities.activityCode", activityCode).operator(Operator.AND));
@@ -435,21 +439,19 @@ public class ElasticSearchTest extends TestHelper {
 
     @Test
     public void testSearchParticipantById() {
-        String pIdToFilter = "WUKIOQNKXJZGCAXCSYGB";
+        String participantIdToFilter = "WUKIOQNKXJZGCAXCSYGB";
         String fetchedPid = "";
         try (RestHighLevelClient client = ElasticSearchUtil.getClientForElasticsearchCloud(cfg.getString("elasticSearch.url"),
                 cfg.getString("elasticSearch.username"), cfg.getString("elasticSearch.password"))) {
             Optional<ElasticSearchParticipantDto> esObject =
-                    ElasticSearchUtil.fetchESDataByParticipantId("participants_structured.rgp.rgp", pIdToFilter, client);
-            fetchedPid = esObject.orElse(new ElasticSearchParticipantDto.Builder().build())
-                    .getProfile()
-                    .map(ESProfile::getParticipantLegacyAltPid)
+                    ElasticSearchUtil.fetchESDataByParticipantId("participants_structured.rgp.rgp", participantIdToFilter, client);
+            fetchedPid = esObject.orElse(new ElasticSearchParticipantDto.Builder().build()).getProfile().map(ESProfile::getLegacyAltPid)
                     .orElse("");
         } catch (IOException e) {
             Assert.fail();
             e.printStackTrace();
         }
-        Assert.assertEquals(pIdToFilter, fetchedPid);
+        Assert.assertEquals(participantIdToFilter, fetchedPid);
     }
 
     @Test
@@ -460,9 +462,7 @@ public class ElasticSearchTest extends TestHelper {
                 cfg.getString("elasticSearch.username"), cfg.getString("elasticSearch.password"))) {
             ElasticSearchParticipantDto esObject =
                     ElasticSearchUtil.fetchESDataByAltpid("participants_structured.atcp.atcp", altpid, client);
-            fetchedPid = esObject.getProfile()
-                    .map(ESProfile::getParticipantLegacyAltPid)
-                    .orElse("");
+            fetchedPid = esObject.getProfile().map(ESProfile::getLegacyAltPid).orElse("");
         } catch (IOException e) {
             Assert.fail();
             e.printStackTrace();
@@ -490,8 +490,8 @@ public class ElasticSearchTest extends TestHelper {
                 orAnswers.should(existsQuery2);
                 activityAnswer.must(orAnswers);
                 activityAnswer.must(QueryBuilders.matchQuery("activities.questionsAnswers.stableId", stableId));
-                NestedQueryBuilder queryActivityAnswer = QueryBuilders.nestedQuery("activities.questionsAnswers", activityAnswer,
-                        ScoreMode.Avg);
+                NestedQueryBuilder queryActivityAnswer =
+                        QueryBuilders.nestedQuery("activities.questionsAnswers", activityAnswer, ScoreMode.Avg);
 
                 BoolQueryBuilder queryBuilder = new BoolQueryBuilder();
                 queryBuilder.must(QueryBuilders.matchQuery("activities.activityCode", activityCode).operator(Operator.AND));
@@ -557,8 +557,8 @@ public class ElasticSearchTest extends TestHelper {
                 ExistsQueryBuilder existsQuery = new ExistsQueryBuilder("activities.questionsAnswers.answer");
                 activityAnswer.mustNot(existsQuery);
                 activityAnswer.mustNot(QueryBuilders.matchQuery("activities.questionsAnswers.stableId", "SURGICAL_PROCEDURES"));
-                NestedQueryBuilder queryActivityAnswer = QueryBuilders.nestedQuery("activities.questionsAnswers", activityAnswer,
-                        ScoreMode.Avg);
+                NestedQueryBuilder queryActivityAnswer =
+                        QueryBuilders.nestedQuery("activities.questionsAnswers", activityAnswer, ScoreMode.Avg);
 
                 BoolQueryBuilder queryBuilder = new BoolQueryBuilder();
                 queryBuilder.must(QueryBuilders.matchQuery("activities.activityCode", "POSTCONSENT").operator(Operator.AND));
@@ -680,9 +680,7 @@ public class ElasticSearchTest extends TestHelper {
     public void searchPTByID() throws Exception {
         try (RestHighLevelClient client = ElasticSearchUtil.getClientForElasticsearchCloud(cfg.getString("elasticSearch.url"),
                 cfg.getString("elasticSearch.username"), cfg.getString("elasticSearch.password"))) {
-            GetRequest getRequest = new GetRequest()
-                    .index("participants_structured.atcp.atcp")
-                    .type("_doc")
+            GetRequest getRequest = new GetRequest().index("participants_structured.atcp.atcp").type("_doc")
                     .id("5db65f9f43f38f2ae0ec3efb1d3325b1356e0a6ffa4b7ef71938f73930269811");
             GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);
             Map<String, Object> map = getResponse.getSourceAsMap();
@@ -727,35 +725,35 @@ public class ElasticSearchTest extends TestHelper {
         try (RestHighLevelClient client = ElasticSearchUtil.getClientForElasticsearchCloud(cfg.getString("elasticSearch.url"),
                 cfg.getString("elasticSearch.username"), cfg.getString("elasticSearch.password"))) {
             //getting a participant ES doc
-//            GetRequest getRequest = new GetRequest(index, "_doc", "EG5AIEQZOJGX2HYDTQZZ");
-//            GetResponse response = client.get(getRequest, RequestOptions.DEFAULT);
-//            Assert.assertNotNull(response);
-//4000
+            //            GetRequest getRequest = new GetRequest(index, "_doc", "EG5AIEQZOJGX2HYDTQZZ");
+            //            GetResponse response = client.get(getRequest, RequestOptions.DEFAULT);
+            //            Assert.assertNotNull(response);
+            //4000
             for (int i = 789; i < 900; i++) {
                 String guid = "TEST00000000000" + StringUtils.leftPad(String.valueOf(i), 5, "0");
                 String hruid = "P" + StringUtils.leftPad(String.valueOf(i), 5, "0");
                 //changing values to be able to create new participant
-//                Map<String, Object> source = response.getSource();
-//                Assert.assertNotNull(source);
-//                Object profile = source.get("profile");
-//                Assert.assertNotNull(profile);
-//                ((Map<String, Object>) profile).put("hruid", hruid);
-//                ((Map<String, Object>) profile).put("firstName", "Unit " + i);
-//                ((Map<String, Object>) profile).put("lastName", "Test " + i);
-//                ((Map<String, Object>) profile).put("guid", guid);
-//                Object medicalProviders = source.get("medicalProviders");
-//                List<Map<String, Object>> medicalProvidersList = ((List<Map<String, Object>>) medicalProviders);
-//                int counter = 0;
-//                for (Map<String, Object> medicalProviderMap : medicalProvidersList) {
-//                    medicalProviderMap.put("guid", "MP0" + counter + hruid);
-//
-//                    //add participant and institution into DSM DB
-//                    if (addToDSMDB) { //only use if you want your dsm db to have the participants as well
-//                        TestHelper.addTestParticipant("Angio", guid, hruid, "MP0" + counter + hruid, "20191022", true);
-//                    }
-//                    counter++;
-//                }
-//                Assert.assertNotNull(medicalProviders);
+                //                Map<String, Object> source = response.getSource();
+                //                Assert.assertNotNull(source);
+                //                Object profile = source.get("profile");
+                //                Assert.assertNotNull(profile);
+                //                ((Map<String, Object>) profile).put("hruid", hruid);
+                //                ((Map<String, Object>) profile).put("firstName", "Unit " + i);
+                //                ((Map<String, Object>) profile).put("lastName", "Test " + i);
+                //                ((Map<String, Object>) profile).put("guid", guid);
+                //                Object medicalProviders = source.get("medicalProviders");
+                //                List<Map<String, Object>> medicalProvidersList = ((List<Map<String, Object>>) medicalProviders);
+                //                int counter = 0;
+                //                for (Map<String, Object> medicalProviderMap : medicalProvidersList) {
+                //                    medicalProviderMap.put("guid", "MP0" + counter + hruid);
+                //
+                //                    //add participant and institution into DSM DB
+                //                    if (addToDSMDB) { //only use if you want your dsm db to have the participants as well
+                //                        TestHelper.addTestParticipant("Angio", guid, hruid, "MP0" + counter + hruid, "20191022", true);
+                //                    }
+                //                    counter++;
+                //                }
+                //                Assert.assertNotNull(medicalProviders);
 
                 if (addToDSMDB) {
                     int kitCount = ThreadLocalRandom.current().nextInt(1, 6 + 1);
@@ -768,58 +766,60 @@ public class ElasticSearchTest extends TestHelper {
                             calendar.add(Calendar.MONTH, 1);
                             ordered = calendar.getTimeInMillis();
                         }
-                        DBTestUtil.insertLatestKitRequest(DBTestUtil.SQL_INSERT_KIT_REQUEST, cfg.getString("portal.insertKit"),
-                                suffix, 6, "6", guid, ordered);
+                        DBTestUtil.insertLatestKitRequest(DBTestUtil.SQL_INSERT_KIT_REQUEST, cfg.getString("portal.insertKit"), suffix, 6,
+                                "6", guid, ordered);
                         DBTestUtil.insertLatestKitRequest(DBTestUtil.SQL_INSERT_KIT_REQUEST, cfg.getString("portal.insertKit"),
                                 suffix + "_1", 7, "6", guid, ordered);
 
                         int status = ThreadLocalRandom.current().nextInt(1, 4 + 1);
                         switch (status) {
                             case 1:
-//                                shipped to PT
-                                DBTestUtil.setKitToStatus("FAKE_SPK_UUID" + suffix, "FAKE_DSM_LABEL_UID" + suffix, "I In Transit", "M "
-                                        + "Shipment Ready for UPS", "20210331 140351", "20210331 140351");
-                                DBTestUtil.setKitToStatus("FAKE_SPK_UUID" + suffix + "_1", "FAKE_DSM_LABEL_UID" + suffix + "_1", "I In "
-                                        + "Transit", "M Shipment Ready for UPS", "20210331 140351", "20210331 140351");
+                                //                                shipped to PT
+                                DBTestUtil.setKitToStatus("FAKE_SPK_UUID" + suffix, "FAKE_DSM_LABEL_UID" + suffix, "I In Transit",
+                                        "M Shipment Ready for UPS", "20210331 140351", "20210331 140351");
+                                DBTestUtil.setKitToStatus("FAKE_SPK_UUID" + suffix + "_1", "FAKE_DSM_LABEL_UID" + suffix + "_1",
+                                        "I In Transit", "M Shipment Ready for UPS", "20210331 140351", "20210331 140351");
                                 break;
                             case 2:
-//                                received @ PT
-                                DBTestUtil.setKitToStatus("FAKE_SPK_UUID" + suffix, "FAKE_DSM_LABEL_UID" + suffix, "D Delivered", "M "
-                                        + "Shipment Ready for UPS", "20210331 140351", "20210331 140351");
-                                DBTestUtil.setKitToStatus("FAKE_SPK_UUID" + suffix + "_1", "FAKE_DSM_LABEL_UID" + suffix + "_1", "D "
-                                        + "Delivered", "M Shipment Ready for UPS", "20210331 140351", "20210331 140351");
+                                //                                received @ PT
+                                DBTestUtil.setKitToStatus("FAKE_SPK_UUID" + suffix, "FAKE_DSM_LABEL_UID" + suffix, "D Delivered",
+                                        "M Shipment Ready for UPS", "20210331 140351", "20210331 140351");
+                                DBTestUtil.setKitToStatus("FAKE_SPK_UUID" + suffix + "_1", "FAKE_DSM_LABEL_UID" + suffix + "_1",
+                                        "D Delivered", "M Shipment Ready for UPS", "20210331 140351", "20210331 140351");
                                 break;
                             case 3:
-//                                shipped to GP
-                                DBTestUtil.setKitToStatus("FAKE_SPK_UUID" + suffix, "FAKE_DSM_LABEL_UID" + suffix, "D Delivered", "I In "
-                                        + "Transit", "20210331 140351", "20210331 140351");
-                                DBTestUtil.setKitToStatus("FAKE_SPK_UUID" + suffix + "_1", "FAKE_DSM_LABEL_UID" + suffix + "_1", "D "
-                                        + "Delivered", "I In Transit", "20210331 140351", "20210331 140351");
+                                //                                shipped to GP
+                                DBTestUtil.setKitToStatus("FAKE_SPK_UUID" + suffix, "FAKE_DSM_LABEL_UID" + suffix, "D Delivered",
+                                        "I In Transit", "20210331 140351", "20210331 140351");
+                                DBTestUtil.setKitToStatus("FAKE_SPK_UUID" + suffix + "_1", "FAKE_DSM_LABEL_UID" + suffix + "_1",
+                                        "D Delivered", "I In Transit", "20210331 140351", "20210331 140351");
                                 break;
                             case 4:
-//                                returned @ GP
-                                DBTestUtil.setKitToReceived("FAKE_SPK_UUID" + suffix, "FAKE_DSM_LABEL_UID" + suffix + "_1", "20210331 "
-                                        + "140351", "20210331 140351");
+                                //                                returned @ GP
+                                DBTestUtil.setKitToReceived("FAKE_SPK_UUID" + suffix, "FAKE_DSM_LABEL_UID" + suffix + "_1",
+                                        "20210331 140351", "20210331 140351");
                                 DBTestUtil.setKitToReceived("FAKE_SPK_UUID" + suffix + "_1", "FAKE_DSM_LABEL_UID" + suffix + "_1",
                                         "20210331 140351", "20210331 140351");
                                 break;
+                            default:
+                                Assert.fail();
                         }
                     }
                 }
 
-//                //adding new participant into ES
-//                IndexRequest indexRequest = new IndexRequest(index, "_doc", guid).source(source);
-//                UpdateRequest updateRequest = new UpdateRequest(index, "_doc", guid).doc(source).upsert(indexRequest);
-//                client.update(updateRequest, RequestOptions.DEFAULT);
-//
-//                //getting a participant ES doc
-//                GetRequest getRequestAfter = new GetRequest(index, "_doc", guid);
-//                GetResponse responseAfter = client.get(getRequestAfter, RequestOptions.DEFAULT);
-//                Assert.assertNotNull(responseAfter);
-//
-//                //changing values to be able to create new participant
-//                Map<String, Object> sourceAfter = responseAfter.getSource();
-//                Assert.assertNotNull(sourceAfter);
+                //                //adding new participant into ES
+                //                IndexRequest indexRequest = new IndexRequest(index, "_doc", guid).source(source);
+                //                UpdateRequest updateRequest = new UpdateRequest(index, "_doc", guid).doc(source).upsert(indexRequest);
+                //                client.update(updateRequest, RequestOptions.DEFAULT);
+                //
+                //                //getting a participant ES doc
+                //                GetRequest getRequestAfter = new GetRequest(index, "_doc", guid);
+                //                GetResponse responseAfter = client.get(getRequestAfter, RequestOptions.DEFAULT);
+                //                Assert.assertNotNull(responseAfter);
+                //
+                //                //changing values to be able to create new participant
+                //                Map<String, Object> sourceAfter = responseAfter.getSource();
+                //                Assert.assertNotNull(sourceAfter);
                 logger.info("added participant #" + i);
             }
         }
@@ -831,11 +831,7 @@ public class ElasticSearchTest extends TestHelper {
             String[] includes = new String[] {object};
             String[] excludes = Strings.EMPTY_ARRAY;
             FetchSourceContext fetchSourceContext = new FetchSourceContext(true, includes, excludes);
-            GetRequest getRequest = new GetRequest()
-                    .index(index)
-                    .type("_doc")
-                    .id(ddpParticipantId)
-                    .fetchSourceContext(fetchSourceContext);
+            GetRequest getRequest = new GetRequest().index(index).type("_doc").id(ddpParticipantId).fetchSourceContext(fetchSourceContext);
             GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);
             return getResponse.getSourceAsMap();
         }
@@ -843,21 +839,22 @@ public class ElasticSearchTest extends TestHelper {
 
     @Test
     public void testRemoveWorkflowIfNoDataOrWrongSubject() throws Exception {
-        try (RestHighLevelClient client =
-                     ElasticSearchUtil.getClientForElasticsearchCloud(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_URL),
-                ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_USERNAME),
-                             ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_PASSWORD))) {
+        try (RestHighLevelClient client = ElasticSearchUtil.getClientForElasticsearchCloud(
+                DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_URL),
+                DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_USERNAME),
+                DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_PASSWORD))) {
             String ddpParticipantId = "TZYO5WQ7N58HX4WSJJG0";
             String collaboratorParticipantId = "RGP_2046_3";
-            DDPInstance ddpInstance = new DDPInstance(null, null, null, null, false, 0, 0,
-                    false, null, false, null, "participants_structured.rgp.rgp", null, null);
-            Map<String, Object> workflowsBefore = ElasticSearchUtil.getObjectsMap(client, ddpInstance.getParticipantIndexES(),
-                    ddpParticipantId, "workflows");
+            DDPInstance ddpInstance =
+                    new DDPInstance(null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.rgp.rgp", null,
+                            null);
+            Map<String, Object> workflowsBefore =
+                    ElasticSearchUtil.getObjectsMap(client, ddpInstance.getParticipantIndexES(), ddpParticipantId, "workflows");
             ElasticSearchUtil.removeWorkflowIfNoDataOrWrongSubject(client, ddpParticipantId, ddpInstance, collaboratorParticipantId);
-            Map<String, Object> workflowsAfter = ElasticSearchUtil.getObjectsMap(client, ddpInstance.getParticipantIndexES(),
-                    ddpParticipantId, "workflows");
-            Map<String, Object> workflows = ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId,
-                    "workflows");
+            Map<String, Object> workflowsAfter =
+                    ElasticSearchUtil.getObjectsMap(client, ddpInstance.getParticipantIndexES(), ddpParticipantId, "workflows");
+            Map<String, Object> workflows =
+                    ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId, "workflows");
             Assert.assertTrue(workflows != null && !workflows.isEmpty());
             List<Map<String, Object>> workflowListES = (List<Map<String, Object>>) workflows.get("workflows");
             Assert.assertTrue(workflowListES != null && !workflowListES.isEmpty());
@@ -877,14 +874,14 @@ public class ElasticSearchTest extends TestHelper {
         String ddpParticipantId = "XLDUNC3BHGWGWERHW783";
         String workflow = "ALIVE_DECEASED";
         String status = "TEST";
-        DDPInstance ddpInstance = new DDPInstance(null, null, null, null, false, 0, 0,
-                false, null, false, null, "participants_structured.atcp.atcp", null, null);
+        DDPInstance ddpInstance =
+                new DDPInstance(null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.atcp.atcp", null,
+                        null);
 
-        Map<String, Object> workflowsBefore = ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId,
-                "workflows");
+        Map<String, Object> workflowsBefore =
+                ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId, "workflows");
 
-        ElasticSearchUtil.writeWorkflow(WorkflowForES.createInstance(ddpInstance, ddpParticipantId,
-                workflow, status), false);
+        ElasticSearchUtil.writeWorkflow(WorkflowForES.createInstance(ddpInstance, ddpParticipantId, workflow, status), false);
         Map<String, Object> workflows = ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId, "workflows");
 
         if (workflows != null && !workflows.isEmpty()) {
@@ -899,10 +896,9 @@ public class ElasticSearchTest extends TestHelper {
         }
 
         String newStatus = "DECEASED";
-        ElasticSearchUtil.writeWorkflow(WorkflowForES.createInstance(ddpInstance, ddpParticipantId,
-                workflow, newStatus), false);
-        Map<String, Object> updatedWorkflows = ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId,
-                "workflows");
+        ElasticSearchUtil.writeWorkflow(WorkflowForES.createInstance(ddpInstance, ddpParticipantId, workflow, newStatus), false);
+        Map<String, Object> updatedWorkflows =
+                ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId, "workflows");
 
         if (updatedWorkflows != null && !updatedWorkflows.isEmpty()) {
             List<Map<String, Object>> updatedWorkflowsListES = (List<Map<String, Object>>) updatedWorkflows.get("workflows");
@@ -927,25 +923,26 @@ public class ElasticSearchTest extends TestHelper {
         String subjectId = "testId";
         String firstname = "testfirstname";
         String lastname = "testlastname";
-        DDPInstance ddpInstance = new DDPInstance(null, null, null, null, false, 0, 0,
-                false, null, false, null, "participants_structured.rgp.rgp", null, null);
-        Map<String, Object> workflowsBefore = ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId,
-                "workflows");
+        DDPInstance ddpInstance =
+                new DDPInstance(null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.rgp.rgp", null,
+                        null);
+        Map<String, Object> workflowsBefore =
+                ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId, "workflows");
 
-        ElasticSearchUtil.writeWorkflow(WorkflowForES.createInstanceWithStudySpecificData(ddpInstance, ddpParticipantId,
-                workflow, status, new WorkflowForES.StudySpecificData(subjectId, firstname, lastname)), false);
+        ElasticSearchUtil.writeWorkflow(WorkflowForES.createInstanceWithStudySpecificData(ddpInstance, ddpParticipantId, workflow, status,
+                new WorkflowForES.StudySpecificData(subjectId, firstname, lastname)), false);
 
         testWorkflowWithStudySpecificData(ddpParticipantId, workflow, status, subjectId, firstname, lastname, ddpInstance);
 
-        ElasticSearchUtil.writeWorkflow(WorkflowForES.createInstanceWithStudySpecificData(ddpInstance, ddpParticipantId,
-                workflow, status, new WorkflowForES.StudySpecificData(subjectId, firstname, lastname)), true);
+        ElasticSearchUtil.writeWorkflow(WorkflowForES.createInstanceWithStudySpecificData(ddpInstance, ddpParticipantId, workflow, status,
+                new WorkflowForES.StudySpecificData(subjectId, firstname, lastname)), true);
 
         testWorkflowWithStudySpecificData(ddpParticipantId, workflow, status, subjectId, firstname, lastname, ddpInstance);
 
         String newSubjectId = "testId3";
 
-        ElasticSearchUtil.writeWorkflow(WorkflowForES.createInstanceWithStudySpecificData(ddpInstance, ddpParticipantId,
-                workflow, status, new WorkflowForES.StudySpecificData(newSubjectId, firstname, lastname)), false);
+        ElasticSearchUtil.writeWorkflow(WorkflowForES.createInstanceWithStudySpecificData(ddpInstance, ddpParticipantId, workflow, status,
+                new WorkflowForES.StudySpecificData(newSubjectId, firstname, lastname)), false);
 
         testWorkflowWithStudySpecificData(ddpParticipantId, workflow, status, subjectId, firstname, lastname, ddpInstance);
 
@@ -982,12 +979,13 @@ public class ElasticSearchTest extends TestHelper {
         String ddpParticipantId = "XLDUNC3BHGWGWERHW781";
         String objectType = ESObjectConstants.MEDICAL_RECORDS;
         String idName = ESObjectConstants.MEDICAL_RECORDS_ID;
-        DDPInstance ddpInstance = new DDPInstance(null, null, null, null, false, 0, 0,
-                false, null, false, null, "participants_structured.rgp.rgp", null, null);
+        DDPInstance ddpInstance =
+                new DDPInstance(null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.rgp.rgp", null,
+                        null);
         String familyId = "1234";
 
-        Map<String, Object> objectsMapESBefore = ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId,
-                "dsm");
+        Map<String, Object> objectsMapESBefore =
+                ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId, "dsm");
 
         Map<String, Object> nameValues = new HashMap<>();
         nameValues.put("name", "testName");
@@ -999,8 +997,8 @@ public class ElasticSearchTest extends TestHelper {
         ElasticSearchUtil.writeDsmRecord(ddpInstance, id, ddpParticipantId, objectType, idName, nameValues);
         ElasticSearchUtil.writeDsmRecord(ddpInstance, null, ddpParticipantId, ESObjectConstants.FAMILY_ID, familyId, null);
 
-        Map<String, Object> objectsMapESAfter = ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId,
-                "dsm");
+        Map<String, Object> objectsMapESAfter =
+                ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId, "dsm");
 
         if (objectsMapESAfter != null && !objectsMapESAfter.isEmpty()) {
             Object dsmObject = objectsMapESAfter.get("dsm");
@@ -1030,11 +1028,12 @@ public class ElasticSearchTest extends TestHelper {
         String ddpParticipantId = "XLDUNC3BHGWGWERHW781";
         String objectType = ESObjectConstants.TISSUE_RECORDS;
         String idName = ESObjectConstants.TISSUE_RECORDS_ID;
-        DDPInstance ddpInstance = new DDPInstance(null, null, null, null, false, 0, 0,
-                false, null, false, null, "participants_structured.rgp.rgp", null, null);
+        DDPInstance ddpInstance =
+                new DDPInstance(null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.rgp.rgp", null,
+                        null);
 
-        Map<String, Object> objectsMapESBefore = ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId,
-                "dsm");
+        Map<String, Object> objectsMapESBefore =
+                ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId, "dsm");
 
         Map<String, Object> nameValues = new HashMap<>();
         nameValues.put("typePx", "testType");
@@ -1048,8 +1047,8 @@ public class ElasticSearchTest extends TestHelper {
 
         ElasticSearchUtil.writeDsmRecord(ddpInstance, id, ddpParticipantId, objectType, idName, nameValues);
 
-        Map<String, Object> objectsMapESAfter = ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId,
-                "dsm");
+        Map<String, Object> objectsMapESAfter =
+                ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId, "dsm");
 
         if (objectsMapESAfter != null && !objectsMapESAfter.isEmpty()) {
             Object dsmObject = objectsMapESAfter.get("dsm");
@@ -1081,11 +1080,12 @@ public class ElasticSearchTest extends TestHelper {
         String ddpParticipantId = "XLDUNC3BHGWGWERHW781";
         String objectType = ESObjectConstants.SAMPLES;
         String idName = ESObjectConstants.KIT_REQUEST_ID;
-        DDPInstance ddpInstance = new DDPInstance(null, null, null, null, false, 0, 0,
-                false, null, false, null, "participants_structured.rgp.rgp", null, null);
+        DDPInstance ddpInstance =
+                new DDPInstance(null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.rgp.rgp", null,
+                        null);
 
-        Map<String, Object> objectsMapESBefore = ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId,
-                objectType);
+        Map<String, Object> objectsMapESBefore =
+                ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId, objectType);
 
         Map<String, Object> nameValues = new HashMap<>();
         nameValues.put("kitType", "testType");
@@ -1101,8 +1101,8 @@ public class ElasticSearchTest extends TestHelper {
 
         ElasticSearchUtil.writeSample(ddpInstance, id, ddpParticipantId, objectType, idName, nameValues);
 
-        Map<String, Object> objectsMapESAfter = ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId,
-                objectType);
+        Map<String, Object> objectsMapESAfter =
+                ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId, objectType);
 
         if (objectsMapESAfter != null && !objectsMapESAfter.isEmpty()) {
             List<Map<String, Object>> objectList = (List<Map<String, Object>>) objectsMapESAfter.get(objectType);
@@ -1132,9 +1132,7 @@ public class ElasticSearchTest extends TestHelper {
         try (RestHighLevelClient client = ElasticSearchUtil.getClientForElasticsearchCloud(cfg.getString("elasticSearch.url"),
                 cfg.getString("elasticSearch.username"), cfg.getString("elasticSearch.password"))) {
 
-            DeleteRequest deleteRequest = new DeleteRequest()
-                    .index("participants_structured.atcp.atcp")
-                    .type("_doc")
+            DeleteRequest deleteRequest = new DeleteRequest().index("participants_structured.atcp.atcp").type("_doc")
                     .id("5db65f9f43f38f2ae0ec3efb1d3325b1356e0a6ffa4b7ef71938f73930269811");
             DeleteResponse deleteResponse = client.delete(deleteRequest, RequestOptions.DEFAULT);
         }

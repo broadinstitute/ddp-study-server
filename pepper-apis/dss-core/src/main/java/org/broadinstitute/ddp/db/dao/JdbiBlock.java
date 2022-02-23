@@ -1,23 +1,22 @@
 package org.broadinstitute.ddp.db.dao;
 
-import static org.broadinstitute.ddp.constants.SqlConstants.BlockTable;
-
-import java.util.Optional;
-import java.util.stream.Stream;
-
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dto.BlockDto;
 import org.broadinstitute.ddp.db.dto.NestedActivityBlockDto;
 import org.broadinstitute.ddp.model.activity.types.NestedActivityRenderHint;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
-import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import static org.broadinstitute.ddp.constants.SqlConstants.BlockTable;
 
 public interface JdbiBlock extends SqlObject {
 
@@ -34,7 +33,7 @@ public interface JdbiBlock extends SqlObject {
 
     @SqlQuery("select bt.block_type_code, b.* from block as b, block_type as bt where"
             + " b.block_id = ? and b.block_type_id = bt.block_type_id")
-    @RegisterRowMapper(BlockDto.BlockDtoMapper.class)
+    @RegisterConstructorMapper(BlockDto.class)
     BlockDto findById(long blockId);
 
     @GetGeneratedKeys

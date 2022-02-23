@@ -25,12 +25,14 @@ import org.broadinstitute.ddp.model.activity.definition.validation.CompleteRuleD
 import org.broadinstitute.ddp.model.activity.definition.validation.DateFieldRequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.IntRangeRuleDef;
+import org.broadinstitute.ddp.model.activity.definition.validation.DecimalRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.LengthRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.NumOptionsSelectedRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RegexRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.UniqueRuleDef;
+import org.broadinstitute.ddp.model.activity.definition.validation.UniqueValueRuleDef;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonUtil;
@@ -73,9 +75,9 @@ public class ValidationRuleTask implements CustomTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(TaskUtil.class);
 
-    private static Gson gson = GsonUtil.standardGson();
-    private String patchCfgFile;
-    private  Config dataCfg;
+    private static final Gson gson = GsonUtil.standardGson();
+    private final String patchCfgFile;
+    private Config dataCfg;
 
     public ValidationRuleTask(String patchCfgFile) {
         this.patchCfgFile = patchCfgFile;
@@ -159,6 +161,11 @@ public class ValidationRuleTask implements CustomTask {
                             gson.fromJson(ConfigUtil.toJson(ruleConfig), IntRangeRuleDef.class),
                             questionDto.getRevisionId());
                     break;
+                case DECIMAL_RANGE:
+                    validationDao.insert(questionDto.getId(),
+                            gson.fromJson(ConfigUtil.toJson(ruleConfig), DecimalRangeRuleDef.class),
+                            questionDto.getRevisionId());
+                    break;
                 case LENGTH:
                     validationDao.insert(questionDto.getId(),
                             gson.fromJson(ConfigUtil.toJson(ruleConfig), LengthRuleDef.class),
@@ -182,6 +189,11 @@ public class ValidationRuleTask implements CustomTask {
                 case UNIQUE:
                     validationDao.insert(questionDto.getId(),
                             gson.fromJson(ConfigUtil.toJson(ruleConfig), UniqueRuleDef.class),
+                            questionDto.getRevisionId());
+                    break;
+                case UNIQUE_VALUE:
+                    validationDao.insert(questionDto.getId(),
+                            gson.fromJson(ConfigUtil.toJson(ruleConfig), UniqueValueRuleDef.class),
                             questionDto.getRevisionId());
                     break;
                 default:

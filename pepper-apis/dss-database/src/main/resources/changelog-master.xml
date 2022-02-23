@@ -289,4 +289,9 @@
     <include file="db-changes/schema/DDP-7292-activity-def-show-activity-status.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7417-add-matrix-modal-columns.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7306.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/add_new_event_type_DDP-7415.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/DDP-7182-add-unique-value-validation-type.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-7306-decimal-question.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-7306-decimal-question-scale.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-7173-add-client-study-uk.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

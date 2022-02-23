@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <databaseChangeLog
-        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
     <changeSet author="simone" id="DDP-1706_10122018">
@@ -64,8 +64,10 @@
     </changeSet>
 
     <changeSet author="simone" id="DDP-1706_10122018_fk">
-        <addForeignKeyConstraint baseColumnNames="medical_record_abstraction_group_id" baseTableName="medical_record_abstraction_field"
-                                 constraintName="medical_record_abstraction_group_id_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION"
+        <addForeignKeyConstraint baseColumnNames="medical_record_abstraction_group_id"
+                                 baseTableName="medical_record_abstraction_field"
+                                 constraintName="medical_record_abstraction_group_id_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="NO ACTION"
                                  onUpdate="NO ACTION" referencedColumnNames="medical_record_abstraction_group_id"
                                  referencedTableName="medical_record_abstraction_group"/>
     </changeSet>
@@ -73,7 +75,8 @@
     <changeSet author="simone" id="DDP-1706_10122018_unique">
         <addUniqueConstraint columnNames="display_name, ddp_instance_id" constraintName="display_name_group_UNIQUE"
                              tableName="medical_record_abstraction_group"/>
-        <addUniqueConstraint columnNames="display_name, ddp_instance_id, medical_record_abstraction_group_id" constraintName="display_name_field_UNIQUE"
+        <addUniqueConstraint columnNames="display_name, ddp_instance_id, medical_record_abstraction_group_id"
+                             constraintName="display_name_field_UNIQUE"
                              tableName="medical_record_abstraction_field"/>
     </changeSet>
 
