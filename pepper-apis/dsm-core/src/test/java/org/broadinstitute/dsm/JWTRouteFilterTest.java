@@ -1,23 +1,13 @@
 package org.broadinstitute.dsm;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.auth0.jwk.JwkProvider;
 import com.auth0.jwk.JwkProviderBuilder;
+import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.Claim;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.RSAKeyProvider;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -32,19 +22,39 @@ import org.broadinstitute.dsm.util.TestUtil;
 import org.broadinstitute.lddp.security.Auth0Util;
 import org.broadinstitute.lddp.security.SecurityHelper;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import spark.Request;
 
-public class JWTRouteFilterTest {
+import java.io.File;
+import java.util.*;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static org.mockito.Mockito.*;
+
+public class JWTRouteFilterTest {
+    private static final Logger logger = LoggerFactory.getLogger(JWTRouteFilterTest.class);
     public static final long THIRTY_MIN_IN_SECONDS = 30 * 60 * 60;
     private static final String BEARER = "Bearer";
-    private static final String auth0Domain = "";
     private static final String AUTHORIZATION = "Authorization";
+    private final String clientId = "https://datadonationplatform.org/cid";
+    private final String userId = "https://datadonationplatform.org/uid";
+    private final String tenantDomain = "https://datadonationplatform.org/t";
+    private static String auth0Domain;
 
     public static long getCurrentUnixUTCTime() {
         return System.currentTimeMillis() / 1000L;
+    }
+
+    @BeforeClass
+    public static void setup() {
+        Config cfg = ConfigFactory.load();
+        //secrets from vault in a config file
+        cfg = cfg.withFallback(ConfigFactory.parseFile(new File(System.getenv("TEST_CONFIG_FILE"))));
+       auth0Domain = cfg.getString("auth0.domain");;
     }
 
     @Test
@@ -129,10 +139,12 @@ public class JWTRouteFilterTest {
             try {
                 JWTCreator.Builder builder = com.auth0.jwt.JWT.create();
                 System.out.println("User Token: " + builder.sign(algorithm));
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 throw new RuntimeException("Couldn't create token " + e);
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
         }
     }
 
@@ -180,7 +192,8 @@ public class JWTRouteFilterTest {
         try {
             Thread.sleep(1000);
             Assert.assertFalse("Token is expired, should not be considered valid", new JWTRouteFilter(secret, null, auth0Domain).isAccessAllowed(req));
-        } catch (InterruptedException e) {
+        }
+        catch (InterruptedException e) {
             Assert.fail("Sleep interrupted, cannot wait for token to expire.");
         }
         verify(req, times(1)).headers(AUTHORIZATION);
@@ -213,9 +226,55 @@ public class JWTRouteFilterTest {
             builder.withClaim(rolesKey, new Gson().toJson(roles, ArrayList.class));
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return builder.sign(algorithm);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new RuntimeException("Couldn't create token " + e);
         }
     }
 
+    public static DecodedJWT verifyDDPToken(String jwt, JwkProvider jwkProvider) {
+        DecodedJWT validToken;
+        RSAKeyProvider keyProvider;
+        try {
+            keyProvider = RSAKeyProviderFactory.createRSAKeyProviderWithPrivateKeyOnly(jwkProvider);
+        }
+        catch (Exception e) {
+            logger.error("Error creating RSAKeyProvider", e);
+            throw (e);
+        }
+
+        try {
+            validToken = JWT.require(Algorithm.RSA256(keyProvider)).acceptLeeway(10).build().verify(jwt);
+        }
+        catch (TokenExpiredException e) {
+            // TokenExpired is one of the benign variants of JWTVerificationException that the `verify()` method throws.
+            logger.warn("Expired token: {}", jwt);
+            throw e;
+        }
+        catch (Exception e) {
+            logger.error("Could not verify token {}", jwt, e);
+            throw (e);
+        }
+        return validToken;
+    }
+
+    @Test
+    public void test() {
+        Map<String, JwkProvider> jwkProviderMap = new HashMap();
+        String jwt = "<COPY_TOKEN_HERE>";
+        // We need to get the Auth0ClientId *before* verification so that we can verify see: Chicken/Egg
+        DecodedJWT decodedJwt = JWT.decode(jwt);
+        String auth0ClientId = decodedJwt.getClaim(clientId).asString();
+        String auth0Domain = decodedJwt.getClaim(tenantDomain).asString();
+        JwkProvider jwkProvider = jwkProviderMap.getOrDefault(auth0ClientId, null);
+        if (jwkProvider == null) {
+
+            jwkProvider = new JwkProviderBuilder(auth0Domain).cached(100, 3L, MINUTES).build();
+            jwkProviderMap.put(auth0ClientId, jwkProvider);
+        }
+
+        DecodedJWT validToken = verifyDDPToken(jwt, jwkProvider);
+        String ddpUserGuid = validToken.getClaim(userId).asString();
+        Assert.assertNotNull(ddpUserGuid);
+    }
 }
