@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="studySpecificStatuses" author="ikhaladz">
+        <addColumn tableName="instance_settings">
+            <column name="study_specific_statuses" type="VARCHAR(1000)"
+                    afterColumn="hide_ES_fields"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,17 +1,23 @@
 package org.broadinstitute.ddp.db.dto;
 
-import java.util.Set;
-
+import lombok.Value;
+import lombok.experimental.Accessors;
 import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
-public final class MailingAddressComponentDto extends ComponentDto {
+import java.util.Set;
 
-    private Long titleTemplateId;
-    private Long subtitleTemplateId;
-    private boolean requireVerified;
-    private boolean requirePhone;
+@Value
+public class MailingAddressComponentDto extends ComponentDto {
+    Long titleTemplateId;
+    Long subtitleTemplateId;
+    
+    @Accessors(fluent = true)
+    boolean shouldRequireVerified;
+    
+    @Accessors(fluent = true)
+    boolean shouldRequirePhone;
 
     @JdbiConstructor
     public MailingAddressComponentDto(
@@ -23,24 +29,8 @@ public final class MailingAddressComponentDto extends ComponentDto {
         super(componentDto);
         this.titleTemplateId = titleTemplateId;
         this.subtitleTemplateId = subtitleTemplateId;
-        this.requireVerified = requireVerified;
-        this.requirePhone = requirePhone;
-    }
-
-    public Long getTitleTemplateId() {
-        return titleTemplateId;
-    }
-
-    public Long getSubtitleTemplateId() {
-        return subtitleTemplateId;
-    }
-
-    public boolean shouldRequireVerified() {
-        return requireVerified;
-    }
-
-    public boolean shouldRequirePhone() {
-        return requirePhone;
+        this.shouldRequireVerified = requireVerified;
+        this.shouldRequirePhone = requirePhone;
     }
 
     @Override

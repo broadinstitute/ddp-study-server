@@ -136,8 +136,8 @@ public class AssignParticipantRoute extends RequestHandler {
         }
         if (!shortIds.isEmpty()) {
             String message = "";
-            for (String sId : shortIds) {
-                message += sId + ", ";
+            for (String userId : shortIds) {
+                message += userId + ", ";
             }
             message = message.replaceAll(", $", "");
             doNotification(email, message, email, EMAIL_TYPE, false, realm);

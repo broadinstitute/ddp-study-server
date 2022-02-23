@@ -1,109 +1,54 @@
 package org.broadinstitute.ddp.db.dto;
 
-import java.io.Serializable;
-
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Value;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
+import java.io.Serializable;
+
+@Value
+@Builder(toBuilder = true)
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class StudyDto implements Serializable {
+    @ColumnName("umbrella_study_id")
+    long id;
 
-    private long id;
-    private String guid;
-    private String name;
-    private String irbPassword;
-    private String webBaseUrl;
-    private long umbrellaId;
-    private long auth0TenantId;
-    private OLCPrecision olcPrecision;
-    private boolean shareParticipantLocation;
-    private String studyEmail;
-    private String recaptchaSiteKey;
-    private boolean dataExportEnabled;
-    private String defaultAuth0Connection;
+    @ColumnName("guid")
+    String guid;
 
-    @JdbiConstructor
-    public StudyDto(@ColumnName("umbrella_study_id") long id,
-                    @ColumnName("guid") String guid,
-                    @ColumnName("study_name") String name,
-                    @ColumnName("irb_password") String irbPassword,
-                    @ColumnName("web_base_url") String webBaseUrl,
-                    @ColumnName("umbrella_id") long umbrellaId,
-                    @ColumnName("auth0_tenant_id") long auth0TenantId,
-                    @ColumnName("olc_precision_code") OLCPrecision olcPrecision,
-                    @ColumnName("share_participant_location") boolean shareParticipantLocation,
-                    @ColumnName("study_email") String studyEmail,
-                    @ColumnName("recaptcha_site_key") String recaptchaSiteKey,
-                    @ColumnName("enable_data_export") boolean dataExportEnabled,
-                    @ColumnName("default_auth0_connection") String defaultAuth0Connection) {
-        this.id = id;
-        this.guid = guid;
-        this.name = name;
-        this.irbPassword = irbPassword;
-        this.webBaseUrl = webBaseUrl;
-        this.umbrellaId = umbrellaId;
-        this.auth0TenantId = auth0TenantId;
-        this.olcPrecision = olcPrecision;
-        this.shareParticipantLocation = shareParticipantLocation;
-        this.studyEmail = studyEmail;
-        this.recaptchaSiteKey = recaptchaSiteKey;
-        this.dataExportEnabled = dataExportEnabled;
-        this.defaultAuth0Connection = defaultAuth0Connection;
-    }
+    @ColumnName("study_name")
+    String name;
 
-    public long getId() {
-        return id;
-    }
+    @ColumnName("irb_password")
+    String irbPassword;
 
-    public String getGuid() {
-        return guid;
-    }
+    @ColumnName("web_base_url")
+    String webBaseUrl;
 
-    public String getName() {
-        return name;
-    }
+    @ColumnName("umbrella_id")
+    long umbrellaId;
 
-    public String getIrbPassword() {
-        return irbPassword;
-    }
+    @ColumnName("auth0_tenant_id")
+    long auth0TenantId;
 
-    public String getWebBaseUrl() {
-        return webBaseUrl;
-    }
+    @ColumnName("olc_precision_code")
+    OLCPrecision olcPrecision;
 
-    public long getUmbrellaId() {
-        return umbrellaId;
-    }
+    @ColumnName("share_participant_location")
+    boolean publicDataSharingEnabled;
 
-    public Long getAuth0TenantId() {
-        return auth0TenantId;
-    }
+    @ColumnName("study_email")
+    String studyEmail;
 
-    public OLCPrecision getOlcPrecision() {
-        return olcPrecision;
-    }
+    @ColumnName("recaptcha_site_key")
+    String recaptchaSiteKey;
 
-    public boolean isPublicDataSharingEnabled() {
-        return shareParticipantLocation;
-    }
+    @ColumnName("enable_data_export")
+    boolean dataExportEnabled;
 
-    public String getStudyEmail() {
-        return studyEmail;
-    }
-
-    public boolean isDataExportEnabled() {
-        return dataExportEnabled;
-    }
-
-    public String getRecaptchaSiteKey() {
-        return recaptchaSiteKey;
-    }
-
-    public void setRecaptchaSiteKey(String key) {
-        this.recaptchaSiteKey = key;
-    }
-
-    public String getDefaultAuth0Connection() {
-        return defaultAuth0Connection;
-    }
+    @ColumnName("default_auth0_connection")
+    String defaultAuth0Connection;
 }

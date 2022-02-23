@@ -10,12 +10,12 @@ import java.util.Collection;
 
 import lombok.Data;
 import lombok.NonNull;
-import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
+import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +45,7 @@ public class ParticipantEvent {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
-                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_PARTICIPANT_EVENTS))) {
+                    DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_PARTICIPANT_EVENTS))) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
@@ -85,7 +85,7 @@ public class ParticipantEvent {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
-                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.INSERT_PARTICIPANT_EVENT))) {
+                    DSMConfig.getSqlFromConfig(ApplicationConfigConstants.INSERT_PARTICIPANT_EVENT))) {
                 stmt.setString(1, instance.getDdpInstanceId());
                 stmt.setString(2, ddpParticipantId);
                 stmt.setLong(3, currentTime);
