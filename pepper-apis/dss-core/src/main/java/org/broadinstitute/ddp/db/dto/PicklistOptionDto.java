@@ -1,119 +1,61 @@
 package org.broadinstitute.ddp.db.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.experimental.Accessors;
+import org.jdbi.v3.core.mapper.reflect.ColumnName;
+import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.jdbi.v3.core.mapper.reflect.ColumnName;
-import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
+@Data
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
+public final class PicklistOptionDto implements Serializable {
+    @ColumnName("picklist_option_id")
+    private final long id;
 
-public class PicklistOptionDto implements TimestampRevisioned, Serializable {
+    @ColumnName("picklist_option_stable_id")
+    private final String stableId;
 
-    private long id;
-    private String stableId;
-    private long optionLabelTemplateId;
-    private Long tooltipTemplateId;
-    private Long detailLabelTemplateId;
-    private boolean allowDetails;
-    private boolean isExclusive;
-    private boolean isDefault;
+    @ColumnName("option_label_template_id")
+    private final long optionLabelTemplateId;
+
+    @ColumnName("tooltip_template_id")
+    private final Long tooltipTemplateId;
+
+    @ColumnName("detail_label_template_id")
+    private final Long detailLabelTemplateId;
+
+    @ColumnName("allow_details")
+    private final boolean allowDetails;
+
+    @ColumnName("is_exclusive")
+    private final boolean exclusive;
+
+    @Accessors(fluent = true)
+    @ColumnName("is_default")
+    private final boolean isDefault;
+
+    @ColumnName("display_order")
     private int displayOrder;
-    private long revisionId;
-    private Long revisionStartTimestamp;
-    private Long revisionEndTimestamp;
-    private Long nestedOptionsTemplateId;
-    private List<PicklistOptionDto> nestedOptions = new ArrayList<>();
 
-    @JdbiConstructor
-    public PicklistOptionDto(@ColumnName("picklist_option_id") long id,
-                             @ColumnName("picklist_option_stable_id") String stableId,
-                             @ColumnName("option_label_template_id") long optionLabelTemplateId,
-                             @ColumnName("tooltip_template_id") Long tooltipTemplateId,
-                             @ColumnName("detail_label_template_id") Long detailLabelTemplateId,
-                             @ColumnName("allow_details") boolean allowDetails,
-                             @ColumnName("is_exclusive") boolean isExclusive,
-                             @ColumnName("is_default") boolean isDefault,
-                             @ColumnName("display_order") int displayOrder,
-                             @ColumnName("revision_id") long revisionId,
-                             @ColumnName("revision_start_timestamp") Long revisionStartTimestamp,
-                             @ColumnName("revision_end_timestamp") Long revisionEndTimestamp,
-                             @ColumnName("nested_options_template_id") Long nestedOptionsTemplateId) {
-        this.id = id;
-        this.stableId = stableId;
-        this.optionLabelTemplateId = optionLabelTemplateId;
-        this.tooltipTemplateId = tooltipTemplateId;
-        this.detailLabelTemplateId = detailLabelTemplateId;
-        this.allowDetails = allowDetails;
-        this.isExclusive = isExclusive;
-        this.isDefault = isDefault;
-        this.displayOrder = displayOrder;
-        this.revisionId = revisionId;
-        this.revisionStartTimestamp = revisionStartTimestamp;
-        this.revisionEndTimestamp = revisionEndTimestamp;
-        this.nestedOptionsTemplateId = nestedOptionsTemplateId;
-    }
+    @ColumnName("revision_id")
+    private final long revisionId;
 
-    public long getId() {
-        return id;
-    }
+    @ColumnName("revision_start_timestamp")
+    private final Long revisionStartTimestamp;
 
-    public String getStableId() {
-        return stableId;
-    }
+    @ColumnName("revision_end_timestamp")
+    private final Long revisionEndTimestamp;
 
-    public long getOptionLabelTemplateId() {
-        return optionLabelTemplateId;
-    }
+    @ColumnName("nested_options_template_id")
+    private final Long nestedOptionsTemplateId;
 
-    public Long getTooltipTemplateId() {
-        return tooltipTemplateId;
-    }
-
-    public Long getDetailLabelTemplateId() {
-        return detailLabelTemplateId;
-    }
-
-    public boolean getAllowDetails() {
-        return allowDetails;
-    }
-
-    public boolean isExclusive() {
-        return isExclusive;
-    }
-
-    public boolean isDefault() {
-        return isDefault;
-    }
-
-    public int getDisplayOrder() {
-        return displayOrder;
-    }
-
-    public void setDisplayOrder(int displayOrder) {
-        this.displayOrder = displayOrder;
-    }
-
-    public long getRevisionId() {
-        return revisionId;
-    }
-
-    public Long getRevisionStartTimestamp() {
-        return revisionStartTimestamp;
-    }
-
-    public Long getRevisionEndTimestamp() {
-        return revisionEndTimestamp;
-    }
-
-    public Long getNestedOptionsTemplateId() {
-        return nestedOptionsTemplateId;
-    }
-
-    public List<PicklistOptionDto> getNestedOptions() {
-        return nestedOptions;
-    }
+    private final List<PicklistOptionDto> nestedOptions = new ArrayList<>();
 
     public Set<Long> getTemplateIds() {
         var ids = new HashSet<Long>();

@@ -1,25 +1,26 @@
 package org.broadinstitute.ddp.db.dto;
 
-import static org.broadinstitute.ddp.util.CollectionMiscUtil.addNonNullsToSet;
-
-import java.io.Serializable;
-import java.util.Set;
-
+import lombok.Value;
 import org.broadinstitute.ddp.model.activity.types.SuggestionType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
-public final class TextQuestionDto extends QuestionDto implements Serializable {
+import java.io.Serializable;
+import java.util.Set;
 
-    private TextInputType inputType;
-    private SuggestionType suggestionType;
-    private Long placeholderTemplateId;
-    private Long confirmPlaceholderTemplateId;
-    private boolean confirmEntry;
-    private Long confirmPromptTemplateId;
-    private Long mismatchMessageTemplateId;
+import static org.broadinstitute.ddp.util.CollectionMiscUtil.addNonNullsToSet;
+
+@Value
+public class TextQuestionDto extends QuestionDto implements Serializable {
+    TextInputType inputType;
+    SuggestionType suggestionType;
+    Long placeholderTemplateId;
+    Long confirmPlaceholderTemplateId;
+    boolean confirmEntry;
+    Long confirmPromptTemplateId;
+    Long mismatchMessageTemplateId;
 
     @JdbiConstructor
     public TextQuestionDto(@Nested QuestionDto questionDto,
@@ -38,34 +39,6 @@ public final class TextQuestionDto extends QuestionDto implements Serializable {
         this.confirmEntry = confirmEntry;
         this.confirmPromptTemplateId = confirmPromptTemplateId;
         this.mismatchMessageTemplateId = mismatchMessageTemplateId;
-    }
-
-    public TextInputType getInputType() {
-        return inputType;
-    }
-
-    public SuggestionType getSuggestionType() {
-        return suggestionType;
-    }
-
-    public Long getPlaceholderTemplateId() {
-        return placeholderTemplateId;
-    }
-
-    public Long getConfirmPlaceholderTemplateId() {
-        return confirmPlaceholderTemplateId;
-    }
-
-    public boolean isConfirmEntry() {
-        return confirmEntry;
-    }
-
-    public Long getMismatchMessageTemplateId() {
-        return mismatchMessageTemplateId;
-    }
-
-    public Long getConfirmPromptTemplateId() {
-        return confirmPromptTemplateId;
     }
 
     @Override

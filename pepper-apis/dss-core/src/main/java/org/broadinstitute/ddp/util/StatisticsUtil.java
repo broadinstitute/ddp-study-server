@@ -81,7 +81,7 @@ public class StatisticsUtil {
             for (PicklistOptionDto optionDto : optionDtos) {
                 PicklistOption option = new PicklistOption(optionDto.getStableId(),
                         optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
-                        optionDto.getAllowDetails(), optionDto.isExclusive(), optionDto.isDefault());
+                        optionDto.isAllowDetails(), optionDto.isExclusive(), optionDto.isDefault());
                 options.add(option);
                 optionByStableId.put(option.getStableId(), option);
             }

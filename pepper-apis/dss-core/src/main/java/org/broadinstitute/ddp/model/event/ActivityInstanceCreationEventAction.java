@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.model.event;
 
 import java.time.Instant;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
@@ -13,13 +14,9 @@ import org.broadinstitute.ddp.model.event.activityinstancecreation.ActivityInsta
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.service.ActivityInstanceCreationService;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class ActivityInstanceCreationEventAction extends EventAction {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ActivityInstanceCreationEventAction.class);
-
     private final long studyActivityId;
     private final boolean createFromAnswer;
     private final String sourceQuestionStableId;
@@ -30,7 +27,7 @@ public class ActivityInstanceCreationEventAction extends EventAction {
     public ActivityInstanceCreationEventAction(EventConfiguration eventConfiguration, EventConfigurationDto dto) {
         super(eventConfiguration, dto);
         studyActivityId = dto.getActivityInstanceCreationStudyActivityId();
-        createFromAnswer = dto.getCreateFromAnswer();
+        createFromAnswer = dto.createFromAnswer();
         sourceQuestionStableId = dto.getSourceQuestionStableId();
         targetQuestionStableId = dto.getTargetQuestionStableId();
     }
@@ -69,7 +66,7 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                         signal.getParticipantId(),
                         signal.getOperatorId()
                 );
-                LOG.info("Created activity instance queued event: {}", queuedEventId);
+                log.info("Created activity instance queued event: {}", queuedEventId);
             }
         } else {
             doActionSynchronously(handle, signal);
