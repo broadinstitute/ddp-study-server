@@ -4,16 +4,21 @@ import com.google.common.primitives.Longs;
 import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
+import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.types.ComparisonType;
+import org.broadinstitute.ddp.model.activity.types.QuestionType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.Optional;
 
+@Slf4j
 @Getter
 @SuperBuilder(toBuilder = true)
 public class ComparisonRule extends Rule<Answer> {
@@ -23,32 +28,47 @@ public class ComparisonRule extends Rule<Answer> {
     @SerializedName("comparison_validation_type")
     private ComparisonType comparisonType;
 
-    private Answer referencedAnswer;
-
     @Override
     public boolean validate(Question<Answer> question, Answer answer) {
-        if (answer.getValue() == null || referencedAnswer.getValue() == null) {
+        if (answer.getValue() == null) {
+            log.debug("The provided answer is null. Nothing to validate");
             return true;
         }
 
-        switch (question.getQuestionType()) {
+        return TransactionWrapper.withTxn((handle) -> {
+            final Optional<Answer> referencedAnswer = handle.attach(AnswerDao.class)
+                    .findAnswerByInstanceGuidAndQuestionId(answer.getActivityInstanceGuid(), referenceQuestionId);
+            if (referencedAnswer.isEmpty()) {
+                log.debug("Referenced answer is empty activity instance id: {}; question id: {}",
+                        answer.getActivityInstanceGuid(), referenceQuestionId);
+                return false;
+            }
+
+            return validate(question.getQuestionType(), answer, referencedAnswer.get());
+        });
+    }
+
+    private boolean validate(final QuestionType type, final Answer actualAnswer, final Answer referencedAnswer) {
+        switch (type) {
             case NUMERIC:
-                return validate(Longs::compare, (Long) referencedAnswer.getValue(), (Long) answer.getValue());
+                return validate(Longs::compare, (Long) referencedAnswer.getValue(), (Long) actualAnswer.getValue());
             case DECIMAL:
-                return validate(BigDecimal::compareTo, (BigDecimal) referencedAnswer.getValue(), (BigDecimal) answer.getValue());
+                return validate(BigDecimal::compareTo, (BigDecimal) referencedAnswer.getValue(), (BigDecimal) actualAnswer.getValue());
             case DATE:
                 final Optional<LocalDate> referencedDate = ((DateValue) referencedAnswer.getValue()).asLocalDate();
-                final Optional<LocalDate> originalDate = ((DateValue) answer.getValue()).asLocalDate();
+                final Optional<LocalDate> originalDate = ((DateValue) actualAnswer.getValue()).asLocalDate();
 
                 return referencedDate.isEmpty() || originalDate.isEmpty()
                         || validate(LocalDate::compareTo, referencedDate.get(), originalDate.get());
             default:
+                log.debug("The question type is not comparable. This is impossible situation. Nothing to validate");
                 return false;
         }
     }
 
     private <V> boolean validate(final Comparator<V> comparator, final V referenceValue, final V actualValue) {
         final int comparisonResult = comparator.compare(actualValue, referenceValue);
+        log.debug("Comparison result: {}", comparisonResult);
 
         switch (comparisonType) {
             case EQUAL:
