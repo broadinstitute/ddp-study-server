@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 public class DDPRequestRouteTest extends TestHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(DDPRequestRouteTest.class);
-    private final String test_participant_id = "FAKE_PARTICIPANT";
+    private final String testParticipantId = "FAKE_PARTICIPANT";
     private List<String> kitRequests;
     private boolean addedDefaultKitRequest = false;
     private int counter = 0;
@@ -85,7 +85,7 @@ public class DDPRequestRouteTest extends TestHelper {
                     stmt.setString(1, INSTANCE_ID);
                     stmt.setString(2, "FAKE_KIT_REQUEST");
                     stmt.setInt(3, 1);
-                    stmt.setString(4, test_participant_id);
+                    stmt.setString(4, testParticipantId);
                     stmt.setString(5, "FAKE_BSP_COLL_ID");
                     stmt.setString(6, "FAKE_BSP_SAM_ID");
                     stmt.setString(7, "FAKE_DSM_LABEL_UID");
@@ -103,10 +103,10 @@ public class DDPRequestRouteTest extends TestHelper {
                 throw new RuntimeException("Error getting list of kitRequests for test ddp ", results.resultException);
             }
 
-            mockDDP.when(request().withPath("/ddp/participants/" + test_participant_id))
-                    .respond(response().withStatusCode(200).withBody(message.replaceAll("%1", test_participant_id).replaceAll("%2", "")));
+            mockDDP.when(request().withPath("/ddp/participants/" + testParticipantId))
+                    .respond(response().withStatusCode(200).withBody(message.replaceAll("%1", testParticipantId).replaceAll("%2", "")));
             kitRequestTestList.add(
-                    new KitRequestShipping(test_participant_id, "TestProject_2", null, "FAKE_DSM_LABEL_UID", TEST_DDP, "SALIVA", 1L, 1L,
+                    new KitRequestShipping(testParticipantId, "TestProject_2", null, "FAKE_DSM_LABEL_UID", TEST_DDP, "SALIVA", 1L, 1L,
                             "https://easypost-files.s3-us-west-2.amazonaws"
                                     + ".com/files/postage_label/20200214/8240f1b66535494a82b1ec0d566c3f0f.png", "", "794685038506",
                             "9405536897846100551129", "https://track.easypost.com/djE6dHJrXzY4NGJmYzU3ZjM5OTQ1Zjg5MjEzOGRmMWVmMjI1NWZl",
@@ -116,12 +116,12 @@ public class DDPRequestRouteTest extends TestHelper {
             counter = 1;
         } else {
             // fill mockAngio with requests
-            for (String participant_id : kitRequests) {
-                logger.info(message.replaceAll("%1", participant_id).replaceAll("%2", Integer.toString(counter)));
-                mockDDP.when(request().withPath("/ddp/participants/" + participant_id)).respond(response().withStatusCode(200)
-                        .withBody(message.replaceAll("%1", participant_id).replaceAll("%2", Integer.toString(counter))));
+            for (String participantId : kitRequests) {
+                logger.info(message.replaceAll("%1", participantId).replaceAll("%2", Integer.toString(counter)));
+                mockDDP.when(request().withPath("/ddp/participants/" + participantId)).respond(response().withStatusCode(200)
+                        .withBody(message.replaceAll("%1", participantId).replaceAll("%2", Integer.toString(counter))));
                 kitRequestTestList.add(
-                        new KitRequestShipping(participant_id, "TestProject_2", null, "FAKE_DSM_LABEL_UID" + counter, TEST_DDP, "SALIVA",
+                        new KitRequestShipping(participantId, "TestProject_2", null, "FAKE_DSM_LABEL_UID" + counter, TEST_DDP, "SALIVA",
                                 1L, 1L,
                                 "https://easypost-files.s3-us-west-2.amazonaws.com/files/postage_label/20200214/8240f1b66535494a82b1ec0d566c3f0f.png",
                                 "", "794685038506", "9405536897846100551129",
@@ -175,7 +175,7 @@ public class DDPRequestRouteTest extends TestHelper {
     @After
     public void cleanTestSettings() {
         if (addedDefaultKitRequest) {
-            DBTestUtil.deleteAllKitData(test_participant_id);
+            DBTestUtil.deleteAllKitData(testParticipantId);
         }
     }
 }

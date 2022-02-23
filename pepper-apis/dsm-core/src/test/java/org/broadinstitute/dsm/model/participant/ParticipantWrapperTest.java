@@ -94,12 +94,12 @@ public class ParticipantWrapperTest {
         Random random = new Random();
         String[] memberTypes = new String[] {"SISTER", "COUSIN", "SELF", "BROTHER"};
         AtomicInteger i = new AtomicInteger(0);
-        List<ParticipantData> pDatas = Stream.generate(
+        List<ParticipantData> participantDataList = Stream.generate(
                 () -> new ParticipantData.Builder().withData(String.format("{\"MEMTER_TYPE\":\"%s\"}", memberTypes[i.getAndIncrement()]))
                         .withParticipantDataId(random.nextInt(100)).build()).limit(4).collect(Collectors.toList());
         ParticipantWrapper participantWrapper = new ParticipantWrapper(new ParticipantWrapperPayload.Builder().build(), elasticSearchable);
-        participantWrapper.sortBySelfElseById(Collections.singleton(pDatas));
-        Assert.assertTrue(pDatas.get(0).getData().orElse("").contains(FamilyMemberConstants.MEMBER_TYPE_SELF));
+        participantWrapper.sortBySelfElseById(Collections.singleton(participantDataList));
+        Assert.assertTrue(participantDataList.get(0).getData().orElse("").contains(FamilyMemberConstants.MEMBER_TYPE_SELF));
     }
 
     @Test

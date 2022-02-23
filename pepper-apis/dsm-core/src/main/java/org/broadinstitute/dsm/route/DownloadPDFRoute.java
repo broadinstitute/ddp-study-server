@@ -25,7 +25,7 @@ public class DownloadPDFRoute extends RequestHandler {
     public static final String PDF = "/pdf";
     public static final String BUNDLE = "/bundle";
     private static final Logger logger = LoggerFactory.getLogger(DownloadPDFRoute.class);
-    private final String PDF_ROLE = "pdf_download";
+    private final String pdfRole = "pdf_download";
 
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
@@ -41,7 +41,7 @@ public class DownloadPDFRoute extends RequestHandler {
         }
         String requestBody = request.body();
         String userIdR = UserUtil.getUserId(request);
-        if (UserUtil.checkUserAccess(realm, userId, PDF_ROLE, userIdR)) {
+        if (UserUtil.checkUserAccess(realm, userId, pdfRole, userIdR)) {
             if (request.url().contains(RoutePath.DOWNLOAD_PDF)) {
                 if (StringUtils.isBlank(requestBody)) {
                     response.status(500);

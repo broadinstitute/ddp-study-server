@@ -6,5 +6,4 @@ public interface Filterable<T> {
 
     T filter(QueryParamsMap queryParamsMap);
 
-
 }
