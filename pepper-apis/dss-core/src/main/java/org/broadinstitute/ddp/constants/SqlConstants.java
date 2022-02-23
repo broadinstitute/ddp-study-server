@@ -171,14 +171,6 @@ public class SqlConstants {
         public static final String FORM_TYPE_ID = "form_type_id";
     }
 
-    public static final class FormSectionBlockTable {
-        public static final String ID = "form_section__block_id";
-        public static final String SECTION_ID = "form_section_id";
-        public static final String BLOCK_ID = "block_id";
-        public static final String DISPLAY_ORDER = "display_order";
-        public static final String REVISION_ID = "revision_id";
-    }
-
     public static final class QuestionTable {
         public static final String STABLE_ID = "stable_id";
         public static final String PROMPT_TEMPLATE_ID = "question_prompt_template_id";

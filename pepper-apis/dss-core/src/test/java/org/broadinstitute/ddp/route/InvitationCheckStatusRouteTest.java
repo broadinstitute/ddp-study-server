@@ -69,7 +69,7 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
     public static void setupData() {
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
-            testData.getTestingStudy().setRecaptchaSiteKey("XXXXX");
+            testData.setTestingStudy(testData.getTestingStudy().toBuilder().recaptchaSiteKey("XXXXX").build());
         });
     }
 
@@ -155,12 +155,12 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
             assertEquals("study invite error", actual.getMessage());
 
             var now = Instant.now();
-            var voided = fakeInvitation(now, now, null, null);
+            var voided = fakeInvitation(now, now, null);
             doReturn(Optional.of(voided)).when(mockInviteDao).findByInvitationGuid(anyLong(), any());
             actual = route.checkStatus(mockHandle, new DDPAuth(), "study", "", "en", payload);
             assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
 
-            var accepted = fakeInvitation(now, null, null, now);
+            var accepted = fakeInvitation(now, null, now);
             doReturn(Optional.of(accepted)).when(mockInviteDao).findByInvitationGuid(anyLong(), any());
             actual = route.checkStatus(mockHandle, new DDPAuth(), "study", "", "en", payload);
             assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
@@ -321,9 +321,9 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
         }
     }
 
-    private InvitationDto fakeInvitation(Instant created, Instant voided, Instant verified, Instant accepted) {
+    private InvitationDto fakeInvitation(Instant created, Instant voided, Instant accepted) {
         Long userId = accepted == null ? null : testData.getUserId();
-        return new InvitationDto(1L, "guid", InvitationType.RECRUITMENT, created, voided, verified, accepted,
+        return new InvitationDto(1L, "guid", InvitationType.RECRUITMENT, created, voided, null, accepted,
                 testData.getStudyId(), userId, null, null);
     }
 }
