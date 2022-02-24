@@ -3,21 +3,21 @@ package org.broadinstitute.ddp.studybuilder.task;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.stream.Collectors;
 
+import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.broadinstitute.ddp.db.dao.ActivityDao;
-import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
-import org.broadinstitute.ddp.db.dao.JdbiBlockContent;
-import org.broadinstitute.ddp.db.dao.JdbiRevision;
-import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
-import org.broadinstitute.ddp.db.dao.PdfDao;
-import org.broadinstitute.ddp.db.dao.TemplateDao;
-import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.cache.LanguageStore;
+import org.broadinstitute.ddp.db.dao.*;
+import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.BlockContentDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
@@ -26,14 +26,17 @@ import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
 import org.broadinstitute.ddp.model.pdf.PdfVersion;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
-import org.broadinstitute.ddp.studybuilder.PdfBuilder;
+import org.broadinstitute.ddp.util.ConfigUtil;
+import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 public class OsteoConsentVersion2 implements CustomTask {
 
@@ -46,6 +49,8 @@ public class OsteoConsentVersion2 implements CustomTask {
     private Config dataCfg;
     private Instant timestamp;
     private String versionTag;
+    private Gson gson;
+
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
@@ -63,30 +68,77 @@ public class OsteoConsentVersion2 implements CustomTask {
         versionTag = dataCfg.getString("versionTag");
         timestamp = Instant.parse(dataCfg.getString("timestamp"));
         this.cfgPath = cfgPath;
+        gson =  GsonUtil.standardGson();;
     }
 
     @Override
     public void run(Handle handle) {
+        LanguageStore.init(handle);
         User adminUser = handle.attach(UserDao.class).findUserByGuid(cfg.getString("adminUser.guid")).get();
-        // todo: we should change jdbi umbrella usage
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid"));
-        PdfBuilder builder = new PdfBuilder(cfgPath.getParent(), cfg, studyDto, adminUser.getId());
+        var activityDao = handle.attach(ActivityDao.class);
+        String activityCode = dataCfg.getString("activityCode");
+        String studyGuid = studyDto.getGuid();
+        ActivityDto activityDto = handle.attach(JdbiActivity.class)
+                .findActivityByStudyGuidAndCode(studyGuid, activityCode)
+                .orElseThrow(() -> new DDPException(
+                        "Could not find activity for activity code " + activityCode + " and study id " + studyGuid));
+        long activityId = activityDto.getActivityId();
 
-        String activityCode = dataCfg.getString("activityCode.consent-assent");
-        LOG.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
-        revisionConsent("assent-parent-question", handle, adminUser.getId(), studyDto, activityCode, versionTag, timestamp.toEpochMilli());
+        String reason = String.format(
+                "Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
+                studyGuid, activityCode, versionTag);
+        RevisionMetadata meta = new RevisionMetadata(timestamp.toEpochMilli(), adminUser.getId(), reason);
+//        JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
+        //change version
+        ActivityVersionDto activityVersionDto = activityDao.changeVersion(activityId, versionTag, meta);
 
-        LOG.info("Adding new pdf version for tissue consent");
-        builder.insertPdfConfig(handle, dataCfg.getConfig("tissueconsentPdfV2"));
-        addNewConsentDataSourceToReleasePdf(handle, studyDto.getId(), dataCfg.getString("tissuereleasePdfName"), activityCode, versionTag);
+        FormActivityDef currentDef = (FormActivityDef) handle.attach(
+                ActivityDao.class).findDefByDtoAndVersion(activityDto, activityVersionDto);
 
-        activityCode = dataCfg.getString("activityCode.blood");
-        LOG.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
-        revisionConsent("blood", handle, adminUser.getId(), studyDto, activityCode, versionTag, timestamp.toEpochMilli());
+        var assentSection = currentDef.getAllSections().stream()
+                .peek(System.out::println)
+                .filter(e-> {
+                    if (e.getNameTemplate() != null){
+                        if (e.getNameTemplate().getTemplateText() != null) {
+                            return e.getNameTemplate().getTemplateText().contains("Sign Assent");
+                        }
+                    }
+                    return false;
+                })
+                .findFirst();
+        System.out.println(assentSection.get());
+        System.out.println(assentSection.get().getSectionCode());
+//        User adminUser = handle.attach(UserDao.class).findUserByGuid(cfg.getString("adminUser.guid")).get();
+//        // todo: we should change jdbi umbrella usage
+//        StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid"));
+//        PdfBuilder builder = new PdfBuilder(cfgPath.getParent(), cfg, studyDto, adminUser.getId());
+//
+//        String activityCode = dataCfg.getString("activityCode.consent-assent");
+//        LOG.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
+//        revisionConsent("assent-parent-question", handle, adminUser.getId(), studyDto, activityCode, versionTag, timestamp.toEpochMilli());
+//
+//        LOG.info("Adding new pdf version for tissue consent");
+//        builder.insertPdfConfig(handle, dataCfg.getConfig("tissueconsentPdfV2"));
+//        addNewConsentDataSourceToReleasePdf(handle, studyDto.getId(), dataCfg.getString("tissuereleasePdfName"), activityCode, versionTag);
+//
+//        activityCode = dataCfg.getString("activityCode.blood");
+//        LOG.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
+//        revisionConsent("blood", handle, adminUser.getId(), studyDto, activityCode, versionTag, timestamp.toEpochMilli());
+//
+//        LOG.info("Adding new pdf version for blood consent");
+//        builder.insertPdfConfig(handle, dataCfg.getConfig("bloodconsentPdfV2"));
+//        addNewConsentDataSourceToReleasePdf(handle, studyDto.getId(), dataCfg.getString("bloodreleasePdfName"), activityCode, versionTag);
+        System.out.println(dataCfg);
+        System.out.println(dataCfg.getConfig("block-element"));
+        SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
+        ContentBlockDef raceDef = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("block-element")), ContentBlockDef.class);
+        System.out.println("form block def is: " + raceDef.getBodyTemplate().getTemplateText());
+        long newV2RevId = activityVersionDto.getRevId();
+        sectionBlockDao.insertBlockForSection(activityId, assentSection.get().getSectionId(),
+                 1, raceDef, newV2RevId);
 
-        LOG.info("Adding new pdf version for blood consent");
-        builder.insertPdfConfig(handle, dataCfg.getConfig("bloodconsentPdfV2"));
-        addNewConsentDataSourceToReleasePdf(handle, studyDto.getId(), dataCfg.getString("bloodreleasePdfName"), activityCode, versionTag);
+
     }
 
     private void revisionConsent(String key, Handle handle, long adminUserId, StudyDto studyDto,
@@ -188,6 +240,12 @@ public class OsteoConsentVersion2 implements CustomTask {
                 + "                        where fafs.form_activity_id = :activityId)")
         @RegisterConstructorMapper(BlockContentDto.class)
         BlockContentDto findContentBlockByBodyText(@Bind("activityId") long activityId, @Bind("text") String bodyTemplateText);
+
+        @SqlQuery("select block_id from block__question where question_id = :questionId")
+        int findQuestionBlockId(@Bind("questionId") long questionId);
+
+        @SqlUpdate("update form_section__block set revision_id = :revisionId where form_section__block_id = :formSectionBlockId")
+        int updateFormSectionBlockRevision(@Bind("formSectionBlockId") long formSectionBlockId, @Bind("revisionId") long revisionId);
     }
 }
 
