@@ -79,7 +79,6 @@ import org.broadinstitute.dsm.route.DrugRoute;
 import org.broadinstitute.dsm.route.EditParticipantMessageReceiverRoute;
 import org.broadinstitute.dsm.route.EditParticipantPublisherRoute;
 import org.broadinstitute.dsm.route.EventTypeRoute;
-import org.broadinstitute.dsm.route.FieldSettingsRoute;
 import org.broadinstitute.dsm.route.FilterRoute;
 import org.broadinstitute.dsm.route.InstitutionRoute;
 import org.broadinstitute.dsm.route.KitAuthorizationRoute;
@@ -108,6 +107,8 @@ import org.broadinstitute.dsm.route.ViewFilterRoute;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
+import org.broadinstitute.dsm.route.settings.GetFieldSettingsRoute;
+import org.broadinstitute.dsm.route.settings.PatchFieldSettingsRoute;
 import org.broadinstitute.dsm.security.JWTConverter;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
@@ -473,8 +474,8 @@ public class DSMServer {
         TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, maxConnections, dbUrl));
 
         logger.info("Running DB update...");
-        LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.DSM);
-        LiquibaseUtil.releaseResources();
+        //        LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.DSM);
+        //        LiquibaseUtil.releaseResources();
 
         logger.info("DB setup complete.");
     }
@@ -504,7 +505,7 @@ public class DSMServer {
         EventUtil eventUtil = new EventUtil();
         NotificationUtil notificationUtil = new NotificationUtil(cfg);
 
-        setupPubSub(cfg, notificationUtil);
+        //        setupPubSub(cfg, notificationUtil);
 
         get(API_ROOT + RoutePath.BSP_KIT_QUERY_PATH, new BSPKitRoute(notificationUtil), new JsonTransformer());
         get(API_ROOT + RoutePath.BSP_KIT_REGISTERED, new BSPKitRegisteredRoute(), new JsonTransformer());
@@ -761,9 +762,8 @@ public class DSMServer {
 
         get(UI_ROOT + RoutePath.LOOKUP, new LookupRoute(), new JsonTransformer());
 
-        FieldSettingsRoute fieldSettingsRoute = new FieldSettingsRoute();
-        get(UI_ROOT + RoutePath.FIELD_SETTINGS_ROUTE, fieldSettingsRoute, new JsonTransformer());
-        patch(UI_ROOT + RoutePath.FIELD_SETTINGS_ROUTE, fieldSettingsRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.FIELD_SETTINGS_ROUTE, new GetFieldSettingsRoute(), new JsonTransformer());
+        patch(UI_ROOT + RoutePath.FIELD_SETTINGS_ROUTE, new PatchFieldSettingsRoute(), new JsonTransformer());
 
         get(UI_ROOT + RoutePath.DISPLAY_SETTINGS_ROUTE, new DisplaySettingsRoute(patchUtil), new JsonTransformer());
     }

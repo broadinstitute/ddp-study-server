@@ -5,6 +5,7 @@ import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,6 +21,7 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,8 +33,7 @@ import org.slf4j.LoggerFactory;
 public class FieldSettings {
     public static final String GET_FIELD_SETTINGS = "SELECT setting.field_settings_id, setting.column_name, setting.max_length, "
             + "setting.column_display, setting.field_type, setting.display_type, setting.possible_values, setting.order_number, actions, "
-            + "readonly "
-            + "FROM field_settings setting, ddp_instance realm WHERE "
+            + "readonly " + "FROM field_settings setting, ddp_instance realm WHERE "
             + "realm.ddp_instance_id = setting.ddp_instance_id AND NOT (setting.deleted <=>1) AND realm.instance_name=? "
             + "ORDER BY order_number asc";
     public static final String UPDATE_FIELD_SETTINGS_TABLE = "UPDATE field_settings SET column_name = ?, "
@@ -44,8 +45,9 @@ public class FieldSettings {
             + "WHERE instance_name = ?), max_length = ?, readonly = ?, changed_by = ?, last_changed = ?";
 
     private static final Logger logger = LoggerFactory.getLogger(FieldSettings.class);
-    private final String fieldSettingId; //Value of field_settings_id for the setting
-    private final String columnName; //Value of column_name for the setting
+
+    private String fieldSettingId; //Value of field_settings_id for the setting
+    private String columnName; //Value of column_name for the setting
     private final String columnDisplay; //Value of column_display for the setting
     private final String displayType; //Value of display_type for the setting
     private final List<Value> possibleValues; //Value of possible_values for the setting
@@ -55,6 +57,8 @@ public class FieldSettings {
     private final boolean readonly; //Value of readonly for the setting
     private final Integer maxLength; //Value of max_length for string-like field settings
     private boolean deleted; //Value of deleted for the setting
+    private boolean addedNew;
+    private boolean changed;
 
     public FieldSettings(String fieldSettingId, String columnName, String columnDisplay, String fieldType, String displayType,
                          List<Value> possibleValues, int orderNumber, List<Value> actions, boolean readonly, Integer maxLength) {
@@ -139,10 +143,12 @@ public class FieldSettings {
             for (FieldSettings fieldSetting : settingsOfType) {
                 String settingId = fieldSetting.getFieldSettingId();
                 try {
-                    if (StringUtils.isNotBlank(settingId)) {
-                        updateFieldSetting(settingId, fieldSetting, userId);
-                    } else {
-                        addFieldSetting(realm, fieldSetting, userId);
+                    if (StringUtils.isNotBlank(fieldSetting.columnDisplay)) {
+                        if (StringUtils.isNotBlank(settingId) && !fieldSetting.isAddedNew() && fieldSetting.isChanged()) {
+                            updateFieldSetting(settingId, fieldSetting, userId);
+                        } else {
+                            addFieldSetting(realm, fieldSetting, userId, getUniqueFieldName(settingsOfType, fieldSetting.columnDisplay));
+                        }
                     }
                 } catch (RuntimeException e) {
                     if (totalSettings == 1) {
@@ -213,13 +219,14 @@ public class FieldSettings {
         }
     }
 
-    private static void addFieldSetting(@NonNull String realm, @NonNull FieldSettings fieldSetting, @NonNull String userId) {
+    private static void addFieldSetting(@NonNull String realm, @NonNull FieldSettings fieldSetting, @NonNull String userId,
+                                        String fieldName) {
         Gson gson = new Gson();
         String possibleValues = gson.toJson(fieldSetting.getPossibleValues(), ArrayList.class);
         SimpleResult results = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(INSERT_FIELD_SETTINGS)) {
-                stmt.setString(1, fieldSetting.getColumnName());
+            try (PreparedStatement stmt = conn.prepareStatement(INSERT_FIELD_SETTINGS, Statement.RETURN_GENERATED_KEYS)) {
+                stmt.setString(1, fieldName);
                 stmt.setString(2, fieldSetting.getColumnDisplay());
                 stmt.setString(3, fieldSetting.getFieldType());
                 stmt.setString(4, fieldSetting.getDisplayType());
@@ -235,6 +242,16 @@ public class FieldSettings {
                 stmt.setLong(10, System.currentTimeMillis());
                 int result = stmt.executeUpdate();
                 if (result == 1) {
+                    try (ResultSet rs = stmt.getGeneratedKeys()) {
+                        if (rs.next()) {
+                            String fieldSettingsId = rs.getString(1);
+                            fieldSetting.setFieldSettingId(fieldSettingsId);
+                            fieldSetting.setColumnName(fieldName);
+                            dbVals.resultValue = fieldSetting;
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException("Error adding new medical record abstraction value ", e);
+                    }
                     logger.info("Added new setting for " + realm);
                 } else {
                     throw new RuntimeException("Error adding new field setting for " + realm + ": it was updating " + result + " rows");
@@ -257,6 +274,28 @@ public class FieldSettings {
             values = Arrays.asList(new Gson().fromJson(json, Value[].class));
         }
         return values;
+    }
+
+    private static String getUniqueFieldName(Collection<FieldSettings> settingsOfType, String columnDisplay) {
+        String fieldName = SystemUtil.stringToPascalSnakeCase(columnDisplay);
+        String tmp = "";
+        int counter = 0;
+        boolean foundUniqueName = false;
+        while (!foundUniqueName) {
+            if (counter != 0) {
+                tmp = fieldName.concat("_").concat(String.valueOf(counter));
+            } else {
+                tmp = fieldName;
+            }
+            foundUniqueName = !isPresent(settingsOfType, tmp);
+            counter++;
+        }
+        return tmp;
+    }
+
+    private static boolean isPresent(Collection<FieldSettings> settingsOfType, String tmp) {
+        return settingsOfType.stream().filter(setting -> StringUtils.isNotBlank(setting.columnDisplay) && setting.columnDisplay.equals(tmp))
+                .findFirst().isPresent();
     }
 
 }

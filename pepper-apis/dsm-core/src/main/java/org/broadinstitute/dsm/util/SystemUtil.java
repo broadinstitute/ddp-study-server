@@ -239,4 +239,8 @@ public class SystemUtil {
         });
         return json1;
     }
+
+    public static String stringToPascalSnakeCase(String str) {
+        return str.toLowerCase().replaceAll(" ","_");
+    }
 }
