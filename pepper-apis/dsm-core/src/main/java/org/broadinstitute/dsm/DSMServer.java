@@ -427,8 +427,9 @@ public class DSMServer {
         TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, maxConnections, dbUrl));
 
         logger.info("Running DB update...");
-        LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.DSM);
-        LiquibaseUtil.releaseResources();
+//        TODO fix and uncomment before merge
+//        LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.DSM);
+//        LiquibaseUtil.releaseResources();
 
         logger.info("DB setup complete.");
     }

@@ -6,7 +6,6 @@ import lombok.NonNull;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.fluent.Executor;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.util.EntityUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -299,19 +298,14 @@ public class DDPRequestUtil {
         return responseCode;
     }
 
-    public static <T> T  postRequestWithResponse(Class<T> responseClass, String sendRequest, Object objectToPost, String name, Map<String, String> header) {
+    public static <T> T postRequestWithResponse(Class<T> responseClass, String sendRequest, Object objectToPost, String name, Map<String, String> header) {
         logger.info("Requesting data from " + name + " w/ " + sendRequest);
         org.apache.http.client.fluent.Request request = SecurityUtil.createPostRequestWithHeaderNoToken(sendRequest, header, objectToPost);
 
         T objects = null;
         try {
-            if (blindTrustEverythingExecutor != null) {
-                objects = blindTrustEverythingExecutor.execute(request).handleResponse(res -> getResponse(res, responseClass, sendRequest));
-            }
-            else {
-                Response response = request.execute();
-                objects = response.handleResponse(res -> getResponse(res, responseClass, sendRequest));
-            }
+            Response response = request.execute();
+            objects = response.handleResponse(res -> getResponse(res, responseClass, sendRequest));
         }
         catch (IOException e) {
             e.printStackTrace();

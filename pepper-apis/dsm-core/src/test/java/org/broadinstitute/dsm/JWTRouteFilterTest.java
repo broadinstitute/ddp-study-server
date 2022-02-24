@@ -86,7 +86,7 @@ public class JWTRouteFilterTest {
         EasyMock.expect(req.headers(AUTHORIZATION)).andReturn(token).once();
 
         EasyMock.replay(req);
-        Assert.assertFalse("Two tokens signed with different secrets should fail", new JWTRouteFilter("def", null).isAccessAllowed(req));
+        Assert.assertFalse("Two tokens signed with different secrets should fail", new JWTRouteFilter("def", null, auth0Domain).isAccessAllowed(req));
         EasyMock.verify(req);
     }
 
