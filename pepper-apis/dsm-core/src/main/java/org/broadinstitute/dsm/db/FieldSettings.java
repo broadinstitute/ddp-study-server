@@ -146,7 +146,7 @@ public class FieldSettings {
                     if (StringUtils.isNotBlank(fieldSetting.columnDisplay)) {
                         if (StringUtils.isNotBlank(settingId) && !fieldSetting.isAddedNew() && fieldSetting.isChanged()) {
                             updateFieldSetting(settingId, fieldSetting, userId);
-                        } else {
+                        } else if (fieldSetting.isAddedNew()) {
                             addFieldSetting(realm, fieldSetting, userId, getUniqueFieldName(settingsOfType, fieldSetting.columnDisplay));
                         }
                     }
@@ -294,7 +294,7 @@ public class FieldSettings {
     }
 
     private static boolean isPresent(Collection<FieldSettings> settingsOfType, String tmp) {
-        return settingsOfType.stream().filter(setting -> StringUtils.isNotBlank(setting.columnDisplay) && setting.columnDisplay.equals(tmp))
+        return settingsOfType.stream().filter(setting -> StringUtils.isNotBlank(setting.columnName) && setting.columnName.equals(tmp))
                 .findFirst().isPresent();
     }
 
