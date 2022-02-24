@@ -651,7 +651,7 @@ public class DSMServer {
         logger.info("Pubsub setup complete");
     }
 
-    private void setupShippingRoutes(@NonNull NotificationUtil notificationUtil, @NonNull Auth0Util auth0Util, @NonNull UserUtil userUtil) {
+    private void setupShippingRoutes(@NonNull NotificationUtil notificationUtil, @NonNull Auth0Util auth0Util, @NonNull UserUtil userUtil, @NonNull String auth0Domain) {
         get(UI_ROOT + RoutePath.KIT_REQUESTS_PATH, new KitRequestRoute(), new JsonTransformer());
 
         KitStatusChangeRoute kitStatusChangeRoute = new KitStatusChangeRoute(notificationUtil);
