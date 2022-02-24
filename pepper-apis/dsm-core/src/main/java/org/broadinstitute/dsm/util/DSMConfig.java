@@ -22,4 +22,16 @@ public class DSMConfig {
 
         return config.getString(queryName);
     }
+
+    public static boolean hasConfigPath(@NonNull String configPath) {
+        if (configPath == null) {
+            throw new NullPointerException("configPath");
+        } else {
+            if (config == null) {
+                throw new RuntimeException("Conf has not been configured");
+            } else {
+                return config.hasPath(configPath);
+            }
+        }
+    }
 }
