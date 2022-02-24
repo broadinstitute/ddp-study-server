@@ -3,8 +3,17 @@ package org.broadinstitute.ddp.studybuilder.task;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.broadinstitute.ddp.db.dao.*;
-import org.broadinstitute.ddp.db.dto.*;
+
+import org.broadinstitute.ddp.db.dao.ActivityDao;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
+import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.SectionBlockDao;
+import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.db.dto.BlockContentDto;
+import org.broadinstitute.ddp.db.dto.RevisionDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
@@ -27,7 +36,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 
-public class CircadiaPostCollectionV2 implements CustomTask{
+public class CircadiaPostCollectionV2 implements CustomTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(CircadiaPostCollectionV2.class);
     private static final String DATA_FILE = "patches/post-collection-v2.conf";

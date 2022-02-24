@@ -9,10 +9,26 @@ import java.util.List;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.broadinstitute.ddp.db.dao.*;
-import org.broadinstitute.ddp.db.dto.*;
+
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
+import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
-import org.broadinstitute.ddp.model.activity.definition.*;
+import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
+import org.broadinstitute.ddp.db.dao.JdbiBlockContent;
+import org.broadinstitute.ddp.db.dao.JdbiRevision;
+import org.broadinstitute.ddp.db.dao.TemplateDao;
+import org.broadinstitute.ddp.db.dto.BlockContentDto;
+import org.broadinstitute.ddp.db.dao.ActivityDao;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.SectionBlockDao;
+import org.broadinstitute.ddp.db.dto.RevisionDto;
+import org.broadinstitute.ddp.db.dao.JdbiVariableSubstitution;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
@@ -127,7 +143,8 @@ public class CircadiaConsentV2 implements CustomTask {
     }
 
 
-    private void revisionVariableTranslation(String varName, String newTemplateText, Handle handle, RevisionMetadata meta, ActivityVersionDto version2) {
+    private void revisionVariableTranslation(String varName, String newTemplateText, Handle handle,
+                                             RevisionMetadata meta, ActivityVersionDto version2) {
         long tmplVarId = handle.attach(SqlHelper.class).findTemplateVariableIdByVariableName(varName);
         JdbiVariableSubstitution jdbiVarSubst = handle.attach(JdbiVariableSubstitution.class);
         List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
