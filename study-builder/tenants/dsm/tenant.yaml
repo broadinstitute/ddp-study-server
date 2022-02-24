@@ -13,9 +13,6 @@ rulesConfigs:
     value: ##SERVER_BASE_URL##
 
 pages:
-  - name: login
-    enabled: true
-    html: ./pages/login.html
   - name: password_reset
     enabled: true
     html: ./pages/password_reset.html
