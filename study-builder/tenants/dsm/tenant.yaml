@@ -28,12 +28,6 @@ emailProvider:
     api_key: ##SENDGRID_TOKEN##
 
 emailTemplates:
-  - template: welcome_email
-    enabled: true
-    syntax: liquid
-    from: '##EMAIL_FROM_NAME##>'
-    subject: Account Created
-    body: emails/welcome_email.html
 
 clients:
   - name: dsm-angular-client
