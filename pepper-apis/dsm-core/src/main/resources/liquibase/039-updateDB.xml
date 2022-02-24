@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="simone" id="optionalFileInfo">
+        <addColumn tableName="medical_record_abstraction_field">
+            <column name="file_info" type="TINYINT(1)" afterColumn="help_text">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="simone" id="fieldSettingOrder">
+        <addColumn tableName="field_settings">
+            <column name="order_number" type="INT(11)" afterColumn="possible_values">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="simone" id="fieldSettingAction">
+        <addColumn tableName="field_settings">
+            <column name="actions" type="VARCHAR(500)" afterColumn="possible_values">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="simone" id="fieldSettingSize">
+        <modifyDataType columnName="column_name" newDataType="VARCHAR(100)" tableName="field_settings"/>
+        <modifyDataType columnName="column_display" newDataType="VARCHAR(500)" tableName="field_settings"/>
+    </changeSet>
+
+    <changeSet id="dynamicFormsData" author="simone">
+        <createTable tableName="ddp_participant_data">
+            <column autoIncrement="true" name="participant_data_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="ddp_participant_id" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="field_type_id" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="data" type="VARCHAR(10000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_changed" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="changed_by" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="simone" id="instanceId">
+        <addColumn tableName="ddp_participant_data">
+            <column name="ddp_instance_id" type="INT(11)" afterColumn="ddp_participant_id">
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

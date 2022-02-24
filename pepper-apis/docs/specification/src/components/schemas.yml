@@ -11,6 +11,21 @@ ActivityInstanceStatusType:
     - COMPLETE
     - CREATED
     - IN_PROGRESS
+DecimalNumber:
+  type: object
+  description: |
+    A representation of a BigDecimal number. The represented number is equal to `value * 10 ^ scale`.
+  required:
+    - scale
+    - value
+  properties:
+    scale:
+      type: integer
+      format: int64
+    value:
+      description: the unscaled value 
+      type: integer
+      format: int64
 FormType:
   title: FormType
   type: string
@@ -74,12 +89,6 @@ ListStyle:
     - BULLET
     - UPPER_ALPHA
     - NONE
-NumericType:
-  title: NumericType
-  type: string
-  enum:
-    - INTEGER
-  description: describes what type of numeric value it is
 Presentation:
   title: Presentation
   type: string
@@ -105,6 +114,7 @@ ValidationType:
     - REQUIRED
     - UNIQUE
     - YEAR_REQUIRED
+    - UNIQUE_VALUE
 Activity:
   type: object
   required:
@@ -308,35 +318,23 @@ Activity.Summary:
 ###
 Answer:
   type: object
-  discriminator:
-    propertyName: type
-    mapping:
-      ACTIVITY_INSTANCE_SELECT: '#/Answer.ActivityInstance'
-      AGREEMENT: '#/Answer.Boolean'
-      BOOLEAN: '#/Answer.Boolean'
-      COMPOSITE: '#/Answer.Composite'
-      DATE: '#/Answer.Date'
-      FILE: '#/Answer.File'
-      NUMERIC: '#/Answer.Numeric'
-      PICKLIST: '#/Answer.Picklist'
-      MATRIX: '#/Answer.Matrix'
-      TEXT: '#/Answer.String'
   required:
     - answerGuid
-    - type
   properties:
     answerGuid:
       type: string
       format: guid
-    type:
-      type: string
 Answer.String:
   allOf:
     - $ref: '#/Answer'
     - type: object
       required:
+        - type
         - value
       properties:
+        type:
+          type: string
+          default: STRING
         value:
           type: string
           nullable: true
@@ -345,8 +343,12 @@ Answer.Date:
     - $ref: '#/Answer'
     - type: object
       required:
+        - type
         - value
       properties:
+        type:
+          type: string
+          default: DATE
         value:
           $ref: '#/DateValue'
 Answer.Composite:
@@ -354,8 +356,12 @@ Answer.Composite:
     - $ref: '#/Answer'
     - type: object
       required:
+        - type
         - value
       properties:
+        type:
+          type: string
+          default: COMPOSITE
         value:
           type: array
           items:
@@ -370,8 +376,12 @@ Answer.Boolean:
     - $ref: '#/Answer'
     - type: object
       required:
+        - type
         - value
       properties:
+        type:
+          type: string
+          default: BOOLEAN
         value:
           type: boolean
 Answer.File:
@@ -380,42 +390,47 @@ Answer.File:
     - type: object
       required:
         - value
+        - type
       properties:
+        type:
+          type: string
+          default: FILE
         value:
           $ref: '#/FileInfo'
-Answer.Numeric:
+Answer.Integer:
   allOf:
     - $ref: '#/Answer'
     - type: object
-      discriminator:
-        propertyName: numericType
-        mapping:
-          INTEGER: '#/Answer.Numeric.Integer'
       required:
-        - numericType
+        - type
       properties:
-        numericType:
+        type:
           type: string
-Answer.Numeric.Integer:
-  allOf:
-    - $ref: '#/Answer.Numeric'
-    - type: object
-      required:
-        - value
-      properties:
-        numericType:
-          type: string
-          default: INTEGER
+          default: NUMERIC
         value:
           type: integer
           nullable: true
+Answer.Decimal:
+  allOf:
+    - $ref: '#/Answer'
+    - type: object
+      required:
+        - type
+        - value
+      properties:
+        value:
+          $ref: '#/DecimalNumber'
 Answer.Picklist:
   allOf:
     - $ref: '#/Answer'
     - type: object
       required:
+        - type
         - value
       properties:
+        type:
+          type: string
+          default: PICKLIST
         value:
           type: array
           items:
@@ -425,8 +440,12 @@ Answer.ActivityInstance:
     - $ref: '#/Answer'
     - type: object
       required:
+        - type
         - value
       properties:
+        type:
+          type: string
+          default: ACTIVITY_INSTANCE_SELECT
         value:
           type: string
           format: guid
@@ -512,7 +531,8 @@ AnswerSubmission:
       COMPOSITE: '#/AnswerSubmission.Composite'
       DATE: '#/AnswerSubmission.Date'
       FILE: '#/AnswerSubmission.File'
-      NUMERIC: '#/AnswerSubmission.Numeric.Integer'
+      NUMERIC: '#/AnswerSubmission.Integer'
+      DECIMAL: '#/AnswerSubmission.Decimal'
       PICKLIST: '#/AnswerSubmission.Picklist'
       MATRIX: '#/AnswerSubmission.Matrix'
       TEXT: '#/AnswerSubmission.String'
@@ -577,7 +597,7 @@ AnswerSubmission.File:
             File upload guid provided by server when upload URL was requested. If this
             answer is currently associated with a file upload, then submitting a `null`
             value will unassociate it and the uploaded file will subsequently get deleted.
-AnswerSubmission.Numeric.Integer:
+AnswerSubmission.Integer:
   allOf:
     - $ref: '#/AnswerSubmission'
     - type: object
@@ -587,6 +607,23 @@ AnswerSubmission.Numeric.Integer:
         value:
           type: integer
           nullable: true
+AnswerSubmission.Decimal:
+  allOf:
+    - $ref: '#/AnswerSubmission'
+    - type: object
+      required:
+        - value
+        - scale
+      properties:
+        value:
+          type: integer
+          format: int64
+          nullable: true
+        scale:
+          type: integer
+          description: the number of digits allowed to the right of the decimal point.
+          minimum: 0
+          default: 0
 AnswerSubmission.Picklist:
   allOf:
     - $ref: '#/AnswerSubmission'
@@ -1172,7 +1209,12 @@ Error.ActivityAnswersPatchInvalid:
               rules:
                 type: array
                 items:
-                  $ref: '#/ValidationType'
+                  type: object
+                  properties:
+                    ruleType:
+                      $ref: '#/ValidationType'
+                    message:
+                      type: string
 Error.ActivityAnswersPatchNotFound:
   allOf:
     - $ref: '#/Error'
@@ -1488,7 +1530,8 @@ Question:
       COMPOSITE: '#/Question.Composite'
       DATE: '#/Question.Date'
       FILE: '#/Question.File'
-      NUMERIC: '#/Question.Numeric'
+      NUMERIC: '#/Question.Integer'
+      DECIMAL: '#/Question.Decimal'
       PICKLIST: '#/Question.Picklist'
       MATRIX: '#/Question.Matrix'
       TEXT: '#/Question.Text'
@@ -1717,28 +1760,37 @@ Question.File:
           type: array
           items:
             $ref: '#/Answer.File'
-Question.Numeric:
+Question.Integer:
   allOf:
-  - $ref: '#/Question'
-  - type: object
-    required:
-      - answers
-      - numericType
-    properties:
-      questionType:
-        type: string
-        default: NUMERIC
-        enum:
-          - NUMERIC
-      placeholderText:
-        type: string
-        description: if present, this text string can be used as a placeholder hint
-      numericType:
-        $ref: '#/NumericType'
-      answers:
-        type: array
-        items:
-          $ref: '#/Answer.Numeric.Integer'
+    - $ref: '#/Question'
+    - type: object
+      required:
+        - answers
+      properties:
+        placeholderText:
+          type: string
+          nullable: true
+          description: if present, this text string can be used as a placeholder hint
+        answers:
+          type: array
+          items:
+            $ref: '#/Answer.Integer'
+Question.Decimal:
+  allOf:
+    - $ref: '#/Question'
+    - type: object
+      required:
+        - answers
+      properties:
+        scale:
+          type: integer
+          description: the number of digits allowed to the right of the decimal point.
+          minimum: 0
+          default: 0
+        answers:
+          type: array
+          items:
+            $ref: '#/Answer.Decimal'
 Question.Picklist:
   allOf:
   - $ref: '#/Question'
@@ -1766,6 +1818,7 @@ Question.Picklist:
           - DROPDOWN
           - CHECKBOX_LIST
           - AUTOCOMPLETE
+          - REMOTE_AUTOCOMPLETE
       groups:
         type: array
         description: A list of groups used in the `picklistOptions` values. If there are no options which explicity request grouping, this will be an empty array.
@@ -1956,6 +2009,7 @@ Validation:
       DATE_RANGE: '#/Validation.DateRange'
       DAY_REQUIRED: '#/Validation.DayRequired'
       INT_RANGE: '#/Validation.IntRange'
+      DECIMAL_RANGE: '#/Validation.DecimalRange'
       LENGTH: '#/Validation.Length'
       MONTH_REQUIRED: '#/Validation.MonthRequired'
       NUM_OPTIONS_SELECTED: '#/Validation.OptionsSelected'
@@ -1963,6 +2017,7 @@ Validation:
       REQUIRED: '#/Validation.Required'
       UNIQUE: '#/Validation.Unique'
       YEAR_REQUIRED: '#/Validation.YearRequired'
+      UNIQUE_VALUE: '#/Validation.UniqueValue'
   required:
     - rule
     - message
@@ -2139,6 +2194,26 @@ Validation.IntRange:
           type: integer
           nullable: true
           description: the maximum acceptable number, inclusive
+Validation.DecimalRange:
+  allOf:
+    - $ref: '#/Validation'
+    - type: object
+      properties:
+        rule:
+          type: string
+          default: DECIMAL_RANGE
+          enum:
+            - DECIMAL_RANGE
+        min:
+          allOf:
+            - $ref: '#/DecimalNumber'
+            - description: the minimum acceptable number, inclusive
+              nullable: true
+        max:
+          allOf:
+            - $ref: '#/DecimalNumber'
+            - description: the maximum acceptable number, inclusive
+              nullable: true
 Validation.Unique:
   allOf:
     - $ref: '#/Validation'
@@ -2149,6 +2224,17 @@ Validation.Unique:
           default: UNIQUE
           enum:
             - UNIQUE
+Validation.UniqueValue:
+  allOf:
+    - $ref: '#/Validation'
+    - type: object
+      description: check for uniqueness in same question answers among all participants of the study
+      properties:
+        rule:
+          type: string
+          default: UNIQUE_VALUE
+          enum:
+            - UNIQUE_VALUE
 AnnouncementModel:
   type: object
   required:

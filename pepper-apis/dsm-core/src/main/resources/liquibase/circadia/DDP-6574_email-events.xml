@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="simone" id="DDP-6574_dropNotNull">
+        <dropNotNullConstraint columnDataType="INT(11)"
+                               columnName="kit_type_id"
+                               tableName="event_type"/>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-6574_email-event">
+        <insert tableName="event_type">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='circadia')"></column>
+            <column name="event_name" value="CIRCADIA_SENT"/>
+            <column name="event_description" value="Kit sent"/>
+            <column name="event_type" value="SENT"/>
+        </insert>
+        <insert tableName="event_type">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='circadia')"></column>
+            <column name="event_name" value="CIRCADIA_RECEIVED"/>
+            <column name="event_description" value="Kit received"/>
+            <column name="event_type" value="RECEIVED"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

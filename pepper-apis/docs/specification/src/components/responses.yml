@@ -484,3 +484,17 @@ ActivityInstanceSelectAnswersResponse:
             type: array
             items:
               $ref: '../pepper.yml#/components/schemas/Suggestion.ActivityInstance'
+RemoteAutoCompleteOptionsResponse:
+  description: a list of pick list options for a given query string
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - results
+        properties:
+          results:
+            description: A list of of pick list options
+            type: array
+            items:
+              $ref: '../pepper.yml#/components/schemas/PicklistOption'
