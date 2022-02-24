@@ -134,6 +134,22 @@
   "v2_con_your_phone": "Please input your phone number here:",
   "v2_address_title": "Your Mailing Address",
 
+  "v2_pcq_confident_set_material_question": "What material, if any, did you use to block light from your windows during the DLMO Collections?",
+
+  "v2_pcq_confident_set_material_prompt": "What material, if any, did you use to block light from your windows during the DLMO Collections?",
+  "v2_pcq_confident_set_material_aluminum": "Aluminum Foil",
+  "v2_pcq_confident_set_material_garbage": "Black Garbage Bags",
+  "v2_pcq_confident_set_material_tape": "Tape",
+  "v2_pcq_confident_set_material_other": "Other",
+
+  "v2_pcq_confident_sleep_question": "How easy was it to remember to complete your daily sleep log?",
+  "v2_pcq_confident_sleep_not_easy": "Not at all easy",
+  "v2_pcq_confident_sleep_slightly_easy": "Slightly easy",
+  "v2_pcq_confident_sleep_moderately_easy": "Moderately easy",
+  "v2_pcq_confident_sleep_very_easy": "Very easy",
+  "v2_pcq_confident_sleep_extremely_easy": "Extremely easy",
+  "v2_pcq_confident_dlmo_collections_question": "I felt confident preparing my environment for the DLMO Collections.",
+
   "consent_what_will_happen_in_study_title": "What will happen if you take part in this research study?",
   "consent_what_will_happen_in_study_p1": "You must provide consent to participate in this study. If you do, you will receive: ",
   "consent_what_will_happen_in_study_p2_l1": "Access to an online site for sample collection scheduling",
