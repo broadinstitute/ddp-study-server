@@ -3,6 +3,7 @@ package org.broadinstitute.lddp.security;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.auth0.client.auth.AuthAPI;
 import com.auth0.client.mgmt.ManagementAPI;
@@ -19,6 +20,7 @@ import com.auth0.net.Request;
 import lombok.NonNull;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.security.JWTConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,8 +62,8 @@ public class Auth0Util {
         this.audience = audience;
     }
 
-    public Auth0UserInfo getAuth0UserInfo(@NonNull String idToken) {
-        Map<String, Claim> auth0Claims = verifyAndParseAuth0TokenClaims(idToken);
+    public Auth0UserInfo getAuth0UserInfo(@NonNull String idToken, String auth0Domain) {
+        Map<String, Claim> auth0Claims = verifyAndParseAuth0TokenClaims(idToken, auth0Domain);
         boolean isEmailVerified = false;
         Claim emailVerifiedClaim = auth0Claims.getOrDefault("email_verified", null);
         if (emailVerifiedClaim != null && !emailVerifiedClaim.isNull()) {
@@ -73,6 +75,11 @@ public class Auth0Util {
         verifyUserConnection(auth0Claims.get("sub").asString(), userInfo.getEmail());
 
         return userInfo;
+    }
+
+    public Optional<Claim> getClaimValue(@NonNull String idToken, @NonNull String claimKey, @NonNull String auth0Domain){
+        Map<String, Claim> auth0Claims = verifyAndParseAuth0TokenClaims(idToken, auth0Domain);
+        return Optional.ofNullable(auth0Claims.getOrDefault(claimKey, null));
     }
 
     private ManagementAPI configManagementApi() {
@@ -121,13 +128,11 @@ public class Auth0Util {
         }
     }
 
-    private Map<String, Claim> verifyAndParseAuth0TokenClaims(String auth0Token) {
+    private Map<String, Claim> verifyAndParseAuth0TokenClaims(String auth0Token, String auth0Domain) {
         Map<String, Claim> auth0Claims = new HashMap<>();
         try {
-            Algorithm algorithm = Algorithm.HMAC256(decodedSecret);
-            JWTVerifier verifier = JWT.require(algorithm).withIssuer(account).build(); //Reusable verifier instance
-            DecodedJWT jwt = verifier.verify(auth0Token);
-            auth0Claims = jwt.getClaims();
+            DecodedJWT validToken = JWTConverter.verifyDDPToken(auth0Token, auth0Domain);
+            auth0Claims = validToken.getClaims();
         } catch (Exception e) {
             throw new RuntimeException("Could not verify auth0 token.", e);
         }

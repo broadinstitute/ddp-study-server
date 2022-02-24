@@ -40,6 +40,10 @@ import org.broadinstitute.lddp.util.GoogleBucket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.*;
+
+import org.apache.http.client.fluent.Response;
+
 public class DDPRequestUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(DDPRequestUtil.class);
@@ -308,5 +312,20 @@ public class DDPRequestUtil {
 
         int responseCode = request.execute().handleResponse(res -> getResponseCode(res, sendRequest));
         return responseCode;
+    }
+
+    public static <T> T postRequestWithResponse(Class<T> responseClass, String sendRequest, Object objectToPost, String name, Map<String, String> header) {
+        logger.info("Requesting data from " + name + " w/ " + sendRequest);
+        org.apache.http.client.fluent.Request request = SecurityUtil.createPostRequestWithHeaderNoToken(sendRequest, header, objectToPost);
+
+        T objects = null;
+        try {
+            Response response = request.execute();
+            objects = response.handleResponse(res -> getResponse(res, responseClass, sendRequest));
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        return objects;
     }
 }

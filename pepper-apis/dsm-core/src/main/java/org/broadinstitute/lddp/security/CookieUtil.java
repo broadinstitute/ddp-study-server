@@ -36,9 +36,9 @@ public class CookieUtil {
         return new String(Base64.getEncoder().encode(hash));
     }
 
-    public boolean isCookieValid(String cookieValue, byte[] cookieSalt, String jwtToken, String tokenSecret)
+    public boolean isCookieValid(String cookieValue, byte[] cookieSalt, String jwtToken, String auth0Domain)
             throws NoSuchAlgorithmException, InvalidKeySpecException {
-        boolean isValidToken = SecurityHelper.validToken(tokenSecret, jwtToken);
+        boolean isValidToken = SecurityHelper.validTokenRSA256(jwtToken, auth0Domain);
         boolean doesCookieMatchToken = false;
 
         if (isValidToken) {

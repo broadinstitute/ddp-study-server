@@ -58,53 +58,7 @@ import org.broadinstitute.dsm.jobs.PubSubLookUp;
 import org.broadinstitute.dsm.log.SlackAppender;
 import org.broadinstitute.dsm.pubsub.DSMtasksSubscription;
 import org.broadinstitute.dsm.pubsub.PubSubResultMessageSubscription;
-import org.broadinstitute.dsm.route.AbstractionFormControlRoute;
-import org.broadinstitute.dsm.route.AbstractionRoute;
-import org.broadinstitute.dsm.route.AllowedRealmsRoute;
-import org.broadinstitute.dsm.route.AssignParticipantRoute;
-import org.broadinstitute.dsm.route.AssigneeRoute;
-import org.broadinstitute.dsm.route.AuthenticationRoute;
-import org.broadinstitute.dsm.route.BSPKitRegisteredRoute;
-import org.broadinstitute.dsm.route.BSPKitRoute;
-import org.broadinstitute.dsm.route.CancerRoute;
-import org.broadinstitute.dsm.route.CarrierServiceRoute;
-import org.broadinstitute.dsm.route.ClinicalKitsRoute;
-import org.broadinstitute.dsm.route.CreateBSPDummyKitRoute;
-import org.broadinstitute.dsm.route.CreateClinicalDummyKitRoute;
-import org.broadinstitute.dsm.route.DashboardRoute;
-import org.broadinstitute.dsm.route.DisplaySettingsRoute;
-import org.broadinstitute.dsm.route.DownloadPDFRoute;
-import org.broadinstitute.dsm.route.DrugListRoute;
-import org.broadinstitute.dsm.route.DrugRoute;
-import org.broadinstitute.dsm.route.EditParticipantMessageReceiverRoute;
-import org.broadinstitute.dsm.route.EditParticipantPublisherRoute;
-import org.broadinstitute.dsm.route.EventTypeRoute;
-import org.broadinstitute.dsm.route.FieldSettingsRoute;
-import org.broadinstitute.dsm.route.FilterRoute;
-import org.broadinstitute.dsm.route.InstitutionRoute;
-import org.broadinstitute.dsm.route.KitAuthorizationRoute;
-import org.broadinstitute.dsm.route.KitDeactivationRoute;
-import org.broadinstitute.dsm.route.KitDiscardRoute;
-import org.broadinstitute.dsm.route.KitExpressRoute;
-import org.broadinstitute.dsm.route.KitLabelRoute;
-import org.broadinstitute.dsm.route.KitRequestRoute;
-import org.broadinstitute.dsm.route.KitSearchRoute;
-import org.broadinstitute.dsm.route.KitStatusChangeRoute;
-import org.broadinstitute.dsm.route.KitTypeRoute;
-import org.broadinstitute.dsm.route.KitUploadRoute;
-import org.broadinstitute.dsm.route.LabelSettingRoute;
-import org.broadinstitute.dsm.route.LoggingFilter;
-import org.broadinstitute.dsm.route.LookupRoute;
-import org.broadinstitute.dsm.route.MailingListRoute;
-import org.broadinstitute.dsm.route.MedicalRecordLogRoute;
-import org.broadinstitute.dsm.route.NDIRoute;
-import org.broadinstitute.dsm.route.ParticipantEventRoute;
-import org.broadinstitute.dsm.route.ParticipantExitRoute;
-import org.broadinstitute.dsm.route.ParticipantStatusRoute;
-import org.broadinstitute.dsm.route.PatchRoute;
-import org.broadinstitute.dsm.route.TriggerSurveyRoute;
-import org.broadinstitute.dsm.route.UserSettingRoute;
-import org.broadinstitute.dsm.route.ViewFilterRoute;
+import org.broadinstitute.dsm.route.*;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
@@ -473,8 +427,9 @@ public class DSMServer {
         TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, maxConnections, dbUrl));
 
         logger.info("Running DB update...");
-        LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.DSM);
-        LiquibaseUtil.releaseResources();
+        // TODO Pegah fix and uncomment before merge (throws error so should eb commented now)
+//        LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.DSM);
+//        LiquibaseUtil.releaseResources();
 
         logger.info("DB setup complete.");
     }
@@ -484,6 +439,8 @@ public class DSMServer {
 
         //BSP route
         String bspSecret = cfg.getString(ApplicationConfigConstants.BSP_SECRET);
+        String auth0Domain = cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN);
+        String auth0claimNameSpace = cfg.getString(ApplicationConfigConstants.AUTH0_CLAIM_NAMESPACE);
 
         if (StringUtils.isBlank(bspSecret)) {
             throw new RuntimeException("No secret supplied for BSP endpoint, system exiting.");
@@ -494,7 +451,7 @@ public class DSMServer {
         afterAfter((req, res) -> MDC.clear());
 
         before(API_ROOT + "*", (req, res) -> {
-            if (!new JWTRouteFilter(bspSecret, null).isAccessAllowed(req)) {
+            if (!new JWTRouteFilter(bspSecret, null, auth0Domain).isAccessAllowed(req)) {
                 halt(404);
             }
             res.header(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
@@ -524,7 +481,12 @@ public class DSMServer {
         String jwtSecret = cfg.getString(ApplicationConfigConstants.BROWSER_JWT_SECRET);
         String cookieSalt = cfg.getString(ApplicationConfigConstants.BROWSER_COOKIE_SALT);
         String cookieName = cfg.getString(ApplicationConfigConstants.BROWSER_COOKIE_NAME);
-        new SecurityUtil(jwtSecret);
+        String auth0Signer = cfg.getString(ApplicationConfigConstants.AUTH0_SIGNER);
+
+        new SecurityUtil(auth0Domain, auth0claimNameSpace, auth0Signer);
+
+        //TODO remove before final merge, for testing only
+        get( UI_ROOT+"dsstest/:participantId", new DSSTestingRoute(), new JsonTransformer());
 
         // path is: /app/drugs (this gets the list of display names)
         DrugRoute drugRoute = new DrugRoute();
@@ -565,9 +527,8 @@ public class DSMServer {
 
                     boolean isTokenValid = false;
                     if (StringUtils.isNotBlank(tokenFromHeader)) {
-                        isTokenValid =
-                                new CookieUtil().isCookieValid(req.cookie(cookieName), cookieSalt.getBytes(), tokenFromHeader, jwtSecret);
-                        isTokenValid = new JWTRouteFilter(jwtSecret, null).isAccessAllowed(req);
+                        isTokenValid = new CookieUtil().isCookieValid(req.cookie(cookieName), cookieSalt.getBytes(), tokenFromHeader, auth0Domain);
+                        isTokenValid = new JWTRouteFilter(jwtSecret, null, auth0Domain).isAccessAllowed(req);
 
                     }
                     if (!isTokenValid) {
@@ -578,9 +539,15 @@ public class DSMServer {
         });
         setupDDPConfigurationLookup(cfg.getString(ApplicationConfigConstants.DDP));
 
-        AuthenticationRoute authenticationRoute =
-                new AuthenticationRoute(auth0Util, jwtSecret, cookieSalt, cookieName, userUtil, cfg.getString("portal.environment"));
-        post(UI_ROOT + RoutePath.AUTHENTICATION_REQUEST, authenticationRoute, new JsonTransformer());
+        AuthenticationRoute authenticationRoute = new AuthenticationRoute(auth0Util,
+                jwtSecret, cookieSalt, cookieName, userUtil,
+                cfg.getString("portal.environment"),
+                cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN),
+                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_SECRET),
+                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_KEY),
+                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL),
+                cfg.getString(ApplicationConfigConstants.AUTH0_CLAIM_NAMESPACE)
+        );
 
         KitUtil kitUtil = new KitUtil();
 
@@ -589,7 +556,7 @@ public class DSMServer {
         setupExternalShipperLookup(cfg.getString(ApplicationConfigConstants.EXTERNAL_SHIPPER));
         GBFRequestUtil gbfRequestUtil = new GBFRequestUtil();
 
-        setupShippingRoutes(notificationUtil, auth0Util, userUtil);
+        setupShippingRoutes(notificationUtil, auth0Util, userUtil, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN));
 
         setupMedicalRecordRoutes(cfg, notificationUtil, patchUtil);
 
@@ -679,7 +646,7 @@ public class DSMServer {
         logger.info("Pubsub setup complete");
     }
 
-    private void setupShippingRoutes(@NonNull NotificationUtil notificationUtil, @NonNull Auth0Util auth0Util, @NonNull UserUtil userUtil) {
+    private void setupShippingRoutes(@NonNull NotificationUtil notificationUtil, @NonNull Auth0Util auth0Util, @NonNull UserUtil userUtil, @NonNull String auth0Domain) {
         get(UI_ROOT + RoutePath.KIT_REQUESTS_PATH, new KitRequestRoute(), new JsonTransformer());
 
         KitStatusChangeRoute kitStatusChangeRoute = new KitStatusChangeRoute(notificationUtil);
@@ -710,7 +677,7 @@ public class DSMServer {
 
         get(UI_ROOT + RoutePath.SEARCH_KIT, new KitSearchRoute(), new JsonTransformer());
 
-        KitDiscardRoute kitDiscardRoute = new KitDiscardRoute(auth0Util, userUtil);
+        KitDiscardRoute kitDiscardRoute = new KitDiscardRoute(auth0Util, userUtil, auth0Domain);
         get(UI_ROOT + RoutePath.DISCARD_SAMPLES, kitDiscardRoute, new JsonTransformer());
         patch(UI_ROOT + RoutePath.DISCARD_SAMPLES, kitDiscardRoute, new JsonTransformer());
         post(UI_ROOT + RoutePath.DISCARD_UPLOAD, kitDiscardRoute, new JsonTransformer());
