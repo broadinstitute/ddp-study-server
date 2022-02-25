@@ -9,9 +9,9 @@
   "AUTH0_CLIENT_SECRET": "{{$conf.auth0.deployClientSecret}}",
   "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
   {{if eq $environment "dev"}}
-    "LOCALHOST_CALLBACKS": ",http://localhost:4200/auth,http://localhost:4200/login-landing",
-    "LOCALHOST_LOGOUTS": ",http://localhost:4200,http://localhost:4200/error,http://localhost:4200/session-expired",
-    "LOCALHOST_ORIGINS": ",http://localhost:4200",
+    "LOCALHOST_CALLBACKS": ",http://localhost:4200/auth,http://localhost:4200/login-landing",https://fon-dot-broad-ddp-dev.uc.r.appspot.com/auth, https://fon-dot-broad-ddp-dev.uc.r.appspot.com/login-landing
+    "LOCALHOST_LOGOUTS": ",http://localhost:4200,http://localhost:4200/error,http://localhost:4200/session-expired",https://fon-dot-broad-ddp-dev.uc.r.appspot.com/session-expired,https://fon-dot-broad-ddp-dev.uc.r.appspot.com,https://fon-dot-broad-ddp-dev.uc.r.appspot.com/error
+    "LOCALHOST_ORIGINS": ",http://localhost:4200",https://fon-dot-broad-ddp-dev.uc.r.appspot.com
   {{else}}
     "LOCALHOST_CALLBACKS": "",
     "LOCALHOST_LOGOUTS": "",
