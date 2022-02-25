@@ -122,7 +122,10 @@ public class ParticipantWrapper {
         if (DDPInstanceDao.getRole(ddpInstance.getName(), DBConstants.KIT_REQUEST_ACTIVATED)) {
             kitRequests = getKitRequestsFromEsData();
         }
-        proxiesByParticipantIds = getProxiesWithParticipantIdsFromElasticList(ddpInstance.getUsersIndexES(), esData.getEsParticipants());
+        if (StringUtils.isNotBlank(ddpInstance.getUsersIndexES())) {
+            proxiesByParticipantIds =
+                    getProxiesWithParticipantIdsFromElasticList(ddpInstance.getUsersIndexES(), esData.getEsParticipants());
+        }
         participantData = getParticipantDataFromEsData();
     }
 
@@ -180,13 +183,15 @@ public class ParticipantWrapper {
     }
 
     Map<String, List<ElasticSearchParticipantDto>> getProxiesWithParticipantIdsFromElasticList(String esUsersIndex,
-                                                      List<ElasticSearchParticipantDto> elasticSearchParticipantDtos) {
+                                                                                               List<ElasticSearchParticipantDto> elasticSearchParticipantDtos) {
         Map<String, List<String>> proxiesIdsFromElasticList = getProxiesIdsFromElasticList(elasticSearchParticipantDtos);
         return getProxiesWithParticipantIdsByProxiesIds(esUsersIndex, proxiesIdsFromElasticList);
     }
 
     private List<ParticipantWrapperDto> collectData(DDPInstance ddpInstance) {
         logger.info("Collecting participant data...");
+        boolean studyHasKitShipping = DDPInstanceDao.getRole(ddpInstance.getName(), DBConstants.KIT_REQUEST_ACTIVATED);
+
         List<ParticipantWrapperDto> result = new ArrayList<>();
         for (ElasticSearchParticipantDto elasticSearchParticipantDto : esData.getEsParticipants()) {
 
@@ -194,36 +199,44 @@ public class ParticipantWrapper {
 
                 Participant participant = esDsm.getParticipant().orElse(new Participant());
 
-                esDsm.getOncHistory().ifPresent(oncHistory -> {
-                    participant.setCreatedOncHistory(oncHistory.getCreated());
-                    participant.setReviewedOncHistory(oncHistory.getReviewed());
-                });
-
-                List<MedicalRecord> medicalRecord = esDsm.getMedicalRecord();
-
-                List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();
-                List<Tissue> tissues = esDsm.getTissue();
-                mapTissueToProperOncHistoryDetail(oncHistoryDetails, tissues);
-
-                List<KitRequestShipping> kitRequestShipping = esDsm.getKitRequestShipping();
-
-                List<String> proxyGuids = elasticSearchParticipantDto.getProxies();
-                String usersIndexES = ddpInstance.getUsersIndexES();
-                ElasticSearch participantsByIds = elasticSearchable.getParticipantsByIds(usersIndexES, proxyGuids);
-                List<ElasticSearchParticipantDto> proxies = participantsByIds.getEsParticipants();
-
                 List<ParticipantData> participantData = esDsm.getParticipantData();
 
                 ParticipantWrapperDto participantWrapperDto = new ParticipantWrapperDto();
                 participantWrapperDto.setEsData(elasticSearchParticipantDto);
                 participantWrapperDto.setParticipant(participant);
-                participantWrapperDto.setMedicalRecords(medicalRecord);
-                participantWrapperDto.setOncHistoryDetails(oncHistoryDetails);
-                participantWrapperDto.setKits(kitRequestShipping);
-                participantWrapperDto.setProxyData(proxies);
                 participantWrapperDto.setParticipantData(participantData);
-                participantWrapperDto.setAbstractionActivities(Collections.emptyList());
-                participantWrapperDto.setAbstractionSummary(Collections.emptyList());
+
+                if (ddpInstance.isHasRole()) {
+                    //MR and OncHistory only needed if study has role DBConstants.HAS_MEDICAL_RECORD_ENDPOINTS
+                    List<MedicalRecord> medicalRecord = esDsm.getMedicalRecord();
+                    participantWrapperDto.setMedicalRecords(medicalRecord);
+
+                    esDsm.getOncHistory().ifPresent(oncHistory -> {
+                        participant.setCreatedOncHistory(oncHistory.getCreated());
+                        participant.setReviewedOncHistory(oncHistory.getReviewed());
+                    });
+
+                    List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();
+                    List<Tissue> tissues = esDsm.getTissue();
+                    mapTissueToProperOncHistoryDetail(oncHistoryDetails, tissues);
+
+                    participantWrapperDto.setOncHistoryDetails(oncHistoryDetails);
+                    participantWrapperDto.setAbstractionActivities(Collections.emptyList());
+                    participantWrapperDto.setAbstractionSummary(Collections.emptyList());
+                }
+                if (studyHasKitShipping) {
+                    //KitRequest only neeeded if study has role DBConstants.KIT_REQUEST_ACTIVATED
+                    List<KitRequestShipping> kitRequestShipping = esDsm.getKitRequestShipping();
+                    participantWrapperDto.setKits(kitRequestShipping);
+                }
+                if (StringUtils.isNotBlank(ddpInstance.getUsersIndexES())) {
+                    // proxy information only needed if study has proxy setup in ddp_instance table
+                    List<String> proxyGuids = elasticSearchParticipantDto.getProxies();
+                    String usersIndexES = ddpInstance.getUsersIndexES();
+                    ElasticSearch participantsByIds = elasticSearchable.getParticipantsByIds(usersIndexES, proxyGuids);
+                    List<ElasticSearchParticipantDto> proxies = participantsByIds.getEsParticipants();
+                    participantWrapperDto.setProxyData(proxies);
+                }
 
                 result.add(participantWrapperDto);
 
@@ -242,11 +255,11 @@ public class ParticipantWrapper {
 
     void sortBySelfElseById(Collection<List<ParticipantData>> participantDatas) {
         participantDatas.forEach(pDataList -> pDataList.sort((o1, o2) -> {
-            Map<String, String> participantData = new Gson().fromJson(o1.getData().orElse(StringUtils.EMPTY),
-                    new TypeToken<Map<String, String>>() {
-                }.getType());
-            if (Objects.nonNull(participantData)
-                    && FamilyMemberConstants.MEMBER_TYPE_SELF.equals(participantData.get(FamilyMemberConstants.MEMBER_TYPE))) {
+            Map<String, String> participantData =
+                    new Gson().fromJson(o1.getData().orElse(StringUtils.EMPTY), new TypeToken<Map<String, String>>() {
+                    }.getType());
+            if (Objects.nonNull(participantData) && FamilyMemberConstants.MEMBER_TYPE_SELF.equals(
+                    participantData.get(FamilyMemberConstants.MEMBER_TYPE))) {
                 return -1;
             }
             return o1.getParticipantDataId() - o2.getParticipantDataId();
@@ -266,7 +279,7 @@ public class ParticipantWrapper {
     }
 
     Map<String, List<ElasticSearchParticipantDto>> getProxiesWithParticipantIdsByProxiesIds(String esUsersIndex,
-                                                      Map<String, List<String>> proxiesIdsByParticipantIds) {
+                                                                                            Map<String, List<String>> proxiesIdsByParticipantIds) {
         Map<String, List<ElasticSearchParticipantDto>> proxiesByParticipantIds = new HashMap<>();
         List<String> proxiesIds = proxiesIdsByParticipantIds.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
         List<ElasticSearchParticipantDto> participantsByIds =
