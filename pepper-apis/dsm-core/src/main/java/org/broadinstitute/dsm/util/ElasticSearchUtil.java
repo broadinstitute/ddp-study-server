@@ -28,6 +28,7 @@ import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
@@ -343,14 +344,23 @@ public class ElasticSearchUtil {
         return esData;
     }
 
-    public static Map<String, Map<String, Object>> getFilteredDDPParticipantsFromES(@NonNull DDPInstance instance, @NonNull String filter) {
-        String index = instance.getParticipantIndexES();
-        if (StringUtils.isNotBlank(index)) {
+    public static Map<String, Map<String, Object>> getFilteredDDPParticipantsFromES(@NonNull DDPInstanceDto ddpInstanceDto,
+                                                                                    @NonNull String filter) {
+        return getFilteredDDPParticipantsFromES(ddpInstanceDto.getEsParticipantIndex(), ddpInstanceDto.getInstanceName(), filter);
+    }
+
+    public static Map<String, Map<String, Object>> getFilteredDDPParticipantsFromES(@NonNull DDPInstance ddpInstance, @NonNull String filter) {
+        return getFilteredDDPParticipantsFromES(ddpInstance.getParticipantIndexES(), ddpInstance.getName(), filter);
+    }
+
+    public static Map<String, Map<String, Object>> getFilteredDDPParticipantsFromES(@NonNull String participantIndex, String instanceName,
+                                                                                    @NonNull String filter) {
+        if (StringUtils.isNotBlank(participantIndex)) {
             Map<String, Map<String, Object>> esData = new HashMap<>();
             logger.info("Collecting ES data");
             try {
                 int scrollSize = 1000;
-                SearchRequest searchRequest = new SearchRequest(index);
+                SearchRequest searchRequest = new SearchRequest(participantIndex);
                 SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
                 SearchResponse response = null;
                 int i = 0;
@@ -365,13 +375,13 @@ public class ElasticSearchUtil {
                     searchRequest.source(searchSourceBuilder);
 
                     response = client.search(searchRequest, RequestOptions.DEFAULT);
-                    addingParticipantStructuredHits(response, esData, instance.getName(), index);
+                    addingParticipantStructuredHits(response, esData, instanceName, participantIndex);
                     i++;
                 }
             } catch (Exception e) {
-                logger.error("Couldn't get participants from ES for instance " + instance.getName(), e);
+                logger.error("Couldn't get participants from ES for instance " + instanceName, e);
             }
-            logger.info("Got " + esData.size() + " participants from ES for instance " + instance.getName());
+            logger.info("Got " + esData.size() + " participants from ES for instance " + instanceName);
             return esData;
         }
         return null;

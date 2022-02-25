@@ -34,7 +34,6 @@ import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.DSMServer;
-import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
@@ -790,18 +789,18 @@ public class KitRequestShipping extends KitRequest {
     }
 
     //adding kit request to db (called by hourly job to add kits into DSM)
-    public static void addKitRequests(@NonNull String instanceId, @NonNull KitDetail kitDetail, @NonNull int kitTypeId,
+    public static void addKitRequests(@NonNull int instanceId, @NonNull KitDetail kitDetail, @NonNull int kitTypeId,
                                       @NonNull KitRequestSettings kitRequestSettings, String collaboratorParticipantId,
-                                      String externalOrderNumber, String uploadReason, DDPInstance ddpInstance) {
+                                      String externalOrderNumber, String uploadReason, DDPInstanceDto ddpInstanceDto) {
         addKitRequests(instanceId, kitDetail.getKitType(), kitDetail.getParticipantId(), kitDetail.getKitRequestId(), kitTypeId,
-                kitRequestSettings, collaboratorParticipantId, kitDetail.isNeedsApproval(), externalOrderNumber, uploadReason, ddpInstance);
+                kitRequestSettings, collaboratorParticipantId, kitDetail.isNeedsApproval(), externalOrderNumber, uploadReason, ddpInstanceDto);
     }
 
     //adding kit request to db (called by hourly job to add kits into DSM)
-    public static void addKitRequests(@NonNull String instanceId, @NonNull String kitType, @NonNull String participantId,
+    public static void addKitRequests(@NonNull int instanceId, @NonNull String kitType, @NonNull String participantId,
                                       @NonNull String kitRequestId, @NonNull int kitTypeId, @NonNull KitRequestSettings kitRequestSettings,
                                       String collaboratorParticipantId, boolean needsApproval, String externalOrderNumber,
-                                      String uploadReason, DDPInstance ddpInstance) {
+                                      String uploadReason, DDPInstanceDto ddpInstanceDto) {
         inTransaction((conn) -> {
             String errorMessage = "";
             String collaboratorSampleId = null;
@@ -820,7 +819,7 @@ public class KitRequestShipping extends KitRequest {
                 }
             }
             writeRequest(instanceId, kitRequestId, kitTypeId, participantId, collaboratorParticipantId, collaboratorSampleId, "SYSTEM",
-                    null, errorMessage, externalOrderNumber, needsApproval, uploadReason, ddpInstance);
+                    null, errorMessage, externalOrderNumber, needsApproval, uploadReason, ddpInstanceDto);
             return null;
         });
     }
@@ -828,15 +827,15 @@ public class KitRequestShipping extends KitRequest {
     // called by
     // 1. hourly job to add kit requests into db
     // 2. kit upload
-    public static String writeRequest(@NonNull String instanceId, @NonNull String ddpKitRequestId, int kitTypeId,
+    public static String writeRequest(@NonNull int instanceId, @NonNull String ddpKitRequestId, int kitTypeId,
                                       @NonNull String ddpParticipantId, String collaboratorPatientId, String collaboratorSampleId,
                                       @NonNull String createdBy, String addressIdTo, String errorMessage, String externalOrderNumber,
-                                      boolean needsApproval, String uploadReason, DDPInstance ddpInstance) {
+                                      boolean needsApproval, String uploadReason, DDPInstanceDto ddpInstanceDto) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult(0);
             try (PreparedStatement insertKitRequest = conn.prepareStatement(
                     DSMConfig.getSqlFromConfig(ApplicationConfigConstants.INSERT_KIT_REQUEST), Statement.RETURN_GENERATED_KEYS)) {
-                insertKitRequest.setString(1, instanceId);
+                insertKitRequest.setInt(1, instanceId);
                 insertKitRequest.setString(2, ddpKitRequestId);
                 insertKitRequest.setInt(3, kitTypeId);
                 insertKitRequest.setString(4, ddpParticipantId);
@@ -871,7 +870,7 @@ public class KitRequestShipping extends KitRequest {
             throw new RuntimeException("Error adding kit request  w/ ddpKitRequestId " + ddpKitRequestId, results.resultException);
         }
 
-        if (Objects.nonNull(ddpInstance)) {
+        if (Objects.nonNull(ddpInstanceDto)) {
             KitRequestShipping kitRequestShipping = new KitRequestShipping();
             kitRequestShipping.setParticipantId(ddpParticipantId);
             kitRequestShipping.setCollaboratorParticipantId(collaboratorPatientId);
@@ -882,12 +881,9 @@ public class KitRequestShipping extends KitRequest {
             kitRequestShipping.setCreatedBy(createdBy);
             kitRequestShipping.setUploadReason(uploadReason);
 
-            DDPInstanceDto ddpInstanceDto =
-                    new DDPInstanceDao().getDDPInstanceByInstanceId(Integer.valueOf(ddpInstance.getDdpInstanceId())).orElseThrow();
-
             UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
                     ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DOC_ID,
-                    Exportable.getParticipantGuid(ddpParticipantId, ddpInstance.getParticipantIndexES())).export();
+                    Exportable.getParticipantGuid(ddpParticipantId, ddpInstanceDto.getEsParticipantIndex())).export();
 
         }
 

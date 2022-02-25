@@ -1,16 +1,14 @@
 package org.broadinstitute.dsm.util;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.LatestKitRequest;
-import org.broadinstitute.dsm.model.KitRequest;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.KitSubKits;
 import org.broadinstitute.dsm.model.KitType;
@@ -51,7 +49,9 @@ public class DDPKitRequest {
                             Map<Integer, KitRequestSettings> kitRequestSettingsMap =
                                     KitRequestSettings.getKitRequestSettings(latestKit.getInstanceID());
 
-                            Map<KitRequestSettings, ArrayList<KitRequest>> kitsToOrder = new HashMap<>();
+                            DDPInstanceDto ddpInstanceDto =
+                                    new DDPInstanceDao().getDDPInstanceByInstanceName(latestKit.getInstanceName()).orElseThrow();
+
                             for (KitDetail kitDetail : kitDetails) {
                                 if (kitDetail != null && kitDetail.getParticipantId() != null && kitDetail.getKitRequestId() != null
                                         && kitDetail.getKitType() != null) {
@@ -69,9 +69,8 @@ public class DDPKitRequest {
                                             //kit requests from study-server
                                             if (StringUtils.isNotBlank(latestKit.getParticipantIndexES())) {
                                                 //without order list, that was only added for promise and currently is not used!
-                                                DDPInstance ddpInstance = DDPInstance.getDDPInstance(latestKit.getInstanceName());
                                                 Map<String, Map<String, Object>> participantsESData =
-                                                        ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance,
+                                                        ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstanceDto,
                                                                 ElasticSearchUtil.BY_GUID + kitDetail.getParticipantId());
                                                 if (participantsESData != null && !participantsESData.isEmpty()) {
                                                     Map<String, Object> participantESData =
@@ -90,11 +89,11 @@ public class DDPKitRequest {
                                                             if (kitHasSubKits) {
                                                                 List<KitSubKits> subKits = kitRequestSettings.getSubKits();
                                                                 addSubKits(subKits, kitDetail, collaboratorParticipantId,
-                                                                        kitRequestSettings, latestKit.getInstanceID(), null, ddpInstance);
+                                                                        kitRequestSettings, ddpInstanceDto.getDdpInstanceId(), null, ddpInstanceDto);
                                                             } else {
-                                                                KitRequestShipping.addKitRequests(latestKit.getInstanceID(), kitDetail,
+                                                                KitRequestShipping.addKitRequests(ddpInstanceDto.getDdpInstanceId(), kitDetail,
                                                                         kitType.getKitTypeId(), kitRequestSettings,
-                                                                        collaboratorParticipantId, null, null, ddpInstance);
+                                                                        collaboratorParticipantId, null, null, ddpInstanceDto);
                                                             }
                                                         } else {
                                                             logger.error(
@@ -136,8 +135,8 @@ public class DDPKitRequest {
     }
 
     private String addSubKits(@NonNull List<KitSubKits> subKits, @NonNull KitDetail kitDetail, @NonNull String collaboratorParticipantId,
-                              @NonNull KitRequestSettings kitRequestSettings, @NonNull String instanceId, String uploadReason,
-                              DDPInstance ddpInstance) {
+                              @NonNull KitRequestSettings kitRequestSettings, @NonNull int instanceId, String uploadReason,
+                              DDPInstanceDto ddpInstanceDto) {
         int subCounter = 0;
         String externalOrderNumber = null;
         if (StringUtils.isNotBlank(kitRequestSettings.getExternalShipper())) {
@@ -149,7 +148,7 @@ public class DDPKitRequest {
                 KitRequestShipping.addKitRequests(instanceId, subKit.getKitName(), kitDetail.getParticipantId(),
                         subCounter == 0 ? kitDetail.getKitRequestId() : kitDetail.getKitRequestId() + "_" + subCounter,
                         subKit.getKitTypeId(), kitRequestSettings, collaboratorParticipantId, kitDetail.isNeedsApproval(),
-                        externalOrderNumber, uploadReason, ddpInstance);
+                        externalOrderNumber, uploadReason, ddpInstanceDto);
                 subCounter = subCounter + 1;
             }
         }

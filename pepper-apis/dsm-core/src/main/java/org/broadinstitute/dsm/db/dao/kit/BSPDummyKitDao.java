@@ -7,9 +7,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Optional;
 
-import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dao.Dao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.kit.ClinicalKitDto;
 import org.broadinstitute.dsm.model.elastic.ESProfile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
@@ -52,28 +52,28 @@ public class BSPDummyKitDao implements Dao<ClinicalKitDto> {
         }
     }
 
-    public String getRandomParticipantForStudy(DDPInstance ddpInstance) {
-        String ddpParticipantId = new BSPDummyKitDao().getRandomParticipantIdForStudy(ddpInstance.getDdpInstanceId()).orElseThrow(() -> {
+    public String getRandomParticipantForStudy(DDPInstanceDto ddpInstanceDto) {
+        String ddpParticipantId = new BSPDummyKitDao().getRandomParticipantIdForStudy(ddpInstanceDto.getDdpInstanceId()).orElseThrow(() -> {
             throw new RuntimeException("Random participant id was not generated");
         });
         Optional<ElasticSearchParticipantDto> maybeParticipantByParticipantId =
-                ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
+                ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstanceDto.getEsParticipantIndex(), ddpParticipantId);
         while (maybeParticipantByParticipantId.isEmpty() || maybeParticipantByParticipantId.get().getProfile().map(ESProfile::getHruid)
                 .isEmpty()) {
-            ddpParticipantId = new BSPDummyKitDao().getRandomParticipantIdForStudy(ddpInstance.getDdpInstanceId()).orElseThrow(() -> {
+            ddpParticipantId = new BSPDummyKitDao().getRandomParticipantIdForStudy(ddpInstanceDto.getDdpInstanceId()).orElseThrow(() -> {
                 throw new RuntimeException("Random participant id was not generated");
             });
             maybeParticipantByParticipantId =
-                    ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
+                    ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstanceDto.getEsParticipantIndex(), ddpParticipantId);
         }
         return ddpParticipantId;
     }
 
-    public Optional<String> getRandomParticipantIdForStudy(String ddpInstanceId) {
+    public Optional<String> getRandomParticipantIdForStudy(int ddpInstanceId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_RANDOM_PT)) {
-                stmt.setString(1, ddpInstanceId);
+                stmt.setInt(1, ddpInstanceId);
                 ResultSet rs = stmt.executeQuery();
                 if (rs.next()) {
                     dbVals.resultValue = rs.getString(DBConstants.DDP_PARTICIPANT_ID);
