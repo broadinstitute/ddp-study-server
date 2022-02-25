@@ -15,7 +15,7 @@ insert into picklist_option (picklist_question_id, picklist_option_stable_id, to
        display_order, revision_id)
 values (:picklistQuestionId, :dto.getStableId, :dto.getTooltipTemplateId,
        :dto.getOptionLabelTemplateId, :dto.getDetailLabelTemplateId,
-       :dto.getAllowDetails, :dto.isExclusive, :dto.isDefault, :dto.getDisplayOrder, :revisionId)
+       :dto.isAllowDetails, :dto.isExclusive, :dto.isDefault, :dto.getDisplayOrder, :revisionId)
 >>
 
 queryInfoByOptionStableIdAndRevision() ::= <<
