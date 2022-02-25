@@ -1,12 +1,6 @@
 package org.broadinstitute.dsm.model.participant;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.google.common.reflect.TypeToken;
@@ -187,8 +181,10 @@ public class ParticipantWrapper {
         List<Participant> participants = new ArrayList<>();
         for (ElasticSearchParticipantDto elasticSearchParticipantDto: esData.getEsParticipants()) {
             elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
-                Participant participant = esDsm.getParticipant().orElse(new Participant());
-                if (Objects.nonNull(participant)) participants.add(participant);
+                Optional<Participant> participant = esDsm.getParticipant();
+                participant.ifPresent(participants::add);
+//                Participant participant = esDsm.getParticipant().orElse(new Participant());
+//                participants.add(participant);
             });
         }
         return participants;

@@ -21,8 +21,8 @@ public enum Alias {
     STATUS(StringUtils.EMPTY,false),
     PROFILE(StringUtils.EMPTY,false),
     ADDRESS(StringUtils.EMPTY,false),
-    INVITATIONS(ElasticSearchUtil.INVITATIONS, true),
-    PROXY(ElasticSearchUtil.PROFILE,true),
+    INVITATIONS(ElasticSearchUtil.INVITATIONS, false),
+    PROXY(ElasticSearchUtil.PROFILE,false),
     ACTIVITIES(ElasticSearchUtil.ACTIVITIES, true);
 
     Alias(String value, boolean isCollection) {
