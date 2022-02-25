@@ -21,6 +21,7 @@ import org.broadinstitute.dsm.model.elastic.ESProfile;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.slf4j.Logger;
@@ -139,8 +140,8 @@ public class ParticipantData {
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceId(ddpInstanceId).orElseThrow();
         String participantGuid = Exportable.getParticipantGuid(ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
 
-        UpsertPainlessFacade.of(DBConstants.DDP_PARTICIPANT_DATA_ALIAS, participantData, ddpInstanceDto, "participantDataId", "_id",
-                        participantGuid)
+        UpsertPainlessFacade.of(DBConstants.DDP_PARTICIPANT_DATA_ALIAS, participantData, ddpInstanceDto, ESObjectConstants.PARTICIPANT_DATA_ID,
+                        ESObjectConstants.DOC_ID, participantGuid)
                 .export();
 
         return createdDataKey;

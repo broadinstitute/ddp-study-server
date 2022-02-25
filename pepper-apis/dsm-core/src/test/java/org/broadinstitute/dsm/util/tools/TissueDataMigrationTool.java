@@ -337,7 +337,7 @@ public class TissueDataMigrationTool {
                 Number mrID = MedicalRecordUtil.isInstitutionTypeInDB(participantId);
                 if (mrID == null) {
                     // mr of that type doesn't exist yet, so create an institution and mr
-                    MedicalRecordUtil.writeInstitutionIntoDb(participantId, MedicalRecordUtil.NOT_SPECIFIED);
+                    MedicalRecordUtil.writeInstitutionIntoDb(participantId, MedicalRecordUtil.NOT_SPECIFIED, ddpParticipantId, realmId);
                     mrID = MedicalRecordUtil.isInstitutionTypeInDB(participantId);
                 }
                 if (mrID != null) {

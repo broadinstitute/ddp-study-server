@@ -42,11 +42,12 @@ public class OncHistoryDetailPatch extends BasePatch {
         mrID = MedicalRecordUtil.isInstitutionTypeInDB(patch.getParentId());
         if (mrID == null) {
             // mr of that type doesn't exist yet, so create an institution and mr
-            MedicalRecordUtil.writeInstitutionIntoDb(patch.getParentId(), MedicalRecordUtil.NOT_SPECIFIED);
+            MedicalRecordUtil.writeInstitutionIntoDb(patch.getParentId(), MedicalRecordUtil.NOT_SPECIFIED, patch.getDdpParticipantId(),
+                    patch.getRealm());
             mrID = MedicalRecordUtil.isInstitutionTypeInDB(patch.getParentId());
         }
         if (mrID != null) {
-            oncHistoryDetailId = OncHistoryDetail.createNewOncHistoryDetail(mrID.toString(), patch.getUser());
+            oncHistoryDetailId = OncHistoryDetail.createNewOncHistoryDetail(mrID.toString(), patch.getUser(), patch);
         }
         resultMap.put(ONC_HISTORY_DETAIL_ID, oncHistoryDetailId);
     }

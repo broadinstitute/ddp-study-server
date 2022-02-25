@@ -49,9 +49,6 @@ public class DDPMedicalRecordDataRequest {
                     + "WHERE rec.medical_record_id = ? AND rec.fax_sent is not null "
                     + "AND (log.type is null OR log.type = ?) ORDER BY medical_record_log_id desc";
 
-    private long lastTimeChecked = System.currentTimeMillis();
-
-
     // Requesting 'new' DDPKitRequests and write them into ddp_kit_request
     public void requestAndWriteParticipantInstitutions() {
         requestFromDDPs();
@@ -75,7 +72,8 @@ public class DDPMedicalRecordDataRequest {
                                         logger.info("Got " + institutionRequests.length + " InstitutionRequests");
                                         for (InstitutionRequest institutionRequest : institutionRequests) {
                                             try {
-                                                writeParticipantIntoDb(conn, ddpInstance.getDdpInstanceId(), institutionRequest);
+                                                writeParticipantIntoDb(conn, ddpInstance.getDdpInstanceId(), institutionRequest,
+                                                        ddpInstance.getName());
                                                 value = Math.max(value, institutionRequest.getId());
                                             } catch (Exception e) {
                                                 logger.error("Failed to insert participant for mr into db ", e);
@@ -99,12 +97,13 @@ public class DDPMedicalRecordDataRequest {
         }
     }
 
-    public void writeParticipantIntoDb(@NonNull Connection conn, @NonNull String instanceId, InstitutionRequest institutionRequest) {
+    public void writeParticipantIntoDb(@NonNull Connection conn, @NonNull String instanceId, InstitutionRequest institutionRequest,
+                                       String instanceName) {
         if (MedicalRecordUtil.isParticipantInDB(conn, institutionRequest.getParticipantId(), instanceId)) {
             //participant already exists
             if (MedicalRecordUtil.updateParticipant(conn, institutionRequest.getParticipantId(), instanceId, institutionRequest.getId(),
                     institutionRequest.getLastUpdated(), SystemUtil.SYSTEM)) {
-                writeInstitutionInfo(conn, institutionRequest, instanceId);
+                writeInstitutionInfo(conn, institutionRequest, instanceId, instanceName);
                 //participant lastVersion changed
                 Collection<Number> medicalRecordIds = getMedicalRecordIds(conn, institutionRequest.getParticipantId(), instanceId);
                 if (medicalRecordIds != null && !medicalRecordIds.isEmpty()) {
@@ -120,42 +119,12 @@ public class DDPMedicalRecordDataRequest {
                                     institutionRequest.getParticipantId()).withLastVersion(institutionRequest.getId())
                             .withLastVersionDate(institutionRequest.getLastUpdated()).withChangedBy(SystemUtil.SYSTEM).build();
             new ParticipantDao().create(participantDto);
-            writeInstitutionInfo(conn, institutionRequest, instanceId);
+            writeInstitutionInfo(conn, institutionRequest, instanceId, instanceName);
         }
     }
 
-    public void writePhysiciansIntoDb(@NonNull Connection conn, @NonNull String instanceId, @NonNull String participantId,
-                                      @NonNull String ptLastUpdated, @NonNull String institutionId,
-                                      @NonNull boolean institutionChangedSinceLastChecked, @NonNull String type, boolean setDuplicateFlag) {
-        if (!MedicalRecordUtil.isParticipantInDB(conn, participantId, instanceId)) {
-            //new participant
-            ParticipantDto participantDto =
-                    new ParticipantDto.Builder(Integer.parseInt(instanceId), System.currentTimeMillis()).withDdpParticipantId(participantId)
-                            .withLastVersion(0).withLastVersionDate(ptLastUpdated).withChangedBy(SystemUtil.SYSTEM).build();
-            new ParticipantDao().create(participantDto);
-            MedicalRecordUtil.writeNewRecordIntoDb(conn, SQL_INSERT_ONC_HISTORY, participantId, instanceId);
-            MedicalRecordUtil.writeNewRecordIntoDb(conn, SQL_INSERT_PARTICIPANT_RECORD, participantId, instanceId);
-        } else {
-            //pt already exists
-            Number lastVersion = MedicalRecordUtil.getParticipantLastVersion(conn, participantId, instanceId);
-            long newVersion = lastVersion.longValue() + 1;
-            MedicalRecordUtil.updateParticipant(conn, participantId, instanceId, newVersion, ptLastUpdated, SystemUtil.SYSTEM);
-        }
-        //new physician/institution
-        Number medicalRecordId = MedicalRecordUtil.isInstitutionInDB(conn, participantId, institutionId, instanceId, type);
-        if (medicalRecordId == null) {
-            MedicalRecordUtil.writeInstitutionIntoDb(conn, participantId, instanceId, institutionId, type, setDuplicateFlag);
-        } else {
-            //physician already exists, so insert mr id into log table
-            if (institutionChangedSinceLastChecked) {
-                if (shouldHaveMedicalRecordLog(conn, medicalRecordId)) {
-                    writingMedicalRecordLogIntoDb(conn, medicalRecordId);
-                }
-            }
-        }
-    }
 
-    private void writeInstitutionInfo(Connection conn, InstitutionRequest institutionRequest, String instanceId) {
+    private void writeInstitutionInfo(Connection conn, InstitutionRequest institutionRequest, String instanceId, String instanceName) {
         Collection<Institution> institutions = institutionRequest.getInstitutions();
         if (!institutions.isEmpty()) {
             logger.info("Participant w/ id " + institutionRequest.getParticipantId() + " has " + institutions.size() + " institutions");
@@ -163,7 +132,7 @@ public class DDPMedicalRecordDataRequest {
             MedicalRecordUtil.writeNewRecordIntoDb(conn, SQL_INSERT_PARTICIPANT_RECORD, institutionRequest.getParticipantId(), instanceId);
             for (Institution institution : institutions) {
                 MedicalRecordUtil.writeInstitutionIntoDb(conn, institutionRequest.getParticipantId(), instanceId, institution.getId(),
-                        institution.getType());
+                        institution.getType(), instanceName);
             }
         } else {
             logger.info("Institution list was empty for participant w/ id " + institutionRequest.getParticipantId());

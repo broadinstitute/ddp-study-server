@@ -20,12 +20,18 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.db.dto.ddp.tissue.ESTissueRecordsDto;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
+import org.broadinstitute.dsm.model.elastic.export.Exportable;
+import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.model.patch.Patch;
 import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
 import org.broadinstitute.dsm.util.DBUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
@@ -68,8 +74,7 @@ public class OncHistoryDetail {
             + "LEFT JOIN ddp_participant as p on (p.participant_id = inst.participant_id) "
             + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
             + "LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id AND NOT m.deleted <=> 1) "
-            + "LEFT JOIN ddp_onc_history_detail as oD on (m.medical_record_id = oD.medical_record_id) "
-            + "WHERE p.participant_id = ?";
+            + "LEFT JOIN ddp_onc_history_detail as oD on (m.medical_record_id = oD.medical_record_id) " + "WHERE p.participant_id = ?";
     public static final String STATUS_REVIEW = "review";
     public static final String STATUS_SENT = "sent";
     public static final String STATUS_RECEIVED = "received";
@@ -87,8 +92,6 @@ public class OncHistoryDetail {
     public static final String PROBLEM_OTHER = "other";
     public static final String PROBLEM_OTHER_OLD = "Other";
     private static final Logger logger = LoggerFactory.getLogger(OncHistoryDetail.class);
-    private static final String SQL_CREATE_ONC_HISTORY =
-            "INSERT INTO ddp_onc_history_detail SET medical_record_id = ?, request = ?, last_changed = ?, changed_by = ?";
     private static final String SQL_SELECT_ONC_HISTORY =
             "SELECT onc_history_detail_id, medical_record_id, date_px, type_px, location_px, histology, accession_number, facility,"
                     + " phone, fax, notes, additional_values_json, request, fax_sent, fax_sent_by, fax_confirmed, fax_sent_2, "
@@ -99,6 +102,7 @@ public class OncHistoryDetail {
             "SELECT tissue_received FROM ddp_onc_history_detail WHERE onc_history_detail_id = ?";
     private static final String SQL_INSERT_ONC_HISTORY_DETAIL =
             "INSERT INTO ddp_onc_history_detail SET medical_record_id = ?, request = ?, last_changed = ?, changed_by = ?";
+
     @ColumnName(DBConstants.ONC_HISTORY_DETAIL_ID)
     private long oncHistoryDetailId;
 
@@ -396,7 +400,7 @@ public class OncHistoryDetail {
         return (OncHistoryDetail) results.resultValue;
     }
 
-    public static String createNewOncHistoryDetail(@NonNull String medicalRecordId, @NonNull String changedBy) {
+    public static String createNewOncHistoryDetail(@NonNull String medicalRecordId, @NonNull String changedBy, Patch patch) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_ONC_HISTORY_DETAIL, Statement.RETURN_GENERATED_KEYS)) {
@@ -430,7 +434,18 @@ public class OncHistoryDetail {
             throw new RuntimeException("Error adding new oncHistoryDetail for medicalRecord w/ id " + medicalRecordId,
                     results.resultException);
         } else {
-            return (String) results.resultValue;
+            String oncHistoryDetailId = (String) results.resultValue;
+            if (StringUtils.isNotBlank(oncHistoryDetailId)) {
+                DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(patch.getRealm()).orElseThrow();
+                String participantGuid = Exportable.getParticipantGuid(patch.getDdpParticipantId(), ddpInstanceDto.getEsParticipantIndex());
+                ESTissueRecordsDto esTissueRecordsDto =
+                        new ESTissueRecordsDto(patch.getDdpParticipantId(), Integer.getInteger(oncHistoryDetailId), null, null, null, null,
+                                null, null, null, null);
+
+                UpsertPainlessFacade.of(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS, esTissueRecordsDto, ddpInstanceDto,
+                        ESObjectConstants.TISSUE_RECORDS_ID, ESObjectConstants.DOC_ID, participantGuid).export();
+            }
+            return oncHistoryDetailId;
         }
     }
 

@@ -15,7 +15,6 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
 import org.broadinstitute.lddp.db.SimpleResult;
 
-
 public class DDPInstanceDao implements Dao<DDPInstanceDto> {
 
     public static final String COLLABORATOR_ID_PREFIX = "collaborator_id_prefix";
