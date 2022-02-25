@@ -47,26 +47,6 @@ public class DDPInstance {
                     + "auth0_token, notification_recipients, kit_behavior_change  "
                     + "FROM ddp_instance main, instance_settings setting WHERE main.ddp_instance_id = setting.ddp_instance_id "
                     + "AND main.is_active = 1 AND setting.kit_behavior_change IS NOT NULL";
-    private static final String SQL_SELECT_ACTIVE_REALMS_WITH_ROLE_INFORMATION_BY_PARTICIPANT_ID =
-            "SELECT main.ddp_instance_id, main.instance_name, main.base_url, "
-                    + "main.collaborator_id_prefix, main.migrated_ddp, main.billing_reference, main.es_participant_index, "
-                    + "main.es_activity_definition_index, es_users_index,   (SELECT count(role.name) "
-                    + "FROM ddp_instance realm, ddp_instance_role inRol, instance_role role "
-                    + "WHERE realm.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id "
-                    + "AND role.name = ? AND realm.ddp_instance_id = main.ddp_instance_id) as 'has_role', mr_attention_flag_d, "
-                    + "tissue_attention_flag_d, auth0_token, notification_recipients "
-                    + "FROM ddp_instance main, ddp_participant part WHERE main.ddp_instance_id = part.ddp_instance_id "
-                    + "AND main.is_active = 1 and part.participant_id = ?";
-    private static final String SQL_SELECT_ACTIVE_REALMS_WITH_ROLE_INFORMATION_BY_DDP_PARTICIPANT_ID_REALM =
-            "SELECT main.ddp_instance_id, main.instance_name, main.base_url, "
-                    + "main.collaborator_id_prefix, main.migrated_ddp, main.billing_reference, main.es_participant_index, "
-                    + "main.es_activity_definition_index, es_users_index, "
-                    + "(SELECT count(role.name) FROM ddp_instance realm, ddp_instance_role inRol, instance_role role "
-                    + "WHERE realm.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id "
-                    + "AND role.name = ? AND realm.ddp_instance_id = main.ddp_instance_id) as 'has_role', mr_attention_flag_d, "
-                    + "tissue_attention_flag_d, auth0_token, notification_recipients "
-                    + "FROM ddp_instance main, ddp_participant part WHERE main.ddp_instance_id = part.ddp_instance_id "
-                    + "AND main.is_active = 1 AND part.ddp_participant_id = ? AND main.instance_name = ?";
     private static final String SQL_SELECT_STUDY_GUID_BY_INSTANCE_NAME =
             "SELECT  study_guid  FROM  ddp_instance  WHERE  instance_name = ?";
 
@@ -296,59 +276,6 @@ public class DDPInstance {
             throw new RuntimeException("Error looking ddpInstances ", results.resultException);
         }
         return ddpInstances;
-    }
-
-    public static DDPInstance getDDPInstanceWithRoleByDDPParticipantAndRealm(@NonNull String realm, @NonNull String ddpParticipantId,
-                                                                             @NonNull String role) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(
-                    SQL_SELECT_ACTIVE_REALMS_WITH_ROLE_INFORMATION_BY_DDP_PARTICIPANT_ID_REALM)) {
-                stmt.setString(1, role);
-                stmt.setString(2, ddpParticipantId);
-                stmt.setString(3, realm);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        dbVals.resultValue = getDDPInstanceWithRoleFormResultSet(rs);
-                    }
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error getting ddps ", e);
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Couldn't get list of participants ", results.resultException);
-        }
-        return (DDPInstance) results.resultValue;
-    }
-
-    public static DDPInstance getDDPInstanceWithRoleByParticipant(@NonNull String participantId, @NonNull String role) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ACTIVE_REALMS_WITH_ROLE_INFORMATION_BY_PARTICIPANT_ID)) {
-                stmt.setString(1, role);
-                stmt.setString(2, participantId);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        dbVals.resultValue = getDDPInstanceWithRoleFormResultSet(rs);
-                    }
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error getting ddps ", e);
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Couldn't get list of participants ", results.resultException);
-        }
-        return (DDPInstance) results.resultValue;
     }
 
     public static boolean getRole(@NonNull String realm, @NonNull String role) {
