@@ -38,33 +38,20 @@ public class SystemUtil {
     public static final long MILLIS_PER_HOUR = 1000 * 60 * 60;
     public static final String SYSTEM = "SYSTEM";
     public static final String SEPARATOR = "\t";
-    public static final DateTimeFormatter USUAL_DATE = new DateTimeFormatterBuilder()
-            .appendPattern(DATE_FORMAT)
-            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
-            .parseDefaulting(ChronoField.MINUTE_OF_DAY, 0)
-            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
-            .toFormatter();
-    public static final DateTimeFormatter FULL_DATE = new DateTimeFormatterBuilder()
-            .appendPattern(DATE_FORMAT)
-            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
-            .parseDefaulting(ChronoField.MINUTE_OF_DAY, 0)
-            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
-            .toFormatter();
-    public static final DateTimeFormatter PARTIAL_DATE = new DateTimeFormatterBuilder()
-            .appendPattern(PARTIAL_DATE_FORMAT)
-            .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
-            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
-            .parseDefaulting(ChronoField.MINUTE_OF_DAY, 0)
-            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
-            .toFormatter();
-    public static final DateTimeFormatter ONLY_YEAR = new DateTimeFormatterBuilder()
-            .appendPattern(YEAR_DATE_FORMAT)
-            .parseDefaulting(ChronoField.MONTH_OF_YEAR, 1)
-            .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
-            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
-            .parseDefaulting(ChronoField.MINUTE_OF_DAY, 0)
-            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
-            .toFormatter();
+    public static final DateTimeFormatter USUAL_DATE =
+            new DateTimeFormatterBuilder().appendPattern(DATE_FORMAT).parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+                    .parseDefaulting(ChronoField.MINUTE_OF_DAY, 0).parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0).toFormatter();
+    public static final DateTimeFormatter FULL_DATE =
+            new DateTimeFormatterBuilder().appendPattern(DATE_FORMAT).parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+                    .parseDefaulting(ChronoField.MINUTE_OF_DAY, 0).parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0).toFormatter();
+    public static final DateTimeFormatter PARTIAL_DATE =
+            new DateTimeFormatterBuilder().appendPattern(PARTIAL_DATE_FORMAT).parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
+                    .parseDefaulting(ChronoField.HOUR_OF_DAY, 0).parseDefaulting(ChronoField.MINUTE_OF_DAY, 0)
+                    .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0).toFormatter();
+    public static final DateTimeFormatter ONLY_YEAR =
+            new DateTimeFormatterBuilder().appendPattern(YEAR_DATE_FORMAT).parseDefaulting(ChronoField.MONTH_OF_YEAR, 1)
+                    .parseDefaulting(ChronoField.DAY_OF_MONTH, 1).parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+                    .parseDefaulting(ChronoField.MINUTE_OF_DAY, 0).parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0).toFormatter();
     private static final String LINEBREAK_UNIVERSAL = "\n";
     private static final String LINEBREAK = "\r";
 
@@ -241,6 +228,6 @@ public class SystemUtil {
     }
 
     public static String stringToPascalSnakeCase(String str) {
-        return str.toLowerCase().replaceAll(" ","_");
+        return str.toUpperCase().replaceAll(" ", "_");
     }
 }
