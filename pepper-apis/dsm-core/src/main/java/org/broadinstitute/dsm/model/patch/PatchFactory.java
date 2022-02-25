@@ -21,7 +21,7 @@ public class PatchFactory {
                 }
             } else if (isTissueRelatedOncHistoryId(patch)) {
                 patcher = new TissuePatch(patch);
-            } else if (isParentParticipandDataId(patch)) {
+            } else if (isParentParticipantDataId(patch)) {
                 patcher = new ParticipantDataPatch(patch);
             } else if (isParticipantIdForRecord(patch)) {
                 patcher = new ParticipantRecordPatch(patch);
@@ -61,7 +61,7 @@ public class PatchFactory {
         return Patch.ONC_HISTORY_ID.equals(patch.getParent());
     }
 
-    private static boolean isParentParticipandDataId(Patch patch) {
+    private static boolean isParentParticipantDataId(Patch patch) {
         return Patch.PARTICIPANT_DATA_ID.equals(patch.getParent());
     }
 
