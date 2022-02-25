@@ -17,7 +17,16 @@ import org.apache.http.client.fluent.Request;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
-import org.broadinstitute.dsm.util.*;
+import org.broadinstitute.dsm.util.DBTestUtil;
+import org.broadinstitute.dsm.util.DDPKitRequest;
+import org.broadinstitute.dsm.util.DDPRequestUtil;
+import org.broadinstitute.dsm.util.DSMConfig;
+import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.broadinstitute.dsm.util.EventUtil;
+import org.broadinstitute.dsm.util.KitUtil;
+import org.broadinstitute.dsm.util.NotificationUtil;
+import org.broadinstitute.dsm.util.TestUtil;
+import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.dsm.util.externalshipper.GBFRequestUtil;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.Assert;
@@ -107,7 +116,6 @@ public class TestHelper {
             throw new RuntimeException("Not local environment");
         }
 
-        new DSMConfig(cfg);
         //        if (!cfg.getString("portal.dbUrl").contains("local")) {
         //            throw new RuntimeException("Not your test db");
         //        }
@@ -115,6 +123,7 @@ public class TestHelper {
         if (cfg == null) {
             throw new NullPointerException("config");
         } else {
+            new DSMConfig(cfg);
             logger.info("Setup the DB...");
             boolean skipSsl = false;
             if (cfg.hasPath("portal.dbSkipSsl") && cfg.getBoolean("portal.dbSkipSsl")) {

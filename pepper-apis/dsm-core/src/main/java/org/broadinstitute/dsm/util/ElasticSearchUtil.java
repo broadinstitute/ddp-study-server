@@ -170,8 +170,9 @@ public class ElasticSearchUtil {
         credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(userName, password));
 
         URL url = new URL(baseUrl);
-//        String proxy = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_PROXY);
-        return getClientForElasticsearchCloud(baseUrl, userName, password, null);
+        String proxy = DSMConfig.hasConfigPath(ApplicationConfigConstants.ES_PROXY)
+                ? DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_PROXY) : null;
+        return getClientForElasticsearchCloud(baseUrl, userName, password, proxy);
     }
 
     public static RestHighLevelClient getClientForElasticsearchCloudCF(@NonNull String baseUrl,

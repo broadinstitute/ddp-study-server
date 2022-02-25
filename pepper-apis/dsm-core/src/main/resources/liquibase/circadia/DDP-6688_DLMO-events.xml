@@ -10,8 +10,8 @@
             UPDATE field_settings
             SET column_display = 'Melatonin Kit Management'
             WHERE
-            ddp_instance_id = (SELECT DDP_instance_id FROM ddp_instance WHERE study_guid = 'circadia')
-            AND column_name = 'CIRCADIA_KIT_MANAGEMENT'
+                    ddp_instance_id = (SELECT DDP_instance_id FROM ddp_instance WHERE study_guid = 'circadia')
+              AND column_name = 'CIRCADIA_KIT_MANAGEMENT'
         </sql>
     </changeSet>
 
@@ -20,15 +20,15 @@
             UPDATE field_settings
             SET actions = '[{&quot;name&quot;:&quot;DLMO_DATE_1&quot;,&quot;type&quot;:&quot;PARTICIPANT_EVENT&quot;}]'
             WHERE
-            ddp_instance_id = (SELECT DDP_instance_id FROM ddp_instance WHERE study_guid = 'circadia')
-            AND column_name = 'DLMO_DATE_1'
+                    ddp_instance_id = (SELECT DDP_instance_id FROM ddp_instance WHERE study_guid = 'circadia')
+              AND column_name = 'DLMO_DATE_1'
         </sql>
         <sql>
             UPDATE field_settings
             SET actions = '[{&quot;name&quot;:&quot;DLMO_DATE_2&quot;,&quot;type&quot;:&quot;PARTICIPANT_EVENT&quot;}]'
             WHERE
-            ddp_instance_id = (SELECT DDP_instance_id FROM ddp_instance WHERE study_guid = 'circadia')
-            AND column_name = 'DLMO_DATE_2'
+                    ddp_instance_id = (SELECT DDP_instance_id FROM ddp_instance WHERE study_guid = 'circadia')
+              AND column_name = 'DLMO_DATE_2'
         </sql>
     </changeSet>
 
