@@ -114,7 +114,7 @@ public class ElasticSearch implements ElasticSearchable {
         if (to <= 0) {
             throw new IllegalArgumentException("incorrect from/to range");
         }
-        logger.info("Collecting ES data");
+        logger.info("Collecting ES data from index: " + esParticipantsIndex);
         SearchResponse response;
         try {
             int scrollSize = to - from;
@@ -145,7 +145,7 @@ public class ElasticSearch implements ElasticSearchable {
         searchSourceBuilder.from(0);
         searchRequest.source(searchSourceBuilder);
         SearchResponse response;
-        logger.info("Collecting ES data");
+        logger.info("Collecting ES data from index: " + esIndex);
         try {
             response = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
@@ -176,7 +176,7 @@ public class ElasticSearch implements ElasticSearchable {
         if (to <= 0) {
             throw new IllegalArgumentException("incorrect from/to range");
         }
-        logger.info("Collecting ES data");
+        logger.info("Collecting ES data from index: " + esParticipantsIndex);
         SearchResponse response;
         try {
             int scrollSize = to - from;
@@ -204,7 +204,7 @@ public class ElasticSearch implements ElasticSearchable {
         searchSourceBuilder.from(from);
         searchRequest.source(searchSourceBuilder);
         SearchResponse response;
-        logger.info("Collecting ES data");
+        logger.info("Collecting ES data from index: " + participantIndexES);
         try {
             response = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
@@ -226,7 +226,7 @@ public class ElasticSearch implements ElasticSearchable {
         searchRequest.source(searchSourceBuilder);
         SearchResponse searchResponse;
         Map<String, Object> sourceAsMap;
-        logger.info("Collecting ES data");
+        logger.info("Collecting ES data from index: " + esParticipantsIndex);
         try {
             searchResponse = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
             sourceAsMap = searchResponse.getHits().getHits().length > 0
@@ -248,7 +248,7 @@ public class ElasticSearch implements ElasticSearchable {
         searchSourceBuilder.size((int) participantsSize);
         searchRequest.source(searchSourceBuilder);
         SearchResponse searchResponse;
-        logger.info("Collecting ES data");
+        logger.info("Collecting ES data from index: " + esParticipantsIndex);
         try {
             searchResponse = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
         } catch (Exception e) {
