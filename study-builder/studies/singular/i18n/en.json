@@ -999,8 +999,8 @@
         "treated_medication": "Treated w/ medication",
         "treated_shock": "Treated w/ shock",
         "treated_pacemaker": "Treated w/ pacemaker",
-        "did_not_require": "Did not require medical treatmentr",
-        "have_not_had_arrhythmia": "Have not had arrhythmia (heart rhythm issues)",
+        "did_not_require": "Did not require medical treatment",
+        "have_not_had_arrhythmia": "Has not had arrhythmia (heart rhythm issues)",
         "i_do_not_know": "I don't know"
       }
     }
