@@ -231,11 +231,12 @@ public class ParticipantWrapper {
                 }
                 if (StringUtils.isNotBlank(ddpInstance.getUsersIndexES())) {
                     // proxy information only needed if study has proxy setup in ddp_instance table
-                    List<String> proxyGuids = elasticSearchParticipantDto.getProxies();
-                    String usersIndexES = ddpInstance.getUsersIndexES();
-                    ElasticSearch participantsByIds = elasticSearchable.getParticipantsByIds(usersIndexES, proxyGuids);
-                    List<ElasticSearchParticipantDto> proxies = participantsByIds.getEsParticipants();
-                    participantWrapperDto.setProxyData(proxies);
+                    ESProfile esProfile = elasticSearchParticipantDto.getProfile().orElseThrow();
+                    String ddpParticipantId = esProfile.getGuid();
+                    List<ElasticSearchParticipantDto> proxies = proxiesByParticipantIds.get(ddpParticipantId);
+                    if (proxies != null && !proxies.isEmpty()) {
+                        participantWrapperDto.setProxyData(proxies);
+                    }
                 }
 
                 result.add(participantWrapperDto);
