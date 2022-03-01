@@ -10,9 +10,9 @@ import java.sql.Statement;
 
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.db.dto.medical.records.ESMedicalRecordsDto;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -77,9 +77,12 @@ public class MedicalRecordUtil {
         if (mrId != null) {
             DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(instanceName).orElseThrow();
             String participantGuid = Exportable.getParticipantGuid(ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
-            ESMedicalRecordsDto esMedicalRecordsDto = new ESMedicalRecordsDto(ddpParticipantId, mrId, null, null, null, null);
+            MedicalRecord medicalRecord = new MedicalRecord();
+            medicalRecord.setMedicalRecordId(mrId);
+            medicalRecord.setDdpParticipantId(ddpParticipantId);
+            medicalRecord.setInstitutionId(Long.getLong(institutionId));
 
-            UpsertPainlessFacade.of(DBConstants.DDP_MEDICAL_RECORD_ALIAS, esMedicalRecordsDto, ddpInstanceDto,
+            UpsertPainlessFacade.of(DBConstants.DDP_MEDICAL_RECORD_ALIAS, medicalRecord, ddpInstanceDto,
                     ESObjectConstants.MEDICAL_RECORDS_ID, ESObjectConstants.DOC_ID, participantGuid).export();
         }
     }
