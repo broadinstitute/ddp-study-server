@@ -15,6 +15,7 @@ import spark.Route;
 
 public class BSPKitRoute implements Route {
 
+    private final String bsp = "BSP";
     private NotificationUtil notificationUtil;
 
     public BSPKitRoute(@NonNull NotificationUtil notificationUtil) {
@@ -43,6 +44,6 @@ public class BSPKitRoute implements Route {
         }
 
         //kit found in ddp_kit table
-        return bspKit.receiveKit(kitLabel, optionalBSPKitDto.get(), this.notificationUtil).get();
+        return bspKit.receiveKit(kitLabel, optionalBSPKitDto.get(), this.notificationUtil, bsp).get();
     }
 }

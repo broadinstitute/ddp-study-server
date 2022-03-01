@@ -38,8 +38,6 @@ public class BSPKitDao implements Dao<BSPKitDto> {
                     + "  left join ddp_participant_exit ex on (request.ddp_participant_id = ex.ddp_participant_id and "
                     + "   request.ddp_instance_id = ex.ddp_instance_id)  where    kit.kit_label = ?";
 
-    private final String bsp = "BSP";
-
     Logger logger = LoggerFactory.getLogger(BSPKitDao.class);
 
     @Override
@@ -98,12 +96,12 @@ public class BSPKitDao implements Dao<BSPKitDto> {
         return Optional.ofNullable((BSPKitDto) results.resultValue);
     }
 
-    public void setKitReceivedAndTriggerDDP(String kitLabel, boolean triggerDDP, BSPKitDto bspKitDto) {
+    public void setKitReceivedAndTriggerDDP(String kitLabel, boolean triggerDDP, BSPKitDto bspKitDto, String receiver) {
         TransactionWrapper.inTransaction(conn -> {
             boolean firstTimeReceived = false;
             try (PreparedStatement stmt = conn.prepareStatement(sqlUpdateKitReceived)) {
                 stmt.setLong(1, System.currentTimeMillis());
-                stmt.setString(2, bsp);
+                stmt.setString(2, receiver);
                 stmt.setString(3, kitLabel);
                 int result = stmt.executeUpdate();
                 if (result > 1) { // 1 row or 0 row updated is perfect
