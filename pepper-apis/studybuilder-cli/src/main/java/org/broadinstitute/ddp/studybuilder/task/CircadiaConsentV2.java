@@ -227,7 +227,8 @@ public class CircadiaConsentV2 implements CustomTask {
         @RegisterConstructorMapper(BlockContentDto.class)
         BlockContentDto findContentBlockByBodyText(@Bind("activityId") long activityId, @Bind("text") String bodyTemplateText);
 
-        @SqlQuery("select template_variable_id from template_variable where variable_name = :variable_name")
+        @SqlQuery("select template_variable_id from template_variable where variable_name = :variable_name "
+                + "order by template_variable_id desc")
         long findTemplateVariableIdByVariableName(@Bind("variable_name") String variableName);
     }
 }

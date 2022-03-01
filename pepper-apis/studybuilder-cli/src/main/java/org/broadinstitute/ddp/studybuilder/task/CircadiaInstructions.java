@@ -41,7 +41,7 @@ import java.util.List;
 
 public class CircadiaInstructions implements CustomTask {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CircadiaConsentV2.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CircadiaInstructions.class);
     private static final String DATA_FILE = "patches/dlmo-instructions.conf";
     private static final String STUDY = "circadia";
     private static final String BLOCK_KEY = "blockNew";
