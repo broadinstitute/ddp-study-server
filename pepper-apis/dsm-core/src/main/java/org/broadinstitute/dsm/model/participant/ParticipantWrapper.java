@@ -183,8 +183,6 @@ public class ParticipantWrapper {
             elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
                 Optional<Participant> participant = esDsm.getParticipant();
                 participant.ifPresent(participants::add);
-//                Participant participant = esDsm.getParticipant().orElse(new Participant());
-//                participants.add(participant);
             });
         }
         return participants;
@@ -217,10 +215,8 @@ public class ParticipantWrapper {
 
                 List<KitRequestShipping> kitRequestShipping = esDsm.getKitRequestShipping();
 
-                List<String> proxyGuids = elasticSearchParticipantDto.getProxies();
-                String usersIndexES = ddpInstance.getUsersIndexES();
-                ElasticSearch participantsByIds = elasticSearchable.getParticipantsByIds(usersIndexES, proxyGuids);
-                List<ElasticSearchParticipantDto> proxies = participantsByIds.getEsParticipants();
+                List<ElasticSearchParticipantDto> proxies =
+                        getParticipantProxiesData(ddpInstance, elasticSearchParticipantDto);
 
                 List<ParticipantData> participantData = esDsm.getParticipantData();
 
@@ -240,6 +236,16 @@ public class ParticipantWrapper {
             });
         }
         return result;
+    }
+
+    private List<ElasticSearchParticipantDto> getParticipantProxiesData(DDPInstance ddpInstance,
+                                                                              ElasticSearchParticipantDto elasticSearchParticipantDto) {
+        List<String> proxyGuids = elasticSearchParticipantDto.getProxies();
+        if (proxyGuids.isEmpty()) return Collections.emptyList();
+        String usersIndexES = ddpInstance.getUsersIndexES();
+        ElasticSearch participantsByIds = elasticSearchable.getParticipantsByIds(usersIndexES, proxyGuids);
+        List<ElasticSearchParticipantDto> proxies = participantsByIds.getEsParticipants();
+        return proxies;
     }
 
     private void mapTissueToProperOncHistoryDetail(List<OncHistoryDetail> oncHistoryDetails, List<Tissue> tissues) {
