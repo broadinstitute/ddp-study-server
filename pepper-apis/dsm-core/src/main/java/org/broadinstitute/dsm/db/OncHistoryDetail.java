@@ -438,11 +438,11 @@ public class OncHistoryDetail {
             if (StringUtils.isNotBlank(oncHistoryDetailId)) {
                 DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(patch.getRealm()).orElseThrow();
                 String participantGuid = Exportable.getParticipantGuid(patch.getDdpParticipantId(), ddpInstanceDto.getEsParticipantIndex());
-                ESTissueRecordsDto esTissueRecordsDto =
-                        new ESTissueRecordsDto(patch.getDdpParticipantId(), Integer.getInteger(oncHistoryDetailId), null, null, null, null,
-                                null, null, null, null);
+                OncHistoryDetail oncHistoryDetail = new OncHistoryDetail();
+                oncHistoryDetail.setOncHistoryDetailId(Integer.getInteger(oncHistoryDetailId));
+                oncHistoryDetail.setDdpParticipantId(patch.getDdpParticipantId());
 
-                UpsertPainlessFacade.of(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS, esTissueRecordsDto, ddpInstanceDto,
+                UpsertPainlessFacade.of(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS, oncHistoryDetail, ddpInstanceDto,
                         ESObjectConstants.TISSUE_RECORDS_ID, ESObjectConstants.DOC_ID, participantGuid).export();
             }
             return oncHistoryDetailId;
