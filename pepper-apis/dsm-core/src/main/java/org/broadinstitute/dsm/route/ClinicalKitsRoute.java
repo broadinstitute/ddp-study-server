@@ -21,8 +21,10 @@ import spark.Response;
 import spark.Route;
 
 public class ClinicalKitsRoute implements Route {
+
     private static final Logger logger = LoggerFactory.getLogger(ClinicalKitsRoute.class);
 
+    private final String mercury = "MERCURY";
     private NotificationUtil notificationUtil;
 
     public ClinicalKitsRoute(@NonNull NotificationUtil notificationUtil) {
@@ -55,7 +57,7 @@ public class ClinicalKitsRoute implements Route {
             //kit not found in ddp_kit table -> check tissue smi-ids
             return new ClinicalKitDao().getClinicalKitBasedOnSmId(kitLabel);
         } else {
-            Optional<KitInfo> maybeKitInfo = GPReceivedKit.receiveKit(kitLabel, optionalBSPKitDto.get(), notificationUtil);
+            Optional<KitInfo> maybeKitInfo = GPReceivedKit.receiveKit(kitLabel, optionalBSPKitDto.get(), notificationUtil, mercury);
             KitInfo kitInfo = maybeKitInfo.get();
             ClinicalKitDto clinicalKit = new ClinicalKitDto();
             logger.info("Creating clinical kit to return to GP " + kitLabel);
