@@ -178,6 +178,8 @@ public class KitRequestShipping extends KitRequest {
                     + "denial_reason = ?, authorized_by = ? WHERE kit.dsm_kit_request_id = ?";
     private static final String MARK_ORDER_AS_TRANSMITTED =
             "update ddp_kit_request set order_transmitted_at = ? where external_order_number = ?";
+    private static final String SELECT_KIT_COUNT = "select count(*) kitRequestCount from ddp_kit_request where bsp_collaborator_sample_id"
+            + " REGEXP '^%1' and kit_type_id = ?";
     private static final String QUEUE = "queue";
     private static final String ERROR = "error";
     private static final String SENT = "sent";
@@ -1139,8 +1141,7 @@ public class KitRequestShipping extends KitRequest {
     }
 
     public static int getKitCounter(@NonNull Connection conn, String collaboratorSampleId, int kitTypeId) {
-        String query = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_COUNT_KITS_WITH_SAME_COLLABORATOR_SAMPLE_ID_AND_KIT_TYPE)
-                .replace("%1", collaboratorSampleId);
+        String query = SELECT_KIT_COUNT.replace("%1", collaboratorSampleId);
         try (PreparedStatement stmt = conn.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
             stmt.setInt(1, kitTypeId);
             try (ResultSet rs = stmt.executeQuery()) {
