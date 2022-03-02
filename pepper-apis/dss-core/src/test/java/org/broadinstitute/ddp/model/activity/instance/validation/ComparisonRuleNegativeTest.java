@@ -23,7 +23,6 @@ import org.jdbi.v3.core.Handle;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 
