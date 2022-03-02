@@ -28,6 +28,7 @@ import static org.junit.Assert.assertTrue;
 
 public class ComparisonRuleTest extends TxnAwareBaseTest {
     private static TestDataSetupUtil.GeneratedTestData testData;
+    private static Pair<Long, String> questionIdInstanceGuidPair;
     private static Question unused;
 
     @Rule
@@ -37,6 +38,7 @@ public class ComparisonRuleTest extends TxnAwareBaseTest {
     public static void setup() {
         testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
         unused = new NumericQuestion("sid", 1L, 2L, false, false, false, null, null, null, List.of(), List.of());
+        questionIdInstanceGuidPair = TransactionWrapper.withTxn(ComparisonRuleTest::prepareTestData);
     }
 
     @Test
@@ -48,26 +50,83 @@ public class ComparisonRuleTest extends TxnAwareBaseTest {
 
     @Test
     public void testValidateEqual() {
-        TransactionWrapper.useTxn(handle -> {
-            var questionIdInstanceGuidPair = prepareTestData(handle);
-            var comparisonRule = ComparisonRule.builder()
-                    .type(RuleType.COMPARISON)
-                    .referenceQuestionId(questionIdInstanceGuidPair.getLeft())
-                    .comparisonType(ComparisonType.EQUAL)
-                    .build();
+        var comparisonRule = ComparisonRule.builder()
+                .type(RuleType.COMPARISON)
+                .referenceQuestionId(questionIdInstanceGuidPair.getLeft())
+                .comparisonType(ComparisonType.EQUAL)
+                .build();
 
-            assertTrue(comparisonRule.validate(unused, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
-            assertFalse(comparisonRule.validate(unused, createAnswer(20L, questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(unused, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(unused, createAnswer(20L, questionIdInstanceGuidPair.getRight())));
+    }
 
-            handle.rollback();
-        });
+    @Test
+    public void testValidateNotEqual() {
+        var comparisonRule = ComparisonRule.builder()
+                .type(RuleType.COMPARISON)
+                .referenceQuestionId(questionIdInstanceGuidPair.getLeft())
+                .comparisonType(ComparisonType.NOT_EQUAL)
+                .build();
+
+        assertTrue(comparisonRule.validate(unused, createAnswer(20L, questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(unused, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
+    }
+
+    @Test
+    public void testValidateGreater() {
+        var comparisonRule = ComparisonRule.builder()
+                .type(RuleType.COMPARISON)
+                .referenceQuestionId(questionIdInstanceGuidPair.getLeft())
+                .comparisonType(ComparisonType.GREATER)
+                .build();
+
+        assertTrue(comparisonRule.validate(unused, createAnswer(20L, questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(unused, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
+    }
+
+    @Test
+    public void testValidateGreaterOrEqual() {
+        var comparisonRule = ComparisonRule.builder()
+                .type(RuleType.COMPARISON)
+                .referenceQuestionId(questionIdInstanceGuidPair.getLeft())
+                .comparisonType(ComparisonType.GREATER_OR_EQUAL)
+                .build();
+
+        assertTrue(comparisonRule.validate(unused, createAnswer(20L, questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(unused, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(unused, createAnswer(5L, questionIdInstanceGuidPair.getRight())));
+    }
+
+    @Test
+    public void testValidateLess() {
+        var comparisonRule = ComparisonRule.builder()
+                .type(RuleType.COMPARISON)
+                .referenceQuestionId(questionIdInstanceGuidPair.getLeft())
+                .comparisonType(ComparisonType.LESS)
+                .build();
+
+        assertTrue(comparisonRule.validate(unused, createAnswer(5L, questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(unused, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
+    }
+
+    @Test
+    public void testValidateLessOrEqual() {
+        var comparisonRule = ComparisonRule.builder()
+                .type(RuleType.COMPARISON)
+                .referenceQuestionId(questionIdInstanceGuidPair.getLeft())
+                .comparisonType(ComparisonType.LESS_OR_EQUAL)
+                .build();
+
+        assertTrue(comparisonRule.validate(unused, createAnswer(5L, questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(unused, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(unused, createAnswer(20L, questionIdInstanceGuidPair.getRight())));
     }
 
     private NumericAnswer createAnswer(long value, String instanceGuid) {
         return new NumericAnswer(null, testData.getStudyGuid(), "abc", value, instanceGuid);
     }
 
-    private Pair<Long, String> prepareTestData(final Handle handle) {
+    private static Pair<Long, String> prepareTestData(final Handle handle) {
         TestFormActivity act = TestFormActivity.builder()
                 .withNumericIntQuestion(true)
                 .build(handle, testData.getUserId(), testData.getStudyGuid());
@@ -87,7 +146,7 @@ public class ComparisonRuleTest extends TxnAwareBaseTest {
         return ImmutablePair.of(questionId.get(), activityInstance.getGuid());
     }
 
-    private ActivityInstanceDto createInstance(Handle handle, long activityId) {
+    private static ActivityInstanceDto createInstance(Handle handle, long activityId) {
         return handle.attach(ActivityInstanceDao.class).insertInstance(activityId, testData.getUserGuid());
     }
 }
