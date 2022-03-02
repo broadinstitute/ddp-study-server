@@ -52,7 +52,7 @@ public class ComparisonDateRuleTest extends TxnAwareBaseTest {
                 .build();
 
         assertTrue(comparisonRule.validate(unused,
-                createAnswer(new DateValue(2000, 1, 1), questionIdInstanceGuidPair.getRight())));
+                createAnswer(new DateValue(2000,1, 1), questionIdInstanceGuidPair.getRight())));
         assertFalse(comparisonRule.validate(unused,
                 createAnswer(new DateValue(1000,1, 1), questionIdInstanceGuidPair.getRight())));
     }
