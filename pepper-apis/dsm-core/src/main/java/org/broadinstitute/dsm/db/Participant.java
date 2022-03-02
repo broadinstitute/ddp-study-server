@@ -132,6 +132,13 @@ public class Participant {
         this.exitDate = exitDate;
     }
 
+    //For TissueList
+    public Participant(String participantId, String  ddpParticipantId, String  assigneeIdTissue){
+        this(Long.parseLong(participantId), ddpParticipantId, null, assigneeIdTissue, null,
+                null, null, null, null, null,
+                false, false, null, 0);
+    }
+
     public static Participant getParticipant(@NonNull Map<String, Assignee> assignees, @NonNull String realm, @NonNull ResultSet rs)
             throws SQLException {
         String assigneeMR = null;
