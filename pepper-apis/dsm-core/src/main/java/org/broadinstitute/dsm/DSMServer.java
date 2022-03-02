@@ -45,6 +45,8 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
+import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetrics;
+import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.dsm.careevolve.Provider;
 import org.broadinstitute.dsm.jetty.JettyConfig;
 import org.broadinstitute.dsm.jobs.DDPEventJob;
@@ -351,12 +353,22 @@ public class DSMServer {
         return true;
     }
 
-    private static void registerAppEngineStartupCallback(long bootTimeoutSeconds) {
+    private static void registerAppEngineStartupCallback(long bootTimeoutSeconds, Config cfg) {
+        GoogleAnalyticsMetricsTracker.setConfig(cfg);
         // Block until isReady is available, with an optional timeout to prevent
         // instance for sitting around too long in a nonresponsive state.  There is a
         // judgement call to be made here to allow for lengthy liquibase migrations during boot.
         logger.info("Will wait for at most {} seconds for boot before GAE termination", bootTimeoutSeconds);
         get("/_ah/start", new ReadinessRoute(bootTimeoutSeconds));
+
+        get(RoutePath.GAE.STOP_ENDPOINT, (request, response) -> {
+            logger.info("Received GAE stop request [{}]", RoutePath.GAE.STOP_ENDPOINT);
+            //flush out any pending GA events
+            GoogleAnalyticsMetricsTracker.getInstance().flushOutMetrics();
+
+            response.status(HttpStatus.SC_OK);
+            return "";
+        });
     }
 
     protected static void enableCORS(String allowedOrigins, String methods, String headers) {
@@ -406,12 +418,15 @@ public class DSMServer {
         logger.info("Using port {}", port);
         port(port);
 
-        registerAppEngineStartupCallback(bootTimeoutSeconds);
+        registerAppEngineStartupCallback(bootTimeoutSeconds, config);
 
         setupDB(config);
 
         // don't run superclass routing--it won't work with JettyConfig changes for capturing proper IP address in GAE
         setupCustomRouting(config);
+
+        GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics("", GoogleAnalyticsMetrics.EVENT_SERVER_START,
+                GoogleAnalyticsMetrics.EVENT_SERVER_START, GoogleAnalyticsMetrics.EVENT_SERVER_START, 1 );
 
         List<String> allowedOrigins = config.getStringList(ApplicationConfigConstants.CORS_ALLOWED_ORIGINS);
         enableCORS(StringUtils.join(allowedOrigins, ","), String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
@@ -777,6 +792,9 @@ public class DSMServer {
 
         GetParticipantDataRoute getParticipantDataRoute = new GetParticipantDataRoute();
         get(UI_ROOT + RoutePath.GET_PARTICIPANT_DATA, getParticipantDataRoute, new JsonTransformer());
+
+        FrontendAnalyticsRoute frontendAnalyticsRoute = new FrontendAnalyticsRoute();
+        patch(UI_ROOT +RoutePath.GoogleAnalytics,  frontendAnalyticsRoute, new JsonTransformer());
     }
 
     private void setupSharedRoutes(@NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil, @NonNull PatchUtil patchUtil) {
