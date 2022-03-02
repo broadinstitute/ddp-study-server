@@ -134,9 +134,9 @@
   "v2_con_your_phone": "Please input your phone number here:",
   "v2_address_title": "Your Mailing Address",
 
-  "v2_pcq_confident_set_material_question": "What material, if any, did you use to block light from your windows during the DLMO Collections?",
+  "v2_pcq_confident_set_material_question": "What material, if any, did you use to block light from your windows during the DLMO Collections? <br/> (Please choose all that apply):",
 
-  "v2_pcq_confident_set_material_prompt": "What material, if any, did you use to block light from your windows during the DLMO Collections?",
+  "v2_pcq_confident_set_material_prompt": "What material, if any, did you use to block light from your windows during the DLMO Collections? (Please choose all that apply):",
   "v2_pcq_confident_set_material_aluminum": "Aluminum Foil",
   "v2_pcq_confident_set_material_garbage": "Black Garbage Bags",
   "v2_pcq_confident_set_material_tape": "Tape",
