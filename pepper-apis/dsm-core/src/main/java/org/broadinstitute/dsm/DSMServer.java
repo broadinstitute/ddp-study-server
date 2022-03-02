@@ -45,6 +45,8 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
+import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetrics;
+import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.dsm.careevolve.Provider;
 import org.broadinstitute.dsm.jetty.JettyConfig;
 import org.broadinstitute.dsm.jobs.DDPEventJob;
@@ -58,53 +60,7 @@ import org.broadinstitute.dsm.jobs.PubSubLookUp;
 import org.broadinstitute.dsm.log.SlackAppender;
 import org.broadinstitute.dsm.pubsub.DSMtasksSubscription;
 import org.broadinstitute.dsm.pubsub.PubSubResultMessageSubscription;
-import org.broadinstitute.dsm.route.AbstractionFormControlRoute;
-import org.broadinstitute.dsm.route.AbstractionRoute;
-import org.broadinstitute.dsm.route.AllowedRealmsRoute;
-import org.broadinstitute.dsm.route.AssignParticipantRoute;
-import org.broadinstitute.dsm.route.AssigneeRoute;
-import org.broadinstitute.dsm.route.AuthenticationRoute;
-import org.broadinstitute.dsm.route.BSPKitRegisteredRoute;
-import org.broadinstitute.dsm.route.BSPKitRoute;
-import org.broadinstitute.dsm.route.CancerRoute;
-import org.broadinstitute.dsm.route.CarrierServiceRoute;
-import org.broadinstitute.dsm.route.ClinicalKitsRoute;
-import org.broadinstitute.dsm.route.CreateBSPDummyKitRoute;
-import org.broadinstitute.dsm.route.CreateClinicalDummyKitRoute;
-import org.broadinstitute.dsm.route.DashboardRoute;
-import org.broadinstitute.dsm.route.DisplaySettingsRoute;
-import org.broadinstitute.dsm.route.DownloadPDFRoute;
-import org.broadinstitute.dsm.route.DrugListRoute;
-import org.broadinstitute.dsm.route.DrugRoute;
-import org.broadinstitute.dsm.route.EditParticipantMessageReceiverRoute;
-import org.broadinstitute.dsm.route.EditParticipantPublisherRoute;
-import org.broadinstitute.dsm.route.EventTypeRoute;
-import org.broadinstitute.dsm.route.FieldSettingsRoute;
-import org.broadinstitute.dsm.route.FilterRoute;
-import org.broadinstitute.dsm.route.InstitutionRoute;
-import org.broadinstitute.dsm.route.KitAuthorizationRoute;
-import org.broadinstitute.dsm.route.KitDeactivationRoute;
-import org.broadinstitute.dsm.route.KitDiscardRoute;
-import org.broadinstitute.dsm.route.KitExpressRoute;
-import org.broadinstitute.dsm.route.KitLabelRoute;
-import org.broadinstitute.dsm.route.KitRequestRoute;
-import org.broadinstitute.dsm.route.KitSearchRoute;
-import org.broadinstitute.dsm.route.KitStatusChangeRoute;
-import org.broadinstitute.dsm.route.KitTypeRoute;
-import org.broadinstitute.dsm.route.KitUploadRoute;
-import org.broadinstitute.dsm.route.LabelSettingRoute;
-import org.broadinstitute.dsm.route.LoggingFilter;
-import org.broadinstitute.dsm.route.LookupRoute;
-import org.broadinstitute.dsm.route.MailingListRoute;
-import org.broadinstitute.dsm.route.MedicalRecordLogRoute;
-import org.broadinstitute.dsm.route.NDIRoute;
-import org.broadinstitute.dsm.route.ParticipantEventRoute;
-import org.broadinstitute.dsm.route.ParticipantExitRoute;
-import org.broadinstitute.dsm.route.ParticipantStatusRoute;
-import org.broadinstitute.dsm.route.PatchRoute;
-import org.broadinstitute.dsm.route.TriggerSurveyRoute;
-import org.broadinstitute.dsm.route.UserSettingRoute;
-import org.broadinstitute.dsm.route.ViewFilterRoute;
+import org.broadinstitute.dsm.route.*;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
@@ -397,12 +353,22 @@ public class DSMServer {
         return true;
     }
 
-    private static void registerAppEngineStartupCallback(long bootTimeoutSeconds) {
+    private static void registerAppEngineStartupCallback(long bootTimeoutSeconds, Config cfg) {
+        GoogleAnalyticsMetricsTracker.setConfig(cfg);
         // Block until isReady is available, with an optional timeout to prevent
         // instance for sitting around too long in a nonresponsive state.  There is a
         // judgement call to be made here to allow for lengthy liquibase migrations during boot.
         logger.info("Will wait for at most {} seconds for boot before GAE termination", bootTimeoutSeconds);
         get("/_ah/start", new ReadinessRoute(bootTimeoutSeconds));
+
+        get(RoutePath.GAE.STOP_ENDPOINT, (request, response) -> {
+            logger.info("Received GAE stop request [{}]", RoutePath.GAE.STOP_ENDPOINT);
+            //flush out any pending GA events
+            GoogleAnalyticsMetricsTracker.getInstance().flushOutMetrics();
+
+            response.status(HttpStatus.SC_OK);
+            return "";
+        });
     }
 
     protected static void enableCORS(String allowedOrigins, String methods, String headers) {
@@ -452,12 +418,15 @@ public class DSMServer {
         logger.info("Using port {}", port);
         port(port);
 
-        registerAppEngineStartupCallback(bootTimeoutSeconds);
+        registerAppEngineStartupCallback(bootTimeoutSeconds, config);
 
         setupDB(config);
 
         // don't run superclass routing--it won't work with JettyConfig changes for capturing proper IP address in GAE
         setupCustomRouting(config);
+
+        GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics("", GoogleAnalyticsMetrics.EVENT_SERVER_START,
+                GoogleAnalyticsMetrics.EVENT_SERVER_START, GoogleAnalyticsMetrics.EVENT_SERVER_START, 1 );
 
         List<String> allowedOrigins = config.getStringList(ApplicationConfigConstants.CORS_ALLOWED_ORIGINS);
         enableCORS(StringUtils.join(allowedOrigins, ","), String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
@@ -810,6 +779,9 @@ public class DSMServer {
 
         GetParticipantDataRoute getParticipantDataRoute = new GetParticipantDataRoute();
         get(UI_ROOT + RoutePath.GET_PARTICIPANT_DATA, getParticipantDataRoute, new JsonTransformer());
+
+        FrontendAnalyticsRoute frontendAnalyticsRoute = new FrontendAnalyticsRoute();
+        patch(UI_ROOT +RoutePath.GoogleAnalytics,  frontendAnalyticsRoute, new JsonTransformer());
     }
 
     private void setupSharedRoutes(@NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil, @NonNull PatchUtil patchUtil) {
