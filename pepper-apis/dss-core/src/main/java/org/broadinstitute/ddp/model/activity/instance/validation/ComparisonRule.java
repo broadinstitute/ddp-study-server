@@ -30,12 +30,16 @@ public class ComparisonRule extends Rule<Answer> {
 
     @Override
     public boolean validate(Question<Answer> question, Answer answer) {
+        if (answer == null) {
+            return false;
+        }
+
         if (answer.getValue() == null) {
             log.debug("The provided answer is null. Nothing to validate");
             return true;
         }
 
-        return TransactionWrapper.withTxn((handle) -> {
+        return TransactionWrapper.withTxn(handle -> {
             final Optional<Answer> referencedAnswer = handle.attach(AnswerDao.class)
                     .findAnswerByInstanceGuidAndQuestionId(answer.getActivityInstanceGuid(), referenceQuestionId);
             if (referencedAnswer.isEmpty()) {
