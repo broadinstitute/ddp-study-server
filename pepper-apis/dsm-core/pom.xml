@@ -251,10 +251,6 @@
             <groupId>com.brsanthu</groupId>
             <artifactId>google-analytics-java</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.brsanthu</groupId>
-            <artifactId>google-analytics-java</artifactId>
-        </dependency>
     </dependencies>
     <build>
         <plugins>
