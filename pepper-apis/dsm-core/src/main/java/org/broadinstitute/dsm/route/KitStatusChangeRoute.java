@@ -14,18 +14,22 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import lombok.NonNull;
-import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.kitrequest.KitRequestDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.kitrequest.KitRequestDto;
 import org.broadinstitute.dsm.model.KitDDPNotification;
 import org.broadinstitute.dsm.model.at.ReceiveKitRequest;
+import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
+import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.ElasticSearchDataUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.EventUtil;
@@ -36,6 +40,7 @@ import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.lddp.handlers.util.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
 
@@ -55,13 +60,8 @@ public class KitStatusChangeRoute extends RequestHandler {
         Map<String, Object> nameValuesMap = new HashMap<>();
         ElasticSearchDataUtil.setCurrentStrictYearMonthDay(nameValuesMap, ESObjectConstants.SENT);
         if (ddpInstance != null && kitRequest.getDdpKitRequestId() != null && kitRequest.getDdpParticipantId() != null) {
-            ElasticSearchUtil.writeSample(
-                    ddpInstance,
-                    kitRequest.getDdpKitRequestId(),
-                    kitRequest.getDdpParticipantId(),
-                    ESObjectConstants.SAMPLES,
-                    ESObjectConstants.KIT_REQUEST_ID, nameValuesMap
-            );
+            ElasticSearchUtil.writeSample(ddpInstance, kitRequest.getDdpKitRequestId(), kitRequest.getDdpParticipantId(),
+                    ESObjectConstants.SAMPLES, ESObjectConstants.KIT_REQUEST_ID, nameValuesMap);
         }
     }
 
@@ -69,8 +69,11 @@ public class KitStatusChangeRoute extends RequestHandler {
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         String requestBody = request.body();
         String userIdRequest = UserUtil.getUserId(request);
-        if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest) || UserUtil.checkUserAccess(null, userId,
-                "kit_receiving", userIdRequest)) {
+        QueryParamsMap queryParams = request.queryMap();
+        String realm = queryParams.get(RoutePath.REALM).value();
+        DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
+        if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest) || UserUtil.checkUserAccess(null, userId, "kit_receiving",
+                userIdRequest)) {
             List<ScanError> scanErrorList = new ArrayList<>();
 
             long currentTime = System.currentTimeMillis();
@@ -78,13 +81,13 @@ public class KitStatusChangeRoute extends RequestHandler {
             int labelCount = scans.size();
             if (labelCount > 0) {
                 if (request.url().endsWith(RoutePath.FINAL_SCAN_REQUEST)) {
-                    updateKits(RoutePath.FINAL_SCAN_REQUEST, scans, currentTime, scanErrorList, userIdRequest);
+                    updateKits(RoutePath.FINAL_SCAN_REQUEST, scans, currentTime, scanErrorList, userIdRequest, ddpInstanceDto);
                 } else if (request.url().endsWith(RoutePath.TRACKING_SCAN_REQUEST)) {
-                    updateKits(RoutePath.TRACKING_SCAN_REQUEST, scans, currentTime, scanErrorList, userIdRequest);
+                    updateKits(RoutePath.TRACKING_SCAN_REQUEST, scans, currentTime, scanErrorList, userIdRequest, ddpInstanceDto);
                 } else if (request.url().endsWith(RoutePath.SENT_KIT_REQUEST)) {
-                    updateKits(RoutePath.SENT_KIT_REQUEST, scans, currentTime, scanErrorList, userIdRequest);
+                    updateKits(RoutePath.SENT_KIT_REQUEST, scans, currentTime, scanErrorList, userIdRequest, ddpInstanceDto);
                 } else if (request.url().endsWith(RoutePath.RECEIVED_KIT_REQUEST)) {
-                    updateKits(RoutePath.RECEIVED_KIT_REQUEST, scans, currentTime, scanErrorList, userIdRequest);
+                    updateKits(RoutePath.RECEIVED_KIT_REQUEST, scans, currentTime, scanErrorList, userIdRequest, ddpInstanceDto);
                 } else {
                     logger.error("Endpoint was not known " + request.url());
                     return new Result(500, UserErrorMessages.CONTACT_DEVELOPER);
@@ -97,8 +100,8 @@ public class KitStatusChangeRoute extends RequestHandler {
         }
     }
 
-    public void updateKits(@NonNull String changeType, @NonNull JsonArray scans, @NonNull long currentTime,
-                           @NonNull List<ScanError> scanErrorList, @NonNull String userId) {
+    public void updateKits(@NonNull String changeType, @NonNull JsonArray scans, long currentTime, @NonNull List<ScanError> scanErrorList,
+                           @NonNull String userId, DDPInstanceDto ddpInstanceDto) {
         for (JsonElement scan : scans) {
             String addValue = null;
             String kit = null;
@@ -106,10 +109,12 @@ public class KitStatusChangeRoute extends RequestHandler {
                 addValue = scan.getAsJsonObject().get("leftValue").getAsString();
                 kit = scan.getAsJsonObject().get("rightValue").getAsString();
                 //check if ddp_label is blood kit
-                if (checkKitLabel(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_TYPE_NEED_TRACKING_BY_DDP_LABEL), kit)) {
+                if (checkKitLabel(DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_TYPE_NEED_TRACKING_BY_DDP_LABEL), kit)) {
                     //check if kit_label is in tracking table
-                    if (checkKitLabel(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_FOUND_IF_KIT_LABEL_ALREADY_EXISTS_IN_TRACKING_TABLE), addValue)) {
-                        updateKit(changeType, kit, addValue, currentTime, scanErrorList, userId);
+                    if (checkKitLabel(
+                            DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_FOUND_IF_KIT_LABEL_ALREADY_EXISTS_IN_TRACKING_TABLE),
+                            addValue)) {
+                        updateKit(changeType, kit, addValue, currentTime, scanErrorList, userId, ddpInstanceDto);
                         KitRequestDao kitRequestDao = new KitRequestDao();
                         KitRequestDto kitRequestByLabel = kitRequestDao.getKitRequestByLabel(kit);
                         if (kitRequestByLabel != null) {
@@ -119,30 +124,38 @@ public class KitStatusChangeRoute extends RequestHandler {
                         scanErrorList.add(new ScanError(kit, "Kit with DSM Label \"" + kit + "\" does not have a Tracking Label"));
                     }
                 } else {
-                    updateKit(changeType, kit, addValue, currentTime, scanErrorList, userId);
+                    updateKit(changeType, kit, addValue, currentTime, scanErrorList, userId, ddpInstanceDto);
                 }
             } else if (RoutePath.TRACKING_SCAN_REQUEST.equals(changeType)) {
                 addValue = scan.getAsJsonObject().get("leftValue").getAsString();
                 kit = scan.getAsJsonObject().get("rightValue").getAsString();
-                updateKit(changeType, kit, addValue, currentTime, scanErrorList, userId);
+                updateKit(changeType, kit, addValue, currentTime, scanErrorList, userId, ddpInstanceDto);
             } else if (RoutePath.SENT_KIT_REQUEST.equals(changeType) || RoutePath.RECEIVED_KIT_REQUEST.equals(changeType)) {
                 kit = scan.getAsJsonObject().get("kit").getAsString();
-                updateKit(changeType, kit, addValue, currentTime, scanErrorList, userId);
+                updateKit(changeType, kit, addValue, currentTime, scanErrorList, userId, ddpInstanceDto);
             } else {
                 throw new RuntimeException("Endpoint was not known");
             }
         }
     }
 
-    private void updateKit(@NonNull String changeType, @NonNull String kit, String addValue, @NonNull long currentTime,
-                           @NonNull List<ScanError> scanErrorList, @NonNull String userId) {
+    private void updateKit(@NonNull String changeType, @NonNull String kit, String addValue, long currentTime,
+                           @NonNull List<ScanError> scanErrorList, @NonNull String userId, DDPInstanceDto ddpInstanceDto) {
+        KitRequestShipping kitRequestShipping = new KitRequestShipping();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             String query = null;
             if (RoutePath.FINAL_SCAN_REQUEST.equals(changeType) || RoutePath.SENT_KIT_REQUEST.equals(changeType)) {
-                query = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.UPDATE_KIT_REQUEST);
+                query = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.UPDATE_KIT_REQUEST);
+                kitRequestShipping.setScanDate(currentTime);
+                kitRequestShipping.setKitLabel(addValue);
+                kitRequestShipping.setDdpLabel(kit);
             } else if (RoutePath.TRACKING_SCAN_REQUEST.equals(changeType)) {
-                query = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.INSERT_KIT_TRACKING);
+                query = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.INSERT_KIT_TRACKING);
+                //add value is value for tracking_id in ddp_kit_tracking and is considered as trackingReturnId in KitRequestShipping
+                kitRequestShipping.setScanDate(currentTime);
+                kitRequestShipping.setTrackingReturnId(addValue);
+                kitRequestShipping.setKitLabel(kit);
             } else if (RoutePath.RECEIVED_KIT_REQUEST.equals(changeType)) {
                 query = KitUtil.SQL_UPDATE_KIT_RECEIVED;
             }
@@ -159,20 +172,25 @@ public class KitStatusChangeRoute extends RequestHandler {
                 if (result == 1) {
                     if (RoutePath.FINAL_SCAN_REQUEST.equals(changeType) || RoutePath.SENT_KIT_REQUEST.equals(changeType)) {
                         logger.info("Updated kitRequests w/ ddp_label " + kit);
-                        KitDDPNotification kitDDPNotification =
-                                KitDDPNotification.getKitDDPNotification(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_SENT_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL), kit, 1);
+                        KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(
+                                DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_SENT_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL), kit,
+                                1);
                         if (kitDDPNotification != null) {
                             EventUtil.triggerDDP(conn, kitDDPNotification);
                         }
+                        UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, "ddpLabel",
+                                "ddpLabel", kit).export();
                     } else if (RoutePath.TRACKING_SCAN_REQUEST.equals(changeType)) {
                         logger.info("Added tracking for kit w/ kit_label " + kit);
+                        UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, "kitLabel",
+                                "kitLabel", addValue).export();
                     } else if (RoutePath.RECEIVED_KIT_REQUEST.equals(changeType)) {
                         logger.info("Updated kitRequest w/ SM-ID kit_label " + kit);
                     }
                 } else {
                     if (RoutePath.FINAL_SCAN_REQUEST.equals(changeType) || RoutePath.SENT_KIT_REQUEST.equals(changeType)) {
-                        scanErrorList.add(new ScanError(kit,
-                                "DSM Label \"" + kit + "\" does not exist or already has a Kit Label.\n" + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
+                        scanErrorList.add(new ScanError(kit, "DSM Label \"" + kit + "\" does not exist or already has a Kit Label.\n"
+                                + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
                         throw new RuntimeException("ddp_label " + kit + " does not exist or already has a Kit Label");
                     } else if (RoutePath.TRACKING_SCAN_REQUEST.equals(changeType)) {
                         scanErrorList.add(new ScanError(kit,
@@ -181,8 +199,9 @@ public class KitStatusChangeRoute extends RequestHandler {
                     } else if (RoutePath.RECEIVED_KIT_REQUEST.equals(changeType)) {
                         //try to receive it as AT kit
                         if (!ReceiveKitRequest.receiveATKitRequest(notificationUtil, kit)) {
-                            scanErrorList.add(new ScanError(kit, "SM-ID \"" + kit + "\" does not exist or was already scanned as received"
-                                    + ".\n" + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
+                            scanErrorList.add(new ScanError(kit,
+                                    "SM-ID \"" + kit + "\" does not exist or was already scanned as received.\n"
+                                            + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
                             logger.warn("SM-ID kit_label " + kit + " does not exist or was already scanned as received");
                         }
                     } else {

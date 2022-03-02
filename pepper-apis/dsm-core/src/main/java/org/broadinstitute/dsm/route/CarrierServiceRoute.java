@@ -24,11 +24,11 @@ import spark.Response;
 public class CarrierServiceRoute extends RequestHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(CarrierServiceRoute.class);
-    String SQL_SELECT_CARRIERS_QUERY = "SELECT carr.service " +
-            "FROM carrier_service carr " +
-            "left join ddp_instance_group realm on (realm.ddp_group_id = carr.instance_group) " +
-            "left join ddp_instance instance on (instance.ddp_instance_id  = realm.ddp_instance_id) " +
-            "where instance.instance_name = ? ";
+
+    private static final String SQL_SELECT_CARRIERS_QUERY = "SELECT carr.service " + "FROM carrier_service carr "
+            + "left join ddp_instance_group realm on (realm.ddp_group_id = carr.instance_group) "
+            + "left join ddp_instance instance on (instance.ddp_instance_id  = realm.ddp_instance_id) "
+            + "where instance.instance_name = ? ";
 
     @Override
     protected Object processRequest(Request request, Response response, String userId) throws Exception {

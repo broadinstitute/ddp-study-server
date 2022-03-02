@@ -3,27 +3,17 @@ package org.broadinstitute.ddp.db.dto.kit;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.broadinstitute.ddp.constants.SqlConstants.KitPexRuleTable;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
+@Value
+@AllArgsConstructor
 public class KitPexRuleDto {
-
-    private Long expressionId;
-    private Long kitRuleId;
-
-    public KitPexRuleDto(Long expressionId, Long kitRuleId) {
-        this.expressionId = expressionId;
-        this.kitRuleId = kitRuleId;
-    }
-
-    public Long getExpressionId() {
-        return expressionId;
-    }
-
-    public Long getKitRuleId() {
-        return kitRuleId;
-    }
+    Long expressionId;
+    Long kitRuleId;
 
     public static class KitPexRuleDtoMapper implements RowMapper<KitPexRuleDto> {
         @Override

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <databaseChangeLog
-        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
     <changeSet author="ikhaladz" id="createMessageStatusTable">
@@ -20,6 +20,6 @@
     <changeSet author="ikhaladz" id="createMessageUserForeignKey">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="message" constraintName="fk_message_user"
                                  deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
-                                    referencedColumnNames="user_id" referencedTableName="access_user"/>
+                                 referencedColumnNames="user_id" referencedTableName="access_user"/>
     </changeSet>
 </databaseChangeLog>

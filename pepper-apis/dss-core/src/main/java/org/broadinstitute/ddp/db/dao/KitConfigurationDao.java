@@ -154,7 +154,7 @@ public interface KitConfigurationDao extends SqlObject {
         var schedule = getKitScheduleDao().findSchedule(kitConfigurationDto.getId()).orElse(null);
 
         return new KitConfiguration(kitConfigurationDto.getId(), numKits, kitType, guid,
-                kitConfigurationDto.needsApproval(), kitRules, schedule);
+                kitConfigurationDto.isApprovalNeeded(), kitRules, schedule);
     }
 
     @SqlQuery("select kckr.kit_configuration_id,"

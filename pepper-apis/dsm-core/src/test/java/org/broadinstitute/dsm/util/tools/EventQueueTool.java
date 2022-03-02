@@ -18,6 +18,7 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.ParticipantEvent;
 import org.broadinstitute.dsm.model.KitDDPNotification;
+import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.EventUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -81,14 +82,12 @@ public class EventQueueTool {
         //secrets from vault in a config file
         cfg = cfg.withFallback(ConfigFactory.parseFile(new File(config)));
 
-        //TODO DSM add back in
-//        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
-//                cfg.getString("portal.dbSslKeyStorePwd"),
-//                cfg.getString("portal.dbSslTrustStore"),
-//                cfg.getString("portal.dbSslTrustStorePwd"));
-//
-//        TransactionWrapper.init(cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS),
-//                cfg.getString(ApplicationConfigConstants.DSM_DB_URL), cfg, false);
+        //        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
+        //                cfg.getString("portal.dbSslKeyStorePwd"),
+        //                cfg.getString("portal.dbSslTrustStore"),
+        //                cfg.getString("portal.dbSslTrustStorePwd"));
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM,
+                cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS), cfg.getString(ApplicationConfigConstants.DSM_DB_URL)));
     }
 
     private static void eventQueue(Connection conn, @NonNull String realm, @NonNull String eventName) {
@@ -111,8 +110,8 @@ public class EventQueueTool {
         ArrayList<KitDDPNotification> kitDDPNotifications = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(EventUtil.SQL_SELECT_KIT_FOR_REMINDER_EMAILS + " AND realm.instance_name "
-                    + "= ?")) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    EventUtil.SQL_SELECT_KIT_FOR_REMINDER_EMAILS + " AND realm.instance_name = ?")) {
                 stmt.setString(1, DBConstants.KIT_PARTICIPANT_NOTIFICATIONS_ACTIVATED);
                 stmt.setString(2, realmName);
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -120,14 +119,12 @@ public class EventQueueTool {
                         String participantId = rs.getString(DBConstants.DDP_PARTICIPANT_ID);
                         String instanceName = rs.getString(DBConstants.INSTANCE_NAME);
                         String eventName = rs.getString(DBConstants.EVENT_NAME);
-                        if (StringUtils.isNotBlank(instanceName) && instanceName.equals(realmName) &&
-                                StringUtils.isNotBlank(eventName) && eventName.equals(skipEventName)) {
-                            kitDDPNotifications.add(new KitDDPNotification(participantId,
-                                    rs.getString(DBConstants.DSM_KIT_REQUEST_ID), rs.getString(DBConstants.DDP_INSTANCE_ID), realmName,
-                                    rs.getString(DBConstants.BASE_URL), eventName,
+                        if (StringUtils.isNotBlank(instanceName) && instanceName.equals(realmName) && StringUtils.isNotBlank(eventName)
+                                && eventName.equals(skipEventName)) {
+                            kitDDPNotifications.add(new KitDDPNotification(participantId, rs.getString(DBConstants.DSM_KIT_REQUEST_ID),
+                                    rs.getString(DBConstants.DDP_INSTANCE_ID), realmName, rs.getString(DBConstants.BASE_URL), eventName,
                                     rs.getString(DBConstants.EVENT_TYPE), System.currentTimeMillis(),
-                                    rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN),
-                                    rs.getString(DBConstants.UPLOAD_REASON),
+                                    rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN), rs.getString(DBConstants.UPLOAD_REASON),
                                     rs.getString(DBConstants.DDP_KIT_REQUEST_ID)));
                         }
                     }

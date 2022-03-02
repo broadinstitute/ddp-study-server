@@ -30,10 +30,10 @@ public class MedicalRecordLogRoute extends RequestHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(MedicalRecordLogRoute.class);
 
-    private static final String SQL_SELECT_MR_LOG = "SELECT medical_record_log_id, date, comments, type FROM ddp_medical_record_log WHERE"
-            + " medical_record_id = ?";
-    private static final String SQL_UPDATE_MR_LOG = "UPDATE ddp_medical_record_log SET date = ?, comments = ?, last_changed = ? WHERE "
-            + "medical_record_log_id = ?";
+    private static final String SQL_SELECT_MR_LOG =
+            "SELECT medical_record_log_id, date, comments, type FROM ddp_medical_record_log WHERE medical_record_id = ?";
+    private static final String SQL_UPDATE_MR_LOG =
+            "UPDATE ddp_medical_record_log SET date = ?, comments = ?, last_changed = ? WHERE medical_record_log_id = ?";
 
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
@@ -65,9 +65,6 @@ public class MedicalRecordLogRoute extends RequestHandler {
 
     /**
      * Read logs form ddp_medical_record_log table
-     *
-     * @return List<MedicalRecordLog>
-     * @throws Exception
      */
     public Collection<MedicalRecordLog> getMedicalRecordLogs(@NonNull String medicalRecordId) {
         List<MedicalRecordLog> logs = new ArrayList<>();
@@ -102,8 +99,6 @@ public class MedicalRecordLogRoute extends RequestHandler {
      * Save value at ddp_medical_record_log table
      * for the given medicalRecordLog
      *
-     * @return boolean value if changes where successful
-     * @throws Exception
      */
     public void saveMedicalRecordLog(@NonNull String medicalRecordLogId, @NonNull MedicalRecordLog medicalRecordLog) {
         SimpleResult results = inTransaction((conn) -> {
@@ -117,7 +112,8 @@ public class MedicalRecordLogRoute extends RequestHandler {
                 if (result == 1) {
                     logger.info("Updated medical record log w/ id " + medicalRecordLogId);
                 } else {
-                    throw new RuntimeException("Error updating medical record log w/ id " + medicalRecordLogId + " it was updating " + result + " rows");
+                    throw new RuntimeException(
+                            "Error updating medical record log w/ id " + medicalRecordLogId + " it was updating " + result + " rows");
                 }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;

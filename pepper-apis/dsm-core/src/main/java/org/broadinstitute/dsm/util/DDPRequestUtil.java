@@ -20,14 +20,12 @@ import lombok.NonNull;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.fluent.Executor;
 import org.apache.http.util.EntityUtils;
-import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.exception.SurveyNotCreated;
-import org.broadinstitute.dsm.model.PDF.MiscPDFDownload;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.model.ddp.PreferredLanguage;
+import org.broadinstitute.dsm.model.pdf.MiscPDFDownload;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -46,37 +44,16 @@ public class DDPRequestUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(DDPRequestUtil.class);
 
-    private static Executor blindTrustEverythingExecutor;
-
-    public DDPRequestUtil() {
-        try {
-            if (Boolean.valueOf(ConfigUtil.getSqlFromConfig("portal.enableBlindTrustDDP"))) {
-                if (blindTrustEverythingExecutor == null) {
-                    blindTrustEverythingExecutor = Executor.newInstance(SecurityUtil.buildHttpClient());
-                    logger.info("Loaded blindTrustEverythingExecutor for DDP requests.");
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Starting up the blindTrustEverythingExecutor ", e);
-            System.exit(-3);
-        }
-    }
-
     public static String getContentAsString(HttpResponse response) throws IOException {
         BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
-        return IOUtils.toString(rd);
+        return org.apache.commons.io.IOUtils.toString(rd);
     }
 
     // make a get request
     public static <T> T getResponseObject(Class<T> responseClass, String sendRequest, String name, boolean auth0Token) throws IOException {
         logger.info("Requesting data from " + name + " w/ " + sendRequest);
         org.apache.http.client.fluent.Request request = SecurityUtil.createGetRequestWithHeader(sendRequest, name, auth0Token);
-        T objects;
-        if (blindTrustEverythingExecutor != null) {
-            objects = blindTrustEverythingExecutor.execute(request).handleResponse(res -> getResponse(res, responseClass, sendRequest));
-        } else {
-            objects = request.execute().handleResponse(res -> getResponse(res, responseClass, sendRequest));
-        }
+        T objects = request.execute().handleResponse(res -> getResponse(res, responseClass, sendRequest));
         if (objects != null) {
             logger.info("Got response back");
         }
@@ -105,12 +82,7 @@ public class DDPRequestUtil {
                 request = request.addHeader(headerEntry.getKey(), headerEntry.getValue());
             }
         }
-        T objects;
-        if (blindTrustEverythingExecutor != null) {
-            objects = blindTrustEverythingExecutor.execute(request).handleResponse(res -> getResponse(res, responseClass, sendRequest));
-        } else {
-            objects = request.execute().handleResponse(res -> getResponse(res, responseClass, sendRequest));
-        }
+        T objects = request.execute().handleResponse(res -> getResponse(res, responseClass, sendRequest));
         if (objects != null) {
             logger.info("Got response back");
         }
@@ -118,18 +90,13 @@ public class DDPRequestUtil {
     }
 
     // make a post request
-    public static Integer postRequest(String sendRequest, Object objectToPost, String name, boolean auth0Token) throws IOException,
-            RuntimeException {
+    public static Integer postRequest(String sendRequest, Object objectToPost, String name, boolean auth0Token)
+            throws IOException, RuntimeException {
         logger.info("Requesting data from " + name + " w/ " + sendRequest);
-        org.apache.http.client.fluent.Request request = SecurityUtil.createPostRequestWithHeader(sendRequest, name, auth0Token,
-                objectToPost);
+        org.apache.http.client.fluent.Request request =
+                SecurityUtil.createPostRequestWithHeader(sendRequest, name, auth0Token, objectToPost);
 
-        int responseCode;
-        if (blindTrustEverythingExecutor != null) {
-            responseCode = blindTrustEverythingExecutor.execute(request).handleResponse(res -> getResponseCode(res, sendRequest));
-        } else {
-            responseCode = request.execute().handleResponse(res -> getResponseCode(res, sendRequest));
-        }
+        int responseCode = request.execute().handleResponse(res -> getResponseCode(res, sendRequest));
         return responseCode;
     }
 
@@ -163,12 +130,7 @@ public class DDPRequestUtil {
 
         org.apache.http.client.fluent.Request request = SecurityUtil.createGetRequestWithHeader(sendRequest, name, auth0Token);
 
-        byte[] bytes;
-        if (blindTrustEverythingExecutor != null) {
-            bytes = blindTrustEverythingExecutor.execute(request).handleResponse(res -> getResponseByteArray(res, sendRequest));
-        } else {
-            bytes = request.execute().handleResponse(res -> getResponseByteArray(res, sendRequest));
-        }
+        byte[] bytes = request.execute().handleResponse(res -> getResponseByteArray(res, sendRequest));
         return bytes;
     }
 
@@ -185,27 +147,20 @@ public class DDPRequestUtil {
         return null;
     }
 
-    /**
-     * Getting all participants of a ddp back
-     *
-     * @param instance DDPInstance object (information of the ddp like url, token)
-     * @return HashMap<String, DDPParticipant>
-     * Key: (String) ddp_participant_id
-     * Value: DDPParticipant (Information of participant from the ddp)
-     */
     public static Map<String, DDPParticipant> getDDPParticipant(@NonNull DDPInstance instance) {
         Map<String, DDPParticipant> mapDDPParticipantInstitution = new HashMap<>();
         String sendRequest = instance.getBaseUrl() + RoutePath.DDP_PARTICIPANTINSTITUTIONS_PATH;
         try {
-            ParticipantInstitutionInfo[] participantInfo = DDPRequestUtil.getResponseObject(ParticipantInstitutionInfo[].class,
-                    sendRequest, instance.getName(), instance.isHasAuth0Token());
+            ParticipantInstitutionInfo[] participantInfo =
+                    DDPRequestUtil.getResponseObject(ParticipantInstitutionInfo[].class, sendRequest, instance.getName(),
+                            instance.isHasAuth0Token());
             if (participantInfo != null) {
                 logger.info("Got " + participantInfo.length + " ParticipantInstitutionInfo ");
                 for (ParticipantInstitutionInfo info : participantInfo) {
                     String key = info.getParticipantId();
-                    mapDDPParticipantInstitution.put(key, new DDPParticipant(info.getShortId(), info.getLegacyShortId(),
-                            info.getFirstName(),
-                            info.getLastName(), info.getAddress()));
+                    mapDDPParticipantInstitution.put(key,
+                            new DDPParticipant(info.getShortId(), info.getLegacyShortId(), info.getFirstName(), info.getLastName(),
+                                    info.getAddress()));
                 }
             }
         } catch (Exception ioe) {
@@ -239,7 +194,8 @@ public class DDPRequestUtil {
             throw new SurveyNotCreated("Couldn't trigger survey for participant " + sendRequest);
         }
         if (ddpResponse == HttpStatusCodes.STATUS_CODE_OK) {
-            logger.info("Triggered DDP to create " + surveyName + " survey for participant w/ ddpParticipantId " + survey.getParticipantId());
+            logger.info(
+                    "Triggered DDP to create " + surveyName + " survey for participant w/ ddpParticipantId " + survey.getParticipantId());
             return new Result(200);
         }
         return new Result(500, UserErrorMessages.SURVEY_NOT_CREATED);
@@ -265,10 +221,10 @@ public class DDPRequestUtil {
     }
 
     public static void savePDFsInBucket(@NonNull String baseURL, @NonNull String instanceName, @NonNull String ddpParticipantId,
-                                        @NonNull boolean hasAuth0Token, @NonNull String pdfEndpoint,
-                                        @NonNull long time, @NonNull String userId, @NonNull String reason) {
+                                        @NonNull boolean hasAuth0Token, @NonNull String pdfEndpoint, @NonNull long time,
+                                        @NonNull String userId, @NonNull String reason) {
         String fileName = pdfEndpoint.replace("/", "").replace("pdf", "");
-        String gcpName = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
+        String gcpName = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
         if (StringUtils.isNotBlank(gcpName)) {
             String bucketName = gcpName + "_dsm_" + instanceName.toLowerCase();
             try {
@@ -277,11 +233,12 @@ public class DDPRequestUtil {
                     byte[] bytes = DDPRequestUtil.getPDFByteArray(pdfRequest, instanceName, hasAuth0Token);
 
                     GoogleBucket.uploadFile(null, gcpName, bucketName,
-                            ddpParticipantId + "/readonly/" + ddpParticipantId + "_" + fileName + "_" + userId + "_" + reason + "_" + time + ".pdf",
-                            new ByteArrayInputStream(bytes));
+                            ddpParticipantId + "/readonly/" + ddpParticipantId + "_" + fileName + "_" + userId + "_" + reason + "_" + time
+                                    + ".pdf", new ByteArrayInputStream(bytes));
                 }
             } catch (Exception e) {
-                throw new RuntimeException("Couldn't save " + fileName + " pdf in google bucket " + bucketName + " for ddpParticipant " + ddpParticipantId, e);
+                throw new RuntimeException(
+                        "Couldn't save " + fileName + " pdf in google bucket " + bucketName + " for ddpParticipant " + ddpParticipantId, e);
             }
         }
     }
@@ -293,9 +250,9 @@ public class DDPRequestUtil {
                 ddpParticipantId, ddpInstance.isHasAuth0Token(), userId, reason);
     }
 
-    public static void makeStandardPDF(@NonNull boolean hasConsentEndpoints, @NonNull boolean hasReleaseEndpoints,
-                                       @NonNull String baseUrl, @NonNull String instanceName, @NonNull String ddpParticipantId,
-                                       @NonNull boolean hasAuth0Token, @NonNull String userId, @NonNull String reason) {
+    public static void makeStandardPDF(@NonNull boolean hasConsentEndpoints, @NonNull boolean hasReleaseEndpoints, @NonNull String baseUrl,
+                                       @NonNull String instanceName, @NonNull String ddpParticipantId, @NonNull boolean hasAuth0Token,
+                                       @NonNull String userId, @NonNull String reason) {
         // save consent in bucket, if ddpInstance has endpoint
         long time = System.currentTimeMillis();
         if (hasConsentEndpoints) {
@@ -343,17 +300,13 @@ public class DDPRequestUtil {
     }
 
     // make a post request
-    public static Integer postRequest(String sendRequest, Object objectToPost, String name, boolean auth0Token, Auth0Util auth0Util) throws IOException, RuntimeException {
+    public static Integer postRequest(String sendRequest, Object objectToPost, String name, boolean auth0Token, Auth0Util auth0Util)
+            throws IOException, RuntimeException {
         logger.info("Requesting data from " + name + " w/ " + sendRequest);
-        org.apache.http.client.fluent.Request request = SecurityUtil.createPostRequestWithHeader(sendRequest, name, auth0Token,
-                objectToPost, auth0Util);
+        org.apache.http.client.fluent.Request request =
+                SecurityUtil.createPostRequestWithHeader(sendRequest, name, auth0Token, objectToPost, auth0Util);
 
-        int responseCode;
-        if (blindTrustEverythingExecutor != null) {
-            responseCode = blindTrustEverythingExecutor.execute(request).handleResponse(res -> getResponseCode(res, sendRequest));
-        } else {
-            responseCode = request.execute().handleResponse(res -> getResponseCode(res, sendRequest));
-        }
+        int responseCode = request.execute().handleResponse(res -> getResponseCode(res, sendRequest));
         return responseCode;
     }
 }

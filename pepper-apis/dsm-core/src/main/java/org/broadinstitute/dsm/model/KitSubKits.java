@@ -20,13 +20,13 @@ public class KitSubKits {
 
     private static final Logger logger = LoggerFactory.getLogger(KitSubKits.class);
 
-    private static final String SQL_SELECT_SUB_KIT_TYPES = "SELECT kit.kit_type_id, kit.kit_type_name, subK.kit_count FROM "
-            + "ddp_kit_request_settings dkc " +
-            "LEFT JOIN sub_kits_settings subK ON (subK.ddp_kit_request_settings_id = dkc.ddp_kit_request_settings_id) LEFT JOIN "
-            + "ddp_instance realm ON (realm.ddp_instance_id = dkc.ddp_instance_id) " +
-            "LEFT JOIN kit_type kit ON (subK.kit_type_id = kit.kit_type_id) LEFT JOIN kit_type kitParent ON (dkc.kit_type_id = kitParent"
-            + ".kit_type_id) " +
-            "WHERE realm.instance_name = ? and kitParent.kit_type_name = ?";
+    private static final String SQL_SELECT_SUB_KIT_TYPES =
+            "SELECT kit.kit_type_id, kit.kit_type_name, subK.kit_count FROM ddp_kit_request_settings dkc "
+                    + "LEFT JOIN sub_kits_settings subK ON (subK.ddp_kit_request_settings_id = dkc.ddp_kit_request_settings_id) "
+                    + "LEFT JOIN ddp_instance realm ON (realm.ddp_instance_id = dkc.ddp_instance_id) "
+                    + "LEFT JOIN kit_type kit ON (subK.kit_type_id = kit.kit_type_id) "
+                    + "LEFT JOIN kit_type kitParent ON (dkc.kit_type_id = kitParent.kit_type_id) "
+                    + "WHERE realm.instance_name = ? and kitParent.kit_type_name = ?";
 
     private int kitTypeId;
     private String kitName;
@@ -40,10 +40,6 @@ public class KitSubKits {
 
     /**
      * Getting all kit types
-     *
-     * @return HashMap<String, KitType>
-     * Key: (String) kit_type_name + _ + instance_id from table kit_type
-     * Value: KitType (Information of kitType like customJson)
      */
     public static List<KitSubKits> getSubKits(@NonNull String realm, @NonNull String kitType) {
         List<KitSubKits> subKits = new ArrayList<>();
@@ -54,8 +50,7 @@ public class KitSubKits {
                 stmt.setObject(2, kitType);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        subKits.add(new KitSubKits(rs.getInt(DBConstants.KIT_TYPE_ID),
-                                rs.getString(DBConstants.KIT_TYPE_NAME),
+                        subKits.add(new KitSubKits(rs.getInt(DBConstants.KIT_TYPE_ID), rs.getString(DBConstants.KIT_TYPE_NAME),
                                 rs.getInt(DBConstants.KIT_COUNT)));
                     }
                 }

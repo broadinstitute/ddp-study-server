@@ -13,7 +13,7 @@ public class QuickFilterParticipantList extends BaseFilterParticipantList {
 
     @Override
     public ParticipantWrapperResult filter(QueryParamsMap queryParamsMap) {
-        prepareNeccesaryData(queryParamsMap);
+        prepareNecessaryData(queryParamsMap);
         ParticipantWrapperResult participantWrapperResult = new ParticipantWrapperResult();
         String filterName = queryParamsMap.get(RequestParameter.FILTER_NAME).value();
         if (StringUtils.isBlank(filterName)) {

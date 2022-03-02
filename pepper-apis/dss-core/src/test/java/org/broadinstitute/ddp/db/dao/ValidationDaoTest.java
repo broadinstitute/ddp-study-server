@@ -78,7 +78,7 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
     public void testGetActiveValidations_questionNotFound() {
         TransactionWrapper.useTxn(handle -> {
             var nonExistingQuestionDto = new QuestionDto(
-                    QuestionType.TEXT, -1, "stuff", -1,
+                    QuestionType.TEXT, -1, "stuff", -1, null,
                     -1L, -1L,
                     -1, false, false, false, false, -1, -1, null
             );
@@ -273,7 +273,7 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
 
     private QuestionDto buildQuestionDto(FormActivityDef form, QuestionDef def) {
         return new QuestionDto(
-                def.getQuestionType(), def.getQuestionId(), def.getStableId(), def.getPromptTemplate().getTemplateId(),
+                def.getQuestionType(), def.getQuestionId(), def.getStableId(), def.getPromptTemplate().getTemplateId(), null,
                 null, null,
                 form.getActivityId(), def.isRestricted(), def.isDeprecated(), def.shouldHideNumber(), false, -1, -1, null
         );

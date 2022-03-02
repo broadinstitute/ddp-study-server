@@ -34,26 +34,13 @@ public class InstanceSettingsDao implements Dao<InstanceSettingsDto> {
     public static final String HAS_INVITATIONS = "has_invitations";
     public static final String GBF_SHIPPED_DSS_DELIVERED = "GBF_SHIPPED_DSS_DELIVERED";
     public static final String HAS_ADDRESS_TAB = "has_address_tab";
-    private static final String SQL_GET_HIDE_SAMPLES_TAB_BY_STUDY_GUID = "SELECT " +
-            "hide_samples_tab " +
-            "FROM instance_settings " +
-            "WHERE ddp_instance_id = (SELECT ddp_instance_id FROM ddp_instance WHERE study_guid = ?)";
-    private static final String SQL_GET_BY_INSTANCE_NAME = "SELECT " +
-            "instance_settings_id, " +
-            "ddp_instance_id, " +
-            "mr_cover_pdf, " +
-            "kit_behavior_change, " +
-            "special_format, " +
-            "hide_ES_fields, " +
-            "hide_samples_tab, " +
-            "study_specific_statuses, " +
-            "default_columns, " +
-            "has_invitations, " +
-            "has_address_tab, " +
-            "has_computed_object, " +
-            "GBF_SHIPPED_DSS_DELIVERED " +
-            "FROM instance_settings " +
-            "WHERE ddp_instance_id = (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = ?)";
+    private static final String SQL_GET_HIDE_SAMPLES_TAB_BY_STUDY_GUID = "SELECT hide_samples_tab FROM instance_settings "
+            + "WHERE ddp_instance_id = (SELECT ddp_instance_id FROM ddp_instance WHERE study_guid = ?)";
+    private static final String SQL_GET_BY_INSTANCE_NAME =
+            "SELECT instance_settings_id, ddp_instance_id, mr_cover_pdf, kit_behavior_change, special_format, "
+                    + "hide_ES_fields, hide_samples_tab, study_specific_statuses, default_columns, has_invitations, "
+                    + "has_address_tab, has_computed_object, GBF_SHIPPED_DSS_DELIVERED " + "FROM instance_settings "
+                    + "WHERE ddp_instance_id = (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = ?)";
 
     @Override
     public int create(InstanceSettingsDto instanceSettingsDto) {
@@ -87,8 +74,7 @@ public class InstanceSettingsDao implements Dao<InstanceSettingsDto> {
             return execResult;
         });
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting tabs to hide for study guid: "
-                    + studyGuid, results.resultException);
+            throw new RuntimeException("Error getting tabs to hide for study guid: " + studyGuid, results.resultException);
         }
         return Optional.ofNullable((Boolean) results.resultValue);
     }
@@ -96,8 +82,7 @@ public class InstanceSettingsDao implements Dao<InstanceSettingsDto> {
     public Optional<InstanceSettingsDto> getByInstanceName(String instanceName) {
         SimpleResult results = inTransaction((conn) -> getInstanceSettingsByInstanceName(instanceName, conn));
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting instance settings for study guid: "
-                    + instanceName, results.resultException);
+            throw new RuntimeException("Error getting instance settings for study guid: " + instanceName, results.resultException);
         }
         return Optional.ofNullable((InstanceSettingsDto) results.resultValue);
     }
@@ -106,8 +91,7 @@ public class InstanceSettingsDao implements Dao<InstanceSettingsDto> {
     public Optional<InstanceSettingsDto> getByInstanceName(Connection conn, String instanceName) {
         SimpleResult results = getInstanceSettingsByInstanceName(instanceName, conn);
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting instance settings for study guid: "
-                    + instanceName, results.resultException);
+            throw new RuntimeException("Error getting instance settings for study guid: " + instanceName, results.resultException);
         }
         return Optional.ofNullable((InstanceSettingsDto) results.resultValue);
     }
@@ -119,8 +103,7 @@ public class InstanceSettingsDao implements Dao<InstanceSettingsDto> {
             stmt.setString(1, instanceName);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    execResult.resultValue = new InstanceSettingsDto.Builder()
-                            .withInstanceSettingsId(rs.getInt(INSTANCE_SETTINGS_ID))
+                    execResult.resultValue = new InstanceSettingsDto.Builder().withInstanceSettingsId(rs.getInt(INSTANCE_SETTINGS_ID))
                             .withDdpInstanceId(Integer.parseInt(rs.getString(DDP_INSTANCE_ID)))
                             .withMrCoverPdf(getValuesFromJson(rs.getString(MR_COVER_PDF)))
                             .withKitBehaviorChange(getValuesFromJson(rs.getString(KIT_BEHAVIOR_CHANGE)))
@@ -131,8 +114,7 @@ public class InstanceSettingsDao implements Dao<InstanceSettingsDto> {
                             .withDefaultColumns(getValuesFromJson(rs.getString(DEFAULT_COLUMNS)))
                             .withHasInvitations(rs.getBoolean(HAS_INVITATIONS))
                             .withGbfShippedTriggerDssDelivered(rs.getBoolean(GBF_SHIPPED_DSS_DELIVERED))
-                            .withHasAddressTab(rs.getBoolean(HAS_ADDRESS_TAB))
-                            .withHasComputedObject(rs.getBoolean(HAS_COMPUTED_OBJECT))
+                            .withHasAddressTab(rs.getBoolean(HAS_ADDRESS_TAB)).withHasComputedObject(rs.getBoolean(HAS_COMPUTED_OBJECT))
                             .build();
                 }
             }

@@ -20,6 +20,7 @@ import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.ParticipantData;
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.ViewFilter;
+import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
@@ -53,6 +54,7 @@ public class PatchUtil {
         getColumnNames(KitRequest.class);
         getColumnNames(Drug.class);
         getColumnNames(ParticipantData.class);
+        getColumnNames(ParticipantRecordDto.class);
         logger.info("Loaded patch utils");
     }
 
@@ -95,7 +97,7 @@ public class PatchUtil {
             columnPrefix = tableNameAnnotation.columnPrefix();
         }
 
-        boolean tableNamePerClass = tableName != null;
+        boolean tableNamePerClass = tableName != null ? true : false;
         Field[] fields = obj.getDeclaredFields();
         for (Field field : fields) {
             if (!tableNamePerClass) {
@@ -122,8 +124,8 @@ public class PatchUtil {
                         fieldKey = columnPrefix.concat("_").concat(field.getName());
                     }
 
-                    columnNameMap.put(fieldKey, new DBElement(tableName, tableAlias, primaryKey, column.value(),
-                            field.getAnnotation(DbDateConversion.class)));
+                    columnNameMap.put(fieldKey,
+                            new DBElement(tableName, tableAlias, primaryKey, column.value(), field.getAnnotation(DbDateConversion.class)));
                     dataBaseMap.put(nameKey, field.getName());
                 }
             }

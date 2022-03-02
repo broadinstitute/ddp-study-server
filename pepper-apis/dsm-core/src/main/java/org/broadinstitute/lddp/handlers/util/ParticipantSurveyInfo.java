@@ -13,6 +13,7 @@ public class ParticipantSurveyInfo {
     private Long surveyQueued;
     private String surveyStatus;
     private Long triggerId;
+
     public ParticipantSurveyInfo() {
     }
 

@@ -37,10 +37,10 @@ public class AssignParticipantRoute extends RequestHandler {
     public static final String ASSIGN_MR = "assignMR";
     public static final String ASSIGN_TISSUE = "assignTissue";
     private static final Logger logger = LoggerFactory.getLogger(AssignParticipantRoute.class);
-    private static final String SQL_UPDATE_MR_ASSIGNEE = "UPDATE ddp_participant SET assignee_id_mr = ?, last_changed = ? WHERE "
-            + "participant_id = ?";
-    private static final String SQL_UPDATE_TISSUE_ASSIGNEE = "UPDATE ddp_participant SET assignee_id_tissue = ?, last_changed = ? WHERE "
-            + "participant_id = ?";
+    private static final String SQL_UPDATE_MR_ASSIGNEE =
+            "UPDATE ddp_participant SET assignee_id_mr = ?, last_changed = ? WHERE participant_id = ?";
+    private static final String SQL_UPDATE_TISSUE_ASSIGNEE =
+            "UPDATE ddp_participant SET assignee_id_tissue = ?, last_changed = ? WHERE participant_id = ?";
 
     private final String queryForDDPParticipantId;
 
@@ -136,8 +136,8 @@ public class AssignParticipantRoute extends RequestHandler {
         }
         if (!shortIds.isEmpty()) {
             String message = "";
-            for (String sId : shortIds) {
-                message += sId + ", ";
+            for (String userId : shortIds) {
+                message += userId + ", ";
             }
             message = message.replaceAll(", $", "");
             doNotification(email, message, email, EMAIL_TYPE, false, realm);
