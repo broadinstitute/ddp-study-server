@@ -8,44 +8,39 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.QuestionDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
-import org.broadinstitute.ddp.model.activity.instance.question.NumericQuestion;
+import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
+import org.broadinstitute.ddp.model.activity.instance.question.DateQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.types.ComparisonType;
+import org.broadinstitute.ddp.model.activity.types.DateFieldType;
+import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestFormActivity;
 import org.jdbi.v3.core.Handle;
 import org.junit.BeforeClass;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import java.util.List;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class ComparisonRuleTest extends TxnAwareBaseTest {
+@SuppressWarnings({"unchecked", "rawtypes"})
+public class ComparisonDateRuleTest extends TxnAwareBaseTest {
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static Pair<Long, String> questionIdInstanceGuidPair;
     private static Question unused;
 
-    @Rule
-    public final ExpectedException thrown = ExpectedException.none();
-
     @BeforeClass
     public static void setup() {
         testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
-        unused = new NumericQuestion("sid", 1L, 2L, false, false, false, null, null, null, List.of(), List.of());
-        questionIdInstanceGuidPair = TransactionWrapper.withTxn(ComparisonRuleTest::prepareTestData);
-    }
-
-    @Test
-    public void testValidate_noValue() {
-        ComparisonRule rule = ComparisonRule.builder().build();
-        assertFalse(rule.validate(null, null));
-        assertTrue(rule.validate(null, new NumericAnswer(1L, "q", "a", null)));
+        unused = new DateQuestion("sid", 1L, false, false, false,
+                null, null, null, List.of(), List.of(),
+                DateRenderMode.TEXT, true, List.of(DateFieldType.YEAR, DateFieldType.MONTH, DateFieldType.DAY),
+                2L);
+        questionIdInstanceGuidPair = TransactionWrapper.withTxn(ComparisonDateRuleTest::prepareTestData);
     }
 
     @Test
@@ -56,8 +51,8 @@ public class ComparisonRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.EQUAL)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused, createAnswer(20L, questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(unused, createAnswer(new DateValue(2000, 1, 1), questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(unused, createAnswer(new DateValue(1000,1, 1), questionIdInstanceGuidPair.getRight())));
     }
 
     @Test
@@ -68,8 +63,8 @@ public class ComparisonRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.NOT_EQUAL)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, createAnswer(20L, questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(unused, createAnswer(new DateValue(1000, 1, 1), questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(unused, createAnswer(new DateValue(2000, 1, 1), questionIdInstanceGuidPair.getRight())));
     }
 
     @Test
@@ -80,8 +75,8 @@ public class ComparisonRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.GREATER)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, createAnswer(20L, questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(unused, createAnswer(new DateValue(2021, 12, 25), questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(unused, createAnswer(new DateValue(2000, 1, 1), questionIdInstanceGuidPair.getRight())));
     }
 
     @Test
@@ -92,9 +87,9 @@ public class ComparisonRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.GREATER_OR_EQUAL)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, createAnswer(20L, questionIdInstanceGuidPair.getRight())));
-        assertTrue(comparisonRule.validate(unused, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused, createAnswer(5L, questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(unused, createAnswer(new DateValue(2021, 12, 25), questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(unused, createAnswer(new DateValue(2000, 1, 1), questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(unused, createAnswer(new DateValue(1986, 12, 9), questionIdInstanceGuidPair.getRight())));
     }
 
     @Test
@@ -105,8 +100,8 @@ public class ComparisonRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.LESS)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, createAnswer(5L, questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(unused, createAnswer(new DateValue(1986, 12, 9), questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(unused, createAnswer(new DateValue(2000, 1, 1), questionIdInstanceGuidPair.getRight())));
     }
 
     @Test
@@ -117,30 +112,30 @@ public class ComparisonRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.LESS_OR_EQUAL)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, createAnswer(5L, questionIdInstanceGuidPair.getRight())));
-        assertTrue(comparisonRule.validate(unused, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused, createAnswer(20L, questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(unused, createAnswer(new DateValue(1986, 12, 9), questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(unused, createAnswer(new DateValue(2000, 1, 1), questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(unused, createAnswer(new DateValue(2021, 12, 25), questionIdInstanceGuidPair.getRight())));
     }
 
-    private NumericAnswer createAnswer(long value, String instanceGuid) {
-        return new NumericAnswer(null, testData.getStudyGuid(), "abc", value, instanceGuid);
+    private DateAnswer createAnswer(DateValue value, String instanceGuid) {
+        return new DateAnswer(null, testData.getStudyGuid(), "abc", value, instanceGuid);
     }
 
     private static Pair<Long, String> prepareTestData(final Handle handle) {
         TestFormActivity act = TestFormActivity.builder()
-                .withNumericIntQuestion(true)
+                .withDateFullQuestion(true)
                 .build(handle, testData.getUserId(), testData.getStudyGuid());
 
         var activityInstance = createInstance(handle, act.getDef().getActivityId());
 
         var created = handle.attach(AnswerDao.class)
                 .createAnswer(testData.getUserId(), activityInstance.getId(),
-                        new NumericAnswer(null, act.getNumericIntQuestion().getStableId(), null,
-                                10L, activityInstance.getGuid()));
+                        new DateAnswer(null, act.getDateFullQuestion().getStableId(), null,
+                                new DateValue(2000, 1, 1), activityInstance.getGuid()));
         assertTrue(created.getAnswerId() > 0);
 
         var questionId = handle.attach(QuestionDao.class).getJdbiQuestion()
-                .findIdByStableIdAndInstanceGuid(act.getNumericIntQuestion().getStableId(), activityInstance.getGuid());
+                .findIdByStableIdAndInstanceGuid(act.getDateFullQuestion().getStableId(), activityInstance.getGuid());
         assertTrue(questionId.isPresent());
 
         return ImmutablePair.of(questionId.get(), activityInstance.getGuid());

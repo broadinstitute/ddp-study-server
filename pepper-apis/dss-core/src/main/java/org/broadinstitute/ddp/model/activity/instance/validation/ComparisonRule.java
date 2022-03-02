@@ -7,13 +7,13 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
+import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.types.ComparisonType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.Optional;
@@ -53,11 +53,17 @@ public class ComparisonRule extends Rule<Answer> {
     }
 
     private boolean validate(final QuestionType type, final Answer actualAnswer, final Answer referencedAnswer) {
+        if (actualAnswer.getQuestionType() != referencedAnswer.getQuestionType()) {
+            log.debug("The answers are incompatible. Actual: {}. Referenced: {}",
+                    actualAnswer.getQuestionType(), referencedAnswer.getQuestionType());
+            return false;
+        }
+
         switch (type) {
             case NUMERIC:
                 return validate(Longs::compare, (Long) referencedAnswer.getValue(), (Long) actualAnswer.getValue());
             case DECIMAL:
-                return validate(BigDecimal::compareTo, (BigDecimal) referencedAnswer.getValue(), (BigDecimal) actualAnswer.getValue());
+                return validate(DecimalDef::compareTo, (DecimalDef) referencedAnswer.getValue(), (DecimalDef) actualAnswer.getValue());
             case DATE:
                 final Optional<LocalDate> referencedDate = ((DateValue) referencedAnswer.getValue()).asLocalDate();
                 final Optional<LocalDate> originalDate = ((DateValue) actualAnswer.getValue()).asLocalDate();
@@ -65,14 +71,13 @@ public class ComparisonRule extends Rule<Answer> {
                 return referencedDate.isEmpty() || originalDate.isEmpty()
                         || validate(LocalDate::compareTo, referencedDate.get(), originalDate.get());
             default:
-                log.debug("The question type is not comparable. This is impossible situation. Nothing to validate");
+                log.debug("The question type is not comparable. This is impossible situation. Nothing to validate Actual: {}", type);
                 return false;
         }
     }
 
     private <V> boolean validate(final Comparator<V> comparator, final V referenceValue, final V actualValue) {
         final int comparisonResult = comparator.compare(actualValue, referenceValue);
-        log.debug("Comparison result: {}", comparisonResult);
 
         switch (comparisonType) {
             case EQUAL:
