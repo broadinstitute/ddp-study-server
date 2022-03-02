@@ -70,7 +70,7 @@ public interface AnswerSql extends SqlObject {
     }
 
     @SqlUpdate("insert into file_answer (answer_id, file_upload_id) values (:answerId, :uploadId)")
-    int insertFileValue(@Bind("answerId") long answerId, @Bind("uploadId") Long fileUploadId);
+    int[] bulkInsertFileValue(@Bind("answerId") long answerId, @Bind("uploadId") List<Long> fileUploadId);
 
     @SqlUpdate("insert into numeric_answer (answer_id, int_value) values (:answerId, :value)")
     int insertNumericIntValue(@Bind("answerId") long answerId, @Bind("value") Long value);
@@ -145,8 +145,8 @@ public interface AnswerSql extends SqlObject {
         return updateDateValueById(answerId, value.getYear(), value.getMonth(), value.getDay());
     }
 
-    @SqlUpdate("update file_answer set file_upload_id = :uploadId where answer_id = :answerId")
-    int updateFileValue(@Bind("answerId") long answerId, @Bind("uploadId") Long fileUploadId);
+    @SqlUpdate("delete from file_answer where answer_id = :answerId")
+    int deleteUploadsByAnswer(@Bind("answerId") long answerId);
 
     @SqlUpdate("update numeric_answer set int_value = :value where answer_id = :answerId")
     int updateNumericIntValueById(@Bind("answerId") long answerId, @Bind("value") Long value);

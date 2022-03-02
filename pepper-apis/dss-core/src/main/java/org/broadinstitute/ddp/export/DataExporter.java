@@ -1036,9 +1036,9 @@ public class DataExporter {
             DateValue value = (DateValue) answer.getValue();
             return new DateQuestionRecord(question.getStableId(), value);
         } else if (answer.getQuestionType() == QuestionType.FILE) {
-            FileInfo info = ((FileAnswer) answer).getValue();
-            String uploadGuid = info != null ? info.getUploadGuid() : null;
-            return new SimpleQuestionRecord(type, question.getStableId(), uploadGuid);
+            List<FileInfo> fileInfos = ((FileAnswer) answer).getValue();
+            List<Long> uploadIds = fileInfos.stream().map(FileInfo::getUploadId).collect(Collectors.toList());
+            return new SimpleQuestionRecord(type, question.getStableId(), uploadIds);
         } else if (answer.getQuestionType() == QuestionType.PICKLIST) {
             List<SelectedPicklistOption> selected = ((PicklistAnswer) answer).getValue();
             return new PicklistQuestionRecord(question.getStableId(), selected);

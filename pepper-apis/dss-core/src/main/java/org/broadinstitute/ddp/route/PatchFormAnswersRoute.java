@@ -609,16 +609,17 @@ public class PatchFormAnswersRoute implements Route {
                                          String instanceGuid, JsonElement value) {
         boolean isNull = (value == null || value.isJsonNull());
         if (isNull || (value.isJsonPrimitive() && value.getAsJsonPrimitive().isString())) {
-            FileInfo info = null;
+            List<FileInfo> fileInfos = new ArrayList<>();
             if (!isNull) {
                 String uploadGuid = value.getAsString();
-                info = handle.attach(FileUploadDao.class).findFileInfoByGuid(uploadGuid).orElse(null);
+                FileInfo info = handle.attach(FileUploadDao.class).findFileInfoByGuid(uploadGuid).orElse(null);
                 if (info == null) {
                     throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
                             "Could not find file upload with guid " + uploadGuid));
                 }
+                fileInfos.add(info);
             }
-            return new FileAnswer(null, stableId, guid, info, instanceGuid);
+            return new FileAnswer(null, stableId, guid, fileInfos, instanceGuid);
         } else {
             return null;
         }
@@ -762,29 +763,31 @@ public class PatchFormAnswersRoute implements Route {
     private void verifyFileUpload(Handle handle, Response response, ActivityInstanceDto instanceDto, FileAnswer answer) {
         long participantId = instanceDto.getParticipantId();
         long studyId = instanceDto.getStudyId();
-        long uploadId = answer.getValue().getUploadId();
+        List<FileInfo> fileInfos = answer.getValue();
+        for (FileInfo info : fileInfos) {
+            long uploadId = info.getUploadId();
+            var verifyResult = fileService.verifyUpload(handle, studyId, participantId, uploadId)
+                    .orElseThrow(() -> new DDPException("Could not find file upload with id " + uploadId));
 
-        var verifyResult = fileService.verifyUpload(handle, studyId, participantId, uploadId)
-                .orElseThrow(() -> new DDPException("Could not find file upload with id " + uploadId));
-
-        switch (verifyResult) {
-            case NOT_UPLOADED:
-                throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
-                        "File has not been uploaded yet"));
-            case OWNER_MISMATCH:
-                throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
-                        "File is not owned by participant and cannot be associated with answer"));
-            case QUARANTINED:
-                throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
-                        "File is infected and cannot be associated with answer"));
-            case SIZE_MISMATCH:
-                throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
-                        "File uploaded size does not match expected size"));
-            case OK:
-                LOG.info("File upload with id {} is uploaded and can be associated with participant's answer", uploadId);
-                break;
-            default:
-                throw new DDPException("Unhandled file check result: " + verifyResult);
+            switch (verifyResult) {
+                case NOT_UPLOADED:
+                    throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
+                            "File has not been uploaded yet"));
+                case OWNER_MISMATCH:
+                    throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
+                            "File is not owned by participant and cannot be associated with answer"));
+                case QUARANTINED:
+                    throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
+                            "File is infected and cannot be associated with answer"));
+                case SIZE_MISMATCH:
+                    throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
+                            "File uploaded size does not match expected size"));
+                case OK:
+                    LOG.info("File upload with id {} is uploaded and can be associated with participant's answer", uploadId);
+                    break;
+                default:
+                    throw new DDPException("Unhandled file check result: " + verifyResult);
+            }
         }
     }
 
