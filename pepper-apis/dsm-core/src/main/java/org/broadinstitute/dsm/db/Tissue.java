@@ -58,7 +58,7 @@ public class Tissue {
             "INSERT INTO ddp_tissue SET onc_history_detail_id = ?, last_changed = ?, changed_by = ?";
     @TableName(name = DBConstants.DDP_TISSUE, alias = DBConstants.DDP_TISSUE_ALIAS, primaryKey = DBConstants.TISSUE_ID, columnPrefix = "")
     @ColumnName(DBConstants.TISSUE_ID)
-    private long tissueId;
+    private Long tissueId;
 
     @ColumnName(DBConstants.ONC_HISTORY_DETAIL_ID)
     private long oncHistoryDetailId;
