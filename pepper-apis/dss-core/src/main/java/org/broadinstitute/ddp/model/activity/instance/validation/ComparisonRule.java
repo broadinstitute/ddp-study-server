@@ -31,12 +31,11 @@ public class ComparisonRule extends Rule<Answer> {
     @Override
     public boolean validate(Question<Answer> question, Answer answer) {
         if (answer == null) {
-            return false;
+            return true;
         }
 
         if (answer.getValue() == null) {
-            log.debug("The provided answer is null. Nothing to validate");
-            return true;
+            return false;
         }
 
         return TransactionWrapper.withTxn(handle -> {

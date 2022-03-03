@@ -43,10 +43,14 @@ public class ComparisonRuleNegativeTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testValidate_nothingToValidate() {
+        assertTrue(ComparisonRule.builder().build().validate(null, null));
+    }
+
+    @Test
     public void testValidate_noValue() {
-        ComparisonRule rule = ComparisonRule.builder().build();
-        assertFalse(rule.validate(null, null));
-        assertTrue(rule.validate(null, new NumericAnswer(1L, "q", "a", null)));
+        assertFalse(ComparisonRule.builder().build().validate(null,
+                new NumericAnswer(1L, "q", "a", null)));
     }
 
     @Test(expected = RuntimeException.class)
@@ -56,8 +60,8 @@ public class ComparisonRuleNegativeTest extends TxnAwareBaseTest {
                 .referenceQuestionId(questionIdInstanceGuidPair.getLeft())
                 .build();
 
-        assertTrue(comparisonRule.validate(testQuestion, new NumericAnswer(null, testData.getStudyGuid(),
-                "abc", 0L, questionIdInstanceGuidPair.getRight())));
+        comparisonRule.validate(testQuestion, new NumericAnswer(null, testData.getStudyGuid(),
+                "abc", 0L, questionIdInstanceGuidPair.getRight()));
     }
 
     @Test(expected = RuntimeException.class)
@@ -68,10 +72,10 @@ public class ComparisonRuleNegativeTest extends TxnAwareBaseTest {
                 .referenceQuestionId(questionIdInstanceGuidPair.getLeft())
                 .build();
 
-        assertFalse(comparisonRule.validate((Question) new TextQuestion("sid", 1L,
+        comparisonRule.validate((Question) new TextQuestion("sid", 1L,
                 2L,  List.of(), List.of(), TextInputType.TEXT),
                 new NumericAnswer(null, testData.getStudyGuid(), "abc", 0L,
-                        questionIdInstanceGuidPair.getRight())));
+                        questionIdInstanceGuidPair.getRight()));
     }
 
     @Test(expected = RuntimeException.class)
