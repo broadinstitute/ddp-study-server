@@ -10,9 +10,6 @@ import com.auth0.client.mgmt.ManagementAPI;
 import com.auth0.json.auth.TokenHolder;
 import com.auth0.json.mgmt.users.Identity;
 import com.auth0.json.mgmt.users.User;
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTVerifier;
-import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.net.AuthRequest;
@@ -20,6 +17,7 @@ import com.auth0.net.Request;
 import lombok.NonNull;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.exception.DSMAuthenticationException;
 import org.broadinstitute.dsm.security.JWTConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,24 +60,23 @@ public class Auth0Util {
         this.audience = audience;
     }
 
-    public Auth0UserInfo getAuth0UserInfo(@NonNull String idToken, String auth0Domain) {
-        Map<String, Claim> auth0Claims = verifyAndParseAuth0TokenClaims(idToken, auth0Domain);
-        boolean isEmailVerified = false;
-        Claim emailVerifiedClaim = auth0Claims.getOrDefault("email_verified", null);
-        if (emailVerifiedClaim != null && !emailVerifiedClaim.isNull()) {
-            Boolean value = emailVerifiedClaim.asBoolean();
-            isEmailVerified = value == null ? false : value;
+    public Auth0UserInfo getAuth0UserInfo(@NonNull String idToken, String auth0Domain) throws DSMAuthenticationException {
+        try {
+            Map<String, Claim> auth0Claims = verifyAndParseAuth0TokenClaims(idToken, auth0Domain);
+            boolean isEmailVerified = false;
+            Claim emailVerifiedClaim = auth0Claims.getOrDefault("email_verified", null);
+            if (emailVerifiedClaim != null && !emailVerifiedClaim.isNull()) {
+                Boolean value = emailVerifiedClaim.asBoolean();
+                isEmailVerified = value == null ? false : value;
+            }
+            Auth0UserInfo userInfo = new Auth0UserInfo(auth0Claims.get("email").asString(), auth0Claims.get("exp").asInt(),
+                    isEmailVerified);
+            verifyUserConnection(auth0Claims.get("sub").asString(), userInfo.getEmail());
+
+            return userInfo;
+        }catch (DSMAuthenticationException e){
+            throw new DSMAuthenticationException("couldn't get Auth0 user info", e);
         }
-        Auth0UserInfo userInfo = new Auth0UserInfo(auth0Claims.get("email").asString(), auth0Claims.get("exp").asInt(),
-                isEmailVerified);
-        verifyUserConnection(auth0Claims.get("sub").asString(), userInfo.getEmail());
-
-        return userInfo;
-    }
-
-    public Optional<Claim> getClaimValue(@NonNull String idToken, @NonNull String claimKey, @NonNull String auth0Domain){
-        Map<String, Claim> auth0Claims = verifyAndParseAuth0TokenClaims(idToken, auth0Domain);
-        return Optional.ofNullable(auth0Claims.getOrDefault(claimKey, null));
     }
 
     private ManagementAPI configManagementApi() {
@@ -117,7 +114,7 @@ public class Auth0Util {
         return connection;
     }
 
-    private void verifyUserConnection(@NonNull String userId, @NonNull String email) {
+    private void verifyUserConnection(@NonNull String userId, @NonNull String email) {//todo pegah check
         try {
             ManagementAPI mgmtApi = configManagementApi();
             Request<User> userRequest = mgmtApi.users().get(userId, null);
@@ -128,13 +125,14 @@ public class Auth0Util {
         }
     }
 
-    private Map<String, Claim> verifyAndParseAuth0TokenClaims(String auth0Token, String auth0Domain) {
+    public static Map<String, Claim> verifyAndParseAuth0TokenClaims(String auth0Token, String auth0Domain) throws DSMAuthenticationException{
         Map<String, Claim> auth0Claims = new HashMap<>();
         try {
-            DecodedJWT validToken = JWTConverter.verifyDDPToken(auth0Token, auth0Domain);
-            auth0Claims = validToken.getClaims();
+            Optional<DecodedJWT> maybeToken = JWTConverter.verifyDDPToken(auth0Token, auth0Domain);
+            maybeToken.orElseThrow();
+            auth0Claims = maybeToken.get().getClaims();
         } catch (Exception e) {
-            throw new RuntimeException("Could not verify auth0 token.", e);
+            throw new DSMAuthenticationException("Could not verify auth0 token.", e);
         }
         return auth0Claims;
     }

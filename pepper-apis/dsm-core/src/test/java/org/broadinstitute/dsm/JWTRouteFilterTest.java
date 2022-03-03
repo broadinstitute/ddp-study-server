@@ -68,7 +68,7 @@ public class JWTRouteFilterTest {
         EasyMock.expect(req.headers(AUTHORIZATION)).andReturn(token).once();
 
         EasyMock.replay(req);
-        Assert.assertTrue(new JWTRouteFilter(secret, null, auth0Domain).isAccessAllowed(req));
+        Assert.assertTrue(new JWTRouteFilter(null, auth0Domain).isAccessAllowed(req));
         EasyMock.verify(req);
     }
 
@@ -80,7 +80,7 @@ public class JWTRouteFilterTest {
         EasyMock.expect(req.headers(AUTHORIZATION)).andReturn(token).once();
 
         EasyMock.replay(req);
-        Assert.assertFalse("Two tokens signed with different secrets should fail", new JWTRouteFilter("def", null, auth0Domain).isAccessAllowed(req));
+        Assert.assertFalse("Two tokens signed with different secrets should fail", new JWTRouteFilter(null, auth0Domain).isAccessAllowed(req));
         EasyMock.verify(req);
     }
 
@@ -157,7 +157,7 @@ public class JWTRouteFilterTest {
         EasyMock.expect(req.headers(AUTHORIZATION)).andReturn(null).once();
 
         EasyMock.replay(req);
-        Assert.assertFalse("Empty token should fail", new JWTRouteFilter("foo", null, auth0Domain).isAccessAllowed(req));
+        Assert.assertFalse("Empty token should fail", new JWTRouteFilter(null, auth0Domain).isAccessAllowed(req));
         EasyMock.verify(req);
     }
 
@@ -169,7 +169,7 @@ public class JWTRouteFilterTest {
         EasyMock.expect(req.headers(AUTHORIZATION)).andReturn(corruptToken).once();
 
         EasyMock.replay(req);
-        Assert.assertFalse("Corrupt token should fail", new JWTRouteFilter("foo", null, auth0Domain).isAccessAllowed(req));
+        Assert.assertFalse("Corrupt token should fail", new JWTRouteFilter(null, auth0Domain).isAccessAllowed(req));
         EasyMock.verify(req);
     }
 
@@ -183,9 +183,9 @@ public class JWTRouteFilterTest {
         EasyMock.expect(req.headers(AUTHORIZATION)).andReturn(token).times(2);
 
         EasyMock.replay(req);
-        Assert.assertTrue("Checking signature without a role should pass.", new JWTRouteFilter(secret, null, auth0Domain).isAccessAllowed(req));
+        Assert.assertTrue("Checking signature without a role should pass.", new JWTRouteFilter( null, auth0Domain).isAccessAllowed(req));
         Assert.assertFalse("Checking signature with the wrong role should fail",
-                new JWTRouteFilter(secret, Arrays.asList("bubs"), auth0Domain).isAccessAllowed(req));
+                new JWTRouteFilter( Arrays.asList("bubs"), auth0Domain).isAccessAllowed(req));
         EasyMock.verify(req);
     }
 
@@ -198,7 +198,7 @@ public class JWTRouteFilterTest {
         EasyMock.replay(req);
         try {
             Thread.sleep(1000);
-            Assert.assertFalse("Token is expired, should not be considered valid", new JWTRouteFilter(secret, null, auth0Domain).isAccessAllowed(req));
+            Assert.assertFalse("Token is expired, should not be considered valid", new JWTRouteFilter( null, auth0Domain).isAccessAllowed(req));
         } catch (InterruptedException e) {
             Assert.fail("Sleep interrupted, cannot wait for token to expire.");
         }

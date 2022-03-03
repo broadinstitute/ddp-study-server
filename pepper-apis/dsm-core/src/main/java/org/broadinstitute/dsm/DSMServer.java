@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -442,9 +443,9 @@ public class DSMServer {
         TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, maxConnections, dbUrl));
 
         logger.info("Running DB update...");
-        // TODO Pegah fix and uncomment before merge (throws error so should eb commented now)
-//        LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.DSM);
-//        LiquibaseUtil.releaseResources();
+
+        LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.DSM);
+        LiquibaseUtil.releaseResources();
 
         logger.info("DB setup complete.");
     }
@@ -462,11 +463,11 @@ public class DSMServer {
         }
 
         //  capture basic route info for logging
-        before("*", new LoggingFilter());
+        before("*", new LoggingFilter(auth0Domain, auth0claimNameSpace));
         afterAfter((req, res) -> MDC.clear());
 
         before(API_ROOT + "*", (req, res) -> {
-            if (!new JWTRouteFilter(bspSecret, null, auth0Domain).isAccessAllowed(req)) {
+            if (!new JWTRouteFilter(null, auth0Domain).isAccessAllowed(req)) {
                 halt(404);
             }
             res.header(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
@@ -498,7 +499,7 @@ public class DSMServer {
         String cookieName = cfg.getString(ApplicationConfigConstants.BROWSER_COOKIE_NAME);
         String auth0Signer = cfg.getString(ApplicationConfigConstants.AUTH0_SIGNER);
 
-        new SecurityUtil(auth0Domain, auth0claimNameSpace, auth0Signer);
+        SecurityUtil.init(auth0Domain, auth0claimNameSpace, auth0Signer);
 
         //TODO remove before final merge, for testing only
         get( UI_ROOT+"dsstest/:participantId", new DSSTestingRoute(), new JsonTransformer());
@@ -524,8 +525,8 @@ public class DSMServer {
 
         before("/info/" + RoutePath.PARTICIPANT_STATUS_REQUEST, (req, res) -> {
             String tokenFromHeader = Utility.getTokenFromHeader(req);
-            DecodedJWT validToken = JWTConverter.verifyDDPToken(tokenFromHeader, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN));
-            if (validToken == null) {
+            Optional<DecodedJWT> validToken = JWTConverter.verifyDDPToken(tokenFromHeader, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN));
+            if (validToken.isEmpty()) {
                 logger.error(req.pathInfo() + " was called without valid token");
                 halt(401, SecurityUtil.ResultType.AUTHENTICATION_ERROR.toString());
             }
@@ -542,8 +543,8 @@ public class DSMServer {
 
                     boolean isTokenValid = false;
                     if (StringUtils.isNotBlank(tokenFromHeader)) {
-                        isTokenValid = new CookieUtil().isCookieValid(req.cookie(cookieName), cookieSalt.getBytes(), tokenFromHeader, auth0Domain);
-                        isTokenValid = new JWTRouteFilter(jwtSecret, null, auth0Domain).isAccessAllowed(req);
+                        isTokenValid = (new CookieUtil().isCookieValid(req.cookie(cookieName), cookieSalt.getBytes(), tokenFromHeader, auth0Domain))
+                         && (new JWTRouteFilter(null, auth0Domain).isAccessAllowed(req));
 
                     }
                     if (!isTokenValid) {
@@ -555,14 +556,14 @@ public class DSMServer {
         setupDDPConfigurationLookup(cfg.getString(ApplicationConfigConstants.DDP));
 
         AuthenticationRoute authenticationRoute = new AuthenticationRoute(auth0Util,
-                jwtSecret, cookieSalt, cookieName, userUtil,
-                cfg.getString("portal.environment"),
+                 userUtil,
                 cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN),
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_SECRET),
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_KEY),
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL),
                 cfg.getString(ApplicationConfigConstants.AUTH0_CLAIM_NAMESPACE)
         );
+        post(UI_ROOT + RoutePath.AUTHENTICATION_REQUEST, authenticationRoute, new JsonTransformer());
 
         KitUtil kitUtil = new KitUtil();
 

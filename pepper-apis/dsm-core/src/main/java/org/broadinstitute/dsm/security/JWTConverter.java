@@ -9,6 +9,8 @@ import com.auth0.jwt.interfaces.RSAKeyProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
+
 public class JWTConverter {
 
     private static final Logger logger = LoggerFactory.getLogger(JWTConverter.class);
@@ -21,7 +23,7 @@ public class JWTConverter {
      * @param auth0Domain auth0 domain
      * @return a verified, decoded JWT
      */
-    public static DecodedJWT verifyDDPToken(String jwt, String auth0Domain) {
+    public static Optional<DecodedJWT> verifyDDPToken(String jwt, String auth0Domain) {
         RSAKeyProvider keyProvider = null;
         DecodedJWT validToken = null;
         try {
@@ -37,6 +39,6 @@ public class JWTConverter {
                 logger.warn("Could not verify token {}", jwt, e);
             }
         }
-        return validToken;
+        return Optional.ofNullable(validToken);
     }
 }

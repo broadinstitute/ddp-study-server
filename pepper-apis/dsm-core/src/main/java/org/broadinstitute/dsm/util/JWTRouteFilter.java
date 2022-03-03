@@ -3,10 +3,8 @@ package org.broadinstitute.dsm.util;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTVerifier;
-import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.apache.commons.lang3.StringUtils;
@@ -39,16 +37,14 @@ public class JWTRouteFilter {
      * secret, and optionally includes one or more of the
      * given roles in the roles claim.
      *
-     * @param jwtSecret    the shared secret used to sign the token
+     *
      * @param allowedRoles If given, at least one of the roles in the list
      *                     must be present in the roles claim in the token.
      *                     If empty or null, the roles claim is not checked.
      */
-    public JWTRouteFilter(String jwtSecret, Collection<String> allowedRoles, String auth0Domain) {
+    public JWTRouteFilter(Collection<String> allowedRoles, String auth0Domain) {
         this.auth0Domain = auth0Domain;
-        if (StringUtils.isBlank(jwtSecret)) {
-            throw new IllegalArgumentException("jwtSecret is required");
-        }
+
         if (allowedRoles != null && !allowedRoles.isEmpty()) {
             this.expectedRoles.addAll(allowedRoles);
         }
@@ -70,7 +66,9 @@ public class JWTRouteFilter {
                         String jwtToken = parsedAuthHeader[1].trim();
                         if (StringUtils.isNotBlank(jwtToken)) {
                             try {
-                                DecodedJWT validToken = JWTConverter.verifyDDPToken(jwtToken, auth0Domain);
+                                Optional<DecodedJWT> maybeValidToken = JWTConverter.verifyDDPToken(jwtToken, auth0Domain);
+                                maybeValidToken.orElseThrow();
+                                DecodedJWT validToken = maybeValidToken.get();
                                 Map<String, Claim> verifiedClaims =validToken.getClaims();
                                 if (verifiedClaims != null) {
                                     if (!expectedRoles.isEmpty()) {

@@ -482,7 +482,7 @@ public class GBFRequestUtil implements ExternalShipper {
                         }
                         logger.warn("Kit Request with external order number " + kit.getExternalOrderNumber()
                                 + "has not been shipped in the last 24 hours! ");
-                        //todo pegah uncomment for production
+
                     } else if (status.getOrderStatus().contains(shipped) && (StringUtils.isBlank(kit.getExternalOrderStatus())
                             || !kit.getExternalOrderStatus().contains(shipped))) {
                         if (kitDDPNotification != null) {
@@ -506,10 +506,9 @@ public class GBFRequestUtil implements ExternalShipper {
                         }
                     } else if (status.getOrderStatus().contains("CANCELLED") && (StringUtils.isBlank(kit.getExternalOrderStatus()) || (
                             StringUtils.isNotBlank(kit.getExternalOrderStatus()) && !kit.getExternalOrderStatus().contains("CANCELLED")))) {
-                        //todo uncomment for prod
                         logger.error(
                                 "Kit Request with external order number " + kit.getExternalOrderNumber() + "has got cancelled by GBF!");
-                        //todo pegah uncomment for production
+
                     }
                     if (StringUtils.isBlank(kit.getExternalOrderStatus()) || !kit.getExternalOrderStatus()
                             .equals(status.getOrderStatus())) {

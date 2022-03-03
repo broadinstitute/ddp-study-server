@@ -1,8 +1,5 @@
 package org.broadinstitute.lddp.security;
 
-import java.util.Date;
-import java.util.Map;
-
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.JWTVerifier;
@@ -10,11 +7,14 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import lombok.NonNull;
+import org.broadinstitute.dsm.exception.DSMAuthenticationException;
 import org.broadinstitute.dsm.security.JWTConverter;
 import org.broadinstitute.lddp.exception.InvalidTokenException;
-import org.broadinstitute.lddp.util.Utility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Date;
+import java.util.Map;
 
 public class SecurityHelper {
     public static final String CLAIM_ISSUER = "iss";
@@ -40,7 +40,8 @@ public class SecurityHelper {
             builder.withClaim(CLAIM_ISSUER, SIGNER);
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return builder.sign(algorithm);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new RuntimeException("Couldn't create token " + e);
         }
     }
@@ -66,7 +67,8 @@ public class SecurityHelper {
             }
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return builder.sign(algorithm);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new RuntimeException("Couldn't create token " + e);
         }
     }
@@ -78,7 +80,8 @@ public class SecurityHelper {
             JWTVerifier verifier = JWT.require(algorithm).build(); //Reusable verifier instance
             DecodedJWT jwt = verifier.verify(token);
             isValid = true;
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             // todo arz probably want to catch specific exceptions for
             // validation failure vs. algorithm related stuff
             logger.warn("Security - Error verifying token", e);
@@ -89,30 +92,26 @@ public class SecurityHelper {
     public static boolean validTokenRSA256(@NonNull String token, @NonNull String auth0Domain) {
         boolean isValid = false;
         try {
-            DecodedJWT validToken = JWTConverter.verifyDDPToken(token, auth0Domain);
+            JWTConverter.verifyDDPToken(token, auth0Domain).orElseThrow();
             isValid = true;
-        } catch (Exception e) {
+
+        }
+        catch (Exception e) {
             logger.warn("Security - Error verifying token", e);
         }
         return isValid;
     }
 
-    public static Map<String, Claim> verifyAndGetClaims(@NonNull String token, @NonNull String auth0Domain, @NonNull String auth0Signer) {
+    public static Map<String, Claim> verifyAndGetClaims(@NonNull String token, @NonNull String auth0Domain, @NonNull String auth0Signer) throws InvalidTokenException, DSMAuthenticationException {
 
-        Map<String, Claim> claimsMap = null;
-
-        try {
-            DecodedJWT validToken = JWTConverter.verifyDDPToken(token, auth0Domain);
-            claimsMap = validToken.getClaims();
-        } catch (Exception e) {
-            throw new InvalidTokenException("Invalid token", e);
-        }
-
+        Map<String, Claim> claimsMap = Auth0Util.verifyAndParseAuth0TokenClaims(token, auth0Domain);
         if (auth0Signer.equals(claimsMap.get(CLAIM_ISSUER).asString())) {
             return claimsMap;
-        } else {
+        }
+        else {
             throw new InvalidTokenException("Token is not signed by the expected signer.");
         }
+
     }
 
     public enum ResultType {

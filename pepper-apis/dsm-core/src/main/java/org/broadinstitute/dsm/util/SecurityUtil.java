@@ -30,16 +30,16 @@ public class SecurityUtil {
 
     public static final String CLAIM_ISSUER = "iss";
     public static final String USER_ID = "USER_ID";
-    public static final String SIGNER = "";
+    public static final String SIGNER = "org.broadinstitute.kdux";
 
-    private static String auth0Domain;
-    private static String auth0Namespace;
-    private static String auth0Signer;
+    private static String AUTH0_DOMAIN;
+    private static String AUTH0_NAMESPACE;
+    private static String AUTH0_SIGNER;
 
-    public SecurityUtil(@NonNull String auth0Domain, @NonNull String auth0Namespace, @NonNull String auth0Signer) {
-        SecurityUtil.auth0Domain = auth0Domain;
-        SecurityUtil.auth0Namespace = auth0Namespace;
-        SecurityUtil.auth0Signer = auth0Signer;
+    public static void init(@NonNull String AUTH0DOMAIN, @NonNull String AUTH0NAMESPACE, @NonNull String AUTH0SIGNER) {
+        SecurityUtil.AUTH0_DOMAIN = AUTH0DOMAIN;
+        SecurityUtil.AUTH0_NAMESPACE = AUTH0NAMESPACE;
+        SecurityUtil.AUTH0_SIGNER = AUTH0SIGNER;
     }
 
     public static Map<String, String> createHeader(@NonNull String instanceName, boolean auth0Token) {
@@ -157,8 +157,8 @@ public class SecurityUtil {
     public static String getUserId(@NonNull Request request) {
         String userId = null;
         Map<String, Claim> claims = getClaims(request);
-        if (claims != null && !claims.isEmpty() && claims.containsKey(auth0Namespace + USER_ID)) {
-            Object userIdObj = claims.get(auth0Namespace + USER_ID).asString();
+        if (claims != null && !claims.isEmpty() && claims.containsKey(AUTH0_NAMESPACE + USER_ID)) {
+            Object userIdObj = claims.get(AUTH0_NAMESPACE + USER_ID).asString();
             if (userIdObj != null) {
                 userId = (String) userIdObj;
             }
@@ -172,7 +172,7 @@ public class SecurityUtil {
             if (header.contains("Bearer ")) {
                 String token = header.replaceFirst("Bearer ", "");
                 if (StringUtils.isNotBlank(token)) {
-                    return SecurityHelper.verifyAndGetClaims(token, auth0Domain, auth0Signer);
+                    return SecurityHelper.verifyAndGetClaims(token, AUTH0_DOMAIN, AUTH0_SIGNER);
                 }
             }
         }

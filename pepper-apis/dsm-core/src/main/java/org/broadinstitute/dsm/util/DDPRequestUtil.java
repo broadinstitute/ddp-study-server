@@ -324,7 +324,7 @@ public class DDPRequestUtil {
             objects = response.handleResponse(res -> getResponse(res, responseClass, sendRequest));
         }
         catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Post request to "+sendRequest+" was not completed successfully", e);
         }
         return objects;
     }
