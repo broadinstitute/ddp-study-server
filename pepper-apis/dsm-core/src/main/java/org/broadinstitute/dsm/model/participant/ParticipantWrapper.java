@@ -18,6 +18,7 @@ import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
+import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.ESProfile;
 import org.broadinstitute.dsm.model.elastic.filter.FilterParser;
 import org.broadinstitute.dsm.model.elastic.filter.query.DsmAbstractQueryBuilder;
@@ -26,6 +27,7 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchable;
 import org.broadinstitute.dsm.model.elastic.sort.Sort;
+import org.broadinstitute.dsm.model.elastic.sort.SortBy;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -170,6 +172,17 @@ public class ParticipantWrapper {
     void fillParticipantWrapperDtosWithProxies(List<ParticipantWrapperDto> result,
                                                List<String> proxyGuids) {
         String esUsersIndex = participantWrapperPayload.getDdpInstanceDto().orElseThrow().getEsUsersIndex();
+        SortBy profileCreatedAt = new SortBy.Builder()
+                .withType(Filter.NUMBER)
+                .withOrder("asc")
+                .withInnerProperty(ElasticSearchUtil.CREATED_AT)
+                .withOuterProperty(ElasticSearchUtil.PROFILE)
+                .withTableAlias(ElasticSearchUtil.DATA)
+                .build();
+        FieldTypeExtractor fieldTypeExtractor = new FieldTypeExtractor();
+        fieldTypeExtractor.setIndex(esUsersIndex);
+        Sort sort = Sort.of(profileCreatedAt, fieldTypeExtractor);
+        elasticSearchable.setSortBy(sort);
         ElasticSearch proxiesByIds = elasticSearchable.getParticipantsByIds(esUsersIndex, proxyGuids);
         result.forEach(participantWrapperDto -> {
             List<String> participantProxyGuids = participantWrapperDto.getEsData().getProxies();
