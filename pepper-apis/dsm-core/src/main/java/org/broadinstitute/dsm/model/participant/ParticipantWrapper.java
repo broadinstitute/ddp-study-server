@@ -196,6 +196,7 @@ public class ParticipantWrapper {
     private List<ParticipantWrapperDto> collectData(DDPInstance ddpInstance) {
         logger.info("Collecting participant data...");
         List<ParticipantWrapperDto> result = new ArrayList<>();
+        List<String> proxyGuids = new ArrayList<>();
         for (ElasticSearchParticipantDto elasticSearchParticipantDto: esData.getEsParticipants()) {
 
             elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
@@ -215,8 +216,7 @@ public class ParticipantWrapper {
 
                 List<KitRequestShipping> kitRequestShipping = esDsm.getKitRequestShipping();
 
-                List<ElasticSearchParticipantDto> proxies =
-                        getParticipantProxiesData(ddpInstance, elasticSearchParticipantDto);
+                proxyGuids.addAll(elasticSearchParticipantDto.getProxies());
 
                 List<ParticipantData> participantData = esDsm.getParticipantData();
 
@@ -226,7 +226,6 @@ public class ParticipantWrapper {
                 participantWrapperDto.setMedicalRecords(medicalRecord);
                 participantWrapperDto.setOncHistoryDetails(oncHistoryDetails);
                 participantWrapperDto.setKits(kitRequestShipping);
-                participantWrapperDto.setProxyData(proxies);
                 participantWrapperDto.setParticipantData(participantData);
                 participantWrapperDto.setAbstractionActivities(Collections.emptyList());
                 participantWrapperDto.setAbstractionSummary(Collections.emptyList());
@@ -235,18 +234,33 @@ public class ParticipantWrapper {
 
             });
         }
+        fillParticipantWrapperDtosWithProxies(result, proxyGuids);
         return result;
     }
 
-    private List<ElasticSearchParticipantDto> getParticipantProxiesData(DDPInstance ddpInstance,
-                                                                              ElasticSearchParticipantDto elasticSearchParticipantDto) {
-        List<String> proxyGuids = elasticSearchParticipantDto.getProxies();
-        if (proxyGuids.isEmpty()) return Collections.emptyList();
-        String usersIndexES = ddpInstance.getUsersIndexES();
-        ElasticSearch participantsByIds = elasticSearchable.getParticipantsByIds(usersIndexES, proxyGuids);
-        List<ElasticSearchParticipantDto> proxies = participantsByIds.getEsParticipants();
-        return proxies;
+    //method to avoid ES request for each participant's proxy
+    void fillParticipantWrapperDtosWithProxies(List<ParticipantWrapperDto> result,
+                                               List<String> proxyGuids) {
+        String esUsersIndex = participantWrapperPayload.getDdpInstanceDto().orElseThrow().getEsUsersIndex();
+        ElasticSearch proxiesByIds = elasticSearchable.getParticipantsByIds(esUsersIndex, proxyGuids);
+        result.forEach(participantWrapperDto -> {
+            List<String> participantProxyGuids = participantWrapperDto.getEsData().getProxies();
+            List<ElasticSearchParticipantDto> proxyEsData = proxiesByIds.getEsParticipants().stream()
+                    .filter(elasticSearchParticipantDto -> participantProxyGuids.contains(elasticSearchParticipantDto.getParticipantId()))
+                    .collect(Collectors.toList());
+            participantWrapperDto.setProxyData(proxyEsData);
+        });
     }
+
+//    private List<ElasticSearchParticipantDto> getParticipantProxiesData(DDPInstance ddpInstance,
+//                                                                              ElasticSearchParticipantDto elasticSearchParticipantDto) {
+//        List<String> proxyGuids = elasticSearchParticipantDto.getProxies();
+//        if (proxyGuids.isEmpty()) return Collections.emptyList();
+//        String usersIndexES = ddpInstance.getUsersIndexES();
+//        ElasticSearch participantsByIds = elasticSearchable.getParticipantsByIds(usersIndexES, proxyGuids);
+//        List<ElasticSearchParticipantDto> proxies = participantsByIds.getEsParticipants();
+//        return proxies;
+//    }
 
     private void mapTissueToProperOncHistoryDetail(List<OncHistoryDetail> oncHistoryDetails, List<Tissue> tissues) {
         for (Tissue tissue : tissues) {
