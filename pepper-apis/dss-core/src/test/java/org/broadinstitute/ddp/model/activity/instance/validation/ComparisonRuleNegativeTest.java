@@ -53,6 +53,9 @@ public class ComparisonRuleNegativeTest extends TxnAwareBaseTest {
                 new NumericAnswer(1L, "q", "a", null)));
     }
 
+    /**
+     * This method tests the case when we're trying to use the rule with missing comparison type
+     */
     @Test(expected = RuntimeException.class)
     public void testValidate_incorrectComparisonType() {
         var comparisonRule = ComparisonRule.builder()
@@ -64,6 +67,10 @@ public class ComparisonRuleNegativeTest extends TxnAwareBaseTest {
                 "abc", 0L, questionIdInstanceGuidPair.getRight()));
     }
 
+    /**
+     * This method tests the case when we're trying to compare two answers but one of them is
+     * not comparable. For instance, trying to compare TextAnswer to anything else.
+     */
     @Test(expected = RuntimeException.class)
     public void testValidate_incorrectQuestionType() {
         var comparisonRule = ComparisonRule.builder()
@@ -78,6 +85,10 @@ public class ComparisonRuleNegativeTest extends TxnAwareBaseTest {
                         questionIdInstanceGuidPair.getRight()));
     }
 
+    /**
+     * This method tests the case when we're trying to compare two answers of comparable questions
+     * but having different types. For example, comparing NumericAnswer to DateAnswer.
+     */
     @Test(expected = RuntimeException.class)
     public void testValidate_incompatibleQuestions() {
         var comparisonRule = ComparisonRule.builder()
