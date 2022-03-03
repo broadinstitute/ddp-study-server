@@ -1,5 +1,14 @@
 package org.broadinstitute.dsm.db;
 
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+
+import java.io.IOException;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -173,7 +182,15 @@ public class Participant {
         this.exitDate = exitDate;
     }
 
-    public static Participant getParticipant(@NonNull Map<String, Assignee> assignees, @NonNull String realm, @NonNull ResultSet rs) throws SQLException {
+    //For TissueList
+    public Participant(String participantId, String  ddpParticipantId, String  assigneeIdTissue){
+        this(Long.parseLong(participantId), ddpParticipantId, null, assigneeIdTissue, null,
+                null, null, null, null, null,
+                false, false, null, 0);
+    }
+
+    public static Participant getParticipant(@NonNull Map<String, Assignee> assignees, @NonNull String realm, @NonNull ResultSet rs)
+            throws SQLException {
         String assigneeMR = null;
         String assigneeTissue = null;
         if (assignees != null && !assignees.isEmpty()) {

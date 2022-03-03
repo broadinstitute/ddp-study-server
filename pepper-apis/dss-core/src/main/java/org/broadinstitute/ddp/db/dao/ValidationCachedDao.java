@@ -24,6 +24,11 @@ public class ValidationCachedDao extends SQLObjectWrapper<ValidationDao> impleme
     }
 
     @Override
+    public JdbiComparisonValidation getJdbiComparisonValidation() {
+        return delegate.getJdbiComparisonValidation();
+    }
+
+    @Override
     public JdbiLengthValidation getJdbiLengthValidation() {
         return delegate.getJdbiLengthValidation();
     }
@@ -61,6 +66,11 @@ public class ValidationCachedDao extends SQLObjectWrapper<ValidationDao> impleme
     @Override
     public JdbiRevision getJdbiRevision() {
         return delegate.getJdbiRevision();
+    }
+
+    @Override
+    public JdbiQuestion getJdbiQuestion() {
+        return delegate.getJdbiQuestion();
     }
 
     @Override
