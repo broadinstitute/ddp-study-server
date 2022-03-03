@@ -1,18 +1,20 @@
 package org.broadinstitute.dsm.model.filter;
 
-import java.io.IOException;
-import java.util.Objects;
-
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.ViewFilter;
 import org.broadinstitute.dsm.model.Filter;
+import org.broadinstitute.dsm.model.elastic.sort.SortBy;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import spark.QueryParamsMap;
+
+import java.io.IOException;
+import java.util.Objects;
 
 public class BaseFilter {
 
@@ -29,6 +31,7 @@ public class BaseFilter {
     protected DDPInstance ddpInstance;
     protected int from;
     protected int to;
+    protected SortBy sortBy;
 
     public BaseFilter(String jsonBody) {
         this.jsonBody = jsonBody;
@@ -36,20 +39,16 @@ public class BaseFilter {
 
     protected void prepareNecessaryData(QueryParamsMap queryParamsMap) {
         parent = Objects.requireNonNull(queryParamsMap).get(DBConstants.FILTER_PARENT).value();
-        if (StringUtils.isBlank(parent)) {
-            throw new RuntimeException("parent is necessary");
-        }
+        if (StringUtils.isBlank(parent)) throw new RuntimeException("parent is necessary");
         realm = queryParamsMap.get(RoutePath.REALM).value();
-        if (StringUtils.isBlank(realm)) {
-            throw new RuntimeException("realm is necessary");
-        }
+        if (StringUtils.isBlank(realm)) throw new RuntimeException("realm is necessary");
         ddpInstance = DDPInstance.getDDPInstance(realm);
         filterQuery = "";
         quickFilterName = "";
         Filter[] savedFilters = new Gson().fromJson(queryParamsMap.get(RequestParameter.FILTERS).value(), Filter[].class);
         if (!Objects.isNull(jsonBody)) {
 
-            ViewFilter requestForFiltering = null;
+            ViewFilter requestForFiltering;
             try {
                 requestForFiltering = StringUtils.isNotBlank(jsonBody)
                         ? ObjectMapperSingleton.instance().readValue(jsonBody, ViewFilter.class)
@@ -71,6 +70,8 @@ public class BaseFilter {
         }
         this.from = Integer.parseInt(queryParamsMap.get(LIST_RANGE_FROM).value());
         this.to = Integer.parseInt(queryParamsMap.get(LIST_RANGE_TO).value());
+        if (queryParamsMap.hasKey(SortBy.SORT_BY))
+            this.sortBy = ObjectMapperSingleton.readValue(queryParamsMap.get(SortBy.SORT_BY).value(), new TypeReference<SortBy>() {});
     }
 
 }
