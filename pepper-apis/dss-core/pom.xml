@@ -406,6 +406,7 @@
                 <configuration>
                     <verbose>true</verbose>
                     <sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
+                    <addOutputDirectory>false</addOutputDirectory>
                     <formatPreferences>
                         <generateDelombokComment>skip</generateDelombokComment>
                         <javaLangAsFQN>skip</javaLangAsFQN>
