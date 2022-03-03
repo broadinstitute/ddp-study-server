@@ -54,9 +54,8 @@ public class ComparisonRule extends Rule<Answer> {
 
     private boolean validate(final QuestionType type, final Answer actualAnswer, final Answer referencedAnswer) {
         if (actualAnswer.getQuestionType() != referencedAnswer.getQuestionType()) {
-            log.debug("The answers are incompatible. Actual: {}. Referenced: {}",
-                    actualAnswer.getQuestionType(), referencedAnswer.getQuestionType());
-            return false;
+            throw new RuntimeException(String.format("The answers are incompatible. Actual: %s. Referenced: %s",
+                    actualAnswer.getQuestionType(), referencedAnswer.getQuestionType()));
         }
 
         switch (type) {
@@ -71,8 +70,7 @@ public class ComparisonRule extends Rule<Answer> {
                 return referencedDate.isEmpty() || originalDate.isEmpty()
                         || validate(LocalDate::compareTo, referencedDate.get(), originalDate.get());
             default:
-                log.debug("The question type is not comparable. This is impossible situation. Nothing to validate Actual: {}", type);
-                return false;
+                throw new RuntimeException(String.format("The question type is not comparable. Actual type: %s", type));
         }
     }
 

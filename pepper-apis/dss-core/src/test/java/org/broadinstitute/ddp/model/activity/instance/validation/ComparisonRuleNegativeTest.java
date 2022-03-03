@@ -60,7 +60,7 @@ public class ComparisonRuleNegativeTest extends TxnAwareBaseTest {
                 "abc", 0L, questionIdInstanceGuidPair.getRight())));
     }
 
-    @Test
+    @Test(expected = RuntimeException.class)
     public void testValidate_incorrectQuestionType() {
         var comparisonRule = ComparisonRule.builder()
                 .type(RuleType.COMPARISON)
@@ -74,7 +74,7 @@ public class ComparisonRuleNegativeTest extends TxnAwareBaseTest {
                         questionIdInstanceGuidPair.getRight())));
     }
 
-    @Test
+    @Test(expected = RuntimeException.class)
     public void testValidate_incompatibleQuestions() {
         var comparisonRule = ComparisonRule.builder()
                 .type(RuleType.COMPARISON)
@@ -82,9 +82,9 @@ public class ComparisonRuleNegativeTest extends TxnAwareBaseTest {
                 .referenceQuestionId(questionIdInstanceGuidPair.getLeft())
                 .build();
 
-        assertFalse(comparisonRule.validate(testQuestion,
+        comparisonRule.validate(testQuestion,
                 new DecimalAnswer(null, testData.getStudyGuid(), "abc", new DecimalDef(BigInteger.TEN, 0),
-                        questionIdInstanceGuidPair.getRight())));
+                        questionIdInstanceGuidPair.getRight()));
     }
 
     private static Pair<Long, String> prepareTestData(final Handle handle) {
