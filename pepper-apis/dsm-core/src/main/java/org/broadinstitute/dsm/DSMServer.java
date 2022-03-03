@@ -494,7 +494,6 @@ public class DSMServer {
             throw new RuntimeException("appRoute was not configured correctly.");
         }
 
-        String jwtSecret = cfg.getString(ApplicationConfigConstants.BROWSER_JWT_SECRET);
         String cookieSalt = cfg.getString(ApplicationConfigConstants.BROWSER_COOKIE_SALT);
         String cookieName = cfg.getString(ApplicationConfigConstants.BROWSER_COOKIE_NAME);
         String auth0Signer = cfg.getString(ApplicationConfigConstants.AUTH0_SIGNER);
@@ -543,9 +542,7 @@ public class DSMServer {
 
                     boolean isTokenValid = false;
                     if (StringUtils.isNotBlank(tokenFromHeader)) {
-                        isTokenValid = (new CookieUtil().isCookieValid(req.cookie(cookieName), cookieSalt.getBytes(), tokenFromHeader, auth0Domain))
-                         && (new JWTRouteFilter(null, auth0Domain).isAccessAllowed(req));
-
+                        isTokenValid = new JWTRouteFilter(null, auth0Domain).isAccessAllowed(req);
                     }
                     if (!isTokenValid) {
                         halt(401, SecurityUtil.ResultType.AUTHENTICATION_ERROR.toString());

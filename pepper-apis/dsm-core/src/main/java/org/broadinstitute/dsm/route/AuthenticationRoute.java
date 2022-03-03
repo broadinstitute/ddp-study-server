@@ -176,10 +176,11 @@ public class AuthenticationRoute implements Route {
     private List<NameValuePair> buildRequestParams(@NonNull String clientId, @NonNull String grantType, @NonNull String clientSecret, @NonNull String audience, Map<String, String> claims, String audienceNameSpace) {
         List<NameValuePair> params = new ArrayList<>();
         for (String key : claims.keySet()) {
+            String finalKey = key;
             if (key.indexOf(audienceNameSpace) == -1) {
-                key = audienceNameSpace + key;
+                finalKey = audienceNameSpace + key;
             }
-            params.add(new BasicNameValuePair(key, claims.get(key)));
+            params.add(new BasicNameValuePair(finalKey, claims.get(key)));
         }
         params.add(new BasicNameValuePair(clientIdKey, clientId));
         params.add(new BasicNameValuePair(grantTypeKey, grantType));

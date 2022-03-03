@@ -35,10 +35,8 @@ public class ApplicationConfigConstants {
 
     //security information
     public static final String BSP_SECRET = "bsp.secret";
-    public static final String BROWSER_JWT_SECRET = "browser_security.jwt_secret";
     public static final String BROWSER_COOKIE_SALT = "browser_security.cookie_salt";
     public static final String BROWSER_COOKIE_NAME = "browser_security.cookie_name";
-    public static final String INTERNAL_API_SECRET = "internal_api.secret";
 
     //auth0
     public static final String AUTH0_SECRET = "auth0.secret";
