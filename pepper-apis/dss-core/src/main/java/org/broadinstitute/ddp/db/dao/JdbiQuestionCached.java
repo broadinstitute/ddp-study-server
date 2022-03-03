@@ -11,17 +11,16 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.util.RedisConnectionValidator;
 import org.jdbi.v3.core.Handle;
 import org.redisson.api.RLocalCachedMap;
 import org.redisson.client.RedisException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implements JdbiQuestion {
-    private static final Logger LOG = LoggerFactory.getLogger(JdbiQuestionCached.class);
     private static RLocalCachedMap<Long, QuestionDto> questionIdToDtoCache;
     private static RLocalCachedMap<Long, List<String>> questionIdToTextSuggestionsCache;
     private static RLocalCachedMap<Long, Long> compositeChildIdToParentIdCache;
@@ -75,6 +74,11 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
     }
 
     @Override
+    public Optional<QuestionDto> findDtoByActivityIdAndQuestionStableId(long activityId, String questionStableId) {
+        return delegate.findDtoByActivityIdAndQuestionStableId(activityId, questionStableId);
+    }
+
+    @Override
     public List<String> getActivityCodesByActivityInstanceSelectQuestionId(Long questionId) {
         return delegate.getActivityCodesByActivityInstanceSelectQuestionId(questionId);
     }
@@ -124,7 +128,7 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
             try {
                 questionId = stableIdInstanceGuidToQuestionIdCache.get(key);
             } catch (RedisException e) {
-                LOG.warn("Failed to retrieve value from Redis cache: " + stableIdInstanceGuidToQuestionIdCache.getName()
+                log.warn("Failed to retrieve value from Redis cache: " + stableIdInstanceGuidToQuestionIdCache.getName()
                         + " key:" + key + " Will try to retrieve from database", e);
                 RedisConnectionValidator.doTest();
             }
@@ -135,7 +139,7 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
                     try {
                         stableIdInstanceGuidToQuestionIdCache.putAsync(key, questionId);
                     } catch (RedisException e) {
-                        LOG.warn("Failed to store value to Redis cache: " + stableIdInstanceGuidToQuestionIdCache.getName(), e);
+                        log.warn("Failed to store value to Redis cache: " + stableIdInstanceGuidToQuestionIdCache.getName(), e);
                     }
                 }
             }
@@ -153,7 +157,7 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
             try {
                 suggestions = questionIdToTextSuggestionsCache.get(questionId);
             } catch (RedisException e) {
-                LOG.warn("Failed to retrieve value from Redis cache: " + questionIdToTextSuggestionsCache.getName()
+                log.warn("Failed to retrieve value from Redis cache: " + questionIdToTextSuggestionsCache.getName()
                         + " key:" + questionId + " Will try to retrieve from database", e);
                 RedisConnectionValidator.doTest();
             }
@@ -163,7 +167,7 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
                 try {
                     questionIdToTextSuggestionsCache.putAsync(questionId, suggestions);
                 } catch (RedisException e) {
-                    LOG.warn("Failed to store value to Redis cache: " + questionIdToTextSuggestionsCache.getName(), e);
+                    log.warn("Failed to store value to Redis cache: " + questionIdToTextSuggestionsCache.getName(), e);
                 }
             }
 
@@ -180,7 +184,7 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
             try {
                 parentId = compositeChildIdToParentIdCache.get(childQuestionId);
             } catch (RedisException e) {
-                LOG.warn("Failed to retrieve value from Redis cache: " + compositeChildIdToParentIdCache.getName()
+                log.warn("Failed to retrieve value from Redis cache: " + compositeChildIdToParentIdCache.getName()
                         + " key:" + childQuestionId + " Will try to retrieve from database", e);
                 RedisConnectionValidator.doTest();
             }
@@ -191,7 +195,7 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
                     try {
                         compositeChildIdToParentIdCache.put(childQuestionId, parentId);
                     } catch (RedisException e) {
-                        LOG.warn("Failed to store value to Redis cache: " + compositeChildIdToParentIdCache.getName(), e);
+                        log.warn("Failed to store value to Redis cache: " + compositeChildIdToParentIdCache.getName(), e);
                     }
                 }
             }
@@ -217,7 +221,7 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
                         missingParentIds.add(parentId);
                     }
                 } catch (RedisException e) {
-                    LOG.warn("Failed to retrieve value from Redis cache: " + compositeParentIdToChildIdsCache.getName()
+                    log.warn("Failed to retrieve value from Redis cache: " + compositeParentIdToChildIdsCache.getName()
                             + " key:" + parentId + " Will try to retrieve from database", e);
                     missingParentIds.add(parentId);
                 }
@@ -234,7 +238,7 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
                         }
                     }
                 } catch (RedisException e) {
-                    LOG.warn("Failed to store values to Redis cache: " + compositeParentIdToChildIdsCache.getName(), e);
+                    log.warn("Failed to store values to Redis cache: " + compositeParentIdToChildIdsCache.getName(), e);
                     RedisConnectionValidator.doTest();
                 }
                 result.putAll(moreChildIds);
@@ -266,7 +270,7 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
                         missingQuestionIds.add(questionId);
                     }
                 } catch (RedisException e) {
-                    LOG.warn("Failed to retrieve value from Redis cache: " + questionIdToDtoCache.getName()
+                    log.warn("Failed to retrieve value from Redis cache: " + questionIdToDtoCache.getName()
                             + " key:" + questionId + " Will try to retrieve from database", e);
                     missingQuestionIds.add(questionId);
                 }
@@ -280,7 +284,7 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
                 try {
                     questionIdToDtoCache.putAllAsync(moreQuestionDtos);
                 } catch (RedisException e) {
-                    LOG.warn("Failed to store values to Redis cache: " + questionIdToDtoCache.getName(), e);
+                    log.warn("Failed to store values to Redis cache: " + questionIdToDtoCache.getName(), e);
                     RedisConnectionValidator.doTest();
                 }
                 moreQuestionDtos.values().forEach(builder::add);

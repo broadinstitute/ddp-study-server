@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.DaoException;
@@ -23,6 +24,7 @@ import org.broadinstitute.ddp.db.dto.validation.DecimalRangeRuleDto;
 import org.broadinstitute.ddp.db.dto.validation.LengthRuleDto;
 import org.broadinstitute.ddp.db.dto.validation.NumOptionsSelectedRuleDto;
 import org.broadinstitute.ddp.db.dto.validation.RegexRuleDto;
+import org.broadinstitute.ddp.db.dto.validation.ComparisonRuleDto;
 import org.broadinstitute.ddp.db.dto.validation.RuleDto;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
@@ -39,6 +41,7 @@ import org.broadinstitute.ddp.model.activity.definition.validation.RegexRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.UniqueRuleDef;
+import org.broadinstitute.ddp.model.activity.definition.validation.ComparisonRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.UniqueValueRuleDef;
 import org.broadinstitute.ddp.model.activity.instance.validation.AgeRangeRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.CompleteRule;
@@ -46,6 +49,7 @@ import org.broadinstitute.ddp.model.activity.instance.validation.DateFieldRequir
 import org.broadinstitute.ddp.model.activity.instance.validation.DateRangeRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.IntRangeRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.DecimalRangeRule;
+import org.broadinstitute.ddp.model.activity.instance.validation.ComparisonRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.LengthRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.NumOptionsSelectedRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.RegexRule;
@@ -54,6 +58,7 @@ import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.instance.validation.UniqueRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.UniqueValueRule;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
+import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
@@ -72,6 +77,9 @@ public interface ValidationDao extends SqlObject {
 
     @CreateSqlObject
     JdbiRegexValidation getJdbiRegexValidation();
+
+    @CreateSqlObject
+    JdbiComparisonValidation getJdbiComparisonValidation();
 
     @CreateSqlObject
     JdbiLengthValidation getJdbiLengthValidation();
@@ -95,6 +103,9 @@ public interface ValidationDao extends SqlObject {
     JdbiQuestionValidation getJdbiQuestionValidation();
 
     @CreateSqlObject
+    JdbiQuestion getJdbiQuestion();
+
+    @CreateSqlObject
     JdbiRevision getJdbiRevision();
 
     @CreateSqlObject
@@ -102,7 +113,6 @@ public interface ValidationDao extends SqlObject {
 
     @CreateSqlObject
     JdbiI18nValidationMsgTrans getJdbiI18nValidationMsgTrans();
-
 
     /**
      * Create new validation rules for given question by inserting common data and then rule specific data.
@@ -137,6 +147,8 @@ public interface ValidationDao extends SqlObject {
                 insert(questionId, (UniqueRuleDef) rule, revisionId);
             } else if (rule instanceof UniqueValueRuleDef) {
                 insert(questionId, (UniqueValueRuleDef) rule, revisionId);
+            } else if (rule instanceof ComparisonRuleDef) {
+                insert(questionId, (ComparisonRuleDef) rule, revisionId);
             } else {
                 throw new DaoException("Unknown validation rule type " + rule.getRuleType());
             }
@@ -229,6 +241,18 @@ public interface ValidationDao extends SqlObject {
                 var decimalRangeDto = (DecimalRangeRuleDto) dto;
                 return DecimalRangeRule.of(dto.getId(), message, hint, dto.isAllowSave(),
                         decimalRangeDto.getMin(), decimalRangeDto.getMax());
+            case COMPARISON:
+                var comparisonRule = (ComparisonRuleDto) dto;
+
+                return ComparisonRule.builder()
+                        .id(dto.getId())
+                        .message(message)
+                        .correctionHint(hint)
+                        .allowSave(dto.isAllowSave())
+                        .referenceQuestionId(comparisonRule.getReferenceQuestionId())
+                        .comparisonType(comparisonRule.getType())
+                        .type(dto.getRuleType())
+                        .build();
             default:
                 throw new DaoException("Unknown validation rule type " + dto.getRuleType());
         }
@@ -371,6 +395,47 @@ public interface ValidationDao extends SqlObject {
      */
     default void insert(long questionId, UniqueValueRuleDef rule, long revisionId) {
         insertBaseRule(questionId, rule, revisionId);
+    }
+
+    /**
+     * Create a compare value validation rule with scope: same question answers among all participants of the study
+     *
+     * @param questionId the associated question
+     * @param rule       the rule definition
+     * @param revisionId the revision to use, will be shared by all created data
+     */
+    default void insert(long questionId, ComparisonRuleDef rule, long revisionId) {
+        insertBaseRule(questionId, rule, revisionId);
+
+        final Optional<QuestionDto> originalQuestion = getJdbiQuestion().findQuestionDtoById(questionId);
+        if (originalQuestion.isEmpty()) {
+            throw new DaoException("Question " + questionId + " doesn't exist");
+        }
+
+        final Optional<QuestionDto> referencedQuestion = getJdbiQuestion()
+                .findDtoByActivityIdAndQuestionStableId(originalQuestion.get().getActivityId(), rule.getValueStableId());
+        if (referencedQuestion.isEmpty()) {
+            throw new DaoException("Referenced question " + rule.getValueStableId() + " doesn't exist");
+        }
+
+        if (referencedQuestion.get().getType() != originalQuestion.get().getType()) {
+            throw new DaoException(String.format(
+                    "Referenced question must have the same type as original: %s (actual: %s)",
+                    originalQuestion.get().getType(),
+                    referencedQuestion.get().getType()));
+        }
+
+        if (!referencedQuestion.get().getType().isComparable()) {
+            throw new DaoException(String.format(
+                    "Only comparable type questions might be compared. Comparable types are: %s. (actual: %s)",
+                    Stream.of(QuestionType.values())
+                            .filter(QuestionType::isComparable)
+                            .map(Enum::name)
+                            .collect(Collectors.joining(",")),
+                    originalQuestion.get().getType()));
+        }
+
+        getJdbiComparisonValidation().insert(rule.getRuleId(), referencedQuestion.get().getId(), rule.getComparison());
     }
 
     /**
