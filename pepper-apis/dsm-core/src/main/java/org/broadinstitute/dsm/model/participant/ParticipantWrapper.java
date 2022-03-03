@@ -252,16 +252,6 @@ public class ParticipantWrapper {
         });
     }
 
-//    private List<ElasticSearchParticipantDto> getParticipantProxiesData(DDPInstance ddpInstance,
-//                                                                              ElasticSearchParticipantDto elasticSearchParticipantDto) {
-//        List<String> proxyGuids = elasticSearchParticipantDto.getProxies();
-//        if (proxyGuids.isEmpty()) return Collections.emptyList();
-//        String usersIndexES = ddpInstance.getUsersIndexES();
-//        ElasticSearch participantsByIds = elasticSearchable.getParticipantsByIds(usersIndexES, proxyGuids);
-//        List<ElasticSearchParticipantDto> proxies = participantsByIds.getEsParticipants();
-//        return proxies;
-//    }
-
     private void mapTissueToProperOncHistoryDetail(List<OncHistoryDetail> oncHistoryDetails, List<Tissue> tissues) {
         for (Tissue tissue : tissues) {
             long oncHistoryDetailId = tissue.getOncHistoryDetailId();
