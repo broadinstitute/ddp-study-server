@@ -113,9 +113,12 @@ public class ComparisonDateRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.LESS_OR_EQUAL)
                 .build();
 
-        assertTrue(comparisonRule.validate(testQuestion, createAnswer(new DateValue(1986, 12, 9), questionIdInstanceGuidPair.getRight())));
-        assertTrue(comparisonRule.validate(testQuestion, createAnswer(new DateValue(2000, 1, 1), questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(testQuestion, createAnswer(new DateValue(2021, 12, 25), questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(new DateValue(1986, 12, 9),
+                questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(new DateValue(2000, 1, 1),
+                questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(testQuestion, createAnswer(new DateValue(2021, 12, 25),
+                questionIdInstanceGuidPair.getRight())));
     }
 
     private DateAnswer createAnswer(DateValue value, String instanceGuid) {
