@@ -19,15 +19,16 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearchable;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class ParticipantWrapperTest {
     public static final int PROXIES_QUANTITY = 5;
-    private static ElasticSearchTest elasticSearchable;
+    private ElasticSearchTest elasticSearchable;
 
-    @BeforeClass
-    public static void setUp() {
+    @Before
+    public void setUp() {
         elasticSearchable = new ElasticSearchTest();
     }
 
@@ -78,29 +79,15 @@ public class ParticipantWrapperTest {
     }
 
     @Test
-    public void getProxiesWithParticipantIdsByProxiesIds() {
-        ParticipantWrapperPayload participantWrapperPayload = new ParticipantWrapperPayload.Builder().build();
-        ParticipantWrapper participantWrapper = new ParticipantWrapper(participantWrapperPayload, elasticSearchable);
-        List<ElasticSearchParticipantDto> elasticSearchList = elasticSearchable.getParticipantsWithinRange("", 0, 50).getEsParticipants();
-        Map<String, List<String>> proxiesIdsFromElasticList = participantWrapper.getProxiesIdsFromElasticList(elasticSearchList);
-        Map<String, List<ElasticSearchParticipantDto>> proxiesByParticipantIds =
-                participantWrapper.getProxiesWithParticipantIdsByProxiesIds("", proxiesIdsFromElasticList);
-        Assert.assertEquals(proxiesByParticipantIds.keySet().size(), proxiesByParticipantIds.keySet().size());
-        String parentId = proxiesIdsFromElasticList.keySet().stream().findFirst().get();
-        String proxyId = proxiesIdsFromElasticList.values().stream().findFirst().get().get(0);
-        Assert.assertEquals(proxiesByParticipantIds.get(parentId).get(0).getParticipantId(), proxyId);
-    }
-
-    @Test
     public void sortBySelfElseById() {
         Random random = new Random();
-        String[] memberTypes = new String[] {"SISTER", "COUSIN", "SELF", "BROTHER"};
+        String[] memberTypes = new String[] {"SISTER", "SELF", "COUSIN", "BROTHER"};
         AtomicInteger i = new AtomicInteger(0);
         List<ParticipantData> participantDataList = Stream.generate(
-                () -> new ParticipantData.Builder().withData(String.format("{\"MEMTER_TYPE\":\"%s\"}", memberTypes[i.getAndIncrement()]))
+                () -> new ParticipantData.Builder().withData(String.format("{\"MEMBER_TYPE\":\"%s\"}", memberTypes[i.getAndIncrement()]))
                         .withParticipantDataId(random.nextInt(100)).build()).limit(4).collect(Collectors.toList());
-        ParticipantWrapper participantWrapper = new ParticipantWrapper(new ParticipantWrapperPayload.Builder().build(), elasticSearchable);
-        participantWrapper.sortBySelfElseById(Collections.singleton(participantDataList));
+        ParticipantWrapper participantWrapper = new ParticipantWrapper(new ParticipantWrapperPayload.Builder().build(), new ElasticSearchTest());
+        participantWrapper.sortBySelfElseById(participantDataList);
         Assert.assertTrue(participantDataList.get(0).getData().orElse("").contains(FamilyMemberConstants.MEMBER_TYPE_SELF));
     }
 

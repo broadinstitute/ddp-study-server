@@ -17,6 +17,9 @@ public class SortBy {
     private String order;
     private String[] activityVersions;
 
+    //used by jackson
+    private SortBy() {}
+
     private SortBy(Builder builder) {
         this.type = builder.type;
         this.additionalType = builder.additionalType;
