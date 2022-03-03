@@ -33,12 +33,12 @@ import static org.junit.Assert.assertTrue;
 public class ComparisonRuleNegativeTest extends TxnAwareBaseTest {
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static Pair<Long, String> questionIdInstanceGuidPair;
-    private static Question unused;
+    private static Question testQuestion;
 
     @BeforeClass
     public static void setup() {
         testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
-        unused = new NumericQuestion("sid", 1L, 2L, false, false, false, null, null, null, List.of(), List.of());
+        testQuestion = new NumericQuestion("sid", 1L, 2L, false, false, false, null, null, null, List.of(), List.of());
         questionIdInstanceGuidPair = TransactionWrapper.withTxn(ComparisonRuleNegativeTest::prepareTestData);
     }
 
@@ -56,7 +56,7 @@ public class ComparisonRuleNegativeTest extends TxnAwareBaseTest {
                 .referenceQuestionId(questionIdInstanceGuidPair.getLeft())
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, new NumericAnswer(null, testData.getStudyGuid(),
+        assertTrue(comparisonRule.validate(testQuestion, new NumericAnswer(null, testData.getStudyGuid(),
                 "abc", 0L, questionIdInstanceGuidPair.getRight())));
     }
 
@@ -82,7 +82,7 @@ public class ComparisonRuleNegativeTest extends TxnAwareBaseTest {
                 .referenceQuestionId(questionIdInstanceGuidPair.getLeft())
                 .build();
 
-        assertFalse(comparisonRule.validate(unused,
+        assertFalse(comparisonRule.validate(testQuestion,
                 new DecimalAnswer(null, testData.getStudyGuid(), "abc", new DecimalDef(BigInteger.TEN, 0),
                         questionIdInstanceGuidPair.getRight())));
     }

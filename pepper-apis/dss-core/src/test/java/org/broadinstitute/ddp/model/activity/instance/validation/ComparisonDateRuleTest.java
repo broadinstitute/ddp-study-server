@@ -31,12 +31,12 @@ import static org.junit.Assert.assertTrue;
 public class ComparisonDateRuleTest extends TxnAwareBaseTest {
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static Pair<Long, String> questionIdInstanceGuidPair;
-    private static Question unused;
+    private static Question testQuestion;
 
     @BeforeClass
     public static void setup() {
         testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
-        unused = new DateQuestion("sid", 1L, false, false, false,
+        testQuestion = new DateQuestion("sid", 1L, false, false, false,
                 null, null, null, List.of(), List.of(),
                 DateRenderMode.TEXT, true, List.of(DateFieldType.YEAR, DateFieldType.MONTH, DateFieldType.DAY),
                 2L);
@@ -51,9 +51,9 @@ public class ComparisonDateRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.EQUAL)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused,
+        assertTrue(comparisonRule.validate(testQuestion,
                 createAnswer(new DateValue(2000, 1, 1), questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused,
+        assertFalse(comparisonRule.validate(testQuestion,
                 createAnswer(new DateValue(1000, 1, 1), questionIdInstanceGuidPair.getRight())));
     }
 
@@ -65,8 +65,8 @@ public class ComparisonDateRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.NOT_EQUAL)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, createAnswer(new DateValue(1000, 1, 1), questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused, createAnswer(new DateValue(2000, 1, 1), questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(new DateValue(1000, 1, 1), questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(testQuestion, createAnswer(new DateValue(2000, 1, 1), questionIdInstanceGuidPair.getRight())));
     }
 
     @Test
@@ -77,8 +77,8 @@ public class ComparisonDateRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.GREATER)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, createAnswer(new DateValue(2021, 12, 25), questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused, createAnswer(new DateValue(2000, 1, 1), questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(new DateValue(2021, 12, 25), questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(testQuestion, createAnswer(new DateValue(2000, 1, 1), questionIdInstanceGuidPair.getRight())));
     }
 
     @Test
@@ -89,9 +89,9 @@ public class ComparisonDateRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.GREATER_OR_EQUAL)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, createAnswer(new DateValue(2021, 12, 25), questionIdInstanceGuidPair.getRight())));
-        assertTrue(comparisonRule.validate(unused, createAnswer(new DateValue(2000, 1, 1), questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused, createAnswer(new DateValue(1986, 12, 9), questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(new DateValue(2021, 12, 25), questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(new DateValue(2000, 1, 1), questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(testQuestion, createAnswer(new DateValue(1986, 12, 9), questionIdInstanceGuidPair.getRight())));
     }
 
     @Test
@@ -102,8 +102,8 @@ public class ComparisonDateRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.LESS)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, createAnswer(new DateValue(1986, 12, 9), questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused, createAnswer(new DateValue(2000, 1, 1), questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(new DateValue(1986, 12, 9), questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(testQuestion, createAnswer(new DateValue(2000, 1, 1), questionIdInstanceGuidPair.getRight())));
     }
 
     @Test
@@ -114,9 +114,9 @@ public class ComparisonDateRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.LESS_OR_EQUAL)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, createAnswer(new DateValue(1986, 12, 9), questionIdInstanceGuidPair.getRight())));
-        assertTrue(comparisonRule.validate(unused, createAnswer(new DateValue(2000, 1, 1), questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused, createAnswer(new DateValue(2021, 12, 25), questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(new DateValue(1986, 12, 9), questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(new DateValue(2000, 1, 1), questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(testQuestion, createAnswer(new DateValue(2021, 12, 25), questionIdInstanceGuidPair.getRight())));
     }
 
     private DateAnswer createAnswer(DateValue value, String instanceGuid) {

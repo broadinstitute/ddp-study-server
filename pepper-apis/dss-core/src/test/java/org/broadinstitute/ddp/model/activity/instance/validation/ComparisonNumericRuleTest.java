@@ -28,12 +28,12 @@ import static org.junit.Assert.assertTrue;
 public class ComparisonNumericRuleTest extends TxnAwareBaseTest {
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static Pair<Long, String> questionIdInstanceGuidPair;
-    private static Question unused;
+    private static Question testQuestion;
 
     @BeforeClass
     public static void setup() {
         testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
-        unused = new NumericQuestion("sid", 1L, 2L, false, false, false, null, null, null, List.of(), List.of());
+        testQuestion = new NumericQuestion("sid", 1L, 2L, false, false, false, null, null, null, List.of(), List.of());
         questionIdInstanceGuidPair = TransactionWrapper.withTxn(ComparisonNumericRuleTest::prepareTestData);
     }
 
@@ -45,8 +45,8 @@ public class ComparisonNumericRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.EQUAL)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused, createAnswer(20L, questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(testQuestion, createAnswer(20L, questionIdInstanceGuidPair.getRight())));
     }
 
     @Test
@@ -57,8 +57,8 @@ public class ComparisonNumericRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.NOT_EQUAL)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, createAnswer(20L, questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(20L, questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(testQuestion, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
     }
 
     @Test
@@ -69,8 +69,8 @@ public class ComparisonNumericRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.GREATER)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, createAnswer(20L, questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(20L, questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(testQuestion, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
     }
 
     @Test
@@ -81,9 +81,9 @@ public class ComparisonNumericRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.GREATER_OR_EQUAL)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, createAnswer(20L, questionIdInstanceGuidPair.getRight())));
-        assertTrue(comparisonRule.validate(unused, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused, createAnswer(5L, questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(20L, questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(testQuestion, createAnswer(5L, questionIdInstanceGuidPair.getRight())));
     }
 
     @Test
@@ -94,8 +94,8 @@ public class ComparisonNumericRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.LESS)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, createAnswer(5L, questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(5L, questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(testQuestion, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
     }
 
     @Test
@@ -106,9 +106,9 @@ public class ComparisonNumericRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.LESS_OR_EQUAL)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, createAnswer(5L, questionIdInstanceGuidPair.getRight())));
-        assertTrue(comparisonRule.validate(unused, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused, createAnswer(20L, questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(5L, questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(10L, questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(testQuestion, createAnswer(20L, questionIdInstanceGuidPair.getRight())));
     }
 
     private NumericAnswer createAnswer(long value, String instanceGuid) {

@@ -30,12 +30,12 @@ import static org.junit.Assert.assertTrue;
 public class ComparisonDecimalRuleTest extends TxnAwareBaseTest {
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static Pair<Long, String> questionIdInstanceGuidPair;
-    private static Question unused;
+    private static Question testQuestion;
 
     @BeforeClass
     public static void setup() {
         testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
-        unused = new DecimalQuestion("sid", 1L, 2L, false, false, false,
+        testQuestion = new DecimalQuestion("sid", 1L, 2L, false, false, false,
                 null, null, null, List.of(), List.of(), 2);
         questionIdInstanceGuidPair = TransactionWrapper.withTxn(ComparisonDecimalRuleTest::prepareTestData);
     }
@@ -48,8 +48,8 @@ public class ComparisonDecimalRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.EQUAL)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, createAnswer(BigInteger.TEN, questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused, createAnswer(BigInteger.valueOf(20), questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(BigInteger.TEN, questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(testQuestion, createAnswer(BigInteger.valueOf(20), questionIdInstanceGuidPair.getRight())));
     }
 
     @Test
@@ -60,8 +60,8 @@ public class ComparisonDecimalRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.NOT_EQUAL)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, createAnswer(BigInteger.valueOf(20), questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused, createAnswer(BigInteger.TEN, questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(BigInteger.valueOf(20), questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(testQuestion, createAnswer(BigInteger.TEN, questionIdInstanceGuidPair.getRight())));
     }
 
     @Test
@@ -72,8 +72,8 @@ public class ComparisonDecimalRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.GREATER)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, createAnswer(BigInteger.valueOf(20), questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused, createAnswer(BigInteger.TEN, questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(BigInteger.valueOf(20), questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(testQuestion, createAnswer(BigInteger.TEN, questionIdInstanceGuidPair.getRight())));
     }
 
     @Test
@@ -84,9 +84,9 @@ public class ComparisonDecimalRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.GREATER_OR_EQUAL)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, createAnswer(BigInteger.valueOf(20), questionIdInstanceGuidPair.getRight())));
-        assertTrue(comparisonRule.validate(unused, createAnswer(BigInteger.TEN, questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused, createAnswer(BigInteger.ONE, questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(BigInteger.valueOf(20), questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(BigInteger.TEN, questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(testQuestion, createAnswer(BigInteger.ONE, questionIdInstanceGuidPair.getRight())));
     }
 
     @Test
@@ -97,8 +97,8 @@ public class ComparisonDecimalRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.LESS)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, createAnswer(BigInteger.ONE, questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused, createAnswer(BigInteger.TEN, questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(BigInteger.ONE, questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(testQuestion, createAnswer(BigInteger.TEN, questionIdInstanceGuidPair.getRight())));
     }
 
     @Test
@@ -109,9 +109,9 @@ public class ComparisonDecimalRuleTest extends TxnAwareBaseTest {
                 .comparisonType(ComparisonType.LESS_OR_EQUAL)
                 .build();
 
-        assertTrue(comparisonRule.validate(unused, createAnswer(BigInteger.ONE, questionIdInstanceGuidPair.getRight())));
-        assertTrue(comparisonRule.validate(unused, createAnswer(BigInteger.TEN, questionIdInstanceGuidPair.getRight())));
-        assertFalse(comparisonRule.validate(unused, createAnswer(BigInteger.valueOf(20), questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(BigInteger.ONE, questionIdInstanceGuidPair.getRight())));
+        assertTrue(comparisonRule.validate(testQuestion, createAnswer(BigInteger.TEN, questionIdInstanceGuidPair.getRight())));
+        assertFalse(comparisonRule.validate(testQuestion, createAnswer(BigInteger.valueOf(20), questionIdInstanceGuidPair.getRight())));
     }
 
     private DecimalAnswer createAnswer(BigInteger value, String instanceGuid) {
