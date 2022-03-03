@@ -29,7 +29,6 @@ import java.util.List;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-@SuppressWarnings({"unchecked", "rawtypes"})
 public class ComparisonRuleNegativeTest extends TxnAwareBaseTest {
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static Pair<Long, String> questionIdInstanceGuidPair;
