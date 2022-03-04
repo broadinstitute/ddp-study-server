@@ -5,6 +5,28 @@
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
 
     <changeSet author="lkapanad" id="file-answer-one-to-many">
+        <createTable tableName="file_answer_temp">
+            <column name="file_answer_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="file_answer_temp__answer_pk" deleteCascade="true"/>
+            </column>
+            <column name="answer_id" type="bigint">
+                <constraints references="answer(answer_id)" foreignKeyName="file_answer_temp__answer_fk"
+                             deleteCascade="true"/>
+            </column>
+            <column name="file_upload_id" type="bigint">
+                <constraints nullable="true"
+                             references="file_upload(file_upload_id)"
+                             foreignKeyName="file_answer_temp_file_upload_fk"/>
+            </column>
+        </createTable>
+        <update tableName="file_answer_temp">
+            <column name="answer_id" valueComputed="(SELECT file_answer.answer_id FROM file_answer WHERE file_answer_temp.answer_id = file_answer.answer_id)"/>
+            <where>file_answer_temp.answer_id = (SELECT file_answer.answer_id FROM file_answer WHERE file_answer_temp.answer_id = file_answer.answer_id)</where>
+        </update>
+        <update tableName="file_answer_temp">
+            <column name="file_upload_id" valueComputed="(SELECT file_answer.file_upload_id FROM file_answer WHERE file_answer_temp.file_upload_id = file_answer.file_upload_id)"/>
+            <where>file_answer_temp.file_upload_id = (SELECT file_answer.file_upload_id FROM file_answer WHERE file_answer_temp.file_upload_id = file_answer.file_upload_id)</where>
+        </update>
         <dropTable tableName="file_answer"/>
         <createTable tableName="file_answer">
             <column name="file_answer_id" type="bigint" autoIncrement="true" startWith="1">
@@ -20,6 +42,15 @@
                              foreignKeyName="file_answer_file_upload_fk"/>
             </column>
         </createTable>
+        <update tableName="file_answer">
+            <column name="answer_id" valueComputed="(SELECT file_answer_temp.answer_id FROM file_answer_temp WHERE file_answer.answer_id = file_answer_temp.answer_id)"/>
+            <where>file_answer.answer_id = (SELECT file_answer_temp.answer_id FROM file_answer_temp WHERE file_answer.answer_id = file_answer_temp.answer_id)</where>
+        </update>
+        <update tableName="file_answer">
+            <column name="file_upload_id" valueComputed="(SELECT file_answer_temp.file_upload_id FROM file_answer_temp WHERE file_answer.file_upload_id = file_answer_temp.file_upload_id)"/>
+            <where>file_answer.file_upload_id = (SELECT file_answer_temp.file_upload_id FROM file_answer_temp WHERE file_answer.file_upload_id = file_answer_temp.file_upload_id)</where>
+        </update>
+        <dropTable tableName="file_answer_temp"/>
     </changeSet>
 
 </databaseChangeLog>
