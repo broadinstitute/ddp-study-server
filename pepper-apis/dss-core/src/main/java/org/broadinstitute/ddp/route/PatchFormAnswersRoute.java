@@ -608,7 +608,7 @@ public class PatchFormAnswersRoute implements Route {
     private FileAnswer convertFileAnswer(Handle handle, Response response, String stableId, String guid,
                                          String instanceGuid, JsonElement value) {
         boolean isNull = (value == null || value.isJsonNull());
-        if (isNull || value.getAsJsonArray().isJsonArray()) {
+        if (isNull || value.isJsonArray()) {
             List<FileInfo> fileInfos = new ArrayList<>();
             if (!isNull) {
                 for (JsonElement element : value.getAsJsonArray()) {
