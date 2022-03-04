@@ -1834,7 +1834,7 @@ public class PatchFormAnswersRouteStandaloneTest {
     @Test
     public void testPatch_fileAnswer_createAndUpdate() {
         var stableId = fileQuestion.getStableId();
-        var submission = new AnswerSubmission(stableId, null, gson.toJsonTree(upload1.getGuid()));
+        var submission = new AnswerSubmission(stableId, null, gson.toJsonTree(List.of(upload1.getGuid())));
         var data = new PatchAnswerPayload(List.of(submission));
         String guid = givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat()
@@ -1855,7 +1855,7 @@ public class PatchFormAnswersRouteStandaloneTest {
         assertEquals(upload1.getFileName(), ((FileAnswer)answer.get()).getValue().get(0).getFileName());
         assertEquals(upload1.getFileSize(), ((FileAnswer)answer.get()).getValue().get(0).getFileSize());
 
-        submission = new AnswerSubmission(stableId, guid, gson.toJsonTree(upload2.getGuid()));
+        submission = new AnswerSubmission(stableId, guid, gson.toJsonTree(List.of(upload2.getGuid())));
         data = new PatchAnswerPayload(List.of(submission));
         String nextGuid = givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat()
@@ -1882,7 +1882,7 @@ public class PatchFormAnswersRouteStandaloneTest {
         var answer = TransactionWrapper.withTxn(handle ->
                 new AnswerCachedDao(handle).findAnswerByGuid(guid));
         assertTrue(answer.isPresent());
-        assertNull("created answer should have null for value", answer.get().getValue());
+        assertNull("created answer should have null for value", ((List<?>) answer.get().getValue()).get(0));
 
         // Set a value then clear it.
         data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, guid, gson.toJsonTree(upload1.getGuid()))));
@@ -1900,13 +1900,13 @@ public class PatchFormAnswersRouteStandaloneTest {
         answer = TransactionWrapper.withTxn(handle ->
                 new AnswerCachedDao(handle).findAnswerByGuid(guid));
         assertTrue(answer.isPresent());
-        assertNull("answer value should be cleared", answer.get().getValue());
+        assertNull("answer value should be cleared", ((List<?>) answer.get().getValue()).get(0));
     }
 
     @Test
     public void testPatch_fileAnswer_fileNotFound() {
         var stableId = fileQuestion.getStableId();
-        var data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, null, gson.toJsonTree("foobar"))));
+        var data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, null, gson.toJsonTree("[foobar]"))));
         givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat()
                 .statusCode(400).contentType(ContentType.JSON)

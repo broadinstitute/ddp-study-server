@@ -1015,8 +1015,8 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .root("sections[8].blocks[0].question")
                 .body("questionType", equalTo(QuestionType.FILE.name()))
                 .body("answers.size()", equalTo(1))
-                .body("answers[0].value.fileName", equalTo("file.pdf"))
-                .body("answers[0].value.fileSize", equalTo(123));
+                .body("answers[0].value[0].fileName", equalTo("file.pdf"))
+                .body("answers[0].value[0].fileSize", equalTo(123));
     }
 
     /**
