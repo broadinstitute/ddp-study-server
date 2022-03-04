@@ -36,17 +36,4 @@ public class CookieUtil {
         return new String(Base64.getEncoder().encode(hash));
     }
 
-    public boolean isCookieValid(String cookieValue, byte[] cookieSalt, String jwtToken, String auth0Domain)
-            throws NoSuchAlgorithmException, InvalidKeySpecException {
-        boolean isValidToken = SecurityHelper.validTokenRSA256(jwtToken, auth0Domain);
-        boolean doesCookieMatchToken = false;
-
-        if (isValidToken) {
-            doesCookieMatchToken = hashToken(jwtToken, cookieSalt).equals(cookieValue);
-            if (!doesCookieMatchToken) {
-                // todo arz issue alert to monitoring--this smells like token theft
-            }
-        }
-        return doesCookieMatchToken;
-    }
 }

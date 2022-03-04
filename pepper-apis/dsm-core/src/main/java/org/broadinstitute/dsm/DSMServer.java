@@ -494,8 +494,6 @@ public class DSMServer {
             throw new RuntimeException("appRoute was not configured correctly.");
         }
 
-        String cookieSalt = cfg.getString(ApplicationConfigConstants.BROWSER_COOKIE_SALT);
-        String cookieName = cfg.getString(ApplicationConfigConstants.BROWSER_COOKIE_NAME);
         String auth0Signer = cfg.getString(ApplicationConfigConstants.AUTH0_SIGNER);
 
         SecurityUtil.init(auth0Domain, auth0claimNameSpace, auth0Signer);

@@ -45,6 +45,9 @@ public class AuthenticationRoute implements Route {
     private static final String grantTypeKey = "grant_type";
     private static final String clientSecretKey = "client_secret";
     private static final String audienceKey = "audience";
+    private static final String api = "/oauth/token";
+    private static final String contentType = "application/x-www-form-urlencoded";
+    private static final String clientCredentials = "client_credentials";
 
     private final Auth0Util auth0Util;
 
@@ -146,10 +149,6 @@ public class AuthenticationRoute implements Route {
     }
 
     private String getNewAuth0TokenWithCustomClaims(Map<String, String> claims, String clientSecret, String clientId, String auth0Domain, String auth0Audience, String audienceNameSpace) throws AuthenticationException {
-        String api = "/oauth/token";
-        String contentType = "application/x-www-form-urlencoded";
-        String clientCredentials = "client_credentials";
-
         String requestUrl = "https://" + auth0Domain + api;
         Map<String, String> headers = new HashMap<>();
         headers.put("content-type", contentType);
