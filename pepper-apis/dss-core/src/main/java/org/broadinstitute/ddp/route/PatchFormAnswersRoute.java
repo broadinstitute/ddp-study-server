@@ -607,7 +607,6 @@ public class PatchFormAnswersRoute implements Route {
 
     private FileAnswer convertFileAnswer(Handle handle, Response response, String stableId, String guid,
                                          String instanceGuid, JsonElement value) {
-        LOG.info("--------StableId: {} guid: {} instanceGuid: {} value:{}", stableId, guid, instanceGuid, value);
         boolean isNull = (value == null || value.isJsonNull());
         if (isNull || value.getAsJsonArray().isJsonArray()) {
             List<FileInfo> fileInfos = new ArrayList<>();
@@ -623,9 +622,7 @@ public class PatchFormAnswersRoute implements Route {
                 }
 
             }
-            FileAnswer fileAnswer = new FileAnswer(null, stableId, guid, fileInfos, instanceGuid);
-            LOG.info("FileAnswer: {}", fileAnswer);
-            return fileAnswer;
+            return new FileAnswer(null, stableId, guid, fileInfos, instanceGuid);
         } else {
             return null;
         }
