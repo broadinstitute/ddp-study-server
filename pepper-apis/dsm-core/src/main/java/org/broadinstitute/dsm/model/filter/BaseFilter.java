@@ -1,5 +1,8 @@
 package org.broadinstitute.dsm.model.filter;
 
+import java.io.IOException;
+import java.util.Objects;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
@@ -11,9 +14,6 @@ import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import spark.QueryParamsMap;
-
-import java.io.IOException;
-import java.util.Objects;
 
 public class BaseFilter {
 
@@ -37,10 +37,13 @@ public class BaseFilter {
 
     protected void prepareNecessaryData(QueryParamsMap queryParamsMap) {
         parent = Objects.requireNonNull(queryParamsMap).get(DBConstants.FILTER_PARENT).value();
-        if (StringUtils.isBlank(parent)) throw new RuntimeException("parent is necessary");
+        if (StringUtils.isBlank(parent)) {
+            throw new RuntimeException("parent is necessary");
+        }
         realm = queryParamsMap.get(RoutePath.REALM).value();
-        if (StringUtils.isBlank(realm)) throw new RuntimeException("realm is necessary");
-        ddpInstance = DDPInstance.getDDPInstance(realm);
+        if (StringUtils.isBlank(realm)) {
+            throw new RuntimeException("realm is necessary");
+        }
         filterQuery = "";
         quickFilterName = "";
         Filter[] savedFilters = new Gson().fromJson(queryParamsMap.get(RequestParameter.FILTERS).value(), Filter[].class);
@@ -48,9 +51,8 @@ public class BaseFilter {
 
             ViewFilter requestForFiltering;
             try {
-                requestForFiltering = StringUtils.isNotBlank(jsonBody)
-                        ? ObjectMapperSingleton.instance().readValue(jsonBody, ViewFilter.class)
-                        : null;
+                requestForFiltering =
+                        StringUtils.isNotBlank(jsonBody) ? ObjectMapperSingleton.instance().readValue(jsonBody, ViewFilter.class) : null;
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -68,8 +70,10 @@ public class BaseFilter {
         }
         this.from = Integer.parseInt(queryParamsMap.get(LIST_RANGE_FROM).value());
         this.to = Integer.parseInt(queryParamsMap.get(LIST_RANGE_TO).value());
-        if (queryParamsMap.hasKey(SortBy.SORT_BY))
-            this.sortBy = ObjectMapperSingleton.readValue(queryParamsMap.get(SortBy.SORT_BY).value(), new TypeReference<SortBy>() {});
+        if (queryParamsMap.hasKey(SortBy.SORT_BY)) {
+            this.sortBy = ObjectMapperSingleton.readValue(queryParamsMap.get(SortBy.SORT_BY).value(), new TypeReference<SortBy>() {
+            });
+        }
     }
 
 }

@@ -4,13 +4,11 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Pattern;
 
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.ViewFilter;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
-import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.model.Filter;
@@ -46,24 +44,22 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
     protected ParticipantWrapperResult filterParticipantList(Filter[] filters, Map<String, DBElement> columnNameMap) {
         Map<String, String> queryConditions = new HashMap<>();
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
-        ParticipantWrapperPayload.Builder participantWrapperPayload = new ParticipantWrapperPayload.Builder()
-                .withDdpInstanceDto(ddpInstanceDto)
-                .withFrom(from)
-                .withTo(to)
-                .withSortBy(sortBy);
+        ParticipantWrapperPayload.Builder participantWrapperPayload =
+                new ParticipantWrapperPayload.Builder().withDdpInstanceDto(ddpInstanceDto).withFrom(from).withTo(to).withSortBy(sortBy);
         ElasticSearch elasticSearch = new ElasticSearch();
         if (filters != null && columnNameMap != null && !columnNameMap.isEmpty()) {
             for (Filter filter : filters) {
                 if (filter != null) {
                     String tableAlias = null;
                     if (filter.getParticipantColumn() != null) { // profile.firstName
-                        if (PARTICIPANT_DATA.equals(filter.getParticipantColumn().getTableAlias()) || PARENT_PARTICIPANT_LIST.equals(filter.getParentName())) {
-                            tableAlias = StringUtils.isNotBlank(filter.getParticipantColumn().getTableAlias())
-                                    ? filter.getParticipantColumn().getTableAlias()
-                                    : filter.getParentName();
+                        if (PARTICIPANT_DATA.equals(filter.getParticipantColumn().getTableAlias()) || PARENT_PARTICIPANT_LIST.equals(
+                                filter.getParentName())) {
+                            tableAlias = StringUtils.isNotBlank(filter.getParticipantColumn().getTableAlias()) ?
+                                    filter.getParticipantColumn().getTableAlias() : filter.getParentName();
                             filter.setParentName(tableAlias);
                         } else {
-                            tableAlias = StringUtils.isNotBlank(filter.getParentName()) ? filter.getParentName() : filter.getParticipantColumn().getTableAlias();
+                            tableAlias = StringUtils.isNotBlank(filter.getParentName()) ? filter.getParentName() :
+                                    filter.getParticipantColumn().getTableAlias();
                         }
                     }
                     String tmpName = null;
@@ -128,8 +124,8 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
             for (String selectedOption : filter.getSelectedOptions()) {
                 filter.getFilter1().setValue(selectedOption);
                 filter.getFilter2().setName(Util.underscoresToCamelCase(tmpName));
-                String filterQuery = Filter.OR_TRIMMED +Filter.getQueryStringForFiltering(filter,
-                        dbElement).trim().substring(AndOrFilterSeparator.MINIMUM_STEP_FROM_OPERATOR);
+                String filterQuery = Filter.OR_TRIMMED + Filter.getQueryStringForFiltering(filter, dbElement).trim()
+                        .substring(AndOrFilterSeparator.MINIMUM_STEP_FROM_OPERATOR);
                 queryConditions.merge(DBConstants.DDP_PARTICIPANT_DATA_ALIAS, filterQuery,
                         (prev, curr) -> String.join(Filter.SPACE, prev, curr));
             }
