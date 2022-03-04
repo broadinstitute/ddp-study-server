@@ -1885,7 +1885,7 @@ public class PatchFormAnswersRouteStandaloneTest {
         assertNull("created answer should have null for value", ((List<?>) answer.get().getValue()).get(0));
 
         // Set a value then clear it.
-        data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, guid, gson.toJsonTree(upload1.getGuid()))));
+        data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, guid, gson.toJsonTree(List.of(upload1.getGuid())))));
         givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat().statusCode(200);
         answer = TransactionWrapper.withTxn(handle ->
@@ -1906,7 +1906,7 @@ public class PatchFormAnswersRouteStandaloneTest {
     @Test
     public void testPatch_fileAnswer_fileNotFound() {
         var stableId = fileQuestion.getStableId();
-        var data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, null, gson.toJsonTree("[foobar]"))));
+        var data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, null, gson.toJsonTree(List.of("foobar")))));
         givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat()
                 .statusCode(400).contentType(ContentType.JSON)
