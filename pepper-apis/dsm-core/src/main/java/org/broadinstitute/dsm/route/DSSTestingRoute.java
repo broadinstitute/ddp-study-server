@@ -13,7 +13,7 @@ import spark.Route;
 
 import java.util.HashMap;
 import java.util.Map;
-//TODO remove before final merge, for testing only
+//TODO pegah remove when the whole Authentication is done, works as a dummy endpoint now
 
 public class DSSTestingRoute implements Route {
     private static final Logger logger = LoggerFactory.getLogger(DSSTestingRoute.class);
