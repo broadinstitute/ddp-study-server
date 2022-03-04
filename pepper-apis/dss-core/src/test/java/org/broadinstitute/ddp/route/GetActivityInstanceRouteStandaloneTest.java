@@ -383,7 +383,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 studyId, userId, userId, "blob", "application/pdf", "file.pdf", 123L);
         fileDao.markVerified(upload.getId());
         var fileAnswer = new FileAnswer(null, file1.getStableId(), null,
-                fileDao.findFileInfoByGuid(upload.getGuid()).get());
+                Collections.singletonList(fileDao.findFileInfoByGuid(upload.getGuid()).get()));
         answerDao.createAnswer(testData.getUserId(), instanceDto.getId(), fileAnswer);
     }
 

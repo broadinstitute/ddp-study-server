@@ -1852,8 +1852,8 @@ public class PatchFormAnswersRouteStandaloneTest {
         assertEquals(guid, answer.get().getAnswerGuid());
         assertEquals(stableId, answer.get().getQuestionStableId());
         assertEquals(QuestionType.FILE, answer.get().getQuestionType());
-        assertEquals(upload1.getFileName(), ((FileAnswer)answer.get()).getValue().getFileName());
-        assertEquals(upload1.getFileSize(), ((FileAnswer)answer.get()).getValue().getFileSize());
+        assertEquals(upload1.getFileName(), ((FileAnswer)answer.get()).getValue().get(0).getFileName());
+        assertEquals(upload1.getFileSize(), ((FileAnswer)answer.get()).getValue().get(0).getFileSize());
 
         submission = new AnswerSubmission(stableId, guid, gson.toJsonTree(upload2.getGuid()));
         data = new PatchAnswerPayload(List.of(submission));
@@ -1866,7 +1866,7 @@ public class PatchFormAnswersRouteStandaloneTest {
         answer =  TransactionWrapper.withTxn(handle ->
                 new AnswerCachedDao(handle).findAnswerByGuid(guid));
         assertTrue(answer.isPresent());
-        assertEquals(upload2.getFileName(), ((FileAnswer) answer.get()).getValue().getFileName());
+        assertEquals(upload2.getFileName(), ((FileAnswer) answer.get()).getValue().get(0).getFileName());
     }
 
     @Test
@@ -1892,7 +1892,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                 new AnswerCachedDao(handle).findAnswerByGuid(guid));
         assertTrue(answer.isPresent());
         assertNotNull(answer.get().getValue());
-        assertEquals(upload1.getFileName(), ((FileAnswer) answer.get()).getValue().getFileName());
+        assertEquals(upload1.getFileName(), ((FileAnswer) answer.get()).getValue().get(0).getFileName());
 
         data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, guid, null)));
         givenAnswerPatchRequest(instanceGuid, data)

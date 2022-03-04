@@ -12,11 +12,8 @@
 
     <changeSet author="yufeng" id="20210127-file-answer-table">
         <createTable tableName="file_answer">
-            <column name="file_answer_id" type="bigint" autoIncrement="true" startWith="1">
-                <constraints primaryKey="true" primaryKeyName="file_answer__answer_pk"/>
-            </column>
             <column name="answer_id" type="bigint">
-                <constraints nullable="false"
+                <constraints primaryKey="true" primaryKeyName="file_answer_pk"
                              references="answer(answer_id)" foreignKeyName="file_answer_answer_fk"
                              deleteCascade="true"/>
             </column>

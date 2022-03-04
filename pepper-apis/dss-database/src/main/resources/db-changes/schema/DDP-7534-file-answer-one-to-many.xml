@@ -5,20 +5,21 @@
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
 
     <changeSet author="lkapanad" id="file-answer-one-to-many">
-        <dropPrimaryKey tableName="file_answer"/>
-        <dropColumn columnName="answer_id" tableName="file_answer"/>
-        <addColumn tableName="file_answer">
+        <dropTable tableName="file_answer"/>
+        <createTable tableName="file_answer">
+            <column name="file_answer_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="file_answer__answer_pk" deleteCascade="true"/>
+            </column>
             <column name="answer_id" type="bigint">
-                <constraints nullable="false"
-                             references="answer(answer_id)" foreignKeyName="file_answer_answer_fk"
+                <constraints references="answer(answer_id)" foreignKeyName="file_answer_answer_fk"
                              deleteCascade="true"/>
             </column>
-        </addColumn>
-        <addColumn tableName="file_answer">
-            <column name="file_answer_id" type="bigint" autoIncrement="true" startWith="1">
-                <constraints primaryKey="true" primaryKeyName="file_answer__answer_pk"/>
+            <column name="file_upload_id" type="bigint">
+                <constraints nullable="true"
+                             references="file_upload(file_upload_id)"
+                             foreignKeyName="file_answer_file_upload_fk"/>
             </column>
-        </addColumn>
+        </createTable>
     </changeSet>
 
 </databaseChangeLog>
