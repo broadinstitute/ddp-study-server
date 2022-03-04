@@ -41,16 +41,10 @@ public class JWTRouteFilter {
      * secret, and optionally includes one or more of the
      * given roles in the roles claim.
      *
-     * @param allowedRoles If given, at least one of the roles in the list
-     *                     must be present in the roles claim in the token.
-     *                     If empty or null, the roles claim is not checked.
      */
-    public JWTRouteFilter(Collection<String> allowedRoles, String auth0Domain, String bspSecret) {
+    public JWTRouteFilter(String auth0Domain, String bspSecret) {
         this.auth0Domain = auth0Domain;
         this.bspSecret = bspSecret;
-        if (allowedRoles != null && !allowedRoles.isEmpty()) {
-            this.expectedRoles.addAll(allowedRoles);
-        }
     }
 
     /**
@@ -81,24 +75,8 @@ public class JWTRouteFilter {
                                     verifiedClaims = jwt.getClaims();
                                 }
                                 if (verifiedClaims != null) {
-                                    if (!expectedRoles.isEmpty()) {
-                                        if (verifiedClaims.containsKey(DDP_ROLES_CLAIM)) {
-                                            Object rolesObj = verifiedClaims.get(DDP_ROLES_CLAIM);
-                                            if (rolesObj != null && rolesObj instanceof Collection) {
-                                                Collection rolesInToken = (Collection) rolesObj;
-                                                for (String expectedRole : expectedRoles) {
-                                                    if (rolesInToken.contains(expectedRole)) {
-                                                        // token has at least one of the request roles, so allow access
-                                                        isAccessAllowed = true;
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        // no role restriction required, just a valid signature
-                                        isAccessAllowed = true;
-                                    }
+                                    // no role restriction required, just a valid signature
+                                    isAccessAllowed = true;
                                 }
                             } catch (Exception e) {
                                 logger.error("Invalid token: " + jwtToken, e);
