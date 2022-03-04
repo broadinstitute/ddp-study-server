@@ -63,14 +63,7 @@ public class Auth0Util {
     public Auth0UserInfo getAuth0UserInfo(@NonNull String idToken, String auth0Domain) throws AuthenticationException {
         try {
             Map<String, Claim> auth0Claims = verifyAndParseAuth0TokenClaims(idToken, auth0Domain);
-            boolean isEmailVerified = false;
-            Claim emailVerifiedClaim = auth0Claims.getOrDefault("email_verified", null);
-            if (emailVerifiedClaim != null && !emailVerifiedClaim.isNull()) {
-                Boolean value = emailVerifiedClaim.asBoolean();
-                isEmailVerified = value == null ? false : value;
-            }
-            Auth0UserInfo userInfo = new Auth0UserInfo(auth0Claims.get("email").asString(), auth0Claims.get("exp").asInt(),
-                    isEmailVerified);
+            Auth0UserInfo userInfo = new Auth0UserInfo(auth0Claims.get("email").asString(), auth0Claims.get("exp").asInt());
             verifyUserConnection(auth0Claims.get("sub").asString(), userInfo.getEmail());
 
             return userInfo;
@@ -172,12 +165,10 @@ public class Auth0Util {
 
         private String email;
         private long expirationTime;
-        private boolean emailVerified;
 
-        public Auth0UserInfo(@NonNull Object emailObj, @NonNull Object expirationTimeObj, @NonNull Object emailVerifiedObj) {
+        public Auth0UserInfo(@NonNull Object emailObj, @NonNull Object expirationTimeObj) {
             this.email = emailObj.toString();
             this.expirationTime = Long.parseLong(expirationTimeObj.toString());
-            this.emailVerified = (boolean) emailVerifiedObj;
         }
 
         public String getEmail() {
@@ -186,10 +177,6 @@ public class Auth0Util {
 
         public long getTokenExpiration() {
             return expirationTime;
-        }
-
-        public boolean getEmailVerified() {
-            return emailVerified;
         }
     }
 }
