@@ -1,22 +1,18 @@
 package org.broadinstitute.dsm;
 
-import org.apache.http.HttpResponse;
-import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
-import org.broadinstitute.dsm.util.TestUtil;
-import org.broadinstitute.lddp.security.Auth0Util;
-import org.broadinstitute.lddp.security.SecurityHelper;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.apache.http.HttpResponse;
+import org.broadinstitute.dsm.util.TestUtil;
+import org.junit.Test;
 
 public class AuthenticationTest {
     @Test
     public void testAuthentication() throws IOException {
         String auth0Token = "";
-        String user_id = "NMRUIZFATUIXIVMHJE9K";
+        String userId = "NMRUIZFATUIXIVMHJE9K";
         String operatorGUID = "C2JYXJUUBC2KP9R10G1U";
         int cookieAgeInSeconds = 60;
         //        Map<String, String> claims = new HashMap<>();
@@ -40,7 +36,7 @@ public class AuthenticationTest {
 
         Map<String, String> authHeaders = new HashMap<>();
         authHeaders.put("Authorization", "Bearer " + auth0Token);
-        String reqAddress = "https://pepper-dev.datadonationplatform.org/pepper/v1/user/"+user_id+"/studies/cmi-pancan/activities";
+        String reqAddress = "https://pepper-dev.datadonationplatform.org/pepper/v1/user/" + userId + "/studies/cmi-pancan/activities";
         HttpResponse response = TestUtil.performGet(reqAddress, "", authHeaders).returnResponse();
         System.out.println(response.toString());
     }

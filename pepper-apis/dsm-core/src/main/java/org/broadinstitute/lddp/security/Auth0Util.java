@@ -74,7 +74,7 @@ public class Auth0Util {
             verifyUserConnection(auth0Claims.get("sub").asString(), userInfo.getEmail());
 
             return userInfo;
-        }catch (AuthenticationException e){
+        } catch (AuthenticationException e) {
             throw new AuthenticationException("couldn't get Auth0 user info", e);
         }
     }

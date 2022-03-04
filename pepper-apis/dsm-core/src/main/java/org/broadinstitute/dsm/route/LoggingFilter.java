@@ -1,5 +1,9 @@
 package org.broadinstitute.dsm.route;
 
+import static spark.Spark.halt;
+
+import java.util.Optional;
+
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.apache.commons.lang3.StringUtils;
@@ -11,10 +15,6 @@ import org.slf4j.MDC;
 import spark.Filter;
 import spark.Request;
 import spark.Response;
-
-import java.util.Optional;
-
-import static spark.Spark.halt;
 
 /**
  * Captures client IP and name of user from token, adding

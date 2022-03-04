@@ -1,5 +1,10 @@
 package org.broadinstitute.dsm.util;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -10,11 +15,6 @@ import org.broadinstitute.dsm.security.JWTConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
-
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * Utility for "before" filter that will halt with a 404
@@ -74,12 +74,10 @@ public class JWTRouteFilter {
                                     maybeValidToken.orElseThrow();
                                     DecodedJWT validToken = maybeValidToken.get();
                                     verifiedClaims = validToken.getClaims();
-                                }
-                                else {
+                                } else {
                                     Algorithm algorithm = Algorithm.HMAC256(bspSecret);
                                     JWTVerifier verifier = JWT.require(algorithm).build(); //Reusable verifier instance
                                     DecodedJWT jwt = verifier.verify(jwtToken);
-
                                     verifiedClaims = jwt.getClaims();
                                 }
                                 if (verifiedClaims != null) {
@@ -97,14 +95,12 @@ public class JWTRouteFilter {
                                                 }
                                             }
                                         }
-                                    }
-                                    else {
+                                    } else {
                                         // no role restriction required, just a valid signature
                                         isAccessAllowed = true;
                                     }
                                 }
-                            }
-                            catch (Exception e) {
+                            } catch (Exception e) {
                                 logger.error("Invalid token: " + jwtToken, e);
                             }
                         }

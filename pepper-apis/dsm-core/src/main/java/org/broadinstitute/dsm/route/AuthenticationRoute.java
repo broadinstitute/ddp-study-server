@@ -1,6 +1,13 @@
 package org.broadinstitute.dsm.route;
 
 
+import static spark.Spark.halt;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.auth0.jwt.interfaces.Claim;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -24,10 +31,6 @@ import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
-
-import java.util.*;
-
-import static spark.Spark.halt;
 
 public class AuthenticationRoute implements Route {
 
@@ -58,7 +61,8 @@ public class AuthenticationRoute implements Route {
     private final String auth0MgmntAudience;
     private final String audienceNameSpace;
 
-    public AuthenticationRoute(@NonNull Auth0Util auth0Util, @NonNull UserUtil userUtil, @NonNull String auth0Domain, @NonNull String clientSecret,
+    public AuthenticationRoute(@NonNull Auth0Util auth0Util, @NonNull UserUtil userUtil, @NonNull String auth0Domain,
+                               @NonNull String clientSecret,
                                @NonNull String auth0ClientId, @NonNull String auth0MgmntAudience, @NonNull String audienceNameSpace) {
 
         this.auth0Util = auth0Util;
@@ -86,13 +90,14 @@ public class AuthenticationRoute implements Route {
                         Gson gson = new Gson();
                         Map<String, String> claims = new HashMap<>();
                         UserDao userDao = new UserDao();
-                        UserDto userDto = userDao.getUserByEmail(email).orElseThrow(() -> new RuntimeException("User " + email + " not found!"));
+                        UserDto userDto =
+                                userDao.getUserByEmail(email).orElseThrow(() -> new RuntimeException("User " + email + " not found!"));
                         if (userDto == null) {
                             userUtil.insertUser(email, email);
-                            userDto = userDao.getUserByEmail(email).orElseThrow(() -> new RuntimeException("new inserted user " + email + " not found!"));
+                            userDto = userDao.getUserByEmail(email)
+                                    .orElseThrow(() -> new RuntimeException("new inserted user " + email + " not found!"));
                             claims.put(userAccessRoles, "user needs roles and groups");
-                        }
-                        else {
+                        } else {
                             String userSetting = gson.toJson(userUtil.getUserAccessRoles(email), ArrayList.class);
                             claims.put(userAccessRoles, userSetting);
                             logger.info(userSetting);
@@ -104,32 +109,28 @@ public class AuthenticationRoute implements Route {
                         claims = getDSSClaimsFromOriginalToken(auth0Token, auth0Domain, claims);
 
                         try {
-                            String dsmToken = getNewAuth0TokenWithCustomClaims(claims, clientSecret, auth0ClientId, auth0Domain, auth0MgmntAudience, audienceNameSpace);
+                            String dsmToken =
+                                    getNewAuth0TokenWithCustomClaims(claims, clientSecret, auth0ClientId, auth0Domain, auth0MgmntAudience,
+                                            audienceNameSpace);
                             if (dsmToken != null) {
                                 return new DSMToken(dsmToken);
+                            } else {
+                                haltWithErrorMsg(401, response, "DSMToken was null! Not authorized user");
                             }
-                            else {
-                                haltWithErrorMsg(401, response,  "DSMToken was null! Not authorized user");
-                            }
+                        } catch (AuthenticationException e) {
+                            haltWithErrorMsg(401, response, "DSMToken was null! Not authorized user", e);
                         }
-                        catch (AuthenticationException e) {
-                            haltWithErrorMsg(401, response,  "DSMToken was null! Not authorized user", e);
-                        }
+                    } else {
+                        haltWithErrorMsg(400, response, "user was null");
                     }
-                    else {
-                        haltWithErrorMsg(400, response,  "user was null");
-                    }
+                } catch (AuthenticationException e) {
+                    haltWithErrorMsg(400, response, "Problem getting user info from Auth0 token", e);
                 }
-                catch (AuthenticationException e) {
-                    haltWithErrorMsg(400, response,  "Problem getting user info from Auth0 token", e);
-                }
+            } else {
+                haltWithErrorMsg(400, response, "There was no token in the payload");
             }
-            else {
-                haltWithErrorMsg(400, response,  "There was no token in the payload");
-            }
-        }
-        catch (JsonSyntaxException e) {
-            haltWithErrorMsg(400, response,  "The provided JSON in the request was malformed", e);
+        } catch (JsonSyntaxException e) {
+            haltWithErrorMsg(400, response, "The provided JSON in the request was malformed", e);
         }
         return response;
     }
@@ -137,7 +138,7 @@ public class AuthenticationRoute implements Route {
     private Map<String, String> getDSSClaimsFromOriginalToken(String auth0Token, String auth0Domain, Map<String, String> claims) {
         Map<String, Claim> auth0Claims = Auth0Util.verifyAndParseAuth0TokenClaims(auth0Token, auth0Domain);
 
-        if(!auth0Claims.containsKey(tenantDomain) || !auth0Claims.containsKey(clientId) ||!auth0Claims.containsKey(userId)){
+        if (!auth0Claims.containsKey(tenantDomain) || !auth0Claims.containsKey(clientId) || !auth0Claims.containsKey(userId)) {
             throw new RuntimeException("Missing dss claims in auth0 claims, can not authenticate");
         }
         claims.put(tenantDomain, auth0Claims.get(tenantDomain).asString());
@@ -148,20 +149,21 @@ public class AuthenticationRoute implements Route {
         return claims;
     }
 
-    private String getNewAuth0TokenWithCustomClaims(Map<String, String> claims, String clientSecret, String clientId, String auth0Domain, String auth0Audience, String audienceNameSpace) throws AuthenticationException {
+    private String getNewAuth0TokenWithCustomClaims(Map<String, String> claims, String clientSecret, String clientId, String auth0Domain,
+                                                    String auth0Audience, String audienceNameSpace) throws AuthenticationException {
         String requestUrl = "https://" + auth0Domain + api;
         Map<String, String> headers = new HashMap<>();
         headers.put("content-type", contentType);
 
-        List<NameValuePair> requestParams = buildRequestParams(clientId, clientCredentials, clientSecret, auth0Audience, claims, audienceNameSpace);
+        List<NameValuePair> requestParams =
+                buildRequestParams(clientId, clientCredentials, clientSecret, auth0Audience, claims, audienceNameSpace);
         Auth0M2MResponse response;
         try {
             response = DDPRequestUtil.postRequestWithResponse(Auth0M2MResponse.class, requestUrl, requestParams, "auth0 M2M", headers);
             if (response == null) {
                 throw new AuthenticationException("Didn't receive a token from auth0!");
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new AuthenticationException("couldn't get response from Auth0 for user " + claims.get("USER_EMAIL"), e);
         }
         if (response.getError() != null) {
@@ -170,7 +172,8 @@ public class AuthenticationRoute implements Route {
         return response.getAccessToken();
     }
 
-    private List<NameValuePair> buildRequestParams(@NonNull String clientId, @NonNull String grantType, @NonNull String clientSecret, @NonNull String audience, Map<String, String> claims, String audienceNameSpace) {
+    private List<NameValuePair> buildRequestParams(@NonNull String clientId, @NonNull String grantType, @NonNull String clientSecret,
+                                                   @NonNull String audience, Map<String, String> claims, String audienceNameSpace) {
         List<NameValuePair> params = new ArrayList<>();
         for (String key : claims.keySet()) {
             String finalKey = key;
@@ -197,7 +200,7 @@ public class AuthenticationRoute implements Route {
     /**
      * sets the status to the code and the message to the given error message
      */
-    public static void haltWithErrorMsg( int responseStatus, Response response, String message) {
+    public static void haltWithErrorMsg(int responseStatus, Response response, String message) {
         response.type(ContentType.APPLICATION_JSON.getMimeType());
         logger.error(message);
         String errorMsgJson = new Gson().toJson(new Error(message));
@@ -205,8 +208,8 @@ public class AuthenticationRoute implements Route {
     }
 
 
-    public static void haltWithErrorMsg( int responseStatus, Response response, String message, Throwable t) {
-        if(t!=null){
+    public static void haltWithErrorMsg(int responseStatus, Response response, String message, Throwable t) {
+        if (t != null) {
             logger.error("Authentication Error", t);
         }
         haltWithErrorMsg(responseStatus, response, message);
