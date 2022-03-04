@@ -20,6 +20,7 @@ import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.DDPKitRequest;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
+import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.EventUtil;
 import org.broadinstitute.dsm.util.KitUtil;
@@ -122,6 +123,7 @@ public class TestHelper {
         if (cfg == null) {
             throw new NullPointerException("config");
         } else {
+            new DSMConfig(cfg);
             logger.info("Setup the DB...");
             boolean skipSsl = false;
             if (cfg.hasPath("portal.dbSkipSsl") && cfg.getBoolean("portal.dbSkipSsl")) {
