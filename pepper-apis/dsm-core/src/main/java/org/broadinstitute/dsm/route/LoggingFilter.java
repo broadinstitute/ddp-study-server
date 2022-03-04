@@ -14,6 +14,8 @@ import spark.Response;
 
 import java.util.Optional;
 
+import static spark.Spark.halt;
+
 /**
  * Captures client IP and name of user from token, adding
  * them to MDC for logging.
@@ -47,7 +49,9 @@ public class LoggingFilter implements Filter {
                             MDC.put(USER_EMAIL, userEmail);
                         }
                     }
-                }, () ->{throw  new RuntimeException("Unable to verifiy token");});
+                }, () ->{logger.error("Unable to verify token");
+                    halt(401);
+                    return;});
 
         }
 

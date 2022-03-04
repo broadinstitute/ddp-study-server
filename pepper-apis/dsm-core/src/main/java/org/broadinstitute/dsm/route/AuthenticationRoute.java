@@ -9,6 +9,7 @@ import com.google.gson.JsonSyntaxException;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
+import org.apache.http.entity.ContentType;
 import org.apache.http.message.BasicNameValuePair;
 import org.broadinstitute.dsm.db.UserSettings;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
@@ -26,22 +27,24 @@ import spark.Route;
 
 import java.util.*;
 
+import static spark.Spark.halt;
+
 public class AuthenticationRoute implements Route {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationRoute.class);
-    public final String authUserId = "USER_ID";
-    private final String payloadToken = "token";
-    private final String authUserName = "USER_NAME";
-    private final String authUserEmail = "USER_MAIL";
-    private final String userAccessRoles = "USER_ACCESS_ROLE";
-    private final String userSettings = "USER_SETTINGS";
-    private final String clientId = "https://datadonationplatform.org/cid";
-    private final String userId = "https://datadonationplatform.org/uid";
-    private final String tenantDomain = "https://datadonationplatform.org/t";
-    private final String clientIdKey = "client_id";
-    private final String grantTypeKey = "grant_type";
-    private final String clientSecretKey = "client_secret";
-    private final String audienceKey = "audience";
+    public static final String authUserId = "USER_ID";
+    private static final String payloadToken = "token";
+    private static final String authUserName = "USER_NAME";
+    private static final String authUserEmail = "USER_MAIL";
+    private static final String userAccessRoles = "USER_ACCESS_ROLE";
+    private static final String userSettings = "USER_SETTINGS";
+    private static final String clientId = "https://datadonationplatform.org/cid";
+    private static final String userId = "https://datadonationplatform.org/uid";
+    private static final String tenantDomain = "https://datadonationplatform.org/t";
+    private static final String clientIdKey = "client_id";
+    private static final String grantTypeKey = "grant_type";
+    private static final String clientSecretKey = "client_secret";
+    private static final String audienceKey = "audience";
 
     private final Auth0Util auth0Util;
 
@@ -103,34 +106,29 @@ public class AuthenticationRoute implements Route {
                                 return new DSMToken(dsmToken);
                             }
                             else {
-                                response.status(401);
-                                throw new RuntimeException("DSMToken was null! Not authorized user");
+                                haltWithErrorMsg(401, response,  "DSMToken was null! Not authorized user");
                             }
                         }
                         catch (DSMAuthenticationException e) {
-                            response.status(401);
-                            throw new RuntimeException("Not authorized user", e);
+                            haltWithErrorMsg(401, response,  "DSMToken was null! Not authorized user", e);
                         }
                     }
                     else {
-                        response.status(400);
-                        throw new RuntimeException("user was null");
+                        haltWithErrorMsg(400, response,  "user was null");
                     }
                 }
                 catch (DSMAuthenticationException e) {
-                    response.status(400);
-                    throw new RuntimeException(e);
+                    haltWithErrorMsg(400, response,  "Problem getting user info from Auth0 token", e);
                 }
             }
             else {
-                response.status(400);
-                throw new RuntimeException("There was no token in the payload");
+                haltWithErrorMsg(400, response,  "There was no token in the payload");
             }
         }
         catch (JsonSyntaxException e) {
-            response.status(400);
-            throw new RuntimeException("The provided JSON in the request was malformed", e);
+            haltWithErrorMsg(400, response,  "The provided JSON in the request was malformed", e);
         }
+        return response;
     }
 
     private Map<String, String> getDSSClaimsFromOriginalToken(String auth0Token, String auth0Domain, Map<String, String> claims) {
@@ -195,5 +193,23 @@ public class AuthenticationRoute implements Route {
         public DSMToken(String token) {
             this.dsmToken = token;
         }
+    }
+
+    /**
+     * sets the status to the code and the message to the given error message
+     */
+    public static void haltWithErrorMsg( int responseStatus, Response response, String message) {
+        response.type(ContentType.APPLICATION_JSON.getMimeType());
+        logger.error(message);
+        String errorMsgJson = new Gson().toJson(new Error(message));
+        halt(responseStatus, errorMsgJson);
+    }
+
+
+    public static void haltWithErrorMsg( int responseStatus, Response response, String message, Throwable t) {
+        if(t!=null){
+            logger.error("Authentication Error", t);
+        }
+        haltWithErrorMsg(responseStatus, response, message);
     }
 }
