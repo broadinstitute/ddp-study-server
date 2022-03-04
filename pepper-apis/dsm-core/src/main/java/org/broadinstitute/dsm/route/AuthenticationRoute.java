@@ -14,7 +14,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.broadinstitute.dsm.db.UserSettings;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
-import org.broadinstitute.dsm.exception.DSMAuthenticationException;
+import org.broadinstitute.dsm.exception.AuthenticationException;
 import org.broadinstitute.dsm.model.auth0.Auth0M2MResponse;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
 import org.broadinstitute.dsm.util.UserUtil;
@@ -109,7 +109,7 @@ public class AuthenticationRoute implements Route {
                                 haltWithErrorMsg(401, response,  "DSMToken was null! Not authorized user");
                             }
                         }
-                        catch (DSMAuthenticationException e) {
+                        catch (AuthenticationException e) {
                             haltWithErrorMsg(401, response,  "DSMToken was null! Not authorized user", e);
                         }
                     }
@@ -117,7 +117,7 @@ public class AuthenticationRoute implements Route {
                         haltWithErrorMsg(400, response,  "user was null");
                     }
                 }
-                catch (DSMAuthenticationException e) {
+                catch (AuthenticationException e) {
                     haltWithErrorMsg(400, response,  "Problem getting user info from Auth0 token", e);
                 }
             }
@@ -145,7 +145,7 @@ public class AuthenticationRoute implements Route {
         return claims;
     }
 
-    private String getNewAuth0TokenWithCustomClaims(Map<String, String> claims, String clientSecret, String clientId, String auth0Domain, String auth0Audience, String audienceNameSpace) throws DSMAuthenticationException {
+    private String getNewAuth0TokenWithCustomClaims(Map<String, String> claims, String clientSecret, String clientId, String auth0Domain, String auth0Audience, String audienceNameSpace) throws AuthenticationException {
         String api = "/oauth/token";
         String contentType = "application/x-www-form-urlencoded";
         String clientCredentials = "client_credentials";
@@ -159,14 +159,14 @@ public class AuthenticationRoute implements Route {
         try {
             response = DDPRequestUtil.postRequestWithResponse(Auth0M2MResponse.class, requestUrl, requestParams, "auth0 M2M", headers);
             if (response == null) {
-                throw new DSMAuthenticationException("Didn't receive a token from auth0!");
+                throw new AuthenticationException("Didn't receive a token from auth0!");
             }
         }
         catch (Exception e) {
-            throw new DSMAuthenticationException("couldn't get response from Auth0 for user " + claims.get("USER_EMAIL"), e);
+            throw new AuthenticationException("couldn't get response from Auth0 for user " + claims.get("USER_EMAIL"), e);
         }
         if (response.getError() != null) {
-            throw new DSMAuthenticationException("Got Auth0 M2M error " + response.getError() + " : " + response.getErrorDescription());
+            throw new AuthenticationException("Got Auth0 M2M error " + response.getError() + " : " + response.getErrorDescription());
         }
         return response.getAccessToken();
     }

@@ -7,7 +7,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import lombok.NonNull;
-import org.broadinstitute.dsm.exception.DSMAuthenticationException;
+import org.broadinstitute.dsm.exception.AuthenticationException;
 import org.broadinstitute.dsm.security.JWTConverter;
 import org.broadinstitute.lddp.exception.InvalidTokenException;
 import org.slf4j.Logger;
@@ -102,7 +102,7 @@ public class SecurityHelper {
         return isValid;
     }
 
-    public static Map<String, Claim> verifyAndGetClaims(@NonNull String token, @NonNull String auth0Domain, @NonNull String auth0Signer) throws InvalidTokenException, DSMAuthenticationException {
+    public static Map<String, Claim> verifyAndGetClaims(@NonNull String token, @NonNull String auth0Domain, @NonNull String auth0Signer) throws InvalidTokenException, AuthenticationException {
 
         Map<String, Claim> claimsMap = Auth0Util.verifyAndParseAuth0TokenClaims(token, auth0Domain);
         if (auth0Signer.equals(claimsMap.get(CLAIM_ISSUER).asString())) {

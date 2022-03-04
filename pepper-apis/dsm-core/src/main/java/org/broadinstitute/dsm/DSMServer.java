@@ -467,7 +467,7 @@ public class DSMServer {
         afterAfter((req, res) -> MDC.clear());
 
         before(API_ROOT + "*", (req, res) -> {
-            if (!new JWTRouteFilter(null, auth0Domain).isAccessAllowed(req)) {
+            if (!new JWTRouteFilter(null, auth0Domain, bspSecret).isAccessAllowed(req, false)) {
                 halt(404);
             }
             res.header(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
@@ -542,7 +542,7 @@ public class DSMServer {
 
                     boolean isTokenValid = false;
                     if (StringUtils.isNotBlank(tokenFromHeader)) {
-                        isTokenValid = new JWTRouteFilter(null, auth0Domain).isAccessAllowed(req);
+                        isTokenValid = new JWTRouteFilter(null, auth0Domain, bspSecret).isAccessAllowed(req, true);
                     }
                     if (!isTokenValid) {
                         halt(401, SecurityUtil.ResultType.AUTHENTICATION_ERROR.toString());

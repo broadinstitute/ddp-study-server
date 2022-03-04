@@ -17,7 +17,7 @@ import com.auth0.net.Request;
 import lombok.NonNull;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.exception.DSMAuthenticationException;
+import org.broadinstitute.dsm.exception.AuthenticationException;
 import org.broadinstitute.dsm.security.JWTConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +60,7 @@ public class Auth0Util {
         this.audience = audience;
     }
 
-    public Auth0UserInfo getAuth0UserInfo(@NonNull String idToken, String auth0Domain) throws DSMAuthenticationException {
+    public Auth0UserInfo getAuth0UserInfo(@NonNull String idToken, String auth0Domain) throws AuthenticationException {
         try {
             Map<String, Claim> auth0Claims = verifyAndParseAuth0TokenClaims(idToken, auth0Domain);
             boolean isEmailVerified = false;
@@ -74,8 +74,8 @@ public class Auth0Util {
             verifyUserConnection(auth0Claims.get("sub").asString(), userInfo.getEmail());
 
             return userInfo;
-        }catch (DSMAuthenticationException e){
-            throw new DSMAuthenticationException("couldn't get Auth0 user info", e);
+        }catch (AuthenticationException e){
+            throw new AuthenticationException("couldn't get Auth0 user info", e);
         }
     }
 
@@ -125,14 +125,14 @@ public class Auth0Util {
         }
     }
 
-    public static Map<String, Claim> verifyAndParseAuth0TokenClaims(String auth0Token, String auth0Domain) throws DSMAuthenticationException{
+    public static Map<String, Claim> verifyAndParseAuth0TokenClaims(String auth0Token, String auth0Domain) throws AuthenticationException {
         Map<String, Claim> auth0Claims = new HashMap<>();
         try {
             Optional<DecodedJWT> maybeToken = JWTConverter.verifyDDPToken(auth0Token, auth0Domain);
             maybeToken.orElseThrow();
             auth0Claims = maybeToken.get().getClaims();
         } catch (Exception e) {
-            throw new DSMAuthenticationException("Could not verify auth0 token.", e);
+            throw new AuthenticationException("Could not verify auth0 token.", e);
         }
         return auth0Claims;
     }

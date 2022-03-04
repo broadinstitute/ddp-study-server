@@ -1,10 +1,8 @@
 package org.broadinstitute.dsm.util;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTVerifier;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.apache.commons.lang3.StringUtils;
@@ -12,6 +10,11 @@ import org.broadinstitute.dsm.security.JWTConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Utility for "before" filter that will halt with a 404
@@ -29,6 +32,7 @@ public class JWTRouteFilter {
     public static final String DDP_ROLES_CLAIM = "org.broadinstitute.ddp.roles";
     private static final Logger logger = LoggerFactory.getLogger(JWTRouteFilter.class);
     private final String auth0Domain;
+    private final String bspSecret;
     private final Collection<String> expectedRoles = new HashSet<>();
 
     /**
@@ -37,25 +41,23 @@ public class JWTRouteFilter {
      * secret, and optionally includes one or more of the
      * given roles in the roles claim.
      *
-     *
      * @param allowedRoles If given, at least one of the roles in the list
      *                     must be present in the roles claim in the token.
      *                     If empty or null, the roles claim is not checked.
      */
-    public JWTRouteFilter(Collection<String> allowedRoles, String auth0Domain) {
+    public JWTRouteFilter(Collection<String> allowedRoles, String auth0Domain, String bspSecret) {
         this.auth0Domain = auth0Domain;
-
+        this.bspSecret = bspSecret;
         if (allowedRoles != null && !allowedRoles.isEmpty()) {
             this.expectedRoles.addAll(allowedRoles);
         }
-
     }
 
     /**
      * Returns true if the request has the appropriate
      * jwt token, false o'wise
      */
-    public boolean isAccessAllowed(Request request) {
+    public boolean isAccessAllowed(Request request, boolean isRSA) {
         boolean isAccessAllowed = false;
         if (request != null) {
             String authHeader = request.headers(AUTHORIZATION);
@@ -66,10 +68,20 @@ public class JWTRouteFilter {
                         String jwtToken = parsedAuthHeader[1].trim();
                         if (StringUtils.isNotBlank(jwtToken)) {
                             try {
-                                Optional<DecodedJWT> maybeValidToken = JWTConverter.verifyDDPToken(jwtToken, auth0Domain);
-                                maybeValidToken.orElseThrow();
-                                DecodedJWT validToken = maybeValidToken.get();
-                                Map<String, Claim> verifiedClaims =validToken.getClaims();
+                                Map<String, Claim> verifiedClaims;
+                                if (isRSA) {
+                                    Optional<DecodedJWT> maybeValidToken = JWTConverter.verifyDDPToken(jwtToken, auth0Domain);
+                                    maybeValidToken.orElseThrow();
+                                    DecodedJWT validToken = maybeValidToken.get();
+                                    verifiedClaims = validToken.getClaims();
+                                }
+                                else {
+                                    Algorithm algorithm = Algorithm.HMAC256(bspSecret);
+                                    JWTVerifier verifier = JWT.require(algorithm).build(); //Reusable verifier instance
+                                    DecodedJWT jwt = verifier.verify(jwtToken);
+
+                                    verifiedClaims = jwt.getClaims();
+                                }
                                 if (verifiedClaims != null) {
                                     if (!expectedRoles.isEmpty()) {
                                         if (verifiedClaims.containsKey(DDP_ROLES_CLAIM)) {
@@ -85,12 +97,14 @@ public class JWTRouteFilter {
                                                 }
                                             }
                                         }
-                                    } else {
+                                    }
+                                    else {
                                         // no role restriction required, just a valid signature
                                         isAccessAllowed = true;
                                     }
                                 }
-                            } catch (Exception e) {
+                            }
+                            catch (Exception e) {
                                 logger.error("Invalid token: " + jwtToken, e);
                             }
                         }
