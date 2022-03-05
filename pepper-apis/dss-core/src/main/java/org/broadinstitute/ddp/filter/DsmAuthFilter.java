@@ -11,6 +11,7 @@ import com.auth0.jwk.JwkProviderBuilder;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.constants.Auth0Constants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ClientDao;
 import org.broadinstitute.ddp.security.JWTConverter;
@@ -93,12 +94,10 @@ public class DsmAuthFilter implements Filter {
      * Get the clientId reported by the token.
      *
      * @param jwt the decoded token object
-     * @return the clientId extracted from token "sub" claim
+     * @return the clientId extracted from token client claim
      */
     private Optional<String> extractClientIdFromToken(DecodedJWT jwt) {
-        //sub claim contains the clientId with a suffix. Extract the client id from it
-        return Optional.ofNullable(jwt.getClaim("sub"))
-                .map(claim -> claim.asString().substring(0, claim.asString().indexOf("@clients")));
+        return Optional.ofNullable(jwt.getClaim(Auth0Constants.DDP_CLIENT_CLAIM).asString());
     }
 
     /**
