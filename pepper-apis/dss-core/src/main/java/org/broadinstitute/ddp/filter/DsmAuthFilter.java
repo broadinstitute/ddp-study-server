@@ -97,8 +97,17 @@ public class DsmAuthFilter implements Filter {
      * @return the clientId extracted from token client claim
      */
     private Optional<String> extractClientIdFromToken(DecodedJWT jwt) {
-        return Optional.ofNullable(jwt.getClaim(Auth0Constants.DDP_CLIENT_CLAIM).asString());
+        Optional<String> clientId;
+        clientId = Optional.ofNullable(jwt.getClaim(Auth0Constants.DDP_CLIENT_CLAIM).asString());
+        if (!clientId.isPresent()) {
+            //check if sub claim contains the clientId with a suffix.
+            //backward compatibility until we see new DSM Tokens
+            clientId = Optional.ofNullable(jwt.getClaim("sub"))
+                    .map(claim -> claim.asString().substring(0, claim.asString().indexOf("@clients")));
+        }
+        return clientId;
     }
+
 
     /**
      * For token client to be valid it has to exist, be the one that we expect, and it has to be still active.
