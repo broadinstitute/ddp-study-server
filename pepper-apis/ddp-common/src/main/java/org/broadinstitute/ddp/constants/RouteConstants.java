@@ -195,6 +195,7 @@ public class RouteConstants {
         public static final String MEDICAL_PROVIDER_GUID = ":medicalProviderGuid";
         public static final String INSTITUTION_TYPE = ":institutionType";
         public static final String INVITATION_ID = ":invitationId";
+        public static final String QUESTION_STABLE_ID = ":questionStableId";
     }
 
     public static final class QueryParam {
