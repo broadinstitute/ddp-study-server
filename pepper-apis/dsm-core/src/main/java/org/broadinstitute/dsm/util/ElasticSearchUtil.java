@@ -219,7 +219,7 @@ public class ElasticSearchUtil {
                                                                               String participantHruid) {
         Map<String, Map<String, Object>> esData = new HashMap<>();
         if (StringUtils.isNotBlank(index)) {
-            logger.info("Collecting ES data");
+            logger.info("Collecting ES data from index " + index);
             try {
                 int scrollSize = 1000;
                 SearchRequest searchRequest = new SearchRequest(index);
@@ -251,7 +251,7 @@ public class ElasticSearchUtil {
                                                                             RestHighLevelClient client) {
         Map<String, Map<String, Object>> esData = new HashMap<>();
         if (StringUtils.isNotBlank(index)) {
-            logger.info("Collecting ES data");
+            logger.info("Collecting ES data from index " + index);
             try {
                 int scrollSize = 1000;
                 SearchRequest searchRequest = new SearchRequest(index);
@@ -348,7 +348,7 @@ public class ElasticSearchUtil {
         String index = instance.getParticipantIndexES();
         if (StringUtils.isNotBlank(index)) {
             Map<String, Map<String, Object>> esData = new HashMap<>();
-            logger.info("Collecting ES data");
+            logger.info("Collecting ES data from index " + index);
             try {
                 int scrollSize = 1000;
                 SearchRequest searchRequest = new SearchRequest(index);
