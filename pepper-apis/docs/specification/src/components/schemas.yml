@@ -1869,7 +1869,7 @@ Question.Matrix:
         renderModal:
           type: boolean
           default: false
-          description: When true, matrix question is wrapped inside a modal.
+          description: When true, the matrix question should be presented inside a modal box.
         modal:
           type: string
           description: Button label that opens modal.
