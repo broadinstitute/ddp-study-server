@@ -16,7 +16,6 @@ import com.typesafe.config.Config;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.entity.ContentType;
-import org.broadinstitute.lddp.security.CookieUtil;
 import org.broadinstitute.lddp.security.SecurityHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,20 +34,6 @@ public class TestUtil {
         this.cookieName = cookieName;
     }
 
-    public static TestUtil newInstance(Config cfg) throws Exception {
-        String jwtSecret = cfg.getString("browser_security.jwt_secret");
-        String cookieSalt = cfg.getString("browser_security.cookie_salt");
-        String cookieName = cfg.getString("browser_security.cookie_name");
-
-        Map<String, String> claims = new HashMap<>();
-        claims.put("USER_ID", "26");
-        String jwtToken = new SecurityHelper().createToken(jwtSecret, (System.currentTimeMillis() / 1000) + (60 * 18), claims);
-
-        CookieUtil cookieUtil = new CookieUtil();
-        int cookieAgeInSeconds = 60;
-        Cookie csrfCookie = cookieUtil.createSecureCookieForToken(cookieName, cookieAgeInSeconds, jwtToken, cookieSalt.getBytes());
-        return new TestUtil(jwtToken, csrfCookie, cookieName);
-    }
 
     public static File getResouresFile(String name) {
         ClassLoader classLoader = TestUtil.class.getClassLoader();
