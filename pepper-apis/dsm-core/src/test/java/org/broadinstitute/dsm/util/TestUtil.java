@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.util;
 
-import javax.servlet.http.Cookie;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -12,6 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gson.GsonBuilder;
+import com.typesafe.config.Config;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.entity.ContentType;
@@ -24,15 +24,23 @@ public class TestUtil {
     public static final String UNIT_TEST = "UNIT_TEST";
     private static final Logger logger = LoggerFactory.getLogger(TestUtil.class);
     private String jwtToken;
-    private Cookie csrfCookie;
     private String cookieName;
 
-    public TestUtil(String jwtToken, Cookie csrfCookie, String cookieName) {
+    public TestUtil(String jwtToken, String cookieName) {
         this.jwtToken = jwtToken;
-        this.csrfCookie = csrfCookie;
         this.cookieName = cookieName;
     }
 
+    public static TestUtil newInstance(Config cfg) throws Exception {
+        String jwtSecret = cfg.getString("browser_security.jwt_secret");
+        String cookieName = cfg.getString("browser_security.cookie_name");
+
+        Map<String, String> claims = new HashMap<>();
+        claims.put("USER_ID", "26");
+        String jwtToken = new SecurityHelper().createToken(jwtSecret, (System.currentTimeMillis() / 1000) + (60 * 18), claims);
+
+        return new TestUtil(jwtToken, cookieName);
+    }
 
     public static File getResouresFile(String name) {
         ClassLoader classLoader = TestUtil.class.getClassLoader();
@@ -114,7 +122,6 @@ public class TestUtil {
 
     public Map<String, String> buildAuthHeaders() {
         Map<String, String> authHeaders = new HashMap<>();
-        authHeaders.put("Cookie", cookieName + "=" + csrfCookie.getValue() + ";");
         authHeaders.put("Authorization", "Bearer " + jwtToken);
         return authHeaders;
     }

@@ -10,15 +10,20 @@ import com.auth0.client.mgmt.ManagementAPI;
 import com.auth0.json.auth.TokenHolder;
 import com.auth0.json.mgmt.users.Identity;
 import com.auth0.json.mgmt.users.User;
+import com.auth0.jwk.JwkProvider;
+import com.auth0.jwk.JwkProviderBuilder;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.auth0.jwt.interfaces.RSAKeyProvider;
 import com.auth0.net.AuthRequest;
 import com.auth0.net.Request;
 import lombok.NonNull;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.exception.AuthenticationException;
-import org.broadinstitute.dsm.security.JWTConverter;
+import org.broadinstitute.dsm.security.RSAKeyProviderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,7 +126,7 @@ public class Auth0Util {
     public static Map<String, Claim> verifyAndParseAuth0TokenClaims(String auth0Token, String auth0Domain) throws AuthenticationException {
         Map<String, Claim> auth0Claims = new HashMap<>();
         try {
-            Optional<DecodedJWT> maybeToken = JWTConverter.verifyDDPToken(auth0Token, auth0Domain);
+            Optional<DecodedJWT> maybeToken = verifyAuth0Token(auth0Token, auth0Domain);
             maybeToken.orElseThrow();
             auth0Claims = maybeToken.get().getClaims();
         } catch (Exception e) {
@@ -178,5 +183,33 @@ public class Auth0Util {
         public long getTokenExpiration() {
             return expirationTime;
         }
+    }
+
+
+    /**
+     * Verifies the given token by checking the signature with the
+     * given jwk provider
+     *
+     * @param jwt         the token to verify
+     * @param auth0Domain auth0 domain
+     * @return a verified, decoded JWT
+     */
+    public static Optional<DecodedJWT> verifyAuth0Token(String jwt, String auth0Domain) {
+        RSAKeyProvider keyProvider = null;
+        DecodedJWT validToken = null;
+        try {
+            JwkProvider jwkProvider = new JwkProviderBuilder(auth0Domain).build();
+            keyProvider = RSAKeyProviderFactory.createRSAKeyProviderWithPrivateKeyOnly(jwkProvider);
+        } catch (Exception e) {
+            logger.warn("Could not verify token {} due to jwk error", jwt);
+        }
+        if (keyProvider != null) {
+            try {
+                validToken = JWT.require(Algorithm.RSA256(keyProvider)).acceptLeeway(10).build().verify(jwt);
+            } catch (Exception e) {
+                logger.warn("Could not verify token {}", jwt, e);
+            }
+        }
+        return Optional.ofNullable(validToken);
     }
 }

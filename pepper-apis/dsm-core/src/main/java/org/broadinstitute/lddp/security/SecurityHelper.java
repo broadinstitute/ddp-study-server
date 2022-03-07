@@ -5,13 +5,10 @@ import java.util.Map;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
-import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
-import com.auth0.jwt.interfaces.DecodedJWT;
 import lombok.NonNull;
 import org.broadinstitute.dsm.exception.AuthenticationException;
-import org.broadinstitute.dsm.security.JWTConverter;
 import org.broadinstitute.lddp.exception.InvalidTokenException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +33,6 @@ public class SecurityHelper {
         try {
             JWTCreator.Builder builder = JWT.create();
             builder.withClaim(CLAIM_MONITORINGSYSTEM, monitoringSystem);
-            // builder.withClaim(CLAIM_EXPIRATION, 0);
             builder.withClaim(CLAIM_ISSUER, SIGNER);
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return builder.sign(algorithm);
@@ -69,33 +65,6 @@ public class SecurityHelper {
         } catch (Exception e) {
             throw new RuntimeException("Couldn't create token " + e);
         }
-    }
-
-    public static boolean validToken(@NonNull String secret, @NonNull String token) {
-        boolean isValid = false;
-        try {
-            Algorithm algorithm = Algorithm.HMAC256(secret);
-            JWTVerifier verifier = JWT.require(algorithm).build(); //Reusable verifier instance
-            DecodedJWT jwt = verifier.verify(token);
-            isValid = true;
-        } catch (Exception e) {
-            // todo arz probably want to catch specific exceptions for
-            // validation failure vs. algorithm related stuff
-            logger.warn("Security - Error verifying token", e);
-        }
-        return isValid;
-    }
-
-    public static boolean validTokenRSA256(@NonNull String token, @NonNull String auth0Domain) {
-        boolean isValid = false;
-        try {
-            JWTConverter.verifyDDPToken(token, auth0Domain).orElseThrow();
-            isValid = true;
-
-        } catch (Exception e) {
-            logger.warn("Security - Error verifying token", e);
-        }
-        return isValid;
     }
 
     public static Map<String, Claim> verifyAndGetClaims(@NonNull String token, @NonNull String auth0Domain, @NonNull String auth0Signer)

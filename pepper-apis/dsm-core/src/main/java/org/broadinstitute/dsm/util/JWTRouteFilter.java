@@ -11,7 +11,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.security.JWTConverter;
+import org.broadinstitute.lddp.security.Auth0Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -40,7 +40,6 @@ public class JWTRouteFilter {
      * bearer auth JWT token is present, signed with the given
      * secret, and optionally includes one or more of the
      * given roles in the roles claim.
-     *
      */
     public JWTRouteFilter(String auth0Domain, String bspSecret) {
         this.auth0Domain = auth0Domain;
@@ -64,7 +63,7 @@ public class JWTRouteFilter {
                             try {
                                 Map<String, Claim> verifiedClaims;
                                 if (isRSA) {
-                                    Optional<DecodedJWT> maybeValidToken = JWTConverter.verifyDDPToken(jwtToken, auth0Domain);
+                                    Optional<DecodedJWT> maybeValidToken = Auth0Util.verifyAuth0Token(jwtToken, auth0Domain);
                                     maybeValidToken.orElseThrow();
                                     DecodedJWT validToken = maybeValidToken.get();
                                     verifiedClaims = validToken.getClaims();

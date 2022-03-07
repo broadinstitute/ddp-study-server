@@ -7,7 +7,7 @@ import java.util.Optional;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.security.JWTConverter;
+import org.broadinstitute.lddp.security.Auth0Util;
 import org.broadinstitute.lddp.util.Utility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +39,7 @@ public class LoggingFilter implements Filter {
     public void handle(Request request, Response response) {
         String tokenFromHeader = Utility.getTokenFromHeader(request);
         if (StringUtils.isNotBlank(tokenFromHeader) && !"null".equals(tokenFromHeader)) {
-                Optional<DecodedJWT> maybeDecodedUnverifiedJWT = JWTConverter.verifyDDPToken(tokenFromHeader, auth0Domain);
+                Optional<DecodedJWT> maybeDecodedUnverifiedJWT = Auth0Util.verifyAuth0Token(tokenFromHeader, auth0Domain);
                 maybeDecodedUnverifiedJWT.ifPresentOrElse(decodedJWT -> {
                     Claim userEmailClaim = decodedJWT.getClaim(claimNameSpace+"USER_MAIL");
 
