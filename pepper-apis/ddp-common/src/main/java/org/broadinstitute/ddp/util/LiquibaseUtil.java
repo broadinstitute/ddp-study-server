@@ -32,11 +32,13 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class LiquibaseUtil implements  AutoCloseable {
+public class LiquibaseUtil implements AutoCloseable {
 
     public static final String PEPPER_APIS_GLOBAL_MIGRATIONS = "changelog-master.xml";
 
     public static final String HOUSEKEEPING_GLOBAL_MIGRATIONS = "housekeeping-changelog-master.xml";
+
+    public static final String DSM_GLOBAL_MIGRATIONS = "master-changelog.xml";
 
     private static final Logger LOG = LoggerFactory.getLogger(LiquibaseUtil.class);
 
@@ -69,6 +71,8 @@ public class LiquibaseUtil implements  AutoCloseable {
                     liquibaseUtil.runPepperAPIsGlobalMigrations();
                 } else if (db == DB.HOUSEKEEPING) {
                     liquibaseUtil.runHousekeepingGlobalMigrations();
+                }  else if (db == DB.DSM) {
+                    liquibaseUtil.runDSMGlobalMigrations();
                 } else {
                     throw new DDPException("Unknown database: " + db.name());
                 }
@@ -116,6 +120,10 @@ public class LiquibaseUtil implements  AutoCloseable {
      */
     private void runHousekeepingGlobalMigrations() throws LiquibaseException, SQLException {
         runMigrations(HOUSEKEEPING_GLOBAL_MIGRATIONS);
+    }
+
+    private void runDSMGlobalMigrations() throws LiquibaseException, SQLException {
+        runMigrations(DSM_GLOBAL_MIGRATIONS);
     }
 
     /**

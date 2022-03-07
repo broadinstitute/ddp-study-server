@@ -5,11 +5,15 @@ import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.Tissue;
+import org.broadinstitute.dsm.db.TissueSmId;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
@@ -18,7 +22,7 @@ import org.slf4j.LoggerFactory;
 @Data
 public class TissueList {
     public static final Logger logger = LoggerFactory.getLogger(TissueList.class);
-    public static final String SQL_SELECT_ALL_ONC_HISTORY_TISSUE_FOR_REALM = "SELECT p.ddp_participant_id,"
+    public static final String SQL_SELECT_ALL_ONC_HISTORY_TISSUE_FOR_REALM = "SELECT p.ddp_participant_id, p.participant_id, p.assignee_id_tissue,"
             + "oD.onc_history_detail_id, oD.request, oD.deleted, oD.fax_sent, oD.tissue_received, oD.medical_record_id, "
             + "oD.date_px, oD.type_px, "
             + "oD.location_px, oD.histology, oD.accession_number, oD.facility, oD.phone, oD.fax, oD.notes, oD.additional_values_json, "
@@ -42,11 +46,22 @@ public class TissueList {
     private OncHistoryDetail oncHistoryDetails;
     private Tissue tissue;
     private String ddpParticipantId;
+    private String participantId;
+    private Participant participant;
 
-    public TissueList(OncHistoryDetail OncHistoryDetails, Tissue tissue, String ddpParticipantId) {
+    public TissueList(OncHistoryDetail oncHistoryDetail, Tissue tissue, String ddpParticipantId) {
+        this.oncHistoryDetails = oncHistoryDetail;
+        this.tissue = tissue;
+        this.ddpParticipantId = ddpParticipantId;
+
+    }
+
+    public TissueList(OncHistoryDetail OncHistoryDetails, Tissue tissue, String ddpParticipantId, String participantId, Participant participant) {
         this.oncHistoryDetails = OncHistoryDetails;
         this.tissue = tissue;
         this.ddpParticipantId = ddpParticipantId;
+        this.participantId = participantId;
+        this.participant = participant;
 
     }
 
@@ -56,26 +71,59 @@ public class TissueList {
 
     public static List<TissueList> getAllTissueListsForRealm(String realm, String query) {
         List<TissueList> results = new ArrayList<>();
+        HashMap<Long, Tissue> tissues = new HashMap<>();
+        HashMap<Long, OncHistoryDetail> oncHistoryDetailHashMap = new HashMap<>();
+        HashMap<String, Participant> participantHashMap = new HashMap<>();
         SimpleResult result = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
                     OncHistoryDetail oncHistory = null;
-                    String ptId = null;
                     while (rs.next()) {
-                        oncHistory = OncHistoryDetail.getOncHistoryDetail(rs);
-                        ptId = rs.getString(
-                                DBConstants.DDP_PARTICIPANT_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.DDP_PARTICIPANT_ID);
-                        Tissue tissue = Tissue.getTissue(rs);
-                        TissueList tissueList = new TissueList(oncHistory, null, ptId);
-
-                        if (!tissue.isDeleted()) {
-                            tissueList.setTissue(tissue);
+                        String participantId = rs.getString(DBConstants.DDP_PARTICIPANT_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.PARTICIPANT_ID);
+                        String ddpParticipantId = rs.getString(DBConstants.DDP_PARTICIPANT_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.DDP_PARTICIPANT_ID);
+                        String assigneeIdTissue = rs.getString(DBConstants.DDP_PARTICIPANT_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ASSIGNEE_ID_TISSUE);
+                        participantHashMap.put(ddpParticipantId, new Participant(participantId, ddpParticipantId, assigneeIdTissue));
+                        TissueSmId tissueSmId = Tissue.getSMIds(rs);
+                        Tissue tissue;
+                        if (tissueSmId != null && tissues.containsKey(tissueSmId.getTissueId())) {
+                            tissue = tissues.get(tissueSmId.getTissueId());
                         }
-                        results.add(tissueList);
+                        else {
+                            tissue = Tissue.getTissue(rs);
+                        }
+                        if (!oncHistoryDetailHashMap.containsKey(tissue.getOncHistoryDetailId())) {
+                            oncHistory = OncHistoryDetail.getOncHistoryDetail(rs);
+                            oncHistoryDetailHashMap.put(oncHistory.getOncHistoryDetailId(), oncHistory);
+                        }
+                        if (tissueSmId != null) {
+                            tissue.setSmIdBasedOnType(tissueSmId, rs);
+                        }
+                        if (tissue.getTissueId() != null) {
+                            tissues.put(tissue.getTissueId(), tissue);
+                        }
+                    }
+                    for (Tissue tissue : tissues.values()) {
+                        Long tissueOncHistoryDetailId = tissue.getOncHistoryDetailId();
+                        OncHistoryDetail oncHistoryDetail = oncHistoryDetailHashMap.get(tissueOncHistoryDetailId);
+                        oncHistoryDetail.getTissues().add(tissue);
+                    }//  add onchistories to their particiapnt
+                    for (OncHistoryDetail oncHistoryDetail : oncHistoryDetailHashMap.values()) {
+                        TissueList tissueList = new TissueList(oncHistoryDetail, null, oncHistoryDetail.getDdpParticipantId(), oncHistoryDetail.getParticipantId(), participantHashMap.get(oncHistoryDetail.getDdpParticipantId()));
+                        if (oncHistoryDetail.getTissues() == null || oncHistoryDetail.getTissues().isEmpty()){
+                            results.add(tissueList);
+                            continue;
+                        }
+                        for (Tissue tissue : oncHistoryDetail.getTissues()) {
+                            if (!tissue.isDeleted() && tissue.getTissueId() != null) {
+                                tissueList.setTissue(tissue);
+                            }
+                            results.add(tissueList);
+                        }
                     }
                     dbVals.resultValue = results;
+
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }

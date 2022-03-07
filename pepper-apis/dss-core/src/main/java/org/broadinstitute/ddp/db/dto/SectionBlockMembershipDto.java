@@ -1,62 +1,25 @@
 package org.broadinstitute.ddp.db.dto;
 
-import static org.broadinstitute.ddp.constants.SqlConstants.FormSectionBlockTable;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import org.jdbi.v3.core.mapper.reflect.ColumnName;
+import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+@Data
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
+public final class SectionBlockMembershipDto {
+    @ColumnName("form_section__block_id")
+    private final long id;
 
-import org.jdbi.v3.core.mapper.RowMapper;
-import org.jdbi.v3.core.statement.StatementContext;
+    @ColumnName("form_section_id")
+    private final long sectionId;
 
-public class SectionBlockMembershipDto {
+    @ColumnName("block_id")
+    private final long blockId;
 
-    private long id;
-    private long sectionId;
-    private long blockId;
+    @ColumnName("display_order")
     private int displayOrder;
-    private long revisionId;
 
-    public SectionBlockMembershipDto(long id, long sectionId, long blockId, int displayOrder, long revisionId) {
-        this.id = id;
-        this.sectionId = sectionId;
-        this.blockId = blockId;
-        this.displayOrder = displayOrder;
-        this.revisionId = revisionId;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public long getSectionId() {
-        return sectionId;
-    }
-
-    public long getBlockId() {
-        return blockId;
-    }
-
-    public int getDisplayOrder() {
-        return displayOrder;
-    }
-
-    public void setDisplayOrder(int displayOrder) {
-        this.displayOrder = displayOrder;
-    }
-
-    public long getRevisionId() {
-        return revisionId;
-    }
-
-    public static class SectionBlockMembershipDtoMapper implements RowMapper<SectionBlockMembershipDto> {
-        @Override
-        public SectionBlockMembershipDto map(ResultSet rs, StatementContext ctx) throws SQLException {
-            return new SectionBlockMembershipDto(
-                    rs.getLong(FormSectionBlockTable.ID),
-                    rs.getLong(FormSectionBlockTable.SECTION_ID),
-                    rs.getLong(FormSectionBlockTable.BLOCK_ID),
-                    rs.getInt(FormSectionBlockTable.DISPLAY_ORDER),
-                    rs.getLong(FormSectionBlockTable.REVISION_ID));
-        }
-    }
+    @ColumnName("revision_id")
+    private final long revisionId;
 }

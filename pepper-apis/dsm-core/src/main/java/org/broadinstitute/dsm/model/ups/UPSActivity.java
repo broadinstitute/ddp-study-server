@@ -55,8 +55,8 @@ public class UPSActivity {
 
     public String getSQLDateTimeString() {
         Instant activityInstant = this.getInstant();
-        DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("America/New_York"));
-        String activityDateTime = DATE_TIME_FORMATTER.format(activityInstant);
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("America/New_York"));
+        String activityDateTime = dateTimeFormatter.format(activityInstant);
         return activityDateTime;
     }
 

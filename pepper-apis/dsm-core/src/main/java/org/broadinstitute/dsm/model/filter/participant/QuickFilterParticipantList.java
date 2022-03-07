@@ -13,12 +13,10 @@ public class QuickFilterParticipantList extends BaseFilterParticipantList {
 
     @Override
     public ParticipantWrapperResult filter(QueryParamsMap queryParamsMap) {
-        prepareNeccesaryData(queryParamsMap);
+        prepareNecessaryData(queryParamsMap);
         ParticipantWrapperResult participantWrapperResult = new ParticipantWrapperResult();
         String filterName = queryParamsMap.get(RequestParameter.FILTER_NAME).value();
-        if (StringUtils.isBlank(filterName)) {
-            return participantWrapperResult;
-        }
+        if (StringUtils.isBlank(filterName)) return participantWrapperResult;
         ViewFilter requestForFiltering = new ViewFilter(filterName, parent);
         requestForFiltering.setFilterQuery(ViewFilter.getFilterQuery(filterName, parent));
         if (requestForFiltering.getFilters() == null && StringUtils.isNotBlank(requestForFiltering.getFilterQuery())) {
@@ -26,7 +24,7 @@ public class QuickFilterParticipantList extends BaseFilterParticipantList {
         }
         Filter[] filters = requestForFiltering.getFilters();
         if (filters != null) {
-            participantWrapperResult = filterParticipantList(filters, PatchUtil.getColumnNameMap(), ddpInstance);
+            participantWrapperResult = filterParticipantList(filters, PatchUtil.getColumnNameMap());
         }
         return participantWrapperResult;
     }

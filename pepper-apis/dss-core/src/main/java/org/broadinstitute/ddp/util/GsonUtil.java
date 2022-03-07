@@ -10,6 +10,7 @@ import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
+import org.broadinstitute.ddp.export.json.structured.QuestionRecord;
 import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
@@ -36,6 +37,7 @@ public class GsonUtil {
                 .registerTypeAdapter(SectionIcon.class, new SectionIcon.Serializer())
                 .registerTypeAdapter(LocalDate.class, new LocalDateAdapter().nullSafe())
                 .registerTypeAdapter(TextQuestion.class, new TextQuestion.Serializer())
+                .registerTypeAdapter(QuestionRecord.class, new QuestionRecord.Serializer())
                 .setExclusionStrategies(new ExcludeAnnotationStrategy())
                 .serializeNulls();
     }

@@ -97,6 +97,8 @@ public abstract class RuleDef {
                     return ctx.deserialize(elem, RegexRuleDef.class);
                 case REQUIRED:
                     return ctx.deserialize(elem, RequiredRuleDef.class);
+                case COMPARISON:
+                    return ctx.deserialize(elem, ComparisonRuleDef.class);
                 default:
                     throw new JsonParseException(String.format("Rule type '%s' is not supported", ruleType));
             }

@@ -12,29 +12,24 @@ import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 @AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class RuleDto implements Serializable {
     @ColumnName("rule_type")
-    private RuleType ruleType;
+    private final RuleType ruleType;
 
     @ColumnName("question_id")
-    private long questionId;
+    private final long questionId;
 
     @ColumnName("validation_id")
-    private long id;
+    private final long id;
 
     @ColumnName("allow_save")
-    private boolean allowSave;
+    private final boolean allowSave;
 
     @ColumnName("correction_hint_template_id")
-    private Long hintTemplateId;
+    private final Long hintTemplateId;
 
     @ColumnName("revision_id")
-    private long revisionId;
+    private final long revisionId;
 
-    protected RuleDto(RuleDto other) {
-        this.ruleType = other.ruleType;
-        this.id = other.id;
-        this.questionId = other.questionId;
-        this.allowSave = other.allowSave;
-        this.hintTemplateId = other.hintTemplateId;
-        this.revisionId = other.revisionId;
+    protected RuleDto(final RuleDto other) {
+        this(other.ruleType, other.questionId, other.id, other.allowSave, other.hintTemplateId, other.revisionId);
     }
 }
