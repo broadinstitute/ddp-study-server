@@ -45,8 +45,8 @@ public class GetOptionsForActivityInstanceQuestion implements Route {
         String queryLimit = request.queryParams(RouteConstants.QueryParam.TYPEAHEAD_QUERY_LIMIT);
         int limit = StringUtils.isNotBlank(queryLimit) ? Integer.valueOf(queryLimit) : DEFAULT_LIMIT;
 
-        LOG.info("Fetching auto complete picklist options for activity instance {} and participant {} in study {} by operator {} (isStudyAdmin={})",
-                instanceGuid, participantGuid, studyGuid, operatorGuid, isStudyAdmin);
+        LOG.info("Fetching auto complete picklist options for activity instance {} and participant {} in study {} by operator {} "
+                + "(isStudyAdmin={})", instanceGuid, participantGuid, studyGuid, operatorGuid, isStudyAdmin);
 
         RemoteAutoCompleteResponse result = TransactionWrapper.withTxn(handle -> {
 

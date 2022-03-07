@@ -501,48 +501,49 @@ public interface QuestionDao extends SqlObject {
                                 + " activityId=%d and createdAt=%d while getting picklist question %s",
                         activityInstanceGuid, instanceDto.getActivityId(), instanceDto.getCreatedAtMillis(), dto.getStableId())));
 
-        PicklistQuestionDao.GroupAndOptionDtos container = getPicklistQuestionDao()
-                .findOrderedGroupAndOptionDtos(dto.getId(), versionDto.getRevStart());
-
         List<PicklistGroup> groups = new ArrayList<>();
         List<PicklistOption> allOptions = new ArrayList<>();
 
-        PicklistOption option = null;
-        // Put the ungrouped options in the list first.
-        for (PicklistOptionDto optionDto : container.getUngroupedOptions()) {
-            if (CollectionUtils.isEmpty(optionDto.getNestedOptions())) {
-                option = new PicklistOption(optionDto.getStableId(),
-                        optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
-                        optionDto.isAllowDetails(), optionDto.isExclusive(), optionDto.isDefault());
-            } else {
-                //add nested options
-                List<PicklistOption> nestedOptions = new ArrayList<>();
-                optionDto.getNestedOptions().forEach(nestedOptionDto -> {
-                    nestedOptions.add(new PicklistOption(nestedOptionDto.getStableId(),
-                            nestedOptionDto.getOptionLabelTemplateId(), nestedOptionDto.getTooltipTemplateId(),
-                            nestedOptionDto.getDetailLabelTemplateId(), nestedOptionDto.isAllowDetails(),
-                            nestedOptionDto.isExclusive(), nestedOptionDto.isDefault()));
-                });
+        if (PicklistRenderMode.REMOTE_AUTOCOMPLETE != dto.getRenderMode()) {
+            PicklistQuestionDao.GroupAndOptionDtos container = getPicklistQuestionDao()
+                    .findOrderedGroupAndOptionDtos(dto.getId(), versionDto.getRevStart());
 
-                option = new PicklistOption(optionDto.getStableId(),
-                        optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
-                        optionDto.isAllowDetails(), optionDto.isExclusive(), optionDto.isDefault(), optionDto.getNestedOptionsTemplateId(),
-                        nestedOptions);
+            PicklistOption option = null;
+            // Put the ungrouped options in the list first.
+            for (PicklistOptionDto optionDto : container.getUngroupedOptions()) {
+                if (CollectionUtils.isEmpty(optionDto.getNestedOptions())) {
+                    option = new PicklistOption(optionDto.getStableId(),
+                            optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
+                            optionDto.isAllowDetails(), optionDto.isExclusive(), optionDto.isDefault());
+                } else {
+                    //add nested options
+                    List<PicklistOption> nestedOptions = new ArrayList<>();
+                    optionDto.getNestedOptions().forEach(nestedOptionDto -> {
+                        nestedOptions.add(new PicklistOption(nestedOptionDto.getStableId(),
+                                nestedOptionDto.getOptionLabelTemplateId(), nestedOptionDto.getTooltipTemplateId(),
+                                nestedOptionDto.getDetailLabelTemplateId(), nestedOptionDto.isAllowDetails(),
+                                nestedOptionDto.isExclusive(), nestedOptionDto.isDefault()));
+                    });
+
+                    option = new PicklistOption(optionDto.getStableId(),
+                            optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
+                            optionDto.isAllowDetails(), optionDto.isExclusive(), optionDto.isDefault(),
+                            optionDto.getNestedOptionsTemplateId(), nestedOptions);
+                }
+                allOptions.add(option);
             }
-            allOptions.add(option);
-        }
 
-        // Then options from groups.
-        for (PicklistGroupDto groupDto : container.getGroups()) {
-            groups.add(new PicklistGroup(groupDto.getStableId(), groupDto.getNameTemplateId()));
-            List<PicklistOptionDto> optionDtos = container.getGroupIdToOptions().get(groupDto.getId());
-            for (PicklistOptionDto optionDto : optionDtos) {
-                allOptions.add(new PicklistOption(groupDto.getStableId(), optionDto.getStableId(),
-                        optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
-                        optionDto.isAllowDetails(), optionDto.isExclusive(), optionDto.isDefault()));
+            // Then options from groups.
+            for (PicklistGroupDto groupDto : container.getGroups()) {
+                groups.add(new PicklistGroup(groupDto.getStableId(), groupDto.getNameTemplateId()));
+                List<PicklistOptionDto> optionDtos = container.getGroupIdToOptions().get(groupDto.getId());
+                for (PicklistOptionDto optionDto : optionDtos) {
+                    allOptions.add(new PicklistOption(groupDto.getStableId(), optionDto.getStableId(),
+                            optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
+                            optionDto.isAllowDetails(), optionDto.isExclusive(), optionDto.isDefault()));
+                }
             }
         }
-
         boolean isReadonly = QuestionUtil.isReadonly(getHandle(), dto, activityInstanceGuid);
 
         return new PicklistQuestion(dto.getStableId(), dto.getPromptTemplateId(),
