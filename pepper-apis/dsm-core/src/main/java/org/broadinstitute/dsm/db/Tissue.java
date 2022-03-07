@@ -206,10 +206,6 @@ public class Tissue {
         return tissue;
     }
 
-    public static TissueSmId getSMIds(ResultSet rs) {
-        return TissueSmId.getSMIdsForTissueId(rs);
-    }
-
     public static List<Tissue> getTissue(@NonNull Connection conn, @NonNull String oncHistoryDetailId) {
         List<Tissue> tissueList = new ArrayList<>();
         SimpleResult dbVals = new SimpleResult();
@@ -241,6 +237,10 @@ public class Tissue {
         tissueList.addAll(tissues.values());
         logger.info("Found " + tissueList.size() + " tissue for oncHistoryDetails w/ id " + oncHistoryDetailId);
         return tissueList;
+    }
+
+    public static TissueSmId getSMIds(ResultSet rs) {
+        return TissueSmId.getSMIdsForTissueId(rs);
     }
 
     public static String createNewTissue(@NonNull String oncHistoryId, @NonNull String user) {

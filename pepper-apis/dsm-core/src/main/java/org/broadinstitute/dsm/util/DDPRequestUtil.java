@@ -40,6 +40,10 @@ import org.broadinstitute.lddp.util.GoogleBucket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.*;
+
+import org.apache.http.client.fluent.Response;
+
 public class DDPRequestUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(DDPRequestUtil.class);
@@ -95,6 +99,17 @@ public class DDPRequestUtil {
         logger.info("Requesting data from " + name + " w/ " + sendRequest);
         org.apache.http.client.fluent.Request request =
                 SecurityUtil.createPostRequestWithHeader(sendRequest, name, auth0Token, objectToPost);
+
+        int responseCode = request.execute().handleResponse(res -> getResponseCode(res, sendRequest));
+        return responseCode;
+    }
+
+    // make a post request
+    public static Integer postRequest(String sendRequest, Object objectToPost, String name, boolean auth0Token, Auth0Util auth0Util)
+            throws IOException, RuntimeException {
+        logger.info("Requesting data from " + name + " w/ " + sendRequest);
+        org.apache.http.client.fluent.Request request =
+                SecurityUtil.createPostRequestWithHeader(sendRequest, name, auth0Token, objectToPost, auth0Util);
 
         int responseCode = request.execute().handleResponse(res -> getResponseCode(res, sendRequest));
         return responseCode;
@@ -299,14 +314,18 @@ public class DDPRequestUtil {
         return null;
     }
 
-    // make a post request
-    public static Integer postRequest(String sendRequest, Object objectToPost, String name, boolean auth0Token, Auth0Util auth0Util)
-            throws IOException, RuntimeException {
+    public static <T> T postRequestWithResponse(Class<T> responseClass, String sendRequest, Object objectToPost, String name, Map<String, String> header) {
         logger.info("Requesting data from " + name + " w/ " + sendRequest);
-        org.apache.http.client.fluent.Request request =
-                SecurityUtil.createPostRequestWithHeader(sendRequest, name, auth0Token, objectToPost, auth0Util);
+        org.apache.http.client.fluent.Request request = SecurityUtil.createPostRequestWithHeaderNoToken(sendRequest, header, objectToPost);
 
-        int responseCode = request.execute().handleResponse(res -> getResponseCode(res, sendRequest));
-        return responseCode;
+        T objects = null;
+        try {
+            Response response = request.execute();
+            objects = response.handleResponse(res -> getResponse(res, responseClass, sendRequest));
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Post request to "+sendRequest+" was not completed successfully", e);
+        }
+        return objects;
     }
 }
