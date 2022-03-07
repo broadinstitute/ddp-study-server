@@ -211,8 +211,10 @@
   },
 
   "add_participant": {
-    "name": "Add Participant",
-    "title": "Add Participant",
+    "name-myself": "Enroll myself",
+    "title-myself": "Enroll myself",
+    "name-my-child-dependent": "Enroll my child/dependent",
+    "title-my-child-dependent": "Enroll my child/dependent",
 
     "summary_created": "Please complete this questionnaire so that we may learn more about you.",
     "summary_in_progress": "Please complete this questionnaire so that we may learn more about you.",
@@ -228,6 +230,7 @@
 
     "enrolling_child_diagnosed": {
       "prompt": "Who in your family has single ventricle heart defect?*",
+      "prompt2": "Select all that apply.",
       "required_hint": "Please select an option",
       "ineligible_hint": "Only an individual with single ventricle heart defect or immediate family members of an individual with single ventricle heart defect can be enrolled.",
 
@@ -240,7 +243,7 @@
     },
 
     "enrolling_child_age": {
-      "prompt": "How old is your child?*",
+      "prompt": "How old is your child/dependent?*",
       "placeholder": "Enter age",
       "range_hint": "Please enter an age between 0 and 100",
       "required_hint": "Please enter your child's age",
@@ -255,6 +258,7 @@
 
     "enrolling_myself_diagnosed": {
       "prompt": "Who in your family has single ventricle heart defect?*",
+      "prompt2": "Select all that apply.",
       "required_hint": "Please select an option",
       "ineligible_hint": "Only an individual with single ventricle heart defect or immediate family members of an individual with single ventricle heart defect can be enrolled.",
 
