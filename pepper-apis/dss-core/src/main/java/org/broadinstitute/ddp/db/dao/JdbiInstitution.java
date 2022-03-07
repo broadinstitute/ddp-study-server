@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 import org.broadinstitute.ddp.db.dto.InstitutionDto;
 import org.broadinstitute.ddp.db.dto.InstitutionSuggestionDto;
 import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
+import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.customizer.BindList;
@@ -23,17 +23,17 @@ public interface JdbiInstitution extends SqlObject {
             "   select institution_id, institution_guid, city_id, name"
             + " from institution where institution_guid = :institutionGuid"
     )
-    @RegisterRowMapper(InstitutionDto.InstitutionDtoMapper.class)
+    @RegisterConstructorMapper(InstitutionDto.class)
     Optional<InstitutionDto> getByGuid(@Bind("institutionGuid") String institutionGuid);
 
     @SqlQuery("getSuggestionsByNamePattern")
     @UseStringTemplateSqlLocator
-    @RegisterRowMapper(InstitutionSuggestionDto.InstitutionSuggestionDtoMapper.class)
+    @RegisterConstructorMapper(InstitutionSuggestionDto.class)
     List<InstitutionSuggestionDto> getSuggestionsByNamePattern(@Bind("namePattern") String namePattern);
 
     @SqlQuery("getLimitedSuggestionsByAnchoredAndFreeNamePatterns")
     @UseStringTemplateSqlLocator
-    @RegisterRowMapper(InstitutionSuggestionDto.InstitutionSuggestionDtoMapper.class)
+    @RegisterConstructorMapper(InstitutionSuggestionDto.class)
     Stream<InstitutionSuggestionDto> getLimitedSuggestionsByNamePatterns(@Bind("anchored") String anchoredPattern,
                                                                          @Bind("free") String freePattern,
                                                                          @Bind("limit") int limit);

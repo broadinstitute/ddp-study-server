@@ -732,7 +732,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
 
             ActivityDto actDto = handle.attach(JdbiActivity.class).queryActivityById(form.getActivityId());
             assertNotNull(actDto);
-            assertTrue(actDto.isOndemandTriggerAllowed());
+            assertTrue(actDto.isOnDemandTriggerAllowed());
 
             handle.rollback();
         });

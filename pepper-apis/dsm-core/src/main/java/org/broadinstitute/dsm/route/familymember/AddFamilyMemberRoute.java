@@ -47,10 +47,10 @@ public class AddFamilyMemberRoute extends RequestHandler {
             return new Result(400, "Family member information is not provided");
         }
 
-        Integer uId =
+        Integer userIdFromPayload =
                 addFamilyMemberPayload.getUserId().orElseThrow(() -> new NoSuchElementException("User id is not provided"));
-        if (Integer.parseInt(userId) != uId) {
-            throw new RuntimeException("User id was not equal. User id in token " + userId + " user id in request " + uId);
+        if (Integer.parseInt(userId) != userIdFromPayload) {
+            throw new RuntimeException("User id was not equal. User id in token " + userId + " user id in request " + userIdFromPayload);
         }
 
         ParticipantDataDao participantDataDao = new ParticipantDataDao();

@@ -63,4 +63,8 @@ public final class CompositeQuestionRecord extends QuestionRecord {
             }
         }
     }
+
+    public List<List<String>> getAnswer() {
+        return answer;
+    }
 }

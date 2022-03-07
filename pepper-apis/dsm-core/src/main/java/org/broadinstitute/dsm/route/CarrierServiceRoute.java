@@ -24,8 +24,8 @@ import spark.Response;
 public class CarrierServiceRoute extends RequestHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(CarrierServiceRoute.class);
-    String SQL_SELECT_CARRIERS_QUERY = "SELECT carr.service "
-            + "FROM carrier_service carr "
+
+    private static final String SQL_SELECT_CARRIERS_QUERY = "SELECT carr.service " + "FROM carrier_service carr "
             + "left join ddp_instance_group realm on (realm.ddp_group_id = carr.instance_group) "
             + "left join ddp_instance instance on (instance.ddp_instance_id  = realm.ddp_instance_id) "
             + "where instance.instance_name = ? ";
@@ -35,8 +35,8 @@ public class CarrierServiceRoute extends RequestHandler {
         String realm = request.params(RequestParameter.REALM);
         String userIdRequest = UserUtil.getUserId(request);
         if (request.url().contains(RoutePath.CARRIERS)) {
-            if (UserUtil.checkUserAccess(realm, userId, "kit_shipping_view", userIdRequest)
-                    || UserUtil.checkUserAccess(realm, userId, "kit_shipping", userIdRequest)) {
+            if (UserUtil.checkUserAccess(realm, userId, "kit_shipping_view", userIdRequest) || UserUtil.checkUserAccess(realm, userId,
+                    "kit_shipping", userIdRequest)) {
                 if (StringUtils.isNotBlank(realm)) {
                     return this.getCarriers(realm);
                 }

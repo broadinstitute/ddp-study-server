@@ -5,6 +5,8 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.content.RenderValueProvider;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -20,40 +22,32 @@ import org.broadinstitute.ddp.model.event.ActivityInstanceStatusChangeSignal;
 import org.broadinstitute.ddp.model.event.DsmNotificationSignal;
 import org.broadinstitute.ddp.model.event.EventSignal;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 
 /**
  * Provides creation of an activity instance in the DB
  */
+@Slf4j
+@AllArgsConstructor
 public class ActivityInstanceCreationService {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ActivityInstanceCreationService.class);
-
     private final EventSignal signal;
-
-    public ActivityInstanceCreationService(EventSignal signal) {
-        this.signal = signal;
-    }
 
     /**
      * Checking if the maximum number of activities of this type is hit
      */
     public Integer detectNumberOfActivitiesLeft(long studyActivityId, ActivityDto activityDto,
                                                 JdbiActivityInstance jdbiActivityInstance) {
-        LOG.info("Checking if the maximum number of activities (n = {}) for the study activity (id = {}) is hit",
+        log.info("Checking if the maximum number of activities (n = {}) for the study activity (id = {}) is hit",
                 activityDto.getMaxInstancesPerUser(), studyActivityId);
 
         int numExistingActivities = jdbiActivityInstance.getNumActivitiesForParticipant(
                 studyActivityId,
                 signal.getParticipantId());
-        LOG.info("Found {} existing activity instances for study activity {}", numExistingActivities, studyActivityId);
+        log.info("Found {} existing activity instances for study activity {}", numExistingActivities, studyActivityId);
 
         Integer numberOfActivitiesLeft = activityDto.getMaxInstancesPerUser() == null ? null :
                 activityDto.getMaxInstancesPerUser() - numExistingActivities;
         if (numberOfActivitiesLeft != null && numberOfActivitiesLeft <= 0) {
-            LOG.info(
+            log.info(
                     "The number of existing study activities (n = {}) with id = {} is greater than or equal than"
                             + " the allowed maximum for this study activity (n = {}), skipping the configuration",
                     numExistingActivities,
@@ -68,7 +62,7 @@ public class ActivityInstanceCreationService {
      * If needs to be hidden then hide existing activities
      */
     public void hideExistingInstancesIfRequired(long studyActivityId, Handle handle, ActivityDto activityDto) {
-        if (activityDto.isHideExistingInstancesOnCreation()) {
+        if (activityDto.hideExistingInstancesOnCreation()) {
             handle.attach(ActivityInstanceDao.class).bulkUpdateIsHiddenByActivityIds(signal.getParticipantId(),
                     true, Set.of(studyActivityId));
         }
@@ -114,11 +108,11 @@ public class ActivityInstanceCreationService {
         );
 
         if (isNestedActivity) {
-            LOG.info("Created child instance {} for parent instance {}", activityInstanceGuid, parentActivityInstanceGuid);
+            log.info("Created child instance {} for parent instance {}", activityInstanceGuid, parentActivityInstanceGuid);
         } else {
-            LOG.info("Performed the instantiation of the study activity with the id {} triggered by"
+            log.info("Performed the instantiation of the study activity with the id {} triggered by"
                             + " {} Operator = {}, participant = {}, study = {}, created activity instance id = {}",
-                    studyActivityId, signal.toString(),
+                    studyActivityId, signal,
                     signal.getOperatorId(),
                     signal.getParticipantId(),
                     signal.getStudyId(),
@@ -147,7 +141,7 @@ public class ActivityInstanceCreationService {
         Map<String, String> snapshot = builder.build().getSnapshot();
         if (!snapshot.isEmpty()) {
             handle.attach(ActivityInstanceDao.class).saveSubstitutions(newActivityInstanceId, snapshot);
-            LOG.info("Saved kit event data as substitution snapshot for activity instance {}", newActivityInstanceId);
+            log.info("Saved kit event data as substitution snapshot for activity instance {}", newActivityInstanceId);
         }
     }
 
