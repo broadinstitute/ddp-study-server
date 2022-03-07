@@ -84,6 +84,7 @@ public class ConfigFile {
     // you can boot the app in a separate process.
     public static final String BOOT_TEST_APP_IN_SEPARATE_PROCESS = "bootTestAppInSeparateProcess";
 
+    public static final String DSM_DOMAIN = "dsmDomain";
     public static final String AUTH0_DSM_CLIENT_ID = "dsmClientId";
     public static final String AUTH0_DSM_CLIENT_SECRET = "dsmClientSecret";
     public static final String AUTH0_DSM_API_AUDIENCE = "dsmApiAudience";
