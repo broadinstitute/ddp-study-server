@@ -621,7 +621,7 @@ public interface QuestionDao extends SqlObject {
         return new MatrixQuestion(dto.getStableId(), dto.getPromptTemplateId(),
                 dto.isRestricted(), dto.isRenderModal(), dto.isDeprecated(), isReadonly, dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
-                dto.getModalTemplateId(), picklistAnswers,
+                dto.getModalTemplateId(), dto.getModalTitleTemplateId(), picklistAnswers,
                 rules, dto.getSelectMode(), groups, options, questions);
     }
 
@@ -1410,8 +1410,13 @@ public interface QuestionDao extends SqlObject {
             modalTemplateId = templateDao.insertTemplate(matrix.getModalTemplate(), revisionId);
         }
 
+        Long modalTitleTemplateId = null;
+        if (matrix.getModalTitleTemplate() != null) {
+            modalTitleTemplateId = templateDao.insertTemplate(matrix.getModalTitleTemplate(), revisionId);
+        }
+
         int numInserted = getJdbiMatrixQuestion().insert(matrix.getQuestionId(), matrix.getSelectMode(),
-                matrix.isRenderModal(), modalTemplateId);
+                matrix.isRenderModal(), modalTemplateId, modalTitleTemplateId);
 
         if (numInserted != 1) {
             throw new DaoException("Inserted " + numInserted + " for picklist question " + matrix.getStableId());
@@ -2154,6 +2159,7 @@ public interface QuestionDao extends SqlObject {
                                                      Map<Long, Template> templates) {
         Template prompt = templates.get(dto.getPromptTemplateId());
         Template modal = templates.get(dto.getModalTemplateId());
+        Template modalTitle = templates.get(dto.getModalTitleTemplateId());
 
         List<MatrixGroupDef> groups = new ArrayList<>();
         for (MatrixGroupDto groupDto : container.getGroups()) {
@@ -2185,6 +2191,7 @@ public interface QuestionDao extends SqlObject {
                 .setSelectMode(dto.getSelectMode())
                 .setRenderModal(dto.isRenderModal())
                 .setModalTemplate(modal)
+                .setModalTitleTemplate(modalTitle)
                 .addGroups(groups)
                 .addOptions(options)
                 .addRows(questions);
