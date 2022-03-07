@@ -514,7 +514,7 @@ public class DSMServer {
         afterAfter((req, res) -> MDC.clear());
 
         before(API_ROOT + "*", (req, res) -> {
-            if (!new JWTRouteFilter( auth0Domain, bspSecret).isAccessAllowed(req, false)) {
+            if (!new JWTRouteFilter(auth0Domain, bspSecret).isAccessAllowed(req, false)) {
                 halt(404);
             }
             res.header(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
