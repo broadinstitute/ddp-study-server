@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -60,11 +61,58 @@ import org.broadinstitute.dsm.jobs.PubSubLookUp;
 import org.broadinstitute.dsm.log.SlackAppender;
 import org.broadinstitute.dsm.pubsub.DSMtasksSubscription;
 import org.broadinstitute.dsm.pubsub.PubSubResultMessageSubscription;
-import org.broadinstitute.dsm.route.*;
+import org.broadinstitute.dsm.route.AbstractionFormControlRoute;
+import org.broadinstitute.dsm.route.AbstractionRoute;
+import org.broadinstitute.dsm.route.AllowedRealmsRoute;
+import org.broadinstitute.dsm.route.AssignParticipantRoute;
+import org.broadinstitute.dsm.route.AssigneeRoute;
+import org.broadinstitute.dsm.route.AuthenticationRoute;
+import org.broadinstitute.dsm.route.BSPKitRegisteredRoute;
+import org.broadinstitute.dsm.route.BSPKitRoute;
+import org.broadinstitute.dsm.route.CancerRoute;
+import org.broadinstitute.dsm.route.CarrierServiceRoute;
+import org.broadinstitute.dsm.route.ClinicalKitsRoute;
+import org.broadinstitute.dsm.route.CreateBSPDummyKitRoute;
+import org.broadinstitute.dsm.route.CreateClinicalDummyKitRoute;
+import org.broadinstitute.dsm.route.DSSTestingRoute;
+import org.broadinstitute.dsm.route.DashboardRoute;
+import org.broadinstitute.dsm.route.DisplaySettingsRoute;
+import org.broadinstitute.dsm.route.DownloadPDFRoute;
+import org.broadinstitute.dsm.route.DrugListRoute;
+import org.broadinstitute.dsm.route.DrugRoute;
+import org.broadinstitute.dsm.route.EditParticipantMessageReceiverRoute;
+import org.broadinstitute.dsm.route.EditParticipantPublisherRoute;
+import org.broadinstitute.dsm.route.EventTypeRoute;
+import org.broadinstitute.dsm.route.FieldSettingsRoute;
+import org.broadinstitute.dsm.route.FilterRoute;
+import org.broadinstitute.dsm.route.FrontendAnalyticsRoute;
+import org.broadinstitute.dsm.route.InstitutionRoute;
+import org.broadinstitute.dsm.route.KitAuthorizationRoute;
+import org.broadinstitute.dsm.route.KitDeactivationRoute;
+import org.broadinstitute.dsm.route.KitDiscardRoute;
+import org.broadinstitute.dsm.route.KitExpressRoute;
+import org.broadinstitute.dsm.route.KitLabelRoute;
+import org.broadinstitute.dsm.route.KitRequestRoute;
+import org.broadinstitute.dsm.route.KitSearchRoute;
+import org.broadinstitute.dsm.route.KitStatusChangeRoute;
+import org.broadinstitute.dsm.route.KitTypeRoute;
+import org.broadinstitute.dsm.route.KitUploadRoute;
+import org.broadinstitute.dsm.route.LabelSettingRoute;
+import org.broadinstitute.dsm.route.LoggingFilter;
+import org.broadinstitute.dsm.route.LookupRoute;
+import org.broadinstitute.dsm.route.MailingListRoute;
+import org.broadinstitute.dsm.route.MedicalRecordLogRoute;
+import org.broadinstitute.dsm.route.NDIRoute;
+import org.broadinstitute.dsm.route.ParticipantEventRoute;
+import org.broadinstitute.dsm.route.ParticipantExitRoute;
+import org.broadinstitute.dsm.route.ParticipantStatusRoute;
+import org.broadinstitute.dsm.route.PatchRoute;
+import org.broadinstitute.dsm.route.TriggerSurveyRoute;
+import org.broadinstitute.dsm.route.UserSettingRoute;
+import org.broadinstitute.dsm.route.ViewFilterRoute;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
-import org.broadinstitute.dsm.security.JWTConverter;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -87,7 +135,6 @@ import org.broadinstitute.dsm.util.triggerlistener.GPNotificationTriggerListener
 import org.broadinstitute.dsm.util.triggerlistener.LabelCreationTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.NotificationTriggerListener;
 import org.broadinstitute.lddp.security.Auth0Util;
-import org.broadinstitute.lddp.security.CookieUtil;
 import org.broadinstitute.lddp.util.BasicTriggerListener;
 import org.broadinstitute.lddp.util.JsonTransformer;
 import org.broadinstitute.lddp.util.Utility;
@@ -131,9 +178,9 @@ public class DSMServer {
     private static final Logger logger = LoggerFactory.getLogger(DSMServer.class);
     private static final String API_ROOT = "/ddp/";
     private static final String UI_ROOT = "/ui/";
-    private static final String[] CORS_HTTP_METHODS = new String[] {"GET", "PUT", "POST", "OPTIONS", "PATCH"};
+    private static final String[] CORS_HTTP_METHODS = new String[] { "GET", "PUT", "POST", "OPTIONS", "PATCH" };
     private static final String[] CORS_HTTP_HEADERS =
-            new String[] {"Content-Type", "Authorization", "X-Requested-With", "Content-Length", "Accept", "Origin", ""};
+            new String[] { "Content-Type", "Authorization", "X-Requested-With", "Content-Length", "Accept", "Origin", "" };
     private static final String VAULT_DOT_CONF = "vault.conf";
     private static final String GAE_DEPLOY_DIR = "appengine/deploy";
     private static final Duration DEFAULT_BOOT_WAIT = Duration.ofMinutes(10);
@@ -426,7 +473,7 @@ public class DSMServer {
         setupCustomRouting(config);
 
         GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics("", GoogleAnalyticsMetrics.EVENT_SERVER_START,
-                GoogleAnalyticsMetrics.EVENT_SERVER_START, GoogleAnalyticsMetrics.EVENT_SERVER_START, 1 );
+                GoogleAnalyticsMetrics.EVENT_SERVER_START, GoogleAnalyticsMetrics.EVENT_SERVER_START, 1);
 
         List<String> allowedOrigins = config.getStringList(ApplicationConfigConstants.CORS_ALLOWED_ORIGINS);
         enableCORS(StringUtils.join(allowedOrigins, ","), String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
@@ -442,6 +489,7 @@ public class DSMServer {
         TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, maxConnections, dbUrl));
 
         logger.info("Running DB update...");
+
         LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.DSM);
         LiquibaseUtil.releaseResources();
 
@@ -453,17 +501,19 @@ public class DSMServer {
 
         //BSP route
         String bspSecret = cfg.getString(ApplicationConfigConstants.BSP_SECRET);
+        String auth0Domain = cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN);
+        String auth0claimNameSpace = cfg.getString(ApplicationConfigConstants.AUTH0_CLAIM_NAMESPACE);
 
         if (StringUtils.isBlank(bspSecret)) {
             throw new RuntimeException("No secret supplied for BSP endpoint, system exiting.");
         }
 
         //  capture basic route info for logging
-        before("*", new LoggingFilter());
+        before("*", new LoggingFilter(auth0Domain, auth0claimNameSpace));
         afterAfter((req, res) -> MDC.clear());
 
         before(API_ROOT + "*", (req, res) -> {
-            if (!new JWTRouteFilter(bspSecret, null).isAccessAllowed(req)) {
+            if (!new JWTRouteFilter(auth0Domain, bspSecret).isAccessAllowed(req, false)) {
                 halt(404);
             }
             res.header(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
@@ -490,10 +540,12 @@ public class DSMServer {
             throw new RuntimeException("appRoute was not configured correctly.");
         }
 
-        String jwtSecret = cfg.getString(ApplicationConfigConstants.BROWSER_JWT_SECRET);
-        String cookieSalt = cfg.getString(ApplicationConfigConstants.BROWSER_COOKIE_SALT);
-        String cookieName = cfg.getString(ApplicationConfigConstants.BROWSER_COOKIE_NAME);
-        new SecurityUtil(jwtSecret);
+        String auth0Signer = cfg.getString(ApplicationConfigConstants.AUTH0_SIGNER);
+
+        SecurityUtil.init(auth0Domain, auth0claimNameSpace, auth0Signer);
+
+        //TODO remove before final merge, for testing only
+        get(UI_ROOT + "dsstest/:participantId", new DSSTestingRoute(), new JsonTransformer());
 
         // path is: /app/drugs (this gets the list of display names)
         DrugRoute drugRoute = new DrugRoute();
@@ -516,8 +568,9 @@ public class DSMServer {
 
         before("/info/" + RoutePath.PARTICIPANT_STATUS_REQUEST, (req, res) -> {
             String tokenFromHeader = Utility.getTokenFromHeader(req);
-            DecodedJWT validToken = JWTConverter.verifyDDPToken(tokenFromHeader, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN));
-            if (validToken == null) {
+            Optional<DecodedJWT> validToken =
+                    Auth0Util.verifyAuth0Token(tokenFromHeader, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN));
+            if (validToken.isEmpty()) {
                 logger.error(req.pathInfo() + " was called without valid token");
                 halt(401, SecurityUtil.ResultType.AUTHENTICATION_ERROR.toString());
             }
@@ -534,10 +587,7 @@ public class DSMServer {
 
                     boolean isTokenValid = false;
                     if (StringUtils.isNotBlank(tokenFromHeader)) {
-                        isTokenValid =
-                                new CookieUtil().isCookieValid(req.cookie(cookieName), cookieSalt.getBytes(), tokenFromHeader, jwtSecret);
-                        isTokenValid = new JWTRouteFilter(jwtSecret, null).isAccessAllowed(req);
-
+                        isTokenValid = new JWTRouteFilter(auth0Domain, bspSecret).isAccessAllowed(req, true);
                     }
                     if (!isTokenValid) {
                         halt(401, SecurityUtil.ResultType.AUTHENTICATION_ERROR.toString());
@@ -547,8 +597,14 @@ public class DSMServer {
         });
         setupDDPConfigurationLookup(cfg.getString(ApplicationConfigConstants.DDP));
 
-        AuthenticationRoute authenticationRoute =
-                new AuthenticationRoute(auth0Util, jwtSecret, cookieSalt, cookieName, userUtil, cfg.getString("portal.environment"));
+        AuthenticationRoute authenticationRoute = new AuthenticationRoute(auth0Util,
+                userUtil,
+                cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN),
+                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_SECRET),
+                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_KEY),
+                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL),
+                cfg.getString(ApplicationConfigConstants.AUTH0_CLAIM_NAMESPACE)
+        );
         post(UI_ROOT + RoutePath.AUTHENTICATION_REQUEST, authenticationRoute, new JsonTransformer());
 
         KitUtil kitUtil = new KitUtil();
@@ -558,7 +614,7 @@ public class DSMServer {
         setupExternalShipperLookup(cfg.getString(ApplicationConfigConstants.EXTERNAL_SHIPPER));
         GBFRequestUtil gbfRequestUtil = new GBFRequestUtil();
 
-        setupShippingRoutes(notificationUtil, auth0Util, userUtil);
+        setupShippingRoutes(notificationUtil, auth0Util, userUtil, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN));
 
         setupMedicalRecordRoutes(cfg, notificationUtil, patchUtil);
 
@@ -648,7 +704,8 @@ public class DSMServer {
         logger.info("Pubsub setup complete");
     }
 
-    private void setupShippingRoutes(@NonNull NotificationUtil notificationUtil, @NonNull Auth0Util auth0Util, @NonNull UserUtil userUtil) {
+    private void setupShippingRoutes(@NonNull NotificationUtil notificationUtil, @NonNull Auth0Util auth0Util, @NonNull UserUtil userUtil,
+                                     @NonNull String auth0Domain) {
         get(UI_ROOT + RoutePath.KIT_REQUESTS_PATH, new KitRequestRoute(), new JsonTransformer());
 
         KitStatusChangeRoute kitStatusChangeRoute = new KitStatusChangeRoute(notificationUtil);
@@ -679,7 +736,7 @@ public class DSMServer {
 
         get(UI_ROOT + RoutePath.SEARCH_KIT, new KitSearchRoute(), new JsonTransformer());
 
-        KitDiscardRoute kitDiscardRoute = new KitDiscardRoute(auth0Util, userUtil);
+        KitDiscardRoute kitDiscardRoute = new KitDiscardRoute(auth0Util, userUtil, auth0Domain);
         get(UI_ROOT + RoutePath.DISCARD_SAMPLES, kitDiscardRoute, new JsonTransformer());
         patch(UI_ROOT + RoutePath.DISCARD_SAMPLES, kitDiscardRoute, new JsonTransformer());
         post(UI_ROOT + RoutePath.DISCARD_UPLOAD, kitDiscardRoute, new JsonTransformer());
@@ -781,7 +838,7 @@ public class DSMServer {
         get(UI_ROOT + RoutePath.GET_PARTICIPANT_DATA, getParticipantDataRoute, new JsonTransformer());
 
         FrontendAnalyticsRoute frontendAnalyticsRoute = new FrontendAnalyticsRoute();
-        patch(UI_ROOT +RoutePath.GoogleAnalytics,  frontendAnalyticsRoute, new JsonTransformer());
+        patch(UI_ROOT + RoutePath.GoogleAnalytics, frontendAnalyticsRoute, new JsonTransformer());
     }
 
     private void setupSharedRoutes(@NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil, @NonNull PatchUtil patchUtil) {
