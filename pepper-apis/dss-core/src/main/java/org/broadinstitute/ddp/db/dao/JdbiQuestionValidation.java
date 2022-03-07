@@ -15,6 +15,7 @@ import org.broadinstitute.ddp.db.dto.validation.IntRangeRuleDto;
 import org.broadinstitute.ddp.db.dto.validation.DecimalRangeRuleDto;
 import org.broadinstitute.ddp.db.dto.validation.LengthRuleDto;
 import org.broadinstitute.ddp.db.dto.validation.NumOptionsSelectedRuleDto;
+import org.broadinstitute.ddp.db.dto.validation.ComparisonRuleDto;
 import org.broadinstitute.ddp.db.dto.validation.RegexRuleDto;
 import org.broadinstitute.ddp.db.dto.validation.RuleDto;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
@@ -35,6 +36,7 @@ import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 @RegisterConstructorMapper(AgeRangeRuleDto.class)
 @RegisterConstructorMapper(DateRangeRuleDto.class)
 @RegisterConstructorMapper(IntRangeRuleDto.class)
+@RegisterConstructorMapper(ComparisonRuleDto.class)
 @RegisterConstructorMapper(DecimalRangeRuleDto.class)
 @RegisterConstructorMapper(LengthRuleDto.class)
 @RegisterConstructorMapper(NumOptionsSelectedRuleDto.class)
@@ -107,6 +109,9 @@ public interface JdbiQuestionValidation extends SqlObject {
                     break;
                 case REGEX:
                     ruleDto = view.getRow(RegexRuleDto.class);
+                    break;
+                case COMPARISON:
+                    ruleDto = view.getRow(ComparisonRuleDto.class);
                     break;
                 case DAY_REQUIRED:      // fall-through
                 case MONTH_REQUIRED:    // fall-through
