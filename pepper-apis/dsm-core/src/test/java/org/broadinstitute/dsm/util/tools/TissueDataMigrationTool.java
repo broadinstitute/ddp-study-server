@@ -66,6 +66,7 @@ public class TissueDataMigrationTool {
     public static File outputFile;
     private static Config cfg;
     private static String realmId;
+    private static String realmName;
     private static HashMap<Integer, String> fieldNameMap = new HashMap<>();
     private static Map<String, DBElement> columnNameMap;
     private static Set<String> dateFields;
@@ -99,6 +100,7 @@ public class TissueDataMigrationTool {
         String confFile = "config/test-config.conf";
         setup(confFile);
         DDPInstance ddpInstance = DDPInstance.getDDPInstance(realm);
+        realmName = realm;
         realmId = ddpInstance.getDdpInstanceId();
         createColumnNameMapAndDateFields();
         createDataLogFile();
@@ -337,7 +339,7 @@ public class TissueDataMigrationTool {
                 Number mrID = MedicalRecordUtil.isInstitutionTypeInDB(participantId);
                 if (mrID == null) {
                     // mr of that type doesn't exist yet, so create an institution and mr
-                    MedicalRecordUtil.writeInstitutionIntoDb(participantId, MedicalRecordUtil.NOT_SPECIFIED);
+                    MedicalRecordUtil.writeInstitutionIntoDb(participantId, MedicalRecordUtil.NOT_SPECIFIED, realmName);
                     mrID = MedicalRecordUtil.isInstitutionTypeInDB(participantId);
                 }
                 if (mrID != null) {

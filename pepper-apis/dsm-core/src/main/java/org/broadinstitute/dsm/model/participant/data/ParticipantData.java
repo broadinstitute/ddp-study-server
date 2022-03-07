@@ -87,6 +87,13 @@ public class ParticipantData {
         this.data = data;
     }
 
+    public void setData(String ddpParticipantId, int ddpInstanceId, String fieldTypeId, Map<String, String> data) {
+        this.ddpParticipantId = ddpParticipantId;
+        this.ddpInstanceId = ddpInstanceId;
+        this.fieldTypeId = fieldTypeId;
+        this.data = data;
+    }
+
     public List<org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData> getParticipantDataByParticipantId(String ddpParticipantId) {
         if (StringUtils.isBlank(ddpParticipantId)) {
             return Collections.emptyList();
@@ -106,13 +113,6 @@ public class ParticipantData {
             data.putIfAbsent(column, option);
             setData(data);
         });
-    }
-
-    public void setData(String ddpParticipantId, int ddpInstanceId, String fieldTypeId, Map<String, String> data) {
-        this.ddpParticipantId = ddpParticipantId;
-        this.ddpInstanceId = ddpInstanceId;
-        this.fieldTypeId = fieldTypeId;
-        this.data = data;
     }
 
     public long insertParticipantData(String userEmail) {

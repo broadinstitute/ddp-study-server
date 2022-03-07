@@ -13,6 +13,7 @@ import spark.QueryParamsMap;
 
 public class EmptyFilterParticipantList extends BaseFilterParticipantList {
 
+
     @Override
     public ParticipantWrapperResult filter(QueryParamsMap queryParamsMap) {
         if (!Objects.requireNonNull(queryParamsMap).hasKey(RoutePath.REALM)) {
@@ -25,6 +26,7 @@ public class EmptyFilterParticipantList extends BaseFilterParticipantList {
                 .withDdpInstanceDto(ddpInstanceByGuid)
                 .withFrom(from)
                 .withTo(to)
+                .withSortBy(sortBy)
                 .build();
         ElasticSearch elasticSearch = new ElasticSearch();
         return new ParticipantWrapper(participantWrapperPayload, elasticSearch).getFilteredList();

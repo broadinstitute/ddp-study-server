@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.model.patch;
 import java.util.HashMap;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.OncHistory;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.model.NameValue;
@@ -41,9 +42,13 @@ public class OncHistoryDetailPatch extends BasePatch {
     private void prepare() {
         mrID = MedicalRecordUtil.isInstitutionTypeInDB(patch.getParentId());
         if (mrID == null) {
-            // mr of that type doesn't exist yet, so create an institution and mr
-            MedicalRecordUtil.writeInstitutionIntoDb(patch.getParentId(), MedicalRecordUtil.NOT_SPECIFIED);
-            mrID = MedicalRecordUtil.isInstitutionTypeInDB(patch.getParentId());
+            if (StringUtils.isNotBlank(patch.getDdpParticipantId())){
+                // mr of that type doesn't exist yet, so create an institution and mr
+                MedicalRecordUtil.writeInstitutionIntoDb(patch.getDdpParticipantId(), MedicalRecordUtil.NOT_SPECIFIED, patch.getRealm());
+                mrID = MedicalRecordUtil.isInstitutionTypeInDB(patch.getParentId());
+            } else {
+                throw new RuntimeException("Error adding new institution for oncHistory for pt w/ id " + patch.getParentId());
+            }
         }
         if (mrID != null) {
             oncHistoryDetailId = OncHistoryDetail.createNewOncHistoryDetail(mrID.toString(), patch.getUser());

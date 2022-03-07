@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.model.activity.instance.validation;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.experimental.SuperBuilder;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.broadinstitute.ddp.util.MiscUtil;
@@ -12,6 +13,7 @@ import org.broadinstitute.ddp.util.MiscUtil;
  *
  * @param <T> the type of answer this rule checks against
  */
+@SuperBuilder(toBuilder = true)
 public abstract class Rule<T extends Answer> implements Validable<T> {
 
     @NotNull

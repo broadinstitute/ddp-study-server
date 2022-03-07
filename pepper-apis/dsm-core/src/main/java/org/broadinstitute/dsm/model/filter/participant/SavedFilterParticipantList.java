@@ -7,17 +7,15 @@ import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.util.PatchUtil;
 import spark.QueryParamsMap;
 
-public class SavedFilterParticipantList extends BaseFilterParticipantList {
+public class SavedFilterParticipantList extends BaseFilterParticipantList{
     @Override
     public ParticipantWrapperResult filter(QueryParamsMap queryParamsMap) {
         prepareNecessaryData(queryParamsMap);
         ParticipantWrapperResult participantWrapperResult = new ParticipantWrapperResult();
-        if (StringUtils.isBlank(queryParamsMap.get(RequestParameter.FILTERS).value())) {
-            return participantWrapperResult;
-        }
+        if (StringUtils.isBlank(queryParamsMap.get(RequestParameter.FILTERS).value())) return participantWrapperResult;
         Filter[] filters = GSON.fromJson(queryParamsMap.get(RequestParameter.FILTERS).value(), Filter[].class);
         if (filters != null) {
-            participantWrapperResult = filterParticipantList(filters, PatchUtil.getColumnNameMap(), ddpInstance);
+            participantWrapperResult = filterParticipantList(filters, PatchUtil.getColumnNameMap());
         }
         return participantWrapperResult;
     }

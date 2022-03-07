@@ -58,7 +58,7 @@ public class Tissue {
             "INSERT INTO ddp_tissue SET onc_history_detail_id = ?, last_changed = ?, changed_by = ?";
     @TableName(name = DBConstants.DDP_TISSUE, alias = DBConstants.DDP_TISSUE_ALIAS, primaryKey = DBConstants.TISSUE_ID, columnPrefix = "")
     @ColumnName(DBConstants.TISSUE_ID)
-    private long tissueId;
+    private Long tissueId;
 
     @ColumnName(DBConstants.ONC_HISTORY_DETAIL_ID)
     private long oncHistoryDetailId;
@@ -206,10 +206,6 @@ public class Tissue {
         return tissue;
     }
 
-    public static TissueSmId getSMIds(ResultSet rs) {
-        return TissueSmId.getSMIdsForTissueId(rs);
-    }
-
     public static List<Tissue> getTissue(@NonNull Connection conn, @NonNull String oncHistoryDetailId) {
         List<Tissue> tissueList = new ArrayList<>();
         SimpleResult dbVals = new SimpleResult();
@@ -241,6 +237,10 @@ public class Tissue {
         tissueList.addAll(tissues.values());
         logger.info("Found " + tissueList.size() + " tissue for oncHistoryDetails w/ id " + oncHistoryDetailId);
         return tissueList;
+    }
+
+    public static TissueSmId getSMIds(ResultSet rs) {
+        return TissueSmId.getSMIdsForTissueId(rs);
     }
 
     public static String createNewTissue(@NonNull String oncHistoryId, @NonNull String user) {
