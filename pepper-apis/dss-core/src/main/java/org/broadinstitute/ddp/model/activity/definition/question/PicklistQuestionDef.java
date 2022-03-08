@@ -96,7 +96,7 @@ public final class PicklistQuestionDef extends QuestionDef {
         groups = (groups == null) ? new ArrayList<>() : groups;
         options = (options == null) ? new ArrayList<>() : options;
 
-        if (groups.isEmpty() && options.isEmpty()) {
+        if (groups.isEmpty() && options.isEmpty() && renderMode != PicklistRenderMode.REMOTE_AUTOCOMPLETE) {
             throw new IllegalArgumentException("need to have at least one option or one group");
         }
 
