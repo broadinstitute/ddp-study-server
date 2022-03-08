@@ -1,4 +1,4 @@
-grammar equation;
+grammar Equation;
 
 file_ : expression* EOF;
 
@@ -11,12 +11,12 @@ expression
    ;
 
 atom
-   : scientific
+   : number
    | variable
    ;
 
-scientific
-   : SCIENTIFIC_NUMBER
+number
+   : NUMBER
    ;
 
 variable
@@ -38,27 +38,8 @@ fragment VALID_ID_CHAR
    : VALID_ID_START | ('0' .. '9')
    ;
 
-//The NUMBER part gets its potential sign from "(PLUS | MINUS)* atom" in the expression rule
-SCIENTIFIC_NUMBER
-   : NUMBER (E SIGN? UNSIGNED_INTEGER)?
-   ;
-
-fragment NUMBER
+NUMBER
    : ('0' .. '9') + ('.' ('0' .. '9') +)?
-   ;
-
-fragment UNSIGNED_INTEGER
-   : ('0' .. '9')+
-   ;
-
-
-fragment E
-   : 'E' | 'e'
-   ;
-
-
-fragment SIGN
-   : ('+' | '-')
    ;
 
 
