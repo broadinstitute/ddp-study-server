@@ -15,6 +15,10 @@
     <dependencies>
         <dependency>
             <groupId>org.broadinstitute.ddp</groupId>
+            <artifactId>equation-antlr</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.broadinstitute.ddp</groupId>
             <artifactId>pex-antlr</artifactId>
         </dependency>
         <dependency>

@@ -22,6 +22,7 @@
     </properties>
 
     <modules>
+        <module>equation-antlr</module>
         <module>pex-antlr</module>
         <module>dss-core</module>
         <module>studybuilder-cli</module>
@@ -75,6 +76,11 @@
             <dependency>
                 <groupId>org.broadinstitute.ddp</groupId>
                 <artifactId>pex-antlr</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.broadinstitute.ddp</groupId>
+                <artifactId>equation-antlr</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
