@@ -39,7 +39,7 @@ public class Sort {
     }
     
     boolean isNestedSort() {
-        return Alias.of(sortBy).isCollection();
+        return getAlias().isCollection();
     }
 
     String buildFieldName() {
@@ -53,15 +53,14 @@ public class Sort {
     }
 
     String handleOuterPropertySpecialCase() {
-        Alias alias = Alias.of(sortBy);
-        if (alias.equals(Alias.PARTICIPANTDATA)) {
+        if (getAlias().equals(Alias.PARTICIPANTDATA)) {
             return ESObjectConstants.DYNAMIC_FIELDS;
         }
         return sortBy.getOuterProperty();
     }
 
     public String handleInnerPropertySpecialCase() {
-        if (Alias.ACTIVITIES == Alias.of(sortBy)) {
+        if (Alias.ACTIVITIES == getAlias()) {
             return sortBy.getInnerProperty();
         }
         return Util.underscoresToCamelCase(sortBy.getInnerProperty());
@@ -90,7 +89,7 @@ public class Sort {
     }
 
     private boolean isFieldTextType() {
-        this.typeExtractor.setFields(buildPath(getAliasValue(Alias.of(sortBy)), handleOuterPropertySpecialCase(), handleInnerPropertySpecialCase()));
+        this.typeExtractor.setFields(buildPath(getAliasValue(getAlias()), handleOuterPropertySpecialCase(), handleInnerPropertySpecialCase()));
         return TypeParser.TEXT.equals(typeExtractor.extract().get(handleInnerPropertySpecialCase()));
     }
 

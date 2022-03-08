@@ -33,24 +33,10 @@ public class ActivityTypeSort extends Sort {
             this.possibleValues = ObjectMapperSingleton.readValue(possibleValuesString,
                     new TypeReference<List<Map<String, String>>>() {});
         }
-//        sortBy.setTableAlias(ElasticSearchUtil.ACTIVITIES);
-//        sortBy.setOuterProperty(ElasticSearchUtil.QUESTIONS_ANSWER);
     }
 
     @Override
     public String handleInnerPropertySpecialCase() {
-//        FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
-//        Optional<FieldSettingsDto> maybeFieldSettings = fieldSettingsDao.getFieldSettingsByFieldTypeAndColumnName(originalOuterProperty,
-//                originalInnerProperty);
-//        Optional<String> maybePossibleValues = maybeFieldSettings
-//                .map(FieldSettingsDto::getPossibleValues);
-//        String innerProperty = StringUtils.EMPTY;
-//        if (maybePossibleValues.isPresent()) {
-//            String possibleValuesString = maybePossibleValues.get();
-//            List<Map<String, String>> possibleValues = ObjectMapperSingleton.readValue(possibleValuesString,
-//                    new TypeReference<List<Map<String, String>>>() {});
-//            innerProperty = getFieldNameToSortBy(possibleValues);
-//        }
         return getFieldNameToSortBy(possibleValues);
     }
 
@@ -64,29 +50,12 @@ public class ActivityTypeSort extends Sort {
 
     @Override
     String handleOuterPropertySpecialCase() {
-//        String outerProperty;
-//        switch (getAlias()) {
-//            case REGISTRATION:
-//                outerProperty = ElasticSearchUtil.QUESTIONS_ANSWER;
-//                break;
-//            default:
-//                outerProperty = getOuterPropertyFromPossibleValues();
-//                break;
-//        }
-//        return outerProperty;
-//        return sortBy.getOuterProperty();
         return getAlias().getValue();
     }
 
     @Override
     public Alias getAlias() {
         return Alias.valueOf(getOuterPropertyFromPossibleValues().toUpperCase());
-    }
-
-    @Override
-    String getAliasValue(Alias alias) {
-
-        return super.getAliasValue(alias);
     }
 
     private String getOuterPropertyFromPossibleValues() {
