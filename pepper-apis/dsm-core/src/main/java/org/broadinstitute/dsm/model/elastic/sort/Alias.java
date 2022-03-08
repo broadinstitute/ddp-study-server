@@ -25,7 +25,7 @@ public enum Alias {
     INVITATIONS(ElasticSearchUtil.INVITATIONS, false),
     PROXY(ElasticSearchUtil.PROFILE,false),
     ACTIVITIES(ElasticSearchUtil.ACTIVITIES, true),
-    REGISTRATION(String.join(DBConstants.ALIAS_DELIMITER, ElasticSearchUtil.ACTIVITIES, ElasticSearchUtil.QUESTIONS_ANSWER), true);
+    REGISTRATION(ElasticSearchUtil.ACTIVITIES, true);
 
     Alias(String value, boolean isCollection) {
         this.value = value;

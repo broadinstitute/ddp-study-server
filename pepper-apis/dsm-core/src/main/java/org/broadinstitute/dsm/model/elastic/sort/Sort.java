@@ -18,10 +18,13 @@ public class Sort {
     SortBy sortBy;
     TypeExtractor<Map<String, String>> typeExtractor;
 
+    private Alias alias;
+
     Sort(SortBy sortBy,
                 TypeExtractor<Map<String, String>> typeExtractor) {
         this.typeExtractor = typeExtractor;
         this.sortBy = sortBy;
+        this.alias = Alias.of(sortBy);
     }
 
     public static Sort of(SortBy sortBy, TypeExtractor<Map<String, String>> typeExtractor) {
@@ -60,7 +63,7 @@ public class Sort {
     }
 
     public String handleInnerPropertySpecialCase() {
-        if (Alias.ACTIVITIES == getAlias()) {
+        if (Alias.ACTIVITIES == getAlias() || Alias.REGISTRATION == getAlias()) {
             return sortBy.getInnerProperty();
         }
         return Util.underscoresToCamelCase(sortBy.getInnerProperty());
@@ -113,7 +116,7 @@ public class Sort {
     }
 
     public Alias getAlias() {
-        return Alias.of(sortBy);
+        return alias;
     }
 
     public String getRawAlias() {
