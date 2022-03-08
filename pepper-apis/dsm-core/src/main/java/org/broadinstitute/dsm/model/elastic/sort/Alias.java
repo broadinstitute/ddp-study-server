@@ -18,7 +18,7 @@ public enum Alias {
     PARTICIPANTDATA(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA),true),
     T(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.TISSUE),true),
     R(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT),false),
-    DSM(StringUtils.EMPTY, false),
+    DSM(ElasticSearchUtil.DSM, false),
     STATUS(ElasticSearchUtil.STATUS,false),
     PROFILE(ElasticSearchUtil.PROFILE,false),
     ADDRESS(ElasticSearchUtil.ADDRESS,false),

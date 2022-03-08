@@ -25,7 +25,7 @@ public class Sort {
     }
 
     public static Sort of(SortBy sortBy, TypeExtractor<Map<String, String>> typeExtractor) {
-        Type type = Type.valueOf(sortBy.getType());
+        Type type = Type.of(sortBy.getType());
         switch (type) {
             case ACTIVITY:
                 return new ActivityTypeSort(sortBy, typeExtractor);
@@ -44,7 +44,7 @@ public class Sort {
 
     String buildFieldName() {
 
-        Type type = Type.valueOf(sortBy.getType());
+        Type type = Type.of(sortBy.getType());
 
         String outerProperty = handleOuterPropertySpecialCase();
         String innerProperty = handleInnerPropertySpecialCase();
@@ -95,7 +95,7 @@ public class Sort {
 
     String buildNestedPath() {
         if (isNestedSort()) {
-            Type type = Type.valueOf(sortBy.getType());
+            Type type = Type.of(sortBy.getType());
             if (isDoubleNested(type)) {
                 return buildPath(getAliasValue(getAlias()), sortBy.getOuterProperty());
             }
