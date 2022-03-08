@@ -13,6 +13,7 @@ public enum Type {
     CHECKBOX(StringUtils.EMPTY),
     TEXTAREA(StringUtils.EMPTY),
     DATE(StringUtils.EMPTY),
+    DATE_SHORT(StringUtils.EMPTY),
     RADIO(StringUtils.EMPTY),
     ADDITIONALVALUE(ESObjectConstants.DYNAMIC_FIELDS),
     ACTIVITY(StringUtils.EMPTY),
