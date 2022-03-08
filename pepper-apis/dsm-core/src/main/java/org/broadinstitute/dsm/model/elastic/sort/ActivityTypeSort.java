@@ -10,7 +10,6 @@ import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.model.elastic.mapping.TypeExtractor;
 import org.broadinstitute.dsm.model.settings.field.FieldSettings;
-import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
@@ -51,10 +50,22 @@ public class ActivityTypeSort extends Sort {
 
     @Override
     String handleOuterPropertySpecialCase() {
-        if (Alias.REGISTRATION == getAlias()) {
-            return String.join(DBConstants.ALIAS_DELIMITER, getAlias().getValue(), ElasticSearchUtil.QUESTIONS_ANSWER);
+        if (isQuestionsAnswers()) {
+            return buildQuestionsAnswersPath();
         }
         return getAlias().getValue();
+    }
+
+    private boolean isQuestionsAnswers() {
+        return Alias.REGISTRATION == getAlias();
+    }
+
+    @Override
+    String buildNestedPath() {
+        if(isQuestionsAnswers()) {
+            return buildQuestionsAnswersPath();
+        }
+        return super.buildNestedPath();
     }
 
     @Override

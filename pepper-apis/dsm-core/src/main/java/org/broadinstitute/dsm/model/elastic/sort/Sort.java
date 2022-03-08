@@ -37,6 +37,9 @@ public class Sort {
             case JSONARRAY:
                 return new JsonArrayTypeSort(sortBy, typeExtractor);
             default:
+                if (Alias.of(sortBy) == Alias.REGISTRATION) {
+                    return new RegistrationSort(sortBy, typeExtractor);
+                }
                 return new Sort(sortBy, typeExtractor);
         }
     }
@@ -72,6 +75,7 @@ public class Sort {
     private String buildPath(String... args) {
         return Stream.of(args)
                 .filter(StringUtils::isNotBlank)
+                .flatMap(pathPart -> Stream.of(pathPart.split(ElasticSearchUtil.ESCAPE_CHARACTER_DOT_SEPARATOR)))
                 .distinct()
                 .collect(Collectors.joining(DBConstants.ALIAS_DELIMITER));
     }
@@ -94,6 +98,10 @@ public class Sort {
     private boolean isFieldTextType() {
         this.typeExtractor.setFields(buildPath(getAliasValue(getAlias()), handleOuterPropertySpecialCase(), handleInnerPropertySpecialCase()));
         return TypeParser.TEXT.equals(typeExtractor.extract().get(handleInnerPropertySpecialCase()));
+    }
+
+    protected String buildQuestionsAnswersPath() {
+        return String.join(DBConstants.ALIAS_DELIMITER, getAlias().getValue(), ElasticSearchUtil.QUESTIONS_ANSWER);
     }
 
     String buildNestedPath() {
