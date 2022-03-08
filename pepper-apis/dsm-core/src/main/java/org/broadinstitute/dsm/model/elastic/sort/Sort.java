@@ -49,7 +49,7 @@ public class Sort {
         String outerProperty = handleOuterPropertySpecialCase();
         String innerProperty = handleInnerPropertySpecialCase();
 
-        return buildPath(getAliasValue(Alias.of(sortBy)), outerProperty, innerProperty, getKeywordIfText(type));
+        return buildPath(getAliasValue(getAlias()), outerProperty, innerProperty, getKeywordIfText(type));
     }
 
     String handleOuterPropertySpecialCase() {
@@ -70,6 +70,7 @@ public class Sort {
     private String buildPath(String... args) {
         return Stream.of(args)
                 .filter(StringUtils::isNotBlank)
+                .distinct()
                 .collect(Collectors.joining(DBConstants.ALIAS_DELIMITER));
     }
 

@@ -15,6 +15,7 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class ActivityTypeSort extends Sort {
 
+    private List<Map<String, String>> possibleValues;
     private String originalOuterProperty;
     private String originalInnerProperty;
 
@@ -22,30 +23,35 @@ public class ActivityTypeSort extends Sort {
         super(sortBy, typeExtractor);
         this.originalOuterProperty = sortBy.getOuterProperty();
         this.originalInnerProperty = sortBy.getInnerProperty();
-        sortBy.setTableAlias(ElasticSearchUtil.ACTIVITIES);
-        sortBy.setOuterProperty(ElasticSearchUtil.QUESTIONS_ANSWER);
-    }
-
-    @Override
-    public String handleInnerPropertySpecialCase() {
         FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
         Optional<FieldSettingsDto> maybeFieldSettings = fieldSettingsDao.getFieldSettingsByFieldTypeAndColumnName(originalOuterProperty,
                 originalInnerProperty);
         Optional<String> maybePossibleValues = maybeFieldSettings
                 .map(FieldSettingsDto::getPossibleValues);
-        String innerProperty = StringUtils.EMPTY;
         if (maybePossibleValues.isPresent()) {
             String possibleValuesString = maybePossibleValues.get();
-            List<Map<String, String>> possibleValues = ObjectMapperSingleton.readValue(possibleValuesString,
+            this.possibleValues = ObjectMapperSingleton.readValue(possibleValuesString,
                     new TypeReference<List<Map<String, String>>>() {});
-            innerProperty = getFieldNameToSortBy(possibleValues);
         }
-        return innerProperty;
+//        sortBy.setTableAlias(ElasticSearchUtil.ACTIVITIES);
+//        sortBy.setOuterProperty(ElasticSearchUtil.QUESTIONS_ANSWER);
     }
 
     @Override
-    String handleOuterPropertySpecialCase() {
-        return sortBy.getOuterProperty();
+    public String handleInnerPropertySpecialCase() {
+//        FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
+//        Optional<FieldSettingsDto> maybeFieldSettings = fieldSettingsDao.getFieldSettingsByFieldTypeAndColumnName(originalOuterProperty,
+//                originalInnerProperty);
+//        Optional<String> maybePossibleValues = maybeFieldSettings
+//                .map(FieldSettingsDto::getPossibleValues);
+//        String innerProperty = StringUtils.EMPTY;
+//        if (maybePossibleValues.isPresent()) {
+//            String possibleValuesString = maybePossibleValues.get();
+//            List<Map<String, String>> possibleValues = ObjectMapperSingleton.readValue(possibleValuesString,
+//                    new TypeReference<List<Map<String, String>>>() {});
+//            innerProperty = getFieldNameToSortBy(possibleValues);
+//        }
+        return getFieldNameToSortBy(possibleValues);
     }
 
     private String getFieldNameToSortBy(List<Map<String, String>> possibleValues) {
@@ -55,4 +61,34 @@ public class ActivityTypeSort extends Sort {
                 .map(value -> value.split(ElasticSearchUtil.ESCAPE_CHARACTER_DOT_SEPARATOR)[1])
                 .orElse(StringUtils.EMPTY);
     }
+
+    @Override
+    String handleOuterPropertySpecialCase() {
+//        String outerProperty;
+//        switch (getAlias()) {
+//            case REGISTRATION:
+//                outerProperty = ElasticSearchUtil.QUESTIONS_ANSWER;
+//                break;
+//            default:
+//                outerProperty = getOuterPropertyFromPossibleValues();
+//                break;
+//        }
+//        return outerProperty;
+//        return sortBy.getOuterProperty();
+        return getAlias().getValue();
+    }
+
+    @Override
+    public Alias getAlias() {
+        return Alias.valueOf(getOuterPropertyFromPossibleValues().toUpperCase());
+    }
+
+    private String getOuterPropertyFromPossibleValues() {
+        return possibleValues.stream()
+                .findFirst()
+                .map(mapValue -> mapValue.get(FieldSettings.KEY_VALUE))
+                .map(value -> value.split(ElasticSearchUtil.ESCAPE_CHARACTER_DOT_SEPARATOR)[0])
+                .orElse(StringUtils.EMPTY);
+    }
+
 }
