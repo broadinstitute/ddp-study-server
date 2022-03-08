@@ -83,6 +83,12 @@ public class ActivityTypeSort extends Sort {
         return Alias.valueOf(getOuterPropertyFromPossibleValues().toUpperCase());
     }
 
+    @Override
+    String getAliasValue(Alias alias) {
+
+        return super.getAliasValue(alias);
+    }
+
     private String getOuterPropertyFromPossibleValues() {
         return possibleValues.stream()
                 .findFirst()

@@ -97,17 +97,16 @@ public class Sort {
     String buildNestedPath() {
         if (isNestedSort()) {
             Type type = Type.valueOf(sortBy.getType());
-            Alias alias = Alias.of(sortBy);
-            if (isDoubleNested(type, alias)) {
-                return buildPath(getAliasValue(Alias.of(sortBy)), sortBy.getOuterProperty());
+            if (isDoubleNested(type)) {
+                return buildPath(getAliasValue(getAlias()), sortBy.getOuterProperty());
             }
-            return buildPath(getAliasValue(Alias.of(sortBy)));
+            return buildPath(getAliasValue(getAlias()));
         }
         throw new UnsupportedOperationException("Building nested path on non-nested objects is unsupported");
     }
 
-    private boolean isDoubleNested(Type type, Alias alias) {
-        return type == Type.JSONARRAY || (alias == Alias.ACTIVITIES && ElasticSearchUtil.QUESTIONS_ANSWER.equals(sortBy.getOuterProperty()));
+    private boolean isDoubleNested(Type type) {
+        return type == Type.JSONARRAY || (getAlias() == Alias.ACTIVITIES && ElasticSearchUtil.QUESTIONS_ANSWER.equals(sortBy.getOuterProperty()));
     }
 
     public SortOrder getOrder() {
