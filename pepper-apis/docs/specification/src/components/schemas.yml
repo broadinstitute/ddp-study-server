@@ -1532,6 +1532,7 @@ Question:
       FILE: '#/Question.File'
       NUMERIC: '#/Question.Integer'
       DECIMAL: '#/Question.Decimal'
+      EQUATION: '#/Question.Equation'
       PICKLIST: '#/Question.Picklist'
       MATRIX: '#/Question.Matrix'
       TEXT: '#/Question.Text'
@@ -1787,6 +1788,26 @@ Question.Decimal:
           description: the number of digits allowed to the right of the decimal point.
           minimum: 0
           default: 0
+        answers:
+          type: array
+          items:
+            $ref: '#/Answer.Decimal'
+Question.Equation:
+  allOf:
+    - $ref: '#/Question'
+    - type: object
+      required:
+        - answers
+      properties:
+        expression:
+          type: string
+          description: the expression that must be computed.
+        scale:
+          type: integer
+          description: the number of digits allowed to the right of the decimal point.
+          minimum: 0
+          default: 0
+        readonly: true
         answers:
           type: array
           items:
