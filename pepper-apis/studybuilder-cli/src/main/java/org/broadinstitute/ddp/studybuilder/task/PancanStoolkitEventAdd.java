@@ -64,7 +64,7 @@ public class PancanStoolkitEventAdd implements CustomTask {
         LOG.info("Deactivated events of stoolkit initial creation.");
 
         LOG.info("Adding new event for DSM stoolkit creation.");
-        
+
         Config eventDataCfg = dataCfg.getConfigList("events").get(0);
 
         eventBuilder.insertEvent(handle, eventDataCfg);
