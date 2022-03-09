@@ -129,13 +129,17 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
         String bucketName = message.getAttributes().get(ATTR_BUCKET_ID);
         String fileName = message.getAttributes().get(ATTR_OBJECT_ID);
         if (bucketName == null || bucketName.isBlank()) {
-            logger.severe("Bucket name is missing in message");
-            throw new RuntimeException(String.format("attribute value for key %s is missing or empty", ATTR_BUCKET_ID));
+            var logMessage = "message " + messageId + ": " +
+                                "Bucket name is missing in message (attribute " + ATTR_BUCKET_ID + ")";
+            logger.severe(logMessage);
+            throw new RuntimeException(logMessage);
         }
         
         if (fileName == null || fileName.isBlank()) {
-            logger.severe("Bucket filename is missing in message");
-            throw new RuntimeException(String.format("attribute value for key %s is missing or empty", ATTR_OBJECT_ID));
+            var logMessage = "message " + messageId + ": " +
+                                "Bucket filename is missing in message (attribute " + ATTR_OBJECT_ID + ")";
+            logger.severe(logMessage);
+            throw new RuntimeException(logMessage);
         }
 
         logger.info("Looking up file: bucket=" + bucketName + " name=" + fileName);
@@ -168,9 +172,18 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
                         "clamd host " + clamdAddress.toString() + " responded to a PING");
 
             var bucketDataStream = Channels.newInputStream(blob.reader());
-
             result = runClamscan(clamav, bucketDataStream);
-            logger.info(String.format("got result %s", result.name()));
+
+            switch (result) {
+                case INFECTED:
+                    logger.severe("message " + messageId + ": " +
+                                    "malware was identified in object " + blob.getBucket() + "/" + blob.getName());
+
+                case CLEAN:
+                    logger.fine("message " + messageId + ": " +
+                                "no malware identified in object " + blob.getBucket() + "/" + blob.getName());
+
+            }
         } catch (IOException ioe) {
             throw new RuntimeException(String.format("connection to %s unexpectedly closed", clamdHost), ioe);
         }
