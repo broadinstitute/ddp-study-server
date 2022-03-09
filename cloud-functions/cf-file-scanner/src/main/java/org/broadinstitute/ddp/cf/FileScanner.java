@@ -5,6 +5,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.channels.Channels;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -35,17 +38,31 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
     private static final String ENV_GCP_PROJECT = "GCP_PROJECT";
     private static final String ENV_RESULT_TOPIC = "RESULT_TOPIC";
 
+    /**
+     * the host and port of the clamd server to use for scanning.
+     * 
+     * the value is expected to be in one of:
+     *  <host>
+     *  <host>:<port>
+     * 
+     *  where <host> may be an IP address or FQDN.
+     */
+    private static final String ENV_DDP_CLAMAV_SERVER = "DDP_CLAMAV_SERVER";
+
     private static final String ATTR_BUCKET_ID = "bucketId";
     private static final String ATTR_OBJECT_ID = "objectId";
     private static final String ATTR_SCAN_RESULT = "scanResult";
 
     private static final Storage storage;
     private static final Publisher publisher;
+    private static final InetSocketAddress clamdAddress;
 
     // This is ran once on cold start.
     static {
         String gcpProjectId = getEnvOrThrow(ENV_GCP_PROJECT);
         String resultTopic = getEnvOrThrow(ENV_RESULT_TOPIC);
+        String clamavServer = getEnvOrThrow(ENV_DDP_CLAMAV_SERVER);
+
         try {
             storage = StorageOptions.newBuilder()
                     .setCredentials(GoogleCredentials.getApplicationDefault())
@@ -60,6 +77,13 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
             publisher = Publisher.newBuilder(topic).build();
         } catch (IOException e) {
             throw new RuntimeException("Error initializing pubsub publisher", e);
+        }
+
+        try {
+            var clamavUrl = new URI(null, clamavServer, null, null, null).parseServerAuthority();
+            clamdAddress = new InetSocketAddress(clamavUrl.getHost(), clamavUrl.getPort());
+        } catch (URISyntaxException cause) {
+            throw new RuntimeException("env variable " + ENV_DDP_CLAMAV_SERVER + " is not a valid server authority.", cause);
         }
     }
 
@@ -129,17 +153,19 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
 
         logger.info("Scanning file: " + blobId.toString());
 
-        var clamdHost = "127.0.0.1";
-        var clamav = new Client("127.0.0.1", 13310);
+        var clamav = new Client(clamdAddress.getHostName(), clamdAddress.getPort());
 
         ScanResult result;
         try {
             if (clamav.ping() == false) {
-                logger.severe("clamd host not responding to PING");
-                throw new RuntimeException(String.format("no response for PING to %s", clamdHost));
+                var logMessage = "message " + messageId + ": " + 
+                                    "clamd host " + clamdAddress.toString() + " did not respond to a PING";
+                logger.severe(logMessage);
+                throw new RuntimeException(logMessage);
             }
 
-             logger.info(String.format("PING to %s was successful", clamdHost));
+            logger.fine("message " + messageId + ": " +
+                        "clamd host " + clamdAddress.toString() + " responded to a PING");
 
             var bucketDataStream = Channels.newInputStream(blob.reader());
 
