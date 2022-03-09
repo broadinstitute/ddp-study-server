@@ -35,10 +35,8 @@ public class ApplicationConfigConstants {
 
     //security information
     public static final String BSP_SECRET = "bsp.secret";
-    public static final String BROWSER_JWT_SECRET = "browser_security.jwt_secret";
     public static final String BROWSER_COOKIE_SALT = "browser_security.cookie_salt";
     public static final String BROWSER_COOKIE_NAME = "browser_security.cookie_name";
-    public static final String INTERNAL_API_SECRET = "internal_api.secret";
 
     //auth0
     public static final String AUTH0_SECRET = "auth0.secret";
@@ -51,6 +49,8 @@ public class ApplicationConfigConstants {
     public static final String AUTH0_MGT_KEY = "auth0.mgtKey";
     public static final String AUTH0_DOMAIN = "auth0.domain";
     public static final String AUTH0_AUDIENCE = "auth0.audience";
+    public static final String AUTH0_CLAIM_NAMESPACE = "auth0.claimNamespace";
+    public static final String AUTH0_SIGNER = "auth0.account";
 
     //quartz
     public static final String QUARTZ_ENABLE_JOBS = "quartz.enableJobs";

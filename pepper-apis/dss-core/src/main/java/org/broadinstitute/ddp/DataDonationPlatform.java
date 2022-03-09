@@ -514,7 +514,7 @@ public class DataDonationPlatform {
 
         Config auth0Config = cfg.getConfig(ConfigFile.AUTH0);
         before(API.DSM_BASE + "/*", new DsmAuthFilter(auth0Config.getString(ConfigFile.AUTH0_DSM_CLIENT_ID),
-                auth0Config.getString(ConfigFile.DOMAIN)));
+                auth0Config.getString(ConfigFile.DSM_DOMAIN)));
 
         get(API.DSM_ALL_KIT_REQUESTS, new GetDsmKitRequestsRoute(), responseSerializer);
         get(API.DSM_KIT_REQUESTS_STARTING_AFTER, new GetDsmKitRequestsRoute(), responseSerializer);
