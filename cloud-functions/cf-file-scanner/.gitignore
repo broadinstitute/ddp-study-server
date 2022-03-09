@@ -5,10 +5,7 @@
 env.yaml
 
 .idea/
-build/
-clamav/
 target/
 
 config/
 !config/example.env
-!freshclam.conf
