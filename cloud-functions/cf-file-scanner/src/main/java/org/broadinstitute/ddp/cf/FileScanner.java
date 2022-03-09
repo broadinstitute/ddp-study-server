@@ -34,34 +34,16 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
 
     private static final String ENV_GCP_PROJECT = "GCP_PROJECT";
     private static final String ENV_RESULT_TOPIC = "RESULT_TOPIC";
-    private static final String ENV_REFRESH_TIME = "REFRESH_TIME";
-    private static final String ENV_REFRESH_UNIT = "REFRESH_UNIT";
 
     private static final String ATTR_BUCKET_ID = "bucketId";
     private static final String ATTR_OBJECT_ID = "objectId";
     private static final String ATTR_SCAN_RESULT = "scanResult";
 
-    private static final String FRESHCLAM_CONF = "./freshclam.conf";
-    private static final String FRESHCLAM_BIN = "./clamav/freshclam";
-    private static final String CLAMSCAN_BIN = "./clamav/clamscan";
-    private static final String BIN_DIR = "./clamav";
-    private static final String DB_DIR = "/tmp/clamav-db";
-    private static final int BUFFER_SIZE = 64 * 1024; // 64 KB
-
-    private static final long refreshMillis;
     private static final Storage storage;
     private static final Publisher publisher;
-    private static Instant dbUpdatedAt = null;
 
     // This is ran once on cold start.
     static {
-        TimeUnit unit = TimeUnit.valueOf(getEnvOrThrow(ENV_REFRESH_UNIT));
-        if (unit == TimeUnit.MICROSECONDS || unit == TimeUnit.NANOSECONDS) {
-            throw new RuntimeException("Refresh time unit is too granular: " + unit);
-        }
-        long refreshTime = Long.parseLong(getEnvOrThrow(ENV_REFRESH_TIME));
-        refreshMillis = unit.toMillis(refreshTime);
-
         String gcpProjectId = getEnvOrThrow(ENV_GCP_PROJECT);
         String resultTopic = getEnvOrThrow(ENV_RESULT_TOPIC);
         try {
@@ -79,9 +61,6 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
         } catch (IOException e) {
             throw new RuntimeException("Error initializing pubsub publisher", e);
         }
-
-        // Pre-load the database files.
-        checkDatabaseFiles();
     }
 
     private static String getEnvOrThrow(String name) {
@@ -92,137 +71,47 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
         return value;
     }
 
-    // This method needs to be thread-safe since it uses shared global state and is used in `accept()`.
-    private static synchronized void checkDatabaseFiles() {
-        if (dbUpdatedAt == null || Instant.now().toEpochMilli() - dbUpdatedAt.toEpochMilli() >= refreshMillis) {
-            var dir = new File(DB_DIR);
-            if (!dir.exists() || !dir.isDirectory()) {
-                boolean created = dir.mkdir();
-                if (!created) {
-                    throw new RuntimeException("Could not create database directory: " + DB_DIR);
-                }
-            }
-            //runFreshclam();
-        }
-    }
-
-    /**
-     * Run a shell command.
-     *
-     * @param withInput whether to provide input to command
-     * @param input     if provided, we'll take ownership of this input stream and close it when done
-     * @param command   command and its arguments
-     * @return output and exit status code of command
-     */
-    private static CommandResult runCommand(boolean withInput, InputStream input, String... command) {
-        var builder = new ProcessBuilder(command);
-        builder.environment().put("LD_LIBRARY_PATH", BIN_DIR);
-        builder.redirectErrorStream(true);
-        logger.info("Running command: " + String.join(" ", command));
-
-        Process process;
-        try {
-            process = builder.start();
-        } catch (IOException e) {
-            throw new RuntimeException("Error starting command: " + command[0], e);
-        }
-
-        if (withInput && input != null) {
-            try (OutputStream out = process.getOutputStream()) {
-                byte[] buffer = new byte[BUFFER_SIZE];
-                while (true) {
-                    int read = input.read(buffer);
-                    if (read < 0) {
-                        break;
-                    }
-                    out.write(buffer, 0, read);
-                }
-                out.flush();
-            } catch (IOException e) {
-                throw new RuntimeException("Error writing input to command: " + command[0], e);
-            }
-            try {
-                input.close();
-            } catch (IOException e) {
-                throw new RuntimeException("Error closing input content stream for command: " + command[0], e);
-            }
-        }
-
-        String output;
-        try {
-            output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new RuntimeException("Error reading output from command: " + command[0], e);
-        }
-
-        int exitCode;
-        try {
-            exitCode = process.waitFor();
-        } catch (InterruptedException e) {
-            throw new RuntimeException("Error waiting for command to finish: " + command[0], e);
-        }
-
-        return new CommandResult(output, exitCode);
-    }
-
-    /**
-     * Refresh the virus signature database files.
-     */
-    private static void runFreshclam() {
-        long start = System.currentTimeMillis();
-        CommandResult result = runCommand(false, null,
-                FRESHCLAM_BIN,
-                "--config-file=" + FRESHCLAM_CONF,
-                "--datadir=" + DB_DIR);
-        logger.info("Output: " + result.getOutput());
-        logger.info("Status: " + result.getExitCode());
-
-        int status = result.getExitCode();
-        if (status == 0) {
-            dbUpdatedAt = Instant.now();
-            long elapsed = System.currentTimeMillis() - start;
-            logger.info("Finished refreshing the database at: " + dbUpdatedAt + " (took " + elapsed + "ms)");
-        } else {
-            throw new RuntimeException("Unable to refresh database, freshclam exited with status: " + status);
-        }
-    }
-
     /**
      * Run a scan on the content input.
+     * <p>
+     * This method consumes the contents of the input streams and guarantees that it will
+     * be closed upon return.
      *
      * @param content we'll take ownership of this input stream and close it at the end
      * @return whether clean or infected
      */
-    private static ScanResult runClamscan(InputStream content) {
-        CommandResult result = runCommand(true, content,
-                CLAMSCAN_BIN,
-                "--database=" + DB_DIR,
-                "-");   // Dash means to read from stdin.
-        logger.info("Output: " + result.getOutput());
-        logger.info("Status: " + result.getExitCode());
+    private ScanResult runClamscan(Client client, InputStream content) throws IOException {
+        var scanResult = client.scan(content);
+        
+        switch (scanResult.result) {
+            case POSITIVE:
+                logger.severe("");
+                return ScanResult.INFECTED;
 
-        int status = result.getExitCode();
-        if (status == 0) {
-            return ScanResult.CLEAN;
-        } else if (status == 1) {
-            return ScanResult.INFECTED;
-        } else {
-            throw new RuntimeException("Error while scanning file, clamscan exited with status: " + status);
+            case NEGATIVE:
+                return ScanResult.CLEAN;
+
+            default:
+                throw new RuntimeException("unreachable");
         }
     }
 
     @Override
-    public void accept(Message message, Context context) {
+    public void accept(FileScanner.Message message, Context context) {
         logger.info("Received message: eventId=" + context.eventId() + " timestamp=" + context.timestamp());
+        
+        final var messageId = context.eventId();
 
-/*        String bucketName = message.getAttributes().get(ATTR_BUCKET_ID);
+        String bucketName = message.getAttributes().get(ATTR_BUCKET_ID);
         String fileName = message.getAttributes().get(ATTR_OBJECT_ID);
         if (bucketName == null || bucketName.isBlank()) {
             logger.severe("Bucket name is missing in message");
-            return;
-        } else if (fileName == null || fileName.isBlank()) {
+            throw new RuntimeException(String.format("attribute value for key %s is missing or empty", ATTR_BUCKET_ID));
+        }
+        
+        if (fileName == null || fileName.isBlank()) {
             logger.severe("Bucket filename is missing in message");
-            return;
+            throw new RuntimeException(String.format("attribute value for key %s is missing or empty", ATTR_OBJECT_ID));
         }
 
         logger.info("Looking up file: bucket=" + bucketName + " name=" + fileName);
@@ -238,32 +127,31 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
         Instant createdAt = Instant.ofEpochMilli(blob.getCreateTime());
         logger.info("Found file that was created at " + createdAt.toString());
 
-        // Ensure database is up-to-date before scanning.
-        //checkDatabaseFiles();
-
-        logger.info("Scanning file: " + blobId.toString());*/
+        logger.info("Scanning file: " + blobId.toString());
 
         var clamdHost = "127.0.0.1";
         var clamav = new Client("127.0.0.1", 13310);
 
+        ScanResult result;
         try {
             if (clamav.ping() == false) {
                 logger.severe("clamd host not responding to PING");
                 throw new RuntimeException(String.format("no response for PING to %s", clamdHost));
             }
 
-            logger.info(String.format("PING to %s was successful", clamdHost));
+             logger.info(String.format("PING to %s was successful", clamdHost));
 
+            // Used for testing purposes. This will be replaced with the bucket input
+            // stream for release. This code should be moved to a test suite
             var eicar = "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*";
             var dataStream = new ByteArrayInputStream(eicar.getBytes(StandardCharsets.US_ASCII));
-            clamav.scan(dataStream);
+            var bucketDataStream = Channels.newInputStream(blob.reader());
+
+            result = runClamscan(clamav, bucketDataStream);
+            logger.info(String.format("got result %s", result.name()));
         } catch (IOException ioe) {
             throw new RuntimeException(String.format("connection to %s unexpectedly closed", clamdHost), ioe);
         }
-
-        throw new RuntimeException("YOU SHALL NOT PASS");
-        /*
-        ScanResult result = runClamscan(Channels.newInputStream(blob.reader()));
 
         String data = message.getData() != null ? message.getData() : "";
         var resultMessage = PubsubMessage.newBuilder()
@@ -277,30 +165,12 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
             logger.info("Published scan result with messageId: " + msgId);
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException("Error publishing scan result for file: " + blobId.toString(), e);
-        }*/
+        }
     }
 
     private enum ScanResult {
         CLEAN,
         INFECTED,
-    }
-
-    private static class CommandResult {
-        private String output;
-        private int exitCode;
-
-        public CommandResult(String output, int exitCode) {
-            this.output = output;
-            this.exitCode = exitCode;
-        }
-
-        public String getOutput() {
-            return output;
-        }
-
-        public int getExitCode() {
-            return exitCode;
-        }
     }
 
     /**
