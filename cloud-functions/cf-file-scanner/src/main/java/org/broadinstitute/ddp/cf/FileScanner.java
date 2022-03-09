@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.cf;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,6 +25,8 @@ import com.google.cloud.storage.StorageOptions;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
+
+import org.broadinstitute.ddp.clamav.Client;
 
 public class FileScanner implements BackgroundFunction<FileScanner.Message> {
 
@@ -99,7 +102,7 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
                     throw new RuntimeException("Could not create database directory: " + DB_DIR);
                 }
             }
-            runFreshclam();
+            //runFreshclam();
         }
     }
 
@@ -212,7 +215,7 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
     public void accept(Message message, Context context) {
         logger.info("Received message: eventId=" + context.eventId() + " timestamp=" + context.timestamp());
 
-        String bucketName = message.getAttributes().get(ATTR_BUCKET_ID);
+/*        String bucketName = message.getAttributes().get(ATTR_BUCKET_ID);
         String fileName = message.getAttributes().get(ATTR_OBJECT_ID);
         if (bucketName == null || bucketName.isBlank()) {
             logger.severe("Bucket name is missing in message");
@@ -236,9 +239,30 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
         logger.info("Found file that was created at " + createdAt.toString());
 
         // Ensure database is up-to-date before scanning.
-        checkDatabaseFiles();
+        //checkDatabaseFiles();
 
-        logger.info("Scanning file: " + blobId.toString());
+        logger.info("Scanning file: " + blobId.toString());*/
+
+        var clamdHost = "127.0.0.1";
+        var clamav = new Client("127.0.0.1", 13310);
+
+        try {
+            if (clamav.ping() == false) {
+                logger.severe("clamd host not responding to PING");
+                throw new RuntimeException(String.format("no response for PING to %s", clamdHost));
+            }
+
+            logger.info(String.format("PING to %s was successful", clamdHost));
+
+            var eicar = "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*";
+            var dataStream = new ByteArrayInputStream(eicar.getBytes(StandardCharsets.US_ASCII));
+            clamav.scan(dataStream);
+        } catch (IOException ioe) {
+            throw new RuntimeException(String.format("connection to %s unexpectedly closed", clamdHost), ioe);
+        }
+
+        throw new RuntimeException("YOU SHALL NOT PASS");
+        /*
         ScanResult result = runClamscan(Channels.newInputStream(blob.reader()));
 
         String data = message.getData() != null ? message.getData() : "";
@@ -253,7 +277,7 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
             logger.info("Published scan result with messageId: " + msgId);
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException("Error publishing scan result for file: " + blobId.toString(), e);
-        }
+        }*/
     }
 
     private enum ScanResult {
@@ -288,7 +312,7 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
      * This message will be passed along downstream as-is, with an additional attribute for the file
      * scan result, so downstream consumers may have more context about the file scanned.
      */
-    public static class Message {
+    public class Message {
 
         private String data;
         private Map<String, String> attributes = new HashMap<>();
