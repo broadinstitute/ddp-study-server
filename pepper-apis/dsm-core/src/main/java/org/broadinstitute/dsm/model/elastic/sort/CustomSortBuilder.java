@@ -19,6 +19,8 @@ public class CustomSortBuilder extends FieldSortBuilder {
         if (sort.isNestedSort())
             setNestedSort(getNestedSortBuilder());
         this.order(sort.getOrder());
+        this.unmappedType("long");
+        this.missing("_last");
     }
 
     protected NestedSortBuilder getNestedSortBuilder() {
@@ -31,8 +33,6 @@ public class CustomSortBuilder extends FieldSortBuilder {
             boolQueryBuilder.must(new TermsQueryBuilder(String.join(DBConstants.ALIAS_DELIMITER, sort.getAlias().getValue(),
                             ElasticSearchUtil.ACTIVITY_VERSION), sort.getActivityVersions()));
             nestedSortBuilder.setFilter(boolQueryBuilder);
-            boolQueryBuilder.must(new RegexpQueryBuilder(String.join(DBConstants.ALIAS_DELIMITER, sort.getAlias().getValue(),
-                    ElasticSearchUtil.ACTIVITY_VERSION), "^(?!null).*$"));
         }
         return nestedSortBuilder;
     }
