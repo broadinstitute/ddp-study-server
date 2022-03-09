@@ -484,11 +484,33 @@ public class DSMServer {
 
         int maxConnections = config.getInt("portal.maxConnections");
         String dbUrl = config.getString("portal.dbUrl");
+        String dssDBUrl = config.getString("dss.dbUrl");
+        int dssMaxConnections = config.getInt("portal.maxConnections");//todo pegah add to vault
+        try {
+            TransactionWrapper.DbConfiguration DSS_DB =
+                    new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DDP_DB, dssMaxConnections, dssDBUrl);
+            //setup the mysql transaction/connection utility
+            TransactionWrapper.init(DSS_DB);
+
+            logger.info("Running Shared DB update...");
+
+            LiquibaseUtil.runLiquibase(dssDBUrl, TransactionWrapper.DB.DDP_DB);
+            LiquibaseUtil.releaseResources();
+
+            logger.info("Shared DB setup complete.");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        finally {
+            TransactionWrapper.reset();
+        }
 
         //setup the mysql transaction/connection utility
-        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, maxConnections, dbUrl));
+        TransactionWrapper.DbConfiguration DSM_DB =
+                new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, maxConnections, dbUrl);
+        TransactionWrapper.init(DSM_DB);
 
-        logger.info("Running DB update...");
+        logger.info("Running DB update on DSM...");
 
         LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.DSM);
         LiquibaseUtil.releaseResources();

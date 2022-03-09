@@ -6,6 +6,7 @@ public class ConfigFile {
 
     // field that specifies the url to the database
     public static final String DB_URL = "dbUrl";
+    public static final String DSS_DB_URL = "dssDbUrl";
 
     // maximum number of db connections
     public static final String NUM_POOLED_CONNECTIONS = "maxConnections";

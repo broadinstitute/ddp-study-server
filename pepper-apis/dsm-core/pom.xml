@@ -132,13 +132,10 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
         </dependency>
-
-        <!-- liquibase -->
-        <!--        <dependency>-->
-        <!--            <groupId>org.liquibase</groupId>-->
-        <!--            <artifactId>liquibase-maven-plugin</artifactId>-->
-        <!--            &lt;!&ndash; <version>3.5.3</version> &ndash;&gt;-->
-        <!--        </dependency>-->
+        <dependency>
+            <groupId>org.broadinstitute.ddp</groupId>
+            <artifactId>ddp-database</artifactId>
+        </dependency>
 
         <!-- elasticsearch -->
         <dependency>

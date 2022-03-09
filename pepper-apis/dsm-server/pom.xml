@@ -16,6 +16,11 @@
             <groupId>org.broadinstitute.ddp</groupId>
             <artifactId>dsm-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.broadinstitute.ddp</groupId>
+            <artifactId>ddp-database</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

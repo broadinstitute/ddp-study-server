@@ -6,7 +6,6 @@ import java.sql.SQLException;
 import java.time.Instant;
 
 import com.typesafe.config.Config;
-
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import liquibase.Contexts;
@@ -40,24 +39,19 @@ public class LiquibaseUtil implements AutoCloseable {
 
     public static final String DSM_GLOBAL_MIGRATIONS = "master-changelog.xml";
 
+    public static final String SHARED_DB_MIGRATIONS = "shared-master-changelog.xml";
+
     private static final Logger LOG = LoggerFactory.getLogger(LiquibaseUtil.class);
 
     public static final String AUTH0_TENANT_MIGRATION = "db-changes/tenant-migration.xml";
 
     private HikariDataSource dataSource;
 
-    private LiquibaseUtil(String dbUrl)  {
+    private LiquibaseUtil(String dbUrl) {
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(dbUrl);
         config.setMaximumPoolSize(2);
         dataSource = new HikariDataSource(config);
-    }
-
-    @Override
-    public void close()  {
-        if (dataSource != null) {
-            dataSource.close();
-        }
     }
 
     /**
@@ -71,14 +65,23 @@ public class LiquibaseUtil implements AutoCloseable {
                     liquibaseUtil.runPepperAPIsGlobalMigrations();
                 } else if (db == DB.HOUSEKEEPING) {
                     liquibaseUtil.runHousekeepingGlobalMigrations();
-                }  else if (db == DB.DSM) {
+                } else if (db == DB.DSM) {
                     liquibaseUtil.runDSMGlobalMigrations();
+                } else if (db == DB.DDP_DB) {
+                    liquibaseUtil.runSharedDBMigrations();
                 } else {
                     throw new DDPException("Unknown database: " + db.name());
                 }
             }
         } catch (Exception e) {
             throw new DDPException("Error running liquibase migrations", e);
+        }
+    }
+
+    @Override
+    public void close() {
+        if (dataSource != null) {
+            dataSource.close();
         }
     }
 
@@ -126,6 +129,10 @@ public class LiquibaseUtil implements AutoCloseable {
         runMigrations(DSM_GLOBAL_MIGRATIONS);
     }
 
+    private void runSharedDBMigrations() throws LiquibaseException, SQLException {
+        runMigrations(SHARED_DB_MIGRATIONS);
+    }
+
     /**
      * Runs the specific changelog file. When migration fails, this will attempt to rollback the changes, as applicable.
      */
@@ -159,7 +166,8 @@ public class LiquibaseUtil implements AutoCloseable {
 
             // Propagate original exception back up.
             throw originalError;
-        } finally {
+        }
+        finally {
             if (liquibase != null) {
                 liquibase.forceReleaseLocks();
             }
@@ -253,7 +261,6 @@ public class LiquibaseUtil implements AutoCloseable {
         }
         return String.format("%d-%s", Instant.now().toEpochMilli(), hostname);
     }
-
 
 
 }

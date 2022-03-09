@@ -28,6 +28,7 @@
         <module>dss-server</module>
         <module>housekeeping</module>
         <module>dss-database</module>
+        <module>ddp-database</module>
         <module>dsm-core</module>
         <module>ddp-common</module>
         <module>dsm-server</module>
@@ -85,6 +86,11 @@
             <dependency>
                 <groupId>org.broadinstitute.ddp</groupId>
                 <artifactId>dss-database</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.broadinstitute.ddp</groupId>
+                <artifactId>ddp-database</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
