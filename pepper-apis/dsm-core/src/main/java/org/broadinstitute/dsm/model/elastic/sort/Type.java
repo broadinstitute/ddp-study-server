@@ -17,6 +17,7 @@ public enum Type {
     DATE_SHORT(StringUtils.EMPTY),
     RADIO(StringUtils.EMPTY),
     AGREEMENT(StringUtils.EMPTY),
+    COMPOSITE(StringUtils.EMPTY),
     ADDITIONALVALUE(ESObjectConstants.DYNAMIC_FIELDS),
     ACTIVITY(StringUtils.EMPTY),
     JSONARRAY(StringUtils.EMPTY);
