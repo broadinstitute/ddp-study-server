@@ -512,6 +512,7 @@ public class DataDonationPlatform {
         // Study exit request
         post(API.USER_STUDY_EXIT, new SendExitNotificationRoute());
 
+
         Config auth0Config = cfg.getConfig(ConfigFile.AUTH0);
         before(API.DSM_BASE + "/*", new DsmAuthFilter(auth0Config.getString(ConfigFile.AUTH0_DSM_CLIENT_ID),
                 auth0Config.getString(ConfigFile.DSM_DOMAIN)));
