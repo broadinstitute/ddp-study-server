@@ -41,7 +41,7 @@ import org.broadinstitute.dsm.route.NDIRoute;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.TestUtil;
-import org.broadinstitute.dsm.util.externalShipper.GBFRequestUtil;
+import org.broadinstitute.dsm.util.externalshipper.GBFRequestUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.lddp.util.GoogleBucket;
 import org.junit.AfterClass;
@@ -89,9 +89,8 @@ public class DirectMethodTest extends TestHelper {
         strings.add(TEST_DDP);
 
         //As a safeguard, make sure that the settings we just added are in fact in the table
-        String stringFromQuery = DBTestUtil.getStringFromQuery("select count(*) from field_settings where ddp_instance_id = (" +
-                        "select ddp_instance_id from ddp_instance where instance_name = ?) and not (deleted <=> 1)",
-                strings, "count(*)");
+        String stringFromQuery = DBTestUtil.getStringFromQuery("select count(*) from field_settings where ddp_instance_id = ("
+                + "select ddp_instance_id from ddp_instance where instance_name = ?) and not (deleted <=> 1)", strings, "count(*)");
         Assert.assertEquals("getFieldSettingsTest: Configuration error: More than two settings found for TEST_DDP", 2,
                 Integer.parseInt(stringFromQuery));
 
@@ -112,37 +111,30 @@ public class DirectMethodTest extends TestHelper {
 
         //Make sure the settings match the ones we created
         for (FieldSettings oncSetting : oncHistorySettings) {
-            DBTestUtil.checkSettingMatch(oncSetting, "oD",
-                    "testOncDisplay", "testOncName", "text",
-                    null, false, "setting named testOncName");
+            DBTestUtil.checkSettingMatch(oncSetting, "oD", "testOncDisplay", "testOncName", "text", null, false,
+                    "setting named testOncName");
         }
 
         for (FieldSettings tissueSetting : tissueSettings) {
-            DBTestUtil.checkSettingMatch(tissueSetting, "t",
-                    "testTissueDisplay", "testTissueName",
-                    "select", possibleTissueValues, false,
+            DBTestUtil.checkSettingMatch(tissueSetting, "t", "testTissueDisplay", "testTissueName", "select", possibleTissueValues, false,
                     "setting named testTissueName");
         }
     }
 
-    private Map<String, Collection<FieldSettings>> constructFieldSettingsMap(String settingId,
-                                                                             @NonNull String columnName,
-                                                                             @NonNull String columnDisplay,
-                                                                             @NonNull String fieldType,
-                                                                             @NonNull String displayType,
-                                                                             List<Value> possibleValues,
-                                                                             int orderNumber,
-                                                                             boolean deleted) {
-        FieldSettings setting = new FieldSettings(settingId, columnName, columnDisplay, fieldType, displayType,
-                possibleValues, orderNumber, null, false, null);
+    private Map<String, Collection<FieldSettings>> constructFieldSettingsMap(String settingId, @NonNull String columnName,
+                                                                             @NonNull String columnDisplay, @NonNull String fieldType,
+                                                                             @NonNull String displayType, List<Value> possibleValues,
+                                                                             int orderNumber, boolean deleted) {
+        FieldSettings setting =
+                new FieldSettings(settingId, columnName, columnDisplay, fieldType, displayType, possibleValues, orderNumber, null, false,
+                        null);
         if (settingId != null && deleted) {
             setting.setDeleted(true);
         }
         return constructFieldSettingsMap(fieldType, setting);
     }
 
-    private Map<String, Collection<FieldSettings>> constructFieldSettingsMap(@NonNull String fieldType,
-                                                                             @NonNull FieldSettings setting) {
+    private Map<String, Collection<FieldSettings>> constructFieldSettingsMap(@NonNull String fieldType, @NonNull FieldSettings setting) {
         Collection<FieldSettings> settingsCollection = new ArrayList<>();
         settingsCollection.add(setting);
         Map<String, Collection<FieldSettings>> settingsMap = new HashMap<>();
@@ -156,15 +148,13 @@ public class DirectMethodTest extends TestHelper {
         //and that queries of the database return what they should.
 
         //Create some example settings
-        Map<String, Collection<FieldSettings>> oncSettingsLists = constructFieldSettingsMap(null,
-                "customOncName", "customOncDisplay", "oD",
-                "textarea", null, 1, false);
+        Map<String, Collection<FieldSettings>> oncSettingsLists =
+                constructFieldSettingsMap(null, "customOncName", "customOncDisplay", "oD", "textarea", null, 1, false);
         List<Value> options = new ArrayList<>();
         options.add(new Value("tissueo1"));
         options.add(new Value("tissueo2"));
-        Map<String, Collection<FieldSettings>> tissueSettingsLists = constructFieldSettingsMap(null,
-                "customTissueName", "customTissueDisplay", "t",
-                "multiselect", options, 1, false);
+        Map<String, Collection<FieldSettings>> tissueSettingsLists =
+                constructFieldSettingsMap(null, "customTissueName", "customTissueDisplay", "t", "multiselect", options, 1, false);
 
         //Use setFieldSettings to add the onc history setting
         FieldSettings.saveFieldSettings(TEST_DDP, oncSettingsLists, "TEST_USER");
@@ -176,23 +166,21 @@ public class DirectMethodTest extends TestHelper {
         //Make sure there are now two TEST_DDP settings
         List<String> strings = new ArrayList<>();
         strings.add(TEST_DDP);
-        String stringFromQuery = DBTestUtil.getStringFromQuery("select count(*) from field_settings " +
-                "where ddp_instance_id = (select ddp_instance_id from ddp_instance where instance_name = ?) " +
-                "and not (deleted <=> 1)", strings, "count(*)");
+        String stringFromQuery = DBTestUtil.getStringFromQuery("select count(*) from field_settings "
+                        + "where ddp_instance_id = (select ddp_instance_id from ddp_instance where instance_name = ?) "
+                        + "and not (deleted <=> 1)",
+                strings, "count(*)");
 
-        Assert.assertEquals("saveFieldSettingsTest: wrong number of field settings returned", 2,
-                Integer.parseInt(stringFromQuery));
+        Assert.assertEquals("saveFieldSettingsTest: wrong number of field settings returned", 2, Integer.parseInt(stringFromQuery));
 
         //Make sure there is one oncHistory setting and get its field_settings_id
-        String idQuery = "select * from field_settings where ddp_instance_id = (select ddp_instance_id from " +
-                "ddp_instance where instance_name = ?) and not (deleted <=> 1) and field_type = ?";
+        String idQuery = "select * from field_settings where ddp_instance_id = (select ddp_instance_id from "
+                + "ddp_instance where instance_name = ?) and not (deleted <=> 1) and field_type = ?";
         strings.add("oD");
         String oncId = DBTestUtil.getStringFromQuery(idQuery, strings, "field_settings_id");
 
         //Make sure the oncHistory setting matches what we expect
-        DBTestUtil.checkSettingMatch(oncId, "oD", "customOncName",
-                "customOncDisplay", "textarea", null,
-                false);
+        DBTestUtil.checkSettingMatch(oncId, "oD", "customOncName", "customOncDisplay", "textarea", null, false);
 
         //Make sure there is one tissue setting and get its field_settings_id
         strings.remove("oD");
@@ -200,39 +188,36 @@ public class DirectMethodTest extends TestHelper {
         String tissueId = DBTestUtil.getStringFromQuery(idQuery, strings, "field_settings_id");
 
         //Make sure the tissue setting matches what we expect
-        DBTestUtil.checkSettingMatch(tissueId, "t", "customTissueName",
-                "customTissueDisplay", "multiselect", options, false);
+        DBTestUtil.checkSettingMatch(tissueId, "t", "customTissueName", "customTissueDisplay", "multiselect", options, false);
 
         //Update the onc history setting by changing the display name
-        oncSettingsLists = constructFieldSettingsMap(oncId, "customOncName", "new onc display",
-                "oD", "textarea", null, 2, false);
+        oncSettingsLists = constructFieldSettingsMap(oncId, "customOncName", "new onc display", "oD", "textarea", null, 2, false);
         FieldSettings.saveFieldSettings(TEST_DDP, oncSettingsLists, "TEST_USER");
 
         //Check the table to make sure it got updated correctly
-        DBTestUtil.checkSettingMatch(oncId, "oD",
-                "customOncName", "new onc display", "textarea",
-                null, false);
+        DBTestUtil.checkSettingMatch(oncId, "oD", "customOncName", "new onc display", "textarea", null, false);
 
         //"Update" the tissue setting by setting deleted to true
-        tissueSettingsLists = constructFieldSettingsMap(tissueId, "customTissueName", "customTissueDisplay",
-                "t", "multiselect", options, 2, true);
+        tissueSettingsLists =
+                constructFieldSettingsMap(tissueId, "customTissueName", "customTissueDisplay", "t", "multiselect", options, 2, true);
         FieldSettings.saveFieldSettings(TEST_DDP, tissueSettingsLists, "TEST_USER");
 
         //Make sure it was effectively deleted
-        DBTestUtil.checkSettingMatch(tissueId, "t", "customTissueName",
-                "customTissueDisplay", "multiselect", options, true);
+        DBTestUtil.checkSettingMatch(tissueId, "t", "customTissueName", "customTissueDisplay", "multiselect", options, true);
     }
 
     @Test
     public void tissue() {
-        String medicalRecordId = DBTestUtil.getQueryDetail(MedicalRecord.SQL_SELECT_MEDICAL_RECORD + " and inst.ddp_institution_id = "
-                + "\"TEST_INSTITUTION\" and p.ddp_participant_id = \"TEST_PARTICIPANT\"", TEST_DDP, "medical_record_id");
+        String medicalRecordId = DBTestUtil.getQueryDetail(MedicalRecord.SQL_SELECT_MEDICAL_RECORD
+                        + " and inst.ddp_institution_id = \"TEST_INSTITUTION\" and p.ddp_participant_id = \"TEST_PARTICIPANT\"", TEST_DDP,
+                "medical_record_id");
 
         //get oncHistoryDetailId
         ArrayList strings = new ArrayList<>();
         strings.add(medicalRecordId);
-        String oncHistoryDetailId = DBTestUtil.getStringFromQuery("select * from ddp_onc_history_detail where medical_record_id = ?",
-                strings, "onc_history_detail_id");
+        String oncHistoryDetailId =
+                DBTestUtil.getStringFromQuery("select * from ddp_onc_history_detail where medical_record_id = ?", strings,
+                        "onc_history_detail_id");
 
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -249,20 +234,23 @@ public class DirectMethodTest extends TestHelper {
 
         strings = new ArrayList<>();
         strings.add(oncHistoryDetailId);
-        Assert.assertEquals(DBTestUtil.getStringFromQuery("select count(*) from ddp_tissue where onc_history_detail_id = ?", strings,
-                "count(*)"), String.valueOf(tissues.size()));
+        Assert.assertEquals(
+                DBTestUtil.getStringFromQuery("select count(*) from ddp_tissue where onc_history_detail_id = ?", strings, "count(*)"),
+                String.valueOf(tissues.size()));
     }
 
     @Test
     public void oncHistoryDetail() {
-        String medicalRecordId = DBTestUtil.getQueryDetail(MedicalRecord.SQL_SELECT_MEDICAL_RECORD + " and inst.ddp_institution_id = "
-                + "\"TEST_INSTITUTION\" and p.ddp_participant_id = \"TEST_PARTICIPANT\"", TEST_DDP, "medical_record_id");
+        String medicalRecordId = DBTestUtil.getQueryDetail(MedicalRecord.SQL_SELECT_MEDICAL_RECORD
+                        + " and inst.ddp_institution_id = \"TEST_INSTITUTION\" and p.ddp_participant_id = \"TEST_PARTICIPANT\"", TEST_DDP,
+                "medical_record_id");
 
         //get oncHistoryDetailId
         ArrayList strings = new ArrayList<>();
         strings.add(medicalRecordId);
-        String oncHistoryDetailId = DBTestUtil.getStringFromQuery("select * from ddp_onc_history_detail where medical_record_id = ?",
-                strings, "onc_history_detail_id");
+        String oncHistoryDetailId =
+                DBTestUtil.getStringFromQuery("select * from ddp_onc_history_detail where medical_record_id = ?", strings,
+                        "onc_history_detail_id");
 
 
         SimpleResult results = inTransaction((conn) -> {
@@ -281,8 +269,9 @@ public class DirectMethodTest extends TestHelper {
 
     @Test
     public void medicalRecord() {
-        String medicalRecordId = DBTestUtil.getQueryDetail(MedicalRecord.SQL_SELECT_MEDICAL_RECORD + " and inst.ddp_institution_id = "
-                + "\"TEST_INSTITUTION\" and p.ddp_participant_id = \"TEST_PARTICIPANT\"", TEST_DDP, "medical_record_id");
+        String medicalRecordId = DBTestUtil.getQueryDetail(MedicalRecord.SQL_SELECT_MEDICAL_RECORD
+                        + " and inst.ddp_institution_id = \"TEST_INSTITUTION\" and p.ddp_participant_id = \"TEST_PARTICIPANT\"", TEST_DDP,
+                "medical_record_id");
 
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -319,9 +308,10 @@ public class DirectMethodTest extends TestHelper {
         List<MedicalRecord> medicalRecords = medicalRecord.get("TEST_PARTICIPANT");
         List strings = new ArrayList<>();
         strings.add(participantId);
-        Assert.assertEquals(DBTestUtil.getStringFromQuery("select count(*) from ddp_medical_record mr, ddp_institution inst, "
-                + "ddp_participant pat where mr.institution_id = inst.institution_id and inst.participant_id = pat.participant_id and pat"
-                + ".participant_id = ? ", strings, "count(*)"), String.valueOf(medicalRecords.size()));
+        Assert.assertEquals(DBTestUtil.getStringFromQuery(
+                "select count(*) from ddp_medical_record mr, ddp_institution inst, ddp_participant pat "
+                        + "where mr.institution_id = inst.institution_id and inst.participant_id = pat.participant_id "
+                        + "and pat.participant_id = ? ", strings, "count(*)"), String.valueOf(medicalRecords.size()));
     }
 
     @Test
@@ -362,8 +352,9 @@ public class DirectMethodTest extends TestHelper {
         strings.add("EXIT_PARTICIPANT");
 
         //check that the participant is in the exit table
-        Assert.assertEquals("1", DBTestUtil.getStringFromQuery("select count(*) from ddp_participant_exit where ddp_instance_id = (select"
-                + " ddp_instance_id from ddp_instance where instance_name = ?) and ddp_participant_id = ?", strings, "count(*)"));
+        Assert.assertEquals("1", DBTestUtil.getStringFromQuery(
+                "select count(*) from ddp_participant_exit where ddp_instance_id = (select ddp_instance_id "
+                        + "from ddp_instance where instance_name = ?) and ddp_participant_id = ?", strings, "count(*)"));
 
         //get list of exit participants for the test ddp
         Collection<ParticipantExit> exitedParticipants = ParticipantExit.getExitedParticipants(TEST_DDP).values();
@@ -378,7 +369,8 @@ public class DirectMethodTest extends TestHelper {
         input += headers + "\n";
 
         String participantId1 =
-                "IAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTVERYLONGPARTICIPANTIDWHICHDOESNOTMAKESENSEBUTWILLTHROWERRORFORCOLLABORATORPARTICIPANTIDANDSAMPLEIDIAMGROOTHOPEFULLYITISNOWLONGENOUGHIAMGROOTIAMGROOT";
+                "IAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTVERYLONGPARTICIPANTIDWHICHDOESNOTMAKESENSEBUTWILLTHROWERROR"
+                        + "FORCOLLABORATORPARTICIPANTIDANDSAMPLEIDIAMGROOTHOPEFULLYITISNOWLONGENOUGHIAMGROOTIAMGROOT";
         String firstNameShort = randomStringGenerator(10, true, false, false);
         String lastNameShort = randomStringGenerator(15, true, false, false);
         String middleLetter = randomStringGenerator(1, true, false, false);
@@ -386,7 +378,8 @@ public class DirectMethodTest extends TestHelper {
         String month1 = randomStringGenerator(2, false, false, true);
         String day1 = randomStringGenerator(2, false, false, true);
         String line1 =
-                participantId1 + "\t" + firstNameShort + "\t" + middleLetter + "\t" + lastNameShort + "\t" + year1 + "\t" + month1 + "\t" + day1;
+                participantId1 + "\t" + firstNameShort + "\t" + middleLetter + "\t" + lastNameShort + "\t" + year1 + "\t" + month1 + "\t"
+                        + day1;
         input += line1 + "\n";
 
 
@@ -410,11 +403,11 @@ public class DirectMethodTest extends TestHelper {
         String secondCNumber = controlNumber1.get(1);
         Assert.assertNotEquals(firstCNumber, secondCNumber);
 
-        String uniqueness = DBTestUtil.getQueryDetail("SELECT * FROM ddp_ndi WHERE BINARY ndi_control_number = ?", firstCNumber,
-                "ndi_control_number");
+        String uniqueness =
+                DBTestUtil.getQueryDetail("SELECT * FROM ddp_ndi WHERE BINARY ndi_control_number = ?", firstCNumber, "ndi_control_number");
         Assert.assertNull(uniqueness);
-        uniqueness = DBTestUtil.getQueryDetail("SELECT * FROM ddp_ndi WHERE BINARY ndi_control_number = ?", secondCNumber,
-                "ndi_control_number");
+        uniqueness =
+                DBTestUtil.getQueryDetail("SELECT * FROM ddp_ndi WHERE BINARY ndi_control_number = ?", secondCNumber, "ndi_control_number");
         Assert.assertNull(uniqueness);
 
         String afterFirstCNumber = NationalDeathIndex.generateNextControlNumber(firstCNumber);
@@ -433,7 +426,8 @@ public class DirectMethodTest extends TestHelper {
         String month1 = randomStringGenerator(2, false, false, true);
         String day1 = randomStringGenerator(2, false, false, true);
         String line1 =
-                participantId1 + "\t" + firstNameShort + "\t" + middleLetter + "\t" + lastNameShort + "\t" + year1 + "\t" + month1 + "\t" + day1;
+                participantId1 + "\t" + firstNameShort + "\t" + middleLetter + "\t" + lastNameShort + "\t" + year1 + "\t" + month1 + "\t"
+                        + day1;
         input += line1 + "\n";
 
         String participantId2 = "2";
@@ -443,8 +437,9 @@ public class DirectMethodTest extends TestHelper {
         String year2 = randomStringGenerator(4, false, false, true);
         String month2 = randomStringGenerator(1, false, false, true);
         String day2 = randomStringGenerator(1, false, false, true);
-        String line2 = participantId2 + "\t" + firstNameLong + "\t" + middleEmpty + "\t" + lastNameLong + "\t" + year2 + "\t" + month2 +
-                "\t" + day2;
+        String line2 =
+                participantId2 + "\t" + firstNameLong + "\t" + middleEmpty + "\t" + lastNameLong + "\t" + year2 + "\t" + month2 + "\t"
+                        + day2;
         input += line2;
 
         List<NDIUploadObject> requests = NDIRoute.isFileValid(input);
@@ -482,8 +477,9 @@ public class DirectMethodTest extends TestHelper {
         String junks = String.valueOf(junk);
         Assert.assertEquals(junks, ndiRow1.substring(53, 81));
         Assert.assertEquals("         ", ndiRow1.substring(91));
-        String ptIdInDB = DBTestUtil.getQueryDetail("SELECT * FROM ddp_ndi WHERE ndi_control_number = ? COLLATE utf8_bin",
-                controlNumber1.get(0), "ddp_participant_id");
+        String ptIdInDB =
+                DBTestUtil.getQueryDetail("SELECT * FROM ddp_ndi WHERE ndi_control_number = ? COLLATE utf8_bin", controlNumber1.get(0),
+                        "ddp_participant_id");
         Assert.assertEquals(participantId1, ptIdInDB);
 
         String ndiRow2 = output.substring(101, output.indexOf("\n", 102));
@@ -531,7 +527,8 @@ public class DirectMethodTest extends TestHelper {
         String month1 = randomStringGenerator(2, false, false, true);
         String day1 = randomStringGenerator(2, false, false, true);
         String line1 =
-                participantId1 + "\t" + firstNameShort + "\t" + middleLetter + "\t" + lastNameShort + "\t" + year1 + "\t" + month1 + "\t" + day1;
+                participantId1 + "\t" + firstNameShort + "\t" + middleLetter + "\t" + lastNameShort + "\t" + year1 + "\t" + month1 + "\t"
+                        + day1;
         input += line1 + "\n";
         int size1 = Integer.parseInt(DBTestUtil.selectFromTable("count(*)", "ddp_ndi"));
 
@@ -636,15 +633,15 @@ public class DirectMethodTest extends TestHelper {
 
     @Test // add new drug
     public void drugListingsPATCH() {
-        String oldDrugId = DBTestUtil.getStringFromQuery("select drug_id from drug_list where display_name = \'DRUG (TEST)\'", null,
-                "drug_id");
+        String oldDrugId =
+                DBTestUtil.getStringFromQuery("select drug_id from drug_list where display_name = \'DRUG (TEST)\'", null, "drug_id");
         DBTestUtil.executeQuery("DELETE FROM drug_list WHERE drug_id = " + oldDrugId);
 
         Drug sampleDrug = new Drug(-1, "DRUG (TEST)", "DRUG", "TEST", "DRUGTEST", "D", false, "H", "N", true);
         Drug.addDrug("1", sampleDrug);
 
-        String drugId = DBTestUtil.getStringFromQuery("select drug_id from drug_list where display_name = \'DRUG (TEST)\'", null,
-                "drug_id");
+        String drugId =
+                DBTestUtil.getStringFromQuery("select drug_id from drug_list where display_name = \'DRUG (TEST)\'", null, "drug_id");
 
         // check that the value was changed
         List<String> values = new ArrayList<>();
@@ -683,35 +680,35 @@ public class DirectMethodTest extends TestHelper {
         String nameInBucket = "unitTest_fileUpload";
         File file = TestUtil.getResouresFile("BSPscreenshot.png");
         //upload File
-        String fileName = GoogleBucket.uploadFile(cfg.getString("portal.googleProjectCredentials"), cfg.getString("portal"
-                        + ".googleProjectName"),
-                cfg.getString("portal.discardSampleBucket"), nameInBucket, new FileInputStream(file));
+        String fileName =
+                GoogleBucket.uploadFile(cfg.getString("portal.googleProjectCredentials"), cfg.getString("portal.googleProjectName"),
+                        cfg.getString("portal.discardSampleBucket"), nameInBucket, new FileInputStream(file));
         Assert.assertNotNull(fileName);
 
         //download file
-        byte[] downloadedFile = GoogleBucket.downloadFile(cfg.getString("portal.googleProjectCredentials"), cfg.getString("portal"
-                        + ".googleProjectName"),
-                cfg.getString("portal.discardSampleBucket"), nameInBucket);
+        byte[] downloadedFile =
+                GoogleBucket.downloadFile(cfg.getString("portal.googleProjectCredentials"), cfg.getString("portal.googleProjectName"),
+                        cfg.getString("portal.discardSampleBucket"), nameInBucket);
         Assert.assertNotNull(downloadedFile);
 
         //delete file
-        boolean fileDeleted = GoogleBucket.deleteFile(cfg.getString("portal.googleProjectCredentials"), cfg.getString("portal"
-                        + ".googleProjectName"),
-                cfg.getString("portal.discardSampleBucket"), nameInBucket);
+        boolean fileDeleted =
+                GoogleBucket.deleteFile(cfg.getString("portal.googleProjectCredentials"), cfg.getString("portal.googleProjectName"),
+                        cfg.getString("portal.discardSampleBucket"), nameInBucket);
         Assert.assertTrue(fileDeleted);
     }
 
     @Test
     public void gbfOrder() throws Exception {
-        org.broadinstitute.dsm.model.gbf.Address address = new org.broadinstitute.dsm.model.gbf.Address("Zulma Medical",
-                "19272 Stone Oak Parkway", null, "San Antonio", "TX", "78258", "United States",
-                "(210) 265-8851");
+        org.broadinstitute.dsm.model.gbf.Address address =
+                new org.broadinstitute.dsm.model.gbf.Address("Zulma Medical", "19272 Stone Oak Parkway", null, "San Antonio", "TX", "78258",
+                        "United States", "(210) 265-8851");
         ShippingInfo shippingInfo = new ShippingInfo(null, "Ground, FedEx", address);
         List<LineItem> lineItems = new ArrayList<>();
         lineItems.add(new LineItem("378186", "1"));
         lineItems.add(new LineItem("378188", "2"));
-        org.broadinstitute.dsm.model.gbf.Order order = new org.broadinstitute.dsm.model.gbf.Order("ID-000814", "C7037154", "A10000018",
-                shippingInfo, lineItems);
+        org.broadinstitute.dsm.model.gbf.Order order =
+                new org.broadinstitute.dsm.model.gbf.Order("ID-000814", "C7037154", "A10000018", shippingInfo, lineItems);
         Orders orders = new Orders();
         orders.setOrders(new ArrayList<>());
         orders.getOrders().add(order);
@@ -722,8 +719,8 @@ public class DirectMethodTest extends TestHelper {
     @Test
     public void gbfConfirmation() throws Exception {
         String shippingConfirmationResponse = TestUtil.readFile("gbf/ShippingConfirmation.xml");
-        ShippingConfirmations shippingConfirmations = GBFRequestUtil.objectFromXMLString(ShippingConfirmations.class,
-                shippingConfirmationResponse);
+        ShippingConfirmations shippingConfirmations =
+                GBFRequestUtil.objectFromXMLString(ShippingConfirmations.class, shippingConfirmationResponse);
         Assert.assertNotNull(shippingConfirmations);
         Assert.assertTrue(!shippingConfirmations.getShippingConfirmations().isEmpty());
         Assert.assertTrue(shippingConfirmations.getShippingConfirmations().size() == 1);
@@ -768,8 +765,7 @@ public class DirectMethodTest extends TestHelper {
         Assert.assertFalse(instanceSettingsDto.getMrCoverPdf().orElse(Collections.emptyList()).isEmpty());
         Assert.assertFalse(instanceSettingsDto.getKitBehaviorChange().orElse(Collections.emptyList()).isEmpty());
 
-        instanceSettingsDto
-                .getKitBehaviorChange()
+        instanceSettingsDto.getKitBehaviorChange()
                 .map(kitBehaviour -> kitBehaviour.stream().filter(o -> o.getName().equals("upload")).findFirst().orElse(null))
                 .ifPresentOrElse(value -> value.getValues().forEach(condition -> {
                     if (StringUtils.isNotBlank(condition.getName()) && condition.getName().contains(".")) {
@@ -780,7 +776,7 @@ public class DirectMethodTest extends TestHelper {
 
     @Ignore("ES values are changing a lot because of testing")
     @Test
-    public void mbcLegacyPTGUID() {
+    public void mbcLegacyPtGUID() {
         DDPInstance instance = DDPInstance.getDDPInstance("Pepper-MBC");
         String filter = " AND profile.guid = R0RR2K62F1D4JT2NUF0D";
         Map<String, Map<String, Object>> participants = ElasticSearchUtil.getFilteredDDPParticipantsFromES(instance, filter);
@@ -789,7 +785,7 @@ public class DirectMethodTest extends TestHelper {
 
     @Ignore("ES values are changing a lot because of testing")
     @Test
-    public void mbcLegacyPTAltPID() {
+    public void mbcLegacyPtAltPID() {
         DDPInstance instance = DDPInstance.getDDPInstance("Pepper-MBC");
         String filter = " AND profile.legacyAltPid = 8315_v3";
         Map<String, Map<String, Object>> participants = ElasticSearchUtil.getFilteredDDPParticipantsFromES(instance, filter);

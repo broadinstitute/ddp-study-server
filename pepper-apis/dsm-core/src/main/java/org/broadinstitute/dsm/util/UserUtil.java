@@ -15,7 +15,6 @@ import java.util.Map;
 
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.db.UserSettings;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
@@ -29,35 +28,34 @@ import spark.Request;
 
 public class UserUtil {
 
-    public static final String SQL_USER_ROLES_PER_REALM = "SELECT role.name FROM  access_user_role_group roleGroup " +
-            "LEFT JOIN ddp_instance_group gr on (gr.ddp_group_id = roleGroup.group_id) " +
-            "LEFT JOIN access_user user on (roleGroup.user_id = user.user_id) " +
-            "LEFT JOIN ddp_instance realm on (realm.ddp_instance_id = gr.ddp_instance_id) " +
-            "LEFT JOIN access_role role on (role.role_id = roleGroup.role_id) " +
-            "WHERE roleGroup.user_id = ? and instance_name = ?";
+    public static final String SQL_USER_ROLES_PER_REALM = "SELECT role.name FROM  access_user_role_group roleGroup "
+            + "LEFT JOIN ddp_instance_group gr on (gr.ddp_group_id = roleGroup.group_id) "
+            + "LEFT JOIN access_user user on (roleGroup.user_id = user.user_id) "
+            + "LEFT JOIN ddp_instance realm on (realm.ddp_instance_id = gr.ddp_instance_id) "
+            + "LEFT JOIN access_role role on (role.role_id = roleGroup.role_id) " + "WHERE roleGroup.user_id = ? and instance_name = ?";
     public static final String USER_ID = "userId";
     public static final String SHIPPING_MENU = "shipping";
     private static final Logger logger = LoggerFactory.getLogger(UserUtil.class);
     private static final String SQL_SELECT_USER = "SELECT user_id, name FROM access_user";
     private static final String SQL_INSERT_USER = "INSERT INTO access_user (name, email) VALUES (?,?)";
-    private static final String SQL_SELECT_USER_ACCESS_ROLE = "SELECT role.name FROM access_user_role_group roleGroup, access_user user, "
-            + "access_role role " +
-            "WHERE roleGroup.user_id = user.user_id AND roleGroup.role_id = role.role_id AND user.is_active = 1";
-    private static final String SQL_USER_ROLES = "SELECT DISTINCT role.name FROM  access_user_role_group roleGroup " +
-            "LEFT JOIN ddp_instance_group gr on (gr.ddp_group_id = roleGroup.group_id) " +
-            "LEFT JOIN access_user user on (roleGroup.user_id = user.user_id) " +
-            "LEFT JOIN access_role role on (role.role_id = roleGroup.role_id) " +
-            "WHERE roleGroup.user_id = ? ";
-    private static final String SQL_SELECT_USER_REALMS = "SELECT DISTINCT realm.instance_name, realm.display_name, (SELECT count(role"
-            + ".name) " +
-            "FROM ddp_instance realm2, ddp_instance_role inRol, instance_role role " +
-            "WHERE realm2.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id AND role.name = ? " +
-            "AND realm2.ddp_instance_id = realm.ddp_instance_id) AS 'has_role' FROM access_user_role_group roleGroup, " +
-            "access_user user, ddp_group, ddp_instance_group realmGroup, ddp_instance realm, access_role role " +
-            "WHERE realm.ddp_instance_id = realmGroup.ddp_instance_id AND realmGroup.ddp_group_id = ddp_group.group_id AND ddp_group"
-            + ".group_id = roleGroup.group_id " +
-            "AND roleGroup.user_id = user.user_id AND role.role_id = roleGroup.role_id AND realm.is_active = 1 AND user.is_active = 1 AND"
-            + " user.user_id = ? ";
+    private static final String SQL_SELECT_USER_ACCESS_ROLE =
+            "SELECT role.name FROM access_user_role_group roleGroup, access_user user, access_role role "
+                    + "WHERE roleGroup.user_id = user.user_id AND roleGroup.role_id = role.role_id AND user.is_active = 1";
+    private static final String SQL_USER_ROLES = "SELECT DISTINCT role.name FROM  access_user_role_group roleGroup "
+            + "LEFT JOIN ddp_instance_group gr on (gr.ddp_group_id = roleGroup.group_id) "
+            + "LEFT JOIN access_user user on (roleGroup.user_id = user.user_id) "
+            + "LEFT JOIN access_role role on (role.role_id = roleGroup.role_id) " + "WHERE roleGroup.user_id = ? ";
+    private static final String SQL_SELECT_USER_REALMS =
+            "SELECT DISTINCT realm.instance_name, realm.display_name, (SELECT count(role.name) "
+                    + "FROM ddp_instance realm2, ddp_instance_role inRol, instance_role role "
+                    + "WHERE realm2.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id "
+                    + "AND role.name = ? "
+                    + "AND realm2.ddp_instance_id = realm.ddp_instance_id) AS 'has_role' FROM access_user_role_group roleGroup, "
+                    + "access_user user, ddp_group, ddp_instance_group realmGroup, ddp_instance realm, access_role role "
+                    + "WHERE realm.ddp_instance_id = realmGroup.ddp_instance_id AND realmGroup.ddp_group_id = ddp_group.group_id "
+                    + "AND ddp_group.group_id = roleGroup.group_id "
+                    + "AND roleGroup.user_id = user.user_id AND role.role_id = roleGroup.role_id AND realm.is_active = 1 "
+                    + "AND user.is_active = 1 AND user.user_id = ? ";
     private static final String NO_USER_ROLE = "NO_USER_ROLE";
     private static final String MAILINGLIST_MENU = "mailingList";
     private static final String MEDICALRECORD_MENU = "medicalRecord";
@@ -122,37 +120,6 @@ public class UserUtil {
         return listOfRealms;
     }
 
-    public static List<NameValue> getAllowedStudies(@NonNull String userId) {
-        List<NameValue> studies = new ArrayList<>();
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_USER_REALMS)) {
-                stmt.setString(1, NO_USER_ROLE);
-                stmt.setString(2, userId);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-                        String instanceName = rs.getString(DBConstants.INSTANCE_NAME);
-                        String displayName = rs.getString(DBConstants.DISPLAY_NAME);
-                        if (StringUtils.isNotBlank(displayName)) {
-                            studies.add(new NameValue(instanceName, displayName));
-                        } else {
-                            studies.add(new NameValue(instanceName, instanceName));
-                        }
-                    }
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Error getting list of studies ", results.resultException);
-        }
-        return studies;
-
-    }
-
     public static Collection<String> getListOfAllowedRealms(@NonNull String userId, @NonNull String menu) {
         List<String> listOfRealms = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
@@ -200,7 +167,7 @@ public class UserUtil {
                     instanceRole = DBConstants.KIT_REQUEST_ACTIVATED;
                     getList(conn, query, instanceRole, userId, listOfRealms);
                 } else if (PDF_DOWNLOAD_MENU.equals(menu)) {
-                    query = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_ALLOWED_REALMS_FOR_USER_ROLE_STARTS_LIKE);
+                    query = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_ALLOWED_REALMS_FOR_USER_ROLE_STARTS_LIKE);
                     query = query.replace("%1", DBConstants.PDF_DOWNLOAD);
                     query = query + QueryExtension.BY_ROLE_NAME;
                     query = query.replace("%1", DBConstants.PDF_DOWNLOAD);
@@ -219,6 +186,37 @@ public class UserUtil {
         }
         logger.info("Found " + listOfRealms.size() + " realm for " + menu);
         return listOfRealms;
+    }
+
+    public static List<NameValue> getAllowedStudies(@NonNull String userId) {
+        List<NameValue> studies = new ArrayList<>();
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_USER_REALMS)) {
+                stmt.setString(1, NO_USER_ROLE);
+                stmt.setString(2, userId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        String instanceName = rs.getString(DBConstants.INSTANCE_NAME);
+                        String displayName = rs.getString(DBConstants.DISPLAY_NAME);
+                        if (StringUtils.isNotBlank(displayName)) {
+                            studies.add(new NameValue(instanceName, displayName));
+                        } else {
+                            studies.add(new NameValue(instanceName, instanceName));
+                        }
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Error getting list of studies ", results.resultException);
+        }
+        return studies;
+
     }
 
     private static void getList(Connection conn, String query, String userId, List<String> listOfRealms) throws SQLException {
@@ -333,8 +331,8 @@ public class UserUtil {
                     throw new RuntimeException("Error getting id of new kit request ", e);
                 }
             } catch (SQLException ex) {
-                logger.error("User " + name + ", " + email + " already exists but doesn't have any access roles or is set to is_active=0."
-                        + "..");
+                logger.error(
+                        "User " + name + ", " + email + " already exists but doesn't have any access roles or is set to is_active=0...");
             }
             return dbVals;
         });

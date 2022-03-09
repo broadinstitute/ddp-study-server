@@ -1818,6 +1818,7 @@ Question.Picklist:
           - DROPDOWN
           - CHECKBOX_LIST
           - AUTOCOMPLETE
+          - REMOTE_AUTOCOMPLETE
       groups:
         type: array
         description: A list of groups used in the `picklistOptions` values. If there are no options which explicity request grouping, this will be an empty array.
@@ -1865,6 +1866,16 @@ Question.Matrix:
           enum:
             - MULTIPLE
             - SINGLE
+        renderModal:
+          type: boolean
+          default: false
+          description: When true, the matrix question should be presented inside a modal box.
+        modal:
+          type: string
+          description: Button label that opens modal.
+        modalTitle:
+          type: string
+          description: Modal title label.
         groups:
           type: array
           description: A list of groups used in the `matrixOptions` values. If there are no options which explicity request grouping, this will be an empty array.

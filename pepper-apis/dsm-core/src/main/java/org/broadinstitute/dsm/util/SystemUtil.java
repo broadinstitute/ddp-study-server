@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.util;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,7 +18,6 @@ import java.time.temporal.ChronoField;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
-import javax.servlet.http.HttpServletRequest;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -36,6 +36,7 @@ public class SystemUtil {
 
     public static final long MILLIS_PER_DAY = 1000 * 60 * 60 * 24;
     public static final long MILLIS_PER_HOUR = 1000 * 60 * 60;
+    public static final String SYSTEM = "SYSTEM";
     public static final String SEPARATOR = "\t";
     public static final DateTimeFormatter USUAL_DATE = new DateTimeFormatterBuilder()
             .appendPattern(DATE_FORMAT)
@@ -171,6 +172,13 @@ public class SystemUtil {
         }
     }
 
+    //TODO Simone - delete if not used at the end...
+    public static int getDaysTillNow(@NonNull String date) {
+        long dateSent = SystemUtil.getLongFromDateString(date);
+        long current = System.currentTimeMillis();
+        return (int) ((current - dateSent) / SystemUtil.MILLIS_PER_DAY);
+    }
+
     public static String getBody(HttpServletRequest request) throws IOException {
         String body = null;
         StringBuilder stringBuilder = new StringBuilder();
@@ -186,6 +194,7 @@ public class SystemUtil {
                     stringBuilder.append(charBuffer, 0, bytesRead);
                 }
             } else {
+                stringBuilder.append("");
             }
         } catch (IOException ex) {
             throw ex;

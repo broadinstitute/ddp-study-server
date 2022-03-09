@@ -513,20 +513,20 @@ public interface QuestionDao extends SqlObject {
             if (CollectionUtils.isEmpty(optionDto.getNestedOptions())) {
                 option = new PicklistOption(optionDto.getStableId(),
                         optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
-                        optionDto.getAllowDetails(), optionDto.isExclusive(), optionDto.isDefault());
+                        optionDto.isAllowDetails(), optionDto.isExclusive(), optionDto.isDefault());
             } else {
                 //add nested options
                 List<PicklistOption> nestedOptions = new ArrayList<>();
-                optionDto.getNestedOptions().stream().forEach(nestedOptionDto -> {
+                optionDto.getNestedOptions().forEach(nestedOptionDto -> {
                     nestedOptions.add(new PicklistOption(nestedOptionDto.getStableId(),
                             nestedOptionDto.getOptionLabelTemplateId(), nestedOptionDto.getTooltipTemplateId(),
-                            nestedOptionDto.getDetailLabelTemplateId(), nestedOptionDto.getAllowDetails(),
+                            nestedOptionDto.getDetailLabelTemplateId(), nestedOptionDto.isAllowDetails(),
                             nestedOptionDto.isExclusive(), nestedOptionDto.isDefault()));
                 });
 
                 option = new PicklistOption(optionDto.getStableId(),
                         optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
-                        optionDto.getAllowDetails(), optionDto.isExclusive(), optionDto.isDefault(), optionDto.getNestedOptionsTemplateId(),
+                        optionDto.isAllowDetails(), optionDto.isExclusive(), optionDto.isDefault(), optionDto.getNestedOptionsTemplateId(),
                         nestedOptions);
             }
             allOptions.add(option);
@@ -539,7 +539,7 @@ public interface QuestionDao extends SqlObject {
             for (PicklistOptionDto optionDto : optionDtos) {
                 allOptions.add(new PicklistOption(groupDto.getStableId(), optionDto.getStableId(),
                         optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
-                        optionDto.getAllowDetails(), optionDto.isExclusive(), optionDto.isDefault()));
+                        optionDto.isAllowDetails(), optionDto.isExclusive(), optionDto.isDefault()));
             }
         }
 
@@ -621,7 +621,7 @@ public interface QuestionDao extends SqlObject {
         return new MatrixQuestion(dto.getStableId(), dto.getPromptTemplateId(),
                 dto.isRestricted(), dto.isRenderModal(), dto.isDeprecated(), isReadonly, dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
-                dto.getModalTemplateId(), picklistAnswers,
+                dto.getModalTemplateId(), dto.getModalTitleTemplateId(), picklistAnswers,
                 rules, dto.getSelectMode(), groups, options, questions);
     }
 
@@ -879,7 +879,8 @@ public interface QuestionDao extends SqlObject {
                 dto.getAdditionalInfoHeaderTemplateId(),
                 dto.getAdditionalInfoFooterTemplateId(),
                 answers,
-                rules);
+                rules,
+                dto.getScale());
     }
 
     /**
@@ -1380,7 +1381,7 @@ public interface QuestionDao extends SqlObject {
             placeholderTemplateId = templateDao.insertTemplate(questionDef.getPlaceholderTemplate(), revisionId);
         }
 
-        int numInserted = getJdbiDecimalQuestion().insert(questionDef.getQuestionId(), placeholderTemplateId);
+        int numInserted = getJdbiDecimalQuestion().insert(questionDef.getQuestionId(), placeholderTemplateId, questionDef.getScale());
         if (numInserted != 1) {
             throw new DaoException("Inserted " + numInserted + " for decimal question " + questionDef.getStableId());
         }
@@ -1409,8 +1410,13 @@ public interface QuestionDao extends SqlObject {
             modalTemplateId = templateDao.insertTemplate(matrix.getModalTemplate(), revisionId);
         }
 
+        Long modalTitleTemplateId = null;
+        if (matrix.getModalTitleTemplate() != null) {
+            modalTitleTemplateId = templateDao.insertTemplate(matrix.getModalTitleTemplate(), revisionId);
+        }
+
         int numInserted = getJdbiMatrixQuestion().insert(matrix.getQuestionId(), matrix.getSelectMode(),
-                matrix.isRenderModal(), modalTemplateId);
+                matrix.isRenderModal(), modalTemplateId, modalTitleTemplateId);
 
         if (numInserted != 1) {
             throw new DaoException("Inserted " + numInserted + " for picklist question " + matrix.getStableId());
@@ -2096,7 +2102,7 @@ public interface QuestionDao extends SqlObject {
             List<PicklistOptionDef> options = container.getGroupIdToOptions().get(groupDto.getId())
                     .stream().map(optionDto -> {
                         Template optionLabel = templates.get(optionDto.getOptionLabelTemplateId());
-                        Template detailLabel = !optionDto.getAllowDetails() ? null
+                        Template detailLabel = !optionDto.isAllowDetails() ? null
                                 : templates.get(optionDto.getDetailLabelTemplateId());
                         Template tooltipTemplate = templates.getOrDefault(optionDto.getTooltipTemplateId(), null);
                         return new PicklistOptionDef(optionDto.getId(), optionDto.getStableId(),
@@ -2109,7 +2115,7 @@ public interface QuestionDao extends SqlObject {
         List<PicklistOptionDef> ungroupedOptions = container.getUngroupedOptions()
                 .stream().map(optionDto -> {
                     Template optionLabel = templates.get(optionDto.getOptionLabelTemplateId());
-                    Template detailLabel = !optionDto.getAllowDetails() ? null
+                    Template detailLabel = !optionDto.isAllowDetails() ? null
                             : templates.get(optionDto.getDetailLabelTemplateId());
                     Template tooltipTemplate = templates.getOrDefault(optionDto.getTooltipTemplateId(), null);
                     Template nestedOptionsTemplate = templates.getOrDefault(optionDto.getNestedOptionsTemplateId(), null);
@@ -2122,7 +2128,7 @@ public interface QuestionDao extends SqlObject {
                         List<PicklistOptionDef> nestedOptions = new ArrayList<>();
                         for (PicklistOptionDto nestedOptionDto : optionDto.getNestedOptions()) {
                             Template nestedOptionLabel = templates.get(nestedOptionDto.getOptionLabelTemplateId());
-                            Template nestedDetailLabel = !nestedOptionDto.getAllowDetails() ? null
+                            Template nestedDetailLabel = !nestedOptionDto.isAllowDetails() ? null
                                     : templates.get(nestedOptionDto.getDetailLabelTemplateId());
                             Template nestedTooltipTemplate = templates.getOrDefault(nestedOptionDto.getTooltipTemplateId(), null);
                             nestedOptions.add(new PicklistOptionDef(nestedOptionDto.getId(), nestedOptionDto.getStableId(),
@@ -2153,6 +2159,7 @@ public interface QuestionDao extends SqlObject {
                                                      Map<Long, Template> templates) {
         Template prompt = templates.get(dto.getPromptTemplateId());
         Template modal = templates.get(dto.getModalTemplateId());
+        Template modalTitle = templates.get(dto.getModalTitleTemplateId());
 
         List<MatrixGroupDef> groups = new ArrayList<>();
         for (MatrixGroupDto groupDto : container.getGroups()) {
@@ -2184,6 +2191,7 @@ public interface QuestionDao extends SqlObject {
                 .setSelectMode(dto.getSelectMode())
                 .setRenderModal(dto.isRenderModal())
                 .setModalTemplate(modal)
+                .setModalTitleTemplate(modalTitle)
                 .addGroups(groups)
                 .addOptions(options)
                 .addRows(questions);

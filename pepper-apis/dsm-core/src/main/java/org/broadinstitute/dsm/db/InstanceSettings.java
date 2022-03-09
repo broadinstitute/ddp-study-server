@@ -46,15 +46,13 @@ public class InstanceSettings {
     private static final Logger logger = LoggerFactory.getLogger(InstanceSettings.class);
     private static final String SQL_SELECT_INSTANCE_SETTINGS =
             "SELECT mr_cover_pdf, kit_behavior_change, special_format, hide_ES_fields, study_specific_statuses, default_columns, "
-                    + "has_invitations, " +
-                    "GBF_SHIPPED_DSS_DELIVERED, has_address_tab, has_computed_object " +
-                    "FROM instance_settings settings, ddp_instance realm " +
-                    "WHERE realm.ddp_instance_id = settings.ddp_instance_id AND realm.instance_name = ?";
+                    + "has_invitations, GBF_SHIPPED_DSS_DELIVERED, has_address_tab, has_computed_object "
+                    + "FROM instance_settings settings, ddp_instance realm "
+                    + "WHERE realm.ddp_instance_id = settings.ddp_instance_id AND realm.instance_name = ?";
     private static final String SQL_SELECT_INSTANCE_SETTINGS_BY_ID =
             "SELECT mr_cover_pdf, kit_behavior_change, special_format, hide_ES_fields, study_specific_statuses, default_columns, "
-                    + "has_invitations, GBF_SHIPPED_DSS_DELIVERED, has_address_tab, has_computed_object " +
-                    "FROM instance_settings settings " +
-                    "WHERE settings.ddp_instance_id = ?";
+                    + "has_invitations, GBF_SHIPPED_DSS_DELIVERED, has_address_tab, has_computed_object "
+                    + "FROM instance_settings settings " + "WHERE settings.ddp_instance_id = ?";
     private final InstanceSettingsDao instanceSettingsDao = new InstanceSettingsDao();
     private List<Value> mrCoverPdf;
     private List<Value> kitBehaviorChange;
@@ -66,8 +64,8 @@ public class InstanceSettings {
     private boolean gbfShippedTriggerDSSDelivered;
 
     public InstanceSettings(List<Value> mrCoverPdf, List<Value> kitBehaviorChange, List<Value> specialFormat, List<Value> hideESFields,
-                            List<Value> studySpecificStatuses,
-                            List<Value> defaultColumns, boolean hasInvitations, boolean gbfShippedTriggerDSSDelivered) {
+                            List<Value> studySpecificStatuses, List<Value> defaultColumns, boolean hasInvitations,
+                            boolean gbfShippedTriggerDSSDelivered) {
         this.mrCoverPdf = mrCoverPdf;
         this.kitBehaviorChange = kitBehaviorChange;
         this.specialFormat = specialFormat;
@@ -96,8 +94,7 @@ public class InstanceSettings {
                         List<Value> studySpecificStatuses = getListValue(rs.getString(DBConstants.STUDY_SPECIFIC_STATUSES));
                         List<Value> defaultColumns = getListValue(rs.getString(DBConstants.DEFAULT_COLUMNS));
                         dbVals.resultValue = new InstanceSettings(mrCoverPdfSettings, kitBehaviorChange, specialFormat, hideESFields,
-                                studySpecificStatuses,
-                                defaultColumns, rs.getBoolean(DBConstants.HAS_INVITATIONS),
+                                studySpecificStatuses, defaultColumns, rs.getBoolean(DBConstants.HAS_INVITATIONS),
                                 rs.getBoolean(DBConstants.GBF_SHIPPED_DSS_DELIVERED));
                     }
                 }
@@ -134,6 +131,16 @@ public class InstanceSettings {
             throw new RuntimeException("Error getting list of realms ", ex);
         }
         return result;
+    }
+
+    public InstanceSettingsDto getInstanceSettings(String realm) {
+        return instanceSettingsDao.getByInstanceName(Objects.requireNonNull(realm)).orElse(new InstanceSettingsDto.Builder().build());
+    }
+
+    //used ONLY for google cloud function
+    public InstanceSettingsDto getInstanceSettings(Connection conn, String realm) {
+        return instanceSettingsDao.getByInstanceName(Objects.requireNonNull(conn), Objects.requireNonNull(realm))
+                .orElse(new InstanceSettingsDto.Builder().build());
     }
 
     public static boolean shouldKitBehaveDifferently(@NonNull Map<String, Object> participant, @NonNull Value behavior) {
@@ -176,8 +183,8 @@ public class InstanceSettings {
                                     try {
                                         //date from ES field is before today +/- x
                                         //in case of osteo dateOfMajority is before the date
-                                        if (sdf.parse((String) nameObject1).after(sdf.parse(formattedStart)) &&
-                                                sdf.parse((String) nameObject1).before(sdf.parse(formattedStop))) {
+                                        if (sdf.parse((String) nameObject1).after(sdf.parse(formattedStart)) && sdf.parse(
+                                                (String) nameObject1).before(sdf.parse(formattedStop))) {
                                             specialKit = true;
                                         }
                                     } catch (ParseException e) {
@@ -216,35 +223,19 @@ public class InstanceSettings {
     }
 
     public boolean getHideSamplesTabByStudyGuid(String studyGuid) {
-        return instanceSettingsDao.getHideSamplesTabByStudyGuid(studyGuid)
-                .orElse(false);
-    }
-
-    public InstanceSettingsDto getInstanceSettings(String realm) {
-        return instanceSettingsDao.getByInstanceName(Objects.requireNonNull(realm))
-                .orElse(new InstanceSettingsDto.Builder().build());
-    }
-
-    //used ONLY for google cloud function
-    public InstanceSettingsDto getInstanceSettings(Connection conn, String realm) {
-        return instanceSettingsDao.getByInstanceName(Objects.requireNonNull(conn), Objects.requireNonNull(realm))
-                .orElse(new InstanceSettingsDto.Builder().build());
+        return instanceSettingsDao.getHideSamplesTabByStudyGuid(studyGuid).orElse(false);
     }
 
     public Map<String, Object> getInstanceSettingsAsMap(InstanceSettingsDto instanceSettingsDto) {
         Map<String, Object> settingsMap = new HashMap<>();
         Class<? extends InstanceSettingsDto> clazz = instanceSettingsDto.getClass();
-        List<String> fieldNames = Arrays.stream(clazz.getDeclaredFields())
-                .map(Field::getName)
-                .collect(Collectors.toList());
+        List<String> fieldNames = Arrays.stream(clazz.getDeclaredFields()).map(Field::getName).collect(Collectors.toList());
         List<Method> methods = Arrays.stream(clazz.getMethods())
-                .filter(method -> method.getName().startsWith("get") || method.getName().startsWith("is") || method.getName().startsWith(
-                        "has"))
-                .collect(Collectors.toList());
+                .filter(method -> method.getName().startsWith("get") || method.getName().startsWith("is") || method.getName()
+                        .startsWith("has")).collect(Collectors.toList());
         fieldNames.forEach(fieldName -> {
-            Optional<Method> methodByFieldName = methods.stream()
-                    .filter(method -> method.getName().toLowerCase().contains(fieldName.toLowerCase()))
-                    .findFirst();
+            Optional<Method> methodByFieldName =
+                    methods.stream().filter(method -> method.getName().toLowerCase().contains(fieldName.toLowerCase())).findFirst();
             methodByFieldName.ifPresent(method -> {
                 try {
                     Optional methodResult = (Optional) method.invoke(instanceSettingsDto);

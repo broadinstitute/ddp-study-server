@@ -28,101 +28,53 @@ public class GBFOrderFinder {
 
     private static final Logger logger = LoggerFactory.getLogger(GBFOrderFinder.class);
     private static final String FIND_KITS_TO_ORDER_QUERY =
-            " " +
-                    "select distinct " +
-                    "subkit.external_name, " +
-                    "orders.external_order_number, " +
-                    "orders.ddp_participant_id, " +
-                    "(select max(req.dsm_kit_request_id) from ddp_kit_request req where req.external_order_number = orders"
-                    + ".external_order_number) as max_kit_request_id, " +
-                    "(select req.order_transmitted_at from ddp_kit_request req where req.dsm_kit_request_id = orders.dsm_kit_request_id " +
-                    "for update) as order_transmission_date " +
-                    "from " +
-                    "ddp_instance i, " +
-                    "ddp_kit_request_settings s, " +
-                    "sub_kits_settings subkit, " +
-                    "(select distinct untransmitted.external_order_number, untransmitted.ddp_participant_id,  untransmitted"
-                    + ".ddp_instance_id, " +
-                    "      untransmitted.kit_type_id, untransmitted.dsm_kit_request_id " +
-                    "      from " +
-                    "      ddp_kit_request untransmitted, " +
-                    "      ddp_instance i " +
-                    "      where " +
-                    "      i.instance_name = ? " +
-                    "      and " +
-                    "      i.ddp_instance_id = untransmitted.ddp_instance_id " +
-                    "      and " +
-                    "      untransmitted.order_transmitted_at is null " +
-                    "      and " +
-                    "      exists " +
-                    "      (select delivered.external_order_number, delivered.ddp_participant_id,  delivered.ddp_instance_id, " +
-                    "      delivered.kit_type_id, delivered.dsm_kit_request_id " +
-                    "      from ddp_kit_request delivered, " +
-                    "           ddp_kit k2, " +
-                    "           ddp_instance i " +
-                    "      where " +
-                    "        delivered.ddp_participant_id = untransmitted.ddp_participant_id " +
-                    "        and i.instance_name = ? " +
-                    "        and untransmitted.dsm_kit_request_id != delivered.dsm_kit_request_id " +
-                    "        and delivered.ddp_instance_id = i.ddp_instance_id " +
-                    "        and k2.dsm_kit_request_id = delivered.dsm_kit_request_id " +
+            " " + "select distinct subkit.external_name, orders.external_order_number, orders.ddp_participant_id, "
+                    + "(select max(req.dsm_kit_request_id) from ddp_kit_request req "
+                    + "where req.external_order_number = orders.external_order_number) as max_kit_request_id, "
+                    + "(select req.order_transmitted_at from ddp_kit_request req where req.dsm_kit_request_id = orders.dsm_kit_request_id "
+                    + "for update) as order_transmission_date from ddp_instance i, " + "ddp_kit_request_settings s, "
+                    + "sub_kits_settings subkit, "
+                    + "(select distinct untransmitted.external_order_number, untransmitted.ddp_participant_id, "
+                    + "untransmitted.ddp_instance_id, " + "      untransmitted.kit_type_id, untransmitted.dsm_kit_request_id  from "
+                    + "      ddp_kit_request untransmitted, ddp_instance i  where i.instance_name = ? "
+                    + "      and  i.ddp_instance_id = untransmitted.ddp_instance_id and "
+                    + "      untransmitted.order_transmitted_at is null and exists "
+                    + "      (select delivered.external_order_number, delivered.ddp_participant_id,  delivered.ddp_instance_id, "
+                    + "      delivered.kit_type_id, delivered.dsm_kit_request_id from ddp_kit_request delivered, "
+                    + "           ddp_kit k2, ddp_instance i where "
+                    + "        delivered.ddp_participant_id = untransmitted.ddp_participant_id and i.instance_name = ? "
+                    + "        and untransmitted.dsm_kit_request_id != delivered.dsm_kit_request_id "
+                    + "        and delivered.ddp_instance_id = i.ddp_instance_id "
+                    + "        and k2.dsm_kit_request_id = delivered.dsm_kit_request_id "
                     // any of: any kit for the ptp has been sent back, has a CE order or a result "
-                    "        and (k2.CE_order is not null " +
-                    "          or " +
-                    "             k2.test_result is not null " +
-                    "          or " +
-                    "             k2.ups_return_status like 'D%' " +
-                    "          or " +
-                    "             k2.ups_return_status like 'I%' " +
-                    "          ) " +
-                    "        and ( " +
+                    + "        and (k2.CE_order is not null or k2.test_result is not null "
+                    + "or k2.ups_return_status like 'D%' or k2.ups_return_status like 'I%' ) " + " and ( "
                     // it's been at most n days since the kit was delivered "
-                    "          (k2.ups_tracking_status like 'D%' " +
-                    "              and " +
-                    "           DATE_ADD(str_to_date(k2.ups_tracking_date, '%Y%m%d %H%i%s'), INTERVAL ? DAY) > now()) " +
-                    "          ) " +
-                    "        and " +
-                    "        delivered.order_transmitted_at is not null) " +
-                    "        and not exists (select 1 from ddp_participant_exit e where e.ddp_instance_id = i.ddp_instance_id and e"
-                    + ".ddp_participant_id = untransmitted.ddp_participant_id) " +
-                    "      union " +
-                    " " +
-                    "      select distinct req.external_order_number, req.ddp_participant_id, req.ddp_instance_id, " +
-                    "      req.kit_type_id, req.dsm_kit_request_id " +
-                    "      from ddp_kit_request req, ddp_instance i " +
-                    "      where  " +
-                    "      i.instance_name = ? " +
-                    "      and req.upload_reason is null " +
-                    "      and req.order_transmitted_at is null " +
-                    "      and req.ddp_instance_id = i.ddp_instance_id " +
-                    "        and 1 = (select count(distinct req2.external_order_number) " +
-                    "                 from ddp_kit_request req2 " +
-                    "                 where req.ddp_participant_id = req2.ddp_participant_id " +
-                    "                   and req.ddp_instance_id = req2.ddp_instance_id) " +
-                    "                   and not exists (select 1 from ddp_participant_exit e where e.ddp_instance_id = i.ddp_instance_id "
-                    + "and e.ddp_participant_id = req.ddp_participant_id) " +
-                    "     ) as orders " +
-                    "where " +
-                    "i.instance_name = ? " +
-                    "and " +
-                    "i.ddp_instance_id = s.ddp_instance_id " +
-                    "and " +
-                    "subkit.ddp_kit_request_settings_id = s.ddp_kit_request_settings_id " +
-                    "and " +
+                    + " (k2.ups_tracking_status like 'D%' "
+                    + "and DATE_ADD(str_to_date(k2.ups_tracking_date, '%Y%m%d %H%i%s'), INTERVAL ? DAY) > now())) "
+                    + "        and  delivered.order_transmitted_at is not null) "
+                    + "        and not exists (select 1 from ddp_participant_exit e where e.ddp_instance_id = i.ddp_instance_id "
+                    + "and e.ddp_participant_id = untransmitted.ddp_participant_id) "
+                    + "    union select distinct req.external_order_number, req.ddp_participant_id, req.ddp_instance_id, "
+                    + "      req.kit_type_id, req.dsm_kit_request_id rom ddp_kit_request req, ddp_instance i where  "
+                    + "      i.instance_name = ? and req.upload_reason is null and req.order_transmitted_at is null "
+                    + "      and req.ddp_instance_id = i.ddp_instance_id "
+                    + "        and 1 = (select count(distinct req2.external_order_number) from ddp_kit_request req2 "
+                    + "                 where req.ddp_participant_id = req2.ddp_participant_id "
+                    + "                   and req.ddp_instance_id = req2.ddp_instance_id) "
+                    + "                   and not exists (select 1 from ddp_participant_exit e "
+                    + "where e.ddp_instance_id = i.ddp_instance_id and e.ddp_participant_id = req.ddp_participant_id) "
+                    + "     ) as orders where i.instance_name = ? and i.ddp_instance_id = s.ddp_instance_id "
+                    + "and subkit.ddp_kit_request_settings_id = s.ddp_kit_request_settings_id "
                     // todo arz do we have a better place for "GBF" constant?
-                    "s.external_shipper = 'gbf' " +
-                    "and " +
-                    "subkit.kit_type_id = orders.kit_type_id " +
-                    "order by max_kit_request_id asc limit ? ";
+                    + "and s.external_shipper = 'gbf' and subkit.kit_type_id = orders.kit_type_id "
+                    + "order by max_kit_request_id asc limit ? ";
     private final int maxOrdersToProcess;
     private final String esIndex;
     private final RestHighLevelClient esClient;
     private int maxDaysToReturnPreviousKit = 99999; // many years later
 
-    public GBFOrderFinder(Integer maxDaysToReturnPreviousKit,
-                          int maxOrdersToProcess,
-                          RestHighLevelClient esClient,
-                          String esIndex) {
+    public GBFOrderFinder(Integer maxDaysToReturnPreviousKit, int maxOrdersToProcess, RestHighLevelClient esClient, String esIndex) {
         if (maxDaysToReturnPreviousKit != null) {
             this.maxDaysToReturnPreviousKit = maxDaysToReturnPreviousKit;
         }
@@ -131,11 +83,7 @@ public class GBFOrderFinder {
         this.esIndex = esIndex;
     }
 
-    /**
-     * Prints out orders, but does not order them
-     *
-     * @param args
-     */
+    // Prints out orders, but does not order them
     public static void main(String[] args) {
         RestHighLevelClient esClient = null;
         String dbUrl = args[0];
@@ -144,16 +92,16 @@ public class GBFOrderFinder {
         String esUrl = args[3];
         int numDays = Integer.parseInt(args[4]);
         Config cfg = ConfigFactory.load();
-        //TODO DSM needs to get init!
-//        TransactionWrapper.init(1, dbUrl, cfg, true);
-
+        int maxConnections = cfg.getInt("portal.maxConnections");
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, maxConnections, dbUrl));
 
         try {
             esClient = ElasticSearchUtil.getClientForElasticsearchCloud(esUrl, esUser, esPassword);
         } catch (MalformedURLException e) {
             throw new RuntimeException("Could not initialize es client", e);
         }
-        GBFOrderFinder orderFinder = new GBFOrderFinder(numDays, 10000, esClient, "participants_structured.testboston.testboston");
+        GBFOrderFinder orderFinder = new GBFOrderFinder(numDays, 10000, esClient,
+                "participants_structured.testboston.testboston");
 
 
         TransactionWrapper.inTransaction(conn -> {
@@ -191,8 +139,8 @@ public class GBFOrderFinder {
 
                 if (!participantGuids.isEmpty()) {
                     logger.info("Found {} participants", participantGuids.size());
-                    Map<String, Address> addressForParticipants = ElasticSearchUtil.getParticipantAddresses(esClient, esIndex,
-                            participantGuids);
+                    Map<String, Address> addressForParticipants =
+                            ElasticSearchUtil.getParticipantAddresses(esClient, esIndex, participantGuids);
                     // now iterate again to get address
                     while (rs.previous()) {
                         String participantGuid = rs.getString(DBConstants.DDP_PARTICIPANT_ID);

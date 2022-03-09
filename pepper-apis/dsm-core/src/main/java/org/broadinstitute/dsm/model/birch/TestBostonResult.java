@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.model.birch;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
+
 @Data
 public class TestBostonResult {
     private String orderMessageId;

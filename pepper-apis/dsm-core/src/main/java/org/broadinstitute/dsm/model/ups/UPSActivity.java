@@ -55,8 +55,8 @@ public class UPSActivity {
 
     public String getSQLDateTimeString() {
         Instant activityInstant = this.getInstant();
-        DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("America/New_York"));
-        String activityDateTime = DATE_TIME_FORMATTER.format(activityInstant);
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("America/New_York"));
+        String activityDateTime = dateTimeFormatter.format(activityInstant);
         return activityDateTime;
     }
 
@@ -68,12 +68,12 @@ public class UPSActivity {
         Instant eventTime = null;
         String dateTime = getDateTimeString();
         if (dateTime != null) {
-            eventTime = DateTimeFormatter.ofPattern("yyyyMMdd HHmmss").withZone(ZoneId.of("America/New_York")).parse(dateTime,
-                    Instant::from);
+            eventTime =
+                    DateTimeFormatter.ofPattern("yyyyMMdd HHmmss").withZone(ZoneId.of("America/New_York")).parse(dateTime, Instant::from);
         } else if (StringUtils.isNotBlank(this.getDateTime())) {
             dateTime = this.getDateTime();
-            eventTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("America/New_York")).parse(dateTime,
-                    Instant::from);
+            eventTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("America/New_York"))
+                    .parse(dateTime, Instant::from);
         }
 
         return eventTime;

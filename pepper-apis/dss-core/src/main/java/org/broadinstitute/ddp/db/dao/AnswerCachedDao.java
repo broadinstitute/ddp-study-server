@@ -175,6 +175,11 @@ public class AnswerCachedDao extends SQLObjectWrapper<AnswerDao> implements Answ
     }
 
     @Override
+    public Optional<Answer> findAnswerByInstanceGuidAndQuestionId(String instanceGuid, Long questionId) {
+        return delegate.findAnswerByInstanceGuidAndQuestionId(instanceGuid, questionId);
+    }
+
+    @Override
     public Optional<Answer> findAnswerByLatestInstanceAndQuestionStableId(long userId, long studyId, String questionStableId) {
         return delegate.findAnswerByLatestInstanceAndQuestionStableId(userId, studyId, questionStableId);
     }

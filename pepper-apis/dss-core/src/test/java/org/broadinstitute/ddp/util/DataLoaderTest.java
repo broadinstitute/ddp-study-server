@@ -632,7 +632,7 @@ public class DataLoaderTest {
         when(mockHandle.attach(any())).thenReturn(mockDao);
 
         long now = Instant.now().toEpochMilli();
-        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null, null, now, now);
+        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null, null, now, now, null);
         mockDataLoader.addUserAddress(mockHandle, userDto,
                 participantData.getParticipantUser().getDatstatparticipantdata(),
                 participantData.getParticipantUser().getDatstatsurveydata().getReleaseSurvey(), mockJdbiMailAddress, olcService);
@@ -680,7 +680,7 @@ public class DataLoaderTest {
         doNothing().when(mockProfileDao).createProfile(any(UserProfile.class));
 
         long now = Instant.now().toEpochMilli();
-        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null, null, now, now);
+        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null, null, now, now, null);
 
         mockDataLoader.addUserProfile(
                 userDto,

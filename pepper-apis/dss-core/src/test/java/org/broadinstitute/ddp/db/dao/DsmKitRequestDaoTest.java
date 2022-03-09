@@ -80,7 +80,7 @@ public class DsmKitRequestDaoTest extends TxnAwareBaseTest {
             assertTrue(kitRequestFromDbOptional.isPresent());
             DsmKitRequest kitRequestFromDb = kitRequestFromDbOptional.get();
             validateKitRequest(kitRequestFromDb, salivaKitType);
-            assertTrue(kitRequestFromDb.getNeedsApproval());
+            assertTrue(kitRequestFromDb.isNeedsApproval());
             return null;
         });
     }

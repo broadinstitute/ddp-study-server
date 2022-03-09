@@ -15,19 +15,27 @@ public final class DecimalQuestion extends Question<DecimalAnswer> {
     @SerializedName("placeholderText")
     private String placeholderText;
 
+    @SerializedName("scale")
+    private Integer scale;
+
     private transient Long placeholderTemplateId;
 
     public DecimalQuestion(String stableId, long promptTemplateId, Long placeholderTemplateId,
                            boolean isRestricted, boolean isDeprecated, Boolean readonly, Long tooltipTemplateId,
                            Long additionalInfoHeaderTemplateId, Long additionalInfoFooterTemplateId,
-                           List<DecimalAnswer> answers, List<Rule<DecimalAnswer>> validations) {
+                           List<DecimalAnswer> answers, List<Rule<DecimalAnswer>> validations, Integer scale) {
         super(QuestionType.DECIMAL, stableId, promptTemplateId, isRestricted, isDeprecated, readonly, tooltipTemplateId,
                 additionalInfoHeaderTemplateId, additionalInfoFooterTemplateId, answers, validations);
         this.placeholderTemplateId = placeholderTemplateId;
+        this.scale = scale;
     }
 
     public Long getPlaceholderTemplateId() {
         return placeholderTemplateId;
+    }
+
+    public Integer getScale() {
+        return scale;
     }
 
     @Override

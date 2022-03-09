@@ -337,14 +337,28 @@ public class StudyBuilder {
             if (passwordRedirectUrl != null && alreadyHasRedirectUrl) {
                 throw new DDPException("There is already a client with a password redirect URL. Currently only one is allowed.");
             }
+            String clientDomain = ConfigUtil.getStrIfPresent(clientCfg, "domain");
+            Long clientTenantId = null;
+            if (StringUtils.isNotBlank(clientDomain)) {
+                //lookup tenant
+                JdbiAuth0Tenant jdbiTenant = handle.attach(JdbiAuth0Tenant.class);
+                Auth0TenantDto dto = jdbiTenant.findByDomain(clientDomain);
+                if (dto == null) {
+                    throw new DDPException("Client Domain :" + clientDomain + " not found ");
+                }
+                clientTenantId = dto.getId();
+                LOG.info("Using client domain: {} ", clientDomain);
+            }
+
+            long finalTenantId = (clientTenantId != null) ? clientTenantId : tenantId;
             ClientDto clientDto = jdbiClient
-                    .findByAuth0ClientIdAndAuth0TenantId(clientId, tenantId)
+                    .findByAuth0ClientIdAndAuth0TenantId(clientId, finalTenantId)
                     .map(dto -> {
                         LOG.warn("Client already exists with id={}, auth0ClientId={}", dto.getId(), dto.getAuth0ClientId());
                         return dto;
                     }).orElseGet(() -> {
                         String encryptedSecret = AesUtil.encrypt(clientSecret, EncryptionKey.getEncryptionKey());
-                        long id = jdbiClient.insertClient(clientId, encryptedSecret, tenantId, passwordRedirectUrl);
+                        long id = jdbiClient.insertClient(clientId, encryptedSecret,  finalTenantId, passwordRedirectUrl);
                         LOG.info("Created client with id={}, auth0ClientId={}", id, clientId);
                         return new ClientDto(id, clientId, encryptedSecret, passwordRedirectUrl, false, tenantId, tenantDto.getDomain());
                     });

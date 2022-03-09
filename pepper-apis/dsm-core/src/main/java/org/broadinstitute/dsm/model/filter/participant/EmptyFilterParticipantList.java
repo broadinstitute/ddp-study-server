@@ -19,13 +19,14 @@ public class EmptyFilterParticipantList extends BaseFilterParticipantList {
         if (!Objects.requireNonNull(queryParamsMap).hasKey(RoutePath.REALM)) {
             throw new RuntimeException("realm is necessary");
         }
-        prepareNeccesaryData(queryParamsMap);
+        prepareNecessaryData(queryParamsMap);
         String realm = queryParamsMap.get(RoutePath.REALM).value();
         DDPInstanceDto ddpInstanceByGuid = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
         ParticipantWrapperPayload participantWrapperPayload = new ParticipantWrapperPayload.Builder()
                 .withDdpInstanceDto(ddpInstanceByGuid)
                 .withFrom(from)
                 .withTo(to)
+                .withSortBy(sortBy)
                 .build();
         ElasticSearch elasticSearch = new ElasticSearch();
         return new ParticipantWrapper(participantWrapperPayload, elasticSearch).getFilteredList();

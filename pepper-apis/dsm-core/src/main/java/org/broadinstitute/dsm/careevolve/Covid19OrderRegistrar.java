@@ -137,7 +137,8 @@ public class Covid19OrderRegistrar {
                     } else if ("OTHER".equals(sex)) {
                         sex = "U";
                     } else {
-                        logger.error("Could not map sex " + sex + " to Ellkay code; will default to unknown for " + baselineCovidActivity.get("guid"));
+                        logger.error("Could not map sex " + sex + " to Ellkay code; will default to unknown for "
+                                + baselineCovidActivity.get("guid"));
                     }
 
                 } else if ("RACE".equals(questionStableId)) {
@@ -160,7 +161,8 @@ public class Covid19OrderRegistrar {
                         } else if ("OTHER".equals(race)) {
                             race = "2131-1";
                         } else {
-                            logger.error("Could not map race " + race + " to Ellkay code; will default to other for " + baselineCovidActivity.get("guid"));
+                            logger.error("Could not map race " + race + " to Ellkay code; will default to other for "
+                                    + baselineCovidActivity.get("guid"));
                         }
                     } else {
                         // if there's no value or if multiple values are selected,
@@ -176,7 +178,8 @@ public class Covid19OrderRegistrar {
                         } else if ("NOT_HISPANIC_LATINO".equals(ethnicity)) {
                             ethnicity = "N";
                         } else {
-                            logger.error("Could not map ethnicity " + ethnicity + " to Ellkay code; will default to unknown for " + baselineCovidActivity.get("guid"));
+                            logger.error("Could not map ethnicity " + ethnicity + " to Ellkay code; will default to unknown for "
+                                    + baselineCovidActivity.get("guid"));
                         }
                     }
                 }
@@ -188,7 +191,8 @@ public class Covid19OrderRegistrar {
         return patient;
     }
 
-    public OrderResponse orderTest(Authentication auth, Patient participant, String kitLabel, String kitId, Instant kitPickupTime) throws CareEvolveException {
+    public OrderResponse orderTest(Authentication auth, Patient participant, String kitLabel, String kitId, Instant kitPickupTime)
+            throws CareEvolveException {
         String patientId = participant.getPatientId();
         if (!(participant.hasFullName() && participant.hasDateOfBirth() && participant.hasAddress())) {
             throw new CareEvolveException("Cannot place order with incomplete data for " + patientId);
@@ -209,7 +213,9 @@ public class Covid19OrderRegistrar {
                         participant.getPatientId());
             } catch (IOException e) {
                 orderExceptions.add(e);
-                logger.warn("Could not order test for " + patientId + ".  Pausing for " + retryWaitMillis + "ms before retry " + numAttempts + "/" + maxRetries, e);
+                logger.warn(
+                        "Could not order test for " + patientId + ".  Pausing for " + retryWaitMillis + "ms before retry " + numAttempts
+                                + "/" + maxRetries, e);
                 try {
                     Thread.sleep(retryWaitMillis);
                 } catch (InterruptedException interruptedException) {
@@ -225,8 +231,9 @@ public class Covid19OrderRegistrar {
         }
 
         if (StringUtils.isNotBlank(orderResponse.getError())) {
-            throw new CareEvolveException("Order for participant " + patientId + " with handle  " + orderResponse.getHandle() + " placed "
-                    + "with error " + orderResponse.getError());
+            throw new CareEvolveException(
+                    "Order for participant " + patientId + " with handle  " + orderResponse.getHandle() + " placed with error "
+                            + orderResponse.getError());
         }
         return orderResponse;
     }
@@ -240,7 +247,7 @@ public class Covid19OrderRegistrar {
      * @param kitId            an identifier that will show up in Birch to help
      *                         associate the result back to the proper kit
      * @param kitPickupTime    the time at which the kit was picked
-     * @param cfg
+     * @param cfg              config
      */
     public OrderResponse orderTest(Authentication auth, String participantHruid, String kitLabel,
                                    String kitId, Instant kitPickupTime, Connection conn, Config cfg) throws CareEvolveException {
@@ -255,8 +262,9 @@ public class Covid19OrderRegistrar {
             throw new RuntimeException("Could not initialize es client", e);
         }
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole("testboston", DBConstants.HAS_KIT_REQUEST_ENDPOINTS, conn);
-        Map<String, Map<String, Object>> esData = ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(),
-                ddpInstance.getParticipantIndexES(), esClient, participantHruid);
+        Map<String, Map<String, Object>> esData =
+                ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES(), esClient,
+                        participantHruid);
 
         if (esData.size() == 1) {
             JsonObject data = new JsonParser().parse(new Gson().toJson(esData.values().iterator().next())).getAsJsonObject();
@@ -292,7 +300,8 @@ public class Covid19OrderRegistrar {
             return orderResponse;
         } else {
             logger.error("Order {} returned {} with {}", message.getName(), httpResponse.getStatusLine().getStatusCode(), responseString);
-            throw new CareEvolveException("CareEvolve returned " + httpResponse.getStatusLine().getStatusCode() + " with " + responseString);
+            throw new CareEvolveException(
+                    "CareEvolve returned " + httpResponse.getStatusLine().getStatusCode() + " with " + responseString);
         }
     }
 }

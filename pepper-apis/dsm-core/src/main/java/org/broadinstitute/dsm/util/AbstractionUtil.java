@@ -32,22 +32,21 @@ import org.broadinstitute.lddp.db.SimpleResult;
 
 public class AbstractionUtil {
 
-    public static final String SQL_SELECT_MEDICAL_RECORD_ABSTRACTION = "SELECT abs.participant_id, pt.ddp_participant_id, cgroup"
-            + ".medical_record_abstraction_group_id, cgroup.display_name, cgroup.order_number, " +
-            "cfield.medical_record_abstraction_field_id, cfield.display_name, cfield.type, cfield.additional_type, cfield"
-            + ".possible_values, cfield.order_number, cfield.ddp_instance_id, cfield.help_text, abs.$pk, abs.value, abs"
-            + ".value_changed_counter, " +
-            "abs.note, abs.question, abs.file_page, abs.file_name, abs.match_phrase, abs.double_check, abs.no_data FROM "
-            + "medical_record_abstraction_group cgroup " +
-            "LEFT JOIN medical_record_abstraction_field cfield ON (cfield.medical_record_abstraction_group_id = cgroup"
-            + ".medical_record_abstraction_group_id) " +
-            "LEFT JOIN ddp_instance realm ON (realm.ddp_instance_id = cgroup.ddp_instance_id OR realm.ddp_instance_id = cfield"
-            + ".ddp_instance_id) " +
-            "LEFT JOIN ddp_participant pt ON (pt.ddp_participant_id = ?) " +
-            "LEFT JOIN $table abs ON (abs.medical_record_abstraction_field_id = cfield.medical_record_abstraction_field_id AND abs"
-            + ".participant_id = pt.participant_id) " +
-            "WHERE realm.instance_name = ? AND cgroup.deleted <=> 0 AND cfield.deleted <=> 0 " +
-            "ORDER BY cgroup.order_number, cfield.order_number ASC";
+    public static final String SQL_SELECT_MEDICAL_RECORD_ABSTRACTION = "SELECT abs.participant_id, pt.ddp_participant_id, "
+            + "cgroup.medical_record_abstraction_group_id, cgroup.display_name, cgroup.order_number, "
+            + "cfield.medical_record_abstraction_field_id, cfield.display_name, cfield.type, cfield.additional_type, "
+            + "cfield.possible_values, cfield.order_number, cfield.ddp_instance_id, cfield.help_text, abs.$pk, abs.value, "
+            + "abs.value_changed_counter, abs.note, abs.question, abs.file_page, abs.file_name, abs.match_phrase, abs.double_check, "
+            + "abs.no_data FROM medical_record_abstraction_group cgroup "
+            + "LEFT JOIN medical_record_abstraction_field cfield "
+            + "ON (cfield.medical_record_abstraction_group_id = cgroup.medical_record_abstraction_group_id) "
+            + "LEFT JOIN ddp_instance realm "
+            + "ON (realm.ddp_instance_id = cgroup.ddp_instance_id OR realm.ddp_instance_id = cfield.ddp_instance_id) "
+            + "LEFT JOIN ddp_participant pt ON (pt.ddp_participant_id = ?) "
+            + "LEFT JOIN $table abs ON (abs.medical_record_abstraction_field_id = cfield.medical_record_abstraction_field_id "
+            + "AND abs.participant_id = pt.participant_id) "
+            + "WHERE realm.instance_name = ? AND cgroup.deleted <=> 0 AND cfield.deleted <=> 0 "
+            + "ORDER BY cgroup.order_number, cfield.order_number ASC";
     public static final String DATE_STRING = "dateString";
     //don't change names of activities! they are used in frontend! if change -> change in both places
     public static final String ACTIVITY_ABSTRACTION = "abstraction";
@@ -60,37 +59,37 @@ public class AbstractionUtil {
     public static final String STATUS_SUBMIT = "submit";
     public static final String STATUS_CLEAR = "clear";
     private static final String SQL_SELECT_FORM_CONTROLS = "SELECT cgroup.medical_record_abstraction_group_id, cgroup.display_name, "
-            + "cgroup.order_number, cfield.medical_record_abstraction_field_id, cfield.display_name, " +
-            "cfield.type, cfield.additional_type, cfield.possible_values, cfield.order_number, cfield.ddp_instance_id, cfield.help_text "
-            + "FROM medical_record_abstraction_group cgroup " +
-            "LEFT JOIN medical_record_abstraction_field cfield ON (cfield.medical_record_abstraction_group_id = cgroup"
-            + ".medical_record_abstraction_group_id) " +
-            "LEFT JOIN ddp_instance realm ON (realm.ddp_instance_id = cgroup.ddp_instance_id OR realm.ddp_instance_id = cfield"
-            + ".ddp_instance_id) " +
-            "WHERE realm.instance_name = ? AND cgroup.deleted <=> 0 AND cfield.deleted <=> 0 " +
-            "ORDER BY cgroup.order_number, cfield.order_number ASC";
-    private static final String SQL_SELECT_QC_VALUES = "SELECT abs.participant_id, pt.ddp_participant_id, cgroup"
-            + ".medical_record_abstraction_group_id, cgroup.display_name, cgroup.order_number, " +
-            "cfield.medical_record_abstraction_field_id, cfield.display_name, cfield.type, cfield.additional_type, cfield"
-            + ".possible_values, cfield.order_number, cfield.ddp_instance_id, cfield.help_text, abs.$pk, abs.value, " +
-            "abs.value_changed_counter, abs.note, abs.question, abs.file_page, abs.file_name, abs.match_phrase, abs.double_check, abs"
-            + ".no_data, rev.$pk2, rev.value, rev.value_changed_counter, rev.note, rev.question, rev.file_page, rev.file_name, rev"
-            + ".match_phrase, " +
-            "rev.double_check, rev.no_data, qc.$pk3, qc.value, qc.value_changed_counter, qc.note, qc.question, qc.file_page, qc"
-            + ".file_name, qc.match_phrase, qc.no_data FROM medical_record_abstraction_group cgroup " +
-            "LEFT JOIN medical_record_abstraction_field cfield ON (cfield.medical_record_abstraction_group_id = cgroup"
-            + ".medical_record_abstraction_group_id) " +
-            "LEFT JOIN ddp_instance realm ON (realm.ddp_instance_id = cgroup.ddp_instance_id OR realm.ddp_instance_id = cfield"
-            + ".ddp_instance_id) " +
-            "LEFT JOIN ddp_participant pt ON (pt.ddp_participant_id = ?) " +
-            "LEFT JOIN $table abs ON (abs.medical_record_abstraction_field_id = cfield.medical_record_abstraction_field_id AND pt"
-            + ".participant_id = abs.participant_id) " +
-            "LEFT JOIN $table2 rev ON (rev.medical_record_abstraction_field_id = cfield.medical_record_abstraction_field_id AND pt"
-            + ".participant_id = rev.participant_id) " +
-            "LEFT JOIN $table3 qc ON (qc.medical_record_abstraction_field_id = cfield.medical_record_abstraction_field_id AND pt"
-            + ".participant_id = qc.participant_id) " +
-            "WHERE realm.instance_name = ? AND cgroup.deleted <=> 0 AND cfield.deleted <=> 0 " +
-            "ORDER BY cgroup.order_number, cfield.order_number ASC";
+            + "cgroup.order_number, cfield.medical_record_abstraction_field_id, cfield.display_name, "
+            + "cfield.type, cfield.additional_type, cfield.possible_values, cfield.order_number, cfield.ddp_instance_id, cfield.help_text "
+            + "FROM medical_record_abstraction_group cgroup "
+            + "LEFT JOIN medical_record_abstraction_field cfield "
+            + "ON (cfield.medical_record_abstraction_group_id = cgroup.medical_record_abstraction_group_id) "
+            + "LEFT JOIN ddp_instance realm ON (realm.ddp_instance_id = cgroup.ddp_instance_id "
+            + "OR realm.ddp_instance_id = cfield.ddp_instance_id) "
+            + "WHERE realm.instance_name = ? AND cgroup.deleted <=> 0 AND cfield.deleted <=> 0 "
+            + "ORDER BY cgroup.order_number, cfield.order_number ASC";
+    private static final String SQL_SELECT_QC_VALUES = "SELECT abs.participant_id, pt.ddp_participant_id, "
+            + "cgroup.medical_record_abstraction_group_id, cgroup.display_name, cgroup.order_number, "
+            + "cfield.medical_record_abstraction_field_id, cfield.display_name, cfield.type, cfield.additional_type, "
+            + "cfield.possible_values, cfield.order_number, cfield.ddp_instance_id, cfield.help_text, abs.$pk, abs.value, "
+            + "abs.value_changed_counter, abs.note, abs.question, abs.file_page, abs.file_name, abs.match_phrase, abs.double_check, "
+            + "abs.no_data, rev.$pk2, rev.value, rev.value_changed_counter, rev.note, rev.question, rev.file_page, rev.file_name, "
+            + "rev.match_phrase, rev.double_check, rev.no_data, qc.$pk3, qc.value, qc.value_changed_counter, qc.note, qc.question, "
+            + "qc.file_page, qc.file_name, qc.match_phrase, qc.no_data "
+            + "FROM medical_record_abstraction_group cgroup "
+            + "LEFT JOIN medical_record_abstraction_field cfield "
+            + "ON (cfield.medical_record_abstraction_group_id = cgroup.medical_record_abstraction_group_id) "
+            + "LEFT JOIN ddp_instance realm ON (realm.ddp_instance_id = cgroup.ddp_instance_id "
+            + "OR realm.ddp_instance_id = cfield.ddp_instance_id) "
+            + "LEFT JOIN ddp_participant pt ON (pt.ddp_participant_id = ?) "
+            + "LEFT JOIN $table abs ON (abs.medical_record_abstraction_field_id = cfield.medical_record_abstraction_field_id "
+            + "AND pt.participant_id = abs.participant_id) "
+            + "LEFT JOIN $table2 rev ON (rev.medical_record_abstraction_field_id = cfield.medical_record_abstraction_field_id "
+            + "AND pt.participant_id = rev.participant_id) "
+            + "LEFT JOIN $table3 qc ON (qc.medical_record_abstraction_field_id = cfield.medical_record_abstraction_field_id "
+            + "AND pt.participant_id = qc.participant_id) "
+            + "WHERE realm.instance_name = ? AND cgroup.deleted <=> 0 AND cfield.deleted <=> 0 "
+            + "ORDER BY cgroup.order_number, cfield.order_number ASC";
 
     public static List<AbstractionGroup> getFormControls(@NonNull String realm) {
         List<AbstractionGroup> abstractionGroupList = new ArrayList<>();
@@ -114,12 +113,13 @@ public class AbstractionUtil {
     public static List<AbstractionGroup> getActivityFieldValues(@NonNull String realm, @NonNull String ddpParticipantId,
                                                                 @NonNull String activity) {
         if (ACTIVITY_ABSTRACTION.equals(activity)) {
-            String query = AbstractionUtil.SQL_SELECT_MEDICAL_RECORD_ABSTRACTION.replace(Patch.TABLE,
-                    DBConstants.MEDICAL_RECORD_ABSTRACTION).replace(Patch.PK, DBConstants.MEDICAL_RECORD_ABSTRACTION_ID);
+            String query =
+                    AbstractionUtil.SQL_SELECT_MEDICAL_RECORD_ABSTRACTION.replace(Patch.TABLE, DBConstants.MEDICAL_RECORD_ABSTRACTION)
+                            .replace(Patch.PK, DBConstants.MEDICAL_RECORD_ABSTRACTION_ID);
             return AbstractionUtil.getAbstractionFieldValue(realm, ddpParticipantId, query, DBConstants.MEDICAL_RECORD_ABSTRACTION_ID);
         } else if (ACTIVITY_REVIEW.equals(activity)) {
-            String query =
-                    AbstractionUtil.SQL_SELECT_MEDICAL_RECORD_ABSTRACTION.replace(Patch.TABLE, DBConstants.MEDICAL_RECORD_REVIEW).replace(Patch.PK, DBConstants.MEDICAL_RECORD_REVIEW_ID);
+            String query = AbstractionUtil.SQL_SELECT_MEDICAL_RECORD_ABSTRACTION.replace(Patch.TABLE, DBConstants.MEDICAL_RECORD_REVIEW)
+                    .replace(Patch.PK, DBConstants.MEDICAL_RECORD_REVIEW_ID);
             return AbstractionUtil.getAbstractionFieldValue(realm, ddpParticipantId, query, DBConstants.MEDICAL_RECORD_REVIEW_ID);
         } else if (ACTIVITY_QC.equals(activity)) {
             return AbstractionUtil.getQCFieldValue(realm, ddpParticipantId);
@@ -193,9 +193,8 @@ public class AbstractionUtil {
                                         } else {
                                             equal = false;
                                         }
-                                    }
-                                    //compare multi_type_array -> array is ordered by first date field. ignore estimated of date
-                                    else if ("multi_type_array".equals(field.getType()) && !absValue.equals(revValue)) {
+                                    } else if ("multi_type_array".equals(field.getType()) && !absValue.equals(revValue)) {
+                                        //compare multi_type_array -> array is ordered by first date field. ignore estimated of date
                                         JsonParser parser = new JsonParser();
                                         JsonArray abstractionArray = null;
                                         if (absValue.startsWith("[")) {
@@ -206,30 +205,31 @@ public class AbstractionUtil {
                                             reviewArray = parser.parse(revValue).getAsJsonArray();
                                         }
                                         //array is same length so data must be different
-                                        if (abstractionArray != null && reviewArray != null && abstractionArray.size() == reviewArray.size()) {
+                                        if (abstractionArray != null && reviewArray != null
+                                                && abstractionArray.size() == reviewArray.size()) {
                                             //first check estimated
                                             for (int i = 0; i < abstractionArray.size(); i++) {
                                                 JsonObject j = abstractionArray.get(i).getAsJsonObject();
-                                                Set<String> entries =
-                                                        j.entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toSet());
+                                                Set<String> entries = j.keySet();
                                                 for (String entry : entries) {
                                                     List<Value> values = field.getPossibleValues();
-                                                    Value typeTest =
-                                                            values.stream().filter(e -> e.getValue().equals(entry)).findFirst().orElse(null);
+                                                    Value typeTest = values.stream().filter(e -> e.getValue().equals(entry)).findFirst()
+                                                            .orElse(null);
                                                     String abstractionValue = null;
                                                     String reviewValue = null;
                                                     if (typeTest != null && "date".equals(typeTest.getType())) {
                                                         //only get date string and ignore estimated checkbox
                                                         abstractionValue = getDateString(j.get(entry).getAsString());
-                                                        reviewValue =
-                                                                getDateString(reviewArray.get(i).getAsJsonObject().get(entry).getAsString());
+                                                        reviewValue = getDateString(
+                                                                reviewArray.get(i).getAsJsonObject().get(entry).getAsString());
                                                     } else {
                                                         //get value
                                                         abstractionValue = j.get(entry).getAsString();
                                                         reviewValue = reviewArray.get(i).getAsJsonObject().get(entry).getAsString();
                                                     }
                                                     // compare values
-                                                    if (StringUtils.isNotBlank(abstractionValue) && StringUtils.isNotBlank(reviewValue) && abstractionValue.equals(reviewValue)) {
+                                                    if (StringUtils.isNotBlank(abstractionValue) && StringUtils.isNotBlank(reviewValue)
+                                                            && abstractionValue.equals(reviewValue)) {
                                                         equal = true;
                                                     } else {
                                                         equal = false;
@@ -319,11 +319,13 @@ public class AbstractionUtil {
         List<AbstractionGroup> abstractionFieldValues = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_QC_VALUES.replace(Patch.TABLE + "2",
-                    DBConstants.MEDICAL_RECORD_REVIEW).replace(Patch.PK + "2", DBConstants.MEDICAL_RECORD_REVIEW_ID)
-                    .replace(Patch.TABLE + "3", DBConstants.MEDICAL_RECORD_QC).replace(Patch.PK + "3", DBConstants.MEDICAL_RECORD_QC_ID)
-                    .replace(Patch.TABLE, DBConstants.MEDICAL_RECORD_ABSTRACTION).replace(Patch.PK,
-                            DBConstants.MEDICAL_RECORD_ABSTRACTION_ID))) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    SQL_SELECT_QC_VALUES.replace(Patch.TABLE + "2", DBConstants.MEDICAL_RECORD_REVIEW)
+                            .replace(Patch.PK + "2", DBConstants.MEDICAL_RECORD_REVIEW_ID)
+                            .replace(Patch.TABLE + "3", DBConstants.MEDICAL_RECORD_QC)
+                            .replace(Patch.PK + "3", DBConstants.MEDICAL_RECORD_QC_ID)
+                            .replace(Patch.TABLE, DBConstants.MEDICAL_RECORD_ABSTRACTION)
+                            .replace(Patch.PK, DBConstants.MEDICAL_RECORD_ABSTRACTION_ID))) {
                 stmt.setString(1, ddpParticipantId);
                 stmt.setString(2, realm);
                 getValues(stmt, abstractionFieldValues, ddpParticipantId, DBConstants.MEDICAL_RECORD_ABSTRACTION_ID,
@@ -345,7 +347,8 @@ public class AbstractionUtil {
         JsonObject jsonField = new JsonParser().parse(jsonValue).getAsJsonObject();
         Set keySet = jsonField.entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toSet());
         //dateString is not allowed to be null (otherwise user would be able to submit with just estimated selected)
-        return !keySet.contains(DATE_STRING) || (!jsonField.has(DATE_STRING) && !StringUtils.isBlank(jsonField.get(DATE_STRING).getAsString()));
+        return !keySet.contains(DATE_STRING)
+                || (!jsonField.has(DATE_STRING) && !StringUtils.isBlank(jsonField.get(DATE_STRING).getAsString()));
     }
 
     public static String getDateString(@NonNull String jsonValue) {
@@ -373,8 +376,8 @@ public class AbstractionUtil {
                 Collections.sort(jsonValues, new Comparator<JsonObject>() {
                     @Override
                     public int compare(JsonObject a, JsonObject b) {
-                        String valA = "";
-                        String valB = "";
+                        String valA = new String();
+                        String valB = new String();
 
                         try {
                             if (a.has(orderKey) && !a.get(orderKey).isJsonNull()) {
@@ -384,6 +387,7 @@ public class AbstractionUtil {
                                 valB = b.get(orderKey).getAsString();
                             }
                         } catch (JsonParseException e) {
+                            throw new RuntimeException("JsonParseException Error " + e.getMessage());
                         }
 
                         return valA.compareTo(valB);

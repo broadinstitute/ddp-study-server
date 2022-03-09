@@ -29,6 +29,13 @@ where qsc.umbrella_study_id = :studyId
   and rev.end_date is null
 >>
 
+queryDtoByActivityIdAndQuestionStableId() ::= <<
+<all_questions_select()>
+where q.study_activity_id = :activityId
+  and qsc.stable_id = :questionStableId
+  and rev.end_date is null
+>>
+
 queryLatestDtosByStudyIdAndQuestionStableIds(questionStableIds) ::= <<
 <all_questions_select()>
 where qsc.umbrella_study_id = :studyId
@@ -67,6 +74,8 @@ select qt.question_type_code as question_type,
        coalesce(
          dq.placeholder_template_id, nq.placeholder_template_id, dcq.placeholder_template_id, tq.placeholder_template_id
        ) as placeholder_template_id,
+
+       dcq.scale,
 
        bq.true_template_id,
        bq.false_template_id,
@@ -110,6 +119,7 @@ select qt.question_type_code as question_type,
 
        mq.render_modal,
        mq.modal_template_id,
+       mq.modal_title_template_id,
 
        (select text_question_input_type_code from text_question_input_type
          where text_question_input_type_id = tq.input_type_id

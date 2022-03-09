@@ -26,33 +26,34 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Data
-@TableName(
-        name = DBConstants.MEDICAL_RECORD_ABSTRACTION_ACTIVITY,
-        alias = DBConstants.DDP_ABSTRACTION_ALIAS,
-        primaryKey = DBConstants.MEDICAL_RECORD_ABSTRACTION_ACTIVITY_ID,
-        columnPrefix = "")
+@TableName(name = DBConstants.MEDICAL_RECORD_ABSTRACTION_ACTIVITY, alias = DBConstants.DDP_ABSTRACTION_ALIAS,
+        primaryKey = DBConstants.MEDICAL_RECORD_ABSTRACTION_ACTIVITY_ID, columnPrefix = "")
 public class AbstractionActivity {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractionActivity.class);
 
-    private static final String SQL_INSERT_MEDICAL_RECORD_ABSTRACTION_ACTIVITY = "INSERT INTO ddp_medical_record_abstraction_activities "
-            + "SET participant_id = (SELECT participant_id FROM ddp_participant pt, ddp_instance realm " +
-            "WHERE realm.ddp_instance_id = pt.ddp_instance_id AND pt.ddp_participant_id = ? AND realm.instance_name = ?), start_date = ?,"
-            + " user_id = ?, activity = ?, status = ?";
-    private static final String SQL_UPDATE_MEDICAL_RECORD_ABSTRACTION_ACTIVITY = "UPDATE ddp_medical_record_abstraction_activities SET "
-            + "user_id = ?, activity = ?, status = ?, files_used = ?, last_changed = ? WHERE medical_record_abstraction_activities_id = ?";
-    private static final String SQL_SELECT_ALL_MEDICAL_RECORD_ABSTRACTION_ACTIVITY = "SELECT medical_record_abstraction_activities_id, p"
-            + ".ddp_participant_id, a.participant_id, user.name, a.activity, a.status, a.start_date, files_used, a.last_changed " +
-            "FROM ddp_medical_record_abstraction_activities a LEFT JOIN access_user user ON (user.user_id = a.user_id) LEFT JOIN "
-            + "ddp_participant pt ON (a.participant_id = pt.participant_id) " +
-            "LEFT JOIN ddp_participant p ON (p.participant_id = a.participant_id) LEFT JOIN ddp_instance realm ON (realm.ddp_instance_id "
-            + "= pt.ddp_instance_id) WHERE realm.instance_name = ?";
-    private static final String SQL_SELECT_MEDICAL_RECORD_ABSTRACTION_ACTIVITY = "SELECT medical_record_abstraction_activities_id, abst"
-            + ".participant_id, user.name, activity, status, start_date, files_used, abst.last_changed " +
-            "FROM ddp_medical_record_abstraction_activities abst LEFT JOIN access_user user ON (user.user_id = abst.user_id) LEFT JOIN "
-            + "ddp_participant pt ON (abst.participant_id = pt.participant_id) " +
-            "LEFT JOIN ddp_instance realm ON (realm.ddp_instance_id = pt.ddp_instance_id) WHERE realm.instance_name = ? AND pt"
-            + ".ddp_participant_id = ?";
+    private static final String SQL_INSERT_MEDICAL_RECORD_ABSTRACTION_ACTIVITY =
+            "INSERT INTO ddp_medical_record_abstraction_activities SET participant_id = (SELECT participant_id "
+                    + "FROM ddp_participant pt, ddp_instance realm "
+                    + "WHERE realm.ddp_instance_id = pt.ddp_instance_id AND pt.ddp_participant_id = ? "
+                    + "AND realm.instance_name = ?), start_date = ?, user_id = ?, activity = ?, status = ?";
+    private static final String SQL_UPDATE_MEDICAL_RECORD_ABSTRACTION_ACTIVITY =
+            "UPDATE ddp_medical_record_abstraction_activities SET user_id = ?, activity = ?, status = ?, files_used = ?, last_changed = ? "
+                    + "WHERE medical_record_abstraction_activities_id = ?";
+    private static final String SQL_SELECT_ALL_MEDICAL_RECORD_ABSTRACTION_ACTIVITY =
+            "SELECT medical_record_abstraction_activities_id, p.ddp_participant_id, a.participant_id, user.name, a.activity, a.status, "
+                    + "a.start_date, files_used, a.last_changed "
+                    + "FROM ddp_medical_record_abstraction_activities a LEFT JOIN access_user user ON (user.user_id = a.user_id) "
+                    + "LEFT JOIN ddp_participant pt ON (a.participant_id = pt.participant_id) "
+                    + "LEFT JOIN ddp_participant p ON (p.participant_id = a.participant_id) "
+                    + "LEFT JOIN ddp_instance realm ON (realm.ddp_instance_id = pt.ddp_instance_id) WHERE realm.instance_name = ?";
+    private static final String SQL_SELECT_MEDICAL_RECORD_ABSTRACTION_ACTIVITY =
+            "SELECT medical_record_abstraction_activities_id, abst.participant_id, user.name, activity, status, start_date, files_used, "
+                    + "abst.last_changed "
+                    + "FROM ddp_medical_record_abstraction_activities abst LEFT JOIN access_user user ON (user.user_id = abst.user_id) "
+                    + "LEFT JOIN ddp_participant pt ON (abst.participant_id = pt.participant_id) "
+                    + "LEFT JOIN ddp_instance realm ON (realm.ddp_instance_id = pt.ddp_instance_id) "
+                    + "WHERE realm.instance_name = ? AND pt.ddp_participant_id = ?";
     private static final String SQL_SELECT_AND_WHERE_ACTIVITY = " AND activity = ?";
 
     private Integer medicalRecordAbstractionActivityId;
@@ -90,8 +91,8 @@ public class AbstractionActivity {
                                                                @NonNull String status) {
         Long startDate = System.currentTimeMillis();
         UserDto userDto = new UserDao().get(changedBy).orElseThrow();
-        AbstractionActivity abstractionActivity = new AbstractionActivity(null, participantId, activity, status,
-                userDto.getName().orElse(""), startDate, null, null);
+        AbstractionActivity abstractionActivity =
+                new AbstractionActivity(null, participantId, activity, status, userDto.getName().orElse(""), startDate, null, null);
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_MEDICAL_RECORD_ABSTRACTION_ACTIVITY,
@@ -112,7 +113,8 @@ public class AbstractionActivity {
                         throw new RuntimeException("Error adding new medical record abstraction activity ", e);
                     }
                 } else {
-                    throw new RuntimeException("Error adding new medical record abstraction activity for participant w/ id " + participantId + " it was updating " + result + " rows");
+                    throw new RuntimeException("Error adding new medical record abstraction activity for participant w/ id " + participantId
+                            + " it was updating " + result + " rows");
                 }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
@@ -143,7 +145,8 @@ public class AbstractionActivity {
                 stmt.setInt(6, abstractionActivity.medicalRecordAbstractionActivityId);
                 int result = stmt.executeUpdate();
                 if (result != 1) {
-                    throw new RuntimeException("Error updating aStatus of medical record abstraction activity for participant w/ id " + abstractionActivity.getParticipantId() + " it was updating " + result + " rows");
+                    throw new RuntimeException("Error updating aStatus of medical record abstraction activity for participant w/ id "
+                            + abstractionActivity.getParticipantId() + " it was updating " + result + " rows");
                 }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
@@ -152,7 +155,8 @@ public class AbstractionActivity {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error adding new medical record abstraction activity for participantId w/ id " + abstractionActivity.getParticipantId(), results.resultException);
+            throw new RuntimeException("Error adding new medical record abstraction activity for participantId w/ id "
+                    + abstractionActivity.getParticipantId(), results.resultException);
         }
         abstractionActivity.setAStatus(status);
         return abstractionActivity;
@@ -162,34 +166,24 @@ public class AbstractionActivity {
         return getAllAbstractionActivityByRealm(realm, null);
     }
 
-    public static Map<String, List<AbstractionActivity>> getAllAbstractionActivityByParticipantIds(@NonNull String realm,
-                                                                                                   List<String> participantIds) {
-        String queryAddition = " AND p.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
-        return getAllAbstractionActivityByRealm(realm, queryAddition);
-    }
-
     public static Map<String, List<AbstractionActivity>> getAllAbstractionActivityByRealm(@NonNull String realm, String queryAddition) {
         logger.info("Collection abstraction activity information");
         Map<String, List<AbstractionActivity>> abstractionActivitiesMap = new HashMap<>();
 
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(DBUtil.getFinalQuery(SQL_SELECT_ALL_MEDICAL_RECORD_ABSTRACTION_ACTIVITY,
-                    changeQueryAddition(queryAddition)))) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    DBUtil.getFinalQuery(SQL_SELECT_ALL_MEDICAL_RECORD_ABSTRACTION_ACTIVITY, changeQueryAddition(queryAddition)))) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         String ddpParticipantId = rs.getString(DBConstants.DDP_PARTICIPANT_ID);
                         AbstractionActivity abstractionActivity =
                                 new AbstractionActivity(rs.getInt(DBConstants.MEDICAL_RECORD_ABSTRACTION_ACTIVITY_ID),
-                                rs.getString(DBConstants.PARTICIPANT_ID),
-                                rs.getString(DBConstants.ACTIVITY),
-                                rs.getString(DBConstants.STATUS),
-                                rs.getString(DBConstants.NAME),
-                                rs.getLong(DBConstants.START_DATE),
-                                rs.getString(DBConstants.FILES_USED),
-                                rs.getLong(DBConstants.LAST_CHANGED)
-                        );
+                                        rs.getString(DBConstants.PARTICIPANT_ID), rs.getString(DBConstants.ACTIVITY),
+                                        rs.getString(DBConstants.STATUS), rs.getString(DBConstants.NAME),
+                                        rs.getLong(DBConstants.START_DATE), rs.getString(DBConstants.FILES_USED),
+                                        rs.getLong(DBConstants.LAST_CHANGED));
                         if (abstractionActivitiesMap.containsKey(ddpParticipantId)) {
                             List<AbstractionActivity> abstractionActivities = abstractionActivitiesMap.get(ddpParticipantId);
                             abstractionActivities.add(abstractionActivity);
@@ -213,6 +207,12 @@ public class AbstractionActivity {
         return abstractionActivitiesMap;
     }
 
+    public static Map<String, List<AbstractionActivity>> getAllAbstractionActivityByParticipantIds(@NonNull String realm,
+                                                                                                   List<String> participantIds) {
+        String queryAddition = " AND p.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
+        return getAllAbstractionActivityByRealm(realm, queryAddition);
+    }
+
     public static List<AbstractionActivity> getAbstractionActivity(@NonNull String realm, @NonNull String ddpParticipantId) {
         List<AbstractionActivity> activities = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
@@ -223,15 +223,10 @@ public class AbstractionActivity {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         String participantId = rs.getString(DBConstants.PARTICIPANT_ID);
-                        activities.add(new AbstractionActivity(rs.getInt(DBConstants.MEDICAL_RECORD_ABSTRACTION_ACTIVITY_ID),
-                                participantId,
-                                rs.getString(DBConstants.ACTIVITY),
-                                rs.getString(DBConstants.STATUS),
-                                rs.getString(DBConstants.NAME),
-                                rs.getLong(DBConstants.START_DATE),
-                                rs.getString(DBConstants.FILES_USED),
-                                rs.getLong(DBConstants.LAST_CHANGED)
-                        ));
+                        activities.add(new AbstractionActivity(rs.getInt(DBConstants.MEDICAL_RECORD_ABSTRACTION_ACTIVITY_ID), participantId,
+                                rs.getString(DBConstants.ACTIVITY), rs.getString(DBConstants.STATUS), rs.getString(DBConstants.NAME),
+                                rs.getLong(DBConstants.START_DATE), rs.getString(DBConstants.FILES_USED),
+                                rs.getLong(DBConstants.LAST_CHANGED)));
                     }
                 }
             } catch (SQLException ex) {
@@ -250,22 +245,19 @@ public class AbstractionActivity {
                                                              @NonNull String activity) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt =
-                         conn.prepareStatement(SQL_SELECT_MEDICAL_RECORD_ABSTRACTION_ACTIVITY + SQL_SELECT_AND_WHERE_ACTIVITY)) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    SQL_SELECT_MEDICAL_RECORD_ABSTRACTION_ACTIVITY + SQL_SELECT_AND_WHERE_ACTIVITY)) {
                 stmt.setString(1, realm);
                 stmt.setString(2, ddpParticipantId);
                 stmt.setString(3, activity);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         String participantId = rs.getString(DBConstants.PARTICIPANT_ID);
-                        dbVals.resultValue = new AbstractionActivity(rs.getInt(DBConstants.MEDICAL_RECORD_ABSTRACTION_ACTIVITY_ID),
-                                participantId,
-                                rs.getString(DBConstants.ACTIVITY),
-                                rs.getString(DBConstants.STATUS),
-                                rs.getString(DBConstants.NAME),
-                                rs.getLong(DBConstants.START_DATE),
-                                rs.getString(DBConstants.FILES_USED),
-                                rs.getLong(DBConstants.LAST_CHANGED));
+                        dbVals.resultValue =
+                                new AbstractionActivity(rs.getInt(DBConstants.MEDICAL_RECORD_ABSTRACTION_ACTIVITY_ID), participantId,
+                                        rs.getString(DBConstants.ACTIVITY), rs.getString(DBConstants.STATUS),
+                                        rs.getString(DBConstants.NAME), rs.getLong(DBConstants.START_DATE),
+                                        rs.getString(DBConstants.FILES_USED), rs.getLong(DBConstants.LAST_CHANGED));
                     }
                 }
             } catch (SQLException ex) {
@@ -281,8 +273,8 @@ public class AbstractionActivity {
     }
 
     private static String changeQueryAddition(String queryAddition) {
-        if (StringUtils.isNotBlank(queryAddition)
-                && queryAddition.contains(DBConstants.DDP_ABSTRACTION_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.PROCESS)) {
+        if (StringUtils.isNotBlank(queryAddition) && queryAddition.contains(
+                DBConstants.DDP_ABSTRACTION_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.PROCESS)) {
             queryAddition = queryAddition.replace(DBConstants.PROCESS, DBConstants.STATUS);
             if (queryAddition.contains("qc_" + AbstractionUtil.STATUS_IN_PROGRESS)) {
                 queryAddition = queryAddition + " AND (activity = \'qc\')";

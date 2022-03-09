@@ -1,5 +1,7 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
-<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+<databaseChangeLog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
     <changeSet author="simone (generated)" id="1523366316339-1">
         <createTable tableName="EMAIL_QUEUE">
             <column autoIncrement="true" name="EMAIL_ID" type="INT">
@@ -711,37 +713,46 @@
         </createTable>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-36">
-        <addUniqueConstraint columnNames="carrier_service_id" constraintName="carrier_service_id_UNIQUE" tableName="carrier_service"/>
+        <addUniqueConstraint columnNames="carrier_service_id" constraintName="carrier_service_id_UNIQUE"
+                             tableName="carrier_service"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-37">
-        <addUniqueConstraint columnNames="instance_id, template_id" constraintName="ddp_instance_template_UNIQUE" tableName="eel_settings"/>
+        <addUniqueConstraint columnNames="instance_id, template_id" constraintName="ddp_instance_template_UNIQUE"
+                             tableName="eel_settings"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-38">
-        <addUniqueConstraint columnNames="ddp_kit_carrier_id" constraintName="ddp_kit_carrier_id_UNIQUE" tableName="ddp_kit_request_settings"/>
+        <addUniqueConstraint columnNames="ddp_kit_carrier_id" constraintName="ddp_kit_carrier_id_UNIQUE"
+                             tableName="ddp_kit_request_settings"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-39">
-        <addUniqueConstraint columnNames="ddp_kit_request_id, ddp_instance_id" constraintName="ddp_kit_req_instance_uid_idx" tableName="ddp_kit_request"/>
+        <addUniqueConstraint columnNames="ddp_kit_request_id, ddp_instance_id"
+                             constraintName="ddp_kit_req_instance_uid_idx" tableName="ddp_kit_request"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-40">
         <addUniqueConstraint columnNames="ddp_label" constraintName="ddp_label_UNIQUE" tableName="ddp_kit_request"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-41">
-        <addUniqueConstraint columnNames="ddp_participant_id, ddp_instance_id" constraintName="ddp_participant_id_UNIQUE" tableName="ddp_participant"/>
+        <addUniqueConstraint columnNames="ddp_participant_id, ddp_instance_id"
+                             constraintName="ddp_participant_id_UNIQUE" tableName="ddp_participant"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-42">
         <addUniqueConstraint columnNames="email" constraintName="email_UNIQUE" tableName="access_user"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-43">
-        <addUniqueConstraint columnNames="ddp_institution_id, type, participant_id" constraintName="fk_institution_uq" tableName="ddp_institution"/>
+        <addUniqueConstraint columnNames="ddp_institution_id, type, participant_id" constraintName="fk_institution_uq"
+                             tableName="ddp_institution"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-44">
-        <addUniqueConstraint columnNames="instance_name" constraintName="instance_name_UNIQUE" tableName="ddp_instance"/>
+        <addUniqueConstraint columnNames="instance_name" constraintName="instance_name_UNIQUE"
+                             tableName="ddp_instance"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-45">
-        <addUniqueConstraint columnNames="instance_id, workflow_id" constraintName="instance_workflow_UNIQUE" tableName="eel_settings"/>
+        <addUniqueConstraint columnNames="instance_id, workflow_id" constraintName="instance_workflow_UNIQUE"
+                             tableName="eel_settings"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-46">
-        <addUniqueConstraint columnNames="kit_dimension_id" constraintName="kit_dimension_id_UNIQUE" tableName="kit_dimension"/>
+        <addUniqueConstraint columnNames="kit_dimension_id" constraintName="kit_dimension_id_UNIQUE"
+                             tableName="kit_dimension"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-47">
         <addUniqueConstraint columnNames="kit_label" constraintName="kit_label_UNIQUE" tableName="ddp_kit"/>
@@ -753,7 +764,8 @@
         <addUniqueConstraint columnNames="kit_type_name" constraintName="kit_type_name_UNIQUE" tableName="kit_type"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-50">
-        <addUniqueConstraint columnNames="label_setting_id" constraintName="label_setting_id_UNIQUE" tableName="label_setting"/>
+        <addUniqueConstraint columnNames="label_setting_id" constraintName="label_setting_id_UNIQUE"
+                             tableName="label_setting"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-51">
         <addUniqueConstraint columnNames="name" constraintName="name_UNIQUE" tableName="access_role"/>
@@ -768,13 +780,16 @@
         <addUniqueConstraint columnNames="name" constraintName="name_UNIQUE" tableName="label_setting"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-55">
-        <addUniqueConstraint columnNames="participant_id" constraintName="participant_id_UNIQUE" tableName="ddp_onc_history"/>
+        <addUniqueConstraint columnNames="participant_id" constraintName="participant_id_UNIQUE"
+                             tableName="ddp_onc_history"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-56">
-        <addUniqueConstraint columnNames="participant_id" constraintName="participant_id_UNIQUE" tableName="ddp_participant_record"/>
+        <addUniqueConstraint columnNames="participant_id" constraintName="participant_id_UNIQUE"
+                             tableName="ddp_participant_record"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-57">
-        <addUniqueConstraint columnNames="tracking_id" constraintName="tracking_id_UNIQUE" tableName="ddp_kit_tracking"/>
+        <addUniqueConstraint columnNames="tracking_id" constraintName="tracking_id_UNIQUE"
+                             tableName="ddp_kit_tracking"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-58">
         <addUniqueConstraint columnNames="user_id" constraintName="user_id_UNIQUE" tableName="user_settings"/>
@@ -925,99 +940,196 @@
         </createIndex>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-88">
-        <addForeignKeyConstraint baseColumnNames="DDP_INSTANCE_ID" baseTableName="EVENT_QUEUE" constraintName="FK_DDP_INSTANCE_ID" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
+        <addForeignKeyConstraint baseColumnNames="DDP_INSTANCE_ID" baseTableName="EVENT_QUEUE"
+                                 constraintName="FK_DDP_INSTANCE_ID" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id"
+                                 referencedTableName="ddp_instance"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-89">
-        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="ddp_instance_role" constraintName="ddp_instance_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
+        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="ddp_instance_role"
+                                 constraintName="ddp_instance_fk" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id"
+                                 referencedTableName="ddp_instance"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-90">
-        <addForeignKeyConstraint baseColumnNames="ddp_group_id" baseTableName="ddp_instance_group" constraintName="ddp_instance_group_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="group_id" referencedTableName="ddp_group"/>
+        <addForeignKeyConstraint baseColumnNames="ddp_group_id" baseTableName="ddp_instance_group"
+                                 constraintName="ddp_instance_group_fk" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="group_id"
+                                 referencedTableName="ddp_group"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-91">
-        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="onc_history_detail_settings" constraintName="ddp_instance_id_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
+        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="onc_history_detail_settings"
+                                 constraintName="ddp_instance_id_fk" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id"
+                                 referencedTableName="ddp_instance"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-92">
-        <addForeignKeyConstraint baseColumnNames="instance_id" baseTableName="eel_settings" constraintName="ddp_instance_pk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
+        <addForeignKeyConstraint baseColumnNames="instance_id" baseTableName="eel_settings"
+                                 constraintName="ddp_instance_pk" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id"
+                                 referencedTableName="ddp_instance"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-93">
-        <addForeignKeyConstraint baseColumnNames="instance_role_id" baseTableName="ddp_instance_role" constraintName="ddp_instance_role_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="instance_role_id" referencedTableName="instance_role"/>
+        <addForeignKeyConstraint baseColumnNames="instance_role_id" baseTableName="ddp_instance_role"
+                                 constraintName="ddp_instance_role_fk" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="instance_role_id"
+                                 referencedTableName="instance_role"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-94">
-        <addForeignKeyConstraint baseColumnNames="carrier_service_return_id" baseTableName="ddp_kit_request_settings" constraintName="ddp_kit_carrier_service_return_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="carrier_service_id" referencedTableName="carrier_service"/>
+        <addForeignKeyConstraint baseColumnNames="carrier_service_return_id" baseTableName="ddp_kit_request_settings"
+                                 constraintName="ddp_kit_carrier_service_return_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="carrier_service_id" referencedTableName="carrier_service"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-95">
-        <addForeignKeyConstraint baseColumnNames="carrier_service_to_id" baseTableName="ddp_kit_request_settings" constraintName="ddp_kit_carrier_service_to_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="carrier_service_id" referencedTableName="carrier_service"/>
+        <addForeignKeyConstraint baseColumnNames="carrier_service_to_id" baseTableName="ddp_kit_request_settings"
+                                 constraintName="ddp_kit_carrier_service_to_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="carrier_service_id" referencedTableName="carrier_service"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-96">
-        <addForeignKeyConstraint baseColumnNames="kit_dimension_id" baseTableName="ddp_kit_request_settings" constraintName="ddp_kit_dimension_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="kit_dimension_id" referencedTableName="kit_dimension"/>
+        <addForeignKeyConstraint baseColumnNames="kit_dimension_id" baseTableName="ddp_kit_request_settings"
+                                 constraintName="ddp_kit_dimension_fk" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="kit_dimension_id"
+                                 referencedTableName="kit_dimension"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-97">
-        <addForeignKeyConstraint baseColumnNames="dsm_kit_request_id" baseTableName="ddp_kit" constraintName="ddp_kit_kit_req_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="dsm_kit_request_id" referencedTableName="ddp_kit_request"/>
+        <addForeignKeyConstraint baseColumnNames="dsm_kit_request_id" baseTableName="ddp_kit"
+                                 constraintName="ddp_kit_kit_req_fk" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="dsm_kit_request_id"
+                                 referencedTableName="ddp_kit_request"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-98">
-        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="ddp_kit_request" constraintName="ddp_kit_req_instance_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
+        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="ddp_kit_request"
+                                 constraintName="ddp_kit_req_instance_fk" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id"
+                                 referencedTableName="ddp_instance"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-99">
-        <addForeignKeyConstraint baseColumnNames="kit_type_id" baseTableName="ddp_kit_request" constraintName="ddp_kit_req_kit_type_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="kit_type_id" referencedTableName="kit_type"/>
+        <addForeignKeyConstraint baseColumnNames="kit_type_id" baseTableName="ddp_kit_request"
+                                 constraintName="ddp_kit_req_kit_type_fk" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="kit_type_id"
+                                 referencedTableName="kit_type"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-100">
-        <addForeignKeyConstraint baseColumnNames="participant_id" baseTableName="ddp_participant_record" constraintName="ddp_participant_record_participant_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="participant_id" referencedTableName="ddp_participant"/>
+        <addForeignKeyConstraint baseColumnNames="participant_id" baseTableName="ddp_participant_record"
+                                 constraintName="ddp_participant_record_participant_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="participant_id" referencedTableName="ddp_participant"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-101">
-        <addForeignKeyConstraint baseColumnNames="onc_history_detail_id" baseTableName="ddp_tissue" constraintName="ddp_tissue_onc_his_detail_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="onc_history_detail_id" referencedTableName="ddp_onc_history_detail"/>
+        <addForeignKeyConstraint baseColumnNames="onc_history_detail_id" baseTableName="ddp_tissue"
+                                 constraintName="ddp_tissue_onc_his_detail_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="onc_history_detail_id"
+                                 referencedTableName="ddp_onc_history_detail"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-102">
-        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="event_type" constraintName="event_instance" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
+        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="event_type"
+                                 constraintName="event_instance" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id"
+                                 referencedTableName="ddp_instance"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-103">
-        <addForeignKeyConstraint baseColumnNames="institution_id" baseTableName="ddp_medical_record" constraintName="fk_institution" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="institution_id" referencedTableName="ddp_institution"/>
+        <addForeignKeyConstraint baseColumnNames="institution_id" baseTableName="ddp_medical_record"
+                                 constraintName="fk_institution" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="institution_id"
+                                 referencedTableName="ddp_institution"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-104">
-        <addForeignKeyConstraint baseColumnNames="medical_record_id" baseTableName="ddp_medical_record_log" constraintName="fk_medical_record" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="medical_record_id" referencedTableName="ddp_medical_record"/>
+        <addForeignKeyConstraint baseColumnNames="medical_record_id" baseTableName="ddp_medical_record_log"
+                                 constraintName="fk_medical_record" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="medical_record_id"
+                                 referencedTableName="ddp_medical_record"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-105">
-        <addForeignKeyConstraint baseColumnNames="participant_id" baseTableName="ddp_onc_history" constraintName="fk_onc_his_participant1" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="participant_id" referencedTableName="ddp_participant"/>
+        <addForeignKeyConstraint baseColumnNames="participant_id" baseTableName="ddp_onc_history"
+                                 constraintName="fk_onc_his_participant1" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="participant_id"
+                                 referencedTableName="ddp_participant"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-106">
-        <addForeignKeyConstraint baseColumnNames="participant_id" baseTableName="ddp_institution" constraintName="fk_participant" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="participant_id" referencedTableName="ddp_participant"/>
+        <addForeignKeyConstraint baseColumnNames="participant_id" baseTableName="ddp_institution"
+                                 constraintName="fk_participant" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="participant_id"
+                                 referencedTableName="ddp_participant"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-107">
-        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="ddp_participant" constraintName="fk_participant_ddp_instance1" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
+        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="ddp_participant"
+                                 constraintName="fk_participant_ddp_instance1" deferrable="false"
+                                 initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-108">
-        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="ddp_instance_group" constraintName="instance_group_instance_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
+        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="ddp_instance_group"
+                                 constraintName="instance_group_instance_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-109">
-        <addForeignKeyConstraint baseColumnNames="medical_record_id" baseTableName="ddp_onc_history_detail" constraintName="onc_history_medical_record_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="medical_record_id" referencedTableName="ddp_medical_record"/>
+        <addForeignKeyConstraint baseColumnNames="medical_record_id" baseTableName="ddp_onc_history_detail"
+                                 constraintName="onc_history_medical_record_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="medical_record_id" referencedTableName="ddp_medical_record"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-110">
-        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="ddp_participant_event" constraintName="participant_event_instance_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
+        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="ddp_participant_event"
+                                 constraintName="participant_event_instance_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-111">
-        <addForeignKeyConstraint baseColumnNames="done_by" baseTableName="ddp_participant_event" constraintName="participant_event_user_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="access_user"/>
+        <addForeignKeyConstraint baseColumnNames="done_by" baseTableName="ddp_participant_event"
+                                 constraintName="participant_event_user_fk" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id"
+                                 referencedTableName="access_user"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-112">
-        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="ddp_participant_exit" constraintName="participant_exit_instance_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
+        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="ddp_participant_exit"
+                                 constraintName="participant_exit_instance_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-113">
-        <addForeignKeyConstraint baseColumnNames="exit_by" baseTableName="ddp_participant_exit" constraintName="participant_exit_user_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="access_user"/>
+        <addForeignKeyConstraint baseColumnNames="exit_by" baseTableName="ddp_participant_exit"
+                                 constraintName="participant_exit_user_fk" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id"
+                                 referencedTableName="access_user"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-114">
-        <addForeignKeyConstraint baseColumnNames="assignee_id_mr" baseTableName="ddp_participant" constraintName="participant_user_mr_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="access_user"/>
+        <addForeignKeyConstraint baseColumnNames="assignee_id_mr" baseTableName="ddp_participant"
+                                 constraintName="participant_user_mr_fk" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id"
+                                 referencedTableName="access_user"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-115">
-        <addForeignKeyConstraint baseColumnNames="assignee_id_tissue" baseTableName="ddp_participant" constraintName="participant_user_tissue_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="access_user"/>
+        <addForeignKeyConstraint baseColumnNames="assignee_id_tissue" baseTableName="ddp_participant"
+                                 constraintName="participant_user_tissue_fk" deferrable="false"
+                                 initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                 referencedColumnNames="user_id" referencedTableName="access_user"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-116">
-        <addForeignKeyConstraint baseColumnNames="group_id" baseTableName="access_user_role_group" constraintName="user_role_grup_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="group_id" referencedTableName="ddp_group"/>
+        <addForeignKeyConstraint baseColumnNames="group_id" baseTableName="access_user_role_group"
+                                 constraintName="user_role_grup_fk" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="group_id"
+                                 referencedTableName="ddp_group"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-117">
-        <addForeignKeyConstraint baseColumnNames="role_id" baseTableName="access_user_role_group" constraintName="user_role_role_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="role_id" referencedTableName="access_role"/>
+        <addForeignKeyConstraint baseColumnNames="role_id" baseTableName="access_user_role_group"
+                                 constraintName="user_role_role_fk" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="role_id"
+                                 referencedTableName="access_role"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-118">
-        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="access_user_role_group" constraintName="user_role_user_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="access_user"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="access_user_role_group"
+                                 constraintName="user_role_user_fk" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id"
+                                 referencedTableName="access_user"/>
     </changeSet>
     <changeSet author="simone (generated)" id="1523366316339-119">
-        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_settings" constraintName="user_settings_user_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="access_user"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_settings"
+                                 constraintName="user_settings_user_fk" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id"
+                                 referencedTableName="access_user"/>
     </changeSet>
 </databaseChangeLog>
