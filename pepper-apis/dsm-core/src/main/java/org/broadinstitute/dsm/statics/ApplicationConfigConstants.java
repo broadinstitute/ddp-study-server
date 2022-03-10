@@ -36,7 +36,7 @@ public class ApplicationConfigConstants {
     //security information
     public static final String BSP_SECRET = "bsp.secret";
     public static final String BSP_ENCODED = "bsp.secretEncoded";
-    public static final String DDP_SECRET = "auth0.jwtDdpSecret";
+    public static final String DDP_SECRET = "portal.jwtDdpSecret";
     public static final String DDP_ENCODED = "auth0.isSecretBase64Encoded";
 
     //auth0
