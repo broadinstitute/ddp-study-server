@@ -141,10 +141,6 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
 
              logger.info(String.format("PING to %s was successful", clamdHost));
 
-            // Used for testing purposes. This will be replaced with the bucket input
-            // stream for release. This code should be moved to a test suite
-            var eicar = "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*";
-            var dataStream = new ByteArrayInputStream(eicar.getBytes(StandardCharsets.US_ASCII));
             var bucketDataStream = Channels.newInputStream(blob.reader());
 
             result = runClamscan(clamav, bucketDataStream);
