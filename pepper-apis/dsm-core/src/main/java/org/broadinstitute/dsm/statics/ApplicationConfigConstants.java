@@ -35,8 +35,9 @@ public class ApplicationConfigConstants {
 
     //security information
     public static final String BSP_SECRET = "bsp.secret";
-    public static final String BROWSER_COOKIE_SALT = "browser_security.cookie_salt";
-    public static final String BROWSER_COOKIE_NAME = "browser_security.cookie_name";
+    public static final String BSP_ENCODED = "bsp.secretEncoded";
+    public static final String DDP_SECRET = "auth0.jwtDdpSecret";
+    public static final String DDP_ENCODED = "auth0.isSecretBase64Encoded";
 
     //auth0
     public static final String AUTH0_SECRET = "auth0.secret";
