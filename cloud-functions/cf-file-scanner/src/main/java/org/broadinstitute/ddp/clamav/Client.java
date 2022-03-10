@@ -212,7 +212,7 @@ public class Client {
                     read = inputStream.read(dataBuffer.array(), 0, chunkSize);
                 }
 
-                logger.fine("data chunks sent, preparting termination chunk");
+                logger.fine("data chunks sent, preparing termination chunk");
                 clamdOutputStream.write(new byte[]{0, 0, 0, 0});
                 clamdOutputStream.flush();
                 logger.fine("terminated final chunk");
