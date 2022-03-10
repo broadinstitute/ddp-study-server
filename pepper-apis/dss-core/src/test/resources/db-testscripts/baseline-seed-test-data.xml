@@ -50,11 +50,22 @@
                 select count(*) from client where auth0_client_id = '5ps6MnYXmzpuo4OePvfcW0Dfv6cMPNIC'
             </sqlCheck>
         </preConditions>
+        <insert tableName="auth0_tenant">
+            <column name="auth0_domain" value="https://dsm-dev.us.auth0.com/"/>
+            <column name="management_client_id" value="t1qI8LMhG26TL0MHdTGT6pxEVc5eg4Ng"/>
+            <column name="management_client_secret" value="1Ug93ERn0bINJ5a1jPMA2UuABfJsEpBjQVJoP4HCv1deWjviXjSSB27ee6knqtMUxyq3NB+sFHjCxGyEK5OyxfjH9hprqpYhJHisOsT8q5KePdMNvjzcUcVNiBIXKEzW"/>
+        </insert>
         <insert tableName="client">
             <column name="is_revoked" valueBoolean="false"/>
             <column name="auth0_domain" value="https://ddp-dev.auth0.com/"/>
             <column name="auth0_client_id" value="5ps6MnYXmzpuo4OePvfcW0Dfv6cMPNIC"/>
             <column name="auth0_signing_secret" value="20JhCH3DTn905Vm90Rcy/DGNqQw9EJ/XOGvPG8yyQV7+kkL4riGVGKEuTzZ6xKOQMFL9wKA8ZBC8h1WqKI4xeh9dX0BqBfRrAuubSyHPrOP2qUX4DcO4SqXqyO5CEnr4"/>
+        </insert>
+        <insert tableName="client">
+            <column name="is_revoked" valueBoolean="false"/>
+            <column name="auth0_domain" value="https://dsm-dev.us.auth0.com/"/>
+            <column name="auth0_client_id" value="cJM1U9TZZFEtmRNef4grqvphsCFl3a39"/>
+            <column name="auth0_signing_secret" value="zQdilp5qfKTreRSqs0SETKas-cF5Py6bGtn2G2ZTlqY0M-_CxJVAMi15PRpuGSC_"/>
         </insert>
         <insert tableName="client__umbrella_study">
             <column name="client_id" valueComputed="(select client_id from client where auth0_client_id = '5ps6MnYXmzpuo4OePvfcW0Dfv6cMPNIC' and auth0_domain = 'https://ddp-dev.auth0.com/')"/>
@@ -62,6 +73,14 @@
         </insert>
         <insert tableName="client__umbrella_study">
             <column name="client_id" valueComputed="(select client_id from client where auth0_client_id = '5ps6MnYXmzpuo4OePvfcW0Dfv6cMPNIC' and auth0_domain = 'https://ddp-dev.auth0.com/')"/>
+            <column name="umbrella_study_id" valueComputed="(select umbrella_study_id from umbrella_study where guid = 'TESTSTUDY2')"/>
+        </insert>
+        <insert tableName="client__umbrella_study">
+            <column name="client_id" valueComputed="(select client_id from client where auth0_client_id = 'cJM1U9TZZFEtmRNef4grqvphsCFl3a39' and auth0_domain = 'https://dsm-dev.us.auth0.com/')"/>
+            <column name="umbrella_study_id" valueComputed="(select umbrella_study_id from umbrella_study where guid = 'TESTSTUDY1')"/>
+        </insert>
+        <insert tableName="client__umbrella_study">
+            <column name="client_id" valueComputed="(select client_id from client where auth0_client_id = 'cJM1U9TZZFEtmRNef4grqvphsCFl3a39' and auth0_domain = 'https://dsm-dev.us.auth0.com/')"/>
             <column name="umbrella_study_id" valueComputed="(select umbrella_study_id from umbrella_study where guid = 'TESTSTUDY2')"/>
         </insert>
     </changeSet>
