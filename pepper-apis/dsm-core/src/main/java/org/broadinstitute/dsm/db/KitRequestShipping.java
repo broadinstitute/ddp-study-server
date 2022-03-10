@@ -395,12 +395,6 @@ public class KitRequestShipping extends KitRequest {
         return getKitRequests(instance, null);
     }
 
-    public static Map<String, List<KitRequestShipping>> getKitRequestsByParticipantIds(@NonNull DDPInstance instance,
-                                                                                       List<String> participantIds) {
-        String queryAddition = " AND request.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
-        return getKitRequests(instance, queryAddition);
-    }
-
     public static Map<String, List<KitRequestShipping>> getKitRequests(@NonNull DDPInstance instance, String queryAddition) {
         logger.info("Collection sample information");
         Map<String, List<KitRequestShipping>> kitRequests = new HashMap<>();
@@ -448,6 +442,39 @@ public class KitRequestShipping extends KitRequest {
         }
         logger.info("Got " + kitRequests.size() + " participants samples in DSM DB for " + instance.getName());
         return kitRequests;
+    }
+
+    private static Map<String, List<KitRequestShipping>> getKitRequests(@NonNull String realm, String target, String kitType,
+                                                                        boolean getAll) {
+        Map<String, List<KitRequestShipping>> kitRequests = new HashMap<>();
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = getPreparedStatement(conn, target, realm, kitType, getAll)) {
+                if (stmt != null) {
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        while (rs.next()) {
+                            addKitRequest(rs, kitRequests);
+                        }
+                    }
+                } else {
+                    throw new RuntimeException("No prepareStatement was created " + target + " " + realm + " " + kitType);
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Error getting list of kitRequests for " + realm, results.resultException);
+        }
+        return kitRequests;
+    }
+
+    public static Map<String, List<KitRequestShipping>> getKitRequestsByParticipantIds(@NonNull DDPInstance instance,
+                                                                                       List<String> participantIds) {
+        String queryAddition = " AND request.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
+        return getKitRequests(instance, queryAddition);
     }
 
     private static void addKitRequest(ResultSet rs, Map<String, List<KitRequestShipping>> kitRequests) throws SQLException {
@@ -559,33 +586,6 @@ public class KitRequestShipping extends KitRequest {
             wholeList.addAll(kitRequestList);
         }
         return wholeList;
-    }
-
-    private static Map<String, List<KitRequestShipping>> getKitRequests(@NonNull String realm, String target, String kitType,
-                                                                        boolean getAll) {
-        Map<String, List<KitRequestShipping>> kitRequests = new HashMap<>();
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = getPreparedStatement(conn, target, realm, kitType, getAll)) {
-                if (stmt != null) {
-                    try (ResultSet rs = stmt.executeQuery()) {
-                        while (rs.next()) {
-                            addKitRequest(rs, kitRequests);
-                        }
-                    }
-                } else {
-                    throw new RuntimeException("No prepareStatement was created " + target + " " + realm + " " + kitType);
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Error getting list of kitRequests for " + realm, results.resultException);
-        }
-        return kitRequests;
     }
 
     public static Map<String, List<KitRequestShipping>> getAllKitRequestsByRealm(@NonNull String realm, String target, String kitType,

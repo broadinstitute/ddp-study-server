@@ -2019,6 +2019,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             DecimalQuestionDef questionDef = DecimalQuestionDef
                     .builder(sid, prompt)
                     .setPlaceholderTemplate(placeholder)
+                    .setScale(2)
                     .addValidation(new DecimalRangeRuleDef(Template.text("decimal_range"),
                             new DecimalDef(0), new DecimalDef(10)))
                     .build();
@@ -2045,6 +2046,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
 
             DecimalQuestion decimalQuestion = (DecimalQuestion) actual;
             assertEquals(placeholder.getTemplateId(), decimalQuestion.getPlaceholderTemplateId());
+            assertEquals(questionDef.getScale(), decimalQuestion.getScale());
 
             assertEquals(1, decimalQuestion.getValidations().size());
             assertEquals(RuleType.DECIMAL_RANGE, decimalQuestion.getValidations().get(0).getRuleType());

@@ -39,16 +39,20 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
     public static final String ES_PARTICIPANT_INDEX = "es_participant_index";
     public static final String ES_ACTIVITY_DEFINITION_INDEX = "es_activity_definition_index";
     public static final String ES_USERS_INDEX = "es_users_index";
+    public static final String STUDY_PRE_FILTER = "study_pre_filter";
+    public static final String QUERY_ITEMS = "query_items";
+
     private static final String SQL_INSERT_DDP_INSTANCE =
             "INSERT INTO ddp_instance SET  instance_name = ?,  study_guid = ?, display_name = ?, base_url = ?,"
                     + "is_active = ?, bsp_group = ?, bsp_collection = ?, bsp_organism = ?, collaborator_id_prefix = ?,"
                     + "reminder_notification_wks = ?, mr_attention_flag_d = ?, tissue_attention_flag_d = ?, auth0_token = ?,"
                     + "notification_recipients = ?, migrated_ddp = ?, billing_reference = ?, es_participant_index = ?,"
-                    + "es_activity_definition_index = ?, es_users_index = ?";
+                    + "es_activity_definition_index = ?, es_users_index = ?, study_pre_filter = ?";
+
     private static final String SQL_DELETE_DDP_INSTANCE = "DELETE FROM ddp_instance WHERE ddp_instance_id = ?";
     private static final String SQL_SELECT_INSTANCE_WITH_ROLE =
             "SELECT ddp_instance_id, instance_name, base_url, collaborator_id_prefix, migrated_ddp, billing_reference, "
-                    + "es_participant_index, es_activity_definition_index, es_users_index, (SELECT count(role.name) "
+                    + "es_participant_index, es_activity_definition_index, es_users_index, study_pre_filter, (SELECT count(role.name) "
                     + "FROM ddp_instance realm, ddp_instance_role inRol, instance_role role "
                     + "WHERE realm.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id "
                     + "AND role.name = ? "
@@ -56,19 +60,20 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                     + "auth0_token, notification_recipients FROM ddp_instance main "
                     + "WHERE is_active = 1";
     private static final String SQL_GET_INSTANCE_ID_BY_GUID =
-            "SELECT ddp_instance_id  FROM ddp_instance  WHERE  study_guid = ? ";
+            "SELECT ddp_instance_id FROM ddp_instance WHERE study_guid = ? ";
     private static final String SQL_GET_PARTICIPANT_ES_INDEX_BY_ID =
-            "SELECT es_participant_index  FROM ddp_instance  WHERE ddp_instance_id = ?";
+            "SELECT es_participant_index FROM ddp_instance WHERE ddp_instance_id = ?";
     private static final String SQL_GET_PARTICIPANT_ES_INDEX_BY_STUDY_GUID =
-            "SELECT es_participant_index  FROM ddp_instance  WHERE study_guid = ?";
+            "SELECT es_participant_index FROM ddp_instance WHERE study_guid = ?";
     private static final String SQL_GET_COLLABORATOR_ID_PREFIX_BY_STUDY_GUID =
-            "SELECT collaborator_id_prefix  FROM ddp_instance  WHERE study_guid = ?";
+            "SELECT collaborator_id_prefix FROM ddp_instance WHERE study_guid = ?";
     private static final String SQL_BASE_SELECT =
-            "SELECT  ddp_instance_id, instance_name, study_guid, display_name, base_url, is_active, bsp_group,"
+            "SELECT  realm.ddp_instance_id, instance_name, study_guid, realm.display_name, base_url, is_active, bsp_group,"
                     + "bsp_collection, bsp_organism, collaborator_id_prefix, reminder_notification_wks,"
                     + "mr_attention_flag_d, tissue_attention_flag_d, auth0_token, notification_recipients, migrated_ddp,"
-                    + "billing_reference, es_participant_index, es_activity_definition_index, es_users_index "
-                    + "FROM ddp_instance ";
+                    + "billing_reference, es_participant_index, es_activity_definition_index, es_users_index, study_pre_filter, "
+                    + "query_items "
+                    + "FROM ddp_instance realm LEFT JOIN view_filters filter ON (filter.filter_id = study_pre_filter) ";
     private static final String SQL_SELECT_DDP_INSTANCE_BY_GUID = SQL_BASE_SELECT + "WHERE study_guid = ? ";
     private static final String SQL_SELECT_DDP_INSTANCE_BY_INSTANCE_NAME = SQL_BASE_SELECT + "WHERE instance_name = ? ";
     private static final String SQL_SELECT_DDP_INSTANCE_BY_INSTANCE_ID = SQL_BASE_SELECT + "WHERE ddp_instance_id = ? ";
@@ -123,6 +128,7 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                 stmt.setString(17, ddpInstanceDto.getEsParticipantIndex());
                 stmt.setString(18, ddpInstanceDto.getEsActivityDefinitionIndex());
                 stmt.setString(19, ddpInstanceDto.getEsUsersIndex());
+                stmt.setObject(20, ddpInstanceDto.getStudyPreFilter());
                 stmt.executeUpdate();
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
@@ -252,6 +258,7 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                 .withNotificationRecipient(rs.getString(NOTIFICATION_RECIPIENTS)).withMigratedDdp(rs.getBoolean(MIGRATED_DDP))
                 .withBillingReference(rs.getString(BILLING_REFERENCE)).withEsParticipantIndex(rs.getString(ES_PARTICIPANT_INDEX))
                 .withEsActivityDefinitionIndex(rs.getString(ES_ACTIVITY_DEFINITION_INDEX)).withEsUsersIndex(rs.getString(ES_USERS_INDEX))
+                .withStudyPreFilter(rs.getInt(STUDY_PRE_FILTER)).withQueryItems(rs.getString(QUERY_ITEMS))
                 .build();
     }
 
