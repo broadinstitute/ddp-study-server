@@ -10,7 +10,6 @@ import java.util.Objects;
 public class SortBy {
 
     public static final String SORT_BY = "sortBy";
-    public static final String[] DEFAULT_VERSIONS = new String[] {"v1", "v2", "v3"};
 
     private String type;
     private String additionalType;
@@ -31,10 +30,6 @@ public class SortBy {
         this.innerProperty = builder.innerProperty;
         this.order = builder.order;
         this.activityVersions = builder.activityVersions;
-    }
-
-    public String[] getActivityVersions() {
-        return Objects.isNull(activityVersions) ? DEFAULT_VERSIONS : activityVersions;
     }
 
     public static class Builder {

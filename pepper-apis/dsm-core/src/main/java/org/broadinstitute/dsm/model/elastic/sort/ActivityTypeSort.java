@@ -81,4 +81,8 @@ public class ActivityTypeSort extends Sort {
                 .orElse(StringUtils.EMPTY);
     }
 
+    @Override
+    public String getRawAlias() {
+        return getAlias().toString();
+    }
 }

@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.sort;
 
+import java.util.Objects;
+
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -25,13 +27,13 @@ public class CustomSortBuilder extends FieldSortBuilder {
 
     protected NestedSortBuilder getNestedSortBuilder() {
         NestedSortBuilder nestedSortBuilder = new NestedSortBuilder(sort.buildNestedPath());
-        if (isActivities() && !ElasticSearchUtil.QUESTIONS_ANSWER.equals(sort.handleOuterPropertySpecialCase())) {
+        if (isActivities() && !ElasticSearchUtil.QUESTIONS_ANSWER.equals(sort.handleOuterPropertySpecialCase()) && Objects.nonNull(sort.getActivityVersions())) {
             BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
             boolQueryBuilder.must(new TermQueryBuilder(String.join(DBConstants.ALIAS_DELIMITER, sort.getAlias().getValue(),
                     ElasticSearchUtil.ACTIVITY_CODE),
                     sort.getRawAlias()));
             boolQueryBuilder.must(new TermsQueryBuilder(String.join(DBConstants.ALIAS_DELIMITER, sort.getAlias().getValue(),
-                            ElasticSearchUtil.ACTIVITY_VERSION), sort.getActivityVersions()));
+                        ElasticSearchUtil.ACTIVITY_VERSION), sort.getActivityVersions()));
             nestedSortBuilder.setFilter(boolQueryBuilder);
         }
         return nestedSortBuilder;
