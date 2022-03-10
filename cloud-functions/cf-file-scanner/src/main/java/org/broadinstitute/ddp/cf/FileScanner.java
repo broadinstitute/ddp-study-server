@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -54,14 +55,18 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
     private static final String ATTR_SCAN_RESULT = "scanResult";
 
     private static final Storage storage;
-    private static final Publisher publisher;
+    private static final Optional<Publisher> publisher;
     private static final InetSocketAddress clamdAddress;
 
     // This is ran once on cold start.
     static {
         String gcpProjectId = getEnvOrThrow(ENV_GCP_PROJECT);
-        String resultTopic = getEnvOrThrow(ENV_RESULT_TOPIC);
         String clamavServer = getEnvOrThrow(ENV_DDP_CLAMAV_SERVER);
+
+        /* 
+            The topic to be used for publishing scan result events
+        */
+        String resultTopic = System.getenv(ENV_RESULT_TOPIC);
 
         try {
             storage = StorageOptions.newBuilder()
@@ -72,11 +77,20 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
             throw new RuntimeException("Error initializing storage service", e);
         }
 
-        try {
-            var topic = ProjectTopicName.of(gcpProjectId, resultTopic);
-            publisher = Publisher.newBuilder(topic).build();
-        } catch (IOException e) {
-            throw new RuntimeException("Error initializing pubsub publisher", e);
+        
+        /*
+            If resultTopic is not set, this function will not publish a message with the results of its scans,
+            and execution will not be halted.
+        */
+        if (resultTopic != null && resultTopic.isBlank() == false) {
+            try {
+                var topic = ProjectTopicName.of(gcpProjectId, resultTopic);
+                publisher = Optional.of(Publisher.newBuilder(topic).build());
+            } catch (IOException e) {
+                throw new RuntimeException("Error initializing pubsub publisher", e);
+            }
+        } else {
+            publisher = Optional.empty();
         }
 
         try {
@@ -188,18 +202,22 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
             throw new RuntimeException(String.format("connection to %s unexpectedly closed", clamdHost), ioe);
         }
 
-        String data = message.getData() != null ? message.getData() : "";
-        var resultMessage = PubsubMessage.newBuilder()
-                .putAllAttributes(message.getAttributes())
-                .putAttributes(ATTR_SCAN_RESULT, result.name())
-                .setData(ByteString.copyFromUtf8(data))
-                .build();
+        if (publisher.isPresent()) {
+            var data = message.getData() != null ? message.getData() : "";
+            var resultMessage = PubsubMessage.newBuilder()
+                    .putAllAttributes(message.getAttributes())
+                    .putAttributes(ATTR_SCAN_RESULT, result.name())
+                    .setData(ByteString.copyFromUtf8(data))
+                    .build();
 
-        try {
-            String msgId = publisher.publish(resultMessage).get();
-            logger.info("Published scan result with messageId: " + msgId);
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException("Error publishing scan result for file: " + blobId.toString(), e);
+            try {
+                var msgId = publisher.get().publish(resultMessage).get();
+                logger.info("Published scan result with messageId: " + msgId);
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException("Error publishing scan result for file: " + blobId.toString(), e);
+            }
+        } else {
+            logger.info("PubSub topic not configured, not sending a scan result message");
         }
     }
 
