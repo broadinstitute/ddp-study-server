@@ -2037,7 +2037,8 @@ public interface QuestionDao extends SqlObject {
         Template placeholderTemplate = templates.getOrDefault(dto.getPlaceholderTemplateId(), null);
         var builder = DecimalQuestionDef
                 .builder(dto.getStableId(), prompt)
-                .setPlaceholderTemplate(placeholderTemplate);
+                .setPlaceholderTemplate(placeholderTemplate)
+                .setScale(dto.getScale());
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
         return builder.build();
     }
