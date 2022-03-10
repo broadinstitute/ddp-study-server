@@ -83,10 +83,8 @@ public class Client {
         }
 
         private ScanResult(MalwareResult result, String message) {
-            assert(message != null);
-            
             this.result = result;
-            this.message = Optional.of(message);
+            this.message = Optional.ofNullable(message);
         }
     }
 
@@ -98,8 +96,8 @@ public class Client {
     }
     
     public Client(String host, int port) {
-        assert(host != null);
-        assert(host.isEmpty() == false);
+        assert host != null;
+        assert host.isEmpty() == false;
 
         clamdAddress = new InetSocketAddress(host, port);
     }
@@ -116,8 +114,8 @@ public class Client {
 
         // BufferedInputStream defaults to an 8k buffer which should be more than enough
         try (Socket socket = open();
-            var clamdOutputStream = new BufferedOutputStream(socket.getOutputStream());
-            var clamdResponseStream = new BufferedInputStream(socket.getInputStream())) {
+                var clamdOutputStream = new BufferedOutputStream(socket.getOutputStream());
+                var clamdResponseStream = new BufferedInputStream(socket.getInputStream())) {
             logger.fine("socket successfully opened");
 
             // The full command for a NUL-delimited PING is "zPING\0".
@@ -127,12 +125,15 @@ public class Client {
             clamdOutputStream.write(delimiter.lineTerminator());
             clamdOutputStream.flush();
 
-            logger.info("Ping sent. Awaiting PONG...");
+            logger.fine("Ping sent. Awaiting PONG...");
 
             String expected = "PONG";
             String response;
 
             // Read in the response from clamd
+            // Keep in mind that Scanner::close _also_ closes the underlying stream, so
+            // clamdResponseStream is closed at the end of the try scope, 
+            // before the end of the parent scope.
             try (var scanner = new Scanner(clamdResponseStream)) {
                 scanner.useDelimiter(new String(delimiter.lineTerminator(), StandardCharsets.US_ASCII));
                 if (scanner.hasNext()) {
@@ -149,13 +150,12 @@ public class Client {
                 } else {
                     throw new IOException("no response from clamd");
                 }
-            } // Keep in mind that Scanner::close _also_ closes the underlying stream, so
-              // clamdResponseStream is closed before the end of the parent scope.
+            }
 
             if (expected.equals(response)) {
                 return true;
             } else {
-                logger.warning(String.format("unexpected response from clamd PING: %s",response));
+                logger.warning("unexpected response from clamd PING: " + response);
                 return false;
             }
         }
@@ -167,12 +167,12 @@ public class Client {
 
     /**
      * Transmits the input stream to the ClamAV host for scanning.
-     * <p>
-     * This method does not call InputStream::reset on the passed stream.
+     * 
+     * <p>This method does not call InputStream::reset on the passed stream.
      * @param inputStream the data to scan.
      * @param chunkSize the maximum size of the chunks sent to clamd.
      * @return true if the malware scan was negative, false otherwise
-     * @throws IOException
+     * @throws IOException if there is a communication error with clamd
      */
     public ScanResult scan(InputStream inputStream, int chunkSize) throws IOException {
         final var delimiter = Delimiter.NULL;
@@ -180,7 +180,7 @@ public class Client {
 
         try (Socket socket = open()) {
             try (var clamdOutputStream = new BufferedOutputStream(socket.getOutputStream());
-                 var clamdInputStream = new BufferedInputStream(socket.getInputStream())) {
+                    var clamdInputStream = new BufferedInputStream(socket.getInputStream())) {
 
                 // clamd will not respond until the terminating chunk has been sent.
                 clamdOutputStream.write(delimiter.modeFlag());
@@ -191,8 +191,8 @@ public class Client {
 
                 int read = inputStream.read(dataBuffer.array(), 0, chunkSize);
 
-                while (read > 0 ) {
-                    logger.info(String.format("read %d bytes from is", read));
+                while (read > 0) {
+                    logger.fine(String.format("read %d bytes from is", read));
 
                     // The chunk format is: <size - 4 bytes><data>
                     // The stream is terminated by sending a zero-length chunk
@@ -212,10 +212,10 @@ public class Client {
                     read = inputStream.read(dataBuffer.array(), 0, chunkSize);
                 }
 
-                logger.info("data chunks sent, preparting termination chunk");
-                clamdOutputStream.write(new byte[]{0,0,0,0});
+                logger.fine("data chunks sent, preparting termination chunk");
+                clamdOutputStream.write(new byte[]{0, 0, 0, 0});
                 clamdOutputStream.flush();
-                logger.info("terminated final chunk");
+                logger.fine("terminated final chunk");
 
                 String response;
 
@@ -252,10 +252,8 @@ public class Client {
                 final var negativeResponse = "OK";
 
                 if (response.startsWith(sizeLimitError)) {
-                    var message = String.format("clamav file size limit exceeded");
-                    throw new IOException(message);
-                }
-                else if (response.startsWith(streamHeader) == false) {
+                    throw new IOException("clamav file size limit exceeded");
+                } else if (response.startsWith(streamHeader) == false) {
                     var message = String.format("unrecognized response from clamav: %s", response);
                     throw new IOException(message);
                 }
