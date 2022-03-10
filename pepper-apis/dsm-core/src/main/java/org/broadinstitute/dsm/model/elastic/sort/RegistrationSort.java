@@ -17,4 +17,9 @@ public class RegistrationSort extends Sort {
             return getAliasValue(getAlias());
         return buildQuestionsAnswersPath();
     }
+
+    @Override
+    public String getRawAlias() {
+        return Alias.REGISTRATION.toString();
+    }
 }
