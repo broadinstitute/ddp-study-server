@@ -76,8 +76,8 @@ public class GPNotificationUtil {
                 Map<String, String> mapy = new HashMap<>();
                 mapy.put(":customText", message);
                 Recipient emailRecipient = new Recipient(gpNotificationRecipient);
-                emailRecipient.setUrl(frontendUrl + KITREQUEST_LINK);
-                emailRecipient.setSurveyLinks(mapy);
+                emailRecipient.setPermalink(frontendUrl + KITREQUEST_LINK);
+                emailRecipient.setPersonalization(mapy);
 
                 notificationUtil.queueCurrentAndFutureEmails(EMAIL_TYPE, emailRecipient, EMAIL_TYPE);
             } else {
