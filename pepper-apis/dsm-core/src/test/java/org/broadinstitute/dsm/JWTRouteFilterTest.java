@@ -53,13 +53,16 @@ public class JWTRouteFilterTest {
     public static long getCurrentUnixUTCTime() {
         return System.currentTimeMillis() / 1000L;
     }
+
     @BeforeClass
     public static void setup() {
         Config cfg = ConfigFactory.load();
         //secrets from vault in a config file
         cfg = cfg.withFallback(ConfigFactory.parseFile(new File(System.getenv("TEST_CONFIG_FILE"))));
-        auth0Domain = cfg.getString("auth0.domain");;
-        bspSecret = cfg.getString(ApplicationConfigConstants.BSP_SECRET);;
+        auth0Domain = cfg.getString("auth0.domain");
+        ;
+        bspSecret = cfg.getString(ApplicationConfigConstants.BSP_SECRET);
+        ;
     }
 
     @Test
@@ -127,15 +130,10 @@ public class JWTRouteFilterTest {
             System.out.println(header + ": " + map.get(header));
         }
 
-        Auth0Util auth0Util = new Auth0Util(cfg.getString("auth0.account"),
-                cfg.getStringList("auth0.connections"),
-                cfg.getBoolean("auth0.isSecretBase64Encoded"),
-                cfg.getString("auth0.clientKey"),
-                cfg.getString("auth0.secret"),
-                cfg.getString("auth0.mgtKey"),
-                cfg.getString("auth0.mgtSecret"),
-                cfg.getString("auth0.mgtApiUrl"),
-                false, cfg.getString("auth0.audience"));
+        Auth0Util auth0Util = new Auth0Util(cfg.getString("auth0.account"), cfg.getStringList("auth0.connections"),
+                cfg.getBoolean("auth0.isSecretBase64Encoded"), cfg.getString("auth0.clientKey"), cfg.getString("auth0.secret"),
+                cfg.getString("auth0.mgtKey"), cfg.getString("auth0.mgtSecret"), cfg.getString("auth0.mgtApiUrl"), false,
+                cfg.getString("auth0.audience"));
         System.out.println("Token for Pepper: " + auth0Util.getAccessToken());
 
         RSAKeyProvider keyProvider = null;
@@ -248,21 +246,18 @@ public class JWTRouteFilterTest {
         RSAKeyProvider keyProvider;
         try {
             keyProvider = RSAKeyProviderFactory.createRSAKeyProviderWithPrivateKeyOnly(jwkProvider);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("Error creating RSAKeyProvider", e);
             throw (e);
         }
 
         try {
             validToken = JWT.require(Algorithm.RSA256(keyProvider)).acceptLeeway(10).build().verify(jwt);
-        }
-        catch (TokenExpiredException e) {
+        } catch (TokenExpiredException e) {
             // TokenExpired is one of the benign variants of JWTVerificationException that the `verify()` method throws.
             logger.warn("Expired token: {}", jwt);
             throw e;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("Could not verify token {}", jwt, e);
             throw (e);
         }

@@ -15,8 +15,9 @@ public class CustomSortBuilder extends FieldSortBuilder {
     public CustomSortBuilder(Sort sort) {
         super(sort.buildFieldName());
         this.sort = sort;
-        if (sort.isNestedSort())
+        if (sort.isNestedSort()) {
             setNestedSort(getNestedSortBuilder());
+        }
         this.order(sort.getOrder());
     }
 
@@ -24,16 +25,15 @@ public class CustomSortBuilder extends FieldSortBuilder {
         NestedSortBuilder nestedSortBuilder = new NestedSortBuilder(sort.buildNestedPath());
         if (Alias.ACTIVITIES == sort.getAlias() && !ElasticSearchUtil.QUESTIONS_ANSWER.equals(sort.handleOuterPropertySpecialCase())) {
             BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
-            boolQueryBuilder.must(new TermQueryBuilder(String.join(DBConstants.ALIAS_DELIMITER, sort.getAlias().getValue(),
-                    ElasticSearchUtil.ACTIVITY_CODE),
+            boolQueryBuilder.must(new TermQueryBuilder(
+                    String.join(DBConstants.ALIAS_DELIMITER, sort.getAlias().getValue(), ElasticSearchUtil.ACTIVITY_CODE),
                     sort.getRawAlias()));
-            boolQueryBuilder.must(new TermsQueryBuilder(String.join(DBConstants.ALIAS_DELIMITER, sort.getAlias().getValue(),
-                            ElasticSearchUtil.ACTIVITY_VERSION), sort.getActivityVersions()));
+            boolQueryBuilder.must(new TermsQueryBuilder(
+                    String.join(DBConstants.ALIAS_DELIMITER, sort.getAlias().getValue(), ElasticSearchUtil.ACTIVITY_VERSION),
+                    sort.getActivityVersions()));
             nestedSortBuilder.setFilter(boolQueryBuilder);
         }
         return nestedSortBuilder;
     }
 
 }
-
-

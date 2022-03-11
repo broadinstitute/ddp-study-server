@@ -18,8 +18,7 @@ public class Sort {
     SortBy sortBy;
     TypeExtractor<Map<String, String>> typeExtractor;
 
-    Sort(SortBy sortBy,
-                TypeExtractor<Map<String, String>> typeExtractor) {
+    Sort(SortBy sortBy, TypeExtractor<Map<String, String>> typeExtractor) {
         this.typeExtractor = typeExtractor;
         this.sortBy = sortBy;
     }
@@ -37,7 +36,7 @@ public class Sort {
                 return new Sort(sortBy, typeExtractor);
         }
     }
-    
+
     boolean isNestedSort() {
         return Alias.of(sortBy).isCollection();
     }
@@ -68,9 +67,7 @@ public class Sort {
     }
 
     private String buildPath(String... args) {
-        return Stream.of(args)
-                .filter(StringUtils::isNotBlank)
-                .collect(Collectors.joining(DBConstants.ALIAS_DELIMITER));
+        return Stream.of(args).filter(StringUtils::isNotBlank).collect(Collectors.joining(DBConstants.ALIAS_DELIMITER));
     }
 
     String getAliasValue(Alias alias) {
@@ -85,11 +82,13 @@ public class Sort {
     }
 
     private boolean isTextContent(Type innerType) {
-        return innerType == Type.TEXT || innerType == Type.TEXTAREA || innerType == Type.RADIO || innerType == Type.OPTIONS || innerType == Type.ACTIVITY;
+        return innerType == Type.TEXT || innerType == Type.TEXTAREA || innerType == Type.RADIO || innerType == Type.OPTIONS
+                || innerType == Type.ACTIVITY;
     }
 
     private boolean isFieldTextType() {
-        this.typeExtractor.setFields(buildPath(getAliasValue(Alias.of(sortBy)), handleOuterPropertySpecialCase(), handleInnerPropertySpecialCase()));
+        this.typeExtractor.setFields(
+                buildPath(getAliasValue(Alias.of(sortBy)), handleOuterPropertySpecialCase(), handleInnerPropertySpecialCase()));
         return TypeParser.TEXT.equals(typeExtractor.extract().get(handleInnerPropertySpecialCase()));
     }
 
@@ -106,7 +105,8 @@ public class Sort {
     }
 
     private boolean isDoubleNested(Type type, Alias alias) {
-        return type == Type.JSONARRAY || (alias == Alias.ACTIVITIES && ElasticSearchUtil.QUESTIONS_ANSWER.equals(sortBy.getOuterProperty()));
+        return type == Type.JSONARRAY || (alias == Alias.ACTIVITIES && ElasticSearchUtil.QUESTIONS_ANSWER.equals(
+                sortBy.getOuterProperty()));
     }
 
     public SortOrder getOrder() {

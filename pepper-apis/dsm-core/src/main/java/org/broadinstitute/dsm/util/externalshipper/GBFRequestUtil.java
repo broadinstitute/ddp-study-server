@@ -301,8 +301,8 @@ public class GBFRequestUtil implements ExternalShipper {
         ByteArrayInputStream stream = new ByteArrayInputStream(xml.getBytes());
         Document document = builder.parse(stream);
 
-        XPath xPath = XPathFactory.newInstance().newXPath();
-        return (Node) xPath.compile(expression).evaluate(document, XPathConstants.NODE);
+        XPath path = XPathFactory.newInstance().newXPath();
+        return (Node) path.compile(expression).evaluate(document, XPathConstants.NODE);
     }
 
     public static String getStringFromNode(Node node) throws Exception {

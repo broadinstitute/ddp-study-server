@@ -114,7 +114,7 @@ public class Auth0Util {
         return connection;
     }
 
-    private void verifyUserConnection(@NonNull String userId, @NonNull String email) {//todo pegah check
+    private void verifyUserConnection(@NonNull String userId, @NonNull String email) { //todo pegah check
         try {
             ManagementAPI mgmtApi = configManagementApi();
             Request<User> userRequest = mgmtApi.users().get(userId, null);
