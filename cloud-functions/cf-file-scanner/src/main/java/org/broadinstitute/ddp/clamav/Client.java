@@ -9,6 +9,7 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.logging.Logger;
@@ -96,8 +97,7 @@ public class Client {
     }
     
     public Client(String host, int port) {
-        assert host != null;
-        assert host.isEmpty() == false;
+        Objects.requireNonNull(host, "host must not be null");
 
         clamdAddress = new InetSocketAddress(host, port);
     }
@@ -192,7 +192,7 @@ public class Client {
                 int read = inputStream.read(dataBuffer.array(), 0, chunkSize);
 
                 while (read > 0) {
-                    logger.fine(String.format("read %d bytes from is", read));
+                    logger.fine("read " + read + " bytes from is");
 
                     // The chunk format is: <size - 4 bytes><data>
                     // The stream is terminated by sending a zero-length chunk
@@ -228,7 +228,7 @@ public class Client {
                     throw new IOException("unexpected response from clamd", nsee);
                 }
 
-                logger.info(String.format("received response from clamd: '%s'", response));
+                logger.info("received response from clamd: " + "response");
 
                 /*
                 _if a NEWLINE delimiter is being used, replace the \0 delimiter as necessary_
@@ -254,8 +254,7 @@ public class Client {
                 if (response.startsWith(sizeLimitError)) {
                     throw new IOException("clamav file size limit exceeded");
                 } else if (response.startsWith(streamHeader) == false) {
-                    var message = String.format("unrecognized response from clamav: %s", response);
-                    throw new IOException(message);
+                    throw new IOException("unrecognized response from clamav: " + response);
                 }
 
                 response = response.replaceFirst(streamHeader, "").trim();
@@ -263,7 +262,7 @@ public class Client {
                 if (response.startsWith(negativeResponse)) {
                     return new ScanResult(MalwareResult.NEGATIVE);
                 } else {
-                    logger.fine(String.format("malware detected: %s", response));
+                    logger.fine("malware detected: " + response);
                     return new ScanResult(MalwareResult.POSITIVE, response);
                 }
             }

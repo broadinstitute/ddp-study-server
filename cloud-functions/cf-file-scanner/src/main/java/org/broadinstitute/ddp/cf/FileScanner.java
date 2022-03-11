@@ -77,7 +77,7 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
             If resultTopic is not set, this function will not publish a message with the results of its scans,
             and execution will not be halted.
         */
-        if (resultTopic != null && resultTopic.isBlank() == false) {
+        if (resultTopic != null && resultTopic.isBlank() != true) {
             try {
                 var topic = ProjectTopicName.of(gcpProjectId, resultTopic);
                 publisher = Optional.of(Publisher.newBuilder(topic).build());
