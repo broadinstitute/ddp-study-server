@@ -2,9 +2,12 @@ package org.broadinstitute.ddp.route;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.RouteConstants;
+import org.broadinstitute.ddp.content.ContentStyle;
+import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiPicklistOption;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.PicklistOptionDto;
 import org.broadinstitute.ddp.json.RemoteAutoCompleteResponse;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
@@ -17,6 +20,7 @@ import spark.Request;
 import spark.Response;
 import spark.Route;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -28,8 +32,12 @@ import java.util.stream.Collectors;
 public class GetOptionsForActivityInstanceQuestion implements Route {
 
     private static final Logger LOG = LoggerFactory.getLogger(GetOptionsForActivityInstanceQuestion.class);
-    //private static final String AUTO_COMPLETE_QUERY_REGEX = "\\w+";
     private static final int DEFAULT_LIMIT = 100;
+    private final I18nContentRenderer renderer;
+
+    public GetOptionsForActivityInstanceQuestion(I18nContentRenderer renderer) {
+        this.renderer = renderer;
+    }
 
     @Override
     public RemoteAutoCompleteResponse handle(Request request, Response response) {
@@ -44,6 +52,8 @@ public class GetOptionsForActivityInstanceQuestion implements Route {
         String autoCompleteQuery = request.queryParams(RouteConstants.QueryParam.TYPEAHEAD_QUERY);
         String queryLimit = request.queryParams(RouteConstants.QueryParam.TYPEAHEAD_QUERY_LIMIT);
         int limit = StringUtils.isNotBlank(queryLimit) ? Integer.valueOf(queryLimit) : DEFAULT_LIMIT;
+        ContentStyle style = RouteUtil.parseContentStyleHeaderOrHalt(request, response, ContentStyle.STANDARD);
+        LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
 
         LOG.info("Fetching auto complete picklist options for activity instance {} and participant {} in study {} by operator {} "
                 + "(isStudyAdmin={})", instanceGuid, participantGuid, studyGuid, operatorGuid, isStudyAdmin);
@@ -52,16 +62,21 @@ public class GetOptionsForActivityInstanceQuestion implements Route {
 
             //load All options first
             List<PicklistOption> allOptions = new ArrayList<>();
-            List<PicklistOption> suggestions = new ArrayList<>();
+            List<PicklistOption> suggestions;
             JdbiPicklistOption jdbiPicklistOption = handle.attach(JdbiPicklistOption.class);
             JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
             Optional<Long> questionId = jdbiQuestion.findIdByStableIdAndInstanceGuid(questionStableId, instanceGuid);
             List<PicklistOptionDto> optionDtos = jdbiPicklistOption.findAllActiveOrderedOptionsByQuestionId(questionId.get());
             for (PicklistOptionDto optionDto : optionDtos) {
-                allOptions.add(new PicklistOption(optionDto.getStableId(), optionDto.getStableId(),
+                PicklistOption option = new PicklistOption(optionDto.getStableId(), optionDto.getStableId(),
                         optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
-                        optionDto.isAllowDetails(), optionDto.isExclusive(), optionDto.isDefault()));
+                        optionDto.isAllowDetails(), optionDto.isExclusive(), optionDto.isDefault());
+                allOptions.add(option);
             }
+            // Render labels using current time to get latest templates.
+            long timestamp = Instant.now().toEpochMilli();
+            long langCodeId = preferredUserLanguage.getId();
+            renderer.bulkRenderAndApply(handle, allOptions, style, langCodeId, timestamp);
 
             if (StringUtils.isBlank(autoCompleteQuery)) {
                 LOG.info("Option suggestion query is blank, returning all results");
