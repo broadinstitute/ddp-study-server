@@ -133,6 +133,16 @@ public class InstanceSettings {
         return result;
     }
 
+    public InstanceSettingsDto getInstanceSettings(String realm) {
+        return instanceSettingsDao.getByInstanceName(Objects.requireNonNull(realm)).orElse(new InstanceSettingsDto.Builder().build());
+    }
+
+    //used ONLY for google cloud function
+    public InstanceSettingsDto getInstanceSettings(Connection conn, String realm) {
+        return instanceSettingsDao.getByInstanceName(Objects.requireNonNull(conn), Objects.requireNonNull(realm))
+                .orElse(new InstanceSettingsDto.Builder().build());
+    }
+
     public static boolean shouldKitBehaveDifferently(@NonNull Map<String, Object> participant, @NonNull Value behavior) {
         boolean specialKit = false;
         //condition type -> alert/notification is currently ignored for upload -> will alert per frontend
@@ -214,16 +224,6 @@ public class InstanceSettings {
 
     public boolean getHideSamplesTabByStudyGuid(String studyGuid) {
         return instanceSettingsDao.getHideSamplesTabByStudyGuid(studyGuid).orElse(false);
-    }
-
-    public InstanceSettingsDto getInstanceSettings(String realm) {
-        return instanceSettingsDao.getByInstanceName(Objects.requireNonNull(realm)).orElse(new InstanceSettingsDto.Builder().build());
-    }
-
-    //used ONLY for google cloud function
-    public InstanceSettingsDto getInstanceSettings(Connection conn, String realm) {
-        return instanceSettingsDao.getByInstanceName(Objects.requireNonNull(conn), Objects.requireNonNull(realm))
-                .orElse(new InstanceSettingsDto.Builder().build());
     }
 
     public Map<String, Object> getInstanceSettingsAsMap(InstanceSettingsDto instanceSettingsDto) {

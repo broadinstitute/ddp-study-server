@@ -560,6 +560,14 @@ public interface ValidationDao extends SqlObject {
             case UNIQUE_VALUE:
                 ruleDef = new UniqueValueRuleDef(hintTmpl);
                 break;
+            case COMPARISON:
+                var questionDto = getJdbiQuestion().findQuestionDtoById(dto.getQuestionId());
+                if (questionDto.isEmpty()) {
+                    throw new DaoException("Question doesn't exist: " + dto.getQuestionId());
+                }
+
+                ruleDef = new ComparisonRuleDef(hintTmpl, questionDto.get().getStableId(), ((ComparisonRuleDto) dto).getType());
+                break;
             case LENGTH:
                 var lengthDto = (LengthRuleDto) dto;
                 ruleDef = new LengthRuleDef(hintTmpl, lengthDto.getMinLength(), lengthDto.getMaxLength());

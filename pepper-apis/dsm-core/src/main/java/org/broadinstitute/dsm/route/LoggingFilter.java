@@ -1,10 +1,13 @@
 package org.broadinstitute.dsm.route;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.exceptions.JWTDecodeException;
+import static spark.Spark.halt;
+
+import java.util.Optional;
+
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.lddp.security.Auth0Util;
 import org.broadinstitute.lddp.util.Utility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,14 +27,28 @@ public class LoggingFilter implements Filter {
     public static final String USER_EMAIL = "USER_EMAIL";
 
     private static final Logger logger = LoggerFactory.getLogger(LoggingFilter.class);
+    private String auth0Domain;
+    private String claimNameSpace;
+    private String secret; // this is not static!
+    private String issuer = null; // this is not static!
+    private boolean secretEncoded = false; // this is not static!
+
+    public LoggingFilter(String auth0Domain, String claimNameSpace, String secret, String issuer, boolean secretEncoded) {
+        this.auth0Domain = auth0Domain;
+        this.claimNameSpace = claimNameSpace;
+        this.secret = secret;
+        this.secretEncoded = secretEncoded;
+        this.issuer = issuer;
+    }
 
     @Override
     public void handle(Request request, Response response) {
         String tokenFromHeader = Utility.getTokenFromHeader(request);
-        if (StringUtils.isNotBlank(tokenFromHeader)) {
-            try {
-                DecodedJWT decodedUnverifiedJWT = JWT.decode(tokenFromHeader);
-                Claim userEmailClaim = decodedUnverifiedJWT.getClaim("USER_MAIL");
+        if (StringUtils.isNotBlank(tokenFromHeader) && !"null".equals(tokenFromHeader)) {
+            Optional<DecodedJWT> maybeDecodedUnverifiedJWT =
+                    Auth0Util.verifyAuth0Token(tokenFromHeader, auth0Domain, secret, issuer, secretEncoded);
+            maybeDecodedUnverifiedJWT.ifPresentOrElse(decodedJWT -> {
+                Claim userEmailClaim = decodedJWT.getClaim(claimNameSpace + "USER_MAIL");
 
                 if (userEmailClaim != null) {
                     String userEmail = userEmailClaim.asString();
@@ -39,10 +56,12 @@ public class LoggingFilter implements Filter {
                         MDC.put(USER_EMAIL, userEmail);
                     }
                 }
+            }, () -> {
+                logger.error("Unable to verify token");
+                halt(401);
+                return;
+            });
 
-            } catch (JWTDecodeException e) {
-                logger.debug("Could not decode token", e);
-            }
         }
 
         // set the ip  so that log4j can include it

@@ -120,37 +120,6 @@ public class UserUtil {
         return listOfRealms;
     }
 
-    public static List<NameValue> getAllowedStudies(@NonNull String userId) {
-        List<NameValue> studies = new ArrayList<>();
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_USER_REALMS)) {
-                stmt.setString(1, NO_USER_ROLE);
-                stmt.setString(2, userId);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-                        String instanceName = rs.getString(DBConstants.INSTANCE_NAME);
-                        String displayName = rs.getString(DBConstants.DISPLAY_NAME);
-                        if (StringUtils.isNotBlank(displayName)) {
-                            studies.add(new NameValue(instanceName, displayName));
-                        } else {
-                            studies.add(new NameValue(instanceName, instanceName));
-                        }
-                    }
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Error getting list of studies ", results.resultException);
-        }
-        return studies;
-
-    }
-
     public static Collection<String> getListOfAllowedRealms(@NonNull String userId, @NonNull String menu) {
         List<String> listOfRealms = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
@@ -217,6 +186,37 @@ public class UserUtil {
         }
         logger.info("Found " + listOfRealms.size() + " realm for " + menu);
         return listOfRealms;
+    }
+
+    public static List<NameValue> getAllowedStudies(@NonNull String userId) {
+        List<NameValue> studies = new ArrayList<>();
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_USER_REALMS)) {
+                stmt.setString(1, NO_USER_ROLE);
+                stmt.setString(2, userId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        String instanceName = rs.getString(DBConstants.INSTANCE_NAME);
+                        String displayName = rs.getString(DBConstants.DISPLAY_NAME);
+                        if (StringUtils.isNotBlank(displayName)) {
+                            studies.add(new NameValue(instanceName, displayName));
+                        } else {
+                            studies.add(new NameValue(instanceName, instanceName));
+                        }
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Error getting list of studies ", results.resultException);
+        }
+        return studies;
+
     }
 
     private static void getList(Connection conn, String query, String userId, List<String> listOfRealms) throws SQLException {
