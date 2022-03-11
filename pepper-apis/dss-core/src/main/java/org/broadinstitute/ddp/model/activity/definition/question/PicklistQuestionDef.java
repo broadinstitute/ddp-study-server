@@ -39,6 +39,8 @@ public final class PicklistQuestionDef extends QuestionDef {
     @SerializedName("picklistOptions")
     private List<@Valid @NotNull PicklistOptionDef> picklistOptions = new ArrayList<>();
 
+    private transient boolean includeRemoteAutoCompleteOptions;
+
     public static Builder builder() {
         return new Builder();
     }
@@ -121,7 +123,19 @@ public final class PicklistQuestionDef extends QuestionDef {
     }
 
     public List<PicklistOptionDef> getPicklistOptions() {
-        return picklistOptions;
+        if (renderMode == PicklistRenderMode.REMOTE_AUTOCOMPLETE && !includeRemoteAutoCompleteOptions) {
+            return null;
+        } else {
+            return picklistOptions;
+        }
+    }
+
+    public List<PicklistOptionDef> getPicklistOptions(boolean includeRemoteAutoCompleteOpts) {
+        if (renderMode == PicklistRenderMode.REMOTE_AUTOCOMPLETE && includeRemoteAutoCompleteOpts) {
+            return null;
+        } else {
+            return picklistOptions;
+        }
     }
 
     public List<PicklistOptionDef> getAllPicklistOptions() {

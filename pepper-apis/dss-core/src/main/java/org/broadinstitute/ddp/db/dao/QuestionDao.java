@@ -1441,7 +1441,7 @@ public interface QuestionDao extends SqlObject {
      */
     default void insertQuestion(long activityId, PicklistQuestionDef picklist, long revisionId) {
 
-        if (picklist.getGroups().isEmpty() && picklist.getPicklistOptions().isEmpty()) {
+        if (picklist.getGroups().isEmpty() && picklist.getPicklistOptions(true).isEmpty()) {
             throw new IllegalStateException(String.format(
                     "picklist question %s need to have at least one option or one group",
                     picklist.getStableId()));
@@ -1463,7 +1463,7 @@ public interface QuestionDao extends SqlObject {
         }
 
         getPicklistQuestionDao().insertGroups(picklist.getQuestionId(), picklist.getGroups(), revisionId);
-        getPicklistQuestionDao().insertOptions(picklist.getQuestionId(), picklist.getPicklistOptions(), revisionId);
+        getPicklistQuestionDao().insertOptions(picklist.getQuestionId(), picklist.getPicklistOptions(true), revisionId);
     }
 
     default void insertQuestion(long activityId, CompositeQuestionDef compositeQuestion, long revisionId) {
@@ -2100,7 +2100,7 @@ public interface QuestionDao extends SqlObject {
         List<PicklistGroupDef> groups = new ArrayList<>();
         List<PicklistOptionDef> ungroupedOptions = new ArrayList<>();
 
-        if (PicklistRenderMode.REMOTE_AUTOCOMPLETE != dto.getRenderMode()) {
+        //if (PicklistRenderMode.REMOTE_AUTOCOMPLETE != dto.getRenderMode()) {
             for (PicklistGroupDto groupDto : container.getGroups()) {
                 Template nameTemplate = templates.get(groupDto.getNameTemplateId());
                 List<PicklistOptionDef> options = container.getGroupIdToOptions().get(groupDto.getId())
@@ -2146,7 +2146,7 @@ public interface QuestionDao extends SqlObject {
                         return optionDef;
                     })
                     .collect(Collectors.toList());
-        }
+        //}
 
         var builder = PicklistQuestionDef
                 .builder(dto.getSelectMode(), dto.getRenderMode(), dto.getStableId(), prompt)
