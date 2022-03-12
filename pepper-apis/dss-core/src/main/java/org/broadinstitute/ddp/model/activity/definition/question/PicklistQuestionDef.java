@@ -125,7 +125,7 @@ public final class PicklistQuestionDef extends QuestionDef {
 
     public List<PicklistOptionDef> getPicklistOptions() {
         if (renderMode == PicklistRenderMode.REMOTE_AUTOCOMPLETE && !includeRemoteAutoCompleteOptions) {
-            return null;
+            return Collections.emptyList();
         } else {
             return picklistOptions;
         }
