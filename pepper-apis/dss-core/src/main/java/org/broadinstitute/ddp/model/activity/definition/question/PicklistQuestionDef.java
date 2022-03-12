@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 import javax.validation.Valid;
@@ -130,9 +131,9 @@ public final class PicklistQuestionDef extends QuestionDef {
         }
     }
 
-    public List<PicklistOptionDef> getPicklistOptions(boolean includeRemoteAutoCompleteOpts) {
-        if (renderMode == PicklistRenderMode.REMOTE_AUTOCOMPLETE && includeRemoteAutoCompleteOpts) {
-            return null;
+    public List<PicklistOptionDef> getPicklistOptions(boolean excludeRemoteAutoCompleteOptions) {
+        if (renderMode == PicklistRenderMode.REMOTE_AUTOCOMPLETE && excludeRemoteAutoCompleteOptions) {
+            return Collections.emptyList();
         } else {
             return picklistOptions;
         }

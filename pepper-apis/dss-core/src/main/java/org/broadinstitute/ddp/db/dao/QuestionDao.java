@@ -1441,7 +1441,7 @@ public interface QuestionDao extends SqlObject {
      */
     default void insertQuestion(long activityId, PicklistQuestionDef picklist, long revisionId) {
 
-        if (picklist.getGroups().isEmpty() && picklist.getPicklistOptions(true).isEmpty()) {
+        if (picklist.getGroups().isEmpty() && picklist.getPicklistOptions(false).isEmpty()) {
             throw new IllegalStateException(String.format(
                     "picklist question %s need to have at least one option or one group",
                     picklist.getStableId()));
@@ -1463,7 +1463,7 @@ public interface QuestionDao extends SqlObject {
         }
 
         getPicklistQuestionDao().insertGroups(picklist.getQuestionId(), picklist.getGroups(), revisionId);
-        getPicklistQuestionDao().insertOptions(picklist.getQuestionId(), picklist.getPicklistOptions(true), revisionId);
+        getPicklistQuestionDao().insertOptions(picklist.getQuestionId(), picklist.getPicklistOptions(false), revisionId);
     }
 
     default void insertQuestion(long activityId, CompositeQuestionDef compositeQuestion, long revisionId) {
