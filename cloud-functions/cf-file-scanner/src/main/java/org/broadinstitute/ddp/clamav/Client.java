@@ -34,7 +34,7 @@ public class Client {
                 case NEWLINE:
                     return new byte[] { 'n' };
                 default:
-                    return new byte[] {};
+                    throw new RuntimeException("unreachable");
             }
         }
 
@@ -45,7 +45,7 @@ public class Client {
                 case NEWLINE:
                     return new byte[] { 0x0A };
                 default:
-                    return new byte[] {};
+                    throw new RuntimeException("unreachable");
             }
         }
     }
