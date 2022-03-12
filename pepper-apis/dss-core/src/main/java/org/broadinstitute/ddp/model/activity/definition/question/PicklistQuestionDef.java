@@ -131,12 +131,8 @@ public final class PicklistQuestionDef extends QuestionDef {
         }
     }
 
-    public List<PicklistOptionDef> getPicklistOptions(boolean excludeRemoteAutoCompleteOptions) {
-        if (renderMode == PicklistRenderMode.REMOTE_AUTOCOMPLETE && excludeRemoteAutoCompleteOptions) {
-            return Collections.emptyList();
-        } else {
-            return picklistOptions;
-        }
+    public List<PicklistOptionDef> getPicklistOptionsIncludingRemoteAutoComplete() {
+        return picklistOptions;
     }
 
     public List<PicklistOptionDef> getAllPicklistOptions() {
@@ -217,18 +213,18 @@ public final class PicklistQuestionDef extends QuestionDef {
 
         public PicklistQuestionDef build() {
             PicklistQuestionDef question = new PicklistQuestionDef(stableId,
-                                                                    isRestricted,
-                                                                    prompt,
-                                                                    getAdditionalInfoHeader(),
-                                                                    getAdditionalInfoFooter(),
-                                                                    validations,
-                                                                    selectMode,
-                                                                    renderMode,
-                                                                    label,
-                                                                    groups,
-                                                                    options,
-                                                                    hideNumber,
-                                                                    writeOnce);
+                    isRestricted,
+                    prompt,
+                    getAdditionalInfoHeader(),
+                    getAdditionalInfoFooter(),
+                    validations,
+                    selectMode,
+                    renderMode,
+                    label,
+                    groups,
+                    options,
+                    hideNumber,
+                    writeOnce);
             configure(question);
             return question;
         }
