@@ -8,6 +8,7 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
+import org.broadinstitute.ddp.studybuilder.EventBuilder;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -51,6 +52,7 @@ public class OsteoConsentAddendumV2 implements CustomTask {
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid"));
 
         insertActivity(handle, studyDto, adminUser.getUserId());
+        insertEvents(handle, studyDto, adminUser.getUserId());
 
     }
 
@@ -58,16 +60,25 @@ public class OsteoConsentAddendumV2 implements CustomTask {
         ActivityBuilder activityBuilder = new ActivityBuilder(cfgPath.getParent(), cfg, varsCfg, studyDto, adminUserId);
         Instant timestamp = ConfigUtil.getInstantIfPresent(cfg, "activityTimestamp");
         List<? extends Config> activities = dataCfg.getConfigList("activityFilepath");
+
         for (Config activity : activities) {
             Config definition = activityBuilder.readDefinitionConfig(activity.getString("name"));
-            List<String> nested1 = activity.getStringList("nested");
             List<Config> nestedcfg = new ArrayList<>();
-            nested1.forEach(cfg -> {
-                Config nestedDef = activityBuilder.readDefinitionConfig(cfg);
-                nestedcfg.add(nestedDef);
-            });
             activityBuilder.insertActivity(handle, definition, nestedcfg, timestamp);
             LOG.info("Activity configuration {} has been added in study {}", activity, STUDY_GUID);
         }
+    }
+
+    private void insertEvents(Handle handle, StudyDto studyDto, long adminUserId) {
+        if (!dataCfg.hasPath("events")) {
+            throw new DDPException("There is no 'events' configuration.");
+        }
+        LOG.info("Inserting events configuration...");
+        List<? extends Config> events = dataCfg.getConfigList("events");
+        EventBuilder eventBuilder = new EventBuilder(cfg, studyDto, adminUserId);
+        for (Config eventCfg : events) {
+            eventBuilder.insertEvent(handle, eventCfg);
+        }
+        LOG.info("Events configuration has added in study {}", STUDY_GUID);
     }
 }
