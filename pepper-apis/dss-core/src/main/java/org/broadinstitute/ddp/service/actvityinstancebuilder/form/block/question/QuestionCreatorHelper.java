@@ -247,7 +247,7 @@ public class QuestionCreatorHelper {
         }
 
         List<PicklistOption> picklistOptions = CollectionMiscUtil.createListFromAnotherList(
-                questionDef.getPicklistOptionsIncludingRemoteAutoComplete(),
+                questionDef.getPicklistOptions(),
                 (picklistOptionDef) ->
                         ctx.getAIBuilderFactory().getPicklistCreatorHelper()
                                 .createPicklistOption(ctx, picklistOptionDef, questionDef.getGroups()));
