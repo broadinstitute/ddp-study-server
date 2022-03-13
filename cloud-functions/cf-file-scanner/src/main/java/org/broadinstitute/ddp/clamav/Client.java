@@ -8,6 +8,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
@@ -24,29 +25,23 @@ public class Client {
     }
 
     private enum Delimiter {
-        NULL,
-        NEWLINE;
+        NULL((byte)'z', (byte)0x00),
+        NEWLINE((byte)'n', (byte)0x0A);
 
-        public byte[] modeFlag() {
-            switch (this) {
-                case NULL:
-                    return new byte[] { 'z' };
-                case NEWLINE:
-                    return new byte[] { 'n' };
-                default:
-                    throw new RuntimeException("unreachable");
-            }
+        final private byte[] modeFlag;
+        final private byte[] lineTerminator;
+
+        private Delimiter(byte modeFlag, byte lineTerminator) {
+            this.modeFlag = new byte[] { modeFlag };
+            this.lineTerminator = new byte[] { lineTerminator };
         }
 
-        public byte[] lineTerminator() {
-            switch (this) {
-                case NULL:
-                    return new byte[] { 0x00 };
-                case NEWLINE:
-                    return new byte[] { 0x0A };
-                default:
-                    throw new RuntimeException("unreachable");
-            }
+        public byte[] getModeFlag() {
+            return Arrays.copyOf(modeFlag, modeFlag.length);
+        }
+
+        public byte[] getLineTerminator() {
+            return Arrays.copyOf(lineTerminator, lineTerminator.length);
         }
     }
 
@@ -120,9 +115,9 @@ public class Client {
 
             // The full command for a NUL-delimited PING is "zPING\0".
             // Upon receipt, clamd should write back "PONG\0"
-            clamdOutputStream.write(delimiter.modeFlag());
+            clamdOutputStream.write(delimiter.getModeFlag());
             clamdOutputStream.write(command.getBytes());
-            clamdOutputStream.write(delimiter.lineTerminator());
+            clamdOutputStream.write(delimiter.getLineTerminator());
             clamdOutputStream.flush();
 
             logger.fine("Ping sent. Awaiting PONG...");
@@ -135,7 +130,7 @@ public class Client {
             // clamdResponseStream is closed at the end of the try scope, 
             // before the end of the parent scope.
             try (var scanner = new Scanner(clamdResponseStream)) {
-                scanner.useDelimiter(new String(delimiter.lineTerminator(), StandardCharsets.US_ASCII));
+                scanner.useDelimiter(new String(delimiter.getLineTerminator(), StandardCharsets.US_ASCII));
                 if (scanner.hasNext()) {
                     // Take a look into nextLine's behavior if the socket is closed.
                     // This is an easy method but we might need to fall back to more 
@@ -183,9 +178,9 @@ public class Client {
                     var clamdInputStream = new BufferedInputStream(socket.getInputStream())) {
 
                 // clamd will not respond until the terminating chunk has been sent.
-                clamdOutputStream.write(delimiter.modeFlag());
+                clamdOutputStream.write(delimiter.getModeFlag());
                 clamdOutputStream.write(command.getBytes());
-                clamdOutputStream.write(delimiter.lineTerminator());
+                clamdOutputStream.write(delimiter.getLineTerminator());
 
                 var dataBuffer = ByteBuffer.allocate(chunkSize);
 
@@ -220,7 +215,7 @@ public class Client {
                 String response;
 
                 try (var scanner = new Scanner(clamdInputStream, StandardCharsets.US_ASCII)) {
-                    scanner.useDelimiter(new String(delimiter.lineTerminator(), StandardCharsets.US_ASCII));
+                    scanner.useDelimiter(new String(delimiter.getLineTerminator(), StandardCharsets.US_ASCII));
                     response = scanner.next().trim();
                 } catch (NoSuchElementException nsee) {
                     // This exception will be thrown by Scanner if a token delimiter has not been
