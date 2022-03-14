@@ -68,7 +68,7 @@ public class SecurityHelper {
         }
     }
 
-    public static String createBspToken(@NonNull String secret, long invalidAfter, @NonNull Map<String, String> claims) {
+    public static String createGpToken(@NonNull String secret, long invalidAfter, @NonNull Map<String, String> claims) {
         try {
             Date dateSoon = new Date(invalidAfter * 1000);
 

@@ -101,7 +101,7 @@ public class JWTRouteFilterTest {
 
         System.out.println("monitoring token: " + SecurityHelper.createMonitoringToken(monitoringSecret, SecurityHelper.MONITORING_SYSTEM));
 
-        String bspToken = SecurityHelper.createBspToken(bspSecret, getCurrentUnixUTCTime() + THIRTY_MIN_IN_SECONDS, new HashMap<>());
+        String bspToken = SecurityHelper.createGpToken(bspSecret, getCurrentUnixUTCTime() + THIRTY_MIN_IN_SECONDS, new HashMap<>());
         System.out.println("Token for bsp: " + bspToken);
 
         String ddpToken = SecurityHelper.createToken(ddpSecret, getCurrentUnixUTCTime() + THIRTY_MIN_IN_SECONDS, new HashMap<>());
