@@ -298,14 +298,32 @@ public class OncHistoryDetail {
         return oncHistoryDetail;
     }
 
-    public static Map<String, List<OncHistoryDetail>> getOncHistoryDetails(@NonNull String realm) {
-        return getOncHistoryDetails(realm, null);
+    public static OncHistoryDetail getOncHistoryDetail(@NonNull String oncHistoryDetailId, String realm) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ONC_HISTORY_DETAIL + QueryExtension.BY_ONC_HISTORY_DETAIL_ID)) {
+                stmt.setString(1, realm);
+                stmt.setString(2, oncHistoryDetailId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        dbVals.resultValue = getOncHistoryDetail(rs);
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Error getting oncHistoryDetails w/ id " + oncHistoryDetailId, results.resultException);
+        }
+
+        return (OncHistoryDetail) results.resultValue;
     }
 
-    public static Map<String, List<OncHistoryDetail>> getOncHistoryDetailsByParticipantIds(@NonNull String realm,
-                                                                                           List<String> participantIds) {
-        String queryAddition = " AND p.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
-        return getOncHistoryDetails(realm, queryAddition);
+    public static Map<String, List<OncHistoryDetail>> getOncHistoryDetails(@NonNull String realm) {
+        return getOncHistoryDetails(realm, null);
     }
 
     public static Map<String, List<OncHistoryDetail>> getOncHistoryDetails(@NonNull String realm, String queryAddition) {
@@ -372,28 +390,10 @@ public class OncHistoryDetail {
         return oncHistory;
     }
 
-    public static OncHistoryDetail getOncHistoryDetail(@NonNull String oncHistoryDetailId, String realm) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ONC_HISTORY_DETAIL + QueryExtension.BY_ONC_HISTORY_DETAIL_ID)) {
-                stmt.setString(1, realm);
-                stmt.setString(2, oncHistoryDetailId);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        dbVals.resultValue = getOncHistoryDetail(rs);
-                    }
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Error getting oncHistoryDetails w/ id " + oncHistoryDetailId, results.resultException);
-        }
-
-        return (OncHistoryDetail) results.resultValue;
+    public static Map<String, List<OncHistoryDetail>> getOncHistoryDetailsByParticipantIds(@NonNull String realm,
+                                                                                           List<String> participantIds) {
+        String queryAddition = " AND p.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
+        return getOncHistoryDetails(realm, queryAddition);
     }
 
     public static String createNewOncHistoryDetail(@NonNull String medicalRecordId, @NonNull String changedBy) {

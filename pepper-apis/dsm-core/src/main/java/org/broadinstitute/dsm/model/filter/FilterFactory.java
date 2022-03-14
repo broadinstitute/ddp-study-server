@@ -38,7 +38,7 @@ public class FilterFactory {
                         } else if (StringUtils.isNotBlank(queryParams.get(RequestParameter.FILTERS).value())) {
                             filterable = new SavedFilterParticipantList();
                         } else {
-                            filterable = new EmptyFilterParticipantList();
+                            filterable = new ManualFilterParticipantList(jsonBody); //no empty filter because of pre-filter
                         }
                         break;
                     case BaseFilter.TISSUE_LIST_PARENT:
