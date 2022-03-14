@@ -224,7 +224,11 @@ public abstract class Question<T extends Answer> implements Renderable {
     }
 
     protected boolean requiredRulesPass(List<T> answerValues) {
-        Optional<Rule> res = validations.stream().filter(rule -> rule.getRuleType().equals(RuleType.REQUIRED)).findFirst();
+        if (validations == null) {
+            return true;
+        }
+
+        Optional<Rule> res = validations.stream().filter(rule -> RuleType.REQUIRED.equals(rule.getRuleType())).findFirst();
         if (res.isPresent()) {
             RequiredRule<T> required = (RequiredRule<T>) res.get();
             if (answerValues.isEmpty()) {
