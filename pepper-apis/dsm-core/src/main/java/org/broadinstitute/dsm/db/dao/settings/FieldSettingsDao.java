@@ -69,8 +69,13 @@ public class FieldSettingsDao implements Dao<FieldSettingsDto> {
     private static final String SQL_DELETE_FIELD_SETTING_BY_ID = "DELETE FROM field_settings " +
             "WHERE field_settings_id = ?";
 
-    private static final String SQL_DISPLAY_TYPE_BY_INSTANCE_NAME_AND_COLUMN_NAME = GET_FIELD_SETTINGS +
-            " WHERE ddp_instance_id = (select ddp_instance_id from ddp_instance where instance_name = ?) AND column_name = ?";
+    private static final String SQL_BY_DDP_INSTANCE_ID = " WHERE ddp_instance_id = (select ddp_instance_id from ddp_instance where " +
+            "instance_name = ?) ";
+
+    private static final String SQL_DISPLAY_TYPE_BY_INSTANCE_NAME_AND_COLUMN_NAME = GET_FIELD_SETTINGS + SQL_BY_DDP_INSTANCE_ID +
+            " AND column_name = ?";
+
+    private static final String SQL_FIELD_SETTINGS_BY_INSTANCE_NAME = GET_FIELD_SETTINGS + SQL_BY_DDP_INSTANCE_ID;
 
     private static final String BY_INSTANCE_ID = " WHERE ddp_instance_id = ?";
     private static final String BY_FIELD_TYPE = " WHERE field_type = ?";
@@ -231,11 +236,12 @@ public class FieldSettingsDao implements Dao<FieldSettingsDto> {
                 .build();
     }
 
-    public List<FieldSettingsDto> getAllFieldSettings() {
+    public List<FieldSettingsDto> getFieldSettingsByInstanceName(String instanceName) {
         List<FieldSettingsDto> fieldSettingsByOptions = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult execResult = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(GET_FIELD_SETTINGS)) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_FIELD_SETTINGS_BY_INSTANCE_NAME)) {
+                stmt.setString(1, instanceName);
                 try(ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         fieldSettingsByOptions.add(
