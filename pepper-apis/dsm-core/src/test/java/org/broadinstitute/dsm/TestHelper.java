@@ -20,6 +20,7 @@ import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.DDPKitRequest;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
+import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.EventUtil;
 import org.broadinstitute.dsm.util.KitUtil;
@@ -122,6 +123,7 @@ public class TestHelper {
         if (cfg == null) {
             throw new NullPointerException("config");
         } else {
+            new DSMConfig(cfg);
             logger.info("Setup the DB...");
             boolean skipSsl = false;
             if (cfg.hasPath("portal.dbSkipSsl") && cfg.getBoolean("portal.dbSkipSsl")) {
@@ -262,10 +264,6 @@ public class TestHelper {
         addTestParticipant(TEST_DDP, "FAKE_DDP_PARTICIPANT_ID", "FAKE_DDP_PHYSICIAN_ID");
     }
 
-    public static void addTestMigratedParticipant() {
-        addTestParticipant(TEST_DDP_MIGRATED, "FAKE_MIGRATED_PARTICIPANT_ID", "FAKE_MIGRATED_PHYSICIAN_ID");
-    }
-
     public static void addTestParticipant(@NonNull String realm, @NonNull String fakeDDPParticipantId,
                                           @NonNull String fakeDDPInstitutionId) {
         DBTestUtil.createTestData(realm, fakeDDPParticipantId, fakeDDPInstitutionId);
@@ -274,6 +272,10 @@ public class TestHelper {
     public static void addTestParticipant(@NonNull String realm, @NonNull String fakeDDPParticipantId, @NonNull String shortId,
                                           @NonNull String fakeDDPInstitutionId, @NonNull String lastVersion, boolean addFakeData) {
         DBTestUtil.createTestData(realm, fakeDDPParticipantId, fakeDDPInstitutionId, lastVersion, addFakeData, shortId);
+    }
+
+    public static void addTestMigratedParticipant() {
+        addTestParticipant(TEST_DDP_MIGRATED, "FAKE_MIGRATED_PARTICIPANT_ID", "FAKE_MIGRATED_PHYSICIAN_ID");
     }
 
     public static void cleanupDB() {

@@ -310,13 +310,35 @@ public class MedicalRecord {
         return medicalRecord;
     }
 
-    public static Map<String, List<MedicalRecord>> getMedicalRecords(@NonNull String realm) {
-        return getMedicalRecords(realm, null);
+    public static MedicalRecord getMedicalRecord(@NonNull String realm, @NonNull String ddpParticipantId, @NonNull String medicalRecordId) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    SQL_SELECT_MEDICAL_RECORD + QueryExtension.BY_DDP_PARTICIPANT_ID + QueryExtension.BY_MEDICAL_RECORD_ID)) {
+                stmt.setString(1, realm);
+                stmt.setString(2, ddpParticipantId);
+                stmt.setString(3, medicalRecordId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        dbVals.resultValue = getMedicalRecord(rs);
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Error getting medicalRecord " + medicalRecordId + " of participant " + ddpParticipantId,
+                    results.resultException);
+        }
+
+        return (MedicalRecord) results.resultValue;
     }
 
-    public static Map<String, List<MedicalRecord>> getMedicalRecordsByParticipantIds(@NonNull String realm, List<String> participantIds) {
-        String queryAddition = " AND p.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
-        return getMedicalRecords(realm, queryAddition);
+    public static Map<String, List<MedicalRecord>> getMedicalRecords(@NonNull String realm) {
+        return getMedicalRecords(realm, null);
     }
 
     public static Map<String, List<MedicalRecord>> getMedicalRecords(@NonNull String realm, String queryAddition) {
@@ -352,31 +374,9 @@ public class MedicalRecord {
         return medicalRecords;
     }
 
-    public static MedicalRecord getMedicalRecord(@NonNull String realm, @NonNull String ddpParticipantId, @NonNull String medicalRecordId) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(
-                    SQL_SELECT_MEDICAL_RECORD + QueryExtension.BY_DDP_PARTICIPANT_ID + QueryExtension.BY_MEDICAL_RECORD_ID)) {
-                stmt.setString(1, realm);
-                stmt.setString(2, ddpParticipantId);
-                stmt.setString(3, medicalRecordId);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        dbVals.resultValue = getMedicalRecord(rs);
-                    }
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Error getting medicalRecord " + medicalRecordId + " of participant " + ddpParticipantId,
-                    results.resultException);
-        }
-
-        return (MedicalRecord) results.resultValue;
+    public static Map<String, List<MedicalRecord>> getMedicalRecordsByParticipantIds(@NonNull String realm, List<String> participantIds) {
+        String queryAddition = " AND p.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
+        return getMedicalRecords(realm, queryAddition);
     }
 
     public static MedicalInfo getDDPInstitutionInfo(@NonNull DDPInstance ddpInstance, @NonNull String ddpParticipantId) {
@@ -430,11 +430,7 @@ public class MedicalRecord {
 
     @JsonProperty("dynamicFields")
     public Map<String, Object> getDynamicFields() {
-        try {
-            return ObjectMapperSingleton.instance().readValue(additionalValuesJson, new TypeReference<Map<String, Object>>() {
-            });
-        } catch (IOException | NullPointerException e) {
-            return Map.of();
-        }
+        return ObjectMapperSingleton.readValue(additionalValuesJson, new TypeReference<Map<String, Object>>() {
+        });
     }
 }

@@ -196,9 +196,11 @@ public class DownloadPDF {
             String bucketName = gcpName + "_dsm_" + realm.toLowerCase();
             try {
                 String credentials = null;
-                String tmp = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS);
-                if (StringUtils.isNotBlank(tmp) && new File(tmp).exists()) {
-                    credentials = tmp;
+                if (DSMConfig.hasConfigPath(ApplicationConfigConstants.GOOGLE_CREDENTIALS)) {
+                    String tmp = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS);
+                    if (StringUtils.isNotBlank(tmp) && new File(tmp).exists()) {
+                        credentials = tmp;
+                    }
                 }
                 if (GoogleBucket.bucketExists(credentials, gcpName, bucketName)) {
                     long time = System.currentTimeMillis();

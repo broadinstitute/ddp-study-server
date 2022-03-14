@@ -67,6 +67,15 @@ public class FieldSettings {
         return isElasticExportWorkflowType(fieldSettings.getActions());
     }
 
+    boolean isElasticExportWorkflowType(String action) {
+        if (StringUtils.isBlank(action)) {
+            return false;
+        }
+        Value[] actions = new Gson().fromJson(action, Value[].class);
+        return Stream.of(actions)
+                .anyMatch(act -> ESObjectConstants.ELASTIC_EXPORT_WORKFLOWS.equals(act.getType()));
+    }
+
     boolean isDefaultValue(String possibleValuesJson) {
         if (StringUtils.isBlank(possibleValuesJson)) {
             return false;
@@ -80,15 +89,6 @@ public class FieldSettings {
             }
         }
         return isDefault;
-    }
-
-    boolean isElasticExportWorkflowType(String action) {
-        if (StringUtils.isBlank(action)) {
-            return false;
-        }
-        Value[] actions = new Gson().fromJson(action, Value[].class);
-        return Stream.of(actions)
-                .anyMatch(act -> ESObjectConstants.ELASTIC_EXPORT_WORKFLOWS.equals(act.getType()));
     }
 
     public boolean isColumnExportable(int instanceId, String columnName) {

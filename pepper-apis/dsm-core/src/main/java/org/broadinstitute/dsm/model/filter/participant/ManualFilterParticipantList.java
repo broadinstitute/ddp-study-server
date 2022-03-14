@@ -14,7 +14,7 @@ public class ManualFilterParticipantList extends BaseFilterParticipantList {
     @Override
     public ParticipantWrapperResult filter(QueryParamsMap queryParamsMap) {
         prepareNecessaryData(queryParamsMap);
-        return filterParticipantList(filters, PatchUtil.getColumnNameMap(), ddpInstance);
+        return filterParticipantList(filters, PatchUtil.getColumnNameMap());
     }
 
 }

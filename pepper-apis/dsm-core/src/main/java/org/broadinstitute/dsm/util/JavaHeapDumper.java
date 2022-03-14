@@ -11,6 +11,7 @@ import java.time.format.DateTimeFormatter;
 
 import com.sun.management.HotSpotDiagnosticMXBean;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.lddp.util.GoogleBucket;
 import org.slf4j.Logger;
@@ -45,9 +46,11 @@ public class JavaHeapDumper {
         }
         try (FileInputStream localDumpFileStream = new FileInputStream(localDumpFile)) {
             String credentials = null;
-            String tmp = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS);
-            if (StringUtils.isNotBlank(tmp) && new File(tmp).exists()) {
-                credentials = tmp;
+            if (DSMConfig.hasConfigPath(ApplicationConfigConstants.GOOGLE_CREDENTIALS)) {
+                String tmp = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS);
+                if (StringUtils.isNotBlank(tmp) && new File(tmp).exists()) {
+                    credentials = tmp;
+                }
             }
             GoogleBucket.uploadFile(credentials, gcpName, bucketName, DEFAULT_BUCKET_PATH + "/" + fileName,
                     localDumpFileStream);
