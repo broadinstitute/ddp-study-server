@@ -246,8 +246,7 @@ public class QuestionCreatorHelper {
                                     .createPicklistOption(ctx, picklistOptionDef, questionDef.getGroups())));
         }
 
-        List<PicklistOption> picklistOptions = CollectionMiscUtil.createListFromAnotherList(
-                questionDef.getPicklistOptions(),
+        List<PicklistOption> picklistOptions = CollectionMiscUtil.createListFromAnotherList(questionDef.getPicklistOptions(),
                 (picklistOptionDef) ->
                         ctx.getAIBuilderFactory().getPicklistCreatorHelper()
                                 .createPicklistOption(ctx, picklistOptionDef, questionDef.getGroups()));
