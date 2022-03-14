@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.db;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
-import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -146,7 +145,7 @@ public class Participant {
     }
 
     //For TissueList
-    public Participant(String participantId, String  ddpParticipantId, String  assigneeIdTissue){
+    public Participant(String participantId, String  ddpParticipantId, String  assigneeIdTissue) {
         this(Long.parseLong(participantId), ddpParticipantId, null, assigneeIdTissue, null,
                 null, null, null, null, null,
                 false, false, null, null);

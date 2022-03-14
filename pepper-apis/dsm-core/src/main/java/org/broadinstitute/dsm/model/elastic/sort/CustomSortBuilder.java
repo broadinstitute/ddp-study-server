@@ -29,7 +29,8 @@ public class CustomSortBuilder extends FieldSortBuilder {
 
     protected NestedSortBuilder getNestedSortBuilder() {
         NestedSortBuilder nestedSortBuilder = new NestedSortBuilder(sort.buildNestedPath());
-        if (isActivities() && !ElasticSearchUtil.QUESTIONS_ANSWER.equals(sort.handleOuterPropertySpecialCase()) && Objects.nonNull(sort.getActivityVersions())) {
+        if (isActivities() && !ElasticSearchUtil.QUESTIONS_ANSWER.equals(sort.handleOuterPropertySpecialCase())
+                && Objects.nonNull(sort.getActivityVersions())) {
             BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
             boolQueryBuilder.must(new TermQueryBuilder(
                     String.join(DBConstants.ALIAS_DELIMITER, sort.getAlias().getValue(), ElasticSearchUtil.ACTIVITY_CODE),
