@@ -14,6 +14,7 @@ ActivityAnswersPatchResponse:
         type: object
         required:
           - answers
+          - equations
           - blockVisibility
           - validationFailures
         properties:
@@ -32,6 +33,27 @@ ActivityAnswersPatchResponse:
                 answerGuid:
                   type: string
                   description: identifier for the answer
+          equations:
+            type: array
+            description: list of computed equations
+            items:
+              type: object
+              required:
+                - stableId
+                - value
+                - scale
+              properties:
+                stableId:
+                  type: string
+                  description: equation question identifier that the answer is for
+                value:
+                  type: integer
+                  description: the unscaled value
+                  format: int64
+                scale:
+                  type: integer
+                  description: the scale
+                  format: int64
           blockVisibility:
             type: array
             description: list of updated block visibilities
