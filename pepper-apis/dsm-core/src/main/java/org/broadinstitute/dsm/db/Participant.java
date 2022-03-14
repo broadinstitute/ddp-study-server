@@ -28,14 +28,6 @@ import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
-
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -146,11 +138,8 @@ public class Participant {
 
     @JsonProperty("dynamicFields")
     public Map<String, Object> getDynamicFields() {
-        try {
-            return ObjectMapperSingleton.instance().readValue(additionalValuesJson, new TypeReference<Map<String, Object>>() {});
-        } catch (IOException | NullPointerException e) {
-            return Map.of();
-        }
+        return ObjectMapperSingleton.readValue(additionalValuesJson, new TypeReference<Map<String, Object>>() {
+        });
     }
 
     @TableName (
@@ -159,13 +148,13 @@ public class Participant {
             primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
     @ColumnName (DBConstants.EXIT_DATE)
-    private long exitDate;
+    private Long exitDate;
 
     public Participant() {}
 
     public Participant(long participantId, String ddpParticipantId, String assigneeIdMr, String assigneeIdTissue, String instanceName,
                        String created, String reviewed, String crSent, String crReceived, String notes,
-                       boolean minimalMr, boolean abstractionReady, String additionalValuesJson, long exitDate) {
+                       boolean minimalMr, boolean abstractionReady, String additionalValuesJson, Long exitDate) {
         this.participantId = participantId;
         this.ddpParticipantId = ddpParticipantId;
         this.assigneeIdMr = assigneeIdMr;
@@ -186,7 +175,7 @@ public class Participant {
     public Participant(String participantId, String  ddpParticipantId, String  assigneeIdTissue){
         this(Long.parseLong(participantId), ddpParticipantId, null, assigneeIdTissue, null,
                 null, null, null, null, null,
-                false, false, null, 0);
+                false, false, null, null);
     }
 
     public static Participant getParticipant(@NonNull Map<String, Assignee> assignees, @NonNull String realm, @NonNull ResultSet rs)
