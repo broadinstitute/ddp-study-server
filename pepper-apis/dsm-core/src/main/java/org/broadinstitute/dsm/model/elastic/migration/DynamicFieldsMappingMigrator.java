@@ -41,7 +41,7 @@ public class DynamicFieldsMappingMigrator implements Exportable {
     @Override
     public void export() {
         FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
-        List<FieldSettingsDto> fieldSettingsByStudyName = fieldSettingsDao.getAllFieldSettings();
+        List<FieldSettingsDto> fieldSettingsByStudyName = fieldSettingsDao.getFieldSettingsByInstanceName(study);
         for (FieldSettingsDto fieldSettingsDto : fieldSettingsByStudyName) {
             parser.setDisplayType(fieldSettingsDto.getDisplayType());
             parser.setPossibleValuesJson(fieldSettingsDto.getPossibleValues());
