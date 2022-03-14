@@ -5,7 +5,6 @@ import java.util.Objects;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.RegexpQueryBuilder;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.index.query.TermsQueryBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
@@ -13,6 +12,8 @@ import org.elasticsearch.search.sort.NestedSortBuilder;
 
 public class CustomSortBuilder extends FieldSortBuilder {
 
+    public static final String UNMAPPED_TYPE_LONG = "long";
+    public static final String IF_MISSING_LAST = "_last";
     protected Sort sort;
 
     public CustomSortBuilder(Sort sort) {
@@ -21,8 +22,8 @@ public class CustomSortBuilder extends FieldSortBuilder {
         if (sort.isNestedSort())
             setNestedSort(getNestedSortBuilder());
         this.order(sort.getOrder());
-        this.unmappedType("long");
-        this.missing("_last");
+        this.unmappedType(UNMAPPED_TYPE_LONG);
+        this.missing(IF_MISSING_LAST);
     }
 
     protected NestedSortBuilder getNestedSortBuilder() {
