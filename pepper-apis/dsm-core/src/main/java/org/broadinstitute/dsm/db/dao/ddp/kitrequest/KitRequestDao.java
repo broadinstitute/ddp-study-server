@@ -32,7 +32,7 @@ public class KitRequestDao implements Dao<KitRequestDto> {
 
     public static final String SQL_GET_KIT_REQUEST_ID = "SELECT  ddp_kit_request_id  FROM  ddp_kit_request";
 
-    public static final String BY_BSP_COLLABORATOR_PARTICIPANT_ID = " WHERE bsp_collaborator_participant_id = ?";
+    public static final String BY_BSP_COLLABORATOR_SAMPLE_ID = " WHERE bsp_collaborator_sample_id = ?";
 
     public static final String SQL_GET_KIT_REQUEST =
             "SELECT  req.ddp_kit_request_id,   req.ddp_instance_id,  req.ddp_kit_request_id,  req.kit_type_id,"
@@ -72,7 +72,7 @@ public class KitRequestDao implements Dao<KitRequestDto> {
                                 new KitRequestDto(rs.getInt(DBConstants.DSM_KIT_REQUEST_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
                                         rs.getString(DBConstants.DDP_KIT_REQUEST_ID), rs.getInt(DBConstants.KIT_TYPE_ID),
                                         rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
-                                        rs.getString(DBConstants.BSP_COLLABORATOR_PARTICIPANT_ID),
+                                        rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID),
                                         rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.DSM_LABEL),
                                         rs.getString(DBConstants.CREATED_BY), rs.getLong(DBConstants.CREATED_DATE),
                                         rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), rs.getLong(DBConstants.EXTERNAL_ORDER_DATE),
@@ -102,7 +102,7 @@ public class KitRequestDao implements Dao<KitRequestDto> {
                         samplesDtosListES.add(new ESSamplesDto(ESSampleRs.getString(DBConstants.DDP_PARTICIPANT_ID),
                                 ESSampleRs.getString(DBConstants.DDP_KIT_REQUEST_ID), ESSampleRs.getString(DBConstants.KIT_TYPE_NAME),
                                 ESSampleRs.getString(DBConstants.KIT_LABEL),
-                                ESSampleRs.getString(DBConstants.BSP_COLLABORATOR_PARTICIPANT_ID),
+                                ESSampleRs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID),
                                 ESSampleRs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
                                 ESSampleRs.getString(DBConstants.DSM_TRACKING_TO), ESSampleRs.getString(DBConstants.DSM_TRACKING_RETURN),
                                 ESSampleRs.getString(DBConstants.CARRIER),
@@ -125,7 +125,7 @@ public class KitRequestDao implements Dao<KitRequestDto> {
     public String getKitRequestIdByBSPParticipantId(String bspParticipantId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_REQUEST_ID + BY_BSP_COLLABORATOR_PARTICIPANT_ID)) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_REQUEST_ID + BY_BSP_COLLABORATOR_SAMPLE_ID)) {
                 stmt.setString(1, bspParticipantId);
                 try (ResultSet idByBSPrs = stmt.executeQuery()) {
                     if (idByBSPrs.next()) {

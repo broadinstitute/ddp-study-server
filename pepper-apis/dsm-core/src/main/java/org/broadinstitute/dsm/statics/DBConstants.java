@@ -104,7 +104,7 @@ public class DBConstants {
     public static final String DSM_DEACTIVATED_DATE = "deactivated_date";
     public static final String COLLABORATOR_ID_PREFIX = "collaborator_id_prefix";
     public static final String COLLABORATOR_PARTICIPANT_ID = "bsp_collaborator_participant_id";
-    public static final String BSP_COLLABORATOR_PARTICIPANT_ID = "bsp_collaborator_sample_id";
+    public static final String BSP_COLLABORATOR_SAMPLE_ID = "bsp_collaborator_sample_id";
     public static final String DEACTIVATION_REASON = "deactivation_reason";
     public static final String TRACKING_ID = "tracking_id";
     public static final String TRACKING_RETURN_ID = "tracking_return_id";

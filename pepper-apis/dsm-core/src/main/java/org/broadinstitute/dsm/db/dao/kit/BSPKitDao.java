@@ -68,8 +68,8 @@ public class BSPKitDao implements Dao<BSPKitDto> {
                             numRows++;
                             dbVals.resultValue =
                                     new BSPKitDto(rs.getString(DBConstants.INSTANCE_NAME), rs.getString(DBConstants.BASE_URL),
-                                            rs.getString(DBConstants.BSP_COLLABORATOR_PARTICIPANT_ID),
-                                            rs.getString(DBConstants.BSP_COLLABORATOR_PARTICIPANT_ID),
+                                            rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID),
+                                            rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
                                             rs.getString(DBConstants.BSP_ORGANISM),
                                             rs.getString(DBConstants.BSP_COLLECTION),
                                             rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.BSP_MATERIAL_TYPE),
