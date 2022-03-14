@@ -15,7 +15,7 @@
 
     "welcome": {
       "subject": "Welcome! Your account has been created.",
-      "p1": "You have successfully created an account. If you haven’t already, the next step is to begin enrollment for a participant by clicking on the “Add Participant” button in Project Singular dashboard. Participants that can be enrolled include:",
+      "p1": "You have successfully created an account. If you haven’t already, the next step is to begin enrollment for a participant by clicking on an enrollment button on the Project Singular dashboard. Participants that can be enrolled include:",
       "list_li1": "Yourself, if:",
       "list_li1_li1": "You have a single ventricle defect; or",
       "list_li1_li2": "You have a biological child with a single ventricle defect; or",
