@@ -74,7 +74,7 @@ public class BSPKitDao implements Dao<BSPKitDto> {
                                             rs.getString(DBConstants.BSP_COLLECTION),
                                             rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.BSP_MATERIAL_TYPE),
                                             rs.getString(DBConstants.BSP_RECEPTABLE_TYPE),
-                                            rs.getBoolean(DBConstants.HAS_ROLE), rs.getString(DBConstants.PARTICIPANT_EXIT),
+                                            rs.getBoolean(DBConstants.HAS_ROLE), rs.getString(DBConstants.DDP_PARTICIPANT_EXIT_ID),
                                             rs.getString(DBConstants.DSM_DEACTIVATED_DATE),
                                             rs.getString(DBConstants.NOTIFICATION_RECIPIENT),
                                             rs.getString("kt." + DBConstants.KIT_TYPE_NAME));

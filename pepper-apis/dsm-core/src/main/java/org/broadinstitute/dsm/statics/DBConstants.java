@@ -306,6 +306,7 @@ public class DBConstants {
     public static final String MR_VIEW = "mr_view";
     public static final String KIT_SHIPPING = "kit_shipping";
     public static final String PARTICIPANT_EXIT = "participant_exit";
+    public static final String DDP_PARTICIPANT_EXIT_ID = "ddp_participant_exit_id";
     public static final String EMAIL_EVENT = "eel_view";
     public static final String SURVEY_CREATION = "survey_creation";
     public static final String PARTICIPANT_EVENT = "participant_event";
