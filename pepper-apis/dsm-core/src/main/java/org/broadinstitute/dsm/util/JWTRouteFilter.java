@@ -50,7 +50,7 @@ public class JWTRouteFilter {
      * Returns true if the request has the appropriate
      * jwt token, false o'wise
      */
-    public boolean isAccessAllowed(Request request, boolean isRSA) {
+    public boolean isAccessAllowed(Request request, boolean isRSA, String secret) {
         boolean isAccessAllowed = false;
         if (request != null) {
             String authHeader = request.headers(AUTHORIZATION);
@@ -68,7 +68,7 @@ public class JWTRouteFilter {
                                     DecodedJWT validToken = maybeValidToken.get();
                                     verifiedClaims = validToken.getClaims();
                                 } else {
-                                    Algorithm algorithm = Algorithm.HMAC256(bspSecret);
+                                    Algorithm algorithm = Algorithm.HMAC256(secret);
                                     JWTVerifier verifier = JWT.require(algorithm).build(); //Reusable verifier instance
                                     DecodedJWT jwt = verifier.verify(jwtToken);
                                     verifiedClaims = jwt.getClaims();

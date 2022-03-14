@@ -13,10 +13,12 @@ import com.auth0.json.mgmt.users.User;
 import com.auth0.jwk.JwkProvider;
 import com.auth0.jwk.JwkProviderBuilder;
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.RSAKeyProvider;
+import com.auth0.jwt.interfaces.Verification;
 import com.auth0.net.AuthRequest;
 import com.auth0.net.Request;
 import lombok.NonNull;
@@ -30,7 +32,7 @@ import org.slf4j.LoggerFactory;
 public class Auth0Util {
 
     private static final Logger logger = LoggerFactory.getLogger(Auth0Util.class);
-    private final String account;
+    private static String account;
     private final String ddpKey;
     private final String ddpSecret;
     private final String mgtApiUrl;
@@ -166,29 +168,9 @@ public class Auth0Util {
         return token;
     }
 
-    public static class Auth0UserInfo {
-
-        private String email;
-        private long expirationTime;
-
-        public Auth0UserInfo(@NonNull Object emailObj, @NonNull Object expirationTimeObj) {
-            this.email = emailObj.toString();
-            this.expirationTime = Long.parseLong(expirationTimeObj.toString());
-        }
-
-        public String getEmail() {
-            return email;
-        }
-
-        public long getTokenExpiration() {
-            return expirationTime;
-        }
-    }
-
-
     /**
      * Verifies the given token by checking the signature with the
-     * given jwk provider
+     * given jwk provider with RSA256 Algorithm
      *
      * @param jwt         the token to verify
      * @param auth0Domain auth0 domain
@@ -211,5 +193,62 @@ public class Auth0Util {
             }
         }
         return Optional.ofNullable(validToken);
+    }
+
+    /**
+     * Verifies the given token by checking the signature with the
+     * given jwk provider and deciding what algorithm to use
+     *
+     * @param jwt           the token to verify
+     * @param auth0Domain   auth0 domain
+     * @param secret        secret to be used for HMAC256 Algorithm
+     * @param signer        the valid issuer of token
+     * @param secretEncoded boolean, true if the secret is base64 encoded
+     * @return a verified, decoded JWT
+     */
+    public static Optional<DecodedJWT> verifyAuth0Token(String jwt, String auth0Domain, String secret, String signer,
+                                                        boolean secretEncoded) {
+        if (StringUtils.isBlank(secret)) {
+            return verifyAuth0Token(jwt, auth0Domain);
+        }
+        DecodedJWT validToken = null;
+        byte[] tempSecret = secret.getBytes();
+        if (secretEncoded) {
+            tempSecret = Base64.decodeBase64(tempSecret);
+        }
+        try {
+            Algorithm algorithm = Algorithm.HMAC256(tempSecret);
+            Verification verification = JWT.require(algorithm).withIssuer(account);
+            if (StringUtils.isNotBlank(signer)) {
+                verification.withIssuer(signer);
+            }
+            JWTVerifier verifier = verification.build();
+            validToken = verifier.verify(jwt);
+
+        } catch (Exception e) {
+            logger.warn("Could not verify token {}", jwt, e);
+        }
+
+        return Optional.ofNullable(validToken);
+    }
+
+    public static class Auth0UserInfo {
+
+        private String email;
+        private long expirationTime;
+
+
+        public Auth0UserInfo(@NonNull Object emailObj, @NonNull Object expirationTimeObj) {
+            this.email = emailObj.toString();
+            this.expirationTime = Long.parseLong(expirationTimeObj.toString());
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public long getTokenExpiration() {
+            return expirationTime;
+        }
     }
 }
