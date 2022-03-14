@@ -75,7 +75,7 @@ public final class PicklistQuestion extends Question<PicklistAnswer> {
             this.picklistLabelTemplateId = picklistLabelTemplateId;
         }
 
-        if (renderMode != PicklistRenderMode.REMOTE_AUTOCOMPLETE && picklistOptions.isEmpty()) {
+        if ((picklistOptions == null || picklistOptions.isEmpty()) && renderMode != PicklistRenderMode.REMOTE_AUTOCOMPLETE) {
             throw new IllegalArgumentException("options list needs to be non-empty");
         } else {
             this.picklistOptions.addAll(picklistOptions);
