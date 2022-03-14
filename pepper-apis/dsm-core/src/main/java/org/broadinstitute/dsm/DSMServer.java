@@ -178,11 +178,13 @@ public class DSMServer {
     private static final Logger logger = LoggerFactory.getLogger(DSMServer.class);
     private static final String API_ROOT = "/ddp/";
     private static final String UI_ROOT = "/ui/";
+    public static final String SIGNER = "org.broadinstitute.kdux";
     private static final String[] CORS_HTTP_METHODS = new String[] { "GET", "PUT", "POST", "OPTIONS", "PATCH" };
     private static final String[] CORS_HTTP_HEADERS =
             new String[] { "Content-Type", "Authorization", "X-Requested-With", "Content-Length", "Accept", "Origin", "" };
     private static final String VAULT_DOT_CONF = "vault.conf";
     private static final String GAE_DEPLOY_DIR = "appengine/deploy";
+    private static final String INFO_ROOT = "/info/";
     private static final Duration DEFAULT_BOOT_WAIT = Duration.ofMinutes(10);
     public static Provider provider;
     private static Map<String, JsonElement> ddpConfigurationLookup = new HashMap<>();
@@ -501,6 +503,11 @@ public class DSMServer {
 
         //BSP route
         String bspSecret = cfg.getString(ApplicationConfigConstants.BSP_SECRET);
+        boolean bspSecretEncoded =
+                cfg.hasPath(ApplicationConfigConstants.BSP_ENCODED) ? cfg.getBoolean(ApplicationConfigConstants.BSP_ENCODED) : false;
+        String ddpSecret = cfg.getString(ApplicationConfigConstants.DDP_SECRET);
+        boolean ddpSecretEncoded =
+                cfg.hasPath(ApplicationConfigConstants.DDP_ENCODED) ? cfg.getBoolean(ApplicationConfigConstants.DDP_ENCODED) : false;
         String auth0Domain = cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN);
         String auth0claimNameSpace = cfg.getString(ApplicationConfigConstants.AUTH0_CLAIM_NAMESPACE);
 
@@ -508,12 +515,26 @@ public class DSMServer {
             throw new RuntimeException("No secret supplied for BSP endpoint, system exiting.");
         }
 
+        if (StringUtils.isBlank(ddpSecret)) {
+            throw new RuntimeException("No secret supplied for DDP endpoint, system exiting.");
+        }
+
+        String appRoute = cfg.hasPath("portal.appRoute") ? cfg.getString("portal.appRoute") : null;
+
+        if (StringUtils.isBlank(appRoute)) {
+            throw new RuntimeException("appRoute was not configured correctly.");
+        }
+
         //  capture basic route info for logging
-        before("*", new LoggingFilter(auth0Domain, auth0claimNameSpace));
+        //        before("*", new LoggingFilter(auth0Domain, auth0claimNameSpace));
+        before(API_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, bspSecret, SIGNER, bspSecretEncoded));
+        before(UI_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, null, null, false));
+        before(INFO_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, ddpSecret, SIGNER, ddpSecretEncoded));
+        before(appRoute + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, ddpSecret, SIGNER, ddpSecretEncoded));
         afterAfter((req, res) -> MDC.clear());
 
         before(API_ROOT + "*", (req, res) -> {
-            if (!new JWTRouteFilter(auth0Domain, bspSecret).isAccessAllowed(req, false)) {
+            if (!new JWTRouteFilter(auth0Domain, bspSecret).isAccessAllowed(req, false, bspSecret)) {
                 halt(404);
             }
             res.header(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
@@ -534,11 +555,6 @@ public class DSMServer {
             get(API_ROOT + RoutePath.DUMMY_ENDPOINT, new CreateBSPDummyKitRoute(), new JsonTransformer());
         }
 
-        String appRoute = cfg.hasPath("portal.appRoute") ? cfg.getString("portal.appRoute") : null;
-
-        if (StringUtils.isBlank(appRoute)) {
-            throw new RuntimeException("appRoute was not configured correctly.");
-        }
 
         String auth0Signer = cfg.getString(ApplicationConfigConstants.AUTH0_SIGNER);
 
@@ -566,17 +582,18 @@ public class DSMServer {
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL), false,
                 cfg.getString(ApplicationConfigConstants.AUTH0_AUDIENCE));
 
-        before("/info/" + RoutePath.PARTICIPANT_STATUS_REQUEST, (req, res) -> {
+        before(INFO_ROOT + RoutePath.PARTICIPANT_STATUS_REQUEST, (req, res) -> {
             String tokenFromHeader = Utility.getTokenFromHeader(req);
             Optional<DecodedJWT> validToken =
-                    Auth0Util.verifyAuth0Token(tokenFromHeader, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN));
+                    Auth0Util.verifyAuth0Token(tokenFromHeader, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN), ddpSecret, SIGNER,
+                            ddpSecretEncoded);
             if (validToken.isEmpty()) {
                 logger.error(req.pathInfo() + " was called without valid token");
                 halt(401, SecurityUtil.ResultType.AUTHENTICATION_ERROR.toString());
             }
         });
 
-        get("/info/" + RoutePath.PARTICIPANT_STATUS_REQUEST, new ParticipantStatusRoute(), new JsonNullTransformer());
+        get(INFO_ROOT + RoutePath.PARTICIPANT_STATUS_REQUEST, new ParticipantStatusRoute(), new JsonNullTransformer());
 
 
         // requests from frontend
@@ -587,7 +604,7 @@ public class DSMServer {
 
                     boolean isTokenValid = false;
                     if (StringUtils.isNotBlank(tokenFromHeader)) {
-                        isTokenValid = new JWTRouteFilter(auth0Domain, bspSecret).isAccessAllowed(req, true);
+                        isTokenValid = new JWTRouteFilter(auth0Domain, bspSecret).isAccessAllowed(req, true, null);
                     }
                     if (!isTokenValid) {
                         halt(401, SecurityUtil.ResultType.AUTHENTICATION_ERROR.toString());
