@@ -114,7 +114,7 @@ import org.broadinstitute.ddp.route.GetMailAddressRoute;
 import org.broadinstitute.ddp.route.GetMailingListRoute;
 import org.broadinstitute.ddp.route.GetMedicalProviderListRoute;
 import org.broadinstitute.ddp.route.GetParticipantDefaultMailAddressRoute;
-import org.broadinstitute.ddp.route.GetOptionsForActivityInstanceQuestion;
+import org.broadinstitute.ddp.route.GetOptionsForActivityInstanceQuestionRoute;
 import org.broadinstitute.ddp.route.GetParticipantInfoRoute;
 import org.broadinstitute.ddp.route.GetParticipantMailAddressRoute;
 import org.broadinstitute.ddp.route.GetPdfRoute;
@@ -506,7 +506,7 @@ public class DataDonationPlatform {
                 responseSerializer
         );
         post(API.USER_ACTIVITY_UPLOADS, new CreateUserActivityUploadRoute(fileUploadService), responseSerializer);
-        get(API.USER_QUESTION_OPTIONS, new GetOptionsForActivityInstanceQuestion(i18nContentRenderer), responseSerializer);
+        get(API.USER_QUESTION_OPTIONS, new GetOptionsForActivityInstanceQuestionRoute(i18nContentRenderer), responseSerializer);
 
         // User study invitations
         get(API.USER_STUDY_INVITES, new ListUserStudyInvitationsRoute(), jsonSerializer);

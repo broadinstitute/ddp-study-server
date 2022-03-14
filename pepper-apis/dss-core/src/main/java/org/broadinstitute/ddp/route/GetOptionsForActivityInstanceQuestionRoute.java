@@ -29,13 +29,13 @@ import java.util.stream.Collectors;
 /**
  *  This route returns the list of suggestions for the supplied Picklist Option label
  */
-public class GetOptionsForActivityInstanceQuestion implements Route {
+public class GetOptionsForActivityInstanceQuestionRoute implements Route {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GetOptionsForActivityInstanceQuestion.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GetOptionsForActivityInstanceQuestionRoute.class);
     private static final int DEFAULT_LIMIT = 100;
     private final I18nContentRenderer renderer;
 
-    public GetOptionsForActivityInstanceQuestion(I18nContentRenderer renderer) {
+    public GetOptionsForActivityInstanceQuestionRoute(I18nContentRenderer renderer) {
         this.renderer = renderer;
     }
 
