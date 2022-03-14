@@ -122,17 +122,17 @@ public class KitRequestDao implements Dao<KitRequestDto> {
         return samplesDtosListES;
     }
 
-    public String getKitRequestIdByBSPParticipantId(String bspParticipantId) {
+    public String getKitRequestIdByBSPSampleId(String bspSampleId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_REQUEST_ID + BY_BSP_COLLABORATOR_SAMPLE_ID)) {
-                stmt.setString(1, bspParticipantId);
+                stmt.setString(1, bspSampleId);
                 try (ResultSet idByBSPrs = stmt.executeQuery()) {
                     if (idByBSPrs.next()) {
                         dbVals.resultValue = idByBSPrs.getString(DBConstants.DDP_KIT_REQUEST_ID);
                     }
                 } catch (SQLException e) {
-                    throw new RuntimeException("Error getting information for " + bspParticipantId, e);
+                    throw new RuntimeException("Error getting information for " + bspSampleId, e);
                 }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
@@ -141,7 +141,7 @@ public class KitRequestDao implements Dao<KitRequestDto> {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Couldn't get kit request id for " + bspParticipantId, results.resultException);
+            throw new RuntimeException("Couldn't get kit request id for " + bspSampleId, results.resultException);
         }
         return (String) results.resultValue;
     }

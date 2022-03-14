@@ -99,7 +99,7 @@ public class GPReceivedKit {
     }
 
     private static void writeSampleReceivedToES(DDPInstance ddpInstance, BSPKitDto bspKitInfo) {
-        String kitRequestId = new KitRequestDao().getKitRequestIdByBSPParticipantId(bspKitInfo.getBspSampleId());
+        String kitRequestId = new KitRequestDao().getKitRequestIdByBSPSampleId(bspKitInfo.getBspSampleId());
         Map<String, Object> nameValuesMap = new HashMap<>();
         ElasticSearchDataUtil.setCurrentStrictYearMonthDay(nameValuesMap, ESObjectConstants.RECEIVED);
         ElasticSearchUtil.writeSample(ddpInstance, kitRequestId, bspKitInfo.getDdpParticipantId(), ESObjectConstants.SAMPLES,
