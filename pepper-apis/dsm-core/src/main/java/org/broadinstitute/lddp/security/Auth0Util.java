@@ -218,7 +218,7 @@ public class Auth0Util {
         }
         try {
             Algorithm algorithm = Algorithm.HMAC256(tempSecret);
-            Verification verification = JWT.require(algorithm).withIssuer(account);
+            Verification verification = JWT.require(algorithm);
             if (StringUtils.isNotBlank(signer)) {
                 verification.withIssuer(signer);
             }

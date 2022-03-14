@@ -12,8 +12,12 @@ public enum Type {
     OPTIONS(StringUtils.EMPTY),
     CHECKBOX(StringUtils.EMPTY),
     TEXTAREA(StringUtils.EMPTY),
+    BOOLEAN(StringUtils.EMPTY),
     DATE(StringUtils.EMPTY),
+    DATE_SHORT(StringUtils.EMPTY),
     RADIO(StringUtils.EMPTY),
+    AGREEMENT(StringUtils.EMPTY),
+    COMPOSITE(StringUtils.EMPTY),
     ADDITIONALVALUE(ESObjectConstants.DYNAMIC_FIELDS),
     ACTIVITY(StringUtils.EMPTY),
     JSONARRAY(StringUtils.EMPTY);
@@ -24,4 +28,8 @@ public enum Type {
         this.value = value;
     }
 
+    public static Type of(String type) {
+        if (StringUtils.isBlank(type)) return TEXT;
+        return valueOf(type);
+    }
 }

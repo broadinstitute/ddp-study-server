@@ -106,6 +106,7 @@ public class DSMtasksSubscription {
         Optional<DDPInstanceDto> maybeDdpInstanceByInstanceName = new DDPInstanceDao().getDDPInstanceByInstanceName(study);
         maybeDdpInstanceByInstanceName.ifPresent(ddpInstanceDto -> {
             String index = ddpInstanceDto.getEsParticipantIndex();
+            logger.info("Starting migrating DSM data to ES for study: " + study + " with index: " + index);
             List<? extends Exportable> exportables = Arrays.asList(
                     //DynamicFieldsMappingMigrator should be first in the list to make sure that mapping will be exported for first
                     new DynamicFieldsMappingMigrator(index, study), new MedicalRecordMigrator(index, study),

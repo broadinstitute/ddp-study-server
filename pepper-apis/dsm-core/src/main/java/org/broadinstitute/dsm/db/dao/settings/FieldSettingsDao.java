@@ -36,8 +36,13 @@ public class FieldSettingsDao implements Dao<FieldSettingsDto> {
 
     private static final String SQL_DELETE_FIELD_SETTING_BY_ID = "DELETE FROM field_settings  WHERE field_settings_id = ?";
 
-    private static final String SQL_DISPLAY_TYPE_BY_INSTANCE_NAME_AND_COLUMN_NAME = GET_FIELD_SETTINGS
-            + " WHERE ddp_instance_id = (select ddp_instance_id from ddp_instance where instance_name = ?) AND column_name = ?";
+    private static final String SQL_BY_DDP_INSTANCE_ID = " WHERE ddp_instance_id = (select ddp_instance_id from ddp_instance where " +
+            "instance_name = ?) ";
+
+    private static final String SQL_DISPLAY_TYPE_BY_INSTANCE_NAME_AND_COLUMN_NAME = GET_FIELD_SETTINGS + SQL_BY_DDP_INSTANCE_ID +
+            " AND column_name = ?";
+
+    private static final String SQL_FIELD_SETTINGS_BY_INSTANCE_NAME = GET_FIELD_SETTINGS + SQL_BY_DDP_INSTANCE_ID;
 
     private static final String BY_INSTANCE_ID = " WHERE ddp_instance_id = ?";
     private static final String BY_FIELD_TYPE = " WHERE field_type = ?";
@@ -59,8 +64,7 @@ public class FieldSettingsDao implements Dao<FieldSettingsDto> {
     private static final String CHANGED_BY = "changed_by";
 
     // for test purposes only
-    protected FieldSettingsDao() {
-    }
+    protected FieldSettingsDao() {}
 
     public static FieldSettingsDao of() {
         if (fieldSettingsDao == null) {
@@ -174,28 +178,40 @@ public class FieldSettingsDao implements Dao<FieldSettingsDto> {
             return execResult;
         });
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting fieldSettingsByOptions for instance id: " + instanceId, results.resultException);
+            throw new RuntimeException("Error getting fieldSettingsByOptions for instance id: "
+                    + instanceId, results.resultException);
         }
         return fieldSettingsByOptions;
     }
 
     private FieldSettingsDto buildFieldSettingsFromResultSet(ResultSet rs) throws SQLException {
-        return new FieldSettingsDto.Builder(rs.getInt(DDP_INSTANCE_ID)).withFieldSettingsId(rs.getInt(FIELD_SETTINGS_ID))
-                .withFieldType(rs.getString(FIELD_TYPE)).withColumnName(rs.getString(COLUMN_NAME))
-                .withColumnDisplay(rs.getString(COLUMN_DISPLAY)).withDisplayType(rs.getString(DISPLAY_TYPE))
-                .withPossibleValues(rs.getString(POSSIBLE_VALUES)).withActions(rs.getString(ACTIONS)).withReadOnly(rs.getBoolean(READONLY))
-                .withOrderNumber(rs.getInt(ORDER_NUMBER)).withDeleted(rs.getBoolean(DELETED)).withLastChanged(rs.getLong(LAST_CHANGED))
-                .withChangedBy(rs.getString(CHANGED_BY)).build();
+        return new FieldSettingsDto.Builder(rs.getInt(DDP_INSTANCE_ID))
+                .withFieldSettingsId(rs.getInt(FIELD_SETTINGS_ID))
+                .withFieldType(rs.getString(FIELD_TYPE))
+                .withColumnName(rs.getString(COLUMN_NAME))
+                .withColumnDisplay(rs.getString(COLUMN_DISPLAY))
+                .withDisplayType(rs.getString(DISPLAY_TYPE))
+                .withPossibleValues(rs.getString(POSSIBLE_VALUES))
+                .withActions(rs.getString(ACTIONS))
+                .withReadOnly(rs.getBoolean(READONLY))
+                .withOrderNumber(rs.getInt(ORDER_NUMBER))
+                .withDeleted(rs.getBoolean(DELETED))
+                .withLastChanged(rs.getLong(LAST_CHANGED))
+                .withChangedBy(rs.getString(CHANGED_BY))
+                .build();
     }
 
-    public List<FieldSettingsDto> getAllFieldSettings() {
+    public List<FieldSettingsDto> getFieldSettingsByInstanceName(String instanceName) {
         List<FieldSettingsDto> fieldSettingsByOptions = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult execResult = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(GET_FIELD_SETTINGS)) {
-                try (ResultSet rs = stmt.executeQuery()) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_FIELD_SETTINGS_BY_INSTANCE_NAME)) {
+                stmt.setString(1, instanceName);
+                try(ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        fieldSettingsByOptions.add(buildFieldSettingsFromResultSet(rs));
+                        fieldSettingsByOptions.add(
+                                buildFieldSettingsFromResultSet(rs)
+                        );
                     }
                 }
             } catch (SQLException ex) {
@@ -217,7 +233,9 @@ public class FieldSettingsDao implements Dao<FieldSettingsDto> {
                 stmt.setInt(1, instanceId);
                 try (ResultSet fieldSettingsByInstanceIdRs = stmt.executeQuery()) {
                     while (fieldSettingsByInstanceIdRs.next()) {
-                        fieldSettingsByOptions.add(buildFieldSettingsFromResultSet(fieldSettingsByInstanceIdRs));
+                        fieldSettingsByOptions.add(
+                                buildFieldSettingsFromResultSet(fieldSettingsByInstanceIdRs)
+                        );
                     }
                 }
             } catch (SQLException ex) {
@@ -275,9 +293,10 @@ public class FieldSettingsDao implements Dao<FieldSettingsDto> {
         return Optional.ofNullable((FieldSettingsDto) results.resultValue);
     }
 
-    public List<FieldSettingsDto> getFieldSettingsByInstanceIdAndColumns(int instanceId, List<String> columns) {
-        String sql = GET_FIELD_SETTINGS + BY_INSTANCE_ID + AND_BY_COLUMN_NAMES.replace("?",
-                columns.stream().collect(Collectors.joining("','", "'", "'")));
+    public List<FieldSettingsDto>  getFieldSettingsByInstanceIdAndColumns(int instanceId, List<String> columns) {
+        String sql = GET_FIELD_SETTINGS
+                + BY_INSTANCE_ID
+                + AND_BY_COLUMN_NAMES.replace("?", columns.stream().collect(Collectors.joining("','","'", "'")));
         List<FieldSettingsDto> fieldSettingsByColumnNames = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult execResult = new SimpleResult();

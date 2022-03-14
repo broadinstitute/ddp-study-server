@@ -111,25 +111,24 @@ public class Participant {
 
     @JsonProperty("dynamicFields")
     public Map<String, Object> getDynamicFields() {
-        try {
-            return ObjectMapperSingleton.instance().readValue(additionalValuesJson, new TypeReference<Map<String, Object>>() {
-            });
-        } catch (IOException | NullPointerException e) {
-            return Map.of();
-        }
+        return ObjectMapperSingleton.readValue(additionalValuesJson, new TypeReference<Map<String, Object>>() {
+        });
     }
 
-    @TableName(name = DBConstants.DDP_PARTICIPANT_EXIT, alias = DBConstants.DDP_PARTICIPANT_EXIT_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
-    @ColumnName(DBConstants.EXIT_DATE)
-    private long exitDate;
+    @TableName (
+            name = DBConstants.DDP_PARTICIPANT_EXIT,
+            alias = DBConstants.DDP_PARTICIPANT_EXIT_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID,
+            columnPrefix = "")
+    @ColumnName (DBConstants.EXIT_DATE)
+    private Long exitDate;
 
     public Participant() {
     }
 
     public Participant(long participantId, String ddpParticipantId, String assigneeIdMr, String assigneeIdTissue, String instanceName,
-                       String created, String reviewed, String crSent, String crReceived, String notes, boolean minimalMr,
-                       boolean abstractionReady, String additionalValuesJson, long exitDate) {
+                       String created, String reviewed, String crSent, String crReceived, String notes,
+                       boolean minimalMr, boolean abstractionReady, String additionalValuesJson, Long exitDate) {
         this.participantId = participantId;
         this.ddpParticipantId = ddpParticipantId;
         this.assigneeIdMr = assigneeIdMr;
@@ -147,12 +146,13 @@ public class Participant {
     }
 
     //For TissueList
-    public Participant(String participantId, String ddpParticipantId, String assigneeIdTissue) {
-        this(Long.parseLong(participantId), ddpParticipantId, null, assigneeIdTissue, null, null, null, null, null, null, false, false,
-                null, 0);
+    public Participant(String participantId, String  ddpParticipantId, String  assigneeIdTissue){
+        this(Long.parseLong(participantId), ddpParticipantId, null, assigneeIdTissue, null,
+                null, null, null, null, null,
+                false, false, null, null);
     }
 
-    private static Participant getParticipant(@NonNull Map<String, Assignee> assignees, @NonNull String realm, @NonNull ResultSet rs)
+    public static Participant getParticipant(@NonNull Map<String, Assignee> assignees, @NonNull String realm, @NonNull ResultSet rs)
             throws SQLException {
         String assigneeMR = null;
         String assigneeTissue = null;

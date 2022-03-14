@@ -12,6 +12,6 @@ public class JsonArrayTypeSort extends Sort {
 
     @Override
     protected String getKeywordIfText(Type innerType) {
-        return super.getKeywordIfText(Type.valueOf(sortBy.getAdditionalType()));
+        return super.getKeywordIfText(Type.of(sortBy.getAdditionalType()));
     }
 }
