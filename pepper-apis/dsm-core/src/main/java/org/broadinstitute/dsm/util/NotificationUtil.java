@@ -208,7 +208,7 @@ public class NotificationUtil {
             JsonObject emailClientSettings = new JsonObject();
             emailClientSettings.addProperty("sendGridFrom", from);
             emailClientSettings.addProperty("sendGridFromName", name);
-            abstractionEmailClient.configure(emailKey, new Gson().fromJson(emailClientSettings.toString(), JsonObject.class), "", "");
+            abstractionEmailClient.configure(emailKey, new Gson().fromJson(emailClientSettings.toString(), JsonObject.class));
             abstractionEmailClient.sendSingleEmail(sendGridTemplate, emailRecipient);
         } catch (Exception ex) {
             logger.error("An error occurred trying to send abstraction expert question.", ex);
@@ -224,7 +224,7 @@ public class NotificationUtil {
 
         try {
             EmailClient emailClient = (EmailClient) Class.forName(emailClassName).newInstance();
-            emailClient.configure(emailKey, emailClientSettings, "", "");
+            emailClient.configure(emailKey, emailClientSettings);
 
             Map<String, ArrayList<EmailRecord>> records = EmailRecord.getRecordsForProcessing();
 

@@ -31,7 +31,7 @@ public class SendGridClient implements EmailClient {
     private String sendGridKey;
     private JsonObject settings = null;
 
-    public void configure(String sendGridKey, JsonObject settings, @NonNull String portalUrl, @NonNull String environment) {
+    public void configure(String sendGridKey, JsonObject settings) {
         this.sendGridKey = sendGridKey;
         this.settings = settings;
     }
