@@ -11,9 +11,9 @@ import static org.junit.Assert.assertNotNull;
 
 public class EquationParserTest {
     private static final String EXPRESSION = "3.14 + 2.71 * (x + y ^ 2)";
-    private static final String TREE = "(expression (expression (atom (number 3.14))) + " +
-            "(expression (expression (atom (number 2.71))) * (expression ( (expression (expression (atom (variable x))) + " +
-            "(expression (expression (atom (variable y))) ^ (expression (atom (number 2))))) ))))";
+    private static final String TREE = "(expression (expression (atom (number 3.14))) + "
+            + "(expression (expression (atom (number 2.71))) * (expression ( (expression (expression (atom (variable x))) + "
+            + "(expression (expression (atom (variable y))) ^ (expression (atom (number 2))))) ))))";
 
     @Test
     public void testParsing_tree() {
