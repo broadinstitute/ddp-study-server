@@ -44,10 +44,10 @@ ActivityAnswersPatchResponse:
               properties:
                 stableId:
                   type: string
-                  description: equation question identifier that the answer is for
+                  description: equation question identifier that the answer is for (in case of composite, this is a child question id)
                 values:
                   type: array
-                  description: the real computed values
+                  description: the real computed values (in case of composite can have multiple values)
                   items:
                     $ref: 'schemas.yml#/DecimalNumber'
           blockVisibility:
