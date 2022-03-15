@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 public class StringSuggestionTypeaheadComparator implements Comparator<String> {
 
     private final String searchTerm;
+    private static final String MATCH_REGEX = "\\b(\\))*";
 
     /**
      * Create a new one, using the given search term
@@ -38,7 +39,7 @@ public class StringSuggestionTypeaheadComparator implements Comparator<String> {
             return 1;
         } else {
             // if the search is not at the start of the term, prefer hits that are at start of words
-            Pattern startOfWordMatch = Pattern.compile("\\b(\\))*" + Pattern.quote(searchTerm));
+            Pattern startOfWordMatch = Pattern.compile(MATCH_REGEX + Pattern.quote(searchTerm));
             boolean string1MatchesAtWordStart = startOfWordMatch.matcher(string1Name).find();
             boolean string2MatchesAtWordStart = startOfWordMatch.matcher(string2Name).find();
 
