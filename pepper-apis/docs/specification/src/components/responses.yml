@@ -40,20 +40,16 @@ ActivityAnswersPatchResponse:
               type: object
               required:
                 - stableId
-                - value
-                - scale
+                - values
               properties:
                 stableId:
                   type: string
                   description: equation question identifier that the answer is for
-                value:
-                  type: integer
-                  description: the unscaled value
-                  format: int64
-                scale:
-                  type: integer
-                  description: the scale
-                  format: int64
+                values:
+                  type: array
+                  description: the real computed values
+                  items:
+                    $ref: 'schemas.yml#/DecimalNumber'
           blockVisibility:
             type: array
             description: list of updated block visibilities
