@@ -225,7 +225,7 @@ public class KitRequestShipping extends KitRequest {
 
     private String collaboratorParticipantId;
 
-    @ColumnName(DBConstants.BSP_COLLABORATOR_PARTICIPANT_ID)
+    @ColumnName (DBConstants.BSP_COLLABORATOR_SAMPLE_ID)
     private String bspCollaboratorSampleId;
     private String easypostAddressId;
     private String realm;
@@ -360,7 +360,7 @@ public class KitRequestShipping extends KitRequest {
         }
         KitRequestShipping kitRequestShipping =
                 new KitRequestShipping(rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
-                        rs.getString(DBConstants.BSP_COLLABORATOR_PARTICIPANT_ID), rs.getString(DBConstants.DSM_LABEL),
+                        rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID), rs.getString(DBConstants.DSM_LABEL),
                         rs.getString(DBConstants.INSTANCE_NAME), rs.getString(DBConstants.KIT_TYPE_NAME),
                         rs.getLong(DBConstants.DSM_KIT_REQUEST_ID), rs.getLong(DBConstants.DSM_KIT_ID),
                         rs.getString(DBConstants.DSM_LABEL_TO), rs.getString(DBConstants.DSM_LABEL_RETURN),

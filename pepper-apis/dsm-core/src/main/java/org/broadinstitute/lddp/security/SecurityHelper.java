@@ -18,6 +18,7 @@ public class SecurityHelper {
     public static final String CLAIM_MONITORINGSYSTEM = "monitor";
     public static final String MONITORING_SYSTEM = "google";
     public static final String SIGNER = "org.broadinstitute.kdux";
+    public static final String BSP_SIGNER = "https://dsm-dev.datadonationplatform.org/ddp/";
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String BEARER = "Bearer ";
     public static final String BASIC = "Basic ";
@@ -54,6 +55,25 @@ public class SecurityHelper {
 
             JWTCreator.Builder builder = JWT.create();
             builder.withIssuer(SIGNER);
+            builder.withExpiresAt(dateSoon);
+            if (claims != null) {
+                claims.forEach((key, value) -> {
+                    builder.withClaim(key, value);
+                });
+            }
+            Algorithm algorithm = Algorithm.HMAC256(secret);
+            return builder.sign(algorithm);
+        } catch (Exception e) {
+            throw new RuntimeException("Couldn't create token " + e);
+        }
+    }
+
+    public static String createGpToken(@NonNull String secret, long invalidAfter, @NonNull Map<String, String> claims) {
+        try {
+            Date dateSoon = new Date(invalidAfter * 1000);
+
+            JWTCreator.Builder builder = JWT.create();
+            builder.withIssuer(BSP_SIGNER);
             builder.withExpiresAt(dateSoon);
             if (claims != null) {
                 claims.forEach((key, value) -> {
