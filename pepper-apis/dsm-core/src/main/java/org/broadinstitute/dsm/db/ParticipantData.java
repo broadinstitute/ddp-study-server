@@ -148,11 +148,7 @@ public class ParticipantData {
 
     @JsonProperty("dynamicFields")
     public Map<String, Object> getDynamicFields() {
-        try {
-            return ObjectMapperSingleton.instance().readValue(data, new TypeReference<Map<String, Object>>() {
-            });
-        } catch (IOException | NullPointerException e) {
-            return Map.of();
-        }
+        return ObjectMapperSingleton.readValue(data, new TypeReference<Map<String, Object>>() {
+        });
     }
 }
