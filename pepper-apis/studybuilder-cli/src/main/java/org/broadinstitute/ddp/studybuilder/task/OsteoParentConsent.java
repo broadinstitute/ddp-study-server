@@ -3,8 +3,20 @@ package org.broadinstitute.ddp.studybuilder.task;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.broadinstitute.ddp.db.dao.*;
-import org.broadinstitute.ddp.db.dto.*;
+import org.apache.commons.collections.CollectionUtils;
+import org.broadinstitute.ddp.db.dao.ActivityDao;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
+import org.broadinstitute.ddp.db.dao.JdbiTemplateVariable;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.SectionBlockDao;
+import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
+import org.broadinstitute.ddp.db.dto.BlockContentDto;
+import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.db.dto.RevisionDto;
+import org.broadinstitute.ddp.db.dao.JdbiVariableSubstitution;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -43,11 +55,11 @@ public class OsteoParentConsent implements CustomTask {
     private static final String ORDER = "order";
     private static final String ACTIVITY_GUID = "CONSENT";
     private static final String NEW_BLOCKS = "new-blocks";
+    private static final String NEW_NESTED_BLOCKS = "new-nested-blocks";
     private static final String SECTION_ORDER = "section_order";
     private static final String BLOCK_UPDATES = "block-updates";
-    private static final String DELETE_BLOCKS = "delete-blocks";
     private static final String TRANSLATION_UPDATES = "translation-updates";
-    private static final String TRANSLATION_KEY = "variableName";
+    private static final String TRANSLATION_OLD = "oldValue";
     private static final String TRANSLATION_NEW = "newValue";
 
     private Path cfgPath;
@@ -100,21 +112,29 @@ public class OsteoParentConsent implements CustomTask {
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
         ActivityVersionDto version = jdbiVersion.getActiveVersion(activityId).get();
 
-        updateVariables(handle);
+        updateVariables(activityId, handle);
         updateTemplates(handle, meta, version);
+        addNestedBlocks(activityId, handle, meta, version);
         addBlocks(activityId, handle, meta, version);
     }
 
-    private void updateVariables(Handle handle) {
+    private void updateVariables(long activityId, Handle handle) {
         List<? extends Config> configList = dataCfg.getConfigList(TRANSLATION_UPDATES);
         for (Config config : configList) {
-            updateVariableTranslation(config.getString(TRANSLATION_KEY), config.getString(TRANSLATION_NEW), handle);
+            updateVariableByText(activityId, config.getString(TRANSLATION_OLD), config.getString(TRANSLATION_NEW), handle);
         }
     }
 
-    private void updateVariableTranslation(String varName, String newTemplateText, Handle handle) {
-        long tmplVarId = handle.attach(SqlHelper.class).findTemplateVariableIdByVariableName(varName);
-        handle.attach(SqlHelper.class).updateVariableText(tmplVarId, newTemplateText);
+    private void updateVariableByText(long activityId, String before, String after, Handle handle) {
+        String oldValue = String.format("%s%s%s", "%", before, "%");
+        List<Long> varIds = handle.attach(SqlHelper.class).findVariableIdsByText(activityId, oldValue);
+        if (CollectionUtils.isEmpty(varIds)) {
+            throw new DDPException("Could not find any variable with text " + before);
+        }
+        varIds.forEach(varId -> {
+            handle.attach(SqlHelper.class).updateVarValueByTemplateVarId(varId, after);
+            LOG.info("Template variable {} text was updated from \"{}\" to \"{}\"", varId, before, after);
+        });
     }
 
     private void updateTemplates(Handle handle, RevisionMetadata meta, ActivityVersionDto version) {
@@ -129,8 +149,6 @@ public class OsteoParentConsent implements CustomTask {
         ContentBlockDef contentBlockDef = gson.fromJson(ConfigUtil.toJson(config), ContentBlockDef.class);
         Template newBodyTemplate = contentBlockDef.getBodyTemplate();
         String oldBlockTemplateText = conf.getString(OLD_TEMPLATE_KEY);
-
-
 
         String templateSearchParam = String.format("%s%s%s", "%", oldBlockTemplateText, "%");
         BlockContentDto contentBlock = handle.attach(SqlHelper.class)
@@ -154,14 +172,38 @@ public class OsteoParentConsent implements CustomTask {
         }
     }
 
-    private void addBlocks(long activityId, Handle handle, RevisionMetadata meta, ActivityVersionDto version) {
+    private void addBlocks(long activityId, Handle handle, RevisionMetadata meta, ActivityVersionDto version2) {
         List<? extends Config> configList = dataCfg.getConfigList(NEW_BLOCKS);
         for (Config config : configList) {
-            addNewBlock(activityId, config, handle, meta, version);
+            addNewBlock(activityId, config, handle, meta, version2);
         }
     }
 
     private void addNewBlock(long activityId, Config config,
+                             Handle handle, RevisionMetadata meta, ActivityVersionDto version2) {
+        Config blockConfig = config.getConfig(BLOCK_KEY);
+        int order = config.getInt(ORDER);
+        int sectionOrder = config.getInt(SECTION_ORDER);
+        ActivityDto activityDto = handle.attach(JdbiActivity.class)
+                .findActivityByStudyGuidAndCode(STUDY, ACTIVITY_GUID).get();
+        FormActivityDef currentDef = (FormActivityDef) handle.attach(ActivityDao.class).findDefByDtoAndVersion(activityDto, version2);
+        FormSectionDef currentSectionDef = currentDef.getSections().get(sectionOrder);
+        FormBlockDef blockDef = gson.fromJson(ConfigUtil.toJson(blockConfig), FormBlockDef.class);
+
+        SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
+        RevisionDto revDto = RevisionDto.fromStartMetadata(version2.getRevId(), meta);
+        sectionBlockDao.addBlock(activityId, currentSectionDef.getSectionId(),
+                order, blockDef, revDto);
+    }
+
+    private void addNestedBlocks(long activityId, Handle handle, RevisionMetadata meta, ActivityVersionDto version) {
+        List<? extends Config> configList = dataCfg.getConfigList(NEW_NESTED_BLOCKS);
+        for (Config config : configList) {
+            addNewNestedBlock(activityId, config, handle, meta, version);
+        }
+    }
+
+    private void addNewNestedBlock(long activityId, Config config,
                              Handle handle, RevisionMetadata meta, ActivityVersionDto version) {
         Config blockConfig = config.getConfig(BLOCK_KEY);
         int sectionOrder = config.getInt(SECTION_ORDER);
@@ -203,10 +245,6 @@ public class OsteoParentConsent implements CustomTask {
         @RegisterConstructorMapper(BlockContentDto.class)
         BlockContentDto findContentBlockByBodyText(@Bind("activityId") long activityId, @Bind("text") String bodyTemplateText);
 
-        @SqlQuery("select template_variable_id from template_variable where variable_name = :variable_name"
-                + " order by template_variable_id desc")
-        long findTemplateVariableIdByVariableName(@Bind("variable_name") String variableName);
-
         @SqlUpdate("update template set template_text = :text where template_id = :id")
         int _updateTemplateTextByTemplateId(@Bind("id") long templateId, @Bind("text") String templateText);
 
@@ -218,20 +256,15 @@ public class OsteoParentConsent implements CustomTask {
             }
         }
 
-        @SqlUpdate("update i18n_template_substitution set substitution_value = :text "
-                + "where template_variable_id = :id")
-        int _updateVariableByTemplateVariableId(@Bind("id") long id, @Bind("text") String updateText);
+        @SqlQuery("select tv.template_variable_id from template_variable tv"
+                + " join i18n_template_substitution ts on ts.template_variable_id = tv.template_variable_id"
+                + " where ts.substitution_value like :text")
+        List<Long> findVariableIdsByText(@Bind("activityId") long activityId,
+                                         @Bind("text") String text);
 
-        default void updateVariableText(long id, String text) {
-            int numUpdated = _updateVariableByTemplateVariableId(id, text);
-            if (numUpdated != 1) {
-                throw new DDPException("Expected to update 1 template text for templateId="
-                        + id + " but updated " + numUpdated);
-            }
-        }
-
-        @SqlUpdate("delete from form_section__block where block_id = :blockId")
-        int _deleteSectionBlockMembershipByBlockId(@Bind("blockId") long blockId);
+        // For single language only
+        @SqlUpdate("update i18n_template_substitution set substitution_value = :value where template_variable_id = :id")
+        int updateVarValueByTemplateVarId(@Bind("id") long templateVarId, @Bind("value") String value);
     }
 
 }
