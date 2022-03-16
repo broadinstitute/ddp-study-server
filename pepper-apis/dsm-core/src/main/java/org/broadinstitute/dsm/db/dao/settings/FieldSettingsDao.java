@@ -17,24 +17,71 @@ import org.broadinstitute.lddp.db.SimpleResult;
 
 public class FieldSettingsDao implements Dao<FieldSettingsDto> {
 
-    private static final String SQL_OPTIONS_AND_RADIOS_BY_INSTANCE_ID =
-            "SELECT field_settings_id, ddp_instance_id, field_type, column_name, column_display, display_type,"
-                    + "possible_values, actions, readonly, order_number, deleted, last_changed, changed_by"
-                    + " FROM field_settings WHERE ddp_instance_id = ? and (display_type = 'OPTIONS' or display_type = 'RADIO') ";
-    private static final String GET_FIELD_SETTINGS =
-            "SELECT  field_settings_id, ddp_instance_id, field_type, column_name, column_display, display_type,"
-                    + "possible_values, actions, readonly, order_number, deleted, last_changed, changed_by"
-                    + " FROM field_settings";
-    private static final String SQL_INSERT_FIELD_SETTING =
-            "INSERT INTO field_settings SET  ddp_instance_id = ?,  field_type = ?,  column_name = ?,  column_display = ?, "
-                    + "display_type = ?,  possible_values = ?,  actions = ?,  order_number = ?,  deleted = ?, "
-                    + "last_changed = ?,  changed_by = ?,  readonly = ?,  max_length = ?";
-    private static final String SQL_DELETE_FIELD_SETTING_BY_ID = "DELETE FROM field_settings  WHERE field_settings_id = ?";
-    private static final String SQL_DISPLAY_TYPE_BY_INSTANCE_NAME_AND_COLUMN_NAME = GET_FIELD_SETTINGS
-            + " WHERE ddp_instance_id = (select ddp_instance_id from ddp_instance where instance_name = ?) AND column_name = ?";
+    private static FieldSettingsDao fieldSettingsDao;
+
+    private static final String SQL_OPTIONS_AND_RADIOS_BY_INSTANCE_ID = "SELECT " +
+            "field_settings_id," +
+            "ddp_instance_id," +
+            "field_type," +
+            "column_name," +
+            "column_display," +
+            "display_type," +
+            "possible_values," +
+            "actions," +
+            "readonly," +
+            "order_number," +
+            "deleted," +
+            "last_changed," +
+            "changed_by" +
+            " FROM field_settings WHERE ddp_instance_id = ? and (display_type = 'OPTIONS' or display_type = 'RADIO') ";
+
+    private static final String GET_FIELD_SETTINGS = "SELECT " +
+            "field_settings_id," +
+            "ddp_instance_id," +
+            "field_type," +
+            "column_name," +
+            "column_display," +
+            "display_type," +
+            "possible_values," +
+            "actions," +
+            "readonly," +
+            "order_number," +
+            "deleted," +
+            "last_changed," +
+            "changed_by" +
+            " FROM field_settings";
+
+    private static final String SQL_INSERT_FIELD_SETTING = "INSERT INTO field_settings SET " +
+            "ddp_instance_id = ?, " +
+            "field_type = ?, " +
+            "column_name = ?, " +
+            "column_display = ?, " +
+            "display_type = ?, " +
+            "possible_values = ?, " +
+            "actions = ?, " +
+            "order_number = ?, " +
+            "deleted = ?, " +
+            "last_changed = ?, " +
+            "changed_by = ?, " +
+            "readonly = ?, " +
+            "max_length = ?";
+
+    private static final String SQL_DELETE_FIELD_SETTING_BY_ID = "DELETE FROM field_settings " +
+            "WHERE field_settings_id = ?";
+
+    private static final String SQL_BY_DDP_INSTANCE_ID = " WHERE ddp_instance_id = (select ddp_instance_id from ddp_instance where " +
+            "instance_name = ?) ";
+
+    private static final String SQL_DISPLAY_TYPE_BY_INSTANCE_NAME_AND_COLUMN_NAME = GET_FIELD_SETTINGS + SQL_BY_DDP_INSTANCE_ID +
+            " AND column_name = ?";
+
+    private static final String SQL_FIELD_SETTINGS_BY_INSTANCE_NAME = GET_FIELD_SETTINGS + SQL_BY_DDP_INSTANCE_ID;
+
     private static final String BY_INSTANCE_ID = " WHERE ddp_instance_id = ?";
+    private static final String BY_FIELD_TYPE = " WHERE field_type = ?";
     private static final String AND_BY_COLUMN_NAME = " AND column_name = ?";
     private static final String AND_BY_COLUMN_NAMES = " AND column_name IN (?)";
+
     private static final String FIELD_SETTINGS_ID = "field_settings_id";
     private static final String DDP_INSTANCE_ID = "ddp_instance_id";
     private static final String FIELD_TYPE = "field_type";
@@ -48,11 +95,9 @@ public class FieldSettingsDao implements Dao<FieldSettingsDto> {
     private static final String DELETED = "deleted";
     private static final String LAST_CHANGED = "last_changed";
     private static final String CHANGED_BY = "changed_by";
-    private static FieldSettingsDao fieldSettingsDao;
 
     // for test purposes only
-    protected FieldSettingsDao() {
-    }
+    protected FieldSettingsDao() {}
 
     public static FieldSettingsDao of() {
         if (fieldSettingsDao == null) {
@@ -142,8 +187,7 @@ public class FieldSettingsDao implements Dao<FieldSettingsDto> {
         });
 
         if (simpleResult.resultException != null) {
-            throw new RuntimeException("could not find the specified display type by instance name and column name",
-                    simpleResult.resultException);
+            throw new RuntimeException("could not find the specified display type by instance name and column name", simpleResult.resultException);
         }
 
         return Optional.ofNullable((FieldSettingsDto) simpleResult.resultValue);
@@ -155,42 +199,58 @@ public class FieldSettingsDao implements Dao<FieldSettingsDto> {
             SimpleResult execResult = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_OPTIONS_AND_RADIOS_BY_INSTANCE_ID)) {
                 stmt.setInt(1, instanceId);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try(ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        fieldSettingsByOptions.add(buildFieldSettingsFromResultSet(rs));
+                        fieldSettingsByOptions.add(
+                                buildFieldSettingsFromResultSet(rs)
+                        );
                     }
                 }
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex) {
                 execResult.resultException = ex;
             }
             return execResult;
         });
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting fieldSettingsByOptions for instance id: " + instanceId, results.resultException);
+            throw new RuntimeException("Error getting fieldSettingsByOptions for instance id: "
+                    + instanceId, results.resultException);
         }
         return fieldSettingsByOptions;
     }
 
     private FieldSettingsDto buildFieldSettingsFromResultSet(ResultSet rs) throws SQLException {
-        return new FieldSettingsDto.Builder(rs.getInt(DDP_INSTANCE_ID)).withFieldSettingsId(rs.getInt(FIELD_SETTINGS_ID))
-                .withFieldType(rs.getString(FIELD_TYPE)).withColumnName(rs.getString(COLUMN_NAME))
-                .withColumnDisplay(rs.getString(COLUMN_DISPLAY)).withDisplayType(rs.getString(DISPLAY_TYPE))
-                .withPossibleValues(rs.getString(POSSIBLE_VALUES)).withActions(rs.getString(ACTIONS)).withReadOnly(rs.getBoolean(READONLY))
-                .withOrderNumber(rs.getInt(ORDER_NUMBER)).withDeleted(rs.getBoolean(DELETED)).withLastChanged(rs.getLong(LAST_CHANGED))
-                .withChangedBy(rs.getString(CHANGED_BY)).build();
+        return new FieldSettingsDto.Builder(rs.getInt(DDP_INSTANCE_ID))
+                .withFieldSettingsId(rs.getInt(FIELD_SETTINGS_ID))
+                .withFieldType(rs.getString(FIELD_TYPE))
+                .withColumnName(rs.getString(COLUMN_NAME))
+                .withColumnDisplay(rs.getString(COLUMN_DISPLAY))
+                .withDisplayType(rs.getString(DISPLAY_TYPE))
+                .withPossibleValues(rs.getString(POSSIBLE_VALUES))
+                .withActions(rs.getString(ACTIONS))
+                .withReadOnly(rs.getBoolean(READONLY))
+                .withOrderNumber(rs.getInt(ORDER_NUMBER))
+                .withDeleted(rs.getBoolean(DELETED))
+                .withLastChanged(rs.getLong(LAST_CHANGED))
+                .withChangedBy(rs.getString(CHANGED_BY))
+                .build();
     }
 
-    public List<FieldSettingsDto> getAllFieldSettings() {
+    public List<FieldSettingsDto> getFieldSettingsByInstanceName(String instanceName) {
         List<FieldSettingsDto> fieldSettingsByOptions = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult execResult = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(GET_FIELD_SETTINGS)) {
-                try (ResultSet rs = stmt.executeQuery()) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_FIELD_SETTINGS_BY_INSTANCE_NAME)) {
+                stmt.setString(1, instanceName);
+                try(ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        fieldSettingsByOptions.add(buildFieldSettingsFromResultSet(rs));
+                        fieldSettingsByOptions.add(
+                                buildFieldSettingsFromResultSet(rs)
+                        );
                     }
                 }
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex) {
                 execResult.resultException = ex;
             }
             return execResult;
@@ -201,18 +261,21 @@ public class FieldSettingsDao implements Dao<FieldSettingsDto> {
         return fieldSettingsByOptions;
     }
 
-    public List<FieldSettingsDto> getFieldSettingsByInstanceId(int instanceId) {
+    public List<FieldSettingsDto>  getFieldSettingsByInstanceId(int instanceId) {
         List<FieldSettingsDto> fieldSettingsByOptions = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult execResult = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(GET_FIELD_SETTINGS + BY_INSTANCE_ID)) {
                 stmt.setInt(1, instanceId);
-                try (ResultSet fieldSettingsByInstanceIdRs = stmt.executeQuery()) {
+                try(ResultSet fieldSettingsByInstanceIdRs = stmt.executeQuery()) {
                     while (fieldSettingsByInstanceIdRs.next()) {
-                        fieldSettingsByOptions.add(buildFieldSettingsFromResultSet(fieldSettingsByInstanceIdRs));
+                        fieldSettingsByOptions.add(
+                                buildFieldSettingsFromResultSet(fieldSettingsByInstanceIdRs)
+                        );
                     }
                 }
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex) {
                 execResult.resultException = ex;
             }
             return execResult;
@@ -229,12 +292,13 @@ public class FieldSettingsDao implements Dao<FieldSettingsDto> {
             try (PreparedStatement stmt = conn.prepareStatement(GET_FIELD_SETTINGS + BY_INSTANCE_ID + AND_BY_COLUMN_NAME)) {
                 stmt.setInt(1, instanceId);
                 stmt.setString(2, columnName);
-                try (ResultSet fieldSettingsByColumnNameRs = stmt.executeQuery()) {
+                try(ResultSet fieldSettingsByColumnNameRs = stmt.executeQuery()) {
                     if (fieldSettingsByColumnNameRs.next()) {
                         dbVals.resultValue = buildFieldSettingsFromResultSet(fieldSettingsByColumnNameRs);
                     }
                 }
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -242,30 +306,56 @@ public class FieldSettingsDao implements Dao<FieldSettingsDto> {
         if (results.resultException != null) {
             throw new RuntimeException("Error getting fieldSettings ", results.resultException);
         }
-        return Optional.ofNullable((FieldSettingsDto) results.resultValue);
+        return Optional.ofNullable( (FieldSettingsDto) results.resultValue);
     }
 
-    public List<FieldSettingsDto> getFieldSettingsByInstanceIdAndColumns(int instanceId, List<String> columns) {
-        String sql = GET_FIELD_SETTINGS + BY_INSTANCE_ID + AND_BY_COLUMN_NAMES.replace("?",
-                columns.stream().collect(Collectors.joining("','", "'", "'")));
+    public Optional<FieldSettingsDto> getFieldSettingsByFieldTypeAndColumnName(String fieldType, String columnName) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(GET_FIELD_SETTINGS + BY_FIELD_TYPE + AND_BY_COLUMN_NAME)) {
+                stmt.setString(1, fieldType);
+                stmt.setString(2, columnName);
+                try(ResultSet fieldSettingsByColumnNameRs = stmt.executeQuery()) {
+                    if (fieldSettingsByColumnNameRs.next()) {
+                        dbVals.resultValue = buildFieldSettingsFromResultSet(fieldSettingsByColumnNameRs);
+                    }
+                }
+            }
+            catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+        if (results.resultException != null) {
+            throw new RuntimeException("Error getting fieldSettings ", results.resultException);
+        }
+        return Optional.ofNullable( (FieldSettingsDto) results.resultValue);
+    }
+
+    public List<FieldSettingsDto>  getFieldSettingsByInstanceIdAndColumns(int instanceId, List<String> columns) {
+        String sql = GET_FIELD_SETTINGS
+                + BY_INSTANCE_ID
+                + AND_BY_COLUMN_NAMES.replace("?", columns.stream().collect(Collectors.joining("','","'", "'")));
         List<FieldSettingsDto> fieldSettingsByColumnNames = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult execResult = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                 stmt.setInt(1, instanceId);
-                try (ResultSet rs = stmt.executeQuery()) {
+                try(ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        fieldSettingsByColumnNames.add(buildFieldSettingsFromResultSet(rs));
+                        fieldSettingsByColumnNames.add(
+                                buildFieldSettingsFromResultSet(rs)
+                        );
                     }
                 }
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex) {
                 execResult.resultException = ex;
             }
             return execResult;
         });
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting fieldSettings by instance id: " + instanceId + " and columns: " + columns,
-                    results.resultException);
+            throw new RuntimeException("Error getting fieldSettings by instance id: " + instanceId + " and columns: " + columns, results.resultException);
         }
         return fieldSettingsByColumnNames;
     }

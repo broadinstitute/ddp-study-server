@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.util;
 
-import javax.servlet.http.Cookie;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -16,7 +15,6 @@ import com.typesafe.config.Config;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.entity.ContentType;
-import org.broadinstitute.lddp.security.CookieUtil;
 import org.broadinstitute.lddp.security.SecurityHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,28 +24,22 @@ public class TestUtil {
     public static final String UNIT_TEST = "UNIT_TEST";
     private static final Logger logger = LoggerFactory.getLogger(TestUtil.class);
     private String jwtToken;
-    private Cookie csrfCookie;
     private String cookieName;
 
-    public TestUtil(String jwtToken, Cookie csrfCookie, String cookieName) {
+    public TestUtil(String jwtToken, String cookieName) {
         this.jwtToken = jwtToken;
-        this.csrfCookie = csrfCookie;
         this.cookieName = cookieName;
     }
 
     public static TestUtil newInstance(Config cfg) throws Exception {
         String jwtSecret = cfg.getString("browser_security.jwt_secret");
-        String cookieSalt = cfg.getString("browser_security.cookie_salt");
         String cookieName = cfg.getString("browser_security.cookie_name");
 
         Map<String, String> claims = new HashMap<>();
         claims.put("USER_ID", "26");
         String jwtToken = new SecurityHelper().createToken(jwtSecret, (System.currentTimeMillis() / 1000) + (60 * 18), claims);
 
-        CookieUtil cookieUtil = new CookieUtil();
-        int cookieAgeInSeconds = 60;
-        Cookie csrfCookie = cookieUtil.createSecureCookieForToken(cookieName, cookieAgeInSeconds, jwtToken, cookieSalt.getBytes());
-        return new TestUtil(jwtToken, csrfCookie, cookieName);
+        return new TestUtil(jwtToken, cookieName);
     }
 
     public static File getResouresFile(String name) {
@@ -109,7 +101,8 @@ public class TestUtil {
             }
         } catch (IOException e) {
             logger.error("Failed to generate PDF " + file + " at directory " + folder, e);
-        } finally {
+        }
+        finally {
             if (inputStream != null) {
                 try {
                     inputStream.close();
@@ -129,7 +122,6 @@ public class TestUtil {
 
     public Map<String, String> buildAuthHeaders() {
         Map<String, String> authHeaders = new HashMap<>();
-        authHeaders.put("Cookie", cookieName + "=" + csrfCookie.getValue() + ";");
         authHeaders.put("Authorization", "Bearer " + jwtToken);
         return authHeaders;
     }
