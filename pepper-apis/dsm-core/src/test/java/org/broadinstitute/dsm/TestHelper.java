@@ -264,10 +264,6 @@ public class TestHelper {
         addTestParticipant(TEST_DDP, "FAKE_DDP_PARTICIPANT_ID", "FAKE_DDP_PHYSICIAN_ID");
     }
 
-    public static void addTestMigratedParticipant() {
-        addTestParticipant(TEST_DDP_MIGRATED, "FAKE_MIGRATED_PARTICIPANT_ID", "FAKE_MIGRATED_PHYSICIAN_ID");
-    }
-
     public static void addTestParticipant(@NonNull String realm, @NonNull String fakeDDPParticipantId,
                                           @NonNull String fakeDDPInstitutionId) {
         DBTestUtil.createTestData(realm, fakeDDPParticipantId, fakeDDPInstitutionId);
@@ -276,6 +272,10 @@ public class TestHelper {
     public static void addTestParticipant(@NonNull String realm, @NonNull String fakeDDPParticipantId, @NonNull String shortId,
                                           @NonNull String fakeDDPInstitutionId, @NonNull String lastVersion, boolean addFakeData) {
         DBTestUtil.createTestData(realm, fakeDDPParticipantId, fakeDDPInstitutionId, lastVersion, addFakeData, shortId);
+    }
+
+    public static void addTestMigratedParticipant() {
+        addTestParticipant(TEST_DDP_MIGRATED, "FAKE_MIGRATED_PARTICIPANT_ID", "FAKE_MIGRATED_PHYSICIAN_ID");
     }
 
     public static void cleanupDB() {

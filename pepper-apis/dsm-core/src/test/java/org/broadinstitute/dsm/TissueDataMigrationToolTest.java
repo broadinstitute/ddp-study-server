@@ -74,12 +74,12 @@ public class TissueDataMigrationToolTest extends TestHelper {
         Assert.assertEquals("3", countReceived);
         String tissueType = DBTestUtil.getQueryDetail(query, "TEST_ACC_NUM1", "tissue_type");
         Assert.assertEquals("block", tissueType);
-        String hE = DBTestUtil.getQueryDetail(query, "TEST_ACC_NUM1", "h_e");
-        Assert.assertEquals("no", hE);
+        String he = DBTestUtil.getQueryDetail(query, "TEST_ACC_NUM1", "h_e");
+        Assert.assertEquals("no", he);
         String pathReport = DBTestUtil.getQueryDetail(query, "TEST_ACC_NUM1", "pathology_report");
         Assert.assertEquals("yes", pathReport);
-        String tSite = DBTestUtil.getQueryDetail(query, "TEST_ACC_NUM1", "tissue_site");
-        Assert.assertEquals("SITE1", tSite);
+        String tsite = DBTestUtil.getQueryDetail(query, "TEST_ACC_NUM1", "tissue_site");
+        Assert.assertEquals("SITE1", tsite);
         String collabId = DBTestUtil.getQueryDetail(query, "TEST_ACC_NUM1", "collaborator_sample_id");
         Assert.assertEquals("TEST_COLLAB1", collabId);
         String blockSent = DBTestUtil.getQueryDetail(query, "TEST_ACC_NUM1", "block_sent");

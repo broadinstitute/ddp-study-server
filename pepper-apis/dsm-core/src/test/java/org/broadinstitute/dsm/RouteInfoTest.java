@@ -408,32 +408,6 @@ public class RouteInfoTest extends TestHelper {
         participantStatus(participantStatus3, "SALIVA", sent / 1000, null, false, true);
     }
 
-    @Test
-    public void poBoxParticipantStatus() throws Exception {
-        //insert a kit for pt of migrated ddp (will be uploaded with legacy shortId)
-        DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"), "M1", 1,
-                INSTANCE_ID_MIGRATED, "adr_6c3ace20442b49bd8fae9a661e481c9e", null, "1112321.22-698-965-659-666", 0);
-
-        //create label an therefore collaborator id
-        RouteTestSample.triggerLabelCreationAndWaitForLabel(TEST_DDP_MIGRATED, "SALIVA", 60);
-
-        ParticipantStatus participantStatus1 = participantStatus(TEST_DDP_MIGRATED, "1112321.22-698-965-659-666");
-        Assert.assertNull(participantStatus1.getSamples());
-        //set kit to sent
-        String ddpLabel = DBTestUtil.getQueryDetail("select ddp_label from ddp_kit_request where ddp_participant_id = ?",
-                "1112321.22-698-965-659-666", "ddp_label");
-        Long sent = System.currentTimeMillis();
-        DBTestUtil.setKitToSent("MIGRATED_KIT_SENT", ddpLabel, sent);
-
-        ParticipantStatus participantStatus2 = participantStatus(TEST_DDP_MIGRATED, "1112321.22-698-965-659-666");
-        Assert.assertNotEquals(participantStatus1, participantStatus2);
-        participantStatus(participantStatus2, "SALIVA", sent / 1000, null, true, false);
-
-        KitUtil.getKitStatus();
-        ParticipantStatus participantStatus3 = participantStatus(TEST_DDP_MIGRATED, "1112321.22-698-965-659-666");
-        Assert.assertEquals(participantStatus3, participantStatus2);
-    }
-
     public Long participantStatus(String realm, String ddpParticipantId, String valueName) throws Exception {
         HttpResponse response =
                 TestUtil.performGet(DSM_BASE_URL, "/info/" + "participantstatus/" + realm + "/" + ddpParticipantId, getHeaderAppRoute())
@@ -470,22 +444,6 @@ public class RouteInfoTest extends TestHelper {
             return Long.valueOf(count);
         }
         return null;
-    }
-
-    public String getTestOncHistoryInfo(String columnToReturn, String ondHistoryId) {
-        List strings = new ArrayList<>();
-        strings.add(ondHistoryId);
-        String value =
-                DBTestUtil.getStringFromQuery("SELECT * FROM  ddp_onc_history_detail onc WHERE onc.onc_history_detail_id = ?;", strings,
-                        columnToReturn);
-        return value;
-    }
-
-    public String getTestTissueInfo(String columnToReturn, String tissueId) {
-        List strings = new ArrayList<>();
-        strings.add(tissueId);
-        String value = DBTestUtil.getStringFromQuery("SELECT * FROM  ddp_tissue WHERE tissue_id = ?;", strings, columnToReturn);
-        return value;
     }
 
     private ParticipantStatus participantStatus(String realm, String ddpParticipantId) throws Exception {
@@ -543,5 +501,47 @@ public class RouteInfoTest extends TestHelper {
                 Assert.fail();
             }
         }
+    }
+
+    @Test
+    public void poBoxParticipantStatus() throws Exception {
+        //insert a kit for pt of migrated ddp (will be uploaded with legacy shortId)
+        DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"), "M1", 1,
+                INSTANCE_ID_MIGRATED, "adr_6c3ace20442b49bd8fae9a661e481c9e", null, "1112321.22-698-965-659-666", 0);
+
+        //create label an therefore collaborator id
+        RouteTestSample.triggerLabelCreationAndWaitForLabel(TEST_DDP_MIGRATED, "SALIVA", 60);
+
+        ParticipantStatus participantStatus1 = participantStatus(TEST_DDP_MIGRATED, "1112321.22-698-965-659-666");
+        Assert.assertNull(participantStatus1.getSamples());
+        //set kit to sent
+        String ddpLabel = DBTestUtil.getQueryDetail("select ddp_label from ddp_kit_request where ddp_participant_id = ?",
+                "1112321.22-698-965-659-666", "ddp_label");
+        Long sent = System.currentTimeMillis();
+        DBTestUtil.setKitToSent("MIGRATED_KIT_SENT", ddpLabel, sent);
+
+        ParticipantStatus participantStatus2 = participantStatus(TEST_DDP_MIGRATED, "1112321.22-698-965-659-666");
+        Assert.assertNotEquals(participantStatus1, participantStatus2);
+        participantStatus(participantStatus2, "SALIVA", sent / 1000, null, true, false);
+
+        KitUtil.getKitStatus();
+        ParticipantStatus participantStatus3 = participantStatus(TEST_DDP_MIGRATED, "1112321.22-698-965-659-666");
+        Assert.assertEquals(participantStatus3, participantStatus2);
+    }
+
+    public String getTestOncHistoryInfo(String columnToReturn, String ondHistoryId) {
+        List strings = new ArrayList<>();
+        strings.add(ondHistoryId);
+        String value =
+                DBTestUtil.getStringFromQuery("SELECT * FROM  ddp_onc_history_detail onc WHERE onc.onc_history_detail_id = ?;", strings,
+                        columnToReturn);
+        return value;
+    }
+
+    public String getTestTissueInfo(String columnToReturn, String tissueId) {
+        List strings = new ArrayList<>();
+        strings.add(tissueId);
+        String value = DBTestUtil.getStringFromQuery("SELECT * FROM  ddp_tissue WHERE tissue_id = ?;", strings, columnToReturn);
+        return value;
     }
 }

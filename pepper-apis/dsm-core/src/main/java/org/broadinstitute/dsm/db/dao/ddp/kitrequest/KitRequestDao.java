@@ -32,7 +32,7 @@ public class KitRequestDao implements Dao<KitRequestDto> {
 
     public static final String SQL_GET_KIT_REQUEST_ID = "SELECT  ddp_kit_request_id  FROM  ddp_kit_request";
 
-    public static final String BY_BSP_COLLABORATOR_PARTICIPANT_ID = " WHERE bsp_collaborator_participant_id = ?";
+    public static final String BY_BSP_COLLABORATOR_SAMPLE_ID = " WHERE bsp_collaborator_sample_id = ?";
 
     public static final String SQL_GET_KIT_REQUEST =
             "SELECT  req.ddp_kit_request_id,   req.ddp_instance_id,  req.ddp_kit_request_id,  req.kit_type_id,"
@@ -72,7 +72,7 @@ public class KitRequestDao implements Dao<KitRequestDto> {
                                 new KitRequestDto(rs.getInt(DBConstants.DSM_KIT_REQUEST_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
                                         rs.getString(DBConstants.DDP_KIT_REQUEST_ID), rs.getInt(DBConstants.KIT_TYPE_ID),
                                         rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
-                                        rs.getString(DBConstants.BSP_COLLABORATOR_PARTICIPANT_ID),
+                                        rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID),
                                         rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.DSM_LABEL),
                                         rs.getString(DBConstants.CREATED_BY), rs.getLong(DBConstants.CREATED_DATE),
                                         rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), rs.getLong(DBConstants.EXTERNAL_ORDER_DATE),
@@ -102,7 +102,7 @@ public class KitRequestDao implements Dao<KitRequestDto> {
                         samplesDtosListES.add(new ESSamplesDto(ESSampleRs.getString(DBConstants.DDP_PARTICIPANT_ID),
                                 ESSampleRs.getString(DBConstants.DDP_KIT_REQUEST_ID), ESSampleRs.getString(DBConstants.KIT_TYPE_NAME),
                                 ESSampleRs.getString(DBConstants.KIT_LABEL),
-                                ESSampleRs.getString(DBConstants.BSP_COLLABORATOR_PARTICIPANT_ID),
+                                ESSampleRs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID),
                                 ESSampleRs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
                                 ESSampleRs.getString(DBConstants.DSM_TRACKING_TO), ESSampleRs.getString(DBConstants.DSM_TRACKING_RETURN),
                                 ESSampleRs.getString(DBConstants.CARRIER),
@@ -122,17 +122,17 @@ public class KitRequestDao implements Dao<KitRequestDto> {
         return samplesDtosListES;
     }
 
-    public String getKitRequestIdByBSPParticipantId(String bspParticipantId) {
+    public String getKitRequestIdByBSPSampleId(String bspSampleId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_REQUEST_ID + BY_BSP_COLLABORATOR_PARTICIPANT_ID)) {
-                stmt.setString(1, bspParticipantId);
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_REQUEST_ID + BY_BSP_COLLABORATOR_SAMPLE_ID)) {
+                stmt.setString(1, bspSampleId);
                 try (ResultSet idByBSPrs = stmt.executeQuery()) {
                     if (idByBSPrs.next()) {
                         dbVals.resultValue = idByBSPrs.getString(DBConstants.DDP_KIT_REQUEST_ID);
                     }
                 } catch (SQLException e) {
-                    throw new RuntimeException("Error getting information for " + bspParticipantId, e);
+                    throw new RuntimeException("Error getting information for " + bspSampleId, e);
                 }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
@@ -141,7 +141,7 @@ public class KitRequestDao implements Dao<KitRequestDto> {
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Couldn't get kit request id for " + bspParticipantId, results.resultException);
+            throw new RuntimeException("Couldn't get kit request id for " + bspSampleId, results.resultException);
         }
         return (String) results.resultValue;
     }
