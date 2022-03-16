@@ -2098,8 +2098,6 @@ public interface QuestionDao extends SqlObject {
         }
 
         List<PicklistGroupDef> groups = new ArrayList<>();
-        List<PicklistOptionDef> ungroupedOptions = new ArrayList<>();
-
         for (PicklistGroupDto groupDto : container.getGroups()) {
             Template nameTemplate = templates.get(groupDto.getNameTemplateId());
             List<PicklistOptionDef> options = container.getGroupIdToOptions().get(groupDto.getId())
@@ -2115,7 +2113,7 @@ public interface QuestionDao extends SqlObject {
             groups.add(new PicklistGroupDef(groupDto.getId(), groupDto.getStableId(), nameTemplate, options));
         }
 
-        ungroupedOptions = container.getUngroupedOptions()
+        List<PicklistOptionDef> ungroupedOptions = container.getUngroupedOptions()
                 .stream().map(optionDto -> {
                     Template optionLabel = templates.get(optionDto.getOptionLabelTemplateId());
                     Template detailLabel = !optionDto.isAllowDetails() ? null
