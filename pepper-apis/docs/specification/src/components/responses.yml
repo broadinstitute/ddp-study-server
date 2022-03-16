@@ -35,7 +35,7 @@ ActivityAnswersPatchResponse:
                   description: identifier for the answer
           equations:
             type: array
-            description: list of computed equations
+            description: list of computed equation values
             items:
               type: object
               required:
