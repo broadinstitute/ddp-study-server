@@ -11,7 +11,6 @@ import java.time.format.DateTimeFormatter;
 
 import com.sun.management.HotSpotDiagnosticMXBean;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.lddp.util.GoogleBucket;
 import org.slf4j.Logger;

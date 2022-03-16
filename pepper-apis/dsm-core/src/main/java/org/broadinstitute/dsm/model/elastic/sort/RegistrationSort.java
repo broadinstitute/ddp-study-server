@@ -1,9 +1,9 @@
 package org.broadinstitute.dsm.model.elastic.sort;
 
-import org.broadinstitute.dsm.model.elastic.mapping.TypeExtractor;
-
 import java.util.Map;
 import java.util.Objects;
+
+import org.broadinstitute.dsm.model.elastic.mapping.TypeExtractor;
 
 public class RegistrationSort extends Sort {
 
@@ -13,8 +13,9 @@ public class RegistrationSort extends Sort {
 
     @Override
     String buildNestedPath() {
-        if (Objects.isNull(sortBy.getOuterProperty()))
+        if (Objects.isNull(sortBy.getOuterProperty())) {
             return getAliasValue(getAlias());
+        }
         return buildQuestionsAnswersPath();
     }
 

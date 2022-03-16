@@ -171,14 +171,15 @@ public class MedicalRecordUtil {
         }
     }
 
-    private static void insertInstitution(@NonNull Connection conn, @NonNull PreparedStatement insertInstitution, @NonNull String ddpParticipantId,
-                                          String instanceName) {
+    private static void insertInstitution(@NonNull Connection conn, @NonNull PreparedStatement insertInstitution,
+                                          @NonNull String ddpParticipantId, String instanceName) {
         try (ResultSet rs = insertInstitution.getGeneratedKeys()) {
             if (rs.next()) { //no next if no generated return key -> update of institution timestamp does not return new key
                 String institutionId = rs.getString(1);
                 if (StringUtils.isNotBlank(institutionId)) {
                     logger.info("Added institution w/ id " + institutionId + " for participant w/ id " + ddpParticipantId);
-                    MedicalRecordUtil.writeNewMedicalRecordIntoDb(conn, SQL_INSERT_MEDICAL_RECORD, institutionId, ddpParticipantId, instanceName);
+                    MedicalRecordUtil.writeNewMedicalRecordIntoDb(conn, SQL_INSERT_MEDICAL_RECORD, institutionId, ddpParticipantId,
+                            instanceName);
                 }
             }
         } catch (Exception e) {
