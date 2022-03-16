@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- *  This route returns the list of suggestions for the supplied Picklist Option label
+ * This route returns the list of suggestions for the supplied Picklist Option label
  */
 public class GetOptionsForActivityInstanceQuestionRoute implements Route {
 
@@ -85,20 +85,8 @@ public class GetOptionsForActivityInstanceQuestionRoute implements Route {
         return result;
     }
 
-    private List<PicklistOption> filterOptions(List<PicklistOption> options, String autoCompleteQuery, int limit) {
-        // first pass: find & filter simple matches
-        List<PicklistOption> optionMatches = options.stream().filter(option -> option.getOptionLabel().toUpperCase()
-                        .contains(autoCompleteQuery.toUpperCase())).collect(Collectors.toList());
-
-        // now sort the matches in a way that puts left-most matches near the top, favoring word start matches
-        // apply limit and return results
-        return optionMatches.stream()
-                .sorted(new PicklistOptionTypeaheadComparator(autoCompleteQuery))
-                .limit(limit).collect(Collectors.toList());
-    }
-
     private List<PicklistOption> getPicklistOptions(Handle handle, String studyGuid,
-                                                       String activityInstanceGuid, String questionStableId) {
+                                                    String activityInstanceGuid, String questionStableId) {
 
         ActivityInstanceDto instanceDto = handle.attach(JdbiActivityInstance.class)
                 .getByActivityInstanceGuid(activityInstanceGuid)
@@ -116,6 +104,18 @@ public class GetOptionsForActivityInstanceQuestionRoute implements Route {
                 optionDef.getDetailLabelTemplate() != null ? optionDef.getDetailLabelTemplate().getTemplateId() : null,
                 optionDef.isDetailsAllowed(), optionDef.isExclusive(), optionDef.isDefault()
         )).collect(Collectors.toList());
+    }
+
+    private List<PicklistOption> filterOptions(List<PicklistOption> options, String autoCompleteQuery, int limit) {
+        // first pass: find & filter simple matches
+        List<PicklistOption> optionMatches = options.stream().filter(option -> option.getOptionLabel().toUpperCase()
+                .contains(autoCompleteQuery.toUpperCase())).collect(Collectors.toList());
+
+        // now sort the matches in a way that puts left-most matches near the top, favoring word start matches
+        // apply limit and return results
+        return optionMatches.stream()
+                .sorted(new PicklistOptionTypeaheadComparator(autoCompleteQuery))
+                .limit(limit).collect(Collectors.toList());
     }
 
 }
