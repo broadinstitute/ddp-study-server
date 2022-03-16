@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.model.activity.instance.question;
 
 import static java.util.stream.Collectors.toList;
 
+import java.util.Objects;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -224,11 +225,10 @@ public abstract class Question<T extends Answer> implements Renderable {
     }
 
     protected boolean requiredRulesPass(List<T> answerValues) {
-        if (validations == null) {
-            return true;
-        }
-
-        Optional<Rule> res = validations.stream().filter(rule -> RuleType.REQUIRED.equals(rule.getRuleType())).findFirst();
+        Optional<Rule> res = validations.stream()
+                .filter(Objects::nonNull)
+                .filter(rule -> RuleType.REQUIRED.equals(rule.getRuleType()))
+                .findFirst();
         if (res.isPresent()) {
             RequiredRule<T> required = (RequiredRule<T>) res.get();
             if (answerValues.isEmpty()) {
