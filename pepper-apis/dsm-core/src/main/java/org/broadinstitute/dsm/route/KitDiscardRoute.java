@@ -128,12 +128,12 @@ public class KitDiscardRoute extends RequestHandler {
                     if (auth0UserInfo != null) {
                         String email = auth0UserInfo.getEmail();
                         UserDto userDto = new UserDao().getUserByEmail(email).orElseThrow();
-                        if (userDto != null && userDto.getId() > 0) {
+                        if (userDto != null && userDto.getUserId() > 0) {
                             ArrayList<String> userSetting = userUtil.getUserAccessRoles(email);
                             if (userSetting.contains(DBConstants.KIT_SHIPPING) || userSetting.contains(DBConstants.DISCARD_SAMPLE)) {
                                 KitDiscard kit = KitDiscard.getKitDiscard(kitAction.getKitDiscardId());
-                                if (kit.getChangedById() != userDto.getId()) {
-                                    if (KitDiscard.setConfirmed(kitAction.getKitDiscardId(), userDto.getId())) {
+                                if (kit.getChangedById() != userDto.getUserId()) {
+                                    if (KitDiscard.setConfirmed(kitAction.getKitDiscardId(), userDto.getUserId())) {
                                         return new Result(200, userDto.getName().orElse(""));
                                     }
                                     throw new RuntimeException("Failed to save confirm");

@@ -86,7 +86,7 @@ public class UpdateWorkflowStatusTest {
         if (participantDataId > 0) {
             participantDataDao.delete(participantDataId);
         }
-        userDao.delete(userDto.getId());
+        userDao.delete(userDto.getUserId());
         ddpInstanceDao.delete(ddpInstanceDto.getDdpInstanceId());
     }
 

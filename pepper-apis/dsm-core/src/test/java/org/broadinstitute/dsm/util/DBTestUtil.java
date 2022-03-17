@@ -492,7 +492,7 @@ public class DBTestUtil {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_USER)) {
-                stmt.setInt(1, userDto.getId());
+                stmt.setInt(1, userDto.getUserId());
                 stmt.setString(2, userDto.getName().orElse(""));
                 stmt.setString(3, userDto.getEmail().orElse(""));
                 stmt.setInt(4, isActive);
@@ -506,7 +506,7 @@ public class DBTestUtil {
             return dbVals;
         });
         if (results.resultException != null) {
-            throw new RuntimeException("Error inserting user with " + userDto.getId(), results.resultException);
+            throw new RuntimeException("Error inserting user with " + userDto.getUserId(), results.resultException);
         }
     }
 
@@ -1132,7 +1132,7 @@ public class DBTestUtil {
 
     public static UserDto createTestDsmUser(String name, String email, UserDao userDao, UserDto userDto) {
         userDto = new UserDto(0, name, email, "");
-        userDto.setId(userDao.create(userDto));
+        userDto.setUserId(userDao.create(userDto));
         return userDto;
     }
 }

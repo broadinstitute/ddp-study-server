@@ -43,7 +43,7 @@ public class EditParticipantTest extends TestHelper {
         dsmToDssSubscriptionId = cfg.getString(GCP_PATH_TO_DSS_TO_DSM_SUB);
         topicId = cfg.getString(GCP_PATH_TO_DSM_TO_DSS_TOPIC);
         messageData = TEST_PAYLOAD;
-        userId = new UserDao().getUserByEmail(cfg.getString(UNIT_TESTER_EMAIL)).orElse(new UserDto()).getId();
+        userId = new UserDao().getUserByEmail(cfg.getString(UNIT_TESTER_EMAIL)).orElse(new UserDto(1, "", "", "")).getUserId();
     }
 
     @Test

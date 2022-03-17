@@ -2,29 +2,26 @@ package org.broadinstitute.dsm.db.dto.user;
 
 import java.util.Optional;
 
+import com.google.gson.annotations.SerializedName;
 import lombok.Setter;
 
 @Setter
 public class UserDto {
-
-    private int id;
+    @SerializedName ("user_id")
+    private int userId;
     private String name;
     private String email;
     private String phoneNumber;
 
-    public UserDto(int id, String name, String email, String phoneNumber) {
-        this.id = id;
+    public UserDto(int userId, String name, String email, String phoneNumber) {
+        this.userId = userId;
         this.name = name;
         this.email = email;
         this.phoneNumber = phoneNumber;
     }
 
-    public UserDto() {
-
-    }
-
-    public int getId() {
-        return this.id;
+    public int getUserId() {
+        return this.userId;
     }
 
     public Optional<String> getName() {

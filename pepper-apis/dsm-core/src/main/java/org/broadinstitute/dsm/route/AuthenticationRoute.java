@@ -103,7 +103,7 @@ public class AuthenticationRoute implements Route {
                             logger.info(userSetting);
                             claims.put(userSettings, gson.toJson(UserSettings.getUserSettings(email), UserSettings.class));
                         }
-                        claims.put(authUserId, String.valueOf(userDto.getId()));
+                        claims.put(authUserId, String.valueOf(userDto.getUserId()));
                         claims.put(authUserName, userDto.getName().orElse(""));
                         claims.put(authUserEmail, email);
                         claims = getDSSClaimsFromOriginalToken(auth0Token, auth0Domain, claims);

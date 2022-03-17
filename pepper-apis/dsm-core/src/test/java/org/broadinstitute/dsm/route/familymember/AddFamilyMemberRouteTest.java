@@ -86,7 +86,7 @@ public class AddFamilyMemberRouteTest {
         if (ddpCopiedProbandFamilyMemberParticipantDataId > 0) {
             participantDataDao.delete(ddpCopiedProbandFamilyMemberParticipantDataId);
         }
-        userDao.delete(userDto.getId());
+        userDao.delete(userDto.getUserId());
         ddpInstanceDao.delete(ddpInstanceDto.getDdpInstanceId());
     }
 
@@ -116,7 +116,7 @@ public class AddFamilyMemberRouteTest {
 
     @Test
     public void noGuidProvided() {
-        String payload = payloadFactory(null, ddpInstanceDto.getInstanceName(), familyMemberData, userDto.getId());
+        String payload = payloadFactory(null, ddpInstanceDto.getInstanceName(), familyMemberData, userDto.getUserId());
         AddFamilyMemberPayload addFamilyMemberPayload = gson.fromJson(payload, AddFamilyMemberPayload.class);
         try {
             addFamilyMemberPayload.getParticipantId().orElseThrow(() -> new NoSuchElementException("Participant Guid is not provided"));
@@ -127,7 +127,7 @@ public class AddFamilyMemberRouteTest {
 
     @Test
     public void noRealmProvided() {
-        String payload = payloadFactory(participantId, null, familyMemberData, userDto.getId());
+        String payload = payloadFactory(participantId, null, familyMemberData, userDto.getUserId());
         AddFamilyMemberPayload addFamilyMemberPayload = gson.fromJson(payload, AddFamilyMemberPayload.class);
         try {
             addFamilyMemberPayload.getRealm().orElseThrow(() -> new NoSuchElementException("Realm is not provided"));
@@ -138,7 +138,7 @@ public class AddFamilyMemberRouteTest {
 
     @Test
     public void noFamilyMemberDataProvided() {
-        String payload = payloadFactory(participantId, ddpInstanceDto.getInstanceName(), Map.of(), userDto.getId());
+        String payload = payloadFactory(participantId, ddpInstanceDto.getInstanceName(), Map.of(), userDto.getUserId());
         Result res = new Result(200);
         AddFamilyMemberPayload addFamilyMemberPayload = gson.fromJson(payload, AddFamilyMemberPayload.class);
         if (addFamilyMemberPayload.getData().isEmpty() || addFamilyMemberPayload.getData().orElseGet(FamilyMemberDetails::new)
@@ -162,7 +162,7 @@ public class AddFamilyMemberRouteTest {
 
     @Test
     public void relationshipIdAlreadyExists() {
-        String payload = payloadFactory(participantId, ddpInstanceDto.getInstanceName(), probandData, userDto.getId());
+        String payload = payloadFactory(participantId, ddpInstanceDto.getInstanceName(), probandData, userDto.getUserId());
         AddFamilyMemberPayload addFamilyMemberPayload = gson.fromJson(payload, AddFamilyMemberPayload.class);
         org.broadinstitute.dsm.model.participant.data.ParticipantData participantData =
                 new org.broadinstitute.dsm.model.participant.data.ParticipantData(participantDataDao);
@@ -174,7 +174,7 @@ public class AddFamilyMemberRouteTest {
 
     @Test
     public void addFamilyMemberToParticipant() {
-        String payload = payloadFactory(participantId, ddpInstanceDto.getInstanceName(), familyMemberData, userDto.getId());
+        String payload = payloadFactory(participantId, ddpInstanceDto.getInstanceName(), familyMemberData, userDto.getUserId());
         Result result = new Result(200);
         AddFamilyMemberPayload addFamilyMemberPayload = gson.fromJson(payload, AddFamilyMemberPayload.class);
         try {

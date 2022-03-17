@@ -95,7 +95,7 @@ public class DownloadPDF {
                     pdfBytes = generateSinglePDF(requestBody, configName, user, ddpInstance);
                 }
                 pdfBytes.ifPresent(bytes -> {
-                    savePDFinBucket(ddpInstance.getName(), ddpParticipantId, new ByteArrayInputStream(bytes), fileName, user.getId());
+                    savePDFinBucket(ddpInstance.getName(), ddpParticipantId, new ByteArrayInputStream(bytes), fileName, user.getUserId());
                 });
                 pdfBytes.orElseThrow();
             } else {

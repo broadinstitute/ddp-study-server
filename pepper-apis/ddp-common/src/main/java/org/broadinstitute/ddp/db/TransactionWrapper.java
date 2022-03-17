@@ -48,6 +48,8 @@ public class TransactionWrapper {
 
     private static final Map<DB, TransactionWrapper> gTxnWrapper = new HashMap<>();
 
+    private static DB DEFAULT_DB = null;
+
     /**
      * Sleep duration in seconds between attempts to get a connection from
      * the pool when it looks like the password has changed.
@@ -193,10 +195,16 @@ public class TransactionWrapper {
     public static synchronized DB getDB() {
         if (gTxnWrapper.size() == 1) {
             return gTxnWrapper.keySet().iterator().next();
+        } else if (DEFAULT_DB != null) {
+            return DEFAULT_DB;
         } else {
             throw new IllegalStateException("There are " + gTxnWrapper.size() + " dbs initialized, "
                     + "please indicate which one to use.");
         }
+    }
+
+    public static synchronized void setDefaultDB(DB db) {
+        DEFAULT_DB = db;
     }
 
     /**

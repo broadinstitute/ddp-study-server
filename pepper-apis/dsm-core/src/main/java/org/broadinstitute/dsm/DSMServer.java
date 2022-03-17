@@ -504,9 +504,6 @@ public class DSMServer {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        finally {
-            TransactionWrapper.reset();
-        }
 
         //setup the mysql transaction/connection utility
         TransactionWrapper.DbConfiguration DSM_DB =
@@ -519,6 +516,8 @@ public class DSMServer {
         LiquibaseUtil.releaseResources();
 
         logger.info("DB setup complete.");
+
+        TransactionWrapper.setDefaultDB(TransactionWrapper.DB.DSM);
     }
 
     protected void setupCustomRouting(@NonNull Config cfg) {
