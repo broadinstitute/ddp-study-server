@@ -1,10 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 
 set -eu
 
 DATABASE_DIR="/var/lib/clamav"
 RUNTIME_DIR="/var/run/clamav"
-CLAMD_SOCKET="$RUNTIME_DIR/clamav.ctl"
+CLAMD_SOCKET="$RUNTIME_DIR/clamd.ctl"
 
 if [ ! -d "${RUNTIME_DIR}" ]; then
 	install -d -g "clamav" -m 775 -o "clamav" "${RUNTIME_DIR}"
@@ -25,20 +25,24 @@ if [ ! -f "${DATABASE_DIR}/main.cvd" ]; then
 fi
 
 echo -n "Starting clamd"
+
+if [ -S "${CLAMD_SOCKET}" ]; then
+    unlink "${CLAMD_SOCKET}"
+fi
+
 clamd --foreground &
 
 while [ ! -S "${CLAMD_SOCKET}" ]; do
-    if [ "${_counter:=0}" -lt "${_timeout:=300}" ]; then
-        echo -n "."
-        sleep 1
-        _counter=$((_counter + 1))
+    if [ "${_counter:=0}" -gt "${_timeout:=300}" ]; then
+        echo
+	    echo "Failed to start clamd"
+		exit -1
     fi
-done
 
-if [ ! -S "${CLAMD_SOCKET}" ]; then
-    echo "Failed to start clamd"
-    exit -1
-fi
+    echo -n "."
+    sleep 1
+    _counter=$((_counter + 1))
+done
 
 echo -e "\nclamd started"
 echo "Starting freshclam"
@@ -53,7 +57,7 @@ echo "Starting cf-file-scanner"
 java \
     -jar java-function-invoker-1.1.0.jar \
     --classpath cf-file-scanner-1.0-SNAPSHOT.jar \
-    --target org.broadinstitute.ddp.cf.FileScanner
+    --target org.broadinstitute.ddp.cf.FileScanner &
 
-wait
-exit $?
+exec tail -f "/dev/null"
+exit 0
