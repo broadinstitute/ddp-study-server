@@ -125,6 +125,7 @@ import org.broadinstitute.ddp.route.GetStudyPasswordPolicyRoute;
 import org.broadinstitute.ddp.route.GetStudyStatisticsRoute;
 import org.broadinstitute.ddp.route.GetTempMailingAddressRoute;
 import org.broadinstitute.ddp.route.GetUserAnnouncementsRoute;
+import org.broadinstitute.ddp.route.GetUserFileAnswersRoute;
 import org.broadinstitute.ddp.route.GetWorkflowRoute;
 import org.broadinstitute.ddp.route.GovernedParticipantRegistrationRoute;
 import org.broadinstitute.ddp.route.HealthCheckRoute;
@@ -504,6 +505,8 @@ public class DataDonationPlatform {
                 new PutFormAnswersRoute(workflowService, actInstService, activityValidationService, interpreter, addressService),
                 responseSerializer
         );
+        get(API.USER_FILE_ANSWERS, new GetUserFileAnswersRoute(fileUploadService));
+
         post(API.USER_ACTIVITY_UPLOADS, new CreateUserActivityUploadRoute(fileUploadService), responseSerializer);
 
         // User study invitations

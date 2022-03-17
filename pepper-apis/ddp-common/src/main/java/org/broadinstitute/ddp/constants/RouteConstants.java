@@ -99,6 +99,8 @@ public class RouteConstants {
                 PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID);
         public static final String USER_ACTIVITY_ANSWERS = fmt(BASE + "/user/%s/studies/%s/activities/%s/answers",
                 PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID);
+        public static final String USER_FILE_ANSWERS = fmt(BASE + "/user/%s/studies/%s/uploads",
+                PathParam.USER_GUID, PathParam.STUDY_GUID);
         public static final String USER_ACTIVITY_UPLOADS = fmt(BASE + "/user/%s/studies/%s/activities/%s/uploads",
                 PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID);
         public static final String USER_MEDICAL_PROVIDERS = fmt(

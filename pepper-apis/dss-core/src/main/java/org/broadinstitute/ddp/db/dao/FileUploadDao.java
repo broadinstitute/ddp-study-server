@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.db.dao;
 
 import java.time.Instant;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -113,4 +114,20 @@ public interface FileUploadDao extends SqlObject {
             + "  from file_upload where file_upload_guid = :guid")
     @RegisterConstructorMapper(FileInfo.class)
     Optional<FileInfo> findFileInfoByGuid(@Bind("guid") String fileUploadGuid);
+
+    @SqlQuery("select f.*, (select file_scan_result_code from file_scan_result "
+            + " where file_scan_result_id = f.scan_result_id) as scan_result "
+            + "from file_upload as f "
+            + "join user u on u.user_id = f.participant_user_id "
+            + "join umbrella_study us on f.study_id = us.umbrella_study_id "
+            + "where f.file_upload_id in (select file_upload_id from file_answer) and "
+            + "      f.is_verified is true and "
+            + "      u.guid = :userGuid and "
+            + "      us.guid = :studyGuid")
+    @RegisterConstructorMapper(FileUpload.class)
+    List<FileUpload> findUserUploadsForStudy(
+            @Bind("userGuid") String userGuid,
+            @Bind("studyGuid") String studyGuid);
+
+
 }

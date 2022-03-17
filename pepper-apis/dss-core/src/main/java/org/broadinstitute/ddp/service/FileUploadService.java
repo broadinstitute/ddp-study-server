@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -288,6 +289,10 @@ public class FileUploadService {
         uploadDao.deleteByIds(uploadIdsToDelete);
         LOG.info("Removed {} unused file uploads", uploadIdsToDelete.size());
         return uploadIdsToDelete.size();
+    }
+
+    public List<FileUpload> getUserUploads(Handle handle, String participantGuid, String studyGuid) {
+        return handle.attach(FileUploadDao.class).findUserUploadsForStudy(participantGuid, studyGuid);
     }
 
     public enum VerifyResult {
