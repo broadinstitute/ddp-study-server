@@ -16,7 +16,9 @@ import java.util.Map;
 //TODO pegah remove when the whole Authentication is done, works as a dummy endpoint now
 
 public class DSSTestingRoute implements Route {
+
     private static final Logger logger = LoggerFactory.getLogger(DSSTestingRoute.class);
+
     @Override
     public Object handle(Request request, Response response) throws Exception {
         String participantId = request.params("participantId");
@@ -43,4 +45,3 @@ public class DSSTestingRoute implements Route {
         return responseString;
     }
 }
-

@@ -1,7 +1,6 @@
 package org.broadinstitute.dsm.model.elastic.sort;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -93,11 +92,13 @@ public class Sort {
     }
 
     private boolean isTextContent(Type innerType) {
-        return innerType == Type.TEXT || innerType == Type.TEXTAREA || innerType == Type.RADIO || innerType == Type.OPTIONS || innerType == Type.ACTIVITY;
+        return innerType == Type.TEXT || innerType == Type.TEXTAREA || innerType == Type.RADIO || innerType == Type.OPTIONS
+                || innerType == Type.ACTIVITY;
     }
 
     private boolean isFieldTextType() {
-        this.typeExtractor.setFields(buildPath(getAliasValue(getAlias()), handleOuterPropertySpecialCase(), handleInnerPropertySpecialCase()));
+        this.typeExtractor.setFields(buildPath(getAliasValue(getAlias()), handleOuterPropertySpecialCase(),
+                handleInnerPropertySpecialCase()));
         return TypeParser.TEXT.equals(typeExtractor.extract().get(handleInnerPropertySpecialCase()));
     }
 
@@ -117,7 +118,8 @@ public class Sort {
     }
 
     private boolean isDoubleNested(Type type) {
-        return type == Type.JSONARRAY || (getAlias() == Alias.ACTIVITIES && ElasticSearchUtil.QUESTIONS_ANSWER.equals(sortBy.getOuterProperty()));
+        return type == Type.JSONARRAY || (getAlias() == Alias.ACTIVITIES
+                && ElasticSearchUtil.QUESTIONS_ANSWER.equals(sortBy.getOuterProperty()));
     }
 
     public SortOrder getOrder() {
