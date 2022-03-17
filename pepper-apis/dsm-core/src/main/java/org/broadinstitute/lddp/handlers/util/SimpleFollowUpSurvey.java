@@ -1,12 +1,10 @@
 package org.broadinstitute.lddp.handlers.util;
 
 import lombok.Data;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.lddp.email.Recipient;
-import org.broadinstitute.lddp.util.CheckValidity;
 
 @Data
-public class SimpleFollowUpSurvey implements CheckValidity {
+public class SimpleFollowUpSurvey {
     private String participantId;
     private Recipient recipient;
     private Long triggerId;
@@ -29,8 +27,4 @@ public class SimpleFollowUpSurvey implements CheckValidity {
         this.triggerId = triggerId;
     }
 
-    public boolean isValid() {
-        return (StringUtils.isNotBlank(participantId));
-    }
 }
-

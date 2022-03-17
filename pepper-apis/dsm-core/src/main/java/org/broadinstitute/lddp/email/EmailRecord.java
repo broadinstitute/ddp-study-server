@@ -50,10 +50,6 @@ public class EmailRecord {
         this.reminderType = reminderType;
     }
 
-    public EmailRecord(@NonNull Recipient recipient) {
-        this.recipient = recipient;
-    }
-
     public static void add(String immediateEmailTemplate, @NonNull Recipient recipient, JsonElement reminderInfo,
                            @NonNull String emailGroupId) {
         add(immediateEmailTemplate, recipient, recipient.getCurrentStatus(), reminderInfo, emailGroupId);
@@ -202,7 +198,7 @@ public class EmailRecord {
 
         for (JsonElement reminder : array) {
             Recipient recipient = new Gson().fromJson(recipientJson, Recipient.class);
-            recipient.setAdminRecipientEmail(reminder.getAsJsonObject().get("adminRecipient").getAsString());
+            recipient.setEmail(reminder.getAsJsonObject().get("adminRecipient").getAsString());
 
             long epochTime = Utility.getCurrentEpoch();
             addRecord(stmt, epochTime, epochTime + (reminder.getAsJsonObject().get("hours").getAsInt() * SEC_IN_HOUR), reminderType,
