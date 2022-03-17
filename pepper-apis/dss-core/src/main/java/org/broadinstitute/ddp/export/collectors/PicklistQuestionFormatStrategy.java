@@ -73,7 +73,7 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
         props.put("groups", groups);
 
         List<Object> options = new ArrayList<>();
-        for (PicklistOptionDef optionDef : definition.getPicklistOptionsIncludingRemoteAutoComplete()) {
+        for (PicklistOptionDef optionDef : definition.getPicklistOptions()) {
             Map<String, Object> stableIdTxt = new HashMap<>();
             stableIdTxt.put("optionStableId", optionDef.getStableId());
             stableIdTxt.put("optionText", HtmlConverter.getPlainText(optionDef.getOptionLabelTemplate().renderWithDefaultValues("en")));

@@ -1440,7 +1440,7 @@ public interface QuestionDao extends SqlObject {
      */
     default void insertQuestion(long activityId, PicklistQuestionDef picklist, long revisionId) {
 
-        if (picklist.getGroups().isEmpty() && picklist.getPicklistOptionsIncludingRemoteAutoComplete().isEmpty()) {
+        if (picklist.getGroups().isEmpty() && picklist.getPicklistOptions().isEmpty()) {
             throw new IllegalStateException(String.format(
                     "picklist question %s need to have at least one option or one group",
                     picklist.getStableId()));
@@ -1463,7 +1463,7 @@ public interface QuestionDao extends SqlObject {
 
         getPicklistQuestionDao().insertGroups(picklist.getQuestionId(), picklist.getGroups(), revisionId);
         getPicklistQuestionDao().insertOptions(picklist.getQuestionId(),
-                picklist.getPicklistOptionsIncludingRemoteAutoComplete(), revisionId);
+                picklist.getPicklistOptions(), revisionId);
     }
 
     default void insertQuestion(long activityId, CompositeQuestionDef compositeQuestion, long revisionId) {

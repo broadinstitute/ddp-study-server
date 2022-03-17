@@ -122,10 +122,22 @@ public final class PicklistQuestionDef extends QuestionDef {
     }
 
     public List<PicklistOptionDef> getPicklistOptions() {
+        return picklistOptions;
+    }
+
+    public List<PicklistOptionDef> getLocalPicklistOptions() {
         if (renderMode == PicklistRenderMode.REMOTE_AUTOCOMPLETE) {
             return Collections.emptyList();
         } else {
             return picklistOptions;
+        }
+    }
+
+    public List<PicklistOptionDef> getRemotePicklistOptions() {
+        if (renderMode == PicklistRenderMode.REMOTE_AUTOCOMPLETE) {
+            return picklistOptions;
+        } else {
+            return Collections.emptyList();
         }
     }
 

@@ -117,7 +117,7 @@ public class GetOptionsForActivityInstanceQuestionRoute implements Route {
             ResponseUtil.haltError(HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(
                     ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, "Not a Picklist question stableID: " + questionStableId));
         }
-        List<PicklistOptionDef> optionDefs = ((PicklistQuestionDef) questionDef).getPicklistOptionsIncludingRemoteAutoComplete();
+        List<PicklistOptionDef> optionDefs = ((PicklistQuestionDef) questionDef).getRemotePicklistOptions();
 
         return optionDefs.stream().map(optionDef -> new PicklistOption(optionDef.getStableId(),
                 optionDef.getOptionLabelTemplate().getTemplateId(),
