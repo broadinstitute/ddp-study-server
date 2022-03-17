@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.model.elastic.sort;
 
-import junit.framework.TestCase;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

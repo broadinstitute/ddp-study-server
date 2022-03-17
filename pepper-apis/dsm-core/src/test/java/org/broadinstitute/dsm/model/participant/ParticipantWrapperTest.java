@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.model.participant;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -20,7 +19,6 @@ import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class ParticipantWrapperTest {
@@ -86,7 +84,8 @@ public class ParticipantWrapperTest {
         List<ParticipantData> participantDataList = Stream.generate(
                 () -> new ParticipantData.Builder().withData(String.format("{\"MEMBER_TYPE\":\"%s\"}", memberTypes[i.getAndIncrement()]))
                         .withParticipantDataId(random.nextInt(100)).build()).limit(4).collect(Collectors.toList());
-        ParticipantWrapper participantWrapper = new ParticipantWrapper(new ParticipantWrapperPayload.Builder().build(), new ElasticSearchTest());
+        ParticipantWrapper participantWrapper =
+                new ParticipantWrapper(new ParticipantWrapperPayload.Builder().build(), new ElasticSearchTest());
         participantWrapper.sortBySelfElseById(participantDataList);
         Assert.assertTrue(participantDataList.get(0).getData().orElse("").contains(FamilyMemberConstants.MEMBER_TYPE_SELF));
     }
@@ -100,35 +99,28 @@ public class ParticipantWrapperTest {
     @Test
     public void fillParticipantWrapperDtosWithProxies() {
 
-        ParticipantWrapperPayload payload = new ParticipantWrapperPayload.Builder()
-                .withDdpInstanceDto(new DDPInstanceDto.Builder().build())
-                .build();
+        ParticipantWrapperPayload payload =
+                new ParticipantWrapperPayload.Builder().withDdpInstanceDto(new DDPInstanceDto.Builder().build()).build();
         ParticipantWrapper participantWrapper = new ParticipantWrapper(payload, new ElasticSearchTest());
         ParticipantWrapperDto participantWrapperDto1 = new ParticipantWrapperDto();
         List<String> proxies1 = Arrays.asList("A1", "A2");
-        ElasticSearchParticipantDto elasticSearchParticipantDto1 = new ElasticSearchParticipantDto.Builder()
-                .withProxies(proxies1)
-                .build();
+        ElasticSearchParticipantDto elasticSearchParticipantDto1 = new ElasticSearchParticipantDto.Builder().withProxies(proxies1).build();
         participantWrapperDto1.setEsData(elasticSearchParticipantDto1);
         ParticipantWrapperDto participantWrapperDto2 = new ParticipantWrapperDto();
         List<String> proxies2 = List.of("B1");
-        ElasticSearchParticipantDto elasticSearchParticipantDto2 = new ElasticSearchParticipantDto.Builder()
-                .withProxies(proxies2)
-                .build();
+        ElasticSearchParticipantDto elasticSearchParticipantDto2 = new ElasticSearchParticipantDto.Builder().withProxies(proxies2).build();
         participantWrapperDto2.setEsData(elasticSearchParticipantDto2);
-        List<ParticipantWrapperDto> participantWrapperDtos =
-                Arrays.asList(participantWrapperDto1, participantWrapperDto2);
+        List<ParticipantWrapperDto> participantWrapperDtos = Arrays.asList(participantWrapperDto1, participantWrapperDto2);
 
         Assert.assertNull(participantWrapperDto1.getProxyData());
         Assert.assertNull(participantWrapperDto2.getProxyData());
 
-        participantWrapper.fillParticipantWrapperDtosWithProxies(participantWrapperDtos, Stream.concat(proxies1.stream(),
-                proxies2.stream()).collect(Collectors.toList()));
+        participantWrapper.fillParticipantWrapperDtosWithProxies(participantWrapperDtos,
+                Stream.concat(proxies1.stream(), proxies2.stream()).collect(Collectors.toList()));
 
         Assert.assertEquals("B1", participantWrapperDto2.getProxyData().get(0).getParticipantId());
-        Assert.assertEquals(proxies1,
-                participantWrapperDto1.getProxyData().stream().map(ElasticSearchParticipantDto::getParticipantId).collect(
-                Collectors.toList()));
+        Assert.assertEquals(proxies1, participantWrapperDto1.getProxyData().stream().map(ElasticSearchParticipantDto::getParticipantId)
+                .collect(Collectors.toList()));
     }
 
     private static class ElasticSearchTest implements ElasticSearchable {

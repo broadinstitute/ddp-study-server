@@ -42,7 +42,7 @@ public class OncHistoryDetailPatch extends BasePatch {
     private void prepare() {
         mrID = MedicalRecordUtil.isInstitutionTypeInDB(patch.getParentId());
         if (mrID == null) {
-            if (StringUtils.isNotBlank(patch.getDdpParticipantId())){
+            if (StringUtils.isNotBlank(patch.getDdpParticipantId())) {
                 // mr of that type doesn't exist yet, so create an institution and mr
                 MedicalRecordUtil.writeInstitutionIntoDb(patch.getDdpParticipantId(), MedicalRecordUtil.NOT_SPECIFIED, patch.getRealm());
                 mrID = MedicalRecordUtil.isInstitutionTypeInDB(patch.getParentId());
