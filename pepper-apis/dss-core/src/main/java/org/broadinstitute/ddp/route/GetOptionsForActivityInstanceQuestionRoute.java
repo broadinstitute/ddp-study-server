@@ -1,22 +1,27 @@
 package org.broadinstitute.ddp.route;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpStatus;
+import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.ActivityDefStore;
-import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.json.RemoteAutoCompleteResponse;
+import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
+import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.PicklistOptionTypeaheadComparator;
+import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -28,6 +33,7 @@ import spark.Route;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -55,8 +61,11 @@ public class GetOptionsForActivityInstanceQuestionRoute implements Route {
         boolean isStudyAdmin = ddpAuth.hasAdminAccessToStudy(studyGuid);
         String autoCompleteQuery = request.queryParams(RouteConstants.QueryParam.TYPEAHEAD_QUERY);
         String queryLimit = request.queryParams(RouteConstants.QueryParam.TYPEAHEAD_QUERY_LIMIT);
-        int limit = (StringUtils.isNotBlank(queryLimit) && Integer.valueOf(queryLimit) <= DEFAULT_LIMIT)
-                ? Integer.valueOf(queryLimit) : DEFAULT_LIMIT;
+        int limit = StringUtils.isNotBlank(queryLimit) ? Integer.valueOf(queryLimit) : DEFAULT_LIMIT;
+        if (limit > DEFAULT_LIMIT) {
+            ResponseUtil.haltError(HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(
+                    ErrorCodes.OPERATION_NOT_ALLOWED, "Supported max limit is only " + DEFAULT_LIMIT));
+        }
         ContentStyle style = RouteUtil.parseContentStyleHeaderOrHalt(request, response, ContentStyle.STANDARD);
         LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
 
@@ -73,7 +82,7 @@ public class GetOptionsForActivityInstanceQuestionRoute implements Route {
             if (StringUtils.isBlank(autoCompleteQuery)) {
                 LOG.info("Option suggestion query is blank, returning all results size to default limit");
                 suggestions = allOptions.stream().limit(limit).collect(Collectors.toList());
-                renderer.bulkRenderAndApply(handle, allOptions, style, langCodeId, timestamp);
+                renderer.bulkRenderAndApply(handle, suggestions, style, langCodeId, timestamp);
             } else {
                 renderer.bulkRenderAndApply(handle, allOptions, style, langCodeId, timestamp);
                 suggestions = filterOptions(allOptions, autoCompleteQuery, limit);
@@ -88,15 +97,27 @@ public class GetOptionsForActivityInstanceQuestionRoute implements Route {
     private List<PicklistOption> getPicklistOptions(Handle handle, String studyGuid,
                                                     String activityInstanceGuid, String questionStableId) {
 
-        ActivityInstanceDto instanceDto = handle.attach(JdbiActivityInstance.class)
-                .getByActivityInstanceGuid(activityInstanceGuid)
-                .orElseThrow(() -> new DaoException("Could not find activity instance using guid " + activityInstanceGuid
-                        + " while loading activity definition "));
-        FormActivityDef formActivityDef = ActivityDefStore.getInstance().findActivityDef(handle, studyGuid, instanceDto)
-                .orElseThrow(() -> new DaoException("Could not find activity def for studyGuid: " + studyGuid
-                        + " and instanceGuid: " + activityInstanceGuid));
-        PicklistQuestionDef questionDef = (PicklistQuestionDef) formActivityDef.getQuestionByStableId(questionStableId);
-        List<PicklistOptionDef> optionDefs = questionDef.getPicklistOptionsIncludingRemoteAutoComplete();
+        Optional<ActivityInstanceDto> instanceDtoOpt = handle.attach(JdbiActivityInstance.class)
+                .getByActivityInstanceGuid(activityInstanceGuid);
+        if (!instanceDtoOpt.isPresent()) {
+            ResponseUtil.haltError(HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(
+                    ErrorCodes.ACTIVITY_NOT_FOUND, "Activity not found for Instance: " + activityInstanceGuid));
+        }
+
+        Optional<FormActivityDef> formActivityDefOpt = ActivityDefStore.getInstance()
+                .findActivityDef(handle, studyGuid, instanceDtoOpt.get());
+        if (!formActivityDefOpt.isPresent()) {
+            ResponseUtil.haltError(HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(
+                    ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, "Could not find activity def for studyGuid: " + studyGuid
+                    + " and instanceGuid: " + activityInstanceGuid));
+        }
+
+        QuestionDef questionDef = formActivityDefOpt.get().getQuestionByStableId(questionStableId);
+        if (questionDef.getQuestionType() != QuestionType.PICKLIST) {
+            ResponseUtil.haltError(HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(
+                    ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, "Not a Picklist question stableID: " + questionStableId));
+        }
+        List<PicklistOptionDef> optionDefs = ((PicklistQuestionDef) questionDef).getPicklistOptionsIncludingRemoteAutoComplete();
 
         return optionDefs.stream().map(optionDef -> new PicklistOption(optionDef.getStableId(),
                 optionDef.getOptionLabelTemplate().getTemplateId(),
