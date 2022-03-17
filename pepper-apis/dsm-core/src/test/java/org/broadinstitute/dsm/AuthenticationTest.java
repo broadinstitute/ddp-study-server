@@ -31,7 +31,8 @@ public class AuthenticationTest {
         //        auth0Util.getClaimValue(auth0Token, tenantDomain).ifPresent( claim -> claims.put(tenantDomain, claim.asString()));
         //        auth0Util.getClaimValue(auth0Token, clientId).ifPresent( claim -> claims.put(clientId, claim.asString()));
         //        claims.put("https://datadonationplatform.org/uid", "C2JYXJUUBC2KP9R10G1U");
-        //        String jwtToken = new SecurityHelper().createToken(auth0Token, cookieAgeInSeconds + (System.currentTimeMillis() / 1000) + (60 * 5),
+        //        String jwtToken = new SecurityHelper().createToken(auth0Token, cookieAgeInSeconds +
+        //        (System.currentTimeMillis() / 1000) + (60 * 5),
         //                claims);
 
         Map<String, String> authHeaders = new HashMap<>();

@@ -169,8 +169,8 @@ public class AssignParticipantRoute extends RequestHandler {
         return true;
     }
 
-    public boolean assignParticipant(HashSet<String> shortIds, String assigneeId, String participantId, String shortId,
-                                     String email, String realm, String query) {
+    public boolean assignParticipant(HashSet<String> shortIds, String assigneeId, String participantId, String shortId, String email,
+                                     String realm, String query) {
         if (assign(assigneeId, participantId, query)) {
             logger.info("Updated assignee for participant " + participantId);
             if (shortId != null) {
@@ -190,9 +190,9 @@ public class AssignParticipantRoute extends RequestHandler {
         Map<String, String> mapy = new HashMap<>();
         mapy.put(":customText", message);
         Recipient emailRecipient = new Recipient(email);
-        emailRecipient.setUrl(frontendUrl + PARTICIPANT_LINK.replace("%1", realm));
+        emailRecipient.setPermalink(frontendUrl + PARTICIPANT_LINK.replace("%1", realm));
         emailRecipient.setCurrentStatus(reason);
-        emailRecipient.setSurveyLinks(mapy);
+        emailRecipient.setPersonalization(mapy);
         if (onlyFuture) {
             notificationUtil.removeOldNotifications("", recordId);
             notificationUtil.queueFutureEmails(reason, emailRecipient, recordId);
@@ -205,8 +205,8 @@ public class AssignParticipantRoute extends RequestHandler {
     public String getDDPParticipantId(@NonNull String participantId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(queryForDDPParticipantId,
-                    ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+            try (PreparedStatement stmt = conn.prepareStatement(queryForDDPParticipantId, ResultSet.TYPE_SCROLL_SENSITIVE,
+                    ResultSet.CONCUR_READ_ONLY)) {
                 stmt.setString(1, participantId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     rs.last();

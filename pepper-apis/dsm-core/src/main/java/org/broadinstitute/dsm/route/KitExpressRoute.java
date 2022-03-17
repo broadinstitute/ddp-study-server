@@ -163,8 +163,8 @@ public class KitExpressRoute extends RequestHandler {
         Map<String, String> mapy = new HashMap<>();
         mapy.put(":customText", message);
         Recipient emailRecipient = new Recipient(DSMConfig.getSqlFromConfig(ApplicationConfigConstants.EMAIL_GP_RECIPIENT));
-        emailRecipient.setUrl(DSMConfig.getSqlFromConfig(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS) + KITREQUEST_LINK);
-        emailRecipient.setSurveyLinks(mapy);
+        emailRecipient.setPermalink(DSMConfig.getSqlFromConfig(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS) + KITREQUEST_LINK);
+        emailRecipient.setPersonalization(mapy);
         notificationUtil.queueCurrentAndFutureEmails(EMAIL_TYPE, emailRecipient, EMAIL_TYPE);
     }
 }

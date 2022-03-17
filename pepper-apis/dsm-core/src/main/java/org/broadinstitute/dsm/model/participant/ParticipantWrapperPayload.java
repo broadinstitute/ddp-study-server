@@ -6,7 +6,6 @@ import java.util.Optional;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.elastic.sort.SortBy;
 
-
 public class ParticipantWrapperPayload {
 
     private DDPInstanceDto ddpInstanceDto;
