@@ -67,15 +67,12 @@ public class GetCancerSuggestionsRoute implements Route {
     }
 
     private CancerSuggestionResponse getCancerSuggestions(String cancerQuery, int limit) {
-        List<Cancer> cancerMatches = new ArrayList<>();
         String upperCancerQuery = cancerQuery.toUpperCase();
 
         // first pass filter: find simple matches
-        for (Cancer cancer : cancerStore.getCancerList()) {
-            if (cancer.getName().toUpperCase().contains(cancerQuery.toUpperCase())) {
-                cancerMatches.add(cancer);
-            }
-        }
+        List<Cancer> cancerMatches = cancerStore.getCancerList().stream()
+                .filter(cancer -> cancer.getName().toUpperCase().contains(upperCancerQuery))
+                .collect(Collectors.toList());
 
         // now rank the matches in a way that puts left-most matches near the top, favoring word start matches
         List<CancerSuggestion> sortedSuggestions = new ArrayList<>();

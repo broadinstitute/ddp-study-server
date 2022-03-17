@@ -54,15 +54,12 @@ public class GetDsmDrugSuggestionsRoute implements Route {
     }
 
     private DrugSuggestionResponse getDrugSuggestions(String drugQuery, int limit) {
-        List<Drug> drugMatches = new ArrayList<>();
         String upperDrugQuery = drugQuery.toUpperCase();
 
         // first pass filter: find simple matches
-        for (Drug drug : drugStore.getDrugList()) {
-            if (drug.getName().toUpperCase().contains(drugQuery.toUpperCase())) {
-                drugMatches.add(drug);
-            }
-        }
+        List<Drug> drugMatches = drugStore.getDrugList().stream()
+                .filter(drug -> drug.getName().toUpperCase().contains(upperDrugQuery))
+                .collect(Collectors.toList());
 
         // now rank the matches in a way that puts left-most matches near the top,
         // favoring word start matches
