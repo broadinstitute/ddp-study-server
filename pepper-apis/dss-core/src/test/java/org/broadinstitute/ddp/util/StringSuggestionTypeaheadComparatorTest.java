@@ -12,8 +12,7 @@ import org.junit.Test;
 
 public class StringSuggestionTypeaheadComparatorTest {
 
-    public static final String FIRST_RESULT =
-            "Foo should match first";
+    public static final String FIRST_RESULT = "Foo should match first";
     public static final String SECOND_RESULT = "This other foo should match second";
     public static final String FOURTH_RESULT = "This mcfoo should match fourth";
     public static final String THIRD_RESULT = "This crazy (foo) should match third";
