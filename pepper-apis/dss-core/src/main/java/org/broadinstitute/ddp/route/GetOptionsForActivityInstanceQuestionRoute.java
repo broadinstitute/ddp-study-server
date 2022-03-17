@@ -20,9 +20,9 @@ import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.security.DDPAuth;
-import org.broadinstitute.ddp.util.PicklistOptionTypeaheadComparator;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
+import org.broadinstitute.ddp.util.StringSuggestionTypeaheadComparator;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +31,6 @@ import spark.Response;
 import spark.Route;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -77,7 +76,7 @@ public class GetOptionsForActivityInstanceQuestionRoute implements Route {
             //Get all options first from ActivityDef (already in memory) then render and match
             long timestamp = Instant.now().toEpochMilli();
             long langCodeId = preferredUserLanguage.getId();
-            List<PicklistOption> suggestions = new ArrayList<>();
+            List<PicklistOption> suggestions;
             List<PicklistOption> allOptions = getPicklistOptions(handle, studyGuid, instanceGuid, questionStableId);
             if (StringUtils.isBlank(autoCompleteQuery)) {
                 LOG.info("Option suggestion query is blank, returning all results size to default limit");
@@ -134,8 +133,9 @@ public class GetOptionsForActivityInstanceQuestionRoute implements Route {
 
         // now sort the matches in a way that puts left-most matches near the top, favoring word start matches
         // apply limit and return results
+        var suggestionComparator = new StringSuggestionTypeaheadComparator(autoCompleteQuery);
         return optionMatches.stream()
-                .sorted(new PicklistOptionTypeaheadComparator(autoCompleteQuery))
+                .sorted((lhs, rhs) -> suggestionComparator.compare(lhs.getOptionLabel(), rhs.getOptionLabel()))
                 .limit(limit).collect(Collectors.toList());
     }
 
