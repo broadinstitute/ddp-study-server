@@ -50,8 +50,6 @@ public class SomaticAssentAddendumV2 implements CustomTask {
         }
 
         cfg = studyCfg;
-        //versionTag = dataCfg.getString("versionTag");
-        //timestamp = Instant.parse(dataCfg.getString("timestamp"));
         this.cfgPath = cfgPath;
         this.varsCfg = varsCfg;
         this.gson = GsonUtil.standardGson();
@@ -59,8 +57,6 @@ public class SomaticAssentAddendumV2 implements CustomTask {
 
     @Override
     public void run(Handle handle) {
-        //creates version: 2 for CONSENT activity.
-
         LanguageStore.init(handle);
         User adminUser = handle.attach(UserDao.class).findUserByGuid(cfg.getString("adminUser.guid")).get();
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid"));
@@ -88,7 +84,7 @@ public class SomaticAssentAddendumV2 implements CustomTask {
 
         var jdbiActSection = handle.attach(JdbiFormActivityFormSection.class);
 
-        jdbiActSection.insert(activityId, sectionId, revisionId, 50);
+        jdbiActSection.insert(activityId, sectionId, revisionId, 60);
 
     }
 
