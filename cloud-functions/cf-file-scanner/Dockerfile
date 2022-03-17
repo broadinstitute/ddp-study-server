@@ -18,17 +18,22 @@ RUN mvn -f pom.xml --batch-mode dependency:copy \
     -Dartifact='com.google.cloud.functions.invoker:java-function-invoker:1.1.0' \
     -DoutputDirectory=/app
 
-FROM openjdk:11-jdk AS runtime
+FROM openjdk:11-jre-slim AS runtime
 
 ENV GCP_PROJECT=""
 ENV RESULT_TOPIC=""
 ENV DDP_CLAMAV_SERVER="localhost:3310"
 
+RUN apt-get update && apt-get install -y \
+  clamav-daemon \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /build/src/main/resources/container/clamd.conf /etc/clamav/clamd.conf
+COPY --from=build /build/src/main/resources/container/freshclam.conf /etc/clamav/freshclam.conf
+COPY entrypoint.sh /app/entrypoint.sh
+
 COPY --from=build /app /app
 
 WORKDIR /app
 
-CMD java \
-    -jar java-function-invoker-1.1.0.jar \
-    --classpath cf-file-scanner-1.0-SNAPSHOT.jar \
-    --target org.broadinstitute.ddp.cf.FileScanner
+ENTRYPOINT [ "/app/entrypoint.sh" ]
