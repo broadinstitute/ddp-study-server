@@ -30,10 +30,7 @@ const picklistString = pickListOptions.reduce((prev, current) => {
     current.optionLabelTemplate.templateType
   }" ${
     Object.keys(current.optionLabelTemplate)[1]
-  }: "${current.optionLabelTemplate.templateText.replace(
-    /[^a-zA-Z0-9 ]/g,
-    ""
-  )}"}},`;
+  }: "${current.optionLabelTemplate.templateText.replace(/'/g, "")}"}},`;
   return (prev += stringBuilder);
 }, "");
 
