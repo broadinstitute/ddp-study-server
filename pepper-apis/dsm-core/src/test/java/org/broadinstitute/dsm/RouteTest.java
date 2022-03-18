@@ -453,8 +453,8 @@ public class RouteTest extends TestHelper {
                 DBTestUtil.getQueryDetail("SELECT * from ddp_medical_record where medical_record_id = ? ", mrId, "follow_ups"),
                 FollowUp[].class);
         Assert.assertEquals(followUp.length, 1);
-        Assert.assertEquals(followUp[0].getFRequest1(), "2019-04-24");
-        Assert.assertEquals(followUp[0].getFReceived(), "2019-04-28");
+        Assert.assertEquals(followUp[0].getFollowUpRequest1(), "2019-04-24");
+        Assert.assertEquals(followUp[0].getFollowUpReceived(), "2019-04-28");
 
         HttpResponse response =
                 TestUtil.performGet(DSM_BASE_URL, "/ui/ddpInformation/2017-03-01/2020-03-20?realm=" + TEST_DDP + "&userId=" + userId,
