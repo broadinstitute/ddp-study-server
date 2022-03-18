@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.model.activity.definition.question;
 import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
+import org.broadinstitute.ddp.equation.ValidEquation;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
@@ -20,6 +21,7 @@ public final class EquationQuestionDef extends QuestionDef {
     @SerializedName("maximumDecimalPlaces")
     private final Integer maximumDecimalPlaces;
 
+    @ValidEquation
     @SerializedName("expression")
     private final String expression;
 
