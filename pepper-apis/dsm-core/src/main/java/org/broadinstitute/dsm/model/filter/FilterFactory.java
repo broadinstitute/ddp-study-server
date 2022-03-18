@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.model.filter.participant.EmptyFilterParticipantList;
 import org.broadinstitute.dsm.model.filter.participant.ManualFilterParticipantList;
 import org.broadinstitute.dsm.model.filter.participant.QuickFilterParticipantList;
 import org.broadinstitute.dsm.model.filter.participant.SavedFilterParticipantList;
@@ -19,7 +18,6 @@ import spark.Request;
 
 public class FilterFactory {
 
-
     public static Filterable of(Request request) {
         QueryParamsMap queryParams = Objects.requireNonNull(request).queryMap();
         String parent = queryParams.get(DBConstants.FILTER_PARENT).value();
@@ -33,14 +31,13 @@ public class FilterFactory {
         switch (lastSegment) {
             case RoutePath.APPLY_FILTER:
                 switch (parent) {
-                    case BaseFilter
-                            .PARENT_PARTICIPANT_LIST:
+                    case BaseFilter.PARENT_PARTICIPANT_LIST:
                         if (StringUtils.isNotBlank(queryParams.get(RequestParameter.FILTER_NAME).value())) {
                             filterable = new QuickFilterParticipantList();
                         } else if (StringUtils.isNotBlank(queryParams.get(RequestParameter.FILTERS).value())) {
                             filterable = new SavedFilterParticipantList();
                         } else {
-                            filterable = new EmptyFilterParticipantList();
+                            filterable = new ManualFilterParticipantList(jsonBody); //no empty filter because of pre-filter
                         }
                         break;
                     case BaseFilter.TISSUE_LIST_PARENT:
@@ -57,8 +54,7 @@ public class FilterFactory {
                 break;
             case RoutePath.FILTER_LIST:
                 switch (parent) {
-                    case BaseFilter
-                            .PARENT_PARTICIPANT_LIST:
+                    case BaseFilter.PARENT_PARTICIPANT_LIST:
                         filterable = new ManualFilterParticipantList(jsonBody);
                         break;
                     case BaseFilter.TISSUE_LIST_PARENT:
@@ -73,6 +69,5 @@ public class FilterFactory {
         }
         return filterable;
     }
-
 
 }

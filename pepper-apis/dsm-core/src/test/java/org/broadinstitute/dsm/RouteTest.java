@@ -1115,7 +1115,7 @@ public class RouteTest extends TestHelper {
                 int instanceId = Integer.parseInt(INSTANCE_ID);
                 long maxParticipantId = org.broadinstitute.dsm.util.DBUtil.getBookmark(conn, INSTANCE_ID);
                 try {
-                    addParticipant(messageParticipant, instanceId, maxParticipantId);
+                    addParticipant(messageParticipant, instanceId, maxParticipantId, TEST_DDP);
                 } catch (Exception e) {
                     Assert.fail("Couldn't add test participant " + e);
                 }
@@ -1152,7 +1152,7 @@ public class RouteTest extends TestHelper {
                 //add new participant or institution information
                 messageParticipant = TestUtil.readFile("ddpResponses/forQuartzJob/Institutionrequests_2.json");
                 try {
-                    addParticipant(messageParticipant, instanceId, maxParticipantId);
+                    addParticipant(messageParticipant, instanceId, maxParticipantId, TEST_DDP);
                 } catch (Exception e) {
                     Assert.fail("Couldn't add test participant " + e);
                 }
@@ -1161,15 +1161,15 @@ public class RouteTest extends TestHelper {
                 Assert.assertNotEquals(newMaxParticipantId, org.broadinstitute.dsm.util.DBUtil.getBookmark(conn, INSTANCE_ID).intValue());
 
                 //check if a medicalRecord was generated
-                String SQL_SELECT_MR_LOG =
+                String sqlSelectMrLog =
                         "SELECT medical_record_log_id, date, comments, type FROM ddp_medical_record_log WHERE medical_record_id = ?";
-                String medicalRecordLogId = DBTestUtil.getQueryDetail(SQL_SELECT_MR_LOG, medicalRecordId, "medical_record_log_id");
+                String medicalRecordLogId = DBTestUtil.getQueryDetail(sqlSelectMrLog, medicalRecordId, "medical_record_log_id");
                 Assert.assertNotEquals("-1", medicalRecordLogId);
 
                 //add new participant or institution information
                 messageParticipant = TestUtil.readFile("ddpResponses/forQuartzJob/Institutionrequests_3.json");
                 try {
-                    addParticipant(messageParticipant, instanceId, maxParticipantId);
+                    addParticipant(messageParticipant, instanceId, maxParticipantId, TEST_DDP);
                 } catch (Exception e) {
                     Assert.fail("Couldn't add test participant " + e);
                 }
@@ -1195,14 +1195,15 @@ public class RouteTest extends TestHelper {
         });
     }
 
-    private void addParticipant(String json, int instanceId, long maxParticipantId) {
+    private void addParticipant(String json, int instanceId, long maxParticipantId, String instanceName) {
         InstitutionRequest[] institutionRequests = new Gson().fromJson(json, InstitutionRequest[].class);
         if (institutionRequests != null && institutionRequests.length > 0) {
             for (InstitutionRequest participantInstitution : institutionRequests) {
                 try {
                     inTransaction((conn) -> {
                         try {
-                            ddpMedicalRecordDataRequest.writeParticipantIntoDb(conn, String.valueOf(instanceId), participantInstitution);
+                            ddpMedicalRecordDataRequest.writeParticipantIntoDb(conn, String.valueOf(instanceId), participantInstitution,
+                                    instanceName);
                         } catch (Exception e) {
                             throw new RuntimeException("medicalRecordLog ", e);
                         }

@@ -27,7 +27,6 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.lucene.search.join.ScoreMode;
-import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Filter;
@@ -137,9 +136,9 @@ public class ElasticSearchUtil {
         if (client == null) {
             try {
                 client = getClientForElasticsearchCloud(
-                        ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_URL),
-                        ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_USERNAME),
-                        ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_PASSWORD));
+                        DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_URL),
+                        DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_USERNAME),
+                        DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_PASSWORD));
             } catch (MalformedURLException e) {
                 throw new RuntimeException("Error while initializing ES client", e);
             }
@@ -171,18 +170,8 @@ public class ElasticSearchUtil {
         credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(userName, password));
 
         URL url = new URL(baseUrl);
-        String proxy = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_PROXY);
-        return getClientForElasticsearchCloud(baseUrl, userName, password, proxy);
-    }
-
-    public static RestHighLevelClient getClientForElasticsearchCloudCF(@NonNull String baseUrl,
-                                                                       @NonNull String userName,
-                                                                       @NonNull String password,
-                                                                       String proxy) throws MalformedURLException {
-        final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-        credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(userName, password));
-
-        URL url = new URL(baseUrl);
+        String proxy = DSMConfig.hasConfigPath(ApplicationConfigConstants.ES_PROXY)
+                ? DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_PROXY) : null;
         return getClientForElasticsearchCloud(baseUrl, userName, password, proxy);
     }
 
@@ -213,13 +202,24 @@ public class ElasticSearchUtil {
         return new RestHighLevelClient(builder);
     }
 
+    public static RestHighLevelClient getClientForElasticsearchCloudCF(@NonNull String baseUrl,
+                                                                       @NonNull String userName,
+                                                                       @NonNull String password,
+                                                                       String proxy) throws MalformedURLException {
+        final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+        credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(userName, password));
+
+        URL url = new URL(baseUrl);
+        return getClientForElasticsearchCloud(baseUrl, userName, password, proxy);
+    }
+
     public static Map<String, Map<String, Object>> getSingleParticipantFromES(@NonNull String realm,
                                                                               @NonNull String index,
                                                                               RestHighLevelClient client,
                                                                               String participantHruid) {
         Map<String, Map<String, Object>> esData = new HashMap<>();
         if (StringUtils.isNotBlank(index)) {
-            logger.info("Collecting ES data");
+            logger.info("Collecting ES data from index " + index);
             try {
                 int scrollSize = 1000;
                 SearchRequest searchRequest = new SearchRequest(index);
@@ -251,7 +251,7 @@ public class ElasticSearchUtil {
                                                                             RestHighLevelClient client) {
         Map<String, Map<String, Object>> esData = new HashMap<>();
         if (StringUtils.isNotBlank(index)) {
-            logger.info("Collecting ES data");
+            logger.info("Collecting ES data from index " + index);
             try {
                 int scrollSize = 1000;
                 SearchRequest searchRequest = new SearchRequest(index);
@@ -272,6 +272,20 @@ public class ElasticSearchUtil {
                 throw new RuntimeException("Couldn't get participants from ES for instance " + realm, e);
             }
             logger.info("Got " + esData.size() + " participants from ES for instance " + realm);
+        }
+        return esData;
+    }
+
+    public static Map<String, Map<String, Object>> getDDPParticipantsFromES(@NonNull String realm, @NonNull String index) {
+        Map<String, Map<String, Object>> esData = new HashMap<>();
+        if (StringUtils.isNotBlank(index)) {
+            logger.info("Collecting ES data from index: " + index);
+            try {
+                esData = getDDPParticipantsFromES(realm, index, client);
+            } catch (Exception e) {
+                logger.error("Couldn't get participants from ES for instance " + realm, e);
+            }
+            logger.info("Finished collecting ES data");
         }
         return esData;
     }
@@ -298,6 +312,20 @@ public class ElasticSearchUtil {
             throw new RuntimeException("Couldn't get ES for participant: " + altpid + " from " + index, e);
         }
         logger.info("Got ES data for participant: " + altpid + " from " + index);
+        return elasticSearch;
+    }
+
+    private static ElasticSearchParticipantDto getParticipantESDataByAltpid(RestHighLevelClient client, String index, String altpid) {
+        ElasticSearchParticipantDto elasticSearch = new ElasticSearchParticipantDto.Builder().build();
+
+        logger.info("Getting ES data for participant: " + altpid);
+        try {
+            elasticSearch = fetchESDataByAltpid(index, altpid, client);
+        } catch (Exception e) {
+            throw new RuntimeException("Couldn't get ES for participant: " + altpid + " from " + index, e);
+        }
+        logger.info("Got ES data for participant: " + altpid + " from " + index);
+
         return elasticSearch;
     }
 
@@ -330,25 +358,11 @@ public class ElasticSearchUtil {
                 .get();
     }
 
-    public static Map<String, Map<String, Object>> getDDPParticipantsFromES(@NonNull String realm, @NonNull String index) {
-        Map<String, Map<String, Object>> esData = new HashMap<>();
-        if (StringUtils.isNotBlank(index)) {
-            logger.info("Collecting ES data from index: " + index);
-            try {
-                esData = getDDPParticipantsFromES(realm, index, client);
-            } catch (Exception e) {
-                logger.error("Couldn't get participants from ES for instance " + realm, e);
-            }
-            logger.info("Finished collecting ES data");
-        }
-        return esData;
-    }
-
     public static Map<String, Map<String, Object>> getFilteredDDPParticipantsFromES(@NonNull DDPInstance instance, @NonNull String filter) {
         String index = instance.getParticipantIndexES();
         if (StringUtils.isNotBlank(index)) {
             Map<String, Map<String, Object>> esData = new HashMap<>();
-            logger.info("Collecting ES data");
+            logger.info("Collecting ES data from index " + index);
             try {
                 int scrollSize = 1000;
                 SearchRequest searchRequest = new SearchRequest(index);
@@ -724,20 +738,6 @@ public class ElasticSearchUtil {
 
         UpdateResponse updateResponse = client.update(updateRequest, RequestOptions.DEFAULT);
         logger.info("Update workflow information for participant " + ddpParticipantId + " to ES index " + index);
-    }
-
-    private static ElasticSearchParticipantDto getParticipantESDataByAltpid(RestHighLevelClient client, String index, String altpid) {
-        ElasticSearchParticipantDto elasticSearch = new ElasticSearchParticipantDto.Builder().build();
-
-        logger.info("Getting ES data for participant: " + altpid);
-        try {
-            elasticSearch = fetchESDataByAltpid(index, altpid, client);
-        } catch (Exception e) {
-            throw new RuntimeException("Couldn't get ES for participant: " + altpid + " from " + index, e);
-        }
-        logger.info("Got ES data for participant: " + altpid + " from " + index);
-
-        return elasticSearch;
     }
 
     public static void updateRequest(RestHighLevelClient client, @NonNull String ddpParticipantId, String index,

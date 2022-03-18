@@ -61,6 +61,13 @@ public interface JdbiQuestion extends SqlObject {
                 @Bind("hideNumber") boolean hideNumber, @Bind("isDeprecated") boolean isDeprecated,
                 @Bind("isWriteOnce") boolean isWriteOnce);
 
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryDtoByActivityIdAndQuestionStableId")
+    @RegisterConstructorMapper(QuestionDto.class)
+    Optional<QuestionDto> findDtoByActivityIdAndQuestionStableId(
+            @Bind("activityId") long activityId,
+            @Bind("questionStableId") String questionStableId);
+
     // study-builder
     @UseStringTemplateSqlLocator
     @SqlQuery("queryLatestDtoByStudyIdAndQuestionStableId")

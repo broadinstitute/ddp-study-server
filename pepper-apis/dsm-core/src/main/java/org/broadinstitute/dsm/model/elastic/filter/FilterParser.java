@@ -22,10 +22,6 @@ public class FilterParser extends ValueParser {
         }
     }
 
-    private boolean isNumeric(String value) {
-        return !isWrappedByChar(value) && StringUtils.isNumeric(value);
-    }
-
     @Override
     public Object[] parse(String[] values) {
         List<Object> parsedValues = new ArrayList<>();
@@ -39,6 +35,10 @@ public class FilterParser extends ValueParser {
             }
         }
         return parsedValues.toArray();
+    }
+
+    private boolean isNumeric(String value) {
+        return !isWrappedByChar(value) && StringUtils.isNumeric(value);
     }
 
     @Override

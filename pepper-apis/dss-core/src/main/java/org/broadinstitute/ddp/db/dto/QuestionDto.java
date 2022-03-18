@@ -1,163 +1,73 @@
 package org.broadinstitute.ddp.db.dto;
 
-import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
-import javax.annotation.Nullable;
-
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Getter;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
-public class QuestionDto implements Serializable {
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
+@Data
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
+public class QuestionDto implements Serializable {
+    @ColumnName("question_type")
     private QuestionType type;
+
+    @ColumnName("question_id")
     private long id;
+
+    @ColumnName("stable_id")
     private String stableId;
+
+    @ColumnName("prompt_template_id")
     private long promptTemplateId;
+
+    @ColumnName("tooltip_template_id")
     private Long tooltipTemplateId;
+
+    @ColumnName("info_header_template_id")
     private Long additionalInfoHeaderTemplateId;
+
+    @ColumnName("info_footer_template_id")
     private Long additionalInfoFooterTemplateId;
+
+    @ColumnName("activity_id")
     private long activityId;
-    private boolean isRestricted;
-    private boolean isDeprecated;
-    private boolean hideNumber;
-    private boolean writeOnce;
+
+    @ColumnName("is_restricted")
+    private boolean restricted;
+
+    @Getter(AccessLevel.NONE)
+    @ColumnName("is_deprecated")
+    private Boolean deprecated;
+
+    @Getter(AccessLevel.NONE)
+    @ColumnName("hide_number")
+    private Boolean hideNumber;
+
+    @Getter(AccessLevel.NONE)
+    @ColumnName("is_write_once")
+    private Boolean writeOnce;
+
+    @ColumnName("revision_id")
     private long revisionId;
+
+    @ColumnName("revision_start")
     private long revisionStart;
+
+    @ColumnName("revision_end")
     private Long revisionEnd;
 
-    @JdbiConstructor
-    public QuestionDto(@ColumnName("question_type") QuestionType type,
-                       @ColumnName("question_id") long id,
-                       @ColumnName("stable_id") String stableId,
-                       @ColumnName("prompt_template_id") long promptTemplateId,
-                       @ColumnName("tooltip_template_id") Long tooltipTemplateId,
-                       @ColumnName("info_header_template_id") Long additionalInfoHeaderTemplateId,
-                       @ColumnName("info_footer_template_id") Long additionalInfoFooterTemplateId,
-                       @ColumnName("activity_id") long activityId,
-                       @ColumnName("is_restricted") boolean isRestricted,
-                       @ColumnName("is_deprecated") Boolean isDeprecated,
-                       @ColumnName("hide_number") Boolean hideNumber,
-                       @ColumnName("is_write_once") Boolean writeOnce,
-                       @ColumnName("revision_id") long revisionId,
-                       @ColumnName("revision_start") long revisionStart,
-                       @ColumnName("revision_end") Long revisionEnd) {
-        this.type = type;
-        this.id = id;
-        this.stableId = stableId;
-        this.promptTemplateId = promptTemplateId;
-        this.tooltipTemplateId = tooltipTemplateId;
-        this.additionalInfoHeaderTemplateId = additionalInfoHeaderTemplateId;
-        this.additionalInfoFooterTemplateId = additionalInfoFooterTemplateId;
-        this.activityId = activityId;
-        this.isRestricted = isRestricted;
-        this.isDeprecated = isDeprecated != null && isDeprecated;
-        this.hideNumber = hideNumber != null && hideNumber;
-        this.writeOnce = writeOnce != null && writeOnce;
-        this.revisionId = revisionId;
-        this.revisionStart = revisionStart;
-        this.revisionEnd = revisionEnd;
-    }
-
-    public QuestionDto(QuestionType type,
-                       long id,
-                       String stableId,
-                       long promptTemplateId,
-                       Long additionalInfoHeaderTemplateId,
-                       Long additionalInfoFooterTemplateId,
-                       long activityId,
-                       boolean isRestricted,
-                       Boolean isDeprecated,
-                       Boolean hideNumber,
-                       Boolean writeOnce,
-                       long revisionId,
-                       long revisionStart,
-                       Long revisionEnd) {
-        this(type, id, stableId, promptTemplateId, null,
-                additionalInfoHeaderTemplateId, additionalInfoFooterTemplateId,
-                activityId, isRestricted, isDeprecated, hideNumber, writeOnce,
-                revisionId, revisionStart, revisionEnd);
-    }
-
-    protected QuestionDto(QuestionDto other) {
-        this.type = other.type;
-        this.id = other.id;
-        this.stableId = other.stableId;
-        this.promptTemplateId = other.promptTemplateId;
-        this.tooltipTemplateId = other.tooltipTemplateId;
-        this.additionalInfoHeaderTemplateId = other.additionalInfoHeaderTemplateId;
-        this.additionalInfoFooterTemplateId = other.additionalInfoFooterTemplateId;
-        this.activityId = other.activityId;
-        this.isRestricted = other.isRestricted;
-        this.isDeprecated = other.isDeprecated;
-        this.hideNumber = other.hideNumber;
-        this.writeOnce = other.writeOnce;
-        this.revisionId = other.revisionId;
-        this.revisionStart = other.revisionStart;
-        this.revisionEnd = other.revisionEnd;
-    }
-
-    public QuestionType getType() {
-        return type;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public String getStableId() {
-        return stableId;
-    }
-
-    public long getPromptTemplateId() {
-        return promptTemplateId;
-    }
-
-    public Long getTooltipTemplateId() {
-        return tooltipTemplateId;
-    }
-
-    @Nullable
-    public Long getAdditionalInfoHeaderTemplateId() {
-        return additionalInfoHeaderTemplateId;
-    }
-
-    @Nullable
-    public Long getAdditionalInfoFooterTemplateId() {
-        return additionalInfoFooterTemplateId;
-    }
-
-    public long getActivityId() {
-        return activityId;
-    }
-
-    public boolean isRestricted() {
-        return isRestricted;
-    }
-
-    public boolean isDeprecated() {
-        return isDeprecated;
-    }
-
-    public boolean shouldHideNumber() {
-        return hideNumber;
-    }
-
-    public boolean isWriteOnce() {
-        return writeOnce;
-    }
-
-    public long getRevisionId() {
-        return revisionId;
-    }
-
-    public long getRevisionStart() {
-        return revisionStart;
-    }
-
-    public Long getRevisionEnd() {
-        return revisionEnd;
+    protected QuestionDto(final QuestionDto other) {
+        this(other.type, other.id, other.stableId, other.promptTemplateId, other.tooltipTemplateId,
+                other.additionalInfoHeaderTemplateId, other.additionalInfoFooterTemplateId,
+                other.activityId, other.restricted, other.deprecated, other.hideNumber,
+                other.writeOnce, other.revisionId, other.revisionStart, other.revisionEnd);
     }
 
     public Set<Long> getTemplateIds() {
@@ -173,5 +83,17 @@ public class QuestionDto implements Serializable {
             ids.add(additionalInfoFooterTemplateId);
         }
         return ids;
+    }
+
+    public final boolean isDeprecated() {
+        return deprecated != null && deprecated;
+    }
+
+    public final boolean isWriteOnce() {
+        return writeOnce != null && writeOnce;
+    }
+
+    public final boolean shouldHideNumber() {
+        return hideNumber != null && hideNumber;
     }
 }

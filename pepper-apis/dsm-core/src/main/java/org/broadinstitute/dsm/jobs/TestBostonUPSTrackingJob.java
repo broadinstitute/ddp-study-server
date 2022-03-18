@@ -48,16 +48,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.utils.StringUtils;
 
-
 public class TestBostonUPSTrackingJob implements BackgroundFunction<PubsubMessage> {
 
     public static final String SKIP_CE_ORDERS_FOR_SCHEDULED_KITS_AFTER = "testboston.skipCEOrdersForScheduledKitsAfter";
     private static Auth0Util auth0Util;
     private final Logger logger = LoggerFactory.getLogger(TestBostonUPSTrackingJob.class);
-    private final int MAX_CONNECTION = 1;
-    private final String SKIP_CE_ORDER_DATE_FORMAT = "YYYY-MM-dd";
-    String DELIVERED = "DELIVERED";
-    String RECEIVED = "RECEIVED";
+    private final int maxConnection = 1;
+    private final String skipCeOrderDateFormat = "YYYY-MM-dd";
+    String delivered = "DELIVERED";
+    String received = "RECEIVED";
     String endpoint;
     String username;
     String password;
@@ -65,8 +64,8 @@ public class TestBostonUPSTrackingJob implements BackgroundFunction<PubsubMessag
     Date ignoreScheduledOrdersAfter;
     Connection conn = null;
     UPSTracker upsTracker = null;
-    private String STUDY_MANAGER_SCHEMA = System.getenv("STUDY_MANAGER_SCHEMA") + ".";
-    private String SELECT_BY_EXTERNAL_ORDER_NUMBER = "and request.external_order_number = ?";
+    private String studyManagerSchema = System.getenv("STUDY_MANAGER_SCHEMA") + ".";
+    private String selectByExternalOrderNumber = "and request.external_order_number = ?";
     private Covid19OrderRegistrar orderRegistrar;
     private Authentication careEvolveAuth = null;
 
@@ -85,11 +84,11 @@ public class TestBostonUPSTrackingJob implements BackgroundFunction<PubsubMessag
         if (cfg.hasPath(SKIP_CE_ORDERS_FOR_SCHEDULED_KITS_AFTER)) {
             String skipAfter = cfg.getString(SKIP_CE_ORDERS_FOR_SCHEDULED_KITS_AFTER);
             try {
-                ignoreScheduledOrdersAfter = new SimpleDateFormat(SKIP_CE_ORDER_DATE_FORMAT).parse(skipAfter);
+                ignoreScheduledOrdersAfter = new SimpleDateFormat(skipCeOrderDateFormat).parse(skipAfter);
                 logger.info("Will skip all CE orders after " + skipAfter);
             } catch (ParseException e) {
                 logger.error(
-                        "Could not parse cutoff time for testboston longitudinal orders.  Expected format is " + SKIP_CE_ORDER_DATE_FORMAT,
+                        "Could not parse cutoff time for testboston longitudinal orders.  Expected format is " + skipCeOrderDateFormat,
                         e);
             }
         } else {
@@ -107,7 +106,7 @@ public class TestBostonUPSTrackingJob implements BackgroundFunction<PubsubMessag
         String data = new String(Base64.getDecoder().decode(message.data));
         UPSKit[] kitsToLookFor = new Gson().fromJson(data, UPSKit[].class);
         PoolingDataSource<PoolableConnection> dataSource =
-                CFUtil.createDataSource(MAX_CONNECTION, cfg.getString(ApplicationConfigConstants.CF_DSM_DB_URL));
+                CFUtil.createDataSource(maxConnection, cfg.getString(ApplicationConfigConstants.CF_DSM_DB_URL));
         Arrays.stream(kitsToLookFor).forEach(kit -> {
                     logger.info("Checking possible actions for kit " + kit.getDsmKitRequestId());
                     if (StringUtils.isNotBlank(kit.getUpsPackage().getUpsShipmentId())) {
@@ -130,9 +129,9 @@ public class TestBostonUPSTrackingJob implements BackgroundFunction<PubsubMessag
         boolean gbfShippedTriggerDSSDelivered = false;
         logger.info("Inserting new kit information for kit " + kit.getDsmKitRequestId());
         final String SQL_INSERT_SHIPMENT =
-                "INSERT INTO " + STUDY_MANAGER_SCHEMA + "ups_shipment" + "  ( dsm_kit_request_id )" + "  VALUES " + "  (?)";
+                "INSERT INTO " + studyManagerSchema + "ups_shipment" + "  ( dsm_kit_request_id )" + "  VALUES " + "  (?)";
         final String SQL_INSERT_UPSPackage =
-                "INSERT INTO " + STUDY_MANAGER_SCHEMA + "ups_package" + "( ups_shipment_id ," + " tracking_number )" + "  VALUES "
+                "INSERT INTO " + studyManagerSchema + "ups_package" + "( ups_shipment_id ," + " tracking_number )" + "  VALUES "
                         + "  ( ? ,?)," + "  ( ? ,?) ";
 
         Connection conn = null;
@@ -227,11 +226,11 @@ public class TestBostonUPSTrackingJob implements BackgroundFunction<PubsubMessag
         UPSPackage upsPackageReturn = new UPSPackage(kit.getTrackingReturnId(), null, insertedShipmentId, returnKitPackageId, null, null);
 
         UPSKit kitShipping =
-                new UPSKit(upsPackageShipping, kit.getKitLabel(), kit.getCE_order(), kit.getDsmKitRequestId(), kit.getExternalOrderNumber(),
+                new UPSKit(upsPackageShipping, kit.getKitLabel(), kit.getCeOrder(), kit.getDsmKitRequestId(), kit.getExternalOrderNumber(),
                         kit.getTrackingToId(), kit.getTrackingReturnId(), kit.getDdpInstanceId(), kit.getHruid(),
                         gbfShippedTriggerDSSDelivered);
         UPSKit kitReturn =
-                new UPSKit(upsPackageReturn, kit.getKitLabel(), kit.getCE_order(), kit.getDsmKitRequestId(), kit.getExternalOrderNumber(),
+                new UPSKit(upsPackageReturn, kit.getKitLabel(), kit.getCeOrder(), kit.getDsmKitRequestId(), kit.getExternalOrderNumber(),
                         kit.getTrackingToId(), kit.getTrackingReturnId(), kit.getDdpInstanceId(), kit.getHruid(),
                         gbfShippedTriggerDSSDelivered);
         getUPSUpdate(dataSource, kitShipping, cfg);
@@ -326,8 +325,8 @@ public class TestBostonUPSTrackingJob implements BackgroundFunction<PubsubMessag
 
     private void updateDeliveryInformation(PoolingDataSource<PoolableConnection> dataSource, UPSPackage responseUpsPackage, UPSKit upsKit,
                                            Config cfg) {
-        String SQL_UPDATE_PACKAGE_DELIVERY =
-                "UPDATE " + STUDY_MANAGER_SCHEMA + "ups_package   " + "SET   " + "delivery_date = ?,   " + "delivery_time_start = ?,   "
+        String sqlUpdatePackageDelivery =
+                "UPDATE " + studyManagerSchema + "ups_package   " + "SET   " + "delivery_date = ?,   " + "delivery_time_start = ?,   "
                         + "delivery_time_end = ?,   " + "delivery_time_type = ?   " + "WHERE ups_package_id = ? ";
         UPSDeliveryDate[] deliveryDates = responseUpsPackage.getDeliveryDate();
         UPSDeliveryDate currentDelivery = null;
@@ -347,7 +346,7 @@ public class TestBostonUPSTrackingJob implements BackgroundFunction<PubsubMessag
         Connection conn = null;
         try {
             conn = dataSource.getConnection();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_PACKAGE_DELIVERY)) {
+            try (PreparedStatement stmt = conn.prepareStatement(sqlUpdatePackageDelivery)) {
                 stmt.setString(1, deliveryDate);
                 stmt.setString(2, deliveryStartTime);
                 stmt.setString(3, deliveryEndTime);
@@ -387,7 +386,7 @@ public class TestBostonUPSTrackingJob implements BackgroundFunction<PubsubMessag
                                     UPSActivity lastActivity, String trackingId, boolean isReturn, UPSKit kit,
                                     Instant earliestInTransitTime, String ddpInstanceId, Config cfg) {
         final String INSERT_NEW_ACTIVITIES =
-                "INSERT INTO " + STUDY_MANAGER_SCHEMA + "ups_activity  (  ups_package_id  , ups_location  ,  "
+                "INSERT INTO " + studyManagerSchema + "ups_activity  (  ups_package_id  , ups_location  ,  "
                         + "  ups_status_type  , ups_status_description  ,  ups_status_code  ,  "
                         + "  ups_activity_date_time) " + "VALUES " + "( ?, ?, ?, ?, ?, ?)";
         final String SQL_SELECT_KIT_FOR_NOTIFICATION_EXTERNAL_SHIPPER =
@@ -395,11 +394,11 @@ public class TestBostonUPSTrackingJob implements BackgroundFunction<PubsubMessag
                         + "request.ddp_kit_request_id, request.upload_reason, "
                         + "        realm.ddp_instance_id, realm.instance_name, realm.base_url, realm.auth0_token, "
                         + "realm.notification_recipients, realm.migrated_ddp, kit.receive_date, kit.scan_date"
-                        + "        FROM " + STUDY_MANAGER_SCHEMA + "ddp_kit_request request, " + STUDY_MANAGER_SCHEMA + "ddp_kit kit, "
-                        + STUDY_MANAGER_SCHEMA + "event_type eve, " + STUDY_MANAGER_SCHEMA
+                        + "        FROM " + studyManagerSchema + "ddp_kit_request request, " + studyManagerSchema + "ddp_kit kit, "
+                        + studyManagerSchema + "event_type eve, " + studyManagerSchema
                         + "ddp_instance realm where request.dsm_kit_request_id = kit.dsm_kit_request_id "
                         + "and request.ddp_instance_id = realm.ddp_instance_id"
-                        + "        and not exists  (select 1 FROM " + STUDY_MANAGER_SCHEMA + "EVENT_QUEUE q"
+                        + "        and not exists  (select 1 FROM " + studyManagerSchema + "EVENT_QUEUE q"
                         + "                    where q.DDP_INSTANCE_ID = realm.ddp_instance_id and "
                         + "                    q.EVENT_TYPE = eve.event_name and "
                         + "                    q.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id "
@@ -450,8 +449,8 @@ public class TestBostonUPSTrackingJob implements BackgroundFunction<PubsubMessag
             if (!isReturn) {
                 if (shouldTriggerEventForKitOnItsWayToParticipant(statusType, oldType, kit.isGbfShippedTriggerDSSDelivered())) {
                     KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(conn,
-                            SQL_SELECT_KIT_FOR_NOTIFICATION_EXTERNAL_SHIPPER + SELECT_BY_EXTERNAL_ORDER_NUMBER,
-                            new String[] {DELIVERED, ddpInstanceId, kit.getDsmKitRequestId(), kit.getExternalOrderNumber()}, 1);
+                            SQL_SELECT_KIT_FOR_NOTIFICATION_EXTERNAL_SHIPPER + selectByExternalOrderNumber,
+                            new String[] {delivered, ddpInstanceId, kit.getDsmKitRequestId(), kit.getExternalOrderNumber()}, 1);
                     if (kitDDPNotification != null) {
                         logger.info(
                                 "Triggering DDP for kit going to participant with external order number: " + kit.getExternalOrderNumber());
@@ -462,7 +461,7 @@ public class TestBostonUPSTrackingJob implements BackgroundFunction<PubsubMessag
                 }
 
             } else { // this is a return
-                if (earliestInTransitTime != null && !kit.getCE_order()) {
+                if (earliestInTransitTime != null && !kit.getCeOrder()) {
                     // if we have the first date of an inbound event, create an order in CE
                     // using the earliest date of inbound event
 
@@ -497,8 +496,8 @@ public class TestBostonUPSTrackingJob implements BackgroundFunction<PubsubMessag
                     KitUtil.setKitReceived(conn, kit.getMainKitLabel());
                     logger.info("RECEIVED: " + trackingId);
                     KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(conn,
-                            SQL_SELECT_KIT_FOR_NOTIFICATION_EXTERNAL_SHIPPER + SELECT_BY_EXTERNAL_ORDER_NUMBER,
-                            new String[] {RECEIVED, ddpInstanceId, kit.getDsmKitRequestId(), kit.getExternalOrderNumber()}, 1);
+                            SQL_SELECT_KIT_FOR_NOTIFICATION_EXTERNAL_SHIPPER + selectByExternalOrderNumber,
+                            new String[] {received, ddpInstanceId, kit.getDsmKitRequestId(), kit.getExternalOrderNumber()}, 1);
                     if (kitDDPNotification != null) {
                         logger.info("Triggering DDP for received kit with external order number: " + kit.getExternalOrderNumber());
                         EventUtil.triggerDDP(conn, kitDDPNotification, auth0Util);
@@ -542,7 +541,7 @@ public class TestBostonUPSTrackingJob implements BackgroundFunction<PubsubMessag
                     KitRequestDto dto = new KitRequestDto(rs.getInt(DBConstants.DSM_KIT_REQUEST_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
                             rs.getString(DBConstants.DDP_KIT_REQUEST_ID), rs.getInt(DBConstants.KIT_TYPE_ID),
                             rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
-                            rs.getString(DBConstants.BSP_COLLABORATOR_PARTICIPANT_ID), rs.getString(DBConstants.DDP_PARTICIPANT_ID),
+                            rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID), rs.getString(DBConstants.DDP_PARTICIPANT_ID),
                             rs.getString(DBConstants.DSM_LABEL), rs.getString(DBConstants.CREATED_BY), rs.getLong(DBConstants.CREATED_DATE),
                             rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), rs.getLong(DBConstants.EXTERNAL_ORDER_DATE),
                             rs.getString(DBConstants.EXTERNAL_ORDER_STATUS), rs.getString(DBConstants.EXTERNAL_RESPONSE),

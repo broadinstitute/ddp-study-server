@@ -66,19 +66,20 @@ public class TissueDataMigrationTool {
     public static File outputFile;
     private static Config cfg;
     private static String realmId;
+    private static String realmName;
     private static HashMap<Integer, String> fieldNameMap = new HashMap<>();
     private static Map<String, DBElement> columnNameMap;
     private static Set<String> dateFields;
     private static HashMap<String, String> dsmData = new HashMap<>();
     private static FileWriter outputFileWriter;
-    private final String SQL_SELECT_FROM_ONC_HISTORY_BY_ACCESSION_NUM =
+    private final String sqlSelectFromOncHistoryByAccessionNum =
             "SELECT part.ddp_participant_id, onc.accession_number, tis.sk_id, tis.sm_id " + "FROM ddp_institution inst  "
                     + "LEFT JOIN ddp_participant part on(part.participant_id = inst.participant_id) "
                     + "LEFT JOIN ddp_medical_record rec on (rec.institution_id = inst.institution_id) "
                     + "LEFT JOIN ddp_onc_history_detail onc on (onc.medical_record_id = rec.medical_record_id) "
                     + "LEFT JOIN ddp_tissue tis on (tis.onc_history_detail_id = onc.onc_history_detail_id) "
                     + "WHERE onc.accession_number = ? AND NOT (onc.deleted  <=> 1)";
-    private final String SQL_SELECT_ONC_HIST_DETAIL_AND_TISSUE =
+    private final String sqlSelectOncHistDetailAndTissue =
             "SELECT oncDetail.onc_history_detail_id,  oncDetail.request, oncDetail.deleted, oncDetail.fax_sent, "
                     + " oncDetail.tissue_received, oncDetail.medical_record_id, oncDetail.date_px, oncDetail.type_px, "
                     + "oncDetail.location_px, oncDetail.histology, oncDetail.accession_number, oncDetail.facility, oncDetail.phone, "
@@ -99,6 +100,7 @@ public class TissueDataMigrationTool {
         String confFile = "config/test-config.conf";
         setup(confFile);
         DDPInstance ddpInstance = DDPInstance.getDDPInstance(realm);
+        realmName = realm;
         realmId = ddpInstance.getDdpInstanceId();
         createColumnNameMapAndDateFields();
         createDataLogFile();
@@ -337,7 +339,7 @@ public class TissueDataMigrationTool {
                 Number mrID = MedicalRecordUtil.isInstitutionTypeInDB(participantId);
                 if (mrID == null) {
                     // mr of that type doesn't exist yet, so create an institution and mr
-                    MedicalRecordUtil.writeInstitutionIntoDb(participantId, MedicalRecordUtil.NOT_SPECIFIED);
+                    MedicalRecordUtil.writeInstitutionIntoDb(participantId, MedicalRecordUtil.NOT_SPECIFIED, realmName);
                     mrID = MedicalRecordUtil.isInstitutionTypeInDB(participantId);
                 }
                 if (mrID != null) {
@@ -359,14 +361,14 @@ public class TissueDataMigrationTool {
         }
     }
 
-    private Boolean skIdsmIdInDB(String SKID, String smId, String accessionNumber) {
-        if (StringUtils.isBlank(SKID) && StringUtils.isBlank(smId)) {
+    private Boolean skIdsmIdInDB(String skID, String smId, String accessionNumber) {
+        if (StringUtils.isBlank(skID) && StringUtils.isBlank(smId)) {
             return false;
         }
         SimpleResult result = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_SK_ID_SM_ID_FROM_ONCHISTORY_AND_TISSUE)) {
-                stmt.setString(1, SKID);
+                stmt.setString(1, skID);
                 stmt.setString(2, smId);
                 ResultSet rs = stmt.executeQuery();
                 while (rs.next()) {
@@ -493,7 +495,7 @@ public class TissueDataMigrationTool {
             boolean written = false;
             try {
                 PreparedStatement stmt =
-                        conn.prepareStatement(SQL_SELECT_ONC_HIST_DETAIL_AND_TISSUE + CHOOSE_BY_ONC_DETAIL_ACCESSION_NUMBER);
+                        conn.prepareStatement(sqlSelectOncHistDetailAndTissue + CHOOSE_BY_ONC_DETAIL_ACCESSION_NUMBER);
                 stmt.setString(1, accessionNumber);
                 ResultSet rs = stmt.executeQuery();
                 if (rs.next()) {
@@ -601,7 +603,7 @@ public class TissueDataMigrationTool {
     private boolean existsInDB(@NonNull String accesionDataValue, String ddpParticipantId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_FROM_ONC_HISTORY_BY_ACCESSION_NUM)) {
+            try (PreparedStatement stmt = conn.prepareStatement(sqlSelectFromOncHistoryByAccessionNum)) {
                 stmt.setString(1, accesionDataValue);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {

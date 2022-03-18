@@ -51,4 +51,8 @@ public final class PicklistQuestionRecord extends QuestionRecord {
             }
         }
     }
+
+    public List<String> getSelected() {
+        return selected;
+    }
 }

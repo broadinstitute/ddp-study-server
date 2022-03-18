@@ -24,4 +24,8 @@ public final class DateQuestionRecord extends QuestionRecord {
             this.date = str;
         }
     }
+
+    public String getDate() {
+        return date;
+    }
 }

@@ -246,7 +246,7 @@ public class QuestionCreatorHelper {
                                     .createPicklistOption(ctx, picklistOptionDef, questionDef.getGroups())));
         }
 
-        List<PicklistOption> picklistOptions = CollectionMiscUtil.createListFromAnotherList(questionDef.getPicklistOptions(),
+        List<PicklistOption> picklistOptions = CollectionMiscUtil.createListFromAnotherList(questionDef.getLocalPicklistOptions(),
                 (picklistOptionDef) ->
                         ctx.getAIBuilderFactory().getPicklistCreatorHelper()
                                 .createPicklistOption(ctx, picklistOptionDef, questionDef.getGroups()));
@@ -305,6 +305,8 @@ public class QuestionCreatorHelper {
                         ctx, questionDef.getAdditionalInfoFooterTemplate()),
                 ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, questionDef.getModalTemplate()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getModalTitleTemplate()),
                 questionCreator.getAnswers(ctx, questionDef.getStableId()),
                 questionCreator.getValidationRules(ctx, questionDef),
                 questionDef.getSelectMode(),

@@ -95,7 +95,7 @@ public class DsmRouteTest extends IntegrationTestSuite.TestCase {
         ClientDao clientDao = handle.attach(ClientDao.class);
         Config auth0Config = RouteTestUtil.getConfig().getConfig(ConfigFile.AUTH0);
 
-        String auth0Domain = auth0Config.getString(ConfigFile.DOMAIN);
+        String auth0Domain = auth0Config.getString(ConfigFile.DSM_DOMAIN);
         auth0TenantId = handle.attach(JdbiAuth0Tenant.class).findByDomain(auth0Domain).getId();
         auth0ClientId = auth0Config.getString(ConfigFile.AUTH0_DSM_CLIENT_ID);
 
@@ -132,7 +132,7 @@ public class DsmRouteTest extends IntegrationTestSuite.TestCase {
     public static String loginDsmTestUser() throws Auth0Exception {
         Config auth0Config = RouteTestUtil.getConfig().getConfig(ConfigFile.AUTH0);
 
-        String authDomain = auth0Config.getString(ConfigFile.DOMAIN);
+        String authDomain = auth0Config.getString(ConfigFile.DSM_DOMAIN);
         String dsmClientId = auth0Config.getString(ConfigFile.AUTH0_DSM_CLIENT_ID);
         String dsmClientSecret = auth0Config.getString(ConfigFile.AUTH0_DSM_CLIENT_SECRET);
         String dsmApiAudience = auth0Config.getString(ConfigFile.AUTH0_DSM_API_AUDIENCE);

@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.broadinstitute.ddp.db.dto.FormActivitySettingDto;
 import org.broadinstitute.ddp.model.activity.types.ListStyleHint;
 import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
+import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -42,7 +42,7 @@ public interface JdbiFormActivitySetting extends SqlObject {
             + "where ai.activity_instance_guid = :instanceGuid "
             + "and rev.start_date <= ai.created_at "
             + "and (rev.end_date is null or ai.created_at < rev.end_date)")
-    @RegisterRowMapper(FormActivitySettingDto.FormActivitySettingDtoMapper.class)
+    @RegisterConstructorMapper(FormActivitySettingDto.class)
     Optional<FormActivitySettingDto> findSettingDtoByInstanceGuid(@Bind("instanceGuid") String instanceGuid);
 
     @SqlQuery("select lsh.list_style_hint_code, fas.*"
@@ -52,7 +52,7 @@ public interface JdbiFormActivitySetting extends SqlObject {
             + " where fas.form_activity_id = :activityId"
             + "   and rev.start_date <= :timestamp"
             + "   and (rev.end_date is null or :timestamp < rev.end_date)")
-    @RegisterRowMapper(FormActivitySettingDto.FormActivitySettingDtoMapper.class)
+    @RegisterConstructorMapper(FormActivitySettingDto.class)
     Optional<FormActivitySettingDto> findSettingDtoByActivityIdAndTimestamp(@Bind("activityId") long activityId,
                                                                             @Bind("timestamp") long timestamp);
 
@@ -62,7 +62,7 @@ public interface JdbiFormActivitySetting extends SqlObject {
             + "  join revision as rev on rev.revision_id = fas.revision_id"
             + " where fas.form_activity_id = :activityId"
             + "   and rev.end_date is null")
-    @RegisterRowMapper(FormActivitySettingDto.FormActivitySettingDtoMapper.class)
+    @RegisterConstructorMapper(FormActivitySettingDto.class)
     Optional<FormActivitySettingDto> findActiveSettingDtoByActivityId(@Bind("activityId") long activityId);
 
     @SqlUpdate("update form_activity_setting set revision_id = :revId where form_activity_setting_id = :id")
