@@ -1799,7 +1799,7 @@ Question.Equation:
       required:
         - answers
       properties:
-        maximalDecimalPlaces:
+        maximumDecimalPlaces:
           type: integer
           format: int64
           description: the number of digits allowed to the right of the decimal point.
