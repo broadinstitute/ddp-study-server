@@ -48,6 +48,6 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
     public void export() {
         fillBulkRequestWithTransformedMap(getDataByRealm());
         bulkExportFacade.executeBulkUpsert();
-        logger.info("finished migrating data of:" + object + " to ES for study: " + realm + " with index: " + index);
+        logger.info("finished migrating data of: " + object + " to ES for study: " + realm + " with index: " + index);
     }
 }
