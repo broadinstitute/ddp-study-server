@@ -35,7 +35,8 @@ public class EquationParserTest {
 
     @Test
     public void testBinaryOperatorPriority() {
-        testParserTreeOutput("x + y * z", "(expression (expression (variable x)) + (expression (expression (variable y)) * (expression (variable z))))");
+        testParserTreeOutput("x + y * z",
+                "(expression (expression (variable x)) + (expression (expression (variable y)) * (expression (variable z))))");
     }
 
     @Test(expected = ParseCancellationException.class)

@@ -1544,11 +1544,7 @@ public interface QuestionDao extends SqlObject {
     }
 
     default void insertQuestion(long activityId, CompositeQuestionDef compositeQuestion, long revisionId) {
-        boolean acceptable = compositeQuestion.getChildren().stream()
-                .map(QuestionDef::getQuestionType)
-                .allMatch(QuestionType::isCompositional);
-
-        if (!acceptable) {
+        if (!compositeQuestion.isAcceptable()) {
             throw new DaoException("Composites only support DATE, PICKLIST, TEXT, NUMERIC and DECIMAL child questions");
         }
 
