@@ -565,9 +565,9 @@ public interface QuestionDao extends SqlObject {
      * @return matrix question object
      */
     default MatrixQuestion getMatrixQuestion(MatrixQuestionDto dto,
-                                               String activityInstanceGuid,
-                                               List<Long> answerIds,
-                                               List<Rule> untypedRules) {
+                                             String activityInstanceGuid,
+                                             List<Long> answerIds,
+                                             List<Rule> untypedRules) {
         AnswerDao answerDao = getAnswerDao();
         List<MatrixAnswer> picklistAnswers = answerIds.stream()
                 .map(answerId -> (MatrixAnswer) answerDao.findAnswerById(answerId)
@@ -1228,9 +1228,9 @@ public interface QuestionDao extends SqlObject {
     /**
      * Create new activity instance select question by inserting common data and text specific data.
      *
-     * @param activityId      the associated activity
+     * @param activityId                     the associated activity
      * @param activityInstanceSelectQuestion the question definition, without generated things like ids
-     * @param revisionId      the revision to use, will be shared by all created data
+     * @param revisionId                     the revision to use, will be shared by all created data
      */
     default void insertQuestion(long activityId, ActivityInstanceSelectQuestionDef activityInstanceSelectQuestion,
                                 long revisionId) {
@@ -1326,7 +1326,6 @@ public interface QuestionDao extends SqlObject {
     /**
      * Create new file question by inserting common data and file question specific data.
      *
-     *
      * @param activityId   the associated activity
      * @param fileQuestion the file question definition, without generated things like ids
      * @param revisionId   the revision to use, will be shared by all created data
@@ -1391,7 +1390,7 @@ public interface QuestionDao extends SqlObject {
      * Create new matrix question by inserting common data and matrix specific data.
      *
      * @param activityId the associated activity
-     * @param matrix   the question definition, without generated things like ids
+     * @param matrix     the question definition, without generated things like ids
      * @param revisionId the revision to use, will be shared by all created data
      */
     default void insertQuestion(long activityId, MatrixQuestionDef matrix, long revisionId) {
@@ -1463,7 +1462,8 @@ public interface QuestionDao extends SqlObject {
         }
 
         getPicklistQuestionDao().insertGroups(picklist.getQuestionId(), picklist.getGroups(), revisionId);
-        getPicklistQuestionDao().insertOptions(picklist.getQuestionId(), picklist.getPicklistOptions(), revisionId);
+        getPicklistQuestionDao().insertOptions(picklist.getQuestionId(),
+                picklist.getPicklistOptions(), revisionId);
     }
 
     default void insertQuestion(long activityId, CompositeQuestionDef compositeQuestion, long revisionId) {
@@ -1884,7 +1884,7 @@ public interface QuestionDao extends SqlObject {
         }
 
         Map<Long, MatrixQuestionDao.GroupOptionRowDtos> questionIdToContainer = getMatrixQuestionDao()
-                    .findOrderedGroupOptionRowDtos(questionIds, timestamp);
+                .findOrderedGroupOptionRowDtos(questionIds, timestamp);
 
         Set<Long> templateIds = new HashSet<>();
 
