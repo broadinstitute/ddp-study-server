@@ -1800,7 +1800,8 @@ Question.Equation:
         - answers
       properties:
         maximalDecimalPlaces:
-          type: int64
+          type: integer
+          format: int64
           description: the number of digits allowed to the right of the decimal point.
           minimum: 0
           default: 0
