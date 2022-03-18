@@ -13,7 +13,7 @@
             <column name="expression" type="text">
                 <constraints nullable="false" />
             </column>
-            <column name="maximal_decimal_places" type="bigint" defaultValue="0" />
+            <column name="maximum_decimal_places" type="bigint" defaultValue="0" />
             <column name="placeholder_template_id" type="bigint">
                 <constraints nullable="true"
                              references="template(template_id)"
