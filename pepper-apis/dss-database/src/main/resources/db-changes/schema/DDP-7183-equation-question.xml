@@ -10,6 +10,9 @@
             <column name="question_id" type="bigint">
                 <constraints primaryKey="true" primaryKeyName="equation_question_pk"/>
             </column>
+            <column name="expression" type="text">
+                <constraints nullable="false" />
+            </column>
             <column name="maximal_decimal_places" type="bigint" defaultValue="0" />
             <column name="placeholder_template_id" type="bigint">
                 <constraints nullable="true"
