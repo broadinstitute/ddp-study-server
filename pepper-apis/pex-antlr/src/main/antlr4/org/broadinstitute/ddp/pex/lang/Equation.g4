@@ -3,7 +3,7 @@ grammar Equation;
 file_ : expression* EOF;
 
 expression
-   :  expression  (PLUS | MINUS | TIMES | DIV | POW)  expression
+   :  expression  (POW | TIMES | DIV | PLUS | MINUS)  expression
    |  LPAREN expression RPAREN
    |  variable
    |  number
