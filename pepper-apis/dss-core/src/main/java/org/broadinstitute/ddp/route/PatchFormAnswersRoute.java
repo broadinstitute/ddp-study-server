@@ -611,9 +611,9 @@ public class PatchFormAnswersRoute implements Route {
         if (isNull || value.isJsonArray()) {
             List<FileInfo> fileInfos = new ArrayList<>();
             if (!isNull) {
+                FileUploadDao fileUploadDao = handle.attach(FileUploadDao.class);
                 for (JsonElement element : value.getAsJsonArray()) {
-                    FileInfo info = handle.attach(FileUploadDao.class)
-                            .findFileInfoByGuid(element.getAsString()).orElse(null);
+                    FileInfo info = fileUploadDao.findFileInfoByGuid(element.getAsString()).orElse(null);
                     if (info == null) {
                         throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
                                 "Could not find file upload with guid " + element.getAsString()));
@@ -768,29 +768,33 @@ public class PatchFormAnswersRoute implements Route {
         long studyId = instanceDto.getStudyId();
         List<FileInfo> fileInfos = answer.getValue();
         for (FileInfo info : fileInfos) {
-            long uploadId = info.getUploadId();
-            var verifyResult = fileService.verifyUpload(handle, studyId, participantId, uploadId)
-                    .orElseThrow(() -> new DDPException("Could not find file upload with id " + uploadId));
+            verifyFileInfo(info, participantId, studyId, handle, response);
+        }
+    }
 
-            switch (verifyResult) {
-                case NOT_UPLOADED:
-                    throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
-                            "File has not been uploaded yet"));
-                case OWNER_MISMATCH:
-                    throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
-                            "File is not owned by participant and cannot be associated with answer"));
-                case QUARANTINED:
-                    throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
-                            "File is infected and cannot be associated with answer"));
-                case SIZE_MISMATCH:
-                    throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
-                            "File uploaded size does not match expected size"));
-                case OK:
-                    LOG.info("File upload with id {} is uploaded and can be associated with participant's answer", uploadId);
-                    break;
-                default:
-                    throw new DDPException("Unhandled file check result: " + verifyResult);
-            }
+    private void verifyFileInfo(FileInfo info, long participantId, long studyId, Handle handle, Response response) {
+        long uploadId = info.getUploadId();
+        var verifyResult = fileService.verifyUpload(handle, studyId, participantId, uploadId)
+                .orElseThrow(() -> new DDPException("Could not find file upload with id " + uploadId));
+
+        switch (verifyResult) {
+            case NOT_UPLOADED:
+                throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
+                        "File has not been uploaded yet"));
+            case OWNER_MISMATCH:
+                throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
+                        "File is not owned by participant and cannot be associated with answer"));
+            case QUARANTINED:
+                throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
+                        "File is infected and cannot be associated with answer"));
+            case SIZE_MISMATCH:
+                throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
+                        "File uploaded size does not match expected size"));
+            case OK:
+                LOG.info("File upload with id {} is uploaded and can be associated with participant's answer", uploadId);
+                break;
+            default:
+                throw new DDPException("Unhandled file check result: " + verifyResult);
         }
     }
 
