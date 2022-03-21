@@ -107,7 +107,8 @@
     "sample_received_self": {
       "subject": "Thank you! Your kit was received.",
       "p1": "Thank you for sending us a sample of your saliva. We are writing to let you know that it has been received by our laboratory.",
-      "p2": "Thank you again for your participation in Project Singular! We hope to learn a great deal about single ventricle heart disease through Project Singular, and you are playing a critically important role."
+      "p2": "If you have not yet heard from Boston Children’s Hospital in regards to obtaining your medical records, they will be in touch with you shortly to provide assistance.",
+      "p3": "Thank you again for your participation in Project Singular! We hope to learn a great deal about single ventricle heart disease through Project Singular, and you are playing a critically important role."
     },
 
     "sample_received_child": {
