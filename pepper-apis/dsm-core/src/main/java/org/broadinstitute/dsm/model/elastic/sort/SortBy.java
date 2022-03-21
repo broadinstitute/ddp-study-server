@@ -3,8 +3,6 @@ package org.broadinstitute.dsm.model.elastic.sort;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Objects;
-
 @Getter
 @Setter
 public class SortBy {
