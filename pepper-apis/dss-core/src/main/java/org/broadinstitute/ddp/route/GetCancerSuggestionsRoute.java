@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.route;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -15,8 +16,8 @@ import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.dsm.Cancer;
 import org.broadinstitute.ddp.model.suggestion.CancerSuggestion;
 import org.broadinstitute.ddp.model.suggestion.PatternMatch;
-import org.broadinstitute.ddp.util.CancerTypeaheadComparator;
 import org.broadinstitute.ddp.util.ResponseUtil;
+import org.broadinstitute.ddp.util.StringSuggestionTypeaheadComparator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -66,22 +67,24 @@ public class GetCancerSuggestionsRoute implements Route {
     }
 
     private CancerSuggestionResponse getCancerSuggestions(String cancerQuery, int limit) {
-        List<Cancer> cancerMatches = new ArrayList<>();
         String upperCancerQuery = cancerQuery.toUpperCase();
 
         // first pass filter: find simple matches
-        for (Cancer cancer : cancerStore.getCancerList()) {
-            if (cancer.getName().toUpperCase().contains(cancerQuery.toUpperCase())) {
-                cancerMatches.add(cancer);
-            }
-        }
+        List<Cancer> cancerMatches = cancerStore.getCancerList().stream()
+                .filter(cancer -> cancer.getName().toUpperCase().contains(upperCancerQuery))
+                .collect(Collectors.toList());
 
         // now rank the matches in a way that puts left-most matches near the top, favoring word start matches
         List<CancerSuggestion> sortedSuggestions = new ArrayList<>();
-        cancerMatches.stream().sorted(new CancerTypeaheadComparator(cancerQuery)).limit(limit).forEach(cancer -> {
-            int offset = cancer.getName().toUpperCase().indexOf(upperCancerQuery);
-            sortedSuggestions.add(new CancerSuggestion(cancer, List.of(new PatternMatch(offset, cancerQuery.length()))));
-        });
+        var suggestionComparator = new StringSuggestionTypeaheadComparator(upperCancerQuery);
+        cancerMatches.stream()
+                .sorted((lhs, rhs) -> suggestionComparator.compare(lhs.getName(), rhs.getName()))
+                .limit(limit)
+                .forEach(cancer -> {
+                    int offset = cancer.getName().toUpperCase().indexOf(upperCancerQuery);
+                    sortedSuggestions.add(new CancerSuggestion(cancer, Collections.singletonList(
+                            new PatternMatch(offset, cancerQuery.length()))));
+                });
 
         return new CancerSuggestionResponse(cancerQuery, sortedSuggestions);
     }
