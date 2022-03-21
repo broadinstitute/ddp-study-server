@@ -36,7 +36,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.DecimalAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
 import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
@@ -294,7 +293,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
                     testData.getStudyId(), testData.getUserId(), testData.getUserId(),
                     "blob", "mime", "file", 123L);
             fileDao.markVerified(upload.getId());
-            FileInfo info = fileDao.findFileInfoByGuid(upload.getGuid()).get();
+            var info = fileDao.findFileInfoByGuid(upload.getGuid()).get();
 
             var answerDao = daoBuilder.buildDao(handle);
             var created = new FileAnswer(null, act.getFileQuestion().getStableId(), null, Collections.singletonList(info));

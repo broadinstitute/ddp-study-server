@@ -32,11 +32,13 @@ public final class FileAnswer extends Answer<List<FileInfo>> {
 
     @Override
     public boolean isEmpty() {
-        return value == null;
+        return value == null || value.isEmpty();
     }
 
     public FileInfo getInfo(int index) {
-        if (value != null && value.size() > index) return value.get(index);
-        throw new RuntimeException("File info with index " + index +" doesn't exist");
+        if (value != null && value.size() > index) {
+            return value.get(index);
+        }
+        throw new RuntimeException("File info with index " + index + " doesn't exist");
     }
 }

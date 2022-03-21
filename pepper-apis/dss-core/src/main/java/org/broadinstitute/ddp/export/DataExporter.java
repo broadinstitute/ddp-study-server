@@ -1038,8 +1038,8 @@ public class DataExporter {
             return new DateQuestionRecord(question.getStableId(), value);
         } else if (answer.getQuestionType() == QuestionType.FILE) {
             List<FileInfo> fileInfos = ((FileAnswer) answer).getValue();
-            List<Long> uploadIds = fileInfos == null?
-                    Collections.emptyList() :
+            List<Long> uploadIds = fileInfos == null
+                    ? Collections.emptyList() :
                     fileInfos.stream().map(FileInfo::getUploadId).collect(Collectors.toList());
             return new SimpleQuestionRecord(type, question.getStableId(), uploadIds);
         } else if (answer.getQuestionType() == QuestionType.PICKLIST) {
