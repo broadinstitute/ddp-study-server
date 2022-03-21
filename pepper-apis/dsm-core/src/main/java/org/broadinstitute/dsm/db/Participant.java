@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.db;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
-import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -28,14 +27,6 @@ import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
-
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -43,15 +34,17 @@ public class Participant {
 
     private static final Logger logger = LoggerFactory.getLogger(Participant.class);
 
-    public static final String SQL_SELECT_PARTICIPANT = "SELECT p.participant_id, p.ddp_participant_id, p.assignee_id_mr, p.assignee_id_tissue, p.ddp_instance_id, " +
-            "realm.instance_name, realm.base_url, realm.mr_attention_flag_d, realm.tissue_attention_flag_d, realm.auth0_token, realm.notification_recipients, realm.migrated_ddp, " +
-            "o.onc_history_id, o.created, o.reviewed, " +
-            "r.cr_sent, r.cr_received, r.notes, r.minimal_mr, r.abstraction_ready, r.additional_values_json, ex.exit_date, ex.exit_by " +
-            "FROM ddp_participant p LEFT JOIN ddp_instance realm on (p.ddp_instance_id = realm.ddp_instance_id) " +
-            "LEFT JOIN ddp_onc_history o on (o.participant_id = p.participant_id) " +
-            "LEFT JOIN ddp_participant_record r on (r.participant_id = p.participant_id) " +
-            "LEFT JOIN ddp_participant_exit ex on (p.ddp_participant_id = ex.ddp_participant_id AND p.ddp_instance_id = ex.ddp_instance_id) " +
-            "WHERE realm.instance_name = ? ";
+    public static final String SQL_SELECT_PARTICIPANT = "SELECT p.participant_id, p.ddp_participant_id, p.assignee_id_mr, "
+            + "p.assignee_id_tissue, p.ddp_instance_id, realm.instance_name, realm.base_url, realm.mr_attention_flag_d, "
+            + "realm.tissue_attention_flag_d, realm.auth0_token, realm.notification_recipients, realm.migrated_ddp, "
+            + "o.onc_history_id, o.created, o.reviewed, r.cr_sent, r.cr_received, r.notes, r.minimal_mr, r.abstraction_ready, "
+            + "r.additional_values_json, ex.exit_date, ex.exit_by "
+            + "FROM ddp_participant p LEFT JOIN ddp_instance realm on (p.ddp_instance_id = realm.ddp_instance_id) "
+            + "LEFT JOIN ddp_onc_history o on (o.participant_id = p.participant_id) "
+            + "LEFT JOIN ddp_participant_record r on (r.participant_id = p.participant_id) "
+            + "LEFT JOIN ddp_participant_exit ex on (p.ddp_participant_id = ex.ddp_participant_id "
+            + "AND p.ddp_instance_id = ex.ddp_instance_id) "
+            + "WHERE realm.instance_name = ? ";
 
     @ColumnName(DBConstants.PARTICIPANT_ID)
     private long participantId;
@@ -146,11 +139,8 @@ public class Participant {
 
     @JsonProperty("dynamicFields")
     public Map<String, Object> getDynamicFields() {
-        try {
-            return ObjectMapperSingleton.instance().readValue(additionalValuesJson, new TypeReference<Map<String, Object>>() {});
-        } catch (IOException | NullPointerException e) {
-            return Map.of();
-        }
+        return ObjectMapperSingleton.readValue(additionalValuesJson, new TypeReference<Map<String, Object>>() {
+        });
     }
 
     @TableName (
@@ -159,13 +149,13 @@ public class Participant {
             primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
     @ColumnName (DBConstants.EXIT_DATE)
-    private long exitDate;
+    private Long exitDate;
 
     public Participant() {}
 
     public Participant(long participantId, String ddpParticipantId, String assigneeIdMr, String assigneeIdTissue, String instanceName,
                        String created, String reviewed, String crSent, String crReceived, String notes,
-                       boolean minimalMr, boolean abstractionReady, String additionalValuesJson, long exitDate) {
+                       boolean minimalMr, boolean abstractionReady, String additionalValuesJson, Long exitDate) {
         this.participantId = participantId;
         this.ddpParticipantId = ddpParticipantId;
         this.assigneeIdMr = assigneeIdMr;
@@ -183,10 +173,10 @@ public class Participant {
     }
 
     //For TissueList
-    public Participant(String participantId, String  ddpParticipantId, String  assigneeIdTissue){
+    public Participant(String participantId, String  ddpParticipantId, String  assigneeIdTissue) {
         this(Long.parseLong(participantId), ddpParticipantId, null, assigneeIdTissue, null,
                 null, null, null, null, null,
-                false, false, null, 0);
+                false, false, null, null);
     }
 
     public static Participant getParticipant(@NonNull Map<String, Assignee> assignees, @NonNull String realm, @NonNull ResultSet rs)
@@ -214,7 +204,7 @@ public class Participant {
                 rs.getBoolean(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.MINIMAL_MR),
                 rs.getBoolean(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ABSTRACTION_READY),
                 rs.getString(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ADDITIONAL_VALUES_JSON),
-                rs.getLong(DBConstants.EXIT_DATE));
+                (Long)rs.getObject(DBConstants.EXIT_DATE));
         return participant;
     }
 
@@ -235,8 +225,7 @@ public class Participant {
                         participants.put(rs.getString(DBConstants.DDP_PARTICIPANT_ID), getParticipant(assignees, realm, rs));
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;

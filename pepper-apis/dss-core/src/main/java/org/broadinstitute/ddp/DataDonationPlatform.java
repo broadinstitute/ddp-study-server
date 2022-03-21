@@ -114,6 +114,7 @@ import org.broadinstitute.ddp.route.GetMailAddressRoute;
 import org.broadinstitute.ddp.route.GetMailingListRoute;
 import org.broadinstitute.ddp.route.GetMedicalProviderListRoute;
 import org.broadinstitute.ddp.route.GetParticipantDefaultMailAddressRoute;
+import org.broadinstitute.ddp.route.GetOptionsForActivityInstanceQuestionRoute;
 import org.broadinstitute.ddp.route.GetParticipantInfoRoute;
 import org.broadinstitute.ddp.route.GetParticipantMailAddressRoute;
 import org.broadinstitute.ddp.route.GetPdfRoute;
@@ -505,6 +506,7 @@ public class DataDonationPlatform {
                 responseSerializer
         );
         post(API.USER_ACTIVITY_UPLOADS, new CreateUserActivityUploadRoute(fileUploadService), responseSerializer);
+        get(API.USER_QUESTION_OPTIONS, new GetOptionsForActivityInstanceQuestionRoute(i18nContentRenderer), responseSerializer);
 
         // User study invitations
         get(API.USER_STUDY_INVITES, new ListUserStudyInvitationsRoute(), jsonSerializer);
@@ -514,7 +516,7 @@ public class DataDonationPlatform {
 
         Config auth0Config = cfg.getConfig(ConfigFile.AUTH0);
         before(API.DSM_BASE + "/*", new DsmAuthFilter(auth0Config.getString(ConfigFile.AUTH0_DSM_CLIENT_ID),
-                auth0Config.getString(ConfigFile.DOMAIN)));
+                auth0Config.getString(ConfigFile.DSM_DOMAIN)));
 
         get(API.DSM_ALL_KIT_REQUESTS, new GetDsmKitRequestsRoute(), responseSerializer);
         get(API.DSM_KIT_REQUESTS_STARTING_AFTER, new GetDsmKitRequestsRoute(), responseSerializer);

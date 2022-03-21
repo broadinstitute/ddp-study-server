@@ -565,9 +565,9 @@ public interface QuestionDao extends SqlObject {
      * @return matrix question object
      */
     default MatrixQuestion getMatrixQuestion(MatrixQuestionDto dto,
-                                               String activityInstanceGuid,
-                                               List<Long> answerIds,
-                                               List<Rule> untypedRules) {
+                                             String activityInstanceGuid,
+                                             List<Long> answerIds,
+                                             List<Rule> untypedRules) {
         AnswerDao answerDao = getAnswerDao();
         List<MatrixAnswer> picklistAnswers = answerIds.stream()
                 .map(answerId -> (MatrixAnswer) answerDao.findAnswerById(answerId)
@@ -621,7 +621,7 @@ public interface QuestionDao extends SqlObject {
         return new MatrixQuestion(dto.getStableId(), dto.getPromptTemplateId(),
                 dto.isRestricted(), dto.isRenderModal(), dto.isDeprecated(), isReadonly, dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
-                dto.getModalTemplateId(), picklistAnswers,
+                dto.getModalTemplateId(), dto.getModalTitleTemplateId(), picklistAnswers,
                 rules, dto.getSelectMode(), groups, options, questions);
     }
 
@@ -1228,9 +1228,9 @@ public interface QuestionDao extends SqlObject {
     /**
      * Create new activity instance select question by inserting common data and text specific data.
      *
-     * @param activityId      the associated activity
+     * @param activityId                     the associated activity
      * @param activityInstanceSelectQuestion the question definition, without generated things like ids
-     * @param revisionId      the revision to use, will be shared by all created data
+     * @param revisionId                     the revision to use, will be shared by all created data
      */
     default void insertQuestion(long activityId, ActivityInstanceSelectQuestionDef activityInstanceSelectQuestion,
                                 long revisionId) {
@@ -1326,7 +1326,6 @@ public interface QuestionDao extends SqlObject {
     /**
      * Create new file question by inserting common data and file question specific data.
      *
-     *
      * @param activityId   the associated activity
      * @param fileQuestion the file question definition, without generated things like ids
      * @param revisionId   the revision to use, will be shared by all created data
@@ -1391,7 +1390,7 @@ public interface QuestionDao extends SqlObject {
      * Create new matrix question by inserting common data and matrix specific data.
      *
      * @param activityId the associated activity
-     * @param matrix   the question definition, without generated things like ids
+     * @param matrix     the question definition, without generated things like ids
      * @param revisionId the revision to use, will be shared by all created data
      */
     default void insertQuestion(long activityId, MatrixQuestionDef matrix, long revisionId) {
@@ -1410,8 +1409,13 @@ public interface QuestionDao extends SqlObject {
             modalTemplateId = templateDao.insertTemplate(matrix.getModalTemplate(), revisionId);
         }
 
+        Long modalTitleTemplateId = null;
+        if (matrix.getModalTitleTemplate() != null) {
+            modalTitleTemplateId = templateDao.insertTemplate(matrix.getModalTitleTemplate(), revisionId);
+        }
+
         int numInserted = getJdbiMatrixQuestion().insert(matrix.getQuestionId(), matrix.getSelectMode(),
-                matrix.isRenderModal(), modalTemplateId);
+                matrix.isRenderModal(), modalTemplateId, modalTitleTemplateId);
 
         if (numInserted != 1) {
             throw new DaoException("Inserted " + numInserted + " for picklist question " + matrix.getStableId());
@@ -1458,7 +1462,8 @@ public interface QuestionDao extends SqlObject {
         }
 
         getPicklistQuestionDao().insertGroups(picklist.getQuestionId(), picklist.getGroups(), revisionId);
-        getPicklistQuestionDao().insertOptions(picklist.getQuestionId(), picklist.getPicklistOptions(), revisionId);
+        getPicklistQuestionDao().insertOptions(picklist.getQuestionId(),
+                picklist.getPicklistOptions(), revisionId);
     }
 
     default void insertQuestion(long activityId, CompositeQuestionDef compositeQuestion, long revisionId) {
@@ -1879,7 +1884,7 @@ public interface QuestionDao extends SqlObject {
         }
 
         Map<Long, MatrixQuestionDao.GroupOptionRowDtos> questionIdToContainer = getMatrixQuestionDao()
-                    .findOrderedGroupOptionRowDtos(questionIds, timestamp);
+                .findOrderedGroupOptionRowDtos(questionIds, timestamp);
 
         Set<Long> templateIds = new HashSet<>();
 
@@ -2032,7 +2037,8 @@ public interface QuestionDao extends SqlObject {
         Template placeholderTemplate = templates.getOrDefault(dto.getPlaceholderTemplateId(), null);
         var builder = DecimalQuestionDef
                 .builder(dto.getStableId(), prompt)
-                .setPlaceholderTemplate(placeholderTemplate);
+                .setPlaceholderTemplate(placeholderTemplate)
+                .setScale(dto.getScale());
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
         return builder.build();
     }
@@ -2154,6 +2160,7 @@ public interface QuestionDao extends SqlObject {
                                                      Map<Long, Template> templates) {
         Template prompt = templates.get(dto.getPromptTemplateId());
         Template modal = templates.get(dto.getModalTemplateId());
+        Template modalTitle = templates.get(dto.getModalTitleTemplateId());
 
         List<MatrixGroupDef> groups = new ArrayList<>();
         for (MatrixGroupDto groupDto : container.getGroups()) {
@@ -2185,6 +2192,7 @@ public interface QuestionDao extends SqlObject {
                 .setSelectMode(dto.getSelectMode())
                 .setRenderModal(dto.isRenderModal())
                 .setModalTemplate(modal)
+                .setModalTitleTemplate(modalTitle)
                 .addGroups(groups)
                 .addOptions(options)
                 .addRows(questions);

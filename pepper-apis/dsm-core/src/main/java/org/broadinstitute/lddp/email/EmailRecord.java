@@ -32,16 +32,14 @@ public class EmailRecord {
             + "REMINDER_TYPE, EMAIL_RECORD_ID, EMAIL_TEMPLATE, EMAIL_DATA) VALUES (?, ?, ?, ?, ?, ?)";
     private static final String SQL_RECORDS_TO_PROCESS = "SELECT EMAIL_ID, EMAIL_TEMPLATE, EMAIL_DATA, REMINDER_TYPE FROM EMAIL_QUEUE "
             + "WHERE EMAIL_DATE_PROCESSED IS NULL AND EMAIL_DATE_SCHEDULED < ? ORDER BY EMAIL_DATE_SCHEDULED";
-    private static final String SQL_DELETE_EMAIL_REMINDERS_EQUAL_TO_TYPE = "DELETE FROM EMAIL_QUEUE WHERE EMAIL_RECORD_ID = ? AND "
-            + "REMINDER_TYPE = ? AND EMAIL_DATE_PROCESSED IS NULL";
+    private static final String SQL_DELETE_EMAIL_REMINDERS_EQUAL_TO_TYPE =
+            "DELETE FROM EMAIL_QUEUE WHERE EMAIL_RECORD_ID = ? AND " + "REMINDER_TYPE = ? AND EMAIL_DATE_PROCESSED IS NULL";
     private static final String SQL_DELETE_EMAIL_REMINDERS_NOT_EQUAL_TO_TYPE = "DELETE FROM EMAIL_QUEUE WHERE EMAIL_RECORD_ID = ? AND "
             + "REMINDER_TYPE != ? AND EMAIL_DATE_PROCESSED IS NULL AND REMINDER_TYPE != 'NA'";
-    private static final String SQL_DELETE_ALL_UNSENT_EMAILS = "DELETE FROM EMAIL_QUEUE WHERE EMAIL_RECORD_ID = ? AND "
-            + "EMAIL_DATE_PROCESSED IS NULL";
-    private static final String SQL_UPDATE_PROCESSED_RECORDS = "UPDATE EMAIL_QUEUE "
-            + "SET EMAIL_DATE_PROCESSED = ? WHERE EMAIL_ID IN (X)";
-    private static final String SQL_RESET_PROCESSED_RECORD = "UPDATE EMAIL_QUEUE "
-            + "SET EMAIL_DATE_PROCESSED = null WHERE EMAIL_ID = ?";
+    private static final String SQL_DELETE_ALL_UNSENT_EMAILS =
+            "DELETE FROM EMAIL_QUEUE WHERE EMAIL_RECORD_ID = ? AND " + "EMAIL_DATE_PROCESSED IS NULL";
+    private static final String SQL_UPDATE_PROCESSED_RECORDS = "UPDATE EMAIL_QUEUE " + "SET EMAIL_DATE_PROCESSED = ? WHERE EMAIL_ID IN (X)";
+    private static final String SQL_RESET_PROCESSED_RECORD = "UPDATE EMAIL_QUEUE " + "SET EMAIL_DATE_PROCESSED = null WHERE EMAIL_ID = ?";
     private Recipient recipient;
     private Long recordId; //EMAIL_ID PK value in DB table
     private String reminderType;
@@ -52,13 +50,43 @@ public class EmailRecord {
         this.reminderType = reminderType;
     }
 
-    public EmailRecord(@NonNull Recipient recipient) {
-        this.recipient = recipient;
-    }
-
     public static void add(String immediateEmailTemplate, @NonNull Recipient recipient, JsonElement reminderInfo,
                            @NonNull String emailGroupId) {
         add(immediateEmailTemplate, recipient, recipient.getCurrentStatus(), reminderInfo, emailGroupId);
+    }
+
+    private static void add(String immediateEmailTemplate, @NonNull Recipient recipient, String reminderType, JsonElement reminderInfo,
+                            @NonNull String emailGroupId) {
+        logger.info(LOG_PREFIX + "Adding email record(s)...");
+
+        if ((immediateEmailTemplate == null) && (reminderInfo == null)) {
+            throw new IllegalArgumentException("Immediate email and/or reminder email info required.");
+        }
+
+        String recipientJson = new Gson().toJson(recipient);
+
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult(0);
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_EMAIL_RECORD)) {
+                if (immediateEmailTemplate != null) {
+                    long epochTime = Utility.getCurrentEpoch();
+                    addRecord(stmt, epochTime, epochTime, "NA", emailGroupId, immediateEmailTemplate, recipient);
+                }
+
+                if (reminderInfo != null) {
+                    addReminders(recipientJson, reminderType, reminderInfo, stmt, emailGroupId);
+                }
+
+                dbVals.resultValue = checkBatchCounts(stmt.executeBatch());
+            } catch (Exception ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if ((results.resultException != null) || (!(boolean) results.resultValue)) {
+            throw new DMLException(ERROR_EMAIL_RECORD_ADD, results.resultException);
+        }
     }
 
     public static void addOnlyReminders(@NonNull Recipient recipient, @NonNull JsonElement reminderInfo, @NonNull String emailGroupId)
@@ -76,8 +104,8 @@ public class EmailRecord {
 
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult(0);
-            try (PreparedStatement stmt = conn.prepareStatement((matchReminderType)
-                    ? SQL_DELETE_EMAIL_REMINDERS_EQUAL_TO_TYPE : SQL_DELETE_EMAIL_REMINDERS_NOT_EQUAL_TO_TYPE)) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    (matchReminderType) ? SQL_DELETE_EMAIL_REMINDERS_EQUAL_TO_TYPE : SQL_DELETE_EMAIL_REMINDERS_NOT_EQUAL_TO_TYPE)) {
                 stmt.setString(1, emailGroupId);
                 stmt.setString(2, reminderType);
                 dbVals.resultValue = stmt.executeUpdate();
@@ -112,8 +140,8 @@ public class EmailRecord {
                         if (records.get(template) == null) {
                             records.put(template, new ArrayList<>());
                         }
-                        records.get(template).add(new EmailRecord(new Gson().fromJson(rs.getString(3), Recipient.class),
-                                rs.getLong(1), rs.getString(4)));
+                        records.get(template).add(new EmailRecord(new Gson().fromJson(rs.getString(3), Recipient.class), rs.getLong(1),
+                                rs.getString(4)));
 
                     }
                 }
@@ -170,45 +198,11 @@ public class EmailRecord {
 
         for (JsonElement reminder : array) {
             Recipient recipient = new Gson().fromJson(recipientJson, Recipient.class);
-            recipient.setAdminRecipientEmail(reminder.getAsJsonObject().get("adminRecipient").getAsString());
+            recipient.setEmail(reminder.getAsJsonObject().get("adminRecipient").getAsString());
 
             long epochTime = Utility.getCurrentEpoch();
-            addRecord(stmt, epochTime, epochTime + (reminder.getAsJsonObject().get("hours").getAsInt() * SEC_IN_HOUR),
-                    reminderType, emailGroupId, reminder.getAsJsonObject().get("sendGridTemplate").getAsString(), recipient);
-        }
-    }
-
-    private static void add(String immediateEmailTemplate, @NonNull Recipient recipient, String reminderType, JsonElement reminderInfo,
-                            @NonNull String emailGroupId) {
-        logger.info(LOG_PREFIX + "Adding email record(s)...");
-
-        if ((immediateEmailTemplate == null) && (reminderInfo == null)) {
-            throw new IllegalArgumentException("Immediate email and/or reminder email info required.");
-        }
-
-        String recipientJson = new Gson().toJson(recipient);
-
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult(0);
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_EMAIL_RECORD)) {
-                if (immediateEmailTemplate != null) {
-                    long epochTime = Utility.getCurrentEpoch();
-                    addRecord(stmt, epochTime, epochTime, "NA", emailGroupId, immediateEmailTemplate, recipient);
-                }
-
-                if (reminderInfo != null) {
-                    addReminders(recipientJson, reminderType, reminderInfo, stmt, emailGroupId);
-                }
-
-                dbVals.resultValue = checkBatchCounts(stmt.executeBatch());
-            } catch (Exception ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if ((results.resultException != null) || (!(boolean) results.resultValue)) {
-            throw new DMLException(ERROR_EMAIL_RECORD_ADD, results.resultException);
+            addRecord(stmt, epochTime, epochTime + (reminder.getAsJsonObject().get("hours").getAsInt() * SEC_IN_HOUR), reminderType,
+                    emailGroupId, reminder.getAsJsonObject().get("sendGridTemplate").getAsString(), recipient);
         }
     }
 }

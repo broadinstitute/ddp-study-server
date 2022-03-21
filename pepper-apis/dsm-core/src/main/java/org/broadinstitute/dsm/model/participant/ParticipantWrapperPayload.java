@@ -4,9 +4,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.sort.SortBy;
-
 
 public class ParticipantWrapperPayload {
 
@@ -25,7 +23,9 @@ public class ParticipantWrapperPayload {
         return Optional.ofNullable(filter);
     }
 
-    public Optional<SortBy> getSortBy() { return Optional.ofNullable(sortBy); }
+    public Optional<SortBy> getSortBy() {
+        return Optional.ofNullable(sortBy);
+    }
 
     public int getUserId() {
         return userId;
