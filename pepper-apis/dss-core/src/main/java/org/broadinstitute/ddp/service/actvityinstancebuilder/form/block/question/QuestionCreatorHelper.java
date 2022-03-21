@@ -19,6 +19,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestio
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
+import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.question.AgreementQuestion;
@@ -257,9 +258,8 @@ public class QuestionCreatorHelper {
         List<PicklistOptionDef> options = questionDef.getLocalPicklistOptions();
         if (questionDef.getRenderMode() == PicklistRenderMode.REMOTE_AUTOCOMPLETE && !answers.isEmpty()) {
 
-            List<String> selectedOptsStableIds = answers.stream()
-                    .flatMap(answer -> answer.getValue().stream().map(SelectedPicklistOption::getStableId))
-                    .collect(Collectors.toList());
+            List<String> selectedOptsStableIds = answers.stream().map(Answer::getValue)
+                    .flatMap(opts -> opts.stream()).map(SelectedPicklistOption::getStableId).collect(Collectors.toList());
 
             options = questionDef.getPicklistOptions().stream()
                     .filter(optionDef -> selectedOptsStableIds.contains(optionDef.getStableId()))
