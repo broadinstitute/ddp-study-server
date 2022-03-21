@@ -19,8 +19,9 @@ public class CustomSortBuilder extends FieldSortBuilder {
     public CustomSortBuilder(Sort sort) {
         super(sort.buildFieldName());
         this.sort = sort;
-        if (sort.isNestedSort())
+        if (sort.isNestedSort()) {
             setNestedSort(getNestedSortBuilder());
+        }
         this.order(sort.getOrder());
         this.unmappedType(UNMAPPED_TYPE_LONG);
         this.missing(IF_MISSING_LAST);
@@ -28,10 +29,11 @@ public class CustomSortBuilder extends FieldSortBuilder {
 
     protected NestedSortBuilder getNestedSortBuilder() {
         NestedSortBuilder nestedSortBuilder = new NestedSortBuilder(sort.buildNestedPath());
-        if (isActivities() && !ElasticSearchUtil.QUESTIONS_ANSWER.equals(sort.handleOuterPropertySpecialCase()) && Objects.nonNull(sort.getActivityVersions())) {
+        if (isActivities() && !ElasticSearchUtil.QUESTIONS_ANSWER.equals(sort.handleOuterPropertySpecialCase())
+                && Objects.nonNull(sort.getActivityVersions())) {
             BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
-            boolQueryBuilder.must(new TermQueryBuilder(String.join(DBConstants.ALIAS_DELIMITER, sort.getAlias().getValue(),
-                    ElasticSearchUtil.ACTIVITY_CODE),
+            boolQueryBuilder.must(new TermQueryBuilder(
+                    String.join(DBConstants.ALIAS_DELIMITER, sort.getAlias().getValue(), ElasticSearchUtil.ACTIVITY_CODE),
                     sort.getRawAlias()));
             boolQueryBuilder.must(new TermsQueryBuilder(String.join(DBConstants.ALIAS_DELIMITER, sort.getAlias().getValue(),
                         ElasticSearchUtil.ACTIVITY_VERSION), sort.getActivityVersions()));
@@ -45,5 +47,3 @@ public class CustomSortBuilder extends FieldSortBuilder {
     }
 
 }
-
-

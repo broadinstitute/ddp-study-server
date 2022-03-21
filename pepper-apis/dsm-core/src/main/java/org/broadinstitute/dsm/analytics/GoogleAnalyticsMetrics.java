@@ -17,15 +17,15 @@ public class GoogleAnalyticsMetrics {
     public static final String DASHBOARD_LABEL_SHIPPING_REPORT_DOWNLOAD = ":shipping-report-download";
     public static final String DASHBOARD_LABEL_ALL_REALM = ":all-realm";
     public static final String DASHBOARD_LABEL_MR = ":medical-record";
-    public static final String  EVENT_SERVER_START= "server-start";
+    public static final String EVENT_SERVER_START = "server-start";
     public static final String EVENT_CATEGORY_PATCH_DATA = "patch-data";
     public static final String EVENT_PATCH_DATA_ANSWERS = "patch-data-answers";
 
     public static final String EVENT_CATEGORY_TISSUE_LIST = "tissue-list";
     public static final String EVENT_TISSUE_LIST_LOAD_TIME = "tissue-list-load-time";
 
-    public static int getTimeDifferenceToNow(Long start){
-        return (int) Math.ceil((System.currentTimeMillis() - start)/1000);
+    public static int getTimeDifferenceToNow(Long start) {
+        return (int) Math.ceil((System.currentTimeMillis() - start) / 1000);
     }
 
 }

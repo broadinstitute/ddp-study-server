@@ -133,9 +133,10 @@ public class NotificationUtil {
         mapy.put(":subject", subject);
         Recipient emailRecipient = new Recipient(recipient);
         if (EMAIL_TYPE.equals(recordId)) {
-            emailRecipient.setUrl(DSMConfig.getSqlFromConfig(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS) + KITREQUEST_LINK);
+            emailRecipient.setPermalink(DSMConfig.getSqlFromConfig(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS)
+                    + KITREQUEST_LINK);
         }
-        emailRecipient.setSurveyLinks(mapy);
+        emailRecipient.setPersonalization(mapy);
         queueCurrentAndFutureEmails(recordId, emailRecipient, recordId);
     }
 
@@ -201,14 +202,14 @@ public class NotificationUtil {
         mapy.put(":customText", question);
         mapy.put(":customSignature", name);
         Recipient emailRecipient = new Recipient(to);
-        emailRecipient.setSurveyLinks(mapy);
+        emailRecipient.setPersonalization(mapy);
         try {
             EmailClient abstractionEmailClient = (EmailClient) Class.forName(emailClassName).newInstance();
             JsonObject emailClientSettings = new JsonObject();
             emailClientSettings.addProperty("sendGridFrom", from);
             emailClientSettings.addProperty("sendGridFromName", name);
-            abstractionEmailClient.configure(emailKey, new Gson().fromJson(emailClientSettings.toString(), JsonObject.class), "", "");
-            abstractionEmailClient.sendSingleEmail(sendGridTemplate, emailRecipient, null);
+            abstractionEmailClient.configure(emailKey, new Gson().fromJson(emailClientSettings.toString(), JsonObject.class));
+            abstractionEmailClient.sendSingleEmail(sendGridTemplate, emailRecipient);
         } catch (Exception ex) {
             logger.error("An error occurred trying to send abstraction expert question.", ex);
         }
@@ -223,7 +224,7 @@ public class NotificationUtil {
 
         try {
             EmailClient emailClient = (EmailClient) Class.forName(emailClassName).newInstance();
-            emailClient.configure(emailKey, emailClientSettings, "", "");
+            emailClient.configure(emailKey, emailClientSettings);
 
             Map<String, ArrayList<EmailRecord>> records = EmailRecord.getRecordsForProcessing();
 
@@ -237,7 +238,7 @@ public class NotificationUtil {
                         template = templateRecords.getKey();
 
                         for (EmailRecord record : templateRecords.getValue()) {
-                            emailClient.sendSingleEmail(template, record.getRecipient(), null);
+                            emailClient.sendSingleEmail(template, record.getRecipient());
                             EmailRecord.startProcessing(record.getRecordId());
                         }
 
