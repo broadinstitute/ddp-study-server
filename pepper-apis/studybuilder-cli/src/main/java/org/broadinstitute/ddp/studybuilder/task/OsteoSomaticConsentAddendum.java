@@ -76,11 +76,11 @@ public class OsteoSomaticConsentAddendum implements CustomTask {
         String sectionfilepath1 = dataCfg.getConfigList("updates").get(1).getString("sectionFilePath");
         Config consentAddendumSelf = activityBuild(studyDto, adminUser, sectionfilepath1);
 
-        insertSection(studyDto, adminUser, handle, consentSelf, consentAddendumSelf);
+        insertSection(studyDto, adminUser, handle, consentAddendumSelf, consentSelf);
 
     }
 
-    private void insertSection(StudyDto studyDto, User adminUser, Handle handle, Config section, Config activity){
+    private void insertSection(StudyDto studyDto, User adminUser, Handle handle, Config section, Config activity) {
 
         versionTag = activity.getString("versionTag");
         String activityCode = activity.getString("activityCode");
