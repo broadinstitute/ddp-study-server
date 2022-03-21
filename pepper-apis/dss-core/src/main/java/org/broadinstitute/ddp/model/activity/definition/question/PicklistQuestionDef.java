@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 import javax.validation.Valid;
@@ -96,7 +97,7 @@ public final class PicklistQuestionDef extends QuestionDef {
         groups = (groups == null) ? new ArrayList<>() : groups;
         options = (options == null) ? new ArrayList<>() : options;
 
-        if (groups.isEmpty() && options.isEmpty()) {
+        if (groups.isEmpty() && options.isEmpty() && renderMode != PicklistRenderMode.REMOTE_AUTOCOMPLETE) {
             throw new IllegalArgumentException("need to have at least one option or one group");
         }
 
@@ -121,6 +122,26 @@ public final class PicklistQuestionDef extends QuestionDef {
     }
 
     public List<PicklistOptionDef> getPicklistOptions() {
+        return picklistOptions;
+    }
+
+    public List<PicklistOptionDef> getLocalPicklistOptions() {
+        if (renderMode == PicklistRenderMode.REMOTE_AUTOCOMPLETE) {
+            return Collections.emptyList();
+        } else {
+            return picklistOptions;
+        }
+    }
+
+    public List<PicklistOptionDef> getRemotePicklistOptions() {
+        if (renderMode == PicklistRenderMode.REMOTE_AUTOCOMPLETE) {
+            return picklistOptions;
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+    public List<PicklistOptionDef> getPicklistOptionsIncludingRemoteAutoComplete() {
         return picklistOptions;
     }
 
@@ -202,18 +223,18 @@ public final class PicklistQuestionDef extends QuestionDef {
 
         public PicklistQuestionDef build() {
             PicklistQuestionDef question = new PicklistQuestionDef(stableId,
-                                                                    isRestricted,
-                                                                    prompt,
-                                                                    getAdditionalInfoHeader(),
-                                                                    getAdditionalInfoFooter(),
-                                                                    validations,
-                                                                    selectMode,
-                                                                    renderMode,
-                                                                    label,
-                                                                    groups,
-                                                                    options,
-                                                                    hideNumber,
-                                                                    writeOnce);
+                    isRestricted,
+                    prompt,
+                    getAdditionalInfoHeader(),
+                    getAdditionalInfoFooter(),
+                    validations,
+                    selectMode,
+                    renderMode,
+                    label,
+                    groups,
+                    options,
+                    hideNumber,
+                    writeOnce);
             configure(question);
             return question;
         }
