@@ -141,10 +141,6 @@ public final class PicklistQuestionDef extends QuestionDef {
         }
     }
 
-    public List<PicklistOptionDef> getPicklistOptionsIncludingRemoteAutoComplete() {
-        return picklistOptions;
-    }
-
     public List<PicklistOptionDef> getAllPicklistOptions() {
         Stream<PicklistOptionDef> nestedOptions =
                 picklistOptions.stream().flatMap(def -> def.getNestedOptions().stream());
