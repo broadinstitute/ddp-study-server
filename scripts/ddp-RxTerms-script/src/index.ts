@@ -2,9 +2,10 @@ import * as XLSX from "xlsx";
 import { RxNormDrugOption } from "./models";
 import { parseToHOCON, writeFile } from "./utils/common";
 
-const fileName = "RxTerms202202.txt";
+const inputFileName = 'RxTerms202202.txt';
+const outputFileName = 'output.txt'
 
-const workBook = XLSX.readFile(fileName);
+const workBook = XLSX.readFile(inputFileName);
 
 const workSheet = workBook.Sheets[workBook.SheetNames[0]];
 
@@ -35,6 +36,6 @@ const picklistString = pickListOptions.reduce((prev, current) => {
 }, "");
 
 writeFile(
-  "output.txt",
+  outputFileName,
   JSON.stringify(parseToHOCON(`picklistOptions : [${picklistString}]`), null, 2)
 );
