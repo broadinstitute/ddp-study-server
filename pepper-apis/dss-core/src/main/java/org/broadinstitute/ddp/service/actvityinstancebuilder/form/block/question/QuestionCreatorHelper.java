@@ -6,6 +6,7 @@ import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderCo
 import org.broadinstitute.ddp.util.CollectionMiscUtil;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -45,8 +46,6 @@ import org.broadinstitute.ddp.model.activity.instance.question.MatrixRow;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.ActivityInstanceSelectQuestion;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
-import org.broadinstitute.ddp.util.CollectionMiscUtil;
 
 public class QuestionCreatorHelper {
 
@@ -288,7 +287,7 @@ public class QuestionCreatorHelper {
         if (questionDef.getRenderMode() == PicklistRenderMode.REMOTE_AUTOCOMPLETE && !answers.isEmpty()) {
 
             List<String> selectedOptsStableIds = answers.stream().map(Answer::getValue)
-                    .flatMap(opts -> opts.stream()).map(SelectedPicklistOption::getStableId).collect(Collectors.toList());
+                    .flatMap(Collection::stream).map(SelectedPicklistOption::getStableId).collect(Collectors.toList());
 
             options = questionDef.getPicklistOptions().stream()
                     .filter(optionDef -> selectedOptsStableIds.contains(optionDef.getStableId()))
