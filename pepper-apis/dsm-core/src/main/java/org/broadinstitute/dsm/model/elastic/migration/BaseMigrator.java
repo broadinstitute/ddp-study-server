@@ -47,7 +47,8 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
             bulkExportFacade.addDataToRequest(finalMapToUpsert, participantId);
             batchCounter++;
         }
-        logger.info("successfully filled bulk request with participants and their details for study: " + realm + " with index: " + index);
+        logger.info("finished migrating data of " + batchCounter + " participants for " + object + " to ES for study: " + realm + " with " +
+                "index: " + index);
     }
 
     protected abstract void transformObject(Object object);
@@ -59,6 +60,5 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
         Map<String, Object> dataByRealm = getDataByRealm();
         if (dataByRealm.isEmpty()) return;
         fillBulkRequestWithTransformedMapAndExport(dataByRealm);
-        logger.info("finished migrating data of: " + object + " to ES for study: " + realm + " with index: " + index);
     }
 }
