@@ -7,6 +7,7 @@ import org.broadinstitute.ddp.util.CollectionMiscUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
@@ -17,10 +18,14 @@ import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestion
 import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.EquationQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
+import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
+import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
+import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.question.AgreementQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.BoolQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.CompositeQuestion;
@@ -39,6 +44,9 @@ import org.broadinstitute.ddp.model.activity.instance.question.MatrixQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.MatrixRow;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.ActivityInstanceSelectQuestion;
+import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
+import org.broadinstitute.ddp.util.CollectionMiscUtil;
 
 public class QuestionCreatorHelper {
 
@@ -273,7 +281,21 @@ public class QuestionCreatorHelper {
                                     .createPicklistOption(ctx, picklistOptionDef, questionDef.getGroups())));
         }
 
-        List<PicklistOption> picklistOptions = CollectionMiscUtil.createListFromAnotherList(questionDef.getLocalPicklistOptions(),
+        //localPicklistOptions doesn't include RemotePicklistOptions
+        //include option defs of any already selected options (answers)
+        List<PicklistAnswer> answers = questionCreator.getAnswers(ctx, questionDef.getStableId());
+        List<PicklistOptionDef> options = questionDef.getLocalPicklistOptions();
+        if (questionDef.getRenderMode() == PicklistRenderMode.REMOTE_AUTOCOMPLETE && !answers.isEmpty()) {
+
+            List<String> selectedOptsStableIds = answers.stream().map(Answer::getValue)
+                    .flatMap(opts -> opts.stream()).map(SelectedPicklistOption::getStableId).collect(Collectors.toList());
+
+            options = questionDef.getPicklistOptions().stream()
+                    .filter(optionDef -> selectedOptsStableIds.contains(optionDef.getStableId()))
+                                    .collect(Collectors.toList());
+        }
+
+        List<PicklistOption> picklistOptions = CollectionMiscUtil.createListFromAnotherList(options,
                 (picklistOptionDef) ->
                         ctx.getAIBuilderFactory().getPicklistCreatorHelper()
                                 .createPicklistOption(ctx, picklistOptionDef, questionDef.getGroups()));
