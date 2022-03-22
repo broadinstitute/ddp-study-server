@@ -82,4 +82,4 @@ Our thanks to the many open-source projects that we rely on for Pepper, each of 
 * [Kotlin](https://github.com/JetBrains/kotlin)
 * [Kotlin coroutines](https://github.com/Kotlin/kotlinx.coroutines)
 * [Android open source project](https://android.googlesource.com/?format=HTML)
-
+* [RxTerms](https://lhncbc.nlm.nih.gov/MOR/RxTerms/)
