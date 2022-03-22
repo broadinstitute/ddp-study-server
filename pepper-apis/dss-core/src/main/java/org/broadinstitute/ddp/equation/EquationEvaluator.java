@@ -1,11 +1,13 @@
 package org.broadinstitute.ddp.equation;
 
+import ch.obermuhlner.math.big.BigDecimalMath;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import org.broadinstitute.ddp.pex.lang.EquationBaseVisitor;
 import org.broadinstitute.ddp.pex.lang.EquationParser;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.util.Map;
 
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
@@ -17,13 +19,34 @@ public final class EquationEvaluator extends EquationBaseVisitor<BigDecimal> {
     }
 
     @Override
-    public BigDecimal visitFile_(final EquationParser.File_Context ctx) {
-        return super.visitFile_(ctx);
+    public BigDecimal visitPower(final EquationParser.PowerContext ctx) {
+        return BigDecimalMath.pow(visit(ctx.expression(0)), visit(ctx.expression(1)), MathContext.DECIMAL64);
     }
 
     @Override
-    public BigDecimal visitExpression(final EquationParser.ExpressionContext ctx) {
-        return super.visitExpression(ctx);
+    public BigDecimal visitMultiplication(final EquationParser.MultiplicationContext ctx) {
+        return visit(ctx.expression(0)).multiply(visit(ctx.expression(1)), MathContext.UNLIMITED);
+    }
+
+    @Override
+    public BigDecimal visitDivision(final EquationParser.DivisionContext ctx) {
+        return visit(ctx.expression(0)).divide(visit(ctx.expression(1)), MathContext.DECIMAL64);
+    }
+
+    @Override
+    public BigDecimal visitAddition(final EquationParser.AdditionContext ctx) {
+        return visit(ctx.expression(0)).add(visit(ctx.expression(1)), MathContext.UNLIMITED);
+    }
+
+    @Override
+    public BigDecimal visitSubtraction(final EquationParser.SubtractionContext ctx) {
+        return visit(ctx.expression(0)).subtract(visit(ctx.expression(1)), MathContext.UNLIMITED);
+
+    }
+
+    @Override
+    public BigDecimal visitParentheses(final EquationParser.ParenthesesContext ctx) {
+        return visit(ctx.expression());
     }
 
     @Override
