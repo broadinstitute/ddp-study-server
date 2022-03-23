@@ -69,7 +69,7 @@ public class JWTConverter {
         }
 
         try {
-            validToken = JWT.require(Algorithm.RSA256(keyProvider)).acceptLeeway(10).build().verify(jwt);
+            validToken = JWT.require(Algorithm.RSA256(keyProvider)).acceptLeeway(1000).build().verify(jwt);
         } catch (TokenExpiredException e) {
             // TokenExpired is one of the benign variants of JWTVerificationException that the `verify()` method throws.
             LOG.warn("Expired token: {}", jwt);
