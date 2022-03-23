@@ -25,7 +25,7 @@ public final class EquationEvaluator extends EquationBaseVisitor<BigDecimal> {
 
     @Override
     public BigDecimal visitMultiplication(final EquationParser.MultiplicationContext ctx) {
-        return visit(ctx.expression(0)).multiply(visit(ctx.expression(1)), MathContext.UNLIMITED);
+        return visit(ctx.expression(0)).multiply(visit(ctx.expression(1)), MathContext.DECIMAL64);
     }
 
     @Override
@@ -35,13 +35,12 @@ public final class EquationEvaluator extends EquationBaseVisitor<BigDecimal> {
 
     @Override
     public BigDecimal visitAddition(final EquationParser.AdditionContext ctx) {
-        return visit(ctx.expression(0)).add(visit(ctx.expression(1)), MathContext.UNLIMITED);
+        return visit(ctx.expression(0)).add(visit(ctx.expression(1)), MathContext.DECIMAL64);
     }
 
     @Override
     public BigDecimal visitSubtraction(final EquationParser.SubtractionContext ctx) {
-        return visit(ctx.expression(0)).subtract(visit(ctx.expression(1)), MathContext.UNLIMITED);
-
+        return visit(ctx.expression(0)).subtract(visit(ctx.expression(1)), MathContext.DECIMAL64);
     }
 
     @Override
