@@ -1725,15 +1725,15 @@ public interface QuestionDao extends SqlObject {
      * @param meta       the revision metadata used for terminating data
      */
     default void disableEquationQuestion(long questionId, RevisionMetadata meta) {
-        QuestionDto dto = getJdbiQuestion().findQuestionDtoById(questionId).orElse(null);
-        EquationQuestionDto questionDto = dto == null ? null : (EquationQuestionDto) dto;
-        if (questionDto == null || questionDto.getRevisionEnd() != null) {
+        EquationQuestionDto dto = getJdbiQuestion().findQuestionDtoById(questionId)
+                .map(EquationQuestionDto.class::cast).orElse(null);
+        if (dto == null || dto.getRevisionEnd() != null) {
             throw new NoSuchElementException("Cannot find active equation question with id " + questionId);
         }
 
-        disableBaseQuestion(questionDto, meta);
-        if (questionDto.getPlaceholderTemplateId() != null) {
-            getTemplateDao().disableTemplate(questionDto.getPlaceholderTemplateId(), meta);
+        disableBaseQuestion(dto, meta);
+        if (dto.getPlaceholderTemplateId() != null) {
+            getTemplateDao().disableTemplate(dto.getPlaceholderTemplateId(), meta);
         }
     }
 
