@@ -10,9 +10,9 @@
         <dropPrimaryKey tableName="file_answer" constraintName="file_answer_pk"/>
         <addPrimaryKey tableName="file_answer" columnNames="answer_id,file_upload_id" constraintName="file_answer_pk"/>
         <addForeignKeyConstraint baseTableName="file_answer" baseColumnNames="answer_id" constraintName="file_answer_answer_fk"
-                                 referencedTableName="answer" referencedColumnNames="answer_id" onDelete="CASCADE"/>
+                                 referencedTableName="answer" referencedColumnNames="answer_id" deleteCascade="true"/>
         <addForeignKeyConstraint baseTableName="file_answer" baseColumnNames="file_upload_id" constraintName="file_answer_file_upload_fk"
-                                 referencedTableName="file_upload" referencedColumnNames="file_upload_id" />
+                                 referencedTableName="file_upload" referencedColumnNames="file_upload_id" deleteCascade="true" />
     </changeSet>
 
 </databaseChangeLog>

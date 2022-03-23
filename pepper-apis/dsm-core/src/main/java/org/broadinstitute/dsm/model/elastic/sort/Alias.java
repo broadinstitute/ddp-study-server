@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.model.elastic.sort;
 
+import com.google.common.base.Enums;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -32,19 +33,18 @@ public enum Alias {
     private String value;
 
     public static Alias of(SortBy sortBy) {
-        Alias alias;
-        try {
-            String tableAlias;
-            if (ESObjectConstants.DATA.equals(sortBy.getTableAlias())) {
-                tableAlias = StringUtils.isNotBlank(sortBy.getOuterProperty()) ? sortBy.getOuterProperty() : sortBy.getInnerProperty();
-            } else {
-                tableAlias = sortBy.getTableAlias();
-            }
-            alias = valueOf(tableAlias.toUpperCase());
-        } catch (IllegalArgumentException iae) {
-            alias = ACTIVITIES;
+        String tableAlias;
+        if (ESObjectConstants.DATA.equals(sortBy.getTableAlias())) {
+            tableAlias = StringUtils.isNotBlank(sortBy.getOuterProperty()) ? sortBy.getOuterProperty() : sortBy.getInnerProperty();
+        } else {
+            tableAlias = sortBy.getTableAlias();
         }
-        return alias;
+        return of(tableAlias);
     }
+
+    public static Alias of(String tableAlias) {
+        return Enums.getIfPresent(Alias.class, tableAlias).or(ACTIVITIES);
+    }
+
 
 }

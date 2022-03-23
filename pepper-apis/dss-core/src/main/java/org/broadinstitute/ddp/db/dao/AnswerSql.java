@@ -69,8 +69,9 @@ public interface AnswerSql extends SqlObject {
         return insertDateValue(answerId, value.getYear(), value.getMonth(), value.getDay());
     }
 
+    @GetGeneratedKeys
     @SqlBatch("insert into file_answer (answer_id, file_upload_id) values (:answerId, :uploadId)")
-    int[] bulkInsertFileValue(@Bind("answerId") long answerId, @Bind("uploadId") List<Long> fileUploadId);
+    long[] bulkInsertFileValue(@Bind("answerId") long answerId, @Bind("uploadId") List<Long> fileUploadId);
 
     @SqlUpdate("insert into numeric_answer (answer_id, int_value) values (:answerId, :value)")
     int insertNumericIntValue(@Bind("answerId") long answerId, @Bind("value") Long value);

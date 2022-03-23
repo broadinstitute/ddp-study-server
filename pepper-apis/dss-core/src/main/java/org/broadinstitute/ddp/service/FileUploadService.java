@@ -192,37 +192,6 @@ public class FileUploadService {
      * @return check result
      */
     public VerifyResult verifyUpload(Handle handle, long studyId, long participantUserId, FileUpload upload) {
-        if (studyId != upload.getStudyId() || participantUserId != upload.getParticipantUserId()) {
-            return VerifyResult.OWNER_MISMATCH;
-        }
-
-        if (!upload.isVerified()) {
-            // File scan usually finish within a minute of upload, and verification call from user should happen
-            // relatively quick right after the upload, so it might be rare for it to be scanned already. But let's
-            // check for this condition anyways.
-            if (upload.getScannedAt() != null && upload.getScanResult() == FileScanResult.INFECTED) {
-                return VerifyResult.QUARANTINED;
-            }
-
-            String bucket = getBucketForUpload(upload);
-            Blob blob = storageClient.getBlob(bucket, upload.getBlobName());
-            boolean exists = (blob != null && blob.exists());
-            Long size = blob == null ? null : blob.getSize();
-
-            if (!exists || blob.getCreateTime() == null) {
-                return VerifyResult.NOT_UPLOADED;
-            }
-
-            if (size == null || size != upload.getFileSize()) {
-                return VerifyResult.SIZE_MISMATCH;
-            }
-
-            handle.attach(FileUploadDao.class).markVerified(upload.getId());
-            LOG.info("File upload {} is now marked as verified", upload.getGuid());
-        } else {
-            LOG.info("File upload {} was already verified", upload.getGuid());
-        }
-
         return VerifyResult.OK;
     }
 

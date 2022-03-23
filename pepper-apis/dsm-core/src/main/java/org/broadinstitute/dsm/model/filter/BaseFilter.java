@@ -2,10 +2,12 @@ package org.broadinstitute.dsm.model.filter;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.Optional;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.broadinstitute.dsm.db.ViewFilter;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.sort.SortBy;
@@ -36,6 +38,7 @@ public class BaseFilter {
     }
 
     protected void prepareNecessaryData(QueryParamsMap queryParamsMap) {
+
         parent = Objects.requireNonNull(queryParamsMap).get(DBConstants.FILTER_PARENT).value();
         if (StringUtils.isBlank(parent)) {
             throw new RuntimeException("parent is necessary");
@@ -68,8 +71,8 @@ public class BaseFilter {
         } else if (savedFilters != null) {
             filters = savedFilters;
         }
-        this.from = Integer.parseInt(queryParamsMap.get(LIST_RANGE_FROM).value());
-        this.to = Integer.parseInt(queryParamsMap.get(LIST_RANGE_TO).value());
+        this.from = NumberUtils.toInt(queryParamsMap.get(LIST_RANGE_FROM).value(), 0);
+        this.to = NumberUtils.toInt(queryParamsMap.get(LIST_RANGE_TO).value(), 10000);
         if (queryParamsMap.hasKey(SortBy.SORT_BY)) {
             this.sortBy = ObjectMapperSingleton.readValue(queryParamsMap.get(SortBy.SORT_BY).value(), new TypeReference<SortBy>() {
             });

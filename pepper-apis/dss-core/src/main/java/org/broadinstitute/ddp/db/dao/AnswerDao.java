@@ -153,8 +153,8 @@ public interface AnswerDao extends SqlObject {
             return;
         }
         List<Long> uploadIds = answer.getValue().stream().map(FileInfo::getUploadId).collect(Collectors.toList());
-        int[] inserted = getAnswerSql().bulkInsertFileValue(answerId, uploadIds);
-        if (inserted.length != uploadIds.size()) {
+        long[] ids = getAnswerSql().bulkInsertFileValue(answerId, uploadIds);
+        if (ids.length != uploadIds.size()) {
             throw new DaoException("Not all file uploads were assigned to answer " + answerId);
         }
     }

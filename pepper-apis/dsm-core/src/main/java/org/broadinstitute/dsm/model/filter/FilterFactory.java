@@ -29,7 +29,8 @@ public class FilterFactory {
         String jsonBody = request.body();
         Filterable filterable = queryParamsMap -> Collections.emptyList();
         switch (lastSegment) {
-            case RoutePath.APPLY_FILTER:
+            case RoutePath.APPLY_FILTER :
+            case RoutePath.DOWNLOAD_PARTICIPANT_LIST_ROUTE:
                 switch (parent) {
                     case BaseFilter.PARENT_PARTICIPANT_LIST:
                         if (StringUtils.isNotBlank(queryParams.get(RequestParameter.FILTER_NAME).value())) {
