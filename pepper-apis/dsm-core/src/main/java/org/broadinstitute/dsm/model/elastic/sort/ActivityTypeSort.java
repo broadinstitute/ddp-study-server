@@ -24,14 +24,13 @@ public class ActivityTypeSort extends Sort {
         this.originalOuterProperty = sortBy.getOuterProperty();
         this.originalInnerProperty = sortBy.getInnerProperty();
         FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
-        Optional<FieldSettingsDto> maybeFieldSettings = fieldSettingsDao.getFieldSettingsByFieldTypeAndColumnName(originalOuterProperty,
-                originalInnerProperty);
-        Optional<String> maybePossibleValues = maybeFieldSettings
-                .map(FieldSettingsDto::getPossibleValues);
+        Optional<FieldSettingsDto> maybeFieldSettings =
+                fieldSettingsDao.getFieldSettingsByFieldTypeAndColumnName(originalOuterProperty, originalInnerProperty);
+        Optional<String> maybePossibleValues = maybeFieldSettings.map(FieldSettingsDto::getPossibleValues);
         if (maybePossibleValues.isPresent()) {
             String possibleValuesString = maybePossibleValues.get();
-            this.possibleValues = ObjectMapperSingleton.readValue(possibleValuesString,
-                    new TypeReference<List<Map<String, String>>>() {});
+            this.possibleValues = ObjectMapperSingleton.readValue(possibleValuesString, new TypeReference<List<Map<String, String>>>() {
+            });
         }
     }
 
@@ -41,11 +40,8 @@ public class ActivityTypeSort extends Sort {
     }
 
     private String getFieldNameToSortBy(List<Map<String, String>> possibleValues) {
-        return possibleValues.stream()
-                .findFirst()
-                .map(mapValue -> mapValue.get(FieldSettings.KEY_VALUE))
-                .map(value -> value.split(ElasticSearchUtil.ESCAPE_CHARACTER_DOT_SEPARATOR)[1])
-                .orElse(StringUtils.EMPTY);
+        return possibleValues.stream().findFirst().map(mapValue -> mapValue.get(FieldSettings.KEY_VALUE))
+                .map(value -> value.split(ElasticSearchUtil.ESCAPE_CHARACTER_DOT_SEPARATOR)[1]).orElse(StringUtils.EMPTY);
     }
 
     @Override
@@ -62,7 +58,7 @@ public class ActivityTypeSort extends Sort {
 
     @Override
     String buildNestedPath() {
-        if(isQuestionsAnswers()) {
+        if (isQuestionsAnswers()) {
             return buildQuestionsAnswersPath();
         }
         return super.buildNestedPath();
@@ -74,11 +70,8 @@ public class ActivityTypeSort extends Sort {
     }
 
     private String getOuterPropertyFromPossibleValues() {
-        return possibleValues.stream()
-                .findFirst()
-                .map(mapValue -> mapValue.get(FieldSettings.KEY_VALUE))
-                .map(value -> value.split(ElasticSearchUtil.ESCAPE_CHARACTER_DOT_SEPARATOR)[0])
-                .orElse(StringUtils.EMPTY);
+        return possibleValues.stream().findFirst().map(mapValue -> mapValue.get(FieldSettings.KEY_VALUE))
+                .map(value -> value.split(ElasticSearchUtil.ESCAPE_CHARACTER_DOT_SEPARATOR)[0]).orElse(StringUtils.EMPTY);
     }
 
     @Override
