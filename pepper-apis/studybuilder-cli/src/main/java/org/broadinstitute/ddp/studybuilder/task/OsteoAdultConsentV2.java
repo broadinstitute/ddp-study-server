@@ -3,27 +3,27 @@ package org.broadinstitute.ddp.studybuilder.task;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
-import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
-import org.broadinstitute.ddp.db.dao.JdbiTemplateVariable;
+import org.broadinstitute.ddp.db.dao.JdbiBlockContent;
+import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiVariableSubstitution;
 import org.broadinstitute.ddp.db.dao.SectionBlockDao;
+import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.BlockContentDto;
-import org.broadinstitute.ddp.db.dto.StudyDto;
-import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.RevisionDto;
-import org.broadinstitute.ddp.db.dao.JdbiVariableSubstitution;
+import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
+import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
-import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.user.User;
@@ -42,12 +42,13 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-public class OsteoParentConsent implements CustomTask {
+public class OsteoAdultConsentV2 implements CustomTask {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OsteoParentConsent.class);
+    private static final Logger LOG = LoggerFactory.getLogger(OsteoAdultConsentV2.class);
     private static final String DATA_FILE = "patches/self-consent.conf";
     private static final String STUDY = "CMI-OSTEO";
     private static final String BLOCK_KEY = "blockNew";
@@ -61,15 +62,13 @@ public class OsteoParentConsent implements CustomTask {
     private static final String TRANSLATION_UPDATES = "translation-updates";
     private static final String TRANSLATION_OLD = "oldValue";
     private static final String TRANSLATION_NEW = "newValue";
+    private static final String TRANSLATION_KEY = "variableName";
 
-    private Path cfgPath;
     private Config cfg;
     private Config dataCfg;
     private Instant timestamp;
     private String versionTag;
     private Gson gson;
-
-    private JdbiActivityVersion jdbiVersion;
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
@@ -86,7 +85,6 @@ public class OsteoParentConsent implements CustomTask {
         cfg = studyCfg;
         versionTag = dataCfg.getString("versionTag");
         timestamp = Instant.now();
-        this.cfgPath = cfgPath;
         gson = GsonUtil.standardGson();
     }
 
@@ -94,8 +92,6 @@ public class OsteoParentConsent implements CustomTask {
     public void run(Handle handle) {
         User adminUser = handle.attach(UserDao.class).findUserByGuid(cfg.getString("adminUser.guid")).get();
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid"));
-
-        jdbiVersion = handle.attach(JdbiActivityVersion.class);
 
         String activityCode = dataCfg.getString("activityCode");
         LOG.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
@@ -110,66 +106,84 @@ public class OsteoParentConsent implements CustomTask {
         RevisionMetadata meta = new RevisionMetadata(timestamp, adminUserId, reason);
 
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
-        ActivityVersionDto version = jdbiVersion.getActiveVersion(activityId).get();
+        ActivityVersionDto version2 = handle.attach(ActivityDao.class).changeVersion(activityId, versionTag, meta);
 
-        updateVariables(activityId, handle);
-        updateTemplates(handle, meta, version);
-        addNestedBlocks(activityId, handle, meta, version);
-        addBlocks(activityId, handle, meta, version);
+        updateVariables(handle, meta, version2);
+        updateTemplates(handle, meta, version2);
+        addNestedBlocks(activityId, handle, meta, version2);
+        addBlocks(activityId, handle, meta, version2);
     }
 
-    private void updateVariables(long activityId, Handle handle) {
+    private void updateVariables(Handle handle, RevisionMetadata meta, ActivityVersionDto version2) {
         List<? extends Config> configList = dataCfg.getConfigList(TRANSLATION_UPDATES);
         for (Config config : configList) {
-            updateVariableByText(activityId, config.getString(TRANSLATION_OLD), config.getString(TRANSLATION_NEW), handle);
+            revisionVariableTranslation(config.getString(TRANSLATION_KEY), config.getString(TRANSLATION_NEW), handle, meta, version2);
         }
     }
 
-    private void updateVariableByText(long activityId, String before, String after, Handle handle) {
-        String oldValue = String.format("%s%s%s", "%", before, "%");
-        List<Long> varIds = handle.attach(SqlHelper.class).findVariableIdsByText(activityId, oldValue);
-        if (CollectionUtils.isEmpty(varIds)) {
-            throw new DDPException("Could not find any variable with text " + before);
-        }
-        varIds.forEach(varId -> {
-            handle.attach(SqlHelper.class).updateVarValueByTemplateVarId(varId, after);
-            LOG.info("Template variable {} text was updated from \"{}\" to \"{}\"", varId, before, after);
-        });
+
+    private void revisionVariableTranslation(String varName, String newTemplateText, Handle handle,
+                                             RevisionMetadata meta, ActivityVersionDto version2) {
+        long tmplVarId = handle.attach(SqlHelper.class).findTemplateVariableIdByVariableName(varName);
+        JdbiVariableSubstitution jdbiVarSubst = handle.attach(JdbiVariableSubstitution.class);
+        List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
+        Translation currTranslation = transList.get(0);
+
+        JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
+        long newFullNameSubRevId = jdbiRevision.copyAndTerminate(currTranslation.getRevisionId().get(), meta);
+        long[] revIds = {newFullNameSubRevId};
+        jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(Arrays.asList(currTranslation.getId().get()), revIds);
+        jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, version2.getRevId(), tmplVarId);
     }
 
     private void updateTemplates(Handle handle, RevisionMetadata meta, ActivityVersionDto version) {
         List<? extends Config> configList = dataCfg.getConfigList(BLOCK_UPDATES);
         for (Config config : configList) {
-            updateContentBlockTemplate(handle, meta, version, config);
+            revisionContentBlockTemplate(handle, meta, version, config);
         }
     }
 
-    private void updateContentBlockTemplate(Handle handle, RevisionMetadata meta, ActivityVersionDto versionDto, Config conf) {
+    private void revisionContentBlockTemplate(Handle handle, RevisionMetadata meta, ActivityVersionDto versionDto, Config conf) {
         Config config = conf.getConfig(BLOCK_KEY);
         ContentBlockDef contentBlockDef = gson.fromJson(ConfigUtil.toJson(config), ContentBlockDef.class);
         Template newBodyTemplate = contentBlockDef.getBodyTemplate();
+        Template newTitleTemplate = contentBlockDef.getTitleTemplate();
+
         String oldBlockTemplateText = conf.getString(OLD_TEMPLATE_KEY);
+
+        JdbiBlockContent jdbiBlockContent = handle.attach(JdbiBlockContent.class);
 
         String templateSearchParam = String.format("%s%s%s", "%", oldBlockTemplateText, "%");
         BlockContentDto contentBlock = handle.attach(SqlHelper.class)
                 .findContentBlockByBodyText(versionDto.getActivityId(), templateSearchParam);
 
-        for (TemplateVariable variable : contentBlockDef.getBodyTemplate().getVariables()) {
-            insertVariable(handle, variable, contentBlock);
+
+        JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
+        long newRevId = jdbiRevision.copyAndTerminate(contentBlock.getRevisionId(), meta);
+        int numUpdated = jdbiBlockContent.updateRevisionById(contentBlock.getId(), newRevId);
+        if (numUpdated != 1) {
+            throw new DDPException(String.format(
+                    "Unable to terminate active block_content with id=%d, blockId=%d, bodyTemplateId=%d",
+                    contentBlock.getId(), contentBlock.getBlockId(), contentBlock.getBodyTemplateId()));
         }
 
-        handle.attach(SqlHelper.class).updateTemplateText(contentBlock.getBodyTemplateId(), newBodyTemplate.getTemplateText());
-    }
-
-    private void insertVariable(Handle handle, TemplateVariable variable, BlockContentDto template) {
-        var jdbiTemplateVariable = handle.attach(JdbiTemplateVariable.class);
-        var jdbiVariableSubstitution = handle.attach(JdbiVariableSubstitution.class);
-
-        long variableId = jdbiTemplateVariable.insertVariable(template.getBodyTemplateId(), variable.getName());
-        for (var translation : variable.getTranslations()) {
-            String language = translation.getLanguageCode();
-            jdbiVariableSubstitution.insert(language, translation.getText(), template.getRevisionId(), variableId);
+        TemplateDao templateDao = handle.attach(TemplateDao.class);
+        templateDao.disableTemplate(contentBlock.getBodyTemplateId(), meta);
+        if (contentBlock.getTitleTemplateId() != null) {
+            templateDao.disableTemplate(contentBlock.getTitleTemplateId(), meta);
         }
+        Long newBodyTemplateId = templateDao.insertTemplate(newBodyTemplate, versionDto.getRevId());
+
+        Long newTitleTemplateId = null;
+        if (newTitleTemplate != null) {
+            newTitleTemplateId = templateDao.insertTemplate(newTitleTemplate, versionDto.getRevId());
+        }
+
+        long newBlockContentId = jdbiBlockContent.insert(contentBlock.getBlockId(), newBodyTemplateId,
+                newTitleTemplateId, versionDto.getRevId());
+
+        LOG.info("Created block_content with id={}, blockId={}, bodyTemplateId={} for bodyTemplateText={}",
+                newBlockContentId, contentBlock.getBlockId(), newBodyTemplateId, contentBlockDef.getBodyTemplate().getTemplateText());
     }
 
     private void addBlocks(long activityId, Handle handle, RevisionMetadata meta, ActivityVersionDto version2) {
@@ -204,7 +218,7 @@ public class OsteoParentConsent implements CustomTask {
     }
 
     private void addNewNestedBlock(long activityId, Config config,
-                             Handle handle, RevisionMetadata meta, ActivityVersionDto version) {
+                                   Handle handle, RevisionMetadata meta, ActivityVersionDto version) {
         Config blockConfig = config.getConfig(BLOCK_KEY);
         int sectionOrder = config.getInt(SECTION_ORDER);
         ActivityDto activityDto = handle.attach(JdbiActivity.class)
@@ -245,26 +259,13 @@ public class OsteoParentConsent implements CustomTask {
         @RegisterConstructorMapper(BlockContentDto.class)
         BlockContentDto findContentBlockByBodyText(@Bind("activityId") long activityId, @Bind("text") String bodyTemplateText);
 
-        @SqlUpdate("update template set template_text = :text where template_id = :id")
-        int _updateTemplateTextByTemplateId(@Bind("id") long templateId, @Bind("text") String templateText);
-
-        default void updateTemplateText(long templateId, String templateText) {
-            int numUpdated = _updateTemplateTextByTemplateId(templateId, templateText);
-            if (numUpdated != 1) {
-                throw new DDPException("Expected to update 1 template text for templateId="
-                        + templateId + " but updated " + numUpdated);
-            }
-        }
-
-        @SqlQuery("select tv.template_variable_id from template_variable tv"
-                + " join i18n_template_substitution ts on ts.template_variable_id = tv.template_variable_id"
-                + " where ts.substitution_value like :text")
-        List<Long> findVariableIdsByText(@Bind("activityId") long activityId,
-                                         @Bind("text") String text);
-
         // For single language only
         @SqlUpdate("update i18n_template_substitution set substitution_value = :value where template_variable_id = :id")
         int updateVarValueByTemplateVarId(@Bind("id") long templateVarId, @Bind("value") String value);
+
+        @SqlQuery("select template_variable_id from template_variable where variable_name = :variable_name "
+                + "order by template_variable_id desc")
+        long findTemplateVariableIdByVariableName(@Bind("variable_name") String variableName);
     }
 
 }
