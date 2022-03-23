@@ -12,9 +12,8 @@ import static org.junit.Assert.assertEquals;
 
 public class EquationParserTest {
     private static final String EXPRESSION = "3.14 + 2.71 * (x + y ^ 2)";
-    private static final String TREE = "(expression (expression (number 3.14)) + "
-            + "(expression (expression (number 2.71)) * (expression ( (expression (expression (variable x)) + "
-            + "(expression (expression (variable y)) ^ (expression (number 2)))) ))))";
+    private static final String TREE = "(expression (expression 3.14) + (expression (expression 2.71) * "
+            + "(expression ( (expression (expression x) + (expression (expression y) ^ (expression 2))) ))))";
 
     @Test
     public void testParsing() {
@@ -30,13 +29,13 @@ public class EquationParserTest {
 
     @Test
     public void testUnaryOperator() {
-        testParserTreeOutput("x + -2", "(expression (expression (variable x)) + (expression (number -2)))");
+        testParserTreeOutput("x + -2", "(expression (expression x) + (expression -2))");
     }
 
     @Test
     public void testBinaryOperatorPriority() {
         testParserTreeOutput("x + y * z",
-                "(expression (expression (variable x)) + (expression (expression (variable y)) * (expression (variable z))))");
+                "(expression (expression x) + (expression (expression y) * (expression z)))");
     }
 
     @Test(expected = ParseCancellationException.class)
