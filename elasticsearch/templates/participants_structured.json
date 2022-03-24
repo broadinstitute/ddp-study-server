@@ -1001,7 +1001,7 @@
                   "type": "keyword"
                 },
                 "deactivatedDate": {
-                  "type": "long"
+                  "type": "date"
                 },
                 "ddpParticipantId": {
                   "type": "keyword"
@@ -1137,10 +1137,10 @@
                   }
                 },
                 "externalOrderDate": {
-                  "type": "long"
+                  "type": "date"
                 },
                 "receiveDate": {
-                  "type": "long"
+                  "type": "date"
                 },
                 "labelUrlReturn": {
                   "type": "text",
@@ -1167,7 +1167,7 @@
                   }
                 },
                 "scanDate": {
-                  "type": "long"
+                  "type": "date"
                 },
                 "authorizedBy": {
                   "type": "text",
@@ -1240,7 +1240,7 @@
                   }
                 },
                 "labelDate": {
-                  "type": "long"
+                  "type": "date"
                 }
               }
             },
@@ -1349,7 +1349,7 @@
                   "type": "date"
                 },
                 "exitDate": {
-                  "type": "long"
+                  "type": "date"
                 }
               }
             },
