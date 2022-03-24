@@ -2,7 +2,11 @@ package org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.questio
 
 import static org.broadinstitute.ddp.util.QuestionUtil.isReadOnly;
 
+import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
+import org.broadinstitute.ddp.util.CollectionMiscUtil;
+
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -13,6 +17,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.EquationQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
@@ -30,6 +35,7 @@ import org.broadinstitute.ddp.model.activity.instance.question.DateQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.FileQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.NumericQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.DecimalQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.EquationQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistGroup;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
@@ -40,8 +46,6 @@ import org.broadinstitute.ddp.model.activity.instance.question.MatrixRow;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.ActivityInstanceSelectQuestion;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
-import org.broadinstitute.ddp.util.CollectionMiscUtil;
 
 public class QuestionCreatorHelper {
 
@@ -237,6 +241,30 @@ public class QuestionCreatorHelper {
         );
     }
 
+    EquationQuestion createEquationQuestion(AIBuilderContext ctx, EquationQuestionDef questionDef) {
+        QuestionCreator questionCreator = ctx.getAIBuilderFactory().getQuestionCreator();
+        return new EquationQuestion(
+                questionDef.getStableId(),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getPromptTemplate()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getPlaceholderTemplate()),
+                questionDef.isRestricted(),
+                questionDef.isDeprecated(),
+                isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getTooltipTemplate()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getAdditionalInfoHeaderTemplate()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                questionCreator.getAnswers(ctx, questionDef.getStableId()),
+                questionCreator.getValidationRules(ctx, questionDef),
+                questionDef.getMaximumDecimalPlaces(),
+                questionDef.getExpression()
+        );
+    }
+
     PicklistQuestion createPicklistQuestion(AIBuilderContext ctx, PicklistQuestionDef questionDef) {
         QuestionCreator questionCreator = ctx.getAIBuilderFactory().getQuestionCreator();
 
@@ -259,7 +287,7 @@ public class QuestionCreatorHelper {
         if (questionDef.getRenderMode() == PicklistRenderMode.REMOTE_AUTOCOMPLETE && !answers.isEmpty()) {
 
             List<String> selectedOptsStableIds = answers.stream().map(Answer::getValue)
-                    .flatMap(opts -> opts.stream()).map(SelectedPicklistOption::getStableId).collect(Collectors.toList());
+                    .flatMap(Collection::stream).map(SelectedPicklistOption::getStableId).collect(Collectors.toList());
 
             options = questionDef.getPicklistOptions().stream()
                     .filter(optionDef -> selectedOptsStableIds.contains(optionDef.getStableId()))
