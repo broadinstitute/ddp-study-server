@@ -14,11 +14,13 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import lombok.experimental.SuperBuilder;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.util.MiscUtil;
 
+@SuperBuilder(toBuilder = true)
 public abstract class QuestionDef {
 
     @NotNull
@@ -270,6 +272,8 @@ public abstract class QuestionDef {
                     return ctx.deserialize(elem, NumericQuestionDef.class);
                 case DECIMAL:
                     return ctx.deserialize(elem, DecimalQuestionDef.class);
+                case EQUATION:
+                    return ctx.deserialize(elem, EquationQuestionDef.class);
                 case PICKLIST:
                     return ctx.deserialize(elem, PicklistQuestionDef.class);
                 case MATRIX:
