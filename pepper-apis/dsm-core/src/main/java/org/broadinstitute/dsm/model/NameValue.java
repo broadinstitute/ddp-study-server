@@ -12,4 +12,8 @@ public class NameValue {
         this.name = name;
         this.value = value;
     }
+
+    public NameValue() {
+
+    }
 }

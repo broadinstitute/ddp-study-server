@@ -1,102 +1,48 @@
 package org.broadinstitute.ddp.db.dto;
 
-import java.time.Instant;
-
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
+import java.time.Instant;
+
+@Value
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class InvitationDto {
+    @ColumnName("invitation_id")
+    long invitationId;
 
-    // don't set this in client code--it will be generated safely on insert
-    private String invitationGuid;
+    @ColumnName("invitation_guid")
+    String invitationGuid;
 
-    // auto generated
-    private long invitationId;
-    private InvitationType invitationType;
-    private Instant createdAt;
-    private Instant voidedAt;
-    private Instant verifiedAt;
-    private Instant acceptedAt;
-    private long studyId;
-    private Long userId;
-    private String contactEmail;
-    private String notes;
+    @ColumnName("invitation_type_code")
+    InvitationType invitationType;
 
-    /**
-     * This should only be used by JDBI on-the-fly.
-     * Please use {@link org.broadinstitute.ddp.db.dao.InvitationFactory#createAgeUpInvitation(long, long, String)} to
-     * safely create a new one
-     */
-    @JdbiConstructor
-    public InvitationDto(
-            @ColumnName("invitation_id") long invitationId,
-            @ColumnName("invitation_guid") String invitationGuid,
-            @ColumnName("invitation_type_code") InvitationType invitationType,
-            @ColumnName("created_at") Instant createdAt,
-            @ColumnName("voided_at") Instant voidedAt,
-            @ColumnName("verified_at") Instant verifiedAt,
-            @ColumnName("accepted_at") Instant acceptedAt,
-            @ColumnName("study_id") long studyId,
-            @ColumnName("user_id") Long userId,
-            @ColumnName("contact_email") String email,
-            @ColumnName("notes") String notes) {
-        this.invitationId = invitationId;
-        this.invitationGuid = invitationGuid;
-        this.invitationType = invitationType;
-        this.createdAt = createdAt;
-        this.voidedAt = voidedAt;
-        this.verifiedAt = verifiedAt;
-        this.acceptedAt = acceptedAt;
-        this.studyId = studyId;
-        this.userId = userId;
-        this.contactEmail = email;
-        this.notes = notes;
-    }
+    @ColumnName("created_at")
+    Instant createdAt;
 
-    public long getInvitationId() {
-        return invitationId;
-    }
+    @ColumnName("voided_at")
+    Instant voidedAt;
 
-    public String getInvitationGuid() {
-        return invitationGuid;
-    }
+    @ColumnName("verified_at")
+    Instant verifiedAt;
 
-    public InvitationType getInvitationType() {
-        return invitationType;
-    }
+    @ColumnName("accepted_at")
+    Instant acceptedAt;
 
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
+    @ColumnName("study_id")
+    long studyId;
 
-    public Instant getVoidedAt() {
-        return voidedAt;
-    }
+    @ColumnName("user_id")
+    Long userId;
 
-    public Instant getVerifiedAt() {
-        return verifiedAt;
-    }
+    @ColumnName("contact_email")
+    String contactEmail;
 
-    public Instant getAcceptedAt() {
-        return acceptedAt;
-    }
-
-    public long getStudyId() {
-        return studyId;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public String getContactEmail() {
-        return contactEmail;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
+    @ColumnName("notes")
+    String notes;
 
     public boolean isVoid() {
         return voidedAt != null;

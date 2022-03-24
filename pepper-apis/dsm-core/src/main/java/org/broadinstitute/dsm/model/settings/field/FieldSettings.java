@@ -37,7 +37,8 @@ public class FieldSettings {
         return defaultOptions;
     }
 
-    public Map<String, String> getColumnsWithDefaultOptionsFilteredByElasticExportWorkflow(@NonNull List<FieldSettingsDto> fieldSettingsDtos) {
+    public Map<String, String> getColumnsWithDefaultOptionsFilteredByElasticExportWorkflow(
+            @NonNull List<FieldSettingsDto> fieldSettingsDtos) {
         Map<String, String> defaultOptionsFileredByElasticExportWorkflow = new HashMap<>();
         for (FieldSettingsDto fieldSettingsDto : fieldSettingsDtos) {
             if (isDefaultValue(fieldSettingsDto.getPossibleValues()) && isElasticExportWorkflowType(fieldSettingsDto.getActions())) {
@@ -66,6 +67,15 @@ public class FieldSettings {
         return isElasticExportWorkflowType(fieldSettings.getActions());
     }
 
+    boolean isElasticExportWorkflowType(String action) {
+        if (StringUtils.isBlank(action)) {
+            return false;
+        }
+        Value[] actions = new Gson().fromJson(action, Value[].class);
+        return Stream.of(actions)
+                .anyMatch(act -> ESObjectConstants.ELASTIC_EXPORT_WORKFLOWS.equals(act.getType()));
+    }
+
     boolean isDefaultValue(String possibleValuesJson) {
         if (StringUtils.isBlank(possibleValuesJson)) {
             return false;
@@ -79,15 +89,6 @@ public class FieldSettings {
             }
         }
         return isDefault;
-    }
-
-    boolean isElasticExportWorkflowType(String action) {
-        if (StringUtils.isBlank(action)) {
-            return false;
-        }
-        Value[] actions = new Gson().fromJson(action, Value[].class);
-        return Stream.of(actions)
-                .anyMatch(act -> ESObjectConstants.ELASTIC_EXPORT_WORKFLOWS.equals(act.getType()));
     }
 
     public boolean isColumnExportable(int instanceId, String columnName) {

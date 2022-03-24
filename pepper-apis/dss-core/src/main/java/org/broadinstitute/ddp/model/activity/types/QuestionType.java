@@ -1,18 +1,25 @@
 package org.broadinstitute.ddp.model.activity.types;
 
-/**
- * Question and answer type.
- */
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@Getter
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public enum QuestionType {
-    AGREEMENT,
-    BOOLEAN,
-    COMPOSITE,
-    DATE,
-    FILE,
-    NUMERIC,
-    DECIMAL,
-    PICKLIST,
-    TEXT,
-    ACTIVITY_INSTANCE_SELECT,
-    MATRIX
+    AGREEMENT(false, false),
+    BOOLEAN(false, false),
+    COMPOSITE(false, false),
+    DATE(true, true),
+    FILE(false, false),
+    NUMERIC(true, true),
+    DECIMAL(true, true),
+    EQUATION(false, false),
+    PICKLIST(false, true),
+    TEXT(false, true),
+    ACTIVITY_INSTANCE_SELECT(false, false),
+    MATRIX(false, false);
+
+    private final boolean comparable;
+    private final boolean compositional;
 }

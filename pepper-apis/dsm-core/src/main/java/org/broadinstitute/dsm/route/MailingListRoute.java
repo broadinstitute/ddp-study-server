@@ -46,8 +46,8 @@ public class MailingListRoute extends RequestHandler {
         Contact[] ddpMailingListContacts = null;
         String sendRequest = instance.getBaseUrl() + RoutePath.DDP_MAILINGLIST_PATH;
         try {
-            ddpMailingListContacts = DDPRequestUtil.getResponseObject(Contact[].class, sendRequest, instance.getName(),
-                    instance.isHasAuth0Token());
+            ddpMailingListContacts =
+                    DDPRequestUtil.getResponseObject(Contact[].class, sendRequest, instance.getName(), instance.isHasAuth0Token());
             logger.info("Got " + ddpMailingListContacts.length + " mailing list contacts ");
         } catch (Exception ex) {
             throw new RuntimeException("Couldn't get mailing list contacts from " + sendRequest, ex);

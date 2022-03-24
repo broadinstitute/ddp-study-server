@@ -17,6 +17,7 @@ public class BSPKitDto {
     private String participantExitId;
     private String deactivationDate;
     private String notificationRecipient;
+    private String kitTypeName;
 
     public BSPKitDto(String instanceName,
                      String baseUrl,
@@ -30,7 +31,8 @@ public class BSPKitDto {
                      boolean hasParticipantNotifications,
                      String participantExitId,
                      String deactivationDate,
-                     String notificationRecipient) {
+                     String notificationRecipient,
+                     String kitTypeName) {
 
         this.instanceName = instanceName;
         this.baseUrl = baseUrl;
@@ -45,5 +47,6 @@ public class BSPKitDto {
         this.participantExitId = participantExitId;
         this.deactivationDate = deactivationDate;
         this.notificationRecipient = notificationRecipient;
+        this.kitTypeName = kitTypeName;
     }
 }

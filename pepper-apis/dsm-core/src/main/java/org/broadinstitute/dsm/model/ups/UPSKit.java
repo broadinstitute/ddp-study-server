@@ -15,7 +15,7 @@ public class UPSKit {
     // the two shipments differ in tracking id
     UPSPackage upsPackage; // package with tracking_to_id
     String kitLabel;
-    Boolean CE_order;
+    Boolean ceOrder;
     String dsmKitRequestId;
     String externalOrderNumber;
     String trackingToId;
@@ -24,11 +24,11 @@ public class UPSKit {
     String hruid;
     boolean gbfShippedTriggerDSSDelivered;
 
-    public UPSKit(@NonNull UPSPackage upsPackage, String kitLabel, Boolean CE_order, String dsmKitRequestId, String externalOrderNumber,
+    public UPSKit(@NonNull UPSPackage upsPackage, String kitLabel, Boolean ceOrder, String dsmKitRequestId, String externalOrderNumber,
                   String trackingToId, String trackingReturnId, String ddpInstanceId, String hruid, boolean gbfShippedTriggerDSSDelivered) {
         this.upsPackage = upsPackage;
         this.kitLabel = kitLabel;
-        this.CE_order = CE_order;
+        this.ceOrder = ceOrder;
         this.dsmKitRequestId = dsmKitRequestId;
         this.externalOrderNumber = externalOrderNumber;
         this.trackingToId = trackingToId;
@@ -45,7 +45,8 @@ public class UPSKit {
         if (this.upsPackage != null && this.upsPackage.getTrackingNumber() != null && trackingReturnId != null) {
             return upsPackage.getTrackingNumber().equals(trackingReturnId);
         } else {
-            throw new RuntimeException("Couldn't say if the package was return, either upsPackage or tracking number was null  for  " + getDsmKitRequestId());
+            throw new RuntimeException(
+                    "Couldn't say if the package was return, either upsPackage or tracking number was null  for  " + getDsmKitRequestId());
         }
     }
 
@@ -62,8 +63,9 @@ public class UPSKit {
             stmt.setBoolean(1, orderStatus);
             stmt.setString(2, this.getDsmKitRequestId());
             int r = stmt.executeUpdate();
-            if (r != 1) {//number of subkits
-                throw new RuntimeException("Update query for CE order flag updated " + r + " rows! with dsm kit request id: " + this.getDsmKitRequestId());
+            if (r != 1) { // number of subkits
+                throw new RuntimeException(
+                        "Update query for CE order flag updated " + r + " rows! with dsm kit request id: " + this.getDsmKitRequestId());
             }
             logger.info("Updated CE_Order value for kit with dsm kit request id " + this.getDsmKitRequestId()
                     + " to " + orderStatus);

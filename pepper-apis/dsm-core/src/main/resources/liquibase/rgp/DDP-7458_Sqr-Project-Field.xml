@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+
+    <changeSet id="DDP-7458_Sqr_Project_field" author="pegah" >
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='rgp')"></column>
+            <column name="field_type" value="r"/>
+            <column name="column_name" value="SQR_PROJECT"/>
+            <column name="column_display" value="Seqr project"/>
+            <column name="display_type" value="OPTIONS"/>
+            <column name="order_number" value="2"/>
+            <column name="possible_values" value="[{&quot;value&quot;:&quot;HMB genome&quot;,&quot;name&quot;:&quot;HMB genome&quot;},{&quot;value&quot;:&quot;OTHER&quot;,&quot;name&quot;:&quot;OTHER&quot;},{&quot;value&quot;:&quot;GRU genome&quot;,&quot;name&quot;:&quot;GRU genome&quot;},{&quot;value&quot;:&quot;UNKNOWN&quot;,&quot;name&quot;:&quot;UNKNOWN&quot;,&quot;default&quot;:true}]"/>
+        </insert>
+    </changeSet>
+    <changeSet id="DDP-7458_order_number_changes_FAMILY_NOTES" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET order_number = 1
+            Where field_settings_id &lt;&gt; 0 and field_settings_id in (SELECT field_settings_id from (select * FROM field_settings ) as something
+                                                                         Where something.ddp_instance_id in (select ddp_instance_id from ddp_instance where instance_name = 'RGP')
+                                                                           and something.column_name = "FAMILY_NOTES" and field_type = 'r');
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-7458_order_number_changes_EXPECTED_NUMBER_TO_SEQUENCE" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET order_number = 3
+            Where field_settings_id &lt;&gt; 0 and field_settings_id in (SELECT field_settings_id from (select * FROM field_settings ) as something
+                                                                         Where something.ddp_instance_id in (select ddp_instance_id from ddp_instance where instance_name = 'RGP')
+                                                                           and something.column_name = "EXPECTED_NUMBER_TO_SEQUENCE" and field_type = 'r');
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-7458_ddp_participant_insertion" author="pegah">
+        <sql>
+            INSERT INTO ddp_participant  (ddp_participant_id, last_version, last_version_date, ddp_instance_id, release_completed, assignee_id_mr, assignee_id_tissue, last_changed, changed_by)
+            SELECT distinct ddp_participant_id, 0, "",ddp_instance_id, null,null,null, CAST( 1000*UNIX_TIMESTAMP(current_timestamp(3)) AS UNSIGNED INTEGER) , "SYSTEM"
+            from ddp_participant_data where ddp_instance_id in (select ddp_instance_id from ddp_instance where instance_name = 'RGP')
+                                        and ddp_participant_id not in (
+                    SELECT ddp_participant_id from ddp_participant where ddp_instance_id in (select ddp_instance_id from ddp_instance where instance_name = 'RGP')
+                )
+                ON DUPLICATE KEY UPDATE last_version = last_version;
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-7458_ddp_participant_record_insertion" author="pegah">
+        <sql>
+            INSERT INTO ddp_participant_record (participant_id, last_changed, changed_by)
+            SELECT distinct p.participant_id,  CAST( 1000*UNIX_TIMESTAMP(current_timestamp(3)) AS UNSIGNED INTEGER) , "SYSTEM"
+            from ddp_participant p where p.ddp_instance_id in (select ddp_instance_id from ddp_instance where instance_name = 'RGP')
+                                     and p.participant_id not in (
+                    SELECT r.participant_id from ddp_participant_record r
+                                                     left join ddp_participant p1 on (p1.participant_id = r.participant_id) where p1.ddp_instance_id in (select ddp_instance_id from ddp_instance where instance_name = 'RGP')
+                )
+                ON DUPLICATE KEY UPDATE cr_sent = cr_sent;
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-7458_update_default_SQR_PROJECT_HMB" author="pegah">
+        <sql>
+            UPDATE ddp_participant_record
+            SET additional_values_json = JSON_SET(COALESCE(additional_values_json, '{}'),'$.SQR_PROJECT','HMB genome')
+            WHERE participant_record_id &lt;&gt; 0 and participant_record_id in (
+                SELECT participant_record_id from (
+                                                      SELECT participant_record_id, p.ddp_instance_id, data
+                                                      FROM ddp_participant_data d
+                                                               LEFT JOIN ddp_participant p ON (d.ddp_participant_id =  p.ddp_participant_id)
+                                                               LEFT JOIN ddp_participant_record r ON (r.participant_id = p.participant_id)
+                                                  ) as something
+                WHERE something.ddp_instance_id in (select ddp_instance_id from ddp_instance where instance_name = 'RGP')
+                  and JSON_EXTRACT(data, "$.DATE_ENROLLED") IS NOT NULL and JSON_EXTRACT(data, "$.DATE_ENROLLED") &lt;&gt; ''
+                  and JSON_EXTRACT(data, "$.MEMBER_TYPE") = "SELF");
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-7458_update_default_SQR_PROJECT_UNKNOWN" author="pegah">
+        <sql>
+            UPDATE ddp_participant_record
+            SET additional_values_json = JSON_SET(COALESCE(additional_values_json, '{}'),'$.SQR_PROJECT','UNKNOWN')
+            WHERE participant_record_id &lt;&gt; 0 and participant_record_id in (
+                SELECT participant_record_id from (
+                                                      SELECT participant_record_id, p.ddp_instance_id, data
+                                                      FROM ddp_participant_data d
+                                                               LEFT JOIN ddp_participant p ON (d.ddp_participant_id =  p.ddp_participant_id)
+                                                               LEFT JOIN ddp_participant_record r ON (r.participant_id = p.participant_id)
+                                                  ) as something
+                WHERE something.ddp_instance_id in (select ddp_instance_id from ddp_instance where instance_name = 'RGP')
+                  and (JSON_EXTRACT(data, "$.DATE_ENROLLED") IS  NULL or JSON_EXTRACT(data, "$.DATE_ENROLLED") = '')
+                  and JSON_EXTRACT(data, "$.MEMBER_TYPE") = "SELF");
+        </sql>
+    </changeSet>
+</databaseChangeLog>

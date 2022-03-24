@@ -1,47 +1,25 @@
 package org.broadinstitute.ddp.db.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
+@Value
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class FormSectionMembershipDto {
+    @ColumnName("form_activity__form_section_id")
+    long id;
 
-    private long id;
-    private long activityId;
-    private long sectionId;
-    private int displayOrder;
-    private long revisionId;
+    @ColumnName("form_activity_id")
+    long activityId;
 
-    @JdbiConstructor
-    public FormSectionMembershipDto(
-            @ColumnName("form_activity__form_section_id") long id,
-            @ColumnName("form_activity_id") long activityId,
-            @ColumnName("form_section_id") long sectionId,
-            @ColumnName("display_order") int displayOrder,
-            @ColumnName("revision_id") long revisionId) {
-        this.id = id;
-        this.activityId = activityId;
-        this.sectionId = sectionId;
-        this.displayOrder = displayOrder;
-        this.revisionId = revisionId;
-    }
+    @ColumnName("form_section_id")
+    long sectionId;
 
-    public long getId() {
-        return id;
-    }
+    @ColumnName("display_order")
+    int displayOrder;
 
-    public long getActivityId() {
-        return activityId;
-    }
-
-    public long getSectionId() {
-        return sectionId;
-    }
-
-    public int getDisplayOrder() {
-        return displayOrder;
-    }
-
-    public long getRevisionId() {
-        return revisionId;
-    }
+    @ColumnName("revision_id")
+    long revisionId;
 }

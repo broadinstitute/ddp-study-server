@@ -370,7 +370,7 @@ public class StudyDataLoaderTest {
         when(mockHandle.attach(JdbiUserStudyEnrollment.class)).thenReturn(mockJdbiUserStudyEnrollment);
         long now = Instant.now().toEpochMilli();
         UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
-                null, now, now);
+                null, now, now, null);
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
                 1L, 2L, null, false, null, null, false, null);
 
@@ -461,7 +461,7 @@ public class StudyDataLoaderTest {
         when(mockHandle.attach(JdbiInstitutionType.class)).thenReturn(mockInstitutionType);
         long now = Instant.now().toEpochMilli();
         UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
-                null, now, now);
+                null, now, now, null);
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
                 1L, 2L, null, false, null, null, false, null);
         ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, "X",
@@ -519,7 +519,7 @@ public class StudyDataLoaderTest {
 
         long now = Instant.now().toEpochMilli();
         UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
-                null, now, now);
+                null, now, now, null);
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
                 1L, 2L, null, false, null, null, false, null);
 
@@ -705,7 +705,8 @@ public class StudyDataLoaderTest {
         when(mockHandle.attach(any())).thenReturn(mockDao);
 
         long now = Instant.now().toEpochMilli();
-        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null, null, now, now);
+        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
+                null, now, now, null);
         mailAddress = mockDataLoader.getUserAddress(mockHandle,
                 participantData,
                 pretendPhoneNumber, olcService, addressService);
@@ -754,7 +755,8 @@ public class StudyDataLoaderTest {
         doNothing().when(mockProfileDao).createProfile(any(UserProfile.class));
 
         long now = Instant.now().toEpochMilli();
-        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null, null, now, now);
+        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
+                null, now, now, null);
 
         mockDataLoader.addUserProfile(
                 userDto,
@@ -852,7 +854,7 @@ public class StudyDataLoaderTest {
 
         long now = Instant.now().toEpochMilli();
         UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
-                null, now, now);
+                null, now, now, null);
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
                 1L, 2L, null, false, null, null, false, null);
 
@@ -978,7 +980,7 @@ public class StudyDataLoaderTest {
 
         long now = Instant.now().toEpochMilli();
         UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
-                null, now, now);
+                null, now, now, null);
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
                 1L, 2L, null, false, null, null, false, null);
 
@@ -1040,7 +1042,7 @@ public class StudyDataLoaderTest {
 
         long now = Instant.now().toEpochMilli();
         UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
-                null, now, now);
+                null, now, now, null);
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
                 1L, 2L, null, false, null, null, false, null);
 

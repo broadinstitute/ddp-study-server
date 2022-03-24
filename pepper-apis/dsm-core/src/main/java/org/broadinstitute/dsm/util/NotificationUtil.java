@@ -19,7 +19,6 @@ import com.google.gson.JsonParser;
 import com.typesafe.config.Config;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.db.EmailQueue;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
@@ -55,9 +54,9 @@ public class NotificationUtil {
     public static Long getLastChanged(@NonNull String participantId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt =
-                         conn.prepareStatement(MedicalRecord.SQL_SELECT_MEDICAL_RECORD_LAST_CHANGED + " UNION " + OncHistoryDetail.SQL_SELECT_ONC_HISTORY_LAST_CHANGED
-                    + " UNION " + Tissue.SQL_SELECT_TISSUE_LAST_CHANGED + " ORDER BY last_changed DESC LIMIT 1")) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    MedicalRecord.SQL_SELECT_MEDICAL_RECORD_LAST_CHANGED + " UNION " + OncHistoryDetail.SQL_SELECT_ONC_HISTORY_LAST_CHANGED
+                            + " UNION " + Tissue.SQL_SELECT_TISSUE_LAST_CHANGED + " ORDER BY last_changed DESC LIMIT 1")) {
                 stmt.setString(1, participantId);
                 stmt.setString(2, participantId);
                 stmt.setString(3, participantId);
@@ -87,13 +86,17 @@ public class NotificationUtil {
 
         JsonArray array = (JsonArray) (new JsonParser().parse(config.getString(ApplicationConfigConstants.EMAIL_NOTIFICATIONS)));
         for (JsonElement notificationInfo : array) {
-            notificationLookup.put(notificationInfo.getAsJsonObject().get(ApplicationConfigConstants.EMAIL_NOTIFICATION_REASON).getAsString(), notificationInfo);
+            notificationLookup.put(
+                    notificationInfo.getAsJsonObject().get(ApplicationConfigConstants.EMAIL_NOTIFICATION_REASON).getAsString(),
+                    notificationInfo);
         }
         array = (JsonArray) (new JsonParser().parse(config.getString(ApplicationConfigConstants.EMAIL_REMINDER_NOTIFICATIONS)));
         for (JsonElement reminderInfo : array) {
             if (reminderInfo.isJsonObject()) {
-                reminderNotificationLookup.put(reminderInfo.getAsJsonObject().get(ApplicationConfigConstants.EMAIL_NOTIFICATION_REASON).getAsString(),
-                        reminderInfo.getAsJsonObject().get(ApplicationConfigConstants.EMAIL_REMINDER_NOTIFICATIONS_REMINDERS).getAsJsonArray());
+                reminderNotificationLookup.put(
+                        reminderInfo.getAsJsonObject().get(ApplicationConfigConstants.EMAIL_NOTIFICATION_REASON).getAsString(),
+                        reminderInfo.getAsJsonObject().get(ApplicationConfigConstants.EMAIL_REMINDER_NOTIFICATIONS_REMINDERS)
+                                .getAsJsonArray());
             }
         }
     }
@@ -130,9 +133,10 @@ public class NotificationUtil {
         mapy.put(":subject", subject);
         Recipient emailRecipient = new Recipient(recipient);
         if (EMAIL_TYPE.equals(recordId)) {
-            emailRecipient.setUrl(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS) + KITREQUEST_LINK);
+            emailRecipient.setPermalink(DSMConfig.getSqlFromConfig(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS)
+                    + KITREQUEST_LINK);
         }
-        emailRecipient.setSurveyLinks(mapy);
+        emailRecipient.setPersonalization(mapy);
         queueCurrentAndFutureEmails(recordId, emailRecipient, recordId);
     }
 
@@ -143,8 +147,8 @@ public class NotificationUtil {
             email = recipient.getEmail();
 
             JsonElement notificationInfo = notificationLookup.get(reason);
-            String template =
-                    notificationInfo.getAsJsonObject().get(ApplicationConfigConstants.EMAIL_NOTIFICATIONS_SEND_GRID_TEMPLATE_ID).getAsString();
+            String template = notificationInfo.getAsJsonObject().get(ApplicationConfigConstants.EMAIL_NOTIFICATIONS_SEND_GRID_TEMPLATE_ID)
+                    .getAsString();
 
             queueEmail(recipient, getPortalReminderNotifications(reason), template, recordId);
             EmailRecord.removeOldReminders(email, reason, false);
@@ -191,21 +195,21 @@ public class NotificationUtil {
         EmailRecord.removeOldReminders(recordId, reason, false);
     }
 
-    public void sentAbstractionExpertQuestion(@NonNull String from, @NonNull String name, @NonNull String to, String field,
-                                              String question, @NonNull String sendGridTemplate) {
+    public void sentAbstractionExpertQuestion(@NonNull String from, @NonNull String name, @NonNull String to, String field, String question,
+                                              @NonNull String sendGridTemplate) {
         Map<String, String> mapy = new HashMap<>();
         mapy.put(":customSubject", "Question about: " + field);
         mapy.put(":customText", question);
         mapy.put(":customSignature", name);
         Recipient emailRecipient = new Recipient(to);
-        emailRecipient.setSurveyLinks(mapy);
+        emailRecipient.setPersonalization(mapy);
         try {
             EmailClient abstractionEmailClient = (EmailClient) Class.forName(emailClassName).newInstance();
             JsonObject emailClientSettings = new JsonObject();
             emailClientSettings.addProperty("sendGridFrom", from);
             emailClientSettings.addProperty("sendGridFromName", name);
-            abstractionEmailClient.configure(emailKey, new Gson().fromJson(emailClientSettings.toString(), JsonObject.class), "", "");
-            abstractionEmailClient.sendSingleEmail(sendGridTemplate, emailRecipient, null);
+            abstractionEmailClient.configure(emailKey, new Gson().fromJson(emailClientSettings.toString(), JsonObject.class));
+            abstractionEmailClient.sendSingleEmail(sendGridTemplate, emailRecipient);
         } catch (Exception ex) {
             logger.error("An error occurred trying to send abstraction expert question.", ex);
         }
@@ -220,7 +224,7 @@ public class NotificationUtil {
 
         try {
             EmailClient emailClient = (EmailClient) Class.forName(emailClassName).newInstance();
-            emailClient.configure(emailKey, emailClientSettings, "", "");
+            emailClient.configure(emailKey, emailClientSettings);
 
             Map<String, ArrayList<EmailRecord>> records = EmailRecord.getRecordsForProcessing();
 
@@ -234,7 +238,7 @@ public class NotificationUtil {
                         template = templateRecords.getKey();
 
                         for (EmailRecord record : templateRecords.getValue()) {
-                            emailClient.sendSingleEmail(template, record.getRecipient(), null);
+                            emailClient.sendSingleEmail(template, record.getRecipient());
                             EmailRecord.startProcessing(record.getRecordId());
                         }
 

@@ -19,25 +19,24 @@ import org.slf4j.LoggerFactory;
 @Data
 public class LatestKitRequest {
 
-    public static final String SQL_SELECT_LATEST_KIT_REQUESTS = "SELECT site.ddp_instance_id, site.instance_name, site.base_url, " +
-            "site.collaborator_id_prefix, site.auth0_token, site.es_participant_index, site.migrated_ddp, (SELECT req2.ddp_kit_request_id"
-            + " FROM ddp_kit_request req2 " +
-            "WHERE req2.dsm_kit_request_id = (SELECT max(req.dsm_kit_request_id) FROM ddp_kit_request req " +
-            "WHERE req.ddp_instance_id = site.ddp_instance_id AND req.ddp_kit_request_id NOT LIKE 'MIGRATED%' " +
-            "AND req.ddp_kit_request_id not like 'UPLOADED%' AND req.ddp_kit_request_id not like 'MERCURY_%'  AND req.ddp_kit_request_id "
-            + "not like 'CLINICALKIT_%')) AS last_kit, (SELECT count(role.name) FROM ddp_instance realm, " +
-            "ddp_instance_role inRol, instance_role role WHERE realm.ddp_instance_id = inRol.ddp_instance_id " +
-            "AND inRol.instance_role_id = role.instance_role_id AND role.name = ? AND realm.ddp_instance_id = site.ddp_instance_id) AS "
-            + "'has_role', " +
-            "(SELECT count(role.name) FROM ddp_instance realm, ddp_instance_role inRol, instance_role role WHERE realm.ddp_instance_id = "
-            + "inRol.ddp_instance_id " +
-            "AND inRol.instance_role_id = role.instance_role_id AND role.name = ? AND realm.ddp_instance_id = site.ddp_instance_id) AS "
-            + "'has_second_role'," +
-            "(SELECT count(role.name) FROM ddp_instance realm, ddp_instance_role inRol, instance_role role WHERE realm.ddp_instance_id = "
-            + "inRol.ddp_instance_id " +
-            "AND inRol.instance_role_id = role.instance_role_id AND role.name = ? AND realm.ddp_instance_id = site.ddp_instance_id) AS "
-            + "'has_third_role'" +
-            "FROM ddp_instance site WHERE site.is_active = 1";
+    public static final String SQL_SELECT_LATEST_KIT_REQUESTS = "SELECT site.ddp_instance_id, site.instance_name, site.base_url, "
+            + "site.collaborator_id_prefix, site.auth0_token, site.es_participant_index, site.migrated_ddp, "
+            + "(SELECT req2.ddp_kit_request_id FROM ddp_kit_request req2 "
+            + "WHERE req2.dsm_kit_request_id = (SELECT max(req.dsm_kit_request_id) FROM ddp_kit_request req "
+            + "WHERE req.ddp_instance_id = site.ddp_instance_id AND req.ddp_kit_request_id NOT LIKE 'MIGRATED%' "
+            + "AND req.ddp_kit_request_id not like 'UPLOADED%' AND req.ddp_kit_request_id not like 'MERCURY_%'  "
+            + "AND req.ddp_kit_request_id not like 'CLINICALKIT_%')) AS last_kit, (SELECT count(role.name) FROM ddp_instance realm, "
+            + "ddp_instance_role inRol, instance_role role WHERE realm.ddp_instance_id = inRol.ddp_instance_id "
+            + "AND inRol.instance_role_id = role.instance_role_id AND role.name = ? "
+            + "AND realm.ddp_instance_id = site.ddp_instance_id) AS 'has_role', "
+            + "(SELECT count(role.name) FROM ddp_instance realm, ddp_instance_role inRol, instance_role role"
+            + " WHERE realm.ddp_instance_id = inRol.ddp_instance_id "
+            + "AND inRol.instance_role_id = role.instance_role_id AND role.name = ? "
+            + "AND realm.ddp_instance_id = site.ddp_instance_id) AS 'has_second_role',"
+            + "(SELECT count(role.name) FROM ddp_instance realm, ddp_instance_role inRol, instance_role role "
+            + "WHERE realm.ddp_instance_id = inRol.ddp_instance_id "
+            + "AND inRol.instance_role_id = role.instance_role_id AND role.name = ? "
+            + "AND realm.ddp_instance_id = site.ddp_instance_id) AS 'has_third_role'" + "FROM ddp_instance site WHERE site.is_active = 1";
     private static final Logger logger = LoggerFactory.getLogger(LatestKitRequest.class);
     private final String instanceID;
     private final String instanceName;
@@ -51,9 +50,8 @@ public class LatestKitRequest {
     private String latestDDPKitRequestID;
 
     public LatestKitRequest(String latestDDPKitRequestID, String instanceID, String instanceName, String baseURL,
-                            String collaboratorIdPrefix,
-                            boolean hasAuth0Token, boolean consentDownloadEndpoints, boolean releaseDownloadEndpoints, boolean isMigrated
-            , String participantIndexES) {
+                            String collaboratorIdPrefix, boolean hasAuth0Token, boolean consentDownloadEndpoints,
+                            boolean releaseDownloadEndpoints, boolean isMigrated, String participantIndexES) {
         this.latestDDPKitRequestID = latestDDPKitRequestID;
         this.instanceID = instanceID;
         this.instanceName = instanceName;
@@ -69,8 +67,6 @@ public class LatestKitRequest {
     /**
      * Getting the latest KitRequestShipping for all portals from ddp_kit_request
      *
-     * @return List<LatestKitRequest>
-     * @throws Exception
      */
     public static List<LatestKitRequest> getLatestKitRequests() {
         List<LatestKitRequest> latestKitRequests = new ArrayList<>();
@@ -88,26 +84,22 @@ public class LatestKitRequest {
                             if (StringUtils.isNotBlank(latestKitRequestId)) {
                                 logger.info("Found latestKitRequestID " + latestKitRequestId + " via " + instanceName);
                                 if (latestKitRequestId.startsWith(DDPKitRequest.MIGRATED_KIT_REQUEST)) {
-                                    //change the DDPKitRequest back to null (normal behaviour without migration (otherwise DDP will throw
-                                    // 500))
+                                    //change the DDPKitRequest back to null
+                                    // (normal behaviour without migration (otherwise DDP will throw 500))
                                     latestKitRequestId = null;
-                                } else if (!latestKitRequestId.startsWith(DDPKitRequest.UPLOADED_KIT_REQUEST) && latestKitRequestId.contains("_")) {
+                                } else if (!latestKitRequestId.startsWith(DDPKitRequest.UPLOADED_KIT_REQUEST)
+                                        && latestKitRequestId.contains("_")) {
                                     //subkit -> ignore `_[SUB_COUNTER]`
                                     latestKitRequestId = latestKitRequestId.split("_")[0];
                                 }
                             }
 
-                            LatestKitRequest latestKitRequest = new LatestKitRequest(
-                                    latestKitRequestId,
-                                    rs.getString(DBConstants.DDP_INSTANCE_ID),
-                                    instanceName,
-                                    rs.getString(DBConstants.BASE_URL),
-                                    rs.getString(DBConstants.COLLABORATOR_ID_PREFIX),
-                                    rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN),
-                                    rs.getBoolean(DBConstants.HAS_SECOND_ROLE),
-                                    rs.getBoolean(DBConstants.HAS_THIRD_ROLE),
-                                    rs.getBoolean(DBConstants.MIGRATED_DDP),
-                                    rs.getString(DBConstants.ES_PARTICIPANT_INDEX));
+                            LatestKitRequest latestKitRequest =
+                                    new LatestKitRequest(latestKitRequestId, rs.getString(DBConstants.DDP_INSTANCE_ID), instanceName,
+                                            rs.getString(DBConstants.BASE_URL), rs.getString(DBConstants.COLLABORATOR_ID_PREFIX),
+                                            rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN), rs.getBoolean(DBConstants.HAS_SECOND_ROLE),
+                                            rs.getBoolean(DBConstants.HAS_THIRD_ROLE), rs.getBoolean(DBConstants.MIGRATED_DDP),
+                                            rs.getString(DBConstants.ES_PARTICIPANT_INDEX));
                             latestKitRequests.add(latestKitRequest);
                         }
                     }

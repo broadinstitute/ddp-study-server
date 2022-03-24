@@ -76,8 +76,8 @@ public class Patch {
     }
 
     //unique field patch
-    public Patch(String id, String parent, String parentId, String user, NameValue nameValue, List<NameValue> nameValues,
-                 Boolean isUnique, String ddpParticipantId) {
+    public Patch(String id, String parent, String parentId, String user, NameValue nameValue, List<NameValue> nameValues, Boolean isUnique,
+                 String ddpParticipantId) {
         this.id = id;
         this.parent = parent;
         this.parentId = parentId;
@@ -105,9 +105,6 @@ public class Patch {
     /**
      * Change value of given table
      * for the given id
-     *
-     * @return boolean value if changes were successful
-     * @throws Exception
      */
     public static boolean patch(@NonNull String id, @NonNull String user, @NonNull NameValue nameValue, @NonNull DBElement dbElement) {
         String multiSelect = null;
@@ -118,11 +115,11 @@ public class Patch {
         }
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_VALUES
-                    .replace(TABLE, dbElement.getTableName()).replace(COL_NAME, dbElement.getColumnName())
-                    .replace(PK, dbElement.getPrimaryKey()))) {
-                if ((nameValue.getName().equals("countReceived") || nameValue.getName().equals("destructionPolicy"))
-                        && StringUtils.isBlank(String.valueOf(nameValue.getValue()))) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    SQL_UPDATE_VALUES.replace(TABLE, dbElement.getTableName()).replace(COL_NAME, dbElement.getColumnName())
+                            .replace(PK, dbElement.getPrimaryKey()))) {
+                if ((nameValue.getName().equals("countReceived") || nameValue.getName().equals("destructionPolicy")) && StringUtils.isBlank(
+                        String.valueOf(nameValue.getValue()))) {
                     stmt.setNull(1, Types.INTEGER);
                 } else if (StringUtils.isBlank(String.valueOf(nameValue.getValue()))) {
                     stmt.setNull(1, Types.VARCHAR);
@@ -137,8 +134,9 @@ public class Patch {
                 if (result == 1) {
                     logger.info("Updated " + dbElement.getTableName() + " record w/ id " + id);
                 } else {
-                    throw new RuntimeException("Error updating " + dbElement.getTableName() + " record of w/ id " + id + " it was "
-                            + "updating " + result + " rows");
+                    throw new RuntimeException(
+                            "Error updating " + dbElement.getTableName() + " record of w/ id " + id + " it was updating " + result
+                                    + " rows");
                 }
             } catch (SQLIntegrityConstraintViolationException ex) {
                 throw new DuplicateException(dbElement.getColumnName());
@@ -157,11 +155,15 @@ public class Patch {
     public static Boolean isValueUnique(@NonNull DBElement dbElement) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_CHECK_UNIQUE.
-                    replace(TABLE, dbElement.getTableName()).replace(COL_NAME, dbElement.getColumnName()))) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    SQL_CHECK_UNIQUE.replace(TABLE, dbElement.getTableName()).replace(COL_NAME, dbElement.getColumnName()))) {
                 try {
                     ResultSet rs = stmt.executeQuery();
-                    dbVals.resultValue = !rs.next();
+                    if (rs.next()) {
+                        dbVals.resultValue = false;
+                    } else {
+                        dbVals.resultValue = true;
+                    }
                 } catch (Exception e) {
                     dbVals.resultException = e;
                 }

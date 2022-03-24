@@ -3,7 +3,6 @@ package org.broadinstitute.lddp.util;
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,22 +14,11 @@ import org.apache.http.util.EntityUtils;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.lddp.exception.DMLException;
 import org.broadinstitute.lddp.security.SecurityHelper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Contains a collection of useful static methods.
  */
 public class Utility {
-    public static final String SQL_DB_EXISTS = "SELECT 1";
-    public static final String FILE_ARG_MISSING_MESSAGE = "No configuration file specified.";
-    public static final String ENV_LOAD_ERROR_MESSAGE = "Problem loading ENV: ";
-    public static final String CONFIG_INCOMPLETE_ERROR_MESSAGE = "Required config setting is missing: ";
-    public static final String CONFIG_AUTH_INCOMPLETE_ERROR_MESSAGE = "Required Auth0 config setting is missing: ";
-    public static final String UTC_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'UTC'";
-    public static final String EDC_DATE_FORMAT = "MM-dd-yyyy";
-    private static final Logger logger = LoggerFactory.getLogger(Utility.class);
-    private static final String LOG_PREFIX = "UTILITY - ";
 
     public static String getTokenFromHeader(@NonNull spark.Request req) {
         String tokenHeader = req.headers(SecurityHelper.AUTHORIZATION_HEADER);
@@ -52,47 +40,6 @@ public class Utility {
         } else {
             return "";
         }
-    }
-
-    /**
-     * Handy method for just getting a count of records in a DDP table.
-     *
-     * @param sql sql string
-     * @return count count of rows
-     * @
-     */
-    public static int getCountInTable(@NonNull String sql) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult(0);
-            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        dbVals.resultValue = rs.getInt(1);
-                    }
-                }
-            } catch (Exception ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new DMLException("An error occurred while trying to get a record count.", results.resultException);
-        }
-
-        return (Integer) results.resultValue;
-    }
-
-    public static boolean dbCheck() {
-        boolean ok = false;
-
-        try {
-            ok = (getCountInTable(SQL_DB_EXISTS) == 1);
-        } catch (Exception ex) {
-            logger.error(LOG_PREFIX + "A problem occurred querying the DB.", ex);
-        }
-
-        return ok;
     }
 
     public static long getCurrentEpoch() {

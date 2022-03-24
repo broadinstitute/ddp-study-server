@@ -22,7 +22,7 @@ public class JdbiInstitutionTest extends TxnAwareBaseTest {
 
     private long insertTestInstitution(Handle handle) {
         return handle.attach(JdbiInstitution.class).insert(
-                new InstitutionDto(
+                new InstitutionDto(0,
                         TestInstitutionData.GUID,
                         cityId,
                         TestInstitutionData.NAME

@@ -23,8 +23,8 @@ public class KitSearchRoute extends RequestHandler {
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         String userIdRequest = UserUtil.getUserId(request);
-        if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest) || UserUtil.checkUserAccess(null, userId,
-                "kit_shipping_view", userIdRequest)) {
+        if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest)
+                || UserUtil.checkUserAccess(null, userId, "kit_shipping_view", userIdRequest)) {
             QueryParamsMap queryParams = request.queryMap();
             String field = null;
             if (queryParams.value(SEARCH_FIELD) != null) {

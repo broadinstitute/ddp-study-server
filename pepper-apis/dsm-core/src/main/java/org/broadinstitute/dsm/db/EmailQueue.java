@@ -19,9 +19,9 @@ import org.broadinstitute.lddp.email.Recipient;
 @Data
 public class EmailQueue {
 
-    private static final String SQL_SELECT_REMINDERS_TO_PROCESS = "SELECT EMAIL_ID, EMAIL_DATA, EMAIL_DATE_CREATED, EMAIL_RECORD_ID, "
-            + "REMINDER_TYPE FROM EMAIL_QUEUE " +
-            "WHERE EMAIL_DATE_PROCESSED IS NULL AND REMINDER_TYPE != 'NA' ORDER BY EMAIL_DATE_SCHEDULED";
+    private static final String SQL_SELECT_REMINDERS_TO_PROCESS =
+            "SELECT EMAIL_ID, EMAIL_DATA, EMAIL_DATE_CREATED, EMAIL_RECORD_ID, REMINDER_TYPE FROM EMAIL_QUEUE "
+                    + "WHERE EMAIL_DATE_PROCESSED IS NULL AND REMINDER_TYPE != 'NA' ORDER BY EMAIL_DATE_SCHEDULED";
 
     private Recipient recipient;
     private Long emailId; //EMAIL_ID PK value in DB table
@@ -52,8 +52,7 @@ public class EmailQueue {
                         }
                         records.get(reminder).add(new EmailQueue(new Gson().fromJson(rs.getString(DBConstants.EMAIL_DATA), Recipient.class),
                                 rs.getLong(DBConstants.EMAIL_ID), rs.getLong(DBConstants.EMAIL_DATE_CREATED),
-                                rs.getString(DBConstants.REMINDER_TYPE),
-                                rs.getString(DBConstants.EMAIL_RECORD_ID)));
+                                rs.getString(DBConstants.REMINDER_TYPE), rs.getString(DBConstants.EMAIL_RECORD_ID)));
                     }
                 }
                 dbVals.resultValue = records;

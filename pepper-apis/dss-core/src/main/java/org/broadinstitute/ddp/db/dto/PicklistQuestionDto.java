@@ -1,22 +1,20 @@
 package org.broadinstitute.ddp.db.dto;
 
-import java.io.Serializable;
-import java.util.Set;
-
+import lombok.Value;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
 import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
-/**
- * DTO class to represent picklist question that includes all base question data.
- */
-public final class PicklistQuestionDto extends QuestionDto implements Serializable {
+import java.io.Serializable;
+import java.util.Set;
 
-    private PicklistSelectMode selectMode;
-    private PicklistRenderMode renderMode;
-    private Long labelTemplateId;
+@Value
+public class PicklistQuestionDto extends QuestionDto implements Serializable {
+    PicklistSelectMode selectMode;
+    PicklistRenderMode renderMode;
+    Long labelTemplateId;
 
     @JdbiConstructor
     public PicklistQuestionDto(@Nested QuestionDto questionDto,
@@ -27,18 +25,6 @@ public final class PicklistQuestionDto extends QuestionDto implements Serializab
         this.selectMode = selectMode;
         this.renderMode = renderMode;
         this.labelTemplateId = labelTemplateId;
-    }
-
-    public PicklistSelectMode getSelectMode() {
-        return selectMode;
-    }
-
-    public PicklistRenderMode getRenderMode() {
-        return renderMode;
-    }
-
-    public Long getLabelTemplateId() {
-        return labelTemplateId;
     }
 
     @Override
