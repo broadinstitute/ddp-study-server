@@ -132,7 +132,8 @@ public class GetOptionsForActivityInstanceQuestionRoute implements Route {
                 .contains(autoCompleteQuery.toUpperCase())).collect(Collectors.toList());
 
         //include options with allowDetails=true if not already included
-        optionMatches.addAll(options.stream().filter(option -> option.isDetailsAllowed() && !optionMatches.contains(option)).collect(Collectors.toList()));
+        optionMatches.addAll(options.stream().filter(option -> option.isDetailsAllowed() && !optionMatches.contains(option))
+                .collect(Collectors.toList()));
 
         // now sort the matches in a way that puts left-most matches near the top, favoring word start matches
         // apply limit and return results
