@@ -1027,14 +1027,20 @@ public class DataExporter {
         if (question.isDeprecated() && !instance.hasAnswer(question.getStableId())) {
             return null;
         }
-        Answer answer = instance.getAnswer(question.getStableId());
+
+        final Answer answer = instance.getAnswer(question.getStableId());
         if (answer == null) {
             return null;
         }
-        QuestionType type = answer.getQuestionType();
+
+        final QuestionType type = answer.getQuestionType();
         if (type == QuestionType.DATE) {
             DateValue value = (DateValue) answer.getValue();
             return new DateQuestionRecord(question.getStableId(), value);
+        } else if (answer.getQuestionType() == QuestionType.NUMERIC) {
+            return new SimpleQuestionRecord(answer);
+        } else if (answer.getQuestionType() == QuestionType.DECIMAL) {
+            return new SimpleQuestionRecord(answer);
         } else if (answer.getQuestionType() == QuestionType.FILE) {
             FileInfo info = ((FileAnswer) answer).getValue();
             String uploadGuid = info != null ? info.getUploadGuid() : null;
