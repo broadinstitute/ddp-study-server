@@ -960,7 +960,8 @@
         "biological_father": "Biological father",
         "biological_brother": "Biological brother",
         "biological_sister": "Biological sister",
-        "biological_child": "Biological child",
+        "biological_son": "Biological son",
+        "biological_daughter": "Biological daughter",
         "placeholder": "",
         "required_hint": "Please select an answer."
       },
