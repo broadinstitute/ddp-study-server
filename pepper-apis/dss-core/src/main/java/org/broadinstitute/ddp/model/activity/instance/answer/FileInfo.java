@@ -4,6 +4,7 @@ import java.io.Serializable;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.gson.annotations.SerializedName;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
@@ -21,7 +22,7 @@ public class FileInfo implements Serializable {
     private transient long uploadId;
 
     @SerializedName("uploadGuid")
-    private transient String uploadGuid;
+    private String uploadGuid;
 
     @JdbiConstructor
     public FileInfo(@ColumnName("file_upload_id") long uploadId,
