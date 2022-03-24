@@ -1,6 +1,8 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
+import com.google.gson.Gson;
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
@@ -11,14 +13,18 @@ import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.QuestionDao;
+import org.broadinstitute.ddp.db.dao.SectionBlockDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.FormSectionMembershipDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.ActivityI18nDetail;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
+import org.broadinstitute.ddp.util.ConfigUtil;
+import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -28,6 +34,7 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -38,14 +45,16 @@ import java.util.stream.Collectors;
 /**
  * One-off task to add adhoc symptom message to TestBoston in deployed environments.
  */
-public class OsteoAboutChildV2 implements CustomTask {
+public class OsteoAboutYouV2 implements CustomTask {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OsteoAboutChildV2.class);
+    private static final Logger LOG = LoggerFactory.getLogger(OsteoAboutYouV2.class);
+    private static final String DATA_FILE = "patches/about-you-v2.conf";
     private static final String STUDY_GUID = "CMI-OSTEO";
-    private static final String ACTIVITY_CODE = "ABOUTCHILD";
+    private static final String ACTIVITY_CODE = "ABOUTYOU";
     private static final String VERSION_TAG = "v2";
-    private static final String TRANSLATED_NAME = "About Your Child's Cancer";
 
+    private Config dataCfg;
+    private Gson gson;
     private Config studyCfg;
     private Instant timestamp;
     private RevisionMetadata meta;
@@ -61,17 +70,24 @@ public class OsteoAboutChildV2 implements CustomTask {
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
+        File file = cfgPath.getParent().resolve(DATA_FILE).toFile();
+        if (!file.exists()) {
+            throw new DDPException("Data file is missing: " + file);
+        }
+
+        this.dataCfg = ConfigFactory.parseFile(file);
+
         if (!studyCfg.getString("study.guid").equals(STUDY_GUID)) {
             throw new DDPException("This task is only for the " + STUDY_GUID + " study!");
         }
 
         this.studyCfg = studyCfg;
         this.timestamp = Instant.now();
+        this.gson = GsonUtil.standardGson();
     }
 
     @Override
     public void run(Handle handle) {
-
         helper = handle.attach(SqlHelper.class);
         questionDao = handle.attach(QuestionDao.class);
         jdbiQuestion = handle.attach(JdbiQuestion.class);
@@ -81,6 +97,8 @@ public class OsteoAboutChildV2 implements CustomTask {
         activityI18nDao = handle.attach(ActivityI18nDao.class);
         ActivityDao activityDao = handle.attach(ActivityDao.class);
         JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
+        JdbiFormActivityFormSection jdbiFormActivityFormSection = handle.attach(JdbiFormActivityFormSection.class);
+        SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
 
         var adminUser = handle.attach(UserDao.class).findUserByGuid(studyCfg.getString("adminUser.guid"))
                 .orElseThrow(() -> new DDPException("Could not find admin user by guid"));
@@ -91,30 +109,34 @@ public class OsteoAboutChildV2 implements CustomTask {
         var studyGuid = studyDto.getGuid();
         long activityId = ActivityBuilder.findActivityId(handle, studyId, ACTIVITY_CODE);
 
-
         meta = new RevisionMetadata(timestamp.toEpochMilli(), adminUser.getId(), String.format(
                 "Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
                 studyGuid, ACTIVITY_CODE, VERSION_TAG));
 
         //change version
-        activityDao.changeVersion(activityId, VERSION_TAG, meta);
+        var versionDto = activityDao.changeVersion(activityId, VERSION_TAG, meta);
 
         //update translatedName
-        updateActivityName(activityId, ACTIVITY_CODE, TRANSLATED_NAME);
+        updateActivityName(activityId, ACTIVITY_CODE, dataCfg.getString("translatedName"));
 
         //add new section
         var section = jdbiFormActivityFormSection.findOrderedSectionMemberships(activityId, meta.getTimestamp()).get(0);
         long newFormSectionId = createSectionBefore(activityId, section);
 
-        // Move WHO_IS_FILLING to new section
-        moveQuestionToAnotherSection("WHO_IS_FILLING", newFormSectionId);
+        //add new WHO_IS_FILLING_ABOUTYOU question
+        FormBlockDef blockDef = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("who_filling_q")), FormBlockDef.class);
+
+        sectionBlockDao.insertBlockForSection(
+                activityId, newFormSectionId, QuestionDao.DISPLAY_ORDER_GAP, blockDef, versionDto.getRevId());
+
+        LOG.info("Question ('WHO_IS_FILLING_ABOUTYOU') successfully added");
 
         // Delete copy configs
         List<String> questionsToDisable = new ArrayList<>(List.of(
-                "CHILD_HOW_HEAR",
-                "CHILD_EXPERIENCE",
-                "CHILD_RACE",
-                "CHILD_HISPANIC"));
+                "HOW_HEAR",
+                "EXPERIENCE",
+                "RACE",
+                "HISPANIC"));
         deleteCopyConfigs(questionsToDisable);
 
         // Disable questions
@@ -132,14 +154,6 @@ public class OsteoAboutChildV2 implements CustomTask {
                 beforeSection.getRevisionId());
 
         return newFormSectionId;
-    }
-
-    private void moveQuestionToAnotherSection(String questionSid, long newFormSectionId) {
-        QuestionDto questionFillingDto = findQuestionBySid(questionSid);
-
-        final long currFillingBlockId = helper.findQuestionBlockId(questionFillingDto.getId());
-        helper.updateFormSectionBlock(newFormSectionId, currFillingBlockId);
-        LOG.info("Question ('{}') successfully moved to new section={}", questionSid, newFormSectionId);
     }
 
     private void disableQuestionDto(String questionSid, long terminatedRevId) {
@@ -210,8 +224,5 @@ public class OsteoAboutChildV2 implements CustomTask {
 
         @SqlUpdate("update form_section__block set revision_id = :revisionId where block_id = :blockId")
         void updateFormSectionBlockRevision(@Bind("blockId") long blockId, @Bind("revisionId") long revisionId);
-
-        @SqlUpdate("update form_section__block set form_section_id = :formSectionId where block_id = :blockId")
-        void updateFormSectionBlock(@Bind("formSectionId") long formSectionId, @Bind("blockId") long blockId);
     }
 }
