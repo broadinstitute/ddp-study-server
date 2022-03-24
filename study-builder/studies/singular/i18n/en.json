@@ -86,7 +86,7 @@
 
     "completion_thank_you_self": {
       "subject": "Thank you for providing your information!",
-      "p1": "Thank you again for enrolling and submitting your information! You are now fully enrolled in Project Singular!",
+      "p1": "Thank you again for enrolling and submitting your information! You are now fully enrolled in Project Singular! If you have not yet submitted your medical records, our partners at Boston Children’s Hospital will be reaching out to you shortly to provide assistance in obtaining those records.",
       "p2": "We’re on a mission to accelerate research into single ventricle heart defects. By contributing your unique health information, you are contributing to a growing community of patients and families committed to finding solutions for single ventricle heart disease.",
       "p3": "Soon, you will be receiving a saliva (spit) donation kit by mail. All of the instructions you will need to collect and return your sample will be included, along with a postage paid return envelope.",
       "p4": "If at any time you would like to check back to visit your dashboard, please feel free to do so using the link below. We plan to periodically post updates on the Project Singular website to keep all participants informed as to our study progress.",
@@ -96,7 +96,7 @@
 
     "completion_thank_you_child": {
       "subject": "Thank you for providing your information!",
-      "p1": "Thank you again for enrolling and submitting your information! Your child is now fully enrolled in Project Singular!",
+      "p1": "Thank you again for enrolling and submitting your information! Your child is now fully enrolled in Project Singular! If you have not yet submitted your child’s medical records, our partners at Boston Children’s Hospital will be reaching out to you shortly to provide assistance in obtaining those records.",
       "p2": "We’re on a mission to accelerate research into single ventricle heart defects. By contributing your child’s unique health information, you are contributing to a growing community of patients and families committed to finding solutions for single ventricle heart disease.",
       "p3": "Soon, you will be receiving a saliva (spit) donation kit by mail. All of the instructions you will need to collect and return your child’s sample will be included, along with a postage paid return envelope.",
       "p4": "If at any time you would like to check back to visit your dashboard, please feel free to do so using the link below. We plan to periodically post updates on the Project Singular website to keep all participants informed as to our study progress.",
@@ -107,13 +107,15 @@
     "sample_received_self": {
       "subject": "Thank you! Your kit was received.",
       "p1": "Thank you for sending us a sample of your saliva. We are writing to let you know that it has been received by our laboratory.",
-      "p2": "Thank you again for your participation in Project Singular! We hope to learn a great deal about single ventricle heart disease through Project Singular, and you are playing a critically important role."
+      "p2": "If you have not yet heard from Boston Children’s Hospital in regards to obtaining your medical records, they will be in touch with you shortly to provide assistance.",
+      "p3": "Thank you again for your participation in Project Singular! We hope to learn a great deal about single ventricle heart disease through Project Singular, and you are playing a critically important role."
     },
 
     "sample_received_child": {
       "subject": "Thank you! Your kit was received.",
       "p1": "Thank you for sending us a sample of your child’s saliva. We are writing to let you know that it has been received by our laboratory.",
-      "p2": "Thank you again for your participation in Project Singular! We hope to learn a great deal about single ventricle heart disease through Project Singular, and your child is playing a critically important role."
+      "p2": "If you have not yet heard from Boston Children’s Hospital in regards to obtaining your child’s medical records, they will be in touch with you shortly to provide assistance.",
+      "p3": "Thank you again for your participation in Project Singular! We hope to learn a great deal about single ventricle heart disease through Project Singular, and your child is playing a critically important role."
     },
 
     "consent_child_age_of_majority": {
@@ -958,7 +960,8 @@
         "biological_father": "Biological father",
         "biological_brother": "Biological brother",
         "biological_sister": "Biological sister",
-        "biological_child": "Biological child",
+        "biological_son": "Biological son",
+        "biological_daughter": "Biological daughter",
         "placeholder": "",
         "required_hint": "Please select an answer."
       },

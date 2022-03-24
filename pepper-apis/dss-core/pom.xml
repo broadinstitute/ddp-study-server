@@ -41,6 +41,11 @@
         </dependency>
 
         <dependency>
+            <groupId>ch.obermuhlner</groupId>
+            <artifactId>big-math</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>com.aventrix.jnanoid</groupId>
             <artifactId>jnanoid</artifactId>
         </dependency>

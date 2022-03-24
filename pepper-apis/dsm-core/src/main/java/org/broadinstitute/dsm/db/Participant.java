@@ -47,7 +47,7 @@ public class Participant {
             + "WHERE realm.instance_name = ? ";
 
     @ColumnName(DBConstants.PARTICIPANT_ID)
-    private long participantId;
+    private Long participantId;
 
     @ColumnName(DBConstants.DDP_PARTICIPANT_ID)
     private String ddpParticipantId;
@@ -153,7 +153,7 @@ public class Participant {
 
     public Participant() {}
 
-    public Participant(long participantId, String ddpParticipantId, String assigneeIdMr, String assigneeIdTissue, String instanceName,
+    public Participant(Long participantId, String ddpParticipantId, String assigneeIdMr, String assigneeIdTissue, String instanceName,
                        String created, String reviewed, String crSent, String crReceived, String notes,
                        boolean minimalMr, boolean abstractionReady, String additionalValuesJson, Long exitDate) {
         this.participantId = participantId;

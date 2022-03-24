@@ -64,7 +64,7 @@ public class UtilTest {
     @Test
     public void transformObjectToMap() {
         Participant participant = new Participant(
-                1, "QWERTY", null,
+                1L, "QWERTY", null,
                 null, "instance", "2020-10-28",
                 "2020-10-28", "2020-10-28", "2020-10-28",
                 "ptNotes", true, true,
