@@ -6,8 +6,8 @@ import java.util.List;
 import com.google.gson.annotations.SerializedName;
 
 public class PatchAnswerPayload {
-
     public static final String ANSWERS_LIST_KEY = "answers";
+
     @SerializedName("answers")
     private List<AnswerSubmission> answers;
 
