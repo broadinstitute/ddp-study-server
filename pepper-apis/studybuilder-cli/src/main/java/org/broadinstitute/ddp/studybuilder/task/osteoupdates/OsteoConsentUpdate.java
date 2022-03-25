@@ -1,4 +1,5 @@
-package org.broadinstitute.ddp.studybuilder.task;
+
+package org.broadinstitute.ddp.studybuilder.task.osteoupdates;
 
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
@@ -8,7 +9,6 @@ import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiBlockContent;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
-import org.broadinstitute.ddp.db.dao.JdbiVariableSubstitution;
 import org.broadinstitute.ddp.db.dao.SectionBlockDao;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
@@ -22,12 +22,12 @@ import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
-import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
+import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
@@ -42,48 +42,49 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-public class OsteoAdultConsentV2 implements CustomTask {
+public class OsteoConsentUpdate implements CustomTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(OsteoAdultConsentV2.class);
-    private static final String DATA_FILE = "patches/self-consent.conf";
     private static final String STUDY = "CMI-OSTEO";
     private static final String BLOCK_KEY = "blockNew";
     private static final String OLD_TEMPLATE_KEY = "old_search";
     private static final String ORDER = "order";
-    private static final String ACTIVITY_GUID = "CONSENT";
     private static final String NEW_BLOCKS = "new-blocks";
     private static final String NEW_NESTED_BLOCKS = "new-nested-blocks";
     private static final String SECTION_ORDER = "section_order";
     private static final String BLOCK_UPDATES = "block-updates";
-    private static final String TRANSLATION_UPDATES = "translation-updates";
-    private static final String TRANSLATION_OLD = "oldValue";
-    private static final String TRANSLATION_NEW = "newValue";
-    private static final String TRANSLATION_KEY = "variableName";
+    private static final String ACTIVITY = "activityCode";
 
     private Config cfg;
     private Config dataCfg;
     private Instant timestamp;
     private String versionTag;
+    private String activityGuid;
+    private String dataFile;
     private Gson gson;
+
+    public OsteoConsentUpdate(String dataFile) {
+        this.dataFile = dataFile;
+    }
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
-        File file = cfgPath.getParent().resolve(DATA_FILE).toFile();
+        File file = cfgPath.getParent().resolve(dataFile).toFile();
         if (!file.exists()) {
             throw new DDPException("Data file is missing: " + file);
         }
         dataCfg = ConfigFactory.parseFile(file).resolveWith(varsCfg);
-
+        
         if (!studyCfg.getString("study.guid").equals(STUDY)) {
             throw new DDPException("This task is only for the " + STUDY + " study!");
         }
 
         cfg = studyCfg;
         versionTag = dataCfg.getString("versionTag");
+        activityGuid = dataCfg.getString(ACTIVITY);
         timestamp = Instant.now();
         gson = GsonUtil.standardGson();
     }
@@ -108,32 +109,9 @@ public class OsteoAdultConsentV2 implements CustomTask {
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
         ActivityVersionDto version2 = handle.attach(ActivityDao.class).changeVersion(activityId, versionTag, meta);
 
-        updateVariables(handle, meta, version2);
         updateTemplates(handle, meta, version2);
         addNestedBlocks(activityId, handle, meta, version2);
         addBlocks(activityId, handle, meta, version2);
-    }
-
-    private void updateVariables(Handle handle, RevisionMetadata meta, ActivityVersionDto version2) {
-        List<? extends Config> configList = dataCfg.getConfigList(TRANSLATION_UPDATES);
-        for (Config config : configList) {
-            revisionVariableTranslation(config.getString(TRANSLATION_KEY), config.getString(TRANSLATION_NEW), handle, meta, version2);
-        }
-    }
-
-
-    private void revisionVariableTranslation(String varName, String newTemplateText, Handle handle,
-                                             RevisionMetadata meta, ActivityVersionDto version2) {
-        long tmplVarId = handle.attach(SqlHelper.class).findTemplateVariableIdByVariableName(varName);
-        JdbiVariableSubstitution jdbiVarSubst = handle.attach(JdbiVariableSubstitution.class);
-        List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
-        Translation currTranslation = transList.get(0);
-
-        JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
-        long newFullNameSubRevId = jdbiRevision.copyAndTerminate(currTranslation.getRevisionId().get(), meta);
-        long[] revIds = {newFullNameSubRevId};
-        jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(Arrays.asList(currTranslation.getId().get()), revIds);
-        jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, version2.getRevId(), tmplVarId);
     }
 
     private void updateTemplates(Handle handle, RevisionMetadata meta, ActivityVersionDto version) {
@@ -199,7 +177,7 @@ public class OsteoAdultConsentV2 implements CustomTask {
         int order = config.getInt(ORDER);
         int sectionOrder = config.getInt(SECTION_ORDER);
         ActivityDto activityDto = handle.attach(JdbiActivity.class)
-                .findActivityByStudyGuidAndCode(STUDY, ACTIVITY_GUID).get();
+                .findActivityByStudyGuidAndCode(STUDY, activityGuid).get();
         FormActivityDef currentDef = (FormActivityDef) handle.attach(ActivityDao.class).findDefByDtoAndVersion(activityDto, version2);
         FormSectionDef currentSectionDef = currentDef.getSections().get(sectionOrder);
         FormBlockDef blockDef = gson.fromJson(ConfigUtil.toJson(blockConfig), FormBlockDef.class);
@@ -222,7 +200,7 @@ public class OsteoAdultConsentV2 implements CustomTask {
         Config blockConfig = config.getConfig(BLOCK_KEY);
         int sectionOrder = config.getInt(SECTION_ORDER);
         ActivityDto activityDto = handle.attach(JdbiActivity.class)
-                .findActivityByStudyGuidAndCode(STUDY, ACTIVITY_GUID).get();
+                .findActivityByStudyGuidAndCode(STUDY, activityGuid).get();
         FormActivityDef currentDef = (FormActivityDef) handle.attach(ActivityDao.class).findDefByDtoAndVersion(activityDto, version);
         FormSectionDef currentSectionDef = currentDef.getSections().get(sectionOrder);
         FormBlockDef blockDef = gson.fromJson(ConfigUtil.toJson(blockConfig), FormBlockDef.class);
