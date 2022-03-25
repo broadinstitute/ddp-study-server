@@ -28,6 +28,7 @@ import org.broadinstitute.ddp.db.dto.FileQuestionDto;
 import org.broadinstitute.ddp.db.dto.FormBlockDto;
 import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
 import org.broadinstitute.ddp.db.dto.DecimalQuestionDto;
+import org.broadinstitute.ddp.db.dto.EquationQuestionDto;
 import org.broadinstitute.ddp.db.dto.PicklistGroupDto;
 import org.broadinstitute.ddp.db.dto.PicklistOptionDto;
 import org.broadinstitute.ddp.db.dto.PicklistQuestionDto;
@@ -49,6 +50,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.EquationQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
@@ -81,6 +83,7 @@ import org.broadinstitute.ddp.model.activity.instance.question.DateQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.FileQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.NumericQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.DecimalQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.EquationQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistGroup;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
@@ -176,6 +179,9 @@ public interface QuestionDao extends SqlObject {
 
     @CreateSqlObject
     JdbiDecimalQuestion getJdbiDecimalQuestion();
+
+    @CreateSqlObject
+    JdbiEquationQuestion getJdbiEquationQuestion();
 
     @CreateSqlObject
     JdbiBlockQuestion getJdbiBlockQuestion();
@@ -416,6 +422,9 @@ public interface QuestionDao extends SqlObject {
                 break;
             case DECIMAL:
                 question = getDecimalQuestion((DecimalQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
+                break;
+            case EQUATION:
+                question = getEquationQuestion((EquationQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
                 break;
             case AGREEMENT:
                 question = getAgreementQuestion((AgreementQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
@@ -884,6 +893,45 @@ public interface QuestionDao extends SqlObject {
     }
 
     /**
+     * Build a decimal question.
+     *
+     * @param dto                  the question dto
+     * @param activityInstanceGuid the activity instance guid
+     * @param answerIds            list of base answer ids to question (may be empty)
+     * @param untypedRules         list of untyped validations for question (may be empty)
+     * @return numeric question object
+     */
+    default Question getEquationQuestion(EquationQuestionDto dto, String activityInstanceGuid,
+                                        List<Long> answerIds, List<Rule> untypedRules) {
+        AnswerDao answerDao = getAnswerDao();
+        List<DecimalAnswer> answers = answerIds.stream()
+                .map(answerId -> (DecimalAnswer) answerDao.findAnswerById(answerId)
+                        .orElseThrow(() -> new DaoException("Could not find decimal answer with id " + answerId)))
+                .collect(toList());
+
+        List<Rule<DecimalAnswer>> rules = untypedRules.stream()
+                .map(rule -> (Rule<DecimalAnswer>) rule)
+                .collect(toList());
+
+        boolean isReadonly = QuestionUtil.isReadonly(getHandle(), dto, activityInstanceGuid);
+
+        return new EquationQuestion(
+                dto.getStableId(),
+                dto.getPromptTemplateId(),
+                dto.getPlaceholderTemplateId(),
+                dto.isRestricted(),
+                dto.isDeprecated(),
+                isReadonly,
+                dto.getTooltipTemplateId(),
+                dto.getAdditionalInfoHeaderTemplateId(),
+                dto.getAdditionalInfoFooterTemplateId(),
+                answers,
+                rules,
+                dto.getMaximumDecimalPlaces(),
+                dto.getExpression());
+    }
+
+    /**
      * Build a agreement question.
      *
      * @param dto                  the question dto
@@ -1009,6 +1057,9 @@ public interface QuestionDao extends SqlObject {
             case DECIMAL:
                 insertQuestion(activityId, (DecimalQuestionDef) question, revisionId);
                 break;
+            case EQUATION:
+                insertQuestion(activityId, (EquationQuestionDef) question, revisionId);
+                break;
             case PICKLIST:
                 insertQuestion(activityId, (PicklistQuestionDef) question, revisionId);
                 break;
@@ -1057,6 +1108,9 @@ public interface QuestionDao extends SqlObject {
                 break;
             case DECIMAL:
                 disableDecimalQuestion(qid.getId(), meta);
+                break;
+            case EQUATION:
+                disableEquationQuestion(qid.getId(), meta);
                 break;
             case PICKLIST:
                 disablePicklistQuestion(qid.getId(), meta);
@@ -1387,6 +1441,29 @@ public interface QuestionDao extends SqlObject {
     }
 
     /**
+     * Create new equation question by inserting common data and numeric specific data.
+     *
+     * @param activityId  the associated activity
+     * @param questionDef the question definition, without generated things like ids
+     * @param revisionId  the revision to use, will be shared by all created data
+     */
+    default void insertQuestion(long activityId, EquationQuestionDef questionDef, long revisionId) {
+        insertBaseQuestion(activityId, questionDef, revisionId);
+
+        TemplateDao templateDao = getTemplateDao();
+        Long placeholderTemplateId = null;
+        if (questionDef.getPlaceholderTemplate() != null) {
+            placeholderTemplateId = templateDao.insertTemplate(questionDef.getPlaceholderTemplate(), revisionId);
+        }
+
+        int numInserted = getJdbiEquationQuestion().insert(questionDef.getQuestionId(), placeholderTemplateId,
+                questionDef.getMaximumDecimalPlaces(), questionDef.getExpression());
+        if (numInserted != 1) {
+            throw new DaoException("Inserted " + numInserted + " for equation question " + questionDef.getStableId());
+        }
+    }
+
+    /**
      * Create new matrix question by inserting common data and matrix specific data.
      *
      * @param activityId the associated activity
@@ -1467,13 +1544,8 @@ public interface QuestionDao extends SqlObject {
     }
 
     default void insertQuestion(long activityId, CompositeQuestionDef compositeQuestion, long revisionId) {
-        boolean acceptable = compositeQuestion.getChildren().stream().allMatch(child -> {
-            QuestionType type = child.getQuestionType();
-            return type == QuestionType.DATE || type == QuestionType.PICKLIST
-                    || type == QuestionType.TEXT || type == QuestionType.NUMERIC || type == QuestionType.DECIMAL;
-        });
-        if (!acceptable) {
-            throw new DaoException("Composites only support DATE, PICKLIST, TEXT and NUMERIC child questions");
+        if (!compositeQuestion.isAcceptable()) {
+            throw new DaoException("Composites only support DATE, PICKLIST, TEXT, NUMERIC and DECIMAL child questions");
         }
 
         insertBaseQuestion(activityId, compositeQuestion, revisionId);
@@ -1643,6 +1715,25 @@ public interface QuestionDao extends SqlObject {
         disableBaseQuestion(questionDto, meta);
         if (questionDto.getPlaceholderTemplateId() != null) {
             getTemplateDao().disableTemplate(questionDto.getPlaceholderTemplateId(), meta);
+        }
+    }
+
+    /**
+     * End currently active numeric question by terminating common data and numeric specific data.
+     *
+     * @param questionId the question id
+     * @param meta       the revision metadata used for terminating data
+     */
+    default void disableEquationQuestion(long questionId, RevisionMetadata meta) {
+        EquationQuestionDto dto = getJdbiQuestion().findQuestionDtoById(questionId)
+                .map(EquationQuestionDto.class::cast).orElse(null);
+        if (dto == null || dto.getRevisionEnd() != null) {
+            throw new NoSuchElementException("Cannot find active equation question with id " + questionId);
+        }
+
+        disableBaseQuestion(dto, meta);
+        if (dto.getPlaceholderTemplateId() != null) {
+            getTemplateDao().disableTemplate(dto.getPlaceholderTemplateId(), meta);
         }
     }
 
@@ -1965,6 +2056,24 @@ public interface QuestionDao extends SqlObject {
                 .setTooltip(tooltipTemplate);
     }
 
+    private void configureBaseQuestionDef(QuestionDef.QuestionDefBuilder builder,
+                                          QuestionDto questionDto,
+                                          List<RuleDef> ruleDefs,
+                                          Map<Long, Template> templates) {
+        Template tooltipTemplate = templates.getOrDefault(questionDto.getTooltipTemplateId(), null);
+        Template headerTemplate = templates.getOrDefault(questionDto.getAdditionalInfoHeaderTemplateId(), null);
+        Template footerTemplate = templates.getOrDefault(questionDto.getAdditionalInfoFooterTemplateId(), null);
+        builder.validations(ruleDefs)
+                .questionId(questionDto.getId())
+                .isRestricted(questionDto.isRestricted())
+                .isDeprecated(questionDto.isDeprecated())
+                .writeOnce(questionDto.isWriteOnce())
+                .hideNumber(questionDto.shouldHideNumber())
+                .additionalInfoHeaderTemplate(headerTemplate)
+                .additionalInfoFooterTemplate(footerTemplate)
+                .tooltipTemplate(tooltipTemplate);
+    }
+
     private AgreementQuestionDef buildAgreementQuestionDef(AgreementQuestionDto dto,
                                                            List<RuleDef> ruleDefs,
                                                            Map<Long, Template> templates) {
@@ -2039,6 +2148,22 @@ public interface QuestionDao extends SqlObject {
                 .builder(dto.getStableId(), prompt)
                 .setPlaceholderTemplate(placeholderTemplate)
                 .setScale(dto.getScale());
+        configureBaseQuestionDef(builder, dto, ruleDefs, templates);
+        return builder.build();
+    }
+
+    private EquationQuestionDef buildEquationQuestionDef(EquationQuestionDto dto,
+                                                        List<RuleDef> ruleDefs,
+                                                        Map<Long, Template> templates) {
+        Template prompt = templates.get(dto.getPromptTemplateId());
+        Template placeholderTemplate = templates.getOrDefault(dto.getPlaceholderTemplateId(), null);
+        var builder = EquationQuestionDef
+                .builder()
+                .stableId(dto.getStableId())
+                .promptTemplate(prompt)
+                .placeholderTemplate(placeholderTemplate)
+                .maximumDecimalPlaces(dto.getMaximumDecimalPlaces())
+                .expression(dto.getExpression());
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
         return builder.build();
     }
