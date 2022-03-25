@@ -811,7 +811,8 @@ public class DataExporterTest extends TxnAwareBaseTest {
                 instance.putAnswer(new TextAnswer(2L, "Q_TEXT", "guid", "john smith"));
                 instance.putAnswer(new NumericAnswer(3L, "Q_NUMERIC", "guid", 25L));
                 instance.putAnswer(new DateAnswer(4L, "Q_BIRTHDAY", "guid", new DateValue(1978, 5, 16)));
-                instance.putAnswer(new FileAnswer(5L, "Q_FILE", "guid", new FileInfo(1L, "file1", "file.pdf", 123L)));
+                instance.putAnswer(new FileAnswer(5L, "Q_FILE", "guid",
+                        Collections.singletonList(new FileInfo(1L, "file1", "file.pdf", 123L))));
                 participant.addResponse(instance);
 
                 participant.addAllFiles(List.of(new FileRecord("uploads", new FileUpload(
