@@ -5,34 +5,35 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.SectionBlockDao;
+import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
+import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.RevisionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
-import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.List;
 
 public class OsteoPrequalUpdate implements CustomTask {
 
@@ -73,51 +74,58 @@ public class OsteoPrequalUpdate implements CustomTask {
         User adminUser = handle.attach(UserDao.class).findUserByGuid(studyCfg.getString("adminUser.guid")).get();
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(STUDY_GUID);
         long activityId = ActivityBuilder.findActivityId(handle, adminUser.getId(), ACTIVITY_CODE);
-
-        ActivityDto activityDto = handle.attach(JdbiActivity.class)
-                .findActivityByStudyGuidAndCode(STUDY_GUID, ACTIVITY_CODE)
-                .orElseThrow(() -> new DDPException("Could not find id for activity " + ACTIVITY_CODE + " and study id " + STUDY_GUID));
+        String versionTag = dataCfg.getString("versionTag");
 
         String reason = String.format(
                 "Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
-                STUDY_GUID, ACTIVITY_CODE, "v2");
+                STUDY_GUID, ACTIVITY_CODE, versionTag);
         RevisionMetadata meta = new RevisionMetadata(timestamp.toEpochMilli(), adminUser.getId(), reason);
-        revisionPrequal(activityId, dataCfg, handle, meta);
-        JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
-        ActivityDao activityDao = handle.attach(ActivityDao.class);
-        ActivityVersionDto currentActivityVerDto = activityDao.getJdbiActivityVersion().findByActivityCodeAndVersionTag(
-                adminUser.getId(), ACTIVITY_CODE, "v1").get();
-        updateTitleandName(activityId, dataCfg, handle);
+        revisionPrequal(activityId, dataCfg, handle, meta, versionTag);
     }
 
-    private void revisionPrequal(long activityId, Config dataCfg, Handle handle, RevisionMetadata revision) {
-        FormActivityDef activityDef = GsonUtil.standardGson().fromJson(ConfigUtil.toJson(cfg), FormActivityDef.class);
-        insertBlock(handle, dataCfg, activityId, activityDef, revision);
+    private void revisionPrequal(long activityId, Config dataCfg, Handle handle, RevisionMetadata meta, String versionTag) {
+        ActivityVersionDto version2 = handle.attach(ActivityDao.class).changeVersion(activityId, versionTag, meta);
+        insertBlock(handle, dataCfg, activityId, version2, meta);
+        updateQuestion(handle, activityId, dataCfg, meta);
     }
 
-    private void updateTitleandName(long id, Config dataCfg, Handle handle) {
-        String name = dataCfg.getConfigList("translatedNames").get(0).getString("text");
-        String title = dataCfg.getConfigList("translatedTitles").get(0).getString("text");
-        SqlHelper attach = handle.attach(SqlHelper.class);
-        attach.updateNameandTitle(title, name, id);
-    }
-
-    private void insertBlock(Handle handle, Config dataCfg, long activityId, FormActivityDef def, RevisionMetadata revisionMetadata) {
-        SectionBlockDao attach = handle.attach(SectionBlockDao.class);
-        List<FormSectionDef> sections = def.getSections();
-        Config config = dataCfg.getConfig("blocksInsert").getConfig("block");
+    private void insertBlock(Handle handle, Config dataCfg, long activityId, ActivityVersionDto def, RevisionMetadata revisionMetadata) {
+        Config blockConfig = dataCfg.getConfig("blocksInsert").getConfig("block");
+        int order = dataCfg.getConfig("blocksInsert").getInt("blockOrder");
         int sectionOrder = dataCfg.getConfig("blocksInsert").getInt("sectionOrder");
-        int blockOrder = dataCfg.getConfig("blocksInsert").getInt("blockOrder");
-        Long sectionId = sections.get(sectionOrder).getSectionId();
-        FormBlockDef blockDef = gson.fromJson(ConfigUtil.toJson(config), FormBlockDef.class);
-        RevisionDto rdto = RevisionDto.fromStartMetadata(activityId, revisionMetadata);
-        attach.addBlock(activityId, sectionId, blockOrder, blockDef, rdto);
+        ActivityDto activityDto = handle.attach(JdbiActivity.class)
+                .findActivityByStudyGuidAndCode(STUDY_GUID, ACTIVITY_CODE).get();
+        FormActivityDef currentDef = (FormActivityDef) handle.attach(ActivityDao.class).findDefByDtoAndVersion(activityDto, def);
+        FormSectionDef currentSectionDef = currentDef.getSections().get(sectionOrder);
+        FormBlockDef blockDef = gson.fromJson(ConfigUtil.toJson(blockConfig), FormBlockDef.class);
+
+        SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
+        RevisionDto revDto = RevisionDto.fromStartMetadata(def.getRevId(), revisionMetadata);
+        sectionBlockDao.addBlock(activityId, currentSectionDef.getSectionId(),
+                order, blockDef, revDto);
     }
 
-    private interface SqlHelper extends SqlObject {
+    private void updateQuestion(Handle handle, long activityId, Config dataCfg, RevisionMetadata revisionMetadata) {
+        String stableId = dataCfg.getConfig("questionUpdate").getString("stableId");
+        Config questionConf = dataCfg.getConfig("questionUpdate").getConfig("question");
+        PicklistQuestionDef questionBlockDef = gson.fromJson(ConfigUtil.toJson(questionConf), PicklistQuestionDef.class);
+        Template promptTemplate = questionBlockDef.getPromptTemplate();
+        JdbiQuestion questionContent = handle.attach(JdbiQuestion.class);
+        QuestionDto questionDto = handle.attach(JdbiQuestion.class)
+                .findDtoByActivityIdAndQuestionStableId(activityId, stableId).get();
+        TemplateDao templateDao = handle.attach(TemplateDao.class);
 
-        @SqlUpdate("update i18n_activity_detail set name = :name, title = :title where study_activity_id = :id")
-        int updateNameandTitle(@Bind("title") String title, @Bind("name") String name, @Bind("id")long id);
+        JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
+        long newRevId = jdbiRevision.copyAndTerminate(questionDto.getRevisionId(), revisionMetadata);
+        int numUpdated = questionContent.updateRevisionIdById(questionDto.getId(), newRevId);
+        if (numUpdated != 1) {
+            throw new DDPException(String.format(
+                    "Unable to terminate active question with id=%d, revId=%d, promptTemplateId=%d",
+                    questionDto.getId(), questionDto.getRevisionId(), questionDto.getPromptTemplateId()));
+        }
 
+        templateDao.disableTemplate(questionDto.getPromptTemplateId(), revisionMetadata);
+        RevisionDto revisionDto = RevisionDto.fromStartMetadata(questionDto.getRevisionId(), revisionMetadata);
+        templateDao.insertTemplate(promptTemplate, revisionDto.getId());
     }
 }
