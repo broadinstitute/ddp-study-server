@@ -1,32 +1,25 @@
 package org.broadinstitute.ddp.json;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Value;
 import org.broadinstitute.ddp.model.user.UserProfile;
 
+import java.util.Optional;
+
+@Value
 public class GovernedParticipant {
-
     @SerializedName("userGuid")
-    private String userGuid;
+    String userGuid;
+    
     @SerializedName("alias")
-    private String alias;
+    String alias;
+    
     @SerializedName("userProfile")
-    private Profile userProfile;
+    Profile userProfile;
 
-    public GovernedParticipant(String userGuid, String alias, UserProfile userProfile) {
+    public GovernedParticipant(final String userGuid, final String alias, final UserProfile userProfile) {
         this.userGuid = userGuid;
         this.alias = alias;
-        this.userProfile = userProfile == null ? null : new Profile(userProfile);
-    }
-
-    public String getUserGuid() {
-        return userGuid;
-    }
-
-    public String getAlias() {
-        return alias;
-    }
-
-    public Profile getUserProfile() {
-        return userProfile;
+        this.userProfile = Optional.ofNullable(userProfile).map(Profile::new).orElse(null);
     }
 }
