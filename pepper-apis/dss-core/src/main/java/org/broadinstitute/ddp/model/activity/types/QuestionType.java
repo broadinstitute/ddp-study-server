@@ -7,17 +7,19 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public enum QuestionType {
-    AGREEMENT(false),
-    BOOLEAN(false),
-    COMPOSITE(false),
-    DATE(true),
-    FILE(false),
-    NUMERIC(true),
-    DECIMAL(true),
-    PICKLIST(false),
-    TEXT(false),
-    ACTIVITY_INSTANCE_SELECT(false),
-    MATRIX(false);
+    AGREEMENT(false, false),
+    BOOLEAN(false, false),
+    COMPOSITE(false, false),
+    DATE(true, true),
+    FILE(false, false),
+    NUMERIC(true, true),
+    DECIMAL(true, true),
+    EQUATION(false, false),
+    PICKLIST(false, true),
+    TEXT(false, true),
+    ACTIVITY_INSTANCE_SELECT(false, false),
+    MATRIX(false, false);
 
     private final boolean comparable;
+    private final boolean compositional;
 }
