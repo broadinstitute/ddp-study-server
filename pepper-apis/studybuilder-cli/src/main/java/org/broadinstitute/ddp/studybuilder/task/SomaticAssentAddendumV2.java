@@ -4,15 +4,12 @@ import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.broadinstitute.ddp.cache.LanguageStore;
-import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
-import org.broadinstitute.ddp.db.dao.JdbiFormActivityFormSection;
-import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
-import org.broadinstitute.ddp.db.dao.SectionBlockDao;
-import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dao.*;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
+import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.util.ConfigUtil;
@@ -23,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.time.Instant;
 
 public class SomaticAssentAddendumV2 implements CustomTask {
 
@@ -36,6 +34,7 @@ public class SomaticAssentAddendumV2 implements CustomTask {
     private Config varsCfg;
     private String versionTag;
     private Gson gson;
+    private Instant timestamp;
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
@@ -53,6 +52,7 @@ public class SomaticAssentAddendumV2 implements CustomTask {
         this.cfgPath = cfgPath;
         this.varsCfg = varsCfg;
         this.gson = GsonUtil.standardGson();
+        this.timestamp = Instant.now();
     }
 
     @Override
@@ -71,21 +71,21 @@ public class SomaticAssentAddendumV2 implements CustomTask {
         String activityCode = consentAssentCfg.getString("activityCode");
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
 
-        ActivityVersionDto versionDto = handle.attach(JdbiActivityVersion.class)
-                .findByActivityCodeAndVersionTag(studyDto.getId(), activityCode, versionTag)
-                .orElseThrow(() -> new DDPException("Could not find version " + versionTag));
-        long revisionId = versionDto.getRevId();
+        String reason = String.format(
+                "Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
+                studyDto.getGuid(), activityCode, "versionTag");
+        RevisionMetadata meta = new RevisionMetadata(timestamp.toEpochMilli(), adminUser.getId(), reason);
+        ActivityVersionDto version2 = handle.attach(ActivityDao.class).changeVersion(activityId, "v2", meta);
+        long revisionId = version2.getRevId();
 
         var sectionDef = gson.fromJson(ConfigUtil.toJson(assentAddendumCfg), FormSectionDef.class);
 
         var sectionId = handle.attach(SectionBlockDao.class)
                 .insertSection(activityId, sectionDef, revisionId);
 
-
         var jdbiActSection = handle.attach(JdbiFormActivityFormSection.class);
 
         jdbiActSection.insert(activityId, sectionId, revisionId, 60);
-
     }
 
     private Config activityBuild(StudyDto studyDto, User adminUser, String activityCodeConf) {
