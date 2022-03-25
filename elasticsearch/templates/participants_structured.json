@@ -2,8 +2,13 @@
   "index_patterns": ["participants_structured.*"],
   "settings": {
     "index": {
+      "mapping": {
+        "total_fields": {
+          "limit": "2000"
+        },
       "number_of_shards": "1",
       "auto_expand_replicas": "0-1"
+      }
     },
     "analysis": {
       "normalizer": {
