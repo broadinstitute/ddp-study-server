@@ -26,9 +26,4 @@ public class UserActivity implements TranslatedSummary {
     public String getActivityInstanceGuid() {
         return guid;
     }
-
-    @Override
-    public String getIsoLanguageCode() {
-        return isoLanguageCode;
-    }
 }
