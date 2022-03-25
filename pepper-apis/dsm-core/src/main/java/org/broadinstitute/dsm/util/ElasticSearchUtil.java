@@ -75,7 +75,6 @@ public class ElasticSearchUtil {
     public static final String QUESTIONS_ANSWER = "questionsAnswers";
     public static final String PROFILE = "profile";
     public static final String DATA = "data";
-    public static final String PROXIES = "proxies";
     public static final String DSM = "dsm";
     public static final String ACTIVITY_CODE = "activityCode";
     public static final String ACTIVITY_VERSION = "activityVersion";
@@ -85,18 +84,11 @@ public class ElasticSearchUtil {
     public static final String GUID = "guid";
     public static final String LEGACY_ALT_PID = "legacyAltPid";
     public static final String BY_GUID = " AND profile.guid = ";
-    public static final String BY_PROFILE_GUID = "profile.guid = ";
     public static final String EMPTY = "empty";
-    public static final String BY_HRUID = " AND profile.hruid = ";
-    public static final String BY_GUIDS = " OR profile.guid = ";
     public static final String BY_LEGACY_ALTPID = " AND profile.legacyAltPid = ";
-    public static final String BY_PROFILE_LEGACY_ALTPID = "profile.legacyAltPid = ";
     public static final String AND = " AND (";
     public static final String ES = "ES";
-    public static final String CLOSING_PARENTHESIS = ")";
     public static final String ESCAPE_CHARACTER_DOT_SEPARATOR = "\\.";
-    public static final String BY_LEGACY_ALTPIDS = " OR profile.legacyAltPid = ";
-    public static final String BY_LEGACY_SHORTID = " AND profile.legacyShortId = ";
     public static final String END_OF_DAY = " 23:59:59";
     public static final String CREATED_AT = "createdAt";
     public static final String COMPLETED_AT = "completedAt";
@@ -105,8 +97,6 @@ public class ElasticSearchUtil {
     public static final String PROFILE_CREATED_AT = "profile." + CREATED_AT;
     public static final String PROFILE_GUID = "profile.guid";
     public static final String PROFILE_LEGACYALTPID = "profile.legacyAltPid";
-    public static final String WORKFLOWS = "workflows";
-    public static final String EMAIL_FIELD = "email";
     public static final String PARTICIPANTS_STRUCTURED_ANY = "participants_structured.*";
     public static final String TYPE = "type";
     public static final String TEXT = "text";
@@ -122,6 +112,7 @@ public class ElasticSearchUtil {
     private static final String ACTIVITIES_QUESTIONS_ANSWER_DATE_FIELDS = "activities.questionsAnswers.dateFields";
     private static final String ACTIVITIES_QUESTIONS_ANSWER_DATE = "activities.questionsAnswers.date";
     private static final String ACTIVITIES_QUESTIONS_ANSWER_STABLE_ID = "activities.questionsAnswers.stableId";
+
     // These clients are expensive. They internally have thread pools and other resources. Let's
     // create one instance and reuse it as much as possible. Client is thread-safe per the docs.
     private static RestHighLevelClient client;
@@ -279,13 +270,11 @@ public class ElasticSearchUtil {
     public static Map<String, Map<String, Object>> getDDPParticipantsFromES(@NonNull String realm, @NonNull String index) {
         Map<String, Map<String, Object>> esData = new HashMap<>();
         if (StringUtils.isNotBlank(index)) {
-            logger.info("Collecting ES data from index: " + index);
             try {
                 esData = getDDPParticipantsFromES(realm, index, client);
             } catch (Exception e) {
                 logger.error("Couldn't get participants from ES for instance " + realm, e);
             }
-            logger.info("Finished collecting ES data");
         }
         return esData;
     }
@@ -331,13 +320,13 @@ public class ElasticSearchUtil {
 
     public static Optional<ElasticSearchParticipantDto> fetchESDataByParticipantId(String index, String participantId,
                                                                                    RestHighLevelClient client) throws IOException {
-        String matchQueryName = ParticipantUtil.isGuid(participantId) ? "profile.guid" : "profile.legacyAltPid";
+        String matchQueryName = ParticipantUtil.isGuid(participantId) ? PROFILE_GUID : PROFILE_LEGACYALTPID;
         return Optional.of(getElasticSearchForGivenMatch(index, participantId, client, matchQueryName));
     }
 
     public static ElasticSearchParticipantDto fetchESDataByAltpid(String index, String altpid, RestHighLevelClient client)
             throws IOException {
-        String matchQueryName = "profile.legacyAltPid";
+        String matchQueryName = PROFILE_LEGACYALTPID;
         return getElasticSearchForGivenMatch(index, altpid, client, matchQueryName);
     }
 
@@ -405,7 +394,7 @@ public class ElasticSearchUtil {
 
 
         BoolQueryBuilder qb = QueryBuilders.boolQuery();
-        qb.must(QueryBuilders.termsQuery("profile.guid", participantGuids));
+        qb.must(QueryBuilders.termsQuery(PROFILE_GUID, participantGuids));
 
         searchSourceBuilder.fetchSource(new String[] {PROFILE, ADDRESS}, null);
         searchSourceBuilder.query(qb).sort(PROFILE_CREATED_AT, SortOrder.ASC).docValueField(ADDRESS).docValueField(PROFILE);

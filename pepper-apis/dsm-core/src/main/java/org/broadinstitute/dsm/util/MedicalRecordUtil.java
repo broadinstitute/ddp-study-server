@@ -78,6 +78,7 @@ public class MedicalRecordUtil {
             medicalRecord.setMedicalRecordId(mrId);
             medicalRecord.setDdpParticipantId(ddpParticipantId);
             medicalRecord.setInstitutionId(Long.parseLong(institutionId));
+            medicalRecord.setRealm(ddpInstanceDto.getInstanceName());
 
             UpsertPainlessFacade.of(DBConstants.DDP_MEDICAL_RECORD_ALIAS, medicalRecord, ddpInstanceDto,
                     ESObjectConstants.MEDICAL_RECORDS_ID, ESObjectConstants.DOC_ID, participantGuid).export();

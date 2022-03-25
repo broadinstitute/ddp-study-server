@@ -68,10 +68,10 @@ public class ParticipantWrapper {
 
         return participantWrapperPayload.getFilter().map(filters -> {
             fetchAndPrepareDataByFilters(filters);
-            return new ParticipantWrapperResult(esData.getTotalCount(), collectData());
+            return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto));
         }).orElseGet(() -> {
             fetchAndPrepareData();
-            return new ParticipantWrapperResult(esData.getTotalCount(), collectData());
+            return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto));
         });
     }
 
@@ -112,7 +112,7 @@ public class ParticipantWrapper {
     }
 
 
-    private List<ParticipantWrapperDto> collectData() {
+    private List<ParticipantWrapperDto> collectData(DDPInstanceDto ddpInstanceDto) {
         logger.info("Collecting participant data...");
         List<ParticipantWrapperDto> result = new ArrayList<>();
         List<String> proxyGuids = new ArrayList<>();
@@ -127,13 +127,28 @@ public class ParticipantWrapper {
                     participant.setReviewed(oncHistory.getReviewed());
                 });
 
-                List<MedicalRecord> medicalRecord = esDsm.getMedicalRecord();
+                boolean filterByInstance = "mbc-filter".equals(ddpInstanceDto.getInstanceName());
+                List<MedicalRecord> medicalRecord = null;
+                List<OncHistoryDetail> oncHistoryDetails = null;
+                List<KitRequestShipping> kitRequestShipping = null;
+                if (filterByInstance) {
+                    //TODO how to make it dynamic - still just comparing realm....
+                    medicalRecord = esDsm.getMedicalRecord().stream().filter(mR -> ddpInstanceDto.getInstanceName().equals(mR.getRealm()))
+                            .collect(Collectors.toList());
+                    oncHistoryDetails =
+                            esDsm.getOncHistoryDetail().stream().filter(oD -> ddpInstanceDto.getInstanceName().equals(oD.getRealm()))
+                                    .collect(Collectors.toList());
+                    kitRequestShipping =
+                            esDsm.getKitRequestShipping().stream().filter(k -> ddpInstanceDto.getInstanceName().equals(k.getRealm()))
+                                    .collect(Collectors.toList());
+                } else {
+                    medicalRecord = esDsm.getMedicalRecord();
+                    oncHistoryDetails = esDsm.getOncHistoryDetail();
+                    kitRequestShipping = esDsm.getKitRequestShipping();
+                }
 
-                List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();
                 List<Tissue> tissues = esDsm.getTissue();
                 mapTissueToProperOncHistoryDetail(oncHistoryDetails, tissues);
-
-                List<KitRequestShipping> kitRequestShipping = esDsm.getKitRequestShipping();
 
                 proxyGuids.addAll(elasticSearchParticipantDto.getProxies());
 
@@ -151,6 +166,8 @@ public class ParticipantWrapper {
                 participantWrapperDto.setAbstractionSummary(Collections.emptyList());
 
                 result.add(participantWrapperDto);
+
+                //TODO filter activity
 
             });
         }
