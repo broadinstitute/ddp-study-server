@@ -9,7 +9,7 @@
         <insert tableName="field_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
-            <column name="field_type" value="TAB"/>
+            <column name="field_type" value="TAB_GROUPED"/>
             <column name="column_name" value="SINGULAR_TAB_CLINICAL_NOTES"/>
             <column name="column_display" value="Clinical Notes"/>
             <column name="display_type" value="TAB"/>
@@ -19,6 +19,14 @@
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
             <column name="field_type" value="SINGULAR_TAB_CLINICAL_NOTES"/>
+            <column name="column_name" value="GROUP_CLINICAL_NOTES"/>
+            <column name="display_type" value="GROUP"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
             <column name="column_name" value="PRIOR_HEART_TRANSPLANT"/>
             <column name="column_display" value="Prior listing for heart transplant"/>
             <column name="display_type" value="RADIO"/>
@@ -29,7 +37,7 @@
         <insert tableName="field_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
-            <column name="field_type" value="SINGULAR_TAB_CLINICAL_NOTES"/>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
             <column name="column_name" value="RECEIVED_HEART_TRANSPLANT"/>
             <column name="column_display" value="Received a heart transplant"/>
             <column name="display_type" value="RADIO"/>
@@ -40,7 +48,7 @@
         <insert tableName="field_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
-            <column name="field_type" value="SINGULAR_TAB_CLINICAL_NOTES"/>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
             <column name="column_name" value="PROTEIN_LOSING_ENTEROPATHY"/>
             <column name="column_display" value="Protein-losing enteropathy"/>
             <column name="display_type" value="RADIO"/>
@@ -51,7 +59,7 @@
         <insert tableName="field_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
-            <column name="field_type" value="SINGULAR_TAB_CLINICAL_NOTES"/>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
             <column name="column_name" value="PLASTIC_BRONCHITIS"/>
             <column name="column_display" value="Plastic bronchitis"/>
             <column name="display_type" value="RADIO"/>
@@ -62,7 +70,7 @@
         <insert tableName="field_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
-            <column name="field_type" value="SINGULAR_TAB_CLINICAL_NOTES"/>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
             <column name="column_name" value="STROKE"/>
             <column name="column_display" value="Stroke (resulted in LoF)"/>
             <column name="display_type" value="RADIO"/>
@@ -73,7 +81,7 @@
         <insert tableName="field_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
-            <column name="field_type" value="SINGULAR_TAB_CLINICAL_NOTES"/>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
             <column name="column_name" value="SEIZURES"/>
             <column name="column_display" value="Seizures requiring ongoing/out-patient antiepileptic medications"/>
             <column name="display_type" value="RADIO"/>
@@ -84,7 +92,7 @@
         <insert tableName="field_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
-            <column name="field_type" value="SINGULAR_TAB_CLINICAL_NOTES"/>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
             <column name="column_name" value="CARCINOMA"/>
             <column name="column_display" value="Hepatocellular carcinoma"/>
             <column name="display_type" value="RADIO"/>
@@ -95,7 +103,7 @@
         <insert tableName="field_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
-            <column name="field_type" value="SINGULAR_TAB_CLINICAL_NOTES"/>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
             <column name="column_name" value="HISTORY_HEMOTYSIS"/>
             <column name="column_display" value="History of hemoptysis requiring hospitalization / intervention"/>
             <column name="display_type" value="RADIO"/>
@@ -106,7 +114,7 @@
         <insert tableName="field_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
-            <column name="field_type" value="SINGULAR_TAB_CLINICAL_NOTES"/>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
             <column name="column_name" value="ECMO_VAD"/>
             <column name="column_display" value="ECMO or VAD?"/>
             <column name="display_type" value="RADIO"/>
@@ -117,7 +125,7 @@
         <insert tableName="field_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
-            <column name="field_type" value="SINGULAR_TAB_CLINICAL_NOTES"/>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
             <column name="column_name" value="TACHYARRHYTMIAS"/>
             <column name="column_display" value="Atrial tachyarrhythmias (atrial fibrillation, atrial flutter, or atrial tachycardia)"/>
             <column name="display_type" value="RADIO"/>
@@ -128,7 +136,7 @@
         <insert tableName="field_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
-            <column name="field_type" value="SINGULAR_TAB_CLINICAL_NOTES"/>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
             <column name="column_name" value="SUSTAINED_TACHYARRHYTMIAS"/>
             <column name="column_display" value="Sustained ventricular tachyarrhythmias (ventricular tachycardia, ventricular fibrillation) (>30 sec)"/>
             <column name="display_type" value="RADIO"/>
@@ -139,7 +147,7 @@
         <insert tableName="field_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
-            <column name="field_type" value="SINGULAR_TAB_CLINICAL_NOTES"/>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
             <column name="column_name" value="ARRHYTMIAS_CARDIAC_ARREST"/>
             <column name="column_display" value="Cardioversion, defibrillation, or arrhythmogenic cardiac arrest"/>
             <column name="display_type" value="RADIO"/>
@@ -150,7 +158,7 @@
         <insert tableName="field_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
-            <column name="field_type" value="SINGULAR_TAB_CLINICAL_NOTES"/>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
             <column name="column_name" value="PACEMAKER_ICD"/>
             <column name="column_display" value="Pacemaker or ICD?"/>
             <column name="display_type" value="RADIO"/>
@@ -161,7 +169,7 @@
         <insert tableName="field_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
-            <column name="field_type" value="SINGULAR_TAB_CLINICAL_NOTES"/>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
             <column name="column_name" value="SURGICAL_HISTORY"/>
             <column name="column_display" value="Surgical History – Initial Fontan procedure"/>
             <column name="display_type" value="RADIO"/>
@@ -172,7 +180,7 @@
         <insert tableName="field_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
-            <column name="field_type" value="SINGULAR_TAB_CLINICAL_NOTES"/>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
             <column name="column_name" value="FONTAN"/>
             <column name="column_display" value="Has the patient had a Fontan Revision or Conversion?"/>
             <column name="display_type" value="RADIO"/>
@@ -183,7 +191,7 @@
         <insert tableName="field_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
-            <column name="field_type" value="SINGULAR_TAB_CLINICAL_NOTES"/>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
             <column name="column_name" value="FONTAN_TYPE"/>
             <column name="column_display" value="If yes, what is the current Fontan type?"/>
             <column name="display_type" value="RADIO"/>

@@ -19,6 +19,14 @@
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
             <column name="field_type" value="SINGULAR_TAB_GENETIC_TESTING"/>
+            <column name="column_name" value="GROUP_GENETIC_TESTING"/>
+            <column name="display_type" value="GROUP"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_GENETIC_TESTING"/>
             <column name="column_name" value="KARYOTYPE"/>
             <column name="column_display" value="Karyotype"/>
             <column name="display_type" value="RADIO"/>
@@ -29,7 +37,7 @@
         <insert tableName="field_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
-            <column name="field_type" value="SINGULAR_TAB_GENETIC_TESTING"/>
+            <column name="field_type" value="GROUP_GENETIC_TESTING"/>
             <column name="column_name" value="KARYOTYPE_ABNORMAL"/>
             <column name="column_display" value="If Abnormal, Result"/>
             <column name="display_type" value="RADIO"/>
@@ -40,7 +48,7 @@
         <insert tableName="field_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
-            <column name="field_type" value="SINGULAR_TAB_GENETIC_TESTING"/>
+            <column name="field_type" value="GROUP_GENETIC_TESTING"/>
             <column name="column_name" value="MICROARRAY"/>
             <column name="column_display" value="Microarray"/>
             <column name="display_type" value="RADIO"/>
@@ -51,7 +59,7 @@
         <insert tableName="field_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
-            <column name="field_type" value="SINGULAR_TAB_GENETIC_TESTING"/>
+            <column name="field_type" value="GROUP_GENETIC_TESTING"/>
             <column name="column_name" value="MICROARRAY_ABNORMAL"/>
             <column name="column_display" value="If Abnormal, Result"/>
             <column name="display_type" value="RADIO"/>
@@ -62,7 +70,7 @@
         <insert tableName="field_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
-            <column name="field_type" value="SINGULAR_TAB_GENETIC_TESTING"/>
+            <column name="field_type" value="GROUP_GENETIC_TESTING"/>
             <column name="column_name" value="GENE_SYNDROMES"/>
             <column name="column_display" value="Single Gene Syndromes"/>
             <column name="display_type" value="RADIO"/>
@@ -73,7 +81,7 @@
         <insert tableName="field_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
-            <column name="field_type" value="SINGULAR_TAB_GENETIC_TESTING"/>
+            <column name="field_type" value="GROUP_GENETIC_TESTING"/>
             <column name="column_name" value="MOLECULAR_CONFIRMATION"/>
             <column name="column_display" value="Molecular Confirmation?"/>
             <column name="display_type" value="RADIO"/>
@@ -84,7 +92,7 @@
         <insert tableName="field_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
-            <column name="field_type" value="SINGULAR_TAB_GENETIC_TESTING"/>
+            <column name="field_type" value="GROUP_GENETIC_TESTING"/>
             <column name="column_name" value="CLINICAL_SYNDROMES"/>
             <column name="column_display" value="Clinical Syndromes"/>
             <column name="display_type" value="RADIO"/>
