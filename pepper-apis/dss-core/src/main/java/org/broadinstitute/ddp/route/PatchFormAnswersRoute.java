@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -41,23 +43,15 @@ import org.broadinstitute.ddp.db.dao.JdbiMatrixOption;
 import org.broadinstitute.ddp.db.dao.JdbiQuestionCached;
 import org.broadinstitute.ddp.db.dao.QuestionCachedDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
-import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
-import org.broadinstitute.ddp.db.dto.AnswerDto;
-import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
-import org.broadinstitute.ddp.db.dto.LanguageDto;
-import org.broadinstitute.ddp.db.dto.MatrixGroupDto;
-import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
-import org.broadinstitute.ddp.db.dto.DecimalQuestionDto;
-import org.broadinstitute.ddp.db.dto.QuestionDto;
-import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
+import org.broadinstitute.ddp.db.dto.*;
+import org.broadinstitute.ddp.equation.EquationEvaluator;
+import org.broadinstitute.ddp.equation.EquationVariablesCollector;
+import org.broadinstitute.ddp.equation.QuestionEvaluator;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.OperationNotAllowedException;
 import org.broadinstitute.ddp.exception.RequiredParameterMissingException;
 import org.broadinstitute.ddp.exception.UnexpectedNumberOfElementsException;
-import org.broadinstitute.ddp.json.AnswerResponse;
-import org.broadinstitute.ddp.json.AnswerSubmission;
-import org.broadinstitute.ddp.json.PatchAnswerPayload;
-import org.broadinstitute.ddp.json.PatchAnswerResponse;
+import org.broadinstitute.ddp.json.*;
 import org.broadinstitute.ddp.json.errors.AnswerValidationError;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -338,6 +332,8 @@ public class PatchFormAnswersRoute implements Route {
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.REQUIRED_PARAMETER_MISSING, e.getMessage()));
             }
 
+            enrichWithEquations(instanceGuid, res);
+
             res.setBlockVisibilities(formService.getBlockVisibilitiesAndEnabled(handle, instanceSummary, activityDef, participantGuid,
                     operatorGuid, instanceGuid));
 
@@ -368,6 +364,30 @@ public class PatchFormAnswersRoute implements Route {
         response.status(200);
         LOG.info("Processing PatchFormAnswersRoute took: {} ms", System.currentTimeMillis() - startTime);
         return result;
+    }
+
+    private void enrichWithEquations(final String instanceGuid, final PatchAnswerResponse response) {
+        TransactionWrapper.useTxn(handle -> {
+            var questionEvaluator = new QuestionEvaluator(handle, instanceGuid);
+
+            new QuestionCachedDao(handle).getJdbiEquationQuestion().findEquationsByActivityInstanceGuid(instanceGuid)
+                    .stream()
+                    .map(questionEvaluator::evaluate)
+                    .filter(Objects::nonNull)
+                    .forEach(response::addEquation);
+        });
+    }
+
+    private EquationResponse evaluateEquation(final EquationQuestionDto equation, final Handle handle) {
+        var variables = EquationVariablesCollector.builder().build().collect(equation.getExpression());
+        if (variables.isEmpty()) {
+            return new EquationResponse(equation.getStableId(), Collections.singletonList(
+                            new DecimalDef(EquationEvaluator.builder().build().evaluate(equation.getExpression()))));
+        }
+
+
+
+        return null;
     }
 
     private QuestionDto extractQuestionDto(Response response, String questionStableId, Optional<QuestionDto> optQuestionDto) {
