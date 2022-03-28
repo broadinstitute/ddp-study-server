@@ -22,6 +22,8 @@ import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
+import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
@@ -178,6 +180,9 @@ public class AnswerToAnswerCopier {
         } else if (type == QuestionType.ACTIVITY_INSTANCE_SELECT) {
             String value = ((ActivityInstanceSelectAnswer) sourceAnswer).getValue();
             targetAnswer = new ActivityInstanceSelectAnswer(null, targetQuestion.getStableId(), null, value);
+        } else if (type == QuestionType.FILE) {
+            List<FileInfo> value = ((FileAnswer) sourceAnswer).getValue();
+            targetAnswer = new FileAnswer(null, targetQuestion.getStableId(), null, value);
         } else {
             throw new DDPException("Unhandled copying for answer type " + type);
         }

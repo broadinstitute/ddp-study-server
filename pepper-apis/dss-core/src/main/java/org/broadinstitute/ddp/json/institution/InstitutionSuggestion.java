@@ -1,29 +1,17 @@
 package org.broadinstitute.ddp.json.institution;
 
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.broadinstitute.ddp.db.dto.InstitutionSuggestionDto;
 
+@Value
+@AllArgsConstructor
 public class InstitutionSuggestion {
+    String name;
+    String city;
+    String state;
 
-    private String name;
-    private String city;
-    private String state;
-
-    public InstitutionSuggestion(InstitutionSuggestionDto dto) {
-        this.name = dto.getName();
-        this.city = dto.getCity();
-        this.state = dto.getState();
+    public InstitutionSuggestion(final InstitutionSuggestionDto dto) {
+        this(dto.getName(), dto.getCity(), dto.getState());
     }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public String getState() {
-        return state;
-    }
-
 }

@@ -14,6 +14,7 @@ ActivityAnswersPatchResponse:
         type: object
         required:
           - answers
+          - equations
           - blockVisibility
           - validationFailures
         properties:
@@ -32,6 +33,23 @@ ActivityAnswersPatchResponse:
                 answerGuid:
                   type: string
                   description: identifier for the answer
+          equations:
+            type: array
+            description: list of computed equation values
+            items:
+              type: object
+              required:
+                - stableId
+                - values
+              properties:
+                stableId:
+                  type: string
+                  description: equation question identifier that the answer is for (in case of composite, this is a child question id)
+                values:
+                  type: array
+                  description: the real computed values (in case of composite can have multiple values)
+                  items:
+                    $ref: 'schemas.yml#/DecimalNumber'
           blockVisibility:
             type: array
             description: list of updated block visibilities

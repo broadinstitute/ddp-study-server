@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.model.filter.participant.EmptyFilterParticipantList;
 import org.broadinstitute.dsm.model.filter.participant.ManualFilterParticipantList;
 import org.broadinstitute.dsm.model.filter.participant.QuickFilterParticipantList;
 import org.broadinstitute.dsm.model.filter.participant.SavedFilterParticipantList;

@@ -188,16 +188,16 @@ public class ParticipantWrapper {
 
     void sortBySelfElseById(List<ParticipantData> participantDatas) {
         participantDatas.sort((o1, o2) -> {
-            Map<String, String> pData =
+            Map<String, String> ptData =
                     ObjectMapperSingleton.readValue(o1.getData().orElse(StringUtils.EMPTY), new TypeReference<Map<String, String>>() {
                     });
-            Map<String, String> pData2 =
+            Map<String, String> ptData2 =
                     ObjectMapperSingleton.readValue(o2.getData().orElse(StringUtils.EMPTY), new TypeReference<Map<String, String>>() {
                     });
-            if (Objects.nonNull(pData) && FamilyMemberConstants.MEMBER_TYPE_SELF.equals(pData.get(FamilyMemberConstants.MEMBER_TYPE))) {
+            if (Objects.nonNull(ptData) && FamilyMemberConstants.MEMBER_TYPE_SELF.equals(ptData.get(FamilyMemberConstants.MEMBER_TYPE))) {
                 return -1;
             }
-            if (Objects.nonNull(pData2) && FamilyMemberConstants.MEMBER_TYPE_SELF.equals(pData2.get(FamilyMemberConstants.MEMBER_TYPE))) {
+            if (Objects.nonNull(ptData2) && FamilyMemberConstants.MEMBER_TYPE_SELF.equals(ptData2.get(FamilyMemberConstants.MEMBER_TYPE))) {
                 return 1;
             }
             return o1.getParticipantDataId() - o2.getParticipantDataId();

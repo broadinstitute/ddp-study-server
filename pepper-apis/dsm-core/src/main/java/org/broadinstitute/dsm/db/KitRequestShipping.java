@@ -225,7 +225,7 @@ public class KitRequestShipping extends KitRequest {
 
     private String collaboratorParticipantId;
 
-    @ColumnName(DBConstants.BSP_COLLABORATOR_PARTICIPANT_ID)
+    @ColumnName (DBConstants.BSP_COLLABORATOR_SAMPLE_ID)
     private String bspCollaboratorSampleId;
     private String easypostAddressId;
     private String realm;
@@ -360,21 +360,22 @@ public class KitRequestShipping extends KitRequest {
         }
         KitRequestShipping kitRequestShipping =
                 new KitRequestShipping(rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
-                        rs.getString(DBConstants.BSP_COLLABORATOR_PARTICIPANT_ID), rs.getString(DBConstants.DSM_LABEL),
+                        rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID), rs.getString(DBConstants.DSM_LABEL),
                         rs.getString(DBConstants.INSTANCE_NAME), rs.getString(DBConstants.KIT_TYPE_NAME),
                         rs.getLong(DBConstants.DSM_KIT_REQUEST_ID), rs.getLong(DBConstants.DSM_KIT_ID),
                         rs.getString(DBConstants.DSM_LABEL_TO), rs.getString(DBConstants.DSM_LABEL_RETURN),
                         rs.getString(DBConstants.DSM_TRACKING_TO), returnTrackingId, rs.getString(DBConstants.DSM_TRACKING_URL_TO),
-                        rs.getString(DBConstants.DSM_TRACKING_URL_RETURN), rs.getLong(DBConstants.DSM_SCAN_DATE),
-                        rs.getBoolean(DBConstants.ERROR), rs.getString(DBConstants.MESSAGE), rs.getLong(DBConstants.DSM_RECEIVE_DATE),
-                        rs.getString(DBConstants.EASYPOST_ADDRESS_ID_TO), rs.getLong(DBConstants.DSM_DEACTIVATED_DATE),
+                        rs.getString(DBConstants.DSM_TRACKING_URL_RETURN), (Long) rs.getObject(DBConstants.DSM_SCAN_DATE),
+                        rs.getBoolean(DBConstants.ERROR), rs.getString(DBConstants.MESSAGE),
+                        (Long) rs.getObject(DBConstants.DSM_RECEIVE_DATE),
+                        rs.getString(DBConstants.EASYPOST_ADDRESS_ID_TO), (Long)rs.getObject(DBConstants.DSM_DEACTIVATED_DATE),
                         rs.getString(DBConstants.DEACTIVATION_REASON), rs.getString(DBConstants.KIT_LABEL),
                         rs.getBoolean(DBConstants.EXPRESS), rs.getString(DBConstants.EASYPOST_TO_ID),
-                        rs.getLong(DBConstants.LABEL_TRIGGERED_DATE), rs.getString(DBConstants.EASYPOST_SHIPMENT_STATUS),
+                        (Long)rs.getObject(DBConstants.LABEL_TRIGGERED_DATE), rs.getString(DBConstants.EASYPOST_SHIPMENT_STATUS),
                         rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), rs.getBoolean(DBConstants.NO_RETURN),
                         rs.getString(DBConstants.EXTERNAL_ORDER_STATUS), rs.getString(DBConstants.CREATED_BY),
                         rs.getString(DBConstants.KIT_TEST_RESULT), rs.getString(DBConstants.UPS_TRACKING_STATUS),
-                        rs.getString(DBConstants.UPS_RETURN_STATUS), rs.getLong(DBConstants.EXTERNAL_ORDER_DATE),
+                        rs.getString(DBConstants.UPS_RETURN_STATUS), (Long)rs.getObject(DBConstants.EXTERNAL_ORDER_DATE),
                         rs.getBoolean(DBConstants.CARE_EVOLVE), rs.getString(DBConstants.UPLOAD_REASON), null, null, null);
         if (DBUtil.columnExists(rs, DBConstants.UPS_STATUS_DESCRIPTION) && StringUtils.isNotBlank(
                 rs.getString(DBConstants.UPS_STATUS_DESCRIPTION))) {

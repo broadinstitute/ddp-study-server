@@ -608,17 +608,21 @@ public class PatchFormAnswersRoute implements Route {
     private FileAnswer convertFileAnswer(Handle handle, Response response, String stableId, String guid,
                                          String instanceGuid, JsonElement value) {
         boolean isNull = (value == null || value.isJsonNull());
-        if (isNull || (value.isJsonPrimitive() && value.getAsJsonPrimitive().isString())) {
-            FileInfo info = null;
+        if (isNull || value.isJsonArray()) {
+            List<FileInfo> fileInfos = new ArrayList<>();
             if (!isNull) {
-                String uploadGuid = value.getAsString();
-                info = handle.attach(FileUploadDao.class).findFileInfoByGuid(uploadGuid).orElse(null);
-                if (info == null) {
-                    throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
-                            "Could not find file upload with guid " + uploadGuid));
+                FileUploadDao fileUploadDao = handle.attach(FileUploadDao.class);
+                for (JsonElement element : value.getAsJsonArray()) {
+                    FileInfo info = fileUploadDao.findFileInfoByGuid(element.getAsString()).orElse(null);
+                    if (info == null) {
+                        throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
+                                "Could not find file upload with guid " + element.getAsString()));
+                    }
+                    fileInfos.add(info);
                 }
+
             }
-            return new FileAnswer(null, stableId, guid, info, instanceGuid);
+            return new FileAnswer(null, stableId, guid, fileInfos, instanceGuid);
         } else {
             return null;
         }
@@ -762,8 +766,14 @@ public class PatchFormAnswersRoute implements Route {
     private void verifyFileUpload(Handle handle, Response response, ActivityInstanceDto instanceDto, FileAnswer answer) {
         long participantId = instanceDto.getParticipantId();
         long studyId = instanceDto.getStudyId();
-        long uploadId = answer.getValue().getUploadId();
+        List<FileInfo> fileInfos = answer.getValue();
+        for (FileInfo info : fileInfos) {
+            verifyFileInfo(info, participantId, studyId, handle, response);
+        }
+    }
 
+    private void verifyFileInfo(FileInfo info, long participantId, long studyId, Handle handle, Response response) {
+        long uploadId = info.getUploadId();
         var verifyResult = fileService.verifyUpload(handle, studyId, participantId, uploadId)
                 .orElseThrow(() -> new DDPException("Could not find file upload with id " + uploadId));
 
