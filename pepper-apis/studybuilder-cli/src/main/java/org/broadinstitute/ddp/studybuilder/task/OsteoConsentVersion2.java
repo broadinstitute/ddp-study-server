@@ -40,10 +40,12 @@ public class OsteoConsentVersion2 implements CustomTask {
     private static final Logger LOG = LoggerFactory.getLogger(OsteoConsentVersion2.class);
     private static final String DATA_FILE = "patches/consent-version-2.conf";
     private static final String DATA_FILE_SOMATIC_CONSENT_ADDENDUM = "patches/somatic-consent-addendum-val.conf";
+    private static final String DATA_FILE_SOMATIC_ASSENT_ADDENDUM = "patches/parent-consent-assent.conf";
     private static final String OSTEO_STUDY = "CMI-OSTEO";
 
     private Config dataCfg;
     private Config somaticAddendumConsentCfg;
+    private Config assentAddendumCfg;
     private Config varsCfg;
     private Path cfgPath;
     private Instant timestamp;
@@ -59,15 +61,24 @@ public class OsteoConsentVersion2 implements CustomTask {
         }
         dataCfg = ConfigFactory.parseFile(file);
         this.cfgPath = cfgPath;
+
         File fileSomaticAddendum = cfgPath.getParent().resolve(DATA_FILE_SOMATIC_CONSENT_ADDENDUM).toFile();
         if (!file.exists()) {
             throw new DDPException("Data file is missing: " + fileSomaticAddendum);
         }
         somaticAddendumConsentCfg = ConfigFactory.parseFile(fileSomaticAddendum);
         this.varsCfg = varsCfg;
+
         if (!studyCfg.getString("study.guid").equals(OSTEO_STUDY)) {
             throw new DDPException("This task is only for the " + OSTEO_STUDY + " study!");
         }
+
+        File fileAssentAddendum = cfgPath.getParent().resolve(DATA_FILE_SOMATIC_ASSENT_ADDENDUM).toFile();
+        if (!file.exists()) {
+            throw new DDPException("Data file is missing: " + fileAssentAddendum);
+        }
+        assentAddendumCfg = ConfigFactory.parseFile(fileAssentAddendum);
+
         cfg = studyCfg;
         versionTag = dataCfg.getString("versionTag");
         timestamp = Instant.now();
@@ -100,6 +111,7 @@ public class OsteoConsentVersion2 implements CustomTask {
 
         updateVariables(handle, metaConsentAssent, version2ForConsentAssent);
         runSomaticConsentAddendum(handle, adminUser, studyDto, version2ForConsent, version2ForConsentAssent);
+        runSomaticAssentAddendum(handle, adminUser, studyDto, version2ForConsentAssent);
     }
 
     private ActivityVersionDto getVersion2(Handle handle, StudyDto studyDto, RevisionMetadata meta, String activityCode) {
@@ -153,6 +165,33 @@ public class OsteoConsentVersion2 implements CustomTask {
 
         insertSection(studyDto, handle, consentAddendumSelf, consentSelf, version2Consent);
 
+    }
+
+
+    public void runSomaticAssentAddendum(Handle handle, User adminUser,
+                                         StudyDto studyDto, ActivityVersionDto version2ConsentAssent) {
+        LanguageStore.init(handle);
+
+        String consentAssent = assentAddendumCfg.getString("activityFilepath");
+        Config consentAssentCfg = activityBuild(studyDto, adminUser, consentAssent);
+
+        String assentAddendum = assentAddendumCfg.getString("sectionFilePath");
+        Config assentAddendumCfg = activityBuild(studyDto, adminUser, assentAddendum);
+
+        versionTag = consentAssentCfg.getString("versionTag");
+        String activityCode = consentAssentCfg.getString("activityCode");
+        long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
+
+        long revisionId = version2ConsentAssent.getRevId();
+
+        var sectionDef = gson.fromJson(ConfigUtil.toJson(assentAddendumCfg), FormSectionDef.class);
+
+        var sectionId = handle.attach(SectionBlockDao.class)
+                .insertSection(activityId, sectionDef, revisionId);
+
+        var jdbiActSection = handle.attach(JdbiFormActivityFormSection.class);
+
+        jdbiActSection.insert(activityId, sectionId, revisionId, 60);
     }
 
     private void insertSection(StudyDto studyDto, Handle handle,
