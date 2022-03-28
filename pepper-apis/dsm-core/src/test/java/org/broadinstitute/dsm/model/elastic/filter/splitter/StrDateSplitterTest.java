@@ -10,7 +10,7 @@ public class StrDateSplitterTest {
     public void split() {
 
         String filter = "STR_TO_DATE(m.fax_sent,'%Y-%m-%d') = STR_TO_DATE('2021-12-17','%Y-%m-%d')";
-        BaseSplitter dateSplitter = SplitterFactory.createSplitter(Operator.STR_DATE, filter);
+        SplitterStrategy dateSplitter = Operator.extract(filter).getStrategy();
         dateSplitter.setFilter(filter);
 
         Assert.assertEquals("m", dateSplitter.getAlias());
