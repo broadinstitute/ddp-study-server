@@ -4,7 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.Util;
 
-public class StrDateSplitter extends BaseSplitter {
+public class StrDateSplitterStrategy extends SplitterStrategy {
 
     @Override
     public String[] split() {
