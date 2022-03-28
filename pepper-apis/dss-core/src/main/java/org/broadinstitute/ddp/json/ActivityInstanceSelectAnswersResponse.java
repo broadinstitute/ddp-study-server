@@ -1,18 +1,14 @@
 package org.broadinstitute.ddp.json;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.AllArgsConstructor;
+import lombok.Value;
 
 import java.util.List;
 
+@Value
+@AllArgsConstructor
 public class ActivityInstanceSelectAnswersResponse {
     @SerializedName("results")
-    private List<ActivityInstanceSelectAnswerSubmission> results;
-
-    public ActivityInstanceSelectAnswersResponse(List<ActivityInstanceSelectAnswerSubmission> results) {
-        this.results = results;
-    }
-
-    public List<ActivityInstanceSelectAnswerSubmission> getResults() {
-        return results;
-    }
+    List<ActivityInstanceSelectAnswerSubmission> results;
 }
