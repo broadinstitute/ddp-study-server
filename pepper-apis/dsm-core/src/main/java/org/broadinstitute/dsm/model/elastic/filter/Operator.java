@@ -83,8 +83,7 @@ public enum Operator {
                 case "JSON_EXTRACT LIKE":
                 case "JSON_EXTRACT IS NOT NULL":
                 case "JSON_EXTRACT IS NULL":
-                    return buildJsonExctractType(filter);
-//                    return JSON_EXTRACT;
+                    return buildJsonExtractOperator(filter);
                 default:
                     return Operator.getOperator(operator);
             }
@@ -93,7 +92,7 @@ public enum Operator {
         }
     }
 
-    private static Operator buildJsonExctractType(String filter) {
+    private static Operator buildJsonExtractOperator(String filter) {
         Operator decoratedOperator = Operator.extract(filter.replace(Filter.JSON_EXTRACT, StringUtils.EMPTY));
         JsonExtractSplitterStrategy strategy = (JsonExtractSplitterStrategy) JSON_EXTRACT.strategy;
         strategy.setDecoratedSplitter(decoratedOperator.strategy);
