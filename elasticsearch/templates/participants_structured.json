@@ -1241,6 +1241,25 @@
                 },
                 "labelDate": {
                   "type": "date"
+                },
+                "testResult": {
+                  "type": "nested",
+                  "properties": {
+                    "isCorrected": {
+                      "type": "boolean"
+                    },
+                    "result": {
+                      "type": "text",
+                      "fields": {
+                        "keyword": {
+                          "type": "keyword"
+                        }
+                      }
+                    },
+                    "timeCompleted": {
+                      "type": "date"
+                    }
+                  }
                 }
               }
             },
