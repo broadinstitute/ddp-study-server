@@ -2,9 +2,13 @@ package org.broadinstitute.ddp.studybuilder.task;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.broadinstitute.ddp.db.dao.*;
+import org.broadinstitute.ddp.db.dao.ActivityDao;
+import org.broadinstitute.ddp.db.dao.JdbiRevision;
+import org.broadinstitute.ddp.db.dao.JdbiVariableSubstitution;
+import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
@@ -64,8 +68,7 @@ public class OsteoConsentVersion2 implements CustomTask {
     }
 
     private void updateVariables(Handle handle, User adminUser, StudyDto studyDto, String activityCode, long ts) {
-        String VARIABLES_V2 = "translation-updates";
-        List<? extends Config> configList = dataCfg.getConfigList(VARIABLES_V2);
+        List<? extends Config> configList = dataCfg.getConfigList("translation-updates");
         System.out.println(configList);
         String reason = String.format(
                 "Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
