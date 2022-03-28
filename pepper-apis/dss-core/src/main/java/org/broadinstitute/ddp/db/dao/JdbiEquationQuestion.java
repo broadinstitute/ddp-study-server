@@ -17,15 +17,11 @@ public interface JdbiEquationQuestion extends SqlObject {
                @Bind("maximumDecimalPlaces") final Integer maximumDecimalPlaces,
                @Bind("expression") final String expression);
 
-    @SqlQuery("select q.*, "
-            + "       q.study_activity_id as activity_id, "
-            + "       q.question_prompt_template_id as prompt_template_id, "
-            + "       eq.expression, eq.maximum_decimal_places, "
-            + "       eq.placeholder_template_id, "
+    @SqlQuery("select q.*, q.study_activity_id as activity_id, q.question_prompt_template_id as prompt_template_id, "
+            + "       eq.expression, eq.maximum_decimal_places, eq.placeholder_template_id, "
             + "       qt.question_type_code as question_type, "
             + "       qsc.stable_id, "
-            + "       rev.start_date as revision_start, "
-            + "       rev.end_date   as revision_end "
+            + "       rev.start_date as revision_start, rev.end_date   as revision_end "
             + "from equation_question eq "
             + "join question q "
             + "  on q.question_id = eq.question_id "
