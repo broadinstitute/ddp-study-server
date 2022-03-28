@@ -19,16 +19,17 @@ public class FrontendAnalyticsRoute extends RequestHandler {
         int timer = 0;
         if (queryParams.value(RoutePath.REALM) != null) {
             realm = queryParams.get(RoutePath.REALM).value();
-            if(queryParams.value("timer") != null){
-                timer = (int) Math.ceil(Double.parseDouble(queryParams.get("timer").value())/1000);
-                GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(realm, GoogleAnalyticsMetrics.EVENT_CATEGORY_PARTICIPANT_LIST,
-                        GoogleAnalyticsMetrics.EVENT_PARTICIPANT_LIST_FRONTEND_LOAD_TIME, GoogleAnalyticsMetrics.EVENT_PARTICIPANT_LIST_FRONTEND_LOAD_TIME,  timer);
+            if (queryParams.value("timer") != null) {
+                timer = (int) Math.ceil(Double.parseDouble(queryParams.get("timer").value()) / 1000);
+                GoogleAnalyticsMetricsTracker.getInstance()
+                        .sendAnalyticsMetrics(realm, GoogleAnalyticsMetrics.EVENT_CATEGORY_PARTICIPANT_LIST,
+                                GoogleAnalyticsMetrics.EVENT_PARTICIPANT_LIST_FRONTEND_LOAD_TIME,
+                                GoogleAnalyticsMetrics.EVENT_PARTICIPANT_LIST_FRONTEND_LOAD_TIME, timer);
                 return new Result(200);
-            }else{
+            } else {
                 throw new RuntimeException("timer should not be empty");
             }
-        }
-        else{
+        } else {
             throw new RuntimeException("Realm should not be empty");
         }
 

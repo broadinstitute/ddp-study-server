@@ -106,6 +106,9 @@ public interface ValidationDao extends SqlObject {
     JdbiQuestion getJdbiQuestion();
 
     @CreateSqlObject
+    JdbiActivity getJdbiActivity();
+
+    @CreateSqlObject
     JdbiRevision getJdbiRevision();
 
     @CreateSqlObject
@@ -412,8 +415,13 @@ public interface ValidationDao extends SqlObject {
             throw new DaoException("Question " + questionId + " doesn't exist");
         }
 
+        final Optional<Long> studyId = getJdbiActivity().getStudyIdByActivityId(originalQuestion.get().getActivityId());
+        if (studyId.isEmpty()) {
+            throw new DaoException("Study can't by found for activity " + originalQuestion.get().getActivityId());
+        }
+
         final Optional<QuestionDto> referencedQuestion = getJdbiQuestion()
-                .findDtoByActivityIdAndQuestionStableId(originalQuestion.get().getActivityId(), rule.getValueStableId());
+                .findLatestDtoByStudyIdAndQuestionStableId(studyId.get(), rule.getValueStableId());
         if (referencedQuestion.isEmpty()) {
             throw new DaoException("Referenced question " + rule.getValueStableId() + " doesn't exist");
         }
@@ -559,6 +567,14 @@ public interface ValidationDao extends SqlObject {
                 break;
             case UNIQUE_VALUE:
                 ruleDef = new UniqueValueRuleDef(hintTmpl);
+                break;
+            case COMPARISON:
+                var questionDto = getJdbiQuestion().findQuestionDtoById(dto.getQuestionId());
+                if (questionDto.isEmpty()) {
+                    throw new DaoException("Question doesn't exist: " + dto.getQuestionId());
+                }
+
+                ruleDef = new ComparisonRuleDef(hintTmpl, questionDto.get().getStableId(), ((ComparisonRuleDto) dto).getType());
                 break;
             case LENGTH:
                 var lengthDto = (LengthRuleDto) dto;

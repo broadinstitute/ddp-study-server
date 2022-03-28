@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.model.filter.participant.EmptyFilterParticipantList;
 import org.broadinstitute.dsm.model.filter.participant.ManualFilterParticipantList;
 import org.broadinstitute.dsm.model.filter.participant.QuickFilterParticipantList;
 import org.broadinstitute.dsm.model.filter.participant.SavedFilterParticipantList;
@@ -38,7 +37,7 @@ public class FilterFactory {
                         } else if (StringUtils.isNotBlank(queryParams.get(RequestParameter.FILTERS).value())) {
                             filterable = new SavedFilterParticipantList();
                         } else {
-                            filterable = new EmptyFilterParticipantList();
+                            filterable = new ManualFilterParticipantList(jsonBody); //no empty filter because of pre-filter
                         }
                         break;
                     case BaseFilter.TISSUE_LIST_PARENT:

@@ -29,6 +29,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.EquationQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
@@ -68,6 +69,7 @@ public class ActivityResponseCollector {
     private FileQuestionFormatStrategy fileFmt = new FileQuestionFormatStrategy();
     private NumericQuestionFormatStrategy numericFmt = new NumericQuestionFormatStrategy();
     private DecimalQuestionFormatStrategy decimalFmt = new DecimalQuestionFormatStrategy();
+    private EquationQuestionFormatStrategy equationFmt = new EquationQuestionFormatStrategy();
     private PicklistQuestionFormatStrategy picklistFmt = new PicklistQuestionFormatStrategy();
     private MatrixQuestionFormatStrategy matrixFmt = new MatrixQuestionFormatStrategy();
     private CompositeQuestionFormatStrategy compositeFmt = new CompositeQuestionFormatStrategy();
@@ -248,6 +250,9 @@ public class ActivityResponseCollector {
             case DECIMAL:
                 currProps.putAll(decimalFmt.mappings((DecimalQuestionDef) questionDef));
                 break;
+            case EQUATION:
+                currProps.putAll(equationFmt.mappings((EquationQuestionDef) questionDef));
+                break;
             case PICKLIST:
                 currProps.putAll(picklistFmt.mappings((PicklistQuestionDef) questionDef));
                 break;
@@ -292,6 +297,9 @@ public class ActivityResponseCollector {
                 break;
             case DECIMAL:
                 questions.add(decimalFmt.questionDef((DecimalQuestionDef) questionDef));
+                break;
+            case EQUATION:
+                questions.add(equationFmt.questionDef((EquationQuestionDef) questionDef));
                 break;
             case PICKLIST:
                 questions.add(picklistFmt.questionDef((PicklistQuestionDef) questionDef));
@@ -457,6 +465,9 @@ public class ActivityResponseCollector {
             case DECIMAL:
                 headers.addAll(decimalFmt.headers((DecimalQuestionDef) questionDef));
                 break;
+            case EQUATION:
+                headers.addAll(equationFmt.headers((EquationQuestionDef) questionDef));
+                break;
             case PICKLIST:
                 headers.addAll(picklistFmt.headers((PicklistQuestionDef) questionDef));
                 break;
@@ -580,6 +591,9 @@ public class ActivityResponseCollector {
                 break;
             case DECIMAL:
                 record.putAll(decimalFmt.collect((DecimalQuestionDef) question, (DecimalAnswer) answer));
+                break;
+            case EQUATION:
+                record.putAll(equationFmt.collect((EquationQuestionDef) question, (DecimalAnswer) answer));
                 break;
             case PICKLIST:
                 record.putAll(picklistFmt.collect((PicklistQuestionDef) question, (PicklistAnswer) answer));

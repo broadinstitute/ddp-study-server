@@ -74,6 +74,11 @@ public class ValidationCachedDao extends SQLObjectWrapper<ValidationDao> impleme
     }
 
     @Override
+    public JdbiActivity getJdbiActivity() {
+        return delegate.getJdbiActivity();
+    }
+
+    @Override
     public TemplateDao getTemplateDao() {
         return delegate.getTemplateDao();
     }

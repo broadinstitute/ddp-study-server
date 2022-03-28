@@ -38,12 +38,14 @@ public abstract class QuestionRecord {
             } else if (record instanceof PicklistQuestionRecord) {
                 questionAnswer = ((PicklistQuestionRecord) record).getSelected();
             } else if (record instanceof CompositeQuestionRecord) {
-                questionAnswer = ((CompositeQuestionRecord) record).getAnswer();
+                //questionAnswer = ((CompositeQuestionRecord) record).getAnswer();
             } else if (record instanceof MatrixQuestionRecord) {
                 questionAnswer = ((MatrixQuestionRecord) record).getSelected();
             }
 
-            recordObject.add(record.stableId, gson.toJsonTree(questionAnswer));
+            if (questionAnswer != null) {
+                recordObject.add(record.stableId, gson.toJsonTree(questionAnswer));
+            }
             return gson.toJsonTree(recordObject);
         }
     }

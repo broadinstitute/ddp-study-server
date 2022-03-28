@@ -166,12 +166,6 @@ public class AbstractionActivity {
         return getAllAbstractionActivityByRealm(realm, null);
     }
 
-    public static Map<String, List<AbstractionActivity>> getAllAbstractionActivityByParticipantIds(@NonNull String realm,
-                                                                                                   List<String> participantIds) {
-        String queryAddition = " AND p.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
-        return getAllAbstractionActivityByRealm(realm, queryAddition);
-    }
-
     public static Map<String, List<AbstractionActivity>> getAllAbstractionActivityByRealm(@NonNull String realm, String queryAddition) {
         logger.info("Collection abstraction activity information");
         Map<String, List<AbstractionActivity>> abstractionActivitiesMap = new HashMap<>();
@@ -211,6 +205,12 @@ public class AbstractionActivity {
         }
         logger.info("Got " + abstractionActivitiesMap.size() + " participants abstraction activity in DSM DB for " + realm);
         return abstractionActivitiesMap;
+    }
+
+    public static Map<String, List<AbstractionActivity>> getAllAbstractionActivityByParticipantIds(@NonNull String realm,
+                                                                                                   List<String> participantIds) {
+        String queryAddition = " AND p.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
+        return getAllAbstractionActivityByRealm(realm, queryAddition);
     }
 
     public static List<AbstractionActivity> getAbstractionActivity(@NonNull String realm, @NonNull String ddpParticipantId) {

@@ -6,6 +6,8 @@ import java.util.Optional;
 
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.ActivityDefStore;
+import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.QuestionDao;
 import org.broadinstitute.ddp.db.dao.ValidationDao;
 import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.AgeRangeRuleDef;
@@ -18,6 +20,7 @@ import org.broadinstitute.ddp.model.activity.definition.validation.LengthRuleDef
 import org.broadinstitute.ddp.model.activity.definition.validation.NumOptionsSelectedRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RegexRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
+import org.broadinstitute.ddp.model.activity.definition.validation.ComparisonRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.UniqueRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.UniqueValueRuleDef;
@@ -27,6 +30,7 @@ import org.broadinstitute.ddp.model.activity.instance.validation.DateFieldRequir
 import org.broadinstitute.ddp.model.activity.instance.validation.DateRangeRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.IntRangeRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.DecimalRangeRule;
+import org.broadinstitute.ddp.model.activity.instance.validation.ComparisonRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.LengthRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.NumOptionsSelectedRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.RegexRule;
@@ -73,6 +77,8 @@ public class ValidationRuleCreator {
                 return createUniqueRule(ctx, (UniqueRuleDef) ruleDef);
             case UNIQUE_VALUE:
                 return createUniqueValueRule(ctx, (UniqueValueRuleDef) ruleDef);
+            case COMPARISON:
+                return createComparisonRule(ctx, (ComparisonRuleDef) ruleDef);
             default:
                 throw new IllegalStateException("Unexpected value: " + ruleDef.getRuleType());
         }
@@ -198,6 +204,19 @@ public class ValidationRuleCreator {
                 getHintTitle(ctx, ruleDef),
                 ruleDef.getAllowSave()
         );
+    }
+
+    private ComparisonRule createComparisonRule(AIBuilderContext ctx, ComparisonRuleDef ruleDef) {
+        return ComparisonRule.builder()
+                .id(ruleDef.getRuleId())
+                .message(findRuleMessage(ctx, ruleDef))
+                .correctionHint(getHintTitle(ctx, ruleDef))
+                .allowSave(ruleDef.getAllowSave())
+                .comparisonType(ruleDef.getComparison())
+                .referenceQuestionId(TransactionWrapper.withTxn(handle -> handle.attach(QuestionDao.class).getJdbiQuestion()
+                                .findIdByStableIdAndInstanceGuid(ruleDef.getValueStableId(), ctx.getInstanceGuid())
+                                .orElseThrow(() -> new RuntimeException("Can't find question by stable ID & instance GUID"))))
+                .build();
     }
 
     private String findRuleMessage(AIBuilderContext ctx, RuleDef ruleDef) {
