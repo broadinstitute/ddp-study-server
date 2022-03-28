@@ -82,7 +82,8 @@ public class OsteoConsentVersion2 implements CustomTask {
     private static final String TRANSLATION_KEY = "varName";
     private static final String TRANSLATION_NEW = "newValue";
 
-    private void revisionVariableTranslation(String varName, String newTemplateText, Handle handle, RevisionMetadata meta, ActivityVersionDto version2) {
+    private void revisionVariableTranslation(String varName, String newTemplateText, Handle handle,
+                                             RevisionMetadata meta, ActivityVersionDto version2) {
         long tmplVarId = handle.attach(SqlHelper.class).findTemplateVariableIdByVariableName(varName);
         JdbiVariableSubstitution jdbiVarSubst = handle.attach(JdbiVariableSubstitution.class);
         List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
@@ -97,7 +98,8 @@ public class OsteoConsentVersion2 implements CustomTask {
 
 
     private interface SqlHelper extends SqlObject {
-        @SqlQuery("select template_variable_id from template_variable where variable_name = :variable_name")
+        @SqlQuery("select template_variable_id from template_variable where variable_name = :variable_name "
+                + "order by template_variable_id desc")
         long findTemplateVariableIdByVariableName(@Bind("variable_name") String variableName);
     }
 }
