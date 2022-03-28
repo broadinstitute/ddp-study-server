@@ -30,7 +30,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Optional;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 public class EvaluationDaoTest extends TxnAwareBaseTest {
     private static TestDataSetupUtil.GeneratedTestData testData;
@@ -196,7 +198,8 @@ public class EvaluationDaoTest extends TxnAwareBaseTest {
                     .setScale(2)
                     .build();
 
-            final FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), questionWidthDef, questionLengthDef, questionHeightDef);
+            final FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(),
+                    questionWidthDef, questionLengthDef, questionHeightDef);
             final ActivityVersionDto version1 = handle.attach(ActivityDao.class)
                     .insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
 
