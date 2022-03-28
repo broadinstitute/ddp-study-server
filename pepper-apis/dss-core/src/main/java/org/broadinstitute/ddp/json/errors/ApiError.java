@@ -1,27 +1,15 @@
 package org.broadinstitute.ddp.json.errors;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
-/**
- * Root of API error response object hierarchy.
- */
+@Getter
+@AllArgsConstructor
 public class ApiError {
-
     @SerializedName("code")
-    private String code;
+    private final String code;
+
     @SerializedName("message")
-    private String message;
-
-    public ApiError(String code, String message) {
-        this.code = code;
-        this.message = message;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public String getMessage() {
-        return message;
-    }
+    private final String message;
 }

@@ -23,6 +23,7 @@ public class HealthCheckResponse {
 
     @SerializedName("result")
     private Integer result;
+
     @SerializedName("resultExplanation")
     private String resultExplanation;
 
