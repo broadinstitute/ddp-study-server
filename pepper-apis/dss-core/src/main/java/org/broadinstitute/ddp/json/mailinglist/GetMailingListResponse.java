@@ -2,38 +2,33 @@ package org.broadinstitute.ddp.json.mailinglist;
 
 import com.google.gson.annotations.SerializedName;
 
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList.MailingListEntryDto;
 
+@Value
+@AllArgsConstructor
 public class GetMailingListResponse {
-
     @SerializedName("firstName")
-    private String firstName;
+    String firstName;
+
     @SerializedName("lastName")
-    private String lastName;
+    String lastName;
+
     @SerializedName("email")
-    private String email;
+    String email;
+
     @SerializedName("info")
-    private String info;
+    String info;
+
     @SerializedName("dateCreated")
-    private long dateCreated;
+    long dateCreated;
+
     @SerializedName("isoLanguageCode")
-    private String languageCode;
+    String languageCode;
 
-    public GetMailingListResponse(MailingListEntryDto dto) {
-        this.firstName = dto.getFirstName();
-        this.lastName = dto.getLastName();
-        this.email = dto.getEmail();
-        this.info = dto.getInfo();
-        this.dateCreated = dto.getDateCreatedMillis() / 1000L;
-        this.languageCode = dto.getLanguageCode();
+    public GetMailingListResponse(final MailingListEntryDto dto) {
+        this(dto.getFirstName(), dto.getLastName(), dto.getEmail(), dto.getInfo(),
+                dto.getDateCreatedMillis() / 1000L, dto.getLanguageCode());
     }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public long getDateCreated() {
-        return dateCreated;
-    }
-
 }

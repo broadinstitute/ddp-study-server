@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="simone" id="DDP-7322_singularForm_tab2">
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="TAB_GROUPED"/>
+            <column name="column_name" value="SINGULAR_TAB_CLINICAL_NOTES"/>
+            <column name="column_display" value="Clinical Notes"/>
+            <column name="display_type" value="TAB"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGULAR_TAB_CLINICAL_NOTES"/>
+            <column name="column_name" value="GROUP_CLINICAL_NOTES"/>
+            <column name="display_type" value="GROUP"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
+            <column name="column_name" value="PRIOR_HEART_TRANSPLANT"/>
+            <column name="column_display" value="Prior listing for heart transplant"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;YES&quot;,&quot;name&quot;:&quot;Yes&quot;},{&quot;value&quot;:&quot;NO&quot;,&quot;name&quot;:&quot;No&quot;},{&quot;value&quot;:&quot;UNKNOWN&quot;,&quot;name&quot;:&quot;Unknown&quot;}]"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
+            <column name="column_name" value="RECEIVED_HEART_TRANSPLANT"/>
+            <column name="column_display" value="Received a heart transplant"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;YES&quot;,&quot;name&quot;:&quot;Yes&quot;},{&quot;value&quot;:&quot;NO&quot;,&quot;name&quot;:&quot;No&quot;},{&quot;value&quot;:&quot;UNKNOWN&quot;,&quot;name&quot;:&quot;Unknown&quot;}]"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
+            <column name="column_name" value="PROTEIN_LOSING_ENTEROPATHY"/>
+            <column name="column_display" value="Protein-losing enteropathy"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;YES&quot;,&quot;name&quot;:&quot;Yes&quot;},{&quot;value&quot;:&quot;NO&quot;,&quot;name&quot;:&quot;No&quot;},{&quot;value&quot;:&quot;UNKNOWN&quot;,&quot;name&quot;:&quot;Unknown&quot;}]"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
+            <column name="column_name" value="PLASTIC_BRONCHITIS"/>
+            <column name="column_display" value="Plastic bronchitis"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;YES&quot;,&quot;name&quot;:&quot;Yes&quot;},{&quot;value&quot;:&quot;NO&quot;,&quot;name&quot;:&quot;No&quot;},{&quot;value&quot;:&quot;UNKNOWN&quot;,&quot;name&quot;:&quot;Unknown&quot;}]"/>
+            <column name="order_number" value="4"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
+            <column name="column_name" value="STROKE"/>
+            <column name="column_display" value="Stroke (resulted in LoF)"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;YES&quot;,&quot;name&quot;:&quot;Yes&quot;},{&quot;value&quot;:&quot;NO&quot;,&quot;name&quot;:&quot;No&quot;},{&quot;value&quot;:&quot;UNKNOWN&quot;,&quot;name&quot;:&quot;Unknown&quot;}]"/>
+            <column name="order_number" value="5"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
+            <column name="column_name" value="SEIZURES"/>
+            <column name="column_display" value="Seizures requiring ongoing/out-patient antiepileptic medications"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;YES&quot;,&quot;name&quot;:&quot;Yes&quot;},{&quot;value&quot;:&quot;NO&quot;,&quot;name&quot;:&quot;No&quot;},{&quot;value&quot;:&quot;UNKNOWN&quot;,&quot;name&quot;:&quot;Unknown&quot;}]"/>
+            <column name="order_number" value="6"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
+            <column name="column_name" value="CARCINOMA"/>
+            <column name="column_display" value="Hepatocellular carcinoma"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;YES&quot;,&quot;name&quot;:&quot;Yes&quot;},{&quot;value&quot;:&quot;NO&quot;,&quot;name&quot;:&quot;No&quot;},{&quot;value&quot;:&quot;UNKNOWN&quot;,&quot;name&quot;:&quot;Unknown&quot;}]"/>
+            <column name="order_number" value="7"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
+            <column name="column_name" value="HISTORY_HEMOTYSIS"/>
+            <column name="column_display" value="History of hemoptysis requiring hospitalization / intervention"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;YES&quot;,&quot;name&quot;:&quot;Yes&quot;},{&quot;value&quot;:&quot;NO&quot;,&quot;name&quot;:&quot;No&quot;},{&quot;value&quot;:&quot;UNKNOWN&quot;,&quot;name&quot;:&quot;Unknown&quot;}]"/>
+            <column name="order_number" value="8"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
+            <column name="column_name" value="ECMO_VAD"/>
+            <column name="column_display" value="ECMO or VAD?"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;YES&quot;,&quot;name&quot;:&quot;Yes&quot;},{&quot;value&quot;:&quot;NO&quot;,&quot;name&quot;:&quot;No&quot;},{&quot;value&quot;:&quot;UNKNOWN&quot;,&quot;name&quot;:&quot;Unknown&quot;}]"/>
+            <column name="order_number" value="9"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
+            <column name="column_name" value="TACHYARRHYTMIAS"/>
+            <column name="column_display" value="Atrial tachyarrhythmias (atrial fibrillation, atrial flutter, or atrial tachycardia)"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;YES&quot;,&quot;name&quot;:&quot;Yes&quot;},{&quot;value&quot;:&quot;NO&quot;,&quot;name&quot;:&quot;No&quot;},{&quot;value&quot;:&quot;UNKNOWN&quot;,&quot;name&quot;:&quot;Unknown&quot;}]"/>
+            <column name="order_number" value="10"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
+            <column name="column_name" value="SUSTAINED_TACHYARRHYTMIAS"/>
+            <column name="column_display" value="Sustained ventricular tachyarrhythmias (ventricular tachycardia, ventricular fibrillation) (>30 sec)"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;YES&quot;,&quot;name&quot;:&quot;Yes&quot;},{&quot;value&quot;:&quot;NO&quot;,&quot;name&quot;:&quot;No&quot;},{&quot;value&quot;:&quot;UNKNOWN&quot;,&quot;name&quot;:&quot;Unknown&quot;}]"/>
+            <column name="order_number" value="11"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
+            <column name="column_name" value="ARRHYTMIAS_CARDIAC_ARREST"/>
+            <column name="column_display" value="Cardioversion, defibrillation, or arrhythmogenic cardiac arrest"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;YES&quot;,&quot;name&quot;:&quot;Yes&quot;},{&quot;value&quot;:&quot;NO&quot;,&quot;name&quot;:&quot;No&quot;},{&quot;value&quot;:&quot;UNKNOWN&quot;,&quot;name&quot;:&quot;Unknown&quot;}]"/>
+            <column name="order_number" value="12"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
+            <column name="column_name" value="PACEMAKER_ICD"/>
+            <column name="column_display" value="Pacemaker or ICD?"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;YES&quot;,&quot;name&quot;:&quot;Yes&quot;},{&quot;value&quot;:&quot;NO&quot;,&quot;name&quot;:&quot;No&quot;},{&quot;value&quot;:&quot;UNKNOWN&quot;,&quot;name&quot;:&quot;Unknown&quot;}]"/>
+            <column name="order_number" value="13"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
+            <column name="column_name" value="SURGICAL_HISTORY"/>
+            <column name="column_display" value="Surgical History – Initial Fontan procedure"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;ATRIAL_PULMONARY&quot;,&quot;name&quot;:&quot;Atrial-Pulmonary Connection&quot;},{&quot;value&quot;:&quot;ATRIAL_VENTRICULAR&quot;,&quot;name&quot;:&quot;Atrial-Ventricular Connection&quot;},{&quot;value&quot;:&quot;FENESTRATED&quot;,&quot;name&quot;:&quot;TCPC, Extracardiac Conduit, Fenestrated&quot;},{&quot;value&quot;:&quot;NONFENESTRATED&quot;,&quot;name&quot;:&quot;TCPC, Extracardiac Conduit, Nonfenestrated&quot;},{&quot;value&quot;:&quot;LATERAL_NONFENESTRATED&quot;,&quot;name&quot;:&quot;TCPC, Lateral Tunnel, Fenestrated&quot;},{&quot;value&quot;:&quot;LATERAL_UNFENESTRATED&quot;,&quot;name&quot;:&quot;TCPC, Lateral Tunnel, Unfenestrated&quot;},{&quot;value&quot;:&quot;HEPATIC_VEIN&quot;,&quot;name&quot;:&quot;Hepatic Vein to Azygous Baffle&quot;},{&quot;value&quot;:&quot;UNKNOWN&quot;,&quot;name&quot;:&quot;Unknown&quot;},{&quot;value&quot;:&quot;OTHER&quot;,&quot;name&quot;:&quot;Other&quot;},{&quot;value&quot;:&quot;NO_FONTAN&quot;,&quot;name&quot;:&quot;Patient has not yet undergone Fontan procedure&quot;}]"/>
+            <column name="order_number" value="14"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
+            <column name="column_name" value="FONTAN"/>
+            <column name="column_display" value="Has the patient had a Fontan Revision or Conversion?"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;YES&quot;,&quot;name&quot;:&quot;Yes&quot;},{&quot;value&quot;:&quot;NO&quot;,&quot;name&quot;:&quot;No&quot;},{&quot;value&quot;:&quot;UNKNOWN&quot;,&quot;name&quot;:&quot;Unknown&quot;}]"/>
+            <column name="order_number" value="15"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="GROUP_CLINICAL_NOTES"/>
+            <column name="column_name" value="FONTAN_TYPE"/>
+            <column name="column_display" value="If yes, what is the current Fontan type?"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;PULMONARY&quot;,&quot;name&quot;:&quot;Atrial-Pulmonary Connection&quot;},{&quot;value&quot;:&quot;VENTRICULAR&quot;,&quot;name&quot;:&quot;Atrial-Ventricular Connection&quot;},{&quot;value&quot;:&quot;FENESTRATED&quot;,&quot;name&quot;:&quot;TCPC, Extracardiac Conduit, Fenestrated&quot;},{&quot;value&quot;:&quot;NONFENESTRATED&quot;,&quot;name&quot;:&quot;TCPC, Extracardiac Conduit, Nonfenestrated&quot;},{&quot;value&quot;:&quot;LATERAL_FENESTRATED&quot;,&quot;name&quot;:&quot;TCPC, Lateral Tunnel, Fenestrated&quot;},{&quot;value&quot;:&quot;LATERAL_UNFENESTRATED&quot;,&quot;name&quot;:&quot;TCPC, Lateral Tunnel, Unfenestrated&quot;},{&quot;value&quot;:&quot;HEPATIC_VEIN&quot;,&quot;name&quot;:&quot;Hepatic Vein to Azygous Baffle&quot;},{&quot;value&quot;:&quot;UNKNOWN&quot;,&quot;name&quot;:&quot;Unknown&quot;},{&quot;value&quot;:&quot;OTHER&quot;,&quot;name&quot;:&quot;Other&quot;}]"/>
+            <column name="order_number" value="16"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

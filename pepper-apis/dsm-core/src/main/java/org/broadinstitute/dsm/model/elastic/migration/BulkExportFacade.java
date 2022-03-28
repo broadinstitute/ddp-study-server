@@ -41,12 +41,15 @@ public class BulkExportFacade {
             logger.info("attempting to upsert participants");
             if (bulkRequest.requests().size() > 0) {
                 client.bulk(bulkRequest, RequestOptions.DEFAULT);
+                logger.info(bulkRequest.requests().size() + " participants have successfully upserted");
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
     }
 
 
+    public void clear() {
+        this.bulkRequest.requests().clear();
+    }
 }

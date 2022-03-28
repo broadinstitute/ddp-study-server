@@ -10,6 +10,7 @@ import static org.junit.Assert.fail;
 
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,10 +34,10 @@ import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
+import org.broadinstitute.ddp.model.activity.instance.answer.DecimalAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DecimalAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
@@ -295,14 +296,14 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             var info = fileDao.findFileInfoByGuid(upload.getGuid()).get();
 
             var answerDao = daoBuilder.buildDao(handle);
-            var created = new FileAnswer(null, act.getFileQuestion().getStableId(), null, info);
+            var created = new FileAnswer(null, act.getFileQuestion().getStableId(), null, Collections.singletonList(info));
             answerDao.createAnswer(testData.getUserId(), instanceId, created);
 
             assertTrue(created.getAnswerId() > 0);
             assertEquals(QuestionType.FILE, created.getQuestionType());
             assertNotNull(created.getValue());
 
-            var updated = new FileAnswer(null, act.getFileQuestion().getStableId(), null, info);
+            var updated = new FileAnswer(null, act.getFileQuestion().getStableId(), null, Collections.singletonList(info));
             answerDao.updateAnswer(testData.getUserId(), created.getAnswerId(), updated);
 
             assertEquals(created.getAnswerId(), updated.getAnswerId());
@@ -312,7 +313,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             assertEquals(QuestionType.FILE, queried.getQuestionType());
             assertNotNull(queried.getValue());
 
-            var queriedInfo = ((FileAnswer) queried).getValue();
+            var queriedInfo = ((FileAnswer) queried).getValue().get(0);
             assertEquals(info.getUploadId(), queriedInfo.getUploadId());
             assertEquals(info.getFileName(), queriedInfo.getFileName());
             assertEquals(info.getFileSize(), queriedInfo.getFileSize());

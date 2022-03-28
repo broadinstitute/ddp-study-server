@@ -12,6 +12,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.EquationQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
@@ -53,6 +54,9 @@ public class QuestionCreator {
                     break;
                 case DECIMAL:
                     question = creatorHelper.createDecimalQuestion(ctx, (DecimalQuestionDef) questionDef);
+                    break;
+                case EQUATION:
+                    question = creatorHelper.createEquationQuestion(ctx, (EquationQuestionDef) questionDef);
                     break;
                 case PICKLIST:
                     question = creatorHelper.createPicklistQuestion(ctx, (PicklistQuestionDef) questionDef);
