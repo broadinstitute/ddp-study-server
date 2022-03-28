@@ -49,7 +49,7 @@ public enum Operator {
                 return op;
             }
         }
-        throw new IllegalArgumentException(UNKNOWN_OPERATOR);
+        throw new IllegalArgumentException(UNKNOWN_OPERATOR + " " + value);
     }
 
     public static Operator extract(String filter) {

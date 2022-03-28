@@ -21,4 +21,12 @@ public class IsNotNullSplitterTest {
         splitter.setFilter(filter);
         assertEquals("kitLabel", splitter.getInnerProperty());
     }
+
+    @Test
+    public void getInnerPropertyAdditionalValuesJson() {
+        BaseSplitter splitter = new IsNotNullSplitter();
+        String filter = "k.additional_tissue_value_json IS NOT NULL";
+        splitter.setFilter(filter);
+        assertEquals("dynamicFields", splitter.getInnerProperty());
+    }
 }

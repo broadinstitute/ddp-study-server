@@ -2,7 +2,7 @@ package org.broadinstitute.dsm.model.elastic.filter.splitter;
 
 import org.broadinstitute.dsm.model.Filter;
 
-public class IsNullSplitterStrategy extends SplitterStrategy {
+public class IsNullSplitterStrategy extends NullBaseSplitter {
 
     @Override
     public String[] split() {
