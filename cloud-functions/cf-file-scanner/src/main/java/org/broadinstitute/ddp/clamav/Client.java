@@ -28,8 +28,8 @@ public class Client {
         NULL((byte)'z', (byte)0x00),
         NEWLINE((byte)'n', (byte)0x0A);
 
-        final private byte[] modeFlag;
-        final private byte[] lineTerminator;
+        private final byte[] modeFlag;
+        private final byte[] lineTerminator;
 
         private Delimiter(byte modeFlag, byte lineTerminator) {
             this.modeFlag = new byte[] { modeFlag };
