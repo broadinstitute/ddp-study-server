@@ -21,6 +21,7 @@ public interface JdbiEquationQuestion extends SqlObject {
             + "       q.study_activity_id as activity_id, "
             + "       q.question_prompt_template_id as prompt_template_id, "
             + "       eq.expression, eq.maximum_decimal_places, "
+            + "       eq.placeholder_template_id, "
             + "       qt.question_type_code as question_type, "
             + "       qsc.stable_id, "
             + "       rev.start_date as revision_start, "
