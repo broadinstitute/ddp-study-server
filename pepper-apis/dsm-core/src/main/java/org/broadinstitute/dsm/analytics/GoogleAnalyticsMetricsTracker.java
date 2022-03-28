@@ -22,7 +22,7 @@ public class GoogleAnalyticsMetricsTracker {
         initStudyMetricTracker();
     }
 
-    public static void setConfig(@NonNull Config config){
+    public static void setConfig(@NonNull Config config) {
         CONFIG = config;
     }
 
@@ -46,10 +46,9 @@ public class GoogleAnalyticsMetricsTracker {
     }
 
     private synchronized void initStudyMetricTracker() {
-        GoogleAnalytics metricTracker = GoogleAnalytics.builder()
-                .withConfig(new GoogleAnalyticsConfig().setGatherStats(true).setUserAgent("Custom User Agent"))
-                .withTrackingId(getAnalyticsToken(CONFIG))
-                .build();
+        GoogleAnalytics metricTracker =
+                GoogleAnalytics.builder().withConfig(new GoogleAnalyticsConfig().setGatherStats(true).setUserAgent("Custom User Agent"))
+                        .withTrackingId(getAnalyticsToken(CONFIG)).build();
         googleAnalyticsTrackers = metricTracker;
         logger.info("Initialized GA Metrics Tracker for DSM ");
     }
@@ -58,23 +57,20 @@ public class GoogleAnalyticsMetricsTracker {
     private void sendEventMetrics(EventHit eventHit) {
         GoogleAnalytics metricTracker = getMetricTracker();
         if (metricTracker != null) {
-            GoogleAnalyticsResponse response = metricTracker.event().eventCategory(eventHit.eventCategory())
-                    .eventAction(eventHit.eventAction())
-                    .eventLabel(eventHit.eventLabel())
-                    .eventValue(eventHit.eventValue())
-                    .trackingId(getAnalyticsToken(CONFIG))
-                    .send();
+            GoogleAnalyticsResponse response =
+                    metricTracker.event().eventCategory(eventHit.eventCategory()).eventAction(eventHit.eventAction())
+                            .eventLabel(eventHit.eventLabel()).eventValue(eventHit.eventValue()).trackingId(getAnalyticsToken(CONFIG))
+                            .send();
 
             logger.info(response.toString());
-            logger.info(response.getStatusCode()+"");
-            logger.info(metricTracker.getStats().getEventHits()+"");
+            logger.info(response.getStatusCode() + "");
+            logger.info(metricTracker.getStats().getEventHits() + "");
 
         }
     }
 
     public void sendAnalyticsMetrics(String studyGuid, String category, String action, String label, int value) {
-        String gaEventLabel = String.join(":", label,
-                studyGuid);
+        String gaEventLabel = String.join(":", label, studyGuid);
         EventHit eventHit = new EventHit(category, action, gaEventLabel, value);
         logger.info(eventHit.toString());
         sendEventMetrics(eventHit);

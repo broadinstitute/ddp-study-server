@@ -1834,7 +1834,7 @@ public class PatchFormAnswersRouteStandaloneTest {
     @Test
     public void testPatch_fileAnswer_createAndUpdate() {
         var stableId = fileQuestion.getStableId();
-        var submission = new AnswerSubmission(stableId, null, gson.toJsonTree(upload1.getGuid()));
+        var submission = new AnswerSubmission(stableId, null, gson.toJsonTree(List.of(upload1.getGuid())));
         var data = new PatchAnswerPayload(List.of(submission));
         String guid = givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat()
@@ -1852,10 +1852,10 @@ public class PatchFormAnswersRouteStandaloneTest {
         assertEquals(guid, answer.get().getAnswerGuid());
         assertEquals(stableId, answer.get().getQuestionStableId());
         assertEquals(QuestionType.FILE, answer.get().getQuestionType());
-        assertEquals(upload1.getFileName(), ((FileAnswer)answer.get()).getValue().getFileName());
-        assertEquals(upload1.getFileSize(), ((FileAnswer)answer.get()).getValue().getFileSize());
+        assertEquals(upload1.getFileName(), ((FileAnswer)answer.get()).getInfo(0).getFileName());
+        assertEquals(upload1.getFileSize(), ((FileAnswer)answer.get()).getInfo(0).getFileSize());
 
-        submission = new AnswerSubmission(stableId, guid, gson.toJsonTree(upload2.getGuid()));
+        submission = new AnswerSubmission(stableId, guid, gson.toJsonTree(List.of(upload2.getGuid())));
         data = new PatchAnswerPayload(List.of(submission));
         String nextGuid = givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat()
@@ -1866,7 +1866,7 @@ public class PatchFormAnswersRouteStandaloneTest {
         answer =  TransactionWrapper.withTxn(handle ->
                 new AnswerCachedDao(handle).findAnswerByGuid(guid));
         assertTrue(answer.isPresent());
-        assertEquals(upload2.getFileName(), ((FileAnswer) answer.get()).getValue().getFileName());
+        assertEquals(upload2.getFileName(), ((FileAnswer) answer.get()).getInfo(0).getFileName());
     }
 
     @Test
@@ -1882,17 +1882,17 @@ public class PatchFormAnswersRouteStandaloneTest {
         var answer = TransactionWrapper.withTxn(handle ->
                 new AnswerCachedDao(handle).findAnswerByGuid(guid));
         assertTrue(answer.isPresent());
-        assertNull("created answer should have null for value", answer.get().getValue());
+        assertNull("created answer should have null for value", ((List<?>) answer.get().getValue()).get(0));
 
         // Set a value then clear it.
-        data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, guid, gson.toJsonTree(upload1.getGuid()))));
+        data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, guid, gson.toJsonTree(List.of(upload1.getGuid())))));
         givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat().statusCode(200);
         answer = TransactionWrapper.withTxn(handle ->
                 new AnswerCachedDao(handle).findAnswerByGuid(guid));
         assertTrue(answer.isPresent());
         assertNotNull(answer.get().getValue());
-        assertEquals(upload1.getFileName(), ((FileAnswer) answer.get()).getValue().getFileName());
+        assertEquals(upload1.getFileName(), ((FileAnswer) answer.get()).getInfo(0).getFileName());
 
         data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, guid, null)));
         givenAnswerPatchRequest(instanceGuid, data)
@@ -1900,13 +1900,13 @@ public class PatchFormAnswersRouteStandaloneTest {
         answer = TransactionWrapper.withTxn(handle ->
                 new AnswerCachedDao(handle).findAnswerByGuid(guid));
         assertTrue(answer.isPresent());
-        assertNull("answer value should be cleared", answer.get().getValue());
+        assertNull("answer value should be cleared", ((List<?>) answer.get().getValue()).get(0));
     }
 
     @Test
     public void testPatch_fileAnswer_fileNotFound() {
         var stableId = fileQuestion.getStableId();
-        var data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, null, gson.toJsonTree("foobar"))));
+        var data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, null, gson.toJsonTree(List.of("foobar")))));
         givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat()
                 .statusCode(400).contentType(ContentType.JSON)

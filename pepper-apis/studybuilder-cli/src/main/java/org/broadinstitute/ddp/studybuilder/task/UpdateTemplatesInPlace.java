@@ -46,6 +46,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuesti
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.EquationQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
@@ -404,6 +405,10 @@ public class UpdateTemplatesInPlace implements CustomTask {
             case DECIMAL:
                 DecimalQuestionDef decimalQuestion = (DecimalQuestionDef) question;
                 extractAndCompare(handle, prefix, decimalQuestion.getPlaceholderTemplate(), questionCfg, "placeholderTemplate");
+                break;
+            case EQUATION:
+                EquationQuestionDef equationQuestion = (EquationQuestionDef) question;
+                extractAndCompare(handle, prefix, equationQuestion.getPlaceholderTemplate(), questionCfg, "placeholderTemplate");
                 break;
             case PICKLIST:
                 traversePicklistQuestion(handle, questionCfg, (PicklistQuestionDef) question);

@@ -1,16 +1,16 @@
 package org.broadinstitute.dsm.model.participant;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.AbstractionActivity;
-import org.broadinstitute.dsm.db.AbstractionGroup;
-import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
@@ -60,22 +60,19 @@ public class ParticipantWrapper {
     public ParticipantWrapperResult getFilteredList() {
         logger.info("Getting list of participant information");
 
-        DDPInstanceDto ddpInstanceDto = participantWrapperPayload.getDdpInstanceDto()
-                .orElseThrow();
+        DDPInstanceDto ddpInstanceDto = participantWrapperPayload.getDdpInstanceDto().orElseThrow();
 
         if (StringUtils.isBlank(ddpInstanceDto.getEsParticipantIndex())) {
             throw new RuntimeException("No participant index setup in ddp_instance table for " + ddpInstanceDto.getInstanceName());
         }
 
-        return participantWrapperPayload.getFilter()
-                .map(filters -> {
-                    fetchAndPrepareDataByFilters(filters);
-                    return new ParticipantWrapperResult(esData.getTotalCount(), collectData());
-                })
-                .orElseGet(() -> {
-                    fetchAndPrepareData();
-                    return new ParticipantWrapperResult(esData.getTotalCount(), collectData());
-                });
+        return participantWrapperPayload.getFilter().map(filters -> {
+            fetchAndPrepareDataByFilters(filters);
+            return new ParticipantWrapperResult(esData.getTotalCount(), collectData());
+        }).orElseGet(() -> {
+            fetchAndPrepareData();
+            return new ParticipantWrapperResult(esData.getTotalCount(), collectData());
+        });
     }
 
     private void fetchAndPrepareDataByFilters(Map<String, String> filters) {
@@ -88,8 +85,7 @@ public class ParticipantWrapper {
                     queryBuilder.setFilter(filters.get(source));
                     queryBuilder.setParser(parser);
                     boolQueryBuilder.must(queryBuilder.build());
-                }
-                else if (ElasticSearchUtil.ES.equals(source)){
+                } else if (ElasticSearchUtil.ES.equals(source)) {
                     //source is not of any study-manager table so it must be ES
                     boolQueryBuilder.must(ElasticSearchUtil.createESQuery(filters.get(source)));
                 }
@@ -104,20 +100,14 @@ public class ParticipantWrapper {
     }
 
     private boolean isUnderDsmKey(String source) {
-        return DBConstants.DDP_PARTICIPANT_ALIAS.equals(source)
-                || DBConstants.DDP_MEDICAL_RECORD_ALIAS.equals(source)
-                || DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS.equals(source)
-                || DBConstants.DDP_KIT_REQUEST_ALIAS.equals(source)
-                || DBConstants.DDP_TISSUE_ALIAS.equals(source)
-                || DBConstants.DDP_ONC_HISTORY_ALIAS.equals(source)
-                || DBConstants.DDP_PARTICIPANT_DATA_ALIAS.equals(source)
-                || DBConstants.DDP_PARTICIPANT_RECORD_ALIAS.equals(source);
+        return DBConstants.DDP_PARTICIPANT_ALIAS.equals(source) || DBConstants.DDP_MEDICAL_RECORD_ALIAS.equals(source)
+                || DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS.equals(source) || DBConstants.DDP_KIT_REQUEST_ALIAS.equals(source)
+                || DBConstants.DDP_TISSUE_ALIAS.equals(source) || DBConstants.DDP_ONC_HISTORY_ALIAS.equals(source)
+                || DBConstants.DDP_PARTICIPANT_DATA_ALIAS.equals(source) || DBConstants.DDP_PARTICIPANT_RECORD_ALIAS.equals(source);
     }
 
     private void fetchAndPrepareData() {
-        esData = elasticSearchable.getParticipantsWithinRange(
-                getEsParticipantIndex(),
-                participantWrapperPayload.getFrom(),
+        esData = elasticSearchable.getParticipantsWithinRange(getEsParticipantIndex(), participantWrapperPayload.getFrom(),
                 participantWrapperPayload.getTo());
     }
 
@@ -126,7 +116,7 @@ public class ParticipantWrapper {
         logger.info("Collecting participant data...");
         List<ParticipantWrapperDto> result = new ArrayList<>();
         List<String> proxyGuids = new ArrayList<>();
-        for (ElasticSearchParticipantDto elasticSearchParticipantDto: esData.getEsParticipants()) {
+        for (ElasticSearchParticipantDto elasticSearchParticipantDto : esData.getEsParticipants()) {
 
             elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
 
@@ -169,16 +159,11 @@ public class ParticipantWrapper {
     }
 
     //method to avoid ES request for each participant's proxy
-    void fillParticipantWrapperDtosWithProxies(List<ParticipantWrapperDto> result,
-                                               List<String> proxyGuids) {
+    void fillParticipantWrapperDtosWithProxies(List<ParticipantWrapperDto> result, List<String> proxyGuids) {
         String esUsersIndex = participantWrapperPayload.getDdpInstanceDto().orElseThrow().getEsUsersIndex();
-        SortBy profileCreatedAt = new SortBy.Builder()
-                .withType(Filter.NUMBER)
-                .withOrder("asc")
-                .withInnerProperty(ElasticSearchUtil.CREATED_AT)
-                .withOuterProperty(ElasticSearchUtil.PROFILE)
-                .withTableAlias(ElasticSearchUtil.DATA)
-                .build();
+        SortBy profileCreatedAt =
+                new SortBy.Builder().withType(Filter.NUMBER).withOrder("asc").withInnerProperty(ElasticSearchUtil.CREATED_AT)
+                        .withOuterProperty(ElasticSearchUtil.PROFILE).withTableAlias(ElasticSearchUtil.DATA).build();
         FieldTypeExtractor fieldTypeExtractor = new FieldTypeExtractor();
         fieldTypeExtractor.setIndex(esUsersIndex);
         Sort sort = Sort.of(profileCreatedAt, fieldTypeExtractor);
@@ -196,37 +181,38 @@ public class ParticipantWrapper {
     private void mapTissueToProperOncHistoryDetail(List<OncHistoryDetail> oncHistoryDetails, List<Tissue> tissues) {
         for (Tissue tissue : tissues) {
             long oncHistoryDetailId = tissue.getOncHistoryDetailId();
-            oncHistoryDetails.stream()
-                    .filter(oncHistoryDetail -> oncHistoryDetail.getOncHistoryDetailId() == oncHistoryDetailId)
-                    .findFirst()
-                    .ifPresent(oncHistoryDetail -> oncHistoryDetail.getTissues().add(tissue));
+            oncHistoryDetails.stream().filter(oncHistoryDetail -> oncHistoryDetail.getOncHistoryDetailId() == oncHistoryDetailId)
+                    .findFirst().ifPresent(oncHistoryDetail -> oncHistoryDetail.getTissues().add(tissue));
         }
     }
 
     void sortBySelfElseById(List<ParticipantData> participantDatas) {
         participantDatas.sort((o1, o2) -> {
-            Map<String, String> pData = ObjectMapperSingleton.readValue(o1.getData().orElse(StringUtils.EMPTY), new TypeReference<Map<String, String>>() {});
-            Map<String, String> pData2 = ObjectMapperSingleton.readValue(o2.getData().orElse(StringUtils.EMPTY), new TypeReference<Map<String, String>>() {});
-            if (Objects.nonNull(pData) && FamilyMemberConstants.MEMBER_TYPE_SELF.equals(pData.get(FamilyMemberConstants.MEMBER_TYPE))) return -1;
-            if (Objects.nonNull(pData2) && FamilyMemberConstants.MEMBER_TYPE_SELF.equals(pData2.get(FamilyMemberConstants.MEMBER_TYPE))) return 1;
+            Map<String, String> ptData =
+                    ObjectMapperSingleton.readValue(o1.getData().orElse(StringUtils.EMPTY), new TypeReference<Map<String, String>>() {
+                    });
+            Map<String, String> ptData2 =
+                    ObjectMapperSingleton.readValue(o2.getData().orElse(StringUtils.EMPTY), new TypeReference<Map<String, String>>() {
+                    });
+            if (Objects.nonNull(ptData) && FamilyMemberConstants.MEMBER_TYPE_SELF.equals(ptData.get(FamilyMemberConstants.MEMBER_TYPE))) {
+                return -1;
+            }
+            if (Objects.nonNull(ptData2) && FamilyMemberConstants.MEMBER_TYPE_SELF.equals(ptData2.get(FamilyMemberConstants.MEMBER_TYPE))) {
+                return 1;
+            }
             return o1.getParticipantDataId() - o2.getParticipantDataId();
         });
     }
 
     List<String> getParticipantIdsFromElasticList(List<ElasticSearchParticipantDto> elasticSearchParticipantDtos) {
-        return elasticSearchParticipantDtos.
-                stream()
-                .flatMap(elasticSearch -> elasticSearch.getProfile().stream())
-                .map(ESProfile::getGuid)
+        return elasticSearchParticipantDtos.stream().flatMap(elasticSearch -> elasticSearch.getProfile().stream()).map(ESProfile::getGuid)
                 .collect(Collectors.toList());
     }
 
     Map<String, List<String>> getProxiesIdsFromElasticList(List<ElasticSearchParticipantDto> elasticSearchParticipantDtos) {
         Map<String, List<String>> participantsWithProxies = new HashMap<>();
-        elasticSearchParticipantDtos.stream()
-                .filter(esParticipantData -> esParticipantData.getProxies().size() > 0)
-                .forEach(esParticipantData ->
-                        participantsWithProxies.put(esParticipantData.getParticipantId(), esParticipantData.getProxies()));
+        elasticSearchParticipantDtos.stream().filter(esParticipantData -> esParticipantData.getProxies().size() > 0).forEach(
+                esParticipantData -> participantsWithProxies.put(esParticipantData.getParticipantId(), esParticipantData.getProxies()));
         return participantsWithProxies;
     }
 

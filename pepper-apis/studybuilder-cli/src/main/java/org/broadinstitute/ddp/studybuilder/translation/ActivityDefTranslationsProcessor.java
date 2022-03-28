@@ -26,6 +26,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.EquationQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
@@ -239,6 +240,9 @@ public class ActivityDefTranslationsProcessor {
             case DECIMAL:
                 addTemplateTranslations(((DecimalQuestionDef) questionDef).getPlaceholderTemplate(), allTranslations);
                 break;
+            case EQUATION:
+                addTemplateTranslations(((EquationQuestionDef) questionDef).getPlaceholderTemplate(), allTranslations);
+                break;
             case PICKLIST:
                 addTemplateTranslations(((PicklistQuestionDef) questionDef).getPicklistLabelTemplate(), allTranslations);
                 ((PicklistQuestionDef) questionDef).getGroups().forEach(this::enrichPickListOptionGroup);
@@ -253,6 +257,7 @@ public class ActivityDefTranslationsProcessor {
                 break;
             case MATRIX:
                 addTemplateTranslations(((MatrixQuestionDef) questionDef).getModalTemplate(), allTranslations);
+                addTemplateTranslations(((MatrixQuestionDef) questionDef).getModalTitleTemplate(), allTranslations);
                 ((MatrixQuestionDef) questionDef).getGroups().forEach(this::enrichMatrixGroupWithTranslations);
                 ((MatrixQuestionDef) questionDef).getOptions().forEach(this::enrichMatrixGroupWithTranslations);
                 ((MatrixQuestionDef) questionDef).getRows().forEach(this::enrichMatrixOptionWithTranslations);

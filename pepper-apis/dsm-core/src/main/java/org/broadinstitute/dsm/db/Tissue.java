@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.db;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -206,10 +205,6 @@ public class Tissue {
         return tissue;
     }
 
-    public static TissueSmId getSMIds(ResultSet rs) {
-        return TissueSmId.getSMIdsForTissueId(rs);
-    }
-
     public static List<Tissue> getTissue(@NonNull Connection conn, @NonNull String oncHistoryDetailId) {
         List<Tissue> tissueList = new ArrayList<>();
         SimpleResult dbVals = new SimpleResult();
@@ -241,6 +236,10 @@ public class Tissue {
         tissueList.addAll(tissues.values());
         logger.info("Found " + tissueList.size() + " tissue for oncHistoryDetails w/ id " + oncHistoryDetailId);
         return tissueList;
+    }
+
+    public static TissueSmId getSMIds(ResultSet rs) {
+        return TissueSmId.getSMIdsForTissueId(rs);
     }
 
     public static String createNewTissue(@NonNull String oncHistoryId, @NonNull String user) {
@@ -279,12 +278,8 @@ public class Tissue {
 
     @JsonProperty("dynamicFields")
     public Map<String, Object> getDynamicFields() {
-        try {
-            return ObjectMapperSingleton.instance().readValue(additionalValuesJson, new TypeReference<Map<String, Object>>() {
-            });
-        } catch (IOException | NullPointerException e) {
-            return Map.of();
-        }
+        return ObjectMapperSingleton.readValue(additionalValuesJson, new TypeReference<Map<String, Object>>() {
+        });
     }
 
     @JsonProperty("hECount")
