@@ -17,13 +17,14 @@ public interface JdbiEquationQuestion extends SqlObject {
                @Bind("maximumDecimalPlaces") final Integer maximumDecimalPlaces,
                @Bind("expression") final String expression);
 
-
     @SqlQuery("select q.*, "
             + "       q.study_activity_id as activity_id, "
             + "       q.question_prompt_template_id as prompt_template_id, "
             + "       eq.expression, eq.maximum_decimal_places, "
             + "       qt.question_type_code as question_type, "
-            + "       qsc.stable_id "
+            + "       qsc.stable_id, "
+            + "       rev.start_date as revision_start, "
+            + "       rev.end_date   as revision_end "
             + "from equation_question eq "
             + "join question q "
             + "  on q.question_id = eq.question_id "
@@ -33,7 +34,9 @@ public interface JdbiEquationQuestion extends SqlObject {
             + "  on qsc.question_stable_code_id = q.question_stable_code_id "
             + "join activity_instance ai "
             + "  on ai.study_activity_id = q.study_activity_id "
-            + "where ai.activity_instance_guid = :activityInstanceGuid")
+            + "join revision as rev "
+            + "  on rev.revision_id = q.revision_id "
+            + "where ai.activity_instance_guid = :activityInstanceGuid and rev.end_date is null")
     @RegisterConstructorMapper(EquationQuestionDto.class)
     List<EquationQuestionDto> findEquationsByActivityInstanceGuid(@Bind("activityInstanceGuid") String activityInstanceGuid);
 }
