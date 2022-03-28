@@ -5,6 +5,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiBlockContent;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
@@ -28,6 +29,9 @@ import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.sqlobject.SqlObject;
+import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,13 +43,11 @@ public class OsteoPrequalUpdate implements CustomTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(OsteoPrequalUpdate.class);
     private static final String FILE = "patches/prequal-updates.conf";
-    private static final String DATA_FILE = "prequal.conf";
     private static final String STUDY_GUID = "CMI-OSTEO";
     private static final String ACTIVITY_CODE = "PREQUAL";
 
     private Config dataCfg;
     private Config studyCfg;
-    private Config cfg;
     private Gson gson;
     private Instant timestamp;
 
@@ -59,11 +61,6 @@ public class OsteoPrequalUpdate implements CustomTask {
             throw new DDPException("Data file is missing: " + file);
         }
         this.dataCfg = ConfigFactory.parseFile(file).resolveWith(varsCfg);
-        File filecfg = cfgPath.getParent().resolve(DATA_FILE).toFile();
-        if (!filecfg.exists()) {
-            throw new DDPException("Data file is missing: " + filecfg);
-        }
-        this.cfg = ConfigFactory.parseFile(filecfg).resolveWith(varsCfg);
         this.studyCfg = studyCfg;
         this.gson = GsonUtil.standardGson();
         this.timestamp = Instant.now();
@@ -73,13 +70,14 @@ public class OsteoPrequalUpdate implements CustomTask {
     public void run(Handle handle) {
         User adminUser = handle.attach(UserDao.class).findUserByGuid(studyCfg.getString("adminUser.guid")).get();
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(STUDY_GUID);
-        long activityId = ActivityBuilder.findActivityId(handle, adminUser.getId(), ACTIVITY_CODE);
+        long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), ACTIVITY_CODE);
         String versionTag = dataCfg.getString("versionTag");
 
         String reason = String.format(
                 "Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
                 STUDY_GUID, ACTIVITY_CODE, versionTag);
         RevisionMetadata meta = new RevisionMetadata(timestamp.toEpochMilli(), adminUser.getId(), reason);
+        LOG.info("Making revision for new changes in blocks");
         revisionPrequal(activityId, dataCfg, handle, meta, versionTag);
     }
 
@@ -93,6 +91,7 @@ public class OsteoPrequalUpdate implements CustomTask {
         Config blockConfig = dataCfg.getConfig("blocksInsert").getConfig("block");
         int order = dataCfg.getConfig("blocksInsert").getInt("blockOrder");
         int sectionOrder = dataCfg.getConfig("blocksInsert").getInt("sectionOrder");
+
         ActivityDto activityDto = handle.attach(JdbiActivity.class)
                 .findActivityByStudyGuidAndCode(STUDY_GUID, ACTIVITY_CODE).get();
         FormActivityDef currentDef = (FormActivityDef) handle.attach(ActivityDao.class).findDefByDtoAndVersion(activityDto, def);
@@ -101,31 +100,45 @@ public class OsteoPrequalUpdate implements CustomTask {
 
         SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
         RevisionDto revDto = RevisionDto.fromStartMetadata(def.getRevId(), revisionMetadata);
+
+        LOG.info("Trying to insert new block");
         sectionBlockDao.addBlock(activityId, currentSectionDef.getSectionId(),
                 order, blockDef, revDto);
     }
 
     private void updateQuestion(Handle handle, long activityId, Config dataCfg, RevisionMetadata revisionMetadata) {
+        SqlHelper helper = handle.attach(SqlHelper.class);
+        JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
+        TemplateDao templateDao = handle.attach(TemplateDao.class);
+        JdbiBlockContent jdbiBlockContent = handle.attach(JdbiBlockContent.class);
         String stableId = dataCfg.getConfig("questionUpdate").getString("stableId");
         Config questionConf = dataCfg.getConfig("questionUpdate").getConfig("question");
         PicklistQuestionDef questionBlockDef = gson.fromJson(ConfigUtil.toJson(questionConf), PicklistQuestionDef.class);
-        Template promptTemplate = questionBlockDef.getPromptTemplate();
-        JdbiQuestion questionContent = handle.attach(JdbiQuestion.class);
-        QuestionDto questionDto = handle.attach(JdbiQuestion.class)
-                .findDtoByActivityIdAndQuestionStableId(activityId, stableId).get();
-        TemplateDao templateDao = handle.attach(TemplateDao.class);
+        Template templateToInsert = questionBlockDef.getPromptTemplate();
 
         JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
+        QuestionDto questionDto = jdbiQuestion.findDtoByActivityIdAndQuestionStableId(activityId, stableId).get();
+
         long newRevId = jdbiRevision.copyAndTerminate(questionDto.getRevisionId(), revisionMetadata);
-        int numUpdated = questionContent.updateRevisionIdById(questionDto.getId(), newRevId);
+        int numUpdated = jdbiQuestion.updateRevisionIdById(questionDto.getId(), newRevId);
         if (numUpdated != 1) {
             throw new DDPException(String.format(
-                    "Unable to terminate active question with id=%d, revId=%d, promptTemplateId=%d",
-                    questionDto.getId(), questionDto.getRevisionId(), questionDto.getPromptTemplateId()));
+                    "Unable to terminate active block_content with id=%d, blockId=%d, bodyTemplateId=%d",
+                    questionDto.getId(), questionDto.getId(), questionDto.getPromptTemplateId()));
         }
 
         templateDao.disableTemplate(questionDto.getPromptTemplateId(), revisionMetadata);
-        RevisionDto revisionDto = RevisionDto.fromStartMetadata(questionDto.getRevisionId(), revisionMetadata);
-        templateDao.insertTemplate(promptTemplate, revisionDto.getId());
+
+        RevisionDto revisionDto = RevisionDto.fromStartMetadata(revisionMetadata.getUserId(), revisionMetadata);
+        var questionId = questionDto.getId();
+        long blockId = helper.getBlockIdByQuestionId(questionId);
+        long templateId = templateDao.insertTemplate(templateToInsert, revisionDto.getId());
+        jdbiBlockContent.insert(blockId, templateId, null, revisionDto.getId());
+    }
+
+    private interface SqlHelper extends SqlObject {
+        @SqlQuery("select block_id from block__question where question_id =:question_id")
+        long getBlockIdByQuestionId(@Bind("question_id") long questionId);
+
     }
 }
