@@ -19,17 +19,17 @@ public class DynamicFieldsMappingMigratorTest {
     @Test
     @Ignore
     public void testExport() {
-        final String index = "participants_structured.atcp.atcp";
-        final String study = "atcp";
+        final String index = "participants_structured.testboston.testboston";
+        final String study = "testboston";
         List<? extends Exportable> exportables = Arrays.asList(
                 //DynamicFieldsMappingMigrator should be first in the list to make sure that mapping will be exported for first
                 new DynamicFieldsMappingMigrator(index, study),
+                new KitRequestShippingMigrator(index, study),
                 new ParticipantDataMigrator(index, study),
                 new ParticipantMigrator(index, study),
                 new OncHistoryMigrator(index, study),
                 new MedicalRecordMigrator(index, study),
                 new OncHistoryDetailsMigrator(index, study),
-                new KitRequestShippingMigrator(index, study),
                 new TissueMigrator(index, study));
         exportables.forEach(Exportable::export);
 

@@ -8,23 +8,39 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.Filter;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.*;
 
 public enum Operator {
 
-    LIKE(Filter.LIKE_TRIMMED), EQUALS(Filter.EQUALS_TRIMMED), GREATER_THAN_EQUALS(Filter.LARGER_EQUALS_TRIMMED),
-    LESS_THAN_EQUALS(Filter.SMALLER_EQUALS_TRIMMED), IS_NOT_NULL(Filter.IS_NOT_NULL_TRIMMED), IS_NULL(Filter.IS_NULL_TRIMMED),
-    DIAMOND_EQUALS(Filter.DIAMOND_EQUALS), MULTIPLE_OPTIONS(Operator.MULTIPLE_OPTIONS_INDICATOR), STR_DATE(Filter.DATE_FORMAT),
-    DATE_GREATER_THAN_EQUALS(Filter.DATE_GREATER), DATE_LESS_THAN_EQUALS(Filter.DATE_LESS), JSON_EXTRACT(Filter.JSON_EXTRACT),
-    JSON_CONTAINS(Filter.JSON_CONTAINS), DATE(Filter.DATE);
+    LIKE(Filter.LIKE_TRIMMED, new LikeSplitterStrategy()),
+    EQUALS(Filter.EQUALS_TRIMMED, new EqualsSplitterStrategy()),
+    GREATER_THAN_EQUALS(Filter.LARGER_EQUALS_TRIMMED, new GreaterThanEqualsSplitterStrategy()),
+    LESS_THAN_EQUALS(Filter.SMALLER_EQUALS_TRIMMED, new LessThanEqualsSplitterStrategy()),
+    IS_NOT_NULL(Filter.IS_NOT_NULL_TRIMMED, new IsNotNullSplitterStrategy()),
+    IS_NULL(Filter.IS_NULL_TRIMMED, new IsNullSplitterStrategy()),
+    DIAMOND_EQUALS(Filter.DIAMOND_EQUALS, new DiamondEqualsSplitterStrategy()),
+    MULTIPLE_OPTIONS(Operator.MULTIPLE_OPTIONS_INDICATOR, new MultipleOptionsSplitterStrategy()),
+    STR_DATE(Filter.DATE_FORMAT, new StrDateSplitterStrategy()),
+    DATE_GREATER_THAN_EQUALS(Filter.DATE_GREATER, new DateGreaterSplitterStrategy()),
+    DATE_LESS_THAN_EQUALS(Filter.DATE_LESS, new DateLowerSplitterStrategy()),
+    JSON_EXTRACT(Filter.JSON_EXTRACT, new JsonExtractSplitterStrategy()),
+    JSON_CONTAINS(Filter.JSON_CONTAINS, new JsonContainsSplitterStrategy()),
+    DATE(Filter.DATE, new DateSplitterStrategy());
 
     public static final String MULTIPLE_OPTIONS_INDICATOR = "()";
     public static final String UNKNOWN_OPERATOR = "Unknown operator";
     public static final List<String> IS_NOT_NULL_LIST = Arrays.asList("IS", "NOT", "NULL");
 
     private String value;
+    private SplitterStrategy strategy;
 
-    Operator(String value) {
+    Operator(String value, SplitterStrategy strategy) {
         this.value = value;
+        this.strategy = strategy;
+    }
+
+    public SplitterStrategy getStrategy() {
+        return this.strategy;
     }
 
     public static Operator getOperator(String value) {
@@ -33,7 +49,7 @@ public enum Operator {
                 return op;
             }
         }
-        throw new IllegalArgumentException(UNKNOWN_OPERATOR);
+        throw new IllegalArgumentException(UNKNOWN_OPERATOR + " " + value);
     }
 
     public static Operator extract(String filter) {
@@ -67,13 +83,20 @@ public enum Operator {
                 case "JSON_EXTRACT LIKE":
                 case "JSON_EXTRACT IS NOT NULL":
                 case "JSON_EXTRACT IS NULL":
-                    return JSON_EXTRACT;
+                    return buildJsonExtractOperator(filter);
                 default:
                     return Operator.getOperator(operator);
             }
         } else {
             throw new NoSuchElementException(UNKNOWN_OPERATOR);
         }
+    }
+
+    private static Operator buildJsonExtractOperator(String filter) {
+        Operator decoratedOperator = Operator.extract(filter.replace(Filter.JSON_EXTRACT, StringUtils.EMPTY));
+        JsonExtractSplitterStrategy strategy = (JsonExtractSplitterStrategy) JSON_EXTRACT.strategy;
+        strategy.setDecoratedSplitter(decoratedOperator.strategy);
+        return JSON_EXTRACT;
     }
 
     private static String handleSpecialCaseOperators(String word) {
