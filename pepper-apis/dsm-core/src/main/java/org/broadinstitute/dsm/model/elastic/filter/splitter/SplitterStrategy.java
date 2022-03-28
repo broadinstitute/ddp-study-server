@@ -8,7 +8,7 @@ import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
-public abstract class BaseSplitter {
+public abstract class SplitterStrategy {
 
     public static final int NESTED_FIELD_LEVEL = 2;
     protected String filter;

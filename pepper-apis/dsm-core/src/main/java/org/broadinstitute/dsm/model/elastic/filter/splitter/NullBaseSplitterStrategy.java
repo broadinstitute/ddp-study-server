@@ -4,7 +4,7 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 
 import java.util.regex.Pattern;
 
-public abstract class NullBaseSplitter extends BaseSplitter {
+public abstract class NullBaseSplitterStrategy extends SplitterStrategy {
 
     public static final Pattern ADDITIONAL_VALUES_JSON_PATTERN = Pattern.compile("additional.*Value[s]{0,1}Json");
 
