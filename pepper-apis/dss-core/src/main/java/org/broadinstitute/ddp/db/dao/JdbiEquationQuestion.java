@@ -18,10 +18,12 @@ public interface JdbiEquationQuestion extends SqlObject {
                @Bind("expression") final String expression);
 
 
-    @SqlQuery("select q.*, eq.expression, eq.maximum_decimal_places "
+    @SqlQuery("select q.*, eq.expression, eq.maximum_decimal_places, qt.question_type_code as question_type "
             + "from equation_question eq "
             + "join question q "
             + "  on q.question_id = eq.question_id "
+            + "join question_type qt "
+            + "  on qt.question_type_id = q.question_type_id "
             + "join activity_instance ai "
             + "  on ai.study_activity_id = q.study_activity_id "
             + "where ai.activity_instance_guid = :activityInstanceGuid")
