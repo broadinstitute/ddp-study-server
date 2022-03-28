@@ -19,6 +19,8 @@ public interface JdbiEquationQuestion extends SqlObject {
 
 
     @SqlQuery("select q.*, "
+            + "       q.study_activity_id as activity_id, "
+            + "       q.question_prompt_template_id as prompt_template_id, "
             + "       eq.expression, eq.maximum_decimal_places, "
             + "       qt.question_type_code as question_type, "
             + "       qsc.stable_id "
