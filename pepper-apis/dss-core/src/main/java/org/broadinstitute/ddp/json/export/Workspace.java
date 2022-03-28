@@ -1,27 +1,15 @@
 package org.broadinstitute.ddp.json.export;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.AllArgsConstructor;
+import lombok.Value;
 
+@Value
+@AllArgsConstructor
 public class Workspace {
-    private static final String NAME = "name";
-    private static final String NAMESPACE = "namespace";
+    @SerializedName("name")
+    String name;
 
-    @SerializedName(NAME)
-    private String name;
-
-    @SerializedName(NAMESPACE)
-    private String namespace;
-
-    public Workspace(String name, String namespace) {
-        this.name = name;
-        this.namespace = namespace;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getNamespace() {
-        return namespace;
-    }
+    @SerializedName("namespace")
+    String namespace;
 }

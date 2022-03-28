@@ -3,24 +3,16 @@ package org.broadinstitute.ddp.json;
 import java.util.List;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.broadinstitute.ddp.model.suggestion.DrugSuggestion;
 
+@Value
+@AllArgsConstructor
 public class DrugSuggestionResponse {
     @SerializedName("query")
-    private String query;
+    String query;
+    
     @SerializedName("results")
-    private List<DrugSuggestion> results;
-
-    public DrugSuggestionResponse(String query, List<DrugSuggestion> results) {
-        this.query = query;
-        this.results = results;
-    }
-
-    public String getQuery() {
-        return query;
-    }
-
-    public List<DrugSuggestion> getResults() {
-        return results;
-    }
+    List<DrugSuggestion> results;
 }
