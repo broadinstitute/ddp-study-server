@@ -7,7 +7,7 @@ import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
 
-public class MultipleOptionsSplitter extends BaseSplitter {
+public class MultipleOptionsSplitterStrategy extends SplitterStrategy {
 
     @Override
     public String[] getValue() {

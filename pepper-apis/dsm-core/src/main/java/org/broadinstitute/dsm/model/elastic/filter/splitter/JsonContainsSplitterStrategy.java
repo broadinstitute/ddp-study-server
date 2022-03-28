@@ -5,7 +5,7 @@ import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
-public class JsonContainsSplitter extends BaseSplitter {
+public class JsonContainsSplitterStrategy extends SplitterStrategy {
 
     public static final int ALIAS_INDEX = 0;
     public static final int FIELD_INDEX = 1;

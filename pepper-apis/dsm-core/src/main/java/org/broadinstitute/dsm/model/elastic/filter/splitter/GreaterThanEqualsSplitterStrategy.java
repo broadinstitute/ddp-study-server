@@ -2,7 +2,7 @@ package org.broadinstitute.dsm.model.elastic.filter.splitter;
 
 import org.broadinstitute.dsm.model.Filter;
 
-public class GreaterThanEqualsSplitter extends BaseSplitter {
+public class GreaterThanEqualsSplitterStrategy extends SplitterStrategy {
 
     @Override
     public String[] split() {
