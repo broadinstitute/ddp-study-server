@@ -3,10 +3,23 @@ package org.broadinstitute.ddp.studybuilder.task;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.broadinstitute.ddp.db.dao.*;
-import org.broadinstitute.ddp.db.dto.*;
+import org.broadinstitute.ddp.db.dao.ActivityDao;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiBlockContent;
+import org.broadinstitute.ddp.db.dao.JdbiRevision;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiUser;
+import org.broadinstitute.ddp.db.dao.SectionBlockDao;
+import org.broadinstitute.ddp.db.dao.TemplateDao;
+import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
+import org.broadinstitute.ddp.db.dto.BlockContentDto;
+import org.broadinstitute.ddp.db.dto.RevisionDto;
+import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
@@ -15,7 +28,6 @@ import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -24,8 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.time.Instant;
-import java.util.List;
 
 public class OsteoMedicalReleaseUpdate implements CustomTask {
 
@@ -99,34 +109,32 @@ public class OsteoMedicalReleaseUpdate implements CustomTask {
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), minorActivityCode);
         ActivityVersionDto version2 = handle.attach(ActivityDao.class).changeVersion(activityId, versionTag, meta);
 
-        updateTemplates(handle, meta, version2);
+        updateIntroduction(handle, meta, version2);
+
+        updateClosing(handle, meta, version2, studyDto, adminUser, helper);
     }
 
-    // title and name update
     private void updateTitleAndName(StudyDto studyDto, JdbiActivity jdbiActivity,
                                     SqlHelper helper, String releaseActivityCode, Config conf) {
 
         ActivityDto activityDto = jdbiActivity.findActivityByStudyIdAndCode(studyDto.getId(), releaseActivityCode).get();
 
-        // update title
         String newTitle = conf.getConfig("replaced").getConfigList("translatedTitles").get(0).getString("text");
         helper.update18nActivityTitle(activityDto.getActivityId(), newTitle);
 
-        // update name
         String newName = conf.getConfig("replaced").getConfigList("translatedNames").get(0).getString("text");
         helper.update18nActivityName(activityDto.getActivityId(), newName);
     }
 
-    private void updateTemplates(Handle handle, RevisionMetadata meta, ActivityVersionDto version2) {
-        var config = minorCfg.getConfig("introduction").getConfig("blocks").
-                getConfig("updated").getConfig("osteo_release_child_intro");
+    private void updateIntroduction(Handle handle, RevisionMetadata meta, ActivityVersionDto version2) {
+        var config = minorCfg.getConfig("introduction").getConfig("blocks")
+                .getConfig("updated").getConfig("osteo_release_child_intro");
 
-        revisionContentBlockTemplate(handle, meta, version2, config);
+        revisionContentBlockIntroduction(handle, meta, version2, config);
 
     }
 
-    //update blocks
-    private void revisionContentBlockTemplate(Handle handle, RevisionMetadata meta, ActivityVersionDto versionDto, Config config) {
+    private void revisionContentBlockIntroduction(Handle handle, RevisionMetadata meta, ActivityVersionDto versionDto, Config config) {
 
         ContentBlockDef contentBlockDef = gson.fromJson(ConfigUtil.toJson(config), ContentBlockDef.class);
         Template newBodyTemplate = contentBlockDef.getBodyTemplate();
@@ -169,6 +177,38 @@ public class OsteoMedicalReleaseUpdate implements CustomTask {
                 newBlockContentId, contentBlock.getBlockId(), newBodyTemplateId, contentBlockDef.getBodyTemplate().getTemplateText());
     }
 
+    private void updateClosing(Handle handle, RevisionMetadata meta, ActivityVersionDto version2,
+                               StudyDto studyDto, UserDto adminUser, SqlHelper helper) {
+        var config = minorCfg.getConfig("closing").getConfig("blocks")
+                .getConfigList("new");
+
+        int blockOrder = 30;
+        for (Config cfg : config) {
+            insertClosingBlocks(handle, meta, version2, cfg, blockOrder, studyDto, adminUser, helper);
+            blockOrder += 10;
+        }
+    }
+
+    private void insertClosingBlocks(Handle handle, RevisionMetadata meta, ActivityVersionDto version2,
+                                     Config config, int order, StudyDto studyDto, UserDto adminUser,
+                                     SqlHelper helper) {
+        FormBlockDef formBlockDef = gson.fromJson(ConfigUtil.toJson(config), FormBlockDef.class);
+        ActivityBuilder activityBuilder = new ActivityBuilder(cfgPath.getParent(), studyCfg, varsCfg, studyDto, adminUser.getUserId());
+        Config cfg = activityBuilder.readDefinitionConfig(MEDICAL_RELEASE_MINOR_V1);
+        var formActivityDef = gson.fromJson(ConfigUtil.toJson(cfg), FormActivityDef.class);
+        var formSectionDef = formActivityDef.getClosing();
+
+        long templateId = helper.selectTemplateId("$osteo_release_child_agree");
+        long blockId = helper.selectBlockId(templateId);
+        long sectionId = helper.selectSectionId(blockId);
+
+        var sectionBlockDao = handle.attach(SectionBlockDao.class);
+
+        RevisionDto revisionDto = RevisionDto.fromStartMetadata(version2.getRevId(), meta);
+
+        sectionBlockDao.addBlock(version2.getActivityId(), sectionId, order, formBlockDef, revisionDto);
+    }
+
     private interface SqlHelper extends SqlObject {
 
         @SqlUpdate("update i18n_activity_detail set title = :text where study_activity_id = :studyActivityId")
@@ -177,13 +217,17 @@ public class OsteoMedicalReleaseUpdate implements CustomTask {
         @SqlUpdate("update i18n_activity_detail set name = :text where study_activity_id = :studyActivityId")
         int update18nActivityName(@Bind("studyActivityId") long studyActivityId, @Bind("text") String text);
 
-        @SqlQuery("select template_id from template " +
-                "where template_text = :templateText")
+        @SqlQuery("select template_id from template "
+                + "where template_text = :templateText")
         long selectTemplateId(@Bind("templateText") String templateText);
 
-        @SqlQuery("select block_id from block_content " +
-                "where body_template_id = :body_template_id")
-        long selectBlockId(@Bind("body_template_id") long body_template_id);
+        @SqlQuery("select block_id from block_content "
+                + "where body_template_id = :bodyTemplateId")
+        long selectBlockId(@Bind("bodyTemplateId") long bodyTemplateId);
+
+        @SqlQuery("select form_section_id from form_section__block "
+                + "where block_id = :blockId")
+        long selectSectionId(@Bind("blockId") long blockId);
 
     }
 }
