@@ -1,48 +1,26 @@
 package org.broadinstitute.ddp.json.medicalprovider;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.AllArgsConstructor;
+import lombok.Value;
 
+@Value
+@AllArgsConstructor
 public class PostPatchMedicalProviderRequestPayload {
-
     @SerializedName(Fields.INSTITUTION_NAME)
-    private String institutionName;
+    String institutionName;
+    
     @SerializedName(Fields.PHYSICIAN_NAME)
-    private String physicianName;
+    String physicianName;
+    
     @SerializedName(Fields.CITY)
-    private String city;
+    String city;
+    
     @SerializedName(Fields.STATE)
-    private String state;
+    String state;
 
     public PostPatchMedicalProviderRequestPayload() {
         this(null, null, null, null);
-    }
-
-    public PostPatchMedicalProviderRequestPayload(
-            String institutionName,
-            String physicianName,
-            String city,
-            String state
-    ) {
-        this.institutionName = institutionName;
-        this.physicianName = physicianName;
-        this.city = city;
-        this.state = state;
-    }
-
-    public String getPhysicianName() {
-        return physicianName;
-    }
-
-    public String getInstitutionName() {
-        return institutionName;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public String getState() {
-        return state;
     }
 
     public static class Fields {
@@ -51,5 +29,4 @@ public class PostPatchMedicalProviderRequestPayload {
         public static final String CITY = "city";
         public static final String STATE = "state";
     }
-
 }

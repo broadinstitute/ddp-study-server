@@ -1,17 +1,12 @@
 package org.broadinstitute.ddp.json;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.AllArgsConstructor;
+import lombok.Value;
 
+@Value
+@AllArgsConstructor
 public class UserRegistrationResponse {
-
     @SerializedName("ddpUserGuid")
-    private String ddpUserGuid;
-
-    public UserRegistrationResponse(String ddpUserGuid) {
-        this.ddpUserGuid = ddpUserGuid;
-    }
-
-    public String getDdpUserGuid() {
-        return ddpUserGuid;
-    }
+    String ddpUserGuid;
 }

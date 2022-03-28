@@ -149,9 +149,14 @@ public interface AnswerDao extends SqlObject {
     }
 
     private void createAnswerFileValue(long answerId, FileAnswer answer) {
-        FileInfo info = answer.getValue();
-        Long uploadId = info == null ? null : info.getUploadId();
-        DBUtils.checkInsert(1, getAnswerSql().insertFileValue(answerId, uploadId));
+        if (answer.getValue() == null) {
+            return;
+        }
+        List<Long> uploadIds = answer.getValue().stream().map(FileInfo::getUploadId).collect(Collectors.toList());
+        int[] inserted = getAnswerSql().bulkInsertFileValue(answerId, uploadIds);
+        if (inserted.length != uploadIds.size()) {
+            throw new DaoException("Not all file uploads were assigned to answer " + answerId);
+        }
     }
 
     private void createAnswerCompositeValue(long operatorId, long instanceId, long answerId, CompositeAnswer answer) {
@@ -242,9 +247,8 @@ public interface AnswerDao extends SqlObject {
     }
 
     private void updateAnswerFileValue(long answerId, FileAnswer newAnswer) {
-        FileInfo info = newAnswer.getValue();
-        Long uploadId = info == null ? null : info.getUploadId();
-        DBUtils.checkUpdate(1, getAnswerSql().updateFileValue(answerId, uploadId));
+        getAnswerSql().deleteUploadsByAnswer(answerId);
+        createAnswerFileValue(answerId, newAnswer);
     }
 
     private void updateAnswerCompositeValue(long operatorId, long answerId, CompositeAnswer newAnswer) {
@@ -488,6 +492,8 @@ public interface AnswerDao extends SqlObject {
                     break;
                 case FILE:
                     FileInfo info = null;
+                    answer = container.computeIfAbsent(answerId, id ->
+                            new FileAnswer(answerId, questionStableId, answerGuid, new ArrayList<>(), actInstanceGuid));
                     Long fileUploadId = view.getColumn("fa_upload_id", Long.class);
                     if (fileUploadId != null) {
                         info = new FileInfo(fileUploadId,
@@ -495,7 +501,7 @@ public interface AnswerDao extends SqlObject {
                                 view.getColumn("fa_file_name", String.class),
                                 view.getColumn("fa_file_size", Long.class));
                     }
-                    answer = new FileAnswer(answerId, questionStableId, answerGuid, info, actInstanceGuid);
+                    ((FileAnswer) answer).getValue().add(info);
                     break;
                 case NUMERIC:
                     answer = new NumericAnswer(answerId, questionStableId, answerGuid,
