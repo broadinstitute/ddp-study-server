@@ -16,9 +16,9 @@ import org.broadinstitute.ddp.model.dsm.Drug;
 import org.broadinstitute.ddp.model.dsm.DrugStore;
 import org.broadinstitute.ddp.model.suggestion.DrugSuggestion;
 import org.broadinstitute.ddp.model.suggestion.PatternMatch;
-import org.broadinstitute.ddp.util.DrugTypeaheadComparator;
 import org.broadinstitute.ddp.util.ResponseUtil;
 
+import org.broadinstitute.ddp.util.StringSuggestionTypeaheadComparator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +41,7 @@ public class GetDsmDrugSuggestionsRoute implements Route {
     }
 
     private DrugSuggestionResponse getUnfilteredDrugSuggestions(String drugQuery, int limit) {
+
         List<DrugSuggestion> drugSuggestions = drugStore.getDrugList().stream().map(
                 drug -> new DrugSuggestion(
                     new Drug(drug.getName(), null),
@@ -53,23 +54,25 @@ public class GetDsmDrugSuggestionsRoute implements Route {
     }
 
     private DrugSuggestionResponse getDrugSuggestions(String drugQuery, int limit) {
-        List<Drug> drugMatches = new ArrayList<>();
         String upperDrugQuery = drugQuery.toUpperCase();
 
         // first pass filter: find simple matches
-        for (Drug drug : drugStore.getDrugList()) {
-            if (drug.getName().toUpperCase().contains(drugQuery.toUpperCase())) {
-                drugMatches.add(drug);
-            }
-        }
+        List<Drug> drugMatches = drugStore.getDrugList().stream()
+                .filter(drug -> drug.getName().toUpperCase().contains(upperDrugQuery))
+                .collect(Collectors.toList());
 
         // now rank the matches in a way that puts left-most matches near the top,
         // favoring word start matches
+        var suggestionComparator = new StringSuggestionTypeaheadComparator(upperDrugQuery);
         List<DrugSuggestion> sortedSuggestions = new ArrayList<>();
-        drugMatches.stream().sorted(new DrugTypeaheadComparator(drugQuery)).limit(limit).forEach(drug -> {
-            int offset = drug.getName().toUpperCase().indexOf(upperDrugQuery);
-            sortedSuggestions.add(new DrugSuggestion(drug, Collections.singletonList(new PatternMatch(offset, drugQuery.length()))));
-        });
+        drugMatches.stream()
+                .sorted((lhs, rhs) -> suggestionComparator.compare(lhs.getName(), rhs.getName()))
+                .limit(limit)
+                .forEach(drug -> {
+                    int offset = drug.getName().toUpperCase().indexOf(upperDrugQuery);
+                    sortedSuggestions.add(new DrugSuggestion(drug, Collections.singletonList(
+                            new PatternMatch(offset, drugQuery.length()))));
+                });
 
         return new DrugSuggestionResponse(drugQuery, sortedSuggestions);
     }

@@ -254,6 +254,20 @@ public class SortTest {
         assertEquals("activities.questionsAnswers", actual);
     }
 
+    @Test
+    public void buildPathIfSameKeys() {
+        SortBy sortBy = new SortBy.Builder()
+                .withType("TEXT")
+                .withOrder("ASC")
+                .withInnerProperty("YEARS")
+                .withOuterProperty("questionsAnswers")
+                .withTableAlias("REGISTRATION")
+                .build();
+        Sort sort = new Sort(sortBy, mockFieldTypeExractorByFieldAndType("YEARS", ""));
+        String actual = sort.buildFieldName();
+        assertEquals("activities.questionsAnswers.YEARS", actual);
+    }
+
     static MockFieldTypeExtractor mockFieldTypeExractorByFieldAndType(String fieldName, String fieldType) {
         return new MockFieldTypeExtractor() {
             @Override

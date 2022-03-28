@@ -15,6 +15,7 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class ActivityTypeSort extends Sort {
 
+    private List<Map<String, String>> possibleValues;
     private String originalOuterProperty;
     private String originalInnerProperty;
 
@@ -22,37 +23,59 @@ public class ActivityTypeSort extends Sort {
         super(sortBy, typeExtractor);
         this.originalOuterProperty = sortBy.getOuterProperty();
         this.originalInnerProperty = sortBy.getInnerProperty();
-        sortBy.setTableAlias(ElasticSearchUtil.ACTIVITIES);
-        sortBy.setOuterProperty(ElasticSearchUtil.QUESTIONS_ANSWER);
+        FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
+        Optional<FieldSettingsDto> maybeFieldSettings =
+                fieldSettingsDao.getFieldSettingsByFieldTypeAndColumnName(originalOuterProperty, originalInnerProperty);
+        Optional<String> maybePossibleValues = maybeFieldSettings.map(FieldSettingsDto::getPossibleValues);
+        if (maybePossibleValues.isPresent()) {
+            String possibleValuesString = maybePossibleValues.get();
+            this.possibleValues = ObjectMapperSingleton.readValue(possibleValuesString, new TypeReference<List<Map<String, String>>>() {
+            });
+        }
     }
 
     @Override
     public String handleInnerPropertySpecialCase() {
-        FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
-        Optional<FieldSettingsDto> maybeFieldSettings = fieldSettingsDao.getFieldSettingsByFieldTypeAndColumnName(originalOuterProperty,
-                originalInnerProperty);
-        Optional<String> maybePossibleValues = maybeFieldSettings
-                .map(FieldSettingsDto::getPossibleValues);
-        String innerProperty = StringUtils.EMPTY;
-        if (maybePossibleValues.isPresent()) {
-            String possibleValuesString = maybePossibleValues.get();
-            List<Map<String, String>> possibleValues = ObjectMapperSingleton.readValue(possibleValuesString,
-                    new TypeReference<List<Map<String, String>>>() {});
-            innerProperty = getFieldNameToSortBy(possibleValues);
-        }
-        return innerProperty;
+        return getFieldNameToSortBy(possibleValues);
+    }
+
+    private String getFieldNameToSortBy(List<Map<String, String>> possibleValues) {
+        return possibleValues.stream().findFirst().map(mapValue -> mapValue.get(FieldSettings.KEY_VALUE))
+                .map(value -> value.split(ElasticSearchUtil.ESCAPE_CHARACTER_DOT_SEPARATOR)[1]).orElse(StringUtils.EMPTY);
     }
 
     @Override
     String handleOuterPropertySpecialCase() {
-        return sortBy.getOuterProperty();
+        if (isQuestionsAnswers()) {
+            return buildQuestionsAnswersPath();
+        }
+        return getAlias().getValue();
     }
 
-    private String getFieldNameToSortBy(List<Map<String, String>> possibleValues) {
-        return possibleValues.stream()
-                .findFirst()
-                .map(mapValue -> mapValue.get(FieldSettings.KEY_VALUE))
-                .map(value -> value.split(ElasticSearchUtil.ESCAPE_CHARACTER_DOT_SEPARATOR)[1])
-                .orElse(StringUtils.EMPTY);
+    private boolean isQuestionsAnswers() {
+        return Alias.REGISTRATION == getAlias();
+    }
+
+    @Override
+    String buildNestedPath() {
+        if (isQuestionsAnswers()) {
+            return buildQuestionsAnswersPath();
+        }
+        return super.buildNestedPath();
+    }
+
+    @Override
+    public Alias getAlias() {
+        return Alias.valueOf(getOuterPropertyFromPossibleValues().toUpperCase());
+    }
+
+    private String getOuterPropertyFromPossibleValues() {
+        return possibleValues.stream().findFirst().map(mapValue -> mapValue.get(FieldSettings.KEY_VALUE))
+                .map(value -> value.split(ElasticSearchUtil.ESCAPE_CHARACTER_DOT_SEPARATOR)[0]).orElse(StringUtils.EMPTY);
+    }
+
+    @Override
+    public String getRawAlias() {
+        return getAlias().toString();
     }
 }

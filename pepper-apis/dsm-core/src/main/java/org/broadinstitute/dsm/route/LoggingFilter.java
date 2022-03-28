@@ -29,29 +29,38 @@ public class LoggingFilter implements Filter {
     private static final Logger logger = LoggerFactory.getLogger(LoggingFilter.class);
     private String auth0Domain;
     private String claimNameSpace;
+    private String secret; // this is not static!
+    private String issuer = null; // this is not static!
+    private boolean secretEncoded = false; // this is not static!
 
-    public LoggingFilter(String auth0Domain, String claimNameSpace){
+    public LoggingFilter(String auth0Domain, String claimNameSpace, String secret, String issuer, boolean secretEncoded) {
         this.auth0Domain = auth0Domain;
         this.claimNameSpace = claimNameSpace;
+        this.secret = secret;
+        this.secretEncoded = secretEncoded;
+        this.issuer = issuer;
     }
 
     @Override
     public void handle(Request request, Response response) {
         String tokenFromHeader = Utility.getTokenFromHeader(request);
         if (StringUtils.isNotBlank(tokenFromHeader) && !"null".equals(tokenFromHeader)) {
-                Optional<DecodedJWT> maybeDecodedUnverifiedJWT = Auth0Util.verifyAuth0Token(tokenFromHeader, auth0Domain);
-                maybeDecodedUnverifiedJWT.ifPresentOrElse(decodedJWT -> {
-                    Claim userEmailClaim = decodedJWT.getClaim(claimNameSpace+"USER_MAIL");
+            Optional<DecodedJWT> maybeDecodedUnverifiedJWT =
+                    Auth0Util.verifyAuth0Token(tokenFromHeader, auth0Domain, secret, issuer, secretEncoded);
+            maybeDecodedUnverifiedJWT.ifPresentOrElse(decodedJWT -> {
+                Claim userEmailClaim = decodedJWT.getClaim(claimNameSpace + "USER_MAIL");
 
-                    if (userEmailClaim != null) {
-                        String userEmail = userEmailClaim.asString();
-                        if (StringUtils.isNotBlank(userEmail)) {
-                            MDC.put(USER_EMAIL, userEmail);
-                        }
+                if (userEmailClaim != null) {
+                    String userEmail = userEmailClaim.asString();
+                    if (StringUtils.isNotBlank(userEmail)) {
+                        MDC.put(USER_EMAIL, userEmail);
                     }
-                }, () ->{logger.error("Unable to verify token");
+                }
+            }, () -> {
+                    logger.error("Unable to verify token");
                     halt(401);
-                    return;});
+                    return;
+                });
 
         }
 
