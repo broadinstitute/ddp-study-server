@@ -15,21 +15,19 @@ RUN mvn -f pom.xml --batch-mode dependency:copy \
     -DoutputDirectory="/app" \
     -Dartifact='org.broadinstitute.ddp.cf:cf-file-scanner:1.0-SNAPSHOT'
 RUN mvn -f pom.xml --batch-mode dependency:copy \
-    -Dartifact='com.google.cloud.functions.invoker:java-function-invoker:1.1.0' \
-    -DoutputDirectory=/app
+    -DoutputDirectory="/app" \
+    -Dartifact='com.google.cloud.functions.invoker:java-function-invoker:1.1.0'
 
-FROM openjdk:11-jre-slim AS runtime
+FROM clamav/clamav:0.104 AS runtime
 
 ENV GCP_PROJECT=""
 ENV RESULT_TOPIC=""
-ENV DDP_CLAMAV_SERVER="localhost:3310"
+ENV DDP_CLAMAV_SERVER="127.0.0.1:3310"
 
-RUN apt-get update && apt-get install -y \
-  clamav-daemon \
-  && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache \
+  openjdk11-jre-headless
 
 COPY --from=build /build/src/main/resources/container/clamd.conf /etc/clamav/clamd.conf
-COPY --from=build /build/src/main/resources/container/freshclam.conf /etc/clamav/freshclam.conf
 COPY entrypoint.sh /app/entrypoint.sh
 
 COPY --from=build /app /app
