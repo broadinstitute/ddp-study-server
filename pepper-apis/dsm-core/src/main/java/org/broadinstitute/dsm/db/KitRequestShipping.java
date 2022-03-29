@@ -279,6 +279,7 @@ public class KitRequestShipping extends KitRequest {
     private Boolean careEvolve;
     @ColumnName(DBConstants.UPLOAD_REASON)
     private String uploadReason;
+    private long ddpInstanceId;
 
     public KitRequestShipping() {
     }
@@ -882,6 +883,7 @@ public class KitRequestShipping extends KitRequest {
             kitRequestShipping.setExternalOrderNumber(externalOrderNumber);
             kitRequestShipping.setCreatedBy(createdBy);
             kitRequestShipping.setUploadReason(uploadReason);
+            kitRequestShipping.setDdpInstanceId(ddpInstance.getDdpInstanceIdAsInt());
 
             DDPInstanceDto ddpInstanceDto =
                     new DDPInstanceDao().getDDPInstanceByInstanceId(Integer.valueOf(ddpInstance.getDdpInstanceId())).orElseThrow();
