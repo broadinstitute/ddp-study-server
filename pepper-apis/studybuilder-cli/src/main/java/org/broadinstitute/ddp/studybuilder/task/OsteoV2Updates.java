@@ -16,6 +16,8 @@ public class OsteoV2Updates implements CustomTask {
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
         tasks.add(new OsteoConsentVersion2());
         tasks.add(new OsteoDdp7601());
+        tasks.add(new OsteoAboutChildV2());
+        tasks.add(new OsteoAboutYouV2());
         tasks.forEach(t -> t.init(cfgPath, studyCfg, varsCfg));
     }
 
