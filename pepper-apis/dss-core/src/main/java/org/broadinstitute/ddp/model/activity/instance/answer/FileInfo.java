@@ -19,7 +19,9 @@ public class FileInfo implements Serializable {
     private long fileSize;
 
     private transient long uploadId;
-    private transient String uploadGuid;
+
+    @SerializedName("uploadGuid")
+    private String uploadGuid;
 
     @JdbiConstructor
     public FileInfo(@ColumnName("file_upload_id") long uploadId,

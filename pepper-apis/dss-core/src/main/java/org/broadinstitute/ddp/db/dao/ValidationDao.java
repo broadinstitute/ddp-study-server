@@ -106,6 +106,9 @@ public interface ValidationDao extends SqlObject {
     JdbiQuestion getJdbiQuestion();
 
     @CreateSqlObject
+    JdbiActivity getJdbiActivity();
+
+    @CreateSqlObject
     JdbiRevision getJdbiRevision();
 
     @CreateSqlObject
@@ -412,8 +415,13 @@ public interface ValidationDao extends SqlObject {
             throw new DaoException("Question " + questionId + " doesn't exist");
         }
 
+        final Optional<Long> studyId = getJdbiActivity().getStudyIdByActivityId(originalQuestion.get().getActivityId());
+        if (studyId.isEmpty()) {
+            throw new DaoException("Study can't by found for activity " + originalQuestion.get().getActivityId());
+        }
+
         final Optional<QuestionDto> referencedQuestion = getJdbiQuestion()
-                .findDtoByActivityIdAndQuestionStableId(originalQuestion.get().getActivityId(), rule.getValueStableId());
+                .findLatestDtoByStudyIdAndQuestionStableId(studyId.get(), rule.getValueStableId());
         if (referencedQuestion.isEmpty()) {
             throw new DaoException("Referenced question " + rule.getValueStableId() + " doesn't exist");
         }
