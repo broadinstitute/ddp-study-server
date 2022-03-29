@@ -6,6 +6,7 @@ import java.util.Objects;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.broadinstitute.dsm.db.ViewFilter;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.sort.SortBy;
@@ -52,7 +53,7 @@ public class BaseFilter {
             ViewFilter requestForFiltering;
             try {
                 requestForFiltering =
-                        StringUtils.isNotBlank(jsonBody) ? ObjectMapperSingleton.instance().readValue(jsonBody, ViewFilter.class) : null;
+                        StringUtils.isNotBlank(jsonBody) ? ObjectMapperSingleton.instance().readValue(jsonBody, ViewFilter.class ) : null;
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -68,8 +69,9 @@ public class BaseFilter {
         } else if (savedFilters != null) {
             filters = savedFilters;
         }
-        this.from = Integer.parseInt(queryParamsMap.get(LIST_RANGE_FROM).value());
-        this.to = Integer.parseInt(queryParamsMap.get(LIST_RANGE_TO).value());
+        this.from = NumberUtils.toInt(queryParamsMap.get(LIST_RANGE_FROM).value(), 0);
+        this.to = NumberUtils.toInt(queryParamsMap.get(LIST_RANGE_TO).value(), 10000);
+
         if (queryParamsMap.hasKey(SortBy.SORT_BY)) {
             this.sortBy = ObjectMapperSingleton.readValue(queryParamsMap.get(SortBy.SORT_BY).value(), new TypeReference<SortBy>() {
             });

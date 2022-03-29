@@ -1,7 +1,9 @@
 package org.broadinstitute.dsm.model.elastic.sort;
 
+import com.google.common.base.Enums;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.model.ParticipantColumn;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -21,8 +23,8 @@ public enum Alias {
     EX(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT), false),
     DSM(ElasticSearchUtil.DSM, false), STATUS(ElasticSearchUtil.STATUS, false), PROFILE(ElasticSearchUtil.PROFILE, false),
     ADDRESS(ElasticSearchUtil.ADDRESS, false), INVITATIONS(ElasticSearchUtil.INVITATIONS, false), PROXY(ElasticSearchUtil.PROFILE, false),
-    ACTIVITIES(ElasticSearchUtil.ACTIVITIES, true), REGISTRATION(ElasticSearchUtil.ACTIVITIES, true);
-
+    ACTIVITIES(ElasticSearchUtil.ACTIVITIES, true), REGISTRATION(ElasticSearchUtil.ACTIVITIES, true),
+    DATA("", false);
     Alias(String value, boolean isCollection) {
         this.value = value;
         this.isCollection = isCollection;
@@ -32,19 +34,21 @@ public enum Alias {
     private String value;
 
     public static Alias of(SortBy sortBy) {
-        Alias alias;
-        try {
-            String tableAlias;
-            if (ESObjectConstants.DATA.equals(sortBy.getTableAlias())) {
-                tableAlias = StringUtils.isNotBlank(sortBy.getOuterProperty()) ? sortBy.getOuterProperty() : sortBy.getInnerProperty();
-            } else {
-                tableAlias = sortBy.getTableAlias();
-            }
-            alias = valueOf(tableAlias.toUpperCase());
-        } catch (IllegalArgumentException iae) {
-            alias = ACTIVITIES;
+        String tableAlias;
+        if (ESObjectConstants.DATA.equals(sortBy.getTableAlias())) {
+            tableAlias = StringUtils.isNotBlank(sortBy.getOuterProperty()) ? sortBy.getOuterProperty() : sortBy.getInnerProperty();
+        } else {
+            tableAlias = sortBy.getTableAlias();
         }
-        return alias;
+        return of(tableAlias);
     }
 
+    public static Alias of(String tableAlias) {
+        return Enums.getIfPresent(Alias.class, tableAlias.toUpperCase()).or(ACTIVITIES);
+    }
+
+
+    public static Alias of(ParticipantColumn column) {
+        return ACTIVITIES;
+    }
 }
