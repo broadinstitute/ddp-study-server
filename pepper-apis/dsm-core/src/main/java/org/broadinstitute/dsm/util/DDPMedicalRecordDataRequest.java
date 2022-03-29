@@ -72,7 +72,7 @@ public class DDPMedicalRecordDataRequest {
                                             DDPRequestUtil.getResponseObject(InstitutionRequest[].class, dsmRequest, ddpInstance.getName(),
                                                     ddpInstance.isHasAuth0Token());
                                     if (institutionRequests != null && institutionRequests.length > 0) {
-                                        logger.info("Got " + institutionRequests.length + " InstitutionRequests");
+                                        logger.info("Got " + institutionRequests.length + " InstitutionRequests for " + ddpInstance.getName());
                                         for (InstitutionRequest institutionRequest : institutionRequests) {
                                             try {
                                                 writeParticipantIntoDb(conn, ddpInstance.getDdpInstanceId(), institutionRequest,
