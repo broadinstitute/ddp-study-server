@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 
 import org.broadinstitute.dsm.model.Filter;
 
-public class LikeSplitter extends BaseSplitter {
+public class LikeSplitterStrategy extends SplitterStrategy {
 
     @Override
     public String[] split() {

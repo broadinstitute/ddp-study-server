@@ -9,8 +9,7 @@ import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
 import org.broadinstitute.dsm.model.elastic.filter.FilterStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
-import org.broadinstitute.dsm.model.elastic.filter.splitter.BaseSplitter;
-import org.broadinstitute.dsm.model.elastic.filter.splitter.SplitterFactory;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.SplitterStrategy;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
@@ -24,7 +23,7 @@ public class DsmAbstractQueryBuilder {
     protected Parser parser;
     protected BoolQueryBuilder boolQueryBuilder;
     protected QueryBuilder queryBuilder;
-    protected BaseSplitter splitter;
+    protected SplitterStrategy splitter;
     protected AndOrFilterSeparator filterSeparator;
     private BaseQueryBuilder baseQueryBuilder;
 
@@ -57,7 +56,7 @@ public class DsmAbstractQueryBuilder {
     protected void buildUpQuery(List<String> filterValues, FilterStrategy filterStrategy) {
         for (String filterValue : filterValues) {
             Operator operator = Operator.extract(filterValue);
-            splitter = SplitterFactory.createSplitter(operator, filterValue);
+            splitter = operator.getStrategy();
             splitter.setFilter(filterValue);
             baseQueryBuilder = BaseQueryBuilder.of(splitter.getAlias(), splitter.getFieldName());
             QueryPayload queryPayload = new QueryPayload(buildPath(), splitter.getInnerProperty(), parser.parse(splitter.getValue()));

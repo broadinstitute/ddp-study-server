@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Used for integrating with SendGrid...
  */
-public class SendGridClient implements EmailClient {
+public class SendGridClient {
 
     private static final Logger logger = LoggerFactory.getLogger(SendGridClient.class);
 

@@ -11,7 +11,6 @@ import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 
 public class AnswerValidationError extends ApiError {
-
     @SerializedName("violations")
     private List<Violation> violations = new ArrayList<>();
 

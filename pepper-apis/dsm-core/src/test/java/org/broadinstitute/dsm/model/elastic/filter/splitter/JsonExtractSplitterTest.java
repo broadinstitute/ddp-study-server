@@ -9,12 +9,12 @@ import org.junit.Test;
 public class JsonExtractSplitterTest {
 
     String filter;
-    BaseSplitter splitter;
+    SplitterStrategy splitter;
 
     @Before
     public void setUp() {
         filter = "JSON_EXTRACT ( m.additional_values_json , '$.seeingIfBugExists' ) = 'true'";
-        splitter = SplitterFactory.createSplitter(Operator.JSON_EXTRACT, filter);
+        splitter = Operator.extract(filter).getStrategy();
         splitter.setFilter(filter);
     }
 
@@ -39,5 +39,22 @@ public class JsonExtractSplitterTest {
         filter = "JSON_EXTRACT ( m.additional_values_json , '$.seeingIfBugExists' ) IS NOT NULL";
         splitter.setFilter(filter);
         Assert.assertEquals(StringUtils.EMPTY, splitter.getValue()[0]);
+    }
+
+    @Test
+    public void decoratedJsonExtractSplitter() {
+        String filter = "JSON_EXTRACT ( m.additional_values_json , '$.seeingIfBugExists' ) = 'true'";
+        String filter2 = "JSON_EXTRACT ( m.additional_values_json , '$.seeingIfBugExists' ) IS NOT NULL";
+        Operator jsonExtract;
+        try {
+            jsonExtract = Operator.extract(filter);
+            JsonExtractSplitterStrategy strategy = (JsonExtractSplitterStrategy) jsonExtract.getStrategy();
+            Assert.assertTrue(strategy.getDecoratedSplitter() instanceof EqualsSplitterStrategy);
+            jsonExtract = Operator.extract(filter2);
+            JsonExtractSplitterStrategy strategy2 = (JsonExtractSplitterStrategy) jsonExtract.getStrategy();
+            Assert.assertTrue(strategy2.getDecoratedSplitter() instanceof IsNotNullSplitterStrategy);
+        } catch (Exception e) {
+            Assert.fail();
+        }
     }
 }
