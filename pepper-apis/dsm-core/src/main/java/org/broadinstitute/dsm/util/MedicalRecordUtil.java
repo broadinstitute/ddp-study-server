@@ -23,19 +23,20 @@ import org.slf4j.LoggerFactory;
 
 public class MedicalRecordUtil {
 
-    public static final String NOT_SPECIFIED = "NOT_SPECIFIED";
     private static final Logger logger = LoggerFactory.getLogger(MedicalRecordUtil.class);
+
+    public static final String NOT_SPECIFIED = "NOT_SPECIFIED";
     private static final String SQL_UPDATE_PARTICIPANT =
             "UPDATE ddp_participant SET last_version = ?, last_version_date = ?, last_changed = ?, changed_by = ? "
                     + "WHERE ddp_participant_id = ? AND ddp_instance_id = ? AND last_version != ?";
     private static final String SQL_INSERT_INSTITUTION =
             "INSERT INTO ddp_institution (ddp_institution_id, type, participant_id, last_changed) VALUES (?, ?, (SELECT participant_id "
-                    + "FROM ddp_participant WHERE ddp_participant_id = ? and ddp_instance_id = ?, ?) ON DUPLICATE "
+                    + "FROM ddp_participant WHERE ddp_participant_id = ? and ddp_instance_id = ?), ?) ON DUPLICATE "
                     + "KEY UPDATE last_changed = ?";
     private static final String SQL_INSERT_INSTITUTION_WITH_REALM_NAME =
             "INSERT INTO ddp_institution (ddp_institution_id, type, participant_id, last_changed) VALUES (?, ?, (SELECT participant_id "
                     + "FROM ddp_participant p, ddp_instance realm WHERE realm.ddp_instance_id = p.ddp_instance_id "
-                    + "AND p.ddp_participant_id = ? and instance_name = ?, ?) ON DUPLICATE "
+                    + "AND p.ddp_participant_id = ? and instance_name = ?), ?) ON DUPLICATE "
                     + "KEY UPDATE last_changed = ?";
     private static final String SQL_INSERT_MEDICAL_RECORD =
             "INSERT INTO ddp_medical_record SET institution_id = ?, last_changed = ?, changed_by = ?";
