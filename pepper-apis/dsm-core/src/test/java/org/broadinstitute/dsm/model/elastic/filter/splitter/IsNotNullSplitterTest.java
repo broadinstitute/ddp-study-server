@@ -8,7 +8,7 @@ public class IsNotNullSplitterTest {
 
     @Test
     public void getNestedInnerProperty() {
-        BaseSplitter splitter = new IsNotNullSplitter();
+        SplitterStrategy splitter = new IsNotNullSplitterStrategy();
         String filter = "k.test_result.isCompleted IS NOT NULL";
         splitter.setFilter(filter);
         assertEquals("testResult.isCompleted", splitter.getInnerProperty());
@@ -16,7 +16,7 @@ public class IsNotNullSplitterTest {
 
     @Test
     public void getInnerProperty() {
-        BaseSplitter splitter = new IsNotNullSplitter();
+        SplitterStrategy splitter = new IsNotNullSplitterStrategy();
         String filter = "k.kit_label IS NOT NULL";
         splitter.setFilter(filter);
         assertEquals("kitLabel", splitter.getInnerProperty());
@@ -24,7 +24,7 @@ public class IsNotNullSplitterTest {
 
     @Test
     public void getInnerPropertyAdditionalValuesJson() {
-        BaseSplitter splitter = new IsNotNullSplitter();
+        SplitterStrategy splitter = new IsNotNullSplitterStrategy();
         String filter = "k.additional_tissue_value_json IS NOT NULL";
         splitter.setFilter(filter);
         assertEquals("dynamicFields", splitter.getInnerProperty());
