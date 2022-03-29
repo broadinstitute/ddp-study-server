@@ -125,6 +125,8 @@ public interface AnswerDao extends SqlObject {
         } else if (type == QuestionType.DECIMAL) {
             DecimalAnswer ans = (DecimalAnswer) answer;
             DBUtils.checkInsert(1, answerSql.insertDecimalValue(answerId, ans.getValueAsBigDecimal()));
+        } else if (type == QuestionType.EQUATION) {
+            throw new DaoException("Equation question doesn't require any answer");
         } else if (type == QuestionType.PICKLIST) {
             if (questionDef == null) {
                 createAnswerPicklistValue(instanceId, answerId, (PicklistAnswer) answer);
@@ -223,6 +225,8 @@ public interface AnswerDao extends SqlObject {
         } else if (type == QuestionType.DECIMAL) {
             DecimalAnswer ans = (DecimalAnswer) newAnswer;
             DBUtils.checkInsert(1, answerSql.updateDecimalValueById(answerId, ans.getValueAsBigDecimal()));
+        } else if (type == QuestionType.EQUATION) {
+            throw new DaoException("Equation question doesn't require any answer");
         } else if (type == QuestionType.PICKLIST) {
             if (questionDef == null) {
                 updateAnswerPicklistValue(answerId, (PicklistAnswer) newAnswer);
