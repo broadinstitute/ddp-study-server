@@ -12,7 +12,6 @@ public class MultipleMatchQueryStrategy implements BuildQueryStrategy{
         for (Object value : values) {
             boolQueryBuilder.should(new MatchQueryBuilder(baseQueryBuilder.payload.getFieldName(), value));
         }
-        baseQueryBuilder.build(boolQueryBuilder);
-        return boolQueryBuilder;
+        return baseQueryBuilder.build(boolQueryBuilder);
     }
 }
