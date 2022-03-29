@@ -4,17 +4,15 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.model.study.StudySettings;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class BackfillStudySettingsAnalytics implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(BackfillStudySettingsAnalytics.class);
     private Config varsCfg;
     private Config studyCfg;
 
@@ -39,7 +37,7 @@ public class BackfillStudySettingsAnalytics implements CustomTask {
 
         Optional<StudySettings> studySettingsOpt = studyDao.findSettings(studyId);
         StudySettings studySettings = studySettingsOpt.get();
-        LOG.info("Populated study settings analyticsEnabled={}, analyticsToken={} for studyId: {} ",
+        log.info("Populated study settings analyticsEnabled={}, analyticsToken={} for studyId: {} ",
                 studySettings.isAnalyticsEnabled(), studySettings.getAnalyticsToken(), studySettings.getStudyId());
     }
 

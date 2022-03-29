@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiFormActivityFormSection;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
@@ -22,15 +23,12 @@ import org.broadinstitute.ddp.util.GsonPojoValidator;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.broadinstitute.ddp.util.JsonValidationError;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * One-off task to add sample collection message to TestBoston in deployed environments.
  */
+@Slf4j
 public class TestBostonAddSampleCollectMessage implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TestBostonAddSampleCollectMessage.class);
     private static final String DATA_FILE = "patches/sample-collect-message.conf";
     private static final String STUDY_GUID = "testboston";
 
@@ -83,7 +81,7 @@ public class TestBostonAddSampleCollectMessage implements CustomTask {
 
     private void prependNewBlockInPlace(Handle handle, long studyId, String activityCode, Config blockCfg) {
         long activityId = ActivityBuilder.findActivityId(handle, studyId, activityCode);
-        LOG.info("Prepending block for activity {}...", activityCode);
+        log.info("Prepending block for activity {}...", activityCode);
 
         ActivityVersionDto versionDto = handle.attach(JdbiActivityVersion.class)
                 .getActiveVersion(activityId)
@@ -102,7 +100,7 @@ public class TestBostonAddSampleCollectMessage implements CustomTask {
         var block = gson.fromJson(ConfigUtil.toJson(blockCfg), ContentBlockDef.class);
 
         handle.attach(SectionBlockDao.class).insertBlockForSection(activityId, sectionId, displayOrder, block, revisionId);
-        LOG.info("Inserted new {} block with id={}, displayOrder={} for activityCode={}, sectionId={}",
+        log.info("Inserted new {} block with id={}, displayOrder={} for activityCode={}, sectionId={}",
                 block.getBlockType(), block.getBlockId(), displayOrder, activityCode, sectionId);
     }
 }

@@ -11,6 +11,7 @@ import java.util.List;
 
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiQuestionValidation;
@@ -37,8 +38,6 @@ import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**Ø
  * Custom task providing insert/update/delete of validation rules to specified questions.
@@ -71,10 +70,8 @@ import org.slf4j.LoggerFactory;
  *  ]
  * }
  */
+@Slf4j
 public class ValidationRuleTask implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TaskUtil.class);
-
     private static final Gson gson = GsonUtil.standardGson();
     private final String patchCfgFile;
     private Config dataCfg;
@@ -131,7 +128,7 @@ public class ValidationRuleTask implements CustomTask {
         JdbiQuestionValidation jdbiQuestionValidation = handle.attach(JdbiQuestionValidation.class);
         List<RuleDto> existingRules = jdbiQuestionValidation.getAllActiveValidations(questionDto.getId());
         if (existingRules.stream().anyMatch(r -> r.getRuleType() == rule.getRuleType())) {
-            LOG.warn("Rule of type={} already exist for question with stableId={}", rule.getRuleType(), questionDto.getStableId());
+            log.warn("Rule of type={} already exist for question with stableId={}", rule.getRuleType(), questionDto.getStableId());
         } else {
             switch (rule.getRuleType()) {
                 case AGE_RANGE:
@@ -199,7 +196,7 @@ public class ValidationRuleTask implements CustomTask {
                 default:
                     throw new DDPException("Unhandled validation rule type: " + rule.getRuleType());
             }
-            LOG.info("Inserted validation rule of type={} to question with stableId={}", rule.getRuleType(), questionDto.getStableId());
+            log.info("Inserted validation rule of type={} to question with stableId={}", rule.getRuleType(), questionDto.getStableId());
         }
     }
 }

@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.studybuilder.task;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -37,8 +38,6 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -47,10 +46,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-
+@Slf4j
 public class OsteoConsentVersion2 implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(OsteoConsentVersion2.class);
     private static final String DATA_FILE = "patches/consent-version-2.conf";
     private static final String DATA_FILE_SOMATIC_CONSENT_ADDENDUM = "patches/somatic-consent-addendum-val.conf";
     private static final String DATA_FILE_SOMATIC_ASSENT_ADDENDUM = "patches/parent-consent-assent.conf";
@@ -142,7 +139,7 @@ public class OsteoConsentVersion2 implements CustomTask {
         String activityCodeParentalConsent = "PARENTAL_CONSENT";
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(dataCfg.getString("study.guid"));
 
-        LOG.info("Changing version of {} to {} with timestamp={}", activityCodeConsent, versionTag, timestamp);
+        log.info("Changing version of {} to {} with timestamp={}", activityCodeConsent, versionTag, timestamp);
         long ts = this.timestamp.toEpochMilli();
 
         String reasonConsentAssent = String.format(
@@ -375,7 +372,7 @@ public class OsteoConsentVersion2 implements CustomTask {
         long newBlockContentId = jdbiBlockContent.insert(contentBlock.getBlockId(), newBodyTemplateId,
                 newTitleTemplateId, versionDto.getRevId());
 
-        LOG.info("Created block_content with id={}, blockId={}, bodyTemplateId={} for bodyTemplateText={}",
+        log.info("Created block_content with id={}, blockId={}, bodyTemplateId={} for bodyTemplateText={}",
                 newBlockContentId, contentBlock.getBlockId(), newBodyTemplateId, contentBlockDef.getBodyTemplate().getTemplateText());
     }
 

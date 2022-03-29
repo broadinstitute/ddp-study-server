@@ -11,10 +11,9 @@ import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigRenderOptions;
 import com.typesafe.config.ConfigValue;
 import com.typesafe.config.ConfigValueFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.broadinstitute.ddp.exception.DDPException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Wrapper around {@link ConfigFactory#load() config load} that
@@ -22,12 +21,9 @@ import org.slf4j.LoggerFactory;
  * DO NOT CALL {@link #overrideValue(String, String)} unless you
  * are in a test!
  */
+@Slf4j
 public class ConfigManager {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ConfigManager.class);
-
     private static final String TYPESAFE_CONFIG_SYSTEM_VAR = "config.file";
-
     public static final File TYPESAFE_CONFIG_FILE;
 
     static {
@@ -121,7 +117,7 @@ public class ConfigManager {
         for (Map.Entry<String, String> override : overrides.entrySet()) {
             ConfigValue overrideValue = ConfigValueFactory.fromAnyRef(override.getValue(), "Overriding via " + this.getClass().getName());
             cfgWithOverride = cfgWithOverride.withValue(override.getKey(), overrideValue);
-            LOG.info("Overriding config value {} with {}", override.getKey(),  override.getValue());
+            log.info("Overriding config value {} with {}", override.getKey(),  override.getValue());
         }
         return cfgWithOverride;
     }
