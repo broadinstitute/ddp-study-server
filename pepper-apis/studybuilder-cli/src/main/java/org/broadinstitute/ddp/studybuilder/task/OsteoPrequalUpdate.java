@@ -5,12 +5,9 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
-import org.broadinstitute.ddp.db.dao.JdbiBlockContent;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
-import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.SectionBlockDao;
-import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
@@ -21,9 +18,8 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
+import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.util.ConfigUtil;
@@ -32,6 +28,7 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,7 +81,7 @@ public class OsteoPrequalUpdate implements CustomTask {
     private void revisionPrequal(long activityId, Config dataCfg, Handle handle, RevisionMetadata meta, String versionTag) {
         ActivityVersionDto version2 = handle.attach(ActivityDao.class).changeVersion(activityId, versionTag, meta);
         insertBlock(handle, dataCfg, activityId, version2, meta);
-        updateQuestion(handle, activityId, dataCfg, meta);
+        updateQuestion(handle, dataCfg, activityId);
     }
 
     private void insertBlock(Handle handle, Config dataCfg, long activityId, ActivityVersionDto def, RevisionMetadata revisionMetadata) {
@@ -106,39 +103,37 @@ public class OsteoPrequalUpdate implements CustomTask {
                 order, blockDef, revDto);
     }
 
-    private void updateQuestion(Handle handle, long activityId, Config dataCfg, RevisionMetadata revisionMetadata) {
+    private void updateQuestion(Handle handle, Config dataCfg, long activityId) {
         SqlHelper helper = handle.attach(SqlHelper.class);
         JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
-        TemplateDao templateDao = handle.attach(TemplateDao.class);
-        JdbiBlockContent jdbiBlockContent = handle.attach(JdbiBlockContent.class);
+
         String stableId = dataCfg.getConfig("questionUpdate").getString("stableId");
-        Config questionConf = dataCfg.getConfig("questionUpdate").getConfig("question");
-        PicklistQuestionDef questionBlockDef = gson.fromJson(ConfigUtil.toJson(questionConf), PicklistQuestionDef.class);
-        Template templateToInsert = questionBlockDef.getPromptTemplate();
-
-        JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
         QuestionDto questionDto = jdbiQuestion.findDtoByActivityIdAndQuestionStableId(activityId, stableId).get();
+        String varName = dataCfg.getConfig("questionUpdate").getConfigList("question").get(0).getString("varName");
+        String subsValue = dataCfg.getConfig("questionUpdate").getConfigList("question").get(0).getString("newVal");
+        long templatevariableId = helper.getTemplatevariableId(varName);
+        helper.updateTemplateText(subsValue, templatevariableId);
 
-        long newRevId = jdbiRevision.copyAndTerminate(questionDto.getRevisionId(), revisionMetadata);
-        int numUpdated = jdbiQuestion.updateRevisionIdById(questionDto.getId(), newRevId);
-        if (numUpdated != 1) {
-            throw new DDPException(String.format(
-                    "Unable to terminate active block_content with id=%d, blockId=%d, bodyTemplateId=%d",
-                    questionDto.getId(), questionDto.getId(), questionDto.getPromptTemplateId()));
-        }
-
-        templateDao.disableTemplate(questionDto.getPromptTemplateId(), revisionMetadata);
-
-        RevisionDto revisionDto = RevisionDto.fromStartMetadata(revisionMetadata.getUserId(), revisionMetadata);
-        var questionId = questionDto.getId();
-        long blockId = helper.getBlockIdByQuestionId(questionId);
-        long templateId = templateDao.insertTemplate(templateToInsert, revisionDto.getId());
-        jdbiBlockContent.insert(blockId, templateId, null, revisionDto.getId());
+        String value = dataCfg.getConfig("questionUpdate").getConfigList("question").get(1).getString("newVal");
+        PicklistSelectMode picklistSelectMode = PicklistSelectMode.valueOf(value);
+        long pickListModeIdByValue = helper.getPickListModeIdByValue(picklistSelectMode);
+        helper.updatePicklistOption(questionDto.getId(), pickListModeIdByValue);
     }
 
     private interface SqlHelper extends SqlObject {
-        @SqlQuery("select block_id from block__question where question_id =:question_id")
-        long getBlockIdByQuestionId(@Bind("question_id") long questionId);
+
+        @SqlUpdate("update i18n_template_substitution set substitution_value = :substitution_value"
+                + " where template_variable_id = :template_variable_id")
+        void updateTemplateText(@Bind("substitution_value") String value, @Bind("template_variable_id") long templateId);
+
+        @SqlQuery("select template_variable_id from template_variable where variable_name like :variable_name ")
+        long getTemplatevariableId(@Bind("variable_name") String variableName);
+
+        @SqlQuery("select picklist_select_mode_id from picklist_select_mode where picklist_select_mode_code = :picklist_select_mode_code")
+        long getPickListModeIdByValue(@Bind("picklist_select_mode_code") PicklistSelectMode picklistSelectMode);
+
+        @SqlUpdate("update picklist_question set picklist_select_mode_id = :picklist_select_mode_id where question_id = :question_id")
+        void updatePicklistOption(@Bind("question_id") long questionId, @Bind("picklist_select_mode_id") long picklistselectModeId);
 
     }
 }
