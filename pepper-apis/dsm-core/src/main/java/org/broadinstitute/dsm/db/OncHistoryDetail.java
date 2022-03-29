@@ -192,7 +192,7 @@ public class OncHistoryDetail {
     private String participantId;
     private String ddpParticipantId;
     private List<Tissue> tissues;
-    private String realm;
+    private long ddpInstanceId;
 
     public OncHistoryDetail() {
     }

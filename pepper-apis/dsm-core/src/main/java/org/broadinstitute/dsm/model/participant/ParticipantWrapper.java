@@ -133,13 +133,14 @@ public class ParticipantWrapper {
                 List<KitRequestShipping> kitRequestShipping = null;
                 if (filterByInstance) {
                     //TODO how to make it dynamic - still just comparing realm....
-                    medicalRecord = esDsm.getMedicalRecord().stream().filter(mR -> ddpInstanceDto.getInstanceName().equals(mR.getRealm()))
-                            .collect(Collectors.toList());
+                    medicalRecord =
+                            esDsm.getMedicalRecord().stream().filter(mR -> ddpInstanceDto.getDdpInstanceId() == mR.getDdpInstanceId())
+                                    .collect(Collectors.toList());
                     oncHistoryDetails =
-                            esDsm.getOncHistoryDetail().stream().filter(oD -> ddpInstanceDto.getInstanceName().equals(oD.getRealm()))
+                            esDsm.getOncHistoryDetail().stream().filter(oD -> ddpInstanceDto.getDdpInstanceId() == oD.getDdpInstanceId())
                                     .collect(Collectors.toList());
                     kitRequestShipping =
-                            esDsm.getKitRequestShipping().stream().filter(k -> ddpInstanceDto.getInstanceName().equals(k.getRealm()))
+                            esDsm.getKitRequestShipping().stream().filter(k -> ddpInstanceDto.getDdpInstanceId() == k.getDdpInstanceId())
                                     .collect(Collectors.toList());
                 } else {
                     medicalRecord = esDsm.getMedicalRecord();
