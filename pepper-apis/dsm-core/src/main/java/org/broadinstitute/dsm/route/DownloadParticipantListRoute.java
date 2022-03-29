@@ -1,62 +1,37 @@
 package org.broadinstitute.dsm.route;
 
+import javax.servlet.ServletOutputStream;
 import java.io.File;
-import java.io.PrintWriter;
+import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.StringJoiner;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.stream.IntStream;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.Gson;
-import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.Assignee;
-import org.broadinstitute.dsm.db.Cancer;
-import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.Drug;
-import org.broadinstitute.dsm.db.FieldSettings;
-import org.broadinstitute.dsm.db.InstanceSettings;
-import org.broadinstitute.dsm.db.KitType;
-import org.broadinstitute.dsm.db.MedicalRecord;
-import org.broadinstitute.dsm.db.ViewFilter;
-import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
-import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.db.dto.settings.InstanceSettingsDto;
-import org.broadinstitute.dsm.db.structure.DBElement;
-import org.broadinstitute.dsm.model.KitRequestSettings;
-import org.broadinstitute.dsm.model.KitSubKits;
-import org.broadinstitute.dsm.model.ParticipantListRequestModel;
-import org.broadinstitute.dsm.model.ddp.PreferredLanguage;
-import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.broadinstitute.dsm.model.elastic.sort.Alias;
-import org.broadinstitute.dsm.model.elastic.sort.SortBy;
+import org.broadinstitute.dsm.model.excel.ParticipantRecord;
 import org.broadinstitute.dsm.model.filter.FilterFactory;
 import org.broadinstitute.dsm.model.filter.Filterable;
-import org.broadinstitute.dsm.model.participant.ParticipantWrapper;
+import org.broadinstitute.dsm.model.participant.DownloadParticipantListPayload;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
-import org.broadinstitute.dsm.model.participant.ParticipantWrapperPayload;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
 import org.broadinstitute.dsm.security.RequestHandler;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.statics.RequestParameter;
-import org.broadinstitute.dsm.statics.UserErrorMessages;
-import org.broadinstitute.dsm.util.AbstractionUtil;
-import org.broadinstitute.dsm.util.DDPRequestUtil;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
-import org.broadinstitute.dsm.util.PatchUtil;
-import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
-import org.broadinstitute.lddp.handlers.util.Result;
-import org.broadinstitute.lddp.util.JsonTransformer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
 
@@ -64,92 +39,142 @@ public class DownloadParticipantListRoute extends RequestHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(DownloadParticipantListRoute.class);
 
-    private PatchUtil patchUtil;
-
-    public DownloadParticipantListRoute(@NonNull PatchUtil patchUtil) {
-        this.patchUtil = patchUtil;
+    public DownloadParticipantListRoute() {
     }
 
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
-        if (patchUtil.getColumnNameMap() == null) {
-            throw new RuntimeException("ColumnNameMap is null!");
-        }
-        System.out.println(patchUtil.getColumnNameMap());
-        QueryParamsMap queryParamsMap = request.queryMap();
-        String realm = queryParamsMap.get("realm").value();
-        if (StringUtils.isBlank(realm)) {
-            logger.error("Realm is empty");
-        }
-        Map<String, Collection<FieldSettings>> fieldSettings = FieldSettings.getFieldSettings(realm);
+        DownloadParticipantListPayload payload = new Gson().fromJson(request.body(), DownloadParticipantListPayload.class);
 
-        String ddpGroupId = DDPInstance.getDDPGroupId(realm);
-        if (StringUtils.isBlank(ddpGroupId)) {
-            logger.error("GroupId is empty");
-        }
-        String[] fieldNames = queryParamsMap.get("fieldNames").values();
-        List<String[]> dataLines = new ArrayList<>();
-        dataLines.add(fieldNames);
-        List<String> esAliases = Arrays.stream(fieldNames)
-                .map(column -> column.split("\\.")[0])
-                .map(column -> Alias.of(column).getValue())
+        List<String> columnNames = payload.getColumnNames();
+        List<String> esAliases = columnNames.stream()
+                .map(column -> {
+                    String[] split = column.split("\\.");
+                    Alias esAlias = Alias.of(split[0]);
+                    if (esAlias == Alias.DATA) {
+                        return split[1];
+                    }
+                    return esAlias.getValue() + "." + split[1];
+                })
                 .collect(Collectors.toList());
 
         Filterable filterable = FilterFactory.of(request);
-        ParticipantWrapperResult filteredList = (ParticipantWrapperResult) filterable.filter(queryParamsMap);
-
-        if (queryParamsMap.get("byParticipant").booleanValue()) {
+        ParticipantWrapperResult filteredList = (ParticipantWrapperResult) filterable.filter(request.queryMap());
+        Workbook workbook = new XSSFWorkbook();
+        List<String> headerNames = payload.getHeaderNames();
+        Sheet sheet = workbook.createSheet("Participant List");
+        Row header = sheet.createRow(0);
+        IntStream.range(0, headerNames.size()).forEach(i -> {
+            Cell cell = header.createCell(i);
+            cell.setCellValue(headerNames.get(i));
+            sheet.autoSizeColumn(i);
+        });
+        if (payload.isByParticipant()) {
+            int currentRow = 1;
             for (ParticipantWrapperDto participant : filteredList.getParticipants()) {
-                List<String> records = participant.getMedicalRecords().stream().map(MedicalRecord::toString).collect(Collectors.toList());
+                List<Object> excelRow = new ArrayList<>();
                 Map<String, Object> esDataAsMap = participant.getEsDataAsMap();
                 List<String> row = new ArrayList<>();
                 for (String esAlias : esAliases) {
                     Object nestedValue = getNestedValue(esAlias, esDataAsMap);
+                    excelRow.add(nestedValue);
                     if (nestedValue instanceof Collection) {
-                        System.out.println(nestedValue);
                         Collection<?> value = (Collection<?>) nestedValue;
-                        value.forEach(val -> row.add(val.toString()));
+                        row.add(value.stream().map(Object::toString)
+                                .collect(Collectors.joining(System.lineSeparator())));
                     } else {
                         row.add(nestedValue.toString());
                     }
                 }
-                dataLines.add(row.toArray(String[]::new));
+                currentRow = createRecord(sheet, currentRow, new ParticipantRecord(excelRow));
             }
         }
-        if (queryParamsMap.hasKey(SortBy.SORT_BY)) {
-            SortBy sortBy = ObjectMapperSingleton.readValue(queryParamsMap.get(SortBy.SORT_BY).value(), new TypeReference<>() {
-            });
-        }
+        responseFile(response, workbook);
+        return response.raw();
+    }
 
-        File csvOutputFile = new File("test.csv");
-        try (PrintWriter pw = new PrintWriter(csvOutputFile)) {
-            dataLines.stream()
-                    .map(this::convertToCSV)
-                    .forEach(pw::println);
+
+    private void responseFile(Response response, Workbook workbook) throws Exception {
+        File currDir = new File(".");
+        String path = currDir.getAbsolutePath();
+        String strDate = getFormattedDate();
+        String fileLocation = String.format("%sParticipant-%s.xlsx", path.substring(0, path.length() - 1), strDate);
+        FileOutputStream outputStream = new FileOutputStream(fileLocation);
+        workbook.write(outputStream);
+        workbook.close();
+        File file = new File(fileLocation);
+        response.raw().setContentType("application/octet-stream");
+        response.raw().setHeader("Content-Disposition", "attachment; filename=" + file.getName());
+        byte[] encoded = Files.readAllBytes(Paths.get(fileLocation));
+        ServletOutputStream os = response.raw().getOutputStream();
+        os.write(encoded);
+        os.close();
+        Files.deleteIfExists(file.toPath());
+    }
+
+    private String getFormattedDate() {
+        Date date = new Date();
+        SimpleDateFormat formatter = new SimpleDateFormat("ddMMyyyy");
+        return formatter.format(date);
+    }
+
+    private int createRecord(Sheet sheet, int startRow, ParticipantRecord participantRecord) {
+        List<Object> values = participantRecord.getValues();
+        List<Row> rows = createEmptyRows(sheet, startRow, participantRecord.getMaxRows(), values.size());
+        IntStream.range(0, values.size()).forEach(i -> {
+            Cell currentCell = rows.get(0).getCell(i);
+            Object currentValue = values.get(i);
+            int filledRows = 1;
+            if (currentValue instanceof Collection) {
+                Collection<?> value = (Collection<?>) currentValue;
+                fillRowColumnsWithValues(rows, value, i);
+                filledRows = Math.max(value.size(), filledRows);
+            } else {
+                currentCell.setCellValue(currentValue.toString());
+            }
+            sheet.autoSizeColumn(i);
+            int firstRow = startRow + filledRows - 1;
+            int lastRow = startRow + participantRecord.getMaxRows() - 1;
+            if (firstRow != lastRow) {
+                sheet.addMergedRegion(new CellRangeAddress(firstRow, lastRow, i, i));
+            }
+        });
+        return startRow + participantRecord.getMaxRows();
+    }
+
+    private void fillRowColumnsWithValues(List<Row> rows, Collection<?> value, int column) {
+        int i = 0;
+        for (Object o : value) {
+            rows.get(i).getCell(column).setCellValue(o.toString());
+            i++;
         }
-        return new Result(200);
+    }
+
+    private List<Row> createEmptyRows(Sheet sheet, int startRow, int count, int columns) {
+        List<Row> rows = new ArrayList<>();
+        IntStream.range(0, count).forEach(i -> {
+            Row row = sheet.createRow(startRow + i);
+            IntStream.range(0, columns).forEach(row::createCell);
+            rows.add(row);
+        });
+        return rows;
     }
 
     private Object getNestedValue(String fieldName, Map<String, Object> esDataAsMap) {
         int dotIndex = fieldName.indexOf('.');
         if (dotIndex != -1) {
-            return getNestedValue(fieldName.substring(dotIndex+1), (Map<String, Object>) esDataAsMap.get(fieldName.substring(0, dotIndex)));
+            Object o = esDataAsMap.get(fieldName.substring(0, dotIndex));
+            if (o == null) {
+                return StringUtils.EMPTY;
+            }
+            if (o instanceof Collection) {
+                return ((Collection<?>) o).stream().map(singleDataMap -> getNestedValue(fieldName.substring(dotIndex + 1),
+                        (Map<String, Object>) singleDataMap)).collect(Collectors.toList());
+            } else {
+                return getNestedValue(fieldName.substring(dotIndex + 1), (Map<String, Object>) o);
+            }
         }
-        return esDataAsMap.get(fieldName);
+        return esDataAsMap.getOrDefault(fieldName, StringUtils.EMPTY);
     }
 
-    public String convertToCSV(String[] data) {
-        return Stream.of(data)
-                .map(this::escapeSpecialCharacters)
-                .collect(Collectors.joining(","));
-    }
-
-    public String escapeSpecialCharacters(String data) {
-        String escapedData = data.replaceAll("\\R", " ");
-        if (data.contains(",") || data.contains("\"") || data.contains("'")) {
-            data = data.replace("\"", "\"\"");
-            escapedData = "\"" + data + "\"";
-        }
-        return escapedData;
-    }
 }

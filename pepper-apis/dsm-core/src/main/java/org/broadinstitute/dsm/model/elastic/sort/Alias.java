@@ -22,8 +22,8 @@ public enum Alias {
     EX(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT), false),
     DSM(ElasticSearchUtil.DSM, false), STATUS(ElasticSearchUtil.STATUS, false), PROFILE(ElasticSearchUtil.PROFILE, false),
     ADDRESS(ElasticSearchUtil.ADDRESS, false), INVITATIONS(ElasticSearchUtil.INVITATIONS, false), PROXY(ElasticSearchUtil.PROFILE, false),
-    ACTIVITIES(ElasticSearchUtil.ACTIVITIES, true), REGISTRATION(ElasticSearchUtil.ACTIVITIES, true);
-
+    ACTIVITIES(ElasticSearchUtil.ACTIVITIES, true), REGISTRATION(ElasticSearchUtil.ACTIVITIES, true),
+    DATA("", false);
     Alias(String value, boolean isCollection) {
         this.value = value;
         this.isCollection = isCollection;
@@ -43,7 +43,7 @@ public enum Alias {
     }
 
     public static Alias of(String tableAlias) {
-        return Enums.getIfPresent(Alias.class, tableAlias).or(ACTIVITIES);
+        return Enums.getIfPresent(Alias.class, tableAlias.toUpperCase()).or(ACTIVITIES);
     }
 
 
