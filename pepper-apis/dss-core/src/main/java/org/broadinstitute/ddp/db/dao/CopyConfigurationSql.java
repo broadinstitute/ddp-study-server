@@ -55,6 +55,9 @@ public interface CopyConfigurationSql extends SqlObject {
     @SqlUpdate("delete from copy_configuration where copy_configuration_id = :id")
     int deleteCopyConfig(@Bind("id") long configId);
 
+    @SqlUpdate("delete from copy_configuration_pair where copy_configuration_pair_id in (<pairIds>)")
+    int deleteCopyConfigPairs(@BindList(value = "pairIds", onEmpty = EmptyHandling.NULL) Set<Long> pairIds);
+
     @SqlUpdate("delete from copy_location where copy_location_id = :locId")
     int deleteCopyLocation(@Bind("locId") long locationId);
 

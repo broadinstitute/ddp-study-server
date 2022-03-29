@@ -3,7 +3,7 @@ package org.broadinstitute.dsm.model.elastic.filter.splitter;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.Util;
 
-public class DiamondEqualsSplitter extends BaseSplitter {
+public class DiamondEqualsSplitterStrategy extends SplitterStrategy {
 
     @Override
     protected String[] getFieldWithAlias() {
