@@ -9,7 +9,7 @@ public class JsonContainsSplitterTest {
     @Test
     public void getValue() {
         //JSON_CONTAINS(k.test_result, JSON_OBJECT('isCorrected', 'true'))
-        BaseSplitter splitter = new JsonContainsSplitter();
+        SplitterStrategy splitter = new JsonContainsSplitterStrategy();
         String filter = "JSON_CONTAINS(k.test_result, JSON_OBJECT('isCorrected', 'true'))";
         splitter.setFilter(filter);
         assertEquals("'true'", splitter.getValue()[0]);
@@ -18,7 +18,7 @@ public class JsonContainsSplitterTest {
     @Test
     public void getInnerProperty() {
         //JSON_CONTAINS(k.test_result, JSON_OBJECT('isCorrected', 'true'))
-        BaseSplitter splitter = new JsonContainsSplitter();
+        SplitterStrategy splitter = new JsonContainsSplitterStrategy();
         String filter = "JSON_CONTAINS(k.test_result, JSON_OBJECT('isCorrected', 'true'))";
         splitter.setFilter(filter);
         assertEquals("testResult.isCorrected", splitter.getInnerProperty());
@@ -28,7 +28,7 @@ public class JsonContainsSplitterTest {
     public void getFieldWithAlias() {
         //JSON_CONTAINS(k.test_result, JSON_OBJECT('isCorrected', 'true'))
         // [k, test_result]
-        BaseSplitter splitter = new JsonContainsSplitter();
+        SplitterStrategy splitter = new JsonContainsSplitterStrategy();
         String filter = "JSON_CONTAINS(k.test_result, JSON_OBJECT('isCorrected', 'true'))";
         splitter.setFilter(filter);
         assertEquals("k", splitter.getFieldWithAlias()[0]);
@@ -37,7 +37,7 @@ public class JsonContainsSplitterTest {
 
     @Test
     public void getField() {
-        BaseSplitter splitter = new JsonContainsSplitter();
+        SplitterStrategy splitter = new JsonContainsSplitterStrategy();
         String filter = "JSON_CONTAINS(k.test_result, JSON_OBJECT('isCorrected', 'true'))";
         splitter.setFilter(filter);
         assertEquals("testResult", splitter.getFieldName());

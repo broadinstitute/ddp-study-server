@@ -181,7 +181,7 @@ public class AnswerToAnswerCopier {
             String value = ((ActivityInstanceSelectAnswer) sourceAnswer).getValue();
             targetAnswer = new ActivityInstanceSelectAnswer(null, targetQuestion.getStableId(), null, value);
         } else if (type == QuestionType.FILE) {
-            FileInfo value = ((FileAnswer) sourceAnswer).getValue();
+            List<FileInfo> value = ((FileAnswer) sourceAnswer).getValue();
             targetAnswer = new FileAnswer(null, targetQuestion.getStableId(), null, value);
         } else {
             throw new DDPException("Unhandled copying for answer type " + type);
