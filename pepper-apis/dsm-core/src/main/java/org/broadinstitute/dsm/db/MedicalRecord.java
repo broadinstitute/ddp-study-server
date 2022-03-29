@@ -230,6 +230,7 @@ public class MedicalRecord {
     @JsonProperty("dynamicFields")
     @SerializedName("dynamicFields")
     private String additionalValuesJson;
+    @ColumnName(DBConstants.REVIEW_MEDICAL_RECORD)
     private boolean reviewMedicalRecord;
     @TableName(name = DBConstants.DDP_MEDICAL_RECORD, alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID, columnPrefix = "")

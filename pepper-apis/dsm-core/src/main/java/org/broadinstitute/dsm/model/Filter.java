@@ -274,10 +274,10 @@ public class Filter {
                     lessThan = lessThan.substring(lessThanIndex);
                     query += moreThan + query + lessThan;
                 } else if (filter.isExactMatch()) {
-                    query += NUMBER.equals(filter.additionalType) ? EQUALS + "#" : EQUALS + "'#'";
+                    query += EQUALS + "#";
                     query = query.replaceAll("#", String.valueOf(filter.getFilter1().getValue()));
                 } else {
-                    query += " " + LIKE + " '%#%'";
+                    query += " " + LIKE + " %#%";
                     query = query.replaceAll("#", String.valueOf(filter.getFilter1().getValue()));
                 }
             }

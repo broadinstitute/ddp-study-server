@@ -10,7 +10,6 @@ import org.broadinstitute.ddp.model.address.AddressWarning;
 import org.broadinstitute.ddp.model.address.MailAddress;
 
 public class VerifyAddressResponse {
-
     public static final String WARNINGS_ENTERED = "entered";
     public static final String WARNINGS_SUGGESTED = "suggested";
 
