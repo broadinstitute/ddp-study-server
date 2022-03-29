@@ -254,7 +254,8 @@ public class MedicalRecord {
                          String mrReceived, String mrDocument, String mrDocumentFileNames, boolean mrProblem, String mrProblemText,
                          boolean unableObtain, boolean duplicate, boolean international, boolean crRequired, String pathologyPresent,
                          String mrNotes, boolean reviewMedicalRecord, FollowUp[] followUps, boolean followUpRequired,
-                         String followupRequiredText, String additionalValuesJson, String unableObtainText, String ddpParticipantId) {
+                         String followupRequiredText, String additionalValuesJson, String unableObtainText, String ddpParticipantId,
+                         long ddpInstanceId) {
         this.medicalRecordId = medicalRecordId;
         this.institutionId = institutionId;
         this.ddpInstitutionId = ddpInstitutionId;
@@ -290,6 +291,7 @@ public class MedicalRecord {
         this.additionalValuesJson = additionalValuesJson;
         this.unableObtainText = unableObtainText;
         this.ddpParticipantId = ddpParticipantId;
+        this.ddpInstanceId = ddpInstanceId;
     }
 
     public static MedicalRecord getMedicalRecord(@NonNull ResultSet rs) throws SQLException {
@@ -308,7 +310,7 @@ public class MedicalRecord {
                 new Gson().fromJson(rs.getString(DBConstants.FOLLOW_UP_REQUESTS), FollowUp[].class),
                 rs.getBoolean(DBConstants.FOLLOWUP_REQUIRED), rs.getString(DBConstants.FOLLOWUP_REQUIRED_TEXT),
                 rs.getString(DBConstants.ADDITIONAL_VALUES_JSON), rs.getString(DBConstants.MR_UNABLE_OBTAIN_TEXT),
-                rs.getString(DBConstants.DDP_PARTICIPANT_ID));
+                rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getLong(DBConstants.DDP_INSTANCE_ID));
         return medicalRecord;
     }
 
