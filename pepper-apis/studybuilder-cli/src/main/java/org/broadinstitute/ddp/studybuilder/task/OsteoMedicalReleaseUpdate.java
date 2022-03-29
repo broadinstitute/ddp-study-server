@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
+import org.broadinstitute.ddp.db.dao.ComponentDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiBlockContent;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
@@ -19,8 +20,8 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
-import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.PhysicianComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
@@ -39,13 +40,11 @@ import java.nio.file.Path;
 
 public class OsteoMedicalReleaseUpdate implements CustomTask {
 
-
     private static final Logger LOG = LoggerFactory.getLogger(OsteoMedicalReleaseUpdate.class);
     private static final String MEDICAL_RELEASE_MINOR_V2 = "patches/medical-release-minor-v2.conf";
     private static final String MEDICAL_RELEASE_MINOR_V1 = "medical-release-minor.conf";
     private static final String MEDICAL_RELEASE_SELF = "patches/medical-release-self-v2.conf";
     private static final String EN_V2 = "patches/en-v2.conf";
-
 
     private Path cfgPath;
     private Config studyCfg;
@@ -112,6 +111,8 @@ public class OsteoMedicalReleaseUpdate implements CustomTask {
         updateIntroduction(handle, meta, version2);
 
         updateClosing(handle, meta, version2, studyDto, adminUser, helper);
+
+        updateSections(handle, meta, version2);
     }
 
     private void updateTitleAndName(StudyDto studyDto, JdbiActivity jdbiActivity,
@@ -195,8 +196,6 @@ public class OsteoMedicalReleaseUpdate implements CustomTask {
         FormBlockDef formBlockDef = gson.fromJson(ConfigUtil.toJson(config), FormBlockDef.class);
         ActivityBuilder activityBuilder = new ActivityBuilder(cfgPath.getParent(), studyCfg, varsCfg, studyDto, adminUser.getUserId());
         Config cfg = activityBuilder.readDefinitionConfig(MEDICAL_RELEASE_MINOR_V1);
-        var formActivityDef = gson.fromJson(ConfigUtil.toJson(cfg), FormActivityDef.class);
-        var formSectionDef = formActivityDef.getClosing();
 
         long templateId = helper.selectTemplateId("$osteo_release_child_agree");
         long blockId = helper.selectBlockId(templateId);
@@ -208,6 +207,64 @@ public class OsteoMedicalReleaseUpdate implements CustomTask {
 
         sectionBlockDao.addBlock(version2.getActivityId(), sectionId, order, formBlockDef, revisionDto);
     }
+
+    private void updateSections(Handle handle, RevisionMetadata meta, ActivityVersionDto version2) {
+        var config = minorCfg.getConfig("sections").getConfig("0").getConfig("blocks")
+                .getConfig("updated").getConfig("1");
+
+        revisionContentBlockSection(handle, meta, version2, config);
+
+    }
+
+    private void revisionContentBlockSection(Handle handle, RevisionMetadata meta, ActivityVersionDto versionDto, Config config) {
+        var physicianComponentBlockDef = gson.fromJson(ConfigUtil.toJson(config), PhysicianComponentDef.class);
+
+        //        var newAddButtonTemplate = physicianComponentBlockDef.getAddButtonTemplate();
+        //        var newTitleTemplate = physicianComponentBlockDef.getTitleTemplate();
+        //        var newSubtitleTemplate = physicianComponentBlockDef.getSubtitleTemplate();
+
+
+        String oldAddButtonTemplateText = "$osteo_release_child_physician_button";
+        String oldTitleTemplateText = "$osteo_release_child_physician_title";
+        String oldSubtitleTemplateText = "$osteo_release_child_physician_subtitle";
+
+        var helper = handle.attach(SqlHelper.class);
+
+        var oldAddButtonTemplateTextId = helper.selectTemplateId(oldAddButtonTemplateText);
+        var oldTitleTemplateTextId = helper.selectTemplateId(oldTitleTemplateText);
+        var oldSubtitleTemplateTextId = helper.selectTemplateId(oldSubtitleTemplateText);
+
+        var templateDao = handle.attach(TemplateDao.class);
+
+        //        var jdbiInstitutionPhysicianComponent = handle.attach(JdbiInstitutionPhysicianComponent.class);
+
+        var componentId = helper.selectComponentId(oldAddButtonTemplateTextId, oldTitleTemplateTextId, oldSubtitleTemplateTextId);
+        //        var institutionTypeId = helper.selectInstitutionTypeId(oldAddButtonTemplateTextId,
+        //                oldTitleTemplateTextId, oldSubtitleTemplateTextId);
+
+        JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
+        long newRevId = jdbiRevision.copyAndTerminate(componentId, meta);
+
+        templateDao.disableTemplate(oldAddButtonTemplateTextId, meta);
+        templateDao.disableTemplate(oldSubtitleTemplateTextId, meta);
+        templateDao.disableTemplate(oldTitleTemplateTextId, meta);
+
+        //        var newAddButtonTemplateId = templateDao.insertTemplate(newAddButtonTemplate, newRevId);
+        //        var newTitleTemplateId = templateDao.insertTemplate(newTitleTemplate, newRevId);
+        //        var newSubtitleTemplateId = templateDao.insertTemplate(newSubtitleTemplate, newRevId);
+        //
+        //        var allowMultiple = config.getBoolean("allowMultiple");
+        //
+        //        var showFields = config.getBoolean("showFields");
+        //
+        //        var required = config.getBoolean("required");
+
+        var blockId = helper.selectBlockIdFromBlockComponent(componentId);
+        var componentDao = handle.attach(ComponentDao.class);
+
+        componentDao.insertComponentDef(blockId, physicianComponentBlockDef, newRevId);
+    }
+
 
     private interface SqlHelper extends SqlObject {
 
@@ -228,6 +285,24 @@ public class OsteoMedicalReleaseUpdate implements CustomTask {
         @SqlQuery("select form_section_id from form_section__block "
                 + "where block_id = :blockId")
         long selectSectionId(@Bind("blockId") long blockId);
+
+        @SqlQuery("select institution_physician_component_id from institution_physician_component "
+                + "where add_button_template_id = :addButtonTemplateId and title_template_id = :titleTemplateId "
+                + "and subtitle_template_id = :subtitleTemplateId")
+        long selectComponentId(@Bind("addButtonTemplateId") long addButtonTemplateId,
+                               @Bind("titleTemplateId") long titleTemplateId,
+                               @Bind("subtitleTemplateId") long subtitleTemplateId);
+
+        @SqlQuery("select institution_type_id from institution_physician_component "
+                + "where add_button_template_id = :addButtonTemplateId and title_template_id = :titleTemplateId "
+                + "and subtitle_template_id = :subtitleTemplateId")
+        long selectInstitutionTypeId(@Bind("addButtonTemplateId") long addButtonTemplateId,
+                                     @Bind("titleTemplateId") long titleTemplateId,
+                                     @Bind("subtitleTemplateId") long subtitleTemplateId);
+
+        @SqlQuery("select block_id from block_component "
+                + "where component_id = :componentId")
+        long selectBlockIdFromBlockComponent(@Bind("componentId") long componentId);
 
     }
 }
