@@ -13,7 +13,7 @@ public class MultipleOptionsSplitterTest {
         String filter =
                 "( oD.fax_sent = 'review' OR oD.fax_sent = 'no' OR oD.fax_sent = 'hold' OR oD.fax_sent = 'request' OR oD.fax_sent = "
                         + "'unable To Obtain' OR oD.fax_sent = 'sent' OR oD.fax_sent = 'received' OR oD.fax_sent = 'returned' )";
-        SplitterStrategy multipleSplitter = Operator.MULTIPLE_OPTIONS.getStrategy();
+        SplitterStrategy multipleSplitter = Operator.MULTIPLE_OPTIONS.getSplitterStrategy();
         multipleSplitter.setFilter(filter);
         assertEquals("faxSent", multipleSplitter.getInnerProperty());
     }
@@ -22,7 +22,7 @@ public class MultipleOptionsSplitterTest {
     public void contentContainsOR() {
         String filter = "( d.status = 'EXITED_BEFORE_ENROLLMENT' OR d.status = 'EXITED_AFTER_ENROLLMENT' )";
         String[] filters = new String[] {"d.status = 'EXITED_BEFORE_ENROLLMENT'", "d.status = 'EXITED_AFTER_ENROLLMENT'"};
-        SplitterStrategy multipleSplitter = Operator.MULTIPLE_OPTIONS.getStrategy();
+        SplitterStrategy multipleSplitter = Operator.MULTIPLE_OPTIONS.getSplitterStrategy();
         multipleSplitter.setFilter(filter);
         String[] actualFilters = multipleSplitter.split();
         assertArrayEquals(filters, actualFilters);
