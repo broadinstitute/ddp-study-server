@@ -312,6 +312,7 @@ public class OsteoConsentVersion2 implements CustomTask {
         updateAdultTemplates(handle, meta, version2, selfConsentDataCfg);
         addAdultNestedBlocks(activityId, handle, meta,"CONSENT", version2, selfConsentDataCfg);
         addAdultBlocks(activityId, handle, "CONSENT", meta, version2, selfConsentDataCfg);
+        reorderNestedBlock(handle, activityCode, version2, selfConsentDataCfg);
     }
 
     private void updateAdultVariables(Handle handle, RevisionMetadata meta,
