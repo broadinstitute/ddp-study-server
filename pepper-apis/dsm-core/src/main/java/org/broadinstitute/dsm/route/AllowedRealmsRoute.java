@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.route;
 
+import org.broadinstitute.dsm.db.dao.roles.UserRoleDao;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.UserUtil;
@@ -19,14 +20,13 @@ public class AllowedRealmsRoute extends RequestHandler {
             throw new RuntimeException("User id was not equal. User Id in token " + userId + " user Id in request " + userIdRequest);
         }
         if (request.url().contains(RoutePath.STUDIES)) {
-            return UserUtil.getAllowedStudies(userIdRequest);
+            return UserRoleDao.getAllowedStudies(userIdRequest);
         }
 
         if (queryParams.value(MENU) != null) {
-            String menu = queryParams.get(MENU).value();
-            return UserUtil.getListOfAllowedRealms(userIdRequest, menu);
+            return UserRoleDao.getAllowedStudies(userIdRequest);
         }
 
-        return UserUtil.getListOfAllowedRealms(userIdRequest);
+        return UserRoleDao.getListOfAllowedRealms(Long.parseLong(userIdRequest));
     }
 }

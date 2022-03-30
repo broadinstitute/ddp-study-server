@@ -28,6 +28,7 @@ import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.ParticipantData;
 import org.broadinstitute.dsm.db.SummaryKitType;
+import org.broadinstitute.dsm.db.dao.roles.UserRoleDao;
 import org.broadinstitute.dsm.model.DashboardInformation;
 import org.broadinstitute.dsm.model.FollowUp;
 import org.broadinstitute.dsm.model.KitDDPSummary;
@@ -150,7 +151,7 @@ public class DashboardRoute extends RequestHandler {
                             realm = queryParams.get(RoutePath.REALM).value();
                             return getShippingDashboard(realm, userIdRequest);
                         } else {
-                            Collection<String> allowedRealms = UserUtil.getListOfAllowedRealms(userIdRequest);
+                            Collection<String> allowedRealms = UserRoleDao.getListOfAllowedRealms(Long.parseLong(userIdRequest));
                             Map<String, List<KitType>> kitTypesPerDDP = new HashMap<>();
                             for (String ddp : allowedRealms) {
                                 kitTypesPerDDP.put(ddp, KitType.getKitTypes(ddp, userIdRequest));
@@ -775,7 +776,7 @@ public class DashboardRoute extends RequestHandler {
 
     public Collection<KitReport> getShippingReport(@NonNull String userId, @NonNull long start, @NonNull long end) {
         logger.info("Shipping report");
-        Collection<String> allowedRealms = UserUtil.getListOfAllowedRealms(userId);
+        Collection<String> allowedRealms = UserRoleDao.getListOfAllowedRealms(Long.parseLong(userId));
         Collection<KitReport> kitTypesPerDDP = new ArrayList<>();
 
         for (String ddp : allowedRealms) {
@@ -793,7 +794,7 @@ public class DashboardRoute extends RequestHandler {
 
     public Collection<KitReport> getShippingReportDownload(@NonNull String userId) {
         logger.info("Shipping report for download");
-        Collection<String> allowedRealms = UserUtil.getListOfAllowedRealms(userId);
+        Collection<String> allowedRealms = UserRoleDao.getListOfAllowedRealms(Long.parseLong(userId));
         Collection<KitReport> kitTypesPerDDP = new ArrayList<>();
         for (String ddp : allowedRealms) {
             ArrayList<SummaryKitType> kitReports = new ArrayList<>();

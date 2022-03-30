@@ -6,6 +6,7 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.ViewFilter;
+import org.broadinstitute.dsm.db.dao.roles.UserRoleDao;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
@@ -58,7 +59,7 @@ public class ViewFilterRoute extends RequestHandler {
                             instance.getDdpInstanceId());
                 } else {
                     if (!request.url().contains(RoutePath.GET_DEFAULT_FILTERS)) {
-                        Collection<String> realms = UserUtil.getListOfAllowedRealms(userIdRequest);
+                        Collection<String> realms = UserRoleDao.getListOfAllowedRealms(Long.parseLong(userIdRequest));
                         realm = realms.iterator().next();
                         String ddpGroupId = DDPInstance.getDDPGroupId(realm);
                         return ViewFilter.getAllFilters(userIdRequest, patchUtil.getColumnNameMap(), parent, ddpGroupId,

@@ -49,6 +49,7 @@ import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetrics;
 import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.dsm.careevolve.Provider;
+import org.broadinstitute.dsm.db.dao.roles.UserRoleDao;
 import org.broadinstitute.dsm.jetty.JettyConfig;
 import org.broadinstitute.dsm.jobs.DDPEventJob;
 import org.broadinstitute.dsm.jobs.DDPRequestJob;
@@ -491,13 +492,13 @@ public class DSMServer {
         int dssMaxConnections = config.getInt("portal.maxConnections");//todo pegah add to vault
         try {
             TransactionWrapper.DbConfiguration DSS_DB =
-                    new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DDP_DB, dssMaxConnections, dssDBUrl);
+                    new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.SHARED_DB, dssMaxConnections, dssDBUrl);
             //setup the mysql transaction/connection utility
             TransactionWrapper.init(DSS_DB);
 
             logger.info("Running Shared DB update...");
 
-            LiquibaseUtil.runLiquibase(dssDBUrl, TransactionWrapper.DB.DDP_DB);
+            LiquibaseUtil.runLiquibase(dssDBUrl, TransactionWrapper.DB.SHARED_DB);
             LiquibaseUtil.releaseResources();
 
             logger.info("Shared DB setup complete.");
@@ -637,7 +638,6 @@ public class DSMServer {
         setupDDPConfigurationLookup(cfg.getString(ApplicationConfigConstants.DDP));
 
         AuthenticationRoute authenticationRoute = new AuthenticationRoute(auth0Util,
-                userUtil,
                 cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN),
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_SECRET),
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_KEY),
@@ -775,7 +775,8 @@ public class DSMServer {
 
         get(UI_ROOT + RoutePath.SEARCH_KIT, new KitSearchRoute(), new JsonTransformer());
 
-        KitDiscardRoute kitDiscardRoute = new KitDiscardRoute(auth0Util, userUtil, auth0Domain);
+        UserRoleDao userRoleDao = new UserRoleDao();
+        KitDiscardRoute kitDiscardRoute = new KitDiscardRoute(auth0Util, userUtil, auth0Domain, userRoleDao);
         get(UI_ROOT + RoutePath.DISCARD_SAMPLES, kitDiscardRoute, new JsonTransformer());
         patch(UI_ROOT + RoutePath.DISCARD_SAMPLES, kitDiscardRoute, new JsonTransformer());
         post(UI_ROOT + RoutePath.DISCARD_UPLOAD, kitDiscardRoute, new JsonTransformer());

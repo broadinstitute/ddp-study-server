@@ -24,7 +24,6 @@ import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.exception.AuthenticationException;
 import org.broadinstitute.dsm.model.auth0.Auth0M2MResponse;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
-import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.lddp.security.Auth0Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,24 +53,24 @@ public class AuthenticationRoute implements Route {
 
     private final Auth0Util auth0Util;
 
-    private final UserUtil userUtil;
     private final String auth0Domain;
     private final String clientSecret;
     private final String auth0ClientId;
     private final String auth0MgmntAudience;
     private final String audienceNameSpace;
+    private UserDao userDao;
 
-    public AuthenticationRoute(@NonNull Auth0Util auth0Util, @NonNull UserUtil userUtil, @NonNull String auth0Domain,
+    public AuthenticationRoute(@NonNull Auth0Util auth0Util, @NonNull String auth0Domain,
                                @NonNull String clientSecret,
                                @NonNull String auth0ClientId, @NonNull String auth0MgmntAudience, @NonNull String audienceNameSpace) {
 
         this.auth0Util = auth0Util;
-        this.userUtil = userUtil;
         this.auth0Domain = auth0Domain;
         this.clientSecret = clientSecret;
         this.auth0ClientId = auth0ClientId;
         this.auth0MgmntAudience = auth0MgmntAudience;
         this.audienceNameSpace = audienceNameSpace;
+        this.userDao = new UserDao();
     }
 
     @Override
@@ -89,24 +88,20 @@ public class AuthenticationRoute implements Route {
                         logger.info("User (" + email + ") was found ");
                         Gson gson = new Gson();
                         Map<String, String> claims = new HashMap<>();
-                        UserDao userDao = new UserDao();
                         UserDto userDto =
                                 userDao.getUserByEmail(email).orElseThrow(() -> new RuntimeException("User " + email + " not found!"));
                         if (userDto == null) {
-                            userUtil.insertUser(email, email);
-                            userDto = userDao.getUserByEmail(email)
-                                    .orElseThrow(() -> new RuntimeException("new inserted user " + email + " not found!"));
-                            claims.put(userAccessRoles, "user needs roles and groups");
+                            throw new RuntimeException("User with email " + email + " not found!");
                         } else {
-                            String userSetting = gson.toJson(userUtil.getUserAccessRoles(email), ArrayList.class);
-                            claims.put(userAccessRoles, userSetting);
-                            logger.info(userSetting);
+                            String userPermissions = gson.toJson(userDao.getAllUserPermissions(userDto.getUserId()), ArrayList.class);
+                            claims.put(userAccessRoles, userPermissions);
+                            logger.info(userPermissions);
                             claims.put(userSettings, gson.toJson(UserSettings.getUserSettings(email), UserSettings.class));
                         }
                         claims.put(authUserId, String.valueOf(userDto.getUserId()));
                         claims.put(authUserName, userDto.getName().orElse(""));
                         claims.put(authUserEmail, email);
-                        claims = getDSSClaimsFromOriginalToken(auth0Token, auth0Domain, claims);
+                        claims = getDSSClaimsFromOriginalToken(auth0Token, auth0Domain, claims, email);
 
                         try {
                             String dsmToken =
@@ -121,7 +116,7 @@ public class AuthenticationRoute implements Route {
                             haltWithErrorMsg(401, response, "DSMToken was null! Not authorized user", e);
                         }
                     } else {
-                        haltWithErrorMsg(400, response, "user was null");
+                        haltWithErrorMsg(400, response, "user info in token was null");
                     }
                 } catch (AuthenticationException e) {
                     haltWithErrorMsg(400, response, "Problem getting user info from Auth0 token", e);
@@ -135,7 +130,8 @@ public class AuthenticationRoute implements Route {
         return response;
     }
 
-    private Map<String, String> getDSSClaimsFromOriginalToken(String auth0Token, String auth0Domain, Map<String, String> claims) {
+    private Map<String, String> getDSSClaimsFromOriginalToken(String auth0Token, String auth0Domain, Map<String, String> claims,
+                                                              String email) {
         Map<String, Claim> auth0Claims = Auth0Util.verifyAndParseAuth0TokenClaims(auth0Token, auth0Domain);
 
         if (!auth0Claims.containsKey(tenantDomain) || !auth0Claims.containsKey(clientId) || !auth0Claims.containsKey(userId)) {
@@ -143,8 +139,8 @@ public class AuthenticationRoute implements Route {
         }
         claims.put(tenantDomain, auth0Claims.get(tenantDomain).asString());
         claims.put(clientId, auth0Claims.get(clientId).asString());
-        claims.put(userId, auth0Claims.get(userId).asString());
-        //todo pegah get user id from database once DDP-7172 is done
+        String guid = userDao.getUserGuid(email);
+        claims.put(userId, guid);
 
         return claims;
     }

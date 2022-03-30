@@ -67,7 +67,7 @@ public class LiquibaseUtil implements AutoCloseable {
                     liquibaseUtil.runHousekeepingGlobalMigrations();
                 } else if (db == DB.DSM) {
                     liquibaseUtil.runDSMGlobalMigrations();
-                } else if (db == DB.DDP_DB) {
+                } else if (db == DB.SHARED_DB) {
                     liquibaseUtil.runSharedDBMigrations();
                 } else {
                     throw new DDPException("Unknown database: " + db.name());

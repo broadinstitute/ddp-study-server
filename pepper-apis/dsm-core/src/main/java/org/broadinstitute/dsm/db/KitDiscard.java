@@ -12,11 +12,11 @@ import java.util.Map;
 
 import lombok.Data;
 import lombok.NonNull;
+import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
 import org.broadinstitute.dsm.util.DSMConfig;
-import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,7 +91,7 @@ public class KitDiscard {
     }
 
     public static List<KitDiscard> getExitedKits(@NonNull String realm) {
-        Map<Integer, String> users = UserUtil.getUserMap();
+        Map<Integer, String> users = new UserDao().getAllUserMap();
         List<KitDiscard> exitedKits = new ArrayList();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -226,7 +226,7 @@ public class KitDiscard {
     }
 
     public static KitDiscard getKitDiscard(@NonNull String kitDiscardId) {
-        Map<Integer, String> users = UserUtil.getUserMap();
+        Map<Integer, String> users = new UserDao().getAllUserMap();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
