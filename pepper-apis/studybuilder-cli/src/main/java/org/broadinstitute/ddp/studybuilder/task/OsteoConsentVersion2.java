@@ -7,6 +7,7 @@ import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiBlockContent;
+import org.broadinstitute.ddp.db.dao.JdbiBlockNesting;
 import org.broadinstitute.ddp.db.dao.JdbiFormActivityFormSection;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
@@ -37,12 +38,14 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -69,6 +72,10 @@ public class OsteoConsentVersion2 implements CustomTask {
     private static final String TRANSLATION_UPDATES = "translation-updates";
     private static final String ADULT_TRANSLATION_NEW = "newValue";
     private static final String ADULT_TRANSLATION_KEY = "variableName";
+    private static final String NESTING_ORDER = "nesting-orders";
+    private static final String NESTING_ORDERING = "ordering";
+    private static final String NESTING_SECTION_ORDER = "sectionOrder";
+    private static final int DISPLAY_ORDER_GAP = 10;
 
     private Config dataCfg;
     private Config somaticAddendumConsentCfg;
@@ -281,8 +288,9 @@ public class OsteoConsentVersion2 implements CustomTask {
 
         updateAdultVariables(handle, meta, version2, consentAssentDataCfg);
         updateAdultTemplates(handle, meta, version2, consentAssentDataCfg);
-        addAdultNestedBlocks(activityId, handle, "CONSENT_ASSENT", version2, consentAssentDataCfg);
+        addAdultNestedBlocks(activityId, handle, meta,"CONSENT_ASSENT", version2, consentAssentDataCfg);
         addAdultBlocks(activityId, handle, "CONSENT_ASSENT", meta, version2, consentAssentDataCfg);
+        reorderNestedBlock(handle, activityCode, version2, consentAssentDataCfg);
     }
 
     private void runParentalConsentUpdate(Handle handle, RevisionMetadata meta, StudyDto studyDto,
@@ -291,8 +299,9 @@ public class OsteoConsentVersion2 implements CustomTask {
 
         updateAdultVariables(handle, meta, version2, parentalConsentDataCfg);
         updateAdultTemplates(handle, meta, version2, parentalConsentDataCfg);
-        addAdultNestedBlocks(activityId, handle, "PARENTAL_CONSENT", version2, parentalConsentDataCfg);
+        addAdultNestedBlocks(activityId, handle, meta,"PARENTAL_CONSENT", version2, parentalConsentDataCfg);
         addAdultBlocks(activityId, handle, "PARENTAL_CONSENT", meta, version2, parentalConsentDataCfg);
+        reorderNestedBlock(handle, activityCode, version2, parentalConsentDataCfg);
     }
 
     private void runAdultConsentUpdate(Handle handle, RevisionMetadata meta, StudyDto studyDto,
@@ -301,7 +310,7 @@ public class OsteoConsentVersion2 implements CustomTask {
 
         updateAdultVariables(handle, meta, version2, selfConsentDataCfg);
         updateAdultTemplates(handle, meta, version2, selfConsentDataCfg);
-        addAdultNestedBlocks(activityId, handle, "CONSENT", version2, selfConsentDataCfg);
+        addAdultNestedBlocks(activityId, handle, meta,"CONSENT", version2, selfConsentDataCfg);
         addAdultBlocks(activityId, handle, "CONSENT", meta, version2, selfConsentDataCfg);
     }
 
@@ -408,18 +417,19 @@ public class OsteoConsentVersion2 implements CustomTask {
                 order, blockDef, revDto);
     }
 
-    private void addAdultNestedBlocks(long activityId, Handle handle, String activityCode,
+    private void addAdultNestedBlocks(long activityId, Handle handle, RevisionMetadata meta, String activityCode,
                                       ActivityVersionDto version, Config dataCfg) {
         List<? extends Config> configList = dataCfg.getConfigList(NEW_NESTED_BLOCKS);
         for (Config config : configList) {
-            addNewNestedBlock(activityId, config, handle, activityCode, version);
+            addNewNestedBlock(activityId, config, meta, handle, activityCode, version);
         }
     }
 
-    private void addNewNestedBlock(long activityId, Config config,
+    private void addNewNestedBlock(long activityId, Config config, RevisionMetadata meta,
                                    Handle handle, String activityCode, ActivityVersionDto version) {
         Config blockConfig = config.getConfig(BLOCK_KEY);
         int sectionOrder = config.getInt(SECTION_ORDER);
+        int blockOrder = config.getInt("order");
         ActivityDto activityDto = handle.attach(JdbiActivity.class)
                 .findActivityByStudyGuidAndCode(OSTEO_STUDY, activityCode).get();
         FormActivityDef currentDef = (FormActivityDef) handle.attach(ActivityDao.class).findDefByDtoAndVersion(activityDto, version);
@@ -432,8 +442,59 @@ public class OsteoConsentVersion2 implements CustomTask {
                 .filter(formBlockDef -> formBlockDef.getBlockType() == BlockType.GROUP)
                 .findFirst();
 
-        blockOpt.ifPresent(formBlockDef -> sectionBlockDao.insertNestedBlocks(activityId, formBlockDef.getBlockId(),
-                List.of(blockDef), version.getRevId()));
+        blockOpt.ifPresent(formBlockDef -> insertNestedBlock(handle, activityId, formBlockDef.getBlockId(),
+                blockOrder, blockDef, version.getRevId()));
+    }
+
+    void insertNestedBlock(Handle handle, long activityId, long parentBlockId, int position,
+                            FormBlockDef nested, long revisionId) {
+        JdbiBlockNesting jdbiBlockNesting = handle.attach(JdbiBlockNesting.class);
+        int nestedBlockOrder = position*DISPLAY_ORDER_GAP;
+
+        if (nested.getBlockType().isContainerBlock()) {
+            throw new IllegalStateException("Nesting container blocks is not allowed");
+        }
+
+        handle.attach(SectionBlockDao.class).insertBlockByType(activityId, nested, revisionId);
+        jdbiBlockNesting.insert(parentBlockId, nested.getBlockId(), nestedBlockOrder, revisionId);
+        LOG.info("Inserted nested block id {} for parent block id {}", nested.getBlockId(), parentBlockId);
+    }
+
+    private void reorderNestedBlock(Handle handle, String activityCode,
+                                    ActivityVersionDto version2, Config dataCfg) {
+
+        List<? extends Config> nestingConfigList = dataCfg.getConfigList(NESTING_ORDER);
+        for (Config config : nestingConfigList) {
+            List<String> configList = config.getStringList(NESTING_ORDERING);
+            List<Long> blockOrdering = new ArrayList<>();
+            for (String oldBlockTemplateText : configList) {
+                String templateSearchParam = String.format("%s%s%s", "%", oldBlockTemplateText, "%");
+                BlockContentDto contentBlock = handle.attach(SqlHelper.class)
+                        .findContentBlockByBodyText(version2.getActivityId(), templateSearchParam);
+                blockOrdering.add(contentBlock.getBlockId());
+            }
+
+            int sectionOrder = config.getInt(NESTING_SECTION_ORDER);
+
+            ActivityDto activityDto = handle.attach(JdbiActivity.class)
+                    .findActivityByStudyGuidAndCode(OSTEO_STUDY, activityCode).get();
+            FormActivityDef currentDef = (FormActivityDef) handle.attach(ActivityDao.class).findDefByDtoAndVersion(activityDto, version2);
+            FormSectionDef currentSectionDef = currentDef.getSections().get(sectionOrder);
+
+            Optional<FormBlockDef> blockOpt = currentSectionDef.getBlocks()
+                    .stream()
+                    .filter(formBlockDef -> formBlockDef.getBlockType() == BlockType.GROUP)
+                    .findFirst();
+
+            if (blockOpt.isPresent()) {
+                long parentBlockId = blockOpt.get().getBlockId();
+                int nestedBlockOrder = 0;
+                for (Long nestedId : blockOrdering) {
+                    nestedBlockOrder += DISPLAY_ORDER_GAP;
+                    handle.attach(SqlHelper.class).updateNestingOrder(parentBlockId, nestedId, nestedBlockOrder);
+                }
+            }
+        }
     }
 
     private interface SqlHelper extends SqlObject {
@@ -444,6 +505,12 @@ public class OsteoConsentVersion2 implements CustomTask {
         @SqlQuery("select template_variable_id from template_variable where variable_name = :variable_name "
                 + "order by template_variable_id desc")
         List<Long> findTemplateVariableIdByVariableNames(@Bind("variable_name") String variableName);
+
+        @SqlUpdate("update block_nesting set display_order = :display_order"
+                + " where parent_block_id = :parent_block_id and nested_block_id = :nested_block_id")
+        void updateNestingOrder(@Bind("parent_block_id") long parentBlockId,
+                                @Bind("nested_block_id") long nestedBlockId,
+                                @Bind("display_order") int displayOrder);
 
         @SqlQuery("select bt.* from block_content as bt"
                 + "  join template as tmpl on tmpl.template_id = bt.body_template_id"
