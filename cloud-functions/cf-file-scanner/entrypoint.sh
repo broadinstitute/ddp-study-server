@@ -10,7 +10,8 @@ echo "Starting cf-file-scanner..."
 java \
     -jar java-function-invoker-1.1.0.jar \
     --classpath cf-file-scanner-1.0-SNAPSHOT.jar \
-    --target org.broadinstitute.ddp.cf.FileScanner &
+    --target org.broadinstitute.ddp.cf.FileScanner \
+    --port "$PORT" &
 
 if [ -x "/init" ]; then
     echo "Starting clamav daemon..."

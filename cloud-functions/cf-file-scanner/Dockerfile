@@ -23,6 +23,7 @@ FROM clamav/clamav:0.104 AS runtime
 ENV GCP_PROJECT=""
 ENV RESULT_TOPIC=""
 ENV DDP_CLAMAV_SERVER="127.0.0.1:3310"
+ENV PORT="8080"
 
 RUN apk add --no-cache \
   openjdk11-jre-headless
