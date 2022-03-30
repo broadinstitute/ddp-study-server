@@ -3,7 +3,7 @@ package org.broadinstitute.dsm.model.elastic.filter.splitter;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.Util;
 
-public class DateSplitter extends EqualsSplitter {
+public class DateSplitterStrategy extends EqualsSplitterStrategy {
 
     // DATE(FROM_UNIXTIME(k.scan_date/1000))  = DATE(FROM_UNIXTIME(1640563200))
     @Override

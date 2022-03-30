@@ -1901,6 +1901,10 @@ public interface QuestionDao extends SqlObject {
                     questionDef = buildDecimalQuestionDef((DecimalQuestionDto) questionDto, ruleDefs, templates);
                     questionDefs.put(questionId, questionDef);
                     break;
+                case EQUATION:
+                    questionDef = buildEquationQuestionDef((EquationQuestionDto) questionDto, ruleDefs, templates);
+                    questionDefs.put(questionId, questionDef);
+                    break;
                 case PICKLIST:
                     picklistDtos.add((PicklistQuestionDto) questionDto);
                     break;
@@ -2153,15 +2157,13 @@ public interface QuestionDao extends SqlObject {
     }
 
     private EquationQuestionDef buildEquationQuestionDef(EquationQuestionDto dto,
-                                                        List<RuleDef> ruleDefs,
-                                                        Map<Long, Template> templates) {
-        Template prompt = templates.get(dto.getPromptTemplateId());
-        Template placeholderTemplate = templates.getOrDefault(dto.getPlaceholderTemplateId(), null);
+                                                         List<RuleDef> ruleDefs,
+                                                         Map<Long, Template> templates) {
         var builder = EquationQuestionDef
                 .builder()
                 .stableId(dto.getStableId())
-                .promptTemplate(prompt)
-                .placeholderTemplate(placeholderTemplate)
+                .promptTemplate(templates.get(dto.getPromptTemplateId()))
+                .placeholderTemplate(templates.getOrDefault(dto.getPlaceholderTemplateId(), null))
                 .maximumDecimalPlaces(dto.getMaximumDecimalPlaces())
                 .expression(dto.getExpression());
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
