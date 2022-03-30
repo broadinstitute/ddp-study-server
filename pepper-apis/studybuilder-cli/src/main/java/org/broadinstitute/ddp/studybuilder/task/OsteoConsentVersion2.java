@@ -279,6 +279,7 @@ public class OsteoConsentVersion2 implements CustomTask {
                                           String activityCode, ActivityVersionDto version2) {
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
 
+        updateAdultVariables(handle, meta, version2, consentAssentDataCfg);
         updateAdultTemplates(handle, meta, version2, consentAssentDataCfg);
         addAdultNestedBlocks(activityId, handle, "CONSENT_ASSENT", version2, consentAssentDataCfg);
         addAdultBlocks(activityId, handle, "CONSENT_ASSENT", meta, version2, consentAssentDataCfg);
@@ -288,6 +289,7 @@ public class OsteoConsentVersion2 implements CustomTask {
                                        String activityCode, ActivityVersionDto version2) {
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
 
+        updateAdultVariables(handle, meta, version2, parentalConsentDataCfg);
         updateAdultTemplates(handle, meta, version2, parentalConsentDataCfg);
         addAdultNestedBlocks(activityId, handle, "PARENTAL_CONSENT", version2, parentalConsentDataCfg);
         addAdultBlocks(activityId, handle, "PARENTAL_CONSENT", meta, version2, parentalConsentDataCfg);
@@ -315,16 +317,18 @@ public class OsteoConsentVersion2 implements CustomTask {
 
     private void revisionAdultVariableTranslation(String varName, String newTemplateText, Handle handle,
                                              RevisionMetadata meta, ActivityVersionDto version2) {
-        long tmplVarId = handle.attach(SqlHelper.class).findTemplateVariableIdByVariableName(varName);
-        JdbiVariableSubstitution jdbiVarSubst = handle.attach(JdbiVariableSubstitution.class);
-        List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
-        Translation currTranslation = transList.get(0);
+        List<Long> templateVariableIdByVariableNames = handle.attach(SqlHelper.class).findTemplateVariableIdByVariableNames(varName);
+        for (Long tmplVarId : templateVariableIdByVariableNames) {
+            JdbiVariableSubstitution jdbiVarSubst = handle.attach(JdbiVariableSubstitution.class);
+            List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
+            Translation currTranslation = transList.get(0);
 
-        JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
-        long newFullNameSubRevId = jdbiRevision.copyAndTerminate(currTranslation.getRevisionId().get(), meta);
-        long[] revIds = {newFullNameSubRevId};
-        jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(Arrays.asList(currTranslation.getId().get()), revIds);
-        jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, version2.getRevId(), tmplVarId);
+            JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
+            long newFullNameSubRevId = jdbiRevision.copyAndTerminate(currTranslation.getRevisionId().get(), meta);
+            long[] revIds = {newFullNameSubRevId};
+            jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(Arrays.asList(currTranslation.getId().get()), revIds);
+            jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, version2.getRevId(), tmplVarId);
+        }
     }
 
     private void updateAdultTemplates(Handle handle, RevisionMetadata meta,
@@ -436,6 +440,10 @@ public class OsteoConsentVersion2 implements CustomTask {
         @SqlQuery("select template_variable_id from template_variable where variable_name = :variable_name "
                 + "order by template_variable_id desc")
         long findTemplateVariableIdByVariableName(@Bind("variable_name") String variableName);
+
+        @SqlQuery("select template_variable_id from template_variable where variable_name = :variable_name "
+                + "order by template_variable_id desc")
+        List<Long> findTemplateVariableIdByVariableNames(@Bind("variable_name") String variableName);
 
         @SqlQuery("select bt.* from block_content as bt"
                 + "  join template as tmpl on tmpl.template_id = bt.body_template_id"
