@@ -75,7 +75,7 @@ public class UserSettings {
         }
     }
 
-    public static UserSettings getUserSettings(@NonNull String email) {
+    public static UserSettings getUserSettings(@NonNull String email) {//todo pegah
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_USER_SETTINGS + QueryExtension.BY_USER_EMAIL)) {
