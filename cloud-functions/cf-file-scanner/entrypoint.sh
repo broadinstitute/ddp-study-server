@@ -15,7 +15,7 @@ java \
 
 if [ -x "/init" ]; then
     echo "Starting clamav daemon..."
-    /init &
+    exec /init
 fi
 
 wait
