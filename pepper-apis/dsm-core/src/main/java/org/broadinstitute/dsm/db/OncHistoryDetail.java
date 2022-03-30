@@ -192,6 +192,7 @@ public class OncHistoryDetail {
     private String participantId;
     private String ddpParticipantId;
     private List<Tissue> tissues;
+    @ColumnName(DBConstants.DDP_INSTANCE_ID)
     private long ddpInstanceId;
 
     public OncHistoryDetail() {

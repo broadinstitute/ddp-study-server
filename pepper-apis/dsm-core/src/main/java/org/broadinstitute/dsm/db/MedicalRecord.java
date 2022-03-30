@@ -236,6 +236,7 @@ public class MedicalRecord {
             primaryKey = DBConstants.MEDICAL_RECORD_ID, columnPrefix = "")
     @ColumnName(DBConstants.PATHOLOGY_PRESENT)
     private String pathologyPresent;
+    @ColumnName(DBConstants.DDP_INSTANCE_ID)
     private long ddpInstanceId;
 
     public MedicalRecord(long medicalRecordId, long institutionId, String ddpInstitutionId, String type) {

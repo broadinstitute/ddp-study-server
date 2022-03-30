@@ -279,6 +279,7 @@ public class KitRequestShipping extends KitRequest {
     private Boolean careEvolve;
     @ColumnName(DBConstants.UPLOAD_REASON)
     private String uploadReason;
+    @ColumnName(DBConstants.DDP_INSTANCE_ID)
     private long ddpInstanceId;
 
     public KitRequestShipping() {
