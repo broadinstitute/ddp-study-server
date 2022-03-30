@@ -68,7 +68,6 @@ public class ApplicationConfigConstants {
     public static final String EMAIL_CRON_EXPRESSION_FOR_GP_NOTIFICATION = "email.cron_expression_GP_notification";
     public static final String EMAIL_FRONTEND_URL_FOR_LINKS = "email.frontendUrl";
     public static final String EMAIL_GP_RECIPIENT = "email.gp_recipient";
-    public static final String EMAIL_CLASS_NAME = "email.className";
     public static final String EMAIL_KEY = "email.key";
     public static final String EMAIL_CLIENT_SETTINGS = "email.clientSettings";
     public static final String EMAIL_NOTIFICATIONS = "email.notifications";

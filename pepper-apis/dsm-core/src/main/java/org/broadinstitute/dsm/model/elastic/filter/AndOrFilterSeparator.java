@@ -132,8 +132,8 @@ public class AndOrFilterSeparator {
         return index;
     }
 
-    private boolean isMatches(int index, int index1, String operator) {
-        return filter.substring(index, index1).matches(operator);
+    private boolean isMatches(int patternStartIndex, int patternEndIndex, String operator) {
+        return patternEndIndex < filter.length() && filter.substring(patternStartIndex, patternEndIndex).matches(operator);
     }
 
     private boolean isAndOrGreaterThanCurrentPosition(int index, int orPrecedeIndex, int andPrecedeIndex) {
