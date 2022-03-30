@@ -11,7 +11,7 @@ public class TestResultCollectionQueryBuilder extends BaseQueryBuilder {
 
     @Override
     protected QueryBuilder build(QueryBuilder queryBuilder) {
-        String path = String.join(DBConstants.ALIAS_DELIMITER, this.payload.getPath(), splitter.getFieldName());
+        String path = String.join(DBConstants.ALIAS_DELIMITER, this.payload.getPath(), operator.getSplitterStrategy().getFieldName());
         return new NestedQueryBuilder(path, queryBuilder, ScoreMode.Avg);
     }
 }

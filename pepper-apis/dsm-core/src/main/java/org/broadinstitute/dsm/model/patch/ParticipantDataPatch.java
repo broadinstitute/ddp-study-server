@@ -6,6 +6,7 @@ import org.broadinstitute.dsm.db.ParticipantData;
 import org.broadinstitute.dsm.db.dao.settings.EventTypeDao;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.Value;
+import org.broadinstitute.dsm.model.elastic.export.generate.ParticipantDataNameValue;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
@@ -45,10 +46,13 @@ public class ParticipantDataPatch extends BasePatch {
                     ParticipantData.createNewParticipantData(patch.getParentId(), ddpInstance.getDdpInstanceId(), patch.getFieldId(),
                             String.valueOf(nameValue.getValue()), patch.getUser());
             resultMap.put(ESObjectConstants.PARTICIPANT_DATA_ID, participantDataId);
-        } else if (participantDataId != null) {
+        } else {
             Patch.patch(participantDataId, patch.getUser(), nameValue, dbElement);
-            exportToESWithId(participantDataId, nameValue);
         }
+        ParticipantDataNameValue participantDataNameValue =
+                new ParticipantDataNameValue(nameValue.getName(), nameValue.getValue(), ddpInstance.getDdpInstanceIdAsInt(),
+                        patch.getDdpParticipantId(), patch.getFieldId());
+        exportToESWithId(participantDataId, participantDataNameValue);
         if (patch.getActions() != null) {
             profile = ElasticSearchUtil.getParticipantProfileByGuidOrAltPid(ddpInstance.getParticipantIndexES(), patch.getParentId())
                     .orElseThrow(() -> new RuntimeException("Unable to find ES profile for participant: " + patch.getParentId()));
@@ -63,3 +67,4 @@ public class ParticipantDataPatch extends BasePatch {
         return Optional.empty();
     }
 }
+
