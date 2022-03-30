@@ -2064,18 +2064,15 @@ public interface QuestionDao extends SqlObject {
                                           QuestionDto questionDto,
                                           List<RuleDef> ruleDefs,
                                           Map<Long, Template> templates) {
-        Template tooltipTemplate = templates.getOrDefault(questionDto.getTooltipTemplateId(), null);
-        Template headerTemplate = templates.getOrDefault(questionDto.getAdditionalInfoHeaderTemplateId(), null);
-        Template footerTemplate = templates.getOrDefault(questionDto.getAdditionalInfoFooterTemplateId(), null);
         builder.validations(ruleDefs)
                 .questionId(questionDto.getId())
                 .isRestricted(questionDto.isRestricted())
                 .isDeprecated(questionDto.isDeprecated())
                 .writeOnce(questionDto.isWriteOnce())
                 .hideNumber(questionDto.shouldHideNumber())
-                .additionalInfoHeaderTemplate(headerTemplate)
-                .additionalInfoFooterTemplate(footerTemplate)
-                .tooltipTemplate(tooltipTemplate);
+                .additionalInfoHeaderTemplate(templates.getOrDefault(questionDto.getAdditionalInfoHeaderTemplateId(), null))
+                .additionalInfoFooterTemplate(templates.getOrDefault(questionDto.getAdditionalInfoFooterTemplateId(), null))
+                .tooltipTemplate(templates.getOrDefault(questionDto.getTooltipTemplateId(), null));
     }
 
     private AgreementQuestionDef buildAgreementQuestionDef(AgreementQuestionDto dto,
@@ -2159,15 +2156,24 @@ public interface QuestionDao extends SqlObject {
     private EquationQuestionDef buildEquationQuestionDef(EquationQuestionDto dto,
                                                          List<RuleDef> ruleDefs,
                                                          Map<Long, Template> templates) {
-        var builder = EquationQuestionDef
+        return EquationQuestionDef
                 .builder()
+                .questionType(dto.getType())
                 .stableId(dto.getStableId())
                 .promptTemplate(templates.get(dto.getPromptTemplateId()))
                 .placeholderTemplate(templates.getOrDefault(dto.getPlaceholderTemplateId(), null))
                 .maximumDecimalPlaces(dto.getMaximumDecimalPlaces())
-                .expression(dto.getExpression());
-        configureBaseQuestionDef(builder, dto, ruleDefs, templates);
-        return builder.build();
+                .expression(dto.getExpression())
+                .validations(ruleDefs)
+                .questionId(dto.getId())
+                .isRestricted(dto.isRestricted())
+                .isDeprecated(dto.isDeprecated())
+                .writeOnce(dto.isWriteOnce())
+                .hideNumber(dto.shouldHideNumber())
+                .additionalInfoHeaderTemplate(templates.getOrDefault(dto.getAdditionalInfoHeaderTemplateId(), null))
+                .additionalInfoFooterTemplate(templates.getOrDefault(dto.getAdditionalInfoFooterTemplateId(), null))
+                .tooltipTemplate(templates.getOrDefault(dto.getTooltipTemplateId(), null))
+                .build();
     }
 
     private TextQuestionDef buildTextQuestionDef(TextQuestionDto dto,
