@@ -2,10 +2,10 @@ package org.broadinstitute.dsm.model.elastic.filter.splitter;
 
 import org.broadinstitute.dsm.model.Filter;
 
-public class GreaterThanEqualsSplitter extends BaseSplitter {
+public class IsNullSplitterStrategy extends NullBaseSplitterStrategy {
 
     @Override
     public String[] split() {
-        return filter.split(Filter.LARGER_EQUALS_TRIMMED);
+        return filter.split(Filter.IS_NULL_TRIMMED);
     }
 }

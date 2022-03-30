@@ -529,19 +529,19 @@ public class DashboardRoute extends RequestHandler {
                            @NonNull Map<String, Integer> dashboardValuesPeriodDetailed,
                            long start, long end) {
         for (KitRequestShipping kit : kits) {
-            if (kit.getScanDate() != 0) {
+            if (kit.getScanDate() != null && kit.getScanDate() != 0) {
                 incrementCounter(dashboardValuesDetailed, "kit." + kit.getKitTypeName() + ".sent", foundAtPT);
                 incrementCounterPeriod(dashboardValuesPeriodDetailed, "kit." + kit.getKitTypeName() + ".sent", kit.getScanDate(), start,
                         end, foundAtPtPeriod);
-            } else if (kit.getDeactivatedDate() == 0) {
+            } else if (kit.getDeactivatedDate() != null && kit.getDeactivatedDate() == 0) {
                 incrementCounter(dashboardValuesDetailed, "kit." + kit.getKitTypeName() + ".waiting", foundAtPT);
             }
-            if (kit.getReceiveDate() != 0) {
+            if (kit.getReceiveDate() != null && kit.getReceiveDate() != 0) {
                 incrementCounter(dashboardValuesDetailed, "kit." + kit.getKitTypeName() + ".received", foundAtPT);
                 incrementCounterPeriod(dashboardValuesPeriodDetailed, "kit." + kit.getKitTypeName() + ".received", kit.getReceiveDate(),
                         start, end, foundAtPtPeriod);
             }
-            if (kit.getDeactivatedDate() != 0) {
+            if (kit.getDeactivatedDate() != null && kit.getDeactivatedDate() != 0) {
                 incrementCounter(dashboardValuesDetailed, "kit." + kit.getKitTypeName() + ".deactivated", foundAtPT);
                 incrementCounterPeriod(dashboardValuesPeriodDetailed, "kit." + kit.getKitTypeName() + ".deactivated",
                         kit.getDeactivatedDate(), start, end, foundAtPtPeriod);

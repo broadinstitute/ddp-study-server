@@ -489,7 +489,7 @@ public class DSMServer {
         int maxConnections = config.getInt("portal.maxConnections");
         String dbUrl = config.getString("portal.dbUrl");
         String dssDBUrl = config.getString("dss.dbUrl");
-        int dssMaxConnections = config.getInt("portal.maxConnections");//todo pegah add to vault
+        int dssMaxConnections = config.getInt("dss.maxConnections");//todo pegah add to SM
         try {
             TransactionWrapper.DbConfiguration DSS_DB =
                     new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.SHARED_DB, dssMaxConnections, dssDBUrl);

@@ -13,7 +13,7 @@ import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.GPNotificationUtil;
 import org.broadinstitute.dsm.util.triggerlistener.GPNotificationTriggerListener;
-import org.broadinstitute.lddp.email.EmailClient;
+import org.broadinstitute.lddp.email.SendGridClient;
 import org.broadinstitute.lddp.util.BasicTriggerListener;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -137,7 +137,7 @@ public class NotificationJobTest extends TestHelper {
     public void testSendSingleEmail() throws Exception {
         String emailClientKey = cfg.getString("errorAlert.key");
         JsonObject emailClientSettings = (JsonObject) ((new JsonParser()).parse(cfg.getString("errorAlert.clientSettings")));
-        EmailClient emailClient = (EmailClient) Class.forName(cfg.getString(ApplicationConfigConstants.EMAIL_CLASS_NAME)).newInstance();
-        emailClient.configure(emailClientKey, emailClientSettings);
+        SendGridClient sendGridClient = new SendGridClient();
+        sendGridClient.configure(emailClientKey, emailClientSettings);
     }
 }

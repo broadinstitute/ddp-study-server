@@ -7,20 +7,24 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
-public class JsonExtractSplitter extends BaseSplitter {
+public class JsonExtractSplitterStrategy extends SplitterStrategy {
 
-    private BaseSplitter decoratedSplitter;
+    private SplitterStrategy decoratedSplitter;
 
-    public JsonExtractSplitter(BaseSplitter splitter) {
+    public JsonExtractSplitterStrategy(SplitterStrategy splitter) {
         this.decoratedSplitter = splitter;
     }
 
-    public JsonExtractSplitter() {
-        decoratedSplitter = new EqualsSplitter();
+    public JsonExtractSplitterStrategy() {
+        decoratedSplitter = new EqualsSplitterStrategy();
     }
 
-    public BaseSplitter getDecoratedSplitter() {
+    public SplitterStrategy getDecoratedSplitter() {
         return decoratedSplitter;
+    }
+
+    public void setDecoratedSplitter(SplitterStrategy splitterStrategy) {
+        this.decoratedSplitter = splitterStrategy;
     }
 
     @Override
