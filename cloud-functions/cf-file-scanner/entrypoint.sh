@@ -18,5 +18,5 @@ if [ -x "/init" ]; then
     exec /init
 fi
 
-wait
-exit $?
+trap : TERM INT;
+sleep 9999999999d & wait
