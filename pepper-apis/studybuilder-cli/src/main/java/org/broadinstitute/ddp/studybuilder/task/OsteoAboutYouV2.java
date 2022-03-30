@@ -99,13 +99,14 @@ public class OsteoAboutYouV2 implements CustomTask {
         JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
         JdbiFormActivityFormSection jdbiFormActivityFormSection = handle.attach(JdbiFormActivityFormSection.class);
         SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
+        JdbiUmbrellaStudy jdbiUmbrellaStudy = handle.attach(JdbiUmbrellaStudy.class);
+        UserDao userDao = handle.attach(UserDao.class);
 
-        var adminUser = handle.attach(UserDao.class).findUserByGuid(studyCfg.getString("adminUser.guid"))
+        var studyDto = jdbiUmbrellaStudy.findByStudyGuid(studyCfg.getString("study.guid"));
+        var adminUser = userDao.findUserByGuid(studyCfg.getString("adminUser.guid"))
                 .orElseThrow(() -> new DDPException("Could not find admin user by guid"));
 
-        var studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyCfg.getString("study.guid"));
         studyId = studyDto.getId();
-
         var studyGuid = studyDto.getGuid();
         long activityId = ActivityBuilder.findActivityId(handle, studyId, ACTIVITY_CODE);
 
