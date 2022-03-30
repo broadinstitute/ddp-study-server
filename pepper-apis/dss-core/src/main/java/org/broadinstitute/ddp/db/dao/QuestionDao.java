@@ -2161,6 +2161,7 @@ public interface QuestionDao extends SqlObject {
                                                          Map<Long, Template> templates) {
         var builder = EquationQuestionDef
                 .builder()
+                .questionType(dto.getType())
                 .stableId(dto.getStableId())
                 .promptTemplate(templates.get(dto.getPromptTemplateId()))
                 .placeholderTemplate(templates.getOrDefault(dto.getPlaceholderTemplateId(), null))
