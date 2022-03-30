@@ -14,7 +14,7 @@ public class JsonExtractSplitterTest {
     @Before
     public void setUp() {
         filter = "JSON_EXTRACT ( m.additional_values_json , '$.seeingIfBugExists' ) = 'true'";
-        splitter = Operator.extract(filter).getStrategy();
+        splitter = Operator.extract(filter).getSplitterStrategy();
         splitter.setFilter(filter);
     }
 
@@ -48,10 +48,10 @@ public class JsonExtractSplitterTest {
         Operator jsonExtract;
         try {
             jsonExtract = Operator.extract(filter);
-            JsonExtractSplitterStrategy strategy = (JsonExtractSplitterStrategy) jsonExtract.getStrategy();
+            JsonExtractSplitterStrategy strategy = (JsonExtractSplitterStrategy) jsonExtract.getSplitterStrategy();
             Assert.assertTrue(strategy.getDecoratedSplitter() instanceof EqualsSplitterStrategy);
             jsonExtract = Operator.extract(filter2);
-            JsonExtractSplitterStrategy strategy2 = (JsonExtractSplitterStrategy) jsonExtract.getStrategy();
+            JsonExtractSplitterStrategy strategy2 = (JsonExtractSplitterStrategy) jsonExtract.getSplitterStrategy();
             Assert.assertTrue(strategy2.getDecoratedSplitter() instanceof IsNotNullSplitterStrategy);
         } catch (Exception e) {
             Assert.fail();

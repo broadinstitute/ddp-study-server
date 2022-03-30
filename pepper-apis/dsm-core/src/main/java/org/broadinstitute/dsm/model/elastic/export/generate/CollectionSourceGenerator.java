@@ -36,7 +36,7 @@ public class CollectionSourceGenerator extends SourceGenerator {
         return getCollectionElementMap(fieldNameElement);
     }
 
-    private List<HashMap<String, Object>> getCollectionElementMap(Map<String, Object> element) {
+    protected List<Map<String, Object>> getCollectionElementMap(Map<String, Object> element) {
         HashMap<String, Object> mapWithParsedObjects = new HashMap<>(Map.of(getPrimaryKey(), generatorPayload.getRecordId()));
         mapWithParsedObjects.putAll(element);
         getParentWithId().ifPresent(mapWithParsedObjects::putAll);
