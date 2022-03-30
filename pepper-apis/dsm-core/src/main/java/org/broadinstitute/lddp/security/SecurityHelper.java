@@ -5,11 +5,13 @@ import java.util.Map;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
+import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import lombok.NonNull;
-import org.broadinstitute.dsm.exception.AuthenticationException;
 import org.broadinstitute.lddp.exception.InvalidTokenException;
+import org.broadinstitute.lddp.util.Utility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,11 +89,43 @@ public class SecurityHelper {
         }
     }
 
-    public static Map<String, Claim> verifyAndGetClaims(@NonNull String token, @NonNull String auth0Domain, @NonNull String auth0Signer)
-            throws InvalidTokenException, AuthenticationException {
+    public static boolean validToken(@NonNull String secret, @NonNull String token) {
+        boolean isValid = false;
+        try {
+            Algorithm algorithm = Algorithm.HMAC256(secret);
+            JWTVerifier verifier = JWT.require(algorithm).build(); //Reusable verifier instance
+            DecodedJWT jwt = verifier.verify(token);
+            isValid = true;
+        } catch (Exception e) {
+            // todo arz probably want to catch specific exceptions for
+            // validation failure vs. algorithm related stuff
+            logger.warn("Security - Error verifying token", e);
+        }
+        return isValid;
+    }
 
-        Map<String, Claim> claimsMap = Auth0Util.verifyAndParseAuth0TokenClaims(token, auth0Domain);
-        if (auth0Signer.equals(claimsMap.get(CLAIM_ISSUER).asString())) {
+    public static Map<String, Claim> verifyAndGetClaims(@NonNull String secret, @NonNull String token) throws InvalidTokenException {
+        return verifyAndGetClaims(secret, token, false);
+    }
+
+    private static Map<String, Claim> verifyAndGetClaims(@NonNull String secret, @NonNull String token, boolean checkMonitoringClaim)
+            throws InvalidTokenException {
+
+        Map<String, Claim> claimsMap = null;
+
+        try {
+            Algorithm algorithm = Algorithm.HMAC256(secret);
+            JWTVerifier verifier = JWT.require(algorithm).build();
+            if (checkMonitoringClaim) {
+                verifier = JWT.require(algorithm).acceptExpiresAt(Utility.getCurrentEpoch() + 60).build();
+            }
+            DecodedJWT jwt = verifier.verify(token);
+            claimsMap = jwt.getClaims();
+        } catch (Exception e) {
+            throw new InvalidTokenException("Invalid token", e);
+        }
+
+        if (SIGNER.equals(claimsMap.get(CLAIM_ISSUER).asString())) {
             return claimsMap;
         } else {
             throw new InvalidTokenException("Token is not signed by the expected signer.");

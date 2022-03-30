@@ -36,12 +36,10 @@ public class KitDiscardRoute extends RequestHandler {
 
     private final Auth0Util auth0Util;
     private final UserUtil userUtil;
-    private final String auth0Domain;
 
-    public KitDiscardRoute(@NonNull Auth0Util auth0Util, @NonNull UserUtil userUtil, @NonNull String auth0Domain) {
+    public KitDiscardRoute(@NonNull Auth0Util auth0Util, @NonNull UserUtil userUtil) {
         this.auth0Util = auth0Util;
         this.userUtil = userUtil;
-        this.auth0Domain = auth0Domain;
     }
 
     @Override
@@ -124,7 +122,7 @@ public class KitDiscardRoute extends RequestHandler {
 
                 String token = kitAction.getToken();
                 if (StringUtils.isNotBlank(token)) {
-                    Auth0Util.Auth0UserInfo auth0UserInfo = auth0Util.getAuth0UserInfo(token, auth0Domain);
+                    Auth0Util.Auth0UserInfo auth0UserInfo = auth0Util.getAuth0UserInfo(token);
                     if (auth0UserInfo != null) {
                         String email = auth0UserInfo.getEmail();
                         UserDto userDto = new UserDao().getUserByEmail(email).orElseThrow();

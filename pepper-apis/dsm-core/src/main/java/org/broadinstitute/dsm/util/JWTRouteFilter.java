@@ -3,7 +3,6 @@ package org.broadinstitute.dsm.util;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
@@ -11,7 +10,6 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.security.Auth0Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -31,8 +29,7 @@ public class JWTRouteFilter {
     // todo arz refactor this with ddp backend core jwt util
     public static final String DDP_ROLES_CLAIM = "org.broadinstitute.ddp.roles";
     private static final Logger logger = LoggerFactory.getLogger(JWTRouteFilter.class);
-    private final String auth0Domain;
-    private final String bspSecret;
+    private final String jwtSecret;
     private final Collection<String> expectedRoles = new HashSet<>();
 
     /**
@@ -41,16 +38,21 @@ public class JWTRouteFilter {
      * secret, and optionally includes one or more of the
      * given roles in the roles claim.
      */
-    public JWTRouteFilter(String auth0Domain, String bspSecret) {
-        this.auth0Domain = auth0Domain;
-        this.bspSecret = bspSecret;
+    public JWTRouteFilter(String jwtSecret, Collection<String> allowedRoles) {
+        if (StringUtils.isBlank(jwtSecret)) {
+            throw new IllegalArgumentException("jwtSecret is required");
+        }
+        this.jwtSecret = jwtSecret;
+        if (allowedRoles != null && !allowedRoles.isEmpty()) {
+            this.expectedRoles.addAll(allowedRoles);
+        }
     }
 
     /**
      * Returns true if the request has the appropriate
      * jwt token, false o'wise
      */
-    public boolean isAccessAllowed(Request request, boolean isRSA, String secret) {
+    public boolean isAccessAllowed(Request request) {
         boolean isAccessAllowed = false;
         if (request != null) {
             String authHeader = request.headers(AUTHORIZATION);
@@ -61,21 +63,30 @@ public class JWTRouteFilter {
                         String jwtToken = parsedAuthHeader[1].trim();
                         if (StringUtils.isNotBlank(jwtToken)) {
                             try {
-                                Map<String, Claim> verifiedClaims;
-                                if (isRSA) {
-                                    Optional<DecodedJWT> maybeValidToken = Auth0Util.verifyAuth0Token(jwtToken, auth0Domain);
-                                    maybeValidToken.orElseThrow();
-                                    DecodedJWT validToken = maybeValidToken.get();
-                                    verifiedClaims = validToken.getClaims();
-                                } else {
-                                    Algorithm algorithm = Algorithm.HMAC256(secret);
-                                    JWTVerifier verifier = JWT.require(algorithm).build(); //Reusable verifier instance
-                                    DecodedJWT jwt = verifier.verify(jwtToken);
-                                    verifiedClaims = jwt.getClaims();
-                                }
+                                Algorithm algorithm = Algorithm.HMAC256(jwtSecret);
+                                JWTVerifier verifier = JWT.require(algorithm).build(); //Reusable verifier instance
+                                DecodedJWT jwt = verifier.verify(jwtToken);
+
+                                Map<String, Claim> verifiedClaims = jwt.getClaims();
                                 if (verifiedClaims != null) {
-                                    // no role restriction required, just a valid signature
-                                    isAccessAllowed = true;
+                                    if (!expectedRoles.isEmpty()) {
+                                        if (verifiedClaims.containsKey(DDP_ROLES_CLAIM)) {
+                                            Object rolesObj = verifiedClaims.get(DDP_ROLES_CLAIM);
+                                            if (rolesObj != null && rolesObj instanceof Collection) {
+                                                Collection rolesInToken = (Collection) rolesObj;
+                                                for (String expectedRole : expectedRoles) {
+                                                    if (rolesInToken.contains(expectedRole)) {
+                                                        // token has at least one of the request roles, so allow access
+                                                        isAccessAllowed = true;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        // no role restriction required, just a valid signature
+                                        isAccessAllowed = true;
+                                    }
                                 }
                             } catch (Exception e) {
                                 logger.error("Invalid token: " + jwtToken, e);

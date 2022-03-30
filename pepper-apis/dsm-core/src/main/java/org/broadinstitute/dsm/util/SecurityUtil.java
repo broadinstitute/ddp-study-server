@@ -3,22 +3,18 @@ package org.broadinstitute.dsm.util;
 import static org.apache.http.client.fluent.Request.Get;
 import static org.apache.http.client.fluent.Request.Post;
 
-import java.net.URLEncoder;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import com.auth0.jwt.interfaces.Claim;
 import com.google.gson.GsonBuilder;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.TrustStrategy;
 import org.broadinstitute.dsm.DSMServer;
@@ -29,17 +25,12 @@ import spark.Request;
 public class SecurityUtil {
 
     public static final String CLAIM_ISSUER = "iss";
-    public static final String USER_ID = "USER_ID";
     public static final String SIGNER = "org.broadinstitute.kdux";
 
-    private static String AUTH0_DOMAIN;
-    private static String AUTH0_NAMESPACE;
-    private static String AUTH0_SIGNER;
+    private static String secret;
 
-    public static void init(@NonNull String auth0Domain, @NonNull String auth0Namespace, @NonNull String auth0Signer) {
-        SecurityUtil.AUTH0_DOMAIN = auth0Domain;
-        SecurityUtil.AUTH0_NAMESPACE = auth0Namespace;
-        SecurityUtil.AUTH0_SIGNER = auth0Signer;
+    public SecurityUtil(@NonNull String secret) {
+        this.secret = secret;
     }
 
     public static Map<String, String> createHeader(@NonNull String instanceName, boolean auth0Token) {
@@ -147,18 +138,6 @@ public class SecurityUtil {
         return addBodyToRequest(objectToPost, request);
     }
 
-    public static org.apache.http.client.fluent.Request createPostRequestWithHeaderNoToken(@NonNull String requestString,
-                                                                                           Map<String, String> headers,
-                                                                                           Object objectToPost) {
-        org.apache.http.client.fluent.Request request = Post(requestString);
-        if (headers != null) {
-            for (Map.Entry<String, String> headerEntry : headers.entrySet()) {
-                request = request.addHeader(headerEntry.getKey(), headerEntry.getValue());
-            }
-        }
-        return addBodyToRequest(objectToPost, request, ContentType.APPLICATION_FORM_URLENCODED);
-    }
-
     private static org.apache.http.client.fluent.Request addBodyToRequest(Object objectToPost,
                                                                           org.apache.http.client.fluent.Request request) {
         if (objectToPost != null) {
@@ -169,21 +148,6 @@ public class SecurityUtil {
                 content = (String) objectToPost;
             }
             request.bodyString(content, ContentType.APPLICATION_JSON);
-        }
-        return request;
-    }
-
-    private static org.apache.http.client.fluent.Request addBodyToRequest(Object objectToPost,
-                                                                          org.apache.http.client.fluent.Request request,
-                                                                          ContentType contentType) {
-        if (objectToPost != null) {
-            String content = null;
-            if (!(objectToPost instanceof String)) {
-                content = createPostData((List<BasicNameValuePair>) objectToPost, contentType);
-            } else {
-                content = (String) objectToPost;
-            }
-            request.bodyString(content, contentType);
         }
         return request;
     }
@@ -206,8 +170,8 @@ public class SecurityUtil {
     public static String getUserId(@NonNull Request request) {
         String userId = null;
         Map<String, Claim> claims = getClaims(request);
-        if (claims != null && !claims.isEmpty() && claims.containsKey(AUTH0_NAMESPACE + USER_ID)) {
-            Object userIdObj = claims.get(AUTH0_NAMESPACE + USER_ID).asString();
+        if (claims != null && !claims.isEmpty() && claims.containsKey("USER_ID")) {
+            Object userIdObj = claims.get("USER_ID").asString();
             if (userIdObj != null) {
                 userId = (String) userIdObj;
             }
@@ -221,7 +185,7 @@ public class SecurityUtil {
             if (header.contains("Bearer ")) {
                 String token = header.replaceFirst("Bearer ", "");
                 if (StringUtils.isNotBlank(token)) {
-                    return SecurityHelper.verifyAndGetClaims(token, AUTH0_DOMAIN, AUTH0_SIGNER);
+                    return SecurityHelper.verifyAndGetClaims(secret, token);
                 }
             }
         }
@@ -230,21 +194,5 @@ public class SecurityUtil {
 
     public enum ResultType {
         AUTHENTICATION_ERROR, AUTHORIZATION_ERROR, AUTHORIZED
-    }
-
-    private static String createPostData(List<BasicNameValuePair> params, ContentType contentType)  {
-        StringBuilder result = new StringBuilder();
-        boolean first = true;
-        for (NameValuePair pair : params) {
-            if (first) {
-                first = false;
-            } else {
-                result.append("&");
-            }
-            result.append(URLEncoder.encode(pair.getName(), contentType.getCharset()));
-            result.append("=");
-            result.append(URLEncoder.encode(pair.getValue(), contentType.getCharset()));
-        }
-        return result.toString();
     }
 }
