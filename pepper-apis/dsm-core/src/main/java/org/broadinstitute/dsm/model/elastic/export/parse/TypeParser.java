@@ -10,6 +10,9 @@ public class TypeParser extends BaseParser {
     public static final String TEXT = "text";
     public static final String FIELDS = "fields";
     public static final String KEYWORD = "keyword";
+    public static final Map<String, Object> LOWER_CASE_SORT = new HashMap<>(Map.of(MappingGenerator.TYPE, TEXT,
+            MappingGenerator.ANALYZER, MappingGenerator.CASE_INSENSITIVE_SORT,
+            MappingGenerator.FIELD_DATA, true));
     public static final Map<String, Object> TEXT_KEYWORD_MAPPING = new HashMap<>(new HashMap<>(
                     Map.of(TYPE, TEXT,
                             FIELDS, new HashMap<>(Map.of(KEYWORD, new HashMap<>(Map.of(TYPE, KEYWORD)),
@@ -21,9 +24,6 @@ public class TypeParser extends BaseParser {
     public static final Map<String, String> DATE_MAPPING = new HashMap<>(Map.of(MappingGenerator.TYPE, DATE));
     public static final String LONG = "long";
     public static final Map<String, String> LONG_MAPPING = new HashMap<>(Map.of(MappingGenerator.TYPE, LONG));
-    public static final Map<String, Object> LOWER_CASE_SORT = new HashMap<>(Map.of(MappingGenerator.TYPE, TEXT,
-            MappingGenerator.ANALYZER, MappingGenerator.CASE_INSENSITIVE_SORT,
-            MappingGenerator.FIELD_DATA, true));
 
     @Override
     protected Object forNumeric(String value) {
