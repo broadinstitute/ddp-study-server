@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 import com.opencsv.CSVWriter;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
@@ -44,15 +45,12 @@ import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Task to migrate Angio to prequal-as-activity design. Do not remove unless no longer needed.
  */
+@Slf4j
 public class AngioMigratePrequal implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AngioMigratePrequal.class);
     private static final String DATA_FILE = "patches/migrate-to-prequal.conf";
 
     private static final String ANGIO_STUDY = "ANGIO";
@@ -110,7 +108,7 @@ public class AngioMigratePrequal implements CustomTask {
         if (updated != 1) {
             throw new DDPException("Could not update form type for " + ACT_ABOUT_YOU);
         }
-        LOG.info("Updated {} form type to {}", ACT_ABOUT_YOU, FormType.GENERAL);
+        log.info("Updated {} form type to {}", ACT_ABOUT_YOU, FormType.GENERAL);
     }
 
     private void insertPrequalActivity(Handle handle, StudyDto studyDto, long adminUserId) {
@@ -181,20 +179,20 @@ public class AngioMigratePrequal implements CustomTask {
 
         AnswerDao answerDao = handle.attach(AnswerDao.class);
 
-        LOG.info("Backfilling prequal data for existing users...");
+        log.info("Backfilling prequal data for existing users...");
 
         AtomicLong count = new AtomicLong();
         helper.findUsersForPrequalBackfilling(studyDto.getId(), ACT_ABOUT_YOU, ACT_LOVED_ONE).forEach(user -> {
             PicklistAnswer selfDescribeAnswer = new PicklistAnswer(null, Q_SELF_DESCRIBE, null, new ArrayList<>());
             if (user.hasBothAboutYouAndLovedOne()) {
-                LOG.warn("User {} has both about-you and loved-one. Proceeding to backfill with {}", user.userGuid, OPT_DIAGNOSED);
+                log.warn("User {} has both about-you and loved-one. Proceeding to backfill with {}", user.userGuid, OPT_DIAGNOSED);
                 selfDescribeAnswer.getValue().add(new SelectedPicklistOption(OPT_DIAGNOSED));
             } else if (user.hasAboutYou) {
                 selfDescribeAnswer.getValue().add(new SelectedPicklistOption(OPT_DIAGNOSED));
             } else if (user.hasLovedOne) {
                 selfDescribeAnswer.getValue().add(new SelectedPicklistOption(OPT_LOVED_ONE));
             } else {
-                LOG.warn("User {} does not have about-you or loved-one. Either it's in a bad state or is dummy user."
+                log.warn("User {} does not have about-you or loved-one. Either it's in a bad state or is dummy user."
                         + " Please follow up! Skipping for now...", user.userGuid);
                 rows.add(new String[] {
                         "1",
@@ -258,8 +256,8 @@ public class AngioMigratePrequal implements CustomTask {
             throw new DDPException("Error while writing results to csv file " + filename, e);
         }
 
-        LOG.info("Backfilled prequal data for {} users", count);
-        LOG.info("Prequal backfill results written to file {}", filename);
+        log.info("Backfilled prequal data for {} users", count);
+        log.info("Prequal backfill results written to file {}", filename);
     }
 
     private interface SqlHelper extends SqlObject {
@@ -318,7 +316,7 @@ public class AngioMigratePrequal implements CustomTask {
                 throw new DDPException("Expected to disable one " + name + " event template with id="
                         + oldEvent.notificationTemplateId + " but changed " + numChanged);
             }
-            LOG.info("Disabled " + name + " event with id={} notificationTemplateId={}",
+            log.info("Disabled " + name + " event with id={} notificationTemplateId={}",
                     oldEvent.eventConfigurationId, oldEvent.notificationTemplateId);
         }
 

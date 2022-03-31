@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.dao.EventActionDao;
 import org.broadinstitute.ddp.db.dao.EventDao;
@@ -52,12 +53,9 @@ import org.broadinstitute.ddp.model.workflow.StateType;
 import org.broadinstitute.ddp.model.workflow.StaticState;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class EventBuilder {
-
-    private static final Logger LOG = LoggerFactory.getLogger(EventBuilder.class);
     public static final String ACTION_SENDGRID_EMAIL = "SENDGRID_EMAIL";
     public static final String ACTION_STUDY_EMAIL = "STUDY_EMAIL";
     public static final String ACTION_INVITATION_EMAIL = "INVITATION_EMAIL";
@@ -120,7 +118,7 @@ public class EventBuilder {
                 .collect(toList());
 
         if (!existingCfgLabelsInDb.isEmpty()) {
-            LOG.warn("Events with following labels already exist" + StringUtils.join(", ", existingCfgLabelsInDb));
+            log.warn("Events with following labels already exist" + StringUtils.join(", ", existingCfgLabelsInDb));
             return;
         }
 
@@ -144,7 +142,7 @@ public class EventBuilder {
         long eventId = handle.attach(JdbiEventConfiguration.class).insert(label, triggerId, actionId, studyDto.getId(),
                 Instant.now().toEpochMilli(), maxOccurrencesPerUser, delaySeconds, preconditionExprId, cancelExprId,
                 eventCfg.getBoolean("dispatchToHousekeeping"), eventCfg.getInt("order"));
-        LOG.info("Created event with id={}, trigger={}, action={}", eventId, triggerAsStr(triggerCfg), actionAsStr(actionCfg));
+        log.info("Created event with id={}, trigger={}, action={}", eventId, triggerAsStr(triggerCfg), actionAsStr(actionCfg));
 
         return eventId;
     }
@@ -176,7 +174,7 @@ public class EventBuilder {
                 String workflowState = triggerCfg.getString(WORKFLOW_STATE_FIELD);
                 Optional<Long> workflowStateId = handle.attach(JdbiWorkflowState.class).findIdByType(StateType.valueOf(workflowState));
                 if (!workflowStateId.isPresent()) {
-                    LOG.warn("State {} is not in the database; will insert it.", workflowState);
+                    log.warn("State {} is not in the database; will insert it.", workflowState);
                     StaticState staticState = StaticState.of(StateType.valueOf(workflowState));
                     workflowStateId = Optional.of(handle.attach(WorkflowDao.class).findWorkflowStateIdOrInsert(staticState));
                 }
