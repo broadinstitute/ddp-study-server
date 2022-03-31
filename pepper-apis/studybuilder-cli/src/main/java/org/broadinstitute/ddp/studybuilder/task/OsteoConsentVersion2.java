@@ -162,7 +162,7 @@ public class OsteoConsentVersion2 implements CustomTask {
         ActivityVersionDto version2ForParentalConsent = getVersion2(handle, studyDto, metaParentalConsent, activityCodeParentalConsent);
 
         updateVariables(handle, metaConsentAssent, version2ForConsentAssent);
-        runSomaticConsentAddendum(handle, adminUser, studyDto, version2ForConsent, version2ForConsentAssent);
+        runSomaticConsentAddendum(handle, adminUser, studyDto, version2ForConsent, version2ForConsentAssent, version2ForParentalConsent);
         runSomaticAssentAddendum(handle, adminUser, studyDto, version2ForConsentAssent);
         runAdultConsentUpdate(handle, metaConsent, studyDto, activityCodeConsent, version2ForConsent);
         runParentalConsentUpdate(handle, metaParentalConsent, studyDto, activityCodeParentalConsent, version2ForParentalConsent);
@@ -201,7 +201,8 @@ public class OsteoConsentVersion2 implements CustomTask {
     }
 
     public void runSomaticConsentAddendum(Handle handle, User adminUser, StudyDto studyDto,
-                                          ActivityVersionDto version2Consent, ActivityVersionDto version2ConsentAssent) {
+                                          ActivityVersionDto version2Consent, ActivityVersionDto version2ConsentAssent,
+                                          ActivityVersionDto version2ParentalConsent) {
         LanguageStore.init(handle);
 
         String filePath = somaticAddendumConsentCfg.getConfigList("updates").get(0).getString("activityFilePath");
@@ -219,6 +220,14 @@ public class OsteoConsentVersion2 implements CustomTask {
         Config consentAddendumSelf = activityBuild(studyDto, adminUser, sectionfilepath1);
 
         insertSection(studyDto, handle, consentAddendumSelf, consentSelf, version2Consent);
+
+        String filePath2 = somaticAddendumConsentCfg.getConfigList("updates").get(2).getString("activityFilePath");
+        Config consentParental = activityBuild(studyDto, adminUser, filePath2);
+
+        String sectionfilepath2 = somaticAddendumConsentCfg.getConfigList("updates").get(2).getString("sectionFilePath");
+        Config parentalConsent = activityBuild(studyDto, adminUser, sectionfilepath2);
+
+        insertSection(studyDto, handle, parentalConsent, consentParental, version2ParentalConsent);
 
     }
 
