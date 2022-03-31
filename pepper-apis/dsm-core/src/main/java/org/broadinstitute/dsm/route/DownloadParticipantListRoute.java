@@ -1,36 +1,31 @@
 package org.broadinstitute.dsm.route;
 
-import javax.servlet.ServletOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
-import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.broadinstitute.dsm.export.ExcelUtils;
 import org.broadinstitute.dsm.model.ParticipantColumn;
 import org.broadinstitute.dsm.model.elastic.sort.Alias;
-import org.broadinstitute.dsm.model.excel.ParticipantRecord;
+import org.broadinstitute.dsm.model.elastic.export.excel.ColumnValue;
+import org.broadinstitute.dsm.model.elastic.export.excel.ParticipantRecord;
+import org.broadinstitute.dsm.model.elastic.export.excel.ParticipantRecordData;
 import org.broadinstitute.dsm.model.filter.FilterFactory;
 import org.broadinstitute.dsm.model.filter.Filterable;
-import org.broadinstitute.dsm.model.participant.DownloadParticipantListPayload;
+import org.broadinstitute.dsm.model.elastic.export.excel.DownloadParticipantListPayload;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
 import org.broadinstitute.dsm.security.RequestHandler;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -39,126 +34,69 @@ import spark.Response;
 public class DownloadParticipantListRoute extends RequestHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(DownloadParticipantListRoute.class);
-    private static final String FILE_DATE_FORMAT = "ddMMyyyy";
 
     public DownloadParticipantListRoute() {
     }
 
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
-        DownloadParticipantListPayload payload = new Gson().fromJson(request.body(), DownloadParticipantListPayload.class);
-
+        DownloadParticipantListPayload payload =
+                ObjectMapperSingleton.instance().readValue(request.body(), DownloadParticipantListPayload.class);
         List<ParticipantColumn> columnNames = payload.getColumnNames();
-        List<String> esAliases = columnNames.stream()
-                .map(column -> {
-                    Alias esAlias;
-                    if (column.getObject() != null) {
-                        esAlias = Alias.of(column.getObject());
-                    } else {
-                        esAlias = Alias.of(column.getTableAlias());
-                    }
-                    return esAlias.getValue().isEmpty()? column.getName() : esAlias.getValue() + "." + column.getName();
-                })
-                .collect(Collectors.toList());
+        Map<Alias, List<ParticipantColumn>> columnAliasEsPathMap =
+                new TreeMap<>(Comparator.comparing(Alias::isCollection).thenComparing(Alias::getValue));
+        columnNames.forEach(column -> {
+            Alias alias = Alias.of(column);
+            columnAliasEsPathMap.computeIfAbsent(alias, paths -> new ArrayList<>())
+                    .add(column);
+        });
 
         Filterable filterable = FilterFactory.of(request);
         ParticipantWrapperResult filteredList = (ParticipantWrapperResult) filterable.filter(request.queryMap());
-        Workbook workbook = new XSSFWorkbook();
-        List<String> headerNames = payload.getHeaderNames();
-        Sheet sheet = workbook.createSheet("Participant List");
-        Row header = sheet.createRow(0);
-        IntStream.range(0, headerNames.size()).forEach(i -> {
-            Cell cell = header.createCell(i);
-            cell.setCellValue(headerNames.get(i));
-            sheet.autoSizeColumn(i);
-        });
-        int currentRow = 1;
+
+        ParticipantRecordData rowData = new ParticipantRecordData(columnAliasEsPathMap);
         for (ParticipantWrapperDto participant : filteredList.getParticipants()) {
-            List<Object> excelRow = new ArrayList<>();
+            ParticipantRecord participantRecord = new ParticipantRecord();
             Map<String, Object> esDataAsMap = participant.getEsDataAsMap();
-            List<String> row = new ArrayList<>();
-            for (String esAlias : esAliases) {
-                Object nestedValue = getNestedValue(esAlias, esDataAsMap);
-                excelRow.add(nestedValue);
-                if (nestedValue instanceof Collection) {
-                    Collection<?> value = (Collection<?>) nestedValue;
-                    row.add(value.stream().map(Object::toString)
-                            .collect(Collectors.joining(System.lineSeparator())));
-                } else {
-                    row.add(nestedValue.toString());
+            for (Map.Entry<Alias, List<ParticipantColumn>> aliasListEntry : columnAliasEsPathMap.entrySet()) {
+                Alias key = aliasListEntry.getKey();
+                for (ParticipantColumn column : aliasListEntry.getValue()) {
+                    String esPath = getEsPath(key, column);
+                    Object nestedValue = getNestedValue(esPath, esDataAsMap);
+                    if (aliasListEntry.getKey() == Alias.ACTIVITIES) {
+                        nestedValue = getQuestionAnswerValue(nestedValue, column);
+                    }
+                    ColumnValue columnValue = new ColumnValue(key, nestedValue);
+                    participantRecord.add(columnValue);
                 }
             }
-            currentRow = createRecord(sheet, currentRow, new ParticipantRecord(excelRow));
+            rowData.addParticipant(participantRecord);
         }
-        responseFile(response, workbook);
+
+        ExcelUtils.createResponseFile(rowData, response);
         return response.raw();
     }
 
-
-    private void responseFile(Response response, Workbook workbook) throws Exception {
-        File currDir = new File(".");
-        String path = currDir.getAbsolutePath();
-        String strDate = getFormattedDate();
-        String fileLocation = String.format("%sParticipant-%s.xlsx", path.substring(0, path.length() - 1), strDate);
-        FileOutputStream outputStream = new FileOutputStream(fileLocation);
-        workbook.write(outputStream);
-        workbook.close();
-        File file = new File(fileLocation);
-        response.raw().setContentType("application/octet-stream");
-        response.raw().setHeader("Content-Disposition", "attachment; filename=" + file.getName());
-        byte[] encoded = Files.readAllBytes(Paths.get(fileLocation));
-        ServletOutputStream os = response.raw().getOutputStream();
-        os.write(encoded);
-        os.close();
-        Files.deleteIfExists(file.toPath());
+    private Object getQuestionAnswerValue(Object nestedValue, ParticipantColumn column) {
+        List<LinkedHashMap<String, Object>> activities = (List<LinkedHashMap<String, Object>>) nestedValue;
+        return activities.stream().filter(activity -> activity.get(ElasticSearchUtil.ACTIVITY_CODE).equals(column.getTableAlias()))
+                .findFirst()
+                .map(foundActivity -> {
+                    if (Objects.isNull(column.getObject())) {
+                        return foundActivity.get(column.getName());
+                    }
+                    List<LinkedHashMap<String, Object>> questionAnswers =
+                            (List<LinkedHashMap<String, Object>>) foundActivity.get(ElasticSearchUtil.QUESTIONS_ANSWER);
+                    return questionAnswers.stream().filter(qa -> qa.get(ElasticSearchUtil.STABLE_ID).equals(column.getName()))
+                            .findFirst().map(fq -> fq.get(column.getName())).orElse(StringUtils.EMPTY);
+                }).orElse(StringUtils.EMPTY);
     }
 
-    private String getFormattedDate() {
-        Date date = new Date();
-        SimpleDateFormat formatter = new SimpleDateFormat(FILE_DATE_FORMAT);
-        return formatter.format(date);
-    }
-
-    private int createRecord(Sheet sheet, int startRow, ParticipantRecord participantRecord) {
-        List<Object> values = participantRecord.getValues();
-        List<Row> rows = createEmptyRows(sheet, startRow, participantRecord.getMaxRows(), values.size());
-        IntStream.range(0, values.size()).forEach(i -> {
-            Cell currentCell = rows.get(0).getCell(i);
-            Object currentValue = values.get(i);
-            int filledRows = 1;
-            if (currentValue instanceof Collection) {
-                Collection<?> value = (Collection<?>) currentValue;
-                fillRowColumnsWithValues(rows, value, i);
-                filledRows = Math.max(value.size(), filledRows);
-            } else {
-                currentCell.setCellValue(currentValue.toString());
-            }
-            sheet.autoSizeColumn(i);
-            int firstRow = startRow + filledRows - 1;
-            int lastRow = startRow + participantRecord.getMaxRows() - 1;
-            if (firstRow != lastRow) {
-                sheet.addMergedRegion(new CellRangeAddress(firstRow, lastRow, i, i));
-            }
-        });
-        return startRow + participantRecord.getMaxRows();
-    }
-
-    private void fillRowColumnsWithValues(List<Row> rows, Collection<?> value, int column) {
-        int i = 0;
-        for (Object o : value) {
-            rows.get(i).getCell(column).setCellValue(o.toString());
-            i++;
+    private String getEsPath(Alias alias, ParticipantColumn column) {
+        if (alias == Alias.ACTIVITIES) {
+            return alias.getValue();
         }
-    }
-
-    private List<Row> createEmptyRows(Sheet sheet, int startRow, int count, int columns) {
-        List<Row> rows = new ArrayList<>();
-        IntStream.range(0, count).forEach(i -> {
-            Row row = sheet.createRow(startRow + i);
-            IntStream.range(0, columns).forEach(row::createCell);
-            rows.add(row);
-        });
-        return rows;
+        return alias.getValue().isEmpty() ? column.getName() : alias.getValue() + DBConstants.ALIAS_DELIMITER + column.getName();
     }
 
     private Object getNestedValue(String fieldName, Map<String, Object> esDataAsMap) {

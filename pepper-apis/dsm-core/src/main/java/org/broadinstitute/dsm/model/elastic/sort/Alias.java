@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.sort;
 
+import java.util.Objects;
+
 import com.google.common.base.Enums;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
@@ -34,21 +36,32 @@ public enum Alias {
     private String value;
 
     public static Alias of(SortBy sortBy) {
-        String tableAlias;
-        if (ESObjectConstants.DATA.equals(sortBy.getTableAlias())) {
-            tableAlias = StringUtils.isNotBlank(sortBy.getOuterProperty()) ? sortBy.getOuterProperty() : sortBy.getInnerProperty();
-        } else {
-            tableAlias = sortBy.getTableAlias();
+        Alias alias;
+        try {
+            String tableAlias;
+            if (ESObjectConstants.DATA.equals(sortBy.getTableAlias())) {
+                tableAlias = StringUtils.isNotBlank(sortBy.getOuterProperty()) ? sortBy.getOuterProperty() : sortBy.getInnerProperty();
+            } else {
+                tableAlias = sortBy.getTableAlias();
+            }
+            alias = valueOf(tableAlias.toUpperCase());
+        } catch (IllegalArgumentException iae) {
+            alias = ACTIVITIES;
         }
-        return of(tableAlias);
+        return alias;
     }
-
-    public static Alias of(String tableAlias) {
-        return Enums.getIfPresent(Alias.class, tableAlias.toUpperCase()).or(ACTIVITIES);
-    }
-
 
     public static Alias of(ParticipantColumn column) {
-        return ACTIVITIES;
+        Alias esAlias;
+        if (Objects.nonNull(column.getObject())) {
+            esAlias = Alias.of(column.getObject());
+        } else {
+            esAlias = Alias.of(column.getTableAlias());
+        }
+        return esAlias;
+    }
+
+    private static Alias of (String alias) {
+        return Enums.getIfPresent(Alias.class, alias.toUpperCase()).or(ACTIVITIES);
     }
 }

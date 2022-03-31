@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.model.participant;
+package org.broadinstitute.dsm.model.elastic.export.excel;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -12,12 +12,4 @@ import org.broadinstitute.dsm.model.ParticipantColumn;
 @Setter
 public class DownloadParticipantListPayload {
     private List<ParticipantColumn> columnNames;
-    private List<String> headerNames;
-
-    public List<String> getHeaderNames() {
-        if (headerNames == null) {
-          headerNames = columnNames.stream().map(ParticipantColumn::getName).collect(Collectors.toList());
-        }
-        return headerNames;
-    }
 }
