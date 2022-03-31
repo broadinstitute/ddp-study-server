@@ -30,35 +30,35 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * Utilities for interacting with browserstack
+ * Utilities for interacting with lambdatest
  */
-public class BrowserStackUtil {
+public class LambdaTestUtil {
 
-    private static final Logger LOG = LoggerFactory.getLogger(BrowserStackUtil.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LambdaTestUtil.class);
 
     private static final String AUTOMATE_REVIEW_BUILD_URL_BASE = "https://www.browserstack.com/automate/builds/";
     public static final String DEVICE_CAPABILITY = "device";
 
-    private final String browserStackAutomateUser;
+    private final String lambdaTestAutomateUser;
 
-    private final String browserStackAutomateKey;
+    private final String lambdaTestAutomateKey;
 
-    public BrowserStackUtil(String browerStackAutomateUser, String browserStackAutomateKey) {
-        this.browserStackAutomateUser = browerStackAutomateUser;
-        this.browserStackAutomateKey = browserStackAutomateKey;
+    public LambdaTestUtil(String lambdaTestAutomateUser, String lambdaTestAutomateKey) {
+        this.lambdaTestAutomateUser = lambdaTestAutomateUser;
+        this.lambdaTestAutomateKey = lambdaTestAutomateKey;
     }
 
     private URI buildApiUrl(String path) throws URISyntaxException {
-        return new URI("https://" + browserStackAutomateUser + ":" + browserStackAutomateKey + "@api.browserstack.com" + path);
+        return new URI("https://" + lambdaTestAutomateUser + ":" + lambdaTestAutomateKey + "@api.browserstack.com" + path);
     }
 
     /**
-     * Creates a new Driver that will run at browserstack
+     * Creates a new Driver that will run at lambdatest
      */
-    public RemoteWebDriver newBrowserStackDriver(String server, DesiredCapabilities capabilities)
+    public RemoteWebDriver newLambdaTestDriver(String server, DesiredCapabilities capabilities)
             throws MalformedURLException {
-        return new BrowserStackDeviceAwareDriver(new URL("https://" + browserStackAutomateUser + ":"
-                + browserStackAutomateKey + "@" + server + "/wd/hub"), capabilities);
+        return new LambdaTestDeviceAwareDriver(new URL("https://" + lambdaTestAutomateUser + ":"
+                + lambdaTestAutomateKey + "@" + server + "/wd/hub"), capabilities);
     }
 
     /**
@@ -67,11 +67,11 @@ public class BrowserStackUtil {
      * mobile devices don't let you set window size.  This is all a workaround
      * because JDI's initialization attempts to set/maximize browser window.
      */
-    private class BrowserStackDeviceAwareDriver extends RemoteWebDriver {
+    private class LambdaTestDeviceAwareDriver extends RemoteWebDriver {
 
         private final boolean isMobileDevice;
 
-        public BrowserStackDeviceAwareDriver(URL url, DesiredCapabilities capabilities) {
+        public LambdaTestDeviceAwareDriver(URL url, DesiredCapabilities capabilities) {
             super(url, capabilities);
             Object device = capabilities.getCapability(DEVICE_CAPABILITY);
             if (device != null) {
@@ -257,7 +257,7 @@ public class BrowserStackUtil {
             int responseCode = response.getStatusLine().getStatusCode();
             String responseBody = EntityUtils.toString(response.getEntity());
             if (responseCode != 200) {
-                throw new RuntimeException("Attempt to update browserstack build status for " + sessionId
+                throw new RuntimeException("Attempt to update lambdatest build status for " + sessionId
                         + " failed with " + responseBody);
             }
         } catch (Exception e) {

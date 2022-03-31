@@ -13,8 +13,8 @@ public class ConfigFile {
     public static final String TEST_USER_PASSWORD = "testUserPassword";
     public static final String SOCIAL_MEDIA_USER = "socialTestEmail";
     public static final String SOCIAL_MEDIA_USER_PASSWORD = "socialTestPassword";
-    public static final String BROWSERSTACK_USER = "browserStackUser";
-    public static final String BROWSERSTACK_KEY = "browserStackKey";
+    public static final String LAMBDA_TEST_USER = "lambdaTestUser";
+    public static final String LAMBDA_TEST_KEY = "lambdaTestKey";
     public static final String SLACK_HOOK_URL = "slackNotificationHookUrl";
     public static final String POST_SYNOPSIS_TO_SLACK = "postSummaryToSlack";
     public static final String HAS_GATEKEEPER = "hasGatekeeper";

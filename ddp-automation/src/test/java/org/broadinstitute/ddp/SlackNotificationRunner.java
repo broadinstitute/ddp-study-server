@@ -45,10 +45,10 @@ public class SlackNotificationRunner extends Categories {
                     String testSuite = packages[amountOfPackages] + "\n";
                     logger.info("Test Suite: {}", testSuite);
 
-                    String browserStackEnvironment = "`" + BaseTest.browserStackEnvironments.toJSONString() + "`";
+                    String browserStackEnvironment = "`" + BaseTest.lambdaTestEnvironments.toJSONString() + "`";
                     String envInfo = " on build *" + BaseTest.buildName + "* using " + browserStackEnvironment;
                     String moreDetails = " More details at "
-                            + BaseTest.browserStackUtil.getBrowserStackAutomateReviewUrl(BaseTest.buildName);
+                            + BaseTest.lambdaTestUtil.getBrowserStackAutomateReviewUrl(BaseTest.buildName);
                     Payload.PayloadBuilder slackBuilder = Payload.builder().channel("#pepper-ci");
 
                     if (result.getFailureCount() == 0) {

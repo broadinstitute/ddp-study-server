@@ -17,8 +17,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.ConfigFile;
 import org.broadinstitute.ddp.DDPWebSite;
 import org.broadinstitute.ddp.pages.DDPPage;
-import org.broadinstitute.ddp.util.BrowserStackTestWatcher;
-import org.broadinstitute.ddp.util.BrowserStackUtil;
+import org.broadinstitute.ddp.util.LambdaTestWatcher;
+import org.broadinstitute.ddp.util.LambdaTestUtil;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -36,13 +36,13 @@ import org.slf4j.LoggerFactory;
 
 public abstract class BaseTest {
 
-    private static final String BUILD_PROPERTY = "org.datadonationplatform.browserStackBuildName";
-    private static final String SESSION_PROPERTY = "org.datadonationplatform.browserStackSessionName";
+    private static final String BUILD_PROPERTY = "org.datadonationplatform.lambdaTestBuildName";
+    private static final String SESSION_PROPERTY = "org.datadonationplatform.lambdaTestSessionName";
     private AtomicReference<String> sessionId = new AtomicReference<>();
 
-    public static BrowserStackUtil browserStackUtil = new BrowserStackUtil(
-            DDPWebSite.CONFIG.getString(ConfigFile.BROWSERSTACK_USER),
-            DDPWebSite.CONFIG.getString(ConfigFile.BROWSERSTACK_KEY));
+    public static LambdaTestUtil lambdaTestUtil = new LambdaTestUtil(
+            DDPWebSite.CONFIG.getString(ConfigFile.LAMBDA_TEST_USER),
+            DDPWebSite.CONFIG.getString(ConfigFile.LAMBDA_TEST_KEY));
 
     /**
      * Derived classes must declare the WebSite on which the test operates.
@@ -54,13 +54,13 @@ public abstract class BaseTest {
     private String currentTestName;
 
     @Rule
-    public TestWatcher browserstackResultsHandler = new BrowserStackTestWatcher(browserStackUtil,
+    public TestWatcher lambdatestResultsHandler = new LambdaTestWatcher(lambdaTestUtil,
             (testName) -> {
                 currentTestName = testName;
             },
             sessionId,
             () -> {
-                hasUpdatedBrowserStackStatus = true;
+                hasUpdatedLambdaTestStatus = true;
             });
 
 
@@ -68,7 +68,7 @@ public abstract class BaseTest {
 
     public static final String TERMINATE_ALL_BROWSERS = "org.datdonationplatform.terminateAllBrowsers";
 
-    public static final String DO_BROWSERSTACK = "org.datadonationplatform.doBrowserStack";
+    public static final String DO_LAMBDA_TEST = "org.datadonationplatform.doLambdaTest";
 
     public static final String USE_SAFARI = "org.datadonationplatform.useSafari";
 
@@ -86,35 +86,36 @@ public abstract class BaseTest {
 
     private static JSONObject config;
 
-    private static boolean isBrowserStack = false;
+    private static boolean useLambdaTest = false;
 
-    public static JSONArray browserStackEnvironments;
+    public static JSONArray lambdaTestEnvironments;
 
     public static String buildName;
 
     private String sessionName;
 
-    private boolean hasUpdatedBrowserStackStatus;
+    private boolean hasUpdatedLambdaTestStatus;
+
 
     @BeforeClass
     public static void setupBrowserStackCreds() throws Exception {
         try {
-            isBrowserStack = Boolean.getBoolean(DO_BROWSERSTACK);
+            useLambdaTest = Boolean.getBoolean(DO_LAMBDA_TEST);
 
 
-            if (isBrowserStack) {
+            if (useLambdaTest) {
 
                 if (System.getProperty("config") != null) {
                     JSONParser parser = new JSONParser();
                     config = (JSONObject) parser.parse(new FileReader("src/test"
                             + "/resources/conf/" + System.getProperty("config")));
-                    browserStackEnvironments = (JSONArray) config.get("environments");
-                    String environments = browserStackEnvironments.toJSONString();
+                    lambdaTestEnvironments = (JSONArray) config.get("environments");
+                    String environments = lambdaTestEnvironments.toJSONString();
                     logger.info("Environments: {}", environments);
-                    if (browserStackEnvironments.size() > 1) {
+                    if (lambdaTestEnvironments.size() > 1) {
                         throw new RuntimeException("Only a single environment is supported by this runner,"
                                 + " but the conf file has "
-                                + browserStackEnvironments.size()
+                                + lambdaTestEnvironments.size()
                                 + " different configurations.");
                     }
                 } else {
@@ -133,13 +134,13 @@ public abstract class BaseTest {
 
     @Before
     public void setUp() throws Exception {
-        if (isBrowserStack) {
+        if (useLambdaTest) {
             Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    if (isBrowserStack && !hasUpdatedBrowserStackStatus && StringUtils.isNotBlank(sessionId.get())) {
+                    if (useLambdaTest && !hasUpdatedLambdaTestStatus && StringUtils.isNotBlank(sessionId.get())) {
                         logger.info("Marking build as failed");
-                        browserStackUtil.markBuildStatus(sessionId.get(), false, "JVM terminated");
+                        lambdaTestUtil.markBuildStatus(sessionId.get(), false, "JVM terminated");
                     }
                 }
             }));
@@ -152,7 +153,7 @@ public abstract class BaseTest {
 
             DesiredCapabilities capabilities = new DesiredCapabilities();
 
-            Map<String, String> envCapabilities = (Map<String, String>) browserStackEnvironments.get(0);
+            Map<String, String> envCapabilities = (Map<String, String>) lambdaTestEnvironments.get(0);
             Iterator it = envCapabilities.entrySet().iterator();
             while (it.hasNext()) {
                 Map.Entry pair = (Map.Entry) it.next();
@@ -179,7 +180,7 @@ public abstract class BaseTest {
             capabilities.setCapability("unicodeKeyboard", true);
             capabilities.setCapability("resetKeyboard", true);
 
-            driver = browserStackUtil.newBrowserStackDriver(config.get("server").toString(), capabilities);
+            driver = lambdaTestUtil.newLambdaTestDriver(config.get("server").toString(), capabilities);
 
             sessionId.set(((RemoteWebDriver) driver).getSessionId().toString());
 
@@ -190,9 +191,9 @@ public abstract class BaseTest {
             String currentTestConfiguration = null;
 
             //Just for logging purposes to follow progress of tests using console output
-            if (capabilities.getCapability("browser") != null) {
+            if (capabilities.getCapability("browserName") != null) {
                 //For desktop browser
-                currentTestConfiguration = capabilities.getCapability("browser").toString().toUpperCase();
+                currentTestConfiguration = capabilities.getCapability("browserName").toString().toUpperCase();
 
             } else {
                 //For mobile phone
@@ -219,7 +220,7 @@ public abstract class BaseTest {
 
     @After
     public void tearDown() throws Exception {
-        if (isBrowserStack) {
+        if (useLambdaTest) {
             if (driver != null) {
                 this.driver.quit();
                 logger.info("Driver is null after driver.quit(): {}", driver == null);

@@ -65,8 +65,7 @@ run_smoke_tests_pepper_angio() {
     local exit_status=0
     local profiles=(
         SmokeTestsAngioWindowsChrome
-        SmokeTestsAngioWindowsFirefox
-        SmokeTestsAngioMacSafari
+
     )
 
     for profile in "${profiles[@]}"; do

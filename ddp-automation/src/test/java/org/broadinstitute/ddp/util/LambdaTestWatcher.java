@@ -9,11 +9,11 @@ import org.junit.runner.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BrowserStackTestWatcher extends TestWatcher {
+public class LambdaTestWatcher extends TestWatcher {
 
-    private static final Logger logger = LoggerFactory.getLogger(BrowserStackTestWatcher.class);
+    private static final Logger logger = LoggerFactory.getLogger(LambdaTestWatcher.class);
 
-    private final BrowserStackUtil browserStackUtil;
+    private final LambdaTestUtil lambdaTestUtil;
 
     private final OnTestStartHandler onTestStartHandler;
 
@@ -31,11 +31,11 @@ public class BrowserStackTestWatcher extends TestWatcher {
      *                                 successfully updates the status of the session
      *                                 at browserstack
      */
-    public BrowserStackTestWatcher(BrowserStackUtil util,
-                                   OnTestStartHandler onTestStart,
-                                   AtomicReference<String> sessionIdAccessor,
-                                   BuildStatusUpdateHandler buildStatusUpdateHandler) {
-        this.browserStackUtil = util;
+    public LambdaTestWatcher(LambdaTestUtil util,
+                             OnTestStartHandler onTestStart,
+                             AtomicReference<String> sessionIdAccessor,
+                             BuildStatusUpdateHandler buildStatusUpdateHandler) {
+        this.lambdaTestUtil = util;
         this.onTestStartHandler = onTestStart;
         this.sessionIdAccessor = sessionIdAccessor;
         this.buildStatusUpdateHandler = buildStatusUpdateHandler;
@@ -53,7 +53,7 @@ public class BrowserStackTestWatcher extends TestWatcher {
                 // JDI/webdriver often have useful information in the cause, one level down
                 cause = e.getCause();
             }
-            browserStackUtil.markBuildStatus(sessionIdAccessor.get(), false, cause.getMessage());
+            lambdaTestUtil.markBuildStatus(sessionIdAccessor.get(), false, cause.getMessage());
             buildStatusUpdateHandler.buildStatusUpdated();
         }
         logger.info("{} has failed: ", description.getDisplayName(), e.getMessage());
@@ -63,7 +63,7 @@ public class BrowserStackTestWatcher extends TestWatcher {
     @Override
     protected void succeeded(Description description) {
         if (hasSessionId()) {
-            browserStackUtil.markBuildStatus(sessionIdAccessor.get(), true, "");
+            lambdaTestUtil.markBuildStatus(sessionIdAccessor.get(), true, "");
             buildStatusUpdateHandler.buildStatusUpdated();
         }
         logger.info("{} passed", description.getDisplayName());
