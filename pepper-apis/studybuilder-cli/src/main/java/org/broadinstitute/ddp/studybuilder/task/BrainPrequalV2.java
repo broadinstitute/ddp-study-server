@@ -9,6 +9,7 @@ import java.util.Set;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.EventActionSql;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -50,15 +51,12 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Task to migrate Brain prequal to v2
  */
+@Slf4j
 public class BrainPrequalV2 implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(BrainPrequalV2.class);
     private static final String DATA_FILE = "patches/prequal-v2.conf";
 
     private Path cfgPath;
@@ -81,7 +79,7 @@ public class BrainPrequalV2 implements CustomTask {
 
     @Override
     public void run(Handle handle) {
-        LOG.info("Executing BrainPrequalV2 task...");
+        log.info("Executing BrainPrequalV2 task...");
 
         String activityCode = dataCfg.getString("activityCode");
         String versionTag = dataCfg.getString("versionTag");
@@ -156,7 +154,7 @@ public class BrainPrequalV2 implements CustomTask {
         questionDao.disableTextQuestion(questionDto.getId(), meta);
         nestedBlockId = helper.findQuestionBlockId(questionDto.getId());
         helper.updateNestedQuestionRevision(nestedBlockId, newRevId);
-        LOG.info("Disabled first_name and last_name questions");
+        log.info("Disabled first_name and last_name questions");
 
         //disable copy first_name and last_name events
         List<Long> eventIds = helper.findStudyCopyEventIds(studyId);
@@ -164,7 +162,7 @@ public class BrainPrequalV2 implements CustomTask {
             throw new RuntimeException("Expecting two COPY events for Brain, got :" + eventIds.size() + "  aborting patch ");
         }
         helper.disableStudyEvents(Set.copyOf(eventIds));
-        LOG.info("Disabled first_name and last_name COPY events");
+        log.info("Disabled first_name and last_name COPY events");
 
         //modify PL question "PREQUAL_SELF_DESCRIBE"
         //update prompt text
@@ -175,7 +173,7 @@ public class BrainPrequalV2 implements CustomTask {
         //disable PREQUAL_SELF_DESCRIBE.MAILING_LIST option
         PicklistQuestionDao plQuestionDao = handle.attach(PicklistQuestionDao.class);
         plQuestionDao.disableOption(questionDto.getId(), "MAILING_LIST", meta, false);
-        LOG.info("Disabled mailing_list option");
+        log.info("Disabled mailing_list option");
 
         //update PREQUAL_SELF_DESCRIBE.DIAGNOSIED option prompt
         PicklistOptionDto selfOptionDto = jdbiPicklistOption.getActiveByStableId(questionDto.getId(), "DIAGNOSED").get();
@@ -210,7 +208,7 @@ public class BrainPrequalV2 implements CustomTask {
                 .get();
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
         helper.updateLinkedActivityId(studyDto.getId(), notificationTemplateId, activityId);
-        LOG.info("Updated notification template with id={} to use linkedActivityId={} ({})",
+        log.info("Updated notification template with id={} to use linkedActivityId={} ({})",
                 notificationTemplateId, activityId, activityCode);
 
         //add cancel expr
@@ -221,7 +219,7 @@ public class BrainPrequalV2 implements CustomTask {
         //remove precondition expr
         helper.removeEventPreCond(eventConfigId);
 
-        LOG.info("Added cancel expr and removed pre-condition for event config ID : {} ", eventConfigId);
+        log.info("Added cancel expr and removed pre-condition for event config ID : {} ", eventConfigId);
     }
 
     private interface SqlHelper extends SqlObject {
