@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
@@ -48,13 +49,9 @@ import org.broadinstitute.ddp.model.pdf.ProfileSubstitution;
 import org.broadinstitute.ddp.model.pdf.SubstitutionType;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class PdfBuilder {
-
-    private static final Logger LOG = LoggerFactory.getLogger(PdfBuilder.class);
-
     private Path dirPath;
     private Config cfg;
     private StudyDto studyDto;
@@ -106,7 +103,7 @@ public class PdfBuilder {
                     //update bytes
                     updatePdfPage(handle, baseTemplateid, pdfBytes, pageType);
                 } else {
-                    LOG.warn("Custom template not found for study : {} mapping type: {}. skipping update... ",
+                    log.warn("Custom template not found for study : {} mapping type: {}. skipping update... ",
                             studyDto.getGuid(), mappingType);
                 }
             } else if (PdfTemplateType.MAILING_ADDRESS.name().equals(pageType)) {
@@ -115,7 +112,7 @@ public class PdfBuilder {
                     baseTemplateid = pdfTemplateDto.get().getId();
                     updatePdfPage(handle, baseTemplateid, pdfBytes, pageType);
                 } else {
-                    LOG.warn("Mailing address template not found for study : {}. skipping update... ",
+                    log.warn("Mailing address template not found for study : {}. skipping update... ",
                             studyDto.getGuid());
                 }
             } else if (InstitutionType.PHYSICIAN.name().equals(pageType) || InstitutionType.INITIAL_BIOPSY.name().equals(pageType)
@@ -126,7 +123,7 @@ public class PdfBuilder {
                     baseTemplateid = pdfTemplateDto.get().getId();
                     updatePdfPage(handle, baseTemplateid, pdfBytes, pageType);
                 } else {
-                    LOG.warn("Physician institute template not found for study : {} page type: {}. skipping update... ",
+                    log.warn("Physician institute template not found for study : {} page type: {}. skipping update... ",
                             studyDto.getGuid(), pageType);
                 }
             } else {
@@ -137,7 +134,7 @@ public class PdfBuilder {
 
     private void updatePdfPage(Handle handle, long baseTemplateid, byte[] pdfBytes, String pageType) {
         handle.attach(JdbiPdfTemplates.class).updatePdfBaseTemplate(baseTemplateid, pdfBytes);
-        LOG.info("Updated pdf bytes for pdfBaseTemplateId: {} study:{} pageType: {}",
+        log.info("Updated pdf bytes for pdfBaseTemplateId: {} study:{} pageType: {}",
                 baseTemplateid, studyDto.getGuid(), pageType);
     }
 
@@ -168,11 +165,11 @@ public class PdfBuilder {
             if (hasExisting) {
                 long versionId = pdfDao.insertNewConfigVersion(pdf, templates);
                 pdfId = pdf.getId();
-                LOG.info("Added pdf configuration version for id={} with name={}, filename={}, displayName={}, versionId={}, versionTag={}",
+                log.info("Added pdf configuration version for id={} with name={}, filename={}, displayName={}, versionId={}, versionTag={}",
                         pdfId, pdf.getConfigName(), pdf.getFilename(), pdf.getDisplayName(), versionId, pdf.getVersion().getVersionTag());
             } else {
                 pdfId = pdfDao.insertNewConfig(pdf, templates);
-                LOG.info("Created pdf configuration with id={}, name={}, filename={}, displayName={}, versionId={}, versionTag={}",
+                log.info("Created pdf configuration with id={}, name={}, filename={}, displayName={}, versionId={}, versionTag={}",
                         pdfId, pdf.getConfigName(), pdf.getFilename(), pdf.getDisplayName(),
                         pdf.getVersion().getId(), pdf.getVersion().getVersionTag());
             }
@@ -182,7 +179,7 @@ public class PdfBuilder {
             Config mapping = pdfCfg.getConfig("mapping");
             PdfMappingType type = PdfMappingType.valueOf(mapping.getString("type"));
             long mappingId = handle.attach(JdbiStudyPdfMapping.class).insert(studyDto.getId(), type, pdfId);
-            LOG.info("Added mapping for pdf id {} with id={}, type={}", pdfId, mappingId, type);
+            log.info("Added mapping for pdf id {} with id={}, type={}", pdfId, mappingId, type);
         }
 
         return pdfId;

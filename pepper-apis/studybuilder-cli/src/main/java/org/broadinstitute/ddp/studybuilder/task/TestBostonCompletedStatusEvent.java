@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.List;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
@@ -21,15 +22,12 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * One-off task to add event for user enrollment status changes and doing necessary data backfill.
  */
+@Slf4j
 public class TestBostonCompletedStatusEvent implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TestBostonCompletedStatusEvent.class);
     private static final String STUDY_GUID = "testboston";
 
     private Path cfgPath;
@@ -74,7 +72,7 @@ public class TestBostonCompletedStatusEvent implements CustomTask {
             delaySeconds = eventCfg.getInt("delaySeconds");
             doBackfill = true;
         } else {
-            LOG.info("Already has (USER_STATUS_CHANGED, ENROLLED) event configuration with id {}",
+            log.info("Already has (USER_STATUS_CHANGED, ENROLLED) event configuration with id {}",
                     statusEnrolled.getEventConfigurationDto().getEventConfigurationId());
         }
 
@@ -91,7 +89,7 @@ public class TestBostonCompletedStatusEvent implements CustomTask {
                             new DDPException("Could not find (USER_STATUS_CHANGED, COMPLETED) event in study config"));
             eventBuilder.insertEvent(handle, eventCfg);
         } else {
-            LOG.info("Already has (USER_STATUS_CHANGED, COMPLETED) event configuration with id {}",
+            log.info("Already has (USER_STATUS_CHANGED, COMPLETED) event configuration with id {}",
                     statusCompleted.getEventConfigurationDto().getEventConfigurationId());
         }
 
@@ -105,11 +103,11 @@ public class TestBostonCompletedStatusEvent implements CustomTask {
         long delayMillis = delaySeconds * 1000L;
         long nowMillis = Instant.now().toEpochMilli();
 
-        LOG.info("Starting backfill with eventConfigId={}, delayMillis={}, nowMillis={}",
+        log.info("Starting backfill with eventConfigId={}, delayMillis={}, nowMillis={}",
                 statusEnrolledEventId, delayMillis, nowMillis);
 
         List<Long> userIds = helper.findEligibleCompletedUsers(studyDto.getId(), delayMillis, nowMillis);
-        LOG.info("Found {} participants that should be marked as COMPLETED", userIds.size());
+        log.info("Found {} participants that should be marked as COMPLETED", userIds.size());
 
         // Idea here is to leverage existing event mechanism to update their status to COMPLETED.
         // We're using TestBoston's "status changed to ENROLLED" event but with zero delay. This
@@ -120,10 +118,10 @@ public class TestBostonCompletedStatusEvent implements CustomTask {
         var queueDao = handle.attach(QueuedEventDao.class);
         for (var userId : userIds) {
             long queuedId = queueDao.addToQueue(statusEnrolledEventId, userId, userId, 0);
-            LOG.info("Queued status change event for participant {} with queued_event_id={}", userId, queuedId);
+            log.info("Queued status change event for participant {} with queued_event_id={}", userId, queuedId);
         }
 
-        LOG.info("Finished backfill");
+        log.info("Finished backfill");
     }
 
     private interface SqlHelper extends SqlObject {

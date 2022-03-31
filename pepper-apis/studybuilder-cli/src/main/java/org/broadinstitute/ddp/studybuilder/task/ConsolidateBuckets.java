@@ -5,6 +5,7 @@ import java.nio.file.Path;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -12,15 +13,12 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Task to update Google Buckets used for Angio/Brain study icons.
  */
+@Slf4j
 public class ConsolidateBuckets implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ConsolidateBuckets.class);
     private static final String DATA_FILE = "patches/consolidate-buckets.conf";
 
     private Config cfg;
@@ -49,7 +47,7 @@ public class ConsolidateBuckets implements CustomTask {
             String oldName = bucketsCfg.getString("old");
             String newName = bucketsCfg.getString("new");
             int numUpdated = helper.replaceIconUrlByStudyId(studyDto.getId(), oldName, newName);
-            LOG.info("Updated {} icon url from old={} to new={}", numUpdated, oldName, newName);
+            log.info("Updated {} icon url from old={} to new={}", numUpdated, oldName, newName);
         }
     }
 

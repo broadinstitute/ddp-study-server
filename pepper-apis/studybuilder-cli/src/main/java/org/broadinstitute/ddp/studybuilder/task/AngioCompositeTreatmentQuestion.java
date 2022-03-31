@@ -8,6 +8,7 @@ import java.util.List;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.JdbiCompositeAnswer;
 import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestion;
@@ -28,12 +29,9 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class AngioCompositeTreatmentQuestion implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AngioCompositeTreatmentQuestion.class);
     private static final String DATA_FILE = "patches/composite-treatment-question.conf";
 
     private Config dataCfg;
@@ -66,7 +64,7 @@ public class AngioCompositeTreatmentQuestion implements CustomTask {
         JdbiCompositeQuestion jdbiCompositeQuestion = handle.attach(JdbiCompositeQuestion.class);
         JdbiCompositeAnswer jdbiCompositeAnswer = handle.attach(JdbiCompositeAnswer.class);
 
-        LOG.info("updating old treatment question...");
+        log.info("updating old treatment question...");
 
         String oldQuestionStableId = dataCfg.getString("oldQuestionStableId");
         String newQuestionStableId = dataCfg.getString("newQuestionStableId");
@@ -79,7 +77,7 @@ public class AngioCompositeTreatmentQuestion implements CustomTask {
         helper.updateTextQuestionInputType(oldQuestionDto.getId(), TextInputType.TEXT);
         helper.updateTextQuestionSuggestionType(oldQuestionDto.getId(), SuggestionType.DRUG);
 
-        LOG.info("updating old treatment question prompt...");
+        log.info("updating old treatment question prompt...");
 
         long templateId = oldQuestionDto.getPromptTemplateId();
         String varName = newQuestionStableId.toLowerCase();
@@ -89,17 +87,17 @@ public class AngioCompositeTreatmentQuestion implements CustomTask {
         helper.updateTemplateVarName(templateVarId, varName);
         helper.updateVarSubstitutionValue(templateVarId, dataCfg.getString("newQuestionPromptText"));
 
-        LOG.info("creating new composite question...");
+        log.info("creating new composite question...");
 
         CompositeQuestionDef def = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("compositeQuestion")), CompositeQuestionDef.class);
         questionDao.insertQuestion(oldQuestionDto.getActivityId(), def, oldQuestionDto.getRevisionId());
 
-        LOG.info("linking old treatment question to composite question...");
+        log.info("linking old treatment question to composite question...");
 
         jdbiCompositeQuestion.insertChildren(def.getQuestionId(), Arrays.asList(oldQuestionDto.getId()));
         helper.assignNewBlockQuestionId(oldQuestionDto.getId(), def.getQuestionId());
 
-        LOG.info("migrating user answer data...");
+        log.info("migrating user answer data...");
 
         List<Long> ids = helper.findAnswerIdsForOldTextQuestion(oldQuestionDto.getId());
         for (long answerId : ids) {
@@ -109,7 +107,7 @@ public class AngioCompositeTreatmentQuestion implements CustomTask {
             jdbiCompositeAnswer.insertChildAnswerItems(parentId, Arrays.asList(answerId), Arrays.asList(0));
         }
 
-        LOG.info("migrated {} user answers", ids.size());
+        log.info("migrated {} user answers", ids.size());
     }
 
     private interface SqlHelper extends SqlObject {
