@@ -8,6 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
@@ -19,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Getter
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Filter {
 
     public static final Logger logger = LoggerFactory.getLogger(Filter.class);
@@ -76,11 +78,13 @@ public class Filter {
     public static String COMPOSITE = "COMPOSITE"; //ES type
     public static String JSON_ARRAY = "JSONARRAY"; //Sample result
     public static String AGREEMENT = "AGREEMENT";
-    public String type;
+
+
     private boolean range = false;
     private boolean exactMatch = false;
     private boolean empty = false;
     private boolean notEmpty = false;
+    public String type;
     private String parentName;
     private NameValue filter1;
     private NameValue filter2;
@@ -199,7 +203,6 @@ public class Filter {
         } else if (ADDITIONAL_VALUES.equals(filter.getType())) {
             finalQuery = buildJsonExtract(filter, dbElement);
         } else if (JSON_ARRAY.equals(filter.getType())) {
-            // filter.getFilter2().getName()
             query = AND + filter.getParentName() + DBConstants.ALIAS_DELIMITER + dbElement.getColumnName() + DBConstants.ALIAS_DELIMITER
                     + filter.getFilter2().getName();
             if (filter.isEmpty()) {
@@ -207,9 +210,6 @@ public class Filter {
             } else if (filter.isNotEmpty()) {
                 finalQuery = query + IS_NOT_NULL + " ";
             } else {
-                // JSON_CONTAINS ( test_result , JSON_OBJECT ( 'result' , 'INVALID' )
-                // String notNullQuery = AND + filter.getParentName() + DBConstants.ALIAS_DELIMITER + dbElement.getColumnName() +
-                // IS_NOT_NULL;
                 if (filter.getFilter1() != null && filter.getFilter1().getValue() != null && StringUtils.isNotBlank(
                         String.valueOf(filter.getFilter1().getValue()))) {
                     String quotation = "'";
@@ -224,8 +224,7 @@ public class Filter {
                 }
                 finalQuery = query;
             }
-        } else if (CHECKBOX.equals(filter.getType())) { //1/0
-            //                String notNullQuery = AND + filter.getParentName() + "." + dbElement.getColumnName() + IS_NOT_NULL;
+        } else if (CHECKBOX.equals(filter.getType())) {
             if (filter.getFilter1() != null && filter.getFilter1().getValue() != null && StringUtils.isNotBlank(
                     String.valueOf(filter.getFilter1().getValue())) && (TRUE.equals(filter.getFilter1().getValue()) || TRUE.equals(
                     String.valueOf(filter.getFilter1().getValue())) || "1".equals(filter.getFilter1().getValue()))) {
@@ -235,7 +234,6 @@ public class Filter {
                     String.valueOf(filter.getFilter2().getValue())) || "1".equals(filter.getFilter2().getValue()))) {
                 query = AND + NOT + " " + filter.getColumnName(dbElement) + " <=> 1";
             }
-            //                finalQuery = notNullQuery + query;
             finalQuery = query;
         } else if (BOOLEAN.equals(filter.getType()) || AGREEMENT.equals(filter.getType())) { //true/false
             if (filter.getFilter1() != null && filter.getFilter1().getValue() != null && StringUtils.isNotBlank(
@@ -248,8 +246,6 @@ public class Filter {
             }
             finalQuery = query;
         }
-
-        //        logger.info(finalQuery);
         return finalQuery;
     }
 
@@ -278,10 +274,10 @@ public class Filter {
                     lessThan = lessThan.substring(lessThanIndex);
                     query += moreThan + query + lessThan;
                 } else if (filter.isExactMatch()) {
-                    query += NUMBER.equals(filter.additionalType) ? EQUALS + "#" : EQUALS + "'#'";
+                    query += EQUALS + "#";
                     query = query.replaceAll("#", String.valueOf(filter.getFilter1().getValue()));
                 } else {
-                    query += " " + LIKE + " '%#%'";
+                    query += " " + LIKE + " %#%";
                     query = query.replaceAll("#", String.valueOf(filter.getFilter1().getValue()));
                 }
             }
@@ -306,6 +302,14 @@ public class Filter {
     /**
      * Uses the appropriate date converter (if given) to write SQL that can
      * compare either exact dates or "in the day" dates.
+     *
+     * @param filter    filter object
+     * @param dbElement dbelement object
+     * @param comparison  how the values will be compared to one another
+     * @param arg         the user-input field to compare
+     * @param useEndOfday if false, when parsing a date, the first millis of the day
+     *                    will be used.  if true, the last millis of the day will
+     *                    be used.
      */
     private static String generateDateComparisonSql(Filter filter, DBElement dbElement, String comparison, Object arg,
                                                     boolean useEndOfday) {
@@ -357,14 +361,6 @@ public class Filter {
         return filter;
     }
 
-    private static Object replaceQuotes(Object text) {
-        if (text != null && ((String) text).contains("'")) {
-            String tmp = ((String) text).replace("'", "");
-            return replaceQuotes(tmp);
-        }
-        return text;
-    }
-
     private String getColumnName(DBElement dbElement) {
         if (dbElement == null) {
             String tmp = StringUtils.isNotBlank(this.getParentName()) ? this.getParentName() : this.getParticipantColumn().getTableAlias();
@@ -380,6 +376,14 @@ public class Filter {
             String tmp = StringUtils.isNotBlank(this.getParentName()) ? this.getParentName() : this.getParticipantColumn().getTableAlias();
             return tmp + DBConstants.ALIAS_DELIMITER + dbElement.getColumnName();
         }
+    }
+
+    private static Object replaceQuotes(Object text) {
+        if (text != null && ((String) text).contains("'")) {
+            String tmp = ((String) text).replace("'", "");
+            return replaceQuotes(tmp);
+        }
+        return text;
     }
 
     public void setRange(boolean range) {

@@ -27,9 +27,9 @@ import org.broadinstitute.dsm.route.AssignParticipantRoute;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.lddp.email.EmailClient;
 import org.broadinstitute.lddp.email.EmailRecord;
 import org.broadinstitute.lddp.email.Recipient;
+import org.broadinstitute.lddp.email.SendGridClient;
 import org.broadinstitute.lddp.exception.EmailQueueException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +41,6 @@ public class NotificationUtil {
     public static final String DSM_SUBJECT = "Study-Manager Notification";
     public static final String KITREQUEST_LINK = "/permalink/whereto?";
     private static final Logger logger = LoggerFactory.getLogger(NotificationUtil.class);
-    private static String emailClassName = null;
     private static String emailKey = null;
     private static JsonObject emailClientSettings = null;
     private static Map<String, JsonElement> notificationLookup = new HashMap<>();
@@ -80,7 +79,6 @@ public class NotificationUtil {
     }
 
     public synchronized void startup(@NonNull Config config) {
-        emailClassName = config.getString(ApplicationConfigConstants.EMAIL_CLASS_NAME);
         emailKey = config.getString(ApplicationConfigConstants.EMAIL_KEY);
         emailClientSettings = (JsonObject) (new JsonParser().parse(config.getString(ApplicationConfigConstants.EMAIL_CLIENT_SETTINGS)));
 
@@ -133,9 +131,10 @@ public class NotificationUtil {
         mapy.put(":subject", subject);
         Recipient emailRecipient = new Recipient(recipient);
         if (EMAIL_TYPE.equals(recordId)) {
-            emailRecipient.setUrl(DSMConfig.getSqlFromConfig(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS) + KITREQUEST_LINK);
+            emailRecipient.setPermalink(DSMConfig.getSqlFromConfig(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS)
+                    + KITREQUEST_LINK);
         }
-        emailRecipient.setSurveyLinks(mapy);
+        emailRecipient.setPersonalization(mapy);
         queueCurrentAndFutureEmails(recordId, emailRecipient, recordId);
     }
 
@@ -201,14 +200,14 @@ public class NotificationUtil {
         mapy.put(":customText", question);
         mapy.put(":customSignature", name);
         Recipient emailRecipient = new Recipient(to);
-        emailRecipient.setSurveyLinks(mapy);
+        emailRecipient.setPersonalization(mapy);
         try {
-            EmailClient abstractionEmailClient = (EmailClient) Class.forName(emailClassName).newInstance();
+            SendGridClient sendGridClient = new SendGridClient();
             JsonObject emailClientSettings = new JsonObject();
             emailClientSettings.addProperty("sendGridFrom", from);
             emailClientSettings.addProperty("sendGridFromName", name);
-            abstractionEmailClient.configure(emailKey, new Gson().fromJson(emailClientSettings.toString(), JsonObject.class), "", "");
-            abstractionEmailClient.sendSingleEmail(sendGridTemplate, emailRecipient, null);
+            sendGridClient.configure(emailKey, new Gson().fromJson(emailClientSettings.toString(), JsonObject.class));
+            sendGridClient.sendSingleEmail(sendGridTemplate, emailRecipient);
         } catch (Exception ex) {
             logger.error("An error occurred trying to send abstraction expert question.", ex);
         }
@@ -222,8 +221,8 @@ public class NotificationUtil {
         int totalNotificationsToProcess = 0;
 
         try {
-            EmailClient emailClient = (EmailClient) Class.forName(emailClassName).newInstance();
-            emailClient.configure(emailKey, emailClientSettings, "", "");
+            SendGridClient sendGridClient = new SendGridClient();
+            sendGridClient.configure(emailKey, emailClientSettings);
 
             Map<String, ArrayList<EmailRecord>> records = EmailRecord.getRecordsForProcessing();
 
@@ -237,7 +236,7 @@ public class NotificationUtil {
                         template = templateRecords.getKey();
 
                         for (EmailRecord record : templateRecords.getValue()) {
-                            emailClient.sendSingleEmail(template, record.getRecipient(), null);
+                            sendGridClient.sendSingleEmail(template, record.getRecipient());
                             EmailRecord.startProcessing(record.getRecordId());
                         }
 

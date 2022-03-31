@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.sort.CustomSortBuilder;
+import org.broadinstitute.dsm.model.elastic.sort.Sort;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.elasticsearch.action.search.SearchRequest;
@@ -27,6 +29,8 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.SortBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,12 +39,15 @@ import org.slf4j.LoggerFactory;
 public class ElasticSearch implements ElasticSearchable {
 
     private static final Logger logger = LoggerFactory.getLogger(ElasticSearch.class);
+    private Deserializer deserializer;
+    private SortBuilder sortBy;
+
     List<ElasticSearchParticipantDto> esParticipants;
     long totalCount;
-    private Deserializer deserializer;
 
 
     public ElasticSearch() {
+        this.sortBy = SortBuilders.fieldSort(ElasticSearchUtil.PROFILE_CREATED_AT).order(SortOrder.ASC);
         this.deserializer = new SourceMapDeserializer();
     }
 
@@ -50,8 +57,16 @@ public class ElasticSearch implements ElasticSearchable {
         this.totalCount = totalCount;
     }
 
+    @Override
     public void setDeserializer(Deserializer deserializer) {
         this.deserializer = deserializer;
+    }
+
+    @Override
+    public void setSortBy(Sort sort) {
+        if (Objects.nonNull(sort)) {
+            this.sortBy = new CustomSortBuilder(sort);
+        }
     }
 
     public List<ElasticSearchParticipantDto> getEsParticipants() {
@@ -70,9 +85,7 @@ public class ElasticSearch implements ElasticSearchable {
             return Optional.of(new ElasticSearchParticipantDto.Builder().build());
         }
         Optional<ElasticSearchParticipantDto> deserializedSourceMap = deserializer.deserialize(sourceMap);
-        return deserializedSourceMap.isPresent()
-                ? deserializedSourceMap
-                : Optional.of(new ElasticSearchParticipantDto.Builder().build());
+        return deserializedSourceMap.isPresent() ? deserializedSourceMap : Optional.of(new ElasticSearchParticipantDto.Builder().build());
     }
 
     public List<ElasticSearchParticipantDto> parseSourceMaps(SearchHit[] searchHits) {
@@ -114,13 +127,13 @@ public class ElasticSearch implements ElasticSearchable {
         if (to <= 0) {
             throw new IllegalArgumentException("incorrect from/to range");
         }
-        logger.info("Collecting ES data");
+        logger.info("Collecting ES data from index " + esParticipantsIndex);
         SearchResponse response;
         try {
             int scrollSize = to - from;
             SearchRequest searchRequest = new SearchRequest(esParticipantsIndex);
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-            searchSourceBuilder.query(QueryBuilders.matchAllQuery()).sort(ElasticSearchUtil.PROFILE_CREATED_AT, SortOrder.ASC);
+            searchSourceBuilder.query(QueryBuilders.matchAllQuery()).sort(sortBy);
             searchSourceBuilder.size(scrollSize);
             searchSourceBuilder.from(from);
             searchRequest.source(searchSourceBuilder);
@@ -140,12 +153,12 @@ public class ElasticSearch implements ElasticSearchable {
         }
         SearchRequest searchRequest = new SearchRequest(Objects.requireNonNull(esIndex));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(getBoolQueryOfParticipantsId(participantIds)).sort(ElasticSearchUtil.PROFILE_CREATED_AT, SortOrder.ASC);
+        searchSourceBuilder.query(getBoolQueryOfParticipantsId(participantIds)).sort(sortBy);
         searchSourceBuilder.size(participantIds.size());
         searchSourceBuilder.from(0);
         searchRequest.source(searchSourceBuilder);
         SearchResponse response;
-        logger.info("Collecting ES data");
+        logger.info("Collecting ES data from index " + esIndex);
         try {
             response = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
@@ -176,13 +189,13 @@ public class ElasticSearch implements ElasticSearchable {
         if (to <= 0) {
             throw new IllegalArgumentException("incorrect from/to range");
         }
-        logger.info("Collecting ES data");
+        logger.info("Collecting ES data from index " + esParticipantsIndex);
         SearchResponse response;
         try {
             int scrollSize = to - from;
             SearchRequest searchRequest = new SearchRequest(Objects.requireNonNull(esParticipantsIndex));
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-            searchSourceBuilder.query(queryBuilder).sort(ElasticSearchUtil.PROFILE_CREATED_AT, SortOrder.ASC);
+            searchSourceBuilder.query(queryBuilder).sort(sortBy);
             searchSourceBuilder.size(scrollSize);
             searchSourceBuilder.from(from);
             searchRequest.source(searchSourceBuilder);
@@ -199,12 +212,12 @@ public class ElasticSearch implements ElasticSearchable {
     public ElasticSearch getParticipantsByRangeAndIds(String participantIndexES, int from, int to, List<String> participantIds) {
         SearchRequest searchRequest = new SearchRequest(Objects.requireNonNull(participantIndexES));
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(getBoolQueryOfParticipantsId(participantIds)).sort(ElasticSearchUtil.PROFILE_CREATED_AT, SortOrder.ASC);
+        searchSourceBuilder.query(getBoolQueryOfParticipantsId(participantIds)).sort(sortBy);
         searchSourceBuilder.size(to - from);
         searchSourceBuilder.from(from);
         searchRequest.source(searchSourceBuilder);
         SearchResponse response;
-        logger.info("Collecting ES data");
+        logger.info("Collecting ES data from index " + participantIndexES);
         try {
             response = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
@@ -226,11 +239,11 @@ public class ElasticSearch implements ElasticSearchable {
         searchRequest.source(searchSourceBuilder);
         SearchResponse searchResponse;
         Map<String, Object> sourceAsMap;
-        logger.info("Collecting ES data");
+        logger.info("Collecting ES data from index " + esParticipantsIndex);
         try {
             searchResponse = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
-            sourceAsMap = searchResponse.getHits().getHits().length > 0
-                    ? searchResponse.getHits().getHits()[0].getSourceAsMap() : new HashMap<>();
+            sourceAsMap = searchResponse.getHits().getHits().length > 0 ? searchResponse.getHits().getHits()[0].getSourceAsMap() :
+                    new HashMap<>();
         } catch (Exception e) {
             throw new RuntimeException("Couldn't get participant from ES for instance " + esParticipantsIndex + " by id: " + participantId,
                     e);
@@ -243,12 +256,12 @@ public class ElasticSearch implements ElasticSearchable {
         long participantsSize = getParticipantsSize(Objects.requireNonNull(esParticipantsIndex));
         SearchRequest searchRequest = new SearchRequest(esParticipantsIndex);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(QueryBuilders.matchAllQuery()).sort(ElasticSearchUtil.PROFILE_CREATED_AT, SortOrder.ASC);
+        searchSourceBuilder.query(QueryBuilders.matchAllQuery()).sort(sortBy);
         searchSourceBuilder.from(0);
         searchSourceBuilder.size((int) participantsSize);
         searchRequest.source(searchSourceBuilder);
         SearchResponse searchResponse;
-        logger.info("Collecting ES data");
+        logger.info("Collecting ES data from index " + esParticipantsIndex);
         try {
             searchResponse = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
         } catch (Exception e) {
@@ -262,9 +275,8 @@ public class ElasticSearch implements ElasticSearchable {
     private BoolQueryBuilder getBoolQueryOfParticipantsId(List<String> participantIds) {
         Map<Boolean, List<String>> isGuidMap = participantIds.stream().collect(Collectors.partitioningBy(ParticipantUtil::isGuid));
         BoolQueryBuilder boolQuery = new BoolQueryBuilder();
-        isGuidMap.forEach((booleanId, idValues) -> boolQuery.should(QueryBuilders.termsQuery(booleanId
-                ? ElasticSearchUtil.PROFILE_GUID
-                : ElasticSearchUtil.PROFILE_LEGACYALTPID, idValues)));
+        isGuidMap.forEach((booleanId, idValues) -> boolQuery.should(
+                QueryBuilders.termsQuery(booleanId ? ElasticSearchUtil.PROFILE_GUID : ElasticSearchUtil.PROFILE_LEGACYALTPID, idValues)));
         return boolQuery;
     }
 

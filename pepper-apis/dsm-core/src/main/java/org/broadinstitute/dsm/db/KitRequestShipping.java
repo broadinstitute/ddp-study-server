@@ -225,7 +225,7 @@ public class KitRequestShipping extends KitRequest {
 
     private String collaboratorParticipantId;
 
-    @ColumnName(DBConstants.BSP_COLLABORATOR_PARTICIPANT_ID)
+    @ColumnName (DBConstants.BSP_COLLABORATOR_SAMPLE_ID)
     private String bspCollaboratorSampleId;
     private String easypostAddressId;
     private String realm;
@@ -279,6 +279,8 @@ public class KitRequestShipping extends KitRequest {
     private Boolean careEvolve;
     @ColumnName(DBConstants.UPLOAD_REASON)
     private String uploadReason;
+    @ColumnName(DBConstants.DDP_INSTANCE_ID)
+    private long ddpInstanceId;
 
     public KitRequestShipping() {
     }
@@ -360,21 +362,22 @@ public class KitRequestShipping extends KitRequest {
         }
         KitRequestShipping kitRequestShipping =
                 new KitRequestShipping(rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
-                        rs.getString(DBConstants.BSP_COLLABORATOR_PARTICIPANT_ID), rs.getString(DBConstants.DSM_LABEL),
+                        rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID), rs.getString(DBConstants.DSM_LABEL),
                         rs.getString(DBConstants.INSTANCE_NAME), rs.getString(DBConstants.KIT_TYPE_NAME),
                         rs.getLong(DBConstants.DSM_KIT_REQUEST_ID), rs.getLong(DBConstants.DSM_KIT_ID),
                         rs.getString(DBConstants.DSM_LABEL_TO), rs.getString(DBConstants.DSM_LABEL_RETURN),
                         rs.getString(DBConstants.DSM_TRACKING_TO), returnTrackingId, rs.getString(DBConstants.DSM_TRACKING_URL_TO),
-                        rs.getString(DBConstants.DSM_TRACKING_URL_RETURN), rs.getLong(DBConstants.DSM_SCAN_DATE),
-                        rs.getBoolean(DBConstants.ERROR), rs.getString(DBConstants.MESSAGE), rs.getLong(DBConstants.DSM_RECEIVE_DATE),
-                        rs.getString(DBConstants.EASYPOST_ADDRESS_ID_TO), rs.getLong(DBConstants.DSM_DEACTIVATED_DATE),
+                        rs.getString(DBConstants.DSM_TRACKING_URL_RETURN), (Long) rs.getObject(DBConstants.DSM_SCAN_DATE),
+                        rs.getBoolean(DBConstants.ERROR), rs.getString(DBConstants.MESSAGE),
+                        (Long) rs.getObject(DBConstants.DSM_RECEIVE_DATE),
+                        rs.getString(DBConstants.EASYPOST_ADDRESS_ID_TO), (Long)rs.getObject(DBConstants.DSM_DEACTIVATED_DATE),
                         rs.getString(DBConstants.DEACTIVATION_REASON), rs.getString(DBConstants.KIT_LABEL),
                         rs.getBoolean(DBConstants.EXPRESS), rs.getString(DBConstants.EASYPOST_TO_ID),
-                        rs.getLong(DBConstants.LABEL_TRIGGERED_DATE), rs.getString(DBConstants.EASYPOST_SHIPMENT_STATUS),
+                        (Long)rs.getObject(DBConstants.LABEL_TRIGGERED_DATE), rs.getString(DBConstants.EASYPOST_SHIPMENT_STATUS),
                         rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), rs.getBoolean(DBConstants.NO_RETURN),
                         rs.getString(DBConstants.EXTERNAL_ORDER_STATUS), rs.getString(DBConstants.CREATED_BY),
                         rs.getString(DBConstants.KIT_TEST_RESULT), rs.getString(DBConstants.UPS_TRACKING_STATUS),
-                        rs.getString(DBConstants.UPS_RETURN_STATUS), rs.getLong(DBConstants.EXTERNAL_ORDER_DATE),
+                        rs.getString(DBConstants.UPS_RETURN_STATUS), (Long)rs.getObject(DBConstants.EXTERNAL_ORDER_DATE),
                         rs.getBoolean(DBConstants.CARE_EVOLVE), rs.getString(DBConstants.UPLOAD_REASON), null, null, null);
         if (DBUtil.columnExists(rs, DBConstants.UPS_STATUS_DESCRIPTION) && StringUtils.isNotBlank(
                 rs.getString(DBConstants.UPS_STATUS_DESCRIPTION))) {
@@ -393,12 +396,6 @@ public class KitRequestShipping extends KitRequest {
 
     public static Map<String, List<KitRequestShipping>> getKitRequests(@NonNull DDPInstance instance) {
         return getKitRequests(instance, null);
-    }
-
-    public static Map<String, List<KitRequestShipping>> getKitRequestsByParticipantIds(@NonNull DDPInstance instance,
-                                                                                       List<String> participantIds) {
-        String queryAddition = " AND request.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
-        return getKitRequests(instance, queryAddition);
     }
 
     public static Map<String, List<KitRequestShipping>> getKitRequests(@NonNull DDPInstance instance, String queryAddition) {
@@ -448,6 +445,39 @@ public class KitRequestShipping extends KitRequest {
         }
         logger.info("Got " + kitRequests.size() + " participants samples in DSM DB for " + instance.getName());
         return kitRequests;
+    }
+
+    private static Map<String, List<KitRequestShipping>> getKitRequests(@NonNull String realm, String target, String kitType,
+                                                                        boolean getAll) {
+        Map<String, List<KitRequestShipping>> kitRequests = new HashMap<>();
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = getPreparedStatement(conn, target, realm, kitType, getAll)) {
+                if (stmt != null) {
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        while (rs.next()) {
+                            addKitRequest(rs, kitRequests);
+                        }
+                    }
+                } else {
+                    throw new RuntimeException("No prepareStatement was created " + target + " " + realm + " " + kitType);
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Error getting list of kitRequests for " + realm, results.resultException);
+        }
+        return kitRequests;
+    }
+
+    public static Map<String, List<KitRequestShipping>> getKitRequestsByParticipantIds(@NonNull DDPInstance instance,
+                                                                                       List<String> participantIds) {
+        String queryAddition = " AND request.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
+        return getKitRequests(instance, queryAddition);
     }
 
     private static void addKitRequest(ResultSet rs, Map<String, List<KitRequestShipping>> kitRequests) throws SQLException {
@@ -559,33 +589,6 @@ public class KitRequestShipping extends KitRequest {
             wholeList.addAll(kitRequestList);
         }
         return wholeList;
-    }
-
-    private static Map<String, List<KitRequestShipping>> getKitRequests(@NonNull String realm, String target, String kitType,
-                                                                        boolean getAll) {
-        Map<String, List<KitRequestShipping>> kitRequests = new HashMap<>();
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = getPreparedStatement(conn, target, realm, kitType, getAll)) {
-                if (stmt != null) {
-                    try (ResultSet rs = stmt.executeQuery()) {
-                        while (rs.next()) {
-                            addKitRequest(rs, kitRequests);
-                        }
-                    }
-                } else {
-                    throw new RuntimeException("No prepareStatement was created " + target + " " + realm + " " + kitType);
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Error getting list of kitRequests for " + realm, results.resultException);
-        }
-        return kitRequests;
     }
 
     public static Map<String, List<KitRequestShipping>> getAllKitRequestsByRealm(@NonNull String realm, String target, String kitType,
@@ -881,6 +884,7 @@ public class KitRequestShipping extends KitRequest {
             kitRequestShipping.setExternalOrderNumber(externalOrderNumber);
             kitRequestShipping.setCreatedBy(createdBy);
             kitRequestShipping.setUploadReason(uploadReason);
+            kitRequestShipping.setDdpInstanceId(ddpInstance.getDdpInstanceIdAsInt());
 
             DDPInstanceDto ddpInstanceDto =
                     new DDPInstanceDao().getDDPInstanceByInstanceId(Integer.valueOf(ddpInstance.getDdpInstanceId())).orElseThrow();

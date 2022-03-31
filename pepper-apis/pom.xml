@@ -162,7 +162,13 @@
                 <groupId>org.zeroturnaround</groupId>
                 <artifactId>zt-exec</artifactId>
                 <version>1.10</version>
+            </dependency>
 
+            <!-- BigDecimal math operations -->
+            <dependency>
+                <groupId>ch.obermuhlner</groupId>
+                <artifactId>big-math</artifactId>
+                <version>2.3.0</version>
             </dependency>
 
             <!-- sendgrid for email sending -->

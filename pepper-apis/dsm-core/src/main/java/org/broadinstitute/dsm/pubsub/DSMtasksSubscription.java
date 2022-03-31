@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -37,64 +38,61 @@ import org.slf4j.LoggerFactory;
 
 public class DSMtasksSubscription {
 
+    private static final Logger logger = LoggerFactory.getLogger(DSMtasksSubscription.class);
     public static final String TASK_TYPE = "taskType";
     public static final String CLEAR_BEFORE_UPDATE = "clearBeforeUpdate";
     public static final String UPDATE_CUSTOM_WORKFLOW = "UPDATE_CUSTOM_WORKFLOW";
     public static final String ELASTIC_EXPORT = "ELASTIC_EXPORT";
     public static final String PARTICIPANT_REGISTERED = "PARTICIPANT_REGISTERED";
-    private static final Logger logger = LoggerFactory.getLogger(DSMtasksSubscription.class);
+    public static final int MAX_RETRY = 5;
+    private static Map<String, Integer> retryPerParticipant = new ConcurrentHashMap<>();
 
     public static void subscribeDSMtasks(String projectId, String subscriptionId) {
         // Instantiate an asynchronous message receiver.
-        MessageReceiver receiver =
-                (PubsubMessage message, AckReplyConsumer consumer) -> {
-                    // Handle incoming message, then ack the received message.
-                    logger.info("Got message with Id: " + message.getMessageId());
-                    Map<String, String> attributesMap = message.getAttributesMap();
-                    String taskType = attributesMap.get(TASK_TYPE);
-                    String data = message.getData() != null ? message.getData().toStringUtf8() : null;
+        MessageReceiver receiver = (PubsubMessage message, AckReplyConsumer consumer) -> {
+            // Handle incoming message, then ack the received message.
+            logger.info("Got message with Id: " + message.getMessageId());
+            Map<String, String> attributesMap = message.getAttributesMap();
+            String taskType = attributesMap.get(TASK_TYPE);
+            String data = message.getData() != null ? message.getData().toStringUtf8() : null;
 
-                    logger.info("Task type is: " + taskType);
+            logger.info("Task type is: " + taskType);
 
-                    if (StringUtils.isBlank(taskType)) {
-                        logger.warn("task type from pubsub was missing");
+            if (StringUtils.isBlank(taskType)) {
+                logger.warn("task type from pubsub was missing");
+                consumer.ack();
+            } else {
+                switch (taskType) {
+                    case UPDATE_CUSTOM_WORKFLOW:
                         consumer.ack();
-                    } else {
-                        switch (taskType) {
-                            case UPDATE_CUSTOM_WORKFLOW:
-                                consumer.ack();
-                                WorkflowStatusUpdate.updateCustomWorkflow(attributesMap, data);
-                                break;
-                            case ELASTIC_EXPORT:
-                                consumer.ack();
-                                ExportToES.ExportPayload exportPayload = new Gson().fromJson(data, ExportToES.ExportPayload.class);
-                                if (exportPayload.isMigration()) {
-                                    migrateToES(exportPayload);
-                                } else {
-                                    boolean clearBeforeUpdate = attributesMap.containsKey(CLEAR_BEFORE_UPDATE)
-                                            && Boolean.parseBoolean(attributesMap.get(CLEAR_BEFORE_UPDATE));
-                                    new ExportToES().exportObjectsToES(data, clearBeforeUpdate);
-                                }
-                                break;
-                            case PARTICIPANT_REGISTERED:
-                                generateStudyDefaultValues(consumer, attributesMap);
-                                break;
-                            default:
-                                logger.warn("Wrong task type for a message from pubsub");
-                                consumer.ack();
-                                break;
+                        WorkflowStatusUpdate.updateCustomWorkflow(attributesMap, data);
+                        break;
+                    case ELASTIC_EXPORT:
+                        consumer.ack();
+                        ExportToES.ExportPayload exportPayload = new Gson().fromJson(data, ExportToES.ExportPayload.class);
+                        if (exportPayload.isMigration()) {
+                            migrateToES(exportPayload);
+                        } else {
+                            boolean clearBeforeUpdate = attributesMap.containsKey(CLEAR_BEFORE_UPDATE) && Boolean.parseBoolean(
+                                    attributesMap.get(CLEAR_BEFORE_UPDATE));
+                            new ExportToES().exportObjectsToES(data, clearBeforeUpdate);
                         }
-                    }
-                };
-
+                        break;
+                    case PARTICIPANT_REGISTERED:
+                        generateStudyDefaultValues(consumer, attributesMap);
+                        break;
+                    default:
+                        logger.warn("Wrong task type for a message from pubsub");
+                        consumer.ack();
+                        break;
+                }
+            }
+        };
         Subscriber subscriber = null;
         ProjectSubscriptionName resultSubName = ProjectSubscriptionName.of(projectId, subscriptionId);
         ExecutorProvider resultsSubExecProvider = InstantiatingExecutorProvider.newBuilder().setExecutorThreadCount(1).build();
-        subscriber = Subscriber.newBuilder(resultSubName, receiver)
-                .setParallelPullCount(1)
-                .setExecutorProvider(resultsSubExecProvider)
-                .setMaxAckExtensionPeriod(org.threeten.bp.Duration.ofSeconds(120))
-                .build();
+        subscriber = Subscriber.newBuilder(resultSubName, receiver).setParallelPullCount(1).setExecutorProvider(resultsSubExecProvider)
+                .setMaxAckExtensionPeriod(org.threeten.bp.Duration.ofSeconds(120)).build();
         try {
             subscriber.startAsync().awaitRunning(1L, TimeUnit.MINUTES);
             logger.info("Started pubsub subscription receiver DSM tasks subscription");
@@ -105,20 +103,16 @@ public class DSMtasksSubscription {
 
     private static void migrateToES(ExportToES.ExportPayload exportPayload) {
         String study = exportPayload.getStudy();
-        Optional<DDPInstanceDto> maybeDdpInstanceByInstanceName =
-                new DDPInstanceDao().getDDPInstanceByInstanceName(study);
+        Optional<DDPInstanceDto> maybeDdpInstanceByInstanceName = new DDPInstanceDao().getDDPInstanceByInstanceName(study);
         maybeDdpInstanceByInstanceName.ifPresent(ddpInstanceDto -> {
             String index = ddpInstanceDto.getEsParticipantIndex();
+            logger.info("Starting migrating DSM data to ES for study: " + study + " with index: " + index);
             List<? extends Exportable> exportables = Arrays.asList(
                     //DynamicFieldsMappingMigrator should be first in the list to make sure that mapping will be exported for first
-                    new DynamicFieldsMappingMigrator(index, study),
-                    new MedicalRecordMigrator(index, study),
-                    new OncHistoryDetailsMigrator(index, study),
-                    new OncHistoryMigrator(index, study),
-                    new ParticipantDataMigrator(index, study),
-                    new ParticipantMigrator(index, study),
-                    new KitRequestShippingMigrator(index, study),
-                    new TissueMigrator(index, study));
+                    new DynamicFieldsMappingMigrator(index, study), new MedicalRecordMigrator(index, study),
+                    new OncHistoryDetailsMigrator(index, study), new OncHistoryMigrator(index, study),
+                    new ParticipantDataMigrator(index, study), new ParticipantMigrator(index, study),
+                    new KitRequestShippingMigrator(index, study), new TissueMigrator(index, study));
             exportables.forEach(Exportable::export);
         });
     }
@@ -131,15 +125,18 @@ public class DSMtasksSubscription {
             return;
         }
         ;
-        Arrays.stream(Study.values())
-                .filter(study -> study.toString().equals(studyGuid.toUpperCase()))
-                .findFirst()
+        Arrays.stream(Study.values()).filter(study -> study.toString().equals(studyGuid.toUpperCase())).findFirst()
                 .ifPresentOrElse(study -> {
-                    Defaultable defaultable = DefaultableMaker
-                            .makeDefaultable(study);
+                    Defaultable defaultable = DefaultableMaker.makeDefaultable(study);
                     boolean result = defaultable.generateDefaults(studyGuid, participantGuid);
                     if (!result) {
-                        consumer.nack();
+                        retryPerParticipant.merge(participantGuid, 1, Integer::sum);
+                        if (retryPerParticipant.get(participantGuid) == MAX_RETRY) {
+                            retryPerParticipant.put(participantGuid, 0);
+                            consumer.ack();
+                        } else {
+                            consumer.nack();
+                        }
                     } else {
                         consumer.ack();
                     }

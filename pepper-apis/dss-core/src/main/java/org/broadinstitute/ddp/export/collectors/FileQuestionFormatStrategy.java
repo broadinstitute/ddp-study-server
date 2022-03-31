@@ -3,11 +3,13 @@ package org.broadinstitute.ddp.export.collectors;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.elastic.MappingUtil;
 import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
 
 /**
  * Rule:
@@ -41,7 +43,8 @@ public class FileQuestionFormatStrategy implements ResponseFormatStrategy<FileQu
     @Override
     public Map<String, String> collect(FileQuestionDef question, FileAnswer answer) {
         Map<String, String> record = new HashMap<>();
-        String uploadGuid = answer.getValue() != null ? answer.getValue().getUploadGuid() : "";
+        String uploadGuid = answer.getValue() != null
+                ? answer.getValue().stream().map(FileInfo::getUploadGuid).collect(Collectors.joining(",")) : "";
         record.put(question.getStableId(), uploadGuid);
         return record;
     }

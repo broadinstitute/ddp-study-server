@@ -38,8 +38,6 @@ public class BSPKitDao implements Dao<BSPKitDto> {
                     + "  left join ddp_participant_exit ex on (request.ddp_participant_id = ex.ddp_participant_id and "
                     + "   request.ddp_instance_id = ex.ddp_instance_id)  where    kit.kit_label = ?";
 
-    private final String bsp = "BSP";
-
     Logger logger = LoggerFactory.getLogger(BSPKitDao.class);
 
     @Override
@@ -70,13 +68,13 @@ public class BSPKitDao implements Dao<BSPKitDto> {
                             numRows++;
                             dbVals.resultValue =
                                     new BSPKitDto(rs.getString(DBConstants.INSTANCE_NAME), rs.getString(DBConstants.BASE_URL),
-                                            rs.getString(DBConstants.BSP_COLLABORATOR_PARTICIPANT_ID),
-                                            rs.getString(DBConstants.BSP_COLLABORATOR_PARTICIPANT_ID),
+                                            rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID),
+                                            rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
                                             rs.getString(DBConstants.BSP_ORGANISM),
                                             rs.getString(DBConstants.BSP_COLLECTION),
                                             rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.BSP_MATERIAL_TYPE),
                                             rs.getString(DBConstants.BSP_RECEPTABLE_TYPE),
-                                            rs.getBoolean(DBConstants.HAS_ROLE), rs.getString(DBConstants.PARTICIPANT_EXIT),
+                                            rs.getBoolean(DBConstants.HAS_ROLE), rs.getString(DBConstants.DDP_PARTICIPANT_EXIT_ID),
                                             rs.getString(DBConstants.DSM_DEACTIVATED_DATE),
                                             rs.getString(DBConstants.NOTIFICATION_RECIPIENT),
                                             rs.getString("kt." + DBConstants.KIT_TYPE_NAME));
@@ -98,12 +96,12 @@ public class BSPKitDao implements Dao<BSPKitDto> {
         return Optional.ofNullable((BSPKitDto) results.resultValue);
     }
 
-    public void setKitReceivedAndTriggerDDP(String kitLabel, boolean triggerDDP, BSPKitDto bspKitDto) {
+    public void setKitReceivedAndTriggerDDP(String kitLabel, boolean triggerDDP, BSPKitDto bspKitDto, String receiver) {
         TransactionWrapper.inTransaction(conn -> {
             boolean firstTimeReceived = false;
             try (PreparedStatement stmt = conn.prepareStatement(sqlUpdateKitReceived)) {
                 stmt.setLong(1, System.currentTimeMillis());
-                stmt.setString(2, bsp);
+                stmt.setString(2, receiver);
                 stmt.setString(3, kitLabel);
                 int result = stmt.executeUpdate();
                 if (result > 1) { // 1 row or 0 row updated is perfect

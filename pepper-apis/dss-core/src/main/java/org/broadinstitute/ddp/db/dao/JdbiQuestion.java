@@ -19,6 +19,7 @@ import org.broadinstitute.ddp.db.dto.DateQuestionDto;
 import org.broadinstitute.ddp.db.dto.FileQuestionDto;
 import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
 import org.broadinstitute.ddp.db.dto.DecimalQuestionDto;
+import org.broadinstitute.ddp.db.dto.EquationQuestionDto;
 import org.broadinstitute.ddp.db.dto.PicklistQuestionDto;
 import org.broadinstitute.ddp.db.dto.MatrixQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
@@ -60,6 +61,13 @@ public interface JdbiQuestion extends SqlObject {
                 @Bind("revisionId") long revisionId, @Bind("activityId") long activityId,
                 @Bind("hideNumber") boolean hideNumber, @Bind("isDeprecated") boolean isDeprecated,
                 @Bind("isWriteOnce") boolean isWriteOnce);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryDtoByActivityIdAndQuestionStableId")
+    @RegisterConstructorMapper(QuestionDto.class)
+    Optional<QuestionDto> findDtoByActivityIdAndQuestionStableId(
+            @Bind("activityId") long activityId,
+            @Bind("questionStableId") String questionStableId);
 
     // study-builder
     @UseStringTemplateSqlLocator
@@ -170,6 +178,7 @@ public interface JdbiQuestion extends SqlObject {
     @RegisterConstructorMapper(TextQuestionDto.class)
     @RegisterConstructorMapper(ActivityInstanceSelectQuestionDto.class)
     @RegisterConstructorMapper(CompositeQuestionDto.class)
+    @RegisterConstructorMapper(EquationQuestionDto.class)
     @RegisterRowMapper(DatePicklistDefMapper.class)
     @UseRowReducer(QuestionDtoReducer.class)
     Stream<QuestionDto> findQuestionDtosByIds(
@@ -241,6 +250,9 @@ public interface JdbiQuestion extends SqlObject {
                     break;
                 case COMPOSITE:
                     questionDto = view.getRow(CompositeQuestionDto.class);
+                    break;
+                case EQUATION:
+                    questionDto = view.getRow(EquationQuestionDto.class);
                     break;
                 default:
                     throw new DaoException("Unhandled question type: " + type);

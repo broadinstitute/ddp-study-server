@@ -5,6 +5,7 @@ import static org.broadinstitute.ddp.model.activity.types.DateRenderMode.PICKLIS
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
@@ -12,6 +13,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.EquationQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
@@ -23,15 +25,15 @@ import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
 import org.broadinstitute.ddp.util.CollectionMiscUtil;
 
-/**
- * Creates {@link Question}
- */
+@Slf4j
 public class QuestionCreator {
 
     public Question createQuestion(AIBuilderContext ctx, QuestionDef questionDef) {
         if (canBeCreated(questionDef)) {
             QuestionCreatorHelper creatorHelper = ctx.getAIBuilderFactory().getQuestionCreatorHelper();
             Question question;
+
+            log.debug("Question definition: {}", questionDef);
             switch (questionDef.getQuestionType()) {
                 case DATE:
                     question = ((DateQuestionDef) questionDef).getRenderMode() == PICKLIST
@@ -53,6 +55,9 @@ public class QuestionCreator {
                     break;
                 case DECIMAL:
                     question = creatorHelper.createDecimalQuestion(ctx, (DecimalQuestionDef) questionDef);
+                    break;
+                case EQUATION:
+                    question = creatorHelper.createEquationQuestion(ctx, (EquationQuestionDef) questionDef);
                     break;
                 case PICKLIST:
                     question = creatorHelper.createPicklistQuestion(ctx, (PicklistQuestionDef) questionDef);

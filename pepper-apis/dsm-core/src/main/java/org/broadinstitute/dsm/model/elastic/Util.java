@@ -36,7 +36,7 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class Util {
 
-    public static final Map<String, BaseGenerator.PropertyInfo> TABLE_ALIAS_MAPPINGS =
+    public static final Map<String, BaseGenerator.PropertyInfo> TABLE_ALIAS_MAPPINGS = new HashMap<>(
             Map.of(DBConstants.DDP_MEDICAL_RECORD_ALIAS, new BaseGenerator.PropertyInfo(MedicalRecord.class, true),
                     DBConstants.DDP_TISSUE_ALIAS, new BaseGenerator.PropertyInfo(Tissue.class, true),
                     DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS, new BaseGenerator.PropertyInfo(OncHistoryDetail.class, true),
@@ -44,18 +44,18 @@ public class Util {
                     DBConstants.DDP_PARTICIPANT_RECORD_ALIAS, new BaseGenerator.PropertyInfo(Participant.class, false),
                     DBConstants.DDP_PARTICIPANT_ALIAS, new BaseGenerator.PropertyInfo(Participant.class, false),
                     DBConstants.DDP_ONC_HISTORY_ALIAS, new BaseGenerator.PropertyInfo(OncHistory.class, false),
-                    DBConstants.DDP_KIT_REQUEST_ALIAS, new BaseGenerator.PropertyInfo(KitRequestShipping.class, true));
+                    DBConstants.DDP_KIT_REQUEST_ALIAS, new BaseGenerator.PropertyInfo(KitRequestShipping.class, true)));
     public static final int FIRST_ELEMENT_INDEX = 0;
     public static final String UNDERSCORE_SEPARATOR = "_";
     public static final String COMMA_SEPARATOR = ",";
     public static final String DOC = "_doc";
     public static final String ESCAPE_CHARACTER = "\\";
     public static final String FORWARD_SLASH_SEPARATOR = "/";
+    private static final Pattern CAMEL_CASE_REGEX = Pattern.compile("(([a-z])+([A-z])+(\\.)*)*");
+    private static final Pattern UPPER_CASE_REGEX = Pattern.compile("(?=\\p{Upper})");
     public static final Gson GSON = new Gson();
     public static final DynamicFieldsParser DYNAMIC_FIELDS_PARSER = new DynamicFieldsParser();
     public static final ValueParser PARSER = new ValueParser();
-    private static final Pattern CAMEL_CASE_REGEX = Pattern.compile("(([a-z])+([A-z])+(\\.)*)*");
-    private static final Pattern UPPER_CASE_REGEX = Pattern.compile("(?=\\p{Upper})");
 
     static {
         DYNAMIC_FIELDS_PARSER.setParser(PARSER);

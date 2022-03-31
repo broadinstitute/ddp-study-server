@@ -101,6 +101,8 @@ public class RouteConstants {
                 PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID);
         public static final String USER_ACTIVITY_UPLOADS = fmt(BASE + "/user/%s/studies/%s/activities/%s/uploads",
                 PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID);
+        public static final String USER_QUESTION_OPTIONS = fmt(BASE + "/user/%s/studies/%s/activities/%s/questions/%s/options",
+                PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID, PathParam.QUESTION_STABLE_ID);
         public static final String USER_MEDICAL_PROVIDERS = fmt(
                 BASE + "/user/%s/studies/%s/medical-providers/%s",
                 PathParam.USER_GUID,
@@ -195,6 +197,7 @@ public class RouteConstants {
         public static final String MEDICAL_PROVIDER_GUID = ":medicalProviderGuid";
         public static final String INSTITUTION_TYPE = ":institutionType";
         public static final String INVITATION_ID = ":invitationId";
+        public static final String QUESTION_STABLE_ID = ":questionStableId";
     }
 
     public static final class QueryParam {

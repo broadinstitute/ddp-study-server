@@ -45,9 +45,11 @@ public class JavaHeapDumper {
         }
         try (FileInputStream localDumpFileStream = new FileInputStream(localDumpFile)) {
             String credentials = null;
-            String tmp = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS);
-            if (StringUtils.isNotBlank(tmp) && new File(tmp).exists()) {
-                credentials = tmp;
+            if (DSMConfig.hasConfigPath(ApplicationConfigConstants.GOOGLE_CREDENTIALS)) {
+                String tmp = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS);
+                if (StringUtils.isNotBlank(tmp) && new File(tmp).exists()) {
+                    credentials = tmp;
+                }
             }
             GoogleBucket.uploadFile(credentials, gcpName, bucketName, DEFAULT_BUCKET_PATH + "/" + fileName,
                     localDumpFileStream);

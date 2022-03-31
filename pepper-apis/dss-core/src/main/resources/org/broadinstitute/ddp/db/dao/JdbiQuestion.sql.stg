@@ -29,6 +29,13 @@ where qsc.umbrella_study_id = :studyId
   and rev.end_date is null
 >>
 
+queryDtoByActivityIdAndQuestionStableId() ::= <<
+<all_questions_select()>
+where q.study_activity_id = :activityId
+  and qsc.stable_id = :questionStableId
+  and rev.end_date is null
+>>
+
 queryLatestDtosByStudyIdAndQuestionStableIds(questionStableIds) ::= <<
 <all_questions_select()>
 where qsc.umbrella_study_id = :studyId
@@ -69,6 +76,9 @@ select qt.question_type_code as question_type,
        ) as placeholder_template_id,
 
        dcq.scale,
+
+       eq.expression,
+       eq.maximum_decimal_places,
 
        bq.true_template_id,
        bq.false_template_id,
@@ -112,6 +122,7 @@ select qt.question_type_code as question_type,
 
        mq.render_modal,
        mq.modal_template_id,
+       mq.modal_title_template_id,
 
        (select text_question_input_type_code from text_question_input_type
          where text_question_input_type_id = tq.input_type_id
@@ -142,6 +153,7 @@ select qt.question_type_code as question_type,
   left join date_question_year_picklist as dqyp on dqyp.date_question_id = dq.question_id
   left join numeric_question as nq on nq.question_id = q.question_id
   left join decimal_question as dcq on dcq.question_id = q.question_id
+  left join equation_question as eq on eq.question_id = q.question_id
   left join picklist_question as pq on pq.question_id = q.question_id
   left join matrix_question as mq on mq.question_id = q.question_id
   left join text_question as tq on tq.question_id = q.question_id
