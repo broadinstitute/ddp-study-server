@@ -117,7 +117,7 @@ public class Participant {
             primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
     @ColumnName (DBConstants.MINIMAL_MR)
-    private boolean minimalMr;
+    private Boolean minimalMr;
 
     @TableName (
             name = DBConstants.DDP_PARTICIPANT_RECORD,
@@ -125,7 +125,7 @@ public class Participant {
             primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
     @ColumnName (DBConstants.ABSTRACTION_READY)
-    private boolean abstractionReady;
+    private Boolean abstractionReady;
 
     @TableName (
             name = DBConstants.DDP_PARTICIPANT_RECORD,
@@ -155,7 +155,7 @@ public class Participant {
 
     public Participant(Long participantId, String ddpParticipantId, String assigneeIdMr, String assigneeIdTissue, String instanceName,
                        String created, String reviewed, String crSent, String crReceived, String notes,
-                       boolean minimalMr, boolean abstractionReady, String additionalValuesJson, Long exitDate) {
+                       Boolean minimalMr, Boolean abstractionReady, String additionalValuesJson, Long exitDate) {
         this.participantId = participantId;
         this.ddpParticipantId = ddpParticipantId;
         this.assigneeIdMr = assigneeIdMr;
@@ -236,5 +236,9 @@ public class Participant {
         }
         logger.info("Got " + participants.size() + " participants in DSM DB for " + realm);
         return participants;
+    }
+
+    public Boolean isMinimalMr() {
+        return minimalMr;
     }
 }

@@ -1,48 +1,29 @@
 package org.broadinstitute.ddp.json.medicalprovider;
 
 import com.google.gson.annotations.SerializedName;
-
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 
+@Value
+@AllArgsConstructor
 public class GetMedicalProviderResponse {
-
     @SerializedName("medicalProviderGuid")
-    private String medicalProviderGuid;
+    String medicalProviderGuid;
+    
     @SerializedName("physicianName")
-    private String physicianName;
+    String physicianName;
+    
     @SerializedName("institutionName")
-    private String institutionName;
+    String institutionName;
+    
     @SerializedName("city")
-    private String city;
+    String city;
+    
     @SerializedName("state")
-    private String state;
+    String state;
 
-    public GetMedicalProviderResponse(MedicalProviderDto dto) {
-        this.medicalProviderGuid = dto.getUserMedicalProviderGuid();
-        this.physicianName = dto.getPhysicianName();
-        this.institutionName = dto.getInstitutionName();
-        this.city = dto.getCity();
-        this.state = dto.getState();
+    public GetMedicalProviderResponse(final MedicalProviderDto dto) {
+        this(dto.getUserMedicalProviderGuid(), dto.getPhysicianName(), dto.getInstitutionName(), dto.getCity(), dto.getState());
     }
-
-    public String getMedicalProviderGuid() {
-        return medicalProviderGuid;
-    }
-
-    public String getPhysicianName() {
-        return physicianName;
-    }
-
-    public String getInstitutionName() {
-        return institutionName;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public String getState() {
-        return state;
-    }
-
 }
