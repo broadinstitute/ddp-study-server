@@ -429,6 +429,14 @@ public interface AnswerDao extends SqlObject {
             @Bind("studyId") long studyId,
             @Bind("questionStableId") String questionStableId);
 
+    @UseStringTemplateSqlLocator
+    @SqlQuery("findAnswerByUserIdLatestInstanceAndQuestionId")
+    @UseRowReducer(AnswerWithValueReducer.class)
+    Optional<Answer> findAnswerByLatestInstanceAndQuestionId(
+            @Bind("userId") long userId,
+            @Bind("studyId") long studyId,
+            @Bind("questionId") long questionId);
+
     //
     // reducers
     //
