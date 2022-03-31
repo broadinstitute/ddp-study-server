@@ -156,7 +156,7 @@ public class OsteoAboutChildV2 implements CustomTask {
         DBUtils.checkDelete(configPairs.size(), copyConfigurationSql.deleteCopyConfigPairs(configPairs));
         DBUtils.checkDelete(locationIds.size(), copyConfigurationSql.bulkDeleteCopyLocations(locationIds));
         log.info("Copy configs successfully deleted");
-        helper.updateActivityName(activityId, "About Your Child’s Cancer");
+        helper.updateActivityNameAndTitle(activityId, "About Your Child’s Cancer", "About Your Child’s Cancer");
     }
 
     private interface SqlHelper extends SqlObject {
@@ -178,11 +178,13 @@ public class OsteoAboutChildV2 implements CustomTask {
         @SqlUpdate("update form_section__block set form_section_id = :formSectionId where block_id = :blockId")
         void updateFormSectionBlock(@Bind("formSectionId") long formSectionId, @Bind("blockId") long blockId);
 
-        @SqlUpdate("update i18n_activity_detail set name = :value where study_activity_id = :studyActivityId")
-        int _updateActivityName(@Bind("studyActivityId") long studyActivityId, @Bind("value") String value);
+        @SqlUpdate("update i18n_activity_detail set name = :name, title = :title where study_activity_id = :studyActivityId")
+        int _updateActivityNameAndTitle(@Bind("studyActivityId") long studyActivityId,
+                                        @Bind("name") String name,
+                                        @Bind("title") String title);
 
-        default void updateActivityName(long studyActivityId, String value) {
-            int numUpdated = _updateActivityName(studyActivityId, value);
+        default void updateActivityNameAndTitle(long studyActivityId, String name, String title) {
+            int numUpdated = _updateActivityNameAndTitle(studyActivityId, name, title);
             if (numUpdated != 1) {
                 throw new DDPException("Expected to update 1 row for studyActivityId="
                         + studyActivityId + " but updated " + numUpdated);
