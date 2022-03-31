@@ -168,6 +168,8 @@ public class AnswerToAnswerCopier {
         } else if (type == QuestionType.DECIMAL) {
             DecimalDef value = ((DecimalAnswer) sourceAnswer).getValue();
             targetAnswer = new DecimalAnswer(null, targetQuestion.getStableId(), null, value);
+        } else if (type == QuestionType.EQUATION) {
+            throw new RuntimeException("The answer copying should be added after merging EQUATION-SINGLE-ANSWER branch");
         } else if (type == QuestionType.PICKLIST) {
             List<SelectedPicklistOption> value = ((PicklistAnswer) sourceAnswer).getValue();
             targetAnswer = new PicklistAnswer(null, targetQuestion.getStableId(), null, value);

@@ -1,15 +1,12 @@
 package org.broadinstitute.ddp.security;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.ConfigManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class EncryptionKey {
-
-    private static final Logger LOG = LoggerFactory.getLogger(EncryptionKey.class);
-
     private static String encryptionKey;
 
     static {
@@ -18,7 +15,7 @@ public class EncryptionKey {
             try {
                 encryptionKey = manager.getConfig().getConfig(ConfigFile.AUTH0).getString(ConfigFile.ENCRYPTION_SECRET);
             } catch (Exception e) {
-                LOG.error("Could not read encryption key", e);
+                log.error("Could not read encryption key", e);
             }
         } else {
             // Allow setting the key later, e.g. when used in CLI tools.

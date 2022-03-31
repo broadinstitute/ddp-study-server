@@ -8,6 +8,7 @@ import java.util.List;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.PdfDao;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -17,12 +18,9 @@ import org.broadinstitute.ddp.model.pdf.PdfDataSource;
 import org.broadinstitute.ddp.model.pdf.PdfDataSourceType;
 import org.broadinstitute.ddp.model.pdf.PdfVersion;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class BrainBackfillPdfVersions implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(BrainBackfillPdfVersions.class);
     private static final String DATA_FILE = "patches/backfill-pdf-versions.conf";
     private static final String GENERIC_TAG = "tag";
 
@@ -69,7 +67,7 @@ public class BrainBackfillPdfVersions implements CustomTask {
 
         PdfVersion version = versions.get(0);
         if (version.getVersionTag().equals(GENERIC_TAG)) {
-            LOG.info("Found consent pdf version with generic tag, turning it into v1...");
+            log.info("Found consent pdf version with generic tag, turning it into v1...");
             String reason = String.format("Create pdf configuration for study=%s with name=%s version=%s",
                     studyDto.getGuid(), info.getConfigName(), v1Tag);
             helper.rewritePdfVersionTag(version.getId(), v1Tag);
@@ -90,7 +88,7 @@ public class BrainBackfillPdfVersions implements CustomTask {
 
         PdfVersion releaseVersion = releaseVersions.get(0);
         if (releaseVersion.getVersionTag().equals(GENERIC_TAG)) {
-            LOG.info("Found release pdf version with generic tag, turning it into v1...");
+            log.info("Found release pdf version with generic tag, turning it into v1...");
             String reason = String.format("Create pdf configuration for study=%s with name=%s version=%s",
                     studyDto.getGuid(), releaseInfo.getConfigName(), v1Tag);
             helper.rewritePdfVersionTag(releaseVersion.getId(), v1Tag);
@@ -99,9 +97,9 @@ public class BrainBackfillPdfVersions implements CustomTask {
 
             if (!releaseVersion.hasDataSource(PdfDataSourceType.PARTICIPANT)) {
                 pdfDao.insertDataSource(releaseVersion.getId(), new PdfDataSource(PdfDataSourceType.PARTICIPANT));
-                LOG.info("Added participant data source to release pdf");
+                log.info("Added participant data source to release pdf");
             } else {
-                LOG.info("Release pdf already have participant data source");
+                log.info("Release pdf already have participant data source");
             }
 
             addActivityDataSource(handle, pdfDao, releaseInfo, releaseVersion, studyDto, releaseCode, v1Tag);

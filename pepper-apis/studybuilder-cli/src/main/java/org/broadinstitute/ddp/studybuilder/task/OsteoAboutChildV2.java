@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.CopyConfigurationSql;
@@ -23,8 +24,6 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.time.Instant;
@@ -33,9 +32,8 @@ import java.util.Set;
 /**
  * One-off task to add adhoc symptom message to TestBoston in deployed environments.
  */
+@Slf4j
 public class OsteoAboutChildV2 implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(OsteoAboutChildV2.class);
     private static final String STUDY_GUID = "CMI-OSTEO";
     private static final String ACTIVITY_CODE = "ABOUTCHILD";
     private static final String VERSION_TAG = "v2";
@@ -91,7 +89,7 @@ public class OsteoAboutChildV2 implements CustomTask {
         final long newFormSectionId = jdbiFormSection.insert(jdbiFormSection.generateUniqueCode(), null);
         jdbiFormActivityFormSection.insert(activityId, newFormSectionId, firstSection.getRevisionId(), sectionOrder);
 
-        LOG.info("New section successfully created with displayOrder={} and revision={}",
+        log.info("New section successfully created with displayOrder={} and revision={}",
                 sectionOrder,
                 firstSection.getRevisionId());
 
@@ -102,7 +100,7 @@ public class OsteoAboutChildV2 implements CustomTask {
 
         final long currFillingBlockId = helper.findQuestionBlockId(questionFillingDto.getId());
         helper.updateFormSectionBlock(newFormSectionId, currFillingBlockId);
-        LOG.info("Question ('WHO_IS_FILLING') successfully moved to new section={}", newFormSectionId);
+        log.info("Question ('WHO_IS_FILLING') successfully moved to new section={}", newFormSectionId);
 
         // Disable CHILD_HOW_HEAR
         QuestionDto questionHowHereDto =
@@ -114,7 +112,7 @@ public class OsteoAboutChildV2 implements CustomTask {
         final long currHowHereBlockId = helper.findQuestionBlockId(questionHowHereDto.getId());
         questionDao.disableTextQuestion(questionHowHereDto.getId(), meta);
         helper.updateFormSectionBlockRevision(currHowHereBlockId, terminatedRevId);
-        LOG.info("Question ('CHILD_HOW_HEAR') successfully disabled");
+        log.info("Question ('CHILD_HOW_HEAR') successfully disabled");
 
         // Disable CHILD_EXPERIENCE
         QuestionDto questionExperienceDto =
@@ -124,7 +122,7 @@ public class OsteoAboutChildV2 implements CustomTask {
         final long currExperienceBlockId = helper.findQuestionBlockId(questionExperienceDto.getId());
         questionDao.disableTextQuestion(questionExperienceDto.getId(), meta);
         helper.updateFormSectionBlockRevision(currExperienceBlockId, terminatedRevId);
-        LOG.info("Question ('CHILD_EXPERIENCE') successfully disabled");
+        log.info("Question ('CHILD_EXPERIENCE') successfully disabled");
 
         // Disable CHILD_RACE
         QuestionDto questionRaceDto =
@@ -134,7 +132,7 @@ public class OsteoAboutChildV2 implements CustomTask {
         final long currRaceBlockId = helper.findQuestionBlockId(questionRaceDto.getId());
         questionDao.disablePicklistQuestion(questionRaceDto.getId(), meta);
         helper.updateFormSectionBlockRevision(currRaceBlockId, terminatedRevId);
-        LOG.info("Question ('CHILD_RACE') successfully disabled");
+        log.info("Question ('CHILD_RACE') successfully disabled");
 
         // Disable CHILD_HISPANIC
         QuestionDto questionHispanicDto =
@@ -144,7 +142,7 @@ public class OsteoAboutChildV2 implements CustomTask {
         final long currHispanicBlockId = helper.findQuestionBlockId(questionHispanicDto.getId());
         questionDao.disablePicklistQuestion(questionHispanicDto.getId(), meta);
         helper.updateFormSectionBlockRevision(currHispanicBlockId, terminatedRevId);
-        LOG.info("Question ('CHILD_HISPANIC') successfully disabled");
+        log.info("Question ('CHILD_HISPANIC') successfully disabled");
 
         // Delete copy configs
         Set<Long> locationIds = helper.findCopyConfigsByQuestionSid(Set.of(
@@ -157,7 +155,8 @@ public class OsteoAboutChildV2 implements CustomTask {
 
         DBUtils.checkDelete(configPairs.size(), copyConfigurationSql.deleteCopyConfigPairs(configPairs));
         DBUtils.checkDelete(locationIds.size(), copyConfigurationSql.bulkDeleteCopyLocations(locationIds));
-        LOG.info("Copy configs successfully deleted");
+        log.info("Copy configs successfully deleted");
+        helper.updateActivityName(activityId, "About Your Child’s Cancer");
     }
 
     private interface SqlHelper extends SqlObject {
@@ -178,5 +177,16 @@ public class OsteoAboutChildV2 implements CustomTask {
 
         @SqlUpdate("update form_section__block set form_section_id = :formSectionId where block_id = :blockId")
         void updateFormSectionBlock(@Bind("formSectionId") long formSectionId, @Bind("blockId") long blockId);
+
+        @SqlUpdate("update i18n_activity_detail set name = :value where study_activity_id = :studyActivityId")
+        int _updateActivityName(@Bind("studyActivityId") long studyActivityId, @Bind("value") String value);
+
+        default void updateActivityName(long studyActivityId, String value) {
+            int numUpdated = _updateActivityName(studyActivityId, value);
+            if (numUpdated != 1) {
+                throw new DDPException("Expected to update 1 row for studyActivityId="
+                        + studyActivityId + " but updated " + numUpdated);
+            }
+        }
     }
 }
