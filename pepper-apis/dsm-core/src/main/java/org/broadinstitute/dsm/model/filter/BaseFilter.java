@@ -13,6 +13,7 @@ import org.broadinstitute.dsm.model.elastic.sort.SortBy;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
+import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import spark.QueryParamsMap;
 
@@ -69,8 +70,8 @@ public class BaseFilter {
         } else if (savedFilters != null) {
             filters = savedFilters;
         }
-        this.from = NumberUtils.toInt(queryParamsMap.get(LIST_RANGE_FROM).value(), 0);
-        this.to = NumberUtils.toInt(queryParamsMap.get(LIST_RANGE_TO).value(), 10000);
+        this.from = NumberUtils.toInt(queryParamsMap.get(LIST_RANGE_FROM).value(), ElasticSearchUtil.DEFAULT_FROM);
+        this.to = NumberUtils.toInt(queryParamsMap.get(LIST_RANGE_TO).value(), ElasticSearchUtil.MAX_RESULT_SIZE);
 
         if (queryParamsMap.hasKey(SortBy.SORT_BY)) {
             this.sortBy = ObjectMapperSingleton.readValue(queryParamsMap.get(SortBy.SORT_BY).value(), new TypeReference<SortBy>() {
