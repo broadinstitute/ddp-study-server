@@ -26,12 +26,8 @@ import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionD
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class TestBostonAddNoSymptionsOption implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(BrainPrequalV2.class);
     private static final String DATA_FILE = "patches/adhoc-no-symptom.conf";
 
     private Path cfgPath;

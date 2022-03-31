@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
@@ -23,15 +24,12 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * One-off task to find participants that should be `completed` and also queue up events for ones that's missing one.
  */
+@Slf4j
 public class TestBostonBackfillCompleted implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TestBostonBackfillCompleted.class);
     private static final String STUDY_GUID = "testboston";
 
     private Path cfgPath;
@@ -73,11 +71,11 @@ public class TestBostonBackfillCompleted implements CustomTask {
         long delayMillis = event.getPostDelaySeconds() * 1000L; // should be 180 days
         long nowMillis = Instant.now().toEpochMilli();
 
-        LOG.info("Starting backfill with eventConfigId={}, delayMillis={}, nowMillis={}",
+        log.info("Starting backfill with eventConfigId={}, delayMillis={}, nowMillis={}",
                 event.getEventConfigurationId(), delayMillis, nowMillis);
 
         List<Candidate> candidates = helper.findNotCompletedOrNoQueuedEvent(studyDto.getId(), event.getEventConfigurationId());
-        LOG.info("Found {} participants that are eligible for COMPLETED or does not have a queued event for it yet", candidates.size());
+        log.info("Found {} participants that are eligible for COMPLETED or does not have a queued event for it yet", candidates.size());
 
         List<Candidate> eligible = new ArrayList<>();
         List<Candidate> needQueuing = new ArrayList<>();
@@ -90,13 +88,13 @@ public class TestBostonBackfillCompleted implements CustomTask {
             }
         }
 
-        LOG.info("Number of eligible participants: {}", eligible.size());
-        LOG.info("Number of participants that need a queued event: {}", needQueuing.size());
+        log.info("Number of eligible participants: {}", eligible.size());
+        log.info("Number of participants that need a queued event: {}", needQueuing.size());
         System.out.print("Press enter to continue...");
         System.out.flush();
         new Scanner(System.in).nextLine();
 
-        LOG.info("Queuing future events now...");
+        log.info("Queuing future events now...");
         var queueDao = handle.attach(QueuedEventDao.class);
         for (var candidate : needQueuing) {
             long millisWhenCompletedShouldHappen = candidate.firstEnrolledAtMillis + delayMillis;
@@ -107,11 +105,11 @@ public class TestBostonBackfillCompleted implements CustomTask {
             int delaySecondsLeft = (int) (millisLeft / 1000);
             long queuedId = queueDao.addToQueue(event.getEventConfigurationId(),
                     candidate.userId, candidate.userId, delaySecondsLeft);
-            LOG.info("Queued status change event for participant {} with queued_event_id={} after delay_seconds={}",
+            log.info("Queued status change event for participant {} with queued_event_id={} after delay_seconds={}",
                     candidate.userId, queuedId, delaySecondsLeft);
         }
 
-        LOG.info("Handling eligible participants now...");
+        log.info("Handling eligible participants now...");
         int batchSize = 100;
         int bufferSecs = 5 * 60; // 5 mins
         int delaySecsToUse = 0;
@@ -121,10 +119,10 @@ public class TestBostonBackfillCompleted implements CustomTask {
             for (var candidate : batch) {
                 queueDao.addToQueue(event.getEventConfigurationId(), candidate.userId, candidate.userId, delaySecsToUse);
             }
-            LOG.info("Prepared triggering of event for batch of size={} and delay_seconds={}", batch.size(), delaySecsToUse);
+            log.info("Prepared triggering of event for batch of size={} and delay_seconds={}", batch.size(), delaySecsToUse);
         }
 
-        LOG.info("Finished setting backfill");
+        log.info("Finished setting backfill");
     }
 
     private interface SqlHelper extends SqlObject {
