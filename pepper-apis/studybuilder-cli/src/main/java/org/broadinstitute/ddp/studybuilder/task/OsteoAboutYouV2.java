@@ -169,6 +169,7 @@ public class OsteoAboutYouV2 implements CustomTask {
         DBUtils.checkDelete(configPairs.size(), copyConfigurationSql.deleteCopyConfigPairs(configPairs));
         DBUtils.checkDelete(locationIds.size(), copyConfigurationSql.bulkDeleteCopyLocations(locationIds));
         LOG.info("Copy configs successfully deleted");
+        helper.updateActivityName(activityId, "About Your Cancer");
     }
 
     private interface SqlHelper extends SqlObject {
@@ -186,5 +187,16 @@ public class OsteoAboutYouV2 implements CustomTask {
 
         @SqlUpdate("update form_section__block set revision_id = :revisionId where block_id = :blockId")
         void updateFormSectionBlockRevision(@Bind("blockId") long blockId, @Bind("revisionId") long revisionId);
+
+        @SqlUpdate("update i18n_activity_detail set name = :value where study_activity_id = :studyActivityId")
+        int _updateActivityName(@Bind("studyActivityId") long studyActivityId, @Bind("value") String value);
+
+        default void updateActivityName(long studyActivityId, String value) {
+            int numUpdated = _updateActivityName(studyActivityId, value);
+            if (numUpdated != 1) {
+                throw new DDPException("Expected to update 1 row for studyActivityId="
+                        + studyActivityId + " but updated " + numUpdated);
+            }
+        }
     }
 }
