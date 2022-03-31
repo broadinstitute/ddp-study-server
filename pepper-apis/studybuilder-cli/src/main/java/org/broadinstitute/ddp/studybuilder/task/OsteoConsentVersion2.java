@@ -40,8 +40,6 @@ import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -295,7 +293,7 @@ public class OsteoConsentVersion2 implements CustomTask {
 
         updateAdultVariables(handle, meta, version2, consentAssentDataCfg);
         updateAdultTemplates(handle, meta, version2, consentAssentDataCfg);
-        addAdultNestedBlocks(activityId, handle, meta,"CONSENT_ASSENT", version2, consentAssentDataCfg);
+        addAdultNestedBlocks(activityId, handle, meta, "CONSENT_ASSENT", version2, consentAssentDataCfg);
         addAdultBlocks(activityId, handle, "CONSENT_ASSENT", meta, version2, consentAssentDataCfg);
         reorderNestedBlock(handle, activityCode, version2, consentAssentDataCfg);
     }
@@ -306,7 +304,7 @@ public class OsteoConsentVersion2 implements CustomTask {
 
         updateAdultVariables(handle, meta, version2, parentalConsentDataCfg);
         updateAdultTemplates(handle, meta, version2, parentalConsentDataCfg);
-        addAdultNestedBlocks(activityId, handle, meta,"PARENTAL_CONSENT", version2, parentalConsentDataCfg);
+        addAdultNestedBlocks(activityId, handle, meta, "PARENTAL_CONSENT", version2, parentalConsentDataCfg);
         addAdultBlocks(activityId, handle, "PARENTAL_CONSENT", meta, version2, parentalConsentDataCfg);
         reorderNestedBlock(handle, activityCode, version2, parentalConsentDataCfg);
     }
@@ -317,7 +315,7 @@ public class OsteoConsentVersion2 implements CustomTask {
 
         updateAdultVariables(handle, meta, version2, selfConsentDataCfg);
         updateAdultTemplates(handle, meta, version2, selfConsentDataCfg);
-        addAdultNestedBlocks(activityId, handle, meta,"CONSENT", version2, selfConsentDataCfg);
+        addAdultNestedBlocks(activityId, handle, meta, "CONSENT", version2, selfConsentDataCfg);
         addAdultBlocks(activityId, handle, "CONSENT", meta, version2, selfConsentDataCfg);
         reorderNestedBlock(handle, activityCode, version2, selfConsentDataCfg);
     }
@@ -457,7 +455,7 @@ public class OsteoConsentVersion2 implements CustomTask {
     void insertNestedBlock(Handle handle, long activityId, long parentBlockId, int position,
                             FormBlockDef nested, long revisionId) {
         JdbiBlockNesting jdbiBlockNesting = handle.attach(JdbiBlockNesting.class);
-        int nestedBlockOrder = position*DISPLAY_ORDER_GAP;
+        int nestedBlockOrder = position * DISPLAY_ORDER_GAP;
 
         if (nested.getBlockType().isContainerBlock()) {
             throw new IllegalStateException("Nesting container blocks is not allowed");
@@ -465,7 +463,7 @@ public class OsteoConsentVersion2 implements CustomTask {
 
         handle.attach(SectionBlockDao.class).insertBlockByType(activityId, nested, revisionId);
         jdbiBlockNesting.insert(parentBlockId, nested.getBlockId(), nestedBlockOrder, revisionId);
-        LOG.info("Inserted nested block id {} for parent block id {}", nested.getBlockId(), parentBlockId);
+        log.info("Inserted nested block id {} for parent block id {}", nested.getBlockId(), parentBlockId);
     }
 
     private void reorderNestedBlock(Handle handle, String activityCode,
