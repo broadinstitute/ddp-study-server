@@ -10,7 +10,7 @@ public class DateSplitterTest {
     public void split() {
 
         String filter = "DATE(FROM_UNIXTIME(k.scan_date/1000))  = DATE(FROM_UNIXTIME(1640563200))";
-        SplitterStrategy splitter = Operator.DATE.getStrategy();
+        SplitterStrategy splitter = Operator.DATE.getSplitterStrategy();
         splitter.setFilter(filter);
 
         Assert.assertEquals("1640563200", splitter.getValue()[0]);

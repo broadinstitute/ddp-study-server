@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
@@ -23,8 +24,6 @@ import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
 import org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingData.TranslationData;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**
@@ -32,10 +31,8 @@ import org.slf4j.LoggerFactory;
  * Variables/translations to be added to templates where variables are not defined.
  * NOTE: The variables will be added only if feature 'saveTranslationsToDbJson' is disabled.
  */
+@Slf4j
 public class TranslationsEnricher {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TranslationsEnricher.class);
-
     /**
      * Max number of variables in a template which defined in activity definition in config files.
      * The thing is that variable value in such template should be moved to translations
@@ -176,7 +173,7 @@ public class TranslationsEnricher {
                 String translationValue = getTranslationForLang(langCde, templateVariable, allTranslations);
                 if (translationValue != null) {
                     addedTranslations.add(new Translation(langCde, translationValue));
-                    LOG.debug("Added translation: langCde={}, key={}, value={}", langCde, templateVariable, translationValue);
+                    log.debug("Added translation: langCde={}, key={}, value={}", langCde, templateVariable, translationValue);
                 } else {
                     throw new RuntimeException(format("Translation not found: langCde=%s, key=%s", langCde, templateVariable));
                 }

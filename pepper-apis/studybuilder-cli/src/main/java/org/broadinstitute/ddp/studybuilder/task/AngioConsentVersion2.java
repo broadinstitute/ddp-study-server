@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.opencsv.CSVWriter;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
@@ -60,17 +61,13 @@ import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Execution of this class will help change Angio's Consent to version 2, and performs data replacements of related activity instances.
  * Note: This class hooks into the "custom task" functionality of study-builder and should not be deleted unless no longer needed.
  */
+@Slf4j
 public class AngioConsentVersion2 implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AngioConsentVersion2.class);
-
     private static final String S1_PART_DETAILS = "Participation requires little effort."
             + " With your permission, we may ask that you send a saliva sample to us in a pre-stamped package that"
             + " we will provide. We may also ask for your medical records. If so, we will take care of obtaining"
@@ -424,16 +421,16 @@ public class AngioConsentVersion2 implements CustomTask {
 
         long now = Instant.parse(V2_DEPLOY_TS).toEpochMilli();
 
-        LOG.info("Changing version of {} to {} with timestamp={}", ACT_CONSENT, TAG_V2, now);
+        log.info("Changing version of {} to {} with timestamp={}", ACT_CONSENT, TAG_V2, now);
         revisionConsent(KEY_CONSENT, handle, adminUser.getUserId(), studyDto, ACT_CONSENT, TAG_V2, now);
 
-        LOG.info("Changing version of {} to {} with timestamp={}", ACT_FOLLOWUP, TAG_V2, now);
+        log.info("Changing version of {} to {} with timestamp={}", ACT_FOLLOWUP, TAG_V2, now);
         revisionConsent(KEY_FOLLOWUP, handle, adminUser.getUserId(), studyDto, ACT_FOLLOWUP, TAG_V2, now);
 
-        LOG.info("Looking for replaceable activity instances for {}", ACT_CONSENT);
+        log.info("Looking for replaceable activity instances for {}", ACT_CONSENT);
         replaceActivityData(KEY_CONSENT, handle, adminUser, studyDto, ACT_CONSENT, now);
 
-        LOG.info("Looking for replaceable activity instances for {}", ACT_FOLLOWUP);
+        log.info("Looking for replaceable activity instances for {}", ACT_FOLLOWUP);
         replaceActivityData(KEY_FOLLOWUP, handle, adminUser, studyDto, ACT_FOLLOWUP, now);
     }
 
@@ -513,7 +510,7 @@ public class AngioConsentVersion2 implements CustomTask {
         long newBlockContentId = jdbiBlockContent.insert(contentBlock.getBlockId(), newTemplateId,
                 contentBlock.getTitleTemplateId(), versionDto.getRevId());
 
-        LOG.info("Created block_content with id={}, blockId={}, bodyTemplateId={} for bodyTemplateText={}",
+        log.info("Created block_content with id={}, blockId={}, bodyTemplateId={} for bodyTemplateText={}",
                 newBlockContentId, contentBlock.getBlockId(), newTemplateId, bodyTemplateText);
     }
 
@@ -539,7 +536,7 @@ public class AngioConsentVersion2 implements CustomTask {
                 settings.getIntroductionSectionId(), settings.getClosingSectionId(), versionDto.getRevId(),
                 settings.getReadonlyHintTemplateId(), lastUpdated, lastUpdatedTemplateId, false, false);
 
-        LOG.info("Created new form activity setting with id={}, lastUpdatedTemplateText='{}', lastUpdated={}",
+        log.info("Created new form activity setting with id={}, lastUpdatedTemplateText='{}', lastUpdated={}",
                 newSettingId, lastUpdatedTemplate.getTemplateText(), lastUpdated);
     }
 
@@ -551,7 +548,7 @@ public class AngioConsentVersion2 implements CustomTask {
         List<ActivityInstanceDto> instances = helper.findReplaceableInstancesForEligibleUsers(activityId, timestamp)
                 .peek(instanceDto -> userIds.add(instanceDto.getParticipantId()))
                 .collect(Collectors.toList());
-        LOG.info("Found {} incomplete activity instances to replace", instances.size());
+        log.info("Found {} incomplete activity instances to replace", instances.size());
         if (instances.isEmpty()) {
             return;
         }
@@ -597,7 +594,7 @@ public class AngioConsentVersion2 implements CustomTask {
 
             String email = emailsMap.get(userDto.getAuth0UserId());
             if (email == null) {
-                LOG.warn("Email not available for user with guid={}", userDto.getUserGuid());
+                log.warn("Email not available for user with guid={}", userDto.getUserGuid());
             }
 
             String instanceUpdatedAt = "";
@@ -608,10 +605,10 @@ public class AngioConsentVersion2 implements CustomTask {
                         .orElse("");
             }
 
-            LOG.info("Working on activity instance for user {}:\n{}", userDto.getUserGuid(), gsonPretty.toJson(instance));
+            log.info("Working on activity instance for user {}:\n{}", userDto.getUserGuid(), gsonPretty.toJson(instance));
 
             List<Answer> answers = helper.findAnswersForInstance(instance.getId());
-            LOG.info("Found {} answers:\n{}", answers.size(), gsonPretty.toJson(answers));
+            log.info("Found {} answers:\n{}", answers.size(), gsonPretty.toJson(answers));
             checkAnswers(activityCode, answers);
 
             // Cleanup and "reset" the activity instance by deleting answers and statuses.
@@ -648,7 +645,7 @@ public class AngioConsentVersion2 implements CustomTask {
         String filename = String.format("angio_%s_v2_data_replacement_%s.csv", key, fmt.format(Instant.ofEpochMilli(timestamp)));
         saveToFile(filename, headers, rows);
 
-        LOG.info("Replacement results written to file {}", filename);
+        log.info("Replacement results written to file {}", filename);
     }
 
     private void checkAnswers(String activityCode, List<Answer> answers) {
