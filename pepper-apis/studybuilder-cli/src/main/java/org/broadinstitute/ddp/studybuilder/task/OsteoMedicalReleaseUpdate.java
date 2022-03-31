@@ -3,13 +3,9 @@ package org.broadinstitute.ddp.studybuilder.task;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.*;
-import org.broadinstitute.ddp.db.dto.ActivityDto;
-import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
-import org.broadinstitute.ddp.db.dto.BlockContentDto;
-import org.broadinstitute.ddp.db.dto.RevisionDto;
-import org.broadinstitute.ddp.db.dto.StudyDto;
-import org.broadinstitute.ddp.db.dto.UserDto;
+import org.broadinstitute.ddp.db.dto.*;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
@@ -29,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.*;
 
 public class OsteoMedicalReleaseUpdate implements CustomTask {
 
@@ -102,11 +99,11 @@ public class OsteoMedicalReleaseUpdate implements CustomTask {
 
         updateIntroduction(handle, meta, version2);
 
-        updateClosing(handle, meta, version2, studyDto, adminUser, helper);
+        updateClosing(handle, meta, version2, helper);
 
         updateSections(handle, meta, version2);
 
-        removeSections(handle, meta, version2);
+        removeBlocksFromSection(handle, meta);
     }
 
     private void updateTitleAndName(StudyDto studyDto, JdbiActivity jdbiActivity,
@@ -172,24 +169,21 @@ public class OsteoMedicalReleaseUpdate implements CustomTask {
                 newBlockContentId, contentBlock.getBlockId(), newBodyTemplateId, contentBlockDef.getBodyTemplate().getTemplateText());
     }
 
-    private void updateClosing(Handle handle, RevisionMetadata meta, ActivityVersionDto version2,
-                               StudyDto studyDto, UserDto adminUser, SqlHelper helper) {
+    private void updateClosing(Handle handle, RevisionMetadata meta,
+                               ActivityVersionDto version2, SqlHelper helper) {
         var config = minorCfg.getConfig("closing").getConfig("blocks")
                 .getConfigList("new");
 
         int blockOrder = 30;
         for (Config cfg : config) {
-            insertClosingBlocks(handle, meta, version2, cfg, blockOrder, studyDto, adminUser, helper);
+            insertClosingBlocks(handle, meta, version2, cfg, blockOrder, helper);
             blockOrder += 10;
         }
     }
 
     private void insertClosingBlocks(Handle handle, RevisionMetadata meta, ActivityVersionDto version2,
-                                     Config config, int order, StudyDto studyDto, UserDto adminUser,
-                                     SqlHelper helper) {
+                                     Config config, int order, SqlHelper helper) {
         FormBlockDef formBlockDef = gson.fromJson(ConfigUtil.toJson(config), FormBlockDef.class);
-        ActivityBuilder activityBuilder = new ActivityBuilder(cfgPath.getParent(), studyCfg, varsCfg, studyDto, adminUser.getUserId());
-        Config cfg = activityBuilder.readDefinitionConfig(MEDICAL_RELEASE_MINOR_V1);
 
         long templateId = helper.selectTemplateId("$osteo_release_child_agree");
         long blockId = helper.selectBlockId(templateId);
@@ -225,7 +219,7 @@ public class OsteoMedicalReleaseUpdate implements CustomTask {
 
         var templateDao = handle.attach(TemplateDao.class);
 
-        var componentId = helper.selectComponentId(oldAddButtonTemplateTextId, oldTitleTemplateTextId, oldSubtitleTemplateTextId);
+        var componentId = helper.selectComponentId(oldTitleTemplateTextId);
 
         JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
         long newRevId = jdbiRevision.copyAndTerminate(versionDto.getRevId(), meta);
@@ -235,34 +229,63 @@ public class OsteoMedicalReleaseUpdate implements CustomTask {
         templateDao.disableTemplate(oldTitleTemplateTextId, meta);
 
         var blockId = helper.selectBlockIdFromBlockComponent(componentId);
+
+        var sectionBlock = handle.attach(SectionBlockDao.class);
+
+        //        var contentBlockDao = handle.attach(ContentBlockDao.class);
+        //        contentBlockDao.disableContentBlock(blockId, meta);
+
         var componentDao = handle.attach(ComponentDao.class);
 
         componentDao.insertComponentDef(blockId, physicianComponentBlockDef, newRevId);
     }
 
-    private void removeSections(Handle handle, RevisionMetadata meta, ActivityVersionDto version2) {
+    private void removeBlocksFromSection(Handle handle, RevisionMetadata meta) {
         var config = minorCfg.getConfig("sections").getConfig("0").getConfig("blocks")
                 .getConfigList("removed");
         for (Config cfg : config) {
-            removeContentBlockSection(handle, meta, version2, cfg);
+            removeContentFromBlockSection(handle, meta, cfg);
         }
 
     }
 
 
-    private void removeContentBlockSection(Handle handle, RevisionMetadata meta, ActivityVersionDto versionDto, Config config) {
-        var templateText = config.getString("titleTemplateText");
+    private void removeContentFromBlockSection(Handle handle, RevisionMetadata meta, Config config) {
+        var titleTemplateText = config.getString("titleTemplateText");
 
         var helper = handle.attach(SqlHelper.class);
 
-        var templateTextId = helper.selectTemplateId(templateText);
 
-        var templateDao = handle.attach(TemplateDao.class);
+        var titleTemplateTextId = helper.selectTemplateId(titleTemplateText);
 
+        long componentId;
+
+        if (config.getString("type").equals("default")) {
+
+            componentId = helper.selectComponentId(titleTemplateTextId);
+        } else {
+            componentId = helper.selectComponentIdFromMailingAddress(titleTemplateTextId);
+        }
+
+        var blockId = helper.selectBlockIdFromBlockComponent(componentId);
+
+        disableTemplate(handle, componentId, meta);
+    }
+
+    private void disableTemplate(Handle handle, long componentId, RevisionMetadata meta) {
+        JdbiComponent jdbiComponent = handle.attach(JdbiComponent.class);
         JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
-        jdbiRevision.copyAndTerminate(versionDto.getRevId(), meta);
+        TemplateDao templateDao = handle.attach(TemplateDao.class);
 
-        templateDao.disableTemplate(templateTextId, meta);
+        ComponentDto componentDto = jdbiComponent.findComponentDtosByIds(List.of(componentId)).findFirst()
+                .orElseThrow(() -> new NoSuchElementException("Cannot find active content block with id " + componentId));
+
+        long oldRevId = componentDto.getRevisionId();
+
+        jdbiRevision.tryDeleteOrphanedRevision(oldRevId);
+        for (long id : componentDto.getTemplateIds()) {
+            templateDao.disableTemplate(id, meta);
+        }
     }
 
 
@@ -287,15 +310,24 @@ public class OsteoMedicalReleaseUpdate implements CustomTask {
         long selectSectionId(@Bind("blockId") long blockId);
 
         @SqlQuery("select institution_physician_component_id from institution_physician_component "
-                + "where add_button_template_id = :addButtonTemplateId and title_template_id = :titleTemplateId "
-                + "and subtitle_template_id = :subtitleTemplateId")
-        long selectComponentId(@Bind("addButtonTemplateId") long addButtonTemplateId,
-                               @Bind("titleTemplateId") long titleTemplateId,
-                               @Bind("subtitleTemplateId") long subtitleTemplateId);
+                + "where title_template_id = :titleTemplateId ")
+        long selectComponentId(@Bind("titleTemplateId") long titleTemplateId);
+
+        @SqlQuery("select component_id from mailing_address_component "
+                + "where title_template_id = :titleTemplateId ")
+        long selectComponentIdFromMailingAddress(@Bind("titleTemplateId") long titleTemplateId);
 
         @SqlQuery("select block_id from block_component "
                 + "where component_id = :componentId")
         long selectBlockIdFromBlockComponent(@Bind("componentId") long componentId);
+
+        @SqlQuery("select revision_id from component "
+                + "where component_id = :componentId")
+        long selectRevisionIdFromComponent(@Bind("componentId") long componentId);
+
+        @SqlUpdate("update component set revision_id = :revisionId where component_id = :componentId")
+        int updateRevisionIdById(@Bind("componentId") long componentId,
+                                 @Bind("revisionId") long revisionId);
 
     }
 }
