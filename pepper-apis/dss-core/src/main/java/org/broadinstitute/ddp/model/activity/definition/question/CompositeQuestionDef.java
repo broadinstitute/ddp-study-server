@@ -81,6 +81,12 @@ public final class CompositeQuestionDef extends QuestionDef {
         return unwrapOnExport && !allowMultiple;
     }
 
+    public boolean isAcceptable() {
+        return children.stream()
+                .map(QuestionDef::getQuestionType)
+                .allMatch(QuestionType::isCompositional);
+    }
+
     public static final class Builder extends AbstractQuestionBuilder<Builder> {
 
         private boolean allowMultiple = false;

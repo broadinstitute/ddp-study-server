@@ -101,8 +101,7 @@ public class TestUtil {
             }
         } catch (IOException e) {
             logger.error("Failed to generate PDF " + file + " at directory " + folder, e);
-        }
-        finally {
+        } finally {
             if (inputStream != null) {
                 try {
                     inputStream.close();

@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,8 +39,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
 
-import static java.util.concurrent.TimeUnit.MINUTES;
-
 public class JWTRouteFilterTest {
     private static final Logger logger = LoggerFactory.getLogger(JWTRouteFilterTest.class);
     public static final long THIRTY_MIN_IN_SECONDS = 30 * 60 * 60;
@@ -53,13 +53,16 @@ public class JWTRouteFilterTest {
     public static long getCurrentUnixUTCTime() {
         return System.currentTimeMillis() / 1000L;
     }
+
     @BeforeClass
     public static void setup() {
         Config cfg = ConfigFactory.load();
         //secrets from vault in a config file
         cfg = cfg.withFallback(ConfigFactory.parseFile(new File(System.getenv("TEST_CONFIG_FILE"))));
-        auth0Domain = cfg.getString("auth0.domain");;
-        bspSecret = cfg.getString(ApplicationConfigConstants.BSP_SECRET);;
+        auth0Domain = cfg.getString("auth0.domain");
+        ;
+        bspSecret = cfg.getString(ApplicationConfigConstants.BSP_SECRET);
+        ;
     }
 
     @Test
@@ -70,7 +73,7 @@ public class JWTRouteFilterTest {
         EasyMock.expect(req.headers(AUTHORIZATION)).andReturn(token).once();
 
         EasyMock.replay(req);
-        Assert.assertTrue(new JWTRouteFilter( auth0Domain, bspSecret).isAccessAllowed(req, false));
+        Assert.assertTrue(new JWTRouteFilter(auth0Domain, bspSecret).isAccessAllowed(req, false, bspSecret));
         EasyMock.verify(req);
     }
 
@@ -82,7 +85,8 @@ public class JWTRouteFilterTest {
         EasyMock.expect(req.headers(AUTHORIZATION)).andReturn(token).once();
 
         EasyMock.replay(req);
-        Assert.assertFalse("Two tokens signed with different secrets should fail", new JWTRouteFilter( auth0Domain, bspSecret).isAccessAllowed(req, false));
+        Assert.assertFalse("Two tokens signed with different secrets should fail",
+                new JWTRouteFilter(auth0Domain, bspSecret).isAccessAllowed(req, false, bspSecret));
         EasyMock.verify(req);
     }
 
@@ -100,7 +104,7 @@ public class JWTRouteFilterTest {
 
         System.out.println("monitoring token: " + SecurityHelper.createMonitoringToken(monitoringSecret, SecurityHelper.MONITORING_SYSTEM));
 
-        String bspToken = SecurityHelper.createToken(bspSecret, getCurrentUnixUTCTime() + THIRTY_MIN_IN_SECONDS, new HashMap<>());
+        String bspToken = SecurityHelper.createGpToken(bspSecret, getCurrentUnixUTCTime() + THIRTY_MIN_IN_SECONDS, new HashMap<>());
         System.out.println("Token for bsp: " + bspToken);
 
         String ddpToken = SecurityHelper.createToken(ddpSecret, getCurrentUnixUTCTime() + THIRTY_MIN_IN_SECONDS, new HashMap<>());
@@ -126,15 +130,10 @@ public class JWTRouteFilterTest {
             System.out.println(header + ": " + map.get(header));
         }
 
-        Auth0Util auth0Util = new Auth0Util(cfg.getString("auth0.account"),
-                cfg.getStringList("auth0.connections"),
-                cfg.getBoolean("auth0.isSecretBase64Encoded"),
-                cfg.getString("auth0.clientKey"),
-                cfg.getString("auth0.secret"),
-                cfg.getString("auth0.mgtKey"),
-                cfg.getString("auth0.mgtSecret"),
-                cfg.getString("auth0.mgtApiUrl"),
-                false, cfg.getString("auth0.audience"));
+        Auth0Util auth0Util = new Auth0Util(cfg.getString("auth0.account"), cfg.getStringList("auth0.connections"),
+                cfg.getBoolean("auth0.isSecretBase64Encoded"), cfg.getString("auth0.clientKey"), cfg.getString("auth0.secret"),
+                cfg.getString("auth0.mgtKey"), cfg.getString("auth0.mgtSecret"), cfg.getString("auth0.mgtApiUrl"), false,
+                cfg.getString("auth0.audience"));
         System.out.println("Token for Pepper: " + auth0Util.getAccessToken());
 
         RSAKeyProvider keyProvider = null;
@@ -159,7 +158,7 @@ public class JWTRouteFilterTest {
         EasyMock.expect(req.headers(AUTHORIZATION)).andReturn(null).once();
 
         EasyMock.replay(req);
-        Assert.assertFalse("Empty token should fail", new JWTRouteFilter( auth0Domain, bspSecret).isAccessAllowed(req, false));
+        Assert.assertFalse("Empty token should fail", new JWTRouteFilter(auth0Domain, bspSecret).isAccessAllowed(req, false, bspSecret));
         EasyMock.verify(req);
     }
 
@@ -171,7 +170,7 @@ public class JWTRouteFilterTest {
         EasyMock.expect(req.headers(AUTHORIZATION)).andReturn(corruptToken).once();
 
         EasyMock.replay(req);
-        Assert.assertFalse("Corrupt token should fail", new JWTRouteFilter( auth0Domain, bspSecret).isAccessAllowed(req, false));
+        Assert.assertFalse("Corrupt token should fail", new JWTRouteFilter(auth0Domain, bspSecret).isAccessAllowed(req, false, bspSecret));
         EasyMock.verify(req);
     }
 
@@ -185,9 +184,10 @@ public class JWTRouteFilterTest {
         EasyMock.expect(req.headers(AUTHORIZATION)).andReturn(token).times(2);
 
         EasyMock.replay(req);
-        Assert.assertTrue("Checking signature without a role should pass.", new JWTRouteFilter( auth0Domain, bspSecret).isAccessAllowed(req, false));
+        Assert.assertTrue("Checking signature without a role should pass.",
+                new JWTRouteFilter(auth0Domain, bspSecret).isAccessAllowed(req, false, bspSecret));
         Assert.assertFalse("Checking signature with the wrong role should fail",
-                new JWTRouteFilter(  auth0Domain, bspSecret).isAccessAllowed(req, false));
+                new JWTRouteFilter(auth0Domain, bspSecret).isAccessAllowed(req, false, bspSecret));
         EasyMock.verify(req);
     }
 
@@ -200,7 +200,8 @@ public class JWTRouteFilterTest {
         EasyMock.replay(req);
         try {
             Thread.sleep(1000);
-            Assert.assertFalse("Token is expired, should not be considered valid", new JWTRouteFilter( auth0Domain, bspSecret).isAccessAllowed(req, false));
+            Assert.assertFalse("Token is expired, should not be considered valid",
+                    new JWTRouteFilter(auth0Domain, bspSecret).isAccessAllowed(req, false, bspSecret));
         } catch (InterruptedException e) {
             Assert.fail("Sleep interrupted, cannot wait for token to expire.");
         }
@@ -245,21 +246,18 @@ public class JWTRouteFilterTest {
         RSAKeyProvider keyProvider;
         try {
             keyProvider = RSAKeyProviderFactory.createRSAKeyProviderWithPrivateKeyOnly(jwkProvider);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("Error creating RSAKeyProvider", e);
             throw (e);
         }
 
         try {
             validToken = JWT.require(Algorithm.RSA256(keyProvider)).acceptLeeway(10).build().verify(jwt);
-        }
-        catch (TokenExpiredException e) {
+        } catch (TokenExpiredException e) {
             // TokenExpired is one of the benign variants of JWTVerificationException that the `verify()` method throws.
             logger.warn("Expired token: {}", jwt);
             throw e;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("Could not verify token {}", jwt, e);
             throw (e);
         }

@@ -80,4 +80,9 @@
     <include file="liquibase/DDP-7431_kit_upload_permission.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/rgp/DDP-7458_Sqr-Project-Field.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/DDP-7344_preFilter.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/singular/DDP-7322_singular.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/singular/DDP-7322_singularForm_tab1.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/singular/DDP-7322_singularForm_tab2.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/singular/DDP-7322_singularForm_tab3.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/singular/DDP-7322_formFix.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

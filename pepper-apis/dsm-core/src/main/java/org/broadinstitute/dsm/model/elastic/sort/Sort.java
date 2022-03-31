@@ -17,15 +17,19 @@ public class Sort {
 
     SortBy sortBy;
     TypeExtractor<Map<String, String>> typeExtractor;
+    private static final String LOWER_CASE_SORT = "lower_case_sort";
+
+    private Alias alias;
 
     Sort(SortBy sortBy,
                 TypeExtractor<Map<String, String>> typeExtractor) {
         this.typeExtractor = typeExtractor;
         this.sortBy = sortBy;
+        this.alias = Alias.of(sortBy);
     }
 
     public static Sort of(SortBy sortBy, TypeExtractor<Map<String, String>> typeExtractor) {
-        Type type = Type.valueOf(sortBy.getType());
+        Type type = Type.of(sortBy.getType());
         switch (type) {
             case ACTIVITY:
                 return new ActivityTypeSort(sortBy, typeExtractor);
@@ -34,34 +38,36 @@ public class Sort {
             case JSONARRAY:
                 return new JsonArrayTypeSort(sortBy, typeExtractor);
             default:
+                if (Alias.of(sortBy) == Alias.REGISTRATION) {
+                    return new RegistrationSort(sortBy, typeExtractor);
+                }
                 return new Sort(sortBy, typeExtractor);
         }
     }
     
     boolean isNestedSort() {
-        return Alias.of(sortBy).isCollection();
+        return getAlias().isCollection();
     }
 
     String buildFieldName() {
 
-        Type type = Type.valueOf(sortBy.getType());
+        Type type = Type.of(sortBy.getType());
 
         String outerProperty = handleOuterPropertySpecialCase();
         String innerProperty = handleInnerPropertySpecialCase();
 
-        return buildPath(getAliasValue(Alias.of(sortBy)), outerProperty, innerProperty, getKeywordIfText(type));
+        return buildPath(getAliasValue(getAlias()), outerProperty, innerProperty, getKeywordIfText(type));
     }
 
     String handleOuterPropertySpecialCase() {
-        Alias alias = Alias.of(sortBy);
-        if (alias.equals(Alias.PARTICIPANTDATA)) {
+        if (getAlias().equals(Alias.PARTICIPANTDATA)) {
             return ESObjectConstants.DYNAMIC_FIELDS;
         }
         return sortBy.getOuterProperty();
     }
 
     public String handleInnerPropertySpecialCase() {
-        if (Alias.ACTIVITIES == Alias.of(sortBy)) {
+        if (Alias.ACTIVITIES == getAlias() || Alias.REGISTRATION == getAlias()) {
             return sortBy.getInnerProperty();
         }
         return Util.underscoresToCamelCase(sortBy.getInnerProperty());
@@ -70,6 +76,8 @@ public class Sort {
     private String buildPath(String... args) {
         return Stream.of(args)
                 .filter(StringUtils::isNotBlank)
+                .flatMap(pathPart -> Stream.of(pathPart.split(ElasticSearchUtil.ESCAPE_CHARACTER_DOT_SEPARATOR)))
+                .distinct()
                 .collect(Collectors.joining(DBConstants.ALIAS_DELIMITER));
     }
 
@@ -79,34 +87,40 @@ public class Sort {
 
     protected String getKeywordIfText(Type innerType) {
         if (isTextContent(innerType) && isFieldTextType()) {
-            return buildPath(TypeParser.KEYWORD);
+            return buildPath(LOWER_CASE_SORT);
         }
         return StringUtils.EMPTY;
     }
 
     private boolean isTextContent(Type innerType) {
-        return innerType == Type.TEXT || innerType == Type.TEXTAREA || innerType == Type.RADIO || innerType == Type.OPTIONS || innerType == Type.ACTIVITY;
+        return innerType == Type.TEXT || innerType == Type.TEXTAREA || innerType == Type.RADIO || innerType == Type.OPTIONS
+                || innerType == Type.ACTIVITY;
     }
 
     private boolean isFieldTextType() {
-        this.typeExtractor.setFields(buildPath(getAliasValue(Alias.of(sortBy)), handleOuterPropertySpecialCase(), handleInnerPropertySpecialCase()));
+        this.typeExtractor.setFields(buildPath(getAliasValue(getAlias()), handleOuterPropertySpecialCase(),
+                handleInnerPropertySpecialCase()));
         return TypeParser.TEXT.equals(typeExtractor.extract().get(handleInnerPropertySpecialCase()));
+    }
+
+    protected String buildQuestionsAnswersPath() {
+        return String.join(DBConstants.ALIAS_DELIMITER, getAlias().getValue(), ElasticSearchUtil.QUESTIONS_ANSWER);
     }
 
     String buildNestedPath() {
         if (isNestedSort()) {
-            Type type = Type.valueOf(sortBy.getType());
-            Alias alias = Alias.of(sortBy);
-            if (isDoubleNested(type, alias)) {
-                return buildPath(getAliasValue(Alias.of(sortBy)), sortBy.getOuterProperty());
+            Type type = Type.of(sortBy.getType());
+            if (isDoubleNested(type)) {
+                return buildPath(getAliasValue(getAlias()), sortBy.getOuterProperty());
             }
-            return buildPath(getAliasValue(Alias.of(sortBy)));
+            return buildPath(getAliasValue(getAlias()));
         }
         throw new UnsupportedOperationException("Building nested path on non-nested objects is unsupported");
     }
 
-    private boolean isDoubleNested(Type type, Alias alias) {
-        return type == Type.JSONARRAY || (alias == Alias.ACTIVITIES && ElasticSearchUtil.QUESTIONS_ANSWER.equals(sortBy.getOuterProperty()));
+    private boolean isDoubleNested(Type type) {
+        return type == Type.JSONARRAY || (getAlias() == Alias.ACTIVITIES
+                && ElasticSearchUtil.QUESTIONS_ANSWER.equals(sortBy.getOuterProperty()));
     }
 
     public SortOrder getOrder() {
@@ -114,7 +128,7 @@ public class Sort {
     }
 
     public Alias getAlias() {
-        return Alias.of(sortBy);
+        return alias;
     }
 
     public String getRawAlias() {

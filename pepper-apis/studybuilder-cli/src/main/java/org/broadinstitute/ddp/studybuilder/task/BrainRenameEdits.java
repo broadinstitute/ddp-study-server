@@ -11,6 +11,7 @@ import java.util.function.Function;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
@@ -45,8 +46,6 @@ import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.util.GsonPojoValidator;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Task to make additional edits as part of the "Brain Tumor Project" rename.
@@ -54,9 +53,8 @@ import org.slf4j.LoggerFactory;
  * <p>This should be ran right after the BrainRename task. This assumes that activities will have a new version from
  * the BrainRename task, so it will make edits using that as the latest version.
  */
+@Slf4j
 public class BrainRenameEdits extends BrainRename {
-
-    private static final Logger LOG = LoggerFactory.getLogger(BrainRenameEdits.class);
     private static final String ACTIVITY_DATA_FILE = "patches/rename-activities.conf";
 
     @Override
@@ -100,13 +98,13 @@ public class BrainRenameEdits extends BrainRename {
         updateSelfActivityDisplayOrders();
         disableConsentEmailEvent();
 
-        LOG.info("Brain Tumor Project additional edits finished");
+        log.info("Brain Tumor Project additional edits finished");
     }
 
     private void editConsentContent(Config activityCfg) {
         String activityCode = activityCfg.getString("activityCode");
         String versionTag = activityCfg.getString("newVersionTag");
-        LOG.info("Editing activity {}...", activityCode);
+        log.info("Editing activity {}...", activityCode);
 
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
         ActivityVersionDto versionDto = findActivityLatestVersion(activityId);
@@ -163,19 +161,19 @@ public class BrainRenameEdits extends BrainRename {
             long currentRevisionId = sub.getRevisionId().get();
             if (currentRevisionId == revisionId) {
                 updateTranslationInPlace(sub, newText);
-                LOG.info("Updated translation in-place for template variable: ${}", variable.getName());
+                log.info("Updated translation in-place for template variable: ${}", variable.getName());
             } else {
                 revisionTranslation(variable, sub, metadata, newText, revisionId);
             }
         }
-        LOG.info("Updated {} {} variables for activity {}", variables.size(), name, activityCode);
+        log.info("Updated {} {} variables for activity {}", variables.size(), name, activityCode);
     }
 
     private void terminateAboutYouQuestions() {
         Config activityCfg = activityDataCfg.getConfig("aboutYou");
         String activityCode = activityCfg.getString("activityCode");
         String versionTag = activityCfg.getString("newVersionTag");
-        LOG.info("Editing activity {}...", activityCode);
+        log.info("Editing activity {}...", activityCode);
 
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
         ActivityVersionDto versionDto = findActivityLatestVersion(activityId);
@@ -219,18 +217,18 @@ public class BrainRenameEdits extends BrainRename {
         var sectionBlockDao = handle.attach(SectionBlockDao.class);
 
         sectionBlockDao.disableBlock(yearQuestionBlock.getBlockId(), meta);
-        LOG.info("Disabled question block for: {}", yearStableId);
+        log.info("Disabled question block for: {}", yearStableId);
 
         sectionBlockDao.disableBlock(countryQuestionBlock.getBlockId(), meta);
-        LOG.info("Disabled question block for: {}", countryStableId);
+        log.info("Disabled question block for: {}", countryStableId);
 
         sectionBlockDao.disableBlock(zipQuestionBlock.getBlockId(), meta);
-        LOG.info("Disabled question block for: {}", zipStableId);
+        log.info("Disabled question block for: {}", zipStableId);
     }
 
     private void editPostConsentTitle(Config activityCfg) {
         String activityCode = activityCfg.getString("activityCode");
-        LOG.info("Editing activity {}...", activityCode);
+        log.info("Editing activity {}...", activityCode);
 
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
         String newTitle = activityCfg.getString("newTitle");
@@ -250,7 +248,7 @@ public class BrainRenameEdits extends BrainRename {
                 i18nDetail.getDescription(),
                 i18nDetail.getRevisionId());
         activityI18nDao.updateDetails(List.of(newI18nDetail));
-        LOG.info("Updated title for activity {}", activityCode);
+        log.info("Updated title for activity {}", activityCode);
     }
 
     private void updateSelfActivityDisplayOrders() {
@@ -260,7 +258,7 @@ public class BrainRenameEdits extends BrainRename {
 
         int displayOrder = activityCfg.getInt("newDisplayOrder");
         DBUtils.checkUpdate(1, jdbiActivity.updateDisplayOrderById(aboutYouActivityId, displayOrder));
-        LOG.info("Updated display order for activity {} to {}", activityCode, displayOrder);
+        log.info("Updated display order for activity {} to {}", activityCode, displayOrder);
 
         activityCfg = activityDataCfg.getConfig("postConsent");
         activityCode = activityCfg.getString("activityCode");
@@ -268,7 +266,7 @@ public class BrainRenameEdits extends BrainRename {
 
         displayOrder = activityCfg.getInt("newDisplayOrder");
         DBUtils.checkUpdate(1, jdbiActivity.updateDisplayOrderById(postConsentActivityId, displayOrder));
-        LOG.info("Updated display order for activity {} to {}", activityCode, displayOrder);
+        log.info("Updated display order for activity {} to {}", activityCode, displayOrder);
     }
 
     private void disableConsentEmailEvent() {
@@ -294,6 +292,6 @@ public class BrainRenameEdits extends BrainRename {
 
         long eventId = consentCreatedEmailEvent.getEventConfigurationId();
         DBUtils.checkUpdate(1, handle.attach(JdbiEventConfiguration.class).updateIsActiveById(eventId, false));
-        LOG.info("Disabled consent-created email event with id={}", eventId);
+        log.info("Disabled consent-created email event with id={}", eventId);
     }
 }
