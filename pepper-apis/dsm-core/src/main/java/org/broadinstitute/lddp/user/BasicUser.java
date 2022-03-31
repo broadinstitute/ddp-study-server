@@ -6,6 +6,4 @@ public interface BasicUser {
     String getLastName();
 
     String getEmail();
-
-    String getLanguage();
 }

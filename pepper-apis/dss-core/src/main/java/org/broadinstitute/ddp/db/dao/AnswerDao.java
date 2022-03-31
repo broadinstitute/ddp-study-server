@@ -125,6 +125,8 @@ public interface AnswerDao extends SqlObject {
         } else if (type == QuestionType.DECIMAL) {
             DecimalAnswer ans = (DecimalAnswer) answer;
             DBUtils.checkInsert(1, answerSql.insertDecimalValue(answerId, ans.getValueAsBigDecimal()));
+        } else if (type == QuestionType.EQUATION) {
+            throw new DaoException("Equation question doesn't require any answer");
         } else if (type == QuestionType.PICKLIST) {
             if (questionDef == null) {
                 createAnswerPicklistValue(instanceId, answerId, (PicklistAnswer) answer);
@@ -149,9 +151,14 @@ public interface AnswerDao extends SqlObject {
     }
 
     private void createAnswerFileValue(long answerId, FileAnswer answer) {
-        FileInfo info = answer.getValue();
-        Long uploadId = info == null ? null : info.getUploadId();
-        DBUtils.checkInsert(1, getAnswerSql().insertFileValue(answerId, uploadId));
+        if (answer.getValue() == null) {
+            return;
+        }
+        List<Long> uploadIds = answer.getValue().stream().map(FileInfo::getUploadId).collect(Collectors.toList());
+        int[] inserted = getAnswerSql().bulkInsertFileValue(answerId, uploadIds);
+        if (inserted.length != uploadIds.size()) {
+            throw new DaoException("Not all file uploads were assigned to answer " + answerId);
+        }
     }
 
     private void createAnswerCompositeValue(long operatorId, long instanceId, long answerId, CompositeAnswer answer) {
@@ -218,6 +225,8 @@ public interface AnswerDao extends SqlObject {
         } else if (type == QuestionType.DECIMAL) {
             DecimalAnswer ans = (DecimalAnswer) newAnswer;
             DBUtils.checkInsert(1, answerSql.updateDecimalValueById(answerId, ans.getValueAsBigDecimal()));
+        } else if (type == QuestionType.EQUATION) {
+            throw new DaoException("Equation question doesn't require any answer");
         } else if (type == QuestionType.PICKLIST) {
             if (questionDef == null) {
                 updateAnswerPicklistValue(answerId, (PicklistAnswer) newAnswer);
@@ -242,9 +251,8 @@ public interface AnswerDao extends SqlObject {
     }
 
     private void updateAnswerFileValue(long answerId, FileAnswer newAnswer) {
-        FileInfo info = newAnswer.getValue();
-        Long uploadId = info == null ? null : info.getUploadId();
-        DBUtils.checkUpdate(1, getAnswerSql().updateFileValue(answerId, uploadId));
+        getAnswerSql().deleteUploadsByAnswer(answerId);
+        createAnswerFileValue(answerId, newAnswer);
     }
 
     private void updateAnswerCompositeValue(long operatorId, long answerId, CompositeAnswer newAnswer) {
@@ -399,6 +407,13 @@ public interface AnswerDao extends SqlObject {
             @Bind("questionStableId") String questionStableId);
 
     @UseStringTemplateSqlLocator
+    @SqlQuery("findAnswerByInstanceGuidAndQuestionId")
+    @UseRowReducer(AnswerWithValueReducer.class)
+    Optional<Answer> findAnswerByInstanceGuidAndQuestionId(
+            @Bind("instanceGuid") String instanceGuid,
+            @Bind("questionId") Long questionId);
+
+    @UseStringTemplateSqlLocator
     @SqlQuery("findAnswerByUserIdLatestInstanceAndQuestionStableId")
     @UseRowReducer(AnswerWithValueReducer.class)
     Optional<Answer> findAnswerByLatestInstanceAndQuestionStableId(
@@ -413,6 +428,14 @@ public interface AnswerDao extends SqlObject {
             @Bind("userGuid") String userGuid,
             @Bind("studyId") long studyId,
             @Bind("questionStableId") String questionStableId);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("findAnswerByUserIdLatestInstanceAndQuestionId")
+    @UseRowReducer(AnswerWithValueReducer.class)
+    Optional<Answer> findAnswerByLatestInstanceAndQuestionId(
+            @Bind("userId") long userId,
+            @Bind("studyId") long studyId,
+            @Bind("questionId") long questionId);
 
     //
     // reducers
@@ -481,6 +504,8 @@ public interface AnswerDao extends SqlObject {
                     break;
                 case FILE:
                     FileInfo info = null;
+                    answer = container.computeIfAbsent(answerId, id ->
+                            new FileAnswer(answerId, questionStableId, answerGuid, new ArrayList<>(), actInstanceGuid));
                     Long fileUploadId = view.getColumn("fa_upload_id", Long.class);
                     if (fileUploadId != null) {
                         info = new FileInfo(fileUploadId,
@@ -488,7 +513,7 @@ public interface AnswerDao extends SqlObject {
                                 view.getColumn("fa_file_name", String.class),
                                 view.getColumn("fa_file_size", Long.class));
                     }
-                    answer = new FileAnswer(answerId, questionStableId, answerGuid, info, actInstanceGuid);
+                    ((FileAnswer) answer).getValue().add(info);
                     break;
                 case NUMERIC:
                     answer = new NumericAnswer(answerId, questionStableId, answerGuid,

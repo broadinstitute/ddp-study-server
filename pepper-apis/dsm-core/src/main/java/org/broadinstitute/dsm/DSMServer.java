@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -45,6 +46,8 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
+import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetrics;
+import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.dsm.careevolve.Provider;
 import org.broadinstitute.dsm.jetty.JettyConfig;
 import org.broadinstitute.dsm.jobs.DDPEventJob;
@@ -71,6 +74,7 @@ import org.broadinstitute.dsm.route.CarrierServiceRoute;
 import org.broadinstitute.dsm.route.ClinicalKitsRoute;
 import org.broadinstitute.dsm.route.CreateBSPDummyKitRoute;
 import org.broadinstitute.dsm.route.CreateClinicalDummyKitRoute;
+import org.broadinstitute.dsm.route.DSSTestingRoute;
 import org.broadinstitute.dsm.route.DashboardRoute;
 import org.broadinstitute.dsm.route.DisplaySettingsRoute;
 import org.broadinstitute.dsm.route.DownloadPDFRoute;
@@ -81,6 +85,7 @@ import org.broadinstitute.dsm.route.EditParticipantPublisherRoute;
 import org.broadinstitute.dsm.route.EventTypeRoute;
 import org.broadinstitute.dsm.route.FieldSettingsRoute;
 import org.broadinstitute.dsm.route.FilterRoute;
+import org.broadinstitute.dsm.route.FrontendAnalyticsRoute;
 import org.broadinstitute.dsm.route.InstitutionRoute;
 import org.broadinstitute.dsm.route.KitAuthorizationRoute;
 import org.broadinstitute.dsm.route.KitDeactivationRoute;
@@ -108,7 +113,6 @@ import org.broadinstitute.dsm.route.ViewFilterRoute;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
-import org.broadinstitute.dsm.security.JWTConverter;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -131,7 +135,6 @@ import org.broadinstitute.dsm.util.triggerlistener.GPNotificationTriggerListener
 import org.broadinstitute.dsm.util.triggerlistener.LabelCreationTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.NotificationTriggerListener;
 import org.broadinstitute.lddp.security.Auth0Util;
-import org.broadinstitute.lddp.security.CookieUtil;
 import org.broadinstitute.lddp.util.BasicTriggerListener;
 import org.broadinstitute.lddp.util.JsonTransformer;
 import org.broadinstitute.lddp.util.Utility;
@@ -175,11 +178,14 @@ public class DSMServer {
     private static final Logger logger = LoggerFactory.getLogger(DSMServer.class);
     private static final String API_ROOT = "/ddp/";
     private static final String UI_ROOT = "/ui/";
-    private static final String[] CORS_HTTP_METHODS = new String[] {"GET", "PUT", "POST", "OPTIONS", "PATCH"};
+    public static final String SIGNER = "org.broadinstitute.kdux";
+    public static final String BSP_SIGNER = "https://dsm-dev.datadonationplatform.org/ddp/";
+    private static final String[] CORS_HTTP_METHODS = new String[] { "GET", "PUT", "POST", "OPTIONS", "PATCH" };
     private static final String[] CORS_HTTP_HEADERS =
-            new String[] {"Content-Type", "Authorization", "X-Requested-With", "Content-Length", "Accept", "Origin", ""};
+            new String[] { "Content-Type", "Authorization", "X-Requested-With", "Content-Length", "Accept", "Origin", "" };
     private static final String VAULT_DOT_CONF = "vault.conf";
     private static final String GAE_DEPLOY_DIR = "appengine/deploy";
+    private static final String INFO_ROOT = "/info/";
     private static final Duration DEFAULT_BOOT_WAIT = Duration.ofMinutes(10);
     public static Provider provider;
     private static Map<String, JsonElement> ddpConfigurationLookup = new HashMap<>();
@@ -397,12 +403,22 @@ public class DSMServer {
         return true;
     }
 
-    private static void registerAppEngineStartupCallback(long bootTimeoutSeconds) {
+    private static void registerAppEngineStartupCallback(long bootTimeoutSeconds, Config cfg) {
+        GoogleAnalyticsMetricsTracker.setConfig(cfg);
         // Block until isReady is available, with an optional timeout to prevent
         // instance for sitting around too long in a nonresponsive state.  There is a
         // judgement call to be made here to allow for lengthy liquibase migrations during boot.
         logger.info("Will wait for at most {} seconds for boot before GAE termination", bootTimeoutSeconds);
         get("/_ah/start", new ReadinessRoute(bootTimeoutSeconds));
+
+        get(RoutePath.GAE.STOP_ENDPOINT, (request, response) -> {
+            logger.info("Received GAE stop request [{}]", RoutePath.GAE.STOP_ENDPOINT);
+            //flush out any pending GA events
+            GoogleAnalyticsMetricsTracker.getInstance().flushOutMetrics();
+
+            response.status(HttpStatus.SC_OK);
+            return "";
+        });
     }
 
     protected static void enableCORS(String allowedOrigins, String methods, String headers) {
@@ -452,12 +468,15 @@ public class DSMServer {
         logger.info("Using port {}", port);
         port(port);
 
-        registerAppEngineStartupCallback(bootTimeoutSeconds);
+        registerAppEngineStartupCallback(bootTimeoutSeconds, config);
 
         setupDB(config);
 
         // don't run superclass routing--it won't work with JettyConfig changes for capturing proper IP address in GAE
         setupCustomRouting(config);
+
+        GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics("", GoogleAnalyticsMetrics.EVENT_SERVER_START,
+                GoogleAnalyticsMetrics.EVENT_SERVER_START, GoogleAnalyticsMetrics.EVENT_SERVER_START, 1);
 
         List<String> allowedOrigins = config.getStringList(ApplicationConfigConstants.CORS_ALLOWED_ORIGINS);
         enableCORS(StringUtils.join(allowedOrigins, ","), String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
@@ -473,6 +492,7 @@ public class DSMServer {
         TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, maxConnections, dbUrl));
 
         logger.info("Running DB update...");
+
         LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.DSM);
         LiquibaseUtil.releaseResources();
 
@@ -484,17 +504,38 @@ public class DSMServer {
 
         //BSP route
         String bspSecret = cfg.getString(ApplicationConfigConstants.BSP_SECRET);
+        boolean bspSecretEncoded =
+                cfg.hasPath(ApplicationConfigConstants.BSP_ENCODED) ? cfg.getBoolean(ApplicationConfigConstants.BSP_ENCODED) : false;
+        String ddpSecret = cfg.getString(ApplicationConfigConstants.DDP_SECRET);
+        boolean ddpSecretEncoded =
+                cfg.hasPath(ApplicationConfigConstants.DDP_ENCODED) ? cfg.getBoolean(ApplicationConfigConstants.DDP_ENCODED) : false;
+        String auth0Domain = cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN);
+        String auth0claimNameSpace = cfg.getString(ApplicationConfigConstants.AUTH0_CLAIM_NAMESPACE);
 
         if (StringUtils.isBlank(bspSecret)) {
             throw new RuntimeException("No secret supplied for BSP endpoint, system exiting.");
         }
 
+        if (StringUtils.isBlank(ddpSecret)) {
+            throw new RuntimeException("No secret supplied for DDP endpoint, system exiting.");
+        }
+
+        String appRoute = cfg.hasPath("portal.appRoute") ? cfg.getString("portal.appRoute") : null;
+
+        if (StringUtils.isBlank(appRoute)) {
+            throw new RuntimeException("appRoute was not configured correctly.");
+        }
+
         //  capture basic route info for logging
-        before("*", new LoggingFilter());
+        //        before("*", new LoggingFilter(auth0Domain, auth0claimNameSpace));
+        before(API_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, bspSecret, BSP_SIGNER, bspSecretEncoded));
+        before(UI_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, null, null, false));
+        before(INFO_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, ddpSecret, SIGNER, ddpSecretEncoded));
+        before(appRoute + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, ddpSecret, SIGNER, ddpSecretEncoded));
         afterAfter((req, res) -> MDC.clear());
 
         before(API_ROOT + "*", (req, res) -> {
-            if (!new JWTRouteFilter(bspSecret, null).isAccessAllowed(req)) {
+            if (!new JWTRouteFilter(auth0Domain, bspSecret).isAccessAllowed(req, false, bspSecret)) {
                 halt(404);
             }
             res.header(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
@@ -515,16 +556,13 @@ public class DSMServer {
             get(API_ROOT + RoutePath.DUMMY_ENDPOINT, new CreateBSPDummyKitRoute(), new JsonTransformer());
         }
 
-        String appRoute = cfg.hasPath("portal.appRoute") ? cfg.getString("portal.appRoute") : null;
 
-        if (StringUtils.isBlank(appRoute)) {
-            throw new RuntimeException("appRoute was not configured correctly.");
-        }
+        String auth0Signer = cfg.getString(ApplicationConfigConstants.AUTH0_SIGNER);
 
-        String jwtSecret = cfg.getString(ApplicationConfigConstants.BROWSER_JWT_SECRET);
-        String cookieSalt = cfg.getString(ApplicationConfigConstants.BROWSER_COOKIE_SALT);
-        String cookieName = cfg.getString(ApplicationConfigConstants.BROWSER_COOKIE_NAME);
-        new SecurityUtil(jwtSecret);
+        SecurityUtil.init(auth0Domain, auth0claimNameSpace, auth0Signer);
+
+        //TODO remove before final merge, for testing only
+        get(UI_ROOT + "dsstest/:participantId", new DSSTestingRoute(), new JsonTransformer());
 
         // path is: /app/drugs (this gets the list of display names)
         DrugRoute drugRoute = new DrugRoute();
@@ -545,16 +583,18 @@ public class DSMServer {
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL), false,
                 cfg.getString(ApplicationConfigConstants.AUTH0_AUDIENCE));
 
-        before("/info/" + RoutePath.PARTICIPANT_STATUS_REQUEST, (req, res) -> {
+        before(INFO_ROOT + RoutePath.PARTICIPANT_STATUS_REQUEST, (req, res) -> {
             String tokenFromHeader = Utility.getTokenFromHeader(req);
-            DecodedJWT validToken = JWTConverter.verifyDDPToken(tokenFromHeader, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN));
-            if (validToken == null) {
+            Optional<DecodedJWT> validToken =
+                    Auth0Util.verifyAuth0Token(tokenFromHeader, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN), ddpSecret, SIGNER,
+                            ddpSecretEncoded);
+            if (validToken.isEmpty()) {
                 logger.error(req.pathInfo() + " was called without valid token");
                 halt(401, SecurityUtil.ResultType.AUTHENTICATION_ERROR.toString());
             }
         });
 
-        get("/info/" + RoutePath.PARTICIPANT_STATUS_REQUEST, new ParticipantStatusRoute(), new JsonNullTransformer());
+        get(INFO_ROOT + RoutePath.PARTICIPANT_STATUS_REQUEST, new ParticipantStatusRoute(), new JsonNullTransformer());
 
 
         // requests from frontend
@@ -565,10 +605,7 @@ public class DSMServer {
 
                     boolean isTokenValid = false;
                     if (StringUtils.isNotBlank(tokenFromHeader)) {
-                        isTokenValid =
-                                new CookieUtil().isCookieValid(req.cookie(cookieName), cookieSalt.getBytes(), tokenFromHeader, jwtSecret);
-                        isTokenValid = new JWTRouteFilter(jwtSecret, null).isAccessAllowed(req);
-
+                        isTokenValid = new JWTRouteFilter(auth0Domain, bspSecret).isAccessAllowed(req, true, null);
                     }
                     if (!isTokenValid) {
                         halt(401, SecurityUtil.ResultType.AUTHENTICATION_ERROR.toString());
@@ -578,8 +615,14 @@ public class DSMServer {
         });
         setupDDPConfigurationLookup(cfg.getString(ApplicationConfigConstants.DDP));
 
-        AuthenticationRoute authenticationRoute =
-                new AuthenticationRoute(auth0Util, jwtSecret, cookieSalt, cookieName, userUtil, cfg.getString("portal.environment"));
+        AuthenticationRoute authenticationRoute = new AuthenticationRoute(auth0Util,
+                userUtil,
+                cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN),
+                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_SECRET),
+                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_KEY),
+                cfg.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL),
+                cfg.getString(ApplicationConfigConstants.AUTH0_CLAIM_NAMESPACE)
+        );
         post(UI_ROOT + RoutePath.AUTHENTICATION_REQUEST, authenticationRoute, new JsonTransformer());
 
         KitUtil kitUtil = new KitUtil();
@@ -589,7 +632,7 @@ public class DSMServer {
         setupExternalShipperLookup(cfg.getString(ApplicationConfigConstants.EXTERNAL_SHIPPER));
         GBFRequestUtil gbfRequestUtil = new GBFRequestUtil();
 
-        setupShippingRoutes(notificationUtil, auth0Util, userUtil);
+        setupShippingRoutes(notificationUtil, auth0Util, userUtil, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN));
 
         setupMedicalRecordRoutes(cfg, notificationUtil, patchUtil);
 
@@ -679,7 +722,8 @@ public class DSMServer {
         logger.info("Pubsub setup complete");
     }
 
-    private void setupShippingRoutes(@NonNull NotificationUtil notificationUtil, @NonNull Auth0Util auth0Util, @NonNull UserUtil userUtil) {
+    private void setupShippingRoutes(@NonNull NotificationUtil notificationUtil, @NonNull Auth0Util auth0Util, @NonNull UserUtil userUtil,
+                                     @NonNull String auth0Domain) {
         get(UI_ROOT + RoutePath.KIT_REQUESTS_PATH, new KitRequestRoute(), new JsonTransformer());
 
         KitStatusChangeRoute kitStatusChangeRoute = new KitStatusChangeRoute(notificationUtil);
@@ -710,7 +754,7 @@ public class DSMServer {
 
         get(UI_ROOT + RoutePath.SEARCH_KIT, new KitSearchRoute(), new JsonTransformer());
 
-        KitDiscardRoute kitDiscardRoute = new KitDiscardRoute(auth0Util, userUtil);
+        KitDiscardRoute kitDiscardRoute = new KitDiscardRoute(auth0Util, userUtil, auth0Domain);
         get(UI_ROOT + RoutePath.DISCARD_SAMPLES, kitDiscardRoute, new JsonTransformer());
         patch(UI_ROOT + RoutePath.DISCARD_SAMPLES, kitDiscardRoute, new JsonTransformer());
         post(UI_ROOT + RoutePath.DISCARD_UPLOAD, kitDiscardRoute, new JsonTransformer());
@@ -810,6 +854,9 @@ public class DSMServer {
 
         GetParticipantDataRoute getParticipantDataRoute = new GetParticipantDataRoute();
         get(UI_ROOT + RoutePath.GET_PARTICIPANT_DATA, getParticipantDataRoute, new JsonTransformer());
+
+        FrontendAnalyticsRoute frontendAnalyticsRoute = new FrontendAnalyticsRoute();
+        patch(UI_ROOT + RoutePath.GoogleAnalytics, frontendAnalyticsRoute, new JsonTransformer());
     }
 
     private void setupSharedRoutes(@NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil, @NonNull PatchUtil patchUtil) {

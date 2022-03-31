@@ -35,10 +35,9 @@ public class ApplicationConfigConstants {
 
     //security information
     public static final String BSP_SECRET = "bsp.secret";
-    public static final String BROWSER_JWT_SECRET = "browser_security.jwt_secret";
-    public static final String BROWSER_COOKIE_SALT = "browser_security.cookie_salt";
-    public static final String BROWSER_COOKIE_NAME = "browser_security.cookie_name";
-    public static final String INTERNAL_API_SECRET = "internal_api.secret";
+    public static final String BSP_ENCODED = "bsp.secretEncoded";
+    public static final String DDP_SECRET = "portal.jwtDdpSecret";
+    public static final String DDP_ENCODED = "auth0.isSecretBase64Encoded";
 
     //auth0
     public static final String AUTH0_SECRET = "auth0.secret";
@@ -51,6 +50,8 @@ public class ApplicationConfigConstants {
     public static final String AUTH0_MGT_KEY = "auth0.mgtKey";
     public static final String AUTH0_DOMAIN = "auth0.domain";
     public static final String AUTH0_AUDIENCE = "auth0.audience";
+    public static final String AUTH0_CLAIM_NAMESPACE = "auth0.claimNamespace";
+    public static final String AUTH0_SIGNER = "auth0.account";
 
     //quartz
     public static final String QUARTZ_ENABLE_JOBS = "quartz.enableJobs";
@@ -67,7 +68,6 @@ public class ApplicationConfigConstants {
     public static final String EMAIL_CRON_EXPRESSION_FOR_GP_NOTIFICATION = "email.cron_expression_GP_notification";
     public static final String EMAIL_FRONTEND_URL_FOR_LINKS = "email.frontendUrl";
     public static final String EMAIL_GP_RECIPIENT = "email.gp_recipient";
-    public static final String EMAIL_CLASS_NAME = "email.className";
     public static final String EMAIL_KEY = "email.key";
     public static final String EMAIL_CLIENT_SETTINGS = "email.clientSettings";
     public static final String EMAIL_NOTIFICATIONS = "email.notifications";

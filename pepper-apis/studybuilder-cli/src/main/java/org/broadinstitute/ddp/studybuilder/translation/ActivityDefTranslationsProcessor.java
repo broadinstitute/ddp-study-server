@@ -5,6 +5,7 @@ import static org.broadinstitute.ddp.studybuilder.translation.TranslationsEnrich
 
 import java.util.Map;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
@@ -26,6 +27,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.EquationQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
@@ -36,8 +38,6 @@ import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariabl
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.studybuilder.StudyBuilderException;
 import org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingData.TranslationData;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Add {@link Translation} references (for all study languages) to the {@link Template}s in {@link FormActivityDef}s.
@@ -61,10 +61,8 @@ import org.slf4j.LoggerFactory;
  *     </li>
  * </ul>
  */
+@Slf4j
 public class ActivityDefTranslationsProcessor {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ActivityDefTranslationsProcessor.class);
-
     private final Map<String, TranslationData> allTranslations;
 
     public ActivityDefTranslationsProcessor(Map<String, TranslationData> allTranslations) {
@@ -78,7 +76,7 @@ public class ActivityDefTranslationsProcessor {
     }
 
     private void enrichActivityDefWithTranslations(FormActivityDef activityDef) {
-        LOG.info("Add translations for languages {} to a generated activity definition {}",
+        log.info("Add translations for languages {} to a generated activity definition {}",
                 TranslationsProcessingData.INSTANCE.getTranslations().keySet(), activityDef.getActivityCode());
 
         addTemplateTranslations(activityDef.getReadonlyHintTemplate(), allTranslations);
@@ -239,6 +237,9 @@ public class ActivityDefTranslationsProcessor {
             case DECIMAL:
                 addTemplateTranslations(((DecimalQuestionDef) questionDef).getPlaceholderTemplate(), allTranslations);
                 break;
+            case EQUATION:
+                addTemplateTranslations(((EquationQuestionDef) questionDef).getPlaceholderTemplate(), allTranslations);
+                break;
             case PICKLIST:
                 addTemplateTranslations(((PicklistQuestionDef) questionDef).getPicklistLabelTemplate(), allTranslations);
                 ((PicklistQuestionDef) questionDef).getGroups().forEach(this::enrichPickListOptionGroup);
@@ -253,6 +254,7 @@ public class ActivityDefTranslationsProcessor {
                 break;
             case MATRIX:
                 addTemplateTranslations(((MatrixQuestionDef) questionDef).getModalTemplate(), allTranslations);
+                addTemplateTranslations(((MatrixQuestionDef) questionDef).getModalTitleTemplate(), allTranslations);
                 ((MatrixQuestionDef) questionDef).getGroups().forEach(this::enrichMatrixGroupWithTranslations);
                 ((MatrixQuestionDef) questionDef).getOptions().forEach(this::enrichMatrixGroupWithTranslations);
                 ((MatrixQuestionDef) questionDef).getRows().forEach(this::enrichMatrixOptionWithTranslations);

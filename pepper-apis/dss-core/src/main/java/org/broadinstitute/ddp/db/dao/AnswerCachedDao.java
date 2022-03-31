@@ -175,6 +175,11 @@ public class AnswerCachedDao extends SQLObjectWrapper<AnswerDao> implements Answ
     }
 
     @Override
+    public Optional<Answer> findAnswerByInstanceGuidAndQuestionId(String instanceGuid, Long questionId) {
+        return delegate.findAnswerByInstanceGuidAndQuestionId(instanceGuid, questionId);
+    }
+
+    @Override
     public Optional<Answer> findAnswerByLatestInstanceAndQuestionStableId(long userId, long studyId, String questionStableId) {
         return delegate.findAnswerByLatestInstanceAndQuestionStableId(userId, studyId, questionStableId);
     }
@@ -182,6 +187,11 @@ public class AnswerCachedDao extends SQLObjectWrapper<AnswerDao> implements Answ
     @Override
     public Optional<Answer> findAnswerByLatestInstanceAndQuestionStableId(String userGuid, long studyId, String questionStableId) {
         return delegate.findAnswerByLatestInstanceAndQuestionStableId(userGuid, studyId, questionStableId);
+    }
+
+    @Override
+    public Optional<Answer> findAnswerByLatestInstanceAndQuestionId(long userId, long studyId, long questionId) {
+        return delegate.findAnswerByLatestInstanceAndQuestionId(userId, studyId, questionId);
     }
 
     private void addToCache(Answer answer) {

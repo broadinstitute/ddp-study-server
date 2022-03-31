@@ -1,9 +1,10 @@
 package org.broadinstitute.ddp.json.security;
 
-public class IrbStudyStudyCredentials {
-    private String password;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-    public String getPassword() {
-        return password;
-    }
+@Data
+@NoArgsConstructor
+public final class IrbStudyStudyCredentials {
+    private String password;
 }

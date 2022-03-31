@@ -541,7 +541,7 @@ public class TestBostonUPSTrackingJob implements BackgroundFunction<PubsubMessag
                     KitRequestDto dto = new KitRequestDto(rs.getInt(DBConstants.DSM_KIT_REQUEST_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
                             rs.getString(DBConstants.DDP_KIT_REQUEST_ID), rs.getInt(DBConstants.KIT_TYPE_ID),
                             rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
-                            rs.getString(DBConstants.BSP_COLLABORATOR_PARTICIPANT_ID), rs.getString(DBConstants.DDP_PARTICIPANT_ID),
+                            rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID), rs.getString(DBConstants.DDP_PARTICIPANT_ID),
                             rs.getString(DBConstants.DSM_LABEL), rs.getString(DBConstants.CREATED_BY), rs.getLong(DBConstants.CREATED_DATE),
                             rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), rs.getLong(DBConstants.EXTERNAL_ORDER_DATE),
                             rs.getString(DBConstants.EXTERNAL_ORDER_STATUS), rs.getString(DBConstants.EXTERNAL_RESPONSE),

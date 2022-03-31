@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.PicklistQuestionDao;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
@@ -14,12 +15,9 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class AddStateOption implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AddStateOption.class);
     private static final String[] studyGuids = {"cmi-pancan", "CMI-OSTEO", "cmi-brain", "rarex"};
     private static final int DISPLAY_ORDER = 75; //between DE and FL
     private String optionGson = "{\"allowDetails\":false,\"detailLabelTemplate\":null,\"exclusive\":false,"
@@ -45,17 +43,17 @@ public class AddStateOption implements CustomTask {
         SqlHelper helper = handle.attach(SqlHelper.class);
         for (String studyGuid : studyGuids) {
             List<Long> questionIds = helper.findStatePLQuestionIdsByStudyGuid(studyGuid);
-            LOG.info("Adding option for {} questions of study: {} ", questionIds.size(), studyGuid);
+            log.info("Adding option for {} questions of study: {} ", questionIds.size(), studyGuid);
             for (Long questionId : questionIds) {
                 var newOption = new Gson().fromJson(optionGson, PicklistOptionDef.class);
-                LOG.info("Adding New PL option DC to Question: {} ", questionId);
+                log.info("Adding New PL option DC to Question: {} ", questionId);
                 Long activityId = helper.findActivityIdByQuestionId(questionId);
                 ActivityVersionDto versionDto = handle.attach(JdbiActivityVersion.class)
                         .getActiveVersion(activityId)
                         .orElseThrow(() -> new DDPException("Could not find latest version for activity " + activityId));
                 long revisionId = versionDto.getRevId();
                 Long optionId = insertOption(questionId, newOption, DISPLAY_ORDER, revisionId, plQuestionDao);
-                LOG.info("Inserted DC PL option : {} for question : {} ", optionId, questionId);
+                log.info("Inserted DC PL option : {} for question : {} ", optionId, questionId);
             }
         }
     }

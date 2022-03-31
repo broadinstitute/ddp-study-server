@@ -230,11 +230,14 @@ public class MedicalRecord {
     @JsonProperty("dynamicFields")
     @SerializedName("dynamicFields")
     private String additionalValuesJson;
+    @ColumnName(DBConstants.REVIEW_MEDICAL_RECORD)
     private boolean reviewMedicalRecord;
     @TableName(name = DBConstants.DDP_MEDICAL_RECORD, alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID, columnPrefix = "")
     @ColumnName(DBConstants.PATHOLOGY_PRESENT)
     private String pathologyPresent;
+    @ColumnName(DBConstants.DDP_INSTANCE_ID)
+    private long ddpInstanceId;
 
     public MedicalRecord(long medicalRecordId, long institutionId, String ddpInstitutionId, String type) {
         this.medicalRecordId = medicalRecordId;
@@ -252,7 +255,8 @@ public class MedicalRecord {
                          String mrReceived, String mrDocument, String mrDocumentFileNames, boolean mrProblem, String mrProblemText,
                          boolean unableObtain, boolean duplicate, boolean international, boolean crRequired, String pathologyPresent,
                          String mrNotes, boolean reviewMedicalRecord, FollowUp[] followUps, boolean followUpRequired,
-                         String followupRequiredText, String additionalValuesJson, String unableObtainText, String ddpParticipantId) {
+                         String followupRequiredText, String additionalValuesJson, String unableObtainText, String ddpParticipantId,
+                         long ddpInstanceId) {
         this.medicalRecordId = medicalRecordId;
         this.institutionId = institutionId;
         this.ddpInstitutionId = ddpInstitutionId;
@@ -288,6 +292,7 @@ public class MedicalRecord {
         this.additionalValuesJson = additionalValuesJson;
         this.unableObtainText = unableObtainText;
         this.ddpParticipantId = ddpParticipantId;
+        this.ddpInstanceId = ddpInstanceId;
     }
 
     public static MedicalRecord getMedicalRecord(@NonNull ResultSet rs) throws SQLException {
@@ -306,17 +311,39 @@ public class MedicalRecord {
                 new Gson().fromJson(rs.getString(DBConstants.FOLLOW_UP_REQUESTS), FollowUp[].class),
                 rs.getBoolean(DBConstants.FOLLOWUP_REQUIRED), rs.getString(DBConstants.FOLLOWUP_REQUIRED_TEXT),
                 rs.getString(DBConstants.ADDITIONAL_VALUES_JSON), rs.getString(DBConstants.MR_UNABLE_OBTAIN_TEXT),
-                rs.getString(DBConstants.DDP_PARTICIPANT_ID));
+                rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getLong(DBConstants.DDP_INSTANCE_ID));
         return medicalRecord;
+    }
+
+    public static MedicalRecord getMedicalRecord(@NonNull String realm, @NonNull String ddpParticipantId, @NonNull String medicalRecordId) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    SQL_SELECT_MEDICAL_RECORD + QueryExtension.BY_DDP_PARTICIPANT_ID + QueryExtension.BY_MEDICAL_RECORD_ID)) {
+                stmt.setString(1, realm);
+                stmt.setString(2, ddpParticipantId);
+                stmt.setString(3, medicalRecordId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        dbVals.resultValue = getMedicalRecord(rs);
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Error getting medicalRecord " + medicalRecordId + " of participant " + ddpParticipantId,
+                    results.resultException);
+        }
+
+        return (MedicalRecord) results.resultValue;
     }
 
     public static Map<String, List<MedicalRecord>> getMedicalRecords(@NonNull String realm) {
         return getMedicalRecords(realm, null);
-    }
-
-    public static Map<String, List<MedicalRecord>> getMedicalRecordsByParticipantIds(@NonNull String realm, List<String> participantIds) {
-        String queryAddition = " AND p.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
-        return getMedicalRecords(realm, queryAddition);
     }
 
     public static Map<String, List<MedicalRecord>> getMedicalRecords(@NonNull String realm, String queryAddition) {
@@ -352,31 +379,9 @@ public class MedicalRecord {
         return medicalRecords;
     }
 
-    public static MedicalRecord getMedicalRecord(@NonNull String realm, @NonNull String ddpParticipantId, @NonNull String medicalRecordId) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(
-                    SQL_SELECT_MEDICAL_RECORD + QueryExtension.BY_DDP_PARTICIPANT_ID + QueryExtension.BY_MEDICAL_RECORD_ID)) {
-                stmt.setString(1, realm);
-                stmt.setString(2, ddpParticipantId);
-                stmt.setString(3, medicalRecordId);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        dbVals.resultValue = getMedicalRecord(rs);
-                    }
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Error getting medicalRecord " + medicalRecordId + " of participant " + ddpParticipantId,
-                    results.resultException);
-        }
-
-        return (MedicalRecord) results.resultValue;
+    public static Map<String, List<MedicalRecord>> getMedicalRecordsByParticipantIds(@NonNull String realm, List<String> participantIds) {
+        String queryAddition = " AND p.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
+        return getMedicalRecords(realm, queryAddition);
     }
 
     public static MedicalInfo getDDPInstitutionInfo(@NonNull DDPInstance ddpInstance, @NonNull String ddpParticipantId) {
@@ -430,11 +435,7 @@ public class MedicalRecord {
 
     @JsonProperty("dynamicFields")
     public Map<String, Object> getDynamicFields() {
-        try {
-            return ObjectMapperSingleton.instance().readValue(additionalValuesJson, new TypeReference<Map<String, Object>>() {
-            });
-        } catch (IOException | NullPointerException e) {
-            return Map.of();
-        }
+        return ObjectMapperSingleton.readValue(additionalValuesJson, new TypeReference<Map<String, Object>>() {
+        });
     }
 }
