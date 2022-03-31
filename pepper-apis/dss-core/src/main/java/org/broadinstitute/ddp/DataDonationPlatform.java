@@ -199,8 +199,6 @@ public class DataDonationPlatform {
     public static final String MDC_STUDY = "Study";
     public static final String MDC_ROUTE_CLASS = "RouteClass";
     public static final String PORT = "PORT";
-    public static final int DEFAULT_RATE_LIMIT_MAX_QUERIES_PER_SECOND = 10;
-    public static final int DEFAULT_RATE_LIMIT_BURST = 15;
 
     private static final String HTTP_METHOD__GET = "GET";
     private static final String HTTP_METHOD__PUT = "PUT";
@@ -288,15 +286,13 @@ public class DataDonationPlatform {
         }
 
         String dbUrl = cfg.getString(ConfigFile.DB_URL);
-        log.info("Using db {}", dbUrl);
-
         TransactionWrapper.init(
                 new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections, dbUrl));
         Config sqlConfig = ConfigFactory.load(ConfigFile.SQL_CONFIG_FILE);
         initSqlCommands(sqlConfig);
 
         if (cfg.hasPath(ConfigFile.DO_LIQUIBASE_IN_STUDY_SERVER) && cfg.getBoolean(ConfigFile.DO_LIQUIBASE_IN_STUDY_SERVER)) {
-            log.info("Running liquibase migrations in StudyServer against database url: {}", dbUrl);
+            log.info("Running liquibase migrations in StudyServer against database");
             LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
             LiquibaseUtil.releaseResources();
         }
