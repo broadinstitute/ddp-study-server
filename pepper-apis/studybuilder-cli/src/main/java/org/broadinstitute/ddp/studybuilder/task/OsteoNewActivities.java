@@ -9,6 +9,7 @@ import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.studybuilder.EventBuilder;
+import org.broadinstitute.ddp.studybuilder.WorkflowBuilder;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -56,6 +57,7 @@ public class OsteoNewActivities implements CustomTask{
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid"));
         insertActivities(handle, studyDto, adminUser.getUserId());
         addEvents(handle, studyDto, adminUser.getUserId());
+        addWorkflowTransitions(handle, studyDto);
     }
 
     private void insertActivities(Handle handle, StudyDto studyDto, long adminUserId) {
@@ -94,5 +96,14 @@ public class OsteoNewActivities implements CustomTask{
         }
 
         LOG.info("Events configuration has added in study {}", STUDY_GUID);
+    }
+
+    private void addWorkflowTransitions(Handle handle, StudyDto studyDto) {
+        List<? extends Config> transitions = dataCfg.getConfigList("workflows");
+
+        WorkflowBuilder workflowBuilder = new WorkflowBuilder(cfg, studyDto);
+        for (Config transitionCfg : transitions) {
+            workflowBuilder.insertTransitionSet(handle, transitionCfg);
+        }
     }
 }
