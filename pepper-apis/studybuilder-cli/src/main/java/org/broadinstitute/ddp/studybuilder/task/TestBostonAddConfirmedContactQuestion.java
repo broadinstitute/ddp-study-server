@@ -4,6 +4,7 @@ import java.nio.file.Path;
 
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
@@ -26,15 +27,12 @@ import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * One-off task to add "confirmed contact" question to adhoc survey in deployed environments.
  */
+@Slf4j
 public class TestBostonAddConfirmedContactQuestion implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TestBostonAddConfirmedContactQuestion.class);
     private static final String STUDY_GUID = "testboston";
     private static final String ADHOC_SYMPTOM_FILE = "adhoc-symptom.conf";
 
@@ -61,7 +59,7 @@ public class TestBostonAddConfirmedContactQuestion implements CustomTask {
         var activityBuilder = new ActivityBuilder(cfgPath.getParent(), studyCfg, varsCfg, studyDto, adminUser.getId());
 
         Config defCfg = activityBuilder.readDefinitionConfig(ADHOC_SYMPTOM_FILE);
-        LOG.info("Loaded activity definition from file: {}", ADHOC_SYMPTOM_FILE);
+        log.info("Loaded activity definition from file: {}", ADHOC_SYMPTOM_FILE);
 
         String activityCode = defCfg.getString("activityCode");
         ActivityDto activityDto = handle.attach(JdbiActivity.class)
@@ -74,10 +72,10 @@ public class TestBostonAddConfirmedContactQuestion implements CustomTask {
                 .orElseThrow(() -> new DDPException("Could not find version " + versionTag));
 
         FormActivityDef currentDef = handle.attach(FormActivityDao.class).findDefByDtoAndVersion(activityDto, versionDto);
-        LOG.info("Loaded {} activity definition from database", activityCode);
+        log.info("Loaded {} activity definition from database", activityCode);
 
         String questionStableId = varsCfg.getString("id.q.confirmed_contact");
-        LOG.info("Searching for question {}...", questionStableId);
+        log.info("Searching for question {}...", questionStableId);
 
         FormSectionDef currentSectionDef = currentDef.getSections().get(0);
         QuestionDef currentQuestionDef = currentSectionDef.getBlocks().stream()
@@ -86,9 +84,9 @@ public class TestBostonAddConfirmedContactQuestion implements CustomTask {
                 .findFirst().orElse(null);
 
         if (currentQuestionDef != null) {
-            LOG.info("Activity already contains question {} with questionId={}", questionStableId, currentQuestionDef.getQuestionId());
+            log.info("Activity already contains question {} with questionId={}", questionStableId, currentQuestionDef.getQuestionId());
         } else {
-            LOG.info("Activity does not contain question {}, adding it directly...", questionStableId);
+            log.info("Activity does not contain question {}, adding it directly...", questionStableId);
 
             long activityId = activityDto.getActivityId();
             long sectionId = currentSectionDef.getSectionId();
@@ -110,7 +108,7 @@ public class TestBostonAddConfirmedContactQuestion implements CustomTask {
 
             handle.attach(SectionBlockDao.class)
                     .insertBlockForSection(activityId, sectionId, newDisplayOrder, newBlockDef, revisionId);
-            LOG.info("Finished inserting new question for {}", questionStableId);
+            log.info("Finished inserting new question for {}", questionStableId);
         }
     }
 }

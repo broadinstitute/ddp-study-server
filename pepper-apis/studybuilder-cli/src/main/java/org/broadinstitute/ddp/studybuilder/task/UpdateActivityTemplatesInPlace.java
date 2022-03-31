@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.studybuilder.task;
 import java.nio.file.Path;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -20,16 +21,12 @@ import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * General task to update templates for an activity in-place. Need to provide the `--activity-code` argument.
  */
+@Slf4j
 public class UpdateActivityTemplatesInPlace implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(UpdateActivityTemplatesInPlace.class);
-
     private Path cfgPath;
     private Config studyCfg;
     private Config varsCfg;
@@ -76,7 +73,7 @@ public class UpdateActivityTemplatesInPlace implements CustomTask {
             String versionTag = definition.getString("versionTag");
 
             if (this.activityCode.equals(activityCode)) {
-                LOG.info("Found activity definition for {}", activityCode);
+                log.info("Found activity definition for {}", activityCode);
 
                 ActivityDto activityDto = jdbiActivity.findActivityByStudyIdAndCode(studyId, activityCode).get();
                 ActivityVersionDto versionDto = jdbiActVersion.findByActivityCodeAndVersionTag(studyId, activityCode, versionTag).get();
@@ -90,7 +87,7 @@ public class UpdateActivityTemplatesInPlace implements CustomTask {
         }
 
         if (!found) {
-            LOG.info("Could not find activity definition for {}", activityCode);
+            log.info("Could not find activity definition for {}", activityCode);
         }
     }
 }

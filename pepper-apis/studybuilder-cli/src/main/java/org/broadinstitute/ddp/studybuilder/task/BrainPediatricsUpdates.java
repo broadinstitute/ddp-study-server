@@ -8,6 +8,7 @@ import java.util.Set;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
@@ -35,11 +36,9 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class BrainPediatricsUpdates implements CustomTask {
-    private static final Logger LOG = LoggerFactory.getLogger(BrainPediatricsUpdates.class);
     private static final String EVENT_DATA_FILE = "patches/pediatrics-study-events.conf";
     private static final String WORKFLOW_DATA_FILE = "patches/pediatrics-study-workflows.conf";
     private static final String PDF_DATA_FILE = "patches/pediatrics-study-pdfs.conf";
@@ -78,7 +77,7 @@ public class BrainPediatricsUpdates implements CustomTask {
 
     @Override
     public void run(Handle handle) {
-        LOG.info("Executing BrainPediatricsUpdates task...");
+        log.info("Executing BrainPediatricsUpdates task...");
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid"));
         //String studyGuid = studyDto.getGuid();
         long studyId = studyDto.getId();
@@ -104,7 +103,7 @@ public class BrainPediatricsUpdates implements CustomTask {
                 + "        <a href=\"tel:651-229-3480\" class=\"Link\">651-229-3480</a> or "
                 + "        <a href=\"mailto:info@braincancerproject.org\" class=\"Link\">info@braincancerproject.org</a>.</p>";
         helper.update18nActivitySubtitle(activityDto.getActivityId(), newSubtitle);
-        LOG.info("updated variables for release styling changes");
+        log.info("updated variables for release styling changes");
 
         //update workflow expr for ABOUTYOU TO POSTCONSENT
         long wfTransitionId = helper.findWorkflowTransitionId(studyId, "ABOUTYOU", "POSTCONSENT");
@@ -149,7 +148,7 @@ public class BrainPediatricsUpdates implements CustomTask {
             throw new RuntimeException("Expecting to update 1 Brain event config rows, got :" + rowCount
                     + "  aborting patch ");
         }
-        LOG.info("Disabled {} activity instance creation event.. configId: {} ", rowCount, eventIds);
+        log.info("Disabled {} activity instance creation event.. configId: {} ", rowCount, eventIds);
 
         List<Long> ayEventIds = helper.findStudyActivityCreationEventIds(studyId, "ABOUTYOU", "CONSENT");
         if (eventIds.size() != 1) {
@@ -323,7 +322,7 @@ public class BrainPediatricsUpdates implements CustomTask {
         }
 
         policy = handle.attach(StudyGovernanceDao.class).createPolicy(policy);
-        LOG.info("Created study governance policy with id={}, shouldCreateGovernedUserExprId={}, numAgeOfMajorityRules={}",
+        log.info("Created study governance policy with id={}, shouldCreateGovernedUserExprId={}, numAgeOfMajorityRules={}",
                 policy.getId(), policy.getShouldCreateGovernedUserExpr().getId(), policy.getAgeOfMajorityRules().size());
     }
 
@@ -463,5 +462,4 @@ public class BrainPediatricsUpdates implements CustomTask {
         int updateWorkflowExecOrder(@Bind("idToUpdate") long idToUpdate, @Bind("idToCompare") long idToCompare);
 
     }
-
 }
