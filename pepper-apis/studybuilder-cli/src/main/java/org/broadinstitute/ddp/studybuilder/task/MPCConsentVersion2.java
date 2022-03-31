@@ -6,6 +6,7 @@ import java.time.Instant;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
@@ -33,12 +34,9 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class MPCConsentVersion2 implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(MPCConsentVersion2.class);
     private static final String DATA_FILE = "patches/consent-version2.conf";
     private static final String MPC = "cmi-mpc";
 
@@ -76,15 +74,15 @@ public class MPCConsentVersion2 implements CustomTask {
         PdfBuilder builder = new PdfBuilder(cfgPath.getParent(), cfg, studyDto, adminUser.getId());
 
         String activityCode = dataCfg.getString("activityCode.consent");
-        LOG.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
+        log.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
         revisionConsent("consent", handle, adminUser.getId(), studyDto, activityCode, versionTag, timestamp.toEpochMilli());
 
-        LOG.info("Adding new pdf version for consent");
+        log.info("Adding new pdf version for consent");
         builder.insertPdfConfig(handle, dataCfg.getConfig("consentPdfV2"));
         addNewConsentDataSourceToReleasePdf(handle, studyDto.getId(), dataCfg.getString("releasePdfName"), activityCode, versionTag);
 
         activityCode = dataCfg.getString("activityCode.followupconsent");
-        LOG.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
+        log.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
         revisionConsent("followupconsent", handle, adminUser.getId(), studyDto, activityCode, versionTag, timestamp.toEpochMilli());
 
         //pdf for followup ?? check back !!
@@ -138,7 +136,7 @@ public class MPCConsentVersion2 implements CustomTask {
         long newBlockContentId = jdbiBlockContent.insert(contentBlock.getBlockId(), newTemplateId,
                 contentBlock.getTitleTemplateId(), versionDto.getRevId());
 
-        LOG.info("Created block_content with id={}, blockId={}, bodyTemplateId={} for bodyTemplateText={}",
+        log.info("Created block_content with id={}, blockId={}, bodyTemplateId={} for bodyTemplateText={}",
                 newBlockContentId, contentBlock.getBlockId(), newTemplateId, bodyTemplateText);
     }
 
@@ -163,7 +161,7 @@ public class MPCConsentVersion2 implements CustomTask {
 
         pdfDao.insertDataSource(version.getId(), new PdfActivityDataSource(activityId, activityVersionId));
 
-        LOG.info("Added activity data source with activityCode={} versionTag={} to pdf {} version {}",
+        log.info("Added activity data source with activityCode={} versionTag={} to pdf {} version {}",
                 activityCode, versionTag, info.getConfigName(), version.getVersionTag());
     }
 

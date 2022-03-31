@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.studybuilder.task;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.UserDao;
@@ -31,17 +32,14 @@ import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 
+@Slf4j
 public class CircadiaInstructions implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(CircadiaInstructions.class);
     private static final String DATA_FILE = "patches/dlmo-instructions.conf";
     private static final String STUDY = "circadia";
     private static final String BLOCK_KEY = "blockNew";
@@ -92,7 +90,7 @@ public class CircadiaInstructions implements CustomTask {
         jdbiVersion = handle.attach(JdbiActivityVersion.class);
 
         String activityCode = dataCfg.getString("activityCode");
-        LOG.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
+        log.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
         updateInstructions(handle, adminUser.getId(), studyDto, activityCode, versionTag, timestamp.toEpochMilli());
     }
 

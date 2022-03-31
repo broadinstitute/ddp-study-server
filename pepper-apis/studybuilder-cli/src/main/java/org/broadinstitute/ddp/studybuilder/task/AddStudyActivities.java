@@ -6,6 +6,7 @@ import java.time.Instant;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -14,12 +15,9 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 abstract class AddStudyActivities implements CustomTask {
-    private static final Logger LOG = LoggerFactory.getLogger(AddStudyActivities.class);
-
     protected String studyGuid;
     protected String dataFile;
     protected Config dataCfg;
@@ -52,7 +50,7 @@ abstract class AddStudyActivities implements CustomTask {
     @Override
     public void run(Handle handle) {
 
-        LOG.info("Executing AddStudyActivities task for study : {} ", studyGuid);
+        log.info("Executing AddStudyActivities task for study : {} ", studyGuid);
 
         UserDto adminUser = handle.attach(JdbiUser.class).findByUserGuid(cfg.getString("adminUser.guid"));
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid"));

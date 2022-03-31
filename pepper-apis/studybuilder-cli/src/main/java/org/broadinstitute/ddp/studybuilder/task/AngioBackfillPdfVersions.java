@@ -9,6 +9,7 @@ import java.util.Set;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.PdfDao;
@@ -28,12 +29,9 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class AngioBackfillPdfVersions implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AngioBackfillPdfVersions.class);
     private static final String DATA_FILE = "patches/backfill-pdf-versions.conf";
     private static final String GENERIC_TAG = "tag";
 
@@ -53,7 +51,7 @@ public class AngioBackfillPdfVersions implements CustomTask {
                                       StudyDto studyDto, String activityCode, String versionTag) {
         Map<String, Set<String>> currentTags = version.getAcceptedActivityVersions();
         if (currentTags.containsKey(activityCode) && currentTags.get(activityCode).contains(versionTag)) {
-            LOG.info("Pdf {} {} already have data source for activityCode={} versionTag={}",
+            log.info("Pdf {} {} already have data source for activityCode={} versionTag={}",
                     info.getConfigName(), version.getVersionTag(), activityCode, versionTag);
         } else {
             long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
@@ -62,7 +60,7 @@ public class AngioBackfillPdfVersions implements CustomTask {
                     .map(ActivityVersionDto::getId)
                     .orElseThrow(() -> new DDPException("Could not find activity version with code=" + activityCode + "tag=" + versionTag));
             pdfDao.insertDataSource(version.getId(), new PdfActivityDataSource(activityId, activityVersionId));
-            LOG.info("Added data source to pdf {} {} for activityCode={} versionTag={}",
+            log.info("Added data source to pdf {} {} for activityCode={} versionTag={}",
                     info.getConfigName(), version.getVersionTag(), activityCode, versionTag);
         }
     }
@@ -112,7 +110,7 @@ public class AngioBackfillPdfVersions implements CustomTask {
         // 1. Massage generic tag from database migration into v2, if applicable
         PdfVersion version = versions.get(0);
         if (version.getVersionTag().equals(GENERIC_TAG)) {
-            LOG.info("Found consent pdf version with generic tag, turning it into v2...");
+            log.info("Found consent pdf version with generic tag, turning it into v2...");
             String reason = String.format("Create pdf configuration for study=%s with name=%s version=%s",
                     studyDto.getGuid(), info.getConfigName(), v2Tag);
             helper.rewritePdfVersionTag(version.getId(), v2Tag);
@@ -123,10 +121,10 @@ public class AngioBackfillPdfVersions implements CustomTask {
 
         // 2. Fill in v1 or v2 if it's missing
         if (version.getVersionTag().equals(v1Tag)) {
-            LOG.info("Missing v2, backfilling...");
+            log.info("Missing v2, backfilling...");
             builder.insertPdfConfig(handle, dataCfg.getConfig("consentPdfV2"));
         } else if (version.getVersionTag().equals(v2Tag)) {
-            LOG.info("Missing v1, backfilling...");
+            log.info("Missing v1, backfilling...");
             builder.insertPdfConfig(handle, dataCfg.getConfig("consentPdfV1"));
         } else {
             throw new DDPException("Unexpected version tag for consent pdf: " + version.getVersionTag());
@@ -143,7 +141,7 @@ public class AngioBackfillPdfVersions implements CustomTask {
 
         PdfVersion releaseVersion = releaseVersions.get(0);
         if (releaseVersion.getVersionTag().equals(GENERIC_TAG)) {
-            LOG.info("Found release pdf version with generic tag, turning it into v1...");
+            log.info("Found release pdf version with generic tag, turning it into v1...");
             String reason = String.format("Create pdf configuration for study=%s with name=%s version=%s",
                     studyDto.getGuid(), releaseInfo.getConfigName(), releaseV1Tag);
             helper.rewritePdfVersionTag(releaseVersion.getId(), releaseV1Tag);
@@ -153,9 +151,9 @@ public class AngioBackfillPdfVersions implements CustomTask {
 
         if (!releaseVersion.hasDataSource(PdfDataSourceType.PARTICIPANT)) {
             pdfDao.insertDataSource(releaseVersion.getId(), new PdfDataSource(PdfDataSourceType.PARTICIPANT));
-            LOG.info("Added participant data source to release pdf");
+            log.info("Added participant data source to release pdf");
         } else {
-            LOG.info("Release pdf already have participant data source");
+            log.info("Release pdf already have participant data source");
         }
 
         addActivityDataSource(handle, pdfDao, releaseInfo, releaseVersion, studyDto, releaseCode, releaseV1Tag);
