@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.model.elastic.export.generate;
 
+import org.broadinstitute.dsm.db.ParticipantData;
 import org.broadinstitute.dsm.db.Tissue;
 
 public class SourceGeneratorFactory implements GeneratorFactory {
@@ -10,6 +11,8 @@ public class SourceGeneratorFactory implements GeneratorFactory {
         if (propertyInfo.isCollection()) {
             if (Tissue.class.isAssignableFrom(propertyInfo.getPropertyClass())) {
                 generator = new TissueSourceGenerator();
+            } else if (ParticipantData.class.isAssignableFrom(propertyInfo.getPropertyClass())) {
+                generator = new ParticipantDataSourceGenerator();
             } else {
                 generator = new CollectionSourceGenerator();
             }

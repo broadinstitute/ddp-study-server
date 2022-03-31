@@ -23,19 +23,20 @@ import org.slf4j.LoggerFactory;
 
 public class MedicalRecordUtil {
 
-    public static final String NOT_SPECIFIED = "NOT_SPECIFIED";
     private static final Logger logger = LoggerFactory.getLogger(MedicalRecordUtil.class);
+
+    public static final String NOT_SPECIFIED = "NOT_SPECIFIED";
     private static final String SQL_UPDATE_PARTICIPANT =
             "UPDATE ddp_participant SET last_version = ?, last_version_date = ?, last_changed = ?, changed_by = ? "
                     + "WHERE ddp_participant_id = ? AND ddp_instance_id = ? AND last_version != ?";
     private static final String SQL_INSERT_INSTITUTION =
             "INSERT INTO ddp_institution (ddp_institution_id, type, participant_id, last_changed) VALUES (?, ?, (SELECT participant_id "
-                    + "FROM ddp_participant WHERE ddp_participant_id = ? and ddp_instance_id = ?, ?) ON DUPLICATE "
+                    + "FROM ddp_participant WHERE ddp_participant_id = ? and ddp_instance_id = ?), ?) ON DUPLICATE "
                     + "KEY UPDATE last_changed = ?";
     private static final String SQL_INSERT_INSTITUTION_WITH_REALM_NAME =
             "INSERT INTO ddp_institution (ddp_institution_id, type, participant_id, last_changed) VALUES (?, ?, (SELECT participant_id "
                     + "FROM ddp_participant p, ddp_instance realm WHERE realm.ddp_instance_id = p.ddp_instance_id "
-                    + "AND p.ddp_participant_id = ? and instance_name = ?, ?) ON DUPLICATE "
+                    + "AND p.ddp_participant_id = ? and instance_name = ?), ?) ON DUPLICATE "
                     + "KEY UPDATE last_changed = ?";
     private static final String SQL_INSERT_MEDICAL_RECORD =
             "INSERT INTO ddp_medical_record SET institution_id = ?, last_changed = ?, changed_by = ?";
@@ -49,7 +50,7 @@ public class MedicalRecordUtil {
                     + "AND NOT rec.deleted <=> 1 AND part.participant_id = ? AND inst.type = ?";
 
     public static void writeNewMedicalRecordIntoDb(Connection conn, String query, String institutionId, String ddpParticipantId,
-                                                   String instanceName) {
+                                                   String instanceName, String ddpInstitutionId) {
         Integer mrId = null;
         if (conn != null) {
             try (PreparedStatement insertNewRecord = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
@@ -83,6 +84,8 @@ public class MedicalRecordUtil {
             medicalRecord.setMedicalRecordId(mrId);
             medicalRecord.setDdpParticipantId(ddpParticipantId);
             medicalRecord.setInstitutionId(Long.parseLong(institutionId));
+            medicalRecord.setDdpInstanceId(ddpInstanceDto.getDdpInstanceId());
+            medicalRecord.setDdpInstitutionId(ddpInstitutionId);
 
             UpsertPainlessFacade.of(DBConstants.DDP_MEDICAL_RECORD_ALIAS, medicalRecord, ddpInstanceDto,
                     ESObjectConstants.MEDICAL_RECORDS_ID, ESObjectConstants.DOC_ID, participantGuid).export();
@@ -118,11 +121,12 @@ public class MedicalRecordUtil {
 
     public static void writeInstitutionIntoDb(@NonNull String ddpParticipantId, @NonNull String type, String instanceName) {
         long currentMilli = System.currentTimeMillis();
+        String ddpInstitutionId = java.util.UUID.randomUUID().toString();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement insertInstitution = conn.prepareStatement(SQL_INSERT_INSTITUTION_WITH_REALM_NAME,
                     Statement.RETURN_GENERATED_KEYS)) {
-                insertInstitution.setString(1, java.util.UUID.randomUUID().toString());
+                insertInstitution.setString(1, ddpInstitutionId);
                 insertInstitution.setString(2, type);
                 insertInstitution.setString(3, ddpParticipantId);
                 insertInstitution.setString(4, instanceName);
@@ -134,7 +138,7 @@ public class MedicalRecordUtil {
                     logger.info("Updated institution for participant w/ id " + ddpParticipantId);
                 } else if (result == 1) {
                     logger.info("Inserted new institution for participant w/ id " + ddpParticipantId);
-                    insertInstitution(conn, insertInstitution, ddpParticipantId, instanceName);
+                    insertInstitution(conn, insertInstitution, ddpParticipantId, instanceName, ddpInstitutionId);
                 } else {
                     throw new RuntimeException("Error updating row");
                 }
@@ -165,7 +169,7 @@ public class MedicalRecordUtil {
                     logger.info("Updated institution w/ id " + ddpInstitutionId);
                 } else if (result == 1) {
                     logger.info("Inserted new institution for participant w/ id " + ddpParticipantId);
-                    insertInstitution(conn, insertInstitution, ddpParticipantId, instanceName);
+                    insertInstitution(conn, insertInstitution, ddpParticipantId, instanceName, ddpInstitutionId);
                 } else {
                     throw new RuntimeException("Error updating row");
                 }
@@ -178,14 +182,14 @@ public class MedicalRecordUtil {
     }
 
     private static void insertInstitution(@NonNull Connection conn, @NonNull PreparedStatement insertInstitution,
-                                          @NonNull String ddpParticipantId, String instanceName) {
+                                          @NonNull String ddpParticipantId, String instanceName, String ddpInstitutionId) {
         try (ResultSet rs = insertInstitution.getGeneratedKeys()) {
             if (rs.next()) { //no next if no generated return key -> update of institution timestamp does not return new key
                 String institutionId = rs.getString(1);
                 if (StringUtils.isNotBlank(institutionId)) {
                     logger.info("Added institution w/ id " + institutionId + " for participant w/ id " + ddpParticipantId);
                     MedicalRecordUtil.writeNewMedicalRecordIntoDb(conn, SQL_INSERT_MEDICAL_RECORD, institutionId, ddpParticipantId,
-                            instanceName);
+                            instanceName, ddpInstitutionId);
                 }
             }
         } catch (Exception e) {

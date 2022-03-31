@@ -14,6 +14,10 @@ public abstract class MappingGenerator extends BaseGenerator {
     public static final String TYPE = "type";
     public static final String NESTED = "nested";
     public static final String TYPE_KEYWORD = "keyword";
+    public static final String LOWER_CASE_SORT = "lower_case_sort";
+    public static final String ANALYZER = "analyzer";
+    public static final String CASE_INSENSITIVE_SORT = "case_insensitive_sort";
+    public static final String FIELD_DATA = "fielddata";
     private static final Logger logger = LoggerFactory.getLogger(MappingGenerator.class);
 
     public MappingGenerator(Parser parser, GeneratorPayload generatorPayload) {

@@ -8,7 +8,7 @@ public class DateGreaterSplitterTest {
 
     @Test
     public void getValue() {
-        SplitterStrategy splitter = Operator.DATE_GREATER_THAN_EQUALS.getStrategy();
+        SplitterStrategy splitter = Operator.DATE_GREATER_THAN_EQUALS.getSplitterStrategy();
         String filter = "AND m.mr_received  >= STR_TO_DATE('2000-01-01','%Y-%m-%d')";
         splitter.setFilter(filter);
         Assert.assertEquals("'2000-01-01'", splitter.getValue()[0]);
