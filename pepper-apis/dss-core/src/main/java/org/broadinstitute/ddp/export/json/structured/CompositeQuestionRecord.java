@@ -32,7 +32,7 @@ public final class CompositeQuestionRecord extends QuestionRecord {
                     if (ansType == QuestionType.DATE) {
                         DateValue ansValue = (DateValue) ans.getValue();
                         row.add(ansValue == null ? null
-                                : String.format("%04d-%02d-%02d", ansValue.getYear(), ansValue.getMonth(), ansValue.getDay()));
+                                : String.format("%04d/%02d/%02d", ansValue.getYear(), ansValue.getMonth(), ansValue.getDay()));
                     } else if (ansType == QuestionType.PICKLIST) {
                         List<SelectedPicklistOption> selected = ((PicklistAnswer) ans).getValue();
                         if (selected == null) {

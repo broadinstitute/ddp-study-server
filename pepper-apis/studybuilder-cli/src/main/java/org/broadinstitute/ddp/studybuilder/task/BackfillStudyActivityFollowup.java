@@ -5,17 +5,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class BackfillStudyActivityFollowup implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(BackfillStudyActivityFollowup.class);
     private Config cfg;
     private Map<String, String> studyActivtyCodes = new HashMap<>();
 
@@ -50,7 +48,7 @@ public class BackfillStudyActivityFollowup implements CustomTask {
                 throw new DDPException("Expected to update is_followup for 1 row with studyGuid="
                         + studyGuid + "actvivityCode = " + activityCode + " but updated " + numUpdated);
             } else {
-                LOG.info(" Done: updated 1 row");
+                log.info(" Done: updated 1 row");
             }
         }
     }

@@ -20,19 +20,19 @@ public class BaseQueryBuilderTest {
         collectionQueryBuilder.operator = operator;
         collectionQueryBuilder.payload = payload;
 
-        NestedQueryBuilder queryBuilder = (NestedQueryBuilder) collectionQueryBuilder.buildQueryBuilder();
+        NestedQueryBuilder queryBuilder = (NestedQueryBuilder) collectionQueryBuilder.buildEachQuery(operator, payload);
         assertTrue(queryBuilder.query() instanceof MatchQueryBuilder);
 
         operator = Operator.LIKE;
         collectionQueryBuilder.operator = operator;
 
-        queryBuilder = (NestedQueryBuilder) collectionQueryBuilder.buildQueryBuilder();
+        queryBuilder = (NestedQueryBuilder) collectionQueryBuilder.buildEachQuery(operator, payload);
         assertTrue(queryBuilder.query() instanceof MatchQueryBuilder);
 
 
         operator = Operator.GREATER_THAN_EQUALS;
         collectionQueryBuilder.operator = operator;
-        queryBuilder = (NestedQueryBuilder) collectionQueryBuilder.buildQueryBuilder();
+        queryBuilder = (NestedQueryBuilder) collectionQueryBuilder.buildEachQuery(operator, payload);
 
         assertTrue(queryBuilder.query() instanceof RangeQueryBuilder);
     }

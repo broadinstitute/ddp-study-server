@@ -190,7 +190,6 @@ public class MedicalRecordUtil {
                     logger.info("Added institution w/ id " + institutionId + " for participant w/ id " + ddpParticipantId);
                     MedicalRecordUtil.writeNewMedicalRecordIntoDb(conn, SQL_INSERT_MEDICAL_RECORD, institutionId, ddpParticipantId,
                             instanceName, ddpInstitutionId);
-                    //TODO
                 }
             }
         } catch (Exception e) {

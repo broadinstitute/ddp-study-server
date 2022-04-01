@@ -279,6 +279,7 @@ public class KitRequestShipping extends KitRequest {
     private Boolean careEvolve;
     @ColumnName(DBConstants.UPLOAD_REASON)
     private String uploadReason;
+    @ColumnName(DBConstants.DDP_INSTANCE_ID)
     private long ddpInstanceId;
 
     public KitRequestShipping() {
@@ -609,6 +610,8 @@ public class KitRequestShipping extends KitRequest {
                 if (StringUtils.isBlank(ddpInstance.getParticipantIndexES())) {
                     throw new RuntimeException("No participant index setup in ddp_instance table for " + ddpInstance.getName());
                 }
+                Map<String, Map<String, Object>> participantsESData =
+                        ElasticSearchUtil.getDDPParticipantsFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES());
 
                 for (String key : kitRequests.keySet()) {
                     List<KitRequestShipping> kitRequest = kitRequests.get(key);
@@ -617,9 +620,6 @@ public class KitRequestShipping extends KitRequest {
 
                     for (KitRequestShipping kit : kitRequest) {
                         if (StringUtils.isNotBlank(kit.getRealm())) {
-
-                            Map<String, Map<String, Object>> participantsESData =
-                                    ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance, ElasticSearchUtil.BY_GUID + kit.getParticipantId());
                             if (participantsESData != null && !participantsESData.isEmpty()) {
                                 kit.setPreferredLanguage(ElasticSearchUtil.getPreferredLanguage(participantsESData, key));
                             }

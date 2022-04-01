@@ -40,8 +40,8 @@ import org.slf4j.LoggerFactory;
 public class OncHistoryDetail {
 
     public static final String SQL_SELECT_ONC_HISTORY_DETAIL =
-            "SELECT p.ddp_participant_id, p.participant_id, oD.onc_history_detail_id, oD.request, oD.deleted, oD.fax_sent, "
-                    + "oD.tissue_received, oD.medical_record_id, oD.date_px, oD.type_px, "
+            "SELECT p.ddp_participant_id, p.ddp_instance_id, p.participant_id, oD.onc_history_detail_id, oD.request, oD.deleted, "
+                    + "oD.fax_sent, oD.tissue_received, oD.medical_record_id, oD.date_px, oD.type_px, "
                     + "oD.location_px, oD.histology, oD.accession_number, oD.facility, oD.phone, oD.fax, oD.notes, "
                     + "oD.additional_values_json, oD.request, oD.fax_sent, oD.fax_sent_by, oD.fax_confirmed, oD.fax_sent_2, "
                     + "oD.fax_sent_2_by, oD.fax_confirmed_2, oD.fax_sent_3, "
@@ -51,7 +51,7 @@ public class OncHistoryDetail {
                     + "collaborator_sample_id, block_sent, scrolls_received, sk_id, sm_id, "
                     + "sent_gp, first_sm_id, additional_tissue_value_json, expected_return, return_date, return_fedex_id, "
                     + "shl_work_number, tumor_percentage, tissue_sequence, "
-                    + " scrolls_count, uss_count, h_e_count, blocks_count, sm.sm_id_value, sm.sm_id_type_id, sm.sm_id_pk, sm.deleted, "
+                    + "scrolls_count, uss_count, h_e_count, blocks_count, sm.sm_id_value, sm.sm_id_type_id, sm.sm_id_pk, sm.deleted, "
                     + "sm.tissue_id, smt.sm_id_type FROM ddp_onc_history_detail oD "
                     + "LEFT JOIN ddp_medical_record m on (oD.medical_record_id = m.medical_record_id "
                     + "AND NOT oD.deleted <=> 1 AND NOT m.deleted <=> 1) "
@@ -192,6 +192,7 @@ public class OncHistoryDetail {
     private String participantId;
     private String ddpParticipantId;
     private List<Tissue> tissues;
+    @ColumnName(DBConstants.DDP_INSTANCE_ID)
     private long ddpInstanceId;
 
     public OncHistoryDetail() {
@@ -238,7 +239,8 @@ public class OncHistoryDetail {
                             String request, String faxSent, String faxSentBy, String faxConfirmed, String faxSent2, String faxSent2By,
                             String faxConfirmed2, String faxSent3, String faxSent3By, String faxConfirmed3, String tissueReceived,
                             String gender, String additionalValuesJson, List<Tissue> tissues, String tissueProblemOption,
-                            String destructionPolicy, boolean unableObtainTissue, String participantId, String ddpParticipantId) {
+                            String destructionPolicy, boolean unableObtainTissue, String participantId, String ddpParticipantId,
+                            long ddpInstanceId) {
         this.oncHistoryDetailId = oncHistoryDetailId;
         this.medicalRecordId = medicalRecordId;
         this.datePx = datePx;
@@ -269,6 +271,7 @@ public class OncHistoryDetail {
         this.unableObtainTissue = unableObtainTissue;
         this.participantId = participantId;
         this.ddpParticipantId = ddpParticipantId;
+        this.ddpInstanceId = ddpInstanceId;
     }
 
     public static OncHistoryDetail getOncHistoryDetail(@NonNull ResultSet rs) throws SQLException {
@@ -294,7 +297,7 @@ public class OncHistoryDetail {
                         DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ADDITIONAL_VALUES_JSON),
                         tissues, rs.getString(DBConstants.TISSUE_PROBLEM_OPTION), rs.getString(DBConstants.DESTRUCTION_POLICY),
                         rs.getBoolean(DBConstants.UNABLE_OBTAIN_TISSUE), rs.getString(DBConstants.PARTICIPANT_ID),
-                        rs.getString(DBConstants.DDP_PARTICIPANT_ID));
+                        rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getLong(DBConstants.DDP_INSTANCE_ID));
         return oncHistoryDetail;
     }
 

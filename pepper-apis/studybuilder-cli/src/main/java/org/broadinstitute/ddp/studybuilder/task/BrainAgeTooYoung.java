@@ -7,6 +7,7 @@ import java.util.List;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.ValidationDao;
@@ -22,12 +23,9 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class BrainAgeTooYoung implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(BrainAgeTooYoung.class);
     private static final String DATA_FILE = "patches/age-too-young-validation.conf";
 
     private Config dataCfg;
@@ -67,7 +65,7 @@ public class BrainAgeTooYoung implements CustomTask {
 
         AgeRangeRuleDef rule = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("ageRangeRule")), AgeRangeRuleDef.class);
         handle.attach(ValidationDao.class).insert(questionDto.getId(), rule, questionDto.getRevisionId());
-        LOG.info("Inserted age-range validation rule with id={} questionStableId={}", rule.getRuleId(), questionDto.getStableId());
+        log.info("Inserted age-range validation rule with id={} questionStableId={}", rule.getRuleId(), questionDto.getStableId());
     }
 
     private void updateConsentReminderEmailEvents(Handle handle, StudyDto studyDto) {
