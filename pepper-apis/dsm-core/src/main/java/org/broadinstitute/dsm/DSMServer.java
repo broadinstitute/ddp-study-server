@@ -41,7 +41,6 @@ import com.google.pubsub.v1.PubsubMessage;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
@@ -150,13 +149,14 @@ import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.impl.matchers.KeyMatcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 import spark.Spark;
 
-@Slf4j
 public class DSMServer {
 
     public static final String CONFIG = "config";
@@ -175,6 +175,7 @@ public class DSMServer {
     public static final String GCP_PATH_TO_DSS_TO_DSM_SUB = "pubsub.dss_to_dsm_subscription";
     public static final String GCP_PATH_TO_DSM_TO_DSS_TOPIC = "pubsub.dsm_to_dss_topic";
     public static final String GCP_PATH_TO_DSM_TASKS_SUB = "pubsub.dsm_tasks_subscription";
+    private static final Logger logger = LoggerFactory.getLogger(DSMServer.class);
     private static final String API_ROOT = "/ddp/";
     private static final String UI_ROOT = "/ui/";
     public static final String SIGNER = "org.broadinstitute.kdux";
@@ -194,14 +195,14 @@ public class DSMServer {
     public static void main(String[] args) {
         // immediately lock isReady so that ah/start route will wait
         synchronized (isReady) {
-            log.info("Starting up DSM");
+            logger.info("Starting up DSM");
             //config without secrets
             Config cfg = ConfigFactory.load();
             //secrets from vault in a config file
             File vaultConfigInCwd = new File(VAULT_DOT_CONF);
             File vaultConfigInDeployDir = new File(GAE_DEPLOY_DIR, VAULT_DOT_CONF);
             File vaultConfig = vaultConfigInCwd.exists() ? vaultConfigInCwd : vaultConfigInDeployDir;
-            log.info("Reading config values from " + vaultConfig.getAbsolutePath());
+            logger.info("Reading config values from " + vaultConfig.getAbsolutePath());
             cfg = cfg.withFallback(ConfigFactory.parseFile(vaultConfig));
 
             if (cfg.hasPath(GCP_PATH_TO_SERVICE_ACCOUNT)) {
@@ -220,7 +221,7 @@ public class DSMServer {
             DSMServer server = new DSMServer();
             server.configureServer(cfg);
             isReady.set(true);
-            log.info("DSM Startup Complete");
+            logger.info("DSM Startup Complete");
         }
     }
 
@@ -317,7 +318,7 @@ public class DSMServer {
                     config.getString(ApplicationConfigConstants.QUARTZ_CRON_EXPRESSION_FOR_EXTERNAL_SHIPPER_ADDITIONAL));
         }
 
-        log.info(cronExpression);
+        logger.info(cronExpression);
 
         //create trigger
         TriggerKey triggerKey = new TriggerKey(identity + "_TRIGGER", "DDP");
@@ -407,11 +408,11 @@ public class DSMServer {
         // Block until isReady is available, with an optional timeout to prevent
         // instance for sitting around too long in a nonresponsive state.  There is a
         // judgement call to be made here to allow for lengthy liquibase migrations during boot.
-        log.info("Will wait for at most {} seconds for boot before GAE termination", bootTimeoutSeconds);
+        logger.info("Will wait for at most {} seconds for boot before GAE termination", bootTimeoutSeconds);
         get("/_ah/start", new ReadinessRoute(bootTimeoutSeconds));
 
         get(RoutePath.GAE.STOP_ENDPOINT, (request, response) -> {
-            log.info("Received GAE stop request [{}]", RoutePath.GAE.STOP_ENDPOINT);
+            logger.info("Received GAE stop request [{}]", RoutePath.GAE.STOP_ENDPOINT);
             //flush out any pending GA events
             GoogleAnalyticsMetricsTracker.getInstance().flushOutMetrics();
 
@@ -449,8 +450,8 @@ public class DSMServer {
     }
 
     protected void configureServer(@NonNull Config config) {
-        log.info("Property source: " + config.getString("portal.environment"));
-        log.info("Configuring the server...");
+        logger.info("Property source: " + config.getString("portal.environment"));
+        logger.info("Configuring the server...");
         threadPool(-1, -1, 60000);
         int port = config.getInt("portal.port");
         String appEnginePort = System.getenv("PORT");
@@ -464,7 +465,7 @@ public class DSMServer {
             bootTimeoutSeconds = config.getInt(ApplicationConfigConstants.BOOT_TIMEOUT);
         }
 
-        log.info("Using port {}", port);
+        logger.info("Using port {}", port);
         port(port);
 
         registerAppEngineStartupCallback(bootTimeoutSeconds, config);
@@ -482,7 +483,7 @@ public class DSMServer {
     }
 
     protected void setupDB(@NonNull Config config) {
-        log.info("Setup the DB...");
+        logger.info("Setup the DB...");
 
         int maxConnections = config.getInt("portal.maxConnections");
         String dbUrl = config.getString("portal.dbUrl");
@@ -490,16 +491,16 @@ public class DSMServer {
         //setup the mysql transaction/connection utility
         TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, maxConnections, dbUrl));
 
-        log.info("Running DB update...");
+        logger.info("Running DB update...");
 
         LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.DSM);
         LiquibaseUtil.releaseResources();
 
-        log.info("DB setup complete.");
+        logger.info("DB setup complete.");
     }
 
     protected void setupCustomRouting(@NonNull Config cfg) {
-        log.info("Setup DSM custom routes...");
+        logger.info("Setup DSM custom routes...");
 
         //BSP route
         String bspSecret = cfg.getString(ApplicationConfigConstants.BSP_SECRET);
@@ -588,7 +589,7 @@ public class DSMServer {
                     Auth0Util.verifyAuth0Token(tokenFromHeader, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN), ddpSecret, SIGNER,
                             ddpSecretEncoded);
             if (validToken.isEmpty()) {
-                log.error(req.pathInfo() + " was called without valid token");
+                logger.error(req.pathInfo() + " was called without valid token");
                 halt(401, SecurityUtil.ResultType.AUTHENTICATION_ERROR.toString());
             }
         });
@@ -653,13 +654,13 @@ public class DSMServer {
         get(UI_ROOT + "/heapDump", new Route() {
             @Override
             public Object handle(Request request, Response response) throws Exception {
-                log.info("Received request to create java heap dump");
+                logger.info("Received request to create java heap dump");
                 String gcpName = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
                 heapDumper.dumpHeapToBucket(gcpName + "_dsm_heapdumps");
                 return null;
             }
         }, new JsonTransformer());
-        log.info("Finished setting up DSM custom routes and jobs...");
+        logger.info("Finished setting up DSM custom routes and jobs...");
     }
 
     private void setupPubSub(@NonNull Config cfg, NotificationUtil notificationUtil) {
@@ -668,7 +669,7 @@ public class DSMServer {
         String dsmToDssSubscriptionId = cfg.getString(GCP_PATH_TO_DSS_TO_DSM_SUB);
         String dsmTasksSubscriptionId = cfg.getString(GCP_PATH_TO_DSM_TASKS_SUB);
 
-        log.info("Setting up pubsub for {}/{}", projectId, subscriptionId);
+        logger.info("Setting up pubsub for {}/{}", projectId, subscriptionId);
 
         try {
             // Instantiate an asynchronous message receiver.
@@ -677,13 +678,13 @@ public class DSMServer {
                 try {
                     TransactionWrapper.inTransaction(conn -> {
                         PubSubLookUp.processCovidTestResults(conn, message, notificationUtil);
-                        log.info("Processing the message finished");
+                        logger.info("Processing the message finished");
                         consumer.ack();
                         return null;
                     });
 
                 } catch (Exception ex) {
-                    log.info("about to nack the message", ex);
+                    logger.info("about to nack the message", ex);
                     consumer.nack();
                     ex.printStackTrace();
                 }
@@ -696,7 +697,7 @@ public class DSMServer {
                     .setMaxAckExtensionPeriod(org.threeten.bp.Duration.ofSeconds(120)).build();
             try {
                 subscriber.startAsync().awaitRunning(1L, TimeUnit.MINUTES);
-                log.info("Started pubsub subscription receiver for {}", subscriptionId);
+                logger.info("Started pubsub subscription receiver for {}", subscriptionId);
             } catch (TimeoutException e) {
                 throw new RuntimeException("Timed out while starting pubsub subscription " + subscriptionId, e);
             }
@@ -704,7 +705,7 @@ public class DSMServer {
             throw new RuntimeException("Failed to get results from pubsub ", e);
         }
 
-        log.info("Setting up pubsub for {}/{}", projectId, dsmToDssSubscriptionId);
+        logger.info("Setting up pubsub for {}/{}", projectId, dsmToDssSubscriptionId);
 
         try {
             PubSubResultMessageSubscription.dssToDsmSubscriber(projectId, dsmToDssSubscriptionId);
@@ -718,7 +719,7 @@ public class DSMServer {
             e.printStackTrace();
         }
 
-        log.info("Pubsub setup complete");
+        logger.info("Pubsub setup complete");
     }
 
     private void setupShippingRoutes(@NonNull NotificationUtil notificationUtil, @NonNull Auth0Util auth0Util, @NonNull UserUtil userUtil,
@@ -896,7 +897,7 @@ public class DSMServer {
                            @NonNull EventUtil eventUtil) {
         String schedulerName = null;
         if (cfg.getBoolean(ApplicationConfigConstants.QUARTZ_ENABLE_JOBS)) {
-            log.info("Setting up jobs");
+            logger.info("Setting up jobs");
             try {
                 Scheduler scheduler = new StdSchedulerFactory().getScheduler();
                 schedulerName = scheduler.getSchedulerName();
@@ -927,10 +928,10 @@ public class DSMServer {
                         cfg);
 
 
-                log.info("Setup Job Scheduler...");
+                logger.info("Setup Job Scheduler...");
                 try {
                     scheduler.start();
-                    log.info("Job Scheduler setup complete.");
+                    logger.info("Job Scheduler setup complete.");
                 } catch (Exception ex) {
                     throw new RuntimeException("Unable to setup Job Scheduler.", ex);
                 }
@@ -945,7 +946,7 @@ public class DSMServer {
         if (config == null) {
             throw new IllegalArgumentException("Config should be provided");
         } else {
-            log.info("Setup error notifications...");
+            logger.info("Setup error notifications...");
             if (config.hasPath("slack.hook") && config.hasPath("slack.channel")) {
                 String appEnv = config.getString("portal.environment");
                 String slackHookUrlString = config.getString("slack.hook");
@@ -959,10 +960,10 @@ public class DSMServer {
                     throw new IllegalArgumentException("Could not parse " + slackHookUrlString + "\n" + e);
                 }
                 SlackAppender.configure(schedulerName, appEnv, slackHookUrl, slackChannel, gcpServiceName, rootPackage);
-                log.info("Error notification setup complete. If log4j.xml is configured, notifications will be sent to " + slackChannel
+                logger.info("Error notification setup complete. If log4j.xml is configured, notifications will be sent to " + slackChannel
                         + ".");
             } else {
-                log.warn("Skipping error notification setup.");
+                logger.warn("Skipping error notification setup.");
             }
 
         }
@@ -990,7 +991,7 @@ public class DSMServer {
 
             waitForBoot.start();
             waitForBoot.join(bootTimeoutSeconds * 1000);
-            log.info("Responding to startup route after {}ms delay with {}", Instant.now().toEpochMilli() - bootTime, status.get());
+            logger.info("Responding to startup route after {}ms delay with {}", Instant.now().toEpochMilli() - bootTime, status.get());
             res.status(status.get());
             return "";
         }
