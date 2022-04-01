@@ -114,7 +114,6 @@ public class ElasticSearchUtil {
     public static final String PROPERTIES = "properties";
     public static final byte OUTER_FIELD_INDEX = 0;
     public static final byte INNER_FIELD_INDEX = 1;
-    public static final String STABLE_ID = "stableId";
     public static final int MAX_RESULT_SIZE = 10000;
     public static final int DEFAULT_FROM = 0;
     private static final Logger logger = LoggerFactory.getLogger(DDPRequestUtil.class);

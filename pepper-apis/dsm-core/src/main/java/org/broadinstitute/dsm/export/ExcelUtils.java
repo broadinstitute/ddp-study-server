@@ -43,17 +43,15 @@ public class ExcelUtils {
         String path = currDir.getAbsolutePath();
         String strDate = getFormattedDate();
         String fileLocation = String.format("%sParticipant-%s.xlsx", path.substring(0, path.length() - 1), strDate);
-        try (FileOutputStream outputStream = new FileOutputStream(fileLocation)){
+        try (FileOutputStream outputStream = new FileOutputStream(fileLocation); ServletOutputStream os = response.raw().getOutputStream()){
             workbook.write(outputStream);
-        }
-        File file = new File(fileLocation);
-        response.raw().setContentType("application/octet-stream");
-        response.raw().setHeader("Content-Disposition", "attachment; filename=" + file.getName());
-        byte[] encoded = Files.readAllBytes(Paths.get(fileLocation));
-        try(ServletOutputStream os = response.raw().getOutputStream()) {
+            File file = new File(fileLocation);
+            response.raw().setContentType("application/octet-stream");
+            response.raw().setHeader("Content-Disposition", "attachment; filename=" + file.getName());
+            byte[] encoded = Files.readAllBytes(Paths.get(fileLocation));
             os.write(encoded);
+            Files.deleteIfExists(file.toPath());
         }
-        Files.deleteIfExists(file.toPath());
     }
 
     private static void createRecords(Sheet sheet, int currentRow, List<List<String>> rowValues) {
