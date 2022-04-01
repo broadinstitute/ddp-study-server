@@ -28,7 +28,7 @@ public class ActivityTypeSortTest {
                 .build();
         Sort sort = new ActivityTypeSort(sortBy, SortTest.mockFieldTypeExractorByFieldAndType("REGISTRATION_GENDER", "text"));
         String fieldName = sort.buildFieldName();
-        assertEquals("activities.questionsAnswers.REGISTRATION_GENDER.keyword", fieldName);
+        assertEquals("activities.questionsAnswers.REGISTRATION_GENDER.lower_case_sort", fieldName);
     }
 
     @Test
