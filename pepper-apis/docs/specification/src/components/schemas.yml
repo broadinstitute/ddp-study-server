@@ -1628,17 +1628,24 @@ Question.Boolean:
       - answers
       - trueContent
       - falseContent
+      - renderMode
     properties:
       questionType:
         type: string
         default: BOOLEAN
         enum:
           - BOOLEAN
-      trueContent:
+      renderMode:
         type: string
+        default: RADIO_BUTTONS
+        enum:
+          - CHECKBOX
+          - RADIO_BUTTONS
+      trueContent:
+        type: string | null (for CHECKBOX renderMode)
         example: 'Yes'
       falseContent:
-        type: string
+        type: string | null (for CHECKBOX renderMode)
         example: 'NO'
       answers:
         type: array
