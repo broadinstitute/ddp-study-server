@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
 import com.typesafe.config.Config;
-import org.broadinstitute.ddp.studybuilder.task.osteoupdates.OsteoDdp7601;
 import org.jdbi.v3.core.Handle;
 
 import java.nio.file.Path;
