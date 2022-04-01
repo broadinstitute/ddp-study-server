@@ -10,25 +10,23 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import javax.crypto.Cipher;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Utility class that encrypts API keys.
  */
+@Slf4j
 public class KeySignerUtil {
-
     public static final String RSA = "RSA";
     public static final String RSA_CIPHER = "RSA/ECB/PKCS1Padding";
-    private static final Logger LOG = LoggerFactory.getLogger(KeySignerUtil.class);
 
     static {
         int providerReturn = Security.addProvider(new BouncyCastleProvider());
-        LOG.info("BouncyCastle provider added with " + providerReturn + " returned");
+        log.info("BouncyCastle provider added with " + providerReturn + " returned");
     }
 
     /**
@@ -36,7 +34,7 @@ public class KeySignerUtil {
      * public key or private key file contents).
      */
     public static PemObject parsePemObject(String pemData) throws IOException {
-        PemObject pemObject = null;
+        PemObject pemObject;
         try (PemReader pemReader = new PemReader(new StringReader(pemData))) {
             pemObject = pemReader.readPemObject();
             if (pemObject == null) {
@@ -51,7 +49,7 @@ public class KeySignerUtil {
      * using RSA.  Returned String is base64 encoded.
      */
     public String encryptAndBase64(String plainText, String publicKeyPem) {
-        String encryptedAndBase64Encoded = null;
+        String encryptedAndBase64Encoded;
         try {
             X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(parsePemObject(publicKeyPem).getContent());
             Cipher cipher = Cipher.getInstance(RSA_CIPHER);
@@ -70,16 +68,14 @@ public class KeySignerUtil {
      * private key.
      */
     public byte[] decryptFromBase64(String base64CipherText, String privateKeyPem) {
-        byte[] decrypted = null;
         try {
             PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(parsePemObject(privateKeyPem).getContent());
             Cipher cipher = Cipher.getInstance(RSA_CIPHER);
             PrivateKey privateKey = KeyFactory.getInstance(RSA).generatePrivate(privateKeySpec);
             cipher.init(Cipher.DECRYPT_MODE, privateKey);
-            decrypted = cipher.doFinal(Base64.decodeBase64(base64CipherText));
+            return cipher.doFinal(Base64.decodeBase64(base64CipherText));
         } catch (Exception e) {
             throw new RuntimeException("Decryption failed", e);
         }
-        return decrypted;
     }
 }

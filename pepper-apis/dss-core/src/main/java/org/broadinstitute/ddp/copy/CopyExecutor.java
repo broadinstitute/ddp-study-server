@@ -10,6 +10,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
@@ -24,13 +25,9 @@ import org.broadinstitute.ddp.model.copy.CopyConfiguration;
 import org.broadinstitute.ddp.model.copy.CopyLocation;
 import org.broadinstitute.ddp.model.copy.CopyLocationType;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class CopyExecutor {
-
-    private static final Logger LOG = LoggerFactory.getLogger(CopyExecutor.class);
-
     private Long triggeredInstanceId;
 
     public CopyExecutor withTriggeredInstanceId(long instanceId) {
@@ -96,7 +93,7 @@ public class CopyExecutor {
         var instanceDao = handle.attach(ActivityInstanceDao.class);
         Long previousInstanceId = instanceDao.findMostRecentInstanceBeforeCurrent(triggeredInstanceId).orElse(null);
         if (previousInstanceId == null) {
-            LOG.info("No previous instance for triggered instance {} to copy answers from", triggeredInstanceId);
+            log.info("No previous instance for triggered instance {} to copy answers from", triggeredInstanceId);
             return;
         }
 
@@ -112,7 +109,7 @@ public class CopyExecutor {
 
         Map<String, QuestionDto> questionDtos = retrievePreviousInstanceQuestionDtos(handle, config, previousInstance);
         if (questionDtos.isEmpty()) {
-            LOG.info("Previous instance {} does not have any answers to copy from", previousInstance.getGuid());
+            log.info("Previous instance {} does not have any answers to copy from", previousInstance.getGuid());
             return;
         }
 
@@ -135,7 +132,7 @@ public class CopyExecutor {
             numCopied++;
         }
 
-        LOG.info("Copied answers for {} questions from previous instance {} to instance {}",
+        log.info("Copied answers for {} questions from previous instance {} to instance {}",
                 numCopied, previousInstance.getGuid(), currentInstance.getGuid());
     }
 
@@ -164,7 +161,7 @@ public class CopyExecutor {
             // If config has previous answer questions specified, then filter down the list to only those
             // that we want to copy over. This can be done using a set intersection operation.
             questionStableIds.retainAll(specifiedStableIds);
-            LOG.info("Filtered previous instance answers to only questions specified in copy config {}", config.getId());
+            log.info("Filtered previous instance answers to only questions specified in copy config {}", config.getId());
         }
 
         if (questionStableIds.isEmpty()) {

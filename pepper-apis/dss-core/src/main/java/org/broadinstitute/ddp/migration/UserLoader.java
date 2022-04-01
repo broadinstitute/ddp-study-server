@@ -8,6 +8,7 @@ import java.util.Map;
 import com.auth0.exception.Auth0Exception;
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
@@ -25,12 +26,9 @@ import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 class UserLoader {
-
-    private static final Logger LOG = LoggerFactory.getLogger(UserLoader.class);
     private static final SecureRandom PW_RANDOMIZER = NanoIdUtils.DEFAULT_NUMBER_GENERATOR;
     private static final String PW_SPECIALS = "!@#$%^&*";
     private static final char[] PW_NUMS = "0123456789".toCharArray();
@@ -56,7 +54,7 @@ class UserLoader {
                 .attach(JdbiClient.class)
                 .getClientByAuth0ClientAndDomain(auth0ClientId, auth0Domain)
                 .orElseThrow(() -> new LoaderException("Could not load client " + auth0ClientId)));
-        LOG.info("Using auth0 client: id={}, tenantId={}, domain={}, clientId={}",
+        log.info("Using auth0 client: id={}, tenantId={}, domain={}, clientId={}",
                 clientDto.getId(), clientDto.getAuth0TenantId(), clientDto.getAuth0Domain(), clientDto.getAuth0ClientId());
         return clientDto;
     }
@@ -114,7 +112,7 @@ class UserLoader {
         if (result.hasThrown()) {
             throw new LoaderException("Error while creating auth0 account for email: " + email, result.getThrown());
         } else if (result.hasError()) {
-            LOG.error("Received auth0 response: status={}", result.getStatusCode(), result.getError());
+            log.error("Received auth0 response: status={}", result.getStatusCode(), result.getError());
             throw new LoaderException("Unable to create auth0 account for email: " + email);
         } else {
             return result.getBody();
@@ -135,7 +133,7 @@ class UserLoader {
         if (result.hasThrown()) {
             throw new LoaderException("Error while updating auth0 user metadata for: " + auth0User.getId(), result.getThrown());
         } else if (result.hasError()) {
-            LOG.error("Received auth0 response: status={}", result.getStatusCode(), result.getError());
+            log.error("Received auth0 response: status={}", result.getStatusCode(), result.getError());
             throw new LoaderException("Unable to update auth0 user metadata for: " + auth0User.getId());
         } else {
             return true;

@@ -16,20 +16,16 @@ import org.junit.Test;
 
 import org.mockito.Mockito;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Tests methods updating the user login data in Auth0
  * Big enough to reside in its own file
  */
 public class UpdateUserLoginDataUtilTest extends TxnAwareBaseTest {
-    private static final Logger LOG = LoggerFactory.getLogger(UpdateUserLoginDataUtilTest.class);
     private static TestDataSetupUtil.GeneratedTestData testData;
 
     @BeforeClass
     public static void setupClass() {
-        testData = TransactionWrapper.withTxn(handle -> TestDataSetupUtil.generateBasicUserTestData(handle));
+        testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
     }
 
     public UserDto convertTestingUserToDto(Auth0Util.TestingUser testingUser) {
@@ -180,11 +176,5 @@ public class UpdateUserLoginDataUtilTest extends TxnAwareBaseTest {
     private static class TestData {
         public static final String NEW_EMAIL = "aaa@bbb.com";
         public static final String NEW_PASSWORD = "fgghsdfghka";
-        public static final String AUTH0_TOKEN = "aabbcc";
-        public static final String NONEXISTENT_USER_GUID = "dfhadsffasdfh";
-        public static final Auth0CallResponse SUCCESS_RESPONSE = new Auth0CallResponse(
-                200,
-                null
-        );
     }
 }

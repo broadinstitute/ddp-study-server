@@ -7,6 +7,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -22,8 +26,6 @@ import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.transformers.DateTimeFormatUtils;
 import org.broadinstitute.ddp.util.ResponseUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -33,28 +35,25 @@ import spark.Route;
  * containing information such as date of birth, list of institutions and samples he/she
  * consented to etc.
  */
+@Slf4j
+@AllArgsConstructor
 public class GetDsmMedicalRecordRoute implements Route {
-    private static final Logger logger = LoggerFactory.getLogger(GetDsmMedicalRecordRoute.class);
     private MedicalRecordService medicalRecordService;
-
-    public GetDsmMedicalRecordRoute(MedicalRecordService medicalRecordService) {
-        this.medicalRecordService = medicalRecordService;
-    }
 
     @Override
     public Participant handle(Request request, Response response) {
         return TransactionWrapper.withTxn(handle -> {
-            logger.info("Starting GetDsmMedicalRecordRoute.handle");
-            logger.info("Checking Study and Participant GUIDs");
+            log.info("Starting GetDsmMedicalRecordRoute.handle");
+            log.info("Checking Study and Participant GUIDs");
             String studyGuid = request.params(STUDY_GUID);
             if (studyGuid == null) {
-                logger.error("Study GUID not found in request");
+                log.error("Study GUID not found in request");
                 throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST,
                         new ApiError(ErrorCodes.MISSING_STUDY_GUID, "Study GUID is missing"));
             }
             String userGuidOrAltpid = request.params(USER_GUID);
             if (userGuidOrAltpid == null) {
-                logger.error("Participant GUID not found in request");
+                log.error("Participant GUID not found in request");
                 throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST,
                         new ApiError(ErrorCodes.MISSING_USER_GUID, "User GUID is missing"));
             }
@@ -92,7 +91,7 @@ public class GetDsmMedicalRecordRoute implements Route {
 
             participant.setParticipantGUID(userGuidOrAltpid);
 
-            logger.info("Retrieving consent summaries and checking for Blood and Tissue consent");
+            log.info("Retrieving consent summaries and checking for Blood and Tissue consent");
 
             // Converting booleans to ints because it's the format DSM expects
             MedicalRecordService.ParticipantConsents consents = medicalRecordService.fetchBloodAndTissueConsents(
@@ -104,11 +103,11 @@ public class GetDsmMedicalRecordRoute implements Route {
                     ? DsmConsentElection.ELECTION_SELECTED.getNumberValue() : DsmConsentElection.ELECTION_NOT_SELECTED.getNumberValue();
             participant.setHasConsentedToTissueSample(hasConsentedToTissueSample);
 
-            logger.info("Retrieving Institutions");
+            log.info("Retrieving Institutions");
             List<Institution> institutions = handle.attach(JdbiMedicalProvider.class)
                     .getAllByUserGuidStudyGuid(dsmParticipant.getUserGuid(), studyGuid)
                     .stream()
-                    .map(dto -> new Institution(dto))
+                    .map(Institution::new)
                     .collect(Collectors.toList());
 
             participant.setInstitutionList(institutions);
@@ -117,18 +116,12 @@ public class GetDsmMedicalRecordRoute implements Route {
         });
     }
 
+    @Getter
+    @AllArgsConstructor(access = AccessLevel.PACKAGE)
     private enum DsmConsentElection {
         ELECTION_NOT_SELECTED(0),
         ELECTION_SELECTED(1);
 
-        private int numberValue;
-
-        DsmConsentElection(int numberValue) {
-            this.numberValue = numberValue;
-        }
-
-        public int getNumberValue() {
-            return numberValue;
-        }
+        private final int numberValue;
     }
 }

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiCompositeAnswer;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
@@ -33,14 +34,9 @@ import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class AnswerToAnswerCopier {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AnswerToAnswerCopier.class);
-
-    private final Handle handle;
     private final long operatorId;
     private final JdbiCompositeAnswer jdbiCompositeAnswer;
     private final JdbiQuestion jdbiQuestion;
@@ -48,7 +44,6 @@ public class AnswerToAnswerCopier {
     private final Map<Long, CompositeQuestionDto> parentDtosByChildId = new HashMap<>();
 
     public AnswerToAnswerCopier(Handle handle, long operatorIdForNewAnswers) {
-        this.handle = handle;
         this.operatorId = operatorIdForNewAnswers;
         this.jdbiCompositeAnswer = handle.attach(JdbiCompositeAnswer.class);
         this.jdbiQuestion = new JdbiQuestionCached(handle);
@@ -67,7 +62,7 @@ public class AnswerToAnswerCopier {
             if (parentAnswer != null) {
                 copyFromParentAnswer((CompositeAnswer) parentAnswer, sourceQuestion, targetInstance, targetQuestion);
             } else {
-                LOG.info("No source answer to copy from activity instance {} and question {}",
+                log.info("No source answer to copy from activity instance {} and question {}",
                         sourceInstance.getGuid(), sourceQuestion.getStableId());
             }
         }

@@ -17,20 +17,17 @@ import com.google.cloud.monitoring.v3.MetricServiceClient;
 import com.google.monitoring.v3.CreateTimeSeriesRequest;
 import com.google.monitoring.v3.ProjectName;
 import com.google.monitoring.v3.TimeSeries;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Manages background sending of stackdriver metrics according to
  * stackdriver rate limits.  Whether or not to send metrics can be controlled
  * by {@link ConfigFile#SEND_METRICS}.
  */
+@Slf4j
 public class StackdriverMetricsTransmitter implements Runnable {
-
-    private static final Logger LOG = LoggerFactory.getLogger(StackdriverMetricsTransmitter.class);
-
     /**
      * last epoch time that we posted stuff to stackdriver
      */
@@ -79,7 +76,7 @@ public class StackdriverMetricsTransmitter implements Runnable {
                 postQueuedMetrics(metricSeriesPoints.getProject(), metricSeriesPoints.dequeuePointsForTransmission());
             }
         } catch (Exception e) {
-            LOG.error("Trouble sending stackdriver metrics processing", e);
+            log.error("Trouble sending stackdriver metrics processing", e);
         }
     }
 
@@ -91,8 +88,7 @@ public class StackdriverMetricsTransmitter implements Runnable {
      * errors from stackdriver.
      */
     private static class TimeSeriesAgeFilter {
-
-        private static Map<Integer, Long> youngestPointForTimeSeries = new HashMap<>();
+        private static final Map<Integer, Long> youngestPointForTimeSeries = new HashMap<>();
 
         private static boolean isTooYoung(TimeSeries timeSeries) {
             int hashCode = computeHashCode(timeSeries);
@@ -139,7 +135,7 @@ public class StackdriverMetricsTransmitter implements Runnable {
                 if (!isTooYoung(timeSeries)) {
                     filtered.add(timeSeries);
                 } else {
-                    LOG.debug("Dropping point {} because it will violate stackdriver's rate limits", timeSeries.getPoints(0));
+                    log.debug("Dropping point {} because it will violate stackdriver's rate limits", timeSeries.getPoints(0));
                 }
             }
             return filtered;
@@ -152,7 +148,7 @@ public class StackdriverMetricsTransmitter implements Runnable {
      */
     private void postQueuedMetrics(ProjectName projectName, Collection<TimeSeries> timeSeriesList) {
         synchronized (hasSentFirstBatch) {
-            LOG.info("Sending {} points to stackdriver", timeSeriesList.size());
+            log.info("Sending {} points to stackdriver", timeSeriesList.size());
             Collection<TimeSeries> ageFilteredTimeSeries = TimeSeriesAgeFilter.filter(timeSeriesList);
 
             List<List<TimeSeries>> rateLimitedChunks = ListUtils.partition(new ArrayList<>(ageFilteredTimeSeries),
@@ -173,9 +169,9 @@ public class StackdriverMetricsTransmitter implements Runnable {
                         }
                     } catch (ApiException e) {
                         String msg = "Could not send metrics data with {} series to project {}";
-                        LOG.warn(msg, timeSeriesList.size(), projectName.getProject(), e);
+                        log.warn(msg, timeSeriesList.size(), projectName.getProject(), e);
                     } catch (Exception e) {
-                        LOG.warn("Failed to send metrics data with {} series to project {}",
+                        log.warn("Failed to send metrics data with {} series to project {}",
                                 timeSeriesList.size(), projectName.getProject(), e);
                     }
                 }
@@ -215,14 +211,14 @@ public class StackdriverMetricsTransmitter implements Runnable {
             try {
                 hasSentFirstBatch.wait();
             } catch (InterruptedException e) {
-                LOG.info("Stackdriver wait interrupted", e);
+                log.info("Stackdriver wait interrupted", e);
             }
         }
         try {
             long sleepTime = getApproximateStackdriverWaitTime();
             Thread.sleep(sleepTime);
         } catch (InterruptedException e) {
-            LOG.error("Stackdriver transmission thread interrupted while waiting", e);
+            log.error("Stackdriver transmission thread interrupted while waiting", e);
         }
     }
 }

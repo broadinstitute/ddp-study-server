@@ -4,11 +4,9 @@ import java.net.UnknownHostException;
 
 
 import com.google.common.annotations.VisibleForTesting;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.RandomStringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.utils.StringUtils;
-
 
 /**
  * Detects Google App Engine instance and service name (for diagnostic/logging purposes basically).
@@ -16,12 +14,8 @@ import spark.utils.StringUtils;
  * If GAE_INSTANCE not detected then host value is returned instead (in case of both not detected - fake string is returned).<br>
  * If GAE_SERVICE not detected then fake string is returned.
  */
+@Slf4j
 public class HostUtil {
-
-    private static final Logger LOG = LoggerFactory.getLogger(HostUtil.class);
-
-    public static final String GAE_INSTANCE_AND_SERVICE_LOG_PARAM = "GAEInstanceAndService";
-
     public static final String APPENGINE_INSTANCE_ENV_VAR = "GAE_INSTANCE";
     public static final String APPENGINE_SERVICE_ENV_VAR = "GAE_SERVICE";
 
@@ -44,7 +38,7 @@ public class HostUtil {
                 try {
                     GAEInstanceOrHostName = SystemUtil.getLocalHostName();
                 } catch (UnknownHostException hostNameException) {
-                    LOG.warn("Could not resolve hostname", hostNameException);
+                    log.warn("Could not resolve hostname", hostNameException);
                     GAEInstanceOrHostName = generateUnknownName(FAKE_HOST_TITLE);
                 }
             }

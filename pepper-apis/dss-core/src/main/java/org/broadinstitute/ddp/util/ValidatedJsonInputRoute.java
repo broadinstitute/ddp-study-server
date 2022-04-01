@@ -8,12 +8,11 @@ import javax.validation.ValidationException;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.json.errors.ApiError;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -26,9 +25,8 @@ import spark.Route;
  *
  * @param <T> The target class for the body-to-POJO conversion
  */
+@Slf4j
 public abstract class ValidatedJsonInputRoute<T> implements Route {
-    private static final Logger LOG = LoggerFactory.getLogger(ValidatedJsonInputRoute.class);
-
     private Gson gson;
     private GsonPojoValidator validator;
 
@@ -127,7 +125,7 @@ public abstract class ValidatedJsonInputRoute<T> implements Route {
                 return true;
             }
         } catch (ValidationException e) {
-            LOG.error("There was an error trying to validate request payload", e);
+            log.error("There was an error trying to validate request payload", e);
             ApiError err = new ApiError(ErrorCodes.SERVER_ERROR, "Error validating request payload");
             ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR, err);
             return true;
@@ -140,7 +138,7 @@ public abstract class ValidatedJsonInputRoute<T> implements Route {
         try {
             deserializedBodyObject = unmarshallJson(request);
         } catch (JsonSyntaxException e) {
-            LOG.warn("JSON payload could not be converted to object of class: " + getTargetClass(request).getName(), e);
+            log.warn("JSON payload could not be converted to object of class: " + getTargetClass(request).getName(), e);
             ApiError err = new ApiError(ErrorCodes.BAD_PAYLOAD, "Request payload could not be parsed and converted to expected type");
             ResponseUtil.haltError(response, getUnmarshallErrorStatus(), err);
             return null;

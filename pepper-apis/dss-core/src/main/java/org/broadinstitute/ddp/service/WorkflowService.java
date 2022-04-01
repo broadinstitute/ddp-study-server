@@ -6,6 +6,8 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
@@ -35,18 +37,11 @@ import org.broadinstitute.ddp.model.workflow.WorkflowState;
 import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
+@AllArgsConstructor
 public class WorkflowService {
-
-    private static final Logger LOG = LoggerFactory.getLogger(WorkflowService.class);
-
     private final PexInterpreter interpreter;
-
-    public WorkflowService(PexInterpreter interpreter) {
-        this.interpreter = interpreter;
-    }
 
     public Optional<WorkflowState> suggestNextState(
             Handle handle,
@@ -59,14 +54,14 @@ public class WorkflowService {
                 .getIdByGuid(studyGuid)
                 .orElseThrow(() -> new NoSuchElementException("Cannot find study " + studyGuid));
         Optional<Long> fromStateId = handle.attach(WorkflowDao.class).findWorkflowStateId(fromState);
-        if (!fromStateId.isPresent()) {
-            LOG.info("No id found for fromState {}, likely no transitions are configured with it; returning no suggestions", fromState);
+        if (fromStateId.isEmpty()) {
+            log.info("No id found for fromState {}, likely no transitions are configured with it; returning no suggestions", fromState);
             return Optional.empty();
         }
 
         List<NextStateCandidate> candidates = handle.attach(WorkflowDao.class)
                 .findOrderedActiveNextStateCandidates(studyId, fromStateId.get());
-        LOG.info("Found {} active transitions for study {} and fromState {}", candidates.size(), studyGuid, fromState);
+        log.info("Found {} active transitions for study {} and fromState {}", candidates.size(), studyGuid, fromState);
 
         WorkflowState next = null;
         for (NextStateCandidate candidate : candidates) {
@@ -97,9 +92,8 @@ public class WorkflowService {
         }
 
         Optional<WorkflowState> nextState = Optional.ofNullable(next);
-        nextState.ifPresent(nextWfState -> {
-            createActivityInstanceIfMissing(handle, fromState, nextWfState, operatorGuid, userGuid, studyId, studyGuid);
-        });
+        nextState.ifPresent(nextWfState ->
+                createActivityInstanceIfMissing(handle, fromState, nextWfState, operatorGuid, userGuid, studyId, studyGuid));
 
         return nextState;
     }
@@ -110,7 +104,7 @@ public class WorkflowService {
             try {
                 return interpreter.eval(candidate.getPrecondition(), handle, userGuid, operatorGuid, instanceGuid);
             } catch (PexException e) {
-                LOG.warn("Error evaluating pex expression: `{}`", candidate.getPrecondition(), e);
+                log.warn("Error evaluating pex expression: `{}`", candidate.getPrecondition(), e);
                 return false;
             }
         } else {
@@ -141,7 +135,7 @@ public class WorkflowService {
                     if (studyRedirectState.getStudyGuid() != null) {
                         studyName = getStudyName(handle, userGuid, studyRedirectState.getStudyGuid());
                     } else {
-                        LOG.error("Study Name not set for StudyRedirect URL: {} ", studyRedirectState.getRedirectUrl());
+                        log.error("Study Name not set for StudyRedirect URL: {} ", studyRedirectState.getRedirectUrl());
                         throw new NoSuchElementException("Could not find studyName for redirect url :"
                                 + studyRedirectState.getRedirectUrl());
                     }
@@ -213,7 +207,7 @@ public class WorkflowService {
         if (activityInstanceIsMissing) {
             ActivityInstanceDto instanceDto = handle.attach(ActivityInstanceDao.class)
                     .insertInstance(activityState.getActivityId(), operatorGuid, userGuid, InstanceStatusType.CREATED, null);
-            LOG.info("Created activity instance with guid '{}' for user guid '{}' using operator guid '{}' and activity id {}",
+            log.info("Created activity instance with guid '{}' for user guid '{}' using operator guid '{}' and activity id {}",
                     instanceDto.getGuid(), userGuid, operatorGuid, activityState.getActivityId());
             processActionsForActivityCreationSignal(
                     handle,
@@ -225,13 +219,13 @@ public class WorkflowService {
                     studyId,
                     studyGuid
             );
-            LOG.info(
+            log.info(
                     "Processed actions for the activity instance {} of activity {} triggered by the creation signal",
                     instanceDto.getGuid(),
                     activityState.getActivityId()
             );
         } else {
-            LOG.info("User guid '{}' already has activity instance with guid '{}', nothing to create", userGuid, instanceGuid);
+            log.info("User guid '{}' already has activity instance with guid '{}', nothing to create", userGuid, instanceGuid);
         }
     }
 

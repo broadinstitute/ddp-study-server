@@ -18,6 +18,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.RSAKeyProvider;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.cache.IdToCacheKeyCollectionMapper;
@@ -33,12 +34,9 @@ import org.broadinstitute.ddp.exception.DDPTokenException;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class JWTConverter {
-
-    private static final Logger LOG = LoggerFactory.getLogger(JWTConverter.class);
     private static final String DEFAULT_ISO_LANGUAGE_CODE = "en";
     private Map<String, JwkProvider> jwkProviderMap = new HashMap<>(); // Map of Auth0ClientIds -> jwkProviders
     private Cache<String, DDPAuth> jwtToDDPAuthCache;
@@ -64,7 +62,7 @@ public class JWTConverter {
         try {
             keyProvider = RSAKeyProviderFactory.createRSAKeyProviderWithPrivateKeyOnly(jwkProvider);
         } catch (DDPTokenException e) {
-            LOG.error("Error creating RSAKeyProvider", e);
+            log.error("Error creating RSAKeyProvider", e);
             throw (e);
         }
 
@@ -72,10 +70,10 @@ public class JWTConverter {
             validToken = JWT.require(Algorithm.RSA256(keyProvider)).acceptLeeway(10).build().verify(jwt);
         } catch (TokenExpiredException e) {
             // TokenExpired is one of the benign variants of JWTVerificationException that the `verify()` method throws.
-            LOG.warn("Expired token: {}", jwt);
+            log.warn("Expired token: {}", jwt);
             throw e;
         } catch (Exception e) {
-            LOG.error("Could not verify token {}", jwt, e);
+            log.error("Could not verify token {}", jwt, e);
             throw (e);
         }
         return validToken;
@@ -122,7 +120,7 @@ public class JWTConverter {
         if (userProfile != null) {
             if (userProfile.getPreferredLangCode() != null) {
                 preferredIsoLanguageCode = userProfile.getPreferredLangCode();
-                LOG.info("The preferred language code for the user with GUID {} is '{}'",
+                log.info("The preferred language code for the user with GUID {} is '{}'",
                         userGuid, preferredIsoLanguageCode);
             }
         }
@@ -135,7 +133,7 @@ public class JWTConverter {
         if (userProfile != null) {
             if (userProfile.getPreferredLangCode() != null) {
                 preferredIsoLanguageCode = userProfile.getPreferredLangCode();
-                LOG.info("The preferred language code for the user with GUID {} is '{}'",
+                log.info("The preferred language code for the user with GUID {} is '{}'",
                         userGuid, preferredIsoLanguageCode);
             }
         }
@@ -149,7 +147,7 @@ public class JWTConverter {
     private DDPAuth convertJWT(String jwt) {
         DDPAuth cachedAuth = jwtToDDPAuthCache.get(jwt);
         if (cachedAuth != null) {
-            LOG.info("Auth found in cache");
+            log.info("Auth found in cache");
             TransactionWrapper.useTxn(handle -> {
                 String preferrededLanguage = getPreferredLanguageCodeForUser(handle, cachedAuth.getOperator());
                 cachedAuth.setPreferredLanguage(preferrededLanguage);
@@ -195,7 +193,7 @@ public class JWTConverter {
                         String preferredLanguage = getPreferredLanguageCodeForUser(userProfile, ddpUserGuid);
                         txnDdpAuth = new DDPAuth(auth0ClientId, ddpUserGuid, jwt, userPermissions, preferredLanguage);
                     } catch (Exception e) {
-                        LOG.warn("Could not verify token. User "
+                        log.warn("Could not verify token. User "
                                 + decodedJwt.getClaim(Auth0Constants.DDP_USER_ID_CLAIM).asString()
                                 + " tried to authenticate against client auth0clientId "
                                 + auth0ClientId);

@@ -2,11 +2,10 @@ package org.broadinstitute.ddp.filter;
 
 import static spark.Spark.halt;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.RouteUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Filter;
 import spark.Request;
 import spark.Response;
@@ -14,9 +13,8 @@ import spark.Response;
 /**
  * A filter that only allows access to study admins.
  */
+@Slf4j
 public class StudyAdminAuthFilter implements Filter {
-
-    private static final Logger LOG = LoggerFactory.getLogger(StudyAdminAuthFilter.class);
     private static final AuthPathRegexUtil pathMatcher = new AuthPathRegexUtil();
 
     @Override
@@ -27,7 +25,7 @@ public class StudyAdminAuthFilter implements Filter {
 
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
         if (ddpAuth.getToken() == null || ddpAuth.getOperator() == null) {
-            LOG.error("Expects study admin operator but no auth token found in request");
+            log.error("Expects study admin operator but no auth token found in request");
             halt(401);
             return;
         }
@@ -45,7 +43,7 @@ public class StudyAdminAuthFilter implements Filter {
         }
 
         if (!canAccess) {
-            LOG.error("User tried accessing study admin only route, operator={}, method={}, path={}",
+            log.error("User tried accessing study admin only route, operator={}, method={}, path={}",
                     ddpAuth.getOperator(), request.requestMethod(), path);
             halt(401);
         }

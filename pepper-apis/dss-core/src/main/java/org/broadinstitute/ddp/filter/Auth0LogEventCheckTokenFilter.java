@@ -7,12 +7,11 @@ import static org.broadinstitute.ddp.constants.ErrorCodes.INVALID_TOKEN;
 import static org.broadinstitute.ddp.constants.ErrorCodes.REQUIRED_HEADER_MISSING;
 import static org.broadinstitute.ddp.constants.RouteConstants.Header.AUTHORIZATION;
 import static org.broadinstitute.ddp.constants.RouteConstants.Header.BEARER;
-import static org.slf4j.LoggerFactory.getLogger;
 
-
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.util.ResponseUtil;
-import org.slf4j.Logger;
 import spark.Filter;
 import spark.Request;
 import spark.Response;
@@ -28,15 +27,10 @@ import spark.Response;
  * If token check is enabled and specified in config then the same token should be specified in
  * Auth0 Custom Webhook settings (with prefix 'Bearer ').
  */
+@Slf4j
+@AllArgsConstructor
 public class Auth0LogEventCheckTokenFilter implements Filter {
-
-    private static final Logger LOG = getLogger(Auth0LogEventCheckTokenFilter.class);
-
     private final String cfgParamAuth0LogEventsToken;
-
-    public Auth0LogEventCheckTokenFilter(String cfgParamAuth0LogEventsToken) {
-        this.cfgParamAuth0LogEventsToken = cfgParamAuth0LogEventsToken;
-    }
 
     @Override
     public void handle(Request request, Response response) {
@@ -64,7 +58,7 @@ public class Auth0LogEventCheckTokenFilter implements Filter {
     }
 
     private void haltError(int status, String code, String msg) {
-        LOG.warn(msg);
+        log.warn(msg);
         throw ResponseUtil.haltError(status, new ApiError(code, msg));
     }
 }

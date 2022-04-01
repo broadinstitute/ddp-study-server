@@ -11,12 +11,10 @@ import java.util.Map;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.event.publish.TaskPublisher;
 import org.broadinstitute.ddp.util.ConfigManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 
 /**
  * Implementation of {@link TaskPublisher} providing publishing
@@ -24,10 +22,8 @@ import org.slf4j.LoggerFactory;
  * The parameters for PubSub publishing are taken from config:
  * `pubsub.pubSubDsmTaskTopic` - name of PubSub topic where to publish a task.
  */
+@Slf4j
 public class TaskPubSubPublisher implements TaskPublisher {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TaskPubSubPublisher.class);
-
     public static final String TASK_PARTICIPANT_REGISTERED = "PARTICIPANT_REGISTERED";
 
     @Override
@@ -57,7 +53,7 @@ public class TaskPubSubPublisher implements TaskPublisher {
             return PubSubPublisherInitializer.getOrCreatePublisher(
                     ConfigManager.getInstance().getConfig().getString(ConfigFile.PUBSUB_DSM_TASKS_TOPIC));
         } catch (Exception e) {
-            LOG.error(format("Error during publishing a task %s to PubSub topic", taskType), e);
+            log.error(format("Error during publishing a task %s to PubSub topic", taskType), e);
         }
         return null;
     }

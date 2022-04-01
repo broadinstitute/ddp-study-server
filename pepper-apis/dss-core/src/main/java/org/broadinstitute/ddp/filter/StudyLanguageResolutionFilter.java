@@ -4,6 +4,7 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -11,8 +12,6 @@ import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.util.I18nUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Filter;
 import spark.Request;
 import spark.Response;
@@ -23,6 +22,7 @@ import spark.Response;
  * supported by the study. Puts that language into the attribute storage to make
  * it available later in all routes interested in fetching translated entities
  */
+@Slf4j
 public class StudyLanguageResolutionFilter implements Filter {
 
     public static final String USER_LANGUAGE = "USER_LANGUAGE";
@@ -33,7 +33,6 @@ public class StudyLanguageResolutionFilter implements Filter {
     private static final String INDONESIAN_OLD = "in";
     private static final String INDONESIAN_NEW = "id";
 
-    private static final Logger LOG = LoggerFactory.getLogger(StudyLanguageResolutionFilter.class);
     private static final String STUDY_GUID_REGEX = "/studies/([0-9a-zA-Z-]+)";
     private static final int STUDY_GUID_INDEX = 1;
 
@@ -47,7 +46,7 @@ public class StudyLanguageResolutionFilter implements Filter {
             // make any sense outside of the study context, so we issue a warning
             boolean supportedLanguagesCanBeDetected = studyGuid != null;
             if (!supportedLanguagesCanBeDetected) {
-                LOG.warn(
+                log.warn(
                         "Supported languages can't be detected because the filter is invoked"
                                 + " before the route that is outside of the study context. Please"
                                 + " remount the filter under '*/studies/*' instead. Current path = {}",
@@ -55,7 +54,7 @@ public class StudyLanguageResolutionFilter implements Filter {
                 );
                 return;
             }
-            LOG.info("The supported languages can be detected for the study {}", studyGuid);
+            log.info("The supported languages can be detected for the study {}", studyGuid);
             Locale ddpAuthPreferredLocale = RouteUtil.getDDPAuth(request).getPreferredLocale();
             TransactionWrapper.useTxn(
                     handle -> {
@@ -66,11 +65,11 @@ public class StudyLanguageResolutionFilter implements Filter {
                                 handle, preferredLocale
                         );
                         request.attribute(USER_LANGUAGE, preferredLanguage);
-                        LOG.info("Added the preferred user language '{}' to the attribute store", preferredLanguage.getIsoCode());
+                        log.info("Added the preferred user language '{}' to the attribute store", preferredLanguage.getIsoCode());
                     }
             );
         } catch (Exception e) {
-            LOG.error("Error while figuring out the user language", e);
+            log.error("Error while figuring out the user language", e);
         }
     }
 

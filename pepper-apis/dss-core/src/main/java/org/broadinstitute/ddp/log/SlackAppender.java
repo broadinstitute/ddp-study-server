@@ -19,6 +19,7 @@ import ch.qos.logback.core.AppenderBase;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
@@ -27,8 +28,6 @@ import org.broadinstitute.ddp.environment.HostUtil;
 import org.broadinstitute.ddp.thread.ThreadFactory;
 import org.broadinstitute.ddp.thread.ThreadPriorities;
 import org.broadinstitute.ddp.util.ConfigManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Lossy appender that sends the message and stack trace into a slack channel.
@@ -36,30 +35,18 @@ import org.slf4j.LoggerFactory;
  * are propagated every  {@link #intervalInMillis} seconds.  Additional
  * calls to {@link #append(ILoggingEvent)} are ignored.
  */
+@Slf4j
 public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(SlackAppender.class);
-
     private URI slackHookUrl;
-
     private String channel;
-
     private static final String TITLE = "$TITLE$";
-
     private static final String SERVICE = "$SERVICE$";
-
     private static final String STACK_TRACE = "$STACK_TRACE$";
-
     private static final String MESSAGE = "[" + SERVICE + "] *" + TITLE  +  "*\n ```" + STACK_TRACE + "```";
-
     private boolean canLog = true;
-
     private List<SlackMessagePayload> messagesToSend = Collections.synchronizedList(new ArrayList<>());
-
     private int queueSize;
-
     private int intervalInMillis;
-
     private HttpClient httpClient;
     private ScheduledThreadPoolExecutor executorService;
 
@@ -68,11 +55,11 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
                       Integer queueSize,
                       Integer intervalInMillis) {
         if (StringUtils.isBlank(slackHookUrl)) {
-            LOG.warn("No logs will go to slack.");
+            log.warn("No logs will go to slack.");
             canLog = false;
         }
         if (StringUtils.isBlank(slackChannel)) {
-            LOG.warn("No logs will go to slack.");
+            log.warn("No logs will go to slack.");
             canLog = false;
         }
         if (canLog) {
@@ -96,14 +83,14 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
                 this.intervalInMillis = 60000;
             }
 
-            LOG.info("At most {} slack alerts will be sent to {} every {} ms", queueSize, slackChannel, intervalInMillis);
+            log.info("At most {} slack alerts will be sent to {} every {} ms", queueSize, slackChannel, intervalInMillis);
             executorService = new ScheduledThreadPoolExecutor(1,
                     new ThreadFactory("SlackAppender", ThreadPriorities.SLACK_PRIORITY));
             executorService.scheduleWithFixedDelay(() -> {
                 sendQueuedMessages();
             }, 0, this.intervalInMillis, TimeUnit.MILLISECONDS);
         } else {
-            LOG.info("No slack alerts will be sent.");
+            log.info("No slack alerts will be sent.");
         }
     }
 
@@ -181,7 +168,7 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
             try {
                 wait(timeoutMillis);
             } catch (InterruptedException e) {
-                LOG.error("Interrupted while waiting for queue to clear", e);
+                log.error("Interrupted while waiting for queue to clear", e);
             }
         }
     }
@@ -213,7 +200,7 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
     }
 
     private void sendQueuedMessages() {
-        LOG.info("Sending {} messages to slack", messagesToSend.size());
+        log.info("Sending {} messages to slack", messagesToSend.size());
         synchronized (messagesToSend) {
             for (SlackMessagePayload payload : messagesToSend) {
                 sendMessage(payload);
@@ -235,7 +222,7 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
                 throw new IOException("Could not post " + payload + " to slack.  Hook returned " + response.body());
             }
         } catch (IOException | InterruptedException e) {
-            LOG.error("Could not post error message to slack room " + channel + " with hook " + slackHookUrl, e);
+            log.error("Could not post error message to slack room " + channel + " with hook " + slackHookUrl, e);
         }
     }
 

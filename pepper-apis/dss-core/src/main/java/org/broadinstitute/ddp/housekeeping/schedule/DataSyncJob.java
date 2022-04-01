@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
@@ -34,17 +35,13 @@ import org.quartz.SchedulerException;
 import org.quartz.SimpleScheduleBuilder;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This manages a queue of requests, so only one instance of this job should run at a time.
  */
+@Slf4j
 @DisallowConcurrentExecution
 public class DataSyncJob implements Job {
-
-    private static final Logger LOG = LoggerFactory.getLogger(DataSyncJob.class);
-
     private static DataExporter exporter;
 
     public static JobKey getKey() {
@@ -59,11 +56,11 @@ public class DataSyncJob implements Job {
                 .storeDurably(true)
                 .build();
         scheduler.addJob(job, true);
-        LOG.info("Added job {} to scheduler", getKey());
+        log.info("Added job {} to scheduler", getKey());
 
         boolean enabled = cfg.getBoolean(ConfigFile.Elasticsearch.SYNC_ENABLED);
         if (!enabled) {
-            LOG.warn("Job {} is disabled, syncing to elasticsearch will not be triggered", getKey());
+            log.warn("Job {} is disabled, syncing to elasticsearch will not be triggered", getKey());
             return;
         }
 
@@ -77,7 +74,7 @@ public class DataSyncJob implements Job {
                 .build();
 
         scheduler.scheduleJob(trigger);
-        LOG.info("Added trigger {} for job {} with interval {} seconds", trigger.getKey(), getKey(), intervalSecs);
+        log.info("Added trigger {} for job {} with interval {} seconds", trigger.getKey(), getKey(), intervalSecs);
     }
 
     @Override
@@ -87,7 +84,7 @@ public class DataSyncJob implements Job {
                     .getCurrentlyExecutingJobs().stream()
                     .anyMatch(jctx -> jctx.getJobDetail().getKey().equals(StudyDataExportJob.getKey()));
             if (exportCurrentlyRunning) {
-                LOG.warn("Regular data export job currently running, skipping sync job");
+                log.warn("Regular data export job currently running, skipping sync job");
                 return;
             }
             TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> run(handle, exporter));
@@ -140,14 +137,14 @@ public class DataSyncJob implements Job {
             Set<Long> userIds = entry.getValue();
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findById(studyId);
             if (studyDto.isDataExportEnabled()) {
-                LOG.info("Syncing data for study {}", studyDto.getGuid());
+                log.info("Syncing data for study {}", studyDto.getGuid());
                 exporter.exportParticipantsToElasticsearchByIds(handle, studyDto, userIds, true);
 
                 //data sync to users index
                 exporter.exportUsersToElasticsearch(handle, studyDto, userIds);
                 distinctUsers.addAll(userIds);
             } else {
-                LOG.warn("Study {} does not have data export enabled, skipping data sync", studyDto.getGuid());
+                log.warn("Study {} does not have data export enabled, skipping data sync", studyDto.getGuid());
             }
         }
 
@@ -155,7 +152,7 @@ public class DataSyncJob implements Job {
         handle.attach(DataExportDao.class).deleteDataSyncRequestsAtOrOlderThan(latestRequest.getId());
 
         long elapsed = System.currentTimeMillis() - start;
-        LOG.info("Finished job {}, took {} ms, processed {} requests, synced {} users",
+        log.info("Finished job {}, took {} ms, processed {} requests, synced {} users",
                 getKey(), elapsed, requests.size(), distinctUsers.size());
     }
 }

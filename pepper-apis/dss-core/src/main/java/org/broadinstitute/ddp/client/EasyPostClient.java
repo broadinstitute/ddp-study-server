@@ -8,16 +8,14 @@ import com.easypost.exception.EasyPostException;
 import com.easypost.model.Address;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.model.address.MailAddress;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Client for EasyPost services.
  */
+@Slf4j
 public class EasyPostClient {
-
-    private static final Logger LOG = LoggerFactory.getLogger(EasyPostClient.class);
     private static final Gson gson = new Gson();
 
     private final String apiKey;
@@ -96,7 +94,7 @@ public class EasyPostClient {
             var container = gson.fromJson(errorBody, VerifyErrorContainer.class);
             return container.error;
         } catch (JsonSyntaxException e) {
-            LOG.warn("Could not convert EasyPost verification error json: {}", errorBody, e);
+            log.warn("Could not convert EasyPost verification error json: {}", errorBody, e);
             return null;
         }
     }
@@ -107,7 +105,7 @@ public class EasyPostClient {
         if (jsonStart >= 0 && jsonEnd > 0 && jsonStart < jsonEnd) {
             return message.substring(jsonStart, jsonEnd + 1);
         } else {
-            LOG.warn("Could not find start and end in EasyPost verification error json: {}", message);
+            log.warn("Could not find start and end in EasyPost verification error json: {}", message);
             return null;
         }
     }

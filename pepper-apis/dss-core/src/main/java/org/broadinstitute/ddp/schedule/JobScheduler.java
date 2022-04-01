@@ -1,17 +1,14 @@
 package org.broadinstitute.ddp.schedule;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.impl.StdSchedulerFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class JobScheduler {
-
-    private static final Logger LOG = LoggerFactory.getLogger(JobScheduler.class);
-
     public static Scheduler initializeWith(Config cfg, Schedulable... schedulables) {
         Scheduler scheduler = createJobSchedulerOrThrow();
         try {
@@ -38,7 +35,7 @@ public class JobScheduler {
     private static void startSchedulerOrThrow(Scheduler scheduler) {
         try {
             scheduler.start();
-            LOG.info("Started DDP job scheduler");
+            log.info("Started DDP job scheduler");
         } catch (SchedulerException e) {
             throw new DDPException("Failed to start job scheduler", e);
         }
@@ -48,7 +45,7 @@ public class JobScheduler {
         try {
             scheduler.shutdown(waitForJobs);
         } catch (SchedulerException e) {
-            LOG.error("Error while shutting down job scheduler", e);
+            log.error("Error while shutting down job scheduler", e);
         }
     }
 

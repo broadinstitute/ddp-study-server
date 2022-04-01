@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.event.pubsubtask.api;
 import static java.lang.String.format;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.errorMsg;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.infoMsg;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
@@ -13,17 +12,15 @@ import com.google.cloud.pubsub.v1.Publisher;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
-import org.slf4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Builds {@link PubSubTaskResult}-message and publishes it
  * to outgoing topic (name specified in Config parameter
  * "pubsub.pubSubTasksResultTopic").
  */
+@Slf4j
 public class PubSubTaskResultSender implements ResultSender {
-
-    private static final Logger LOG = getLogger(PubSubTaskResultSender.class);
-
     private final Publisher publisher;
 
     public PubSubTaskResultSender(Publisher publisher) {
@@ -35,7 +32,7 @@ public class PubSubTaskResultSender implements ResultSender {
 
         PubsubMessage pubSubMessage = createPubSubMessage(pubSubTaskResult);
 
-        LOG.info(format(infoMsg("Publish PubSubTaskResult message to topic=%s: result={%s}, pubSubTask={%s}"),
+        log.info(format(infoMsg("Publish PubSubTaskResult message to topic=%s: result={%s}, pubSubTask={%s}"),
                 publisher.getTopicName(), pubSubTaskResult, pubSubTaskResult.getPubSubTask()));
 
         ApiFuture<String> publishResult = publisher.publish(pubSubMessage);
@@ -55,12 +52,12 @@ public class PubSubTaskResultSender implements ResultSender {
                         if (statusCode != null) {
                             msg += ", statusCode=" + statusCode;
                         }
-                        LOG.error(msg, e);
+                        log.error(msg, e);
                     }
 
                     @Override
                     public void onSuccess(String messageId) {
-                        LOG.info(infoMsg("Result \"{}\" successfully published to pubsub topic={}. MessageId={}"),
+                        log.info(infoMsg("Result \"{}\" successfully published to pubsub topic={}. MessageId={}"),
                                 pubSubTaskResult, publisher.getTopicName(), messageId);
                     }
                 },

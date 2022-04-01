@@ -4,24 +4,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ClientDao;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Script for registering auth0 clients and setting which studies
  * they have access to.
  */
+@Slf4j
 @Ignore
 public class RegisterAuth0ClientScript extends TxnAwareBaseTest {
-
-    private static final Logger LOG = LoggerFactory.getLogger(RegisterAuth0ClientScript.class);
-
     public static final String CLIENT_PREFIX = "ddp.auth0ClientLoader.";
 
     /**
@@ -70,7 +67,7 @@ public class RegisterAuth0ClientScript extends TxnAwareBaseTest {
             studyGuids.add(rawStudyGuids);
         }
 
-        LOG.info(
+        log.info(
                 "Registering client {} in domain {}.  Omitting logging of secret.  Will have access to {}",
                 auth0ClientId, auth0domain, studyGuids
         );

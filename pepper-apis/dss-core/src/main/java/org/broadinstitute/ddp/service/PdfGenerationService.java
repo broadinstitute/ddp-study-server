@@ -4,8 +4,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -28,6 +28,7 @@ import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfDocumentInfo;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
@@ -81,23 +82,20 @@ import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.transformers.DateTimeFormatUtils;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class PdfGenerationService {
-
     // Do not change these Off/Yes values as they are defined by iText internals
     public static final String UNCHECKED_VALUE = "Off";
     public static final String CHECKED_VALUE = "Yes";
 
     public static final int COPY_START_PAGE = 1;
 
-    private static final Logger LOG = LoggerFactory.getLogger(PdfGenerationService.class);
     private static final String INTERNATIONAL_FONT_PATH = "fonts/FreeSans.ttf";
     private static final String INTERNATIONAL_FONT_NAME = "freesans";
 
     // canEncode() changes state of the encoder, so we need one per thread
-    private static final ThreadLocal<CharsetEncoder> ISO88591 = ThreadLocal.withInitial(() -> Charset.forName("ISO-8859-1").newEncoder());
+    private static final ThreadLocal<CharsetEncoder> ISO88591 = ThreadLocal.withInitial(StandardCharsets.ISO_8859_1::newEncoder);
 
     /**
      * Sets the value of a checkbox to boolean submitted
@@ -124,7 +122,7 @@ public class PdfGenerationService {
             PdfAcroForm form = PdfAcroForm.getAcroForm(flattenedDoc, false);
             form.flattenFields();
 
-            LOG.info("Flattened {}", configuration.getConfigName());
+            log.info("Flattened {}", configuration.getConfigName());
             flattenedDoc.close();
             return new ByteArrayInputStream(baos.toByteArray());
         }
@@ -153,7 +151,7 @@ public class PdfGenerationService {
                 templateIds = handle.attach(PdfDao.class)
                         .findTemplateIdsByVersionIdAndLanguageCodeId(configuration.getVersion().getId(), languageId);
                 if (templateIds.isEmpty()) {
-                    LOG.warn("User : {} has language {} as preferred language but NO PDF templates found for the language. " 
+                    log.warn("User : {} has language {} as preferred language but NO PDF templates found for the language. " 
                             + "Using study default language ", userGuid, participant.getUser().getProfile().getPreferredLangCode());
                 }
             }
@@ -265,9 +263,7 @@ public class PdfGenerationService {
                     .orElseThrow(() -> new DDPException("Could not find participant user data for pdf generation with guid=" + userGuid)));
             UserProfileDao userProfileDao = handle.attach(UserProfileDao.class);
             Optional<UserProfile>  profileOpt = userProfileDao.findProfileByUserGuid(userGuid);
-            if (profileOpt.isPresent()) {
-                participant.getUser().setProfile(profileOpt.get());
-            }
+            profileOpt.ifPresent(userProfile -> participant.getUser().setProfile(userProfile));
         }
 
         if (hasEmailSource) {
@@ -329,7 +325,7 @@ public class PdfGenerationService {
     private void checkForErrors(List<String> errors, String userGuid) {
         if (!errors.isEmpty()) {
             for (String error : errors) {
-                LOG.error("PDF configuration error: " + error);
+                log.error("PDF configuration error: " + error);
             }
             throw new DDPException("Errors while generating PDF for user: " + userGuid
                     + ". See logged PDF configuration errors for exact failures.");
@@ -352,8 +348,7 @@ public class PdfGenerationService {
         String[] array = new String[keySet.size()];
         String[] fields = keySet.toArray(array);
 
-        for (int i = 0; i < fields.length; i++) {
-            String fieldName = fields[i];
+        for (String fieldName : fields) {
             form.renameField(fieldName, fieldName + "_" + counter);
         }
     }
@@ -425,7 +420,7 @@ public class PdfGenerationService {
 
         if (providerDtos.size() > 1) {
             // This is an erroneous scenario but pdf generation doesn't need to halt.
-            LOG.error("User {} in study {} has {} biopsy institutions", userGuid, studyGuid, providerDtos.size());
+            log.error("User {} in study {} has {} biopsy institutions", userGuid, studyGuid, providerDtos.size());
         }
 
         try (ByteArrayOutputStream rendered = new ByteArrayOutputStream()) {
@@ -446,7 +441,7 @@ public class PdfGenerationService {
                                                PhysicianInstitutionTemplate template, int pdfOrderIndex, String pdfConfigurationName,
                                                List<String> errors) throws IOException {
         PdfDocument master = new PdfDocument(new PdfWriter(output));
-        int pagesWritten = 0;
+        int pagesWritten;
 
         try {
             int currentDocumentIndex = 0;
@@ -609,7 +604,7 @@ public class PdfGenerationService {
                                 participant, instances, errors);
                         break;
                     default:
-                        errors.add("Tried to use unsupported custom substitution type: " + type.toString());
+                        errors.add("Tried to use unsupported custom substitution type: " + type);
                         break;
                 }
             }
@@ -967,7 +962,7 @@ public class PdfGenerationService {
 
             MailAddress address = user.getAddress();
             if (address == null) {
-                LOG.error("Could not find default address for user {}, continuing with empty address", user.getGuid());
+                log.error("Could not find default address for user {}, continuing with empty address", user.getGuid());
                 address = new MailAddress("", "", "", "", "", "", "", "", "", "",
                         DsmAddressValidationStatus.DSM_INVALID_ADDRESS_STATUS, false);
             }
@@ -987,11 +982,11 @@ public class PdfGenerationService {
                 if (governances.isEmpty()) {
                     String errorMessage = String.format("No proxy found for participant %s in study %s to substitute proxy name ",
                             user.getGuid(), studyGuid);
-                    LOG.error(errorMessage);
+                    log.error(errorMessage);
                     errors.add(errorMessage);
                 } else {
                     if (governances.size() > 1) {
-                        LOG.warn("Multiple proxies found for participant {} in study {} , using first one ", user.getGuid(), studyGuid);
+                        log.warn("Multiple proxies found for participant {} in study {} , using first one ", user.getGuid(), studyGuid);
                     }
                     governance = governances.get(0);
                     //get proxy userProfile to substitute first & last names

@@ -6,14 +6,13 @@ import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException.Se
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.errorMsg;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.infoMsg;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.PubSubTaskResultType.ERROR;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.common.util.concurrent.AtomicLongMap;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
-import org.slf4j.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Receive and process PubSubTask-messages fetched from a subscription
@@ -28,10 +27,8 @@ import org.slf4j.Logger;
  * defined by config param "pubsub.pubSubTasksResultTopic".
  * The result message published to the topic by {@link PubSubTaskResultSender}
  */
+@Slf4j
 public class PubSubTaskReceiver implements MessageReceiver {
-
-    private static final Logger LOG = getLogger(PubSubTaskReceiver.class);
-
     private static final int MAX_NUMBER_OF_RETRIES_FOR_RETRIABLE_ERROR = 5;
 
     private final AtomicLongMap<String> retryMessageCounters = AtomicLongMap.create();
@@ -73,7 +70,7 @@ public class PubSubTaskReceiver implements MessageReceiver {
 
         PubSubTask pubSubTask = new PubSubTask(messageId, taskType, message.getAttributesMap(), payloadJson);
 
-        LOG.info(infoMsg("PubSubTask message received[subscription={}]: {}}"), projectSubscriptionName, pubSubTask);
+        log.info(infoMsg("PubSubTask message received[subscription={}]: {}}"), projectSubscriptionName, pubSubTask);
 
         var pubSubTaskDescriptor = pubSubTaskProcessorFactory.getPubSubTaskDescriptor(taskType);
         if (pubSubTaskDescriptor == null) {
@@ -106,7 +103,7 @@ public class PubSubTaskReceiver implements MessageReceiver {
     private void handleRetriableErrors(AckReplyConsumer consumer, PubSubTask pubSubTask, Exception e) {
         long count = retryMessageCounters.incrementAndGet(pubSubTask.getMessageId());
         if (count <= MAX_NUMBER_OF_RETRIES_FOR_RETRIABLE_ERROR) {
-            LOG.warn(errorMsg(format("PubSubTask processing FAILED, will retry (try=%d/%d): taskType=%s, messageId=%s, ErrorMessage: %s",
+            log.warn(errorMsg(format("PubSubTask processing FAILED, will retry (try=%d/%d): taskType=%s, messageId=%s, ErrorMessage: %s",
                     count, MAX_NUMBER_OF_RETRIES_FOR_RETRIABLE_ERROR, pubSubTask.getTaskType(),
                     pubSubTask.getMessageId(), e.getMessage())));
             consumer.nack();
@@ -121,9 +118,9 @@ public class PubSubTaskReceiver implements MessageReceiver {
         String msg = format(errorMsg("Error processing PubSubTask: taskType=%s, messageId=%s, ErrorMessage: %s"),
                 pubSubTask.getTaskType(), pubSubTask.getMessageId(), e.getMessage());
         if (e instanceof PubSubTaskException && ((PubSubTaskException)e).getSeverity() == WARN) {
-            LOG.warn(msg);
+            log.warn(msg);
         } else {
-            LOG.error(msg, e);
+            log.error(msg, e);
         }
 
         sendResponse(new PubSubTaskResult(ERROR, e.getMessage(),

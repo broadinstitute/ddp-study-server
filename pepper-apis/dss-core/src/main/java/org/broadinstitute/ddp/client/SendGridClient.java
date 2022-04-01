@@ -20,16 +20,17 @@ import com.sendgrid.Method;
 import com.sendgrid.Request;
 import com.sendgrid.Response;
 import com.sendgrid.SendGrid;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.impl.client.HttpClients;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A client for SendGrid services, effectively just a wrapper around the API calls.
  */
+@Slf4j
 public class SendGridClient {
 
     // Note: API endpoint paths should not have leading slash,
@@ -39,14 +40,12 @@ public class SendGridClient {
     public static final String PATH_TEMPLATES_VERSIONS = "templates/:templateId/versions";
     public static final String PARAM_TEMPLATE_ID = ":templateId";
 
-    private static final Logger LOG = LoggerFactory.getLogger(SendGridClient.class);
     private static final Gson gson = new Gson();
     private static final String ATTACHMENT_DISPOSITION = "attachment";
     private static final String ATTACHMENT_PDF_TYPE = "application/pdf";
     private static final String GEN_LEGACY = "legacy";
     private static final String GEN_DYNAMIC = "dynamic";
     private static final String EDITOR_CODE = "code";
-    private static final String EDITOR_DESIGN = "design";
 
     private static final String KEY_NAME = "name";
     private static final String KEY_GENERATION = "generation";
@@ -78,7 +77,7 @@ public class SendGridClient {
             }
             httpClientBuilder.setProxy(new HttpHost(proxyUrl.getHost(), proxyUrl.getPort(), proxyUrl.getProtocol()));
             httpClientBuilder.setConnectionReuseStrategy(NoConnectionReuseStrategy.INSTANCE);
-            LOG.info("Using SendGrid proxy: {}", proxy);
+            log.info("Using SendGrid proxy: {}", proxy);
         }
         var client = new Client(httpClientBuilder.build());
         this.sendGrid = new SendGrid(apiKey, client);
@@ -308,6 +307,7 @@ public class SendGridClient {
         }
     }
 
+    @Getter
     public static class TemplateVersion {
         private String id;
         @SerializedName(KEY_TEMPLATE_ID)
@@ -324,34 +324,6 @@ public class SendGridClient {
         public TemplateVersion(String id, int active) {
             this.id = id;
             this.active = active;
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public String getTemplateId() {
-            return templateId;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getSubject() {
-            return subject;
-        }
-
-        public String getHtmlContent() {
-            return htmlContent;
-        }
-
-        public String getUpdatedAt() {
-            return updatedAt;
-        }
-
-        public String getEditor() {
-            return editor;
         }
 
         public boolean isActive() {

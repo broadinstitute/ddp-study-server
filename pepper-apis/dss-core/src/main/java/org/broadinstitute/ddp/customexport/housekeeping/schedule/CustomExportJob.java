@@ -7,6 +7,7 @@ import java.util.TimeZone;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Bucket;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.customexport.constants.CustomExportConfigFile;
@@ -35,15 +36,13 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 @DisallowConcurrentExecution
 public class CustomExportJob implements Job {
     private static Config cfg;
     private static Config exportCfg;
 
-    private static final Logger LOG = LoggerFactory.getLogger(CustomExportJob.class);
     private static final String EXPORT_SECRET_ID = "custom-export";
 
     private static JobKey getKey() {
@@ -56,7 +55,7 @@ public class CustomExportJob implements Job {
 
         String schedule = ConfigUtil.getStrIfPresent(cfg, ConfigFile.CUSTOM_EXPORT_SCHEDULE);
         if (schedule == null || schedule.equalsIgnoreCase("off")) {
-            LOG.warn("Job {} is set to be turned off: not scheduled", getKey());
+            log.warn("Job {} is set to be turned off: not scheduled", getKey());
             return;
         }
 
@@ -71,7 +70,7 @@ public class CustomExportJob implements Job {
                 .storeDurably(true)
                 .build();
         scheduler.addJob(job, true);
-        LOG.info("Added job {} to scheduler", getKey());
+        log.info("Added job {} to scheduler", getKey());
 
         Trigger trigger = TriggerBuilder.newTrigger()
                 .withIdentity(Keys.Export.CustomExportTrigger)
@@ -83,19 +82,19 @@ public class CustomExportJob implements Job {
                 .startNow()
                 .build();
         scheduler.scheduleJob(trigger);
-        LOG.info("Added trigger {} for job {} with schedule '{}'", trigger.getKey(), getKey(), schedule);
+        log.info("Added trigger {} for job {} with schedule '{}'", trigger.getKey(), getKey(), schedule);
     }
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         try {
-            LOG.info("Running job {}", getKey());
+            log.info("Running job {}", getKey());
             long start = Instant.now().toEpochMilli();
             runExport();
             long elapsed = Instant.now().toEpochMilli() - start;
-            LOG.info("Finished job {}. Took {} ms", getKey(), elapsed);
+            log.info("Finished job {}. Took {} ms", getKey(), elapsed);
         } catch (Exception e) {
-            LOG.error("Error while executing job {}", getKey(), e);
+            log.error("Error while executing job {}", getKey(), e);
             throw new JobExecutionException(e, false);
         }
     }
@@ -104,7 +103,7 @@ public class CustomExportJob implements Job {
         String gcpProjectId = cfg.getString(ConfigFile.GOOGLE_PROJECT_ID);
         GoogleCredentials credentials = GoogleCredentialUtil.initCredentials(true);
         if (credentials == null) {
-            LOG.error("No Google credentials are provided, skipping job {}", getKey());
+            log.error("No Google credentials are provided, skipping job {}", getKey());
             return;
         }
 
@@ -112,7 +111,7 @@ public class CustomExportJob implements Job {
         String bucketName = exportCfg.getString(CustomExportConfigFile.BUCKET_NAME);
         Bucket bucket = bucketClient.getBucket(bucketName);
         if (bucket == null) {
-            LOG.error("Could not find google bucket {}, skipping job {}", bucketName, getKey());
+            log.error("Could not find google bucket {}, skipping job {}", bucketName, getKey());
             return;
         }
 
@@ -121,7 +120,7 @@ public class CustomExportJob implements Job {
 
         StudyDto customDto = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS,
                 handle -> new JdbiUmbrellaStudyCached(handle).findByStudyGuid(studyGuid));
-        LOG.info("Found custom study for data export");
+        log.info("Found custom study for data export");
 
         // Invalidate the caches for a fresh export
         ActivityDefStore.getInstance().clear();
@@ -138,7 +137,7 @@ public class CustomExportJob implements Job {
                         .addPoint(1, Instant.now().toEpochMilli());
             }
         } catch (Exception e) {
-            LOG.error("Error while doing custom export", e);
+            log.error("Error while doing custom export", e);
         }
     }
 }

@@ -13,6 +13,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DsmKitRequestDao;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
@@ -30,12 +31,9 @@ import org.jdbi.v3.core.HandleCallback;
 import org.jdbi.v3.core.mapper.EnumMapper;
 import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
 import org.jdbi.v3.stringtemplate4.StringTemplateSqlLocator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class KitCheckService {
-
-    private static final Logger LOG = LoggerFactory.getLogger(KitCheckService.class);
     private static final int DEFAULT_PENDING_BATCH_SIZE = 300;
 
     private final PexInterpreter interpreter;
@@ -80,11 +78,11 @@ public class KitCheckService {
 
             int numKits = kitConfig.getNumKits();
             if (numKits <= 0) {
-                LOG.warn("Kit configuration with id {} has no kit quantity configured, skipping", kitConfigId);
+                log.warn("Kit configuration with id {} has no kit quantity configured, skipping", kitConfigId);
                 continue;
             }
 
-            LOG.info("Processing potential kit recipients for study {} and kit configuration {}", studyGuid, kitConfigId);
+            log.info("Processing potential kit recipients for study {} and kit configuration {}", studyGuid, kitConfigId);
 
             int fetched = 0;
             while (true) {
@@ -100,13 +98,13 @@ public class KitCheckService {
                     try {
                         processPotentialKitRecipient(studyGuid, kitTypeId, kitCheckResult, kitConfig, candidate);
                     } catch (Exception e) {
-                        LOG.error("Error while checking potential kit recipient {}, continuing", candidate.getUserGuid(), e);
+                        log.error("Error while checking potential kit recipient {}, continuing", candidate.getUserGuid(), e);
                     }
                 }
                 fetched += fetchedSize;
             }
 
-            LOG.info("Finished processing {} potential kit recipients for study {} and kit configuration {}",
+            log.info("Finished processing {} potential kit recipients for study {} and kit configuration {}",
                     fetched, studyGuid, kitConfigId);
         }
 
@@ -120,13 +118,13 @@ public class KitCheckService {
         String userGuid = candidate.getUserGuid();
 
         if (candidate.getAddressId() == null) {
-            LOG.warn("Participant {} is missing a default mailing address", userGuid);
+            log.warn("Participant {} is missing a default mailing address", userGuid);
             return;
         }
 
         if (candidate.getAddressValidationStatus() == null
                 || candidate.getAddressValidationStatus() == DSM_INVALID_ADDRESS_STATUS) {
-            LOG.warn("Participant {} has an invalid mailing address", userGuid);
+            log.warn("Participant {} has an invalid mailing address", userGuid);
             return;
         }
 
@@ -137,19 +135,19 @@ public class KitCheckService {
             DsmKitRequestDao kitRequestDao = handle.attach(DsmKitRequestDao.class);
 
             if (success) {
-                Long kitRequestId = null;
+                Long kitRequestId;
                 int numKits = kitConfiguration.getNumKits();
                 for (int i = 0; i < numKits; i++) {
-                    LOG.info("Creating kit request for {}", userGuid);
+                    log.info("Creating kit request for {}", userGuid);
                     kitRequestId = kitRequestDao.createKitRequest(studyGuid, candidate.getUserId(),
                             candidate.getAddressId(), kitTypeId, kitConfiguration.needsApproval());
-                    LOG.info("Created kit request id {} for {}. Completed {} out of {} kits",
+                    log.info("Created kit request id {} for {}. Completed {} out of {} kits",
                             kitRequestId, userGuid, i + 1, numKits);
                 }
                 if (kitConfiguration.getSchedule() != null) {
                     // Add a tracking record for participant if kit has a reoccurring schedule.
                     long id = kitScheduleDao.createScheduleRecord(candidate.getUserId(), kitConfiguration.getId());
-                    LOG.info("Added kit schedule record with id={} for tracking reoccurring kits"
+                    log.info("Added kit schedule record with id={} for tracking reoccurring kits"
                             + " for participantGuid={} and kitConfigurationId={}", id, userGuid, kitConfiguration.getId());
                 }
             }
@@ -160,7 +158,7 @@ public class KitCheckService {
         if (wasSuccessful) {
             kitCheckResult.addQueuedParticipantForStudy(studyGuid, candidate.getUserId());
         } else {
-            LOG.warn("Participant {} was ineligible for a kit", userGuid);
+            log.warn("Participant {} was ineligible for a kit", userGuid);
         }
     }
 
@@ -185,7 +183,7 @@ public class KitCheckService {
             KitConfiguration kitConfig = kitConfigs.remove();
             long kitConfigId = kitConfig.getId();
             String studyGuid = kitConfig.getStudyGuid();
-            LOG.info("Checking kit schedule records for study {} and kit configuration {}", studyGuid, kitConfigId);
+            log.info("Checking kit schedule records for study {} and kit configuration {}", studyGuid, kitConfigId);
 
             int fetched = 0;
             while (true) {
@@ -202,13 +200,13 @@ public class KitCheckService {
                     try {
                         scheduleNextKitForParticipant(kitCheckResult, kitConfig, record);
                     } catch (Exception e) {
-                        LOG.error("Error while checking kit schedule record for participant {}, continuing", record.getUserGuid(), e);
+                        log.error("Error while checking kit schedule record for participant {}, continuing", record.getUserGuid(), e);
                     }
                 }
                 fetched += fetchedSize;
             }
 
-            LOG.info("Finished processing {} kit schedule records for study {} and kit configuration {}",
+            log.info("Finished processing {} kit schedule records for study {} and kit configuration {}",
                     fetched, studyGuid, kitConfigId);
         }
 
@@ -254,13 +252,13 @@ public class KitCheckService {
                 if (shouldOptOut) {
                     // They're opting out, save that and move on.
                     kitScheduleDao.updateRecordOptOut(record.getId(), true);
-                    LOG.info("Participant {} is opting out of recurring kits for kit_configuration_id={}",
+                    log.info("Participant {} is opting out of recurring kits for kit_configuration_id={}",
                             pending.getUserGuid(), schedule.getConfigId());
                     return true;
                 }
             } catch (Exception e) {
                 // Somehow there's an error, so skip over this one.
-                LOG.error("Error while determining if participant should opt-out of entire kit schedule,"
+                log.error("Error while determining if participant should opt-out of entire kit schedule,"
                         + " participantGuid={}, kitConfigurationId={}", pending.getUserGuid(), schedule.getConfigId(), e);
                 return true;
             }
@@ -276,7 +274,7 @@ public class KitCheckService {
                 EventTriggerType.KIT_PREP);
         EventService.getInstance().processAllActionsForEventSignal(apisHandle, signal);
         kitScheduleDao.updateRecordCurrentOccurrencePrepTime(record.getId(), Instant.now());
-        LOG.info("Preparation step finished for participant {} and occurrence {} of kit_configuration_id={}",
+        log.info("Preparation step finished for participant {} and occurrence {} of kit_configuration_id={}",
                 pending.getUserGuid(), record.getNumOccurrences() + 1, schedule.getConfigId());
         return false;
     }
@@ -298,13 +296,13 @@ public class KitCheckService {
                 if (shouldOptOut) {
                     // They're opting out, save that and move on.
                     kitScheduleDao.updateRecordOptOut(record.getId(), true);
-                    LOG.info("Participant {} is opting out of recurring kits for kit_configuration_id={}",
+                    log.info("Participant {} is opting out of recurring kits for kit_configuration_id={}",
                             pending.getUserGuid(), schedule.getConfigId());
                     return;
                 }
             } catch (Exception e) {
                 // Somehow there's an error, so skip over this one.
-                LOG.error("Error while determining if participant should opt-out of entire kit schedule,"
+                log.error("Error while determining if participant should opt-out of entire kit schedule,"
                         + " participantGuid={}, kitConfigurationId={}", userGuid, schedule.getConfigId(), e);
                 return;
             }
@@ -317,13 +315,13 @@ public class KitCheckService {
                 if (shouldOptOut) {
                     // They're opting out, bump up the occurrence and move on.
                     kitScheduleDao.incrementRecordNumOccurrence(record.getId());
-                    LOG.info("Participant {} is opting out of kit for occurrence {} of kit_configuration_id={}",
+                    log.info("Participant {} is opting out of kit for occurrence {} of kit_configuration_id={}",
                             pending.getUserGuid(), record.getNumOccurrences() + 1, schedule.getConfigId());
                     return;
                 }
             } catch (Exception e) {
                 // Somehow there's an error, so skip over this one.
-                LOG.error("Error while determining if participant should opt-out of kit for occurrence,"
+                log.error("Error while determining if participant should opt-out of kit for occurrence,"
                         + " participantGuid={}, kitConfigurationId={}", userGuid, kitConfig.getId(), e);
                 return;
             }
@@ -331,12 +329,12 @@ public class KitCheckService {
 
         // Haven't opted-out of this kit. Let's check the rules.
         if (pending.getAddressId() == null) {
-            LOG.warn("Participant {} is missing a default mailing address", userGuid);
+            log.warn("Participant {} is missing a default mailing address", userGuid);
             return;
         }
         if (pending.getAddressValidationStatus() == null
                 || pending.getAddressValidationStatus() == DSM_INVALID_ADDRESS_STATUS) {
-            LOG.warn("Participant {} has an invalid mailing address", userGuid);
+            log.warn("Participant {} has an invalid mailing address", userGuid);
             return;
         }
 
@@ -344,18 +342,18 @@ public class KitCheckService {
         if (success) {
             // All good. Create the next kit.
             for (int i = 0; i < kitConfig.getNumKits(); i++) {
-                LOG.info("Creating next kit request for {}", userGuid);
+                log.info("Creating next kit request for {}", userGuid);
                 long kitRequestId = kitRequestDao.createKitRequest(studyGuid, pending.getUserId(),
                         pending.getAddressId(), kitConfig.getKitType().getId(), kitConfig.needsApproval());
-                LOG.info("Created next kit request id {} for {}. Completed {} out of {} kits",
+                log.info("Created next kit request id {} for {}. Completed {} out of {} kits",
                         kitRequestId, userGuid, i + 1, kitConfig.getNumKits());
             }
             kitScheduleDao.incrementRecordNumOccurrence(record.getId());
             kitCheckResult.addQueuedParticipantForStudy(studyGuid, pending.getUserId());
-            LOG.info("Finished occurrence {} for participant {} and kit_configuration_id={}",
+            log.info("Finished occurrence {} for participant {} and kit_configuration_id={}",
                     record.getNumOccurrences() + 1, pending.getUserGuid(), schedule.getConfigId());
         } else {
-            LOG.warn("Participant {} was ineligible for next kit, kitConfigurationId={}", userGuid, kitConfig.getId());
+            log.warn("Participant {} was ineligible for next kit, kitConfigurationId={}", userGuid, kitConfig.getId());
         }
     }
 

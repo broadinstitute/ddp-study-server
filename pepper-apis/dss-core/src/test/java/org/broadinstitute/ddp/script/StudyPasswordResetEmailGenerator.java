@@ -10,6 +10,7 @@ import java.util.Set;
 
 import com.auth0.exception.Auth0Exception;
 import com.auth0.json.mgmt.users.User;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
@@ -31,14 +32,10 @@ import org.broadinstitute.ddp.util.DdpParticipantSendGridEmailPersonalization;
 import org.broadinstitute.ddp.util.SendGridMailUtil;
 import org.jdbi.v3.core.Handle;
 import org.junit.Assert;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 // Useful script to help migrate existing studies.
+@Slf4j
 public class StudyPasswordResetEmailGenerator {
-
-    private static final Logger LOG = LoggerFactory.getLogger(StudyPasswordResetEmailGenerator.class);
-
     public List<ProfileWithEmail> getProfileWithEmailForEmailAddresses(Handle handle,
                                                                        List<String> recipientEmailAddresses,
                                                                        String auth0Domain,
@@ -78,14 +75,14 @@ public class StudyPasswordResetEmailGenerator {
         for (String emailAddress : recipientEmailAddresses) {
             String auth0UserId = auth0EmailUserMap.get(emailAddress);
             if (StringUtils.isBlank(auth0UserId)) {
-                LOG.error("Could not find auth0UserID for {}", emailAddress);
+                log.error("Could not find auth0UserID for {}", emailAddress);
                 continue;
             }
             UserDto userDto = handle.attach(JdbiUser.class).findByAuth0UserId(auth0UserId, auth0TenantDto.getId());
             UserProfile userProfile = handle.attach(UserProfileDao.class).findProfileByUserGuid(userDto.getUserGuid()).orElse(null);
 
             if (userProfile == null) {
-                LOG.error("Could not find profile for {} ", emailAddress);
+                log.error("Could not find profile for {} ", emailAddress);
             } else {
                 recipientProfiles.add(new ProfileWithEmail(userProfile, emailAddress));
             }
@@ -112,7 +109,7 @@ public class StudyPasswordResetEmailGenerator {
         var getResult = mgmtClient.getConnectionByName(Auth0ManagementClient.DEFAULT_DB_CONN_NAME);
         if (getResult.hasFailure()) {
             var e = getResult.hasThrown() ? getResult.getThrown() : getResult.getError();
-            LOG.error("Could not obtain connection id", e);
+            log.error("Could not obtain connection id", e);
             return false;
         }
         String connectionId = getResult.getBody().getId();
@@ -123,20 +120,20 @@ public class StudyPasswordResetEmailGenerator {
                 UserProfile profile = profileWithEmail.getProfile();
                 String userEmail = profileWithEmail.getEmailAddress();
                 if (userEmail == null) {
-                    LOG.error("Could not look up email address for user with id: " + profile.getUserId());
+                    log.error("Could not look up email address for user with id: " + profile.getUserId());
                     continue;
                 }
 
                 if (StringUtils.isBlank(profile.getLastName()) || StringUtils.isBlank(profile.getFirstName())) {
-                    LOG.error("Missing full name for user with with email: " + userEmail + " and user id: " + profile.getUserId());
+                    log.error("Missing full name for user with with email: " + userEmail + " and user id: " + profile.getUserId());
                     continue;
                 }
 
-                LOG.info("Creating password reset for {}", userEmail);
+                log.info("Creating password reset for {}", userEmail);
                 var result = mgmtClient.createPasswordResetTicket(userEmail, connectionId, redirectUrlAfterPasswordReset);
                 if (result.hasFailure()) {
                     var e = result.hasThrown() ? result.getThrown() : result.getError();
-                    LOG.error("Could not generate password reset link for email: " + userEmail + " and user id: " + profile.getUserId(), e);
+                    log.error("Could not generate password reset link for email: " + userEmail + " and user id: " + profile.getUserId(), e);
                     continue;
                 }
 
@@ -229,11 +226,11 @@ public class StudyPasswordResetEmailGenerator {
         } else {
             User auth0User = getResult.getBody();
             if (auth0User == null) {
-                LOG.error("Could not retrieve the Auth0User info for auth0UserId=" + auth0UserId);
+                log.error("Could not retrieve the Auth0User info for auth0UserId=" + auth0UserId);
                 return null;
             } else {
                 if (StringUtils.isBlank(auth0User.getEmail())) {
-                    LOG.error("Could not find email address in Auth0 for auth0UserId=" + auth0UserId);
+                    log.error("Could not find email address in Auth0 for auth0UserId=" + auth0UserId);
                     return null;
                 } else {
                     return auth0User.getEmail();
@@ -245,9 +242,7 @@ public class StudyPasswordResetEmailGenerator {
     String getSendgridApiKey(String studyGuid, Handle apisHandle) {
         SendgridConfigurationDto sendgridConf = apisHandle.attach(JdbiSendgridConfiguration.class)
                 .findByStudyGuid(studyGuid).orElseThrow(
-                        () -> {
-                            return new DDPException("No Sendgrid configuration exists for the study" + " with GUID " + studyGuid);
-                        }
+                        () -> new DDPException("No Sendgrid configuration exists for the study" + " with GUID " + studyGuid)
                 );
 
         String sendgridApiKey = sendgridConf.getApiKey();

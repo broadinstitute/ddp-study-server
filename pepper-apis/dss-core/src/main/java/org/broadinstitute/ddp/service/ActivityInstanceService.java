@@ -21,6 +21,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.ddp.constants.LanguageConstants;
@@ -57,23 +59,13 @@ import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderFactory;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-
+@Slf4j
+@AllArgsConstructor
 public class ActivityInstanceService {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ActivityInstanceService.class);
-
     private final ActivityInstanceDao actInstanceDao;
     private final PexInterpreter interpreter;
     private final I18nContentRenderer renderer;
-
-    public ActivityInstanceService(ActivityInstanceDao actInstanceDao, PexInterpreter interpreter, I18nContentRenderer renderer) {
-        this.actInstanceDao = actInstanceDao;
-        this.interpreter = interpreter;
-        this.renderer = renderer;
-    }
 
     /**
      * Iterate through the instance and load activity instance summaries for each nested activity block.
@@ -490,7 +482,9 @@ public class ActivityInstanceService {
         Map<Long, Map<String, String>> substitutions;
         try (var substitutionStream = instanceDao.bulkFindSubstitutions(instanceIds)) {
             substitutions = substitutionStream
-                    .collect(Collectors.toMap(wrapper -> wrapper.getActivityInstanceId(), wrapper -> wrapper.unwrap()));
+                    .collect(Collectors.toMap(
+                            org.broadinstitute.ddp.db.dao.ActivityInstanceDao.SubstitutionsWrapper::getActivityInstanceId,
+                            org.broadinstitute.ddp.db.dao.ActivityInstanceDao.SubstitutionsWrapper::unwrap));
         }
         var sharedSnapshot = I18nContentRenderer
                 .newValueProviderBuilder(handle, userId, operatorGuid, studyGuid)
@@ -601,7 +595,7 @@ public class ActivityInstanceService {
                     .getContext();
 
         if (context.getFailedStep() != null) {
-            LOG.warn("ActivityInstance build failed: {}, step={}", context.getFailedMessage(), context.getFailedStep());
+            log.warn("ActivityInstance build failed: {}, step={}", context.getFailedMessage(), context.getFailedStep());
         }
         return Optional.ofNullable(context.getFormInstance());
     }
@@ -648,7 +642,7 @@ public class ActivityInstanceService {
                     .getContext();
 
         if (context.getFailedStep() != null) {
-            LOG.warn("ActivityInstance build failed: {}, step={}", context.getFailedMessage(), context.getFailedStep());
+            log.warn("ActivityInstance build failed: {}, step={}", context.getFailedMessage(), context.getFailedStep());
         }
         return Optional.ofNullable(context.getFormInstance());
     }

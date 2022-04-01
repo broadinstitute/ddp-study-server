@@ -25,31 +25,21 @@ import com.google.pubsub.v1.Subscription;
 import com.google.pubsub.v1.Topic;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.util.PubSubEmulator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Generally useful utilities for connecting to pubsub
  */
+@Slf4j
 public class PubSubConnectionManager {
-
-    private static final Logger LOG = LoggerFactory.getLogger(PubSubConnectionManager.class);
-
     public static final int ACK_DEADLINE_SECONDS = 60;
-
     private final boolean useEmulator;
-
     private ManagedChannel pubsubChannel;
-
     private CredentialsProvider pubsubCredsProvider;
-
     private TransportChannelProvider channelProvider;
-
     private final TopicAdminClient adminClient;
-
     private final SubscriptionAdminClient subscriptionAdminClient;
-
     private static final Map<String, Publisher> PUBLISHERS_TO_SHUTDOWN = new HashMap<>();
 
     static {
@@ -60,7 +50,7 @@ public class PubSubConnectionManager {
                 try {
                     publisher.shutdown();
                 } catch (Exception e) {
-                    LOG.error("Could not shutdown publisher for topic {}", publisher.getTopicName(), e);
+                    log.error("Could not shutdown publisher for topic {}", publisher.getTopicName(), e);
                 }
             }
         }));
@@ -77,7 +67,7 @@ public class PubSubConnectionManager {
         this.useEmulator = useEmulator;
         if (useEmulator) {
             if (!PubSubEmulator.hasStarted()) {
-                LOG.info("Starting simulator");
+                log.info("Starting simulator");
                 PubSubEmulator.startEmulator();
             }
             pubsubChannel = emulatedPubSubChannel();
@@ -130,7 +120,7 @@ public class PubSubConnectionManager {
                         subscription.getName(),
                         subscription.getTopic()), e);
             } else {
-                LOG.info("Subscription {} for topic {} already exists", subscription.getName(), subscription.getTopic());
+                log.info("Subscription {} for topic {} already exists", subscription.getName(), subscription.getTopic());
             }
         }
         return subscription;
@@ -143,7 +133,7 @@ public class PubSubConnectionManager {
         Topic topic = null;
         try {
             topic = adminClient.createTopic(topicName);
-            LOG.info("Created topic {} for project {}", topicName.getTopic(), topicName.getProject());
+            log.info("Created topic {} for project {}", topicName.getTopic(), topicName.getProject());
         } catch (ApiException e) {
             if (e.getStatusCode().getCode() != StatusCode.Code.ALREADY_EXISTS) {
                 throw new RuntimeException(String.format("Error creating topic %s in project %s.  Status code: %s.  "
@@ -153,7 +143,7 @@ public class PubSubConnectionManager {
                                                          e.getStatusCode().getCode(),
                                                          e.isRetryable()));
             } else {
-                LOG.info("Topic {} already exists in project {}", topicName.getTopic(), topicName.getProject());
+                log.info("Topic {} already exists in project {}", topicName.getTopic(), topicName.getProject());
             }
         } catch (Exception e) {
             throw new RuntimeException(String.format("Error creating topic %s in project %s",
@@ -238,14 +228,14 @@ public class PubSubConnectionManager {
             try {
                 subscriptionAdminClient.close();
             } catch (Exception e) {
-                LOG.error("Could not clean up subscription admin client", e);
+                log.error("Could not clean up subscription admin client", e);
             }
         }
         if (adminClient != null) {
             try {
                 adminClient.close();
             } catch (Exception e) {
-                LOG.error("Could not clean up admin client", e);
+                log.error("Could not clean up admin client", e);
             }
         }
         if (pubsubChannel != null) {

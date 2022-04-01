@@ -31,6 +31,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.opencsv.CSVReader;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -115,13 +116,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class DataExporterTest extends TxnAwareBaseTest {
-
-    private static final Logger LOG = LoggerFactory.getLogger(DataExporterTest.class);
-
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String TEST_USER_GUID = "blah-guid";
     private static DataExporter exporter;
@@ -447,7 +444,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
             //covert to json and verify
             Gson gson = new GsonBuilder().serializeNulls().create();
             String esDoc = gson.toJson(value);
-            LOG.info("JSON DATA: \n {} ", esDoc);
+            log.info("JSON DATA: \n {} ", esDoc);
             Assert.assertTrue(esDoc.contains("{\"stableId\":\"TEST_TEXTQ\",\"questionType\":\"TEXT\",\"questionText\":\"text prompt\"}"));
 
             //check Date Question

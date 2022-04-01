@@ -5,6 +5,7 @@ import java.time.ZoneId;
 import java.util.TimeZone;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.UserDao;
@@ -20,13 +21,9 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class TemporaryUserCleanupJob implements Job {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TemporaryUserCleanupJob.class);
-
     public static JobKey getKey() {
         return Keys.Cleanup.TempUserJob;
     }
@@ -38,11 +35,11 @@ public class TemporaryUserCleanupJob implements Job {
                 .storeDurably(true)
                 .build();
         scheduler.addJob(job, true);
-        LOG.info("Added job {} to scheduler", getKey());
+        log.info("Added job {} to scheduler", getKey());
 
         String schedule = ConfigUtil.getStrIfPresent(cfg, ConfigFile.TEMP_USER_CLEANUP_SCHEDULE);
         if (schedule == null || schedule.equalsIgnoreCase("off")) {
-            LOG.warn("Job {} is set to be turned off, no trigger added", getKey());
+            log.warn("Job {} is set to be turned off, no trigger added", getKey());
             return;
         }
 
@@ -56,22 +53,22 @@ public class TemporaryUserCleanupJob implements Job {
                 .startNow()
                 .build();
         scheduler.scheduleJob(trigger);
-        LOG.info("Added trigger {} for job {} with schedule '{}'", trigger.getKey(), getKey(), schedule);
+        log.info("Added trigger {} for job {} with schedule '{}'", trigger.getKey(), getKey(), schedule);
     }
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         try {
-            LOG.info("Running job {}", getKey());
+            log.info("Running job {}", getKey());
             long start = Instant.now().toEpochMilli();
 
             TransactionWrapper.useTxn(TransactionWrapper.DB.APIS,
                     handle -> handle.attach(UserDao.class).deleteAllExpiredTemporaryUsers());
 
             long elapsed = Instant.now().toEpochMilli() - start;
-            LOG.info("Job {} completed in {}ms", getKey(), elapsed);
+            log.info("Job {} completed in {}ms", getKey(), elapsed);
         } catch (Exception e) {
-            LOG.error("Error while executing job {}", getKey(), e);
+            log.error("Error while executing job {}", getKey(), e);
             throw new JobExecutionException(e, false);
         }
     }

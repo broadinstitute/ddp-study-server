@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.service;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.dto.ActivityValidationDto;
@@ -10,15 +11,12 @@ import org.broadinstitute.ddp.model.activity.instance.validation.ActivityValidat
 import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Performs the activity-level validation of answers with respect to their compatibility
  */
+@Slf4j
 public class ActivityValidationService {
-    private static final Logger LOG = LoggerFactory.getLogger(ActivityValidationService.class);
-
     /**
      * Check if the combination of answers in the form is compatible with each other
      * While isComplete() checks if individual required questions are answered,
@@ -65,7 +63,7 @@ public class ActivityValidationService {
             } catch (PexException e) {
                 // DDP-4124: If the validation fails because we are unable to find all the data (PEX Exception), then just ignore.
                 // We'll come back to it as soon as those data are entered
-                LOG.warn("Failed to evaluate a PEX expression or precondition. This is not considered an error", e);
+                log.warn("Failed to evaluate a PEX expression or precondition. This is not considered an error", e);
             }
         }
 

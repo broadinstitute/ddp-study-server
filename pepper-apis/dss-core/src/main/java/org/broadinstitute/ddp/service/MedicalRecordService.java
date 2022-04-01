@@ -10,6 +10,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import lombok.AllArgsConstructor;
+import lombok.Value;
+import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerSql;
@@ -20,21 +24,14 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.study.ActivityMapping;
 import org.broadinstitute.ddp.model.study.ActivityMappingType;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Fetches the information related to the user medical record
  */
+@Slf4j
+@AllArgsConstructor
 public class MedicalRecordService {
-
-    private static final Logger LOG = LoggerFactory.getLogger(MedicalRecordService.class);
-
-    private ConsentService consentService;
-
-    public MedicalRecordService(ConsentService consentService) {
-        this.consentService = consentService;
-    }
+    private final ConsentService consentService;
 
     /**
      * Find value for "date of diagnosis". Looks through all submitted activity instances mapped by the study, sorted by latest
@@ -52,7 +49,6 @@ public class MedicalRecordService {
                 .findActivityMappings(studyId, ActivityMappingType.DATE_OF_DIAGNOSIS)
                 .stream()
                 .collect(Collectors.toMap(ActivityMapping::getActivityId, Function.identity()));
-
 
         try (Stream<ActivityResponse> responseStream = handle.attach(ActivityInstanceDao.class)
                 .findBaseResponsesByStudyAndUserIds(studyId, Set.of(participantUserId), true, mappings.keySet())) {
@@ -148,7 +144,7 @@ public class MedicalRecordService {
                 .findFirst()
                 .orElse(null);
         if (instance == null) {
-            LOG.info("No completed activity instance found for user {} and study {} for mapping type {}",
+            log.info("No completed activity instance found for user {} and study {} for mapping type {}",
                     participantGuid, studyGuid, mappingType);
             return false;
         }
@@ -157,7 +153,7 @@ public class MedicalRecordService {
                 .getLatestConsentSummary(handle, participantGuid, operatorGuid, studyGuid, instance.getActivityCode())
                 .orElse(null);
         if (summary == null) {
-            LOG.error("No consent summary found for activity {} user {} study {} for mapping type {}",
+            log.error("No consent summary found for activity {} user {} study {} for mapping type {}",
                     instance.getActivityCode(), participantGuid, studyGuid, mappingType);
             return false;
         }
@@ -171,28 +167,17 @@ public class MedicalRecordService {
         if (election != null) {
             return election.getSelected() != null ? election.getSelected() : false;
         } else {
-            LOG.error("No consent election found for stableId {} activity {} user {} study {} for mapping type {}",
+            log.error("No consent election found for stableId {} activity {} user {} study {} for mapping type {}",
                     electionStableId, instance.getActivityCode(), participantGuid, studyGuid, mappingType);
             return false;
         }
     }
 
+    @Value
+    @AllArgsConstructor
+    @Accessors(fluent = true)
     public static class ParticipantConsents {
-        private boolean hasConsentedToBloodDraw;
-        private boolean hasConsentedToTissueSample;
-
-        public ParticipantConsents(boolean hasConsentedToBloodDraw, boolean hasConsentedToTissueSample) {
-            this.hasConsentedToBloodDraw = hasConsentedToBloodDraw;
-            this.hasConsentedToTissueSample = hasConsentedToTissueSample;
-        }
-
-        public boolean hasConsentedToBloodDraw() {
-            return hasConsentedToBloodDraw;
-        }
-
-        public boolean hasConsentedToTissueSample() {
-            return hasConsentedToTissueSample;
-        }
+        boolean hasConsentedToBloodDraw;
+        boolean hasConsentedToTissueSample;
     }
-
 }

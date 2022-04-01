@@ -2,7 +2,6 @@ package org.broadinstitute.ddp.event.pubsubtask.api;
 
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.errorMsg;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.infoMsg;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
@@ -17,9 +16,9 @@ import com.google.cloud.pubsub.v1.Publisher;
 import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.ProjectTopicName;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.housekeeping.PubSubConnectionManager;
-import org.slf4j.Logger;
 
 /**
  * Creates PubSubTask Subscriber
@@ -33,10 +32,8 @@ import org.slf4j.Logger;
  * After doing an action it is called the {@link PubSubTaskResultSender}
  * which sends result to a topic "pubsub.pubSubTasksResultTopic".
  */
+@Slf4j
 public class PubSubTaskConnectionService {
-
-    private static final Logger LOG = getLogger(PubSubTaskConnectionService.class);
-
     public static final int DEFAULT_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT_SEC = 30;
     public static final int SUBSCRIBER_FAILURE_LISTENER_THREAD_COUNT = 4;
     public static final int PUBLISHER_AWAIT_TERMINATION_TIMEOUT_MIN = 1;
@@ -109,7 +106,7 @@ public class PubSubTaskConnectionService {
             pubSubTaskSubscriber.addListener(
                     new Subscriber.Listener() {
                         public void failed(Subscriber.State from, Throwable failure) {
-                            LOG.error(errorMsg("Unrecoverable failure happened during subscribing to subscription "
+                            log.error(errorMsg("Unrecoverable failure happened during subscribing to subscription "
                                     + projectSubscriptionName), failure);
                             if (!executorProvider.getExecutor().isShutdown()) {
                                 createPubSubTaskSubscriber(executorProvider, callbackExecutor);
@@ -124,7 +121,7 @@ public class PubSubTaskConnectionService {
             throw new DDPException("Could not start subscriber for subscription"
                     + projectSubscriptionName.getSubscription(), e);
         }
-        LOG.info(infoMsg("Subscriber to subscription {} is STARTED"), projectSubscriptionName);
+        log.info(infoMsg("Subscriber to subscription {} is STARTED"), projectSubscriptionName);
     }
 
     public void createPubSubTaskResultPublisher() {

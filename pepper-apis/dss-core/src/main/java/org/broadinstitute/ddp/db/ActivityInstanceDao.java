@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.db;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -23,13 +22,8 @@ import org.broadinstitute.ddp.util.I18nUtil;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.JdbiException;
 import org.jdbi.v3.core.generic.GenericType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ActivityInstanceDao {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ActivityInstanceDao.class);
-
     private static String TRANSLATED_SUMMARY_BY_GUID_QUERY;
     private static String INSTANCE_ID_BY_GUID_QUERY;
     private static String SECTIONS_SIZE_FOR_ACTIVITY_INSTANCE;
@@ -55,7 +49,7 @@ public class ActivityInstanceDao {
                                                                       long studyId) {
         try {
             return handle.attach(JdbiActivityInstance.class)
-                    .findLatestInstanceGuidByUserGuidAndCodesOfActivities(userGuid, Arrays.asList(activityCode), studyId);
+                    .findLatestInstanceGuidByUserGuidAndCodesOfActivities(userGuid, List.of(activityCode), studyId);
         } catch (IllegalStateException e) {
             throw new DaoException("Multiple rows found for user guid " + userGuid
                     + " and activity code " + activityCode, e);
@@ -88,7 +82,7 @@ public class ActivityInstanceDao {
                         String isoLangCode = rs.getString(LanguageCodeTable.CODE);
                         return new UserActivity(activityInstanceGuid, title, subtitle, type, status, isoLangCode);
                     })
-                    .collectInto(new GenericType<List<UserActivity>>() {
+                    .collectInto(new GenericType<>() {
                     });
             // Picking the appropriate language for each activity instance
             List<UserActivity> userActivitiesTranslated = I18nUtil.getActivityInstanceTranslation(
@@ -117,7 +111,7 @@ public class ActivityInstanceDao {
      * @return Id of the activity instance
      */
     public Long getActivityInstanceIdByGuid(Handle handle, String guid) {
-        Long activityInstanceId = null;
+        long activityInstanceId;
         try (PreparedStatement stmt = handle.getConnection().prepareStatement(INSTANCE_ID_BY_GUID_QUERY)) {
             stmt.setString(1, guid);
             ResultSet rs = stmt.executeQuery();

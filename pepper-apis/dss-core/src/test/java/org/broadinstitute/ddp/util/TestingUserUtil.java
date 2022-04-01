@@ -28,6 +28,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.Auth0Constants;
 import org.broadinstitute.ddp.constants.TestConstants;
@@ -38,13 +39,9 @@ import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.security.JWTConverter;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class TestingUserUtil {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TestingUserUtil.class);
-
     /**
      * Creates a totally new user that hopefully has not been
      * used before, logs it in, and returns information about the
@@ -151,10 +148,10 @@ public class TestingUserUtil {
         CachedUser cachedUser = tryCachedUser(userGUID, auth0ClientId, mgmtClient.getDomain());
         if (cachedUser != null) {
             if (cachedUser.getId() == user.getUserId()) {
-                LOG.info("Using cached test user");
+                log.info("Using cached test user");
                 return cachedUser.asTestingUser();
             } else {
-                LOG.warn("Cached test user id doesn't match what's in database, not using");
+                log.warn("Cached test user id doesn't match what's in database, not using");
             }
         }
 
@@ -185,21 +182,21 @@ public class TestingUserUtil {
         try {
             jwt = JWTConverter.verifyDDPToken(user.getToken(), JWTConverter.defaultProvider(auth0Domain));
             if (jwt == null) {
-                LOG.warn("Unable to verify or decode jwt token for cached test user");
+                log.warn("Unable to verify or decode jwt token for cached test user");
                 return null;
             }
         } catch (TokenExpiredException e) {
-            LOG.warn("Cached test user token expired, not using", e);
+            log.warn("Cached test user token expired, not using", e);
             return null;
         } catch (Exception e) {
-            LOG.warn("Error while verifying jwt token for cached test user, not using", e);
+            log.warn("Error while verifying jwt token for cached test user, not using", e);
             return null;
         }
 
         String guidClaim = jwt.getClaim(Auth0Constants.DDP_USER_ID_CLAIM).asString();
         String clientIdClaim = jwt.getClaim(Auth0Constants.DDP_CLIENT_CLAIM).asString();
         if (!userGuid.equals(guidClaim) || !auth0ClientId.equals(clientIdClaim)) {
-            LOG.warn("Cached test user token does not match expected claims, not using");
+            log.warn("Cached test user token does not match expected claims, not using");
             return null;
         }
 
@@ -207,7 +204,7 @@ public class TestingUserUtil {
         Instant shortenedExpire = jwt.getExpiresAt().toInstant().minus(1, ChronoUnit.MINUTES);
         Instant now = Instant.now();
         if (now.equals(shortenedExpire) || now.isAfter(shortenedExpire)) {
-            LOG.info("Cached test user's jwt token has or is about to expire");
+            log.info("Cached test user's jwt token has or is about to expire");
             return null;
         }
 
@@ -245,10 +242,10 @@ public class TestingUserUtil {
             Gson gson = new Gson();
             Path path = defaultCachedFilePath(userGuid, auth0ClientId);
 
-            LOG.info("Trying to read cached test user from: {}", path.toAbsolutePath());
+            log.info("Trying to read cached test user from: {}", path.toAbsolutePath());
 
             if (!Files.exists(path) || !Files.isReadable(path) || !Files.isRegularFile(path)) {
-                LOG.warn("Cached test user file is missing or invalid, not using");
+                log.warn("Cached test user file is missing or invalid, not using");
                 return null;
             }
 
@@ -256,7 +253,7 @@ public class TestingUserUtil {
                 String content = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
                 return gson.fromJson(content, CachedUser.class);
             } catch (IOException | JsonSyntaxException e) {
-                LOG.warn("Encountered issues reading cached test user", e);
+                log.warn("Encountered issues reading cached test user", e);
                 return null;
             }
         }
@@ -280,13 +277,13 @@ public class TestingUserUtil {
 
             try {
                 Files.write(path, content.getBytes(StandardCharsets.UTF_8));
-                LOG.info("Written cached test user to: {}", path.toAbsolutePath());
+                log.info("Written cached test user to: {}", path.toAbsolutePath());
             } catch (IOException e) {
-                LOG.warn("Error while writing test user", e);
+                log.warn("Error while writing test user", e);
                 try {
                     Files.deleteIfExists(path);
                 } catch (IOException ex) {
-                    LOG.warn("Unable to cleanup cache test user file", ex);
+                    log.warn("Unable to cleanup cache test user file", ex);
                 }
             }
         }

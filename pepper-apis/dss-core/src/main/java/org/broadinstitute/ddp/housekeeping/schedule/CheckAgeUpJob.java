@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
@@ -30,14 +31,10 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 @DisallowConcurrentExecution
 public class CheckAgeUpJob implements Job {
-
-    private static final Logger LOG = LoggerFactory.getLogger(CheckAgeUpJob.class);
-
     public static JobKey getKey() {
         return Keys.AgeUp.CheckJob;
     }
@@ -49,11 +46,11 @@ public class CheckAgeUpJob implements Job {
                 .storeDurably(true)
                 .build();
         scheduler.addJob(job, true);
-        LOG.info("Added job {} to scheduler", getKey());
+        log.info("Added job {} to scheduler", getKey());
 
         String schedule = ConfigUtil.getStrIfPresent(cfg, ConfigFile.CHECK_AGE_UP_SCHEDULE);
         if (schedule == null || schedule.equalsIgnoreCase("off")) {
-            LOG.warn("Job {} is set to be turned off, no trigger added", getKey());
+            log.warn("Job {} is set to be turned off, no trigger added", getKey());
             return;
         }
 
@@ -67,19 +64,19 @@ public class CheckAgeUpJob implements Job {
                 .startNow()
                 .build();
         scheduler.scheduleJob(trigger);
-        LOG.info("Added trigger {} for job {} with schedule '{}'", trigger.getKey(), getKey(), schedule);
+        log.info("Added trigger {} for job {} with schedule '{}'", trigger.getKey(), getKey(), schedule);
     }
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         try {
-            LOG.info("Running job {}", getKey());
+            log.info("Running job {}", getKey());
             long start = Instant.now().toEpochMilli();
             run();
             long elapsed = Instant.now().toEpochMilli() - start;
-            LOG.info("Job {} completed in {} ms", getKey(), elapsed);
+            log.info("Job {} completed in {} ms", getKey(), elapsed);
         } catch (Exception e) {
-            LOG.error("Error while executing job {} ", getKey(), e);
+            log.error("Error while executing job {} ", getKey(), e);
             throw new JobExecutionException(e, false);
         }
     }
@@ -95,16 +92,16 @@ public class CheckAgeUpJob implements Job {
         Collections.shuffle(policies);
         for (var policy : policies) {
             if (policy.getAgeOfMajorityRules().isEmpty()) {
-                LOG.info("Study {} has no age-of-majority rules, skipping", policy.getStudyGuid());
+                log.info("Study {} has no age-of-majority rules, skipping", policy.getStudyGuid());
                 continue;
             }
             try {
-                LOG.info("Running age-up check for study {}", policy.getStudyGuid());
+                log.info("Running age-up check for study {}", policy.getStudyGuid());
                 // Perform check for each study within a transaction so any unhandled errors for study will not affect other studies.
                 TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> service.runAgeUpCheck(handle, interpreter, policy));
-                LOG.info("Finished age-up check for study {}", policy.getStudyGuid());
+                log.info("Finished age-up check for study {}", policy.getStudyGuid());
             } catch (DDPException e) {
-                LOG.error("Error while checking age-up for study {}, continuing", policy.getStudyGuid(), e);
+                log.error("Error while checking age-up for study {}, continuing", policy.getStudyGuid(), e);
             }
         }
     }

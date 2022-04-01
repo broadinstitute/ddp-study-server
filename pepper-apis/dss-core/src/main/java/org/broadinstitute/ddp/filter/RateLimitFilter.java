@@ -10,25 +10,14 @@ import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.servlets.DoSFilter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Filter;
 import spark.Request;
 import spark.Response;
 
 public class RateLimitFilter implements Filter {
-
-    private static final Logger LOG = LoggerFactory.getLogger(RateLimitFilter.class);
-
-    private final int maxRequestsPerSecond;
-
-    private final int burst;
-
     private final DoSFilter rateLimitFilter;
 
     public RateLimitFilter(int maxRequestsPerSecond, int burst) {
-        this.maxRequestsPerSecond = maxRequestsPerSecond;
-        this.burst = burst;
         DoSFilter rateLimitFilter = new DoSFilter();
         rateLimitFilter.setEnabled(true);
         try {

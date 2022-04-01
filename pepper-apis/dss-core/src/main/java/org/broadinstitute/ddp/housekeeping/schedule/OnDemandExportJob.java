@@ -5,6 +5,7 @@ import java.time.Instant;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Bucket;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -24,17 +25,14 @@ import org.quartz.JobExecutionException;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class OnDemandExportJob implements Job {
 
     public static final String DATA_STUDY = "study";
     public static final String DATA_INDEX = "index";
     public static final String DATA_CSV = "csv";
     public static final String ALL_INDICES = "ALL_INDICES";
-
-    private static final Logger LOG = LoggerFactory.getLogger(OnDemandExportJob.class);
 
     private static DataExporter exporter;
 
@@ -52,7 +50,7 @@ public class OnDemandExportJob implements Job {
 
         // Add job without a trigger schedule since it's by on-demand.
         scheduler.addJob(job, true);
-        LOG.info("Added job {} to scheduler", getKey());
+        log.info("Added job {} to scheduler", getKey());
     }
 
     @Override
@@ -63,7 +61,7 @@ public class OnDemandExportJob implements Job {
             String index = data.getOrDefault(DATA_INDEX, null) != null
                     ? data.getString(DATA_INDEX) : null;
             boolean doCsv = data.getOrDefault(DATA_CSV, null) != null && data.getBoolean(DATA_CSV);
-            LOG.info("Triggered on-demand export job for study={}, index={}, csv={}",
+            log.info("Triggered on-demand export job for study={}, index={}, csv={}",
                     study, index == null ? "<null>" : index, doCsv);
 
             boolean exportCurrentlyRunning = ctx.getScheduler()
@@ -73,17 +71,17 @@ public class OnDemandExportJob implements Job {
                         return key.equals(StudyDataExportJob.getKey());
                     });
             if (exportCurrentlyRunning) {
-                LOG.warn("Regular data export job currently running, skipping job {}", getKey());
+                log.warn("Regular data export job currently running, skipping job {}", getKey());
                 return;
             }
 
-            LOG.info("Running job {}", getKey());
+            log.info("Running job {}", getKey());
             long start = Instant.now().toEpochMilli();
             run(study, index, doCsv);
             long elapsed = Instant.now().toEpochMilli() - start;
-            LOG.info("Finished job {}. Took {}s", getKey(), elapsed / 1000);
+            log.info("Finished job {}. Took {}s", getKey(), elapsed / 1000);
         } catch (Exception e) {
-            LOG.error("Error while executing job {}", getKey(), e);
+            log.error("Error while executing job {}", getKey(), e);
             throw new JobExecutionException(e, false);
         }
     }
@@ -94,10 +92,10 @@ public class OnDemandExportJob implements Job {
         StudyDto studyDto = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, handle ->
                 handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid));
         if (studyDto == null) {
-            LOG.warn("Unknown study '{}', skipping job {}", studyGuid, getKey());
+            log.warn("Unknown study '{}', skipping job {}", studyGuid, getKey());
             return;
         } else if (!studyDto.isDataExportEnabled()) {
-            LOG.warn("Study {} does not have data export enabled, skipping job {}", studyGuid, getKey());
+            log.warn("Study {} does not have data export enabled, skipping job {}", studyGuid, getKey());
             return;
         }
 
@@ -115,7 +113,7 @@ public class OnDemandExportJob implements Job {
                     var indexType = ElasticSearchIndexType.valueOf(index.toUpperCase());
                     coordinator.includeIndex(indexType);
                 } catch (Exception e) {
-                    LOG.error("Unknown index type: {}", index);
+                    log.error("Unknown index type: {}", index);
                     return;
                 }
             }
@@ -127,14 +125,14 @@ public class OnDemandExportJob implements Job {
             GoogleCredentials credentials = GoogleCredentialUtil
                     .initCredentials(cfg.getBoolean(ConfigFile.REQUIRE_DEFAULT_GCP_CREDENTIALS));
             if (credentials == null) {
-                LOG.error("No Google credentials are provided, skipping job {}", getKey());
+                log.error("No Google credentials are provided, skipping job {}", getKey());
                 return;
             }
 
             var bucketClient = new GoogleBucketClient(gcpProjectId, credentials);
             Bucket bucket = bucketClient.getBucket(bucketName);
             if (bucket == null) {
-                LOG.error("Could not find google bucket {}, skipping job {}", bucketName, getKey());
+                log.error("Could not find google bucket {}, skipping job {}", bucketName, getKey());
                 return;
             }
 

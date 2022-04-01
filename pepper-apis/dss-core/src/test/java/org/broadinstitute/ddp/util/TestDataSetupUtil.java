@@ -32,7 +32,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import com.auth0.exception.Auth0Exception;
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -126,16 +126,14 @@ import org.slf4j.LoggerFactory;
 /**
  * Utility that helps setup general purpose generatedTestData for testing.
  */
+@Slf4j
 public class TestDataSetupUtil {
-
     public static final String TEMP_DISABLE_CLIENT_STUDY_TENANT_CONSTRAINTS = "db-testscripts/disable-tenant-constraints.xml";
     public static final String MIGRATE_LEGACY_STUDY_CLIENT_TENANT_AND_ENABLE_CONSTRAINTS =
             "db-testscripts/backfill-test-tenants-and-re-enable-tenant-constrains.xml";
     public static final String BASELINE_SEED_TEST_DATA = "db-testscripts/baseline-seed-test-data.xml";
-    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(TestDataSetupUtil.class);
     private static final Config cfg = ConfigManager.getInstance().getConfig();
     private static final Config auth0Config = cfg.getConfig(ConfigFile.AUTH0);
-    private static final Config sqlConfig = ConfigFactory.parseResources(ConfigFile.SQL_CONF);
     private static final String testUser = auth0Config.getString(AUTH0_TEST_EMAIL);
     private static final String testUserGuid = auth0Config.getString(AUTH0_TEST_USER_GUID);
     private static final String password = auth0Config.getString(AUTH0_TEST_PASSWORD);
@@ -390,7 +388,7 @@ public class TestDataSetupUtil {
                 UserDto user = handle.attach(JdbiUser.class).findByUserGuid(testUserGuid);
                 if (user == null) {
                     // TODO Separate Unit Tests and Integration Tests. Units should not touch the DB
-                    LOG.error("Missing canonical test user. This must be a TXNAwareTest which is not an "
+                    log.error("Missing canonical test user. This must be a TXNAwareTest which is not an "
                             + "integration test");
                     String testUserAuth0Id = ConfigManager.getInstance().getConfig().getConfig(ConfigFile.AUTH0).getString(
                             ConfigFile.TEST_USER_AUTH0_ID);
@@ -475,7 +473,7 @@ public class TestDataSetupUtil {
 
         String encryptedSecret = AesUtil.encrypt(mgmtSecret, EncryptionKey.getEncryptionKey());
         jdbiAuth0Tenant.insertIfNotExists(domain, mgmtApiClient, encryptedSecret);
-        LOG.info("Inserted testing tenant {}", domain);
+        log.info("Inserted testing tenant {}", domain);
     }
 
     /**
@@ -494,12 +492,12 @@ public class TestDataSetupUtil {
         scripts.add(MIGRATE_LEGACY_STUDY_CLIENT_TENANT_AND_ENABLE_CONSTRAINTS);
         try {
             for (String script : scripts) {
-                LOG.info("Running legacy test setup script {}", script);
+                log.info("Running legacy test setup script {}", script);
                 String dbUrl = cfg.getString(TransactionWrapper.DB.APIS.getDbUrlConfigKey());
                 LiquibaseUtil.runChangeLog(dbUrl, script);
             }
         } catch (Exception e) {
-            LOG.error("Failed to insert static test account data", e);
+            log.error("Failed to insert static test account data", e);
         }
     }
 

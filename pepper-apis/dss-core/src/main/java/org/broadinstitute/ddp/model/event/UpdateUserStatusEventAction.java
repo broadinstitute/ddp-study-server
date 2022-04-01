@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.model.event;
 
 import com.google.common.annotations.VisibleForTesting;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
@@ -9,14 +10,10 @@ import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.service.EventService;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class UpdateUserStatusEventAction extends EventAction {
-
-    private static final Logger LOG = LoggerFactory.getLogger(UpdateUserStatusEventAction.class);
-
-    private EnrollmentStatusType targetStatusType;
+    private final EnrollmentStatusType targetStatusType;
 
     public UpdateUserStatusEventAction(EventConfiguration eventConfiguration, EventConfigurationDto dto) {
         super(eventConfiguration, dto);
@@ -32,7 +29,7 @@ public class UpdateUserStatusEventAction extends EventAction {
                         + " delayed UpdateUserStatus events should set dispatchToHousekeeping");
             }
             long queuedEventId = queueDelayedEvent(handle, signal);
-            LOG.info("Queued UpdateUserStatus event with id {}", queuedEventId);
+            log.info("Queued UpdateUserStatus event with id {}", queuedEventId);
         } else {
             doActionSynchronously(handle, signal);
         }
@@ -45,7 +42,7 @@ public class UpdateUserStatusEventAction extends EventAction {
                 signal.getParticipantId(),
                 signal.getStudyId(),
                 targetStatusType);
-        LOG.info("Changed enrollment status for participant {} in study {} to {}",
+        log.info("Changed enrollment status for participant {} in study {} to {}",
                 signal.getParticipantGuid(), signal.getStudyId(), targetStatusType);
 
         triggerEvents(handle, new UserStatusChangedSignal(

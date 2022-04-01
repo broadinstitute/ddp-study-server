@@ -2,12 +2,10 @@ package org.broadinstitute.ddp.filter;
 
 import java.util.Locale;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.util.RouteUtil;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import spark.Filter;
 
@@ -21,11 +19,8 @@ import spark.Response;
  * "/user/*studies/*" and thus the language resolution filter is invoked for it
  * earlier in the chain.
  */
+@Slf4j
 public class StudyLanguageContentLanguageSettingFilter implements Filter {
-
-    public static final String USER_LANGUAGE = "USER_LANGUAGE";
-    private static final Logger LOG = LoggerFactory.getLogger(StudyLanguageContentLanguageSettingFilter.class);
-
     @Override
     public void handle(Request request, Response response) {
         LanguageDto preferredLanguage = null;
@@ -33,7 +28,7 @@ public class StudyLanguageContentLanguageSettingFilter implements Filter {
             preferredLanguage = RouteUtil.getUserLanguage(request);
             boolean preferredLanguageIsSpecified = preferredLanguage != null;
             if (!preferredLanguageIsSpecified) {
-                LOG.warn(
+                log.warn(
                         "The preferred language can't be specified because the filter is invoked"
                         + " after the route that is outside of the study context. Please"
                         + " remount the filter under '/user/*/studies/*' instead. Current path = {}",
@@ -49,9 +44,9 @@ public class StudyLanguageContentLanguageSettingFilter implements Filter {
             String contentLanguageHeader = createHeaderFromLocale(preferredLocale);
             response.header(RouteConstants.Header.CONTENT_LANGUAGE, contentLanguageHeader);
         } catch (Exception e) {
-            LOG.error("Error while try to set the Content-Language header", e);
+            log.error("Error while try to set the Content-Language header", e);
         }
-        LOG.info(
+        log.info(
                 "Successfully set the Content-Language header to '{}' for {}",
                 preferredLanguage.getIsoCode(),
                 request.url()

@@ -36,6 +36,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -64,12 +65,9 @@ import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.migration.StudyMigrationRun;
 import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.OLCService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class StudyDataLoaderMain {
-
-    private static final Logger LOG = LoggerFactory.getLogger(StudyDataLoaderMain.class);
     private static final String DATA_GC_ID = "broad-ddp-mbc";
     private static final String DEFAULT_MIGRATION_REPORT_PATH = "/tmp/migration_reports";
     private static final String USAGE = "StudyDataLoaderMain [-h, --help] [OPTIONS] study-guid";
@@ -235,7 +233,7 @@ public class StudyDataLoaderMain {
 
         if (isDryRun && hasTestEmail) {
             dataLoaderMain.dryRunEmail = cmd.getOptionValue('e');
-            LOG.info("dry run email: {}", dataLoaderMain.dryRunEmail);
+            log.info("dry run email: {}", dataLoaderMain.dryRunEmail);
             if (dataLoaderMain.dryRunEmail == null || !dataLoaderMain.dryRunEmail.contains("@")
                     || !dataLoaderMain.dryRunEmail.contains(".")) {
                 throw new Exception("Please pass valid dry run test email");
@@ -244,7 +242,7 @@ public class StudyDataLoaderMain {
 
         if (hasUserList) {
             altPidUserList = Arrays.asList(cmd.getOptionValue('u').split(","));
-            LOG.info("userList size: {}. users: {} ", altPidUserList.size(),
+            log.info("userList size: {}. users: {} ", altPidUserList.size(),
                     Arrays.toString(altPidUserList.toArray()));
         }
 
@@ -261,7 +259,7 @@ public class StudyDataLoaderMain {
         }
 
         if (isPreProcess) {
-            LOG.info("Preprocessing Auth0 Email and Address verification");
+            log.info("Preprocessing Auth0 Email and Address verification");
             Instant now = Instant.now();
             dataLoaderMain.serviceAccountFile = cmd.getOptionValue("gsa");
             dataLoaderMain.googleBucketName = cmd.getOptionValue("gb");
@@ -280,23 +278,23 @@ public class StudyDataLoaderMain {
             } else {
                 Files.write(Paths.get(".", dataLoaderMain.preProcessFileName), preProcessedData.getBytes());
             }
-            LOG.info("Created pre-processed data file: {} ", dataLoaderMain.preProcessFileName);
+            log.info("Created pre-processed data file: {} ", dataLoaderMain.preProcessFileName);
             Instant now2 = Instant.now();
             Duration duration = Duration.between(now, now2);
             long secs = duration.getSeconds();
             long mins = duration.toMinutes();
-            LOG.info("Completed preprocess of {} GB files: {} ", userPreProcessedDto.getAltpidBucketDataMap().size(), new Date());
-            LOG.info("Google Bucket preprocess took : {} secs .. minutes : {} ", secs, mins);
+            log.info("Completed preprocess of {} GB files: {} ", userPreProcessedDto.getAltpidBucketDataMap().size(), new Date());
+            log.info("Google Bucket preprocess took : {} secs .. minutes : {} ", secs, mins);
 
             //Now try to read the file into memory just to make sure its good
             PreProcessedData preProcessedDataJson = new Gson().fromJson(new FileReader(dataLoaderMain.preProcessFileName),
                     PreProcessedData.class);
-            LOG.info("Loaded pre-processed data from {}", dataLoaderMain.preProcessFileName);
+            log.info("Loaded pre-processed data from {}", dataLoaderMain.preProcessFileName);
             Map<String, Map> bucketData = preProcessedDataJson.getAltpidBucketDataMap();
-            LOG.info("Loaded bucket Data altpid count: {} ", bucketData.size());
+            log.info("Loaded bucket Data altpid count: {} ", bucketData.size());
             String firstAltpid = bucketData.keySet().iterator().next();
             Map<String, JsonElement> surveyData = bucketData.get(firstAltpid);
-            LOG.info("first altpid : {} .. surveyName: {} ",
+            log.info("first altpid : {} .. surveyName: {} ",
                     firstAltpid, surveyData.keySet().iterator().next(), surveyData.values().size());
         } else if (hasGoogleBucket) {
             dataLoaderMain.serviceAccountFile = cmd.getOptionValue("gsa");
@@ -324,7 +322,7 @@ public class StudyDataLoaderMain {
         Config sqlConfig = ConfigFactory.parseResources(ConfigFile.SQL_CONF);
 
         String dbUrl = cfg.getString(ConfigFile.DB_URL);
-        LOG.info("Initializing db pool for " + dbUrl);
+        log.info("Initializing db pool for " + dbUrl);
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
         TransactionWrapper.reset();
         TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections, dbUrl));
@@ -339,7 +337,7 @@ public class StudyDataLoaderMain {
             data = new Gson().fromJson(participantData, new TypeToken<JsonObject>() {
             }.getType());
         } catch (Exception e) {
-            LOG.error("Failed to load file data as JSON ", e);
+            log.error("Failed to load file data as JSON ", e);
             return null;
         }
         JsonObject dataObj = data.getAsJsonObject();
@@ -417,7 +415,7 @@ public class StudyDataLoaderMain {
         try {
             createReport(migrationRunReport);
         } catch (Exception e) {
-            LOG.error("Failed to create migration run report. ", e);
+            log.error("Failed to create migration run report. ", e);
         }
 
         if (isDeleteAuth0Email) {
@@ -441,7 +439,7 @@ public class StudyDataLoaderMain {
         Map<String, Map> altpidBucketDataMap = new HashMap<>();
         for (Blob file : bucket.list().iterateAll()) {
             if (!file.getName().startsWith("Participant_")) {
-                LOG.info("Skipping bucket file: {}", file.getName());
+                log.info("Skipping bucket file: {}", file.getName());
                 continue;
                 //not a participant data .. continue to next file.
             }
@@ -452,7 +450,7 @@ public class StudyDataLoaderMain {
                 surveyDataMap = loadSourceDataFile(data);
             } catch (JsonSyntaxException e) {
                 e.printStackTrace();
-                LOG.error("JSON Exception: while processing participant file: " + e.toString());
+                log.error("JSON Exception: while processing participant file: " + e.toString());
                 continue;
             }
 
@@ -466,7 +464,7 @@ public class StudyDataLoaderMain {
             if (StringUtils.isNotBlank(altpid)) {
                 altpidBucketDataMap.put(altpid, surveyDataMap);
             } else {
-                LOG.error("AltPid null for participant file: {} skipping the file ", file.getName());
+                log.error("AltPid null for participant file: {} skipping the file ", file.getName());
                 continue;
             }
 
@@ -493,11 +491,11 @@ public class StudyDataLoaderMain {
         Map<String, String> existingEmails = studyDataLoader.verifyAuth0Users(emails);
         existingAuth0Emails.addAll(existingEmails.keySet());
         if (!existingAuth0Emails.isEmpty()) {
-            LOG.warn("Found {} existing emails \n{} ", existingAuth0Emails.size(), Arrays.toString(existingAuth0Emails.toArray()));
+            log.warn("Found {} existing emails \n{} ", existingAuth0Emails.size(), Arrays.toString(existingAuth0Emails.toArray()));
         } else {
-            LOG.info("NO existing emails found.");
+            log.info("NO existing emails found.");
         }
-        LOG.info("Apltpid Map size: {} ", altpidBucketDataMap.size());
+        log.info("Apltpid Map size: {} ", altpidBucketDataMap.size());
 
         return new PreProcessedData(userEmailMap, userAddressMap, existingAuth0Emails, altpidBucketDataMap);
     }
@@ -513,7 +511,7 @@ public class StudyDataLoaderMain {
 
     public void processGoogleBucketParticipantFiles(Config cfg, String studyGuid, boolean dryRun) throws Exception {
 
-        LOG.info("Processing google bucket files. {} ", new Date());
+        log.info("Processing google bucket files. {} ", new Date());
         Instant now = Instant.now();
         //Download files from Google storage
         //iterate through All buckets
@@ -526,18 +524,18 @@ public class StudyDataLoaderMain {
         if (StringUtils.isNotEmpty(preProcessFileName)) {
             //load pre-processed data from File
             preProcessedData = new Gson().fromJson(new FileReader(preProcessFileName), PreProcessedData.class);
-            LOG.info("using pre-processed data from {}", preProcessFileName);
+            log.info("using pre-processed data from {}", preProcessFileName);
         } else {
             //load it now
             preProcessedData = preProcessAddressAndEmailVerification(cfg, dataLoader);
-            LOG.info("loaded pre-processed data. {} ", new Date());
+            log.info("loaded pre-processed data. {} ", new Date());
         }
         Instant nowPreprocessDone = Instant.now();
         Duration duration = Duration.between(now, nowPreprocessDone);
         long secs = duration.getSeconds();
         long mins = duration.toMinutes();
-        LOG.info("Completed preprocess for GB files: {} .. {}", preProcessedData.getAltpidBucketDataMap().size(), new Date());
-        LOG.info("Bucket preprocess load took : {} secs .. minutes : {} ", secs, mins);
+        log.info("Completed preprocess for GB files: {} .. {}", preProcessedData.getAltpidBucketDataMap().size(), new Date());
+        log.info("Bucket preprocess load took : {} secs .. minutes : {} ", secs, mins);
 
         //load mapping data
         Map<String, JsonElement> mappingData = loadDataMapping(mappingFileName);
@@ -554,7 +552,7 @@ public class StudyDataLoaderMain {
             setRunEmail(dryRun, datstatData);
 
             if (!dryRun && preProcessedData.getAuth0ExistingEmails().contains(email)  && !isUseExistingAuth0Users) {
-                LOG.error("Skipped altpid: {} . Email : {} already exists in Auth0. ", altpid, email);
+                log.error("Skipped altpid: {} . Email : {} already exists in Auth0. ", altpid, email);
                 skippedList.add(altpid);
                 continue;
             }
@@ -566,28 +564,28 @@ public class StudyDataLoaderMain {
         try {
             createReport(migrationRunReport);
         } catch (Exception e) {
-            LOG.error("Failed to create migration run report. ", e);
+            log.error("Failed to create migration run report. ", e);
         }
 
         if (isDeleteAuth0Email) {
             deleteAuth0Emails(cfg, migrationRunReport);
         }
-        LOG.info("completed processing google bucket files");
+        log.info("completed processing google bucket files");
         Instant nowDone = Instant.now();
         duration = Duration.between(now, nowDone);
         secs = duration.getSeconds();
         mins = duration.toMinutes();
-        LOG.info("Completed processing & loading GB files {}", preProcessedData.getAltpidBucketDataMap().size(), new Date());
-        LOG.info("Bucket participant file load took : {} secs .. minutes : {} ", secs, mins);
+        log.info("Completed processing & loading GB files {}", preProcessedData.getAltpidBucketDataMap().size(), new Date());
+        log.info("Bucket participant file load took : {} secs .. minutes : {} ", secs, mins);
         if (!failedList.isEmpty()) {
-            LOG.error("Failed to load {} altpids: {} ", failedList.size(), Arrays.toString(failedList.toArray()));
+            log.error("Failed to load {} altpids: {} ", failedList.size(), Arrays.toString(failedList.toArray()));
         } else {
-            LOG.info("NO failed load of Altpids...");
+            log.info("NO failed load of Altpids...");
         }
         if (!skippedList.isEmpty()) {
-            LOG.warn("Skipped {} altpids: {} ", skippedList.size(), Arrays.toString(skippedList.toArray()));
+            log.warn("Skipped {} altpids: {} ", skippedList.size(), Arrays.toString(skippedList.toArray()));
         } else {
-            LOG.info("NO skipped Altpids...");
+            log.info("NO skipped Altpids...");
         }
     }
 
@@ -601,7 +599,7 @@ public class StudyDataLoaderMain {
         String altpid = datstatParticipantData.getAsJsonObject().get("datstat_altpid").getAsString();
         String emailAddress = datstatParticipantData.getAsJsonObject().get("datstat_email").getAsString().toLowerCase();
         String createdAt = datstatParticipantData.getAsJsonObject().get("ddp_created").getAsString();
-        LOG.info("loading participant: {} email: {} ", altpid, emailAddress);
+        log.info("loading participant: {} email: {} ", altpid, emailAddress);
 
         TransactionWrapper.useTxn(handle -> {
             String userGuid = null;
@@ -674,7 +672,7 @@ public class StudyDataLoaderMain {
                             && !completeStatusElement.isJsonNull() && "COMPLETE".equals(completeStatusElement.getAsString()));
 
                     if (hasSomeMedical && !hasMedical) {
-                        LOG.warn("Not loading medical questionnaire for participant (altpid " + altpid + ", email "
+                        log.warn("Not loading medical questionnaire for participant (altpid " + altpid + ", email "
                                 + emailAddress + ") because consent survey has not been completed.");
                     }
 
@@ -707,7 +705,7 @@ public class StudyDataLoaderMain {
                     }
 
                     if (hasMedical) {
-                        LOG.info("Loading medical survey");
+                        log.info("Loading medical survey");
                         String activityCode = mappingData.get("medicalsurvey").getAsJsonObject().get("activity_code").getAsString();
                         ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get(
                                 "medicalsurvey"),
@@ -832,24 +830,24 @@ public class StudyDataLoaderMain {
                     isSuccess = true;
                 } else {
                     skippedList.add(altpid);
-                    LOG.warn("Participant: {} already loaded into pepper. skipping ", userGuid);
+                    log.warn("Participant: {} already loaded into pepper. skipping ", userGuid);
                     previousRun = true;
                 }
             } catch (StudyDataLoader.UserExistsException e) {
                 failedList.add(altpid);
                 auth0Collision = true;
-                LOG.error("Failed to load Participant: " + e.getMessage());
+                log.error("Failed to load Participant: " + e.getMessage());
                 e.printStackTrace();
                 handle.rollback();
                 isSuccess = false;
-                LOG.error("Rolled back...");
+                log.error("Rolled back...");
             } catch (Exception e) {
                 failedList.add(altpid);
-                LOG.error("Failed to load Participant: " + e.getMessage());
+                log.error("Failed to load Participant: " + e.getMessage());
                 e.printStackTrace();
                 handle.rollback();
                 isSuccess = false;
-                LOG.error("Rolled back...");
+                log.error("Rolled back...");
             }
 
             if (previousRun) {
@@ -915,7 +913,7 @@ public class StudyDataLoaderMain {
                     }.getType());
                     dataLoader.loadMailingListData(handle, dataEl.getAsJsonObject().get("mailing_list_data"), studyGuid);
                 } catch (Exception e) {
-                    LOG.error("Failed to load Mailing List data: " + e.getMessage());
+                    log.error("Failed to load Mailing List data: " + e.getMessage());
                     e.printStackTrace();
                     handle.rollback();
                 }
@@ -936,9 +934,9 @@ public class StudyDataLoaderMain {
         TransactionWrapper.useTxn(handle -> {
             try {
                 Auth0Util.deleteUserFromAuth0(handle, cfg, email);
-                LOG.info("Deleted auth0 email : " + email);
+                log.info("Deleted auth0 email : " + email);
             } catch (Exception e) {
-                LOG.error("Failed to delete auth0 email : " + email, e);
+                log.error("Failed to delete auth0 email : " + email, e);
             }
         });
     }
@@ -973,7 +971,7 @@ public class StudyDataLoaderMain {
             csvPrinter.close();
         }
 
-        LOG.info("Generated migration run report file: {} ", reportFileName);
+        log.info("Generated migration run report file: {} ", reportFileName);
     }
 
     private void addRunValues(StudyMigrationRun run, CSVPrinter printer) throws IOException {

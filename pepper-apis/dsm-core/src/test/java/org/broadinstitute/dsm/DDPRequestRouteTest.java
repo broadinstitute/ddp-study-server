@@ -8,12 +8,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
-import org.broadinstitute.dsm.route.KitRequestRoute;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
 import org.broadinstitute.dsm.util.DBTestUtil;
@@ -25,12 +24,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class DDPRequestRouteTest extends TestHelper {
-
-    private static final Logger logger = LoggerFactory.getLogger(DDPRequestRouteTest.class);
     private final String testParticipantId = "FAKE_PARTICIPANT";
     private List<String> kitRequests;
     private boolean addedDefaultKitRequest = false;
@@ -45,7 +41,7 @@ public class DDPRequestRouteTest extends TestHelper {
         startMockServer();
         setupUtils();
 
-        logger.info("Setting up stuff");
+        log.info("Setting up stuff");
     }
 
     @AfterClass
@@ -74,11 +70,11 @@ public class DDPRequestRouteTest extends TestHelper {
             return null;
         });
         String message = TestUtil.readFile("ddpResponses/ParticipantsWithId.json");
-        logger.info("Response from Participants.json: " + message);
+        log.info("Response from Participants.json: " + message);
         kitRequestTestList = new ArrayList<>();
         if (kitRequests.isEmpty()) {
             //add Test Participant ID
-            logger.info("No KitRequests in ddp_kit_requests going to add one for testing");
+            log.info("No KitRequests in ddp_kit_requests going to add one for testing");
             SimpleResult results = inTransaction((conn) -> {
                 SimpleResult dbVals = new SimpleResult(0);
                 try (PreparedStatement stmt = conn.prepareStatement(cfg.getString("portal.insertKitRequest"))) {
@@ -117,7 +113,7 @@ public class DDPRequestRouteTest extends TestHelper {
         } else {
             // fill mockAngio with requests
             for (String participantId : kitRequests) {
-                logger.info(message.replaceAll("%1", participantId).replaceAll("%2", Integer.toString(counter)));
+                log.info(message.replaceAll("%1", participantId).replaceAll("%2", Integer.toString(counter)));
                 mockDDP.when(request().withPath("/ddp/participants/" + participantId)).respond(response().withStatusCode(200)
                         .withBody(message.replaceAll("%1", participantId).replaceAll("%2", Integer.toString(counter))));
                 kitRequestTestList.add(
@@ -137,7 +133,6 @@ public class DDPRequestRouteTest extends TestHelper {
     public void readKitRequest() {
         String realm = TEST_DDP;
         try {
-            KitRequestRoute route = new KitRequestRoute();
             inTransaction((conn) -> {
                 try (PreparedStatement stmt = conn.prepareStatement(
                         DDPInstance.SQL_SELECT_ALL_ACTIVE_REALMS + QueryExtension.BY_INSTANCE_NAME)) {
@@ -148,14 +143,9 @@ public class DDPRequestRouteTest extends TestHelper {
 
                             Assert.assertEquals(counter, kitRequestList.size());
 
-                            logger.info("result of ddp_kit_request with name and address of participants:");
+                            log.info("result of ddp_kit_request with name and address of participants:");
                             int x = 0;
-                            kitRequestList.sort(new Comparator<KitRequestShipping>() {
-                                @Override
-                                public int compare(KitRequestShipping o1, KitRequestShipping o2) {
-                                    return (int) (o1.getDsmKitId() - o2.getDsmKitId());
-                                }
-                            });
+                            kitRequestList.sort((o1, o2) -> (int) (o1.getDsmKitId() - o2.getDsmKitId()));
                             for (KitRequestShipping kit : kitRequestList) {
                                 Assert.assertEquals(kit.getParticipantId(), kitRequestTestList.get(x).getParticipantId());
                                 x++;
@@ -168,7 +158,7 @@ public class DDPRequestRouteTest extends TestHelper {
                 return null;
             });
         } catch (Exception e) {
-            logger.error("Starting up the blindTrustEverythingExecutor");
+            log.error("Starting up the blindTrustEverythingExecutor");
         }
     }
 

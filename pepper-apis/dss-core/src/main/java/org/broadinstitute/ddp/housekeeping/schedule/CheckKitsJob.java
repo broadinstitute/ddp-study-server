@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.monitoring.PointsReducerFactory;
 import org.broadinstitute.ddp.monitoring.StackdriverCustomMetric;
@@ -23,13 +24,10 @@ import org.quartz.SchedulerException;
 import org.quartz.SimpleScheduleBuilder;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 @DisallowConcurrentExecution
 public class CheckKitsJob implements Job {
-
-    private static final Logger LOG = LoggerFactory.getLogger(CheckKitsJob.class);
     private static final int INITIAL_TRIGGER_DELAY_SECS = 10;
 
     /**
@@ -44,7 +42,7 @@ public class CheckKitsJob implements Job {
 
     public static void register(Scheduler scheduler, Config cfg) throws SchedulerException {
         if (!cfg.getBoolean(ConfigFile.Kits.CHECK_ENABLED)) {
-            LOG.warn("Job {} is disabled, no trigger added", getKey());
+            log.warn("Job {} is disabled, no trigger added", getKey());
             return;
         }
 
@@ -56,7 +54,7 @@ public class CheckKitsJob implements Job {
                 .storeDurably(true)
                 .build();
         scheduler.addJob(job, true);
-        LOG.info("Added job {} to scheduler", getKey());
+        log.info("Added job {} to scheduler", getKey());
 
         int intervalSecs = cfg.getInt(ConfigFile.Kits.INTERVAL_SECS);
         Trigger trigger = TriggerBuilder.newTrigger()
@@ -66,26 +64,26 @@ public class CheckKitsJob implements Job {
                 .startAt(new Date(Instant.now().toEpochMilli() + INITIAL_TRIGGER_DELAY_SECS * 1000))
                 .build();
         scheduler.scheduleJob(trigger);
-        LOG.info("Added trigger {} for job {} with delay of {} seconds", trigger.getKey(), getKey(), intervalSecs);
+        log.info("Added trigger {} for job {} with delay of {} seconds", trigger.getKey(), getKey(), intervalSecs);
     }
 
     @Override
     public void execute(JobExecutionContext ctx) throws JobExecutionException {
         try {
-            LOG.info("Running job {}", getKey());
+            log.info("Running job {}", getKey());
             long start = Instant.now().toEpochMilli();
 
-            LOG.info("Checking for initial kits");
+            log.info("Checking for initial kits");
             KitCheckService.KitCheckResult result = kitCheckService.checkForInitialKits();
-            LOG.info("Checking for recurring kits");
+            log.info("Checking for recurring kits");
             result.add(kitCheckService.scheduleNextKits());
 
             sendKitMetrics(result);
 
             long elapsed = Instant.now().toEpochMilli() - start;
-            LOG.info("Job {} completed in {}s", getKey(), elapsed / 1000);
+            log.info("Job {} completed in {}s", getKey(), elapsed / 1000);
         } catch (Exception e) {
-            LOG.error("Error while executing job {} ", getKey(), e);
+            log.error("Error while executing job {} ", getKey(), e);
             throw new JobExecutionException(e, false);
         }
     }

@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.housekeeping.handler;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.housekeeping.message.HousekeepingMessageHandler;
@@ -8,22 +10,13 @@ import org.broadinstitute.ddp.model.pdf.PdfConfiguration;
 import org.broadinstitute.ddp.service.PdfBucketService;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.broadinstitute.ddp.service.PdfService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
+@AllArgsConstructor
 public class PdfGenerationHandler implements HousekeepingMessageHandler<PdfGenerationMessage> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(PdfGenerationHandler.class);
-
-    private PdfService pdfService;
-    private PdfBucketService pdfBucketService;
-    private PdfGenerationService pdfGenerationService;
-
-    public PdfGenerationHandler(PdfService pdfService, PdfBucketService pdfBucketService, PdfGenerationService pdfGenerationService) {
-        this.pdfService = pdfService;
-        this.pdfBucketService = pdfBucketService;
-        this.pdfGenerationService = pdfGenerationService;
-    }
+    private final PdfService pdfService;
+    private final PdfBucketService pdfBucketService;
+    private final PdfGenerationService pdfGenerationService;
 
     @Override
     public void handleMessage(PdfGenerationMessage pdfGenerationMessage) {
@@ -41,14 +34,14 @@ public class PdfGenerationHandler implements HousekeepingMessageHandler<PdfGener
                             pdfConfig,
                             participantGuid,
                             studyGuid);
-                    LOG.info("Uploaded pdf to bucket {} with filename {}", pdfBucketService.getBucketName(), uploadedFilename);
+                    log.info("Uploaded pdf to bucket {} with filename {}", pdfBucketService.getBucketName(), uploadedFilename);
                 } catch (Exception e) {
                     throw new MessageHandlingException("Error generating or uploading PDF with id=" + configId
                             + " for user " + participantGuid, e, true);
                 }
             });
         } else {
-            LOG.error("No participant guid found in pdf generation message, skipping");
+            log.error("No participant guid found in pdf generation message, skipping");
         }
     }
 }

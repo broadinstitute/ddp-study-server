@@ -24,6 +24,7 @@ import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
@@ -58,15 +59,11 @@ import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class PubSubMessageBuilder {
-
-    private static final Logger LOG = LoggerFactory.getLogger(PubSubMessageBuilder.class);
-
-    private Gson gson;
-    private Config cfg;
+    private final Gson gson;
+    private final Config cfg;
 
     public PubSubMessageBuilder(Config cfg) {
         this.gson = GsonUtil.standardGson();
@@ -79,7 +76,7 @@ public class PubSubMessageBuilder {
         if (StringUtils.isBlank(ddpMessageId)) {
             throw new RuntimeException("ddpMessageId is required");
         }
-        String messageJson = null;
+        String messageJson;
         String participantGuid = pendingEvent.getParticipantGuid();
         String studyGuid = pendingEvent.getStudyGuid();
         if (pendingEvent.getActionType() == EventActionType.NOTIFICATION) {
@@ -112,7 +109,8 @@ public class PubSubMessageBuilder {
                 } else {
                     // otherwise, lookup address information for the auth0 account
                     UserDao userDao = apisHandle.attach(UserDao.class);
-                    String auth0UserId = userDao.findUserByGuid(participantGuid).map(user -> user.getAuth0UserId()).orElse(null);
+                    String auth0UserId = userDao.findUserByGuid(participantGuid)
+                            .map(org.broadinstitute.ddp.model.user.User::getAuth0UserId).orElse(null);
 
                     if (auth0UserId == null) {
                         List<Governance> governances;
@@ -134,19 +132,20 @@ public class PubSubMessageBuilder {
                         }
 
                         if (gov != null) {
-                            LOG.info("Operator {} is a proxy for participant {} in study {}, will send email to that user",
+                            log.info("Operator {} is a proxy for participant {} in study {}, will send email to that user",
                                     gov.getProxyUserGuid(), participantGuid, studyGuid);
                         } else if (governances.size() == 1) {
                             gov = governances.get(0);
-                            LOG.info("Will send email to proxy {} for participant {} in study {}",
+                            log.info("Will send email to proxy {} for participant {} in study {}",
                                     gov.getProxyUserGuid(), participantGuid, studyGuid);
                         } else {
                             gov = governances.get(0);
-                            LOG.error("Multiple proxies found for participant {} in study {}, will send email to the first proxy {}",
+                            log.error("Multiple proxies found for participant {} in study {}, will send email to the first proxy {}",
                                     participantGuid, studyGuid, gov.getProxyUserGuid());
                         }
 
-                        auth0UserId = userDao.findUserById(gov.getProxyUserId()).map(user -> user.getAuth0UserId()).orElse(null);
+                        auth0UserId = userDao.findUserById(gov.getProxyUserId())
+                                .map(org.broadinstitute.ddp.model.user.User::getAuth0UserId).orElse(null);
 
                         // add personalizations for proxy
                         UserProfile profile = apisHandle.attach(UserProfileDao.class)
@@ -210,7 +209,7 @@ public class PubSubMessageBuilder {
                         if (inviteCode != null) {
                             queuedNotificationDto.addTemplateSubstitutions(new NotificationTemplateSubstitutionDto(
                                     NotificationTemplateVariables.DDP_INVITATION_ID, inviteCode));
-                            LOG.info("Added notification template substitution invitationId={} for participant {}",
+                            log.info("Added notification template substitution invitationId={} for participant {}",
                                     inviteCode, participantGuid);
                         }
                     }
@@ -223,7 +222,7 @@ public class PubSubMessageBuilder {
                         userPreferredLangCode);
                 String templateKey = template.getTemplateKey();
                 String templateLanguage = template.getLanguageCode();
-                LOG.info("Using notification template with key={} and language={} for queued event {}",
+                log.info("Using notification template with key={} and language={} for queued event {}",
                         templateKey, templateLanguage, queuedNotificationDto.getQueuedEventId());
 
                 // Override the activity instance substitution for email if it has a linked activity.
@@ -244,7 +243,7 @@ public class PubSubMessageBuilder {
                         queuedNotificationDto.getTemplateSubstitutions().clear();
                         queuedNotificationDto.getTemplateSubstitutions().addAll(filtered);
                     } else {
-                        LOG.error("Could not find latest activity instance for notification template substitution:"
+                        log.error("Could not find latest activity instance for notification template substitution:"
                                         + " queuedEventId={}, userGuid={}, studyGuid={}, linkedActivityId={}, templateKey={}",
                                 queuedNotificationDto.getQueuedEventId(), queuedNotificationDto.getParticipantGuid(), studyGuid,
                                 queuedNotificationDto.getLinkedActivityId(), templateKey);
@@ -333,10 +332,10 @@ public class PubSubMessageBuilder {
                     .orElse(null);
             if (languageDto == null && !studyLanguages.isEmpty()) {
                 languageDto = studyLanguages.get(0).toLanguageDto();
-                LOG.warn("Study {} does not have a default language, will fallback to {}", studyGuid, languageDto.getIsoCode());
+                log.warn("Study {} does not have a default language, will fallback to {}", studyGuid, languageDto.getIsoCode());
             } else if (languageDto == null) {
                 languageDto = LanguageStore.getDefault();
-                LOG.warn("Study {} does not have any languages, will fallback to {}", studyGuid, languageDto.getIsoCode());
+                log.warn("Study {} does not have any languages, will fallback to {}", studyGuid, languageDto.getIsoCode());
             }
 
             String langCode = languageDto.getIsoCode();

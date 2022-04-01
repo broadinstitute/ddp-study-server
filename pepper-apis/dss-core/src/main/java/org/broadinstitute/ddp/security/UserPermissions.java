@@ -3,32 +3,24 @@ package org.broadinstitute.ddp.security;
 import java.io.Serializable;
 import java.util.Collection;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The guts of our logic for figuring out whether
  * a user should be able to access various things
  * like profile, study, or participant data.
  */
+@Slf4j
 public class UserPermissions implements Serializable {
-
-    private static final Logger LOG = LoggerFactory.getLogger(UserPermissions.class);
-
     private final Collection<String> clientStudyGuids;
-
     private final Collection<ParticipantAccess> participantAccesses;
-
     private final boolean isAccountLocked;
-
     private final boolean isClientRevoked;
-
     private final String operatorGuid;
-
     private final Collection<String> adminStudiesWithAccess;
 
     /**
@@ -83,21 +75,21 @@ public class UserPermissions implements Serializable {
      */
     public boolean canAccessStudyDataForUser(String requestedUserGuid, String studyGuid) {
         if (isDisabled()) {
-            LOG.warn("Either client is revoked or account is locked for user: {} and study: {}", requestedUserGuid, studyGuid);
+            log.warn("Either client is revoked or account is locked for user: {} and study: {}", requestedUserGuid, studyGuid);
             return false;
         } else if (!isStudyPermittedForUserClient(studyGuid)) {
-            LOG.warn("Study GUID: {} is not one of the studies enabled for given Auth0 client", studyGuid);
+            log.warn("Study GUID: {} is not one of the studies enabled for given Auth0 client", studyGuid);
             return false;
         } else {
             // if the operator is the requested user, they can do anything to their own data
             if (operatorGuid.equals(requestedUserGuid)) {
-                LOG.debug("Operator is the requested user");
+                log.debug("Operator is the requested user");
                 return true;
             } else if (hasAdminAccessToStudy(studyGuid)) {
-                LOG.debug("Operator has admin access to study {}", studyGuid);
+                log.debug("Operator has admin access to study {}", studyGuid);
                 return true;
             } else {
-                LOG.debug("The requested user GUID: {} is not the same as the operator GUID. About to check if this a managed user",
+                log.debug("The requested user GUID: {} is not the same as the operator GUID. About to check if this a managed user",
                         requestedUserGuid);
                 // verify that this operator has been granted access to the participant
                 // in the context of a particular study
@@ -105,14 +97,14 @@ public class UserPermissions implements Serializable {
                     if (accessForParticipant.getParticipantGuid().equals(requestedUserGuid)) {
                         for (String allowedStudy : accessForParticipant.getStudyAccess()) {
                             if (studyGuid.equals(allowedStudy)) {
-                                LOG.debug("The requested user GUID: {} is managed", requestedUserGuid);
+                                log.debug("The requested user GUID: {} is managed", requestedUserGuid);
                                 return true;
                             }
                         }
 
                     }
                 }
-                LOG.warn("The requested user GUID: {} is not managed", requestedUserGuid);
+                log.warn("The requested user GUID: {} is not managed", requestedUserGuid);
                 return false;
             }
         }

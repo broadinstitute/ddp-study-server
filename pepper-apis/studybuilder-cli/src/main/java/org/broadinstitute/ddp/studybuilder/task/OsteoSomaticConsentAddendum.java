@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.studybuilder.task;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiFormActivityFormSection;
@@ -19,17 +20,13 @@ import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
 
-
+@Slf4j
 public class OsteoSomaticConsentAddendum implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(OsteoSomaticConsentAddendum.class);
     private static final String DATA_FILE = "patches/somatic-consent-addendum-val.conf";
     private static final String CMI_OSTEO = "CMI-OSTEO";
 

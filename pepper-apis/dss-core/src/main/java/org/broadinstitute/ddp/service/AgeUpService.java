@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
@@ -25,12 +26,9 @@ import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class AgeUpService {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AgeUpService.class);
     private static final String SP_AGEUP = "ageup";
     private static final String SP_PREP = "prep";
     private static final String SP_STATUS = "status";
@@ -75,10 +73,10 @@ public class AgeUpService {
             String userGuid = candidate.getParticipantUserGuid();
             String operatorGuid = candidate.getOperatorUserGuid();
             if (candidate.getBirthDate() == null) {
-                LOG.info("Age-up candidate with guid {} in study {} does not have birth date, skipping", userGuid, studyGuid);
+                log.info("Age-up candidate with guid {} in study {} does not have birth date, skipping", userGuid, studyGuid);
                 continue;
             } else if (candidate.getStatus().isExited()) {
-                LOG.info("Age-up candidate with guid {} has exited study {}, will be removed", userGuid, studyGuid);
+                log.info("Age-up candidate with guid {} has exited study {}, will be removed", userGuid, studyGuid);
                 exitedCandidates.add(candidate.getId());
                 continue;
             }
@@ -87,11 +85,11 @@ public class AgeUpService {
             try {
                 rule = policy.getApplicableAgeOfMajorityRule(handle, interpreter, userGuid, operatorGuid).orElse(null);
             } catch (PexException e) {
-                LOG.error("Error while evaluating age-of-majority rules for participant {} and study {}, skipping", userGuid, studyGuid, e);
+                log.error("Error while evaluating age-of-majority rules for participant {} and study {}, skipping", userGuid, studyGuid, e);
                 continue;
             }
             if (rule == null) {
-                LOG.warn("No applicable age-of-majority rules found for participant {} in study {}", userGuid, studyGuid);
+                log.warn("No applicable age-of-majority rules found for participant {} in study {}", userGuid, studyGuid);
                 continue;
             }
 
@@ -101,7 +99,7 @@ public class AgeUpService {
 
             // First, handle updating consent status.
             if (agedUp && candidate.getStatus() != EnrollmentStatusType.CONSENT_SUSPENDED) {
-                LOG.info("Candidate {} in study {} has reached age-of-majority, suspending consent status", userGuid, studyGuid);
+                log.info("Candidate {} in study {} has reached age-of-majority, suspending consent status", userGuid, studyGuid);
                 try {
                     TransactionWrapper.useSavepoint(named(SP_STATUS, studyGuid, userGuid), handle, h -> {
                         jdbiEnrollment.suspendUserStudyConsent(candidate.getParticipantUserId(), policy.getStudyId());
@@ -116,7 +114,7 @@ public class AgeUpService {
                         EventService.getInstance().processAllActionsForEventSignal(handle, signal);
                     });
                 } catch (Exception e) {
-                    LOG.error("Candidate {} in study {} has reached age-of-majority"
+                    log.error("Candidate {} in study {} has reached age-of-majority"
                             + " but could not suspend consent status, skipping", userGuid, studyGuid, e);
                     continue;
                 }
@@ -124,7 +122,7 @@ public class AgeUpService {
 
             // Second, see if we need to initiate the age-up process.
             if (shouldPrepForAgeUp && !candidate.hasInitiatedPrep()) {
-                LOG.info("Candidate {} in study {} has reached preparation for age-of-majority,"
+                log.info("Candidate {} in study {} has reached preparation for age-of-majority,"
                         + " processing age-up preparation events", userGuid, studyGuid);
                 try {
                     TransactionWrapper.useSavepoint(named(SP_PREP, studyGuid, userGuid), handle, h -> {
@@ -140,7 +138,7 @@ public class AgeUpService {
                     });
                     preppedCandidateIds.add(candidate.getId());
                 } catch (Exception e) {
-                    LOG.error("Error processing age-up preparation events for candidate {} in study {},"
+                    log.error("Error processing age-up preparation events for candidate {} in study {},"
                             + " rolling back and skipping", userGuid, studyGuid, e);
                     continue;
                 }
@@ -154,7 +152,7 @@ public class AgeUpService {
                             .filter(invitation -> invitation.getInvitationType() == InvitationType.AGE_UP)
                             .anyMatch(invitation -> !invitation.isVoid() && !invitation.isAccepted());
                     if (hasInvitation) {
-                        LOG.info("Candidate {} in study {} has an age-up invitation, processing age-up events", userGuid, studyGuid);
+                        log.info("Candidate {} in study {} has an age-up invitation, processing age-up events", userGuid, studyGuid);
                         TransactionWrapper.useSavepoint(named(SP_AGEUP, studyGuid, userGuid), handle, h -> {
                             EventSignal signal = new EventSignal(
                                     candidate.getParticipantUserId(),
@@ -168,24 +166,24 @@ public class AgeUpService {
                         });
                         completedCandidateIds.add(candidate.getId());
                     } else {
-                        LOG.warn("Candidate {} in study {} does not have an age-up invitation,"
+                        log.warn("Candidate {} in study {} does not have an age-up invitation,"
                                 + " postponing age-up events", userGuid, studyGuid);
                     }
                 } catch (Exception e) {
-                    LOG.error("Error processing age-up events for candidate {} in study {},"
+                    log.error("Error processing age-up events for candidate {} in study {},"
                             + " rolling back and skipping", userGuid, studyGuid, e);
                 }
             }
         }
 
         int numRows = studyGovernanceDao.markAgeUpPrepInitiated(preppedCandidateIds);
-        LOG.info("Initiated age-of-majority preparation for {} candidates", numRows);
+        log.info("Initiated age-of-majority preparation for {} candidates", numRows);
 
         numRows = studyGovernanceDao.removeAgeUpCandidates(completedCandidateIds);
-        LOG.info("Removed {} already aged up and completed candidates", numRows);
+        log.info("Removed {} already aged up and completed candidates", numRows);
 
         numRows = studyGovernanceDao.removeAgeUpCandidates(exitedCandidates);
-        LOG.info("Removed {} exited age-up candidates", numRows);
+        log.info("Removed {} exited age-up candidates", numRows);
 
         return completedCandidateIds.size();
     }

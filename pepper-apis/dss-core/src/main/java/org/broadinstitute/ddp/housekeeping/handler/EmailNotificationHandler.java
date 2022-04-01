@@ -25,6 +25,7 @@ import com.sendgrid.helpers.mail.objects.Attachments;
 import com.sendgrid.helpers.mail.objects.Email;
 import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Personalization;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -48,13 +49,9 @@ import org.broadinstitute.ddp.service.PdfBucketService;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.broadinstitute.ddp.service.PdfService;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class EmailNotificationHandler implements HousekeepingMessageHandler<NotificationMessage> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(EmailNotificationHandler.class);
-
     private final SendGridClient sendGrid;
     private final PdfService pdfService;
     private final PdfBucketService pdfBucketService;
@@ -117,7 +114,7 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
             Email toEmail = new Email(toAddress, toAddress);
             personalization.addTo(toEmail);
             if (skippingPdfs && hasPdfConfiguration) {
-                LOG.warn("Skipping PDF configuration for {} since PDF substitution can't happen without a participant.",
+                log.warn("Skipping PDF configuration for {} since PDF substitution can't happen without a participant.",
                         toAddress);
             }
         }
@@ -152,7 +149,7 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
                 "Error sending template " + templateId + " to " + distributionList, e, true));
 
         if (sendResult.getStatusCode() == 200 || sendResult.getStatusCode() == 202) {
-            LOG.info("Sent template {} version {} to {}", templateId, versionUsed, distributionList);
+            log.info("Sent template {} version {} to {}", templateId, versionUsed, distributionList);
             new StackdriverMetricsTracker(StackdriverCustomMetric.EMAILS_SENT, studyGuid,
                     PointsReducerFactory.buildSumReducer()).addPoint(1, Instant.now().toEpochMilli());
         } else {
@@ -212,7 +209,7 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
                 .getEnrollmentStatusByUserAndStudyGuids(participantGuid, studyGuid)
                 .orElse(null);
         if (status != null && !status.shouldReceiveCommunications()) {
-            LOG.info("The participant {} in study {} should not receive communications because of status {}",
+            log.info("The participant {} in study {} should not receive communications because of status {}",
                     participantGuid, studyGuid, status);
             return true;
         }
@@ -222,7 +219,7 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
                 .map(UserProfile::getDoNotContact)
                 .orElse(false);
         if (doNotContact) {
-            LOG.info("The participant {} elected not to receive notifications, so nothing will be sent", participantGuid);
+            log.info("The participant {} elected not to receive notifications, so nothing will be sent", participantGuid);
             return true;
         }
 
@@ -276,14 +273,14 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
                 pdfStream = pdfAttachment.shouldAlwaysGenerate() ? null : pdfBucketService.getPdfFromBucket(blobName).orElse(null);
                 if (pdfStream == null) {
                     if (!pdfAttachment.shouldAlwaysGenerate()) {
-                        LOG.info("Could not find {} in bucket {}, generating", blobName, pdfBucketService.getBucketName());
+                        log.info("Could not find {} in bucket {}, generating", blobName, pdfBucketService.getBucketName());
                     }
                     pdfStream = pdfGenerationService.generateFlattenedPdfForConfiguration(
                             pdfConfig,
                             participantGuid,
                             apisHandle);
                     pdfBucketService.sendPdfToBucket(blobName, pdfStream);
-                    LOG.info("Uploaded pdf to bucket {} with filename {}", pdfBucketService.getBucketName(), blobName);
+                    log.info("Uploaded pdf to bucket {} with filename {}", pdfBucketService.getBucketName(), blobName);
                     pdfStream = pdfBucketService.getPdfFromBucket(blobName).orElse(null);
                 }
                 String name = pdfConfig.getFilename() + ".pdf";
@@ -298,7 +295,7 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
                     try {
                         pdfStream.close();
                     } catch (IOException e) {
-                        LOG.warn("Could not close stream", e);
+                        log.warn("Could not close stream", e);
                     }
                 }
             }

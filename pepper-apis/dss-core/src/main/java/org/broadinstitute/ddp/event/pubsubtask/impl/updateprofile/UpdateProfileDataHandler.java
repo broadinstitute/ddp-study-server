@@ -7,6 +7,7 @@ import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateP
 
 import java.util.Properties;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.TransactionWrapper.DB;
@@ -14,13 +15,9 @@ import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class UpdateProfileDataHandler {
-
-    private static final Logger LOG = LoggerFactory.getLogger(UpdateProfileDataHandler.class);
-
     public void updateProfileData(String userGuid, Properties payload) {
         TransactionWrapper.useTxn(DB.APIS, handle -> updateProfileData(handle, userGuid, payload));
     }
@@ -38,7 +35,7 @@ public class UpdateProfileDataHandler {
             int count = profileDao.getUserProfileSql().updateFirstAndLastNameByUserGuid(userGuid, firstName, lastName);
             if (count > 0) {
                 needElasticUpdate = true;
-                LOG.info("Updated firstName & lastName for user {} ", userGuid);
+                log.info("Updated firstName & lastName for user {} ", userGuid);
             } else {
                 throwUserNotFoundException(userGuid);
             }
@@ -49,7 +46,7 @@ public class UpdateProfileDataHandler {
         if (doNotContact != null && doNotContact != profile.getDoNotContact()) {
             int count = profileDao.getUserProfileSql().updateDoNotContact(profile.getUserId(), doNotContact);
             if (count > 0) {
-                LOG.info("Updated DoNotContact to {} for user {} ", doNotContact, userGuid);
+                log.info("Updated DoNotContact to {} for user {} ", doNotContact, userGuid);
                 needElasticUpdate = true;
             } else {
                 throwUserNotFoundException(userGuid);

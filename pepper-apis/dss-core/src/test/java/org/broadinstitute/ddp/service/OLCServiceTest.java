@@ -20,6 +20,7 @@ import com.google.maps.model.LatLng;
 import com.google.maps.model.PlusCode;
 import com.google.openlocationcode.OpenLocationCode;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.client.ApiResult;
 import org.broadinstitute.ddp.client.GoogleMapsClient;
@@ -36,12 +37,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testcontainers.shaded.org.apache.commons.lang.StringUtils;
 
+@Slf4j
 public class OLCServiceTest extends TxnAwareBaseTest {
-
     private static final String ADDRESS = "415 Main St, Cambridge, MA 02142, USA";
     private static final String PLUSCODE_FULL = "87JC9W76+5G";
     private static final String PLUSCODE_MORE = "87JC9W76+";
@@ -50,7 +49,6 @@ public class OLCServiceTest extends TxnAwareBaseTest {
     private static final String PLUSCODE_LEAST = "87000000+";
     private static final double LAT = 42.362937;
     private static final double LNG = -71.088687;
-    private static final Logger LOG = LoggerFactory.getLogger(OLCServiceTest.class);
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -261,6 +259,6 @@ public class OLCServiceTest extends TxnAwareBaseTest {
         String geocodingKey = cfg.getString(ConfigFile.GEOCODING_API_KEY);
         OLCService location = new OLCService(geocodingKey);
         String result = location.calculatePlusCodeWithPrecision(address, location.DEFAULT_OLC_PRECISION);
-        LOG.info("Result: {}", result);
+        log.info("Result: {}", result);
     }
 }

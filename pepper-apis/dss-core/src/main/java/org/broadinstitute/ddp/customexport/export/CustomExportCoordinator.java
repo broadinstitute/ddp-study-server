@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.customexport.constants.CustomExportConfigFile;
 import org.broadinstitute.ddp.customexport.db.dao.CustomExportDao;
@@ -34,13 +35,9 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.SendGridMailUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class CustomExportCoordinator {
-
-    private static final Logger LOG = LoggerFactory.getLogger(CustomExportCoordinator.class);
-
     private final CustomExporter exporter;
     private Bucket csvBucket;
     private final String customActivity;
@@ -72,7 +69,7 @@ public class CustomExportCoordinator {
         });
 
         if (!needExport) {
-            LOG.info("Skipping custom export: nothing to export");
+            log.info("Skipping custom export: nothing to export");
             sendNotificationEmail(false, true);
             return true;
         }
@@ -119,7 +116,7 @@ public class CustomExportCoordinator {
         }
 
         String proxy = ConfigUtil.getStrIfPresent(mainCfg, ConfigFile.Sendgrid.PROXY);
-        LOG.info("About to send notification email to {} <{}> with{}", toName, toEmailAddress, null == proxy ? "out proxy" :
+        log.info("About to send notification email to {} <{}> with{}", toName, toEmailAddress, null == proxy ? "out proxy" :
                 " proxy " + proxy);
         SendGridMailUtil.sendDynamicEmailMessage(fromName, fromEmailAddress, toName, toEmailAddress,  subject, templateId,
                 templateVarNameToValue, sendGridApiKey, proxy);
@@ -128,7 +125,7 @@ public class CustomExportCoordinator {
     private boolean runCsvExports(StudyDto studyDto, List<CustomActivityExtract> activities) {
         String studyGuid = studyDto.getGuid();
         try {
-            LOG.info("Running csv export for study {}", studyGuid);
+            log.info("Running csv export for study {}", studyGuid);
             long start = Instant.now().toEpochMilli();
             withAPIsTxn(handle -> {
                 CustomExportDao customExportDao = handle.attach(CustomExportDao.class);
@@ -144,10 +141,10 @@ public class CustomExportCoordinator {
             });
 
             long elapsed = Instant.now().toEpochMilli() - start;
-            LOG.info("Finished csv export for study {} in {}s", studyGuid, elapsed / 1000);
+            log.info("Finished csv export for study {} in {}s", studyGuid, elapsed / 1000);
             return true;
         } catch (Exception e) {
-            LOG.error("Error while running csv export for study {}, continuing", studyGuid, e);
+            log.error("Error while running csv export for study {}, continuing", studyGuid, e);
             return false;
         }
     }
@@ -181,7 +178,7 @@ public class CustomExportCoordinator {
         return () -> {
             try {
                 int total = exporter.exportDataSetAsCsv(studyDto, activities, participants, csvOutputWriter);
-                LOG.info("Written {} participants to csv export for study {}", total, studyDto.getGuid());
+                log.info("Written {} participants to csv export for study {}", total, studyDto.getGuid());
                 // closing here is important! Can't wait until the try block calls close
                 csvOutputWriter.close();
             } catch (IOException e) {
@@ -207,7 +204,7 @@ public class CustomExportCoordinator {
 
     private void saveToGoogleBucket(InputStream csvInputStream, String fileName, String studyGuid, Bucket bucket) {
         Blob blob = bucket.create(fileName, csvInputStream, "text/csv");
-        LOG.info("Uploaded file {} to bucket {} for study {}", blob.getName(), bucket.getName(), studyGuid);
+        log.info("Uploaded file {} to bucket {} for study {}", blob.getName(), bucket.getName(), studyGuid);
     }
 
     private class CustomExportPaginatedParticipantIterator implements Iterator<CustomExportParticipant> {

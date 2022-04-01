@@ -31,6 +31,7 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
@@ -38,12 +39,11 @@ import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A client wrapper for Auth0's Management API.
  */
+@Slf4j
 public class Auth0ManagementClient {
 
     public static final String PATH_OAUTH_TOKEN = "/oauth/token";
@@ -57,7 +57,6 @@ public class Auth0ManagementClient {
 
     public static final String APP_METADATA_PEPPER_USER_GUIDS = "pepper_user_guids";
 
-    private static final Logger LOG = LoggerFactory.getLogger(Auth0ManagementClient.class);
     private static final String AUDIENCE_SUFFIX = "api/v2/";
     private static final int DEFAULT_TIMEOUT_SECS = 10;
     private static final int TOKEN_LEEWAY_SECONDS = 30;
@@ -165,7 +164,7 @@ public class Auth0ManagementClient {
         if (!shouldRequestToken()) {
             return;
         }
-        LOG.info("Getting new auth0 management token");
+        log.info("Getting new auth0 management token");
         var result = getAccessTokenByClientCreds();
         result.rethrowIfThrown(e -> new DDPException("Error generating management API token", e));
         if (result.hasError()) {
@@ -175,7 +174,7 @@ public class Auth0ManagementClient {
             throw new DDPException(msg);
         }
         TOKEN_CACHE.put(tokenLookupKey, result.getBody());
-        LOG.info("Got and cached new auth0 management token");
+        log.info("Got and cached new auth0 management token");
     }
 
     private boolean shouldRequestToken() {
@@ -423,7 +422,7 @@ public class Auth0ManagementClient {
      * @return the updated auth0 user
      */
     public User setUserGuidForAuth0User(String auth0UserId, String auth0ClientId, String userGuid) {
-        LOG.info("About to update auth0 user {} with user guid {} for client {}", auth0UserId, userGuid, auth0ClientId);
+        log.info("About to update auth0 user {} with user guid {} for client {}", auth0UserId, userGuid, auth0ClientId);
         var result = getAuth0User(auth0UserId);
         if (result.hasFailure()) {
             var e = result.hasThrown() ? result.getThrown() : result.getError();
@@ -445,7 +444,7 @@ public class Auth0ManagementClient {
             throw new DDPException("Failed to update app metadata for auth0 user " + auth0UserId, e);
         }
 
-        LOG.info("Updated auth0 user {} with user guid {} for client {}", auth0UserId, userGuid, auth0ClientId);
+        log.info("Updated auth0 user {} with user guid {} for client {}", auth0UserId, userGuid, auth0ClientId);
         return result.getBody();
     }
 
@@ -457,7 +456,7 @@ public class Auth0ManagementClient {
      * @return the updated auth0 user
      */
     public User removeUserGuidForAuth0User(String auth0UserId, String auth0ClientId) {
-        LOG.info("About to remove user guid for auth0 user {} and client {}", auth0UserId, auth0ClientId);
+        log.info("About to remove user guid for auth0 user {} and client {}", auth0UserId, auth0ClientId);
         var result = getAuth0User(auth0UserId);
         if (result.hasFailure()) {
             var e = result.hasThrown() ? result.getThrown() : result.getError();
@@ -479,7 +478,7 @@ public class Auth0ManagementClient {
             throw new DDPException("Failed to update app metadata for auth0 user " + auth0UserId, e);
         }
 
-        LOG.info("Removed user guid {} from auth0 user {} for client {}", guid, auth0UserId, auth0ClientId);
+        log.info("Removed user guid {} from auth0 user {} for client {}", guid, auth0UserId, auth0ClientId);
         return result.getBody();
     }
 
@@ -539,12 +538,12 @@ public class Auth0ManagementClient {
                 break;
             }
             if (res.getStatusCode() == 429) {
-                LOG.error(retryMessage, res.getError());
+                log.error(retryMessage, res.getError());
                 long wait = backoffMillis * numTries + new Random().nextInt(MAX_JITTER_MILLIS);
                 try {
                     TimeUnit.MILLISECONDS.sleep(wait);
                 } catch (InterruptedException e) {
-                    LOG.warn("Interrupted while waiting after rate limit", e);
+                    log.warn("Interrupted while waiting after rate limit", e);
                 }
             } else {
                 break;

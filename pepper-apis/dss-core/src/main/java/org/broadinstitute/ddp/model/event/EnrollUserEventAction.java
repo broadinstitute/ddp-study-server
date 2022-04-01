@@ -1,19 +1,16 @@
 package org.broadinstitute.ddp.model.event;
 
 import com.google.common.annotations.VisibleForTesting;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.service.EventService;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class EnrollUserEventAction extends EventAction {
-
-    private static final Logger LOG = LoggerFactory.getLogger(EnrollUserEventAction.class);
-
     public EnrollUserEventAction(EventConfiguration eventConfiguration, EventConfigurationDto dto) {
         super(eventConfiguration, dto);
     }
@@ -26,7 +23,7 @@ public class EnrollUserEventAction extends EventAction {
                 signal.getParticipantId(),
                 signal.getStudyId(),
                 EnrollmentStatusType.ENROLLED);
-        LOG.info("Changed enrollment status for participant {} in study {} to {}",
+        log.info("Changed enrollment status for participant {} in study {} to {}",
                 signal.getParticipantGuid(), signal.getStudyId(), EnrollmentStatusType.ENROLLED);
 
         triggerEvents(handle, new UserStatusChangedSignal(

@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.model.event;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.copy.CopyExecutor;
 import org.broadinstitute.ddp.db.dao.CopyConfigurationDao;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
@@ -8,14 +9,10 @@ import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.copy.CopyConfiguration;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class CopyAnswerEventAction extends EventAction {
-
-    private static final Logger LOG = LoggerFactory.getLogger(CopyAnswerEventAction.class);
-
-    private long copyConfigurationId;
+    private final long copyConfigurationId;
 
     public CopyAnswerEventAction(EventConfiguration eventConfiguration, EventConfigurationDto dto) {
         super(eventConfiguration, dto);
@@ -38,11 +35,11 @@ public class CopyAnswerEventAction extends EventAction {
             var activitySignal = (ActivityInstanceStatusChangeSignal) signal;
             long instanceId = activitySignal.getActivityInstanceIdThatChanged();
             executor.withTriggeredInstanceId(instanceId);
-            LOG.info("Using activity instance {} as the triggered instance for copying", instanceId);
+            log.info("Using activity instance {} as the triggered instance for copying", instanceId);
         }
 
         executor.execute(handle, signal.getOperatorId(), signal.getParticipantId(), config);
-        LOG.info("Finished executing copy configuration {} for event signal {}", copyConfigurationId, signal);
+        log.info("Finished executing copy configuration {} for event signal {}", copyConfigurationId, signal);
     }
 
     public long getCopyConfigurationId() {

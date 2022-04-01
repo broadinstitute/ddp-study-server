@@ -10,6 +10,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -22,16 +23,12 @@ import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.dsm.KitReasonType;
 import org.broadinstitute.ddp.model.dsm.TestResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Provides methods that can be called within templates to get certain values from the system.
  */
+@Slf4j
 public class RenderValueProvider {
-
-    private static final Logger LOG = LoggerFactory.getLogger(RenderValueProvider.class);
-
     /**
      * If this value is `true` then  DDP methods (answer(), isGovernedParticipant()) defined in {@link RenderValueProvider} will
      * return pre-defined values:
@@ -98,7 +95,7 @@ public class RenderValueProvider {
         try {
             return DateTimeFormatter.ofPattern(format).format(participantBirthDate);
         } catch (Exception e) {
-            LOG.warn("Error formatting participant birth date value '{}' using format '{}'", participantBirthDate, format, e);
+            log.warn("Error formatting participant birth date value '{}' using format '{}'", participantBirthDate, format, e);
             return participantBirthDate.toString();
         }
     }
@@ -110,7 +107,7 @@ public class RenderValueProvider {
         try {
             return DateTimeFormatter.ofPattern(format).format(date);
         } catch (Exception e) {
-            LOG.warn("Error formatting date value '{}' using format '{}'", date, format, e);
+            log.warn("Error formatting date value '{}' using format '{}'", date, format, e);
             return date.toString();
         }
     }
@@ -164,7 +161,7 @@ public class RenderValueProvider {
             ZoneId zone = participantTimeZone == null ? ZoneOffset.UTC : participantTimeZone;
             return DateTimeFormatter.ofPattern(format).withZone(zone).format(testResultTimeCompleted);
         } catch (Exception e) {
-            LOG.warn("Error formatting test result time completed value '{}' using format '{}'", testResultTimeCompleted, format, e);
+            log.warn("Error formatting test result time completed value '{}' using format '{}'", testResultTimeCompleted, format, e);
             return testResultTimeCompleted.toString();
         }
     }

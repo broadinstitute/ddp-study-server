@@ -7,15 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 // All epoch timestamps are expressed in seconds
+@Slf4j
 public class ParticipantStatusTrackingInfo {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ParticipantStatus.class);
-
     public enum RecordStatus {
         INELIGIBLE, PENDING, SENT, RECEIVED, DELIVERED, UNKNOWN
     }
@@ -49,7 +46,7 @@ public class ParticipantStatusTrackingInfo {
         } else if (requested == null && received != null) {
             return RecordStatus.RECEIVED;
         } else {
-            LOG.error("Something completely unexpected happened with {}", entityName);
+            log.error("Something completely unexpected happened with {}", entityName);
             return RecordStatus.UNKNOWN;
         }
     }
@@ -225,7 +222,7 @@ public class ParticipantStatusTrackingInfo {
             } else if (delivered == null && received != null) {
                 return RecordStatus.RECEIVED;
             } else {
-                LOG.error("Something completely unexpected happened with kit");
+                log.error("Something completely unexpected happened with kit");
                 return RecordStatus.UNKNOWN;
             }
         }

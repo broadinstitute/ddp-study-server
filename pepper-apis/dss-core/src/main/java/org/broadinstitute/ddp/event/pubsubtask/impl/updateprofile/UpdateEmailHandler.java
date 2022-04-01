@@ -4,11 +4,10 @@ import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException.Se
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException.Severity.WARN;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.infoMsg;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.FIELD__EMAIL;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Properties;
 
-
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.TransactionWrapper.DB;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
@@ -17,12 +16,9 @@ import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
 
+@Slf4j
 public class UpdateEmailHandler {
-
-    private static final Logger LOG = getLogger(UpdateEmailHandler.class);
-
     public void updateEmail(String userGuid, Properties payload) {
         TransactionWrapper.useTxn(DB.APIS, handle -> updateEmail(handle, userGuid, payload));
     }
@@ -36,7 +32,7 @@ public class UpdateEmailHandler {
             }
             validateUserForLoginDataUpdateEligibility(userDto);
 
-            LOG.info(infoMsg("Attempting to change the email of the user {}"), userGuid);
+            log.info(infoMsg("Attempting to change the email of the user {}"), userGuid);
 
             updateEmailInAuth0(handle, userDto, email, userGuid);
         }
@@ -66,7 +62,7 @@ public class UpdateEmailHandler {
         switch (status.getAuth0Status()) {
             case SUCCESS:
                 syncToElastic(handle, userDto.getUserId());
-                LOG.info(infoMsg("The email of the user {} was successfully changed"), userGuid);
+                log.info(infoMsg("The email of the user {} was successfully changed"), userGuid);
                 break;
             case INVALID_TOKEN:
                 errMsg = "The provided Auth0 token is invalid";

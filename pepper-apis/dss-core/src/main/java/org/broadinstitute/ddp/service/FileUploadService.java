@@ -23,6 +23,7 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.HttpMethod;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
@@ -34,15 +35,11 @@ import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GoogleCredentialUtil;
 import org.broadinstitute.ddp.util.GuidUtils;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class FileUploadService {
-
     public static final String DEFAULT_MIME_TYPE = "application/octet-stream";
     public static final int DEFAULT_BATCH_SIZE = 100;
-
-    private static final Logger LOG = LoggerFactory.getLogger(FileUploadService.class);
 
     private final ServiceAccountSigner signer;
     private final GoogleBucketClient storageClient;
@@ -68,7 +65,7 @@ public class FileUploadService {
         boolean ensureDefault = cfg.getBoolean(ConfigFile.REQUIRE_DEFAULT_GCP_CREDENTIALS);
         bucketCredentials = GoogleCredentialUtil.initCredentials(ensureDefault);
         if (bucketCredentials == null) {
-            LOG.error("Could not get bucket credentials, defaulting to signer credentials");
+            log.error("Could not get bucket credentials, defaulting to signer credentials");
             bucketCredentials = signerCredentials;
         }
 
@@ -218,9 +215,9 @@ public class FileUploadService {
             }
 
             handle.attach(FileUploadDao.class).markVerified(upload.getId());
-            LOG.info("File upload {} is now marked as verified", upload.getGuid());
+            log.info("File upload {} is now marked as verified", upload.getGuid());
         } else {
-            LOG.info("File upload {} was already verified", upload.getGuid());
+            log.info("File upload {} was already verified", upload.getGuid());
         }
 
         return VerifyResult.OK;
@@ -228,7 +225,7 @@ public class FileUploadService {
 
     // Convenience helper to run removal using the service's configured settings.
     public int removeUnusedUploads(Handle handle) {
-        LOG.info("Starting removal of unused file uploads older than {} {}", removalExpireTime, removalExpireUnit);
+        log.info("Starting removal of unused file uploads older than {} {}", removalExpireTime, removalExpireUnit);
         long duration = removalExpireUnit.toMillis(removalExpireTime);
         Instant olderThanTimestamp = Instant.now().minusMillis(duration);
         return removeUnusedUploads(handle, olderThanTimestamp, removalBatchSize);
@@ -266,14 +263,14 @@ public class FileUploadService {
                 if (blob != null && blob.exists()) {
                     try {
                         storageClient.deleteBlob(blob);
-                        LOG.info("Deleted blob {} for unused file upload {}", blob.getBlobId(), upload.getGuid());
+                        log.info("Deleted blob {} for unused file upload {}", blob.getBlobId(), upload.getGuid());
                     } catch (Exception e) {
-                        LOG.error("Unable to delete file {} from bucket {}, skipping removal of unused file upload {}",
+                        log.error("Unable to delete file {} from bucket {}, skipping removal of unused file upload {}",
                                 upload.getBlobName(), bucket, upload.getGuid());
                         continue;
                     }
                 } else if (upload.getUploadedAt() != null) {
-                    LOG.error("Unable to locate file {} in bucket {}, skipping removal of unused file upload {}",
+                    log.error("Unable to locate file {} in bucket {}, skipping removal of unused file upload {}",
                             upload.getBlobName(), bucket, upload.getGuid());
                     continue;
                 } else {
@@ -286,7 +283,7 @@ public class FileUploadService {
         }
 
         uploadDao.deleteByIds(uploadIdsToDelete);
-        LOG.info("Removed {} unused file uploads", uploadIdsToDelete.size());
+        log.info("Removed {} unused file uploads", uploadIdsToDelete.size());
         return uploadIdsToDelete.size();
     }
 

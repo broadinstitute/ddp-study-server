@@ -33,6 +33,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.client.AddressVerificationException;
@@ -86,16 +87,14 @@ import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.service.OLCService;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class StudyDataLoader {
     public static final String OTHER = "OTHER";
     //public static final String NED = "NED";
     public static final String YES = "YES";
     public static final String NO = "NO";
     public static final String DK = "DK";
-    private static final Logger LOG = LoggerFactory.getLogger(StudyDataLoader.class);
     private static final String DEFAULT_PREFERRED_LANGUAGE_CODE = "en";
     private static final String DATSTAT_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     private static final int DSM_DEFAULT_ON_DEMAND_TRIGGER_ID = -2;
@@ -292,7 +291,7 @@ public class StudyDataLoader {
     }
 
     void loadMailingListData(Handle handle, JsonElement data, String studyCode) {
-        LOG.info("loading: {} mailinglist", studyCode);
+        log.info("loading: {} mailinglist", studyCode);
         JdbiMailingList dao = handle.attach(JdbiMailingList.class);
         JsonArray dataArray = data.getAsJsonArray();
         Long dateCreatedMillis = null;
@@ -333,7 +332,7 @@ public class StudyDataLoader {
         String altpid = datstatData.getAsJsonObject().get("datstat_altpid").getAsString();
         String userGuid = jdbiUser.getUserGuidByAltpid(altpid);
         if (userGuid != null) {
-            LOG.warn("Looks like Participant data already loaded: " + userGuid);
+            log.warn("Looks like Participant data already loaded: " + userGuid);
             return userGuid;
             //watch out.. early return
         }
@@ -395,7 +394,7 @@ public class StudyDataLoader {
         handle.attach(JdbiUserStudyEnrollment.class)
                 .changeUserStudyEnrollmentStatus(userGuid, studyDto.getGuid(), EnrollmentStatusType.REGISTERED, ddpCreatedAt);
 
-        LOG.info("user guid: " + pepperUser.getUserGuid());
+        log.info("user guid: " + pepperUser.getUserGuid());
         processLegacyFields(handle, datstatData, mappingData.getAsJsonArray().get(1),
                 studyDto.getId(), pepperUser.getUserId(), null);
 
@@ -454,7 +453,7 @@ public class StudyDataLoader {
 
         BaseSurvey baseSurvey = getBaseSurvey(surveyData);
         if (baseSurvey.getDdpCreated() == null) {
-            LOG.warn("No createdAt for survey: {} participant guid: {} . using participant data created_at ",
+            log.warn("No createdAt for survey: {} participant guid: {} . using participant data created_at ",
                     activityCode, participantGuid);
             baseSurvey.setDdpCreated(createdAt);
         }
@@ -544,7 +543,7 @@ public class StudyDataLoader {
                         ddpCreatedAt,
                         submissionId, sessionId, activityVersion);
 
-        LOG.info("Created activity instance {} for activity {} and user {}",
+        log.info("Created activity instance {} for activity {} and user {}",
                 dto.getGuid(), activityCode, participantGuid);
 
         long activityInstanceId = dto.getId();
@@ -582,9 +581,9 @@ public class StudyDataLoader {
                                        ActivityInstanceDto instanceDto,
                                        AnswerDao answerDao) throws Exception {
 
-        LOG.info("Populating AboutYou Survey...");
+        log.info("Populating AboutYou Survey...");
         if (surveyData == null || surveyData.isJsonNull()) {
-            LOG.warn("NO AboutYou Survey !");
+            log.warn("NO AboutYou Survey !");
             return;
         }
 
@@ -663,9 +662,9 @@ public class StudyDataLoader {
                                       ActivityInstanceDto instanceDto,
                                       AnswerDao answerDao) throws Exception {
 
-        LOG.info("Populating Release Survey...");
+        log.info("Populating Release Survey...");
         if (surveyData == null || surveyData.isJsonNull()) {
-            LOG.warn("NO Release Survey !");
+            log.warn("NO Release Survey !");
             return;
         }
 
@@ -696,9 +695,9 @@ public class StudyDataLoader {
                                            ActivityInstanceDto instanceDto,
                                            AnswerDao answerDao) throws Exception {
 
-        LOG.info("Populating Blood Release Survey...");
+        log.info("Populating Blood Release Survey...");
         if (surveyData == null || surveyData.isJsonNull()) {
-            LOG.warn("NO Release Survey !");
+            log.warn("NO Release Survey !");
             return;
         }
 
@@ -762,9 +761,9 @@ public class StudyDataLoader {
                                       ActivityInstanceDto instanceDto,
                                       AnswerDao answerDao) throws Exception {
 
-        LOG.info("Populating Consent Survey...");
+        log.info("Populating Consent Survey...");
         if (surveyData == null || surveyData.isJsonNull()) {
-            LOG.warn("NO Consent Survey !");
+            log.warn("NO Consent Survey !");
             return;
         }
 
@@ -779,9 +778,9 @@ public class StudyDataLoader {
                                            UserDto userDto,
                                            ActivityInstanceDto instanceDto,
                                            AnswerDao answerDao) throws Exception {
-        LOG.info("Populating Medical Survey...");
+        log.info("Populating Medical Survey...");
         if (surveyData == null || surveyData.isJsonNull()) {
-            LOG.warn("NO Medical Survey !");
+            log.warn("NO Medical Survey !");
             return;
         }
 
@@ -797,9 +796,9 @@ public class StudyDataLoader {
                                             ActivityInstanceDto instanceDto,
                                             AnswerDao answerDao) throws Exception {
 
-        LOG.info("Populating Tissue Consent Survey...");
+        log.info("Populating Tissue Consent Survey...");
         if (surveyData == null || surveyData.isJsonNull()) {
-            LOG.warn("NO Tissue Consent Survey !");
+            log.warn("NO Tissue Consent Survey !");
             return;
         }
 
@@ -816,9 +815,9 @@ public class StudyDataLoader {
                                            ActivityInstanceDto instanceDto,
                                            AnswerDao answerDao) throws Exception {
 
-        LOG.info("Populating Blood Consent Survey...");
+        log.info("Populating Blood Consent Survey...");
         if (surveyData == null || surveyData.isJsonNull()) {
-            LOG.warn("NO Blood Consent Survey !");
+            log.warn("NO Blood Consent Survey !");
             return;
         }
 
@@ -857,15 +856,15 @@ public class StudyDataLoader {
                                        JdbiActivityInstance activityInstanceDao,
                                        AnswerDao answerDao) throws Exception {
 
-        LOG.info("Populating Followup Survey...");
+        log.info("Populating Followup Survey...");
         if (surveyData == null || surveyData.isJsonNull()) {
-            LOG.warn("NO Followup Survey !");
+            log.warn("NO Followup Survey !");
             return;
         }
 
         String status = getStringValueFromElement(surveyData, "survey_status");
         if (status.equalsIgnoreCase("CREATED")) {
-            LOG.warn("Created followup survey instance but no data ");
+            log.warn("Created followup survey instance but no data ");
             return;
         }
 
@@ -886,9 +885,9 @@ public class StudyDataLoader {
                                               JdbiActivityInstance activityInstanceDao,
                                               AnswerDao answerDao) throws Exception {
 
-        LOG.info("Populating FollowupConsent Survey...");
+        log.info("Populating FollowupConsent Survey...");
         if (surveyData == null || surveyData.isJsonNull()) {
-            LOG.warn("NO Followup Survey !");
+            log.warn("NO Followup Survey !");
             return;
         }
 
@@ -995,14 +994,14 @@ public class StudyDataLoader {
             if (auth0UsersByEmail != null && auth0UsersByEmail.size() > 0) {
                 userAction = "found";
                 newAuth0User = auth0UsersByEmail.get(0);
-                LOG.info("Using existing Auth0 user");
+                log.info("Using existing Auth0 user");
             }
         }
 
         if (newAuth0User == null) {
             // Create a user for the given domain
             if (useExistingAuth0Users) {
-                LOG.info("User not found: creating with random password");
+                log.info("User not found: creating with random password");
             }
             String randomPass = generateRandomPassword();
             newAuth0User = auth0Util.createAuth0User(emailAddress, randomPass, mgmtToken);
@@ -1031,7 +1030,7 @@ public class StudyDataLoader {
                 shortId, createdAtMillis, updatedAtMillis, null);
         mgmtClient.setUserGuidForAuth0User(auth0UserId, clientDto.getAuth0ClientId(), newUser.getUserGuid());
 
-        LOG.info("User " + userAction + ": Auth0UserId = " + auth0UserId + ", GUID = " + userGuid + ", HRUID = " + userHruid
+        log.info("User " + userAction + ": Auth0UserId = " + auth0UserId + ", GUID = " + userGuid + ", HRUID = " + userHruid
                 + ", " + "ALTPID = " + altpid);
         return newUser;
     }
@@ -1103,7 +1102,7 @@ public class StudyDataLoader {
                 mailAddress = addressService.verifyAddress(mailAddress);
                 mailAddress.setValidationStatus(DsmAddressValidationStatus.DSM_EASYPOST_SUGGESTED_ADDRESS_STATUS);
             } catch (AddressVerificationException e) {
-                //LOG.warn("Exception while verifying address for user: {} error: {} ", user.getUserGuid(), e);
+                //log.warn("Exception while verifying address for user: {} error: {} ", user.getUserGuid(), e);
                 mailAddress.setValidationStatus(DsmAddressValidationStatus.DSM_INVALID_ADDRESS_STATUS);
             }
         }
@@ -1134,7 +1133,7 @@ public class StudyDataLoader {
 
         MailAddress address = jdbiMailAddress.insertLegacyAddress(mailAddress, user.getUserGuid(), user.getUserGuid(), ddpCreatedAt);
         jdbiMailAddress.setDefaultAddressForParticipant(address.getGuid());
-        LOG.info("Inserted address id: {}...createdTime: {}", address.getGuid(), ddpCreatedAt);
+        log.info("Inserted address id: {}...createdTime: {}", address.getGuid(), ddpCreatedAt);
         return mailAddress;
     }
 
@@ -1221,7 +1220,7 @@ public class StudyDataLoader {
         long kitTypeId = kitTypeDao.getSalivaKitType().getId();
         long kitId = dsmKitRequestDao.createKitRequest(kitRequestId, studyGuid, addressid, kitTypeId,
                 pepperUserId, defaultKitCreationEpoch, false);
-        LOG.info("Created kit ID: " + kitId);
+        log.info("Created kit ID: " + kitId);
         return kitId;
     }
 
@@ -1242,7 +1241,7 @@ public class StudyDataLoader {
 
         //if survey is null.. just return
         if (sourceData == null || sourceData.isJsonNull()) {
-            LOG.warn("no source data for survey: {}", surveyName);
+            log.warn("no source data for survey: {}", surveyName);
             return;
         }
 
@@ -1299,7 +1298,7 @@ public class StudyDataLoader {
                             participantGuid, instanceGuid, answerDao);
                     break;
                 default:
-                    LOG.warn(" Default .. Q name: {} .. type: {} ", questionName, questionType);
+                    log.warn(" Default .. Q name: {} .. type: {} ", questionName, questionType);
             }
         }
 
@@ -1326,7 +1325,7 @@ public class StudyDataLoader {
 
         JsonElement valueEl = sourceData.getAsJsonObject().get(fieldName);
         if (valueEl != null && !valueEl.isJsonNull() && StringUtils.isNotEmpty(valueEl.getAsString())) {
-            LOG.debug(" study: {} .. userguid: {} actinstanceguid: {} fieldName: {} fieldValue: {} ",
+            log.debug(" study: {} .. userguid: {} actinstanceguid: {} fieldName: {} fieldValue: {} ",
                     studyId, participantId, instanceId, fieldName, valueEl.getAsString());
 
             handle.attach(JdbiUserStudyLegacyData.class).insert(participantId, studyId, instanceId,
@@ -1386,7 +1385,7 @@ public class StudyDataLoader {
                     selectedPicklistOptions = getPicklistOptionsForSourceNumbers(mapElement, sourceDataElement, questionName, surveyName);
                     break;
                 default:
-                    LOG.warn("source type: {} not supported", sourceType, questionName);
+                    log.warn("source type: {} not supported", sourceType, questionName);
             }
         } else {
             selectedPicklistOptions = getSelectedPicklistOptions(mapElement, sourceDataElement, questionName, surveyName);
@@ -1619,7 +1618,7 @@ public class StudyDataLoader {
         JsonElement valueEl;
         String questionName = mapElement.getAsJsonObject().get("name").getAsString();
         String stableId = getStringValueFromElement(mapElement, "stable_id");
-        LOG.info("Processing date question: " + questionName + " with stable_id " + stableId);
+        log.info("Processing date question: " + questionName + " with stable_id " + stableId);
 
         //check if question has subelements, nullable
         if (mapElement.getAsJsonObject().get("subelements") == null) {
@@ -1684,7 +1683,7 @@ public class StudyDataLoader {
 
         valueEl = sourceDataElement.getAsJsonObject().get(questionName);
         String stableId = getStringValueFromElement(mapElement, "stable_id");
-        LOG.info("Processing text question " + questionName + " with stable id " + stableId);
+        log.info("Processing text question " + questionName + " with stable id " + stableId);
 
         if (valueEl != null && !valueEl.isJsonNull()) {
             answerGuid = answerTextQuestion(stableId, participantGuid, instanceGuid, valueEl.getAsString(), answerDao);
@@ -1704,7 +1703,7 @@ public class StudyDataLoader {
             return null;
         }
         String stableId = getStringValueFromElement(mapElement, "stable_id");
-        LOG.info("Processing agreement question " + questionName + " with stable id " + stableId);
+        log.info("Processing agreement question " + questionName + " with stable id " + stableId);
 
         if (stableId == null) {
             return null;
@@ -1730,7 +1729,7 @@ public class StudyDataLoader {
         sourceDataSurveyQs.get(surveyName).add(questionName);
         //handle composite options (nested answers)
         String stableId = getStringValueFromElement(mapElement, "stable_id");
-        LOG.info("Processing composite question " + questionName + " with stable_id " + stableId);
+        log.info("Processing composite question " + questionName + " with stable_id " + stableId);
         //handle children/nestedQA
         JsonArray children = mapElement.getAsJsonObject().getAsJsonArray("children");
         List<String> nestedQAGuids = new ArrayList<>();
@@ -1780,7 +1779,7 @@ public class StudyDataLoader {
                         }
                         break;
                     default:
-                        LOG.warn(" Default ..Composite nested Q name: {} .. type: {} not supported", questionName,
+                        log.warn(" Default ..Composite nested Q name: {} .. type: {} not supported", questionName,
                                 nestedQuestionType);
                 }
                 if (StringUtils.isNotBlank(childGuid)) {
@@ -1859,7 +1858,7 @@ public class StudyDataLoader {
                                 }
                                 break;
                             default:
-                                LOG.warn(" Default ..Composite nested Q name: {} .. type: {} ", questionName,
+                                log.warn(" Default ..Composite nested Q name: {} .. type: {} ", questionName,
                                         nestedQuestionType);
                         }
                         if (StringUtils.isNotBlank(childGuid)) {
@@ -1889,7 +1888,7 @@ public class StudyDataLoader {
         String answerGuid = null;
         String stableId = getStringValueFromElement(mapElement, "stable_id");
         String questionName = mapElement.getAsJsonObject().get("name").getAsString();
-        LOG.info("Processing boolean special picklist question " + questionName + " with stable id " + stableId);
+        log.info("Processing boolean special picklist question " + questionName + " with stable id " + stableId);
 
         JsonElement valueEl = sourceDataElement.getAsJsonObject().get(questionName);
         if (valueEl == null || valueEl.isJsonNull()) {
@@ -1917,7 +1916,7 @@ public class StudyDataLoader {
         String answerGuid = null;
         String stableId = getStringValueFromElement(mapElement, "stable_id");
         String questionName = getStringValueFromElement(mapElement, "name");
-        LOG.info("Processing boolean question " + questionName + " with stable id " + stableId);
+        log.info("Processing boolean question " + questionName + " with stable id " + stableId);
 
         JsonElement valueEl = sourceDataElement.getAsJsonObject().get(questionName);
         if (valueEl == null || valueEl.isJsonNull()) {
@@ -1937,7 +1936,7 @@ public class StudyDataLoader {
                 value = valueEl.getAsBoolean();
             }
         } else {
-            LOG.error("NO source type for Boolean Q: {} ", stableId);
+            log.error("NO source type for Boolean Q: {} ", stableId);
         }
 
         answerGuid = answerBooleanQuestion(stableId, participantGuid, instanceGuid, value, answerDao);
@@ -1998,7 +1997,7 @@ public class StudyDataLoader {
                         streetAddress
                 ));
             } else {
-                LOG.warn("skipping duplicate physician: {} for participant: {}", physicianId, userDto.getUserGuid());
+                log.warn("skipping duplicate physician: {} for participant: {}", physicianId, userDto.getUserGuid());
             }
         }
     }
@@ -2076,28 +2075,28 @@ public class StudyDataLoader {
         List<String> exportDataQs = new ArrayList<>();
 
         if (sourceDataEl == null || sourceDataEl.isJsonNull()) {
-            LOG.warn(" Survey : {} null ", surveyName);
+            log.warn(" Survey : {} null ", surveyName);
             return;
         }
         int actualQsCount = sourceDataEl.getAsJsonObject().entrySet().size();
         Set<Map.Entry<String, JsonElement>> actualQs = sourceDataEl.getAsJsonObject().entrySet();
-        LOG.info("survey Name: {} .. Qs looked at count: {} ... Actual source Qs: {} ", surveyName,
+        log.info("survey Name: {} .. Qs looked at count: {} ... Actual source Qs: {} ", surveyName,
                 mappingQuestions.size(), actualQsCount);
         for (String question : mappingQuestions) {
-            LOG.debug(" Mapping Question: {} ", question);
+            log.debug(" Mapping Question: {} ", question);
         }
 
         for (Map.Entry<String, JsonElement> entry : actualQs) {
             System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue());
             if (!mappingQuestions.contains(entry.getKey())) {
-                LOG.warn("*Question : \"{}\" missing from Mapping File", entry.getKey());
+                log.warn("*Question : \"{}\" missing from Mapping File", entry.getKey());
             }
             exportDataQs.add(entry.getKey());
         }
 
         for (String question : mappingQuestions) {
             if (!exportDataQs.contains(question)) {
-                LOG.warn("*Mapping Question : \"{}\" not in source data ", question);
+                log.warn("*Mapping Question : \"{}\" not in source data ", question);
             }
         }
     }

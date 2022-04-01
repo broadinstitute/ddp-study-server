@@ -19,6 +19,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.broadinstitute.ddp.cache.LanguageStore;
@@ -30,12 +31,9 @@ import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class I18nContentRenderer {
-
-    private static final Logger LOG = LoggerFactory.getLogger(I18nContentRenderer.class);
     private static final String TEMPLATE_NAME = "template";
 
     private static Long defaultLangId = null;
@@ -186,7 +184,7 @@ public class I18nContentRenderer {
 
         TemplateDao templateDao = handle.attach(TemplateDao.class);
         Optional<TemplateDao.TextAndVarCount> res = templateDao.findTextAndVarCountById(contentTemplateId);
-        if (!res.isPresent() || res.get().getText() == null) {
+        if (res.isEmpty() || res.get().getText() == null) {
             throw new NoSuchElementException("could not find template with id " + contentTemplateId);
         }
         String templateText = res.get().getText();
@@ -197,30 +195,30 @@ public class I18nContentRenderer {
         boolean allVariablesTranslated = false;
 
         for (Long langCodeId : languageCodeIds) {
-            LOG.info("Fetching translations for the variables with templateId " + contentTemplateId);
+            log.info("Fetching translations for the variables with templateId " + contentTemplateId);
             translatedTemplateVariables = templateDao
                     .findAllTranslatedVariablesByIds(Set.of(contentTemplateId), langCodeId, null, timestamp)
                     .getOrDefault(contentTemplateId, new HashMap<>());
             int translatedTemplateVariablesCount = translatedTemplateVariables.size();
             if (templateVariableCount == translatedTemplateVariablesCount) {
-                LOG.info("Found all required translations for variables with templateId " + contentTemplateId);
+                log.info("Found all required translations for variables with templateId " + contentTemplateId);
                 allVariablesTranslated = true;
                 break;
             } else if (templateVariableCount != translatedTemplateVariablesCount) {
                 if (translatedTemplateVariablesCount == 0) {
-                    LOG.warn("No translations for the language with id "
+                    log.warn("No translations for the language with id "
                             + langCodeId + ", trying the next language");
                 } else {
                     String errMsg = "The template with id " + contentTemplateId + " is only partially translated: "
                             + templateVariableCount + " variable(s) exist while only "
                             + translatedTemplateVariablesCount + " are translated, " + "trying the next language";
-                    LOG.warn(errMsg);
+                    log.warn(errMsg);
                 }
             }
         }
 
         if (!allVariablesTranslated) {
-            LOG.warn("The template with id " + contentTemplateId
+            log.warn("The template with id " + contentTemplateId
                     + " is not completely translated, some variables won't be substituted!");
         }
 
@@ -262,7 +260,7 @@ public class I18nContentRenderer {
 
             Map<String, Object> vars = new HashMap<>(variables.getOrDefault(templateId, new HashMap<>()));
             if (vars.size() != data.getVarCount()) {
-                LOG.warn("Not all variables will be translated for template id {} (found {}/{})",
+                log.warn("Not all variables will be translated for template id {} (found {}/{})",
                         templateId, vars.size(), data.getVarCount());
             }
 

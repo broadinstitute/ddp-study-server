@@ -13,6 +13,7 @@ import com.auth0.net.TokenRequest;
 import com.google.gson.JsonObject;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -26,19 +27,14 @@ import org.broadinstitute.ddp.db.dao.JdbiClient;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 
 /**
  * Lets you create a new auth0 user, an associated pepper user, and grab
  * a token that you can use in API calls for that user.
  */
+@Slf4j
 public class UserAdminCLI {
-
     private static final String USAGE = UserAdminCLI.class.getSimpleName() + " [OPTIONS]";
-
-    private static final Logger LOG = LoggerFactory.getLogger(UserAdminCLI.class);
     public static final String STUDY_OPTION = "s";
     public static final String EMAIL_OPTION = "e";
     public static final String PASSWORD_OPTION = "p";
@@ -98,7 +94,7 @@ public class UserAdminCLI {
                 if (auth0Users.isEmpty()) {
                     // if no user with this email exists, create it and insert a corresponding  row in the user table
                     CreatedUser newUser = auth.signUp(userEmail, password, Auth0Util.USERNAME_PASSWORD_AUTH0_CONN_NAME).execute();
-                    LOG.info("Created new auth0 user {}", newUser.getEmail());
+                    log.info("Created new auth0 user {}", newUser.getEmail());
                     hruid = GuidUtils.randomUserHruid();
                     userGuid = GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20);
 
@@ -106,13 +102,13 @@ public class UserAdminCLI {
                     jdbiUser.insert(auth0UserId, userGuid, clientDto.getId(), hruid);
 
                     mgmtClient.setUserGuidForAuth0User(auth0UserId, auth0ClientId, userGuid);
-                    LOG.info("Created new pepper user {} with guid {} and hruid {}", newUser.getEmail(), userGuid, hruid);
+                    log.info("Created new pepper user {} with guid {} and hruid {}", newUser.getEmail(), userGuid, hruid);
                 } else {
                     // user exists, so pull out some details about them
                     UserDto existingUser = jdbiUser.findByAuth0UserId(auth0Users.iterator().next().getId(), clientDto.getAuth0TenantId());
                     userGuid = existingUser.getUserGuid();
                     hruid = existingUser.getUserHruid();
-                    LOG.info("User {} already exists with guid {} and hruid {}", userEmail, userGuid, hruid);
+                    log.info("User {} already exists with guid {} and hruid {}", userEmail, userGuid, hruid);
                 }
 
                 // since our auth0 rule pings the backend, add the study_guid param
@@ -129,15 +125,15 @@ public class UserAdminCLI {
                 sessionToken.addProperty("participantGuid", userGuid);
                 sessionToken.addProperty("userGuid", userGuid);
 
-                LOG.info("Here is the value for 'session_key' in browser local storage:");
+                log.info("Here is the value for 'session_key' in browser local storage:");
                 System.out.println(sessionToken);
 
-                LOG.info("Here is the value for 'token' in browser local storage or for direct API calls:");
+                log.info("Here is the value for 'token' in browser local storage or for direct API calls:");
                 System.out.println(token.getIdToken());
 
             });
         } catch (Exception e) {
-            LOG.error("Trouble setting up user", e);
+            log.error("Trouble setting up user", e);
         }
     }
 }
