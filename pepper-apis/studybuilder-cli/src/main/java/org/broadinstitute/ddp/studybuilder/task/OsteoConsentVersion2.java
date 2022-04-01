@@ -302,6 +302,7 @@ public class OsteoConsentVersion2 implements CustomTask {
         addAdultNestedBlocks(activityId, handle, meta, "CONSENT_ASSENT", version2, consentAssentDataCfg);
         addAdultBlocks(activityId, handle, "CONSENT_ASSENT", meta, version2, consentAssentDataCfg);
         reorderNestedBlock(handle, activityCode, version2, consentAssentDataCfg);
+        detachQuestionFromBothSectionAndBlock(handle, "CONSENT_ASSENT_PARENT_SIGNATURE");
     }
 
     private void runParentalConsentUpdate(Handle handle, RevisionMetadata meta, StudyDto studyDto,
@@ -313,6 +314,7 @@ public class OsteoConsentVersion2 implements CustomTask {
         addAdultNestedBlocks(activityId, handle, meta, "PARENTAL_CONSENT", version2, parentalConsentDataCfg);
         addAdultBlocks(activityId, handle, "PARENTAL_CONSENT", meta, version2, parentalConsentDataCfg);
         reorderNestedBlock(handle, activityCode, version2, parentalConsentDataCfg);
+        detachQuestionFromBothSectionAndBlock(handle, "PARENTAL_CONSENT_SIGNATURE");
     }
 
     private void runAdultConsentUpdate(Handle handle, RevisionMetadata meta, StudyDto studyDto,
