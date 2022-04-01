@@ -106,28 +106,30 @@ public class OsteoPrequalUpdate implements CustomTask {
 
     private void updateQuestion(Handle handle, Config dataCfg, long activityId) {
         SqlHelper helper = handle.attach(SqlHelper.class);
-        JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
 
         List<? extends Config> questionUpdates = dataCfg.getConfigList("questionUpdates");
         questionUpdates.forEach(config -> {
-             String stableId = config.getString("stableId");
-             QuestionDto questionDto = jdbiQuestion.findDtoByActivityIdAndQuestionStableId(activityId, stableId).get();
-             List<? extends Config> question = config.getConfigList("question");
+            String stableId = config.getString("stableId");
+            List<? extends Config> question = config.getConfigList("question");
              String varName = question.get(0).getString("varName");
              String subsValue = question.get(0).getString("newVal");
-             long templatevariableId = helper.getTemplatevariableId(varName);
-             helper.updateTemplateText(subsValue, templatevariableId);
-
-             if(question.get(1) != null){
-                String value = question.get(1).getString("newVal");
-                PicklistSelectMode picklistSelectMode = PicklistSelectMode.valueOf(value);
-                long pickListModeIdByValue = helper.getPickListModeIdByValue(picklistSelectMode);
-                helper.updatePicklistOption(questionDto.getId(), pickListModeIdByValue);
-             }
+             long questioId = helper.getQuestionStableCodeId(stableId);
+             long questionPromptId = helper.getQuestionPromptId(questioId);
+             long templateVariableIdbyTemplateId = helper.getTemplateVariableIdbyTemplateId(questionPromptId);
+             helper.updateTemplateText(subsValue, templateVariableIdbyTemplateId);
         });
 
+        changeQuetionStyle(handle, activityId, "PREQUAL_SELF_DESCRIBE");
+    }
 
-
+    private void changeQuetionStyle(Handle handle, long activityId, String stableId){
+        SqlHelper helper = handle.attach(SqlHelper.class);
+        JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
+        QuestionDto questionDto = jdbiQuestion.findDtoByActivityIdAndQuestionStableId(activityId, stableId).get();
+        String value = "MULTIPLE";
+        PicklistSelectMode picklistSelectMode = PicklistSelectMode.valueOf(value);
+        long pickListModeIdByValue = helper.getPickListModeIdByValue(picklistSelectMode);
+        helper.updatePicklistOption(questionDto.getId(), pickListModeIdByValue);
     }
 
     private interface SqlHelper extends SqlObject {
@@ -136,8 +138,6 @@ public class OsteoPrequalUpdate implements CustomTask {
                 + " where template_variable_id = :template_variable_id")
         void updateTemplateText(@Bind("substitution_value") String value, @Bind("template_variable_id") long templateId);
 
-        @SqlQuery("select template_variable_id from template_variable where variable_name like :variable_name ")
-        long getTemplatevariableId(@Bind("variable_name") String variableName);
 
         @SqlQuery("select picklist_select_mode_id from picklist_select_mode where picklist_select_mode_code = :picklist_select_mode_code")
         long getPickListModeIdByValue(@Bind("picklist_select_mode_code") PicklistSelectMode picklistSelectMode);
@@ -145,5 +145,13 @@ public class OsteoPrequalUpdate implements CustomTask {
         @SqlUpdate("update picklist_question set picklist_select_mode_id = :picklist_select_mode_id where question_id = :question_id")
         void updatePicklistOption(@Bind("question_id") long questionId, @Bind("picklist_select_mode_id") long picklistselectModeId);
 
+        @SqlQuery("select question_stable_code_id from question_stable_code where stable_id like :syableId")
+        long getQuestionStableCodeId(@Bind("stableId") String StableId);
+
+        @SqlQuery("select question_prompt_template_id from question where question_stable_code_id = :stableId")
+        long getQuestionPromptId(@Bind("stableId") long stableId);
+
+        @SqlQuery("select template_variable_id from template_variable where template_id = :templateId")
+        long getTemplateVariableIdbyTemplateId(@Bind("templateId") long templateId);
     }
 }
