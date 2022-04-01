@@ -111,7 +111,7 @@ public class OsteoPrequalUpdate implements CustomTask {
         questionUpdates.forEach(config -> {
             String stableId = config.getString("stableId");
 
-            if (config.getConfig("validation") != null) {
+            if (!config.getConfig("validation").isEmpty()) {
                 Config validation = config.getConfig("validation");
                 String varName = validation.getString("varName");
                 String newVal = validation.getString("newVal");
@@ -125,15 +125,16 @@ public class OsteoPrequalUpdate implements CustomTask {
                 String subsValue = config1.getString("newVal");
                 long questionId = helper.getQuestionStableCodeId(stableId);
                 long questionPromptId = helper.getQuestionPromptId(questionId);
-                long templateVariableIdbyTemplateId = helper.getTemplateVariableIdbyTemplateId(questionPromptId, varName);
+                long templateVariableIdbyTemplateId = helper.getTemplateVariableIdByTemplateId(questionPromptId, varName);
                 helper.updateTemplateText(subsValue, templateVariableIdbyTemplateId);
             }
         });
 
-        changeQuetionStyle(handle, activityId, "PREQUAL_SELF_DESCRIBE");
+        changeQuestionStyle(handle, activityId, "PREQUAL_SELF_DESCRIBE");
+        changeAgeRestriction(helper);
     }
 
-    private void changeQuetionStyle(Handle handle, long activityId, String stableId) {
+    private void changeQuestionStyle(Handle handle, long activityId, String stableId) {
         SqlHelper helper = handle.attach(SqlHelper.class);
         JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
         QuestionDto questionDto = jdbiQuestion.findDtoByActivityIdAndQuestionStableId(activityId, stableId).get();
@@ -143,9 +144,13 @@ public class OsteoPrequalUpdate implements CustomTask {
         helper.updatePicklistOption(questionDto.getId(), pickListModeIdByValue);
     }
 
-    private void changeAgeRestriction() {
+    private void changeAgeRestriction(SqlHelper helper) {
         int age = 110;
         String stableId = "SELF_CURRENT_AGE";
+        long questionStableCodeId = helper.getQuestionStableCodeId(stableId);
+        long questionId = helper.getQuestionId(questionStableCodeId);
+        long validationId = helper.getValidationId(questionId);
+        helper.insertUpperRange(age, validationId);
     }
 
     private interface SqlHelper extends SqlObject {
@@ -171,6 +176,15 @@ public class OsteoPrequalUpdate implements CustomTask {
         long getTemplateVariableId(@Bind("name") String name);
 
         @SqlQuery("select template_variable_id from template_variable where template_id = :templateId and variable_name = :name")
-        long getTemplateVariableIdbyTemplateId(@Bind("templateId") long templateId, @Bind("name") String name);
+        long getTemplateVariableIdByTemplateId(@Bind("templateId") long templateId, @Bind("name") String name);
+
+        @SqlQuery("select question_id from question where question_stable_code_id = :stableId")
+        long getQuestionId(@Bind("stableId") long stableId);
+
+        @SqlQuery("select validation_id from question__validation where question_id = :questionId")
+        long getValidationId(@Bind("questionId") long questionId);
+
+        @SqlUpdate("update int_range_validation set max = :max where validation_id = :validationId")
+        void insertUpperRange(@Bind("max") int max, @Bind("validationId") long validationId);
     }
 }
