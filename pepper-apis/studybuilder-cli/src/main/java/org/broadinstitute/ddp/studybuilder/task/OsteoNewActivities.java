@@ -21,7 +21,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OsteoNewActivities implements CustomTask{
+public class OsteoNewActivities implements CustomTask {
     private static final Logger LOG = LoggerFactory.getLogger(OsteoNewActivities.class);
     private static final String DATA_FILE = "patches/osteo-new-activities.conf";
 
