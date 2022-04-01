@@ -30,7 +30,7 @@ public class BaseCollectionMigratorTest {
     private List mockOncHistoryDetail() {
         OncHistoryDetail oncHistoryDetail =
                 new OncHistoryDetail(23, 0, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                        null, null, null, null, null, null, null, null, null, mockTissues(), null, null, false, null, null);
+                        null, null, null, null, null, null, null, null, null, mockTissues(), null, null, false, null, null, 0);
         return Collections.singletonList(oncHistoryDetail);
     }
 

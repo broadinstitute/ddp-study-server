@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
@@ -14,12 +15,9 @@ import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.event.EventConfiguration;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class TestBostonDisableKitPrepEmail implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TestBostonDisableKitPrepEmail.class);
     private static final String STUDY_GUID = "testboston";
 
     private Path cfgPath;
@@ -50,6 +48,6 @@ public class TestBostonDisableKitPrepEmail implements CustomTask {
 
         DBUtils.checkUpdate(1, handle.attach(JdbiEventConfiguration.class)
                 .updateIsActiveById(kitPrepEmail.getEventConfigurationId(), false));
-        LOG.info("Disabled kit prep email event with id {}", kitPrepEmail.getEventConfigurationId());
+        log.info("Disabled kit prep email event with id {}", kitPrepEmail.getEventConfigurationId());
     }
 }

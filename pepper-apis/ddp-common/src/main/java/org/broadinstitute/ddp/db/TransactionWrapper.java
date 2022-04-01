@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import com.typesafe.config.Config;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.InvalidConfigurationException;
@@ -21,8 +22,6 @@ import org.jdbi.v3.core.HandleCallback;
 import org.jdbi.v3.core.HandleConsumer;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Singleton that grabs a connection and calls
@@ -31,6 +30,7 @@ import org.slf4j.LoggerFactory;
  * is rolled back.  Any exceptions encountered
  * are re-thrown after making an attempt to rollback the transaction.
  */
+@Slf4j
 public class TransactionWrapper {
     // We are setting the VMs default timezone expectation that it will be same on server
     // or at least specified in DB connection URL
@@ -43,8 +43,6 @@ public class TransactionWrapper {
             TimeZone.setDefault(TimeZone.getTimeZone(manager.getConfig().getString(ConfigFile.DEFAULT_TIMEZONE)));
         }
     }
-
-    private static final Logger LOG = LoggerFactory.getLogger(TransactionWrapper.class);
 
     private static final Map<DB, TransactionWrapper> gTxnWrapper = new HashMap<>();
 
@@ -114,12 +112,12 @@ public class TransactionWrapper {
      * Should only be called during testing.
      */
     public static synchronized void reset() {
-        LOG.warn("reset() should only be called in the context of testing");
+        log.warn("reset() should only be called in the context of testing");
         for (TransactionWrapper transactionWrapper : gTxnWrapper.values()) {
             try {
                 transactionWrapper.dataSource.close();
             } catch (Exception e) {
-                LOG.error("Trouble while closing datasource for {}", transactionWrapper.dbUrl, e);
+                log.error("Trouble while closing datasource for {}", transactionWrapper.dbUrl, e);
             }
         }
         gTxnWrapper.clear();
@@ -180,7 +178,7 @@ public class TransactionWrapper {
                             + "it with different params " + maxConnections
                             + " and " + dbUrl);
                 } else {
-                    LOG.warn("TransactionWrapper has already been initialized.");
+                    log.warn("TransactionWrapper has already been initialized.");
                 }
             }
             gTxnWrapper.put(dbConfig.getDb(), new TransactionWrapper(dbConfig.getMaxConnections(), dbConfig.getDbUrl(), dbConfig.getDb()));
@@ -331,18 +329,18 @@ public class TransactionWrapper {
                 return getInstance(db).jdbi.open();
             } catch (ConnectionException e) {
                 if (isAuthException(e)) {
-                    LOG.info("Database pool credentials have been rejected; pausing and reloading creds from config file.", e);
+                    log.info("Database pool credentials have been rejected; pausing and reloading creds from config file.", e);
                     try {
                         TimeUnit.SECONDS.sleep(PASSWORD_ROTATION_SLEEP);
                     } catch (InterruptedException interrupted) {
-                        LOG.error("Sleep before dbpool credential reload has been interrupted", interrupted);
+                        log.error("Sleep before dbpool credential reload has been interrupted", interrupted);
                     }
                     reloadDbPoolConfiguration(false);
                 } else {
                     throw new DDPException(COULD_NOT_GET_CONNECTION, e);
                 }
             } catch (InvalidConfigurationException e) {
-                LOG.error("Database connection configuration is invalid.  Proceeding with original configuration values.");
+                log.error("Database connection configuration is invalid.  Proceeding with original configuration values.");
             }
         }
         // if here, we've tried a few times, but are still unable to get a connection.
@@ -445,7 +443,7 @@ public class TransactionWrapper {
             try {
                 handle.rollbackToSavepoint(name);
             } catch (Exception e) {
-                LOG.error("Error rolling back savepoint {}", name, e);
+                log.error("Error rolling back savepoint {}", name, e);
             }
             throw original;
         }

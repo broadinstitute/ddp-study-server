@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -42,12 +43,9 @@ import org.broadinstitute.ddp.studybuilder.EventBuilder;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class TestBostonLongitudinalV2 implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TestBostonLongitudinalV2.class);
     private static final String LONGITUDINAL_V2_FILE = "longitudinal-covid-v2.conf";
     private static final String VACCINE_COPY_EVENT_FILE = "patches/vaccine-copy-answer-event.conf";
     private static final String STUDY_GUID = "testboston";
@@ -87,7 +85,7 @@ public class TestBostonLongitudinalV2 implements CustomTask {
         Config v2Cfg = activityBuilder.readDefinitionConfig(LONGITUDINAL_V2_FILE);
         var v2Def = (FormActivityDef) gson.fromJson(ConfigUtil.toJson(v2Cfg), ActivityDef.class);
         activityBuilder.validateDefinition(v2Def);
-        LOG.info("Loaded activity definition from file: {}", LONGITUDINAL_V2_FILE);
+        log.info("Loaded activity definition from file: {}", LONGITUDINAL_V2_FILE);
 
         // Extract the new question block definitions.
         FormSectionDef v2SectionDef = v2Def.getSections().get(0);
@@ -113,7 +111,7 @@ public class TestBostonLongitudinalV2 implements CustomTask {
 
         String activityCode = v2Cfg.getString("activityCode");
         String v2VersionTag = v2Cfg.getString("versionTag");
-        LOG.info("Creating version {} of {}...", v2VersionTag, activityCode);
+        log.info("Creating version {} of {}...", v2VersionTag, activityCode);
 
         ActivityDto activityDto = handle.attach(JdbiActivity.class)
                 .findActivityByStudyGuidAndCode(STUDY_GUID, activityCode).get();
@@ -123,13 +121,13 @@ public class TestBostonLongitudinalV2 implements CustomTask {
                 studyDto.getGuid(), activityCode, v2VersionTag);
         var metadata = RevisionMetadata.now(adminUser.getId(), reason);
         ActivityVersionDto v2Dto = activityDao.changeVersion(activityId, v2VersionTag, metadata);
-        LOG.info("Version {} is created with versionId={}, revisionId={}", v2VersionTag, v2Dto.getId(), v2Dto.getRevId());
+        log.info("Version {} is created with versionId={}, revisionId={}", v2VersionTag, v2Dto.getId(), v2Dto.getRevId());
 
         ActivityVersionDto v1Dto = handle.attach(JdbiActivityVersion.class)
                 .findByActivityCodeAndVersionTag(studyDto.getId(), activityCode, V1_VERSION_TAG)
                 .orElseThrow(() -> new DDPException("Could not find version " + V1_VERSION_TAG));
         long v1TerminatedRevId = v1Dto.getRevId(); // v1 should be terminated already after adding v2 above.
-        LOG.info("Version {} is terminated with revisionId={}", V1_VERSION_TAG, v1TerminatedRevId);
+        log.info("Version {} is terminated with revisionId={}", V1_VERSION_TAG, v1TerminatedRevId);
 
         //
         // Add new question blocks to v2.
@@ -145,19 +143,19 @@ public class TestBostonLongitudinalV2 implements CustomTask {
         // Hospital question blocks should show up last in nested blocks.
         int displayOrder = 60;
 
-        LOG.info("Adding question {} as nested block to question {} with nestedDisplayOrder={}...",
+        log.info("Adding question {} as nested block to question {} with nestedDisplayOrder={}...",
                 hospitalizedBlockDef.getQuestion().getStableId(), question1Def.getControl().getStableId(), displayOrder);
         sectionBlockDao.insertBlockByType(activityId, hospitalizedBlockDef, revisionId);
         jdbiBlockNesting.insert(parentBlockId, hospitalizedBlockDef.getBlockId(), displayOrder, revisionId);
 
         displayOrder += SectionBlockDao.DISPLAY_ORDER_GAP;
-        LOG.info("Adding question {} as nested block to question {} with nestedDisplayOrder={}...",
+        log.info("Adding question {} as nested block to question {} with nestedDisplayOrder={}...",
                 hospitalNameBlockDef.getQuestion().getStableId(), question1Def.getControl().getStableId(), displayOrder);
         sectionBlockDao.insertBlockByType(activityId, hospitalNameBlockDef, revisionId);
         jdbiBlockNesting.insert(parentBlockId, hospitalNameBlockDef.getBlockId(), displayOrder, revisionId);
 
         displayOrder += SectionBlockDao.DISPLAY_ORDER_GAP;
-        LOG.info("Adding question {} as nested block to question {} with nestedDisplayOrder={}...",
+        log.info("Adding question {} as nested block to question {} with nestedDisplayOrder={}...",
                 hospitalDaysBlockDef.getQuestion().getStableId(), question1Def.getControl().getStableId(), displayOrder);
         sectionBlockDao.insertBlockByType(activityId, hospitalDaysBlockDef, revisionId);
         jdbiBlockNesting.insert(parentBlockId, hospitalDaysBlockDef.getBlockId(), displayOrder, revisionId);
@@ -174,12 +172,12 @@ public class TestBostonLongitudinalV2 implements CustomTask {
                 .map(SectionBlockMembershipDto::getDisplayOrder)
                 .get() + 3;
 
-        LOG.info("Adding question block {} to section {} with displayOrder={}...",
+        log.info("Adding question block {} to section {} with displayOrder={}...",
                 vaccineStudyBlockDef.getControl().getStableId(), sectionId, displayOrder);
         sectionBlockDao.insertBlockForSection(activityId, sectionId, displayOrder, vaccineStudyBlockDef, revisionId);
 
         displayOrder += 3;
-        LOG.info("Adding question block {} to section {} with displayOrder={}...",
+        log.info("Adding question block {} to section {} with displayOrder={}...",
                 vaccineReceivedBlockDef.getControl().getStableId(), sectionId, displayOrder);
         sectionBlockDao.insertBlockForSection(activityId, sectionId, displayOrder, vaccineReceivedBlockDef, revisionId);
 
@@ -190,7 +188,7 @@ public class TestBostonLongitudinalV2 implements CustomTask {
         List<EventConfiguration> events = handle.attach(EventDao.class)
                 .getAllEventConfigurationsByStudyId(studyDto.getId());
 
-        LOG.info("Searching for longitudinal copy answer event configuration...");
+        log.info("Searching for longitudinal copy answer event configuration...");
         EventConfiguration copyEvent = null;
         for (var event : events) {
             if (event.getEventTriggerType() == EventTriggerType.ACTIVITY_STATUS) {
@@ -205,9 +203,9 @@ public class TestBostonLongitudinalV2 implements CustomTask {
         }
 
         if (copyEvent != null) {
-            LOG.info("Already has longitudinal copy answer event config with id={}", copyEvent.getEventConfigurationId());
+            log.info("Already has longitudinal copy answer event config with id={}", copyEvent.getEventConfigurationId());
         } else {
-            LOG.info("Did not find longitudinal copy answer event, creating...");
+            log.info("Did not find longitudinal copy answer event, creating...");
 
             // Load the copy answer event definition.
             File file = cfgPath.getParent().resolve(VACCINE_COPY_EVENT_FILE).toFile();
@@ -220,6 +218,6 @@ public class TestBostonLongitudinalV2 implements CustomTask {
             eventBuilder.insertEvent(handle, copyEventCfg);
         }
 
-        LOG.info("Done");
+        log.info("Done");
     }
 }

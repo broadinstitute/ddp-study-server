@@ -18,6 +18,7 @@ import liquibase.exception.RollbackFailedException;
 import liquibase.lockservice.DatabaseChangeLogLock;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import liquibase.servicelocator.ServiceLocator;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -31,12 +32,10 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class LiquibaseUtil implements AutoCloseable {
-
     public static final String PEPPER_APIS_GLOBAL_MIGRATIONS = "changelog-master.xml";
-
     public static final String HOUSEKEEPING_GLOBAL_MIGRATIONS = "housekeeping-changelog-master.xml";
-
     public static final String DSM_GLOBAL_MIGRATIONS = "master-changelog.xml";
 
     public static final String SHARED_DB_MIGRATIONS = "shared-master-changelog.xml";
@@ -148,20 +147,20 @@ public class LiquibaseUtil implements AutoCloseable {
 
             tag = generateDatabaseTag();
             liquibase.tag(tag);
-            LOG.info("Tagged database with tag {}", tag);
+            log.info("Tagged database with tag {}", tag);
 
             liquibase.update(new Contexts());
         } catch (MigrationFailedException originalError) {
             if (liquibase != null && tag != null) {
                 try {
-                    LOG.info("Attempting to rollback changesets to tag {}", tag);
+                    log.info("Attempting to rollback changesets to tag {}", tag);
                     liquibase.rollback(tag, new Contexts());
-                    LOG.info("Successfully rolled back changesets to tag {}", tag);
+                    log.info("Successfully rolled back changesets to tag {}", tag);
                 } catch (RollbackFailedException e) {
-                    LOG.error("Failed to rollback changesets to tag {}, database might be in a bad state", tag, e);
+                    log.error("Failed to rollback changesets to tag {}, database might be in a bad state", tag, e);
                 }
             } else {
-                LOG.error("No liquibase object or tag to rollback changesets");
+                log.error("No liquibase object or tag to rollback changesets");
             }
 
             // Propagate original exception back up.
@@ -219,10 +218,10 @@ public class LiquibaseUtil implements AutoCloseable {
 
             String encryptedSecret = AesUtil.encrypt(mgmtSecret, EncryptionKey.getEncryptionKey());
             Auth0TenantDto tenantDto = jdbiAuth0Tenant.insertIfNotExists(domain, mgmtApiClient, encryptedSecret);
-            LOG.info("Inserted testing tenant {}", domain);
+            log.info("Inserted testing tenant {}", domain);
             insertedTenant = true;
         } else {
-            LOG.info("No legacy domain/mgt secret in config, skipping insert of auth0_tenant data");
+            log.info("No legacy domain/mgt secret in config, skipping insert of auth0_tenant data");
         }
         return insertedTenant;
     }
@@ -237,13 +236,13 @@ public class LiquibaseUtil implements AutoCloseable {
             if (databaseChangeLogLocks.length > 0) {
                 hasLocks = true;
                 for (DatabaseChangeLogLock dbLock : databaseChangeLogLocks) {
-                    LOG.info("Liquibase locked by {} at {}.  Lock id is {} ", dbLock.getLockedBy(),
+                    log.info("Liquibase locked by {} at {}.  Lock id is {} ", dbLock.getLockedBy(),
                             dbLock.getLockGranted(), dbLock.getId());
                 }
             }
         }
         if (!hasLocks) {
-            LOG.info("No liquibase locks");
+            log.info("No liquibase locks");
         }
     }
 
@@ -257,10 +256,11 @@ public class LiquibaseUtil implements AutoCloseable {
             hostname = InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
             hostname = RouteConstants.API.VERSION;
-            LOG.warn("Unable to get hostname to create tag, defaulting to {}", hostname, e);
+            log.warn("Unable to get hostname to create tag, defaulting to {}", hostname, e);
         }
         return String.format("%d-%s", Instant.now().toEpochMilli(), hostname);
     }
+
 
 
 }
