@@ -26,7 +26,7 @@ public class OsteoNewActivities implements CustomTask{
     private static final String DATA_FILE = "patches/osteo-new-activities.conf";
 
     private static final String STUDY_GUID = "CMI-OSTEO";
-    private static final int NUM_EVENTS = 1;
+    private static final int NUM_EVENTS = 2;
 
 
     private Path cfgPath;
