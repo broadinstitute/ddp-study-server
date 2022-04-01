@@ -26,7 +26,7 @@ public enum Alias {
     DSM(ElasticSearchUtil.DSM, false), STATUS(ElasticSearchUtil.STATUS, false), PROFILE(ElasticSearchUtil.PROFILE, false),
     ADDRESS(ElasticSearchUtil.ADDRESS, false), INVITATIONS(ElasticSearchUtil.INVITATIONS, false), PROXY(ElasticSearchUtil.PROFILE, false),
     ACTIVITIES(ElasticSearchUtil.ACTIVITIES, true), REGISTRATION(ElasticSearchUtil.ACTIVITIES, true),
-    DATA("", false);
+    DATA(StringUtils.EMPTY, false);
     Alias(String value, boolean isCollection) {
         this.value = value;
         this.isCollection = isCollection;
