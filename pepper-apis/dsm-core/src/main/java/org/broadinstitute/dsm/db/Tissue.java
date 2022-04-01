@@ -139,6 +139,8 @@ public class Tissue {
     private Integer blocksCount;
     @ColumnName(DBConstants.H_E_COUNT)
     private Integer hECount;
+    private List<TissueSmId> smIds;
+
     private List<TissueSmId> ussSMID;
     private List<TissueSmId> scrollSMID;
     private List<TissueSmId> heSMID;
@@ -221,7 +223,8 @@ public class Tissue {
                         tissue = getTissue(rs);
                     }
                     if (tissueSmId != null) {
-                        tissue.setSmIdBasedOnType(tissueSmId, rs);
+                        tissue.smIds.add(tissueSmId);
+//                        tissue.setSmIdBasedOnType(tissueSmId, rs);
                     }
                     tissues.put(tissue.tissueId, tissue);
                 }
@@ -293,6 +296,7 @@ public class Tissue {
         }
         try {
             String type = rs.getString(DBConstants.SM_ID_TYPE_TABLE_ALIAS + "." + DBConstants.SM_ID_TYPE);
+
             switch (type.toLowerCase()) {
                 case "he": {
                     this.heSMID.add(tissueSmId);

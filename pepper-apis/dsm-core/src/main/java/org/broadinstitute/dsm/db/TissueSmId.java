@@ -59,7 +59,7 @@ public class TissueSmId {
             }
             tissueSmId = new TissueSmId(
                     rs.getString(DBConstants.SM_ID_PK),
-                    rs.getString(DBConstants.SM_ID_TYPE_ID),
+                    rs.getString(DBConstants.SM_ID_TYPE_TABLE_ALIAS + "." + DBConstants.SM_ID_TYPE),
                     rs.getString(DBConstants.SM_ID_VALUE),
                     rs.getString("sm." + DBConstants.TISSUE_ID)
             );
