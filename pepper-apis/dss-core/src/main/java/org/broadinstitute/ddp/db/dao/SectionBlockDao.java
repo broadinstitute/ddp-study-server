@@ -504,6 +504,8 @@ public interface SectionBlockDao extends SqlObject {
             getContentBlockDao().disableContentBlock(blockId, meta);
         } else if (BlockType.QUESTION.equals(blockType)) {
             getQuestionDao().disableQuestionBlock(blockId, meta);
+        } else if (BlockType.COMPONENT.equals(blockType)) {
+            getComponentDao().disableComponentBlock(blockId, meta);
         } else {
             throw new DaoException("Unhandled block type " + blockType);
         }
