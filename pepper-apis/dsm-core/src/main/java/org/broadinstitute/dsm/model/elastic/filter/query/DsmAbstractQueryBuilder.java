@@ -56,11 +56,11 @@ public class DsmAbstractQueryBuilder {
     protected void buildUpQuery(List<String> filterValues, FilterStrategy filterStrategy) {
         for (String filterValue : filterValues) {
             Operator operator = Operator.extract(filterValue);
-            splitter = operator.getStrategy();
+            splitter = operator.getSplitterStrategy();
             splitter.setFilter(filterValue);
             baseQueryBuilder = BaseQueryBuilder.of(splitter.getAlias(), splitter.getFieldName());
             QueryPayload queryPayload = new QueryPayload(buildPath(), splitter.getInnerProperty(), parser.parse(splitter.getValue()));
-            filterStrategy.build(boolQueryBuilder, baseQueryBuilder.buildEachQuery(operator, queryPayload, splitter));
+            filterStrategy.build(boolQueryBuilder, baseQueryBuilder.buildEachQuery(operator, queryPayload));
         }
     }
 

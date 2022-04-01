@@ -23,9 +23,6 @@ import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 
 public class AesUtil {
 
@@ -46,8 +43,6 @@ public class AesUtil {
             + "SET auth0_signing_secret = :auth0_signing_secret "
             + "WHERE auth0_client_id = :auth0_client_id "
             + "AND auth0_tenant_id = :auth0_tenant_id";
-    private Logger logger = LoggerFactory.getLogger(AesUtil.class);
-
 
     public static String encrypt(String strToEncrypt, String key) {
         try {

@@ -5,6 +5,7 @@ import java.nio.file.Path;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.UserDao;
@@ -12,11 +13,9 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.studybuilder.EventBuilder;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class OsteoDdp7601 implements CustomTask {
-    private static final Logger LOG = LoggerFactory.getLogger(OsteoDdp7601.class);
     private static final String STUDY_GUID = "CMI-OSTEO";
     private static final String DATA_FILE = "patches/DDP-7601-new-event-for-dsm.conf";
 
@@ -46,12 +45,12 @@ public class OsteoDdp7601 implements CustomTask {
         var studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(STUDY_GUID);
         var eventBuilder = new EventBuilder(studyCfg, studyDto, adminUser.getId());
 
-        LOG.info("Adding new event for DSM notification.");
+        log.info("Adding new event for DSM notification.");
 
         Config eventDataCfg = dataCfg.getConfigList("events").get(0);
 
         eventBuilder.insertEvent(handle, eventDataCfg);
 
-        LOG.info("Added new event for DSM notification.");
+        log.info("Added new event for DSM notification.");
     }
 }

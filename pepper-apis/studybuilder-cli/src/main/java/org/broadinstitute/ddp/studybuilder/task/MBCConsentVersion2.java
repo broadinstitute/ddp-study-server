@@ -6,6 +6,7 @@ import java.time.Instant;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiBlockContent;
@@ -32,12 +33,9 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class MBCConsentVersion2 implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(MBCConsentVersion2.class);
     private static final String DATA_FILE = "patches/tissue-blood-consent-version2.conf";
     private static final String MBC_STUDY = "cmi-mbc";
 
@@ -72,18 +70,18 @@ public class MBCConsentVersion2 implements CustomTask {
         PdfBuilder builder = new PdfBuilder(cfgPath.getParent(), cfg, studyDto, adminUser.getId());
 
         String activityCode = dataCfg.getString("activityCode.tissue");
-        LOG.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
+        log.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
         revisionConsent("tissue", handle, adminUser.getId(), studyDto, activityCode, versionTag, timestamp.toEpochMilli());
 
-        LOG.info("Adding new pdf version for tissue consent");
+        log.info("Adding new pdf version for tissue consent");
         builder.insertPdfConfig(handle, dataCfg.getConfig("tissueconsentPdfV2"));
         addNewConsentDataSourceToReleasePdf(handle, studyDto.getId(), dataCfg.getString("tissuereleasePdfName"), activityCode, versionTag);
 
         activityCode = dataCfg.getString("activityCode.blood");
-        LOG.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
+        log.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
         revisionConsent("blood", handle, adminUser.getId(), studyDto, activityCode, versionTag, timestamp.toEpochMilli());
 
-        LOG.info("Adding new pdf version for blood consent");
+        log.info("Adding new pdf version for blood consent");
         builder.insertPdfConfig(handle, dataCfg.getConfig("bloodconsentPdfV2"));
         addNewConsentDataSourceToReleasePdf(handle, studyDto.getId(), dataCfg.getString("bloodreleasePdfName"), activityCode, versionTag);
     }
@@ -137,7 +135,7 @@ public class MBCConsentVersion2 implements CustomTask {
         long newBlockContentId = jdbiBlockContent.insert(contentBlock.getBlockId(), newTemplateId,
                 contentBlock.getTitleTemplateId(), versionDto.getRevId());
 
-        LOG.info("Created block_content with id={}, blockId={}, bodyTemplateId={} for bodyTemplateText={}",
+        log.info("Created block_content with id={}, blockId={}, bodyTemplateId={} for bodyTemplateText={}",
                 newBlockContentId, contentBlock.getBlockId(), newTemplateId, bodyTemplateText);
     }
 
@@ -162,7 +160,7 @@ public class MBCConsentVersion2 implements CustomTask {
 
         pdfDao.insertDataSource(version.getId(), new PdfActivityDataSource(activityId, activityVersionId));
 
-        LOG.info("Added activity data source with activityCode={} versionTag={} to pdf {} version {}",
+        log.info("Added activity data source with activityCode={} versionTag={} to pdf {} version {}",
                 activityCode, versionTag, info.getConfigName(), version.getVersionTag());
     }
 
