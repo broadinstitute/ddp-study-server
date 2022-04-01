@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.studybuilder.task;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.EventTriggerDao;
@@ -31,8 +32,6 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -43,9 +42,8 @@ import java.util.stream.Collectors;
 /**
  * One-off task to update configurations and events to support kit uploads and adhoc survey in deployed environments.
  */
+@Slf4j
 public class CircadiaUpdateDLMOInstructionsTrigger implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(CircadiaUpdateDLMOInstructionsTrigger.class);
     private static final String STUDY_GUID = "circadia";
     private static final String DATA_FILE = "patches/patch1.conf";
 
@@ -77,7 +75,7 @@ public class CircadiaUpdateDLMOInstructionsTrigger implements CustomTask {
     }
 
     private void updateDLMOInstructionsTrigger(Handle handle, List<EventConfiguration> events) {
-        LOG.info("Looking for DLMO_INSTRUCTIONS creation event...");
+        log.info("Looking for DLMO_INSTRUCTIONS creation event...");
         var helper = handle.attach(SqlHelper.class);
 
         long activityId = helper.findActivityIdByStudyIdAndCode(studyId, "DLMO_INSTRUCTIONS");
@@ -96,7 +94,7 @@ public class CircadiaUpdateDLMOInstructionsTrigger implements CustomTask {
             if (dsmEvent.getEventAction() instanceof ActivityInstanceCreationEventAction
                     && dsmType == DsmNotificationEventType.CIRCADIA_SENT) {
                 ActivityInstanceCreationEventAction ea = (ActivityInstanceCreationEventAction) dsmEvent.getEventAction();
-                LOG.info("Working on event with id={} dsmNotificationType={}...", eventId, dsmType);
+                log.info("Working on event with id={} dsmNotificationType={}...", eventId, dsmType);
 
                 if (ea.getStudyActivityId() == activityId) {
                     long newTriggerId = handle.attach(EventTriggerDao.class)
@@ -105,7 +103,7 @@ public class CircadiaUpdateDLMOInstructionsTrigger implements CustomTask {
                     helper.updateEventTrigger(dsmEvent.getEventConfigurationId(), newTriggerId);
                     helper.deleteDsmNotificationEventTriggerId(oldTriggerId);
                     handle.attach(EventTriggerSql.class).deleteBaseTriggerById(oldTriggerId);
-                    LOG.info("New trigger {} was created for the action", newTriggerId);
+                    log.info("New trigger {} was created for the action", newTriggerId);
                 }
             }
         }
@@ -126,7 +124,7 @@ public class CircadiaUpdateDLMOInstructionsTrigger implements CustomTask {
         int displayOrder = currentSectionDef.getBlocks().size() * 10 + 10;
         sectionBlockDao.insertBlockForSection(activityId, currentSectionDef.getSectionId(),
                 displayOrder, raceDef, ver.getRevId());
-        LOG.info("New block {} was added to activity {} into section #{} with display order {}", blockName,
+        log.info("New block {} was added to activity {} into section #{} with display order {}", blockName,
                 "DLMO_INSTRUCTIONS", 1, displayOrder);
     }
 

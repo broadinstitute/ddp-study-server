@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 public class TissueList {
     public static final Logger logger = LoggerFactory.getLogger(TissueList.class);
     public static final String SQL_SELECT_ALL_ONC_HISTORY_TISSUE_FOR_REALM =
-            "SELECT p.ddp_participant_id, p.participant_id, p.assignee_id_tissue,"
+            "SELECT p.ddp_participant_id, p.ddp_instance_id, p.participant_id, p.assignee_id_tissue,"
                     + "oD.onc_history_detail_id, oD.request, oD.deleted, oD.fax_sent, oD.tissue_received, oD.medical_record_id, "
                     + "oD.date_px, oD.type_px, "
                     + "oD.location_px, oD.histology, oD.accession_number, oD.facility, oD.phone, oD.fax, oD.notes, "

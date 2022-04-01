@@ -6,6 +6,7 @@ import java.time.Instant;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
@@ -24,12 +25,9 @@ import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class RgpVersion2 implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(RgpVersion2.class);
     private static final String DATA_FILE = "patches/version2.conf";
 
     private Path cfgPath;
@@ -60,7 +58,7 @@ public class RgpVersion2 implements CustomTask {
     private void revisionPrequal(Handle handle, StudyDto studyDto, UserDto adminUser) {
         String activityCode = varsCfg.getString("id.act.prequal");
         String versionTag = dataCfg.getString("newVersionTag");
-        LOG.info("Working on activity {}...", activityCode);
+        log.info("Working on activity {}...", activityCode);
 
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
         ActivityVersionDto v1Dto = findActivityLatestVersion(handle, activityId);
@@ -69,7 +67,7 @@ public class RgpVersion2 implements CustomTask {
         var activityDao = handle.attach(ActivityDao.class);
         RevisionMetadata meta = makeRevMetadata(studyDto, adminUser, activityCode, versionTag);
         ActivityVersionDto v2Dto = activityDao.changeVersion(activityId, versionTag, meta);
-        LOG.info("Created new revision {} of activity {}", v2Dto.getVersionTag(), activityCode);
+        log.info("Created new revision {} of activity {}", v2Dto.getVersionTag(), activityCode);
 
         String questionStableId = varsCfg.getString("id.q.general_info");
         PicklistQuestionDef questionDef = null;
@@ -93,13 +91,13 @@ public class RgpVersion2 implements CustomTask {
         handle.attach(PicklistQuestionDao.class)
                 .disableOption(questionDef.getQuestionId(), optionStableId, meta, false);
 
-        LOG.info("Disabled picklist option '{}' from question '{}'", optionStableId, questionStableId);
+        log.info("Disabled picklist option '{}' from question '{}'", optionStableId, questionStableId);
     }
 
     private void revisionEnrollment(Handle handle, StudyDto studyDto, UserDto adminUser) {
         String activityCode = varsCfg.getString("id.act.enrollment");
         String versionTag = dataCfg.getString("newVersionTag");
-        LOG.info("Working on activity {}...", activityCode);
+        log.info("Working on activity {}...", activityCode);
 
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
         ActivityVersionDto v1Dto = findActivityLatestVersion(handle, activityId);
@@ -108,7 +106,7 @@ public class RgpVersion2 implements CustomTask {
         var activityDao = handle.attach(ActivityDao.class);
         RevisionMetadata meta = makeRevMetadata(studyDto, adminUser, activityCode, versionTag);
         ActivityVersionDto v2Dto = activityDao.changeVersion(activityId, versionTag, meta);
-        LOG.info("Created new revision {} of activity {}", v2Dto.getVersionTag(), activityCode);
+        log.info("Created new revision {} of activity {}", v2Dto.getVersionTag(), activityCode);
 
         String relationshipStableId = varsCfg.getString("id.q.relationship");
         String testsStableId = varsCfg.getString("id.q.tests");
@@ -137,11 +135,11 @@ public class RgpVersion2 implements CustomTask {
         var picklistDao = handle.attach(PicklistQuestionDao.class);
         for (var optionStableId : dataCfg.getStringList("optionsToRemove.relationship")) {
             picklistDao.disableOption(relationshipQuestion.getQuestionId(), optionStableId, meta, false);
-            LOG.info("Disabled picklist option '{}' from question '{}'", optionStableId, relationshipStableId);
+            log.info("Disabled picklist option '{}' from question '{}'", optionStableId, relationshipStableId);
         }
         for (var optionStableId : dataCfg.getStringList("optionsToRemove.tests")) {
             picklistDao.disableOption(testsQuestion.getQuestionId(), optionStableId, meta, false);
-            LOG.info("Disabled picklist option '{}' from question '{}'", optionStableId, testsStableId);
+            log.info("Disabled picklist option '{}' from question '{}'", optionStableId, testsStableId);
         }
     }
 

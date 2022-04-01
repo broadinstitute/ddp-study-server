@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.studybuilder.task;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
@@ -20,8 +21,6 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -30,9 +29,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
+@Slf4j
 public class RarexVersion3 implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(RarexVersion3.class);
     private static final String STUDY_GUID = "rarex";
     private static final String DATA_FILE = "patches/patch_0903.conf";
 
@@ -69,7 +67,7 @@ public class RarexVersion3 implements CustomTask {
         long consentAssentLar = ActivityBuilder.findActivityId(handle, studyId, "LAR_CONSENT_ASSENT");
         long dataSharing = ActivityBuilder.findActivityId(handle, studyId, "DATA_SHARING");
 
-        LOG.info("DDP-6773");
+        log.info("DDP-6773");
 
         updateVariableByText(consent,
                 "Who can I choose to share my <i>de-identified</i> data with, and what will they do with it?",
@@ -192,7 +190,7 @@ public class RarexVersion3 implements CustomTask {
         questionDtos.forEach(questionDto -> {
             PicklistOptionDef pickListOptionDef = GsonUtil.standardGson().fromJson(ConfigUtil.toJson(option), PicklistOptionDef.class);
             plQuestionDao.insertOption(questionDto.getId(), pickListOptionDef, displayOrder, questionDto.getRevisionId());
-            LOG.info("Added new picklistOption " + pickListOptionDef.getStableId() + " with id "
+            log.info("Added new picklistOption " + pickListOptionDef.getStableId() + " with id "
                     + pickListOptionDef.getOptionId() + " into question " + questionDto.getStableId());
         });
     }
@@ -209,7 +207,7 @@ public class RarexVersion3 implements CustomTask {
         }
         varIds.forEach(varId -> {
             helper.updateVarValueByTemplateVarId(varId, after);
-            LOG.info("Template variable {} text was updated from \"{}\" to \"{}\"", varId, before, after);
+            log.info("Template variable {} text was updated from \"{}\" to \"{}\"", varId, before, after);
         });
     }
 

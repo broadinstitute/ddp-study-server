@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.studybuilder.task;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
@@ -38,8 +39,6 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -52,9 +51,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+@Slf4j
 public class RarexVersion2 implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(RarexVersion2.class);
     private static final String STUDY_GUID = "rarex";
     private static final String DATA_FILE = "patches/patch_0721.conf";
 
@@ -104,18 +102,18 @@ public class RarexVersion2 implements CustomTask {
         long qolChildId = ActivityBuilder.findActivityId(handle, studyId, "CHILD_QUALITY_OF_LIFE");
         long qolPatientId = ActivityBuilder.findActivityId(handle, studyId, "PATIENT_QUALITY_OF_LIFE");
 
-        LOG.info("REFID 27");
+        log.info("REFID 27");
         replaceContentBlockVariableTextByName(generalInformationId,
                 "general_information_health_insurance_coverage_exp",
                 "This is just to look at insurance coverage in rare disease in general, NOT to track insurance details.");
 
-        LOG.info("REFID 71");
+        log.info("REFID 71");
         updateVariableByText(healthAndDevelopmentId,
                 "Examples: physical mouth, lips, tongue or teeth issues or mouth function.",
                 "Examples: physical mouth, lips, tongue or teeth issues or mouth function. "
                         + "You may have seen a dentist for these issues.");
 
-        LOG.info("REFID 83");
+        log.info("REFID 83");
         replaceQuestionBlockVariableText(prequalId, "SELF_COUNTRY",
                 "COUNTRY_picklist_label",
                 "Choose Country or Territory...");
@@ -123,7 +121,7 @@ public class RarexVersion2 implements CustomTask {
                 "COUNTRY_picklist_label",
                 "Choose Country or Territory...");
 
-        LOG.info("REFID 98");
+        log.info("REFID 98");
         updateVariableByText(healthAndDevelopmentId,
                 "Have you ever been diagnosed with cancer, colon polyps or a non-cancerous tumor?",
                 "Have you ever been diagnosed with CANCER, COLON POLYPS or a NON-CANCEROUS TUMOR?");
@@ -137,23 +135,23 @@ public class RarexVersion2 implements CustomTask {
                 "Has the patient had issues with their teeth or mouth?",
                 "Has the patient had issues with their TEETH or MOUTH?");
 
-        LOG.info("REFID 105");
+        log.info("REFID 105");
         updateVariableByText(healthAndDevelopmentId,
                 "For the conditions you listed above do you have reports or summaries to upload as support?",
                 "Do you have genetic reports or summaries to upload?");
 
-        LOG.info("REFID 99");
+        log.info("REFID 99");
         Map<Long, String> stableCodes = Map.of(
                 addParticipantId, "PRIMARY_DIAGNOSIS",
                 legacyId, "LEGACY_PRIMARY_DIAGNOSIS");
         updatePicklistOptionVariables(stableCodes, "DYRK1",
                 "DYRK1A - dual-specificity tyrosine phosphorylation regulated kinase 1A");
 
-        LOG.info("REFID 101");
+        log.info("REFID 101");
         Config option = dataCfg.getConfig("stateDC");
         addPicklistOption(handle, studyId, Set.of("PARTICIPANT_STATE", "SELF_STATE"), option, 75);
 
-        LOG.info("REFID 107");
+        log.info("REFID 107");
         option = dataCfg.getConfig("preferNotToAnswer");
         Config ruleConfig = dataCfg.getConfig("qolRequiredValidation");
         Set<String> stableIds = new HashSet<>(Set.of("QOL_SELF_WALK", "QOL_SELF_ERRANDS", "QOL_SELF_FEARFUL", "QOL_SELF_FOCUS",
@@ -204,7 +202,7 @@ public class RarexVersion2 implements CustomTask {
                 "!user.studies[\"rarex\"].forms[\"PATIENT_QUALITY_OF_LIFE\"].questions[\"PAIN_INTENSITY_PATIENT_PREFERENCE\"].answers."
                         + "hasOption(\"PREFER_NOT_TO_ANSWER\")");
 
-        LOG.info("REFID 103");
+        log.info("REFID 103");
         stableIds = Set.of("HD_GENETIC_TEST", "HD_GENETIC_TEST_REASON", "HD_GENETIC_TEST_REASON_PATIENT", "HD_GENETIC_TEST_REPORT",
                 "HD_GENETIC_TEST_REPORT_PATIENT", "HD_PREGNANCY_ISSUES", "HD_LABOR_AND_DELIVERY_ISSUES", "HD_BRAIN_ISSUES",
                 "HD_BEHAVIOR_ISSUES", "HD_GROWTH_ISSUES", "HD_CANCER_ISSUES", "HD_HEAD_NECK_ISSUES", "HD_EYES_ISSUES",
@@ -254,7 +252,7 @@ public class RarexVersion2 implements CustomTask {
                 "user.studies[\"rarex\"].forms[\"HEALTH_AND_DEVELOPMENT\"].questions[\"HD_GENETIC_TEST\"].answers."
                         + "hasOption(\"YES\")");
 
-        LOG.info("REFID 109");
+        log.info("REFID 109");
         long consentSelfId = ActivityBuilder.findActivityId(handle, studyId, "CONSENT");
         long consentParentalId = ActivityBuilder.findActivityId(handle, studyId, "PARENTAL_CONSENT");
         long consentAssentId = ActivityBuilder.findActivityId(handle, studyId, "CONSENT_ASSENT");
@@ -283,22 +281,22 @@ public class RarexVersion2 implements CustomTask {
                 "\n              Your child is not likely to directly benefit from participating in this Program.\n            ",
                 "Your child is not likely to directly benefit from participating in this program.");
 
-        LOG.info("REFID 71");
+        log.info("REFID 71");
         replaceContentBlockVariableTextByName(generalInformationId,
                 "general_information_birthplace_header",
                 "Birthplace");
         detachQuestionFromBothSectionAndBlock(handle, "PATIENT_DATE_OF_BIRTH");
 
-        LOG.info("REFID 92");
+        log.info("REFID 92");
         helper.updateExpressionText(
                 "user.studies[\"rarex\"].forms[\"DATA_SHARING\"].questions"
                         + "[\"DATA_SHARING_BIOSPECIMEN_INTERESTED\"].answers.hasOption(\"YES\")",
                 helper.findComponentBlockExpressionIds(generalInformationId));
 
-        LOG.info("REFID 28");
+        log.info("REFID 28");
         helper.updatePicklistsToMulti(healthAndDevelopmentId, List.of("HD_GENETIC_TEST_REASON_PATIENT", "HD_GENETIC_TEST_REASON"));
 
-        LOG.info("REFID 102");
+        log.info("REFID 102");
         replaceContentBlockVariableTextByName(generalInformationId,
                 "general_information_primary_lang_prompt",
                 "What is the primary language you speak?*");
@@ -310,7 +308,7 @@ public class RarexVersion2 implements CustomTask {
                 "general_information_hic_not_to_answer_details",
                 "What type(s) of coverage do you have?*");
 
-        LOG.info("REFID 48");
+        log.info("REFID 48");
         replaceContentBlockVariableTextByName(generalInformationId,
                 "general_information_hic_not_to_answer_details_exp",
                 "For health insurance coverage outside the USA, please select the categories that most closely "
@@ -325,7 +323,7 @@ public class RarexVersion2 implements CustomTask {
         questionDao.insertQuestion(generalInformationId, questionDef, questionDto.get().getRevisionId());
         questionDao.getJdbiBlockQuestion().insert(blockId, questionDef.getQuestionId());
 
-        LOG.info("REFID 30");
+        log.info("REFID 30");
         blockId = helper.findBlockByText(healthAndDevelopmentId,
                 "While your mom was pregnant with you do you know if there were any concerns with the pregnancy or "
                         + "have you been told that there were issues during <u>your biological mother's</u> PREGNANCY with you?*");
@@ -368,7 +366,7 @@ public class RarexVersion2 implements CustomTask {
         }
         varIds.forEach(varId -> {
             helper.updateVarValueByTemplateVarId(varId, replacement);
-            LOG.info("Updated picklist option {} template variable {} text to \"{}\"", optionStableCode, varId, replacement);
+            log.info("Updated picklist option {} template variable {} text to \"{}\"", optionStableCode, varId, replacement);
         });
     }
 
@@ -379,7 +377,7 @@ public class RarexVersion2 implements CustomTask {
         }
         varIds.forEach(varId -> {
             helper.updateVarValueByTemplateVarId(varId, after);
-            LOG.info("Template variable {} text was updated from \"{}\" to \"{}\"", varId, before, after);
+            log.info("Template variable {} text was updated from \"{}\" to \"{}\"", varId, before, after);
         });
     }
 
@@ -394,7 +392,7 @@ public class RarexVersion2 implements CustomTask {
         int displayOrder = currentSectionDef.getBlocks().size() * 10 + 10;
         sectionBlockDao.insertBlockForSection(activityId, currentSectionDef.getSectionId(),
                 displayOrder, raceDef, ver.getRevId());
-        LOG.info("New block {} was added to activity {} into section #{} with display order {}", blockName,
+        log.info("New block {} was added to activity {} into section #{} with display order {}", blockName,
                 activityGuid, sectionNumber, displayOrder);
     }
 
@@ -405,7 +403,7 @@ public class RarexVersion2 implements CustomTask {
             throw new DDPException("Couldn't find question with stableId: " + questionStableId);
         }
         helper.detachQuestionFromBothSectionAndBlock(questionDto.get().getId());
-        LOG.info("Question {} and its block were detached", questionStableId);
+        log.info("Question {} and its block were detached", questionStableId);
     }
 
     private long detachQuestionFromBlockAndGetBlockId(Handle handle, String questionStableId) {
@@ -415,7 +413,7 @@ public class RarexVersion2 implements CustomTask {
             long questionId = questionDto.get().getId();
             long blockId = helper.findQuestionBlockId(questionId);
             helper.detachQuestionFromBlock(questionId);
-            LOG.info("Question {} was detached from block {}", questionStableId, blockId);
+            log.info("Question {} was detached from block {}", questionStableId, blockId);
             return blockId;
         }
         throw new DDPException("Couldn't find question with stableId: " + questionStableId);
@@ -434,7 +432,7 @@ public class RarexVersion2 implements CustomTask {
                         helper.updateVarValueByTemplateVarId(
                                 templateVariable.getId().get(),
                                 templateVariable.getTranslation(LanguageStore.DEFAULT_LANG_CODE).get().getText() + "*");
-                        LOG.info("Added an asterisk to the content block variable {} with id {}",
+                        log.info("Added an asterisk to the content block variable {} with id {}",
                                 templateVariable.getName(), templateVariable.getId());
                     });
                 }
@@ -449,7 +447,7 @@ public class RarexVersion2 implements CustomTask {
         }
         for (Long variableId : variableIds) {
             helper.updateVarValueByTemplateVarId(variableId, text);
-            LOG.info("Updated content block variable {} with text \"{}\"", variableId, text);
+            log.info("Updated content block variable {} with text \"{}\"", variableId, text);
         }
     }
 
@@ -460,7 +458,7 @@ public class RarexVersion2 implements CustomTask {
         }
         for (Long variableId : variableIds) {
             helper.updateVarValueByTemplateVarId(variableId, text);
-            LOG.info("Updated question {} block variable {} in activity {} with text \"{}\"", stableId, variableId, activityId, text);
+            log.info("Updated question {} block variable {} in activity {} with text \"{}\"", stableId, variableId, activityId, text);
         }
     }
 
@@ -471,7 +469,7 @@ public class RarexVersion2 implements CustomTask {
         questionDtos.forEach(questionDto -> {
             PicklistOptionDef pickListOptionDef = gson.fromJson(ConfigUtil.toJson(option), PicklistOptionDef.class);
             plQuestionDao.insertOption(questionDto.getId(), pickListOptionDef, displayOrder, questionDto.getRevisionId());
-            LOG.info("Added new picklistOption " + pickListOptionDef.getStableId() + " with id "
+            log.info("Added new picklistOption " + pickListOptionDef.getStableId() + " with id "
                     + pickListOptionDef.getOptionId() + " into question " + questionDto.getStableId());
         });
     }
@@ -484,7 +482,7 @@ public class RarexVersion2 implements CustomTask {
                     .orElseThrow(() -> new DDPException("Could not find question " + stableId));
             RequiredRuleDef rule = gson.fromJson(ConfigUtil.toJson(ruleConfig), RequiredRuleDef.class);
             validationDao.insert(questionDto.getId(), rule, questionDto.getRevisionId());
-            LOG.info("Inserted validation rule with id={} questionStableId={}", rule.getRuleId(), questionDto.getStableId());
+            log.info("Inserted validation rule with id={} questionStableId={}", rule.getRuleId(), questionDto.getStableId());
         }
     }
 

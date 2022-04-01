@@ -44,7 +44,7 @@ public class DSMtasksSubscription {
     public static final String UPDATE_CUSTOM_WORKFLOW = "UPDATE_CUSTOM_WORKFLOW";
     public static final String ELASTIC_EXPORT = "ELASTIC_EXPORT";
     public static final String PARTICIPANT_REGISTERED = "PARTICIPANT_REGISTERED";
-    public static final int MAX_RETRY = 5;
+    public static final int MAX_RETRY = 50;
     private static Map<String, Integer> retryPerParticipant = new ConcurrentHashMap<>();
 
     public static void subscribeDSMtasks(String projectId, String subscriptionId) {
@@ -132,12 +132,13 @@ public class DSMtasksSubscription {
                     if (!result) {
                         retryPerParticipant.merge(participantGuid, 1, Integer::sum);
                         if (retryPerParticipant.get(participantGuid) == MAX_RETRY) {
-                            retryPerParticipant.put(participantGuid, 0);
+                            retryPerParticipant.remove(participantGuid);
                             consumer.ack();
                         } else {
                             consumer.nack();
                         }
                     } else {
+                        retryPerParticipant.remove(participantGuid);
                         consumer.ack();
                     }
                 }, consumer::ack);
