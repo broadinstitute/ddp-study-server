@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.WorkflowDao;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -15,13 +16,9 @@ import org.broadinstitute.ddp.model.workflow.WorkflowState;
 import org.broadinstitute.ddp.model.workflow.WorkflowTransition;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class WorkflowBuilder {
-
-    private static final Logger LOG = LoggerFactory.getLogger(WorkflowBuilder.class);
-
     private Config cfg;
     private StudyDto studyDto;
 
@@ -39,7 +36,7 @@ public class WorkflowBuilder {
             return;
         }
         int deletionCount = handle.attach(WorkflowDao.class).deleteStudyWorkflow(studyDto.getId());
-        LOG.info("Deleted {} workflow transitions", deletionCount);
+        log.info("Deleted {} workflow transitions", deletionCount);
         insertWorkflow(handle);
     }
 
@@ -68,7 +65,7 @@ public class WorkflowBuilder {
             order++;
         }
         workflowDao.insertTransitions(transitions);
-        LOG.info("Created {} workflow transitions for state={}", transitions.size(), stateAsStr(fromCfg));
+        log.info("Created {} workflow transitions for state={}", transitions.size(), stateAsStr(fromCfg));
     }
 
     private WorkflowState convertWorkflowState(Handle handle, Config stateCfg) {

@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiBlock;
@@ -49,12 +50,9 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class AngioRestructureConsent implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AngioRestructureConsent.class);
     private static final String DATA_FILE = "patches/restructure-consent.conf";
 
     private Config dataCfg;
@@ -82,7 +80,7 @@ public class AngioRestructureConsent implements CustomTask {
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
         restructureConsent(handle, studyDto, "consent");
         restructureConsent(handle, studyDto, "followupconsent");
-        LOG.info("restructuring done");
+        log.info("restructuring done");
     }
 
     private void restructureConsent(Handle handle, StudyDto studyDto, String key) {
@@ -103,7 +101,7 @@ public class AngioRestructureConsent implements CustomTask {
         String activityCode = dataCfg.getConfig(key).getString("activityCode");
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
 
-        LOG.info("{}: restructuring additional-agree-terms into one block...", key);
+        log.info("{}: restructuring additional-agree-terms into one block...", key);
 
         BlockContentDto agreeTermsTitle = helper.findContentBlockByBodyText(activityId, "$angio_" + key + "_s3_additional_agree");
         BlockContentDto agreeTermsBodyV1 = helper.findContentBlockByBodyText(activityId, "$angio_" + key + "_s3_additional_agree_list");
@@ -113,7 +111,7 @@ public class AngioRestructureConsent implements CustomTask {
                 Arrays.asList(agreeTermsBodyV1.getId(), agreeTermsBodyV2.getId()));
         helper.deleteContentBlock(agreeTermsTitle.getBlockId());
 
-        LOG.info("{}: preparing consent questions...", key);
+        log.info("{}: preparing consent questions...", key);
 
         String signatureStableId = dataCfg.getConfig(key).getString("signatureStableId");
         TextQuestionDto signature = (TextQuestionDto) jdbiQuestion
@@ -134,7 +132,7 @@ public class AngioRestructureConsent implements CustomTask {
         helper.updateTemplateSubstitutionValue(dob.getPromptTemplateId(), dataCfg.getString("dobPrompt"));
         helper.detachQuestionFromBothSectionAndBlock(dob.getId());
 
-        LOG.info("{}: creating composite consent block...", key);
+        log.info("{}: creating composite consent block...", key);
 
         String compositeJson = ConfigUtil.toJson(dataCfg.getConfig(key).getConfig("compositeDef"));
         CompositeQuestionDef composite = gson.fromJson(compositeJson, CompositeQuestionDef.class);
@@ -144,7 +142,7 @@ public class AngioRestructureConsent implements CustomTask {
         long compositeBlockId = jdbiBlock.insert(jdbiBlockType.getTypeId(BlockType.QUESTION), jdbiBlock.generateUniqueGuid());
         jdbiBlockQuestion.insert(compositeBlockId, composite.getQuestionId());
 
-        LOG.info("{}: restructuring terms and composite into group block...", key);
+        log.info("{}: restructuring terms and composite into group block...", key);
 
         BlockContentDto termsTitle = helper.findContentBlockByBodyText(activityId, "$angio_" + key + "_s3_full_name_indicates");
         BlockContentDto termsBody = helper.findContentBlockByBodyText(activityId, "$angio_" + key + "_s3_full_name_indicates_list");
@@ -161,7 +159,7 @@ public class AngioRestructureConsent implements CustomTask {
         jdbiBlockNesting.insert(groupBlockId, compositeBlockId, 20, membership.getRevisionId());
         jdbiFormSectionBlock.insert(membership.getSectionId(), groupBlockId, membership.getDisplayOrder(), membership.getRevisionId());
 
-        LOG.info("{}: backfilling answers for composite consent...", key);
+        log.info("{}: backfilling answers for composite consent...", key);
 
         AtomicInteger instanceCount = new AtomicInteger(0);
         AtomicInteger createdCount = new AtomicInteger(0);
@@ -181,7 +179,7 @@ public class AngioRestructureConsent implements CustomTask {
             }
         });
 
-        LOG.info("{}: backfilled {} composite answers for {} activity instances", key, createdCount.get(), instanceCount.get());
+        log.info("{}: backfilled {} composite answers for {} activity instances", key, createdCount.get(), instanceCount.get());
     }
 
     private interface SqlHelper extends SqlObject {

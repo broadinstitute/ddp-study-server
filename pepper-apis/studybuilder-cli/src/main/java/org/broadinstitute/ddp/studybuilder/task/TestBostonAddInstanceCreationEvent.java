@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.studybuilder.task;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -13,16 +14,13 @@ import org.broadinstitute.ddp.model.event.ActivityStatusChangeTrigger;
 import org.broadinstitute.ddp.model.event.EventConfiguration;
 import org.broadinstitute.ddp.studybuilder.EventBuilder;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 
+@Slf4j
 public class TestBostonAddInstanceCreationEvent implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TestBostonAddInstanceCreationEvent.class);
     private static final String EVENT_DATA_FILE = "patches/adhoc-symptom-creation-event.conf";
     private static final String STUDY_GUID = "testboston";
 
@@ -56,7 +54,7 @@ public class TestBostonAddInstanceCreationEvent implements CustomTask {
         List<EventConfiguration> events = handle.attach(EventDao.class)
                 .getAllEventConfigurationsByStudyId(studyDto.getId());
 
-        LOG.info("Searching for activity instance creation event copy configuration...");
+        log.info("Searching for activity instance creation event copy configuration...");
 
         EventConfiguration existingEvent = null;
 
@@ -67,7 +65,7 @@ public class TestBostonAddInstanceCreationEvent implements CustomTask {
         }
 
         if (existingEvent != null) {
-            LOG.info("Already has activity instance creation event configuration with id {}",
+            log.info("Already has activity instance creation event configuration with id {}",
                     existingEvent.getEventConfigurationId());
         } else {
             eventBuilder.insertEvent(handle, eventDataCfg);

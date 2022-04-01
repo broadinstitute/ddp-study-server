@@ -10,6 +10,7 @@ import java.util.Set;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -53,12 +54,9 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class BrainConsentVersion2 implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(BrainConsentVersion2.class);
     private static final String DATA_FILE = "patches/consent-version2.conf";
     private static final String BRAIN = "cmi-brain";
 
@@ -133,12 +131,12 @@ public class BrainConsentVersion2 implements CustomTask {
         RuleDto ageRangeValidation = consentDobValidations.stream().filter(
                 validationDto -> validationDto.getRuleType().equals(RuleType.AGE_RANGE)).findFirst().get();
         validationDao.disableBaseRule(ageRangeValidation, meta);
-        LOG.info("Disabled age range validation for consent dob QID: {} validationID: {} old ver: {} rule: {}",
+        log.info("Disabled age range validation for consent dob QID: {} validationID: {} old ver: {} rule: {}",
                 dobDto.getId(), ageRangeValidation.getId(), ageRangeValidation.getRevisionId(), ageRangeValidation.getRuleType());
 
         UpdateTemplatesInPlace updateTemplatesTask = new UpdateTemplatesInPlace();
         updateTemplatesTask.traverseActivity(handle, activityCode, definition, activity, versionDto.getRevStart());
-        LOG.info("updated variables for styling changes");
+        log.info("updated variables for styling changes");
 
         //update brain_consent_s3_election_agree listHintStyle to NONE
         long tmplId = helper.findTemplateIdByTemplateText("$brain_consent_s3_election_agree");
@@ -155,7 +153,7 @@ public class BrainConsentVersion2 implements CustomTask {
         List<Long> iconIds = helper.findSectionIconIdByActivity(activityId);
         if (!iconIds.isEmpty()) {
             helper.deleteActivityIcons(Set.copyOf(iconIds));
-            LOG.info("deleted form section icons for consent");
+            log.info("deleted form section icons for consent");
         }
 
         //consent ver: 2 stuff
@@ -184,7 +182,7 @@ public class BrainConsentVersion2 implements CustomTask {
         TextQuestionDef lastNameDef = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("lastNameQuestion")), TextQuestionDef.class);
         QuestionBlockDef lnBlockDef = new QuestionBlockDef(lastNameDef);
         sectionBlockDao.insertBlockForSection(activityId, fullNameSectionDto.getSectionId(), dobDisplayOrder - 4, lnBlockDef, newV2RevId);
-        LOG.info("Added first name and last name questions.");
+        log.info("Added first name and last name questions.");
 
         //change displayOrder of fullname
         long terminatedFullnameOrderRevId = jdbiRevision.copyAndTerminate(fullNameSectionDto.getRevisionId(), meta);
@@ -204,7 +202,7 @@ public class BrainConsentVersion2 implements CustomTask {
         jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, newV2RevId, tmplVarId);
 
         //pdf version
-        LOG.info("Adding new pdf version for consent");
+        log.info("Adding new pdf version for consent");
         builder.insertPdfConfig(handle, dataCfg.getConfig("consentPdfV2"));
         addNewConsentDataSourceToReleasePdf(handle, studyDto.getId(), dataCfg.getString("releasePdfName"), activityCode, versionTag);
     }
@@ -230,7 +228,7 @@ public class BrainConsentVersion2 implements CustomTask {
 
         pdfDao.insertDataSource(version.getId(), new PdfActivityDataSource(activityId, activityVersionId));
 
-        LOG.info("Added activity data source with activityCode={} versionTag={} to pdf {} version {}",
+        log.info("Added activity data source with activityCode={} versionTag={} to pdf {} version {}",
                 activityCode, versionTag, info.getConfigName(), version.getVersionTag());
     }
 

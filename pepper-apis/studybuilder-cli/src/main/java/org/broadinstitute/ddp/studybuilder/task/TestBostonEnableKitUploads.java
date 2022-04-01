@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -35,15 +36,12 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * One-off task to update configurations and events to support kit uploads and adhoc survey in deployed environments.
  */
+@Slf4j
 public class TestBostonEnableKitUploads implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TestBostonEnableKitUploads.class);
     private static final String STUDY_GUID = "testboston";
     private static final String RESULT_REPORT_FILE = "result-report.conf";
 
@@ -81,7 +79,7 @@ public class TestBostonEnableKitUploads implements CustomTask {
     }
 
     private void updateKitEventExpressions(Handle handle, List<EventConfiguration> events) {
-        LOG.info("Checking cancel expressions for kit events...");
+        log.info("Checking cancel expressions for kit events...");
         var helper = handle.attach(SqlHelper.class);
         var jdbiExpr = handle.attach(JdbiExpression.class);
 
@@ -89,48 +87,48 @@ public class TestBostonEnableKitUploads implements CustomTask {
                 .filter(e -> e.getEventTriggerType() == EventTriggerType.DSM_NOTIFICATION)
                 .sorted(Comparator.comparing(EventConfiguration::getEventConfigurationId))
                 .collect(Collectors.toList());
-        LOG.info("Found {} DSM_NOTIFICATION event configurations", dsmEvents.size());
+        log.info("Found {} DSM_NOTIFICATION event configurations", dsmEvents.size());
 
         for (var dsmEvent : dsmEvents) {
             long eventId = dsmEvent.getEventConfigurationId();
             DsmNotificationEventType dsmType = ((DsmNotificationTrigger) dsmEvent.getEventTrigger()).getDsmEventType();
-            LOG.info("Working on event with id={} dsmNotificationType={}...", eventId, dsmType);
+            log.info("Working on event with id={} dsmNotificationType={}...", eventId, dsmType);
 
             if (dsmType == DsmNotificationEventType.TESTBOSTON_SENT) {
-                LOG.info("  Sent event will only be handled for initial kit, so skip adding kit reason clause");
+                log.info("  Sent event will only be handled for initial kit, so skip adding kit reason clause");
                 continue;
             } else if (dsmType == DsmNotificationEventType.TEST_RESULT) {
-                LOG.info("  Test result event should trigger for all kit events, so skip adding kit reason clause");
+                log.info("  Test result event should trigger for all kit events, so skip adding kit reason clause");
                 continue;
             }
 
             Long cancelExprId = helper.findEventCancelExprId(eventId).orElse(null);
             if (cancelExprId == null) {
-                LOG.info("  Event does not have a cancel expression, so adding one...");
+                log.info("  Event does not have a cancel expression, so adding one...");
                 Expression expr = jdbiExpr.insertExpression(KIT_REASON_PEX);
                 DBUtils.checkUpdate(1, helper.updateEventCancelExprId(eventId, expr.getId()));
-                LOG.info("  Added expression with id={} text=`{}`", expr.getId(), expr.getText());
+                log.info("  Added expression with id={} text=`{}`", expr.getId(), expr.getText());
             } else {
-                LOG.info("  Event already has a cancel expression with id={}, checking if it has kit reason clause...", cancelExprId);
+                log.info("  Event already has a cancel expression with id={}, checking if it has kit reason clause...", cancelExprId);
                 Expression expr = jdbiExpr.getById(cancelExprId).get();
                 if (expr.getText().startsWith(KIT_REASON_PEX)) {
-                    LOG.info("  Cancel expression already contains kit reason clause: `{}`", expr.getText());
+                    log.info("  Cancel expression already contains kit reason clause: `{}`", expr.getText());
                 } else {
                     // DSM event does not have the "reason" clause! Let's add it.
-                    LOG.info("  Cancel expression does not have kit reason clause, updating it...");
+                    log.info("  Cancel expression does not have kit reason clause, updating it...");
                     String newPEX = String.format("%s || %s", KIT_REASON_PEX, expr.getText());
                     DBUtils.checkUpdate(1, jdbiExpr.updateById(expr.getId(), newPEX));
-                    LOG.info("  Cancel expression updated: `{}`", newPEX);
+                    log.info("  Cancel expression updated: `{}`", newPEX);
                 }
             }
         }
     }
 
     private void updateResultReportNamingDetails(Handle handle, StudyDto studyDto, ActivityBuilder activityBuilder) {
-        LOG.info("Updating naming details for test result report activity...");
+        log.info("Updating naming details for test result report activity...");
 
         Config defCfg = activityBuilder.readDefinitionConfig(RESULT_REPORT_FILE);
-        LOG.info("Loaded activity definition from: {}", RESULT_REPORT_FILE);
+        log.info("Loaded activity definition from: {}", RESULT_REPORT_FILE);
 
         String activityCode = defCfg.getString("activityCode");
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
@@ -140,7 +138,7 @@ public class TestBostonEnableKitUploads implements CustomTask {
                 .findByActivityCodeAndVersionTag(studyDto.getId(), activityCode, versionTag)
                 .orElseThrow(() -> new DDPException("Could not find version " + versionTag));
 
-        LOG.info("Comparing naming details for activityCode={} activityId={} ...", activityCode, activityId);
+        log.info("Comparing naming details for activityCode={} activityId={} ...", activityCode, activityId);
         var task = new UpdateActivityBaseSettings();
         task.init(cfgPath, studyCfg, varsCfg);
         task.compareNamingDetails(handle, defCfg, activityId, versionDto);
@@ -151,12 +149,12 @@ public class TestBostonEnableKitUploads implements CustomTask {
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
 
         handle.attach(JdbiActivity.class).updateExcludeFromDisplayById(activityId, false);
-        LOG.info("Enabled dashboard display for activityCode={} activityId={}", activityCode, activityId);
+        log.info("Enabled dashboard display for activityCode={} activityId={}", activityCode, activityId);
     }
 
     private void addAdhocSymptomStudyStaffEmail(Handle handle, StudyDto studyDto,
                                                 List<EventConfiguration> events, EventBuilder eventBuilder) {
-        LOG.info("Checking adhoc symptom study staff email...");
+        log.info("Checking adhoc symptom study staff email...");
         String activityCode = varsCfg.getString("id.act.adhoc_symptom");
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
 
@@ -177,9 +175,9 @@ public class TestBostonEnableKitUploads implements CustomTask {
         }
 
         if (emailEvent != null) {
-            LOG.info("Already has study staff email event config with id={}", emailEvent.getEventConfigurationId());
+            log.info("Already has study staff email event config with id={}", emailEvent.getEventConfigurationId());
         } else {
-            LOG.info("Did not find study staff email event, creating...");
+            log.info("Did not find study staff email event, creating...");
             Config emailEventCfg = null;
             for (var eventCfg : studyCfg.getConfigList("events")) {
                 Config triggerCfg = eventCfg.getConfig("trigger");
