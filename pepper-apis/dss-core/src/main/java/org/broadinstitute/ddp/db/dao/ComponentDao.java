@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -25,7 +24,6 @@ import org.broadinstitute.ddp.model.activity.instance.FormComponent;
 import org.broadinstitute.ddp.model.activity.instance.InstitutionComponent;
 import org.broadinstitute.ddp.model.activity.instance.MailingAddressComponent;
 import org.broadinstitute.ddp.model.activity.instance.PhysicianComponent;
-import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.ComponentType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
@@ -45,9 +43,6 @@ public interface ComponentDao extends SqlObject {
 
     @CreateSqlObject
     TemplateDao getTemplateDao();
-
-    @CreateSqlObject
-    JdbiRevision getJdbiRevision();
 
     @CreateSqlObject
     JdbiInstitutionType getJdbiInstitutionType();
@@ -242,27 +237,6 @@ public interface ComponentDao extends SqlObject {
                     institutionComponentDto.getInstitutionType(),
                     institutionComponentDto.showFields(),
                     institutionComponentDto.isRequired());
-        }
-    }
-
-    default void disableComponentBlock(long blockId, RevisionMetadata meta) {
-        JdbiRevision jdbiRevision = getJdbiRevision();
-        JdbiComponent jdbiComponent = getJdbiComponent();
-        TemplateDao templateDao = getTemplateDao();
-
-        ComponentDto componentDto = jdbiComponent.findActiveComponentByBlock(blockId)
-                .orElseThrow(() -> new NoSuchElementException("Cannot find active component block with id " + blockId));
-
-        long oldRevId = componentDto.getRevisionId();
-        long newRevId = jdbiRevision.copyAndTerminate(oldRevId, meta);
-        int numUpdated = jdbiComponent.updateRevisionById(componentDto.getComponentId(), newRevId);
-        if (numUpdated != 1) {
-            throw new DaoException("Unable to terminate active block component " + componentDto.getComponentId());
-        }
-        jdbiRevision.tryDeleteOrphanedRevision(oldRevId);
-
-        for (long templateId : componentDto.getTemplateIds()) {
-            templateDao.disableTemplate(templateId, meta);
         }
     }
 }
