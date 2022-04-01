@@ -10,6 +10,7 @@ import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiBlockContent;
 import org.broadinstitute.ddp.db.dao.JdbiBlockNesting;
 import org.broadinstitute.ddp.db.dao.JdbiFormActivityFormSection;
+import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiVariableSubstitution;
@@ -19,6 +20,7 @@ import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.BlockContentDto;
+import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.RevisionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -85,6 +87,8 @@ public class OsteoConsentVersion2 implements CustomTask {
     private String versionTag;
     private Config cfg;
     private Gson gson;
+    private long studyId;
+
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
@@ -144,6 +148,8 @@ public class OsteoConsentVersion2 implements CustomTask {
         String activityCodeConsent = "CONSENT";
         String activityCodeParentalConsent = "PARENTAL_CONSENT";
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(dataCfg.getString("study.guid"));
+
+        studyId = studyDto.getId();
 
         log.info("Changing version of {} to {} with timestamp={}", activityCodeConsent, versionTag, timestamp);
         long ts = this.timestamp.toEpochMilli();
@@ -318,6 +324,7 @@ public class OsteoConsentVersion2 implements CustomTask {
         addAdultNestedBlocks(activityId, handle, meta, "CONSENT", version2, selfConsentDataCfg);
         addAdultBlocks(activityId, handle, "CONSENT", meta, version2, selfConsentDataCfg);
         reorderNestedBlock(handle, activityCode, version2, selfConsentDataCfg);
+        detachQuestionFromBothSectionAndBlock(handle, "CONSENT_SIGNATURE");
     }
 
     private void updateAdultVariables(Handle handle, RevisionMetadata meta,
@@ -503,7 +510,36 @@ public class OsteoConsentVersion2 implements CustomTask {
         }
     }
 
+    private void detachQuestionFromBothSectionAndBlock(Handle handle, String questionStableId) {
+        JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
+        Optional<QuestionDto> questionDto = jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId, questionStableId);
+        if (questionDto.isEmpty()) {
+            throw new DDPException("Couldn't find question with stableId: " + questionStableId);
+        }
+        handle.attach(SqlHelper.class).detachQuestionFromBothSectionAndBlock(questionDto.get().getId());
+        log.info("Question {} and its block were detached", questionStableId);
+    }
+
     private interface SqlHelper extends SqlObject {
+
+        default void detachQuestionFromBothSectionAndBlock(long questionId) {
+            int numDeleted = _deleteSectionBlockMembershipByQuestionId(questionId);
+            if (numDeleted != 1) {
+                throw new DDPException("Could not remove question with questionId=" + questionId + " from section");
+            }
+            numDeleted = _deleteBlockQuestionByQuestionId(questionId);
+            if (numDeleted != 1) {
+                throw new DDPException("Could not remove question with questionId=" + questionId + " from block");
+            }
+        }
+
+        @SqlUpdate("delete from form_section__block"
+                + "  where block_id in (select block_id from block__question where question_id = :questionId)")
+        int _deleteSectionBlockMembershipByQuestionId(@Bind("questionId") long questionId);
+
+        @SqlUpdate("delete from block__question where question_id = :questionId")
+        int _deleteBlockQuestionByQuestionId(@Bind("questionId") long questionId);
+
         @SqlQuery("select template_variable_id from template_variable where variable_name = :variable_name "
                 + "order by template_variable_id desc")
         long findTemplateVariableIdByVariableName(@Bind("variable_name") String variableName);
