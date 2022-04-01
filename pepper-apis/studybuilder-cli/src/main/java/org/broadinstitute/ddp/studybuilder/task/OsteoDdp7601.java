@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.studybuilder.task.osteoupdates;
+package org.broadinstitute.ddp.studybuilder.task;
 
 import java.io.File;
 import java.nio.file.Path;
