@@ -91,11 +91,15 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
                 boolean jobError = schedulerName != null && event.getThreadName().contains(schedulerName);
                 long currentEpoch = Utility.getCurrentEpoch();
                 String linkToGcpError = "";
-                if (event != null && event.getThrowableProxy() != null) {
+                String linkToGcpLog = "";
+                String errorMessageAndLocation = "";
+                if (event.getThrowableProxy() != null) {
                     linkToGcpError = buildLinkToGcpError(event);
+                    linkToGcpLog = buildLinkToGcpLog();
+                    errorMessageAndLocation = getErrorMessageAndLocation(event);
+                } else if (event.getFormattedMessage() != null) {
+                    errorMessageAndLocation = event.getFormattedMessage();
                 }
-                String linkToGcpLog = buildLinkToGcpLog();
-                String errorMessageAndLocation = getErrorMessageAndLocation(event);
                 if (jobError && currentEpoch >= minEpochForNextJobError.get()) {
                     this.sendSlackNotification(buildMessage(errorMessageAndLocation, linkToGcpError, jobErrorMessage, linkToGcpLog));
                     minEpochForNextJobError.set(currentEpoch + JOB_DELAY * 60L);
