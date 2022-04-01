@@ -7,6 +7,7 @@ import java.time.Instant;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -36,12 +37,9 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class MBCAboutYouV2 implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(MBCAboutYouV2.class);
     private static final String DATA_FILE = "patches/aboutyou-version2.conf";
     private static final String MBC = "cmi-mbc";
 
@@ -142,7 +140,7 @@ public class MBCAboutYouV2 implements CustomTask {
         FormSectionDef closingSectionDef =  formActivityDef.getClosing();
         sectionBlockDao.insertBlockForSection(activityId, closingSectionDef.getSectionId(),
                 (closingSectionDef.getBlocks().size() * 10) + 10, citationsDef, newV2RevId);
-        LOG.info("Added citations");
+        log.info("Added citations");
     }
 
     private interface SqlHelper extends SqlObject {

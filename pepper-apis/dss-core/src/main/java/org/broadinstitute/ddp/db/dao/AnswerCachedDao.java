@@ -189,6 +189,11 @@ public class AnswerCachedDao extends SQLObjectWrapper<AnswerDao> implements Answ
         return delegate.findAnswerByLatestInstanceAndQuestionStableId(userGuid, studyId, questionStableId);
     }
 
+    @Override
+    public Optional<Answer> findAnswerByLatestInstanceAndQuestionId(long userId, long studyId, long questionId) {
+        return delegate.findAnswerByLatestInstanceAndQuestionId(userId, studyId, questionId);
+    }
+
     private void addToCache(Answer answer) {
         if (!isNullCache(idToAnswerCache)) {
             try {
