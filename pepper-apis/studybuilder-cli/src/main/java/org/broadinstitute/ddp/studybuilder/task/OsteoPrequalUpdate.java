@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.List;
 
 public class OsteoPrequalUpdate implements CustomTask {
 
@@ -107,17 +108,26 @@ public class OsteoPrequalUpdate implements CustomTask {
         SqlHelper helper = handle.attach(SqlHelper.class);
         JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
 
-        String stableId = dataCfg.getConfig("questionUpdate").getString("stableId");
-        QuestionDto questionDto = jdbiQuestion.findDtoByActivityIdAndQuestionStableId(activityId, stableId).get();
-        String varName = dataCfg.getConfig("questionUpdate").getConfigList("question").get(0).getString("varName");
-        String subsValue = dataCfg.getConfig("questionUpdate").getConfigList("question").get(0).getString("newVal");
-        long templatevariableId = helper.getTemplatevariableId(varName);
-        helper.updateTemplateText(subsValue, templatevariableId);
+        List<? extends Config> questionUpdates = dataCfg.getConfigList("questionUpdates");
+        questionUpdates.forEach(config -> {
+             String stableId = config.getString("stableId");
+             QuestionDto questionDto = jdbiQuestion.findDtoByActivityIdAndQuestionStableId(activityId, stableId).get();
+             List<? extends Config> question = config.getConfigList("question");
+             String varName = question.get(0).getString("varName");
+             String subsValue = question.get(0).getString("newVal");
+             long templatevariableId = helper.getTemplatevariableId(varName);
+             helper.updateTemplateText(subsValue, templatevariableId);
 
-        String value = dataCfg.getConfig("questionUpdate").getConfigList("question").get(1).getString("newVal");
-        PicklistSelectMode picklistSelectMode = PicklistSelectMode.valueOf(value);
-        long pickListModeIdByValue = helper.getPickListModeIdByValue(picklistSelectMode);
-        helper.updatePicklistOption(questionDto.getId(), pickListModeIdByValue);
+             if(question.get(1) != null){
+                String value = question.get(1).getString("newVal");
+                PicklistSelectMode picklistSelectMode = PicklistSelectMode.valueOf(value);
+                long pickListModeIdByValue = helper.getPickListModeIdByValue(picklistSelectMode);
+                helper.updatePicklistOption(questionDto.getId(), pickListModeIdByValue);
+             }
+        });
+
+
+
     }
 
     private interface SqlHelper extends SqlObject {
