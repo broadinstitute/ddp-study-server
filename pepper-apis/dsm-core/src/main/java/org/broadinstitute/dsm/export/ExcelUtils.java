@@ -5,11 +5,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import com.google.common.net.MediaType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -46,12 +47,17 @@ public class ExcelUtils {
         try (FileOutputStream outputStream = new FileOutputStream(fileLocation); ServletOutputStream os = response.raw().getOutputStream()){
             workbook.write(outputStream);
             File file = new File(fileLocation);
-            response.raw().setContentType("application/octet-stream");
-            response.raw().setHeader("Content-Disposition", "attachment; filename=" + file.getName());
+            setResponseHeaders(response, file.getName());
             byte[] encoded = Files.readAllBytes(Paths.get(fileLocation));
             os.write(encoded);
             Files.deleteIfExists(file.toPath());
         }
+    }
+
+    private static void setResponseHeaders(Response response, String filename) {
+        response.type(MediaType.OCTET_STREAM.toString());
+        response.header("Access-Control-Expose-Headers", "Content-Disposition");
+        response.header("Content-Disposition", "attachment;filename=" + filename);
     }
 
     private static void createRecords(Sheet sheet, int currentRow, List<List<String>> rowValues) {
@@ -66,7 +72,7 @@ public class ExcelUtils {
 
     private static String getFormattedDate() {
         LocalDate date = LocalDate.now();
-        SimpleDateFormat formatter = new SimpleDateFormat(FILE_DATE_FORMAT);
-        return formatter.format(date);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(FILE_DATE_FORMAT);
+        return date.format(formatter);
     }
 }
