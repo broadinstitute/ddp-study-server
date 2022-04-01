@@ -106,25 +106,34 @@ public class OsteoPrequalUpdate implements CustomTask {
 
     private void updateQuestion(Handle handle, Config dataCfg, long activityId) {
         SqlHelper helper = handle.attach(SqlHelper.class);
-
         List<? extends Config> questionUpdates = dataCfg.getConfigList("questionUpdates");
+
         questionUpdates.forEach(config -> {
             String stableId = config.getString("stableId");
+
+            if (config.getConfig("validation") != null) {
+                Config validation = config.getConfig("validation");
+                String varName = validation.getString("varName");
+                String newVal = validation.getString("newVal");
+                long templateVariableId = helper.getTemplateVariableId(varName);
+                helper.updateTemplateText(newVal, templateVariableId);
+            }
+
             List<? extends Config> question = config.getConfigList("question");
             for (Config config1 : question) {
-             String varName = config1.getString("varName");
-             String subsValue = config1.getString("newVal");
-             long questionId = helper.getQuestionStableCodeId(stableId);
-             long questionPromptId = helper.getQuestionPromptId(questionId);
-             long templateVariableIdbyTemplateId = helper.getTemplateVariableIdbyTemplateId(questionPromptId, varName);
-             helper.updateTemplateText(subsValue, templateVariableIdbyTemplateId);
+                String varName = config1.getString("varName");
+                String subsValue = config1.getString("newVal");
+                long questionId = helper.getQuestionStableCodeId(stableId);
+                long questionPromptId = helper.getQuestionPromptId(questionId);
+                long templateVariableIdbyTemplateId = helper.getTemplateVariableIdbyTemplateId(questionPromptId, varName);
+                helper.updateTemplateText(subsValue, templateVariableIdbyTemplateId);
             }
         });
 
         changeQuetionStyle(handle, activityId, "PREQUAL_SELF_DESCRIBE");
     }
 
-    private void changeQuetionStyle(Handle handle, long activityId, String stableId){
+    private void changeQuetionStyle(Handle handle, long activityId, String stableId) {
         SqlHelper helper = handle.attach(SqlHelper.class);
         JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
         QuestionDto questionDto = jdbiQuestion.findDtoByActivityIdAndQuestionStableId(activityId, stableId).get();
@@ -134,9 +143,9 @@ public class OsteoPrequalUpdate implements CustomTask {
         helper.updatePicklistOption(questionDto.getId(), pickListModeIdByValue);
     }
 
-    private void changeAgeRestriction(){
+    private void changeAgeRestriction() {
         int age = 110;
-        String stable_id = "SELF_CURRENT_AGE";
+        String stableId = "SELF_CURRENT_AGE";
     }
 
     private interface SqlHelper extends SqlObject {
@@ -152,8 +161,8 @@ public class OsteoPrequalUpdate implements CustomTask {
         @SqlUpdate("update picklist_question set picklist_select_mode_id = :picklist_select_mode_id where question_id = :question_id")
         void updatePicklistOption(@Bind("question_id") long questionId, @Bind("picklist_select_mode_id") long picklistselectModeId);
 
-        @SqlQuery("select question_stable_code_id from question_stable_code where stable_id like :syableId")
-        long getQuestionStableCodeId(@Bind("stableId") String StableId);
+        @SqlQuery("select question_stable_code_id from question_stable_code where stable_id like :stableId")
+        long getQuestionStableCodeId(@Bind("stableId") String stableId);
 
         @SqlQuery("select question_prompt_template_id from question where question_stable_code_id = :stableId")
         long getQuestionPromptId(@Bind("stableId") long stableId);
