@@ -111,12 +111,14 @@ public class OsteoPrequalUpdate implements CustomTask {
         questionUpdates.forEach(config -> {
             String stableId = config.getString("stableId");
             List<? extends Config> question = config.getConfigList("question");
-             String varName = question.get(0).getString("varName");
-             String subsValue = question.get(0).getString("newVal");
-             long questioId = helper.getQuestionStableCodeId(stableId);
-             long questionPromptId = helper.getQuestionPromptId(questioId);
-             long templateVariableIdbyTemplateId = helper.getTemplateVariableIdbyTemplateId(questionPromptId);
+            for (Config config1 : question) {
+             String varName = config1.getString("varName");
+             String subsValue = config1.getString("newVal");
+             long questionId = helper.getQuestionStableCodeId(stableId);
+             long questionPromptId = helper.getQuestionPromptId(questionId);
+             long templateVariableIdbyTemplateId = helper.getTemplateVariableIdbyTemplateId(questionPromptId, varName);
              helper.updateTemplateText(subsValue, templateVariableIdbyTemplateId);
+            }
         });
 
         changeQuetionStyle(handle, activityId, "PREQUAL_SELF_DESCRIBE");
@@ -130,6 +132,11 @@ public class OsteoPrequalUpdate implements CustomTask {
         PicklistSelectMode picklistSelectMode = PicklistSelectMode.valueOf(value);
         long pickListModeIdByValue = helper.getPickListModeIdByValue(picklistSelectMode);
         helper.updatePicklistOption(questionDto.getId(), pickListModeIdByValue);
+    }
+
+    private void changeAgeRestriction(){
+        int age = 110;
+        String stable_id = "SELF_CURRENT_AGE";
     }
 
     private interface SqlHelper extends SqlObject {
@@ -151,7 +158,10 @@ public class OsteoPrequalUpdate implements CustomTask {
         @SqlQuery("select question_prompt_template_id from question where question_stable_code_id = :stableId")
         long getQuestionPromptId(@Bind("stableId") long stableId);
 
-        @SqlQuery("select template_variable_id from template_variable where template_id = :templateId")
-        long getTemplateVariableIdbyTemplateId(@Bind("templateId") long templateId);
+        @SqlQuery("select template_variable_id from template_variable where variable_name = :name")
+        long getTemplateVariableId(@Bind("name") String name);
+
+        @SqlQuery("select template_variable_id from template_variable where template_id = :templateId and variable_name = :name")
+        long getTemplateVariableIdbyTemplateId(@Bind("templateId") long templateId, @Bind("name") String name);
     }
 }
