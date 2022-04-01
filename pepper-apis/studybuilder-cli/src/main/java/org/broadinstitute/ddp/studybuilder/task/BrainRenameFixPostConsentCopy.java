@@ -7,6 +7,7 @@ import java.util.Map;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.CopyConfigurationDao;
@@ -36,15 +37,12 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Task to fix copy event for Post Consent due to new sex/gender questions.
  */
+@Slf4j
 public class BrainRenameFixPostConsentCopy implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(BrainRenameFixPostConsentCopy.class);
     private static final String ACTIVITY_DATA_FILE = "patches/rename-activities.conf";
     private static final String GENDER_DATA_FILE = "patches/rename-gender-questions.conf";
 
@@ -90,7 +88,7 @@ public class BrainRenameFixPostConsentCopy implements CustomTask {
     private void fixChildPostConsentGenderPicklistOptionStableIds() {
         Config activityCfg = activityDataCfg.getConfig("childPostConsent");
         String activityCode = activityCfg.getString("activityCode");
-        LOG.info("Editing activity {}...", activityCode);
+        log.info("Editing activity {}...", activityCode);
 
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
         ActivityVersionDto versionDto = findActivityLatestVersion(activityId);
@@ -126,18 +124,18 @@ public class BrainRenameFixPostConsentCopy implements CustomTask {
             String newStableId = mappings.get(option.getStableId());
             if (newStableId != null) {
                 DBUtils.checkUpdate(1, helper.updatePicklistOptionStableId(option.getOptionId(), newStableId));
-                LOG.info("Updated picklist question {} option {} to new stable id {}",
+                log.info("Updated picklist question {} option {} to new stable id {}",
                         childGenderStableId, option.getStableId(), newStableId);
             }
         }
 
-        LOG.info("Finished updating picklist option stable ids for activity {}", activityCode);
+        log.info("Finished updating picklist option stable ids for activity {}", activityCode);
     }
 
     private void fixPostConsentCopyEvent() {
         Config activityCfg = activityDataCfg.getConfig("postConsent");
         String activityCode = activityCfg.getString("activityCode");
-        LOG.info("Working on copy event for {}...", activityCode);
+        log.info("Working on copy event for {}...", activityCode);
 
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
         long copyConfigId = handle.attach(EventDao.class)
@@ -155,7 +153,7 @@ public class BrainRenameFixPostConsentCopy implements CustomTask {
                 .map(event -> ((CopyAnswerEventAction) event.getEventAction()).getCopyConfigurationId())
                 .findFirst()
                 .orElseThrow(() -> new DDPException("Could not find copy event for activity " + activityCode));
-        LOG.info("Found copy event with copy configuration id " + copyConfigId);
+        log.info("Found copy event with copy configuration id " + copyConfigId);
 
         var copyConfigDao = handle.attach(CopyConfigurationDao.class);
         CopyConfiguration currentConfig = copyConfigDao
@@ -171,10 +169,10 @@ public class BrainRenameFixPostConsentCopy implements CustomTask {
             executionOrder++;
             newPair.setOrder(executionOrder);
             long id = copyConfigDao.addCopyPairToConfig(studyDto.getId(), copyConfigId, newPair);
-            LOG.info("Added copy pair with id={} to copy configuration {}", id, copyConfigId);
+            log.info("Added copy pair with id={} to copy configuration {}", id, copyConfigId);
         }
 
-        LOG.info("Finished updating copy event for {}", activityCode);
+        log.info("Finished updating copy event for {}", activityCode);
     }
 
     private ActivityVersionDto findActivityLatestVersion(long activityId) {

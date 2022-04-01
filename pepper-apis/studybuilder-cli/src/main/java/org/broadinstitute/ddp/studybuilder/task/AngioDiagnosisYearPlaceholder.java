@@ -3,14 +3,12 @@ package org.broadinstitute.ddp.studybuilder.task;
 import java.nio.file.Path;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class AngioDiagnosisYearPlaceholder implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AngioDiagnosisYearPlaceholder.class);
     private static final String ANGIO_GUID = "ANGIO";
 
     @Override
@@ -41,6 +39,6 @@ public class AngioDiagnosisYearPlaceholder implements CustomTask {
                 .bind("varName", "OTHER_CANCER_LIST_YEAR_PLACEHOLDER")
                 .bind("studyGuid", ANGIO_GUID)
                 .execute();
-        LOG.info("Update {} template substitution value for diagnosis year placeholder", numUpdated);
+        log.info("Update {} template substitution value for diagnosis year placeholder", numUpdated);
     }
 }

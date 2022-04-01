@@ -8,8 +8,8 @@ import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 @Data
 public class NameValue {
 
-    private String name;
-    private Object value;
+    protected String name;
+    protected Object value;
 
     @JdbiConstructor
     @ConstructorProperties ({ "name", "value" })

@@ -3,20 +3,17 @@ package org.broadinstitute.ddp.studybuilder.task;
 import java.nio.file.Path;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.studybuilder.StudyBuilder;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * General task to update study details.
  */
+@Slf4j
 public class UpdateStudyDetails implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(UpdateStudyDetails.class);
-
     private Path cfgPath;
     private Config studyCfg;
     private Config varsCfg;
@@ -34,7 +31,7 @@ public class UpdateStudyDetails implements CustomTask {
                 .findByStudyGuid(studyCfg.getString("study.guid"));
         var builder = new StudyBuilder(cfgPath, studyCfg, varsCfg);
 
-        LOG.info("Updating {} study details...", studyDto.getGuid());
+        log.info("Updating {} study details...", studyDto.getGuid());
         builder.insertOrUpdateStudyDetails(handle, studyDto.getId());
     }
 }
