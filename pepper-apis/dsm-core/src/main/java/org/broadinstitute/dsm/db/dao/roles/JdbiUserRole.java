@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.db.dao.roles;
 import java.util.Collection;
 import java.util.List;
 
+import org.broadinstitute.dsm.db.dto.user.AssigneeDto;
 import org.broadinstitute.dsm.model.NameValue;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
@@ -51,6 +52,18 @@ public interface JdbiUserRole extends SqlObject {
             "left join umbrella u on (r.umbrella_id = u.umbrella_id) " +
             "left join umbrella_study us on (us.umbrella_id = u.umbrella_id) " +
             "where ur.user_id = :userId and us.guid=:guid;")
-    List<String> getUserRolesPerRealm(@Bind ("userId") long userId, @Bind ("guid") String study_guid);
+    List<String> getUserRolesPerRealm(@Bind ("userId") long userId, @Bind ("guid") String studyGuid);
+
+    @SqlQuery (" select up.user_id as assigneeId, concat(up.first_name, \" \", up.last_name) as name, email " +
+            "    from user_profile up " +
+            "    left join user_role ur on (ur.user_id = up.user_id) " +
+            "    left join role r on (r.role_id = ur.role_id) " +
+            "    left join umbrella u on (r.umbrella_id = u.umbrella_id) " +
+            "    left join role_permissions rp on (rp.role_id = ur.role_id) " +
+            "    left join permissions p on (p.permissions_id = rp.permissions_id) " +
+            "    left join umbrella_study us on (us.umbrella_id = u.umbrella_id) " +
+            "    where p.name = \"mr_request\" and us.guid = :guid;")
+    @RegisterConstructorMapper (AssigneeDto.class)
+    List<AssigneeDto> getAssigneesForStudy(@Bind ("guid") String studyGuid);
 
 }

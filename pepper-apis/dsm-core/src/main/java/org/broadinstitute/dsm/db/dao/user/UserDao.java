@@ -116,6 +116,4 @@ public class UserDao implements Dao<UserDto> {
         }
         return (String) results.resultValue;
     }
-
-
 }

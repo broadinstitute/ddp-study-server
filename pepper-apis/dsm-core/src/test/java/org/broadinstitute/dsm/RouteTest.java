@@ -27,11 +27,11 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
-import org.broadinstitute.dsm.db.Assignee;
 import org.broadinstitute.dsm.db.FieldSettings;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.ParticipantExit;
+import org.broadinstitute.dsm.db.dto.user.AssigneeDto;
 import org.broadinstitute.dsm.model.DashboardInformation;
 import org.broadinstitute.dsm.model.FollowUp;
 import org.broadinstitute.dsm.model.LookupResponse;
@@ -221,22 +221,22 @@ public class RouteTest extends TestHelper {
         DBTestUtil.deleteAllFieldSettings(TEST_DDP);
     }
 
-    public List<Assignee> assigneeEndpoint() throws Exception {
+    public List<AssigneeDto> assigneeEndpoint() throws Exception {
         HttpResponse response =
                 TestUtil.performGet(DSM_BASE_URL, "/ui/" + "assignees?realm=" + TEST_DDP, testUtil.buildAuthHeaders()).returnResponse();
 
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
         String message = DDPRequestUtil.getContentAsString(response);
-        Type listType = new TypeToken<ArrayList<Assignee>>() {
+        Type listType = new TypeToken<ArrayList<AssigneeDto>>() {
         }.getType();
-        List<Assignee> assignees = new Gson().fromJson(message, listType);
+        List<AssigneeDto> assignees = new Gson().fromJson(message, listType);
 
         Assert.assertTrue(!assignees.isEmpty());
 
         //test if added assignee was returned
         boolean foundAssignee = false;
-        for (Assignee assignee : assignees) {
+        for (AssigneeDto assignee : assignees) {
             if (assignee.getName().equals("THE UNIT TESTER 1")) {
                 foundAssignee = true;
                 Assert.assertEquals("THE UNIT TESTER 1", assignee.getName());
@@ -1567,7 +1567,7 @@ public class RouteTest extends TestHelper {
                 testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-        List<Assignee> assignees = assigneeEndpoint();
+        List<AssigneeDto> assignees = assigneeEndpoint();
         List<String> drugs = drugList();
 
         response = TestUtil.performGet(DSM_BASE_URL, "/ui/fieldSettings/" + TEST_DDP, testUtil.buildAuthHeaders()).returnResponse();

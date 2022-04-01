@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.route;
 
-import org.broadinstitute.dsm.db.Assignee;
+import org.broadinstitute.dsm.db.dao.roles.UserRoleDao;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
@@ -16,7 +16,7 @@ public class AssigneeRoute extends RequestHandler {
         String realm = RoutePath.getRealm(request);
         String userIdRequest = UserUtil.getUserId(request);
         if (UserUtil.checkUserAccess(realm, userId, "mr_view", userIdRequest)) {
-            return Assignee.getAssignees(realm);
+            return UserRoleDao.getAssigneeMap(realm);
         } else {
             response.status(500);
             return new Result(500, UserErrorMessages.NO_RIGHTS);

@@ -2,10 +2,12 @@ package org.broadinstitute.dsm.db.dao.roles;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 
 import lombok.NonNull;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.dsm.db.dto.user.AssigneeDto;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
@@ -83,5 +85,24 @@ public class UserRoleDao {
             throw new RuntimeException("Error getting user by id ", results.resultException);
         }
         return (List<String>) results.resultValue;
+    }
+
+    public static HashMap<Long, AssigneeDto> getAssigneeMap(String realm) {
+        HashMap<Long, AssigneeDto> assignees = new HashMap<>();
+        TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
+            List<AssigneeDto> assigneeLists = handle.attach(JdbiUserRole.class).getAssigneesForStudy(realm);
+            for (AssigneeDto assigneeDto : assigneeLists) {
+                assignees.put(assigneeDto.getAssigneeId(), new AssigneeDto(assigneeDto.getAssigneeId(), assigneeDto.getName().orElse(""),
+                        assigneeDto.getEmail().orElseThrow()));
+            }
+            return null;
+        });
+
+        logger.info("Found " + assignees.size() + " assignees ");
+        return assignees;
+    }
+
+    public static Collection<AssigneeDto> getAssignees(String realm){
+        return UserRoleDao.getAssigneeMap(realm).values();
     }
 }

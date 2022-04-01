@@ -7,7 +7,6 @@ import java.util.Map;
 
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.Assignee;
 import org.broadinstitute.dsm.db.Cancer;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.Drug;
@@ -16,6 +15,7 @@ import org.broadinstitute.dsm.db.InstanceSettings;
 import org.broadinstitute.dsm.db.KitType;
 import org.broadinstitute.dsm.db.ViewFilter;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dao.roles.UserRoleDao;
 import org.broadinstitute.dsm.db.dto.settings.InstanceSettingsDto;
 import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.KitSubKits;
@@ -78,7 +78,7 @@ public class DisplaySettingsRoute extends RequestHandler {
                     && StringUtils.isNotBlank(parent) && StringUtils.isNotBlank(ddpGroupId)) {
                 Map<String, Object> displaySettings = new HashMap<>();
                 InstanceSettings instanceSettings = new InstanceSettings();
-                displaySettings.put("assignees", Assignee.getAssignees(realm));
+                displaySettings.put("assignees", UserRoleDao.getAssignees(realm));
                 displaySettings.put("fieldSettings", FieldSettings.getFieldSettings(realm));
                 displaySettings.put("drugs", Drug.getDrugList());
                 displaySettings.put("cancers", Cancer.getCancers());

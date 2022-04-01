@@ -17,9 +17,9 @@ public interface JdbiUser extends SqlObject {
     @RegisterConstructorMapper (UserDto.class)
     UserDto getUserByEmail(@Bind ("userEmail") String userEmail);
 
-    @SqlQuery ("SELECT user.user_id, user.name, user.email, user.phone_number FROM access_user user WHERE user.user_id = :userId")
+    @SqlQuery ("SELECT up.user_id, up.first_name, up.last_name, up.email, up.phone_number FROM user_profile up WHERE up.user_id = :userId")
     @RegisterConstructorMapper (UserDto.class)
-    long getUserByUserId(@Bind ("userId") long userId);
+    UserDto getUserByUserId(@Bind ("userId") long userId);
 
     @SqlUpdate ("")
     @GetGeneratedKeys

@@ -24,7 +24,7 @@ public class AllowedRealmsRoute extends RequestHandler {
         }
 
         if (queryParams.value(MENU) != null) {
-            return UserRoleDao.getAllowedStudies(userIdRequest);
+            return UserRoleDao.getListOfAllowedRealms(Long.parseLong(userIdRequest));
         }
 
         return UserRoleDao.getListOfAllowedRealms(Long.parseLong(userIdRequest));

@@ -16,6 +16,8 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.dao.roles.UserRoleDao;
+import org.broadinstitute.dsm.db.dto.user.AssigneeDto;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
@@ -179,18 +181,20 @@ public class Participant {
                 false, false, null, null);
     }
 
-    public static Participant getParticipant(@NonNull Map<String, Assignee> assignees, @NonNull String realm, @NonNull ResultSet rs)
+    public static Participant getParticipant(@NonNull Map<Long, AssigneeDto> assignees, @NonNull String realm, @NonNull ResultSet rs)
             throws SQLException {
         String assigneeMR = null;
         String assigneeTissue = null;
         if (assignees != null && !assignees.isEmpty()) {
             String assigneeIdMR = rs.getString(DBConstants.ASSIGNEE_ID_MR);
             if (StringUtils.isNotBlank(assigneeIdMR)) {
-                assigneeMR = assignees.get(assigneeIdMR).getName();
+                AssigneeDto assigneeDto = assignees.get(Long.parseLong(assigneeIdMR));
+                assigneeMR = assigneeDto.getName().orElse(assigneeDto.getEmail().orElseThrow());
             }
             String assigneeIdTissue = rs.getString(DBConstants.ASSIGNEE_ID_TISSUE);
             if (StringUtils.isNotBlank(assigneeIdTissue)) {
-                assigneeTissue = assignees.get(assigneeIdTissue).getName();
+                AssigneeDto assigneeDto = assignees.get(Long.parseLong(assigneeIdTissue));
+                assigneeTissue = assigneeDto.getName().orElse(assigneeDto.getEmail().orElseThrow());
             }
         }
         Participant participant = new Participant(rs.getLong(DBConstants.PARTICIPANT_ID),
@@ -215,7 +219,7 @@ public class Participant {
     public static Map<String, Participant> getParticipants(@NonNull String realm, String queryAddition) {
         logger.info("Collection participant information");
         Map<String, Participant> participants = new HashMap<>();
-        HashMap<String, Assignee> assignees = Assignee.getAssigneeMap(realm);
+        HashMap<Long, AssigneeDto> assignees = UserRoleDao.getAssigneeMap(realm);
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(DBUtil.getFinalQuery(SQL_SELECT_PARTICIPANT, queryAddition))) {
