@@ -43,7 +43,9 @@ public abstract class QuestionRecord {
                 questionAnswer = ((MatrixQuestionRecord) record).getSelected();
             }
 
-            recordObject.add(record.stableId, gson.toJsonTree(questionAnswer));
+            if (questionAnswer != null) {
+                recordObject.add(record.stableId, gson.toJsonTree(questionAnswer));
+            }
             return gson.toJsonTree(recordObject);
         }
     }
