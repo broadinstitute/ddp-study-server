@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
@@ -185,8 +186,6 @@ import org.broadinstitute.ddp.util.RouteUtil;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import spark.Request;
 import spark.Response;
@@ -195,14 +194,11 @@ import spark.Route;
 import spark.Spark;
 import spark.route.HttpMethod;
 
+@Slf4j
 public class DataDonationPlatform {
-
     public static final String MDC_STUDY = "Study";
     public static final String MDC_ROUTE_CLASS = "RouteClass";
     public static final String PORT = "PORT";
-    public static final int DEFAULT_RATE_LIMIT_MAX_QUERIES_PER_SECOND = 10;
-    public static final int DEFAULT_RATE_LIMIT_BURST = 15;
-    private static final Logger LOG = LoggerFactory.getLogger(DataDonationPlatform.class);
 
     private static final String HTTP_METHOD__GET = "GET";
     private static final String HTTP_METHOD__PUT = "PUT";
@@ -246,13 +242,13 @@ public class DataDonationPlatform {
 
         stop();
         try {
-            LOG.info("Pausing for {}ms for server to stop", millisecs);
+            log.info("Pausing for {}ms for server to stop", millisecs);
             Thread.sleep(millisecs);
         } catch (InterruptedException e) {
-            LOG.warn("Wait interrupted", e);
+            log.warn("Wait interrupted", e);
         }
 
-        LOG.info("ddp shutdown complete");
+        log.info("ddp shutdown complete");
     }
 
     public static void main(String[] args) {
@@ -262,7 +258,7 @@ public class DataDonationPlatform {
                 isReady.set(true);
             }
         } catch (Exception e) {
-            LOG.error("Could not start ddp", e);
+            log.error("Could not start ddp", e);
             shutdown();
         }
     }
@@ -290,15 +286,13 @@ public class DataDonationPlatform {
         }
 
         String dbUrl = cfg.getString(ConfigFile.DB_URL);
-        LOG.info("Using db {}", dbUrl);
-
         TransactionWrapper.init(
                 new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections, dbUrl));
         Config sqlConfig = ConfigFactory.load(ConfigFile.SQL_CONFIG_FILE);
         initSqlCommands(sqlConfig);
 
         if (cfg.hasPath(ConfigFile.DO_LIQUIBASE_IN_STUDY_SERVER) && cfg.getBoolean(ConfigFile.DO_LIQUIBASE_IN_STUDY_SERVER)) {
-            LOG.info("Running liquibase migrations in StudyServer against database url: {}", dbUrl);
+            log.info("Running liquibase migrations in StudyServer against database");
             LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
             LiquibaseUtil.releaseResources();
         }
@@ -332,10 +326,10 @@ public class DataDonationPlatform {
         if (cfg.hasPath(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND) && cfg.hasPath(ConfigFile.API_RATE_LIMIT.BURST)) {
             int maxQueriesPerSecond = cfg.getInt(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND);
             int burst = cfg.getInt(ConfigFile.API_RATE_LIMIT.BURST);
-            LOG.info("Will use rate limit {} with burst {}", maxQueriesPerSecond, burst);
+            log.info("Will use rate limit {} with burst {}", maxQueriesPerSecond, burst);
             before("*", new RateLimitFilter(maxQueriesPerSecond, burst));
         } else {
-            LOG.warn("No rate limit values given.  Rate limiting is disabled.");
+            log.warn("No rate limit values given.  Rate limiting is disabled.");
         }
 
         before("*", new HttpHeaderMDCFilter(X_FORWARDED_FOR));
@@ -581,10 +575,10 @@ public class DataDonationPlatform {
                 scheduler.triggerJob(DsmDrugLoaderJob.getKey());
                 scheduler.triggerJob(DsmCancerLoaderJob.getKey());
             } catch (SchedulerException e) {
-                LOG.error("Could not trigger job to initialize drug/cancer lists", e);
+                log.error("Could not trigger job to initialize drug/cancer lists", e);
             }
         } else {
-            LOG.info("DDP job scheduler is not set to run");
+            log.info("DDP job scheduler is not set to run");
         }
 
         setupApiActivityFilter();
@@ -597,12 +591,12 @@ public class DataDonationPlatform {
                 MDCLogBreadCrumbFilter.LOG_BREADCRUMB));
 
         awaitInitialization();
-        LOG.info("ddp startup complete");
+        log.info("ddp startup complete");
     }
 
     private static void registerAppEngineCallbacks(long bootWaitSecs) {
         get(RouteConstants.GAE.START_ENDPOINT, (request, response) -> {
-            LOG.info("Received GAE start request [{}]", RouteConstants.GAE.START_ENDPOINT);
+            log.info("Received GAE start request [{}]", RouteConstants.GAE.START_ENDPOINT);
             long startedMillis = Instant.now().toEpochMilli();
 
             var status = new AtomicInteger(HttpStatus.SC_SERVICE_UNAVAILABLE);
@@ -617,13 +611,13 @@ public class DataDonationPlatform {
             waitForBoot.join(bootWaitSecs * 1000);
 
             long elapsed = Instant.now().toEpochMilli() - startedMillis;
-            LOG.info("Responding to GAE start request with status {} after delay of {}ms", status, elapsed);
+            log.info("Responding to GAE start request with status {} after delay of {}ms", status, elapsed);
             response.status(status.get());
             return "";
         });
 
         get(RouteConstants.GAE.STOP_ENDPOINT, (request, response) -> {
-            LOG.info("Received GAE stop request [{}]", RouteConstants.GAE.STOP_ENDPOINT);
+            log.info("Received GAE stop request [{}]", RouteConstants.GAE.STOP_ENDPOINT);
             //flush out any pending GA events
             GoogleAnalyticsMetricsTracker.getInstance().flushOutMetrics();
 
@@ -707,7 +701,7 @@ public class DataDonationPlatform {
     private static void setupCatchAllErrorHandling() {
         //JSON for Not Found (code 404) handling
         notFound((request, response) -> {
-            LOG.info("[404] Current status: {}", response.status());
+            log.info("[404] Current status: {}", response.status());
             return ResponseUtil.renderPageNotFound(response);
         });
 

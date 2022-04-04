@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.studybuilder.task;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.CopyConfigurationSql;
@@ -29,8 +30,6 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -40,9 +39,8 @@ import java.util.Set;
 /**
  * One-off task to add adhoc symptom message to TestBoston in deployed environments.
  */
+@Slf4j
 public class OsteoAboutYouV2 implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(OsteoAboutYouV2.class);
     private static final String DATA_FILE = "patches/about-you-v2.conf";
     private static final String STUDY_GUID = "CMI-OSTEO";
     private static final String ACTIVITY_CODE = "ABOUTYOU";
@@ -111,7 +109,7 @@ public class OsteoAboutYouV2 implements CustomTask {
         final long currHowHereBlockId = helper.findQuestionBlockId(questionHowHereDto.getId());
         questionDao.disableTextQuestion(questionHowHereDto.getId(), meta);
         helper.updateFormSectionBlockRevision(currHowHereBlockId, terminatedRevId);
-        LOG.info("Question ('HOW_HEAR') successfully disabled");
+        log.info("Question ('HOW_HEAR') successfully disabled");
 
         // Disable EXPERIENCE
         QuestionDto questionExperienceDto =
@@ -121,7 +119,7 @@ public class OsteoAboutYouV2 implements CustomTask {
         final long currExperienceBlockId = helper.findQuestionBlockId(questionExperienceDto.getId());
         questionDao.disableTextQuestion(questionExperienceDto.getId(), meta);
         helper.updateFormSectionBlockRevision(currExperienceBlockId, terminatedRevId);
-        LOG.info("Question ('EXPERIENCE') successfully disabled");
+        log.info("Question ('EXPERIENCE') successfully disabled");
 
         // Disable RACE
         QuestionDto questionRaceDto =
@@ -131,7 +129,7 @@ public class OsteoAboutYouV2 implements CustomTask {
         final long currRaceBlockId = helper.findQuestionBlockId(questionRaceDto.getId());
         questionDao.disablePicklistQuestion(questionRaceDto.getId(), meta);
         helper.updateFormSectionBlockRevision(currRaceBlockId, terminatedRevId);
-        LOG.info("Question ('RACE') successfully disabled");
+        log.info("Question ('RACE') successfully disabled");
 
         // Disable HISPANIC
         QuestionDto questionHispanicDto =
@@ -141,7 +139,7 @@ public class OsteoAboutYouV2 implements CustomTask {
         final long currHispanicBlockId = helper.findQuestionBlockId(questionHispanicDto.getId());
         questionDao.disablePicklistQuestion(questionHispanicDto.getId(), meta);
         helper.updateFormSectionBlockRevision(currHispanicBlockId, terminatedRevId);
-        LOG.info("Question ('HISPANIC') successfully disabled");
+        log.info("Question ('HISPANIC') successfully disabled");
 
         //add new section
         final var firstSection = jdbiFormActivityFormSection
@@ -149,13 +147,13 @@ public class OsteoAboutYouV2 implements CustomTask {
         final long newFormSectionId = jdbiFormSection.insert(jdbiFormSection.generateUniqueCode(), null);
         final int sectionOrder = firstSection.getDisplayOrder() - 1;
         jdbiFormActivityFormSection.insert(activityId, newFormSectionId, versionDto.getRevId(), sectionOrder);
-        LOG.info("New section successfully created with displayOrder={} and revision={}", sectionOrder, versionDto.getRevId());
+        log.info("New section successfully created with displayOrder={} and revision={}", sectionOrder, versionDto.getRevId());
 
         //add new WHO_IS_FILLING_ABOUTYOU question
         SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
         FormBlockDef raceDef = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("who_filling_q")), FormBlockDef.class);
         sectionBlockDao.insertBlockForSection(activityId, newFormSectionId, sectionOrder, raceDef, versionDto.getRevId());
-        LOG.info("Question ('WHO_IS_FILLING_ABOUTYOU') successfully added");
+        log.info("Question ('WHO_IS_FILLING_ABOUTYOU') successfully added");
 
         // Delete copy configs
         Set<Long> locationIds = helper.findCopyConfigsByQuestionSid(Set.of(
@@ -168,7 +166,8 @@ public class OsteoAboutYouV2 implements CustomTask {
 
         DBUtils.checkDelete(configPairs.size(), copyConfigurationSql.deleteCopyConfigPairs(configPairs));
         DBUtils.checkDelete(locationIds.size(), copyConfigurationSql.bulkDeleteCopyLocations(locationIds));
-        LOG.info("Copy configs successfully deleted");
+        log.info("Copy configs successfully deleted");
+        helper.updateActivityNameAndTitle(activityId, "About Your Cancer", "About Your Cancer");
     }
 
     private interface SqlHelper extends SqlObject {
@@ -186,5 +185,18 @@ public class OsteoAboutYouV2 implements CustomTask {
 
         @SqlUpdate("update form_section__block set revision_id = :revisionId where block_id = :blockId")
         void updateFormSectionBlockRevision(@Bind("blockId") long blockId, @Bind("revisionId") long revisionId);
+
+        @SqlUpdate("update i18n_activity_detail set name = :name, title = :title where study_activity_id = :studyActivityId")
+        int _updateActivityNameAndTitle(@Bind("studyActivityId") long studyActivityId,
+                                @Bind("name") String name,
+                                @Bind("title") String title);
+
+        default void updateActivityNameAndTitle(long studyActivityId, String name, String title) {
+            int numUpdated = _updateActivityNameAndTitle(studyActivityId, name, title);
+            if (numUpdated != 1) {
+                throw new DDPException("Expected to update 1 row for studyActivityId="
+                        + studyActivityId + " but updated " + numUpdated);
+            }
+        }
     }
 }

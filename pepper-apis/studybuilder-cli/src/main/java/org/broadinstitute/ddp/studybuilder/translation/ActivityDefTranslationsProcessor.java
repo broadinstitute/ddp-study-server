@@ -5,6 +5,7 @@ import static org.broadinstitute.ddp.studybuilder.translation.TranslationsEnrich
 
 import java.util.Map;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
@@ -37,8 +38,6 @@ import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariabl
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.studybuilder.StudyBuilderException;
 import org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingData.TranslationData;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Add {@link Translation} references (for all study languages) to the {@link Template}s in {@link FormActivityDef}s.
@@ -62,10 +61,8 @@ import org.slf4j.LoggerFactory;
  *     </li>
  * </ul>
  */
+@Slf4j
 public class ActivityDefTranslationsProcessor {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ActivityDefTranslationsProcessor.class);
-
     private final Map<String, TranslationData> allTranslations;
 
     public ActivityDefTranslationsProcessor(Map<String, TranslationData> allTranslations) {
@@ -79,7 +76,7 @@ public class ActivityDefTranslationsProcessor {
     }
 
     private void enrichActivityDefWithTranslations(FormActivityDef activityDef) {
-        LOG.info("Add translations for languages {} to a generated activity definition {}",
+        log.info("Add translations for languages {} to a generated activity definition {}",
                 TranslationsProcessingData.INSTANCE.getTranslations().keySet(), activityDef.getActivityCode());
 
         addTemplateTranslations(activityDef.getReadonlyHintTemplate(), allTranslations);
