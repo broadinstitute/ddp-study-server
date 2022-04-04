@@ -194,8 +194,8 @@ public class OsteoAboutChildV2 implements CustomTask {
 
         default void updateVarSubstitutionValue(String oldValue, String value) {
             int numUpdated = _updateVarValueByOldValue(oldValue, value);
-            if (numUpdated != 1) {
-                throw new DDPException("Expected to update 1 template variable value for value="
+            if (numUpdated < 1) {
+                throw new DDPException("Expected to update a template variable value for value="
                         + oldValue + " but updated " + numUpdated);
             }
         }
