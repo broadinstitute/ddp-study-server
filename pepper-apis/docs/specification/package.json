@@ -1,6 +1,6 @@
 {
   "name": "pepper-api-spec",
-  "version": "1.27-370-ge7f3453f7",
+  "version": "1.27.370",
   "private": true,
   "description": "",
   "dependencies": {
