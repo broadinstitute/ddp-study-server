@@ -265,7 +265,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
         }
     }
 
-    private void traverseSection(Handle handle, int sectionNum, Config sectionCfg, FormSectionDef section, long timestamp) {
+    protected void traverseSection(Handle handle, int sectionNum, Config sectionCfg, FormSectionDef section, long timestamp) {
         String prefix = String.format("section %d", sectionNum);
         extractAndCompare(handle, prefix, section.getNameTemplate(), sectionCfg, "nameTemplate");
 
@@ -374,7 +374,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
         }
     }
 
-    private void traverseQuestion(Handle handle, Config questionCfg, QuestionDef question, long timestamp) {
+    protected void traverseQuestion(Handle handle, Config questionCfg, QuestionDef question, long timestamp) {
         String prefix = String.format("question %s", question.getStableId());
 
         extractAndCompare(handle, prefix, question.getPromptTemplate(), questionCfg, "promptTemplate");
