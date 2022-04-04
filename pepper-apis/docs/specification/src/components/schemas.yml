@@ -1642,10 +1642,10 @@ Question.Boolean:
           - CHECKBOX
           - RADIO_BUTTONS
       trueContent:
-        type: string | null (for CHECKBOX renderMode)
+        type: string
         example: 'Yes'
       falseContent:
-        type: string | null (for CHECKBOX renderMode)
+        type: string
         example: 'NO'
       answers:
         type: array
