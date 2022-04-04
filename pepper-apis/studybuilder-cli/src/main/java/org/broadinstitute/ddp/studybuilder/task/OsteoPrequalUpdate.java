@@ -111,7 +111,7 @@ public class OsteoPrequalUpdate implements CustomTask {
         questionUpdates.forEach(config -> {
             String stableId = config.getString("stableId");
 
-            if (config.getConfig("validation") != null) {
+            if (!config.getConfig("validation").isEmpty()) {
                 Config validation = config.getConfig("validation");
                 String varName = validation.getString("varName");
                 String newVal = validation.getString("newVal");
