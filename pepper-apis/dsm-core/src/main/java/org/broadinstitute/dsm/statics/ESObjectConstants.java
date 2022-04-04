@@ -81,4 +81,7 @@ public class ESObjectConstants {
     public static final String PARTICIPANT = "participant";
     public static final String DYNAMIC_FIELDS = "dynamicFields";
     public static final String DOC_ID = "_id";
+
+    //question
+    public static final String STABLE_ID = "stableId";
 }
