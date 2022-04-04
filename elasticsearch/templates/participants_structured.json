@@ -31,6 +31,27 @@
   },
   "mappings": {
     "_doc": {
+      "dynamic": true,
+      "dynamic_templates": [
+        {
+          "strings": {
+            "match_mapping_type": "string",
+            "mapping": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                },
+                "lower_case_sort": {
+                  "type": "text",
+                  "analyzer": "case_insensitive_sort",
+                  "fielddata": true
+                }
+              }
+            }
+          }
+        }
+      ],
       "properties": {
         "status": {
           "type": "keyword"
