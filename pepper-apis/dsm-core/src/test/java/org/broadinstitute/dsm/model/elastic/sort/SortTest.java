@@ -43,7 +43,7 @@ public class SortTest {
         Sort sort = Sort.of(sortBy, mockFieldTypeExractorByFieldAndType("isCorrected", "text"));
         String fieldName = sort.buildFieldName();
 
-        assertEquals("dsm.kitRequestShipping.testResult.isCorrected.keyword", fieldName);
+        assertEquals("dsm.kitRequestShipping.testResult.isCorrected.lower_case_sort", fieldName);
     }
 
     @Test
@@ -58,7 +58,7 @@ public class SortTest {
 
         Sort sort = Sort.of(sortBy, mockFieldTypeExractorByFieldAndType("hello", "text"));
         String fieldName = sort.buildFieldName();
-        assertEquals("dsm.medicalRecord.dynamicFields.hello.keyword", fieldName);
+        assertEquals("dsm.medicalRecord.dynamicFields.hello.lower_case_sort", fieldName);
     }
 
     @Test
@@ -71,7 +71,7 @@ public class SortTest {
                 .build();
         Sort sort = new Sort(sortBy, mockFieldTypeExractorByFieldAndType("notes", "text"));
         String fieldName = sort.buildFieldName();
-        assertEquals("dsm.medicalRecord.notes.keyword", fieldName);
+        assertEquals("dsm.medicalRecord.notes.lower_case_sort", fieldName);
     }
 
 
@@ -128,7 +128,7 @@ public class SortTest {
                 .build();
         Sort sort = new Sort(sortBy, mockFieldTypeExractorByFieldAndType("registrationStatus", "text"));
         String outerProperty = sort.buildFieldName();
-        assertEquals("dsm.participantData.dynamicFields.registrationStatus.keyword", outerProperty);
+        assertEquals("dsm.participantData.dynamicFields.registrationStatus.lower_case_sort", outerProperty);
     }
 
     @Test
@@ -142,7 +142,7 @@ public class SortTest {
                 .build();
         Sort sort = new Sort(sortBy, mockFieldTypeExractorByFieldAndType("country", "text"));
         String outerProperty = sort.buildFieldName();
-        assertEquals("address.country.keyword", outerProperty);
+        assertEquals("address.country.lower_case_sort", outerProperty);
     }
 
     @Test
@@ -155,7 +155,7 @@ public class SortTest {
                 .build();
         Sort sort = new Sort(sortBy, mockFieldTypeExractorByFieldAndType("status", "text"));
         String outerProperty = sort.buildFieldName();
-        assertEquals("status.keyword", outerProperty);
+        assertEquals("status.lower_case_sort", outerProperty);
     }
 
     @Test
@@ -195,7 +195,7 @@ public class SortTest {
                 .build();
         Sort sort = new Sort(sortBy, mockFieldTypeExractorByFieldAndType("email", "text"));
         String outerProperty = sort.buildFieldName();
-        assertEquals("profile.email.keyword", outerProperty);
+        assertEquals("profile.email.lower_case_sort", outerProperty);
     }
 
     @Test
@@ -223,7 +223,7 @@ public class SortTest {
                 .build();
         Sort sort = new Sort(sortBy, mockFieldTypeExractorByFieldAndType("YEARS", "text"));
         String outerProperty = sort.buildFieldName();
-        assertEquals("activities.questionsAnswers.YEARS.keyword", outerProperty);
+        assertEquals("activities.questionsAnswers.YEARS.lower_case_sort", outerProperty);
     }
 
     @Test
