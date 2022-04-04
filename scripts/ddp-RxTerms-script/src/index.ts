@@ -1,41 +1,72 @@
 import * as XLSX from "xlsx";
 import { RxNormDrugOption } from "./models";
 import { parseToHOCON, writeFile } from "./utils/common";
+import * as inquirer from "inquirer";
 
-const inputFileName = 'RxTerms202202.txt';
-const outputFileName = 'output.txt'
+const inquirerFileTreeSelection = require("inquirer-file-tree-selection-prompt");
 
-const workBook = XLSX.readFile(inputFileName);
+interface InputOutput {
+  files: string;
+  outputName: string;
+}
+let inputAndOutput: InputOutput;
 
-const workSheet = workBook.Sheets[workBook.SheetNames[0]];
+inquirer.registerPrompt("file-tree-selection", inquirerFileTreeSelection);
 
-const rxNormArray = XLSX.utils.sheet_to_json(workSheet) as RxNormDrugOption[];
+inquirer
+  .prompt([
+    {
+      root: "./",
+      type: "file-tree-selection",
+      name: "files",
+      message: "choose RxNorm .txt file"
+    },
+    {
+      type: "input",
+      name: "outputName",
+      message: "Enter output file name. File will be generated on TXT extension"
+    }
+  ])
+  .then((answers: InputOutput) => {
+    console.log(answers.files);
+    const workBook = XLSX.readFile(answers.files);
 
-const filteredRxNormOptions = rxNormArray.map((drug) => ({
-  stableId: drug.RXCUI,
-  displayName: drug.DISPLAY_NAME
-}));
+    const workSheet = workBook.Sheets[workBook.SheetNames[0]];
 
-const pickListOptions = filteredRxNormOptions.map((option) => ({
-  stableId: option.stableId,
-  optionLabelTemplate: {
-    templateType: "TEXT",
-    templateText: option.displayName
-  }
-}));
+    const rxNormArray = XLSX.utils.sheet_to_json(
+      workSheet
+    ) as RxNormDrugOption[];
 
-const picklistString = pickListOptions.reduce((prev, current) => {
-  const stringBuilder = `{${Object.keys(current)[0]}: ${
-    current.stableId
-  } optionLabelTemplate:{${Object.keys(current.optionLabelTemplate)[0]}: "${
-    current.optionLabelTemplate.templateType
-  }" ${
-    Object.keys(current.optionLabelTemplate)[1]
-  }: "${current.optionLabelTemplate.templateText.replace(/'/g, "")}"}},`;
-  return (prev += stringBuilder);
-}, "");
+    const filteredRxNormOptions = rxNormArray.map((drug) => ({
+      stableId: drug.RXCUI,
+      displayName: drug.DISPLAY_NAME
+    }));
 
-writeFile(
-  outputFileName,
-  JSON.stringify(parseToHOCON(`picklistOptions : [${picklistString}]`), null, 2)
-);
+    const pickListOptions = filteredRxNormOptions.map((option) => ({
+      stableId: option.stableId,
+      optionLabelTemplate: {
+        templateType: "TEXT",
+        templateText: option.displayName
+      }
+    }));
+
+    const picklistString = pickListOptions.reduce((prev, current) => {
+      const stringBuilder = `{${Object.keys(current)[0]}: ${
+        current.stableId
+      } optionLabelTemplate:{${Object.keys(current.optionLabelTemplate)[0]}: "${
+        current.optionLabelTemplate.templateType
+      }" ${
+        Object.keys(current.optionLabelTemplate)[1]
+      }: "${current.optionLabelTemplate.templateText.replace(/'/g, "")}"}},`;
+      return (prev += stringBuilder);
+    }, "");
+
+    writeFile(
+      answers.outputName.concat('.txt'),
+      JSON.stringify(
+        parseToHOCON(`picklistOptions : [${picklistString}]`),
+        null,
+        2
+      )
+    );
+  });
