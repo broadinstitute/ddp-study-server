@@ -16,15 +16,12 @@ publishes to one result topic, subscribers might receive result messages for
 all of those scans. One tip here is to create your subscription with a
 [filter][pubsub-filter] to match on your desired bucket.
 
-Internally, the scanner uses the [ClamAV][clamav] open-source antivirus engine.
-The virus signature database files are loaded at runtime on every scan using
-`freshclam`. Files are scanned using the `clamscan` command-line, invoked via
-the CF. ClamAV binaries are packaged with the CF, see `build-clamav.sh` script
-as a starting point to see how that bundle is built.
+Internally, the scanner uses the [ClamAV][clamav] open-source antivirus engine. The ClamAV binaries are provided by the official ClamAV docker image, and scanning is performed by communication over clamd's [socket protocol][clamd].
 
 [gcs-fmt]: https://cloud.google.com/storage/docs/pubsub-notifications#format
 [pubsub-filter]: https://cloud.google.com/pubsub/docs/filtering
 [clamav]: https://www.clamav.net/
+[clamd]: https://manpages.debian.org/unstable/clamav-daemon/clamd.8.en.html
 
 ## Project layout
 
@@ -65,7 +62,6 @@ will run the CF as a HTTP function even if it was implemented as a background
 function. This is so we can trigger the function locally easily using something
 like `curl`. The HTTP request payload follows a certain format. See the
 [docs][call-cf] for more info.
-
 You'll also need Google application default credentials on your local
 environment. You can get this by using the `gcloud auth` commands.
 
@@ -77,12 +73,12 @@ environment. You can get this by using the `gcloud auth` commands.
 6. In a separate terminal, post a message. For example:
 
 ```
-$ curl -X POST localhost:8080 \
+$ curl -X POST 127.0.0.1:8080 \
   -H 'content-type: application/json' \
   -d '{
     "context": {
-      "eventId": "1144231683168617",
-      "timestamp": "2020-05-06T07:33:34.556Z",
+      "eventId": "11235813853211",
+      "timestamp": "1999-12-31T11:59:99.999Z",
       "eventType": "google.pubsub.topic.publish",
       "resource": {
         "service": "pubsub.googleapis.com",
@@ -94,7 +90,7 @@ $ curl -X POST localhost:8080 \
       "@type": "type.googleapis.com/google.pubsub.v1.PubsubMessage",
       "attributes": {
         "bucketId": "ddp-dev-file-uploads",
-        "objectId": "file.pdf",
+        "objectId": "test-files/positive-eicar.txt",
         "other": "attributes"
       },
       "data": ""
