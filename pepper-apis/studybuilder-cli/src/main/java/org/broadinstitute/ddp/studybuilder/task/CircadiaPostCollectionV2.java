@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.UserDao;
@@ -28,17 +29,14 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 
+@Slf4j
 public class CircadiaPostCollectionV2 implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(CircadiaPostCollectionV2.class);
     private static final String DATA_FILE = "patches/post-collection-v2.conf";
     private static final String STUDY = "circadia";
     private static final String BLOCK_KEY = "blockNew";
@@ -78,7 +76,7 @@ public class CircadiaPostCollectionV2 implements CustomTask {
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid"));
 
         String activityCode = dataCfg.getString("activityCode");
-        LOG.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
+        log.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
         revisionPostCollection(handle, adminUser.getId(), studyDto, activityCode, versionTag, timestamp.toEpochMilli());
     }
 

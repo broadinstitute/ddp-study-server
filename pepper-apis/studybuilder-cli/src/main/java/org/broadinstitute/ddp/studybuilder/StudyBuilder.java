@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.EventDao;
@@ -58,12 +59,9 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class StudyBuilder {
-
-    private static final Logger LOG = LoggerFactory.getLogger(StudyBuilder.class);
     private static final String UMBRELLA_UNASSIGNED = "unassigned";
 
     private boolean doWorkflow = true;
@@ -166,7 +164,7 @@ public class StudyBuilder {
     public void runEnableEvents(Handle handle, boolean enable) {
         StudyDto studyDto = getStudy(handle);
         int numUpdated = handle.attach(EventDao.class).enableAllStudyEvents(studyDto.getId(), enable);
-        LOG.info("{} {} event configurations for study {}",
+        log.info("{} {} event configurations for study {}",
                 enable ? "Enabled" : "Disabled", numUpdated, studyDto.getGuid());
     }
 
@@ -175,22 +173,22 @@ public class StudyBuilder {
         StudyInvalidationHelper helper = handle.attach(StudyInvalidationHelper.class);
 
         int numRows = handle.attach(QueuedEventDao.class).deleteQueuedEventsByStudyId(studyDto.getId());
-        LOG.info("deleted {} queued events for study", numRows);
+        log.info("deleted {} queued events for study", numRows);
 
         numRows = helper.invalidateMailingAddressStatuses(studyDto.getId());
-        LOG.info("invalidated {} mailing addresses", numRows);
+        log.info("invalidated {} mailing addresses", numRows);
 
         numRows = helper.invalidateKitScheduleRecords(studyDto.getId());
-        LOG.info("invalidated {} kit schedule records", numRows);
+        log.info("invalidated {} kit schedule records", numRows);
 
         numRows = helper.renamePdfConfigurations(studyDto.getId());
-        LOG.info("renamed {} pdf configurations", numRows);
+        log.info("renamed {} pdf configurations", numRows);
 
         // Remove the governance policy
         StudyGovernanceDao studyGovernanceDao = handle.attach(StudyGovernanceDao.class);
         studyGovernanceDao.findPolicyByStudyId(studyDto.getId()).ifPresent(policy -> {
             studyGovernanceDao.removePolicy(policy.getId());
-            LOG.info("removed governance policy with id {} and {} age-of-majority rules",
+            log.info("removed governance policy with id {} and {} age-of-majority rules",
                     policy.getId(), policy.getAgeOfMajorityRules().size());
         });
 
@@ -218,7 +216,7 @@ public class StudyBuilder {
         }
 
         StudyDto renamedStudy = handle.attach(JdbiUmbrellaStudy.class).findById(studyDto.getId());
-        LOG.info("renamed study with guid={} and moved to umbrella '{}'", renamedStudy.getGuid(), UMBRELLA_UNASSIGNED);
+        log.info("renamed study with guid={} and moved to umbrella '{}'", renamedStudy.getGuid(), UMBRELLA_UNASSIGNED);
     }
 
     public Auth0TenantDto getTenantOrInsert(Handle handle) {
@@ -234,9 +232,9 @@ public class StudyBuilder {
             String encryptedSecret = AesUtil.encrypt(mgmtSecret, EncryptionKey.getEncryptionKey());
             long tenantId = jdbiTenant.insert(domain, mgmtClientId, encryptedSecret);
             dto = new Auth0TenantDto(tenantId, mgmtClientId, encryptedSecret, domain);
-            LOG.info("Created tenant with id={}, domain={}", tenantId, domain);
+            log.info("Created tenant with id={}, domain={}", tenantId, domain);
         } else {
-            LOG.warn("Tenant already exists with id={}, domain={}", dto.getId(), dto.getDomain());
+            log.warn("Tenant already exists with id={}, domain={}", dto.getId(), dto.getDomain());
         }
 
         return dto;
@@ -253,9 +251,9 @@ public class StudyBuilder {
         if (dto == null) {
             long umbrellaId = jdbiUmbrella.insert(name, guid);
             dto = new UmbrellaDto(umbrellaId, name, guid);
-            LOG.info("Created umbrella with id={}, name={}, guid={}", umbrellaId, name, guid);
+            log.info("Created umbrella with id={}, name={}, guid={}", umbrellaId, name, guid);
         } else {
-            LOG.warn("Umbrella already exists with id={}, name={}, guid={}", dto.getId(), dto.getName(), dto.getGuid());
+            log.warn("Umbrella already exists with id={}, name={}, guid={}", dto.getId(), dto.getName(), dto.getGuid());
         }
 
         return dto;
@@ -284,10 +282,10 @@ public class StudyBuilder {
         String olcPrecisionString = ConfigUtil.getStrIfPresent(studyCfg, "plusCodePrecision");
         OLCPrecision olcPrecision;
         if (olcPrecisionString == null) {
-            LOG.warn("OLC precision is null.");
+            log.warn("OLC precision is null.");
             olcPrecision = null;
         } else {
-            LOG.info("OLC precision is " + olcPrecisionString);
+            log.info("OLC precision is " + olcPrecisionString);
             olcPrecision = OLCPrecision.valueOf(olcPrecisionString);
         }
 
@@ -309,9 +307,9 @@ public class StudyBuilder {
                     tenantId, irbPassword, olcPrecisionId, shareLocationInformation, studyEmail, recaptchaSiteKey,
                     defaultAuth0Connection);
             dto = handle.attach(JdbiUmbrellaStudy.class).findById(studyId);
-            LOG.info("Created study with id={}, name={}, guid={}", studyId, name, guid);
+            log.info("Created study with id={}, name={}, guid={}", studyId, name, guid);
         } else {
-            LOG.warn("Study already exists with id={}, name={}, guid={}", dto.getId(), dto.getName(), dto.getGuid());
+            log.warn("Study already exists with id={}, name={}, guid={}", dto.getId(), dto.getName(), dto.getGuid());
         }
 
         return dto;
@@ -347,19 +345,19 @@ public class StudyBuilder {
                     throw new DDPException("Client Domain :" + clientDomain + " not found ");
                 }
                 clientTenantId = dto.getId();
-                LOG.info("Using client domain: {} ", clientDomain);
+                log.info("Using client domain: {} ", clientDomain);
             }
 
             long finalTenantId = (clientTenantId != null) ? clientTenantId : tenantId;
             ClientDto clientDto = jdbiClient
                     .findByAuth0ClientIdAndAuth0TenantId(clientId, finalTenantId)
                     .map(dto -> {
-                        LOG.warn("Client already exists with id={}, auth0ClientId={}", dto.getId(), dto.getAuth0ClientId());
+                        log.warn("Client already exists with id={}, auth0ClientId={}", dto.getId(), dto.getAuth0ClientId());
                         return dto;
                     }).orElseGet(() -> {
                         String encryptedSecret = AesUtil.encrypt(clientSecret, EncryptionKey.getEncryptionKey());
                         long id = jdbiClient.insertClient(clientId, encryptedSecret,  finalTenantId, passwordRedirectUrl);
-                        LOG.info("Created client with id={}, auth0ClientId={}", id, clientId);
+                        log.info("Created client with id={}, auth0ClientId={}", id, clientId);
                         return new ClientDto(id, clientId, encryptedSecret, passwordRedirectUrl, false, tenantId, tenantDto.getDomain());
                     });
             alreadyHasRedirectUrl = alreadyHasRedirectUrl || passwordRedirectUrl != null;
@@ -378,9 +376,9 @@ public class StudyBuilder {
             );
             if (!studyGuids.contains(studyDto.getGuid())) {
                 jdbiACL.insert(clientDto.getId(), studyDto.getId());
-                LOG.info("Granted client {} access to study {}", clientDto.getAuth0ClientId(), studyDto.getGuid());
+                log.info("Granted client {} access to study {}", clientDto.getAuth0ClientId(), studyDto.getGuid());
             } else {
-                LOG.warn("Client {} already has access to study {}", clientDto.getAuth0ClientId(), studyDto.getGuid());
+                log.warn("Client {} already has access to study {}", clientDto.getAuth0ClientId(), studyDto.getGuid());
             }
         }
     }
@@ -407,9 +405,9 @@ public class StudyBuilder {
         if (dto == null) {
             long userId = jdbiUser.insert(null, guid, clientId, null);
             dto = jdbiUser.findByUserId(userId);
-            LOG.info("Created admin user with id={}, guid={}", userId, guid);
+            log.info("Created admin user with id={}, guid={}", userId, guid);
         } else {
-            LOG.warn("Admin user already exists with id={}, guid={}", dto.getUserId(), dto.getUserGuid());
+            log.warn("Admin user already exists with id={}, guid={}", dto.getUserId(), dto.getUserGuid());
         }
 
         return dto;
@@ -431,7 +429,7 @@ public class StudyBuilder {
             }
 
             policy = handle.attach(StudyGovernanceDao.class).createPolicy(policy);
-            LOG.info("Created study governance policy with id={}, shouldCreateGovernedUserExprId={}, numAgeOfMajorityRules={}",
+            log.info("Created study governance policy with id={}, shouldCreateGovernedUserExprId={}, numAgeOfMajorityRules={}",
                     policy.getId(), policy.getShouldCreateGovernedUserExpr().getId(), policy.getAgeOfMajorityRules().size());
         }
     }
@@ -462,13 +460,13 @@ public class StudyBuilder {
 
             if (current == null) {
                 long detailId = jdbiStudyI18n.insert(studyId, langCodeId, name, summary);
-                LOG.info("Created study details with id={}, language={}, name={}, summary={}",
+                log.info("Created study details with id={}, language={}, name={}, summary={}",
                         detailId, lang, name, StringUtils.abbreviate(summary, 50));
             } else if (!current.equals(latest)) {
                 DBUtils.checkUpdate(1, jdbiStudyI18n.updateByStudyIdAndLanguage(studyId, lang, name, summary));
-                LOG.info("Updated study details for language {}", lang);
+                log.info("Updated study details for language {}", lang);
             } else {
-                LOG.info("Study details for language {} already up-to-date", lang);
+                log.info("Study details for language {} already up-to-date", lang);
             }
         }
     }
@@ -507,12 +505,12 @@ public class StudyBuilder {
 
             if (current == null) {
                 long studyLanguageId = studyLanguageDao.insert(studyId, langCodeId, name);
-                LOG.info("Created study language with id={}, languageCode={} languageName={}", studyLanguageId, lang, name);
+                log.info("Created study language with id={}, languageCode={} languageName={}", studyLanguageId, lang, name);
             } else if (!current.equals(latest)) {
                 studyLanguageDao.update(studyId, langCodeId, name);
-                LOG.info("Updated study language {}", lang);
+                log.info("Updated study language {}", lang);
             } else {
-                LOG.info("Study already has language {}", lang);
+                log.info("Study already has language {}", lang);
             }
 
             chosenDefault = isDefault ? latest : chosenDefault;
@@ -520,17 +518,17 @@ public class StudyBuilder {
 
         // Make sure there is one default language.
         if (chosenDefault != null) {
-            LOG.info("Setting language {} as default", chosenDefault.getLanguageCode());
+            log.info("Setting language {} as default", chosenDefault.getLanguageCode());
             studyLanguageDao.setAsDefaultLanguage(studyId, chosenDefault.getLanguageId());
         } else {
-            LOG.error("No language is set as default. Please set default language");
+            log.error("No language is set as default. Please set default language");
             throw new DDPException("No language is set as default");
         }
     }
 
     private void insertSettings(Handle handle, StudyDto studyDto, long userId) {
         if (!cfg.hasPath("settings")) {
-            LOG.info("No additional settings configured for study {}", studyDto.getGuid());
+            log.info("No additional settings configured for study {}", studyDto.getGuid());
             return;
         }
 
@@ -559,7 +557,7 @@ public class StudyBuilder {
 
         handle.attach(StudyDao.class).addSettings(studyDto.getId(), inviteError, revisionId, analyticsEnabled, analyticsToken,
                 shouldDeleteUnsendableEmails, shouldDisplayLanguageChangePopup);
-        LOG.info("Created settings for study={}, inviteErrorTmplId={}, analyticsEnabled={}, analyticsToken={},"
+        log.info("Created settings for study={}, inviteErrorTmplId={}, analyticsEnabled={}, analyticsToken={},"
                         + " shouldDeleteUnsendableEmails={}, shouldDisplayLanguageChangePopup={}",
                 studyDto.getGuid(), inviteError == null ? null : inviteError.getTemplateId(), analyticsEnabled, analyticsToken,
                 shouldDeleteUnsendableEmails, shouldDisplayLanguageChangePopup);
@@ -577,7 +575,7 @@ public class StudyBuilder {
         String defaultSalutation = sendgridCfg.getString("defaultSalutation");
 
         long id = handle.attach(JdbiSendgridConfiguration.class).insert(studyId, apiKey, fromName, fromEmail, defaultSalutation);
-        LOG.info("Created sendgrid configuration with id={}, fromName={}, fromEmail={}", id, fromName, fromEmail);
+        log.info("Created sendgrid configuration with id={}, fromName={}, fromEmail={}", id, fromName, fromEmail);
     }
 
     private void insertKits(Handle handle, long studyId, long userId) {
@@ -596,7 +594,7 @@ public class StudyBuilder {
             KitType kitType = kitTypeDao.getKitTypeByName(type)
                     .orElseThrow(() -> new DDPException("Could not find kit type " + type));
             long kitId = kitDao.insertConfiguration(studyId, quantity, kitType.getId(), needsApproval);
-            LOG.info("Created kit configuration with id={}, type={}, quantity={}, needsApproval={}",
+            log.info("Created kit configuration with id={}, type={}, quantity={}, needsApproval={}",
                     kitId, type, quantity, needsApproval);
 
             for (Config ruleCfg : kitCfg.getConfigList("rules")) {
@@ -604,11 +602,11 @@ public class StudyBuilder {
                 if (ruleType == KitRuleType.PEX) {
                     String expr = ruleCfg.getString("expression");
                     long ruleId = kitDao.addPexRule(kitId, expr);
-                    LOG.info("Added pex rule to kit configuration {} with id={}", kitId, ruleId);
+                    log.info("Added pex rule to kit configuration {} with id={}", kitId, ruleId);
                 } else if (ruleType == KitRuleType.COUNTRY) {
                     String country = ruleCfg.getString("country");
                     long ruleId = kitDao.addCountryRule(kitId, country);
-                    LOG.info("Added country rule to kit configuration {} with id={}, country={}", kitId, ruleId, country);
+                    log.info("Added country rule to kit configuration {} with id={}, country={}", kitId, ruleId, country);
                 } else if (ruleType == KitRuleType.ZIP_CODE) {
                     insertKipZipCodeRule(handle, ruleCfg, kitId, userId);
                 } else {
@@ -655,7 +653,7 @@ public class StudyBuilder {
         Set<String> zipCodes = Set.copyOf(ruleCfg.getStringList("zipCodes"));
         long ruleId = handle.attach(KitConfigurationDao.class)
                 .addZipCodeRule(kitConfigId, zipCodes, errorMsg, warningMsg, revisionId);
-        LOG.info("Added zip code rule to kit configuration {} with id={}, zipCodes={}, errorTmplId={}, warningTmplId={}",
+        log.info("Added zip code rule to kit configuration {} with id={}, zipCodes={}, errorTmplId={}, warningTmplId={}",
                 kitConfigId, ruleId, zipCodes,
                 errorMsg == null ? null : errorMsg.getTemplateId(),
                 warningMsg == null ? null : warningMsg.getTemplateId());
@@ -672,7 +670,7 @@ public class StudyBuilder {
             String value = statEntry.hasPath("value") ? statEntry.getString("value") : null;
             StatisticsType statType = StatisticsType.valueOf(typeName);
             long statConfigId = statConfigDao.insertConfiguration(studyId, statType, stableId, value);
-            LOG.info("Created statistics configuration with id={}, type={}, stableId={}, value={}",
+            log.info("Created statistics configuration with id={}, type={}, stableId={}, value={}",
                     statConfigId, typeName, stableId, value);
         }
     }

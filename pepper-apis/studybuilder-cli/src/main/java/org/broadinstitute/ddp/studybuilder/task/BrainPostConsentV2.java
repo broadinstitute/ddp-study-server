@@ -32,12 +32,8 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class BrainPostConsentV2 implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(BrainPostConsentV2.class);
     private static final String DATA_FILE = "patches/postconsent-version2.conf";
     private static final String BRAIN = "cmi-brain";
 

@@ -12,6 +12,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
@@ -65,8 +66,6 @@ import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.studybuilder.EventBuilder;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * General task to iterate through all templates in a study and update them in-place. For each template, this will
@@ -75,10 +74,8 @@ import org.slf4j.LoggerFactory;
  * database and in config files. Due to these assumptions and the fact that templates are updated in-place instead of
  * revisioned, use this task with caution and only if it makes sense for your use-case.
  */
+@Slf4j
 public class UpdateTemplatesInPlace implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(UpdateTemplatesInPlace.class);
-
     private Path cfgPath;
     private Config studyCfg;
     private Config varsCfg;
@@ -103,7 +100,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
     }
 
     private void traverseStudySettings(Handle handle, long studyId) {
-        LOG.info("Comparing templates in study settings...");
+        log.info("Comparing templates in study settings...");
         StudySettings settings = handle.attach(StudyDao.class).findSettings(studyId).orElse(null);
         if (settings == null) {
             return;
@@ -117,7 +114,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
 
     // Note: This currently assumes study has only one config per kit type.
     private void traverseKitConfigurations(Handle handle, long studyId) {
-        LOG.info("Comparing templates in kit configurations...");
+        log.info("Comparing templates in kit configurations...");
 
         Map<String, Config> latestZipCodeRules = new HashMap<>();
         for (var kitCfg : studyCfg.getConfigList("kits")) {
@@ -162,7 +159,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
 
     // Note: This currently assumes only ANNOUNCEMENT event actions has templates.
     private void traverseEventConfigurations(Handle handle, long studyId) {
-        LOG.info("Comparing templates in event configurations...");
+        log.info("Comparing templates in event configurations...");
 
         Map<String, Config> latestAnnouncementEvents = new HashMap<>();
         for (var eventCfg : studyCfg.getConfigList("events")) {
@@ -235,7 +232,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
 
         long activityId = ActivityBuilder.findActivityId(handle, studyId, activityCode);
 
-        LOG.info("Comparing activity {} naming details...", activityCode);
+        log.info("Comparing activity {} naming details...", activityCode);
         var task = new UpdateActivityBaseSettings();
         task.init(cfgPath, studyCfg, varsCfg);
         task.compareNamingDetails(handle, definition, activityId, versionDto);
@@ -245,7 +242,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
     }
 
     void traverseActivity(Handle handle, String activityCode, Config definition, FormActivityDef activity, long timestamp) {
-        LOG.info("Comparing templates in activity {}...", activityCode);
+        log.info("Comparing templates in activity {}...", activityCode);
 
         extractAndCompare(handle, "", activity.getLastUpdatedTextTemplate(), definition, "lastUpdatedTextTemplate");
         extractAndCompare(handle, "", activity.getReadonlyHintTemplate(), definition, "readonlyHintTemplate");
@@ -268,7 +265,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
         }
     }
 
-    private void traverseSection(Handle handle, int sectionNum, Config sectionCfg, FormSectionDef section, long timestamp) {
+    protected void traverseSection(Handle handle, int sectionNum, Config sectionCfg, FormSectionDef section, long timestamp) {
         String prefix = String.format("section %d", sectionNum);
         extractAndCompare(handle, prefix, section.getNameTemplate(), sectionCfg, "nameTemplate");
 
@@ -377,7 +374,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
         }
     }
 
-    private void traverseQuestion(Handle handle, Config questionCfg, QuestionDef question, long timestamp) {
+    protected void traverseQuestion(Handle handle, Config questionCfg, QuestionDef question, long timestamp) {
         String prefix = String.format("question %s", question.getStableId());
 
         extractAndCompare(handle, prefix, question.getPromptTemplate(), questionCfg, "promptTemplate");
@@ -544,7 +541,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
                     current.getTemplateType(),
                     latestText,
                     revisionId);
-            LOG.info("[{}] updated template text", tag);
+            log.info("[{}] updated template text", tag);
         }
 
         Map<String, TemplateVariable> latestVariables = new HashMap<>();
@@ -588,7 +585,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
                         language,
                         latestText);
                 if (updated) {
-                    LOG.info("[{}] variable {} language {}: updated substitution", tag, variableName, language);
+                    log.info("[{}] variable {} language {}: updated substitution", tag, variableName, language);
                 } else {
                     throw new DDPException(String.format(
                             "Could not update substitution for %s variable %s language %s",
@@ -601,7 +598,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
         for (var language : latestTranslations.keySet()) {
             String text = latestTranslations.get(language);
             jdbiVariableSubstitution.insert(language, text, revisionId, variableId);
-            LOG.info("[{}] variable {} language {}: inserted substitution", tag, variableName, language);
+            log.info("[{}] variable {} language {}: inserted substitution", tag, variableName, language);
         }
     }
 
@@ -615,7 +612,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
             String language = translation.getLanguageCode();
             boolean deleted = jdbiVariableSubstitution.delete(translation.getId().get());
             if (deleted) {
-                LOG.info("[{}] variable {} language {}: deleted substitution", tag, variableName, language);
+                log.info("[{}] variable {} language {}: deleted substitution", tag, variableName, language);
             } else {
                 throw new DDPException(String.format(
                         "Could not delete substitution for %s variable %s language %s",
@@ -625,7 +622,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
 
         boolean deleted = jdbiTemplateVariable.delete(variableId);
         if (deleted) {
-            LOG.info("[{}] deleted variable {}", tag, variableName);
+            log.info("[{}] deleted variable {}", tag, variableName);
         } else {
             throw new DDPException(String.format("Could not delete %s variable %s", tag, variableName));
         }
@@ -641,12 +638,12 @@ public class UpdateTemplatesInPlace implements CustomTask {
         }
 
         long variableId = jdbiTemplateVariable.insertVariable(templateId, variableName);
-        LOG.info("[{}] inserted variable {}", tag, variableName);
+        log.info("[{}] inserted variable {}", tag, variableName);
 
         for (var translation : variable.getTranslations()) {
             String language = translation.getLanguageCode();
             jdbiVariableSubstitution.insert(language, translation.getText(), revisionId, variableId);
-            LOG.info("[{}] variable {} language {}: inserted substitution",
+            log.info("[{}] variable {} language {}: inserted substitution",
                     tag, variableName, language);
         }
     }

@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -14,12 +15,9 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class BackfillCompositeOrientations implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(BackfillCompositeOrientations.class);
     private static final String DATA_FILE = "patches/backfill-composite-orientations.conf";
 
     private Config cfg;
@@ -45,9 +43,9 @@ public class BackfillCompositeOrientations implements CustomTask {
             String stableId = question.getString("stableId");
             OrientationType orientation = question.getEnum(OrientationType.class, "orientation");
             helper.backfillCompositeOrientation(studyDto.getId(), stableId, orientation);
-            LOG.info("backfilled question {} with orientation {}", stableId, orientation);
+            log.info("backfilled question {} with orientation {}", stableId, orientation);
         }
-        LOG.info("backfilled orientation for {} composite questions", questions.size());
+        log.info("backfilled orientation for {} composite questions", questions.size());
     }
 
     private interface SqlHelper extends SqlObject {

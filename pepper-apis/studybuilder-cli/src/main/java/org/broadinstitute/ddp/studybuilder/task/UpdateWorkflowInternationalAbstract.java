@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiExpression;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
@@ -19,11 +20,9 @@ import org.broadinstitute.ddp.model.pex.Expression;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.studybuilder.WorkflowBuilder;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 abstract class UpdateWorkflowInternationalAbstract implements CustomTask {
-    private static final Logger LOG = LoggerFactory.getLogger(UpdateWorkflowInternationalAbstract.class);
     private static final String DATA_FILE = "patches/update-international-workflow.conf";
 
     private static final int NUM_TRANSITIONS = 1;
@@ -57,7 +56,7 @@ abstract class UpdateWorkflowInternationalAbstract implements CustomTask {
     public void run(Handle handle) {
         // First get all the relevant values
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
-        LOG.info("Updating study " + studyGuid + " with id " + studyDto.getId());
+        log.info("Updating study " + studyGuid + " with id " + studyDto.getId());
 
 
         long fromStateActivityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), fromState);
@@ -103,8 +102,6 @@ abstract class UpdateWorkflowInternationalAbstract implements CustomTask {
             throw new RuntimeException("We expected to update four email configs, but updated:"
                     + emailConfigs);
         }
-
-
     }
 
     private void addNewWorkflowTransitions(Handle handle, StudyDto studyDto) {
@@ -119,6 +116,4 @@ abstract class UpdateWorkflowInternationalAbstract implements CustomTask {
             workflowBuilder.insertTransitionSet(handle, transitionCfg);
         }
     }
-
-
 }
