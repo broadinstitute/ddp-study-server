@@ -3,7 +3,7 @@ package org.broadinstitute.dsm.model.elastic.export.excel;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.stream.Collectors;
-import java.util.stream.LongStream;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
@@ -11,14 +11,10 @@ import org.broadinstitute.dsm.model.elastic.sort.Alias;
 
 public class ColumnValue {
     private Object object;
-    private boolean isCollection;
     private final Alias alias;
     public ColumnValue(Alias alias, Object object) {
         this.object = object;
         this.alias = alias;
-        if (object instanceof Collection) {
-            isCollection = true;
-        }
     }
 
     public <T> T getObject() {
@@ -26,7 +22,7 @@ public class ColumnValue {
     }
 
     public int getColumnsSize() {
-        if (isCollection) {
+        if (isCollection()) {
             return Math.max(1, ((Collection<?>)object).size());
         } else {
             return 1;
@@ -34,7 +30,7 @@ public class ColumnValue {
     }
 
     public boolean isCollection() {
-        return isCollection;
+        return object instanceof Collection && alias != Alias.ACTIVITIES;
     }
 
     public Alias getAlias() {
@@ -42,19 +38,22 @@ public class ColumnValue {
     }
 
     public <T> Iterator<T> iterator () {
-        if (!isCollection) {
-            throw new RuntimeException("Value not iterable");
+        if (isCollection()) {
+            return ((Collection<T>) object).iterator();
         }
-        return ((Collection<T>) object).iterator();
+        throw new RuntimeException("Value not iterable");
     }
 
-    public void appendEmptyStrings(long size) {
-        if (!isCollection) {
-            throw new RuntimeException("Value not iterable");
+    public void appendEmptyStrings(int size) {
+        if (object instanceof Collection) {
+            Collection<String> collection = (Collection<String>) object;
+            if (alias == Alias.ACTIVITIES) {
+                this.object = String.join(",", collection);
+            } else {
+                this.object = Stream.concat(collection.stream(), IntStream.range(0, size).mapToObj(s -> StringUtils.EMPTY))
+                        .collect(Collectors.toList());
+            }
         }
-        Collection<String> collection = (Collection<String>) object;
-        this.object = Stream.concat(collection.stream(), LongStream.range(0, size).mapToObj(s -> StringUtils.EMPTY))
-                .collect(Collectors.toList());
     }
 
 }
