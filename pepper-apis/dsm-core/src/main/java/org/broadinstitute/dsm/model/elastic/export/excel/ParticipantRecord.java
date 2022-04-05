@@ -26,13 +26,22 @@ public class ParticipantRecord {
                 .forEach(entry -> aliasIterators.computeIfAbsent(entry.getKey(), e -> new ArrayList<>()).add(entry.getValue()));
         Stream.Builder<String> rowStream = Stream.builder();
         singleValues.forEach(rowStream::add);
-        aliasIterators.forEach((key, value) ->
+        aliasIterators.forEach((key, value) -> {
+            if (key == Alias.ACTIVITIES) {
+                value.forEach(iter -> {
+                    while (iter.hasNext()) {
+                        rowStream.add(iter.next().toString());
+                    }
+                });
+            } else {
                 IntStream.range(0, size)
                         .mapToObj(n -> value.stream()
                                 .filter(Iterator::hasNext)
                                 .map(it -> it.next().toString())
                                 .collect(Collectors.toList()))
-                        .flatMap(Collection::stream).forEach(rowStream::add));
+                        .flatMap(Collection::stream).forEach(rowStream::add);
+            }
+        });
         return rowStream.build().collect(Collectors.toList());
     }
 

@@ -30,7 +30,7 @@ public class ColumnValue {
     }
 
     public boolean isCollection() {
-        return object instanceof Collection && alias != Alias.ACTIVITIES;
+        return object instanceof Collection;
     }
 
     public Alias getAlias() {
@@ -47,12 +47,8 @@ public class ColumnValue {
     public void appendEmptyStrings(int size) {
         if (object instanceof Collection) {
             Collection<String> collection = (Collection<String>) object;
-            if (alias == Alias.ACTIVITIES) {
-                this.object = String.join(",", collection);
-            } else {
-                this.object = Stream.concat(collection.stream(), IntStream.range(0, size).mapToObj(s -> StringUtils.EMPTY))
-                        .collect(Collectors.toList());
-            }
+            this.object = Stream.concat(collection.stream(), IntStream.range(0, size).mapToObj(s -> StringUtils.EMPTY))
+                    .collect(Collectors.toList());
         }
     }
 

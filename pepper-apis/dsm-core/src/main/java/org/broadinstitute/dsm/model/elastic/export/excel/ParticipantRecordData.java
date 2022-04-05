@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.model.elastic.export.excel;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +11,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.dsm.model.ParticipantColumn;
 import org.broadinstitute.dsm.model.elastic.sort.Alias;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
@@ -59,7 +61,7 @@ public class ParticipantRecordData {
     public List<String> getHeader() {
         int i = 0;
         for (Map.Entry<Alias, List<ParticipantColumn>> aliasListEntry : columnAliasEsPathMap.entrySet()) {
-            headerNames.addAll(getColumnNamesFor(aliasListEntry, columnSizes.get(i)));
+            headerNames.addAll(getColumnNamesFor(aliasListEntry, columnSizes.subList(i, i + aliasListEntry.getValue().size())));
             i+= aliasListEntry.getValue().size();
         }
         return headerNames;
@@ -83,28 +85,57 @@ public class ParticipantRecordData {
         }
     }
 
-    private Collection<String> getColumnNamesFor(Map.Entry<Alias, List<ParticipantColumn>> aliasColumns, int size) {
+    private Collection<String> getColumnNamesFor(Map.Entry<Alias, List<ParticipantColumn>> aliasColumns, List<Integer> sizes) {
+        List<ParticipantColumn> columnsList = aliasColumns.getValue();
         List<String> columns = new ArrayList<>();
-        IntStream.rangeClosed(1, size).forEach(value ->
-                columns.addAll(aliasColumns.getValue().stream().map(column -> String.format("%s %s", column.getDisplay(),
-                                aliasColumns.getKey().isCollection() && size > 1? value : StringUtils.EMPTY))
-                        .collect(Collectors.toList())));
+        int sameAliasSize = sizes.get(0);
+        if (aliasColumns.getKey() != Alias.ACTIVITIES) {
+            IntStream.rangeClosed(1, sizes.get(0)).forEach(value ->
+                    columns.addAll(columnsList.stream().map(column -> String.format("%s %s", column.getDisplay(),
+                                    aliasColumns.getKey().isCollection() && sameAliasSize > 1? value : StringUtils.EMPTY))
+                            .collect(Collectors.toList())));
+        } else {
+            return IntStream.range(0, columnsList.size()).mapToObj(i -> Pair.of(columnsList.get(i), sizes.get(i)))
+                    .map(entry -> IntStream.rangeClosed(1, entry.getValue())
+                            .mapToObj(currentIndex -> String.format("%s %s", entry.getKey().getDisplay(),
+                                    aliasColumns.getKey().isCollection() && entry.getValue() > 1? currentIndex : StringUtils.EMPTY))
+                            .collect(Collectors.toList())).flatMap(Collection::stream).collect(Collectors.toList());
+        }
+
         return columns;
     }
 
-    private Object getQuestionAnswerValue(Object nestedValue, ParticipantColumn column) {
+    private Collection getQuestionAnswerValue(Object nestedValue, ParticipantColumn column) {
         List<LinkedHashMap<String, Object>> activities = (List<LinkedHashMap<String, Object>>) nestedValue;
-        return activities.stream().filter(activity -> activity.get(ElasticSearchUtil.ACTIVITY_CODE).equals(column.getTableAlias()))
-                .findFirst()
-                .map(foundActivity -> {
-                    if (Objects.isNull(column.getObject())) {
-                        return foundActivity.get(column.getName());
-                    }
-                    List<LinkedHashMap<String, Object>> questionAnswers =
-                            (List<LinkedHashMap<String, Object>>) foundActivity.get(ElasticSearchUtil.QUESTIONS_ANSWER);
-                    return questionAnswers.stream().filter(qa -> qa.get(ESObjectConstants.STABLE_ID).equals(column.getName()))
-                            .findFirst().map(fq -> fq.get(column.getName())).orElse(StringUtils.EMPTY);
-                }).orElse(StringUtils.EMPTY);
+        Collection<?> objects =
+                activities.stream().filter(activity -> activity.get(ElasticSearchUtil.ACTIVITY_CODE).equals(column.getTableAlias()))
+                        .findFirst().map(foundActivity -> {
+                            if (Objects.isNull(column.getObject())) {
+                                Object o = foundActivity.get(column.getName());
+                                return mapToCollection(o);
+                            } else {
+                                List<LinkedHashMap<String, Object>> questionAnswers =
+                                        (List<LinkedHashMap<String, Object>>) foundActivity.get(ElasticSearchUtil.QUESTIONS_ANSWER);
+                                return questionAnswers.stream().filter(qa -> qa.get(ESObjectConstants.STABLE_ID).equals(column.getName()))
+                                        .map(fq -> fq.get(column.getName())).map(this::mapToCollection)
+                                        .flatMap(Collection::stream).collect(Collectors.toList());
+                            }
+                        }).orElse(Collections.singletonList(StringUtils.EMPTY));
+        if (objects.isEmpty()) {
+            return Collections.singletonList(StringUtils.EMPTY);
+        }
+        return objects;
+    }
+
+    private Collection<?> mapToCollection(Object o) {
+        if (o instanceof Collection) {
+            if (((Collection<?>) o).isEmpty()) {
+                return Collections.singletonList(StringUtils.EMPTY);
+            }
+            return (Collection<?>) o;
+        } else {
+            return Collections.singletonList(o);
+        }
     }
 
     private String getEsPath(Alias alias, ParticipantColumn column) {
