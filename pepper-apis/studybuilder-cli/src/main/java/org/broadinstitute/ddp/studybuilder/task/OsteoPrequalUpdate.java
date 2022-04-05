@@ -146,26 +146,19 @@ public class OsteoPrequalUpdate implements CustomTask {
 
     private void changeAgeRestriction(SqlHelper helper) {
         int age = 110;
+        int oldAge = 100;
         String templateText = "Please enter an age between 0 and 110";
 
-        String stableId1 = "SELF_CURRENT_AGE";
         String varNameSelf = "self_current_age_range_hint";
-
-        String stableId2 = "CHILD_CURRENT_AGE";
         String varNameChild = "child_current_age_range_hint";
 
-        long questionStableCodeId = helper.getQuestionStableCodeId(stableId1);
-        long questionId = helper.getQuestionId(questionStableCodeId).get(0);
-        Long validationId = helper.getValidationId(questionId).get(0);
-        helper.insertUpperRange(age, validationId);
-        Long templateId = helper.getTemplateVariableId(varNameSelf).get(0);
+        List<Long> validationIds = helper.getValidationId(oldAge);
+        validationIds.forEach(id -> helper.insertUpperRange(age, id));
+
+        long templateId = helper.getTemplateVariableId(varNameSelf).get(0);
         helper.updateTemplateText(templateText, templateId);
 
-        long questionStableCodeId2 = helper.getQuestionStableCodeId(stableId2);
-        long questionId2 = helper.getQuestionId(questionStableCodeId2).get(0);
-        long validationId2 = helper.getValidationId(questionId2).get(0);
-        helper.insertUpperRange(age, validationId2);
-        Long templateId2 = helper.getTemplateVariableId(varNameChild).get(0);
+        long templateId2 = helper.getTemplateVariableId(varNameChild).get(0);
         helper.updateTemplateText(templateText, templateId2);
     }
 
@@ -186,21 +179,21 @@ public class OsteoPrequalUpdate implements CustomTask {
         long getQuestionStableCodeId(@Bind("stableId") String stableId);
 
         @SqlQuery("select question_prompt_template_id from question where question_stable_code_id = :stableId "
-                + "order by question_prompt_template_id desc")
+                + "order by question_prompt_template_id asc")
         List<Long> getQuestionPromptId(@Bind("stableId") long stableId);
 
         @SqlQuery("select template_variable_id from template_variable where variable_name = :name order by template_variable_id desc")
         List<Long> getTemplateVariableId(@Bind("name") String name);
 
         @SqlQuery("select template_variable_id from template_variable where template_id = :templateId and variable_name = :name "
-                + "order by template_variable_id desc")
+                + "order by template_variable_id asc")
         List<Long> getTemplateVariableIdbyTemplateId(@Bind("templateId") long templateId, @Bind("name") String name);
 
         @SqlQuery("select question_id from question where question_stable_code_id = :stableId order by question_id desc")
         List<Long> getQuestionId(@Bind("stableId") long stableId);
 
-        @SqlQuery("select validation_id from question__validation where question_id = :questionId order by validation_id asc")
-        List<Long> getValidationId(@Bind("questionId")long questionId);
+        @SqlQuery("select validation_id from int_range_validation where max = :max order by validation_id asc")
+        List<Long> getValidationId(@Bind("max")int max);
 
         @SqlUpdate("update int_range_validation set max = :max where validation_id = :validationId")
         void insertUpperRange(@Bind("max") int max, @Bind("validationId") long validationId);
