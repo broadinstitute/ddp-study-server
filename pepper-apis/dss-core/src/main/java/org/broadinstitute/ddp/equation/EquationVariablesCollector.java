@@ -1,6 +1,5 @@
 package org.broadinstitute.ddp.equation;
 
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStreams;
@@ -8,15 +7,14 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.broadinstitute.ddp.pex.lang.EquationBaseVisitor;
 import org.broadinstitute.ddp.pex.lang.EquationLexer;
 import org.broadinstitute.ddp.pex.lang.EquationParser;
+
+import java.util.HashSet;
 import java.util.Set;
 
-@AllArgsConstructor(access = AccessLevel.PACKAGE)
+@AllArgsConstructor
 public final class EquationVariablesCollector extends EquationBaseVisitor<Byte> {
-    private final Set<String> variables;
-
-    public static EquationVariablesCollectorBuilder builder() {
-        return new EquationVariablesCollectorBuilder();
-    }
+    private final Set<String> variables = new HashSet<>();
+    private final String expression;
 
     @Override
     public Byte visitVariable(final EquationParser.VariableContext ctx) {
@@ -24,7 +22,7 @@ public final class EquationVariablesCollector extends EquationBaseVisitor<Byte> 
         return null;
     }
 
-    public Set<String> collect(final String expression) {
+    public Set<String> collect() {
         variables.clear();
         visit(buildParser(expression).expression());
         return variables;

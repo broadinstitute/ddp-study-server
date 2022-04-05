@@ -25,6 +25,6 @@ public class EquationVariablesCollectorTest {
     }
 
     private Set<String> collect(final String expression) {
-        return EquationVariablesCollector.builder().build().collect(expression);
+        return new EquationVariablesCollector(expression).collect();
     }
 }

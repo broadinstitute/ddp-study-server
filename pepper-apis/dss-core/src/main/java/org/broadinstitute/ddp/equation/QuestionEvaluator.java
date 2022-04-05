@@ -23,23 +23,28 @@ public class QuestionEvaluator {
     private final String instanceGuid;
 
     public EquationResponse evaluate(final EquationQuestionDto equation) {
-        StreamEx.of(EquationVariablesCollector.builder().build().collect(equation.getExpression()))
-                .remove(values::containsKey)
-                .forEach(this::fetchVariableValue);
+        final var variables = new EquationVariablesCollector(equation.getExpression()).collect();
 
-        if (!StreamEx.of(EquationVariablesCollector.builder().build().collect(equation.getExpression()))
-                .allMatch(values::containsKey)) {
+        StreamEx.of(variables).remove(values::containsKey).forEach(this::fetchVariableValue);
+        if (!StreamEx.of(variables).allMatch(values::containsKey)) {
             log.info("The equation can't be evaluated. Not all variables were populated");
             return null;
         }
 
-        final var evaluatorBuilder = EquationEvaluator.builder();
-        StreamEx.of(EquationVariablesCollector.builder().build().collect(equation.getExpression()))
-                .forEach(variable -> evaluatorBuilder.withVariableValue(variable, values.get(variable).getValues().get(0).toBigDecimal()));
-
-        addValue(QuestionType.EQUATION, equation.getStableId(), evaluatorBuilder.build().evaluate(equation.getExpression()));
+        addValue(QuestionType.EQUATION, equation.getStableId(), EquationEvaluator.builder()
+                .withVariablesValues(getVariablesValuesMap())
+                .build()
+                .evaluate(equation.getExpression()));
 
         return values.get(equation.getStableId());
+    }
+
+    private Map<String, BigDecimal> getVariablesValuesMap() {
+        return StreamEx.of(values.values()).toMap(EquationResponse::getQuestionStableId, this::getFirstAnswerValue);
+    }
+
+    private BigDecimal getFirstAnswerValue(final EquationResponse v) {
+        return v.getValues().get(0).toBigDecimal();
     }
 
     private void fetchVariableValue(final String variable) {
@@ -74,9 +79,12 @@ public class QuestionEvaluator {
     private void addValue(final QuestionType type, final String variable, final Object value) {
         switch (type) {
             case NUMERIC:
-            case PICKLIST:
                 values.put(variable, new EquationResponse(variable,
                         Collections.singletonList(new DecimalDef((Integer) value))));
+                return;
+            case PICKLIST:
+                values.put(variable, new EquationResponse(variable,
+                        Collections.singletonList(new DecimalDef((String) value))));
                 return;
             case EQUATION:
                 values.put(variable, new EquationResponse(variable,
