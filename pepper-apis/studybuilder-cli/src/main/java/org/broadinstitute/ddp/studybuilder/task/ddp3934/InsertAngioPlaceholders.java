@@ -11,6 +11,7 @@ import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiDateQuestion;
@@ -36,24 +37,21 @@ import org.broadinstitute.ddp.studybuilder.task.ddp3934.util.l10n.Placeholders;
 import org.broadinstitute.ddp.studybuilder.task.ddp3934.util.model.Language;
 import org.broadinstitute.ddp.studybuilder.task.ddp3934.util.model.QuestionMetadata;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class InsertAngioPlaceholders implements CustomTask {
-    private static final Logger LOG = LoggerFactory.getLogger(InsertAngioPlaceholders.class);
-    
     private interface Constants {
-        public final String PLACEHOLDER_KEY_SUFFIX = "_PLACEHOLDER";
-        public final String ANGIO_STUDY_GUID = "ANGIO";
-        public final String ABOUT_YOU_ACTIVITY_CODE = "ANGIOABOUTYOU";
-        public final String CONSENT_ACTIVITY_CODE = "ANGIOCONSENT";
-        public final String LOVED_ONE_ACTIVITY_CODE = "ANGIOLOVEDONE";
-        public final String FOLLOWUP_CONSENT_ACTIVITY_CODE = "followupconsent";
+        String PLACEHOLDER_KEY_SUFFIX = "_PLACEHOLDER";
+        String ANGIO_STUDY_GUID = "ANGIO";
+        String ABOUT_YOU_ACTIVITY_CODE = "ANGIOABOUTYOU";
+        String CONSENT_ACTIVITY_CODE = "ANGIOCONSENT";
+        String LOVED_ONE_ACTIVITY_CODE = "ANGIOLOVEDONE";
+        String FOLLOWUP_CONSENT_ACTIVITY_CODE = "followupconsent";
     }
 
     private class ActivityReference {
-        private String studyGuid;
-        private String activityCode;
+        private final String studyGuid;
+        private final String activityCode;
 
         ActivityReference(String studyGuid, String activityCode) {
             this.studyGuid = studyGuid;
@@ -167,7 +165,7 @@ public class InsertAngioPlaceholders implements CustomTask {
                     .map(ActivityVersionDto::getRevStart)
                     .orElseThrow(() -> new DDPException("Could not find latest version for activity " + activityCode));
 
-            LOG.info("updating placeholders for activity {}", currentActivity.getActivityCode());
+            log.info("updating placeholders for activity {}", currentActivity.getActivityCode());
             List<QuestionMetadata> questions = handle.attach(QuestionMetadataDao.class)
                     .getQuestionsWithPlaceholders(studyGuid, activityCode)
                     .stream()
@@ -176,7 +174,7 @@ public class InsertAngioPlaceholders implements CustomTask {
                     .collect(Collectors.toList());
 
             for (QuestionMetadata question : questions) {
-                LOG.debug("updating question {}.{}.{}", question.stableIdentifier, question.type.toString(), question.revision);
+                log.debug("updating question {}.{}.{}", question.stableIdentifier, question.type.toString(), question.revision);
 
                 String localizationKey = question.stableIdentifier + Constants.PLACEHOLDER_KEY_SUFFIX;
                 List<Translation> localizations = new ArrayList<>();
@@ -191,13 +189,13 @@ public class InsertAngioPlaceholders implements CustomTask {
                     }
 
                     if (localizedString == null) {
-                        LOG.info("no {} localization defined for key {}", locale.getLanguage(), localizationKey);
+                        log.info("no {} localization defined for key {}", locale.getLanguage(), localizationKey);
                         continue;
                     } else if (localizationKey.equals(localizedString)) {
-                        LOG.info("localization for key {} in {} defined, but no value set", localizationKey, locale.getLanguage());
+                        log.info("localization for key {} in {} defined, but no value set", localizationKey, locale.getLanguage());
                         continue;
                     } else {
-                        LOG.debug("adding {} localization for key {}", locale.getLanguage(), localizationKey);
+                        log.debug("adding {} localization for key {}", locale.getLanguage(), localizationKey);
 
                         Translation placeholder = new Translation(locale.getLanguage(), localizedString);
                         localizations.add(placeholder);
@@ -205,7 +203,7 @@ public class InsertAngioPlaceholders implements CustomTask {
                 }
 
                 if (localizations.isEmpty()) {
-                    LOG.info("no localizations found for key {}", localizationKey);
+                    log.info("no localizations found for key {}", localizationKey);
                     continue;
                 }
 
@@ -230,7 +228,7 @@ public class InsertAngioPlaceholders implements CustomTask {
                                                         activeRevisionId);
                         throw new DDPException(message);
                     } else {
-                        LOG.info("cleared placeholder template '{}' ({}, {}) for question {}", templateText,
+                        log.info("cleared placeholder template '{}' ({}, {}) for question {}", templateText,
                                                                     templateCode,
                                                                     templateId, 
                                                                     question.stableIdentifier);
@@ -238,7 +236,7 @@ public class InsertAngioPlaceholders implements CustomTask {
 
                     targetTemplateId = templateId;
                 } else {
-                    LOG.info("creating new placeholder template for question {}", question.stableIdentifier);
+                    log.info("creating new placeholder template for question {}", question.stableIdentifier);
                     String code = templateDao.getJdbiTemplate().generateUniqueCode();
                     targetTemplateId = templateDao.getJdbiTemplate().insert(code,
                                                                             TemplateType.TEXT,
@@ -253,7 +251,7 @@ public class InsertAngioPlaceholders implements CustomTask {
                                                                         templateText,
                                                                         template.getRevisionId().get());
                 if (result) {
-                    LOG.info("persisted placeholder template '{}' ({}, {})", templateText,
+                    log.info("persisted placeholder template '{}' ({}, {})", templateText,
                                                                                 template.getTemplateCode(),
                                                                                 template.getTemplateId());
                 }
@@ -269,7 +267,7 @@ public class InsertAngioPlaceholders implements CustomTask {
                                                                     activeRevisionId,
                                                                     variableId);
 
-                    LOG.info("updated translation with id {} ({},{})",
+                    log.info("updated translation with id {} ({},{})",
                                 substitutionId,
                                 localizationKey,
                                 substitution.getLanguageCode());
@@ -344,7 +342,7 @@ public class InsertAngioPlaceholders implements CustomTask {
                     String message = String.format("failed to delete translation with id %ld", translationId);
                     throw new DDPException(message);
                 } else {
-                    LOG.info("deleted translation '{}' ({}.{}, {})", translation.getText(),
+                    log.info("deleted translation '{}' ({}.{}, {})", translation.getText(),
                                                                     translationId,
                                                                     revisionId,
                                                                     translation.getLanguageCode());
@@ -356,7 +354,7 @@ public class InsertAngioPlaceholders implements CustomTask {
                 String message = String.format("failed to delete variable with id %ld", variableId);
                 throw new DDPException(message);
             } else {
-                LOG.info("deleted variable {} with id {}", variable.getName(), variableId);
+                log.info("deleted variable {} with id {}", variable.getName(), variableId);
             }
         }
 

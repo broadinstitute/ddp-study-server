@@ -4,6 +4,7 @@ import static org.mockito.Mockito.mock;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.DBUtils;
@@ -12,7 +13,6 @@ import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.MySqlTestContainerUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -28,11 +28,10 @@ import org.slf4j.LoggerFactory;
  * grep the housekeeping logs looking for a particular log statement
  * and then check whether or not it was found in your asserts.
  */
+@Slf4j
 public abstract class HousekeepingTest extends ConfigAwareBaseTest {
 
     public static final int LOG_WATCHER_TIMEOUT_MILLIS = 30 * 1000;
-
-    private static final Logger LOG = LoggerFactory.getLogger(HousekeepingTest.class);
 
     private static Thread housekeepingThread;
 
@@ -55,7 +54,7 @@ public abstract class HousekeepingTest extends ConfigAwareBaseTest {
             try {
                 Housekeeping.startupMonitor.wait(10 * 1000);
             } catch (InterruptedException e) {
-                LOG.error("Housekeeping startup interrupted", e);
+                log.error("Housekeeping startup interrupted", e);
             }
         }
     }
@@ -88,7 +87,7 @@ public abstract class HousekeepingTest extends ConfigAwareBaseTest {
             try {
                 housekeepingThread.join(Housekeeping.SLEEP_MILLIS);
             } catch (InterruptedException e) {
-                LOG.error("Interrupted while shutting down housekeeping thread ", e);
+                log.error("Interrupted while shutting down housekeeping thread ", e);
             }
         }
         TransactionWrapper.reset();
@@ -107,7 +106,7 @@ public abstract class HousekeepingTest extends ConfigAwareBaseTest {
                 try {
                     logMonitor.wait(LOG_WATCHER_TIMEOUT_MILLIS);
                 } catch (InterruptedException e) {
-                    LOG.error("log waiter interrupted", e);
+                    log.error("log waiter interrupted", e);
                 }
             }
         });

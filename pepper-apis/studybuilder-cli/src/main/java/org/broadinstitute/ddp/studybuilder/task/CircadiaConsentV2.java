@@ -10,6 +10,7 @@ import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
@@ -41,12 +42,9 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class CircadiaConsentV2 implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(CircadiaConsentV2.class);
     private static final String DATA_FILE = "patches/consent-v2.conf";
     private static final String STUDY = "circadia";
     private static final String OLD_TEMPLATE_KEY = "old_search";
@@ -92,7 +90,7 @@ public class CircadiaConsentV2 implements CustomTask {
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid"));
 
         String activityCode = dataCfg.getString("activityCode");
-        LOG.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
+        log.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
         revisionConsent(handle, adminUser.getId(), studyDto, activityCode, versionTag, timestamp.toEpochMilli());
     }
 
@@ -201,7 +199,7 @@ public class CircadiaConsentV2 implements CustomTask {
         long newBlockContentId = jdbiBlockContent.insert(contentBlock.getBlockId(), newBodyTemplateId,
                 newTitleTemplateId, versionDto.getRevId());
 
-        LOG.info("Created block_content with id={}, blockId={}, bodyTemplateId={} for bodyTemplateText={}",
+        log.info("Created block_content with id={}, blockId={}, bodyTemplateId={} for bodyTemplateText={}",
                 newBlockContentId, contentBlock.getBlockId(), newBodyTemplateId, contentBlockDef.getBodyTemplate().getTemplateText());
     }
 
