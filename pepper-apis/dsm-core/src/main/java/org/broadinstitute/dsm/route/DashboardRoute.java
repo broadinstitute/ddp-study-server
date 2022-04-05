@@ -423,7 +423,7 @@ public class DashboardRoute extends RequestHandler {
                 List<KitRequestShipping> kits = kitRequests.get(medicalRecord.getDdpParticipantId());
                 if (kits != null) {
                     for (KitRequestShipping kit : kits) {
-                        if (kit.getReceiveDate() != 0) {
+                        if (kit.getReceiveDate() != null && kit.getReceiveDate() != 0) {
                             // one kit was received
                             incrementCounter(dashboardValuesDetailed, "readyToRequest");
                             foundAtPT.add("readyToRequest");
