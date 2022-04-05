@@ -40,7 +40,7 @@ public class ParticipantRecordData {
                 Alias key = aliasListEntry.getKey();
                 for (ParticipantColumn column : aliasListEntry.getValue()) {
                     String esPath = getEsPath(key, column);
-                    Object nestedValue = getNestedValue(esPath, esDataAsMap);
+                    Collection<?> nestedValue = getNestedValue(esPath, esDataAsMap);
                     if (aliasListEntry.getKey() == Alias.ACTIVITIES) {
                         nestedValue = getQuestionAnswerValue(nestedValue, column);
                     }
@@ -105,7 +105,7 @@ public class ParticipantRecordData {
         return columns;
     }
 
-    private Collection getQuestionAnswerValue(Object nestedValue, ParticipantColumn column) {
+    private Collection<?> getQuestionAnswerValue(Object nestedValue, ParticipantColumn column) {
         List<LinkedHashMap<String, Object>> activities = (List<LinkedHashMap<String, Object>>) nestedValue;
         Collection<?> objects =
                 activities.stream().filter(activity -> activity.get(ElasticSearchUtil.ACTIVITY_CODE).equals(column.getTableAlias()))
@@ -145,20 +145,28 @@ public class ParticipantRecordData {
         return alias.getValue().isEmpty() ? column.getName() : alias.getValue() + DBConstants.ALIAS_DELIMITER + column.getName();
     }
 
-    private Object getNestedValue(String fieldName, Map<String, Object> esDataAsMap) {
+    private Collection<?> getNestedValue(String fieldName, Map<String, Object> esDataAsMap) {
         int dotIndex = fieldName.indexOf('.');
         if (dotIndex != -1) {
             Object o = esDataAsMap.get(fieldName.substring(0, dotIndex));
             if (o == null) {
-                return StringUtils.EMPTY;
+                return Collections.singletonList(StringUtils.EMPTY);
             }
             if (o instanceof Collection) {
-                return ((Collection<?>) o).stream().map(singleDataMap -> getNestedValue(fieldName.substring(dotIndex + 1),
-                        (Map<String, Object>) singleDataMap)).collect(Collectors.toList());
+                List<Object> collect = ((Collection<?>) o).stream().map(singleDataMap -> getNestedValue(fieldName.substring(dotIndex + 1),
+                        (Map<String, Object>) singleDataMap)).flatMap(Collection::stream).collect(Collectors.toList());
+                if (collect.isEmpty()) {
+                    return Collections.singletonList(StringUtils.EMPTY);
+                }
+                return collect;
             } else {
                 return getNestedValue(fieldName.substring(dotIndex + 1), (Map<String, Object>) o);
             }
         }
-        return esDataAsMap.getOrDefault(fieldName, StringUtils.EMPTY);
+        Object value = esDataAsMap.getOrDefault(fieldName, StringUtils.EMPTY);
+        if (!(value instanceof Collection )) {
+            return Collections.singletonList(value);
+        }
+        return (Collection<?>) value;
     }
 }

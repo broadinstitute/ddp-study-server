@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -17,15 +16,11 @@ public class ParticipantRecord {
     private final List<ColumnValue> values = new ArrayList<>();
     public List<String> transposeAndFlatten(List<Integer> columnSizes) {
         fillWithEmptyStringsIfNeeded(columnSizes);
-        List<ColumnValue> collectionValues = values.stream().filter(ColumnValue::isCollection).collect(Collectors.toList());
-        Stream<String> singleValues = values.stream().filter(Predicate.not(ColumnValue::isCollection))
-                .map(columnValue -> columnValue.getObject().toString());
-        final int size = collectionValues.stream().mapToInt(ColumnValue::getColumnsSize).max().orElse(-1);
-        Map<Alias, List<Iterator<Object>>> aliasIterators = new LinkedHashMap<>();
-        collectionValues.stream().map(columnValue -> Map.entry(columnValue.getAlias(), columnValue.iterator()))
+        final int size = values.stream().mapToInt(ColumnValue::getColumnsSize).max().orElse(-1);
+        Map<Alias, List<Iterator<?>>> aliasIterators = new LinkedHashMap<>();
+        values.stream().map(columnValue -> Map.entry(columnValue.getAlias(), columnValue.iterator()))
                 .forEach(entry -> aliasIterators.computeIfAbsent(entry.getKey(), e -> new ArrayList<>()).add(entry.getValue()));
         Stream.Builder<String> rowStream = Stream.builder();
-        singleValues.forEach(rowStream::add);
         aliasIterators.forEach((key, value) -> {
             if (key == Alias.ACTIVITIES) {
                 value.forEach(iter -> {
