@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.model.filter.participant.EmptyFilterParticipantList;
 import org.broadinstitute.dsm.model.filter.participant.ManualFilterParticipantList;
 import org.broadinstitute.dsm.model.filter.participant.QuickFilterParticipantList;
 import org.broadinstitute.dsm.model.filter.participant.SavedFilterParticipantList;
@@ -31,6 +30,7 @@ public class FilterFactory {
         Filterable filterable = queryParamsMap -> Collections.emptyList();
         switch (lastSegment) {
             case RoutePath.APPLY_FILTER:
+            case RoutePath.DOWNLOAD_PARTICIPANT_LIST_ROUTE:
                 switch (parent) {
                     case BaseFilter.PARENT_PARTICIPANT_LIST:
                         if (StringUtils.isNotBlank(queryParams.get(RequestParameter.FILTER_NAME).value())) {

@@ -36,10 +36,10 @@ public class SecurityUtil {
     private static String AUTH0_NAMESPACE;
     private static String AUTH0_SIGNER;
 
-    public static void init(@NonNull String AUTH0DOMAIN, @NonNull String AUTH0NAMESPACE, @NonNull String AUTH0SIGNER) {
-        SecurityUtil.AUTH0_DOMAIN = AUTH0DOMAIN;
-        SecurityUtil.AUTH0_NAMESPACE = AUTH0NAMESPACE;
-        SecurityUtil.AUTH0_SIGNER = AUTH0SIGNER;
+    public static void init(@NonNull String auth0Domain, @NonNull String auth0Namespace, @NonNull String auth0Signer) {
+        SecurityUtil.AUTH0_DOMAIN = auth0Domain;
+        SecurityUtil.AUTH0_NAMESPACE = auth0Namespace;
+        SecurityUtil.AUTH0_SIGNER = auth0Signer;
     }
 
     public static Map<String, String> createHeader(@NonNull String instanceName, boolean auth0Token) {
@@ -120,18 +120,6 @@ public class SecurityUtil {
         return addBodyToRequest(objectToPost, request);
     }
 
-    public static org.apache.http.client.fluent.Request createPostRequestWithHeaderNoToken(@NonNull String requestString,
-                                                                                           Map<String, String> headers,
-                                                                                           Object objectToPost) {
-        org.apache.http.client.fluent.Request request = Post(requestString);
-        if (headers != null) {
-            for (Map.Entry<String, String> headerEntry : headers.entrySet()) {
-                request = request.addHeader(headerEntry.getKey(), headerEntry.getValue());
-            }
-        }
-        return addBodyToRequest(objectToPost, request, ContentType.APPLICATION_FORM_URLENCODED);
-    }
-
     public static org.apache.http.client.fluent.Request createPostRequestWithHeader(@NonNull String requestString,
                                                                                     @NonNull String bearer,
                                                                                     Object objectToPost) {
@@ -159,6 +147,18 @@ public class SecurityUtil {
         return addBodyToRequest(objectToPost, request);
     }
 
+    public static org.apache.http.client.fluent.Request createPostRequestWithHeaderNoToken(@NonNull String requestString,
+                                                                                           Map<String, String> headers,
+                                                                                           Object objectToPost) {
+        org.apache.http.client.fluent.Request request = Post(requestString);
+        if (headers != null) {
+            for (Map.Entry<String, String> headerEntry : headers.entrySet()) {
+                request = request.addHeader(headerEntry.getKey(), headerEntry.getValue());
+            }
+        }
+        return addBodyToRequest(objectToPost, request, ContentType.APPLICATION_FORM_URLENCODED);
+    }
+
     private static org.apache.http.client.fluent.Request addBodyToRequest(Object objectToPost,
                                                                           org.apache.http.client.fluent.Request request) {
         if (objectToPost != null) {
@@ -169,6 +169,21 @@ public class SecurityUtil {
                 content = (String) objectToPost;
             }
             request.bodyString(content, ContentType.APPLICATION_JSON);
+        }
+        return request;
+    }
+
+    private static org.apache.http.client.fluent.Request addBodyToRequest(Object objectToPost,
+                                                                          org.apache.http.client.fluent.Request request,
+                                                                          ContentType contentType) {
+        if (objectToPost != null) {
+            String content = null;
+            if (!(objectToPost instanceof String)) {
+                content = createPostData((List<BasicNameValuePair>) objectToPost, contentType);
+            } else {
+                content = (String) objectToPost;
+            }
+            request.bodyString(content, contentType);
         }
         return request;
     }
@@ -217,29 +232,15 @@ public class SecurityUtil {
         AUTHENTICATION_ERROR, AUTHORIZATION_ERROR, AUTHORIZED
     }
 
-    private static org.apache.http.client.fluent.Request addBodyToRequest(Object objectToPost,
-                                                                          org.apache.http.client.fluent.Request request, ContentType contentType) {
-        if (objectToPost != null) {
-            String content = null;
-            if (!(objectToPost instanceof String)) {
-                content = createPostData((List<BasicNameValuePair>) objectToPost, contentType);
-            }
-            else {
-                content = (String) objectToPost;
-            }
-            request.bodyString(content, contentType);
-        }
-        return request;
-    }
-
     private static String createPostData(List<BasicNameValuePair> params, ContentType contentType)  {
         StringBuilder result = new StringBuilder();
         boolean first = true;
         for (NameValuePair pair : params) {
-            if (first)
+            if (first) {
                 first = false;
-            else
+            } else {
                 result.append("&");
+            }
             result.append(URLEncoder.encode(pair.getName(), contentType.getCharset()));
             result.append("=");
             result.append(URLEncoder.encode(pair.getValue(), contentType.getCharset()));

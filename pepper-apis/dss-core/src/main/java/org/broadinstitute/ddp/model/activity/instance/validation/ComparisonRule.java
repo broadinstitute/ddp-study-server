@@ -6,7 +6,9 @@ import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
@@ -39,8 +41,18 @@ public class ComparisonRule extends Rule<Answer> {
         }
 
         return TransactionWrapper.withTxn(handle -> {
+            final Optional<ActivityInstanceDto> activityInstance = handle.attach(ActivityInstanceDao.class)
+                    .findByActivityInstanceGuid(answer.getActivityInstanceGuid());
+            if (activityInstance.isEmpty()) {
+                log.debug("Activity instance {} doesn't exist", answer.getActivityInstanceGuid());
+                return false;
+            }
+
             final Optional<Answer> referencedAnswer = handle.attach(AnswerDao.class)
-                    .findAnswerByInstanceGuidAndQuestionId(answer.getActivityInstanceGuid(), referenceQuestionId);
+                    .findAnswerByLatestInstanceAndQuestionId(
+                            activityInstance.get().getParticipantId(),
+                            activityInstance.get().getStudyId(),
+                            referenceQuestionId);
             if (referencedAnswer.isEmpty()) {
                 log.debug("Referenced answer is empty activity instance id: {}; question id: {}",
                         answer.getActivityInstanceGuid(), referenceQuestionId);

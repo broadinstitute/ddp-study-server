@@ -78,6 +78,7 @@ import org.broadinstitute.dsm.route.DSSTestingRoute;
 import org.broadinstitute.dsm.route.DashboardRoute;
 import org.broadinstitute.dsm.route.DisplaySettingsRoute;
 import org.broadinstitute.dsm.route.DownloadPDFRoute;
+import org.broadinstitute.dsm.route.DownloadParticipantListRoute;
 import org.broadinstitute.dsm.route.DrugListRoute;
 import org.broadinstitute.dsm.route.DrugRoute;
 import org.broadinstitute.dsm.route.EditParticipantMessageReceiverRoute;
@@ -179,6 +180,7 @@ public class DSMServer {
     private static final String API_ROOT = "/ddp/";
     private static final String UI_ROOT = "/ui/";
     public static final String SIGNER = "org.broadinstitute.kdux";
+    public static final String BSP_SIGNER = "https://dsm-dev.datadonationplatform.org/ddp/";
     private static final String[] CORS_HTTP_METHODS = new String[] { "GET", "PUT", "POST", "OPTIONS", "PATCH" };
     private static final String[] CORS_HTTP_HEADERS =
             new String[] { "Content-Type", "Authorization", "X-Requested-With", "Content-Length", "Accept", "Origin", "" };
@@ -527,7 +529,7 @@ public class DSMServer {
 
         //  capture basic route info for logging
         //        before("*", new LoggingFilter(auth0Domain, auth0claimNameSpace));
-        before(API_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, bspSecret, SIGNER, bspSecretEncoded));
+        before(API_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, bspSecret, BSP_SIGNER, bspSecretEncoded));
         before(UI_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, null, null, false));
         before(INFO_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, ddpSecret, SIGNER, ddpSecretEncoded));
         before(appRoute + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, ddpSecret, SIGNER, ddpSecretEncoded));
@@ -809,6 +811,9 @@ public class DSMServer {
         patch(UI_ROOT + RoutePath.FIELD_SETTINGS_ROUTE, fieldSettingsRoute, new JsonTransformer());
 
         get(UI_ROOT + RoutePath.DISPLAY_SETTINGS_ROUTE, new DisplaySettingsRoute(patchUtil), new JsonTransformer());
+
+        post(UI_ROOT + RoutePath.DOWNLOAD_PARTICIPANT_LIST_ROUTE, new DownloadParticipantListRoute());
+
     }
 
     private void setupMRAbstractionRoutes() {

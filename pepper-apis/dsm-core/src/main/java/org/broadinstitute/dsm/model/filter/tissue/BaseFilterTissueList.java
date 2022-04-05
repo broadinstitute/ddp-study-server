@@ -36,7 +36,7 @@ public abstract class BaseFilterTissueList extends BaseFilter implements Filtera
         if (filters != null && !columnNameMap.isEmpty()) {
             for (Filter filter : filters) {
                 if (filter != null) {
-                    DBElement dbElement = columnNameMap.get(filter.getParticipantColumn().tableAlias + "." + filter.getFilter1().getName());
+                    DBElement dbElement = columnNameMap.get(filter.getParticipantColumn().getTableAlias() + "." + filter.getFilter1().getName());
                     ViewFilter.addQueryCondition(queryConditions, dbElement, filter);
                 }
             }

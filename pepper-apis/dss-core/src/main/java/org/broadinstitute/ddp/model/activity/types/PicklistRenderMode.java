@@ -11,5 +11,8 @@ public enum PicklistRenderMode {
     LIST,
 
     /** Hint to render as a list of options with autocompletion function */
-    AUTOCOMPLETE
+    AUTOCOMPLETE,
+
+    /** Hint to render as a list of options with server side / remote autocompletion function */
+    REMOTE_AUTOCOMPLETE
 }

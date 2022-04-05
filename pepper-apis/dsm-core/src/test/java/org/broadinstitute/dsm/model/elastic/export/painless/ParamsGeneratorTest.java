@@ -1,8 +1,9 @@
 package org.broadinstitute.dsm.model.elastic.export.painless;
 
-import java.util.List;
-import java.util.Map;
+import java.io.Serializable;
+import java.util.*;
 
+import io.opencensus.trace.Link;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.model.birch.DSMTestResult;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -38,10 +39,11 @@ public class ParamsGeneratorTest {
         ParamsGenerator paramsGenerator = new ParamsGenerator(kitRequestShipping, null);
         Map<String, Object> actual = paramsGenerator.generate();
 
-        Map<String, Object> expected = Map.of(ESObjectConstants.DSM, Map.of(ESObjectConstants.KIT_REQUEST_SHIPPING,
-                Map.of(ESObjectConstants.KIT_TEST_RESULT, List.of(
-                        Map.of("result", "Negative", "timeCompleted", "2012-05-02", "isCorrected", true)))
-        ));
+        Map<String, Object> innerMap = new LinkedHashMap<>(Map.of("timeCompleted", "2012-05-02", "result", "Negative", "isCorrected", true));
+        List<Map<String, Object>> innerMapInList = new ArrayList<>(List.of(innerMap));
+        Map<String, Object> fullInnerMap = new HashMap<>(Map.of(ESObjectConstants.KIT_TEST_RESULT, innerMapInList, "ddpInstanceId", 0L));
+        Map<String, Map<String, Object>> kitRequestShippingMap = new HashMap<>(Map.of(ESObjectConstants.KIT_REQUEST_SHIPPING, fullInnerMap));
+        Map<String, Object> expected = new HashMap<>(Map.of(ESObjectConstants.DSM, kitRequestShippingMap));
 
         Assert.assertEquals(expected, actual);
 
