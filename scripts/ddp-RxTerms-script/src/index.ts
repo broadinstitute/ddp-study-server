@@ -2,8 +2,10 @@ import * as XLSX from "xlsx";
 import { RxNormDrugOption } from "./models";
 import { parseToHOCON, writeFile } from "./utils/common";
 
-const inputFileName =  process.argv[2] || 'RxTerms202202.txt';
-const outputFileName = process.argv[3] || 'output.txt'
+const inputFileName = process.argv[2] || "RxTerms202202.txt";
+const outputFileName = process.argv[3] || "output.txt";
+
+const translations: string[] =  process.argv.filter(arg => ['en', 'es', 'ru'].includes(arg));
 
 const workBook = XLSX.readFile(inputFileName);
 
@@ -31,9 +33,19 @@ const picklistString = pickListOptions.reduce((prev, current) => {
     current.optionLabelTemplate.templateType
   }" ${
     Object.keys(current.optionLabelTemplate)[1]
-  }: "${current.optionLabelTemplate.templateText.replace(/'/g, "")}"}},`;
+  }: "$drug_name"
+  variables: [
+    {
+      name: drug_name
+      translations: [
+         ${translations.map(lang => `{language:  ${lang}  text:  "${current.optionLabelTemplate.templateText.replace(/'/g, "")}"}` )}
+      ]
+    }
+  ]  
+}},`;
   return (prev += stringBuilder);
 }, "");
+
 
 writeFile(
   outputFileName,
