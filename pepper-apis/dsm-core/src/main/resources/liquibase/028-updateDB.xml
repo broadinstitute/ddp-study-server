@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet author="simone" id="DDP-3699_20190520">
+        <addColumn tableName="ddp_instance">
+            <column name="es_participant_index" type="VARCHAR(80)">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-3699_20190820">
+        <addColumn tableName="ddp_instance">
+            <column name="es_activity_definition_index" type="VARCHAR(80)">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-3708_23102019">
+        <addColumn tableName="ddp_participant_record">
+            <column name="additional_values_json" defaultValue="NULL" type="VARCHAR(1000)" afterColumn="minimal_mr">
+            </column>
+        </addColumn>
+        <addColumn tableName="ddp_medical_record">
+            <column name="additional_values_json" defaultValue="NULL" type="VARCHAR(1000)" afterColumn="follow_ups">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="DDP-4160_security" author="simone">
+        <insert tableName="access_role">
+            <column name="name" value="field_settings"></column>
+        </insert>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-3888_06112019">
+        <addColumn tableName="medical_record_abstraction_field">
+            <column name="additional_type" defaultValue="NULL" type="VARCHAR(250)" afterColumn="type">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-3888_06112019_unique">
+        <dropUniqueConstraint constraintName="display_name_field_UNIQUE" tableName="medical_record_abstraction_field"/>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-3888_changeType">
+        <modifyDataType columnName="file_page" newDataType="VARCHAR(200)" tableName="ddp_medical_record_abstraction"/>
+        <modifyDataType columnName="file_page" newDataType="VARCHAR(200)" tableName="ddp_medical_record_review"/>
+        <modifyDataType columnName="file_page" newDataType="VARCHAR(200)" tableName="ddp_medical_record_qc"/>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-3888_10012020">
+        <addColumn tableName="ddp_participant_record">
+            <column name="abstraction_ready" type="INT" afterColumn="minimal_mr">
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>
