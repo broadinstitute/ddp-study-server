@@ -27,7 +27,7 @@ public class SingularDefaultValues extends BasicDefaultDataMaker {
         if (isParticipantDataInES()) {
             return false;
         }
-        return insertDefaultForParticipant();
+        return insertDefaultEnrollmentStatusForParticipant();
     }
 
     private boolean isParticipantDataInES() {
@@ -35,13 +35,13 @@ public class SingularDefaultValues extends BasicDefaultDataMaker {
         return elasticSearchParticipantDto.getProfile().isEmpty() && elasticSearchParticipantDto.getActivities().isEmpty();
     }
 
-    private boolean insertDefaultForParticipant() {
+    private boolean insertDefaultEnrollmentStatusForParticipant() {
         String ddpParticipantId = elasticSearchParticipantDto.getProfile().orElseThrow().getGuid();
-        String datstatExitReasonDefaultOption = getDefaultFields();
-        return insertParticipantData(Map.of(COLUMN_NAME, datstatExitReasonDefaultOption), ddpParticipantId, FIELD_TYPE);
+        String enrollmentStatusDefaultOption = getEnrollmentStatus();
+        return insertParticipantData(Map.of(COLUMN_NAME, enrollmentStatusDefaultOption), ddpParticipantId, FIELD_TYPE);
     }
 
-    private String getDefaultFields() {
+    private String getEnrollmentStatus() {
         this.setDataAccess(FieldSettingsDao.of());
         Optional<FieldSettingsDto> fieldSettingByColumnNameAndInstanceId =
                 ((FieldSettingsDao) dataAccess).getFieldSettingByColumnNameAndInstanceId(Integer.parseInt(instance.getDdpInstanceId()),
