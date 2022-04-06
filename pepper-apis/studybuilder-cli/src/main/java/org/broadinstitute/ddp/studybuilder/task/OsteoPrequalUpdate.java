@@ -110,6 +110,8 @@ public class OsteoPrequalUpdate implements CustomTask {
 
         questionUpdates.forEach(config -> {
             String stableId = config.getString("stableId");
+            QuestionDto questionDto = handle.attach(JdbiQuestion.class)
+                    .findDtoByActivityIdAndQuestionStableId(activityId, stableId).get();
 
             if (!config.getConfig("validation").isEmpty()) {
                 Config validation = config.getConfig("validation");
@@ -123,15 +125,13 @@ public class OsteoPrequalUpdate implements CustomTask {
             for (Config config1 : question) {
                 String varName = config1.getString("varName");
                 String subsValue = config1.getString("newVal");
-                long questionId = helper.getQuestionStableCodeId(stableId);
-                long questionPromptId = helper.getQuestionPromptId(questionId);
-                long templateVariableIdbyTemplateId = helper.getTemplateVariableIdbyTemplateId(questionPromptId, varName);
+                long templateVariableIdbyTemplateId = helper.getTemplateVariableIdbyTemplateId(questionDto.getPromptTemplateId(), varName);
                 helper.updateTemplateText(subsValue, templateVariableIdbyTemplateId);
             }
         });
 
         changeQuetionStyle(handle, activityId, "PREQUAL_SELF_DESCRIBE");
-        changeAgeRestriction(helper);
+        changeAgeRestriction(handle, activityId);
     }
 
     private void changeQuetionStyle(Handle handle, long activityId, String stableId) {
@@ -144,13 +144,30 @@ public class OsteoPrequalUpdate implements CustomTask {
         helper.updatePicklistOption(questionDto.getId(), pickListModeIdByValue);
     }
 
-    private void changeAgeRestriction(SqlHelper helper) {
+    private void changeAgeRestriction(Handle handle, long activityId) {
         int age = 110;
-        String stableId = "SELF_CURRENT_AGE";
-        long questionStableCodeId = helper.getQuestionStableCodeId(stableId);
-        long questionId = helper.getQuestionId(questionStableCodeId);
-        long validationId = helper.getValidationId(questionId);
+        String templateText = "Please enter an age between 0 and 110";
+
+        String stableId1 = "SELF_CURRENT_AGE";
+        String varNameSelf = "self_current_age_range_hint";
+
+        String stableId2 = "CHILD_CURRENT_AGE";
+        String varNameChild = "child_current_age_range_hint";
+
+        QuestionDto selfQuestion = handle.attach(JdbiQuestion.class).findDtoByActivityIdAndQuestionStableId(activityId, stableId1).get();
+        QuestionDto childQuestion = handle.attach(JdbiQuestion.class).findDtoByActivityIdAndQuestionStableId(activityId, stableId2).get();
+
+        SqlHelper helper = handle.attach(SqlHelper.class);
+
+        long validationId = helper.getValidationId(selfQuestion.getId());
         helper.insertUpperRange(age, validationId);
+        long templateId = helper.getTemplateVariableId(varNameSelf);
+        helper.updateTemplateText(templateText, templateId);
+
+        long validationId2 = helper.getValidationId(childQuestion.getId());
+        helper.insertUpperRange(age, validationId2);
+        long templateId2 = helper.getTemplateVariableId(varNameChild);
+        helper.updateTemplateText(templateText, templateId2);
     }
 
     private interface SqlHelper extends SqlObject {
@@ -159,18 +176,11 @@ public class OsteoPrequalUpdate implements CustomTask {
                 + " where template_variable_id = :template_variable_id")
         void updateTemplateText(@Bind("substitution_value") String value, @Bind("template_variable_id") long templateId);
 
-
         @SqlQuery("select picklist_select_mode_id from picklist_select_mode where picklist_select_mode_code = :picklist_select_mode_code")
         long getPickListModeIdByValue(@Bind("picklist_select_mode_code") PicklistSelectMode picklistSelectMode);
 
         @SqlUpdate("update picklist_question set picklist_select_mode_id = :picklist_select_mode_id where question_id = :question_id")
         void updatePicklistOption(@Bind("question_id") long questionId, @Bind("picklist_select_mode_id") long picklistselectModeId);
-
-        @SqlQuery("select question_stable_code_id from question_stable_code where stable_id like :stableId")
-        long getQuestionStableCodeId(@Bind("stableId") String stableId);
-
-        @SqlQuery("select question_prompt_template_id from question where question_stable_code_id = :stableId")
-        long getQuestionPromptId(@Bind("stableId") long stableId);
 
         @SqlQuery("select template_variable_id from template_variable where variable_name = :name")
         long getTemplateVariableId(@Bind("name") String name);
