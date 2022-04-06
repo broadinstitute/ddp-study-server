@@ -34,6 +34,7 @@ import org.broadinstitute.dsm.model.KitDDPSummary;
 import org.broadinstitute.dsm.model.KitRequestsPerDate;
 import org.broadinstitute.dsm.model.KitSubKits;
 import org.broadinstitute.dsm.model.NameValue;
+import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
 import org.broadinstitute.dsm.security.RequestHandler;
@@ -98,9 +99,8 @@ public class DashboardRoute extends RequestHandler {
             Participant participant = participantMap != null ? participantMap.get(ddpParticipantId) : null;
             Map<String, Object> participantESData = esDataMap.get(ddpParticipantId);
             if (participantESData != null) {
-                String participantEsDataAsJson = gson.toJson(participantESData);
                 ElasticSearchParticipantDto elasticSearchParticipantDto =
-                        gson.fromJson(participantEsDataAsJson, ElasticSearchParticipantDto.class);
+                        new ElasticSearch().parseSourceMap(participantESData).get();
                 participantList.add(new ParticipantWrapperDto(elasticSearchParticipantDto, participant,
                         medicalRecordMap != null ? medicalRecordMap.get(ddpParticipantId) : null,
                         oncHistoryMap != null ? oncHistoryMap.get(ddpParticipantId) : null,
