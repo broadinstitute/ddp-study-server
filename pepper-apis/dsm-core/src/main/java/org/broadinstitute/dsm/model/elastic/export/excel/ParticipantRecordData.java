@@ -23,7 +23,7 @@ public class ParticipantRecordData {
     private final List<ParticipantRecord> participantRecords = new ArrayList<>();
     private final List<String> headerNames = new ArrayList<>();
     private List<Integer> columnSizes = new ArrayList<>();
-    private ParticipantWrapperResult participantData;
+    private final ParticipantWrapperResult participantData;
     public ParticipantRecordData(ParticipantWrapperResult participantData,
                                  Map<Alias, List<ParticipantColumn>> columnAliasEsPathMap) {
         this.columnAliasEsPathMap = columnAliasEsPathMap;
