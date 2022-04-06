@@ -115,9 +115,10 @@ public class OsteoPrequalUpdate implements CustomTask {
 
             if (!config.getConfig("validation").isEmpty()) {
                 Config validation = config.getConfig("validation");
-                String varName = validation.getString("varName");
+                String varName = String.format("%s%s%s", "%", validation.getString("varName"), "%");
                 String newVal = validation.getString("newVal");
-                long templateVariableId = helper.getTemplateVariableId(varName);
+                long activityValidationTemplateId = helper.getActivityValidationTemplateId(activityId, varName);
+                long templateVariableId = helper.getTemplateVariableIdbyTemplateId(activityValidationTemplateId);
                 helper.updateTemplateText(newVal, templateVariableId);
             }
 
@@ -125,7 +126,7 @@ public class OsteoPrequalUpdate implements CustomTask {
             for (Config config1 : question) {
                 String varName = config1.getString("varName");
                 String subsValue = config1.getString("newVal");
-                long templateVariableIdbyTemplateId = helper.getTemplateVariableIdbyTemplateId(questionDto.getPromptTemplateId(), varName);
+                long templateVariableIdbyTemplateId = helper.getTemplateVariableIdbyTemplateId(questionDto.getPromptTemplateId());
                 helper.updateTemplateText(subsValue, templateVariableIdbyTemplateId);
             }
         });
@@ -161,13 +162,15 @@ public class OsteoPrequalUpdate implements CustomTask {
 
         long validationId = helper.getValidationId(selfQuestion.getId());
         helper.insertUpperRange(age, validationId);
-        long templateId = helper.getTemplateVariableId(varNameSelf);
-        helper.updateTemplateText(templateText, templateId);
+        long hintTemplateId = helper.getHintTemplateId(validationId);
+        long templateVariableId = helper.getTemplateVariableIdbyTemplateId(hintTemplateId);
+        helper.updateTemplateText(templateText, templateVariableId);
 
         long validationId2 = helper.getValidationId(childQuestion.getId());
         helper.insertUpperRange(age, validationId2);
-        long templateId2 = helper.getTemplateVariableId(varNameChild);
-        helper.updateTemplateText(templateText, templateId2);
+        long hintTemplateId2 = helper.getHintTemplateId(validationId2);
+        long templateVariableId2 = helper.getTemplateVariableIdbyTemplateId(hintTemplateId2);
+        helper.updateTemplateText(templateText, templateVariableId2);
     }
 
     private interface SqlHelper extends SqlObject {
@@ -182,11 +185,15 @@ public class OsteoPrequalUpdate implements CustomTask {
         @SqlUpdate("update picklist_question set picklist_select_mode_id = :picklist_select_mode_id where question_id = :question_id")
         void updatePicklistOption(@Bind("question_id") long questionId, @Bind("picklist_select_mode_id") long picklistselectModeId);
 
-        @SqlQuery("select template_variable_id from template_variable where variable_name = :name")
-        long getTemplateVariableId(@Bind("name") String name);
+        @SqlQuery("select error_message_template_id from activity_validation "
+                + "where study_activity_id = :activityId and expression_text like :text")
+        long getActivityValidationTemplateId(@Bind("activityId") long activityId, @Bind("text") String text);
 
-        @SqlQuery("select template_variable_id from template_variable where template_id = :templateId and variable_name = :name")
-        long getTemplateVariableIdbyTemplateId(@Bind("templateId") long templateId, @Bind("name") String name);
+        @SqlQuery("select correction_hint_template_id from validation where validation_id = :validationId")
+        long getHintTemplateId(@Bind("validationId")long validationId);
+
+        @SqlQuery("select template_variable_id from template_variable where template_id = :templateId")
+        long getTemplateVariableIdbyTemplateId(@Bind("templateId") long templateId);
 
         @SqlQuery("select question_id from question where question_stable_code_id = :stableId")
         long getQuestionId(@Bind("stableId") long stableId);
