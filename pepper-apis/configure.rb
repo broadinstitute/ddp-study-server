@@ -184,24 +184,24 @@ def render_from_path(path, output_file_name = nil)
   copy_file_from_path(path)
   if $use_docker == true
     vault_cmd = [
-        "docker", "run", "--rm", "-w", "/w", "-v", "#{Dir.pwd}:/w",
-        "-e", "VAULT_TOKEN=#{$vault_token}", "-e", "ENVIRONMENT=#{$env}", "-e", "VERSION=#{$version}",
-        "-e", "GAE=#{$gae}",
-        "-e", "APP=#{$app}",
-        "-e", "BUILD_CONTAINERS=#{$build_containers_flag}",
-        "-e", "DOCS_PROXIED_HOST=#{$docsProxiedHost}",
-        "-e", "NGINX_PROXIED_HOST=#{$nginxProxiedHost}",
-        "-e", "NO_SYSLOG=#{$noSyslog}",
-        "-e", "DEBUG=#{$debug_flag}",
-        "-e", "DIR=#{$dir}", "-e", "IMAGE=#{$image}",
-        "-e", "STUDY_GUID=#{$study_guid}",
-        "-e", "STUDY_KEY=#{$study_key}",
-        "-e", "IMAGE_NAME=#{$image_base}",
-        $dsde_toolbox_image_name,
-        "consul-template", "-config=/etc/consul-template/config/config.json",
-        "-template=#{file_name}:#{output_file_name}",
-        "-retry=30",
-        "-once"
+             "docker", "run", "--rm", "-w", "/w", "-v", "#{Dir.pwd}:/w",
+                  "-e", "VAULT_TOKEN=#{$vault_token}", "-e", "ENVIRONMENT=#{$env}", "-e", "VERSION=#{$version}",
+                  "-e", "GAE=#{$gae}",
+                  "-e", "APP=#{$app}",
+                  "-e", "BUILD_CONTAINERS=#{$build_containers_flag}",
+                  "-e", "DOCS_PROXIED_HOST=#{$docsProxiedHost}",
+                  "-e", "NGINX_PROXIED_HOST=#{$nginxProxiedHost}",
+                  "-e", "NO_SYSLOG=#{$noSyslog}",
+                  "-e", "DEBUG=#{$debug_flag}",
+                  "-e", "DIR=#{$dir}", "-e", "IMAGE=#{$image}",
+                  "-e", "STUDY_GUID=#{$study_guid}",
+                  "-e", "STUDY_KEY=#{$study_key}",
+                  "-e", "IMAGE_NAME=#{$image_base}",
+                  $dsde_toolbox_image_name,
+                  "consul-template", "-config=/etc/consul-template/config/config.json",
+                  "-template=#{file_name}:#{output_file_name}",
+                  "-retry=30",
+                  "-once"
     ]
   else
     vault_cmd = ["consul-template", "-config=/etc/consul-template/config/config.json",
