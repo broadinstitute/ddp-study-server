@@ -200,12 +200,12 @@ def render_from_path(path, output_file_name = nil)
                   $dsde_toolbox_image_name,
                   "consul-template", "-config=/etc/consul-template/config/config.json",
                   "-template=#{file_name}:#{output_file_name}",
-                  "-retry=30",
+                  "-retry=30s",
                   "-once"
     ]
   else
     vault_cmd = ["consul-template", "-config=/etc/consul-template/config/config.json",
-                 "-template=#{file_name}:#{output_file_name}", "-once", "-retry=30"]
+                 "-template=#{file_name}:#{output_file_name}", "-once", "-retry=30s"]
   end
 
   Open3.popen3(*vault_cmd) { |stdin, stdout, stderr, wait_thread|
