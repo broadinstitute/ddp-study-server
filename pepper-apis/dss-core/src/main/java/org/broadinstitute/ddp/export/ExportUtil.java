@@ -6,8 +6,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import com.typesafe.config.ConfigValue;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -16,6 +18,8 @@ import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
 import org.broadinstitute.ddp.db.dao.ParticipantDao;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
+import org.broadinstitute.ddp.model.activity.instance.FormResponse;
+import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.study.Participant;
 import org.broadinstitute.ddp.util.Auth0Util;
@@ -171,6 +175,21 @@ public class ExportUtil {
                     participant.associateParticipantInstancesWithNonDefaultAddresses(wrapper.unwrap());
                 }
             });
+        }
+    }
+
+    public static void hideProtectedValue(Participant participant, Map.Entry<String, ConfigValue> entry) {
+        List<Answer> questionIdAnswers = participant.getAllResponses().stream()
+                .filter(activityResponse -> activityResponse instanceof FormResponse)
+                .map(activityResponse -> (FormResponse) activityResponse)
+                .filter(formResponse -> formResponse.hasAnswer(entry.getKey()))
+                .map(formResponse -> formResponse.getAnswer(entry.getKey()))
+                .collect(Collectors.toList());
+        if (questionIdAnswers.size() == 1) {
+            questionIdAnswers.get(0).setValue(entry.getValue().unwrapped());
+        } else if (questionIdAnswers.size() > 1) {
+            IntStream.range(0, questionIdAnswers.size()).forEach(i ->
+                    questionIdAnswers.get(i).setValue(String.format("%s %d", entry.getValue().unwrapped(), i+1)));
         }
     }
 }

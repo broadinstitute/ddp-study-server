@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.util;
 
+import static org.broadinstitute.ddp.export.ExportUtil.hideProtectedValue;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,6 +22,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigValue;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -169,8 +172,10 @@ public class DataExporterCli {
                     .collect(Collectors.toSet()));
 
             System.out.println("[export] extracting participants...");
+            Config protectedColumnsConf = ConfigFactory.load(ConfigFile.ES_PROTECTED_COLUMNS_CONFIG_FILE);
             long start = System.currentTimeMillis();
             List<Participant> participants = exporter.extractParticipantDataSet(handle, studyDto);
+            hideProtectedAnswerValues(participants, protectedColumnsConf.getConfig(ConfigFile.ES_PROTECTED_COLUMNS_KEY).entrySet());
             long elapsed = System.currentTimeMillis() - start;
             System.out.println(String.format("[export] took %d ms (%.2f s)", elapsed, elapsed / 1000.0));
 
@@ -200,6 +205,14 @@ public class DataExporterCli {
         });
         long total = System.currentTimeMillis() - begin;
         System.out.println(String.format("[export] entire process took %.2f mins", total / 1000.0 / 60.0));
+    }
+
+    private void hideProtectedAnswerValues(List<Participant> participants, Set<Map.Entry<String, ConfigValue>> answerDefaultValues) {
+        for (Participant participant : participants) {
+            for (Map.Entry<String, ConfigValue> entry : answerDefaultValues) {
+                hideProtectedValue(participant, entry);
+            }
+        }
     }
 
     private void runEsExport(String studyGuid, Set<String> participantGuids, boolean exportStructuredDocument) {

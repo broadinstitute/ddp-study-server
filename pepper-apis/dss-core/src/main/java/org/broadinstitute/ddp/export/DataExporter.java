@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.export;
 
 import static org.broadinstitute.ddp.export.ExportUtil.extractParticipantsFromResultSet;
 import static org.broadinstitute.ddp.export.ExportUtil.getSnapshottedMailAddress;
+import static org.broadinstitute.ddp.export.ExportUtil.hideProtectedValue;
 import static org.broadinstitute.ddp.model.activity.types.ComponentType.MAILING_ADDRESS;
 
 import java.io.BufferedWriter;
@@ -33,6 +34,8 @@ import java.util.stream.Stream;
 import com.google.gson.Gson;
 import com.opencsv.CSVWriter;
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigValue;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
@@ -157,6 +160,7 @@ public class DataExporter {
     private final FileUploadService fileService;
     private final RestHighLevelClient esClient;
     private final AddressService addressService;
+    private final Config protectedColumnsConfig;
 
     public static String makeExportCSVFilename(String studyGuid, Instant timestamp) {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssX").withZone(ZoneOffset.UTC);
@@ -176,6 +180,7 @@ public class DataExporter {
         this.fileService = FileUploadService.fromConfig(cfg);
         this.addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
                 cfg.getString(ConfigFile.GEOCODING_API_KEY));
+        this.protectedColumnsConfig = ConfigFactory.load(ConfigFile.ES_PROTECTED_COLUMNS_CONFIG_FILE);
         try {
             this.esClient = ElasticsearchServiceUtil.getElasticsearchClient(cfg);
         } catch (MalformedURLException e) {
@@ -303,7 +308,16 @@ public class DataExporter {
                                                        boolean exportStructuredDocument) {
         List<ActivityExtract> activityExtracts = extractActivities(handle, studyDto);
         List<Participant> participants = extractParticipantDataSetByIds(handle, studyDto, participantIds);
+        hideProtectedAnswerValues(participants);
         exportToElasticsearch(handle, studyDto, activityExtracts, participants, exportStructuredDocument);
+    }
+
+    private void hideProtectedAnswerValues(List<Participant> participants) {
+        for (Participant participant : participants) {
+            for (Map.Entry<String, ConfigValue> entry : protectedColumnsConfig.getConfig(ConfigFile.ES_PROTECTED_COLUMNS_KEY).entrySet()) {
+                hideProtectedValue(participant, entry);
+            }
+        }
     }
 
     public void exportToElasticsearch(Handle handle, StudyDto studyDto,
