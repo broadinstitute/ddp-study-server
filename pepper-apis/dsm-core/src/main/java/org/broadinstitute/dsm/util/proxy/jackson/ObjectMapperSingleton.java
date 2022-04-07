@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 
@@ -38,7 +39,8 @@ public class ObjectMapperSingleton {
     }
 
     private static class Helper {
-        private static final ObjectMapper objectMapperInstance = new ObjectMapper();
+        private static final ObjectMapper objectMapperInstance = new ObjectMapper()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
 
