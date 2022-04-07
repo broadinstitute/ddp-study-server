@@ -1,9 +1,9 @@
 export const parseToHOCON = require("hocon-parser");
 
-const fs = require("fs");
+import * as fs from 'fs';
 
 export const writeFile = (fileName: string, value: string) => {
-  return fs.writeFile(fileName, value, (err: string) => {
+  return fs.writeFile(fileName, value, err => {
     if (err) {
       return console.log(err);
     }
