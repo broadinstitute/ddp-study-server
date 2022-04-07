@@ -10,6 +10,7 @@ import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
+
 public interface JdbiValidation extends SqlObject {
 
     @SqlUpdate("insert into validation(validation_type_id,allow_save,correction_hint_template_id,revision_id)"
