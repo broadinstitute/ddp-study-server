@@ -80,7 +80,7 @@ public class QuestionEvaluator {
         switch (type) {
             case NUMERIC:
                 values.put(variable, new EquationResponse(variable,
-                        Collections.singletonList(new DecimalDef((Integer) value))));
+                        Collections.singletonList(new DecimalDef((Long) value))));
                 return;
             case PICKLIST:
                 values.put(variable, new EquationResponse(variable,
