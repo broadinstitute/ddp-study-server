@@ -1278,7 +1278,6 @@
             },
             "smId": {
               "type": "nested",
-              "properties": {
                 "properties": {
                   "smIdPk": {
                     "type": "keyword"
@@ -1316,7 +1315,6 @@
                     "type": "boolean"
                   }
                 }
-              }
             },
             "kitRequestShipping": {
               "type": "nested",
