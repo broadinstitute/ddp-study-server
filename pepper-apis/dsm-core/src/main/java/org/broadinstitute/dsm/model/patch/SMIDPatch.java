@@ -1,13 +1,13 @@
 package org.broadinstitute.dsm.model.patch;
 
 import org.broadinstitute.dsm.db.Tissue;
+import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
 import org.broadinstitute.dsm.model.NameValue;
 
+import java.util.Map;
 import java.util.Optional;
 
 public class SMIDPatch extends BasePatch {
-
-    private String smIdPk;
 
     public SMIDPatch(Patch patch) {
         super(patch);
@@ -15,7 +15,7 @@ public class SMIDPatch extends BasePatch {
 
     @Override
     public Object doPatch() {
-        return null;
+        return patchNameValuePair();
     }
 
     @Override
@@ -23,16 +23,25 @@ public class SMIDPatch extends BasePatch {
         return null;
     }
 
-    @Override
-    protected Object patchNameValuePair() {
-        prepare();
-        Optional<Object> maybeNameValue = processSingleNameValue();
-        return maybeNameValue.orElse(resultMap);
+    private String getSMIDValue() {
+        NameValue nameValue = patch.getNameValues().get(1);
+        return String.valueOf(nameValue.getValue());
     }
 
-    private void prepare() {
-        smIdPk = Tissue.createNewTissue(patch.getParentId(), patch.getUser());
+    private String getSMIDType() {
+        return String.valueOf(patch.getNameValue().getValue());
     }
+
+    @Override
+    protected Object patchNameValuePair() {
+        String smIdPk = new TissueSMIDDao().createNewSMIDForTissue(patch.getParentId(), patch.getUser(), getSMIDType(), getSMIDValue());
+        if (Integer.parseInt(smIdPk) > 0) {
+            NameValue nameValue = new NameValue("sm.smIdValue", getSMIDValue());
+            exportToESWithId(smIdPk, nameValue);
+        }
+        return resultMap;
+    }
+
 
     @Override
     Object handleSingleNameValue() {

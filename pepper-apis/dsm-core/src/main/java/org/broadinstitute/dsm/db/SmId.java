@@ -22,9 +22,9 @@ import org.slf4j.LoggerFactory;
         alias = DBConstants.SM_ID_TABLE_ALIAS,
         primaryKey = DBConstants.SM_ID_PK,
         columnPrefix = "")
-public class TissueSmId {
+public class SmId {
 
-    private static final Logger logger = LoggerFactory.getLogger(TissueSmId.class);
+    private static final Logger logger = LoggerFactory.getLogger(SmId.class);
     public static String HE = "he";
     public static String USS = "uss";
     public static String SCROLLS = "scrolls";
@@ -39,10 +39,10 @@ public class TissueSmId {
     @ColumnName(DBConstants.DELETED)
     private Boolean deleted;
 
-    public TissueSmId() {
+    public SmId() {
     }
 
-    public TissueSmId(String smIdPk, String smIdType, String smIdValue, String tissueId) {
+    public SmId(String smIdPk, String smIdType, String smIdValue, String tissueId) {
         this.smIdPk = smIdPk;
         this.smIdType = smIdType;
         this.smIdValue = smIdValue;
@@ -50,14 +50,14 @@ public class TissueSmId {
     }
 
 
-    public static TissueSmId getSMIdsForTissueId(ResultSet rs) {
-        TissueSmId tissueSmId = null;
+    public static SmId getSMIdsForTissueId(ResultSet rs) {
+        SmId tissueSmId = null;
 
         try {
             if (rs.getString(DBConstants.SM_ID_PK) == null) {
                 return null;
             }
-            tissueSmId = new TissueSmId(
+            tissueSmId = new SmId(
                     rs.getString(DBConstants.SM_ID_PK),
                     rs.getString(DBConstants.SM_ID_TYPE_ID),
                     rs.getString(DBConstants.SM_ID_VALUE),
