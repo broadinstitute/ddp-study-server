@@ -340,7 +340,7 @@ public class PatchFormAnswersRoute implements Route {
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.REQUIRED_PARAMETER_MISSING, e.getMessage()));
             }
 
-            enrichWithEquations(instanceGuid, res);
+            enrichWithEquations(handle, instanceGuid, res);
 
             res.setBlockVisibilities(formService.getBlockVisibilitiesAndEnabled(handle, instanceSummary, activityDef, participantGuid,
                     operatorGuid, instanceGuid));
@@ -374,20 +374,18 @@ public class PatchFormAnswersRoute implements Route {
         return result;
     }
 
-    private void enrichWithEquations(final String instanceGuid, final PatchAnswerResponse response) {
-        TransactionWrapper.useTxn(handle -> {
-            var questionEvaluator = new QuestionEvaluator(handle, instanceGuid);
+    private void enrichWithEquations(final Handle handle, final String instanceGuid, final PatchAnswerResponse response) {
+        var questionEvaluator = new QuestionEvaluator(handle, instanceGuid);
 
-            new QuestionCachedDao(handle).getJdbiEquationQuestion().findEquationsByActivityInstanceGuid(instanceGuid)
-                    .stream()
-                    .map(questionEvaluator::evaluate)
-                    .filter(Objects::nonNull)
-                    .forEach(response::addEquation);
-        });
+        new QuestionCachedDao(handle).getJdbiEquationQuestion().findEquationsByActivityInstanceGuid(instanceGuid)
+                .stream()
+                .map(questionEvaluator::evaluate)
+                .filter(Objects::nonNull)
+                .forEach(response::addEquation);
     }
 
     private QuestionDto extractQuestionDto(Response response, String questionStableId, Optional<QuestionDto> optQuestionDto) {
-        if (!optQuestionDto.isPresent()) {
+        if (optQuestionDto.isEmpty()) {
             String msg = "Question with stable id " + questionStableId + " is not found in form activity";
             throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.QUESTION_NOT_FOUND, msg));
         }
