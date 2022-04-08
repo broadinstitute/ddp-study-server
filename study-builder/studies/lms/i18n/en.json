@@ -8,6 +8,9 @@
   "mr_title": "Medical Release Form",
   "mr_header": "Medical Release Form",
 
+  "mr_name_minor": "Medical Release Form - Parent or Guardian",
+  "mr_title_minor": "Medical Release Form - Parent or Guardian",
+
   "ayc_name": "About Your Cancer Survey",
   "ayc_title": "About Your Cancer Survey",
   "ayc_header": "About Your Cancer Survey",
