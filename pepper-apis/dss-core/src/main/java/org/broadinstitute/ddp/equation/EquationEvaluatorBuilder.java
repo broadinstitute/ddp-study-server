@@ -16,6 +16,11 @@ public final class EquationEvaluatorBuilder {
         return this;
     }
 
+    public EquationEvaluatorBuilder withVariablesValues(final Map<String, BigDecimal> values) {
+        variables.putAll(values);
+        return this;
+    }
+
     public EquationEvaluator build() {
         return new EquationEvaluator(variables);
     }

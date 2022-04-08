@@ -229,6 +229,13 @@
                 </exclusions>
             </dependency>
 
+            <!-- Nice streams -->
+            <dependency>
+                <groupId>one.util</groupId>
+                <artifactId>streamex</artifactId>
+                <version>0.8.1</version>
+            </dependency>
+
             <!-- database utilities -->
             <dependency>
                 <groupId>com.zaxxer</groupId>

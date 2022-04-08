@@ -78,6 +78,7 @@ import org.broadinstitute.dsm.route.DSSTestingRoute;
 import org.broadinstitute.dsm.route.DashboardRoute;
 import org.broadinstitute.dsm.route.DisplaySettingsRoute;
 import org.broadinstitute.dsm.route.DownloadPDFRoute;
+import org.broadinstitute.dsm.route.DownloadParticipantListRoute;
 import org.broadinstitute.dsm.route.DrugListRoute;
 import org.broadinstitute.dsm.route.DrugRoute;
 import org.broadinstitute.dsm.route.EditParticipantMessageReceiverRoute;
@@ -831,6 +832,9 @@ public class DSMServer {
         patch(UI_ROOT + RoutePath.FIELD_SETTINGS_ROUTE, fieldSettingsRoute, new JsonTransformer());
 
         get(UI_ROOT + RoutePath.DISPLAY_SETTINGS_ROUTE, new DisplaySettingsRoute(patchUtil), new JsonTransformer());
+
+        post(UI_ROOT + RoutePath.DOWNLOAD_PARTICIPANT_LIST_ROUTE, new DownloadParticipantListRoute());
+
     }
 
     private void setupMRAbstractionRoutes() {
