@@ -8,10 +8,10 @@ import lombok.Setter;
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ParticipantColumn {
-
-    public String name;
-    public String tableAlias;
-    public String object;
+    private String display;
+    private String name;
+    private String tableAlias;
+    private String object;
 
     public ParticipantColumn(String name, String tableAlias) {
         this.name = name;

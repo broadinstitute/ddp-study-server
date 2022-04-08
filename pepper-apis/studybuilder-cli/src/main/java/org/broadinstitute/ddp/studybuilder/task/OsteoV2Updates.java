@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
 import com.typesafe.config.Config;
-import org.broadinstitute.ddp.studybuilder.task.osteoupdates.OsteoDdp7601;
 import org.jdbi.v3.core.Handle;
 
 import java.nio.file.Path;
@@ -22,6 +21,7 @@ public class OsteoV2Updates implements CustomTask {
         tasks.add(new OsteoConsentAddendumV2());
         tasks.add(new OsteoPrequalUpdate());
         tasks.add(new OsteoNewActivities());
+        tasks.add(new OsteoMRFv2());
         tasks.forEach(t -> t.init(cfgPath, studyCfg, varsCfg));
     }
 
