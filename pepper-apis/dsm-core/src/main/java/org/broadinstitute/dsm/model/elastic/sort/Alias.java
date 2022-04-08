@@ -1,7 +1,11 @@
 package org.broadinstitute.dsm.model.elastic.sort;
 
+import java.util.Objects;
+
+import com.google.common.base.Enums;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.model.ParticipantColumn;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -21,8 +25,8 @@ public enum Alias {
     EX(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT), false),
     DSM(ElasticSearchUtil.DSM, false), STATUS(ElasticSearchUtil.STATUS, false), PROFILE(ElasticSearchUtil.PROFILE, false),
     ADDRESS(ElasticSearchUtil.ADDRESS, false), INVITATIONS(ElasticSearchUtil.INVITATIONS, false), PROXY(ElasticSearchUtil.PROFILE, false),
-    ACTIVITIES(ElasticSearchUtil.ACTIVITIES, true), REGISTRATION(ElasticSearchUtil.ACTIVITIES, true);
-
+    ACTIVITIES(ElasticSearchUtil.ACTIVITIES, true), REGISTRATION(ElasticSearchUtil.ACTIVITIES, true),
+    DATA(StringUtils.EMPTY, false);
     Alias(String value, boolean isCollection) {
         this.value = value;
         this.isCollection = isCollection;
@@ -47,4 +51,17 @@ public enum Alias {
         return alias;
     }
 
+    public static Alias of(ParticipantColumn column) {
+        Alias esAlias;
+        if (Objects.nonNull(column.getObject())) {
+            esAlias = Alias.of(column.getObject());
+        } else {
+            esAlias = Alias.of(column.getTableAlias());
+        }
+        return esAlias;
+    }
+
+    private static Alias of (String alias) {
+        return Enums.getIfPresent(Alias.class, alias.toUpperCase()).or(ACTIVITIES);
+    }
 }

@@ -85,4 +85,5 @@
     <include file="liquibase/singular/DDP-7322_singularForm_tab2.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/singular/DDP-7322_singularForm_tab3.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/singular/DDP-7322_formFix.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/singular/DDP-7746_singularParticipantFields.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
