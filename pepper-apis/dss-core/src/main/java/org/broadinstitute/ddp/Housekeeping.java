@@ -39,6 +39,7 @@ import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.Subscription;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
@@ -111,17 +112,14 @@ import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.jdbi.v3.core.Handle;
 import org.quartz.Scheduler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Spark;
 
+@Slf4j
 public class Housekeeping {
 
     public static final AtomicBoolean startupMonitor = new AtomicBoolean();
 
     private static final Map<Object, Long> lastLogTimeForException = new HashMap<>();
-
-    private static final Logger LOG = LoggerFactory.getLogger(Housekeeping.class);
 
     private static final String DDP_ATTRIBUTE_PREFIX = "ddp.";
     /**
@@ -226,9 +224,9 @@ public class Housekeeping {
         }
 
         if (doLiquibase) {
-            LOG.info("Running Pepper liquibase migrations against " + apisDbUrl);
+            log.info("Running Pepper liquibase migrations against " + apisDbUrl);
             LiquibaseUtil.runLiquibase(apisDbUrl, TransactionWrapper.DB.APIS);
-            LOG.info("Running Housekeeping liquibase migrations against " + housekeepingDbUrl);
+            log.info("Running Housekeeping liquibase migrations against " + housekeepingDbUrl);
             LiquibaseUtil.runLiquibase(housekeepingDbUrl, TransactionWrapper.DB.HOUSEKEEPING);
             LiquibaseUtil.releaseResources();
         }
@@ -251,13 +249,13 @@ public class Housekeeping {
         try {
             pubSubTaskConnectionService.create();
         } catch (PubSubTaskException e) {
-            LOG.error("Failed to init PubSubTask API", e);
+            log.error("Failed to init PubSubTask API", e);
         }
 
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
             JdbiMessageDestination messageDestinationDao = handle.attach(JdbiMessageDestination.class);
             for (String topicName : messageDestinationDao.getAllTopics()) {
-                LOG.info("Initializing subscription for topic {}", topicName);
+                log.info("Initializing subscription for topic {}", topicName);
                 ProjectTopicName projectTopicName = ProjectTopicName.of(pubSubProject, topicName);
                 pubsubConnectionManager.createTopicIfNotExists(projectTopicName);
                 // todo arz investigate topic naming vs. subscription naming
@@ -295,9 +293,9 @@ public class Housekeeping {
                 TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, apisHandle -> {
                     EventDao eventDao = apisHandle.attach(EventDao.class);
                     // first query the full list of pending events, shuffled to avoid event starvation
-                    LOG.info("Querying pending events");
+                    log.info("Querying pending events");
                     pendingEvents.addAll(eventDao.findPublishableQueuedEvents());
-                    LOG.info("Found {} events that may be publishable", pendingEvents.size());
+                    log.info("Found {} events that may be publishable", pendingEvents.size());
                     Collections.shuffle(pendingEvents);
                 });
 
@@ -312,11 +310,11 @@ public class Housekeeping {
                                     .findUserByGuid(pendingEvent.getParticipantGuid())
                                     .orElse(null);
                             if (participant == null) {
-                                LOG.error("Could not find participant {} for publishing queued event {}, skipping",
+                                log.error("Could not find participant {} for publishing queued event {}, skipping",
                                         pendingEvent.getParticipantGuid(), pendingEvent.getQueuedEventId());
                                 shouldSkipEvent = true;
                             } else if (participant.isTemporary()) {
-                                LOG.warn("Participant {} for queued event {} is a temporary user, skipping",
+                                log.warn("Participant {} for queued event {} is a temporary user, skipping",
                                         pendingEvent.getParticipantGuid(), pendingEvent.getQueuedEventId());
                                 shouldSkipEvent = true;
                             }
@@ -333,13 +331,13 @@ public class Housekeeping {
                                             pendingEvent.getOperatorGuid(),
                                             null);
                                 } catch (PexException e) {
-                                    LOG.warn("Failed to evaluate cancelCondition pex, defaulting to false: `{}`",
+                                    log.warn("Failed to evaluate cancelCondition pex, defaulting to false: `{}`",
                                             pendingEvent.getCancelCondition(), e);
                                     shouldCancel = false;
                                 }
                             }
                             if (shouldCancel) {
-                                LOG.info("Deleting queued event {} because its cancel condition has been met", pendingEvent
+                                log.info("Deleting queued event {} because its cancel condition has been met", pendingEvent
                                         .getQueuedEventId());
                                 int rowsDeleted = queuedEventDao.deleteAllByQueuedEventId(pendingEvent.getQueuedEventId());
                                 if (rowsDeleted != 1) {
@@ -358,7 +356,7 @@ public class Housekeeping {
                                                 pendingEvent.getOperatorGuid(),
                                                 null);
                                     } catch (PexException e) {
-                                        LOG.warn("Failed to evaluate precondition pex, defaulting to false: `{}`",
+                                        log.warn("Failed to evaluate precondition pex, defaulting to false: `{}`",
                                                 pendingEvent.getPrecondition(), e);
                                         hasMetPrecondition = false;
                                     }
@@ -377,7 +375,7 @@ public class Housekeeping {
                                                     pendingEvent.getMaxOccurrencesPerUser())) {
                                                 String ddpMessageId = Long.toString(jdbiMessage.insertMessageForEvent(
                                                         pendingEventId));
-                                                LOG.info("Publishing queued event {}", pendingEvent.getQueuedEventId());
+                                                log.info("Publishing queued event {}", pendingEvent.getQueuedEventId());
                                                 PubsubMessage message = null;
                                                 try {
                                                     message = messageBuilder.createMessage(ddpMessageId, pendingEvent,
@@ -388,7 +386,7 @@ public class Housekeeping {
                                                             .map(StudySettings::shouldDeleteUnsendableEmails)
                                                             .orElse(false);
                                                     if (shouldDeleteEvent) {
-                                                        LOG.warn("Unable to create message for event with "
+                                                        log.warn("Unable to create message for event with "
                                                                 + "queued_event_id={}, proceeding to delete",
                                                                 pendingEvent.getQueuedEventId(), e);
                                                         queuedEventDao.deleteAllByQueuedEventId(
@@ -396,13 +394,13 @@ public class Housekeeping {
                                                         return; // Exit out of transaction wrapper and move on to next
                                                         // event.
                                                     } else {
-                                                        LOG.error("Could not create message for event with "
+                                                        log.error("Could not create message for event with "
                                                                 + "queued_event_id={}"
                                                                 + " because there is no email address to sent to",
                                                                 pendingEvent.getQueuedEventId(), e);
                                                     }
                                                 } catch (MessageBuilderException e) {
-                                                    LOG.error("Could not create message for queued event "
+                                                    log.error("Could not create message for queued event "
                                                             + pendingEvent.getQueuedEventId(), e);
                                                 }
 
@@ -419,7 +417,7 @@ public class Housekeeping {
                                                     ApiFuture<String> publishResult = publisher.publish(message);
 
                                                     int numRowsUpdated = queuedEventDao.markPending(pendingEvent.getQueuedEventId());
-                                                    LOG.info("Marked queued event {} as pending", pendingEvent.getQueuedEventId());
+                                                    log.info("Marked queued event {} as pending", pendingEvent.getQueuedEventId());
                                                     if (numRowsUpdated != 1) {
                                                         throw new DaoException("Marked " + numRowsUpdated + " rows as pending for "
 
@@ -427,10 +425,10 @@ public class Housekeeping {
                                                     }
                                                     setPostPublishingCallbacks(publishResult, pendingEvent.getQueuedEventId());
                                                 } else {
-                                                    LOG.error("null message for " + pendingEvent.getQueuedEventId());
+                                                    log.error("null message for " + pendingEvent.getQueuedEventId());
                                                 }
                                             } else {
-                                                LOG.info(IGNORE_EVENT_LOG_MESSAGE + "{}", pendingEvent
+                                                log.info(IGNORE_EVENT_LOG_MESSAGE + "{}", pendingEvent
                                                         .getEventConfigurationId());
                                                 synchronized (afterHandlerGuard) {
                                                     if (afterHandling != null) {
@@ -443,7 +441,7 @@ public class Housekeeping {
                                         });
                                     }
                                 } else {
-                                    LOG.info("Skipping event {} because its precondition has not been met", pendingEvent
+                                    log.info("Skipping event {} because its precondition has not been met", pendingEvent
                                             .getQueuedEventId());
                                 }
                             }
@@ -460,7 +458,7 @@ public class Housekeeping {
             try {
                 Thread.sleep(SLEEP_MILLIS);
             } catch (InterruptedException e) {
-                LOG.info("Housekeeping interrupted during sleep", e);
+                log.info("Housekeeping interrupted during sleep", e);
             }
         }
         pubsubConnectionManager.close();
@@ -478,18 +476,18 @@ public class Housekeeping {
             try {
                 pubSubTaskConnectionService.destroy();
             } catch (PubSubTaskException e) {
-                LOG.error("Failed to shutdown PubSubTask API", e);
+                log.error("Failed to shutdown PubSubTask API", e);
             }
         }
 
-        LOG.info("Housekeeping is shutting down");
+        log.info("Housekeeping is shutting down");
     }
 
     private static void setupScheduler(Config cfg) {
         boolean runScheduler = cfg.getBoolean(ConfigFile.RUN_SCHEDULER);
         boolean enableHKeepTasks = cfg.getBoolean(ConfigFile.PUBSUB_ENABLE_HKEEP_TASKS);
         if (runScheduler || enableHKeepTasks) {
-            LOG.info("Booting job scheduler...");
+            log.info("Booting job scheduler...");
             scheduler = JobScheduler.initializeWith(cfg);
             try {
                 // Setup background jobs if scheduler is enabled.
@@ -516,7 +514,7 @@ public class Housekeeping {
                 throw new DDPException("Failed to setup scheduler jobs", e);
             }
         } else {
-            LOG.info("Housekeeping job scheduler is not set to run");
+            log.info("Housekeeping job scheduler is not set to run");
         }
     }
 
@@ -536,16 +534,16 @@ public class Housekeeping {
             } catch (TimeoutException e) {
                 throw new DDPException("Could not start housekeeping tasks subscriber", e);
             }
-            LOG.info("Started housekeeping tasks subscriber to subscription {}", subName);
+            log.info("Started housekeeping tasks subscriber to subscription {}", subName);
         } else {
-            LOG.warn("Housekeeping tasks is not enabled");
+            log.warn("Housekeeping tasks is not enabled");
         }
     }
 
     private static void setupFileScanResultReceiver(Config cfg, String projectId) {
         boolean enabled = cfg.getBoolean(ConfigFile.FileUploads.ENABLE_SCAN_RESULT_HANDLER);
         if (!enabled) {
-            LOG.warn("File scan result handler is not enabled");
+            log.warn("File scan result handler is not enabled");
             return;
         }
 
@@ -585,7 +583,7 @@ public class Housekeeping {
                 .setParallelPullCount(1);
 
         startNewSubscriberWithRecovery(subName, builder, executorProvider, callbackExecutor, subscriber -> {
-            LOG.info("Started file scan result subscriber to subscription {}", subName);
+            log.info("Started file scan result subscriber to subscription {}", subName);
             fileScanResultSubscriber = subscriber;
         });
     }
@@ -601,7 +599,7 @@ public class Housekeeping {
         newSubscriber.addListener(new ApiService.Listener() {
             @Override
             public void failed(ApiService.State from, Throwable failure) {
-                LOG.error("Subscriber to subscription {} encountered unrecoverable failure from {}"
+                log.error("Subscriber to subscription {} encountered unrecoverable failure from {}"
                         + ", rebuilding subscriber", subscription, from, failure);
                 if (!executorProvider.getExecutor().isShutdown()) {
                     startNewSubscriberWithRecovery(subscription, builder, executorProvider, callbackExecutor, consumer);
@@ -629,7 +627,7 @@ public class Housekeeping {
             return "";
         });
         Spark.awaitInitialization();
-        LOG.info("Started HTTP server on port {} and waiting for ping from GAE", envPort);
+        log.info("Started HTTP server on port {} and waiting for ping from GAE", envPort);
 
         long startMillis = Instant.now().toEpochMilli();
         while (!receivedPing.get()) {
@@ -639,16 +637,16 @@ public class Housekeeping {
             try {
                 TimeUnit.SECONDS.sleep(1);
             } catch (InterruptedException e) {
-                LOG.warn("Wait interrupted", e);
+                log.warn("Wait interrupted", e);
             }
         }
 
         Spark.stop();
         Spark.awaitStop();
         if (receivedPing.get()) {
-            LOG.info("Received ping from GAE, proceeding with Housekeeping startup");
+            log.info("Received ping from GAE, proceeding with Housekeeping startup");
         } else {
-            LOG.error("Did not receive ping from GAE but proceeding with Housekeeping startup");
+            log.error("Did not receive ping from GAE but proceeding with Housekeeping startup");
         }
     }
 
@@ -657,7 +655,7 @@ public class Housekeeping {
     }
 
     private static void logException(Exception e) {
-        LOG.error("Housekeeping error", e);
+        log.error("Housekeeping error", e);
     }
 
     public static void stop() {
@@ -675,10 +673,10 @@ public class Housekeeping {
                 PUBSUB_PUBLISH_CALLBACK_EXECUTOR.execute(() -> {
                     if (t instanceof ApiException) {
                         ApiException apiException = ((ApiException) t);
-                        LOG.error("Error while publishing queued event {}.  Pubsub returned {}", queuedEventId,
+                        log.error("Error while publishing queued event {}.  Pubsub returned {}", queuedEventId,
                                 apiException.getStatusCode(), apiException);
                     }
-                    LOG.error("Error while publishing queued event {}.  Re-queueing.", queuedEventId, t);
+                    log.error("Error while publishing queued event {}.  Re-queueing.", queuedEventId, t);
                     TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, apisHandle -> {
                         JdbiQueuedEvent queuedEventDao = apisHandle.attach(JdbiQueuedEvent.class);
                         int numRowsUpdated = queuedEventDao.clearStatus(queuedEventId);
@@ -693,16 +691,16 @@ public class Housekeeping {
             @Override
             public void onSuccess(String messageId) {
                 PUBSUB_PUBLISH_CALLBACK_EXECUTOR.execute(() -> {
-                    LOG.info("Posted queued event {} with message id {}", queuedEventId, messageId);
+                    log.info("Posted queued event {} with message id {}", queuedEventId, messageId);
                     TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
                         QueuedEventDao queuedEventDao = handle.attach(QueuedEventDao.class);
-                        LOG.info("Attempting to delete queued event {}", queuedEventId);
+                        log.info("Attempting to delete queued event {}", queuedEventId);
                         int numRowsDeleted = queuedEventDao.deleteByQueuedEventId(queuedEventId);
                         if (numRowsDeleted != 1) {
                             throw new DaoException("Deleted " + numRowsDeleted + " rows for queued event "
                                     + queuedEventId);
                         } else {
-                            LOG.info("Deleted posted event {}", queuedEventId);
+                            log.info("Deleted posted event {}", queuedEventId);
                         }
                     });
                 });
@@ -743,7 +741,7 @@ public class Housekeeping {
                                     if (jdbiMessage.shouldProcessMessage(ddpMessageId)) {
                                         String messageText = message.getData().toStringUtf8();
                                         Map<String, String> attributes = message.getAttributesMap();
-                                        LOG.info("Received ddp message {} of type/version {}/{} for event {} with text {}",
+                                        log.info("Received ddp message {} of type/version {}/{} for event {} with text {}",
                                                 attributes.get(DDP_MESSAGE_ID),
                                                 attributes.get(Housekeeping.DDP_EVENT_TYPE),
                                                 attributes.get(DDP_HOUSEKEEPING_VERSION),
@@ -794,16 +792,16 @@ public class Housekeeping {
                                     } else {
                                         consumer.ack(); // deliberate decision to *not* handle duplicated message, so
                                         // do not redeliver
-                                        LOG.warn("Skipping duplicate message {} for event {}", ddpMessageId,
+                                        log.warn("Skipping duplicate message {} for event {}", ddpMessageId,
                                                 ddpEventId);
                                     }
                                 });
                             } catch (MissingUserException e) {
-                                LOG.error("We have a message for which we no longer have a user, "
+                                log.error("We have a message for which we no longer have a user, "
                                         + "ack-ing and skipping it: ", e);
                                 consumer.ack();
                             } catch (MessageHandlingException e) {
-                                LOG.error("Trouble processing message", e);
+                                log.error("Trouble processing message", e);
                                 if (e.shouldRetry()) {
                                     consumer.nack();
                                 } else {
@@ -811,7 +809,7 @@ public class Housekeeping {
                                 }
                             } catch (Exception e) {
                                 consumer.nack();
-                                LOG.error("Could not make sense of message " + message.getMessageId(), e);
+                                log.error("Could not make sense of message " + message.getMessageId(), e);
                             }
                         }
                     };
@@ -824,7 +822,7 @@ public class Housekeeping {
                     .build();
             subscriber.startAsync();
         } catch (Exception e) {
-            LOG.error("Error during message handling", e);
+            log.error("Error during message handling", e);
         }
     }
 
@@ -839,7 +837,7 @@ public class Housekeeping {
                     .map(EventConfiguration::new)
                     .orElse(null);
             if (event == null) {
-                LOG.error("No event configuration found for id={}, skipping queued event {}",
+                log.error("No event configuration found for id={}, skipping queued event {}",
                         pendingEvent.getEventConfigurationId(), pendingEvent.getQueuedEventId());
                 return true;
             }

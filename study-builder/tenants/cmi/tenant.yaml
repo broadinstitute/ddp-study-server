@@ -46,6 +46,7 @@ emailTemplates:
       {% elsif client.client_metadata.study == "cmi-mpc" %} Metastatic Prostate Cancer Project
       {% elsif client.client_metadata.study == "cmi-esc" %} Esophageal and Stomach Cancer Project
       {% elsif client.client_metadata.study == "cmi-pancan" %} Count Me In
+      {% elsif client.client_metadata.study == "cmi-lms" %} Leiomyosarcoma Project
       {% endif %} Password Reset
     urlLifetimeInSeconds: 432000
     syntax: liquid
@@ -350,6 +351,29 @@ clients:
     ]
     client_metadata:
       study: cmi-pancan
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+    oidc_conformant: true
+
+  - name: lms-angular-client
+    app_type: spa
+    callbacks: [
+      '##LMS_BASE_URL##/login-landing'
+      ##LOCALHOST_CALLBACKS##
+    ]
+    allowed_logout_urls: [
+      '##LMS_BASE_URL##',
+      '##LMS_BASE_URL##/error',
+      '##LMS_BASE_URL##/session-expired'
+      ##LOCALHOST_LOGOUTS##
+    ]
+    web_origins: [
+      '##LMS_BASE_URL##'
+      ##LOCALHOST_ORIGINS##
+    ]
+    client_metadata:
+      study: cmi-lms
     jwt_configuration:
       alg: RS256
       lifetime_in_seconds: 36000

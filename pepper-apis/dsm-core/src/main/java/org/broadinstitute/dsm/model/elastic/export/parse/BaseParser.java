@@ -31,9 +31,9 @@ public abstract class BaseParser implements Parser {
         Object elementMap;
         try {
             Field field = propertyClass.getDeclaredField(fieldName);
-            if (long.class.isAssignableFrom(field.getType())) {
+            if (isNumericTypeField(field)) {
                 elementMap = forNumeric(element);
-            } else if (boolean.class.isAssignableFrom(field.getType())) {
+            } else if (isBooleanTypeField(field)) {
                 elementMap = forBoolean(element);
             } else {
                 // either text or date in string
@@ -47,6 +47,18 @@ public abstract class BaseParser implements Parser {
             throw new RuntimeException(e);
         }
         return elementMap;
+    }
+
+    private boolean isBooleanTypeField(Field field) {
+        return boolean.class.isAssignableFrom(field.getType()) || Boolean.class.isAssignableFrom(field.getType());
+    }
+
+    private boolean isNumericTypeField(Field field) {
+        Class<?> fieldType = field.getType();
+        return long.class.isAssignableFrom(fieldType)
+                || Long.class.isAssignableFrom(fieldType)
+                || int.class.isAssignableFrom(fieldType)
+                || Integer.class.isAssignableFrom(fieldType);
     }
 
     protected abstract Object forNumeric(String value);

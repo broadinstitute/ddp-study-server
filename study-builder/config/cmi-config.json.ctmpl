@@ -40,9 +40,12 @@
     "ESC_BASE_URL": "{{$resp.Data.baseWebUrl}}",
   {{end}}
   {{with $resp := vault (printf "secret/pepper/%s/%s/pancan/conf" $environment $version)}}
-   "PANCAN_BASE_URL": "{{$resp.Data.baseWebUrl}}",
+    "PANCAN_BASE_URL": "{{$resp.Data.baseWebUrl}}",
   {{end}}
-   "ASSETS_BUCKET_URL": "{{$conf.assetsBucketUrl}}",
+  {{with $resp := vault (printf "secret/pepper/%s/%s/lms/conf" $environment $version)}}
+    "LMS_BASE_URL": "{{$resp.Data.baseWebUrl}}",
+  {{end}}
+    "ASSETS_BUCKET_URL": "{{$conf.assetsBucketUrl}}",
     "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}",
     "SERVER_BASE_URL": "{{$conf.serverBaseUrl}}",
     "SENDGRID_EMAIL": "{{$conf.sendgridFromEmail}}",

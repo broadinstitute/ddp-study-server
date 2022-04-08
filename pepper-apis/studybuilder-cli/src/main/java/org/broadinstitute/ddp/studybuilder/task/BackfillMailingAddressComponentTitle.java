@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.JdbiComponent;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
@@ -19,12 +20,9 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class BackfillMailingAddressComponentTitle implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(BackfillMailingAddressComponentTitle.class);
     private static final String DEFAULT_TITLE_VAR = "mailing_address_title";
     private static final String DEFAULT_TITLE_TEXT = "Your contact information";
 
@@ -42,7 +40,7 @@ public class BackfillMailingAddressComponentTitle implements CustomTask {
         JdbiComponent jdbiComponent = handle.attach(JdbiComponent.class);
 
         List<ComponentDto> dtos = helper.findMailingAddressComponentsInStudy(studyDto.getId());
-        LOG.info("Found {} mailing address components in study {}", dtos.size(), studyDto.getGuid());
+        log.info("Found {} mailing address components in study {}", dtos.size(), studyDto.getGuid());
 
         for (ComponentDto dto : dtos) {
             long componentId = dto.getComponentId();
@@ -54,15 +52,15 @@ public class BackfillMailingAddressComponentTitle implements CustomTask {
             if (compDto == null) {
                 long titleTemplateId = createTitleTemplate(handle, dto.getRevisionId());
                 DBUtils.checkInsert(1, jdbiComponent.insertMailingAddressComponent(componentId, titleTemplateId, null, false, false));
-                LOG.info("Inserted mailing address component {} with titleTemplateId={}", componentId, titleTemplateId);
+                log.info("Inserted mailing address component {} with titleTemplateId={}", componentId, titleTemplateId);
             } else if (compDto.getTitleTemplateId() == null) {
                 long titleTemplateId = createTitleTemplate(handle, dto.getRevisionId());
                 DBUtils.checkUpdate(1, jdbiComponent.updateMailingAddressComponent(
                         componentId, titleTemplateId, compDto.getSubtitleTemplateId(),
                         compDto.shouldRequireVerified(), compDto.shouldRequirePhone()));
-                LOG.info("Updated mailing address component {} with titleTemplateId={}", componentId, titleTemplateId);
+                log.info("Updated mailing address component {} with titleTemplateId={}", componentId, titleTemplateId);
             } else {
-                LOG.info("Mailing address component with id={} already has titleTemplateId={}",
+                log.info("Mailing address component with id={} already has titleTemplateId={}",
                         componentId, compDto.getTitleTemplateId());
             }
         }

@@ -17,6 +17,7 @@ public class Sort {
 
     SortBy sortBy;
     TypeExtractor<Map<String, String>> typeExtractor;
+    private static final String LOWER_CASE_SORT = "lower_case_sort";
 
     private Alias alias;
 
@@ -86,7 +87,7 @@ public class Sort {
 
     protected String getKeywordIfText(Type innerType) {
         if (isTextContent(innerType) && isFieldTextType()) {
-            return buildPath(TypeParser.KEYWORD);
+            return buildPath(LOWER_CASE_SORT);
         }
         return StringUtils.EMPTY;
     }
