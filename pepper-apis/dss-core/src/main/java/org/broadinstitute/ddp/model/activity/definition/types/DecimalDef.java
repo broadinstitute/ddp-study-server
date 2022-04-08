@@ -24,6 +24,10 @@ public class DecimalDef implements Comparable<DecimalDef> {
         this(BigDecimal.valueOf(integer));
     }
 
+    public DecimalDef(final String value) {
+        this(new BigDecimal(value));
+    }
+
     @Override
     public int compareTo(final DecimalDef o) {
         return toBigDecimal().compareTo(o.toBigDecimal());
