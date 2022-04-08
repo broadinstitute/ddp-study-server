@@ -1273,125 +1273,47 @@
                 },
                 "hECount": {
                   "type": "long"
-                },
-                "ussSMID": {
-                  "type": "nested",
-                  "properties": {
-                    "smIdPk": {
-                      "type": "keyword"
-                    },
-                    "smIdValue": {
-                      "type": "text",
-                      "fields": {
-                        "keyword": {
-                          "type": "keyword"
-                        },
-                        "lower_case_sort": {
-                          "type": "text",
-                          "analyzer": "case_insensitive_sort",
-                          "fielddata": true
-                        }
+                }
+              }
+            },
+            "smId": {
+              "type": "nested",
+              "properties": {
+                "properties": {
+                  "smIdPk": {
+                    "type": "keyword"
+                  },
+                  "smIdValue": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword"
+                      },
+                      "lower_case_sort": {
+                        "type": "text",
+                        "analyzer": "case_insensitive_sort",
+                        "fielddata": true
                       }
-                    },
-                    "smIdType": {
-                      "type": "text",
-                      "fields": {
-                        "keyword": {
-                          "type": "keyword"
-                        },
-                        "lower_case_sort": {
-                          "type": "text",
-                          "analyzer": "case_insensitive_sort",
-                          "fielddata": true
-                        }
-                      }
-                    },
-                    "tissueId": {
-                      "type": "keyword"
-                    },
-                    "deleted": {
-                      "type": "boolean"
                     }
-                  }
-                },
-                "scrollsSMID": {
-                  "type": "nested",
-                  "properties": {
-                    "smIdPk": {
-                      "type": "keyword"
-                    },
-                    "smIdValue": {
-                      "type": "text",
-                      "fields": {
-                        "keyword": {
-                          "type": "keyword"
-                        },
-                        "lower_case_sort": {
-                          "type": "text",
-                          "analyzer": "case_insensitive_sort",
-                          "fielddata": true
-                        }
+                  },
+                  "smIdType": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword"
+                      },
+                      "lower_case_sort": {
+                        "type": "text",
+                        "analyzer": "case_insensitive_sort",
+                        "fielddata": true
                       }
-                    },
-                    "smIdType": {
-                      "type": "text",
-                      "fields": {
-                        "keyword": {
-                          "type": "keyword"
-                        },
-                        "lower_case_sort": {
-                          "type": "text",
-                          "analyzer": "case_insensitive_sort",
-                          "fielddata": true
-                        }
-                      }
-                    },
-                    "tissueId": {
-                      "type": "keyword"
-                    },
-                    "deleted": {
-                      "type": "boolean"
                     }
-                  }
-                },
-                "heSMID": {
-                  "type": "nested",
-                  "properties": {
-                    "smIdPk": {
-                      "type": "keyword"
-                    },
-                    "smIdValue": {
-                      "type": "text",
-                      "fields": {
-                        "keyword": {
-                          "type": "keyword"
-                        },
-                        "lower_case_sort": {
-                          "type": "text",
-                          "analyzer": "case_insensitive_sort",
-                          "fielddata": true
-                        }
-                      }
-                    },
-                    "smIdType": {
-                      "type": "text",
-                      "fields": {
-                        "keyword": {
-                          "type": "keyword"
-                        },
-                        "lower_case_sort": {
-                          "type": "text",
-                          "analyzer": "case_insensitive_sort",
-                          "fielddata": true
-                        }
-                      }
-                    },
-                    "tissueId": {
-                      "type": "keyword"
-                    },
-                    "deleted": {
-                      "type": "boolean"
-                    }
+                  },
+                  "tissueId": {
+                    "type": "keyword"
+                  },
+                  "deleted": {
+                    "type": "boolean"
                   }
                 }
               }
