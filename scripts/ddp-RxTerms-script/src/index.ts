@@ -13,7 +13,7 @@ const workSheet = workBook.Sheets[workBook.SheetNames[0]];
 
 const rxNormArray = XLSX.utils.sheet_to_json(workSheet) as RxNormDrugOption[];
 
-const pickListOptions = rxNormArray.map((drug) => ({
+const picklistOptions = rxNormArray.map((drug) => ({
   stableId: drug.RXCUI.toString(),
   optionLabelTemplate: {
       templateType: 'TEXT',
@@ -25,7 +25,7 @@ const pickListOptions = rxNormArray.map((drug) => ({
   }
 }));
 
-fs.writeFile(outputFileName, JSON.stringify({pickListOptions}, null, 2), err => {
+fs.writeFile(outputFileName, JSON.stringify({picklistOptions}, null, 2), err => {
   if (err) {
     return console.log(err);
   }
