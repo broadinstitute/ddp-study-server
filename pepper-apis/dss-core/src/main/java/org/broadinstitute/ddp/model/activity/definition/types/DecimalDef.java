@@ -20,8 +20,12 @@ public class DecimalDef implements Comparable<DecimalDef> {
         this(decimal.unscaledValue(), decimal.scale());
     }
 
-    public DecimalDef(final int integer) {
-        this(BigDecimal.valueOf(integer));
+    public DecimalDef(final int value) {
+        this(BigDecimal.valueOf(value));
+    }
+
+    public DecimalDef(final long value) {
+        this(BigDecimal.valueOf(value));
     }
 
     public DecimalDef(final String value) {
