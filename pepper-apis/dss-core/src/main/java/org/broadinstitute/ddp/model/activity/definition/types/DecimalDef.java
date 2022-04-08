@@ -4,12 +4,13 @@ import com.google.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
 @Value
 @AllArgsConstructor
-public class DecimalDef implements Comparable<DecimalDef> {
+public class DecimalDef implements Comparable<DecimalDef>, Serializable {
     @SerializedName("value")
     BigInteger value;
 
