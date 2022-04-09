@@ -1,12 +1,7 @@
 package org.broadinstitute.ddp.equation.compute;
 
-import org.antlr.v4.runtime.BailErrorStrategy;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.broadinstitute.ddp.equation.EquationEvaluator;
-import org.broadinstitute.ddp.pex.lang.EquationLexer;
-import org.broadinstitute.ddp.pex.lang.EquationParser;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -83,7 +78,7 @@ public class EquationEvaluationTest {
                 .build();
 
         assertEquals(new BigDecimal("16.69"),
-                evaluator.visit(buildParser("3.14 + 2.71 * (x + y ^ 2)").expression()));
+                evaluator.evaluate("3.14 + 2.71 * (x + y ^ 2)"));
     }
 
     @Test
@@ -99,16 +94,6 @@ public class EquationEvaluationTest {
     }
 
     private BigDecimal evaluate(final String expression) {
-        return EquationEvaluator.builder().build().visit(buildParser(expression).expression());
-    }
-
-    private EquationLexer buildLexer(final String expression) {
-        return new EquationLexer(CharStreams.fromString(expression));
-    }
-
-    private EquationParser buildParser(final String expression) {
-        final EquationParser parser = new EquationParser(new CommonTokenStream(buildLexer(expression)));
-        parser.setErrorHandler(new BailErrorStrategy());
-        return parser;
+        return EquationEvaluator.builder().build().evaluate(expression);
     }
 }
