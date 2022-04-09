@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="simone" id="OS_pe-cgs-prefilter">
+        <insert tableName="view_filters">
+            <column name="display_name" value="OS_PE-CGS_PRE-FILTER"/>
+            <column name="query_items" value=" AND GERMLINE_CONSENT_ADDENDUM_PEDIATRIC.completedAt IS NOT NULL  OR GERMLINE_CONSENT_ADDENDUM.completedAt IS NOT NULL "/>
+            <column name="created_by" value="SYSTEM"/>
+            <column name="view_columns" value="data.ddp,data.hruid,data.firstName,data.lastName,data.status,PARENTAL_CONSENT.completedAt,GERMLINE_CONSENT_ADDENDUM_PEDIATRIC.completedAt,GERMLINE_CONSENT_ADDENDUM.completedAt,CONSENT.completedAt,"/>
+            <column name="parent" value="participantList"/>
+            <column name="ddp_group_id"
+                    valueComputed="(SELECT ddp_group_id FROM ddp_group WHERE name='cmi')"></column>
+            <column name="changed_by" value="SYSTEM"/>
+            <column name="last_changed"
+                    valueComputed="select UNIX_TIMESTAMP(NOW())"></column>
+        </insert>
+    </changeSet>
+    <changeSet author="simone" id="OS-prefilter">
+        <insert tableName="view_filters">
+            <column name="display_name" value="OS_PRE-FILTER"/>
+            <column name="query_items" value=" AND GERMLINE_CONSENT_ADDENDUM_PEDIATRIC.completedAt IS NOT NULL  OR GERMLINE_CONSENT_ADDENDUM.completedAt IS NOT NULL "/>
+            <column name="created_by" value="SYSTEM"/>
+            <column name="view_columns" value="data.ddp,data.hruid,data.firstName,data.lastName,data.status,PARENTAL_CONSENT.completedAt,GERMLINE_CONSENT_ADDENDUM_PEDIATRIC.completedAt,GERMLINE_CONSENT_ADDENDUM.completedAt,CONSENT.completedAt,"/>
+            <column name="parent" value="participantList"/>
+            <column name="ddp_group_id"
+                    valueComputed="(SELECT ddp_group_id FROM ddp_group WHERE name='cmi')"></column>
+            <column name="changed_by" value="SYSTEM"/>
+            <column name="last_changed"
+                    valueComputed="select UNIX_TIMESTAMP(NOW())"></column>
+        </insert>
+    </changeSet>
+    <changeSet author="simone" id="instanceOS2">
+        <insert tableName="ddp_instance">
+            <column name="instance_name" value="osteo2"/>
+            <column name="study_guid" value="cmi-osteo"/>
+            <column name="display_name" value="OS PE-CGS"/>
+            <column name="base_url"
+                    valueComputed="(SELECT base_url FROM ddp_instance WHERE name='osteo')"></column>
+            <column name="is_active" value="0"/>
+            <column name="auth0_token" value="1"/>
+            <column name="migrated_ddp" value="0"/>
+            <column name="es_participant_index" value="0"/>
+            <column name="es_activity_definition_index" value="0"/>
+            <column name="es_users_index" value="0"/>
+            <column name="study_pre_filter"
+                    valueComputed="(SELECT filter_id FROM view_filters WHERE display_name='OS_PE-CGS_PRE-FILTER')"></column>
+        </insert>
+    </changeSet>
+
+    <changeSet id="updating_instanceOS" author="Simone">
+        <sql>
+            UPDATE ddp_instance
+            SET study_pre_filter = (SELECT filter_id FROM view_filters WHERE display_name='OS_PRE-FILTER')
+            WHERE instance_name = 'osteo'
+        </sql>
+    </changeSet>
+
+<!--    todo add kit settings-->
+</databaseChangeLog>

@@ -42,8 +42,6 @@ public class MedicalRecordUtil {
             "INSERT INTO ddp_medical_record SET institution_id = ?, last_changed = ?, changed_by = ?";
     private static final String SQL_SELECT_PARTICIPANT_EXISTS = "SELECT count(ddp_participant_id) as participantCount FROM ddp_participant "
             + "WHERE ddp_participant_id = ? AND ddp_instance_id = ?";
-    private static final String SQL_SELECT_PARTICIPANT_LAST_VERSION =
-            "SELECT last_version FROM ddp_participant WHERE ddp_participant_id = ? AND ddp_instance_id = ?";
     private static final String SQL_SELECT_MEDICAL_RECORD_ID_AND_TYPE_FOR_PARTICIPANT =
             "SELECT rec.medical_record_id, inst.type FROM ddp_institution inst, ddp_participant part, ddp_medical_record rec "
                     + "WHERE part.participant_id = inst.participant_id AND rec.institution_id = inst.institution_id "

@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.pubsub;
 
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -7,6 +9,7 @@ import java.util.Optional;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
@@ -16,7 +19,9 @@ import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
+import org.broadinstitute.dsm.util.DDPMedicalRecordDataRequest;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.broadinstitute.dsm.util.MedicalRecordUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +31,9 @@ public class WorkflowStatusUpdate {
     public static final String MEMBER_TYPE = "MEMBER_TYPE";
     public static final String SELF = "SELF";
     public static final String DSS = "DSS";
+    public static final String OSTEO_RECONSENTED_WORKFLOW = "OSTEO_RECONSENTED";
+    public static final String OSTEO_RECONSENTED_WORKFLOW_STATUS = "Complete";
+
     private static final Gson gson = new Gson();
 
     private static final Logger logger = LoggerFactory.getLogger(ExportToES.class);
@@ -41,26 +49,48 @@ public class WorkflowStatusUpdate {
         String ddpParticipantId = attributesMap.get(PARTICIPANT_GUID);
         DDPInstance instance = DDPInstance.getDDPInstanceByGuid(studyGuid);
 
-        List<ParticipantData> participantDatas = participantDataDao.getParticipantDataByParticipantId(ddpParticipantId);
-        Optional<FieldSettingsDto> fieldSetting =
-                fieldSettingsDao.getFieldSettingByColumnNameAndInstanceId(Integer.parseInt(instance.getDdpInstanceId()), workflow);
-        if (fieldSetting.isEmpty()) {
-            logger.warn("Wrong workflow name");
-        } else {
-            FieldSettingsDto setting = fieldSetting.get();
-            boolean isOldParticipant = participantDatas.stream()
-                    .anyMatch(participantDataDto -> participantDataDto.getFieldTypeId().equals(setting.getFieldType())
-                            || participantDataDto.getFieldTypeId().orElse("").contains(FamilyMemberConstants.PARTICIPANTS));
-            if (isOldParticipant) {
-                participantDatas.forEach(participantDataDto -> {
-                    updateProbandStatusInDB(workflow, status, participantDataDto, studyGuid);
-                });
-            } else {
-                addNewParticipantDataWithStatus(workflow, status, ddpParticipantId, setting);
-            }
-            exportToESifNecessary(workflow, status, ddpParticipantId, instance, setting, participantDatas);
-        }
+        if (OSTEO_RECONSENTED_WORKFLOW.equals(workflow) && OSTEO_RECONSENTED_WORKFLOW_STATUS.equals(status)) {
+            inTransaction((conn) -> {
+                if (!MedicalRecordUtil.isParticipantInDB(conn, ddpParticipantId, instance.getDdpInstanceId())) {
+                    //todo write into ddp_participant
+                    //todo write into ddp_participant_record
+                    //todo write into ES
+                    Map<String, List<MedicalRecord>> medicalRecords = MedicalRecord.getMedicalRecords(instance.getName(),
+                            " AND p.ddp_participant_id = '" + ddpParticipantId + "'");
+                    if ( medicalRecords != null) {
+                        List<MedicalRecord> medicalRecordList = medicalRecords.get(ddpParticipantId);
+                        medicalRecordList.forEach(medicalRecord -> {
+                            //todo writen into ddp_institution
+                            //todo write into ddp_medical_record
+                            //todo write into ES
+                        });
+                    }
+                }
+                return null;
+            });
+            //todo set tag "OS PE-CGS"
 
+        } else {
+            List<ParticipantData> participantDatas = participantDataDao.getParticipantDataByParticipantId(ddpParticipantId);
+            Optional<FieldSettingsDto> fieldSetting =
+                    fieldSettingsDao.getFieldSettingByColumnNameAndInstanceId(Integer.parseInt(instance.getDdpInstanceId()), workflow);
+            if (fieldSetting.isEmpty()) {
+                logger.warn("Wrong workflow name");
+            } else {
+                FieldSettingsDto setting = fieldSetting.get();
+                boolean isOldParticipant = participantDatas.stream()
+                        .anyMatch(participantDataDto -> participantDataDto.getFieldTypeId().equals(setting.getFieldType())
+                                || participantDataDto.getFieldTypeId().orElse("").contains(FamilyMemberConstants.PARTICIPANTS));
+                if (isOldParticipant) {
+                    participantDatas.forEach(participantDataDto -> {
+                        updateProbandStatusInDB(workflow, status, participantDataDto, studyGuid);
+                    });
+                } else {
+                    addNewParticipantDataWithStatus(workflow, status, ddpParticipantId, setting);
+                }
+                exportToESifNecessary(workflow, status, ddpParticipantId, instance, setting, participantDatas);
+            }
+        }
     }
 
     public static void exportToESifNecessary(String workflow, String status, String ddpParticipantId,
