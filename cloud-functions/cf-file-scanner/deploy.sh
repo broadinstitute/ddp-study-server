@@ -6,6 +6,11 @@
 #   1: Bad usage (improper or missing arguments)
 #   2: Missing cli tools
 #   -1 or 255: subprocess failure- most likely gcloud
+#
+# Misc notes:
+#   * The IAM policy updates & describe calls generally have their
+#     stdout redirected to /dev/null as they can be quite noisy.
+#
 
 set -euo pipefail
 IFS=$'\n\t'
@@ -37,55 +42,72 @@ SECRET_VERSION="latest"
 ##
 # Topic name the service subscribes to listen for google.storage.object.finalize events
 ##
-LISTEN_TOPIC_NAME="${LISTEN_TOPIC_NAME:-$SERVICE_NAME}"
-DEAD_LETTER_TOPIC_NAME="${DEAD_LETTER_TOPIC_NAME:-"$RESULT_TOPIC_NAME-dead-letter"}"
+LISTEN_TOPIC_NAME="${LISTEN_TOPIC_NAME:-"$SERVICE_NAME"}"
+DEAD_LETTER_TOPIC_NAME="${DEAD_LETTER_TOPIC_NAME:-"$LISTEN_TOPIC_NAME-dead-letter"}"
+LISTEN_SUBSCRIPTION_NAME="${LISTEN_SUBSCRIPTION_NAME:-"$SERVICE_NAME-trigger"}"
 
 RESULT_TOPIC_NAME="${RESULT_TOPIC_NAME:-"cf-file-scan-result"}"
-CF_NAME="$SERVICE_NAME"
-SA_ACCT="$SERVICE_NAME@$PROJECT_ID.iam.gserviceaccount.com"
+SA_NAME="${SA_NAME:-$SERVICE_NAME}"
+SERVICE_ACCOUNT="$SA_NAME@$PROJECT_ID.iam.gserviceaccount.com"
+
+OTHER_GCLOUD_FLAGS="--quiet"
 
 ##
 # file-scanner container
 ##
-CONTAINER_BASE="$CLOUDSDK_RUN_REGION-docker.pkg.dev/$PROJECT_ID/dss/$SERVICE_NAME"
+CONTAINER_NAME="${CONTAINER_NAME:-$SERVICE_NAME}"
+CONTAINER_BASE="$CLOUDSDK_RUN_REGION-docker.pkg.dev/$PROJECT_ID/dss/$CONTAINER_NAME"
 CONTAINER_TAG="latest"
-CONTAINER_NAME="$CONTAINER_BASE:$CONTAINER_TAG"
+CONTAINER_FQ_NAME="$CONTAINER_BASE:$CONTAINER_TAG"
 
+function gcloudw {
+  gcloud "$@" $OTHER_GCLOUD_FLAGS
+}
 
 function check-for-image {
-  gcloud container images describe "$CONTAINER_NAME" &> /dev/null
+  gcloudw container images describe "$CONTAINER_FQ_NAME" &> /dev/null
 }
 
 function check-for-service-account {
-  gcloud iam service-accounts describe "$SA_ACCT" &> /dev/null
+  gcloudw iam service-accounts describe "$SERVICE_ACCOUNT" &> /dev/null
 }
 
 function create-service-account {
-  gcloud iam service-accounts create "$SA_ACCT" \
+  gcloudw iam service-accounts create "$SERVICE_ACCOUNT" \
     --display-name="gsc-$SERVICE_NAME" \
-    --description="Service Account for the $SERVICE_NAME service"
+    --description="Service Account for the $SERVICE_NAME service" 1>/dev/null
+    
 }
 
 function access-secret {
-  gcloud secrets versions access "$SECRET_VERSION" \
+  ##
+  # Intentially not redirecting the output here as its going
+  # to be the value of the secret and we want to be able to
+  # pipe & manipulate the stdout
+  ##
+  gcloudw secrets versions access "$SECRET_VERSION" \
     --project="$PROJECT_ID" \
     --secret="$SECRET_ID"
 }
 
 function check-for-subscription-topic {
-  gcloud pubsub topics describe "$LISTEN_TOPIC_NAME" &> /dev/null
+  gcloudw pubsub topics describe "$LISTEN_TOPIC_NAME"  &> /dev/null
+}
+
+function check-for-result-topic {
+  gcloudw pubsub topics describe "$RESULT_TOPIC_NAME"  &> /dev/null
 }
 
 function add-subscriber-iam-binding {
-  gcloud pubsub topics add-iam-policy-binding "$LISTEN_TOPIC_NAME" \
-    --member "serviceAccount:$SA_NAME" \
-    --role "roles/pubsub.subscriber"
+  gcloudw pubsub topics add-iam-policy-binding "$LISTEN_TOPIC_NAME" \
+    --member "serviceAccount:$SERVICE_ACCOUNT" \
+    --role "roles/pubsub.subscriber" 1> /dev/null
 }
 
-function add-publisher-iam-binding {
-  gcloud pubsub topics add-iam-policy-binding "$RESULT_TOPIC_NAME" \
-    --member "serviceAccount:$SA_NAME" \
-    --role "roles/pubsub.publisher";
+function add-result-publisher-iam-binding {
+  gcloudw pubsub topics add-iam-policy-binding "$RESULT_TOPIC_NAME" \
+    --member "serviceAccount:$SERVICE_ACCOUNT" \
+    --role "roles/pubsub.publisher" 1> /dev/null
 }
 
 function deploy-service {
@@ -101,51 +123,49 @@ function deploy-service {
   # This system may also be able to get by with only a single CPU.
   #
   ##
-  gcloud run deploy "$SERVICE_NAME" \
-    --service-account="$SA_NAME" \
+  gcloudw run deploy "$SERVICE_NAME" \
+    --service-account="$SERVICE_ACCOUNT" \
     --region="$CLOUDSDK_RUN_REGION" \
     --platform="managed" \
-    --cpu="2" \
-    --memory="4Gi" \
+    --cpu="1" \
+    --memory="2Gi" \
     --cpu-throttling \
-    --image="$CONTAINER_NAME" \
+    --image="$CONTAINER_FQ_NAME" \
     --min-instances="1" \
     --max-instances="3" \
-    --env-var-file="env.yaml" \
+    --env-vars-file="env.yaml" \
     --update-secrets=ENV="$SECRET_ID:$SECRET_VERSION" \
     --ingress="internal-and-cloud-load-balancing" \
-    --no-allow-unauthenticated \
+    --allow-unauthenticated \
     --port="80"
 }
 
 function setup-dead-letter-topic {
-  if ! gcloud pubsub topics describe "$DEAD_LETTER_TOPIC_NAME"; then
-    gcloud pubsub topics create "$DEAD_LETTER_TOPIC_NAME" \
+  if ! gcloudw pubsub topics describe "$DEAD_LETTER_TOPIC_NAME"  &> /dev/null; then
+    gcloudw pubsub topics create "$DEAD_LETTER_TOPIC_NAME" \
       --message-retention-duration=7d \
       --message-storage-policy-allowed-regions="$CLOUDSDK_RUN_REGION"
   fi
+}
 
-  ## Ensure the permissions are correct for the service account
-  gcloud pubsub topics add-iam-policy-binding \
-    --member "serviceAccount:$SA_NAME" \
-    --role "roles/pubsub.publisher"
+function check-for-listen-subscription {
+  gcloudw pubsub subscriptions describe "$LISTEN_SUBSCRIPTION_NAME" &> /dev/null
 }
 
 function setup-listen-subscription {
   local service_url=$1
 
-  gcloud pubsub subscriptions create "gsc-file-scanner-trigger" \
+  gcloudw pubsub subscriptions create "$LISTEN_SUBSCRIPTION_NAME" \
     --topic="$LISTEN_TOPIC_NAME" \
     --topic-project="$PROJECT_ID" \
     --ack-deadline="60" \
     --enable-message-ordering \
     --expiration-period="never" \
-    --push-auth-service-account="$SA_NAME" \
     --push-endpoint="$service_url" \
     --max-delivery-attempts="5" \
     --dead-letter-topic="$DEAD_LETTER_TOPIC_NAME" \
     --dead-letter-topic-project="$PROJECT_ID" \
-    --min-retry-delay="10s"
+    --min-retry-delay="10s" \
     --max-retry-delay="5m"
 }
 
@@ -156,7 +176,7 @@ function main {
   ##
 
   if ! check-for-image; then
-    echo "Failed to locate a valid image for $CONTAINER_NAME. Ensure the repository exists and the name is correct."
+    echo "Failed to locate a valid image for $CONTAINER_FQ_NAME. Ensure the repository exists and the name is correct."
     exit -1
   fi
   
@@ -199,10 +219,10 @@ function main {
   # first).
   ##
   if ! check-for-service-account; then
-    echo "Service account $SA_ACCT does not exist. Attempting to create it..."
+    echo "Service account $SERVICE_ACCOUNT does not exist. Attempting to create it..."
     create-service-account
   else
-    echo "Service account $SA_ACCT found"
+    echo "Service account $SERVICE_ACCOUNT found"
   fi
 
   ##
@@ -212,12 +232,12 @@ function main {
   # modified, so it's safe to call repeatedly.
   ##
   if ! add-subscriber-iam-binding; then
-    echo "failed to grant the pubsub.subscriber role to $SA_NAME on topic $LISTEN_TOPIC_NAME"
+    echo "failed to grant the pubsub.subscriber role to $SERVICE_ACCOUNT on topic $LISTEN_TOPIC_NAME"
     exit -1
   fi
 
   if ! add-result-publisher-iam-binding; then
-    echo "failed to grant the pubsub.publisher role to $SA_NAME on topic $RESULT_TOPIC_NAME"
+    echo "failed to grant the pubsub.publisher role to $SERVICE_ACCOUNT on topic $RESULT_TOPIC_NAME"
     exit -1
   fi
 
@@ -227,7 +247,7 @@ function main {
   # the same image is already deployed, and the invocation is identical
   # to the previous one
   ##
-  echo "Deploying $CONTAINER_NAME to service $SERVICE_NAME."
+  echo "Deploying $CONTAINER_FQ_NAME to service $SERVICE_NAME."
   if ! deploy-service; then
     echo "Deploy of $SERVICE_NAME failed."
     exit -1
@@ -243,13 +263,35 @@ function main {
   ##
   if ! setup-dead-letter-topic; then 
     echo "failed to setup topic $DEAD_LETTER_TOPIC_NAME"
-  fi
-
-  local service_url="$(gcloud run services describe $SERVICE_NAME --format=json | jq '.status.address.url')"
-  if ! setup-listen-subscription "$service_url"; then
-    echo "failed to create a subscriber to topic $LISTEN_TOPIC_NAME"
     exit -1
   fi
+
+  if ! check-for-listen-subscription; then
+    local service_url="$(gcloud run services describe $SERVICE_NAME --format=json | jq -r '.status.address.url')"
+    if ! setup-listen-subscription "$service_url"; then
+      echo "failed to create a subscriber to topic $LISTEN_TOPIC_NAME"
+      exit -1
+    fi
+  else
+    echo "subscription named $LISTEN_SUBSCRIPTION_NAME already exists, skipping creation"
+  fi
+
+  ##
+  # In order to Acknowledge and Publish messages from the listen subscription
+  # to the dead letter topic, the project pubsub service accounts needs
+  # the pubsub.subscriber role on the listen subscription, and the
+  # pubsub.publisher role on the dead lotter topic
+  ##
+  local project_number="$(gcloudw projects describe $PROJECT_ID --format=json | jq -r .projectNumber)"
+  local project_sa="service-${project_number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+  
+  gcloudw pubsub subscriptions add-iam-policy-binding "$LISTEN_SUBSCRIPTION_NAME" \
+    --member "serviceAccount:$project_sa" \
+    --role "roles/pubsub.subscriber" 1> /dev/null
+
+  gcloudw pubsub topics add-iam-policy-binding "$DEAD_LETTER_TOPIC_NAME" \
+    --member "serviceAccount:$project_sa" \
+    --role "roles/pubsub.publisher" 1> /dev/null
 
   echo "$SERVICE_NAME deployment was successful"
   return 0
