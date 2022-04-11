@@ -160,7 +160,6 @@ import spark.Spark;
 
 public class DSMServer {
 
-    
     public static final String CONFIG = "config";
     public static final String NOTIFICATION_UTIL = "NotificationUtil";
     public static final String KIT_UTIL = "KitUtil";
