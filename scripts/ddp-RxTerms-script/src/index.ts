@@ -58,8 +58,9 @@ function replaceSingleQuotes(text: string): string {
 function generateStableID(drugDisplayName: string): string {
   drugDisplayName = drugDisplayName
     .trimEnd()
-    .replace(/[^a-zA-Z0-9 ]/g, "")
+    .replace(/[^a-zA-Z0-9 \\/]/g, "")
     .replaceAll(" ", "_")
+    .replaceAll("/", "_")
     .toUpperCase();
 
   drugDisplayName = trimStringByMaxLength(drugDisplayName);
@@ -70,16 +71,49 @@ function generateStableID(drugDisplayName: string): string {
 }
 
 function removeFloatingUnderscoresAfterTrim(text: string): string {
-  return text.charAt(text.length -1) === '_' ? text.substring(0, text.length - 1): text;
+  return text.charAt(text.length - 1) === "_"
+    ? text.substring(0, text.length - 1)
+    : text;
 }
 
 function trimStringByMaxLength(text: string): string {
   return text.length > MAX_LENGTH ? text.substring(0, MAX_LENGTH) : text;
 }
 
+const truncatedDuplicates = groupBy(picklistOptions, (x) => x.stableId).map(
+  (group) => {
+    if (group.length > 1) {
+      return group.map((x, i) => ({
+        ...x,
+        stableId: appendIndexToTruncatedDuplicates(x.stableId, i + 1)
+      }));
+    }
+    return group;
+  }
+);
+
+function appendIndexToTruncatedDuplicates(
+  stableId: string,
+  index: number
+): string {
+  let newText = stableId;
+  if (stableId.length >= MAX_LENGTH - 2) {
+    newText = trimLastTwoChars(stableId);
+  }
+  return newText.endsWith("_")
+    ? newText.concat("" + index)
+    : newText.concat("_" + index);
+}
+
+function trimLastTwoChars(text: string) {
+  return text.slice(0, -2);
+}
+
+const newOptionsWithSuffix = truncatedDuplicates.flat();
+
 fs.writeFile(
   outputFileName,
-  JSON.stringify({ picklistOptions }, null, 2),
+  JSON.stringify({ newOptionsWithSuffix }, null, 2),
   (err) => {
     if (err) {
       return console.log(err);
