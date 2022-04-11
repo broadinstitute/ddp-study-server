@@ -33,7 +33,7 @@ public class SmId {
     @ColumnName(DBConstants.SM_ID_TYPE)
     private String smIdType;
     @ColumnName(DBConstants.SM_ID_TISSUE_ID)
-    private String tissueId;
+    private Long tissueId;
     @ColumnName(DBConstants.SM_ID_PK)
     private String smIdPk;
     @ColumnName(DBConstants.DELETED)
@@ -42,7 +42,7 @@ public class SmId {
     public SmId() {
     }
 
-    public SmId(String smIdPk, String smIdType, String smIdValue, String tissueId) {
+    public SmId(String smIdPk, String smIdType, String smIdValue, Long tissueId) {
         this.smIdPk = smIdPk;
         this.smIdType = smIdType;
         this.smIdValue = smIdValue;
@@ -61,7 +61,7 @@ public class SmId {
                     rs.getString(DBConstants.SM_ID_PK),
                     rs.getString(DBConstants.SM_ID_TYPE_ID),
                     rs.getString(DBConstants.SM_ID_VALUE),
-                    rs.getString("sm." + DBConstants.TISSUE_ID)
+                    rs.getLong("sm." + DBConstants.TISSUE_ID)
             );
             if (tissueSmId != null) {
                 tissueSmId.setDeleted(rs.getBoolean("sm." + DBConstants.DELETED));
