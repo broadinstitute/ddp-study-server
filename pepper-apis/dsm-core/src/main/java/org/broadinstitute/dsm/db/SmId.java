@@ -30,7 +30,7 @@ public class SmId {
     public static String SCROLLS = "scrolls";
     @ColumnName(DBConstants.SM_ID_VALUE)
     private String smIdValue;
-    @ColumnName(DBConstants.SM_ID_TYPE_ID)
+    @ColumnName(DBConstants.SM_ID_TYPE)
     private String smIdType;
     @ColumnName(DBConstants.SM_ID_TISSUE_ID)
     private String tissueId;

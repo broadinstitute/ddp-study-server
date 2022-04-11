@@ -36,7 +36,8 @@ public class SMIDPatch extends BasePatch {
     protected Object patchNameValuePair() {
         String smIdPk = new TissueSMIDDao().createNewSMIDForTissue(patch.getParentId(), patch.getUser(), getSMIDType(), getSMIDValue());
         if (Integer.parseInt(smIdPk) > 0) {
-            NameValue nameValue = new NameValue("sm.smIdValue", getSMIDValue());
+            resultMap.put("smIdPk", smIdPk);
+            NameValue nameValue = new SMIDNameValue("sm.smIdValue", getSMIDValue(), getSMIDType());
             exportToESWithId(smIdPk, nameValue);
         }
         return resultMap;
