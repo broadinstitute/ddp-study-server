@@ -77,7 +77,7 @@ function removeFloatingUnderscoresAfterTrim(text: string): string {
 }
 
 function trimStringByMaxLength(text: string): string {
-  return text.length > MAX_LENGTH ? text.substring(0, MAX_LENGTH - 2) : text;
+  return text.length > MAX_LENGTH ? text.substring(0, MAX_LENGTH - 3) : text;
 }
 
 const truncatedDuplicates = groupBy(picklistOptions, (x) => x.stableId).map(
@@ -103,13 +103,6 @@ function appendIndexToTruncatedDuplicates(
 
 const newOptionsWithSuffix = truncatedDuplicates.flat();
 
-groupBy(newOptionsWithSuffix, x => x.stableId).map(x => {
-  if(x.length > 1) {
-    console.log(x)
-  } else {
-    console.log(x)
-  }
-})
 
 fs.writeFile(
   outputFileName,
