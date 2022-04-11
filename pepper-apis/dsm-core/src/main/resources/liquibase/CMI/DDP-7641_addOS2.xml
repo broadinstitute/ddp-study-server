@@ -51,6 +51,17 @@
         </insert>
     </changeSet>
 
+<!--    adding group x instance relation for osteo2-->
+    <changeSet author="simone" id="os2GroupCMI">
+        <insert tableName="ddp_instance_group">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
+            <column name="ddp_group_id"
+                    valueComputed="(SELECT ddp_group_id FROM ddp_group WHERE name='cmi')"></column>
+        </insert>
+    </changeSet>
+
+<!--    adding pre filter to osteo-->
     <changeSet id="updating_instanceOS" author="Simone">
         <sql>
             UPDATE ddp_instance
@@ -59,5 +70,119 @@
         </sql>
     </changeSet>
 
-<!--    todo add kit settings-->
+<!--    adding new kit type-->
+    <changeSet author="simone" id="kitType_FFPESection">
+        <insert tableName="kit_type">
+            <column name="kit_type_name" value="FFPE-SECTION"/>
+            <column name="bsp_material_name" value="Tissue:FFPE Tissue Section"/>
+            <column name="bsp_receptacle_type" value="Slide"/>
+        </insert>
+    </changeSet>
+    <changeSet author="simone" id="kitType_FFPEScroll">
+        <insert tableName="kit_type">
+            <column name="kit_type_name" value="FFPE-SCROLL"/>
+            <column name="bsp_material_name" value="Tissue:FFPE Tissue Scroll"/>
+            <column name="bsp_receptacle_type" value="Eppendorf Flip-top [2.0mL]"/>
+        </insert>
+    </changeSet>
+
+<!--    adding kit settings for osteo2-->
+    <changeSet author="simone" id="os2KitSettings_SALIVA">
+        <insert tableName="ddp_kit_request_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
+            <column name="ddp_kit_type"
+                    valueComputed="(SELECT kit_type_id FROM kit_type WHERE kit_type_name='SALIVA')"></column>
+            <column name="kit_return_id" value="1"/>
+            <column name="carrier_service_to_id"
+                    valueComputed="(SELECT carrier_service_id FROM carrier_service WHERE carrier='FedEx' AND service='FEDEX_EXPRESS_SAVER')"></column>
+            <column name="kit_dimension_id" value="1"/>
+        </insert>
+    </changeSet>
+    <changeSet author="simone" id="os2KitSettings_BLOOD">
+        <insert tableName="ddp_kit_request_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
+            <column name="ddp_kit_type"
+                    valueComputed="(SELECT kit_type_id FROM kit_type WHERE kit_type_name='BLOOD' AND bsp_material_type='Whole Blood:Streck Cell-Free Preserved')"></column>
+            <column name="kit_return_id" value="1"/>
+            <column name="carrier_service_to_id"
+                    valueComputed="(SELECT carrier_service_id FROM carrier_service WHERE carrier='FedEx' AND service='FEDEX_EXPRESS_SAVER')"></column>
+            <column name="kit_dimension_id" value="2"/>
+        </insert>
+    </changeSet>
+    <changeSet author="simone" id="os2KitSettings_SECTION">
+        <insert tableName="ddp_kit_request_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
+            <column name="ddp_kit_type"
+                    valueComputed="(SELECT kit_type_id FROM kit_type WHERE kit_type_name='FFPE-SECTION')"></column>
+            <column name="kit_return_id" value="1"/>
+            <column name="carrier_service_to_id"
+                    valueComputed="(SELECT carrier_service_id FROM carrier_service WHERE carrier='FedEx' AND service='FEDEX_EXPRESS_SAVER')"></column>
+            <column name="kit_dimension_id" value="2"/>
+        </insert>
+    </changeSet>
+    <changeSet author="simone" id="os2KitSettings_SCROLL">
+        <insert tableName="ddp_kit_request_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
+            <column name="ddp_kit_type"
+                    valueComputed="(SELECT kit_type_id FROM kit_type WHERE kit_type_name='FFPE-SCROLL')"></column>
+            <column name="kit_return_id" value="1"/>
+            <column name="carrier_service_to_id"
+                    valueComputed="(SELECT carrier_service_id FROM carrier_service WHERE carrier='FedEx' AND service='FEDEX_EXPRESS_SAVER')"></column>
+            <column name="kit_dimension_id" value="2"/>
+        </insert>
+    </changeSet>
+
+<!--    drop column of osteo and kit/mr endpoint-->
+    <changeSet id="remove_kit_endpoint_instanceOS" author="Simone">
+        <sql>
+            DELETE FROM ddp_instance_role WHERE ddp_instance_id = (SELECT ddp_instance_id FROM ddp_instance WHERE
+                instance_name='osteo')  AND instance_role_id = (SELECT instance_role_id FROM instance_role WHERE
+                name='has_kit_request_endpoints');
+        </sql>
+    </changeSet>
+    <changeSet id="remove_mr_endpoint_instanceOS" author="Simone">
+        <sql>
+            DELETE FROM ddp_instance_role WHERE ddp_instance_id = (SELECT ddp_instance_id FROM ddp_instance WHERE
+                instance_name='osteo')  AND instance_role_id = (SELECT instance_role_id FROM instance_role WHERE
+                name='has_medical_record_endpoints');
+        </sql>
+    </changeSet>
+
+<!--    add instance roles for os2-->
+    <changeSet author="simone" id="add_kit_instance_role_1">
+        <insert tableName="ddp_kit_request_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
+            <column name="instance_role_id"
+                    valueComputed="(SELECT instance_role_id FROM instance_role WHERE name='kit_request_activated')"></column>
+        </insert>
+    </changeSet>
+    <changeSet author="simone" id="add_kit_instance_role_2">
+        <insert tableName="ddp_kit_request_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
+            <column name="instance_role_id"
+                    valueComputed="(SELECT instance_role_id FROM instance_role WHERE name='has_kit_request_endpoints')"></column>
+        </insert>
+    </changeSet>
+    <changeSet author="simone" id="add_mr_instance_role_1">
+        <insert tableName="ddp_kit_request_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
+            <column name="instance_role_id"
+                    valueComputed="(SELECT instance_role_id FROM instance_role WHERE name='has_medical_record_endpoints')"></column>
+        </insert>
+    </changeSet>
+    <changeSet author="simone" id="add_mr_instance_role_2">
+        <insert tableName="ddp_kit_request_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
+            <column name="instance_role_id"
+                    valueComputed="(SELECT instance_role_id FROM instance_role WHERE name='medical_record_activated')"></column>
+        </insert>
+    </changeSet>
 </databaseChangeLog>
