@@ -96,20 +96,20 @@ function appendIndexToTruncatedDuplicates(
   stableId: string,
   index: number
 ): string {
-  let newText = stableId;
-  if (stableId.length >= MAX_LENGTH -2) {
-    newText = trimLastTwoChars(stableId);
-  }
-  return newText.endsWith("_")
-    ? newText.concat("" + index)
-    : newText.concat("_" + index);
-}
-
-function trimLastTwoChars(text: string) {
-  return text.slice(0, -2);
+  return stableId.endsWith("_")
+    ? stableId.concat("" + index)
+    : stableId.concat("_" + index);
 }
 
 const newOptionsWithSuffix = truncatedDuplicates.flat();
+
+groupBy(newOptionsWithSuffix, x => x.stableId).map(x => {
+  if(x.length > 1) {
+    console.log(x)
+  } else {
+    console.log(x)
+  }
+})
 
 fs.writeFile(
   outputFileName,
