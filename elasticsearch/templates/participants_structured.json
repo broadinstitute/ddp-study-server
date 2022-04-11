@@ -359,7 +359,6 @@
                 "prion_medical_earliest_symptoms": {
                   "type": "text"
                 },
-
                 "selected": {
                   "type": "keyword"
                 },
