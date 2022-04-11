@@ -35,18 +35,23 @@ public class SmId {
     @ColumnName(DBConstants.SM_ID_TISSUE_ID)
     private Long tissueId;
     @ColumnName(DBConstants.SM_ID_PK)
-    private String smIdPk;
+    private Integer smIdPk;
     @ColumnName(DBConstants.DELETED)
     private Boolean deleted;
 
     public SmId() {
     }
 
-    public SmId(String smIdPk, String smIdType, String smIdValue, Long tissueId) {
+    public SmId(Integer smIdPk, String smIdType, String smIdValue, Long tissueId) {
         this.smIdPk = smIdPk;
         this.smIdType = smIdType;
         this.smIdValue = smIdValue;
         this.tissueId = tissueId;
+    }
+
+    public SmId(Integer smIdPk, String smType, String smIdValue, Integer tissueId, Boolean deleted) {
+        this(smIdPk, smType, smIdValue, tissueId.longValue());
+        this.deleted = deleted;
     }
 
 
@@ -58,7 +63,7 @@ public class SmId {
                 return null;
             }
             tissueSmId = new SmId(
-                    rs.getString(DBConstants.SM_ID_PK),
+                    rs.getInt(DBConstants.SM_ID_PK),
                     rs.getString(DBConstants.SM_ID_TYPE_ID),
                     rs.getString(DBConstants.SM_ID_VALUE),
                     rs.getLong("sm." + DBConstants.TISSUE_ID)
