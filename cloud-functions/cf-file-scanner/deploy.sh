@@ -31,8 +31,11 @@ if ! command -v gcloud &> /dev/null; then
 fi
 
 PROJECT_ID="${1:-""}"
+
+##
 # gsc -> Google Serverless Compute
-# open to alternate naming schemes
+# (open to alternate naming schemes)
+##
 SERVICE_NAME="${SERVICE_NAME:-"gsc-file-scanner"}"
 CLOUDSDK_RUN_REGION="${CLOUDSDK_RUN_REGION:-"us-central1"}"
 
@@ -43,22 +46,46 @@ SECRET_VERSION="latest"
 # Topic name the service subscribes to listen for google.storage.object.finalize events
 ##
 LISTEN_TOPIC_NAME="${LISTEN_TOPIC_NAME:-"$SERVICE_NAME"}"
-DEAD_LETTER_TOPIC_NAME="${DEAD_LETTER_TOPIC_NAME:-"$LISTEN_TOPIC_NAME-dead-letter"}"
+LISTEN_DEAD_LETTER_TOPIC_NAME="${LISTEN_DEAD_LETTER_TOPIC_NAME:-"$LISTEN_TOPIC_NAME-dead-letter"}"
 LISTEN_SUBSCRIPTION_NAME="${LISTEN_SUBSCRIPTION_NAME:-"$SERVICE_NAME-trigger"}"
 
+##
+# Topic name the service will publish scan results to
+##
 RESULT_TOPIC_NAME="${RESULT_TOPIC_NAME:-"cf-file-scan-result"}"
+
+##
+# The service account the service should run as
+##
 SA_NAME="${SA_NAME:-$SERVICE_NAME}"
 SERVICE_ACCOUNT="$SA_NAME@$PROJECT_ID.iam.gserviceaccount.com"
 
+##
+# Used in the gcloudw function to provide global arguments
+# for all gcloud invocations. Be aware that a number of gcloud
+# command do redirect their output to /dev/null so errors
+# in these flags may not be immediately clear.
+##
 OTHER_GCLOUD_FLAGS="--quiet"
 
 ##
-# file-scanner container
+# file-scanner container naming
+#
+# CONTAINER_NAME and CONTAINER_TAG are sourced from the
+#  current environment and can be overriden to provide
+#  more control over the source image to deploy.
+#
+# CONTAINER_REGISTRY assumes that the Google Artifact Registry is going to be
+# used to house the images, but there's no strong requirement for this.
+# If an alternate registry is desired, the most straightforward path would
+# be to allow the `CONTAINER_REGISTRY` pattern to be overridden.
+#
+# CONTAINER_FQ_NAME -> Container Fully-Qualified Name
 ##
 CONTAINER_NAME="${CONTAINER_NAME:-$SERVICE_NAME}"
-CONTAINER_BASE="$CLOUDSDK_RUN_REGION-docker.pkg.dev/$PROJECT_ID/dss/$CONTAINER_NAME"
-CONTAINER_TAG="latest"
-CONTAINER_FQ_NAME="$CONTAINER_BASE:$CONTAINER_TAG"
+CONTAINER_TAG="${CONTAINER_TAG:-latest}"
+CONTAINER_REGISTRY="$CLOUDSDK_RUN_REGION-docker.pkg.dev/$PROJECT_ID/dss"
+CONTAINER_FQ_NAME="$CONTAINER_REGISTRY/$CONTAINER_NAME:$CONTAINER_TAG"
 
 function gcloudw {
   gcloud "$@" $OTHER_GCLOUD_FLAGS
@@ -141,8 +168,8 @@ function deploy-service {
 }
 
 function setup-dead-letter-topic {
-  if ! gcloudw pubsub topics describe "$DEAD_LETTER_TOPIC_NAME"  &> /dev/null; then
-    gcloudw pubsub topics create "$DEAD_LETTER_TOPIC_NAME" \
+  if ! gcloudw pubsub topics describe "$LISTEN_DEAD_LETTER_TOPIC_NAME"  &> /dev/null; then
+    gcloudw pubsub topics create "$LISTEN_DEAD_LETTER_TOPIC_NAME" \
       --message-retention-duration=7d \
       --message-storage-policy-allowed-regions="$CLOUDSDK_RUN_REGION"
   fi
@@ -163,10 +190,29 @@ function setup-listen-subscription {
     --expiration-period="never" \
     --push-endpoint="$service_url" \
     --max-delivery-attempts="5" \
-    --dead-letter-topic="$DEAD_LETTER_TOPIC_NAME" \
+    --dead-letter-topic="$LISTEN_DEAD_LETTER_TOPIC_NAME" \
     --dead-letter-topic-project="$PROJECT_ID" \
     --min-retry-delay="10s" \
     --max-retry-delay="5m"
+}
+
+function add-dead-letter-topic-roles {
+  ##
+  # In order to Acknowledge and Publish messages from the listen subscription
+  # to the dead letter topic, the project pubsub service accounts needs
+  # the pubsub.subscriber role on the listen subscription, and the
+  # pubsub.publisher role on the dead lotter topic
+  ##
+  local project_number="$(gcloudw projects describe $PROJECT_ID --format=json | jq -r .projectNumber)"
+  local project_sa="service-${project_number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+  
+  gcloudw pubsub subscriptions add-iam-policy-binding "$LISTEN_SUBSCRIPTION_NAME" \
+    --member "serviceAccount:$project_sa" \
+    --role "roles/pubsub.subscriber" 1> /dev/null
+
+  gcloudw pubsub topics add-iam-policy-binding "$LISTEN_DEAD_LETTER_TOPIC_NAME" \
+    --member "serviceAccount:$project_sa" \
+    --role "roles/pubsub.publisher" 1> /dev/null
 }
 
 function main {
@@ -262,10 +308,18 @@ function main {
   # for now in the interests of time.
   ##
   if ! setup-dead-letter-topic; then 
-    echo "failed to setup topic $DEAD_LETTER_TOPIC_NAME"
+    echo "failed to setup topic $LISTEN_DEAD_LETTER_TOPIC_NAME"
     exit -1
   fi
 
+  ##
+  # This needs a check-then-create pattern since attempting to create a subscription
+  # when one already exists with the same name results in an error.
+  #
+  # This section assumes that once a subscription is created, it won't need other changes
+  # after the fact. If this ends up not being the case, this should likely be changed to
+  # a delete-then-create flow.
+  ##
   if ! check-for-listen-subscription; then
     local service_url="$(gcloud run services describe $SERVICE_NAME --format=json | jq -r '.status.address.url')"
     if ! setup-listen-subscription "$service_url"; then
@@ -276,22 +330,8 @@ function main {
     echo "subscription named $LISTEN_SUBSCRIPTION_NAME already exists, skipping creation"
   fi
 
-  ##
-  # In order to Acknowledge and Publish messages from the listen subscription
-  # to the dead letter topic, the project pubsub service accounts needs
-  # the pubsub.subscriber role on the listen subscription, and the
-  # pubsub.publisher role on the dead lotter topic
-  ##
-  local project_number="$(gcloudw projects describe $PROJECT_ID --format=json | jq -r .projectNumber)"
-  local project_sa="service-${project_number}@gcp-sa-pubsub.iam.gserviceaccount.com"
-  
-  gcloudw pubsub subscriptions add-iam-policy-binding "$LISTEN_SUBSCRIPTION_NAME" \
-    --member "serviceAccount:$project_sa" \
-    --role "roles/pubsub.subscriber" 1> /dev/null
-
-  gcloudw pubsub topics add-iam-policy-binding "$DEAD_LETTER_TOPIC_NAME" \
-    --member "serviceAccount:$project_sa" \
-    --role "roles/pubsub.publisher" 1> /dev/null
+  echo "Updating roles for the topic $LISTEN_DEAD_LETTER_TOPIC_NAME"
+  add-dead-letter-topic-roles
 
   echo "$SERVICE_NAME deployment was successful"
   return 0
