@@ -318,4 +318,16 @@ public class Tissue {
     public Boolean isDeleted() {
         return deleted;
     }
+
+    public List<SmId> getScrollSMID() {
+        return null == scrollSMID ? new ArrayList<>() : scrollSMID;
+    }
+
+    public List<SmId> getUssSMID() {
+        return null == ussSMID ? new ArrayList<>() : ussSMID;
+    }
+
+    public List<SmId> getHeSMID() {
+        return null == heSMID ? new ArrayList<>() : heSMID;
+    }
 }

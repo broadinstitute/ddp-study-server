@@ -11,11 +11,7 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.KitRequestShipping;
-import org.broadinstitute.dsm.db.MedicalRecord;
-import org.broadinstitute.dsm.db.OncHistoryDetail;
-import org.broadinstitute.dsm.db.Participant;
-import org.broadinstitute.dsm.db.Tissue;
+import org.broadinstitute.dsm.db.*;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.model.Filter;
@@ -131,6 +127,11 @@ public class ParticipantWrapper {
 
                 List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();
                 List<Tissue> tissues = esDsm.getTissue();
+
+                List<SmId> smIds = esDsm.getSmId();
+
+                mapSmIdsToProperTissue(tissues, smIds);
+
                 mapTissueToProperOncHistoryDetail(oncHistoryDetails, tissues);
 
                 List<KitRequestShipping> kitRequestShipping = esDsm.getKitRequestShipping();
@@ -156,6 +157,23 @@ public class ParticipantWrapper {
         }
         fillParticipantWrapperDtosWithProxies(result, proxyGuids);
         return result;
+    }
+
+    private void mapSmIdsToProperTissue(List<Tissue> tissues, List<SmId> smIds) {
+        for (SmId smId : smIds) {
+            Long tissueId = smId.getTissueId();
+            tissues.stream().filter(tissue -> tissue.getTissueId().equals(tissueId))
+                    .findFirst().ifPresent(tissue -> {
+                        String smIdType = smId.getSmIdType();
+                        if ("he".equals(smIdType)) {
+                            tissue.getHeSMID().add(smId);
+                        } else if ("scrolls".equals(smIdType)) {
+                            tissue.getScrollSMID().add(smId);
+                        } else if ("uss".equals(smIdType)) {
+                            tissue.getUssSMID().add(smId);
+                        }
+                    });
+        }
     }
 
     //method to avoid ES request for each participant's proxy
