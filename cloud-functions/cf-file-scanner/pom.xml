@@ -12,6 +12,13 @@
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <!-- Version properties -->
+    <version.checkstyle>10.0</version.checkstyle>
+    <version.functions-framework>1.0.4</version.functions-framework>
+    <version.flogger>0.4</version.flogger>
+    <version.google.cloud>24.0.0</version.google.cloud>
+    <version.lombok>1.18.22</version.lombok>
   </properties>
 
   <dependencyManagement>
@@ -19,7 +26,7 @@
       <dependency>
         <groupId>com.google.cloud</groupId>
         <artifactId>libraries-bom</artifactId>
-        <version>24.0.0</version>
+        <version>${version.google.cloud}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -30,9 +37,10 @@
     <dependency>
       <groupId>com.google.cloud.functions</groupId>
       <artifactId>functions-framework-api</artifactId>
-      <version>1.0.4</version>
+      <version>${version.functions-framework}</version>
       <scope>provided</scope>
     </dependency>
+
     <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
@@ -41,15 +49,50 @@
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-pubsub</artifactId>
     </dependency>
+
     <dependency>
       <groupId>com.puppycrawl.tools</groupId>
       <artifactId>checkstyle</artifactId>
-      <version>10.0</version>
+      <version>${version.checkstyle}</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>${version.lombok}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- Google Fluent Logging API -->
+    <dependency>
+        <groupId>com.google.flogger</groupId>
+        <artifactId>flogger</artifactId>
+        <version>${version.flogger}</version>
+    </dependency>
+    <dependency>
+        <groupId>com.google.flogger</groupId>
+        <artifactId>flogger-system-backend</artifactId>
+        <version>${version.flogger}</version>
+        <scope>runtime</scope>
     </dependency>
   </dependencies>
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.10.1</version>
+        <configuration>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>1.18.22</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
       <plugin>
         <!-- Use `mvn function:run` to run this function locally. -->
         <groupId>com.google.cloud.functions</groupId>

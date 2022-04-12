@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Logger;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.functions.BackgroundFunction;
@@ -24,12 +23,11 @@ import com.google.cloud.storage.StorageOptions;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
+import lombok.extern.flogger.Flogger;
 import org.broadinstitute.ddp.clamav.Client;
 
+@Flogger
 public class FileScanner implements BackgroundFunction<FileScanner.Message> {
-
-    private static final Logger logger = Logger.getLogger(FileScanner.class.getName());
-
     private static final String ENV_GCP_PROJECT = "GCP_PROJECT";
     private static final String ENV_RESULT_TOPIC = "RESULT_TOPIC";
 
@@ -62,7 +60,7 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
         /* 
             The topic to be used for publishing scan result events
         */
-        String resultTopic = System.getenv(ENV_RESULT_TOPIC);
+        var resultTopic = System.getenv(ENV_RESULT_TOPIC);
 
         try {
             storage = StorageOptions.newBuilder()
@@ -118,7 +116,7 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
         
         switch (scanResult.result) {
             case POSITIVE:
-                logger.severe("malware variant identified " + scanResult.message.orElse(""));
+                log.atInfo().log("malware variant identified: %s", scanResult.message.orElse(""));
                 return ScanResult.INFECTED;
 
             case NEGATIVE:
@@ -131,30 +129,32 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
 
     @Override
     public void accept(FileScanner.Message message, Context context) {
-        logger.info("Received message: eventId=" + context.eventId() + " timestamp=" + context.timestamp());
-        
-        final var messageId = context.eventId();
+        var eventId = context.eventId();
+        var timestamp = context.timestamp();
+        var eventLogPrefix = "event " + eventId;
 
-        String bucketName = message.getAttributes().get(ATTR_BUCKET_ID);
-        String fileName = message.getAttributes().get(ATTR_OBJECT_ID);
+        log.atInfo().log("Received message: eventId=%s timestamp=%s", eventId, timestamp);
+
+        var bucketName = message.getAttributes().get(ATTR_BUCKET_ID);
+        var fileName = message.getAttributes().get(ATTR_OBJECT_ID);
         if (bucketName == null || bucketName.isBlank()) {
-            var logMessage = "message " + messageId + ": "
+            var logMessage = eventLogPrefix + ": "
                                 + "Bucket name is missing in message (attribute " + ATTR_BUCKET_ID + ")";
-            logger.severe(logMessage);
+            log.atSevere().log(logMessage);
             throw new RuntimeException(logMessage);
         }
         
         if (fileName == null || fileName.isBlank()) {
-            var logMessage = "message " + messageId + ": "
+            var logMessage = eventLogPrefix + ": "
                                 + "Bucket filename is missing in message (attribute " + ATTR_OBJECT_ID + ")";
-            logger.severe(logMessage);
+            log.atSevere().log(logMessage);
             throw new RuntimeException(logMessage);
         }
 
-        logger.info("Looking up file: bucket=" + bucketName + " name=" + fileName);
+        log.atInfo().log("Looking up file: bucket=%s name=%s", bucketName, fileName);
         Blob blob = storage.get(bucketName, fileName);
         if (blob == null || !blob.exists()) {
-            logger.severe("Could not find file: bucket=" + bucketName + " name=" + fileName);
+            log.atWarning().log("Could not find file: bucket=%s name=%s", bucketName, fileName);
             // This might be a duplicate (due to pubsub at-least-once delivery), in which case the
             // file might have already been moved. Exit gracefully so we don't incur a cold start.
             return;
@@ -162,36 +162,35 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
 
         BlobId blobId = blob.getBlobId();
         Instant createdAt = Instant.ofEpochMilli(blob.getCreateTime());
-        logger.info("Found file that was created at " + createdAt.toString());
+        log.atInfo().log("Found file that was created at %s", createdAt.toString());
 
-        logger.info("Scanning file: " + blobId.toString());
+        log.atInfo().log("Scanning file: %s", blobId.toString());
 
         var clamav = new Client(clamdAddress.getHostName(), clamdAddress.getPort());
 
         ScanResult result;
         try {
             if (clamav.ping() == false) {
-                var logMessage = "message " + messageId + ": "
+                var logMessage = eventLogPrefix + ": "
                                     + "clamd host " + clamdAddress.toString() + " did not respond to a PING";
-                logger.severe(logMessage);
+                log.atSevere().log(logMessage);
                 throw new RuntimeException(logMessage);
             }
 
-            logger.fine("message " + messageId + ": "
-                        + "clamd host " + clamdAddress.toString() + " responded to a PING");
+            log.atFine().log("%s: clamd host %s responded to a PING", eventLogPrefix, clamdAddress.toString());
 
             var bucketDataStream = Channels.newInputStream(blob.reader());
             result = runClamscan(clamav, bucketDataStream);
 
             switch (result) {
                 case INFECTED:
-                    logger.severe("message " + messageId + ": "
-                                    + "malware was identified in object " + blob.getBucket() + "/" + blob.getName());
+                    log.atInfo().log("%s: malware was identified in object %s/%s",
+                            eventLogPrefix, blob.getBucket(), blob.getName());
                     break;
 
                 case CLEAN:
-                    logger.fine("message " + messageId + ": "
-                                + "no malware identified in object " + blob.getBucket() + "/" + blob.getName());
+                    log.atInfo().log("%s: no malware identified in object %s/%s",
+                            eventLogPrefix, blob.getBucket(), blob.getName());
                     break;
                 default:
                     throw new RuntimeException("unreachable");
@@ -210,12 +209,12 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
 
             try {
                 var msgId = publisher.get().publish(resultMessage).get();
-                logger.info("Published scan result with messageId: " + msgId);
+                log.atFine().log("Published scan result with messageId %s", msgId);
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException("Error publishing scan result for file: " + blobId.toString(), e);
             }
         } else {
-            logger.info("PubSub topic not configured, not sending a scan result message");
+            log.atInfo().log("PubSub topic not configured, not sending a scan result message");
         }
     }
 

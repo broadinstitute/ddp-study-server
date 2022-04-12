@@ -13,10 +13,11 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Scanner;
-import java.util.logging.Logger;
 
+import lombok.extern.flogger.Flogger;
+
+@Flogger
 public class Client {
-    private static final Logger logger = Logger.getLogger(Client.class.getName());
 
     private class Defaults {
         static final int PORT = 3310;
@@ -111,7 +112,7 @@ public class Client {
         try (Socket socket = open();
                 var clamdOutputStream = new BufferedOutputStream(socket.getOutputStream());
                 var clamdResponseStream = new BufferedInputStream(socket.getInputStream())) {
-            logger.fine("socket successfully opened");
+            log.atFiner().log("socket successfully opened");
 
             // The full command for a NUL-delimited PING is "zPING\0".
             // Upon receipt, clamd should write back "PONG\0"
@@ -120,7 +121,7 @@ public class Client {
             clamdOutputStream.write(delimiter.getLineTerminator());
             clamdOutputStream.flush();
 
-            logger.fine("Ping sent. Awaiting PONG...");
+            log.atFine().log("Ping sent. Awaiting PONG...");
 
             String expected = "PONG";
             String response;
@@ -150,7 +151,7 @@ public class Client {
             if (expected.equals(response)) {
                 return true;
             } else {
-                logger.warning("unexpected response from clamd PING: " + response);
+                log.atWarning().log("unexpected response from clamd PING: %s", response);
                 return false;
             }
         }
@@ -187,11 +188,11 @@ public class Client {
                 int read = inputStream.read(dataBuffer.array(), 0, chunkSize);
 
                 while (read > 0) {
-                    logger.fine("read " + read + " bytes from is");
+                    log.atFiner().log("read %s bytes from stream", read);
 
                     // The chunk format is: <size - 4 bytes><data>
                     // The stream is terminated by sending a zero-length chunk
-                    // {0x00, 0x00, 0x00, 0x00}
+                    // { 0x00, 0x00, 0x00, 0x00 }
                     clamdOutputStream.write(ByteBuffer.allocate(4).putInt(read).array());
                     clamdOutputStream.write(dataBuffer.array(), 0, read);
 
@@ -207,10 +208,10 @@ public class Client {
                     read = inputStream.read(dataBuffer.array(), 0, chunkSize);
                 }
 
-                logger.fine("data chunks sent, preparing termination chunk");
+                log.atFiner().log("data chunks sent, preparing termination chunk");
                 clamdOutputStream.write(new byte[]{0, 0, 0, 0});
                 clamdOutputStream.flush();
-                logger.fine("terminated final chunk");
+                log.atFiner().log("terminated final chunk");
 
                 String response;
 
@@ -223,7 +224,7 @@ public class Client {
                     throw new IOException("unexpected response from clamd", nsee);
                 }
 
-                logger.info("received response from clamd: " + "response");
+                log.atFiner().log("received response from clamd: %s", response);
 
                 /*
                 _if a NEWLINE delimiter is being used, replace the \0 delimiter as necessary_
@@ -257,7 +258,7 @@ public class Client {
                 if (response.startsWith(negativeResponse)) {
                     return new ScanResult(MalwareResult.NEGATIVE);
                 } else {
-                    logger.fine("malware detected: " + response);
+                    log.atFine().log("malware detected: %s", response);
                     return new ScanResult(MalwareResult.POSITIVE, response);
                 }
             }
