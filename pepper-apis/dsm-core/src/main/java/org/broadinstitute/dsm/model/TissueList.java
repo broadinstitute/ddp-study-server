@@ -12,7 +12,7 @@ import lombok.Data;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.Tissue;
-import org.broadinstitute.dsm.db.TissueSmId;
+import org.broadinstitute.dsm.db.SmId;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
@@ -94,7 +94,7 @@ public class TissueList {
                         String assigneeIdTissue = rs.getString(
                                 DBConstants.DDP_PARTICIPANT_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ASSIGNEE_ID_TISSUE);
                         participantHashMap.put(ddpParticipantId, new Participant(participantId, ddpParticipantId, assigneeIdTissue));
-                        TissueSmId tissueSmId = Tissue.getSMIds(rs);
+                        SmId tissueSmId = Tissue.getSMIds(rs);
                         Tissue tissue;
                         if (tissueSmId != null && tissues.containsKey(tissueSmId.getTissueId())) {
                             tissue = tissues.get(tissueSmId.getTissueId());
