@@ -21,7 +21,7 @@ public class PatchFactory {
                 }
             } else if (isTissueRelatedOncHistoryId(patch)) {
                 patcher = new TissuePatch(patch);
-            } else if ("tissueId".equals(patch.getParent())) {
+            } else if (TissuePatch.TISSUE_ID.equals(patch.getParent())) {
                 patcher = new SMIDPatch(patch);
             } else if (isParentParticipandDataId(patch)) {
                 patcher = new ParticipantDataPatch(patch);
