@@ -117,7 +117,10 @@ public class ParticipantRecordData {
                                 List<LinkedHashMap<String, Object>> questionAnswers =
                                         (List<LinkedHashMap<String, Object>>) foundActivity.get(ElasticSearchUtil.QUESTIONS_ANSWER);
                                 return questionAnswers.stream().filter(qa -> qa.get(ESObjectConstants.STABLE_ID).equals(column.getName()))
-                                        .map(fq -> fq.get("answer")).map(this::mapToCollection)
+                                        .map(fq -> {
+                                            Object answer = fq.get("answer");
+                                            return answer != null ? answer : fq.get(column.getName());
+                                        }).map(this::mapToCollection)
                                         .flatMap(Collection::stream).collect(Collectors.toList());
                             }
                         }).orElse(Collections.singletonList(StringUtils.EMPTY));
@@ -128,6 +131,9 @@ public class ParticipantRecordData {
     }
 
     private Collection<?> mapToCollection(Object o) {
+        if (o == null) {
+            return Collections.singletonList(StringUtils.EMPTY);
+        }
         if (o instanceof Collection) {
             if (((Collection<?>) o).isEmpty()) {
                 return Collections.singletonList(StringUtils.EMPTY);
