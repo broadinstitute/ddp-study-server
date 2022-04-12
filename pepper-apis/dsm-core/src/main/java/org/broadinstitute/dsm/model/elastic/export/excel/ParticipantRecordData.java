@@ -117,7 +117,7 @@ public class ParticipantRecordData {
                                 List<LinkedHashMap<String, Object>> questionAnswers =
                                         (List<LinkedHashMap<String, Object>>) foundActivity.get(ElasticSearchUtil.QUESTIONS_ANSWER);
                                 return questionAnswers.stream().filter(qa -> qa.get(ESObjectConstants.STABLE_ID).equals(column.getName()))
-                                        .map(fq -> fq.get(column.getName())).map(this::mapToCollection)
+                                        .map(fq -> fq.get("answer")).map(this::mapToCollection)
                                         .flatMap(Collection::stream).collect(Collectors.toList());
                             }
                         }).orElse(Collections.singletonList(StringUtils.EMPTY));
