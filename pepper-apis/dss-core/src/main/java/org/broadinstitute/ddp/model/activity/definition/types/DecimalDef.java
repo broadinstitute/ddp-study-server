@@ -4,12 +4,13 @@ import com.google.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
 @Value
 @AllArgsConstructor
-public class DecimalDef implements Comparable<DecimalDef> {
+public class DecimalDef implements Comparable<DecimalDef>, Serializable {
     @SerializedName("value")
     BigInteger value;
 
@@ -20,8 +21,16 @@ public class DecimalDef implements Comparable<DecimalDef> {
         this(decimal.unscaledValue(), decimal.scale());
     }
 
-    public DecimalDef(final int integer) {
-        this(BigDecimal.valueOf(integer));
+    public DecimalDef(final int value) {
+        this(BigDecimal.valueOf(value));
+    }
+
+    public DecimalDef(final long value) {
+        this(BigDecimal.valueOf(value));
+    }
+
+    public DecimalDef(final String value) {
+        this(new BigDecimal(value));
     }
 
     @Override

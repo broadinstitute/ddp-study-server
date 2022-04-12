@@ -230,11 +230,14 @@ public class MedicalRecord {
     @JsonProperty("dynamicFields")
     @SerializedName("dynamicFields")
     private String additionalValuesJson;
+    @ColumnName(DBConstants.REVIEW_MEDICAL_RECORD)
     private boolean reviewMedicalRecord;
     @TableName(name = DBConstants.DDP_MEDICAL_RECORD, alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID, columnPrefix = "")
     @ColumnName(DBConstants.PATHOLOGY_PRESENT)
     private String pathologyPresent;
+    @ColumnName(DBConstants.DDP_INSTANCE_ID)
+    private long ddpInstanceId;
 
     public MedicalRecord(long medicalRecordId, long institutionId, String ddpInstitutionId, String type) {
         this.medicalRecordId = medicalRecordId;
@@ -252,7 +255,8 @@ public class MedicalRecord {
                          String mrReceived, String mrDocument, String mrDocumentFileNames, boolean mrProblem, String mrProblemText,
                          boolean unableObtain, boolean duplicate, boolean international, boolean crRequired, String pathologyPresent,
                          String mrNotes, boolean reviewMedicalRecord, FollowUp[] followUps, boolean followUpRequired,
-                         String followupRequiredText, String additionalValuesJson, String unableObtainText, String ddpParticipantId) {
+                         String followupRequiredText, String additionalValuesJson, String unableObtainText, String ddpParticipantId,
+                         long ddpInstanceId) {
         this.medicalRecordId = medicalRecordId;
         this.institutionId = institutionId;
         this.ddpInstitutionId = ddpInstitutionId;
@@ -288,6 +292,7 @@ public class MedicalRecord {
         this.additionalValuesJson = additionalValuesJson;
         this.unableObtainText = unableObtainText;
         this.ddpParticipantId = ddpParticipantId;
+        this.ddpInstanceId = ddpInstanceId;
     }
 
     public static MedicalRecord getMedicalRecord(@NonNull ResultSet rs) throws SQLException {
@@ -306,7 +311,7 @@ public class MedicalRecord {
                 new Gson().fromJson(rs.getString(DBConstants.FOLLOW_UP_REQUESTS), FollowUp[].class),
                 rs.getBoolean(DBConstants.FOLLOWUP_REQUIRED), rs.getString(DBConstants.FOLLOWUP_REQUIRED_TEXT),
                 rs.getString(DBConstants.ADDITIONAL_VALUES_JSON), rs.getString(DBConstants.MR_UNABLE_OBTAIN_TEXT),
-                rs.getString(DBConstants.DDP_PARTICIPANT_ID));
+                rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getLong(DBConstants.DDP_INSTANCE_ID));
         return medicalRecord;
     }
 

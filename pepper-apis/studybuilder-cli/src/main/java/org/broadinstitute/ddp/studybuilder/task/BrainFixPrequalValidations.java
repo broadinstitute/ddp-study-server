@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.JdbiActivityValidation;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
@@ -21,8 +22,6 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A one-time task to fix revision data for Brain study's Prequal activity validations.
@@ -37,9 +36,8 @@ import org.slf4j.LoggerFactory;
  * <p>This task fixes this issue by creating the appropriate revisioning data and updating the templates
  * with new revision_ids.
  */
+@Slf4j
 public class BrainFixPrequalValidations implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(BrainFixPrequalValidations.class);
     private static final String STUDY_GUID = "cmi-brain";
     private static final String PREQUAL_ACT_CODE = "PREQUAL";
 
@@ -76,7 +74,7 @@ public class BrainFixPrequalValidations implements CustomTask {
                 .map(ActivityValidationDto::getErrorMessageTemplateId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-        LOG.info("Found {} activity validation message templates to update", validationMessageIds.size());
+        log.info("Found {} activity validation message templates to update", validationMessageIds.size());
 
         // Find the translation text objects for each template.
         // Each variable should only have one translation for the Brain study.
@@ -87,7 +85,7 @@ public class BrainFixPrequalValidations implements CustomTask {
                 .flatMap(variable -> variable.getTranslations().stream())
                 .map(translation -> translation.getId().get())
                 .collect(Collectors.toList());
-        LOG.info("Found {} template variable translations to update", translationIds.size());
+        log.info("Found {} template variable translations to update", translationIds.size());
 
         // Manually update the templates and translations to use the new revision_id.
         // The new revision_id doesn't have an end date, so it ensures templates are visible for all activity versions.
@@ -99,6 +97,6 @@ public class BrainFixPrequalValidations implements CustomTask {
             DBUtils.checkUpdate(1, jdbiTemplate.updateRevisionIdById(templateId, newRevId));
         }
 
-        LOG.info("Finished fixing activity validations for " + PREQUAL_ACT_CODE);
+        log.info("Finished fixing activity validations for " + PREQUAL_ACT_CODE);
     }
 }

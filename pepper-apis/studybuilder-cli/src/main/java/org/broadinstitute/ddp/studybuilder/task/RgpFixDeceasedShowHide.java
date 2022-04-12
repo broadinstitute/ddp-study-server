@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.studybuilder.task;
 import java.nio.file.Path;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -19,12 +20,9 @@ import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class RgpFixDeceasedShowHide implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(RgpFixDeceasedShowHide.class);
     private static final String MOTHER_PEX = ""
             + "user.studies[\"RGP\"].forms[\"MOTHER\"].questions[\"MOTHER_CAN_PARTICIPATE\"].answers.hasOption(\"NO\")"
             + " && user.studies[\"RGP\"].forms[\"MOTHER\"].questions[\"MOTHER_DECEASED\"].answers.hasOption(\"YES\")";
@@ -57,7 +55,7 @@ public class RgpFixDeceasedShowHide implements CustomTask {
     }
 
     private void fixDiseasedShowHide(Handle handle, StudyDto studyDto, String activityCode, String questionStableId, String expression) {
-        LOG.info("Working on activity {}...", activityCode);
+        log.info("Working on activity {}...", activityCode);
 
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
         ActivityVersionDto versionDto = findActivityLatestVersion(handle, activityId);
@@ -84,12 +82,12 @@ public class RgpFixDeceasedShowHide implements CustomTask {
         var exprDto = handle.attach(JdbiBlockExpression.class)
                 .getActiveByBlockId(blockDef.getBlockId())
                 .orElseThrow(() -> new DDPException("Could not find expression for block id " + blockId));
-        LOG.info("Found block definition with id {} and shown expression id {}", blockId, exprDto.getExpressionId());
+        log.info("Found block definition with id {} and shown expression id {}", blockId, exprDto.getExpressionId());
 
         DBUtils.checkUpdate(1, handle.attach(JdbiExpression.class)
                 .updateById(exprDto.getExpressionId(), expression));
 
-        LOG.info("Updated shown expression for block {} question {}", blockId, questionStableId);
+        log.info("Updated shown expression for block {} question {}", blockId, questionStableId);
     }
 
     private ActivityVersionDto findActivityLatestVersion(Handle handle, long activityId) {

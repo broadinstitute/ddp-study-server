@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.studybuilder.task;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
@@ -16,8 +17,6 @@ import org.broadinstitute.ddp.studybuilder.EventBuilder;
 import org.broadinstitute.ddp.studybuilder.PdfBuilder;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -25,9 +24,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 public class PanCanNewActivities implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(PanCanNewActivities.class);
     private static final String DATA_FILE = "patches/new-activities.conf";
 
     private static final String STUDY_GUID = "cmi-pancan";
@@ -66,7 +64,7 @@ public class PanCanNewActivities implements CustomTask {
     }
 
     private void insertActivities(Handle handle, StudyDto studyDto, long adminUserId) {
-        LOG.info("Inserting activity configuration...");
+        log.info("Inserting activity configuration...");
 
         ActivityBuilder activityBuilder = new ActivityBuilder(cfgPath.getParent(), cfg, varsCfg, studyDto, adminUserId);
 
@@ -80,12 +78,12 @@ public class PanCanNewActivities implements CustomTask {
                 nested.add(nestedDef);
             }
             activityBuilder.insertActivity(handle, definition, nested, timestamp);
-            LOG.info("Activity configuration {} has been added in study {}", activity, STUDY_GUID);
+            log.info("Activity configuration {} has been added in study {}", activity, STUDY_GUID);
         }
     }
 
     private void insertBloodConsentPdf(Handle handle, StudyDto studyDto, long adminUserId) {
-        LOG.info("Inserting pdf configuration...");
+        log.info("Inserting pdf configuration...");
 
         if (!dataCfg.hasPath("pdf")) {
             throw new DDPException("There is no 'pdf' configuration.");
@@ -93,11 +91,11 @@ public class PanCanNewActivities implements CustomTask {
         PdfBuilder pdfBuilder = new PdfBuilder(cfgPath.getParent(), cfg, studyDto, adminUserId);
         pdfBuilder.insertPdfConfig(handle, dataCfg.getConfig("pdf"));
 
-        LOG.info("PDF configuration has added in study {}", STUDY_GUID);
+        log.info("PDF configuration has added in study {}", STUDY_GUID);
     }
 
     private void addEvents(Handle handle, StudyDto studyDto, long adminUserId) {
-        LOG.info("Inserting events configuration...");
+        log.info("Inserting events configuration...");
 
         if (!dataCfg.hasPath("events")) {
             throw new DDPException("There is no 'events' configuration.");
@@ -112,11 +110,11 @@ public class PanCanNewActivities implements CustomTask {
             eventBuilder.insertEvent(handle, eventCfg);
         }
 
-        LOG.info("Events configuration has added in study {}", STUDY_GUID);
+        log.info("Events configuration has added in study {}", STUDY_GUID);
     }
 
     private void addBloodConsentKits(Handle handle, StudyDto studyDto) {
-        LOG.info("Inserting kits configuration...");
+        log.info("Inserting kits configuration...");
 
         if (!dataCfg.hasPath("kit")) {
             throw new DDPException("There is no 'kit' configuration.");
@@ -129,7 +127,7 @@ public class PanCanNewActivities implements CustomTask {
                 .orElseThrow(() -> new DDPException("Could not find kit type " + type));
         long kitId = handle.attach(KitConfigurationDao.class)
                 .insertConfiguration(studyDto.getId(), quantity, kitType.getId(), needsApproval);
-        LOG.info("Created kit configuration with id={}, type={}, quantity={}, needsApproval={}",
+        log.info("Created kit configuration with id={}, type={}, quantity={}, needsApproval={}",
                 kitId, type, quantity, needsApproval);
 
         if (dataCfg.getConfig("kit").getConfigList("rules").size() != 1) {
@@ -145,7 +143,7 @@ public class PanCanNewActivities implements CustomTask {
         }
 
         long ruleId = handle.attach(KitConfigurationDao.class).addPexRule(kitId, ruleCfg.getString("expression"));
-        LOG.info("Added pex rule to kit configuration {} with id={}", kitId, ruleId);
-        LOG.info("Kit configuration has added in study {}", STUDY_GUID);
+        log.info("Added pex rule to kit configuration {} with id={}", kitId, ruleId);
+        log.info("Kit configuration has added in study {}", STUDY_GUID);
     }
 }

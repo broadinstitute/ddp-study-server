@@ -16,24 +16,14 @@ import java.util.Set;
 import com.google.gson.Gson;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.AbstractionActivity;
-import org.broadinstitute.dsm.db.AbstractionFinal;
-import org.broadinstitute.dsm.db.AbstractionGroup;
-import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.KitReport;
-import org.broadinstitute.dsm.db.KitRequestShipping;
-import org.broadinstitute.dsm.db.KitType;
-import org.broadinstitute.dsm.db.MedicalRecord;
-import org.broadinstitute.dsm.db.OncHistoryDetail;
-import org.broadinstitute.dsm.db.Participant;
-import org.broadinstitute.dsm.db.ParticipantData;
-import org.broadinstitute.dsm.db.SummaryKitType;
+import org.broadinstitute.dsm.db.*;
 import org.broadinstitute.dsm.model.DashboardInformation;
 import org.broadinstitute.dsm.model.FollowUp;
 import org.broadinstitute.dsm.model.KitDDPSummary;
 import org.broadinstitute.dsm.model.KitRequestsPerDate;
 import org.broadinstitute.dsm.model.KitSubKits;
 import org.broadinstitute.dsm.model.NameValue;
+import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
 import org.broadinstitute.dsm.security.RequestHandler;
@@ -98,9 +88,8 @@ public class DashboardRoute extends RequestHandler {
             Participant participant = participantMap != null ? participantMap.get(ddpParticipantId) : null;
             Map<String, Object> participantESData = esDataMap.get(ddpParticipantId);
             if (participantESData != null) {
-                String participantEsDataAsJson = gson.toJson(participantESData);
                 ElasticSearchParticipantDto elasticSearchParticipantDto =
-                        gson.fromJson(participantEsDataAsJson, ElasticSearchParticipantDto.class);
+                        new ElasticSearch().parseSourceMap(participantESData).get();
                 participantList.add(new ParticipantWrapperDto(elasticSearchParticipantDto, participant,
                         medicalRecordMap != null ? medicalRecordMap.get(ddpParticipantId) : null,
                         oncHistoryMap != null ? oncHistoryMap.get(ddpParticipantId) : null,
@@ -423,7 +412,7 @@ public class DashboardRoute extends RequestHandler {
                 List<KitRequestShipping> kits = kitRequests.get(medicalRecord.getDdpParticipantId());
                 if (kits != null) {
                     for (KitRequestShipping kit : kits) {
-                        if (kit.getReceiveDate() != 0) {
+                        if (kit != null && kit.getReceiveDate() != null && kit.getReceiveDate() != 0) {
                             // one kit was received
                             incrementCounter(dashboardValuesDetailed, "readyToRequest");
                             foundAtPT.add("readyToRequest");
@@ -528,19 +517,19 @@ public class DashboardRoute extends RequestHandler {
                            @NonNull Map<String, Integer> dashboardValuesPeriodDetailed,
                            long start, long end) {
         for (KitRequestShipping kit : kits) {
-            if (kit.getScanDate() != 0) {
+            if (kit.getScanDate() != null && kit.getScanDate() != 0) {
                 incrementCounter(dashboardValuesDetailed, "kit." + kit.getKitTypeName() + ".sent", foundAtPT);
                 incrementCounterPeriod(dashboardValuesPeriodDetailed, "kit." + kit.getKitTypeName() + ".sent", kit.getScanDate(), start,
                         end, foundAtPtPeriod);
-            } else if (kit.getDeactivatedDate() == 0) {
+            } else if (kit.getDeactivatedDate() != null && kit.getDeactivatedDate() == 0) {
                 incrementCounter(dashboardValuesDetailed, "kit." + kit.getKitTypeName() + ".waiting", foundAtPT);
             }
-            if (kit.getReceiveDate() != 0) {
+            if (kit.getReceiveDate() != null && kit.getReceiveDate() != 0) {
                 incrementCounter(dashboardValuesDetailed, "kit." + kit.getKitTypeName() + ".received", foundAtPT);
                 incrementCounterPeriod(dashboardValuesPeriodDetailed, "kit." + kit.getKitTypeName() + ".received", kit.getReceiveDate(),
                         start, end, foundAtPtPeriod);
             }
-            if (kit.getDeactivatedDate() != 0) {
+            if (kit.getDeactivatedDate() != null && kit.getDeactivatedDate() != 0) {
                 incrementCounter(dashboardValuesDetailed, "kit." + kit.getKitTypeName() + ".deactivated", foundAtPT);
                 incrementCounterPeriod(dashboardValuesPeriodDetailed, "kit." + kit.getKitTypeName() + ".deactivated",
                         kit.getDeactivatedDate(), start, end, foundAtPtPeriod);

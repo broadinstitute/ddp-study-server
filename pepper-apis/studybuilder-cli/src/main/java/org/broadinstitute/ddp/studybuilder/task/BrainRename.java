@@ -18,6 +18,7 @@ import java.util.stream.Stream;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
@@ -56,6 +57,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuesti
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.EquationQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
@@ -72,8 +74,6 @@ import org.broadinstitute.ddp.util.GsonPojoValidator;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.broadinstitute.ddp.util.JsonValidationError;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Task to rename Brain study to "Brain Tumor Project".
@@ -88,9 +88,8 @@ import org.slf4j.LoggerFactory;
  * <p>Make sure to run Brain study's other patches (e.g. pediatric changes) before running this. See the
  * `patch-log.conf` file for what those patches are.
  */
+@Slf4j
 public class BrainRename implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(BrainRename.class);
     private static final String RENAME_DATA_FILE = "patches/rename.conf";
     private static final String ACTIVITY_DATA_FILE = "patches/rename-activities.conf";
     private static final String GENDER_DATA_FILE = "patches/rename-gender-questions.conf";
@@ -203,24 +202,24 @@ public class BrainRename implements CustomTask {
         pdfBuilder.insertPdfConfig(handle, pdfDataCfg.getConfig("releaseParentalConsentPdf"));
         pdfBuilder.insertPdfConfig(handle, pdfDataCfg.getConfig("releaseConsentAssentPdf"));
 
-        LOG.info("Brain Tumor Project rename finished");
+        log.info("Brain Tumor Project rename finished");
     }
 
     private void renameProjectContactInfo() {
-        LOG.info("Updating study contact information...");
+        log.info("Updating study contact information...");
         DBUtils.checkUpdate(1, handle.attach(JdbiUmbrellaStudy.class)
                 .updateEmailAndWebUrl(studyDto.getId(),
                         studyCfg.getString("study.studyEmail"),
                         studyCfg.getString("study.baseWebUrl")));
 
-        LOG.info("Updating client password redirect url...");
+        log.info("Updating client password redirect url...");
         DBUtils.checkUpdate(1, handle.attach(JdbiClient.class)
                 .updateWebPasswordRedirectUrlByAuth0ClientIdAndAuth0Domain(
                         studyCfg.getString("client.passwordRedirectUrl"),
                         studyCfg.getString("client.id"),
                         studyCfg.getString("tenant.domain")));
 
-        LOG.info("Updating sendgrid configuration...");
+        log.info("Updating sendgrid configuration...");
         DBUtils.checkUpdate(1, handle.attach(JdbiSendgridConfiguration.class)
                 .updateFromDetails(studyDto.getId(),
                         studyCfg.getString("sendgrid.fromName"),
@@ -234,12 +233,12 @@ public class BrainRename implements CustomTask {
                 .filter(event -> event.getEventActionType().equals(EventActionType.ANNOUNCEMENT))
                 .map(event -> ((AnnouncementEventAction) event.getEventAction()).getMessageTemplateId())
                 .collect(Collectors.toSet());
-        LOG.info("Found {} announcement event message templates", messageTemplateIds.size());
+        log.info("Found {} announcement event message templates", messageTemplateIds.size());
 
         List<Translation> translations = streamTemplateVariables(messageTemplateIds, Instant.now().toEpochMilli())
                 .flatMap(variable -> variable.getTranslations().stream())
                 .collect(Collectors.toList());
-        LOG.info("Found {} announcement event template variable translations to update in-place", translations.size());
+        log.info("Found {} announcement event template variable translations to update in-place", translations.size());
 
         List<Edit> edits = parseEdits(renameDataCfg, "announcementEdits");
         for (var sub : translations) {
@@ -250,7 +249,7 @@ public class BrainRename implements CustomTask {
             updateTranslationInPlace(sub, newText);
         }
 
-        LOG.info("Finished updating announcement message templates");
+        log.info("Finished updating announcement message templates");
     }
 
     private void revisionPostConsentAndGenderQuestions(String activityKey,
@@ -293,28 +292,28 @@ public class BrainRename implements CustomTask {
         questionDao.disablePicklistQuestion(questionId, result.getMetadata());
         questionDao.insertQuestion(activity.getActivityId(), assignedSexQuestion, newRevId);
         questionDao.getJdbiBlockQuestion().insert(blockId, assignedSexQuestion.getQuestionId());
-        LOG.info("Disabled question {} and swapped in question {}", genderStableId, assignedSexQuestion.getStableId());
+        log.info("Disabled question {} and swapped in question {}", genderStableId, assignedSexQuestion.getStableId());
 
         blockId = transgenderQuestionBlock.getBlockId();
         questionId = transgenderQuestionBlock.getQuestion().getQuestionId();
         questionDao.disablePicklistQuestion(questionId, result.getMetadata());
         questionDao.insertQuestion(activity.getActivityId(), genderIdentityQuestion, newRevId);
         questionDao.getJdbiBlockQuestion().insert(blockId, genderIdentityQuestion.getQuestionId());
-        LOG.info("Disabled question {} and swapped in question {}", transgenderStableId, genderIdentityQuestion.getStableId());
+        log.info("Disabled question {} and swapped in question {}", transgenderStableId, genderIdentityQuestion.getStableId());
     }
 
     private RevisionResult revisionActivity(Config activityCfg) {
         String activityCode = activityCfg.getString("activityCode");
         String versionTag = activityCfg.getString("newVersionTag");
         RevisionMetadata meta = makeActivityRevMetadata(activityCode, versionTag);
-        LOG.info("Working on activity {}...", activityCode);
+        log.info("Working on activity {}...", activityCode);
 
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
         ActivityVersionDto currentVersionDto = findActivityLatestVersion(activityId);
         FormActivityDef activity = findActivityDef(activityCode, currentVersionDto.getVersionTag());
 
         ActivityVersionDto newVersionDto = activityDao.changeVersion(activityId, versionTag, meta);
-        LOG.info("Created new revision {} of activity {}", newVersionDto.getVersionTag(), activityCode);
+        log.info("Created new revision {} of activity {}", newVersionDto.getVersionTag(), activityCode);
 
         if (activityCfg.getBoolean("editSubtitle")) {
             updateActivitySubtitleInPlace(activityId, activityCode);
@@ -345,7 +344,7 @@ public class BrainRename implements CustomTask {
                     count.getAndIncrement();
                 });
 
-        LOG.info("Renamed {} variable translations for activity {}", count.get(), activityCode);
+        log.info("Renamed {} variable translations for activity {}", count.get(), activityCode);
 
         return new RevisionResult(activity, currentVersionDto, newVersionDto, meta);
     }
@@ -363,7 +362,7 @@ public class BrainRename implements CustomTask {
         // Add new version of translation text.
         long variableId = variable.getId().get();
         jdbiSubstitution.insert(translation.getLanguageCode(), newText, newRevisionId, variableId);
-        LOG.info("Revisioned translation for template variable: ${}", variable.getName());
+        log.info("Revisioned translation for template variable: ${}", variable.getName());
     }
 
     protected RevisionMetadata makeActivityRevMetadata(String activityCode, String newVersionTag) {
@@ -430,7 +429,7 @@ public class BrainRename implements CustomTask {
                 i18nDetail.getDescription(),
                 i18nDetail.getRevisionId());
         activityI18nDao.updateDetails(List.of(newI18nDetail));
-        LOG.info("Updated subtitle for activity {}", activityCode);
+        log.info("Updated subtitle for activity {}", activityCode);
     }
 
     private void updateActivityStatusSummariesInPlace(long activityId, String activityCode, List<Edit> edits) {
@@ -449,7 +448,7 @@ public class BrainRename implements CustomTask {
                     newText));
         }
         activityI18nDao.updateSummaries(newSummaries);
-        LOG.info("Updated {} status summaries for activity {}", newSummaries.size(), activityCode);
+        log.info("Updated {} status summaries for activity {}", newSummaries.size(), activityCode);
     }
 
     private void updateActivityReadOnlyHintInPlace(FormActivityDef activity) {
@@ -459,7 +458,7 @@ public class BrainRename implements CustomTask {
                 .findFirst().get();
         String newText = replaceNameAndEmail(readOnlyTranslation.getText());
         updateTranslationInPlace(readOnlyTranslation, newText);
-        LOG.info("Updated read-only hint for activity {}", activity.getActivityCode());
+        log.info("Updated read-only hint for activity {}", activity.getActivityCode());
     }
 
     private void updateActivityValidationsInPlace(long activityId, String activityCode, ActivityVersionDto versionDto, List<Edit> edits) {
@@ -472,7 +471,7 @@ public class BrainRename implements CustomTask {
             }
             updateTranslationInPlace(sub, newText);
         }
-        LOG.info("Updated {} complex validations for activity {}", validationVariables.size(), activityCode);
+        log.info("Updated {} complex validations for activity {}", validationVariables.size(), activityCode);
     }
 
     private Stream<TemplateVariable> streamTemplateVariables(Iterable<Long> templateIds, long timestamp) {
@@ -555,6 +554,10 @@ public class BrainRename implements CustomTask {
             case DECIMAL:
                 var decQuestion = (DecimalQuestionDef) question;
                 templates.add(decQuestion.getPlaceholderTemplate());
+                break;
+            case EQUATION:
+                var eqQuestion = (EquationQuestionDef) question;
+                templates.add(eqQuestion.getPlaceholderTemplate());
                 break;
             case PICKLIST:
                 var picklistQuestion = (PicklistQuestionDef) question;

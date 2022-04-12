@@ -15,6 +15,7 @@ import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigResolveOptions;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -39,13 +40,9 @@ import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonPojoValidator;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class ActivityBuilder {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ActivityBuilder.class);
-
     private Gson gson;
     private GsonPojoValidator validator;
     private Path dirPath;
@@ -83,7 +80,7 @@ public class ActivityBuilder {
     void runSingle(Handle handle, String activityCode) {
         Long id = handle.attach(JdbiActivity.class).findIdByStudyIdAndCode(studyDto.getId(), activityCode).orElse(null);
         if (id != null) {
-            LOG.warn("Activity {} already exists with id={}", activityCode, id);
+            log.warn("Activity {} already exists with id={}", activityCode, id);
             return;
         }
 
@@ -98,7 +95,7 @@ public class ActivityBuilder {
                 continue;   // Try other definition files.
             }
             if (activityCode.equals(definition.getString("activityCode"))) {
-                LOG.info("Using configuration for activityCode={} with filepath={}", activityCode, activityCfg.getString("filepath"));
+                log.info("Using configuration for activityCode={} with filepath={}", activityCode, activityCfg.getString("filepath"));
                 ActivityDef def = buildActivityDefFromConfig(definition);
                 List<ActivityDef> nestedDefs = loadNestedActivities(activityCfg);
                 insertActivity(handle, def, nestedDefs, timestamp);
@@ -109,7 +106,7 @@ public class ActivityBuilder {
         }
 
         if (!found) {
-            LOG.error("Unable to find configuration for activityCode={}", activityCode);
+            log.error("Unable to find configuration for activityCode={}", activityCode);
         }
     }
 
@@ -194,7 +191,7 @@ public class ActivityBuilder {
             versionDto = activityDao.insertActivity(def, nestedDefs, meta);
         }
 
-        LOG.info("Created activity with id={}, code={}, versionTag={}, revisionId={}, revisionStart={}{}",
+        log.info("Created activity with id={}, code={}, versionTag={}, revisionId={}, revisionStart={}{}",
                 def.getActivityId(), def.getActivityCode(), def.getVersionTag(), versionDto.getRevId(),
                 Instant.ofEpochMilli(versionDto.getRevStart()).toString(),
                 nestedDefs.isEmpty() ? "" : " (" + nestedDefs.size() + " nested activities)");
@@ -207,7 +204,7 @@ public class ActivityBuilder {
             var type = ActivityMappingType.valueOf(mappingCfg.getString("type"));
             String stableId = ConfigUtil.getStrIfPresent(mappingCfg, "stableId");
             activityDao.insertActivityMapping(studyDto.getGuid(), type, def.getActivityId(), stableId);
-            LOG.info("Added activity mapping for {} with type={}, activityId={}, subStableId={}",
+            log.info("Added activity mapping for {} with type={}, activityId={}, subStableId={}",
                     def.getActivityCode(), type, def.getActivityId(), stableId);
         }
     }
@@ -245,7 +242,7 @@ public class ActivityBuilder {
             List<String> stableIds = validationCfg.getStringList("stableIds");
             dto.addAffectedFields(stableIds);
             jdbiActivity.insertValidation(dto, adminUserId, studyDto.getId(), revisionId);
-            LOG.info("Added activity validations for {}, activityId={}, expression={}, affectedQuestionStableIds={}",
+            log.info("Added activity validations for {}, activityId={}, expression={}, affectedQuestionStableIds={}",
                     activityCode, activityId, expression, stableIds);
         }
     }
@@ -276,7 +273,7 @@ public class ActivityBuilder {
             InstanceStatusType statusType = InstanceStatusType.valueOf(iconCfg.getString("statusType"));
             for (FormType formType : FormType.values()) {
                 long iconId = jdbiStatusIcon.insert(studyDto.getId(), formType, statusType, iconBytes, revId);
-                LOG.info("Added activity status icon with id={}, formType={}, statusType={}, revisionId={}",
+                log.info("Added activity status icon with id={}, formType={}, statusType={}, revisionId={}",
                         iconId, formType, statusType, revId);
             }
         }
@@ -305,7 +302,7 @@ public class ActivityBuilder {
             InstanceStatusType statusType = InstanceStatusType.valueOf(iconCfg.getString("statusType"));
             for (FormType formType : FormType.values()) {
                 jdbiStatusIcon.updateIcon(studyDto.getId(), formType, statusType, iconBytes);
-                LOG.info("Updated activity status icon with studyId={}, formType={}, statusType={}",
+                log.info("Updated activity status icon with studyId={}, formType={}, statusType={}",
                         studyDto.getId(), formType, statusType);
             }
         }

@@ -32,7 +32,7 @@ public class ATCPStudyContact implements HttpFunction {
     private static final char[] GUID_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890".toCharArray();
     private static final int GUID_LENGTH = 10;
     private static final int MAX_METADATA_PAIRS = 50;
-    private static final int MAX_FILE_SIZE_BYTES = 2097152; // 2 MB
+    private static final int MAX_FILE_SIZE_BYTES = 5242880; // 5 MB
     private static final int MAX_SIGNED_URL_MINS = 5;
 
     private final String bucketName;

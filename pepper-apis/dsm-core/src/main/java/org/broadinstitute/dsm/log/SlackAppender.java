@@ -78,6 +78,7 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
             GCP_SERVICE = gcpServiceName;
             ROOT_PACKAGE = rootPackage;
             configured = true;
+            logger.info("Configured SlackAppender");
         } else {
             throw new RuntimeException("Configure has already been called for this appender.");
         }
@@ -89,9 +90,16 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
             try {
                 boolean jobError = schedulerName != null && event.getThreadName().contains(schedulerName);
                 long currentEpoch = Utility.getCurrentEpoch();
-                String linkToGcpError = buildLinkToGcpError(event);
-                String linkToGcpLog = buildLinkToGcpLog();
-                String errorMessageAndLocation = getErrorMessageAndLocation(event);
+                String linkToGcpError = "";
+                String linkToGcpLog = "";
+                String errorMessageAndLocation = "";
+                if (event.getThrowableProxy() != null) {
+                    linkToGcpError = buildLinkToGcpError(event);
+                    linkToGcpLog = buildLinkToGcpLog();
+                    errorMessageAndLocation = getErrorMessageAndLocation(event);
+                } else if (event.getFormattedMessage() != null) {
+                    errorMessageAndLocation = event.getFormattedMessage();
+                }
                 if (jobError && currentEpoch >= minEpochForNextJobError.get()) {
                     this.sendSlackNotification(buildMessage(errorMessageAndLocation, linkToGcpError, jobErrorMessage, linkToGcpLog));
                     minEpochForNextJobError.set(currentEpoch + JOB_DELAY * 60L);

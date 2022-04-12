@@ -79,6 +79,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.EquationQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
@@ -174,6 +175,9 @@ public class PatchFormAnswersRouteStandaloneTest {
     private static String decimalIntegerSid;
     private static String decimalIntegerReqSid;
     private static String decimalIntegerWithMultipleRulesSid;
+
+    private static EquationQuestionDef equationQuestionDef;
+    private static String equationSid;
 
     private static String plistSingle_option1_sid;
     private static String plistSingle_option2_sid;
@@ -292,6 +296,8 @@ public class PatchFormAnswersRouteStandaloneTest {
         decimalIntegerSid = "PATCH_DECIMAL_Q" + timestamp;
         decimalIntegerReqSid = "PATCH_DECIMAL_REQ" + timestamp;
         decimalIntegerWithMultipleRulesSid = "PATCH_DECIMAL_W_MULT_RULES" + timestamp;
+
+        equationSid = "PATCH_EQUATION_Q" + timestamp;
 
         BoolQuestionDef b1 = BoolQuestionDef.builder(boolStableId, newTemplate(), newTemplate(), newTemplate()).build();
         FormSectionDef boolSection = new FormSectionDef(null, TestUtil.wrapQuestions(b1));
@@ -424,6 +430,16 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .build();
         FormSectionDef decimalSection = new FormSectionDef(null, TestUtil.wrapQuestions(decimalQuestionDef, dec2, dec3));
 
+        equationQuestionDef = EquationQuestionDef
+                .builder()
+                .stableId(equationSid)
+                .promptTemplate(newTemplate())
+                .questionType(QuestionType.EQUATION)
+                .expression(String.format("2 * %s", decimalIntegerSid))
+                .build();
+
+        FormSectionDef equationSection = new FormSectionDef(null, TestUtil.wrapQuestions(equationQuestionDef));
+
         fileQuestion = FileQuestionDef.builder("FILE" + timestamp, Template.text("file"))
                 .setMaxFileSize(DEFAULT_MAX_FILE_SIZE_FOR_TEST)
                 .build();
@@ -442,7 +458,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                         Arrays.asList(
                                 boolSection, textSection, textSection2, textSection3, plistSection,
                                 dateSection, compositeSection, essayTextSection, agreementSection,
-                                numericSection, decimalSection, fileSection, matrixSection
+                                numericSection, decimalSection, equationSection, fileSection, matrixSection
                         )
                 )
                 .build();
@@ -1834,7 +1850,7 @@ public class PatchFormAnswersRouteStandaloneTest {
     @Test
     public void testPatch_fileAnswer_createAndUpdate() {
         var stableId = fileQuestion.getStableId();
-        var submission = new AnswerSubmission(stableId, null, gson.toJsonTree(upload1.getGuid()));
+        var submission = new AnswerSubmission(stableId, null, gson.toJsonTree(List.of(upload1.getGuid())));
         var data = new PatchAnswerPayload(List.of(submission));
         String guid = givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat()
@@ -1852,10 +1868,10 @@ public class PatchFormAnswersRouteStandaloneTest {
         assertEquals(guid, answer.get().getAnswerGuid());
         assertEquals(stableId, answer.get().getQuestionStableId());
         assertEquals(QuestionType.FILE, answer.get().getQuestionType());
-        assertEquals(upload1.getFileName(), ((FileAnswer)answer.get()).getValue().getFileName());
-        assertEquals(upload1.getFileSize(), ((FileAnswer)answer.get()).getValue().getFileSize());
+        assertEquals(upload1.getFileName(), ((FileAnswer)answer.get()).getInfo(0).getFileName());
+        assertEquals(upload1.getFileSize(), ((FileAnswer)answer.get()).getInfo(0).getFileSize());
 
-        submission = new AnswerSubmission(stableId, guid, gson.toJsonTree(upload2.getGuid()));
+        submission = new AnswerSubmission(stableId, guid, gson.toJsonTree(List.of(upload2.getGuid())));
         data = new PatchAnswerPayload(List.of(submission));
         String nextGuid = givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat()
@@ -1866,7 +1882,7 @@ public class PatchFormAnswersRouteStandaloneTest {
         answer =  TransactionWrapper.withTxn(handle ->
                 new AnswerCachedDao(handle).findAnswerByGuid(guid));
         assertTrue(answer.isPresent());
-        assertEquals(upload2.getFileName(), ((FileAnswer) answer.get()).getValue().getFileName());
+        assertEquals(upload2.getFileName(), ((FileAnswer) answer.get()).getInfo(0).getFileName());
     }
 
     @Test
@@ -1882,17 +1898,17 @@ public class PatchFormAnswersRouteStandaloneTest {
         var answer = TransactionWrapper.withTxn(handle ->
                 new AnswerCachedDao(handle).findAnswerByGuid(guid));
         assertTrue(answer.isPresent());
-        assertNull("created answer should have null for value", answer.get().getValue());
+        assertNull("created answer should have null for value", ((List<?>) answer.get().getValue()).get(0));
 
         // Set a value then clear it.
-        data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, guid, gson.toJsonTree(upload1.getGuid()))));
+        data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, guid, gson.toJsonTree(List.of(upload1.getGuid())))));
         givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat().statusCode(200);
         answer = TransactionWrapper.withTxn(handle ->
                 new AnswerCachedDao(handle).findAnswerByGuid(guid));
         assertTrue(answer.isPresent());
         assertNotNull(answer.get().getValue());
-        assertEquals(upload1.getFileName(), ((FileAnswer) answer.get()).getValue().getFileName());
+        assertEquals(upload1.getFileName(), ((FileAnswer) answer.get()).getInfo(0).getFileName());
 
         data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, guid, null)));
         givenAnswerPatchRequest(instanceGuid, data)
@@ -1900,13 +1916,13 @@ public class PatchFormAnswersRouteStandaloneTest {
         answer = TransactionWrapper.withTxn(handle ->
                 new AnswerCachedDao(handle).findAnswerByGuid(guid));
         assertTrue(answer.isPresent());
-        assertNull("answer value should be cleared", answer.get().getValue());
+        assertNull("answer value should be cleared", ((List<?>) answer.get().getValue()).get(0));
     }
 
     @Test
     public void testPatch_fileAnswer_fileNotFound() {
         var stableId = fileQuestion.getStableId();
-        var data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, null, gson.toJsonTree("foobar"))));
+        var data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, null, gson.toJsonTree(List.of("foobar")))));
         givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat()
                 .statusCode(400).contentType(ContentType.JSON)
@@ -2044,6 +2060,9 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .body("answers.size()", equalTo(1))
                 .body("answers[0].stableId", equalTo(decimalIntegerSid))
                 .body("answers[0].answerGuid", not(isEmptyOrNullString()))
+                .body("equations[0].stableId", equalTo(equationSid))
+                .body("equations[0].values[0].value", equalTo(5000000000000000L))
+                .body("equations[0].values[0].scale", equalTo(14))
                 .and().extract().path("answers[0].answerGuid");
 
         answerGuidsToDelete.get(QuestionType.DECIMAL).add(guid);

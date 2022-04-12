@@ -162,7 +162,13 @@
                 <groupId>org.zeroturnaround</groupId>
                 <artifactId>zt-exec</artifactId>
                 <version>1.10</version>
+            </dependency>
 
+            <!-- BigDecimal math operations -->
+            <dependency>
+                <groupId>ch.obermuhlner</groupId>
+                <artifactId>big-math</artifactId>
+                <version>2.3.0</version>
             </dependency>
 
             <!-- sendgrid for email sending -->
@@ -215,6 +221,13 @@
                         <artifactId>slf4j-simple</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+
+            <!-- Nice streams -->
+            <dependency>
+                <groupId>one.util</groupId>
+                <artifactId>streamex</artifactId>
+                <version>0.8.1</version>
             </dependency>
 
             <!-- database utilities -->
