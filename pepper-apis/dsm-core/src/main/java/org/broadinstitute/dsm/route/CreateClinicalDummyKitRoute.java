@@ -10,7 +10,7 @@ import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.KitType;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.Tissue;
-import org.broadinstitute.dsm.db.TissueSmId;
+import org.broadinstitute.dsm.db.SmId;
 import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
 import org.broadinstitute.dsm.db.dao.kit.BSPDummyKitDao;
@@ -48,8 +48,8 @@ public class CreateClinicalDummyKitRoute implements Route {
         new BookmarkDao().getBookmarkByInstance(CLINICAL_KIT_REALM).ifPresentOrElse(book -> {
             realm = (int) book.getValue();
         }, () -> {
-                throw new RuntimeException("Bookmark doesn't exist for " + CLINICAL_KIT_REALM);
-            });
+            throw new RuntimeException("Bookmark doesn't exist for " + CLINICAL_KIT_REALM);
+        });
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(realm);
         BSPDummyKitDao bspDummyKitDao = new BSPDummyKitDao();
         if (ddpInstance != null) {
@@ -83,9 +83,9 @@ public class CreateClinicalDummyKitRoute implements Route {
             } else {
                 String smIdType;
                 if (kitTypeString.equalsIgnoreCase(ffpeScroll)) {
-                    smIdType = TissueSmId.SCROLLS;
+                    smIdType = SmId.SCROLLS;
                 } else if (kitTypeString.equalsIgnoreCase(ffpeSection)) {
-                    smIdType = TissueSmId.USS;
+                    smIdType = SmId.USS;
                 } else {
                     throw new RuntimeException("The FFPE kit type does not match any of the valid types " + kitTypeString);
                 }

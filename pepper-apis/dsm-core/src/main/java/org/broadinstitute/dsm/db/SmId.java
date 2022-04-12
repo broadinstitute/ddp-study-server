@@ -22,46 +22,51 @@ import org.slf4j.LoggerFactory;
         alias = DBConstants.SM_ID_TABLE_ALIAS,
         primaryKey = DBConstants.SM_ID_PK,
         columnPrefix = "")
-public class TissueSmId {
+public class SmId {
 
-    private static final Logger logger = LoggerFactory.getLogger(TissueSmId.class);
+    private static final Logger logger = LoggerFactory.getLogger(SmId.class);
     public static String HE = "he";
     public static String USS = "uss";
     public static String SCROLLS = "scrolls";
     @ColumnName(DBConstants.SM_ID_VALUE)
     private String smIdValue;
-    @ColumnName(DBConstants.SM_ID_TYPE_ID)
+    @ColumnName(DBConstants.SM_ID_TYPE)
     private String smIdType;
     @ColumnName(DBConstants.SM_ID_TISSUE_ID)
-    private String tissueId;
+    private Long tissueId;
     @ColumnName(DBConstants.SM_ID_PK)
-    private String smIdPk;
+    private Integer smIdPk;
     @ColumnName(DBConstants.DELETED)
     private Boolean deleted;
 
-    public TissueSmId() {
+    public SmId() {
     }
 
-    public TissueSmId(String smIdPk, String smIdType, String smIdValue, String tissueId) {
+    public SmId(Integer smIdPk, String smIdType, String smIdValue, Long tissueId) {
         this.smIdPk = smIdPk;
         this.smIdType = smIdType;
         this.smIdValue = smIdValue;
         this.tissueId = tissueId;
     }
 
+    public SmId(Integer smIdPk, String smType, String smIdValue, Integer tissueId, Boolean deleted) {
+        this(smIdPk, smType, smIdValue, tissueId.longValue());
+        this.deleted = deleted;
+    }
 
-    public static TissueSmId getSMIdsForTissueId(ResultSet rs) {
-        TissueSmId tissueSmId = null;
+
+    public static SmId getSMIdsForTissueId(ResultSet rs) {
+        SmId tissueSmId = null;
 
         try {
             if (rs.getString(DBConstants.SM_ID_PK) == null) {
                 return null;
             }
-            tissueSmId = new TissueSmId(
-                    rs.getString(DBConstants.SM_ID_PK),
+            tissueSmId = new SmId(
+                    rs.getInt(DBConstants.SM_ID_PK),
                     rs.getString(DBConstants.SM_ID_TYPE_ID),
                     rs.getString(DBConstants.SM_ID_VALUE),
-                    rs.getString("sm." + DBConstants.TISSUE_ID)
+                    rs.getLong("sm." + DBConstants.TISSUE_ID)
             );
             if (tissueSmId != null) {
                 tissueSmId.setDeleted(rs.getBoolean("sm." + DBConstants.DELETED));
