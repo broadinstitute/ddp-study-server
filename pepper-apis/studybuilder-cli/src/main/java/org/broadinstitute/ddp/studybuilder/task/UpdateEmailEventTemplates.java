@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import com.typesafe.config.ConfigValueFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.EventActionSql;
 import org.broadinstitute.ddp.db.dao.EventDao;
@@ -26,16 +27,12 @@ import org.broadinstitute.ddp.model.event.EventConfiguration;
 import org.broadinstitute.ddp.model.event.NotificationTemplate;
 import org.broadinstitute.ddp.studybuilder.EventBuilder;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * General task to update sendgrid templates for email event configurations.
  */
+@Slf4j
 public class UpdateEmailEventTemplates implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(UpdateEmailEventTemplates.class);
-
     private Path cfgPath;
     private Config studyCfg;
     private Config varsCfg;
@@ -51,7 +48,7 @@ public class UpdateEmailEventTemplates implements CustomTask {
     public void run(Handle handle) {
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class)
                 .findByStudyGuid(studyCfg.getString("study.guid"));
-        LOG.info("Comparing {} email event templates...", studyDto.getGuid());
+        log.info("Comparing {} email event templates...", studyDto.getGuid());
 
         Map<String, EventConfiguration> emailEvents =  new HashMap<>();
         handle.attach(EventDao.class)
@@ -132,12 +129,12 @@ public class UpdateEmailEventTemplates implements CustomTask {
 
             if (current == null) {
                 addEmailTemplate(handle, actionId, language, latestTemplateKey, isDynamic);
-                LOG.info("[{}] language {}: added template {}", eventKey, language, latestTemplateKey);
+                log.info("[{}] language {}: added template {}", eventKey, language, latestTemplateKey);
             } else {
                 if (!current.getTemplateKey().equals(latestTemplateKey)) {
                     String currentTemplateKey = current.getTemplateKey();
                     updateEmailTemplate(handle, actionId, language, currentTemplateKey, latestTemplateKey, isDynamic);
-                    LOG.info("[{}] language {}: un-assigned template {} and added template {}",
+                    log.info("[{}] language {}: un-assigned template {} and added template {}",
                             eventKey, language, currentTemplateKey, latestTemplateKey);
                 }
             }
@@ -152,7 +149,7 @@ public class UpdateEmailEventTemplates implements CustomTask {
                     .map(NotificationTemplate::getId)
                     .orElseThrow(() -> new DDPException("Could not find email template with key " + currentTemplateKey));
             unassignTemplateFromEmailAction(handle, actionId, currentTemplateId);
-            LOG.info("[{}] language {}: un-assigned template {}", eventKey, language, currentTemplateKey);
+            log.info("[{}] language {}: un-assigned template {}", eventKey, language, currentTemplateKey);
         }
     }
 

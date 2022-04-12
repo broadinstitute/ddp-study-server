@@ -403,6 +403,10 @@ public interface ActivityInstanceDao extends SqlObject {
         DBUtils.checkInsert(variables.size(), inserted.length);
     }
 
+    default Optional<ActivityInstanceDto> findByActivityInstanceGuid(final String activityInstanceGuid) {
+        return getJdbiActivityInstance().getByActivityInstanceGuid(activityInstanceGuid);
+    }
+
     @SqlQuery("select distinct sub.variable_name"
             + "  from activity_instance_substitution as sub"
             + "  join activity_instance as ai on ai.activity_instance_id = sub.activity_instance_id"

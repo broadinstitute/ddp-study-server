@@ -16,18 +16,16 @@ import java.util.stream.Collectors;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.ConfigUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class EmailBuilder {
-
-    private static final Logger LOG = LoggerFactory.getLogger(EmailBuilder.class);
     private static final Gson prettyGson = new GsonBuilder().setPrettyPrinting().create();
 
     private Path cfgPath;
@@ -68,20 +66,20 @@ public class EmailBuilder {
             EmailInfo email = createSendGridEmail(emailCfg);
             if (email != null) {
                 emails.add(email);
-                LOG.info("Created email {} with templateId={} versionId={}",
+                log.info("Created email {} with templateId={} versionId={}",
                         email.getKey(), email.getTemplateId(), email.getVersionId());
             }
         }
         Map<String, String> mappings = new TreeMap<>();
         emails.forEach(info -> mappings.put(info.getKey(), info.getTemplateId()));
-        LOG.info("Created {} email templates:\n{}", emails.size(), prettyGson.toJson(mappings));
+        log.info("Created {} email templates:\n{}", emails.size(), prettyGson.toJson(mappings));
     }
 
     private EmailInfo createSendGridEmail(Config emailCfg) {
         String key = emailCfg.getString("key");
         String templateId = ConfigUtil.getStrIfPresent(varsCfg, "emails." + key);
         if (templateId != null && !templateId.isEmpty()) {
-            LOG.error("Email {} already has template id set to {}, not creating", key, templateId);
+            log.error("Email {} already has template id set to {}, not creating", key, templateId);
             return null;
         }
 
@@ -97,7 +95,7 @@ public class EmailBuilder {
         var templateResult = sendGrid.createTemplate(name, isDynamic);
         templateResult.rethrowIfThrown(e -> new DDPException("Error while creating email " + key, e));
         if (templateResult.hasError()) {
-            LOG.error("Error while creating email {}: {}", key, templateResult.getError());
+            log.error("Error while creating email {}: {}", key, templateResult.getError());
             return null;
         }
 
@@ -107,7 +105,7 @@ public class EmailBuilder {
         var versionResult = sendGrid.createTemplateVersion(templateId, name, subject, html, true);
         versionResult.rethrowIfThrown(e -> new DDPException("Error while creating version for email " + key, e));
         if (versionResult.hasError()) {
-            LOG.error("Error while creating version for email {}. You might need to manually create"
+            log.error("Error while creating version for email {}. You might need to manually create"
                             + " the version and run update-emails to load HTML content: {}",
                     key, versionResult.getError());
         } else {
@@ -131,11 +129,11 @@ public class EmailBuilder {
             EmailInfo email = updateSendGridEmail(emailCfg);
             if (email != null) {
                 emails.add(email);
-                LOG.info("Updated email {} with templateId={} versionId={}",
+                log.info("Updated email {} with templateId={} versionId={}",
                         email.getKey(), email.getTemplateId(), email.getVersionId());
             }
         }
-        LOG.info("Updated active versions of {} email templates", emails.size());
+        log.info("Updated active versions of {} email templates", emails.size());
     }
 
     private EmailInfo updateSendGridEmail(Config emailCfg) {
@@ -155,7 +153,7 @@ public class EmailBuilder {
         var versionResult = sendGrid.getTemplateActiveVersionId(templateId);
         versionResult.rethrowIfThrown(e -> new DDPException("Error fetching active version for email " + key, e));
         if (versionResult.hasError()) {
-            LOG.error("Could not find active version for email {} with template id {}: {}",
+            log.error("Could not find active version for email {} with template id {}: {}",
                     key, templateId, versionResult.getError());
             return null;
         }
@@ -165,7 +163,7 @@ public class EmailBuilder {
         var updateResult = sendGrid.updateTemplateVersion(templateId, versionId, null, subject, html);
         updateResult.rethrowIfThrown(e -> new DDPException("Error while updating email " + key, e));
         if (updateResult.hasError()) {
-            LOG.error("Error while updating active version {} for email {} with template id {}: {}",
+            log.error("Error while updating active version {} for email {} with template id {}: {}",
                     versionId, key, templateId, versionResult.getError());
             return null;
         }
