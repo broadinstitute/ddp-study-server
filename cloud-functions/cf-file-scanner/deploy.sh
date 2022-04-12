@@ -151,8 +151,7 @@ function deploy-service {
     --region="$CLOUDSDK_RUN_REGION" \
     --platform="managed" \
     --cpu="1" \
-    --memory="2Gi" \
-    --cpu-throttling \
+    --memory="4Gi" \
     --image="$CONTAINER_FQ_NAME" \
     --min-instances="1" \
     --max-instances="3" \
