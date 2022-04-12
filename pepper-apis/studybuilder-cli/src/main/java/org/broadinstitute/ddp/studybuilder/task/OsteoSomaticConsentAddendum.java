@@ -1,115 +1,128 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
-import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.broadinstitute.ddp.cache.LanguageStore;
-import org.broadinstitute.ddp.db.dao.ActivityDao;
-import org.broadinstitute.ddp.db.dao.JdbiFormActivityFormSection;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
-import org.broadinstitute.ddp.db.dao.SectionBlockDao;
-import org.broadinstitute.ddp.db.dao.UserDao;
-import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
+import org.broadinstitute.ddp.db.dao.JdbiUser;
+import org.broadinstitute.ddp.db.dao.JdbiWorkflowTransition;
+import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
-import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
-import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
-import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
+import org.broadinstitute.ddp.studybuilder.EventBuilder;
+import org.broadinstitute.ddp.studybuilder.WorkflowBuilder;
 import org.broadinstitute.ddp.util.ConfigUtil;
-import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.sqlobject.SqlObject;
+import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class OsteoSomaticConsentAddendum implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(OsteoSomaticConsentAddendum.class);
+    private static Logger log = LoggerFactory.getLogger(OsteoSomaticConsentAddendum.class);
+    private static final String STUDY_GUID = "CMI-OSTEO";
     private static final String DATA_FILE = "patches/somatic-consent-addendum-val.conf";
-    private static final String CMI_OSTEO = "CMI-OSTEO";
 
     private Path cfgPath;
     private Config cfg;
-    private Config dataCfg;
     private Config varsCfg;
-    private String versionTag;
-    private Gson gson;
-    private Instant timestamp;
+    private Config dataCfg;
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
+        if (!studyCfg.getString("study.guid").equals(STUDY_GUID)) {
+            throw new DDPException("This task is only for the " + STUDY_GUID + " study!");
+        }
+        this.cfgPath = cfgPath;
+        this.cfg = studyCfg;
+        this.varsCfg = varsCfg;
+
         File file = cfgPath.getParent().resolve(DATA_FILE).toFile();
         if (!file.exists()) {
             throw new DDPException("Data file is missing: " + file);
         }
-        dataCfg = ConfigFactory.parseFile(file);
-
-        if (!studyCfg.getString("study.guid").equals(CMI_OSTEO)) {
-            throw new DDPException("This task is only for the " + CMI_OSTEO + " study!");
-        }
-
-        cfg = studyCfg;
-        this.cfgPath = cfgPath;
-        this.varsCfg = varsCfg;
-        this.gson = GsonUtil.standardGson();
-        this.timestamp = Instant.now();
+        this.dataCfg = ConfigFactory.parseFile(file).resolveWith(varsCfg);
     }
 
     @Override
     public void run(Handle handle) {
-        LanguageStore.init(handle);
-        User adminUser = handle.attach(UserDao.class).findUserByGuid(cfg.getString("adminUser.guid")).get();
+        UserDto adminUser = handle.attach(JdbiUser.class).findByUserGuid(cfg.getString("adminUser.guid"));
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid"));
 
-        String filePath = dataCfg.getConfigList("updates").get(0).getString("activityFilePath");
-        Config consentAssent = activityBuild(studyDto, adminUser, filePath);
-
-        String sectionfilepath = dataCfg.getConfigList("updates").get(0).getString("sectionFilePath");
-        Config consentAddendumPediatric = activityBuild(studyDto, adminUser, sectionfilepath);
-
-        insertSection(studyDto, adminUser, handle, consentAddendumPediatric, consentAssent);
-
-        String filePath1 = dataCfg.getConfigList("updates").get(1).getString("activityFilePath");
-        Config consentSelf = activityBuild(studyDto, adminUser, filePath1);
-
-        String sectionfilepath1 = dataCfg.getConfigList("updates").get(1).getString("sectionFilePath");
-        Config consentAddendumSelf = activityBuild(studyDto, adminUser, sectionfilepath1);
-
-        insertSection(studyDto, adminUser, handle, consentAddendumSelf, consentSelf);
-
+        insertActivity(handle, studyDto, adminUser.getUserId());
+        insertEvents(handle, studyDto, adminUser.getUserId());
+        updateWorkflow(handle, studyDto);
     }
 
-    private void insertSection(StudyDto studyDto, User adminUser, Handle handle, Config section, Config activity) {
+    private void insertActivity(Handle handle, StudyDto studyDto, long adminUserId) {
+        ActivityBuilder activityBuilder = new ActivityBuilder(cfgPath.getParent(), cfg, varsCfg, studyDto, adminUserId);
+        Instant timestamp = ConfigUtil.getInstantIfPresent(cfg, "activityTimestamp");
+        List<? extends Config> activities = dataCfg.getConfigList("activityFilepath");
 
-        versionTag = "v2";
-        String activityCode = activity.getString("activityCode");
-        long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
-
-        String reason = String.format(
-                "Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
-                studyDto.getGuid(), activityCode, "versionTag");
-        RevisionMetadata meta = new RevisionMetadata(timestamp.toEpochMilli(), adminUser.getId(), reason);
-        ActivityVersionDto version2 = handle.attach(ActivityDao.class).changeVersion(activityId, versionTag, meta);
-        long revisionId = version2.getRevId();
-
-        var sectionDef = gson.fromJson(ConfigUtil.toJson(section), FormSectionDef.class);
-
-        var sectionId = handle.attach(SectionBlockDao.class)
-                .insertSection(activityId, sectionDef, revisionId);
-
-        var jdbiActSection = handle.attach(JdbiFormActivityFormSection.class);
-
-        jdbiActSection.insert(activityId, sectionId, revisionId, 50);
+        for (Config activity : activities) {
+            Config definition = activityBuilder.readDefinitionConfig(activity.getString("name"));
+            List<Config> nestedcfg = new ArrayList<>();
+            activityBuilder.insertActivity(handle, definition, nestedcfg, timestamp);
+            log.info("Activity configuration {} has been added in study {}", activity, STUDY_GUID);
+        }
     }
 
-    private Config activityBuild(StudyDto studyDto, User adminUser, String activityCodeConf) {
-        ActivityBuilder activityBuilder = new ActivityBuilder(cfgPath.getParent(), cfg, varsCfg, studyDto, adminUser.getId());
-        Config config = activityBuilder.readDefinitionConfig(activityCodeConf);
-        return config;
+    private void insertEvents(Handle handle, StudyDto studyDto, long adminUserId) {
+        if (!dataCfg.hasPath("events")) {
+            throw new DDPException("There is no 'events' configuration.");
+        }
+        log.info("Inserting events configuration...");
+        List<? extends Config> events = dataCfg.getConfigList("events");
+        EventBuilder eventBuilder = new EventBuilder(cfg, studyDto, adminUserId);
+        for (Config eventCfg : events) {
+            eventBuilder.insertEvent(handle, eventCfg);
+        }
+        log.info("Events configuration has added in study {}", STUDY_GUID);
+    }
+
+    private void updateWorkflow(Handle handle, StudyDto studyDto) {
+        if (!dataCfg.hasPath("workflows")) {
+            throw new DDPException("There is no 'workflows' configuration.");
+        }
+        log.info("Inserting events configuration...");
+        SqlHelper helper = handle.attach(SqlHelper.class);
+        JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
+        String[] activities = {"PARENTAL_CONSENT", "CONSENT_ASSENT", "CONSENT"};
+        JdbiWorkflowTransition jdbiWorkflowTransition = handle.attach(JdbiWorkflowTransition.class);
+
+        for (String activity : activities) {
+            ActivityDto activityDto = jdbiActivity.findActivityByStudyIdAndCode(studyDto.getId(), activity).get();
+            long workflowStateId = helper.getWorkflowStateId(activityDto.getActivityId());
+            long transitionId = helper.getTransitionId(workflowStateId);
+            int deleteById = jdbiWorkflowTransition.deleteById(transitionId);
+            log.info("deleted activity {} transition for configuration {}", activity, deleteById);
+        }
+
+
+        List<? extends Config> workflows = dataCfg.getConfigList("workflows");
+        WorkflowBuilder workflowBuilder = new WorkflowBuilder(cfg, studyDto);
+        for (Config workflow : workflows) {
+            workflowBuilder.insertTransitionSet(handle, workflow);
+        }
+        log.info("Workflow configuration has added in study {}", STUDY_GUID);
+    }
+
+    private interface SqlHelper extends SqlObject {
+
+        @SqlQuery("select workflow_state_id from workflow_activity_state where study_activity_id = :activityId")
+        long getWorkflowStateId(@Bind("activityId") long activityId);
+
+        @SqlQuery("select workflow_transition_id from workflow_transition where from_state_id = :stateId")
+        long getTransitionId(@Bind("stateId") long stateId);
     }
 }
