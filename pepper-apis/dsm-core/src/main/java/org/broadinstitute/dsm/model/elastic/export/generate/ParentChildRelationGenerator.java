@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-public class TissueSourceGenerator extends CollectionSourceGenerator {
+public class ParentChildRelationGenerator extends CollectionSourceGenerator {
 
     @Override
     protected Optional<Map<String, Object>> getParentWithId() {
