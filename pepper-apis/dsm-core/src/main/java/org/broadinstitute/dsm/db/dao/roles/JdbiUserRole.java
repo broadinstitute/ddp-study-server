@@ -8,6 +8,7 @@ import org.broadinstitute.dsm.model.NameValue;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
 public interface JdbiUserRole extends SqlObject {
@@ -20,14 +21,14 @@ public interface JdbiUserRole extends SqlObject {
             "where ur.user_id = :userId;")
     Collection<String> getListOfAllowedRealmsGuids(@Bind ("userId") long userId);
 
-    @SqlQuery ("select guid as name, guid as value " +
-            "from  umbrella u " +
-            "left join  role r on (r.umbrella_id = u.umbrella_id) " +
-            "left join  user_role ur on (ur.role_id = r.role_id) " +
-            "left join umbrella_study us on (us.umbrella_id = u.umbrella_id) " +
-            "where ur.user_id = :userId")
+    @SqlQuery ("SELECT DISTINCT realm.instance_name" +
+            " from ddp_instance realm where realm.study_guid in (<studies>)")
+    Collection<String> getAllowedStudiesNames(@BindList (value = "studies", onEmpty = BindList.EmptyHandling.NULL) List<String> studies);
+
+    @SqlQuery ("SELECT DISTINCT realm.instance_name as name, realm.display_name as value" +
+            " from ddp_instance realm where realm.study_guid in (<studies>)")
     @RegisterConstructorMapper (NameValue.class)
-    List<NameValue> getAllowedStudies(@Bind ("userId") long userId);
+    List<NameValue> getAllowedStudiesNameVale(@BindList (value = "studies", onEmpty = BindList.EmptyHandling.NULL) List<String> studies);
 
     @SqlQuery ("select p.name " +
             "from permissions p " +

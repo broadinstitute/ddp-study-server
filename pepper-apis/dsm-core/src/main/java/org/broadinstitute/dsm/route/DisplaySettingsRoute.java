@@ -56,6 +56,7 @@ public class DisplaySettingsRoute extends RequestHandler {
         if (StringUtils.isBlank(realm)) {
             logger.error("Realm is empty");
         }
+        String studyGuid = DDPInstance.getStudyGuidByInstanceName(realm);
         String ddpGroupId = DDPInstance.getDDPGroupId(realm);
         if (StringUtils.isBlank(ddpGroupId)) {
             logger.error("GroupId is empty");
@@ -64,8 +65,8 @@ public class DisplaySettingsRoute extends RequestHandler {
         if (!userId.equals(userIdRequest)) {
             throw new RuntimeException("User id was not equal. User Id in token " + userId + " user Id in request " + userIdRequest);
         }
-        if (UserUtil.checkUserAccess(realm, userId, "mr_view", userIdRequest)
-                || UserUtil.checkUserAccess(realm, userId, "pt_list_view", userIdRequest)) {
+        if (UserUtil.checkUserAccess(studyGuid, userId, "mr_view", userIdRequest)
+                || UserUtil.checkUserAccess(studyGuid, userId, "pt_list_view", userIdRequest)) {
             String parent = queryParams.get("parent").value();
             if (StringUtils.isBlank(parent)) {
                 logger.error("Parent is empty");

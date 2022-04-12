@@ -27,13 +27,19 @@ public class UserRoleDao {
             throw new RuntimeException("Error getting list of realms for userId " + userId, results.resultException);
         }
         logger.info("found " + ((Collection<String>) results.resultValue).size() + " realms for user " + userId);
-        return (Collection<String>) results.resultValue;
+        List allowedStudies = new ArrayList((Collection<String>) results.resultValue);
+        SimpleResult finalResults = TransactionWrapper.withTxn(TransactionWrapper.DB.DSM, handle -> {
+            SimpleResult dbVals = new SimpleResult();
+            dbVals.resultValue = handle.attach(JdbiUserRole.class).getAllowedStudiesNames(allowedStudies);
+            return dbVals;
+        });
+        return (Collection<String>) finalResults.resultValue;
     }
 
-    public static List<NameValue> getAllowedStudies(@NonNull String userId) {
+    public static List<NameValue> getAllowedStudiesNameValues(@NonNull String userId) {
         SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
             SimpleResult dbVals = new SimpleResult();
-            dbVals.resultValue = handle.attach(JdbiUserRole.class).getAllowedStudies(Long.parseLong(userId));
+            dbVals.resultValue = handle.attach(JdbiUserRole.class).getListOfAllowedRealmsGuids(Long.parseLong(userId));
             return dbVals;
         });
 
@@ -41,7 +47,13 @@ public class UserRoleDao {
             throw new RuntimeException("Error getting list of realms for userId " + userId, results.resultException);
         }
         logger.info("found " + ((Collection<String>) results.resultValue).size() + " studies for user " + userId);
-        return (List<NameValue>) results.resultValue;
+        List allowedStudies = (List<String>) results.resultValue;
+        SimpleResult finalResults = TransactionWrapper.withTxn(TransactionWrapper.DB.DSM, handle -> {
+            SimpleResult dbVals = new SimpleResult();
+            dbVals.resultValue = handle.attach(JdbiUserRole.class).getAllowedStudiesNameVale(allowedStudies);
+            return dbVals;
+        });
+        return (List<NameValue>) finalResults.resultValue;
     }
 
     public List<String> checkUserAccess(@NonNull long userId) {
@@ -102,7 +114,7 @@ public class UserRoleDao {
         return assignees;
     }
 
-    public static Collection<AssigneeDto> getAssignees(String realm){
+    public static Collection<AssigneeDto> getAssignees(String realm) {
         return UserRoleDao.getAssigneeMap(realm).values();
     }
 }

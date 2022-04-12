@@ -20,7 +20,7 @@ public class AllowedRealmsRoute extends RequestHandler {
             throw new RuntimeException("User id was not equal. User Id in token " + userId + " user Id in request " + userIdRequest);
         }
         if (request.url().contains(RoutePath.STUDIES)) {
-            return UserRoleDao.getAllowedStudies(userIdRequest);
+            return UserRoleDao.getAllowedStudiesNameValues(userIdRequest);
         }
 
         if (queryParams.value(MENU) != null) {
