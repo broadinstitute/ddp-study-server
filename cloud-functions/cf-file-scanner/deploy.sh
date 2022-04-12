@@ -32,11 +32,7 @@ fi
 
 PROJECT_ID="${1:-""}"
 
-##
-# gsc -> Google Serverless Compute
-# (open to alternate naming schemes)
-##
-SERVICE_NAME="${SERVICE_NAME:-"gsc-file-scanner"}"
+SERVICE_NAME="${SERVICE_NAME:-"cf-file-scanner"}"
 CLOUDSDK_RUN_REGION="${CLOUDSDK_RUN_REGION:-"us-central1"}"
 
 SECRET_ID="${SECRET_ID:-$SERVICE_NAME}"
@@ -69,9 +65,9 @@ SERVICE_ACCOUNT="$SA_NAME@$PROJECT_ID.iam.gserviceaccount.com"
 OTHER_GCLOUD_FLAGS="--quiet"
 
 ##
-# file-scanner container naming
+# file-scanner container selection
 #
-# CONTAINER_NAME and CONTAINER_TAG are sourced from the
+# CONTAINER_NAME and CONTAINER_VERSION are sourced from the
 #  current environment and can be overriden to provide
 #  more control over the source image to deploy.
 #
@@ -83,9 +79,9 @@ OTHER_GCLOUD_FLAGS="--quiet"
 # CONTAINER_FQ_NAME -> Container Fully-Qualified Name
 ##
 CONTAINER_NAME="${CONTAINER_NAME:-$SERVICE_NAME}"
-CONTAINER_TAG="${CONTAINER_TAG:-latest}"
+CONTAINER_VERSION="${CONTAINER_VERSION:-latest}"
 CONTAINER_REGISTRY="$CLOUDSDK_RUN_REGION-docker.pkg.dev/$PROJECT_ID/dss"
-CONTAINER_FQ_NAME="$CONTAINER_REGISTRY/$CONTAINER_NAME:$CONTAINER_TAG"
+CONTAINER_FQ_NAME="$CONTAINER_REGISTRY/$CONTAINER_NAME:$CONTAINER_VERSION"
 
 function gcloudw {
   gcloud "$@" $OTHER_GCLOUD_FLAGS
