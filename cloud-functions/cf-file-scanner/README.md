@@ -124,8 +124,8 @@ environment.
     $ docker run \                                                     
         --interactive \
         --tty \
-        --publish 3310:3310 \
-        --name "clamav" \                                         
+        --rm \
+        --publish 3310:3310 \                                     
         clamav/clamav:0.104
     ```
 2. Open a new terminal in the `cf-file-scanner` subdirectory, and run the
