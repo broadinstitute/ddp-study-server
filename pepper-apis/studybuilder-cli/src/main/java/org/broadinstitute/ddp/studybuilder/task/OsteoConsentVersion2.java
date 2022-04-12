@@ -53,7 +53,6 @@ import java.util.Optional;
 @Slf4j
 public class OsteoConsentVersion2 implements CustomTask {
     private static final String DATA_FILE = "patches/consent-version-2.conf";
-    private static final String DATA_FILE_SOMATIC_CONSENT_ADDENDUM = "patches/somatic-consent-addendum-val.conf";
     private static final String DATA_FILE_SOMATIC_ASSENT_ADDENDUM = "patches/parent-consent-assent.conf";
     private static final String OSTEO_STUDY = "CMI-OSTEO";
 
@@ -76,7 +75,6 @@ public class OsteoConsentVersion2 implements CustomTask {
     private static final int DISPLAY_ORDER_GAP = 10;
 
     private Config dataCfg;
-    private Config somaticAddendumConsentCfg;
     private Config assentAddendumCfg;
     private Config selfConsentDataCfg;
     private Config parentalConsentDataCfg;
@@ -99,11 +97,6 @@ public class OsteoConsentVersion2 implements CustomTask {
         dataCfg = ConfigFactory.parseFile(file);
         this.cfgPath = cfgPath;
 
-        File fileSomaticAddendum = cfgPath.getParent().resolve(DATA_FILE_SOMATIC_CONSENT_ADDENDUM).toFile();
-        if (!fileSomaticAddendum.exists()) {
-            throw new DDPException("Data file is missing: " + fileSomaticAddendum);
-        }
-        somaticAddendumConsentCfg = ConfigFactory.parseFile(fileSomaticAddendum);
         this.varsCfg = varsCfg;
 
         if (!studyCfg.getString("study.guid").equals(OSTEO_STUDY)) {
@@ -174,7 +167,6 @@ public class OsteoConsentVersion2 implements CustomTask {
         ActivityVersionDto version2ForParentalConsent = getVersion2(handle, studyDto, metaParentalConsent, activityCodeParentalConsent);
 
         updateVariables(handle, metaConsentAssent, version2ForConsentAssent);
-        runSomaticConsentAddendum(handle, adminUser, studyDto, version2ForConsent, version2ForConsentAssent, version2ForParentalConsent);
         runSomaticAssentAddendum(handle, adminUser, studyDto, version2ForConsentAssent);
         runAdultConsentUpdate(handle, metaConsent, studyDto, activityCodeConsent, version2ForConsent);
         runParentalConsentUpdate(handle, metaParentalConsent, studyDto, activityCodeParentalConsent, version2ForParentalConsent);
@@ -212,37 +204,6 @@ public class OsteoConsentVersion2 implements CustomTask {
         jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, version2.getRevId(), tmplVarId);
     }
 
-    public void runSomaticConsentAddendum(Handle handle, User adminUser, StudyDto studyDto,
-                                          ActivityVersionDto version2Consent, ActivityVersionDto version2ConsentAssent,
-                                          ActivityVersionDto version2ParentalConsent) {
-        LanguageStore.init(handle);
-
-        String filePath = somaticAddendumConsentCfg.getConfigList("updates").get(0).getString("activityFilePath");
-        Config consentAssent = activityBuild(studyDto, adminUser, filePath);
-
-        String sectionfilepath = somaticAddendumConsentCfg.getConfigList("updates").get(0).getString("sectionFilePath");
-        Config consentAddendumPediatric = activityBuild(studyDto, adminUser, sectionfilepath);
-
-        insertSection(studyDto, handle, consentAddendumPediatric, consentAssent, version2ConsentAssent);
-
-        String filePath1 = somaticAddendumConsentCfg.getConfigList("updates").get(1).getString("activityFilePath");
-        Config consentSelf = activityBuild(studyDto, adminUser, filePath1);
-
-        String sectionfilepath1 = somaticAddendumConsentCfg.getConfigList("updates").get(1).getString("sectionFilePath");
-        Config consentAddendumSelf = activityBuild(studyDto, adminUser, sectionfilepath1);
-
-        insertSection(studyDto, handle, consentAddendumSelf, consentSelf, version2Consent);
-
-        String filePath2 = somaticAddendumConsentCfg.getConfigList("updates").get(2).getString("activityFilePath");
-        Config consentParental = activityBuild(studyDto, adminUser, filePath2);
-
-        String sectionfilepath2 = somaticAddendumConsentCfg.getConfigList("updates").get(2).getString("sectionFilePath");
-        Config parentalConsent = activityBuild(studyDto, adminUser, sectionfilepath2);
-
-        insertSection(studyDto, handle, parentalConsent, consentParental, version2ParentalConsent);
-
-    }
-
 
     public void runSomaticAssentAddendum(Handle handle, User adminUser,
                                          StudyDto studyDto, ActivityVersionDto version2ConsentAssent) {
@@ -270,22 +231,6 @@ public class OsteoConsentVersion2 implements CustomTask {
         jdbiActSection.insert(activityId, sectionId, revisionId, 60);
     }
 
-    private void insertSection(StudyDto studyDto, Handle handle,
-                               Config section, Config activity, ActivityVersionDto version2) {
-
-        String activityCode = activity.getString("activityCode");
-        long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
-        long revisionId = version2.getRevId();
-
-        var sectionDef = gson.fromJson(ConfigUtil.toJson(section), FormSectionDef.class);
-
-        var sectionId = handle.attach(SectionBlockDao.class)
-                .insertSection(activityId, sectionDef, revisionId);
-
-        var jdbiActSection = handle.attach(JdbiFormActivityFormSection.class);
-
-        jdbiActSection.insert(activityId, sectionId, revisionId, 50);
-    }
 
     private Config activityBuild(StudyDto studyDto, User adminUser, String activityCodeConf) {
         ActivityBuilder activityBuilder = new ActivityBuilder(cfgPath.getParent(), cfg, varsCfg, studyDto, adminUser.getId());

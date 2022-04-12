@@ -22,6 +22,7 @@ public class OsteoV2Updates implements CustomTask {
         tasks.add(new OsteoPrequalUpdate());
         tasks.add(new OsteoNewActivities());
         tasks.add(new OsteoMRFv2());
+        tasks.add(new OsteoSomaticConsentAddendum());
         tasks.forEach(t -> t.init(cfgPath, studyCfg, varsCfg));
     }
 
