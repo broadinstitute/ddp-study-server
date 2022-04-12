@@ -60,7 +60,7 @@ public abstract class BaseGenerator implements Generator, Collector, GeneratorHe
         this.dbElement = dbElement;
     }
 
-    private PropertyInfo getOuterPropertyByAlias() {
+    protected PropertyInfo getOuterPropertyByAlias() {
         return Util.TABLE_ALIAS_MAPPINGS.get(getDBElement().getTableAlias());
     }
 
