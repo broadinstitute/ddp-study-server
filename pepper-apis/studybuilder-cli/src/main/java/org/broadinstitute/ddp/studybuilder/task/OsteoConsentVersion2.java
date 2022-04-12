@@ -3,11 +3,14 @@ package org.broadinstitute.ddp.studybuilder.task;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiBlockContent;
+import org.broadinstitute.ddp.db.dao.JdbiBlockNesting;
 import org.broadinstitute.ddp.db.dao.JdbiFormActivityFormSection;
+import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiVariableSubstitution;
@@ -17,6 +20,7 @@ import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.BlockContentDto;
+import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.RevisionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -37,20 +41,17 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-
+@Slf4j
 public class OsteoConsentVersion2 implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(OsteoConsentVersion2.class);
     private static final String DATA_FILE = "patches/consent-version-2.conf";
     private static final String DATA_FILE_SOMATIC_CONSENT_ADDENDUM = "patches/somatic-consent-addendum-val.conf";
     private static final String DATA_FILE_SOMATIC_ASSENT_ADDENDUM = "patches/parent-consent-assent.conf";
@@ -69,6 +70,10 @@ public class OsteoConsentVersion2 implements CustomTask {
     private static final String TRANSLATION_UPDATES = "translation-updates";
     private static final String ADULT_TRANSLATION_NEW = "newValue";
     private static final String ADULT_TRANSLATION_KEY = "variableName";
+    private static final String NESTING_ORDER = "nesting-orders";
+    private static final String NESTING_ORDERING = "ordering";
+    private static final String NESTING_SECTION_ORDER = "sectionOrder";
+    private static final int DISPLAY_ORDER_GAP = 10;
 
     private Config dataCfg;
     private Config somaticAddendumConsentCfg;
@@ -82,6 +87,8 @@ public class OsteoConsentVersion2 implements CustomTask {
     private String versionTag;
     private Config cfg;
     private Gson gson;
+    private long studyId;
+
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
@@ -142,7 +149,9 @@ public class OsteoConsentVersion2 implements CustomTask {
         String activityCodeParentalConsent = "PARENTAL_CONSENT";
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(dataCfg.getString("study.guid"));
 
-        LOG.info("Changing version of {} to {} with timestamp={}", activityCodeConsent, versionTag, timestamp);
+        studyId = studyDto.getId();
+
+        log.info("Changing version of {} to {} with timestamp={}", activityCodeConsent, versionTag, timestamp);
         long ts = this.timestamp.toEpochMilli();
 
         String reasonConsentAssent = String.format(
@@ -288,18 +297,24 @@ public class OsteoConsentVersion2 implements CustomTask {
                                           String activityCode, ActivityVersionDto version2) {
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
 
+        updateAdultVariables(handle, meta, version2, consentAssentDataCfg);
         updateAdultTemplates(handle, meta, version2, consentAssentDataCfg);
-        addAdultNestedBlocks(activityId, handle, "CONSENT_ASSENT", version2, consentAssentDataCfg);
+        addAdultNestedBlocks(activityId, handle, meta, "CONSENT_ASSENT", version2, consentAssentDataCfg);
         addAdultBlocks(activityId, handle, "CONSENT_ASSENT", meta, version2, consentAssentDataCfg);
+        reorderNestedBlock(handle, activityCode, version2, consentAssentDataCfg);
+        detachQuestionFromBothSectionAndBlock(handle, "CONSENT_ASSENT_PARENT_SIGNATURE");
     }
 
     private void runParentalConsentUpdate(Handle handle, RevisionMetadata meta, StudyDto studyDto,
                                        String activityCode, ActivityVersionDto version2) {
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
 
+        updateAdultVariables(handle, meta, version2, parentalConsentDataCfg);
         updateAdultTemplates(handle, meta, version2, parentalConsentDataCfg);
-        addAdultNestedBlocks(activityId, handle, "PARENTAL_CONSENT", version2, parentalConsentDataCfg);
+        addAdultNestedBlocks(activityId, handle, meta, "PARENTAL_CONSENT", version2, parentalConsentDataCfg);
         addAdultBlocks(activityId, handle, "PARENTAL_CONSENT", meta, version2, parentalConsentDataCfg);
+        reorderNestedBlock(handle, activityCode, version2, parentalConsentDataCfg);
+        detachQuestionFromBothSectionAndBlock(handle, "PARENTAL_CONSENT_SIGNATURE");
     }
 
     private void runAdultConsentUpdate(Handle handle, RevisionMetadata meta, StudyDto studyDto,
@@ -308,8 +323,10 @@ public class OsteoConsentVersion2 implements CustomTask {
 
         updateAdultVariables(handle, meta, version2, selfConsentDataCfg);
         updateAdultTemplates(handle, meta, version2, selfConsentDataCfg);
-        addAdultNestedBlocks(activityId, handle, "CONSENT", version2, selfConsentDataCfg);
+        addAdultNestedBlocks(activityId, handle, meta, "CONSENT", version2, selfConsentDataCfg);
         addAdultBlocks(activityId, handle, "CONSENT", meta, version2, selfConsentDataCfg);
+        reorderNestedBlock(handle, activityCode, version2, selfConsentDataCfg);
+        detachQuestionFromBothSectionAndBlock(handle, "CONSENT_SIGNATURE");
     }
 
     private void updateAdultVariables(Handle handle, RevisionMetadata meta,
@@ -324,16 +341,18 @@ public class OsteoConsentVersion2 implements CustomTask {
 
     private void revisionAdultVariableTranslation(String varName, String newTemplateText, Handle handle,
                                              RevisionMetadata meta, ActivityVersionDto version2) {
-        long tmplVarId = handle.attach(SqlHelper.class).findTemplateVariableIdByVariableName(varName);
-        JdbiVariableSubstitution jdbiVarSubst = handle.attach(JdbiVariableSubstitution.class);
-        List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
-        Translation currTranslation = transList.get(0);
+        List<Long> templateVariableIdByVariableNames = handle.attach(SqlHelper.class).findTemplateVariableIdByVariableNames(varName);
+        for (Long tmplVarId : templateVariableIdByVariableNames) {
+            JdbiVariableSubstitution jdbiVarSubst = handle.attach(JdbiVariableSubstitution.class);
+            List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
+            Translation currTranslation = transList.get(0);
 
-        JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
-        long newFullNameSubRevId = jdbiRevision.copyAndTerminate(currTranslation.getRevisionId().get(), meta);
-        long[] revIds = {newFullNameSubRevId};
-        jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(Arrays.asList(currTranslation.getId().get()), revIds);
-        jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, version2.getRevId(), tmplVarId);
+            JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
+            long newFullNameSubRevId = jdbiRevision.copyAndTerminate(currTranslation.getRevisionId().get(), meta);
+            long[] revIds = {newFullNameSubRevId};
+            jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(Arrays.asList(currTranslation.getId().get()), revIds);
+            jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, version2.getRevId(), tmplVarId);
+        }
     }
 
     private void updateAdultTemplates(Handle handle, RevisionMetadata meta,
@@ -384,7 +403,7 @@ public class OsteoConsentVersion2 implements CustomTask {
         long newBlockContentId = jdbiBlockContent.insert(contentBlock.getBlockId(), newBodyTemplateId,
                 newTitleTemplateId, versionDto.getRevId());
 
-        LOG.info("Created block_content with id={}, blockId={}, bodyTemplateId={} for bodyTemplateText={}",
+        log.info("Created block_content with id={}, blockId={}, bodyTemplateId={} for bodyTemplateText={}",
                 newBlockContentId, contentBlock.getBlockId(), newBodyTemplateId, contentBlockDef.getBodyTemplate().getTemplateText());
     }
 
@@ -413,18 +432,19 @@ public class OsteoConsentVersion2 implements CustomTask {
                 order, blockDef, revDto);
     }
 
-    private void addAdultNestedBlocks(long activityId, Handle handle, String activityCode,
+    private void addAdultNestedBlocks(long activityId, Handle handle, RevisionMetadata meta, String activityCode,
                                       ActivityVersionDto version, Config dataCfg) {
         List<? extends Config> configList = dataCfg.getConfigList(NEW_NESTED_BLOCKS);
         for (Config config : configList) {
-            addNewNestedBlock(activityId, config, handle, activityCode, version);
+            addNewNestedBlock(activityId, config, meta, handle, activityCode, version);
         }
     }
 
-    private void addNewNestedBlock(long activityId, Config config,
+    private void addNewNestedBlock(long activityId, Config config, RevisionMetadata meta,
                                    Handle handle, String activityCode, ActivityVersionDto version) {
         Config blockConfig = config.getConfig(BLOCK_KEY);
         int sectionOrder = config.getInt(SECTION_ORDER);
+        int blockOrder = config.getInt("order");
         ActivityDto activityDto = handle.attach(JdbiActivity.class)
                 .findActivityByStudyGuidAndCode(OSTEO_STUDY, activityCode).get();
         FormActivityDef currentDef = (FormActivityDef) handle.attach(ActivityDao.class).findDefByDtoAndVersion(activityDto, version);
@@ -437,14 +457,104 @@ public class OsteoConsentVersion2 implements CustomTask {
                 .filter(formBlockDef -> formBlockDef.getBlockType() == BlockType.GROUP)
                 .findFirst();
 
-        blockOpt.ifPresent(formBlockDef -> sectionBlockDao.insertNestedBlocks(activityId, formBlockDef.getBlockId(),
-                List.of(blockDef), version.getRevId()));
+        blockOpt.ifPresent(formBlockDef -> insertNestedBlock(handle, activityId, formBlockDef.getBlockId(),
+                blockOrder, blockDef, version.getRevId()));
+    }
+
+    void insertNestedBlock(Handle handle, long activityId, long parentBlockId, int position,
+                            FormBlockDef nested, long revisionId) {
+        JdbiBlockNesting jdbiBlockNesting = handle.attach(JdbiBlockNesting.class);
+        int nestedBlockOrder = position * DISPLAY_ORDER_GAP;
+
+        if (nested.getBlockType().isContainerBlock()) {
+            throw new IllegalStateException("Nesting container blocks is not allowed");
+        }
+
+        handle.attach(SectionBlockDao.class).insertBlockByType(activityId, nested, revisionId);
+        jdbiBlockNesting.insert(parentBlockId, nested.getBlockId(), nestedBlockOrder, revisionId);
+        log.info("Inserted nested block id {} for parent block id {}", nested.getBlockId(), parentBlockId);
+    }
+
+    private void reorderNestedBlock(Handle handle, String activityCode,
+                                    ActivityVersionDto version2, Config dataCfg) {
+
+        List<? extends Config> nestingConfigList = dataCfg.getConfigList(NESTING_ORDER);
+        for (Config config : nestingConfigList) {
+            List<String> configList = config.getStringList(NESTING_ORDERING);
+            List<Long> blockOrdering = new ArrayList<>();
+            for (String oldBlockTemplateText : configList) {
+                String templateSearchParam = String.format("%s%s%s", "%", oldBlockTemplateText, "%");
+                BlockContentDto contentBlock = handle.attach(SqlHelper.class)
+                        .findContentBlockByBodyText(version2.getActivityId(), templateSearchParam);
+                blockOrdering.add(contentBlock.getBlockId());
+            }
+
+            int sectionOrder = config.getInt(NESTING_SECTION_ORDER);
+
+            ActivityDto activityDto = handle.attach(JdbiActivity.class)
+                    .findActivityByStudyGuidAndCode(OSTEO_STUDY, activityCode).get();
+            FormActivityDef currentDef = (FormActivityDef) handle.attach(ActivityDao.class).findDefByDtoAndVersion(activityDto, version2);
+            FormSectionDef currentSectionDef = currentDef.getSections().get(sectionOrder);
+
+            Optional<FormBlockDef> blockOpt = currentSectionDef.getBlocks()
+                    .stream()
+                    .filter(formBlockDef -> formBlockDef.getBlockType() == BlockType.GROUP)
+                    .findFirst();
+
+            if (blockOpt.isPresent()) {
+                long parentBlockId = blockOpt.get().getBlockId();
+                int nestedBlockOrder = 0;
+                for (Long nestedId : blockOrdering) {
+                    nestedBlockOrder += DISPLAY_ORDER_GAP;
+                    handle.attach(SqlHelper.class).updateNestingOrder(parentBlockId, nestedId, nestedBlockOrder);
+                }
+            }
+        }
+    }
+
+    private void detachQuestionFromBothSectionAndBlock(Handle handle, String questionStableId) {
+        JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
+        Optional<QuestionDto> questionDto = jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId, questionStableId);
+        if (questionDto.isEmpty()) {
+            throw new DDPException("Couldn't find question with stableId: " + questionStableId);
+        }
+        handle.attach(SqlHelper.class).detachQuestionFromBothSectionAndBlock(questionDto.get().getId());
+        log.info("Question {} and its block were detached", questionStableId);
     }
 
     private interface SqlHelper extends SqlObject {
+
+        default void detachQuestionFromBothSectionAndBlock(long questionId) {
+            int numDeleted = _deleteSectionBlockMembershipByQuestionId(questionId);
+            if (numDeleted != 1) {
+                throw new DDPException("Could not remove question with questionId=" + questionId + " from section");
+            }
+            numDeleted = _deleteBlockQuestionByQuestionId(questionId);
+            if (numDeleted != 1) {
+                throw new DDPException("Could not remove question with questionId=" + questionId + " from block");
+            }
+        }
+
+        @SqlUpdate("delete from form_section__block"
+                + "  where block_id in (select block_id from block__question where question_id = :questionId)")
+        int _deleteSectionBlockMembershipByQuestionId(@Bind("questionId") long questionId);
+
+        @SqlUpdate("delete from block__question where question_id = :questionId")
+        int _deleteBlockQuestionByQuestionId(@Bind("questionId") long questionId);
+
         @SqlQuery("select template_variable_id from template_variable where variable_name = :variable_name "
                 + "order by template_variable_id desc")
         long findTemplateVariableIdByVariableName(@Bind("variable_name") String variableName);
+
+        @SqlQuery("select template_variable_id from template_variable where variable_name = :variable_name "
+                + "order by template_variable_id desc")
+        List<Long> findTemplateVariableIdByVariableNames(@Bind("variable_name") String variableName);
+
+        @SqlUpdate("update block_nesting set display_order = :display_order"
+                + " where parent_block_id = :parent_block_id and nested_block_id = :nested_block_id")
+        void updateNestingOrder(@Bind("parent_block_id") long parentBlockId,
+                                @Bind("nested_block_id") long nestedBlockId,
+                                @Bind("display_order") int displayOrder);
 
         @SqlQuery("select bt.* from block_content as bt"
                 + "  join template as tmpl on tmpl.template_id = bt.body_template_id"

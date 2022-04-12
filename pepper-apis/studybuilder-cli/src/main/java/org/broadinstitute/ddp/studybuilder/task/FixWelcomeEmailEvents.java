@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.studybuilder.task;
 import java.nio.file.Path;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.EventActionSql;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -13,17 +14,13 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Task to update the "welcome" email events for Angio/Brain to link them to the appropriate activity, so we render
  * the proper URLs in the email to link user back to activity.
  */
+@Slf4j
 public class FixWelcomeEmailEvents implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(FixWelcomeEmailEvents.class);
-
     private static final String ANGIO_STUDY = "ANGIO";
     private static final String BRAIN_STUDY = "cmi-brain";
     private static final String ACT_ANGIO_ABOUT_YOU = "ANGIOABOUTYOU";
@@ -68,7 +65,7 @@ public class FixWelcomeEmailEvents implements CustomTask {
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
         helper.updateLinkedActivityId(studyDto.getId(), notificationTemplateId, activityId);
 
-        LOG.info("Updated notification template with id={} to use linkedActivityId={} ({})",
+        log.info("Updated notification template with id={} to use linkedActivityId={} ({})",
                 notificationTemplateId, activityId, activityCode);
     }
 

@@ -7,17 +7,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Optional;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dto.kit.ClinicalKitDto;
 import org.broadinstitute.dsm.model.gp.ClinicalKitWrapper;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class ClinicalKitDao {
-    private static final Logger logger = LoggerFactory.getLogger(ClinicalKitDao.class);
     private static final String SQL_GET_CLINICAL_KIT_BASED_ON_SM_ID_VALUE =
             "SELECT p.ddp_participant_id, accession_number, ddp.instance_name, bsp_organism, bsp_collection, "
                     + "kit_type_name, bsp_material_type, bsp_receptacle_type, ddp.ddp_instance_id "
@@ -58,7 +57,7 @@ public class ClinicalKitDao {
                                 Integer.parseInt(rs.getString(DBConstants.DDP_INSTANCE_ID)),
                                 rs.getString(DBConstants.DDP_PARTICIPANT_ID));
                         dbVals.resultValue = clinicalKitWrapper;
-                        logger.info("found clinical kit for sm id value: " + smIdValue);
+                        log.info("found clinical kit for sm id value: " + smIdValue);
                     }
                 } catch (Exception e) {
                     throw new RuntimeException("Error getting clinical kit", e);
@@ -77,7 +76,7 @@ public class ClinicalKitDao {
     }
 
     public ClinicalKitDto getClinicalKitBasedOnSmId(String smIdValue) {
-        logger.info("Checking the kit for SM Id value " + smIdValue);
+        log.info("Checking the kit for SM Id value " + smIdValue);
         Optional<ClinicalKitWrapper> maybeClinicalKitWrapper = getClinicalKitFromSMId(smIdValue);
         maybeClinicalKitWrapper.orElseThrow();
         ClinicalKitWrapper clinicalKitWrapper = maybeClinicalKitWrapper.get();
