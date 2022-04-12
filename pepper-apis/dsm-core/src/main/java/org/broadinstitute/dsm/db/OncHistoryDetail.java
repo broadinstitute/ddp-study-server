@@ -342,7 +342,7 @@ public class OncHistoryDetail {
                     Map<Long, OncHistoryDetail> oncHistoryMap = new HashMap<>();
                     while (rs.next()) {
                         long oncHistoryDetailId = rs.getLong(DBConstants.ONC_HISTORY_DETAIL_ID);
-                        TissueSmId tissueSmId = Tissue.getSMIds(rs);
+                        SmId tissueSmId = Tissue.getSMIds(rs);
                         Tissue tissue;
                         if (tissueSmId != null && tissues.containsKey(tissueSmId.getTissueId())) {
                             tissue = tissues.get(tissueSmId.getTissueId());
