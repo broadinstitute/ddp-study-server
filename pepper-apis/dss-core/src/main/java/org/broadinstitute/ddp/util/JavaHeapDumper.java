@@ -14,8 +14,6 @@ import java.util.HashMap;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.cloud.storage.Storage;
 import org.broadinstitute.ddp.exception.DDPException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -141,17 +139,19 @@ public class JavaHeapDumper {
         dumpHeap(DEFAULT_LOCAL_PATH + "/" + fileName);
         var localDumpFile = Paths.get(DEFAULT_LOCAL_PATH, fileName).toFile();
         if (localDumpFile.exists()) {
-            log.info("Created local dump file: " + localDumpFile.getAbsolutePath() + " with size: " + localDumpFile.length());
+            log.info("Created local dump file: {} with size: {}",
+                localDumpFile.getAbsolutePath(),
+                localDumpFile.length());
         } else {
-            log.error("Could not find dump file at:" + DEFAULT_LOCAL_PATH + "/" + fileName);
+            log.error("Could not find dump file at: {}/{}", DEFAULT_LOCAL_PATH, fileName);
             throw new JavaHeapDumpException("Could not locate local dump file");
         }
         try (FileInputStream localDumpFileStream = new FileInputStream(localDumpFile)) {
             GoogleBucketUtil.uploadFile(storage, bucketName, DEFAULT_BUCKET_PATH + "/" + fileName,
                     "application/octet-stream", localDumpFileStream);
-            log.info("Heap dump saved to bucket:" + bucketName + " to path: " + DEFAULT_BUCKET_PATH + "/" + fileName);
+            log.info("Heap dump saved to bucket: {} to path: {}/{}", bucketName, DEFAULT_BUCKET_PATH, fileName);
         } catch (DDPException e) {
-            log.error("Could not upload the dump file at: " + fileName, e);
+            log.error("Could not upload the dump file at: {}", fileName, e);
             throw e;
         } finally {
             if (localDumpFile.exists()) {
