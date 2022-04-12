@@ -320,14 +320,20 @@ public class Tissue {
     }
 
     public List<SmId> getScrollSMID() {
-        return null == scrollSMID ? new ArrayList<>() : scrollSMID;
+        if (scrollSMID == null)
+            scrollSMID = new ArrayList<>();
+        return scrollSMID;
     }
 
     public List<SmId> getUssSMID() {
-        return null == ussSMID ? new ArrayList<>() : ussSMID;
+        if (null == ussSMID)
+            ussSMID = new ArrayList<>();
+        return ussSMID;
     }
 
     public List<SmId> getHeSMID() {
-        return null == heSMID ? new ArrayList<>() : heSMID;
+        if (null == heSMID)
+            heSMID = new ArrayList<>();
+        return heSMID;
     }
 }

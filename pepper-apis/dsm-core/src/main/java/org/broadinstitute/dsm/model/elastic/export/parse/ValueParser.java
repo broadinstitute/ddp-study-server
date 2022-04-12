@@ -11,9 +11,13 @@ public class ValueParser extends BaseParser {
 
     @Override
     protected Object forBoolean(String value) {
-        if ("1".equals(value))
+        if (isTrue(value))
             return true;
         return Boolean.valueOf(value);
+    }
+
+    private boolean isTrue(String value) {
+        return "1".equals(value);
     }
 
     @Override

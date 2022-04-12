@@ -162,17 +162,20 @@ public class ParticipantWrapper {
     private void mapSmIdsToProperTissue(List<Tissue> tissues, List<SmId> smIds) {
         for (SmId smId : smIds) {
             Long tissueId = smId.getTissueId();
-            tissues.stream().filter(tissue -> tissue.getTissueId().equals(tissueId))
-                    .findFirst().ifPresent(tissue -> {
-                        String smIdType = smId.getSmIdType();
-                        if ("he".equals(smIdType)) {
-                            tissue.getHeSMID().add(smId);
-                        } else if ("scrolls".equals(smIdType)) {
-                            tissue.getScrollSMID().add(smId);
-                        } else if ("uss".equals(smIdType)) {
-                            tissue.getUssSMID().add(smId);
-                        }
-                    });
+            tissues.stream()
+                    .filter(tissue -> tissue.getTissueId().equals(tissueId))
+                    .findFirst().ifPresent(tissue -> fillSmIdsByType(smId, tissue));
+        }
+    }
+
+    private void fillSmIdsByType(SmId smId, Tissue tissue) {
+        String smIdType = smId.getSmIdType();
+        if (SmId.HE.equals(smIdType)) {
+            tissue.getHeSMID().add(smId);
+        } else if (SmId.SCROLLS.equals(smIdType)) {
+            tissue.getScrollSMID().add(smId);
+        } else if (SmId.USS.equals(smIdType)) {
+            tissue.getUssSMID().add(smId);
         }
     }
 
