@@ -7,7 +7,7 @@ import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.patch.SMIDNameValue;
 import org.broadinstitute.dsm.statics.DBConstants;
 
-public class SMIDSourceGenerator extends ParentChildRelationGenerator{
+public class SMIDSourceGenerator extends ParentChildRelationGenerator {
 
     @Override
     protected Optional<Map<String, Object>> getParentWithId() {
