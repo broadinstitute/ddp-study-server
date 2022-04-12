@@ -8,8 +8,7 @@ RUN mvn -f pom.xml --batch-mode dependency:go-offline
 COPY src src
 COPY checkstyle.xml checkstyle.xml
 
-# Would like to run these with --offline, but the checkstyle
-# plugin breaks things.
+# Would like to run these with --offline, but the checkstyle plugin breaks things.
 RUN mvn -f pom.xml --batch-mode clean install
 RUN mvn -f pom.xml --batch-mode dependency:copy \
     -DoutputDirectory="/app" \
@@ -28,10 +27,9 @@ ENV PORT="8080"
 RUN apk add --no-cache \
   openjdk11-jre-headless
 
-COPY --from=build /build/src/main/resources/container/clamd.conf /etc/clamav/clamd.conf
-COPY entrypoint.sh /app/entrypoint.sh
-
 COPY --from=build /app /app
+COPY --from=build /build/src/main/resources/container/clamd.conf /etc/clamav/clamd.conf
+COPY --from=build /build/src/main/resources/container/entrypoint.sh /app/entrypoint.sh
 
 WORKDIR /app
 
