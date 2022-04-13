@@ -44,6 +44,13 @@ public class PdfVersion {
         this.revId = revId;
     }
 
+    public PdfVersion(long configId, String versionTag, long revId, List<PdfDataSource> sources) {
+        this.configId = configId;
+        this.versionTag = versionTag;
+        this.revId = revId;
+        this.sources = sources;
+    }
+
     public long getId() {
         return id;
     }

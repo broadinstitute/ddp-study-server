@@ -10,6 +10,8 @@ import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
+import org.broadinstitute.ddp.db.dao.PdfDao;
+import org.broadinstitute.ddp.db.dao.PdfSql;
 import org.broadinstitute.ddp.db.dao.SectionBlockDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
@@ -23,6 +25,10 @@ import org.broadinstitute.ddp.model.activity.definition.i18n.ActivityI18nDetail;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
+import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
+import org.broadinstitute.ddp.model.pdf.PdfConfiguration;
+import org.broadinstitute.ddp.model.pdf.PdfTemplate;
+import org.broadinstitute.ddp.model.pdf.PdfVersion;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonPojoValidator;
@@ -68,6 +74,8 @@ public class OsteoMRFv2 implements CustomTask {
     private UserDto adminUser;
     private SqlHelper helper;
     private SectionBlockDao sectionBlockDao;
+    private PdfDao pdfDao;
+    private PdfSql pdfSql;
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
@@ -96,6 +104,8 @@ public class OsteoMRFv2 implements CustomTask {
         this.jdbiVersion = handle.attach(JdbiActivityVersion.class);
         this.helper = handle.attach(SqlHelper.class);
         this.sectionBlockDao = handle.attach(SectionBlockDao.class);
+        this.pdfDao = handle.attach(PdfDao.class);
+        this.pdfSql = handle.attach(PdfSql.class);
 
         for (var activityCfg : activityDataCfg.getConfigList("updateActivities")) {
             updateActivity(activityCfg);
@@ -107,11 +117,6 @@ public class OsteoMRFv2 implements CustomTask {
                 "Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
                 studyDto.getGuid(), activityCode, newVersionTag);
         return RevisionMetadata.now(adminUser.getUserId(), reason);
-    }
-
-    private ActivityVersionDto findActivityLatestVersion(long activityId) {
-        return jdbiVersion.getActiveVersion(activityId)
-                .orElseThrow(() -> new DDPException("Could not find active version for activity " + activityId));
     }
 
     private FormActivityDef findActivityDef(String activityCode, String versionTag) {
@@ -216,6 +221,42 @@ public class OsteoMRFv2 implements CustomTask {
             order += SectionBlockDao.DISPLAY_ORDER_GAP;
             FormBlockDef blockDef = parseFormBlockDef(blockCfg);
             sectionBlockDao.insertBlockForSection(activityId, closeSectionId, order, blockDef, v2Dto.getRevId());
+        }
+
+        // update study-pdfs.conf
+        for (var pdfConfigName : activityCfg.getStringList("pdfs")) {
+            PdfConfigInfo info = pdfDao.findConfigInfoByStudyIdAndName(studyDto.getId(), pdfConfigName)
+                    .orElseThrow(() -> new DDPException("Could not find consent pdf info"));
+
+            List<PdfVersion> versions = pdfDao.findOrderedConfigVersionsByConfigId(info.getId());
+            if (versions.size() != 1) {
+                throw new DDPException("Expected one consent pdf version but found " + versions.size());
+            }
+
+            PdfVersion terminatedVersion = versions.get(0);
+            pdfSql.updateConfigVersion(terminatedVersion.getId(), v1Dto.getRevId());
+            LOG.info("Terminated {} of pdf configuration with name={}, filename={}, displayName={}, versionId={}",
+                    terminatedVersion.getVersionTag(), info.getConfigName(), info.getFilename(),
+                    info.getDisplayName(), terminatedVersion.getId());
+
+            PdfVersion newVersion = new PdfVersion(
+                    terminatedVersion.getConfigId(),
+                    newVersionTag, v2Dto.getRevId(),
+                    terminatedVersion.getDataSources());
+
+            PdfConfigInfo newInfo = new PdfConfigInfo(
+                    studyDto.getId(),
+                    info.getConfigName(),
+                    info.getFilename(),
+                    info.getDisplayName());
+
+            PdfConfiguration pdfV2 = new PdfConfiguration(newInfo, newVersion);
+            List<PdfTemplate> templates = pdfDao.findBaseTemplatesByVersionId(terminatedVersion.getId());
+            long versionId = pdfDao.insertNewConfigVersion(pdfV2, templates);
+            LOG.info("Added pdf configuration version for id={} with name={}, filename={}, "
+                            + "displayName={}, versionId={}, versionTag={}",
+                    pdfV2.getId(), pdfV2.getConfigName(), pdfV2.getFilename(),
+                    pdfV2.getDisplayName(), versionId, pdfV2.getVersion().getVersionTag());
         }
     }
 
