@@ -4,18 +4,23 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
-import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.CopyConfigurationSql;
-import org.broadinstitute.ddp.db.dao.JdbiFormActivityFormSection;
-import org.broadinstitute.ddp.db.dao.JdbiFormSection;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
-import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.QuestionDao;
-import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
+import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiFormActivityFormSection;
+import org.broadinstitute.ddp.db.dao.ActivityDao;
+import org.broadinstitute.ddp.db.dao.JdbiFormSection;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
@@ -30,6 +35,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -40,14 +46,23 @@ public class OsteoAboutChildV2 implements CustomTask {
     private static final String STUDY_GUID = "CMI-OSTEO";
     private static final String UPDATES_DATA_FILE = "patches/about-you-child-updates.conf";
     private static final String TRANS_UPDATE = "trans-update";
+    private static final String TRANS_INSERT = "summary-trans-insert";
     private static final String TRANS_UPDATE_OLD = "old_text";
     private static final String TRANS_UPDATE_NEW = "new_text";
     private static final String ACTIVITY_CODE = "ABOUTCHILD";
     private static final String VERSION_TAG = "v2";
 
+    private static final String SUMMARY_INSERT_ACTIVITY_CODE = "activity_code";
+    private static final String SUMMARY_INSERT_STATUS_TYPE_CODE = "status_type_code";
+    private static final String SUMMARY_INSERT_LANGUAGE_CODE = "language_code";
+    private static final String SUMMARY_INSERT_TEXT = "text";
+
     private Config studyCfg;
     private Instant timestamp;
     private Config updatesDataCfg;
+
+    private JdbiActivityVersion jdbiVersion;
+
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
@@ -74,6 +89,8 @@ public class OsteoAboutChildV2 implements CustomTask {
         final StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class)
                 .findByStudyGuid(studyCfg.getString("study.guid"));
 
+        jdbiVersion = handle.attach(JdbiActivityVersion.class);
+
         final SqlHelper helper = handle.attach(SqlHelper.class);
         final ActivityDao activityDao = handle.attach(ActivityDao.class);
         final QuestionDao questionDao = handle.attach(QuestionDao.class);
@@ -94,7 +111,7 @@ public class OsteoAboutChildV2 implements CustomTask {
         final RevisionMetadata meta = new RevisionMetadata(timestamp.toEpochMilli(), adminUser.getId(), reason);
 
         //change version
-        activityDao.changeVersion(activityId, VERSION_TAG, meta);
+        ActivityVersionDto activityVersion = activityDao.changeVersion(activityId, VERSION_TAG, meta);
 
         //add new section
         final var firstSection =
@@ -171,14 +188,55 @@ public class OsteoAboutChildV2 implements CustomTask {
         DBUtils.checkDelete(locationIds.size(), copyConfigurationSql.bulkDeleteCopyLocations(locationIds));
         log.info("Copy configs successfully deleted");
         helper.updateActivityNameAndTitle(activityId, "About Your Child’s Cancer", "About Your Child’s Cancer");
-        updateTranslationSummaries(handle);
+        updateTranslationSummaries(handle, studyDto);
     }
 
-    private void updateTranslationSummaries(Handle handle) {
+    private void updateTranslationSummaries(Handle handle, StudyDto studyDto) {
+        long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), ACTIVITY_CODE);
+        Optional<ActivityVersionDto> opt = jdbiVersion.getActiveVersion(activityId);
+
+        ActivityVersionDto version;
+        if (opt.isPresent()) {
+            version = opt.get();
+        } else {
+            throw new DDPException("Unable to fetch version");
+        }
+
+
+
+
         List<? extends Config> configList = updatesDataCfg.getConfigList(TRANS_UPDATE);
         for (Config config : configList) {
             updateSummary(config, handle);
         }
+        List<? extends Config> configList1 = updatesDataCfg.getConfigList(TRANS_INSERT);
+        for (Config config : configList1) {
+            insertTransSummaryText(config, handle, version);
+        }
+    }
+
+    private void insertTransSummaryText(Config config, Handle handle, ActivityVersionDto version) {
+        //        String oldSum = config.getString(TRANS_UPDATE_OLD);
+        //        String newSum = config.getString(TRANS_UPDATE_NEW);
+        String activityCode = config.getString(SUMMARY_INSERT_ACTIVITY_CODE);
+        String statusTypeCode = config.getString(SUMMARY_INSERT_STATUS_TYPE_CODE);
+        String languageCode = config.getString(SUMMARY_INSERT_LANGUAGE_CODE);
+        String text = config.getString(SUMMARY_INSERT_TEXT);
+
+        ActivityDto activityDto;
+        Optional<ActivityDto> opt = handle.attach(JdbiActivity.class).findActivityByStudyGuidAndCode(STUDY_GUID, ACTIVITY_CODE);
+        if (opt.isPresent()) {
+            activityDto = opt.get();
+        } else {
+            throw new DDPException("Unable to get activityDto");
+        }
+        FormActivityDef currentDef = (FormActivityDef) handle.attach(ActivityDao.class).findDefByDtoAndVersion(activityDto, version);
+
+        handle.attach(SqlHelper.class).insertTransSummaryText(activityCode, statusTypeCode, languageCode, text);
+
+        //        currentDef.getTranslatedSummaries()
+        //                .stream().filter(sum -> sum.getText().equals(oldSum))
+        //                .forEach(sum -> handle.attach(SqlHelper.class).insertTransSummaryText(activityDto.getActivityCode(),cur));
     }
 
     private void updateSummary(Config config, Handle handle) {
@@ -189,6 +247,42 @@ public class OsteoAboutChildV2 implements CustomTask {
     }
 
     private interface SqlHelper extends SqlObject {
+
+        @SqlUpdate("insert into i18n_study_activity_summary_trans(\n"
+                + "\tstudy_activity_id,\n"
+                + "\tactivity_instance_status_type_id,\n"
+                + "\tlanguage_code_id,\n"
+                + "\ttranslation_text\n"
+                + ")\n"
+                + "select study_activity_id,\n"
+                + "(select activity_instance_status_type_id  "
+                + "from activity_instance_status_type "
+                + "where activity_instance_status_type_code =:statusTypeCode),\n"
+                + "(select language_code_id  from language_code where iso_language_code =:languageCode),\n"
+                + ":text\n"
+                + "from study_activity WHERE study_activity_code =:activityCode \n")
+        int _insertTransSummaryByActivityCode(
+                @Bind("activityCode") String activityCode,
+                @Bind("statusTypeCode") String statusTypeCode,
+                @Bind("languageCode") String languageCode,
+                @Bind("text") String text
+        );
+
+        default void insertTransSummaryText(
+                String activityCode,
+                String statusTypeCode,
+                String languageCode,
+                String text
+        ) {
+            int numInserted = _insertTransSummaryByActivityCode(activityCode, statusTypeCode, languageCode, text);
+            if (numInserted < 1) {
+                throw new DDPException("Expected to insert a summary translation for activity="
+                        + activityCode + " but inserted " + numInserted);
+            }
+        }
+
+
+
         @SqlUpdate("update i18n_template_substitution set substitution_value = :newValue where substitution_value like :oldValue")
         int _updateVarValueByOldValue(@Bind("oldValue") String oldValue, @Bind("newValue") String newValue);
 
