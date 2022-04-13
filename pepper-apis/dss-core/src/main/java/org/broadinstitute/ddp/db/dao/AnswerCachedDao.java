@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -192,6 +193,12 @@ public class AnswerCachedDao extends SQLObjectWrapper<AnswerDao> implements Answ
     @Override
     public Optional<Answer> findAnswerByLatestInstanceAndQuestionId(long userId, long studyId, long questionId) {
         return delegate.findAnswerByLatestInstanceAndQuestionId(userId, studyId, questionId);
+    }
+
+
+    @Override
+    public List<Answer> findAnswersByInstanceGuidAndQuestionStableId(String instanceGuid, String questionStableId) {
+        return delegate.findAnswersByInstanceGuidAndQuestionStableId(instanceGuid, questionStableId);
     }
 
     private void addToCache(Answer answer) {

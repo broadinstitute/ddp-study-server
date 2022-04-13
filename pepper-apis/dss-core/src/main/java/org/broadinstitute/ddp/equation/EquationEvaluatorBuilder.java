@@ -5,18 +5,19 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
 public final class EquationEvaluatorBuilder {
-    private final Map<String, BigDecimal> variables = new HashMap<>();
+    private final Map<String, List<BigDecimal>> variables = new HashMap<>();
 
-    public EquationEvaluatorBuilder withVariableValue(final String variable, final BigDecimal value) {
+    public EquationEvaluatorBuilder withVariableValues(final String variable, final List<BigDecimal> value) {
         variables.put(variable, value);
         return this;
     }
 
-    public EquationEvaluatorBuilder withVariablesValues(final Map<String, BigDecimal> values) {
+    public EquationEvaluatorBuilder withVariablesValues(final Map<String, List<BigDecimal>> values) {
         variables.putAll(values);
         return this;
     }

@@ -36,6 +36,7 @@ select ans.answer_id,
        cq.unwrap_on_export as ca_unwrap_on_export,
        ca.child_answer_id  as ca_child_answer_id,
        ca.response_order   as ca_child_row,
+       cai.response_order,
        (select display_order from composite_question__question
          where parent_question_id = ans.question_id
            and child_question_id = (select question_id from answer where answer_id = ca.child_answer_id)
@@ -68,6 +69,7 @@ select ans.answer_id,
   left join matrix_group as mg on mg.matrix_group_id = mo.matrix_group_id
   left join matrix_row as mr on mr.matrix_row_id = ma.matrix_row_id
   left join composite_answer_item as ca on ca.parent_answer_id = ans.answer_id
+  left join composite_answer_item as cai ON cai.child_answer_id = ans.answer_id
 >>
 
 // Important: sort the child answers first so we have them in memory when we get to the composite parent answers.

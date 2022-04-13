@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import one.util.streamex.StreamEx;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.DaoException;
@@ -1545,7 +1546,10 @@ public interface QuestionDao extends SqlObject {
 
     default void insertQuestion(long activityId, CompositeQuestionDef compositeQuestion, long revisionId) {
         if (!compositeQuestion.isAcceptable()) {
-            throw new DaoException("Composites only support DATE, PICKLIST, TEXT, NUMERIC and DECIMAL child questions");
+            throw new DaoException("Composites only support " +
+                    StreamEx.of(QuestionType.values())
+                            .filter(QuestionType::isCompositional)
+                            .joining());
         }
 
         insertBaseQuestion(activityId, compositeQuestion, revisionId);
