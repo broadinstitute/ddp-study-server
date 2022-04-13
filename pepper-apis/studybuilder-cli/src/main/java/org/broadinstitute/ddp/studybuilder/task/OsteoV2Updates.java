@@ -21,6 +21,7 @@ public class OsteoV2Updates implements CustomTask {
         tasks.add(new OsteoPrequalUpdate());
         tasks.add(new OsteoNewActivities());
         tasks.add(new OsteoMRFv2());
+        //OsteoAboutChildV2() must be run after OsteoNewActivities()
         tasks.add(new OsteoAboutChildV2());
         tasks.forEach(t -> t.init(cfgPath, studyCfg, varsCfg));
     }
