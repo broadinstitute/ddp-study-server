@@ -216,27 +216,12 @@ public class OsteoAboutChildV2 implements CustomTask {
     }
 
     private void insertTransSummaryText(Config config, Handle handle, ActivityVersionDto version) {
-        //        String oldSum = config.getString(TRANS_UPDATE_OLD);
-        //        String newSum = config.getString(TRANS_UPDATE_NEW);
         String activityCode = config.getString(SUMMARY_INSERT_ACTIVITY_CODE);
         String statusTypeCode = config.getString(SUMMARY_INSERT_STATUS_TYPE_CODE);
         String languageCode = config.getString(SUMMARY_INSERT_LANGUAGE_CODE);
         String text = config.getString(SUMMARY_INSERT_TEXT);
 
-        ActivityDto activityDto;
-        Optional<ActivityDto> opt = handle.attach(JdbiActivity.class).findActivityByStudyGuidAndCode(STUDY_GUID, ACTIVITY_CODE);
-        if (opt.isPresent()) {
-            activityDto = opt.get();
-        } else {
-            throw new DDPException("Unable to get activityDto");
-        }
-        FormActivityDef currentDef = (FormActivityDef) handle.attach(ActivityDao.class).findDefByDtoAndVersion(activityDto, version);
-
         handle.attach(SqlHelper.class).insertTransSummaryText(activityCode, statusTypeCode, languageCode, text);
-
-        //        currentDef.getTranslatedSummaries()
-        //                .stream().filter(sum -> sum.getText().equals(oldSum))
-        //                .forEach(sum -> handle.attach(SqlHelper.class).insertTransSummaryText(activityDto.getActivityCode(),cur));
     }
 
     private void updateSummary(Config config, Handle handle) {
