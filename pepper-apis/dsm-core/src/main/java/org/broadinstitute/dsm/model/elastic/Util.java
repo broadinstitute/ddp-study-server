@@ -15,7 +15,14 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.*;
+import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.MedicalRecord;
+import org.broadinstitute.dsm.db.OncHistory;
+import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.db.Participant;
+import org.broadinstitute.dsm.db.ParticipantData;
+import org.broadinstitute.dsm.db.SmId;
+import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.db.structure.TableName;
@@ -27,9 +34,12 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.broadinstitute.dsm.util.PatchUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Util {
 
+    private static final Logger logger = LoggerFactory.getLogger(Util.class);
     public static final Map<String, BaseGenerator.PropertyInfo> TABLE_ALIAS_MAPPINGS = new HashMap<>(
             Map.of(DBConstants.DDP_MEDICAL_RECORD_ALIAS, new BaseGenerator.PropertyInfo(MedicalRecord.class, true),
                     DBConstants.DDP_TISSUE_ALIAS, new BaseGenerator.PropertyInfo(Tissue.class, true),
