@@ -6,6 +6,7 @@ public class ValueParser extends BaseParser {
 
     @Override
     protected Object forNumeric(String value) {
+        if (StringUtils.isBlank(value)) return 0;
         return Long.valueOf(value);
     }
 
