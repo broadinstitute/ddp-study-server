@@ -344,6 +344,30 @@
                     }
                   }
                 },
+                "LONGITUDINAL_VACCINE_RECEIVED_LIST": {
+                  "type": "text"
+                },
+                "LONGITUDINAL_VACCINE_STUDY_LIST": {
+                  "type": "text"
+                },
+                "LONGITUDINAL_BLOOD_TEST_LIST": {
+                  "type": "text"
+                },
+                "VIRAL_TEST_LIST": {
+                  "type": "text"
+                },
+                "BLOOD_TEST_LIST": {
+                  "type": "text"
+                },
+                "prion_medical_earliest_symptoms": {
+                  "type": "text"
+                },
+                "prion_medical_diagnosis_date": {
+                  "type": "text"
+                },
+                "ESTIMATED_DATE": {
+                  "type": "text"
+                },
                 "selected": {
                   "type": "keyword"
                 },
