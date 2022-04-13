@@ -1,4 +1,10 @@
-package org.broadinstitute.ddp.studybuilder.task;
+package org.broadinstitute.ddp.studybuilder.task.osteo;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -10,14 +16,9 @@ import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.studybuilder.EventBuilder;
+import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.jdbi.v3.core.Handle;
-
-import java.io.File;
-import java.nio.file.Path;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 
 @Slf4j
 public class OsteoConsentAddendumV2 implements CustomTask {

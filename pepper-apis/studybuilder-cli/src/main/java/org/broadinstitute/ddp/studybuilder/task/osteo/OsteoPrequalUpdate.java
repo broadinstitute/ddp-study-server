@@ -1,4 +1,9 @@
-package org.broadinstitute.ddp.studybuilder.task;
+package org.broadinstitute.ddp.studybuilder.task.osteo;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.List;
 
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
@@ -22,6 +27,7 @@ import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
+import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
@@ -31,11 +37,6 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.nio.file.Path;
-import java.time.Instant;
-import java.util.List;
 
 public class OsteoPrequalUpdate implements CustomTask {
 
