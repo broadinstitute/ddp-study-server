@@ -1,11 +1,20 @@
 package org.broadinstitute.ddp.studybuilder.task.osteo;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
+import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
 import org.broadinstitute.ddp.db.dao.CopyConfigurationSql;
 import org.broadinstitute.ddp.db.dao.JdbiFormActivityFormSection;
 import org.broadinstitute.ddp.db.dao.JdbiFormSection;
@@ -19,7 +28,9 @@ import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
@@ -31,12 +42,6 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-
-import java.io.File;
-import java.nio.file.Path;
-import java.time.Instant;
-import java.util.List;
-import java.util.Set;
 
 /**
  * One-off task to add adhoc symptom message to TestBoston in deployed environments.
@@ -183,6 +188,7 @@ public class OsteoAboutYouV2 implements CustomTask {
         log.info("Copy configs successfully deleted");
         helper.updateActivityNameAndTitle(activityId, "About Your Cancer", "About Your Cancer");
         updateTranslationSummaries(handle);
+        updateActivityStatusSummariesInPlace(handle, activityId);
     }
 
     private void updateTranslationSummaries(Handle handle) {
@@ -197,6 +203,29 @@ public class OsteoAboutYouV2 implements CustomTask {
         String newSum = config.getString(TRANS_UPDATE_NEW);
 
         handle.attach(SqlHelper.class).updateVarSubstitutionValue(oldSum, newSum);
+    }
+
+    private void updateActivityStatusSummariesInPlace(Handle handle, long activityId) {
+        Map<InstanceStatusType, String> replacements = Map.of(
+                InstanceStatusType.CREATED, "Please complete this survey to tell us about your experiences with osteosarcoma.",
+                InstanceStatusType.IN_PROGRESS, "Please finish this survey to tell us about your experiences with osteosarcoma."
+        );
+        var activityI18nDao = handle.attach(ActivityI18nDao.class);
+        List<SummaryTranslation> oldSummaries = activityI18nDao.findSummariesByActivityId(activityId);
+        List<SummaryTranslation> newSummaries = new ArrayList<>();
+        for (var summary : oldSummaries) {
+            String newText = replacements.get(summary.getStatusType());
+            if (newText != null) {
+                newSummaries.add(new SummaryTranslation(
+                        summary.getId().get(),
+                        summary.getActivityId(),
+                        summary.getStatusType(),
+                        summary.getLanguageCode(),
+                        newText));
+            }
+        }
+        activityI18nDao.updateSummaries(newSummaries);
+        log.info("Updated {} status summaries for activity {}", newSummaries.size(), activityId);
     }
 
     private interface SqlHelper extends SqlObject {
