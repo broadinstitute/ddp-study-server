@@ -1,25 +1,22 @@
 package org.broadinstitute.dsm.model.elastic.export.generate;
 
-import org.broadinstitute.dsm.db.OncHistoryDetail;
-
 import java.util.HashMap;
 import java.util.Map;
 
+import org.broadinstitute.dsm.db.OncHistoryDetail;
+
 public class OncHistoryDetailFaxSentStrategy implements Generator {
 
-    private final String faxConfirmed;
-    private final Object value;
+    Generator baseStrategy;
 
-    public OncHistoryDetailFaxSentStrategy(String faxConfirmed, Object value) {
-        this.faxConfirmed = faxConfirmed;
-        this.value = value;
+    public OncHistoryDetailFaxSentStrategy(Generator strategy) {
+        this.baseStrategy = strategy;
     }
 
     @Override
     public Map<String, Object> generate() {
-        Map<String, Object> map = new HashMap<>();
-        map.put(faxConfirmed, value);
-        map.put(OncHistoryDetail.STATUS_REQUEST, OncHistoryDetail.STATUS_SENT);
-        return map;
+        Map<String, Object> baseMap = baseStrategy.generate();
+        baseMap.put(OncHistoryDetail.STATUS_REQUEST, OncHistoryDetail.STATUS_SENT);
+        return baseMap;
     }
 }

@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.model.elastic.export.generate;
 
 import java.util.Map;
 
+import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.ParticipantData;
 import org.broadinstitute.dsm.db.SmId;
@@ -25,7 +26,8 @@ public class SourceGeneratorFactory implements GeneratorFactory {
                 Tissue.class, new ParentChildRelationGenerator(),
                 SmId.class, new SMIDSourceGenerator(),
                 ParticipantData.class, new ParticipantDataSourceGenerator(),
-                OncHistoryDetail.class, new OncHistoryDetailSourceGenerator()
+                OncHistoryDetail.class, new OncHistoryDetailSourceGenerator(),
+                MedicalRecord.class, new MedicalRecordSourceGenerator()
         );
         return collectionGeneratorByClass.getOrDefault(clazz, new CollectionSourceGenerator());
     }

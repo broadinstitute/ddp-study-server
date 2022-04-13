@@ -22,11 +22,12 @@ public class OncHistoryDetailSourceGenerator extends CollectionSourceGenerator {
 
     Generator obtainStrategyByFieldName(String fieldName) {
         return Map.of(
-                FAX_SENT, new OncHistoryDetailFaxSentStrategy(FAX_CONFIRMED, generatorPayload.getValue()),
-                FAX_SENT_2, new OncHistoryDetailFaxSentStrategy(FAX_CONFIRMED_2, generatorPayload.getValue()),
-                FAX_SENT_3, new OncHistoryDetailFaxSentStrategy(FAX_CONFIRMED_3, generatorPayload.getValue()),
+                FAX_SENT, new OncHistoryDetailFaxSentStrategy(new FaxSentStrategy(FAX_CONFIRMED, generatorPayload.getValue())),
+                FAX_SENT_2, new OncHistoryDetailFaxSentStrategy(new FaxSentStrategy(FAX_CONFIRMED_2, generatorPayload.getValue())),
+                FAX_SENT_3, new OncHistoryDetailFaxSentStrategy(new FaxSentStrategy(FAX_CONFIRMED_3, generatorPayload.getValue())),
                 TISSUE_RECEIVED, new OncHistoryDetailTissueReceivedStrategy(),
-                UNABLE_OBTAIN_TISSUE, new OncHistoryDetailUnableObtainTissueStrategy(generatorPayload)).getOrDefault(fieldName, new OncHistoryDetailNullObjectStrategy());
+                UNABLE_OBTAIN_TISSUE, new OncHistoryDetailUnableObtainTissueStrategy(generatorPayload))
+                .getOrDefault(fieldName, new NullObjectStrategy());
 
     }
 
