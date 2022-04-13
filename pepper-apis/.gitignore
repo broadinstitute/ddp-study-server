@@ -28,5 +28,11 @@ output/
 output-config/
 output-build-config/
 docker-compose.yaml
+appengine/deploy/*.conf
+
+!**/src/main/resources/*.conf
 
 .java-version
+
+appengine
+.idea

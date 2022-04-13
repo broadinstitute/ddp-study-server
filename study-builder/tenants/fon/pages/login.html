@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <title>FON</title>
@@ -8,21 +8,34 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
     />
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="icon" type="image/x-icon" href="##BASE_URL##/favicon.ico" />
-</head>
-<body>
-<!--[if IE 8]>
-<script src="//cdnjs.cloudflare.com/ajax/libs/ie8/0.2.5/ie8.js"></script>
-<![endif]-->
+  </head>
+  <body>
+    <!--[if IE 8]>
+      <script src="//cdnjs.cloudflare.com/ajax/libs/ie8/0.2.5/ie8.js"></script>
+    <![endif]-->
 
-<!--[if lte IE 9]>
-<script src="https://cdn.auth0.com/js/base64.js"></script>
-<script src="https://cdn.auth0.com/js/es5-shim.min.js"></script>
-<![endif]-->
+    <!--[if lte IE 9]>
+      <script src="https://cdn.auth0.com/js/base64.js"></script>
+      <script src="https://cdn.auth0.com/js/es5-shim.min.js"></script>
+    <![endif]-->
 
-<script src="https://cdn.auth0.com/js/lock/11.30/lock.min.js"></script>
+    <script src="https://cdn.auth0.com/js/lock/11.30/lock.min.js"></script>
 
-<style type="text/css">
+    <style type="text/css">
+      body {
+        font-family: 'Nunito', sans-serif;
+      }
+
+      .auth0-lock {
+        font-family: 'Nunito', sans-serif !important;
+      }
+
       .auth0-lock.auth0-lock .auth0-lock-overlay {
         background: radial-gradient(#ffffff, #f3f3f2, #f3f3f2);
         background-image: radial-gradient(#ffffff, #f3f3f2, #f3f3f2);
@@ -80,7 +93,8 @@
         margin-bottom: 10px;
       }
     </style>
-<script>
+
+    <script>
       // Decode utf8 characters properly
       var config = JSON.parse(
         decodeURIComponent(escape(window.atob('@@config@@'))),
@@ -90,7 +104,9 @@
 
       var mode = config.extraParams.mode;
       var study_guid = config.extraParams.study_guid;
+      var headerLogo = '##ASSETS_URL##/auth0/logo.png';
       var headerText = '';
+      var studyColor = '#0b1245';
       var studyHelpEmail = '##STUDY_EMAIL##';
       var registerUrl = '##BASE_URL##/join-us';
       var connection = config.connection;
@@ -160,6 +176,10 @@
         rememberLastLogin: false,
         language: language,
         languageDictionary: languageDictionary,
+        theme: {
+          logo: headerLogo,
+          primaryColor: studyColor,
+        },
         prefill: loginHint ? { email: loginHint, username: loginHint } : null,
         closable: false,
         configurationBaseUrl: config.clientConfigurationBaseUrl,
@@ -201,13 +221,261 @@
         showPasswordRecentText = true;
       }
 
+      if (mode === 'signup') {
+        realOptions.additionalSignUpFields = [
+          {
+            name: 'first_name',
+            icon: '##ASSETS_URL##/auth0/name-icon.svg',
+            placeholder:
+              languageDictionary.additionalFields.firstName.placeholder,
+            validator: function (input) {
+              return {
+                valid: input != null && input.trim().length > 0,
+                hint: languageDictionary.additionalFields.firstName
+                  .nonBlankHint,
+              };
+            },
+          },
+          {
+            name: 'last_name',
+            icon: '##ASSETS_URL##/auth0/name-icon.svg',
+            placeholder:
+              languageDictionary.additionalFields.lastName.placeholder,
+            validator: function (input) {
+              return {
+                valid: input != null && input.trim().length > 0,
+                hint: languageDictionary.additionalFields.lastName.nonBlankHint,
+              };
+            },
+          },
+        ];
+      }
+
       var lock = new Auth0Lock(
         config.clientID,
         config.auth0Domain,
         realOptions,
       );
 
+      function addHelp() {
+        // we use setInterval because auth0's on() methods for display
+        // do not account for all the display modes and they appear to fire
+        // before animations complete, not after
+        setInterval(function () {
+          if (
+            document.getElementsByClassName('auth0-global-message').length > 0
+          ) {
+            if (
+              languageDictionary.error.signUp.user_exists.toUpperCase() ===
+              document
+                .getElementsByClassName('auth0-global-message')[0]
+                .children[0].children[0].innerText.toUpperCase()
+            ) {
+              if (!document.getElementById('ddp-already-registered')) {
+                var auth0GlobalMessage = document.getElementsByClassName(
+                  'auth0-global-message',
+                )[0].children[0].children[0];
+
+                console.log('parent: ', auth0GlobalMessage.parentElement);
+                auth0GlobalMessage.parentElement.removeChild(
+                  auth0GlobalMessage,
+                );
+
+                var alreadyRegistered = document.createElement('a');
+                alreadyRegistered.setAttribute('href', loginUrl);
+                alreadyRegistered.setAttribute('style', 'color:black');
+                alreadyRegistered.setAttribute('id', 'ddp-already-registered');
+                alreadyRegistered.innerText =
+                  languageDictionary.message.alreadyRegisteredText;
+                document
+                  .getElementsByClassName('auth0-global-message')[0]
+                  .children[0].appendChild(alreadyRegistered);
+              }
+            }
+          }
+
+          if (!document.getElementById('ddp-header')) {
+            // tweak the header
+            var header = document.createElement('div');
+            header.innerHTML =
+              '<div id="ddp-header" style="display:flex;flex-direction:row;justify-content: center;align-items:center;"><img class="auth0-lock-header-logo" src="' +
+              headerLogo +
+              '"></div>';
+            var auth0LockHeader = document.getElementsByClassName(
+              'auth0-lock-header-logo',
+            )[0];
+
+            if (auth0LockHeader) {
+              console.log('header parent', auth0LockHeader.parentElement);
+
+              auth0LockHeader.parentElement.removeChild(auth0LockHeader);
+
+              var headerWelcome = document.getElementsByClassName(
+                'auth0-lock-header-welcome',
+              )[0];
+
+              headerWelcome.insertBefore(
+                header,
+                headerWelcome.hasChildNodes()
+                  ? headerWelcome.childNodes[0]
+                  : null,
+              );
+              //document.getElementsByClassName('auth0-lock-header-welcome')[0].prepend(header);
+            }
+          }
+
+          if (!document.getElementById('ddp-help')) {
+            var lockForm = document.getElementsByClassName('auth0-lock-form');
+            var showSignUpHelp =
+              document.getElementsByClassName('auth0-lock-last-login-pane')
+                .length === 0;
+
+            if (mode === 'login' && !doNotShowRegLink) {
+              // navigate back to registration
+              var registerMessageWrapper = document.createElement('p');
+              registerMessageWrapper.setAttribute(
+                'class',
+                'auth0-lock-alternative',
+              );
+              registerMessageWrapper.setAttribute('id', 'ddp-reg');
+              registerMessageWrapper.setAttribute(
+                'style',
+                'margin-top: 10px;font-size: small;text-align: left;',
+              );
+
+              if (showSignUpHelp) {
+                var registerMessage = document.createElement('p');
+                registerMessage.setAttribute('style', 'margin-bottom:0;');
+                registerMessage.innerHTML =
+                  languageDictionary.message.registerMessageHtml;
+                registerMessageWrapper.appendChild(registerMessage);
+
+                if (lockForm) {
+                  lockForm[0].appendChild(registerMessageWrapper);
+                }
+              }
+            }
+
+            var helpWrapper = document.createElement('div');
+            helpWrapper.setAttribute('id', 'ddp-help');
+            helpWrapper.setAttribute(
+              'style',
+              'display:flex;flex-direction:row;align-items:center;margin-top:10px;flex-wrap:nowrap;',
+            );
+            var help =
+              '<p style="text-align:left;margin-bottom:0;">' +
+              languageDictionary.message.helpHtml +
+              '</p>';
+            helpWrapper.innerHTML = help;
+            if (lockForm) {
+              lockForm[0].appendChild(helpWrapper);
+            }
+
+            if (mode === 'signup' || options.allowSignUp) {
+              console.log('appending sign in with existing account');
+              var loginLink = document.createElement('a');
+              loginLink.setAttribute('class', 'auth0-lock-alternative-link');
+              loginLink.setAttribute('href', loginUrl);
+              loginLink.innerText = languageDictionary.message.loginLinkText;
+              var switchToLogin = document.createElement('p');
+              switchToLogin.setAttribute('class', 'auth0-lock-alternative');
+              switchToLogin.setAttribute(
+                'style',
+                'text-align:left;margin-top:5px;',
+              );
+              switchToLogin.innerText =
+                languageDictionary.message.switchToLoginText;
+              switchToLogin.appendChild(loginLink);
+              helpWrapper.parentElement.appendChild(switchToLogin);
+            }
+
+            if (showPasswordRecentText) {
+              if (!document.getElementById('ddp-pwd')) {
+                var resetPasswordWrapper = document.createElement('p');
+                resetPasswordWrapper.setAttribute(
+                  'class',
+                  'auth0-lock-alternative',
+                );
+                resetPasswordWrapper.setAttribute('id', 'ddp-pwd');
+                resetPasswordWrapper.setAttribute('style', 'margin-top:0px;');
+
+                var resetPasswordText = document.createElement('div');
+                resetPasswordText.innerText =
+                  languageDictionary.message.resetPasswordText;
+
+                resetPasswordWrapper.appendChild(resetPasswordText);
+                document
+                  .getElementsByClassName('auth0-lock-content')[0]
+                  .prepend(resetPasswordWrapper);
+              }
+            }
+          }
+        }, 200);
+      }
+
+      function reorderFields() {
+        let fieldsAreReordered = false;
+
+        const intervalId = setInterval(function () {
+          if (fieldsAreReordered) {
+            clearInterval(intervalId);
+
+            return;
+          }
+
+          const firstNameWrapper = document.querySelector(
+            '.auth0-lock-input-first_name',
+          );
+          const lastNameWrapper = document.querySelector(
+            '.auth0-lock-input-last_name',
+          );
+
+          if (firstNameWrapper && lastNameWrapper) {
+            const parentWrapper = firstNameWrapper.parentElement;
+
+            parentWrapper.insertAdjacentElement('afterbegin', firstNameWrapper);
+            firstNameWrapper.insertAdjacentElement('afterend', lastNameWrapper);
+
+            fieldsAreReordered = true;
+          }
+        }, 100);
+      }
+
+      function focusFirstNameInput() {
+        let isFocused = false;
+
+        const intervalId = setInterval(function () {
+          if (isFocused || 'ontouchstart' in window) {
+            clearInterval(intervalId);
+
+            return;
+          }
+
+          const emailInput = document.querySelector('input[name="email"]');
+          const firstNameInput = document.querySelector(
+            'input[name="first_name"]',
+          );
+
+          if (
+            emailInput &&
+            document.activeElement === emailInput &&
+            firstNameInput
+          ) {
+            firstNameInput.focus();
+
+            isFocused = true;
+          }
+        }, 50);
+      }
+
       lock.on('show', function () {
+        addHelp();
+
+        if (mode === 'signup') {
+          reorderFields();
+          focusFirstNameInput();
+        }
+
         if (realOptions.prefill && realOptions.prefill.email) {
           var getInputElement = function (name) {
             return document.getElementsByName(name)[0];
@@ -254,5 +522,5 @@
 
       lock.show(options);
     </script>
-</body>
+  </body>
 </html>

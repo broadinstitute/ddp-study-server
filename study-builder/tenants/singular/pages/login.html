@@ -141,6 +141,10 @@
       .link-list__item + .link-list__item {
         margin-left: 25px;
       }
+      .link-list__item .link {
+        display: inline-block;
+        text-align: center;
+      }
       .header .SimpleButton {
         width: 140px;
       }
@@ -494,6 +498,11 @@
                 For Researchers
               </a>
             </li>
+            <li routerlinkactive="link-list__item_active" class="link-list__item">
+              <a class="link" href="##BASE_URL##/for-clinicians">
+                For Clinicians
+              </a>
+            </li>
             <!---->
             <li routerlinkactive="link-list__item_active" class="link-list__item auth-item">
               <ddp-sign-in-out>
@@ -519,7 +528,7 @@
             <img src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/logo-horizontal-white.png"" alt="Header.LogoAlt">
           </div>
           <div class="footer-contacts">
-            Contact Us: (650) 761-6486<br>
+            Contact Us: (650) 561-6750<br>
             contact@projectsingular.org
           </div>
     
@@ -563,6 +572,11 @@
               <li routerlinkactive="link-list__item_active" class="link-list__item">
                 <a class="link" href="##BASE_URL##/for-researchers">
                   For Researchers
+                </a>
+              </li>
+              <li routerlinkactive="link-list__item_active" class="link-list__item">
+                <a class="link" href="##BASE_URL##/for-clinicians">
+                  For Clinicians
                 </a>
               </li>
               <!---->

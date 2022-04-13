@@ -19,8 +19,14 @@
   {{end}}
     "SERVER_BASE_URL": "{{$conf.serverBaseUrl}}",
     "BASE_URL": "{{$conf.baseWebUrl}}",
+    "ASSETS_BUCKET_NAME": "{{$conf.assetsBucketName}}",
+    "STUDY_EMAIL": "{{$conf.studyEmail}}",
     "SENDGRID_EMAIL": "{{$conf.sendgridFromEmail}}",
-    "SENDGRID_TOKEN": "{{$conf.sendgridApiKey}}"
+    "SENDGRID_TOKEN": "{{$conf.sendgridApiKey}}",
+    "PASSWORD_REDIRECT_URL": "{{$conf.passwordRedirectUrl}}",
+    "EMAIL_FROM_NAME": "{{$conf.sendgridFromName}}",
+    "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}",
+    "DB_NAME": "{{$conf.auth0.dbName}}"
   },
   "AUTH0_ALLOW_DELETE": false,
   "INCLUDED_PROPS": {},
