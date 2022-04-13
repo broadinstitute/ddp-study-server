@@ -1,57 +1,33 @@
 package org.broadinstitute.dsm.model.elastic.export.generate;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDao;
-import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
-import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDto;
-
 public class OncHistoryDetailSourceGenerator extends CollectionSourceGenerator {
 
-    OncHistoryDetailDao<OncHistoryDetailDto> oncHistoryDetailDao;
+    public static final String FAX_SENT = "faxSent";
+    public static final String FAX_CONFIRMED = "faxConfirmed";
+    public static final String FAX_SENT_2 = "faxSent2";
+    public static final String FAX_SENT_3 = "faxSent3";
+    public static final String TISSUE_RECEIVED = "tissueReceived";
+    public static final String UNABLE_OBTAIN_TISSUE = "unableObtainTissue";
+    public static final String FAX_CONFIRMED_2 = "faxConfirmed2";
+    public static final String FAX_CONFIRMED_3 = "faxConfirmed3";
 
-    public OncHistoryDetailSourceGenerator() {
-        oncHistoryDetailDao = new OncHistoryDetailDaoImpl();
-    }
-    
     @Override
     protected Optional<Map<String, Object>> getAdditionalData() {
-        Map<String, Object> resultMap = new HashMap<>();
-        if ("faxSent".equals(getFieldName())) {
-            resultMap = addFaxSentData("faxConfirmed");
-        } else if ("faxSent2".equals(getFieldName())) {
-            resultMap = addFaxSentData("faxConfirmed2");
-        } else if ("faxSent3".equals(getFieldName())) {
-            resultMap = addFaxSentData("faxConfirmed3");
-        } else if ("tissueReceived".equals(getFieldName())) {
-            Map<String, Object> rm = new HashMap<>();
-            rm.put("request", "received");
-            resultMap = rm;
-        } else if (isAbleToObtain()) {
-            resultMap = addRequestBasedOnReceivedDate();
-        } 
+        Map<String, Object> resultMap = obtainStrategyByFieldName(getFieldName()).generate();
         return Optional.of(resultMap);
     }
 
-    private void addRequestBasedOnReceivedDate() {
-        boolean hasReceivedDate = oncHistoryDetailDao.hasReceivedDate(generatorPayload.getRecordId());
-        if (hasReceivedDate) {
-            resultMap.put("request", "received");
-        } else {
-            resultMap.put("request", "sent");
-        }
+    Generator obtainStrategyByFieldName(String fieldName) {
+        return Map.of(
+                FAX_SENT, new OncHistoryDetailFaxSentStrategy(FAX_CONFIRMED, generatorPayload.getValue()),
+                FAX_SENT_2, new OncHistoryDetailFaxSentStrategy(FAX_CONFIRMED_2, generatorPayload.getValue()),
+                FAX_SENT_3, new OncHistoryDetailFaxSentStrategy(FAX_CONFIRMED_3, generatorPayload.getValue()),
+                TISSUE_RECEIVED, new OncHistoryDetailTissueReceivedStrategy(),
+                UNABLE_OBTAIN_TISSUE, new OncHistoryDetailUnableObtainTissueStrategy(generatorPayload)).getOrDefault(fieldName, new OncHistoryDetailNullObjectStrategy());
+
     }
 
-    private boolean isAbleToObtain() {
-        return "unableObtainTissue".equals(getFieldName()) && !(boolean) generatorPayload.getValue();
-    }
-
-    private Map<String, Object> addFaxSentData(String faxConfirmed) {
-        Map<String, Object> map = new HashMap<>();
-        map.put(faxConfirmed, generatorPayload.getValue());
-        map.put("request", "sent");
-        return map;
-    }
 }

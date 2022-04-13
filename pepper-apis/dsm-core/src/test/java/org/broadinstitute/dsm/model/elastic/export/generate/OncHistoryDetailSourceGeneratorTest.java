@@ -45,10 +45,16 @@ public class OncHistoryDetailSourceGeneratorTest {
         valueParser.setPropertyInfo(new BaseGenerator.PropertyInfo(OncHistoryDetail.class, true));
         valueParser.setFieldName("unableObtainTissue");
 
-        OncHistoryDetailSourceGenerator sourceGenerator = new OncHistoryDetailSourceGenerator();
+        OncHistoryDetailSourceGenerator sourceGenerator = new OncHistoryDetailSourceGenerator() {
+            @Override
+            Generator obtainStrategyByFieldName(String fieldName) {
+                OncHistoryDetailUnableObtainTissueStrategy generatorStrategy = (OncHistoryDetailUnableObtainTissueStrategy) super.obtainStrategyByFieldName(fieldName);
+                generatorStrategy.oncHistoryDetailDao = new MockOncHistoryDetailDao();
+                return generatorStrategy;
+            }
+        };
         sourceGenerator.setParser(valueParser);
         sourceGenerator.setPayload(generatorPayload);
-        sourceGenerator.oncHistoryDetailDao = new MockOncHistoryDetailDao();
 
         Map<String, Object> actual = sourceGenerator.generate();
 
