@@ -49,11 +49,16 @@ public class OsteoAboutYouV2 implements CustomTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(OsteoAboutYouV2.class);
     private static final String DATA_FILE = "patches/about-you-v2.conf";
+    private static final String UPDATES_DATA_FILE = "patches/about-you-updates.conf";
+    private static final String TRANS_UPDATE = "trans-update";
+    private static final String TRANS_UPDATE_OLD = "old_text";
+    private static final String TRANS_UPDATE_NEW = "new_text";
     private static final String STUDY_GUID = "CMI-OSTEO";
     private static final String ACTIVITY_CODE = "ABOUTYOU";
     private static final String VERSION_TAG = "v2";
 
     private Config dataCfg;
+    private Config updatesDataCfg;
     private Gson gson;
     private Config studyCfg;
     private Instant timestamp;
@@ -76,6 +81,13 @@ public class OsteoAboutYouV2 implements CustomTask {
         }
 
         this.dataCfg = ConfigFactory.parseFile(file);
+
+        File updatesFile = cfgPath.getParent().resolve(UPDATES_DATA_FILE).toFile();
+        if (!updatesFile.exists()) {
+            throw new DDPException("Data file is missing: " + updatesFile);
+        }
+
+        this.updatesDataCfg = ConfigFactory.parseFile(updatesFile);
 
         if (!studyCfg.getString("study.guid").equals(STUDY_GUID)) {
             throw new DDPException("This task is only for the " + STUDY_GUID + " study!");
@@ -143,6 +155,9 @@ public class OsteoAboutYouV2 implements CustomTask {
         // Disable questions
         long terminatedRevId = jdbiRevision.copyAndTerminate(section.getRevisionId(), meta);
         questionsToDisable.forEach(s -> disableQuestionDto(s, terminatedRevId));
+
+        helper.updateActivityNameAndTitle(activityId, "About Your Cancer", "About Your Cancer");
+        updateTranslationSummaries(handle);
     }
 
     private long createSectionBefore(long activityId, FormSectionMembershipDto beforeSection) {
@@ -210,7 +225,32 @@ public class OsteoAboutYouV2 implements CustomTask {
         LOG.info("Updated translatedName for activity {}", activityCode);
     }
 
+    private void updateTranslationSummaries(Handle handle) {
+        List<? extends Config> configList = updatesDataCfg.getConfigList(TRANS_UPDATE);
+        for (Config config : configList) {
+            updateSummary(config, handle);
+        }
+    }
+
+    private void updateSummary(Config config, Handle handle) {
+        String oldSum = String.format("%s%s%s", "%", config.getString(TRANS_UPDATE_OLD), "%");
+        String newSum = config.getString(TRANS_UPDATE_NEW);
+
+        handle.attach(SqlHelper.class).updateVarSubstitutionValue(oldSum, newSum);
+    }
+
     private interface SqlHelper extends SqlObject {
+        @SqlUpdate("update i18n_template_substitution set substitution_value = :newValue where substitution_value like :oldValue")
+        int _updateVarValueByOldValue(@Bind("oldValue") String oldValue, @Bind("newValue") String newValue);
+
+        default void updateVarSubstitutionValue(String oldValue, String value) {
+            int numUpdated = _updateVarValueByOldValue(oldValue, value);
+            if (numUpdated < 1) {
+                throw new DDPException("Expected to update a template variable value for value="
+                        + oldValue + " but updated " + numUpdated);
+            }
+        }
+
         @SqlQuery("select block_id from block__question where question_id = :questionId")
         int findQuestionBlockId(@Bind("questionId") long questionId);
 
@@ -225,5 +265,18 @@ public class OsteoAboutYouV2 implements CustomTask {
 
         @SqlUpdate("update form_section__block set revision_id = :revisionId where block_id = :blockId")
         void updateFormSectionBlockRevision(@Bind("blockId") long blockId, @Bind("revisionId") long revisionId);
+
+        @SqlUpdate("update i18n_activity_detail set name = :name, title = :title where study_activity_id = :studyActivityId")
+        int _updateActivityNameAndTitle(@Bind("studyActivityId") long studyActivityId,
+                                @Bind("name") String name,
+                                @Bind("title") String title);
+
+        default void updateActivityNameAndTitle(long studyActivityId, String name, String title) {
+            int numUpdated = _updateActivityNameAndTitle(studyActivityId, name, title);
+            if (numUpdated != 1) {
+                throw new DDPException("Expected to update 1 row for studyActivityId="
+                        + studyActivityId + " but updated " + numUpdated);
+            }
+        }
     }
 }
