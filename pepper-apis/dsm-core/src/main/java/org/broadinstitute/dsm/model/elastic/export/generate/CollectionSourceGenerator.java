@@ -39,11 +39,11 @@ public class CollectionSourceGenerator extends SourceGenerator {
     protected List<Map<String, Object>> getCollectionElementMap(Map<String, Object> element) {
         HashMap<String, Object> mapWithParsedObjects = new HashMap<>(Map.of(getPrimaryKey(), generatorPayload.getRecordId()));
         mapWithParsedObjects.putAll(element);
-        getParentWithId().ifPresent(mapWithParsedObjects::putAll);
+        getAdditionalData().ifPresent(mapWithParsedObjects::putAll);
         return List.of(mapWithParsedObjects);
     }
 
-    protected Optional<Map<String, Object>> getParentWithId() {
+    protected Optional<Map<String, Object>> getAdditionalData() {
         return Optional.empty();
     }
 }

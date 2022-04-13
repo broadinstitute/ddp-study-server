@@ -10,8 +10,8 @@ import org.broadinstitute.dsm.statics.DBConstants;
 public class SMIDSourceGenerator extends ParentChildRelationGenerator{
 
     @Override
-    protected Optional<Map<String, Object>> getParentWithId() {
-        Optional<Map<String, Object>> parentWithId = super.getParentWithId();
+    protected Optional<Map<String, Object>> getAdditionalData() {
+        Optional<Map<String, Object>> parentWithId = super.getAdditionalData();
         parentWithId.ifPresent(this::addSMIDType);
         return parentWithId;
     }
