@@ -18,7 +18,7 @@ public class OncHistoryDetailSourceGenerator extends CollectionSourceGenerator {
         } else if ("tissueReceived".equals(getFieldName())) {
             resultMap.put("request", "received");
         }
-        return super.getAdditionalData();
+        return Optional.of(resultMap);
     }
 
     private void addFaxSentData(Map<String, Object> resultMap, String faxConfirmed) {

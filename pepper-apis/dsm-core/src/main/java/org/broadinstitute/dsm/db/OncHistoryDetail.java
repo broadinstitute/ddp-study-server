@@ -99,10 +99,10 @@ public class OncHistoryDetail {
     private static final String SQL_INSERT_ONC_HISTORY_DETAIL =
             "INSERT INTO ddp_onc_history_detail SET medical_record_id = ?, request = ?, last_changed = ?, changed_by = ?";
     @ColumnName(DBConstants.ONC_HISTORY_DETAIL_ID)
-    private long oncHistoryDetailId;
+    private Long oncHistoryDetailId;
 
     @ColumnName(DBConstants.MEDICAL_RECORD_ID)
-    private long medicalRecordId;
+    private Long medicalRecordId;
 
     @ColumnName(DBConstants.DATE_PX)
     @DbDateConversion(SqlDateConverter.STRING_DAY)
@@ -198,7 +198,7 @@ public class OncHistoryDetail {
     public OncHistoryDetail() {
     }
 
-    public OncHistoryDetail(long oncHistoryDetailId, long medicalRecordId, String datePx, String typePx, String locationPx,
+    public OncHistoryDetail(Long oncHistoryDetailId, Long medicalRecordId, String datePx, String typePx, String locationPx,
                             String histology, String accessionNumber, String facility, String phone, String fax, String notes,
                             String request, String faxSent, String faxSentBy, String faxConfirmed, String faxSent2, String faxSent2By,
                             String faxConfirmed2, String faxSent3, String faxSent3By, String faxConfirmed3, String tissueReceived,
@@ -234,7 +234,7 @@ public class OncHistoryDetail {
         this.unableObtainTissue = unableObtainTissue;
     }
 
-    public OncHistoryDetail(long oncHistoryDetailId, long medicalRecordId, String datePx, String typePx, String locationPx,
+    public OncHistoryDetail(Long oncHistoryDetailId, Long medicalRecordId, String datePx, String typePx, String locationPx,
                             String histology, String accessionNumber, String facility, String phone, String fax, String notes,
                             String request, String faxSent, String faxSentBy, String faxConfirmed, String faxSent2, String faxSent2By,
                             String faxConfirmed2, String faxSent3, String faxSent3By, String faxConfirmed3, String tissueReceived,

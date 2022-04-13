@@ -6,7 +6,7 @@ import org.broadinstitute.dsm.model.elastic.Util;
 public class GeneratorPayload {
 
     NameValue nameValue;
-    int recordId;
+    Integer recordId;
     private String parent;
     private String parentId;
 
@@ -40,7 +40,7 @@ public class GeneratorPayload {
         return nameValue.getValue();
     }
 
-    public int getRecordId() {
+    public Integer getRecordId() {
         return recordId;
     }
 
