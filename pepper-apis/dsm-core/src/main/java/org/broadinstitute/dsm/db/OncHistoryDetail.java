@@ -19,6 +19,7 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
@@ -94,8 +95,6 @@ public class OncHistoryDetail {
                     + "fax_sent_2_by, fax_confirmed_2, fax_sent_3, fax_sent_3_by, fax_confirmed_3,"
                     + " tissue_received, gender, tissue_problem_option, destruction_policy FROM ddp_onc_history_detail "
                     + "WHERE NOT (deleted <=> 1)";
-    private static final String SQL_SELECT_TISSUE_RECEIVED =
-            "SELECT tissue_received FROM ddp_onc_history_detail WHERE onc_history_detail_id = ?";
     private static final String SQL_INSERT_ONC_HISTORY_DETAIL =
             "INSERT INTO ddp_onc_history_detail SET medical_record_id = ?, request = ?, last_changed = ?, changed_by = ?";
     @ColumnName(DBConstants.ONC_HISTORY_DETAIL_ID)
@@ -435,42 +434,6 @@ public class OncHistoryDetail {
         } else {
             return (String) results.resultValue;
         }
-    }
-
-    public static Boolean hasReceivedDate(@NonNull Patch patch) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_TISSUE_RECEIVED)) {
-                if (patch.getNameValue().getName().contains(DBConstants.DDP_TISSUE_ALIAS + DBConstants.ALIAS_DELIMITER)) {
-                    stmt.setString(1, patch.getParentId());
-                } else if (patch.getNameValue().getName()
-                        .contains(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER)) {
-                    stmt.setString(1, patch.getId());
-                }
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        String receivedDate = rs.getString(DBConstants.TISSUE_RECEIVED);
-                        if (StringUtils.isNotBlank(receivedDate)) {
-                            dbVals.resultValue = true;
-                        } else {
-                            dbVals.resultValue = false;
-                        }
-                    } else {
-                        dbVals.resultException = new RuntimeException(" The patch id was not found in the table!");
-                    }
-                } catch (SQLException ex) {
-                    dbVals.resultException = ex;
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-        if (results.resultException != null) {
-            throw new RuntimeException(" Error getting the received date of the OncHistory with Id:" + patch.getParentId(),
-                    results.resultException);
-        }
-        return (Boolean) results.resultValue;
     }
 
     @JsonProperty("dynamicFields")

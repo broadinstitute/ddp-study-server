@@ -16,6 +16,7 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dao.queue.EventDao;
 import org.broadinstitute.dsm.db.dao.settings.EventTypeDao;
@@ -29,6 +30,7 @@ import org.broadinstitute.dsm.model.elastic.export.ExportFacade;
 import org.broadinstitute.dsm.model.elastic.export.ExportFacadePayload;
 import org.broadinstitute.dsm.model.elastic.export.generate.GeneratorPayload;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
+import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.EventUtil;
@@ -237,7 +239,7 @@ public abstract class BasePatch {
                         new Patch(patch.getParentId(), PARTICIPANT_ID, null, patch.getUser(), patch.getNameValue(), patch.getNameValues(),
                                 patch.getDdpParticipantId()), "returned"));
             } else {
-                Boolean hasReceivedDate = OncHistoryDetail.hasReceivedDate(patch);
+                boolean hasReceivedDate = new OncHistoryDetailDaoImpl().hasReceivedDate(getOncHistoryDetailId(patch));
 
                 if (hasReceivedDate) {
                     nameValues.add(setAdditionalValue("oD.request",
@@ -250,8 +252,8 @@ public abstract class BasePatch {
                 }
             }
         // } else if (patch.getNameValue().getName().equals("oD.unableToObtain") && (boolean) patch.getNameValue().getValue()) {
-        } else if (patch.getNameValue().getName().equals("oD.unableToObtain") && !(boolean) patch.getNameValue().getValue()) {
-            Boolean hasReceivedDate = OncHistoryDetail.hasReceivedDate(patch);
+        } else if (patch.getNameValue().getName().equals("oD.unableObtainTissue") && !(boolean) patch.getNameValue().getValue()) {
+            boolean hasReceivedDate = new OncHistoryDetailDaoImpl().hasReceivedDate(getOncHistoryDetailId(patch));
 
             if (hasReceivedDate) {
                 nameValues.add(setAdditionalValue("oD.request",
@@ -264,6 +266,17 @@ public abstract class BasePatch {
             }
         }
         return nameValues;
+    }
+
+    private int getOncHistoryDetailId(Patch patch) {
+        int oncHistoryDetailId = -1;
+        if (patch.getNameValue().getName().contains(DBConstants.DDP_TISSUE_ALIAS + DBConstants.ALIAS_DELIMITER)) {
+            oncHistoryDetailId = Integer.parseInt(patch.getParentId());
+        } else if (patch.getNameValue().getName()
+                .contains(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER)) {
+            oncHistoryDetailId = Integer.parseInt(patch.getId());
+        }
+        return oncHistoryDetailId;
     }
 
     private NameValue setAdditionalValue(String additionalValue, @NonNull Patch patch, @NonNull Object value) {
