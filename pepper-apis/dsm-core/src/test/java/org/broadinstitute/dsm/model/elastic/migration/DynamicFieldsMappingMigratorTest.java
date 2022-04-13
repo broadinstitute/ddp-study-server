@@ -19,10 +19,11 @@ public class DynamicFieldsMappingMigratorTest {
     @Test
     @Ignore
     public void testExport() {
-        final String index = "participants_structured.testboston.testboston";
-        final String study = "testboston";
+        final String index = "participants_structured.rgp.rgp";
+        final String study = "rgp";
         List<? extends Exportable> exportables = Arrays.asList(
                 //DynamicFieldsMappingMigrator should be first in the list to make sure that mapping will be exported for first
+                new SMIDMigrator(index, study),
                 new DynamicFieldsMappingMigrator(index, study),
                 new KitRequestShippingMigrator(index, study),
                 new ParticipantDataMigrator(index, study),
