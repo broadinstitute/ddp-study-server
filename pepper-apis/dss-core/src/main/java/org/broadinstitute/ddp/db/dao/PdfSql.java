@@ -177,6 +177,9 @@ public interface PdfSql extends SqlObject {
     @SqlUpdate("update pdf_activity_date_substitution set study_activity_id = :activityId where pdf_substitution_id = :subId")
     int updateActivityDateSubstitution(@Bind("subId") long substitutionId, @Bind("activityId") long activityId);
 
+    @SqlUpdate("update pdf_document_version set revision_id = :revId where pdf_document_version_id = :versionId")
+    int updateConfigVersion(@Bind("versionId") long versionId, @Bind("revId") long revisionId);
+
 
     @SqlUpdate("delete from pdf_document_configuration where pdf_document_configuration_id = :configId")
     int deleteConfigInfoById(@Bind("configId") long configId);
