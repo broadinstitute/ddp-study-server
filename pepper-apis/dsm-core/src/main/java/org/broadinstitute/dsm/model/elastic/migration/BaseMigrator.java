@@ -41,6 +41,7 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
             if (StringUtils.isBlank(participantId)) {
                 continue;
             }
+            logger.info("Generating data to export to ES for participant: " + participantId);
             Object participantDetails = entry.getValue();
             transformObject(participantDetails);
             Map<String, Object> finalMapToUpsert = generate();

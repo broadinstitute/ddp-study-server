@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.model.elastic.export.parse;
 
 import static org.broadinstitute.dsm.model.Filter.NUMBER;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -14,6 +15,7 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class DynamicFieldsParser extends BaseParser {
 
+    private static final Map<String, FieldSettingsDto> fieldSettingsDtoByColumnName = new HashMap<>();
     public static final String DATE_TYPE = "DATE";
     public static final String CHECKBOX_TYPE = "CHECKBOX";
     public static final String ACTIVITY_STAFF_TYPE = "ACTIVITY_STAFF";
@@ -76,8 +78,16 @@ public class DynamicFieldsParser extends BaseParser {
     }
 
     protected void getProperDisplayTypeWithPossibleValues() {
-        Optional<FieldSettingsDto> fieldSettingsByInstanceNameAndColumnName =
-                fieldSettingsDao.getFieldSettingsByInstanceNameAndColumnName(realm, super.fieldName);
+        Optional<FieldSettingsDto> fieldSettingsByInstanceNameAndColumnName;
+        if (!fieldSettingsDtoByColumnName.containsKey(super.fieldName)) {
+            fieldSettingsByInstanceNameAndColumnName =
+                    fieldSettingsDao.getFieldSettingsByInstanceNameAndColumnName(realm, super.fieldName);
+            fieldSettingsByInstanceNameAndColumnName.ifPresent(fieldSetting -> {
+                fieldSettingsDtoByColumnName.put(super.fieldName, fieldSetting);
+            });
+        } else {
+            fieldSettingsByInstanceNameAndColumnName = Optional.of(fieldSettingsDtoByColumnName.get(super.fieldName));
+        }
         if (fieldSettingsByInstanceNameAndColumnName.isPresent()) {
             FieldSettingsDto fieldSettings = fieldSettingsByInstanceNameAndColumnName.get();
             displayType = StringUtils.isNotBlank(fieldSettings.getDisplayType())
