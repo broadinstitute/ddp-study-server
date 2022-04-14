@@ -53,7 +53,6 @@ import java.util.Optional;
 @Slf4j
 public class OsteoConsentVersion2 implements CustomTask {
     private static final String DATA_FILE = "patches/consent-version-2.conf";
-    private static final String DATA_FILE_SOMATIC_ASSENT_ADDENDUM = "patches/parent-consent-assent.conf";
     private static final String OSTEO_STUDY = "CMI-OSTEO";
 
     private static final String DATA_FILE_OSTEO_SELF_CONSENT = "patches/self-consent.conf";
@@ -75,7 +74,6 @@ public class OsteoConsentVersion2 implements CustomTask {
     private static final int DISPLAY_ORDER_GAP = 10;
 
     private Config dataCfg;
-    private Config assentAddendumCfg;
     private Config selfConsentDataCfg;
     private Config parentalConsentDataCfg;
     private Config consentAssentDataCfg;
@@ -102,12 +100,6 @@ public class OsteoConsentVersion2 implements CustomTask {
         if (!studyCfg.getString("study.guid").equals(OSTEO_STUDY)) {
             throw new DDPException("This task is only for the " + OSTEO_STUDY + " study!");
         }
-
-        File fileAssentAddendum = cfgPath.getParent().resolve(DATA_FILE_SOMATIC_ASSENT_ADDENDUM).toFile();
-        if (!fileAssentAddendum.exists()) {
-            throw new DDPException("Data file is missing: " + fileAssentAddendum);
-        }
-        assentAddendumCfg = ConfigFactory.parseFile(fileAssentAddendum);
 
         File selfConsentFile = cfgPath.getParent().resolve(DATA_FILE_OSTEO_SELF_CONSENT).toFile();
         if (!selfConsentFile.exists()) {
@@ -167,7 +159,6 @@ public class OsteoConsentVersion2 implements CustomTask {
         ActivityVersionDto version2ForParentalConsent = getVersion2(handle, studyDto, metaParentalConsent, activityCodeParentalConsent);
 
         updateVariables(handle, metaConsentAssent, version2ForConsentAssent);
-        runSomaticAssentAddendum(handle, adminUser, studyDto, version2ForConsentAssent);
         runAdultConsentUpdate(handle, metaConsent, studyDto, activityCodeConsent, version2ForConsent);
         runParentalConsentUpdate(handle, metaParentalConsent, studyDto, activityCodeParentalConsent, version2ForParentalConsent);
         runConsentAssentUpdate(handle, metaConsentAssent, studyDto, activityCodeConsentAssent, version2ForConsentAssent);
@@ -204,39 +195,6 @@ public class OsteoConsentVersion2 implements CustomTask {
         jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, version2.getRevId(), tmplVarId);
     }
 
-
-    public void runSomaticAssentAddendum(Handle handle, User adminUser,
-                                         StudyDto studyDto, ActivityVersionDto version2ConsentAssent) {
-        LanguageStore.init(handle);
-
-        String consentAssent = assentAddendumCfg.getString("activityFilepath");
-        Config consentAssentCfg = activityBuild(studyDto, adminUser, consentAssent);
-
-        String assentAddendum = assentAddendumCfg.getString("sectionFilePath");
-        Config assentAddendumCfg = activityBuild(studyDto, adminUser, assentAddendum);
-
-        versionTag = consentAssentCfg.getString("versionTag");
-        String activityCode = consentAssentCfg.getString("activityCode");
-        long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
-
-        long revisionId = version2ConsentAssent.getRevId();
-
-        var sectionDef = gson.fromJson(ConfigUtil.toJson(assentAddendumCfg), FormSectionDef.class);
-
-        var sectionId = handle.attach(SectionBlockDao.class)
-                .insertSection(activityId, sectionDef, revisionId);
-
-        var jdbiActSection = handle.attach(JdbiFormActivityFormSection.class);
-
-        jdbiActSection.insert(activityId, sectionId, revisionId, 60);
-    }
-
-
-    private Config activityBuild(StudyDto studyDto, User adminUser, String activityCodeConf) {
-        ActivityBuilder activityBuilder = new ActivityBuilder(cfgPath.getParent(), cfg, varsCfg, studyDto, adminUser.getId());
-        Config config = activityBuilder.readDefinitionConfig(activityCodeConf);
-        return config;
-    }
 
     private void runConsentAssentUpdate(Handle handle, RevisionMetadata meta, StudyDto studyDto,
                                           String activityCode, ActivityVersionDto version2) {
