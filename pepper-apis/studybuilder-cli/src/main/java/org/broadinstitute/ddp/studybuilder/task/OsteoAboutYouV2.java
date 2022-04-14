@@ -32,8 +32,6 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -49,7 +47,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class OsteoAboutYouV2 implements CustomTask {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OsteoAboutYouV2.class);
     private static final String DATA_FILE = "patches/about-you-v2.conf";
     private static final String UPDATES_DATA_FILE = "patches/about-you-updates.conf";
     private static final String TRANS_UPDATE = "trans-update";
@@ -144,7 +141,7 @@ public class OsteoAboutYouV2 implements CustomTask {
         sectionBlockDao.insertBlockForSection(
                 activityId, newFormSectionId, QuestionDao.DISPLAY_ORDER_GAP, blockDef, versionDto.getRevId());
 
-        LOG.info("Question ('WHO_IS_FILLING_ABOUTYOU') successfully added");
+        log.info("Question ('WHO_IS_FILLING_ABOUTYOU') successfully added");
 
         // Delete copy configs
         List<String> questionsToDisable = new ArrayList<>(List.of(
@@ -167,7 +164,7 @@ public class OsteoAboutYouV2 implements CustomTask {
         final long newFormSectionId = jdbiFormSection.insert(jdbiFormSection.generateUniqueCode(), null);
         jdbiFormActivityFormSection.insert(activityId, newFormSectionId, beforeSection.getRevisionId(), sectionOrder);
 
-        LOG.info("New section successfully created with displayOrder={} and revision={}",
+        log.info("New section successfully created with displayOrder={} and revision={}",
                 sectionOrder,
                 beforeSection.getRevisionId());
 
@@ -189,7 +186,7 @@ public class OsteoAboutYouV2 implements CustomTask {
         final long blockId = helper.findQuestionBlockId(questionDto.getId());
         helper.updateFormSectionBlockRevision(blockId, terminatedRevId);
 
-        LOG.info("Question ('{}') successfully disabled", questionSid);
+        log.info("Question ('{}') successfully disabled", questionSid);
     }
 
     private QuestionDto findQuestionBySid(String questionSid) {
@@ -205,7 +202,7 @@ public class OsteoAboutYouV2 implements CustomTask {
 
         DBUtils.checkDelete(configPairs.size(), copyConfigurationSql.deleteCopyConfigPairs(configPairs));
         DBUtils.checkDelete(locationIds.size(), copyConfigurationSql.bulkDeleteCopyLocations(locationIds));
-        LOG.info("Copy configs successfully deleted");
+        log.info("Copy configs successfully deleted");
     }
 
     private void updateActivityName(long activityId, String activityCode, String name) {
@@ -224,7 +221,7 @@ public class OsteoAboutYouV2 implements CustomTask {
                 i18nDetail.getDescription(),
                 i18nDetail.getRevisionId());
         activityI18nDao.updateDetails(List.of(newI18nDetail));
-        LOG.info("Updated translatedName for activity {}", activityCode);
+        log.info("Updated translatedName for activity {}", activityCode);
     }
 
     private void updateTranslationSummaries(Handle handle) {

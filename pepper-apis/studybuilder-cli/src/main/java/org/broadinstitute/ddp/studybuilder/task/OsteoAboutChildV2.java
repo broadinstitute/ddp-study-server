@@ -26,8 +26,6 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.time.Instant;
@@ -42,7 +40,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class OsteoAboutChildV2 implements CustomTask {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OsteoAboutChildV2.class);
     private static final String STUDY_GUID = "CMI-OSTEO";
     private static final String ACTIVITY_CODE = "ABOUTCHILD";
     private static final String VERSION_TAG = "v2";
@@ -129,7 +126,7 @@ public class OsteoAboutChildV2 implements CustomTask {
         final long newFormSectionId = jdbiFormSection.insert(jdbiFormSection.generateUniqueCode(), null);
         jdbiFormActivityFormSection.insert(activityId, newFormSectionId, beforeSection.getRevisionId(), sectionOrder);
 
-        LOG.info("New section successfully created with displayOrder={} and revision={}",
+        log.info("New section successfully created with displayOrder={} and revision={}",
                 sectionOrder,
                 beforeSection.getRevisionId());
 
@@ -141,7 +138,7 @@ public class OsteoAboutChildV2 implements CustomTask {
 
         final long currFillingBlockId = helper.findQuestionBlockId(questionFillingDto.getId());
         helper.updateFormSectionBlock(newFormSectionId, currFillingBlockId);
-        LOG.info("Question ('{}') successfully moved to new section={}", questionSid, newFormSectionId);
+        log.info("Question ('{}') successfully moved to new section={}", questionSid, newFormSectionId);
     }
 
     private void disableQuestionDto(String questionSid, long terminatedRevId) {
@@ -159,7 +156,7 @@ public class OsteoAboutChildV2 implements CustomTask {
         final long blockId = helper.findQuestionBlockId(questionDto.getId());
         helper.updateFormSectionBlockRevision(blockId, terminatedRevId);
 
-        LOG.info("Question ('{}') successfully disabled", questionSid);
+        log.info("Question ('{}') successfully disabled", questionSid);
     }
 
     private QuestionDto findQuestionBySid(String questionSid) {
@@ -175,7 +172,7 @@ public class OsteoAboutChildV2 implements CustomTask {
 
         DBUtils.checkDelete(configPairs.size(), copyConfigurationSql.deleteCopyConfigPairs(configPairs));
         DBUtils.checkDelete(locationIds.size(), copyConfigurationSql.bulkDeleteCopyLocations(locationIds));
-        LOG.info("Copy configs successfully deleted");
+        log.info("Copy configs successfully deleted");
     }
 
     private void updateActivityName(long activityId, String activityCode, String name) {
@@ -194,7 +191,7 @@ public class OsteoAboutChildV2 implements CustomTask {
                 i18nDetail.getDescription(),
                 i18nDetail.getRevisionId());
         activityI18nDao.updateDetails(List.of(newI18nDetail));
-        LOG.info("Updated translatedName for activity {}", activityCode);
+        log.info("Updated translatedName for activity {}", activityCode);
     }
 
     private interface SqlHelper extends SqlObject {
