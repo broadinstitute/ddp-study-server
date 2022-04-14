@@ -3,9 +3,6 @@ package org.broadinstitute.ddp.studybuilder.task;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
-import org.broadinstitute.ddp.cache.LanguageStore;
-import org.broadinstitute.ddp.db.dao.ActivityDao;
-import org.broadinstitute.ddp.db.dao.JdbiFormActivityFormSection;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
@@ -22,14 +19,13 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 public class OsteoSomaticConsentAddendum implements CustomTask {
@@ -104,8 +100,13 @@ public class OsteoSomaticConsentAddendum implements CustomTask {
         JdbiWorkflowTransition jdbiWorkflowTransition = handle.attach(JdbiWorkflowTransition.class);
 
         for (String activity : activities) {
-            ActivityDto activityDto = jdbiActivity.findActivityByStudyIdAndCode(studyDto.getId(), activity).get();
-            long workflowStateId = helper.getWorkflowStateId(activityDto.getActivityId());
+            Optional<ActivityDto> activityDto = jdbiActivity.findActivityByStudyIdAndCode(studyDto.getId(), activity);
+            if (activityDto.isEmpty()) {
+                log.warn("Activity {} can't be found", activity);
+                continue;
+            }
+
+            long workflowStateId = helper.getWorkflowStateId(activityDto.get().getActivityId());
             long transitionId = helper.getTransitionId(workflowStateId);
             int deleteById = jdbiWorkflowTransition.deleteById(transitionId);
             log.info("deleted activity {} transition for configuration {}", activity, deleteById);
@@ -121,7 +122,6 @@ public class OsteoSomaticConsentAddendum implements CustomTask {
     }
 
     private interface SqlHelper extends SqlObject {
-
         @SqlQuery("select workflow_state_id from workflow_activity_state where study_activity_id = :activityId")
         long getWorkflowStateId(@Bind("activityId") long activityId);
 
