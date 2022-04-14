@@ -53,7 +53,7 @@ public class TaskPubSubPublisher implements TaskPublisher {
             return PubSubPublisherInitializer.getOrCreatePublisher(
                     ConfigManager.getInstance().getConfig().getString(ConfigFile.PUBSUB_DSM_TASKS_TOPIC));
         } catch (Exception e) {
-            log.error(format("Error during publishing a task %s to PubSub topic", taskType), e);
+            log.error("Error during publishing a task {} to PubSub topic", taskType, e);
         }
         return null;
     }
