@@ -353,6 +353,9 @@
                 "LONGITUDINAL_BLOOD_TEST_LIST": {
                   "type": "text"
                 },
+                "LONGITUDINAL_VIRAL_TEST_LIST": {
+                  "type": "text"
+                },
                 "VIRAL_TEST_LIST": {
                   "type": "text"
                 },
