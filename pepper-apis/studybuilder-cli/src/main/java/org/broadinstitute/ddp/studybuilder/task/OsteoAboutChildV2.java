@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 /**
  * One-off task to add adhoc symptom message to TestBoston in deployed environments.
  */
+@Slf4j
 public class OsteoAboutChildV2 implements CustomTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(OsteoAboutChildV2.class);
