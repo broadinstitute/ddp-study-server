@@ -14,7 +14,7 @@ public enum QuestionType {
     FILE(false, false),
     NUMERIC(true, true),
     DECIMAL(true, true),
-    EQUATION(false, false),
+    EQUATION(false, true),
     PICKLIST(false, true),
     TEXT(false, true),
     ACTIVITY_INSTANCE_SELECT(false, false),
