@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
@@ -14,14 +15,11 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.junit.Before;
 import org.junit.Ignore;
-//import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 @Ignore
 //Script to trigger pwd reset emails for migrated users during MBC study migration to pepper.
 public class MBCAuth0PasswordResetEmailScript extends TxnAwareBaseTest {
-    private static final Logger LOG = LoggerFactory.getLogger(MBCAuth0PasswordResetEmailScript.class);
     private static final String STUDY_GUID = "cmi-mbc";
     private static final String FROM_NAME = "MBCproject";
     private static final String FROM_EMAIL = "info@mbcproject.org";
@@ -49,7 +47,7 @@ public class MBCAuth0PasswordResetEmailScript extends TxnAwareBaseTest {
 
     @Ignore
     //@Test
-    public void sendPasswordResetsForHardcodedUsersNotConsented() throws Exception {
+    public void sendPasswordResetsForHardcodedUsersNotConsented() {
         StudyPasswordResetEmailGenerator emailGenerator = new StudyPasswordResetEmailGenerator();
         List<ProfileWithEmail> recipientProfiles = Collections.emptyList();
         //add emails
@@ -62,7 +60,7 @@ public class MBCAuth0PasswordResetEmailScript extends TxnAwareBaseTest {
         //remove emails already sent
         ncEmailList.removeAll(ncEmailListSent);
 
-        LOG.info("NON consented email ARRAY count: {} non consented email List count: {} already sent count: {}",
+        log.info("NON consented email ARRAY count: {} non consented email List count: {} already sent count: {}",
                 nonConsentedEmails.length, ncEmailList.size(), ncEmailListSent.size());
 
         //pick todays emails
@@ -71,7 +69,7 @@ public class MBCAuth0PasswordResetEmailScript extends TxnAwareBaseTest {
             ptpEmails.add(ncEmailList.get(counter));
         }
 
-        LOG.info("TODAYS {} non-consented emails:: {}", ptpEmails.size(), ptpEmails.toString());
+        log.info("TODAYS {} non-consented emails:: {}", ptpEmails.size(), ptpEmails);
 
         try {
             recipientProfiles = TransactionWrapper.withTxn(handle -> {
@@ -80,21 +78,21 @@ public class MBCAuth0PasswordResetEmailScript extends TxnAwareBaseTest {
                         auth0Domain, mgmtClient.getToken());
             });
         } catch (Exception e) {
-            LOG.error("Error sending email", e);
+            log.error("Error sending email", e);
         }
 
-        LOG.info("Not consented participant profile count: {}", recipientProfiles.size());
+        log.info("Not consented participant profile count: {}", recipientProfiles.size());
 
         try {
             emailGenerator.sendPasswordResetEmails(STUDY_GUID, recipientProfiles, FROM_NAME, FROM_EMAIL, MESSAGE_SUBJECT, BASE_WEBPAGE_URL,
                     SENDGRID_NOT_CONSENTED_TEMPLATE_ID, mgmtClient);
         } catch (DDPException e) {
-            LOG.error("Exception executing MBCAuth0PasswordResetEmailScript", e);
+            log.error("Exception executing MBCAuth0PasswordResetEmailScript", e);
         }
 
         //add emails sent today to sentEmails and update the nonConsentedEmailsSent array manually;
         ncEmailListSent.addAll(ptpEmails);
-        LOG.info("ncEmailListSent = {}", ncEmailListSent.toString());
+        log.info("ncEmailListSent = {}", ncEmailListSent);
     }
 
     @Ignore
@@ -112,7 +110,7 @@ public class MBCAuth0PasswordResetEmailScript extends TxnAwareBaseTest {
 
         //remove emails already sent
         consentedEmailList.removeAll(consentedEmailListSent);
-        LOG.info("Consented email ARRAY count: {} consented email list count: {} ", consentedEmails.length, consentedEmailList.size());
+        log.info("Consented email ARRAY count: {} consented email list count: {} ", consentedEmails.length, consentedEmailList.size());
 
         //pick todays emails to send
         Set<String> ptpEmails = new HashSet<>();
@@ -120,7 +118,7 @@ public class MBCAuth0PasswordResetEmailScript extends TxnAwareBaseTest {
             ptpEmails.add(consentedEmailList.get(counter));
         }
 
-        LOG.info("TODAYS consented users {} emails:: {}", ptpEmails.size(), ptpEmails.toString());
+        log.info("TODAYS consented users {} emails:: {}", ptpEmails.size(), ptpEmails);
 
         try {
             recipientProfiles = TransactionWrapper.withTxn(handle -> {
@@ -129,21 +127,21 @@ public class MBCAuth0PasswordResetEmailScript extends TxnAwareBaseTest {
                         auth0Domain, mgmtClient.getToken());
             });
         } catch (Exception e) {
-            LOG.error("Error sending email for consented user ", e);
+            log.error("Error sending email for consented user ", e);
         }
 
-        LOG.info("Consented participant profile count: {}", recipientProfiles.size());
+        log.info("Consented participant profile count: {}", recipientProfiles.size());
 
         try {
             emailGenerator.sendPasswordResetEmails(STUDY_GUID, recipientProfiles, FROM_NAME, FROM_EMAIL, MESSAGE_SUBJECT, BASE_WEBPAGE_URL,
                     SENDGRID_CONSENTED_TEMPLATE_ID, mgmtClient);
         } catch (DDPException e) {
-            LOG.error("Exception executing MBCAuth0PasswordResetEmailScript", e);
+            log.error("Exception executing MBCAuth0PasswordResetEmailScript", e);
         }
 
         //add emails sent today to sentEmails and update the consentedEmailsSent array manually;
         consentedEmailListSent.addAll(ptpEmails);
-        LOG.info("consentedEmailListSent = {}", consentedEmailListSent.toString());
+        log.info("consentedEmailListSent = {}", consentedEmailListSent);
     }
 
 }

@@ -6,9 +6,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.constants.SqlConstants.ActivityInstanceTable;
 import org.broadinstitute.ddp.constants.SqlConstants.ConsentConditionTable;
@@ -18,13 +17,9 @@ import org.broadinstitute.ddp.json.consent.ConsentSummary;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.JdbiException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class StudyActivityDao {
-
-    private static final Logger LOG = LoggerFactory.getLogger(StudyActivityDao.class);
-
     private static String AUTO_INSTANTIATABLE_ACTIVITIES_BY_CLIENT_ID_QUERY;
     private static String ACTIVITY_CODE_BY_STUDY_GUID_AND_FORM_TYPE_QUERY;
     private static String ALL_CONSENTS_BY_USER_AND_STUDY_GUIDS_QUERY;
@@ -96,7 +91,7 @@ public class StudyActivityDao {
                 // An exception for now, can be different in the future
                 String errMsg = "There can be 1 and only 1 prequalifier activity for the study, but "
                         + prequalCodes.size() + " prequalifier activities for study " + studyGuid + " were found, "
-                        + "guids: " + prequalCodes.stream().collect(Collectors.joining(", "));
+                        + "guids: " + String.join(", ", prequalCodes);
                 throw new DaoException(errMsg);
             }
             return Optional.ofNullable(prequalCode);
@@ -162,7 +157,7 @@ public class StudyActivityDao {
                 long activityId = rs.getLong(StudyActivityTable.ID);
                 summary = Optional.of(new ConsentSummary(activityId, consentActivityCode, instanceGuid, consentedExpr));
             } else {
-                LOG.info("No consent summary found for user {} study {} activity {}",
+                log.info("No consent summary found for user {} study {} activity {}",
                         userGuid, studyGuid, consentActivityCode);
             }
         } catch (SQLException e) {
