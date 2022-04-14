@@ -23,7 +23,6 @@ public class SourceGeneratorFactory implements GeneratorFactory {
 
     private BaseGenerator getCollectionGenerator(Class<?> clazz) {
         Map<Class<?>, BaseGenerator> collectionGeneratorByClass = Map.of(
-                Tissue.class, new ParentChildRelationGenerator(),
                 SmId.class, new SMIDSourceGenerator(),
                 ParticipantData.class, new ParticipantDataSourceGenerator(),
                 OncHistoryDetail.class, new OncHistoryDetailSourceGenerator(),

@@ -9,6 +9,7 @@ import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
+import org.broadinstitute.dsm.model.patch.OncHistoryDetailPatch;
 import org.broadinstitute.dsm.model.patch.TissuePatch;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.junit.Assert;
@@ -18,7 +19,7 @@ public class TissueSourceGeneratorTest {
 
     @Test
     public void getAdditionalDataReturnDateExists() {
-        GeneratorPayload generatorPayload = new GeneratorPayload(new NameValue(getReturnedDateWithAlias(), "2020-01-01"), 25);
+        GeneratorPayload generatorPayload = new GeneratorPayload(new NameValue(getReturnedDateWithAlias(), "2020-01-01"), 25, OncHistoryDetailPatch.ONC_HISTORY_DETAIL_ID, "5");
         ValueParser valueParser = new ValueParser();
         valueParser.setPropertyInfo(new BaseGenerator.PropertyInfo(Tissue.class, true));
         valueParser.setFieldName(TissueSourceGenerator.RETURN_DATE);
@@ -30,6 +31,7 @@ public class TissueSourceGeneratorTest {
         Map<String, Object> actual = sourceGenerator.generate();
 
         Map<String, Object> expected = new HashMap<>();
+        expected.put(OncHistoryDetailPatch.ONC_HISTORY_DETAIL_ID, "5");
         expected.put(TissueSourceGenerator.RETURN_DATE, "2020-01-01");
         expected.put(OncHistoryDetail.STATUS_REQUEST, OncHistoryDetail.STATUS_RETURNED);
         expected.put(TissuePatch.TISSUE_ID, 25);
@@ -40,10 +42,11 @@ public class TissueSourceGeneratorTest {
 
     @Test
     public void getAdditionalDataReturnDateNotExistsHasReceivedDate() {
-        GeneratorPayload generatorPayload = new GeneratorPayload(new NameValue(getReturnedDateWithAlias(), StringUtils.EMPTY), 25);
+        GeneratorPayload generatorPayload = new GeneratorPayload(new NameValue(getReturnedDateWithAlias(), StringUtils.EMPTY), 25, OncHistoryDetailPatch.ONC_HISTORY_DETAIL_ID, "5");
         Map<String, Object> actual = getDateNotExistsActualMap(generatorPayload);
 
         Map<String, Object> expected = new HashMap<>();
+        expected.put(OncHistoryDetailPatch.ONC_HISTORY_DETAIL_ID, "5");
         expected.put(OncHistoryDetail.STATUS_REQUEST, OncHistoryDetail.STATUS_RECEIVED);
         expected.put(TissuePatch.TISSUE_ID, 25);
 
@@ -54,10 +57,11 @@ public class TissueSourceGeneratorTest {
 
     @Test
     public void getAdditionalDataReturnDateNotExistsHasNotReceivedDate() {
-        GeneratorPayload generatorPayload = new GeneratorPayload(new NameValue(getReturnedDateWithAlias(), StringUtils.EMPTY), -1);
+        GeneratorPayload generatorPayload = new GeneratorPayload(new NameValue(getReturnedDateWithAlias(), StringUtils.EMPTY), -1, OncHistoryDetailPatch.ONC_HISTORY_DETAIL_ID, "5");
         Map<String, Object> actual = getDateNotExistsActualMap(generatorPayload);
 
         Map<String, Object> expected = new HashMap<>();
+        expected.put(OncHistoryDetailPatch.ONC_HISTORY_DETAIL_ID, "5");
         expected.put(OncHistoryDetail.STATUS_REQUEST, OncHistoryDetail.STATUS_SENT);
         expected.put(TissuePatch.TISSUE_ID, -1);
 

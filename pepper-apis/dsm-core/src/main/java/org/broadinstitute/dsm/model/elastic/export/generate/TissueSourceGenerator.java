@@ -6,30 +6,30 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.model.elastic.export.ExportFacade;
+import org.broadinstitute.dsm.model.elastic.export.ExportFacadePayload;
 
-public class TissueSourceGenerator extends AdditionalCollectionSourceGenerator {
+public class TissueSourceGenerator extends ParentChildRelationGenerator {
 
-    CollectionSourceGenerator baseCollectionGenerator;
     public static final String RETURN_DATE = "returnDate";
 
-    public TissueSourceGenerator() {
-        baseCollectionGenerator = new ParentChildRelationGenerator();
-    }
 
     @Override
     protected Optional<Map<String, Object>> getAdditionalData() {
-        baseCollectionGenerator.getAdditionalData()
-        return super.getAdditionalData().fl;
+
+
+
+        Optional<Map<String, Object>> additionalData = baseCollectionGenerator.getAdditionalData();
+        additionalData.ifPresent(map -> super.getAdditionalData().ifPresent(map::putAll));
+        return additionalData;
     }
 
     @Override
-    protected Map<String, Generator> obtainStrategyByFieldName() {
-        Map<String, Generator> resultMap = new HashMap<>();
-        if (StringUtils.isNotBlank(String.valueOf(generatorPayload.getValue()))) {
-            resultMap.put(RETURN_DATE, new BaseStrategy(OncHistoryDetail.STATUS_REQUEST, OncHistoryDetail.STATUS_RETURNED));
-        } else {
-            resultMap.put(RETURN_DATE, new UnableObtainTissueStrategy(generatorPayload));
+    public Map<String, Object> generate() {
+        if (RETURN_DATE.equals(getFieldName())) {
+
+            new ExportFacadePayload();
         }
-        return resultMap;
+        return super.generate();
     }
 }
