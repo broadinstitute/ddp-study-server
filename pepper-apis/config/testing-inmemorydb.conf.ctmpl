@@ -51,6 +51,7 @@
         "testAdminPassword": "{{$testingAuth.testAdminPassword}}",
         "testAdminUserAuth0Id": "{{$testingAuth.testAdminUserAuth0Id}}",
         "dsmApiAudience": "https://dsm.datadonationplatform.org",
+        "dsmDomain": "{{$auth0.dsmDomain}}",
         "dsmClientId": "{{$testingAuth.dsmClientId}}",
         "dsmClientSecret": "{{$testingAuth.dsmClientSecret}}",
         "backendTestClientId": "{{$testingAuth.backendTestClientId}}",

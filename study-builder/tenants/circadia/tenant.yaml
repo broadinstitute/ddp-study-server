@@ -16,6 +16,13 @@ pages:
     enabled: true
     html: ./pages/password_reset.html
 
+emailProvider:
+  name: "sendgrid"
+  enabled: true
+  default_from_address: ##SENDGRID_EMAIL##
+  credentials:
+    api_key: ##SENDGRID_TOKEN##
+
 emailTemplates:
   - template: welcome_email
     enabled: true

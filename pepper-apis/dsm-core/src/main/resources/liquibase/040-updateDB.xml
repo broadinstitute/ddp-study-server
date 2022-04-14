@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="pegah" id="kitUploadReasons">
+        <addColumn tableName="ddp_kit_request_settings">
+            <column name="upload_reasons" type="VARCHAR(1000)">
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="pegah" id="kitUploadReasonForUpload">
+        <addColumn tableName="ddp_kit_request">
+            <column name="upload_reason" type="VARCHAR(100)">
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="carrierPerGroup" author="pegah">
+        <addColumn tableName="carrier_service">
+            <column name="instance_group" type="VARCHAR(100)">
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="simone" id="DDP-5356-userIndex">
+        <addColumn tableName="ddp_instance">
+            <column name="es_users_index" type="VARCHAR(80)">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="simone" id="hasInvitations">
+        <addColumn tableName="instance_settings">
+            <column name="has_invitations" type="TINYINT(1)">
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

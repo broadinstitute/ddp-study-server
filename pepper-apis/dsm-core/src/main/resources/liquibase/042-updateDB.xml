@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="simone" id="addingDeletedFlag">
+        <addColumn tableName="ddp_medical_record">
+            <column name="deleted" type="tinyint(1)"></column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="simone" id="setDeletedFlag">
+        <sql>UPDATE ddp_medical_record as m, (
+                 SELECT m.medical_record_id from ddp_medical_record m
+                 left join ddp_institution i on (i.institution_id = m.institution_id)
+                 left join ddp_participant p on (p.participant_id = i.participant_id)
+                 left join ddp_instance realm on (p.ddp_instance_id = realm.ddp_instance_id)
+                 where realm.instance_name = 'Prostate' and (p.ddp_participant_id like '1771332079%' OR p.ddp_participant_id like '-763171247%') and type = 'INITIAL_BIOPSY' and i.ddp_institution_id != '1' and i.institution_id &#60; 20000) as m2
+             SET m.deleted = 1
+             WHERE m2.medical_record_id = m.medical_record_id;</sql>
+    </changeSet>
+    <!-- prefix for gen2 prostate pts in dev: 1771332079 on prod: -763171247  -->
+    <!-- prod i.instance_id > 20000 are actual new added initial_biopsies for migrated pts  -->
+
+    <changeSet id="carrier_per_study_key" author="pegah">
+        <addColumn tableName="carrier_service">
+            <column name="carrier_tracking_url" type="VARCHAR(500)"></column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="DDP-5445_ups_shipment_table" author="pegah">
+        <createTable tableName="ups_shipment">
+            <column name="ups_shipment_id" type="INT" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"></constraints>
+            </column>
+            <column name="dsm_kit_request_id" type="INT">
+                <constraints nullable="false" unique="true" foreignKeyName="dsm_kit_request_id_shipment_fk"
+                             referencedTableName="ddp_kit" referencedColumnNames="dsm_kit_request_id"></constraints>
+            </column>
+        </createTable>
+
+    </changeSet>
+
+    <changeSet id="DDP-5445-ups_package-table" author="pegah">
+        <createTable tableName="ups_package">
+            <column name="ups_package_id" type="INT" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"></constraints>
+            </column>
+            <column name="ups_shipment_id" type="INT">
+                <constraints nullable="false" foreignKeyName="ups_shipment_id_fk"
+                             referencedTableName="ups_shipment"
+                             referencedColumnNames="ups_shipment_id"></constraints>
+            </column>
+            <column name="tracking_number" type="varchar(50)"></column>
+            <column name="delivery_date" type="varchar(10)"></column><!-- Format: MMDDYYYY-->
+            <column name="delivery_date_type" type="varchar(3)"></column><!-- Indicates the type of delivery-->
+            <column name="delivery_time_start" type="varchar(6)"></column><!-- Format: HHMMSS 24 hour-->
+            <column name="delivery_time_end" type="varchar(6)"></column><!-- Format: HHMMSS 24 hour-->
+            <column name="delivery_time_type" type="varchar(3)"></column><!-- Indicates the type of delivery-->
+
+        </createTable>
+    </changeSet>
+    <changeSet id="DDP-5445_ups_activity_table" author="pegah">
+        <createTable tableName="ups_activity">
+            <column name="ups_activity_id" type="INT" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"></constraints>
+            </column>
+            <column name="ups_package_id" type="INT">
+                <constraints nullable="false" foreignKeyName="ups_package_id_fk" referencedTableName="ups_package"
+                             referencedColumnNames="ups_package_id"></constraints>
+            </column>
+            <column name="ups_location" type="TEXT(10000)"></column>
+            <column name="ups_status_type" type="VARCHAR(10)"></column>
+            <column name="ups_status_description" type="VARCHAR(100)"></column>
+            <column name="ups_status_code" type="VARCHAR(10)"></column>
+            <column name="ups_activity_date_time" type="DATETIME"></column>
+        </createTable>
+    </changeSet>
+
+
+</databaseChangeLog>

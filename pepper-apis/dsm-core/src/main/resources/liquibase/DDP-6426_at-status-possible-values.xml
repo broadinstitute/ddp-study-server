@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="statusPossibleValuesAT" author="ikhaladz">
+        <update tableName="field_settings">
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;NotRegistered&quot;,&quot;name&quot;:&quot;Not Registered&quot;},{&quot;value&quot;:&quot;Registered&quot;,&quot;name&quot;:&quot;Registered&quot;},{&quot;value&quot;:&quot;ConsentedNeedsAssent&quot;,&quot;name&quot;:&quot;Consented, Needs Assent&quot;},{&quot;value&quot;:&quot;Consented&quot;,&quot;name&quot;:&quot;Consented&quot;},{&quot;value&quot;:&quot;SubmittedPhysicianInfo&quot;,&quot;name&quot;:&quot;Submitted Physician Info&quot;},{&quot;value&quot;:&quot;SubmittedMedicalHistory&quot;,&quot;name&quot;:&quot;Submitted Medical History&quot;},{&quot;value&quot;:&quot;SubmittedGenomeStudyShippingInfo&quot;,&quot;name&quot;:&quot;Submitted Genome Study Shipping Info&quot;},{&quot;value&quot;:&quot;SubmittedEnrollment&quot;,&quot;name&quot;:&quot;Submitted Enrollment/Pending Confirmation&quot;},{&quot;value&quot;:&quot;Enrolled&quot;,&quot;name&quot;:&quot;Enrolled&quot;},{&quot;value&quot;:&quot;NotEligible&quot;,&quot;name&quot;:&quot;Not Eligible&quot;},{&quot;value&quot;:&quot;Duplicate&quot;,&quot;name&quot;:&quot;Duplicate&quot;}]"/>
+            <where>column_name = 'REGISTRATION_STATUS'</where>
+        </update>
+
+        <update tableName="field_settings">
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;Dependent&quot;,&quot;name&quot;:&quot;Dependent&quot;},{&quot;value&quot;:&quot;PortalUser&quot;,&quot;name&quot;:&quot;Portal User&quot;},{&quot;value&quot;:&quot;Self&quot;,&quot;name&quot;:&quot;Self&quot;}]"/>
+            <where>column_name = 'REGISTRATION_TYPE'</where>
+        </update>
+    </changeSet>
+
+</databaseChangeLog>

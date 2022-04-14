@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="lkapanad" id="file-answer-one-to-many">
+        <dropForeignKeyConstraint baseTableName="file_answer" constraintName="file_answer_file_upload_fk"/>
+        <dropForeignKeyConstraint baseTableName="file_answer" constraintName="file_answer_answer_fk"/>
+        <dropPrimaryKey tableName="file_answer" constraintName="file_answer_pk"/>
+        <addPrimaryKey tableName="file_answer" columnNames="answer_id,file_upload_id" constraintName="file_answer_pk"/>
+        <addForeignKeyConstraint baseTableName="file_answer" baseColumnNames="answer_id" constraintName="file_answer_answer_fk"
+                                 referencedTableName="answer" referencedColumnNames="answer_id" onDelete="CASCADE"/>
+        <addForeignKeyConstraint baseTableName="file_answer" baseColumnNames="file_upload_id" constraintName="file_answer_file_upload_fk"
+                                 referencedTableName="file_upload" referencedColumnNames="file_upload_id" />
+    </changeSet>
+
+</databaseChangeLog>

@@ -24,6 +24,7 @@
         "managementApiSecret": "{{$auth0.managementApiSecret}}",
         "managementApiClientId": "{{$auth0.managementApiClientId}}",
         "encryptionSecret": "{{$auth0.encryptionSecret}}",
+        "dsmDomain": "{{$auth0.dsmDomain}}",
         "dsmClientId": "{{$auth0.dsmClientId}}",
         "dsmClientSecret": "{{$auth0.dsmClientSecret}}",
         "ipAllowList": [

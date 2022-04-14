@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="simone" id="atForm">
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="TAB"/>
+            <column name="column_name" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_display" value="Participant Info"/>
+            <column name="display_type" value="TAB"/>
+            <column name="order_number" value="8"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_FIRSTNAME"/>
+            <column name="column_display" value="First name"/>
+            <column name="display_type" value="ACTIVITY"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;REGISTRATION.REGISTRATION_FIRST_NAME&quot;}]"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_MIDDLENAME"/>
+            <column name="column_display" value="Middle name"/>
+            <column name="display_type" value="ACTIVITY"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;REGISTRATION.REGISTRATION_MIDDLE_NAME&quot;}]"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_LASTNAME"/>
+            <column name="column_display" value="Last name"/>
+            <column name="display_type" value="ACTIVITY"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;REGISTRATION.REGISTRATION_LAST_NAME&quot;}]"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_SUFFIX"/>
+            <column name="column_display" value="Prefix/Suffix"/>
+            <column name="display_type" value="ACTIVITY"/>
+            <column name="possible_values" value="[{&quot;value&quot;:&quot;REGISTRATION.REGISTRATION_PREFIX&quot;}]"/>
+            <column name="order_number" value="4"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_TITLE"/>
+            <column name="column_display" value="Title"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="order_number" value="5"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_GENDER"/>
+            <column name="column_display" value="Gender"/>
+            <column name="display_type" value="ACTIVITY"/>
+            <column name="possible_values" value="[{&quot;value&quot;:&quot;REGISTRATION.REGISTRATION_GENDER&quot;}]"/>
+            <column name="order_number" value="6"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_DATEOFBIRTH"/>
+            <column name="column_display" value="Date of birth"/>
+            <column name="display_type" value="ACTIVITY"/>
+            <column name="possible_values" value="[{&quot;value&quot;:&quot;REGISTRATION.REGISTRATION_DOB&quot;}]"/>
+            <column name="order_number" value="7"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_LANGUAGE"/>
+            <column name="column_display" value="Language"/>
+            <column name="display_type" value="ACTIVITY"/>
+            <column name="possible_values" value="[{&quot;value&quot;:&quot;profile.preferredLanguage&quot;}]"/>
+            <column name="order_number" value="8"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_TIMEZONE"/>
+            <column name="column_display" value="Time zone"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="order_number" value="9"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_HOMEPHONE"/>
+            <column name="column_display" value="Phone (H)"/>
+            <column name="display_type" value="ACTIVITY"/>
+            <column name="possible_values" value="[{&quot;value&quot;:&quot;REGISTRATION.REGISTRATION_PHONE&quot;}]"/>
+            <column name="order_number" value="10"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_WORKPHONE"/>
+            <column name="column_display" value="Phone (W)"/>
+            <column name="order_number" value="11"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_MOBILEPHONE"/>
+            <column name="column_display" value="Phone (M)"/>
+            <column name="order_number" value="12"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_EMAIL"/>
+            <column name="column_display" value="E-mail"/>
+            <column name="display_type" value="ACTIVITY"/>
+            <column name="possible_values" value="[{&quot;value&quot;:&quot;profile.email&quot;}]"/>
+            <column name="order_number" value="13"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_ALTEMAIL"/>
+            <column name="column_display" value="Alt e-mail"/>
+            <column name="order_number" value="14"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_PHYSICALADDRESS"/>
+            <column name="column_display" value="Address (P)"/>
+            <column name="display_type" value="ACTIVITY"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;REGISTRATION.REGISTRATION_STREET_ADDRESS&quot;}]"/>
+            <column name="order_number" value="15"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_PHYSICALCITY"/>
+            <column name="column_display" value="City (P)"/>
+            <column name="display_type" value="ACTIVITY"/>
+            <column name="possible_values" value="[{&quot;value&quot;:&quot;REGISTRATION.REGISTRATION_CITY&quot;}]"/>
+            <column name="order_number" value="16"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_PHYSICALSTATE"/>
+            <column name="column_display" value="State (P)"/>
+            <column name="display_type" value="ACTIVITY"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;REGISTRATION.US_REGISTRATION_STATE_PROVINCE&quot;}]"/>
+            <column name="order_number" value="17"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_PHYSICALCOUNTRY"/>
+            <column name="column_display" value="Country (P)"/>
+            <column name="display_type" value="ACTIVITY"/>
+            <column name="possible_values" value="[{&quot;value&quot;:&quot;REGISTRATION.REGISTRATION_COUNTRY&quot;}]"/>
+            <column name="order_number" value="18"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_PHYSICALZIP"/>
+            <column name="column_display" value="Zip (P)"/>
+            <column name="display_type" value="ACTIVITY"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;REGISTRATION.REGISTRATION_POSTAL_CODE&quot;}]"/>
+            <column name="order_number" value="19"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_MAILINGADDRESS"/>
+            <column name="column_display" value="Address (M)"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="order_number" value="20"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_MAILINGCITY"/>
+            <column name="column_display" value="City (M)"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="order_number" value="21"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_MAILINGSTATE"/>
+            <column name="column_display" value="State (M)"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="order_number" value="22"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_MAILINGCOUNTRY"/>
+            <column name="column_display" value="Country (M)"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="order_number" value="23"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_MAILINGZIP"/>
+            <column name="column_display" value="Zip (M)"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="order_number" value="24"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_DONOTCONTACT"/>
+            <column name="column_display" value="DNC"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="order_number" value="25"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_INFO"/>
+            <column name="column_name" value="DATSTAT_DONOTCONTACTCOMMENT"/>
+            <column name="column_display" value="DNC comment"/>
+            <column name="display_type" value="TEXTAREA"/>
+            <column name="order_number" value="26"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="TAB"/>
+            <column name="column_name" value="AT_PARTICIPANT_EXIT"/>
+            <column name="column_display" value="Exit Information"/>
+            <column name="display_type" value="TAB"/>
+            <column name="order_number" value="9"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_EXIT"/>
+            <column name="column_name" value="EXITSTATUS"/>
+            <column name="column_display" value="Exit status:"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;0&quot;,&quot;name&quot;:&quot;Not Exited&quot;,&quot;default&quot;:true},{&quot;value&quot;:&quot;1&quot;,&quot;name&quot;:&quot;Exited&quot;}]"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_EXIT"/>
+            <column name="column_name" value="DATSTAT_EXITREASON"/>
+            <column name="column_display" value="Exit reason:"/>
+            <column name="display_type" value="OPTIONS"/>
+            <column name="possible_values"
+                    value="[{&quot;value&quot;:&quot;C&quot;,&quot;name&quot;:&quot;Completed&quot;},{&quot;value&quot;:&quot;D&quot;,&quot;name&quot;:&quot;Deceased&quot;},{&quot;value&quot;:&quot;I&quot;,&quot;name&quot;:&quot;Incarcerated&quot;},{&quot;value&quot;:&quot;UL&quot;,&quot;name&quot;:&quot;Unable to continue&quot;},{&quot;value&quot;:&quot;UA&quot;,&quot;name&quot;:&quot;Unable to locate&quot;},{&quot;value&quot;:&quot;UW&quot;,&quot;name&quot;:&quot;Unwilling to continue&quot;},{&quot;value&quot;:&quot;W&quot;,&quot;name&quot;:&quot;Withdrawn by study staff&quot;},{&quot;value&quot;:&quot;O&quot;,&quot;name&quot;:&quot;Other&quot;}]"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_EXIT"/>
+            <column name="column_name" value="DATSTAT_EXITDATE"/>
+            <column name="column_display" value="Exit date:"/>
+            <column name="display_type" value="DATE"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_PARTICIPANT_EXIT"/>
+            <column name="column_name" value="DATSTAT_EXITCOMMENT"/>
+            <column name="column_display" value="Exit comments:"/>
+            <column name="display_type" value="TEXTAREA"/>
+            <column name="order_number" value="4"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

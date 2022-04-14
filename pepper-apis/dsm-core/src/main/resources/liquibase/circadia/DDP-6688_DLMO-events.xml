@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="DDP-6688_updateTabName" author="simone" >
+        <sql>
+            UPDATE field_settings
+            SET column_display = 'Melatonin Kit Management'
+            WHERE
+                    ddp_instance_id = (SELECT DDP_instance_id FROM ddp_instance WHERE study_guid = 'circadia')
+              AND column_name = 'CIRCADIA_KIT_MANAGEMENT'
+        </sql>
+    </changeSet>
+
+    <changeSet id="DDP-6688_DLMO-event" author="simone" >
+        <sql>
+            UPDATE field_settings
+            SET actions = '[{&quot;name&quot;:&quot;DLMO_DATE_1&quot;,&quot;type&quot;:&quot;PARTICIPANT_EVENT&quot;}]'
+            WHERE
+                    ddp_instance_id = (SELECT DDP_instance_id FROM ddp_instance WHERE study_guid = 'circadia')
+              AND column_name = 'DLMO_DATE_1'
+        </sql>
+        <sql>
+            UPDATE field_settings
+            SET actions = '[{&quot;name&quot;:&quot;DLMO_DATE_2&quot;,&quot;type&quot;:&quot;PARTICIPANT_EVENT&quot;}]'
+            WHERE
+                    ddp_instance_id = (SELECT DDP_instance_id FROM ddp_instance WHERE study_guid = 'circadia')
+              AND column_name = 'DLMO_DATE_2'
+        </sql>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-6688_DLMO-event2">
+        <insert tableName="event_type">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='circadia')"></column>
+            <column name="event_name" value="DLMO_DATE_1"/>
+            <column name="event_description" value="DLMO Collection Date #1"/>
+            <column name="event_type" value="SENT"/>
+        </insert>
+        <insert tableName="event_type">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='circadia')"></column>
+            <column name="event_name" value="DLMO_DATE_2"/>
+            <column name="event_description" value="DLMO Collection Date #2"/>
+            <column name="event_type" value="SENT"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

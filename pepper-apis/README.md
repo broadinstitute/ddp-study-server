@@ -92,8 +92,8 @@ database, which is the default.
 2. Render the configuration file (if you're on Linux, prepend `sudo` because this invokes docker)
     * `./api-build.sh v1 dev . --config`
 3. Build the project
-    * `mvn -DskipTests clean install`
-    * `mvn -DskipTests -f parent-pom.xml install`
+    * `mvn -DskipTests clean install -pl dss-server -am`
+   
 4. Copy the command-line flags from `output-build-config/local-java-props.txt`
 5. Run the JAR
     * `java [the copied cmd line flags] -jar ./target/DataDonationPlatform.jar`
@@ -109,14 +109,6 @@ The `api-build.sh` script helps with a few automation steps. Try the `--help` fl
 
 ### Options when building backend container
 * `DEBUG` when set to `true`, will open up port 9786 and launch the backend with debugging enabled
-* `NGINX_PROXIED_HOST` controls the IP that nginx will proxy to.  Use this to run nginx locally
-via docker and have nginx proxy your non-dockered locally running instance of the backend.  Use
-this in conjunction with `ifconfig` magic to reserve a fixed IP
-address locally and have nginx proxy to your locally deployed java app.  For example:
-```sh
-$ sudo ifconfig lo0 alias 192.168.1.100/24
-$ export NGINX_PROXIED_HOST=192.168.1.100
-```
 
 ### Running tests and main apps (DataDonationPlatform.java and Housekeeping.java) in intellij and mvn
 After running `api-build.sh` (you ran that already, right?), take a look at the `output-build-config/local-java-props.txt`
@@ -159,16 +151,9 @@ In order to send a request to the service, you must obtain an `idToken` first
 
 ## Databases
 We track schema changes via liquibase, use mysql for local database, and google
-cloudsql/mysql for our CI dev/test/staging/prod environments. We used to use
-hsql for local in-memory database. If you're using that and want to connect to
-hsqldb locally, see [docs/hsqldb-on-cli.md](docs/hsqldb-on-cli.md).
+cloudsql/mysql for our CI dev/test/staging/prod environments. 
 
 ### Setting up a local mysql database
-Local mysql databases have some advantages over hsqldb:
-
-1. They more closely resemble what you'll find in dev/test/staging/prod
-2. You can connect to them with sql clients, which you can't do easily with disposable hsqldb
-
 Beware that our cloudSQL databases require SSL, and if you don't enable SSL on your local mysql instance, you may
 end up with surprises during CI builds. If you still want to disable SSL locally, append the following parameter to the
 JDBC connection string (see the details on how to set it below):

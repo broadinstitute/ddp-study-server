@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="Dmitrii Eliseev" id="20220127-drop-numeric-type column">
+        <dropForeignKeyConstraint baseTableName="numeric_question" constraintName="numeric_question_numeric_type_fk"/>
+        <dropColumn tableName="numeric_question" columnName="numeric_type_id"/>
+    </changeSet>
+
+    <changeSet author="Dmitrii Eliseev" id="20220127-drop-numeric-type table">
+        <dropTable tableName="numeric_type" />
+    </changeSet>
+
+</databaseChangeLog>

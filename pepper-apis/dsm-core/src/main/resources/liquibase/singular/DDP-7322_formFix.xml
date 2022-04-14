@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="DDP-7322_fixFormError_Tab1" author="Simone">
+        <sql>
+            UPDATE field_settings
+            SET display_type = 'TAB', field_type = 'TAB_GROUPED'
+                WHERE column_name = 'SINGULAR_TAB_CARDIAC_MALFORMATION'
+        </sql>
+    </changeSet>
+
+    <changeSet id="DDP-7322_fixFormError_Tab2" author="Simone">
+        <sql>
+            UPDATE field_settings
+            SET field_type = 'TAB_GROUPED'
+                WHERE column_name = 'SINGULAR_TAB_GENETIC_TESTING'
+        </sql>
+    </changeSet>
+</databaseChangeLog>

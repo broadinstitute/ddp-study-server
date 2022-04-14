@@ -1,4 +1,4 @@
-FROM ubuntu:focal-20200729
+FROM ubuntu:focal-20210723
 
 ENV SQUID_VERSION=4.10 \
     SQUID_CACHE_DIR=/var/spool/squid \

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="ypavlov" id="id-add-new-question-type-ai-question-table">
+        <createTable tableName="activity_instance_select_question">
+            <column name="activity_instance_select_question_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="activity_instance_select_question_pk"
+                             references="question(question_id)" foreignKeyName="activity_instance_select_question_question_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="ypavlov" id="id-add-new-question-type-ai-based-questions-table">
+        <createTable tableName="activity_instance_select_activity_code">
+            <column name="activity_instance_select_question_id" type="bigint">
+                <constraints nullable="false"
+                             references="activity_instance_select_question(activity_instance_select_question_id)" foreignKeyName="activity_instance_select_activity_code__question_fk"/>
+            </column>
+            <column name="study_activity_code" type="varchar(80)"/>
+            <column name="display_order" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="ypavlov" id="id-add-new-question-type-ai-answer-table">
+        <createTable tableName="activity_instance_select_answer">
+            <column name="answer_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="activity_instance_select_answer_pk"
+                             references="answer(answer_id)" foreignKeyName="activity_instance_select_answer_answer_fk" deleteCascade="true"/>
+            </column>
+            <column name="instance_guid" type="varchar(10)">
+                <constraints nullable="true" foreignKeyName="activity_instance_select_answer_activity_instance_fk"
+                             references="activity_instance(activity_instance_guid)" deleteCascade="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="ypavlov" id="id-add-new-question-type-to-question_type-table">
+        <insert tableName="question_type">
+            <column name="question_type_code" value="ACTIVITY_INSTANCE_SELECT"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

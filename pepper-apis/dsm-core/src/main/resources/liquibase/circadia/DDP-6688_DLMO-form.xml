@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="simone" id="2ndCircadiaForm">
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='circadia')"></column>
+            <column name="field_type" value="TAB"/>
+            <column name="column_name" value="CIRCADIA_DLMO_TAB"/>
+            <column name="column_display" value="DLMO Collection"/>
+            <column name="display_type" value="TAB"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='circadia')"></column>
+            <column name="field_type" value="CIRCADIA_DLMO_TAB"/>
+            <column name="column_name" value="DLMO_DATE_1"/>
+            <column name="column_display" value="DLMO Collection Date #1"/>
+            <column name="display_type" value="DATE"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='circadia')"></column>
+            <column name="field_type" value="CIRCADIA_DLMO_TAB"/>
+            <column name="column_name" value="DLMO_DATE_2"/>
+            <column name="column_display" value="DLMO Collection Date #2"/>
+            <column name="display_type" value="DATE"/>
+            <column name="order_number" value="2"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="changeTabOrder" author="simone">
+        <sql>
+            UPDATE field_settings
+            SET order_number = 2
+            WHERE column_name = 'CIRCADIA_KIT_MANAGEMENT'
+        </sql>
+    </changeSet>
+</databaseChangeLog>

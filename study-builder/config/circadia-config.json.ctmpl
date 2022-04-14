@@ -17,12 +17,14 @@
     "LOCALHOST_LOGOUTS": "",
     "LOCALHOST_ORIGINS": "",
   {{end}}
+    "SERVER_BASE_URL": "{{$conf.serverBaseUrl}}",
     "BASE_URL": "{{$conf.baseWebUrl}}",
     "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}",
     "ASSETS_URL": "{{$conf.assetsBucketName}}",
     "STUDY_EMAIL": "{{$conf.studyEmail}}",
     "FROM_NAME": "{{$conf.sendgridFromName}}",
-    "FROM_EMAIL": "{{$conf.sendgridFromEmail}}"
+    "SENDGRID_EMAIL": "{{$conf.sendgridFromEmail}}",
+    "SENDGRID_TOKEN": "{{$conf.sendgridApiKey}}"
   },
   "AUTH0_ALLOW_DELETE": false,
   "INCLUDED_PROPS": {

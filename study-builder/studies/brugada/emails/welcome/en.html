@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <meta
+    http-equiv="Content-Type"
+    content="text/html; charset=utf-8"
+  />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1"
+  />
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+  />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap"
+  >
+
+  <!--[if !mso]><!-->
+  <meta
+    http-equiv="X-UA-Compatible"
+    content="IE=Edge"
+  />
+  <title>
+    ${i18n.en.emails.welcome.subject}
+  </title>
+  <!--<![endif]-->
+
+  <!--[if (gte mso 9)|(IE)]>
+  <xml>
+    <o:OfficeDocumentSettings>
+      <o:AllowPNG/>
+      <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+  </xml>
+  <![endif]-->
+
+  <!--[if (gte mso 9)|(IE)]>
+  <style type="text/css">
+        body {
+          max-width: 648px;
+          margin: 0 auto;
+          padding: 0 24px;
+        }
+
+        table {
+          border-collapse: collapse;
+        }
+
+        table,
+        td {
+          mso-table-lspace: 0pt;
+          mso-table-rspace: 0pt;
+        }
+
+        img {
+          -ms-interpolation-mode: bicubic;
+        }
+  </style>
+  <![endif]-->
+
+  <style type="text/css">
+      body,
+      p,
+      div {
+        font-family: "PT Sans", sans-serif;
+        font-size: 18px;
+        color: #281d1c;
+      }
+
+      p {
+        margin: 0 0 20px 0;
+        padding: 0;
+      }
+  </style>
+</head>
+<body>
+<center>
+  <table
+    style="
+      width: 100% !important;
+      max-width: 648px !important;
+      padding: 0 24px 0 24px;
+      border-collapse: collapse !important;
+      background-color: #ffffff !important;
+    "
+  >
+    <tbody>
+      <tr>
+        <td style="text-align: center; padding: 42px">
+          <img
+            src="https://storage.googleapis.com/${assetsBucketName}/email-assets/logo.png"
+            alt="${i18n.en.emails.common.logo_alt}"
+            style="width: 280px"
+          />
+        </td>
+      </tr>
+
+      <tr>
+        <td style="border-collapse: collapse">
+          <p>
+            ${i18n.en.emails.common.salutation}
+          </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>
+            ${i18n.en.emails.welcome.thank_you}
+          </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>
+            ${i18n.en.emails.welcome.account_created}
+          </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>
+            ${i18n.en.emails.welcome.enrollment}
+          </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>
+            <a
+              href="{{ baseWebUrl }}/activity/{{ activityInstanceGuid }}"
+              target="_blank"
+              style="
+                font-weight: bold;
+                text-decoration: underline;
+                color: #589297;
+              "
+            >${i18n.en.emails.welcome.consent_link}</a>
+          </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>
+            ${i18n.en.emails.common.progress}
+          </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p style="text-align: center; margin: 40px 0 40px 0;">
+            <img
+              src="https://storage.googleapis.com/${assetsBucketName}/email-assets/workflow-steps.png"
+              alt="${i18n.en.emails.common.progress_image_alt}"
+              style="
+                height: 140px;
+              "
+            />
+          </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>
+            ${i18n.en.emails.common.questions} <a
+                                                 href="tel:6177147560"
+                                                 style="
+                                     font-weight: bold;
+                                     text-decoration: underline;
+                                     color: #589297;
+                                   "
+                                               >(617) 714-7560</a>
+          </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p>
+            ${i18n.en.emails.common.closing}
+          </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p style="border-bottom: 1px solid #f3f3f3; padding: 0 0 20px 0;">
+            ${i18n.en.emails.common.team}
+          </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <p style="font-size: 13px; text-align: center; opacity: 0.75;">
+            ${i18n.en.emails.common.info_text1} <a
+                                    href="https://www.massgeneralbrigham.org/complianceline"
+                                    target="_blank"
+                                    style="
+                                      font-weight: bold;
+                                      text-decoration: underline;
+                                      color: #589297;
+                                    "
+                                  >${i18n.en.emails.common.info_link}</a>. ${i18n.en.emails.common.info_text2}
+          </p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</center>
+</body>
+</html>

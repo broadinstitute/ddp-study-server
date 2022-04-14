@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+
+    <changeSet id="DDP-7423-Data-sharing" author="pegah" >
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='rgp')"></column>
+            <column name="field_type" value="RGP_STUDY_STATUS_GROUP"/>
+            <column name="column_name" value="DATA_SHARING"/>
+            <column name="column_display" value="Data-sharing permissions"/>
+            <column name="display_type" value="OPTIONS"/>
+            <column name="possible_values" value="[{&quot;value&quot;:&quot;HMB&quot;,&quot;name&quot;:&quot;HMB&quot;},{&quot;value&quot;:&quot;GRU&quot;,&quot;name&quot;:&quot;GRU&quot;},{&quot;value&quot;:&quot;UNKNOWN&quot;,&quot;name&quot;:&quot;Unknown&quot;,&quot;default&quot;:true}]"/>
+            <column name="order_number" value="8"/>
+        </insert>
+    </changeSet>
+    <changeSet id="DDP-7423_order_number_changes" author="pegah">
+        <sql>
+            UPDATE field_settings
+            SET order_number = order_number + 1
+            Where field_settings_id &lt;&gt; 0 and field_settings_id in (SELECT field_settings_id from (select * FROM field_settings ) as something
+                                                                         Where something.ddp_instance_id in (select ddp_instance_id from ddp_instance where instance_name = 'RGP')
+                                                                           and something.order_number >= 8 and column_name &lt;&gt; "DATA_SHARING" and field_type = 'RGP_STUDY_STATUS_GROUP');
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-7423_update_default_data_sharing_hmb" author="pegah">
+        <sql>
+            UPDATE ddp_participant_data
+            SET data = JSON_SET(data,'$.DATA_SHARING','HMB')
+            where participant_data_id &lt;&gt; 0 and  participant_data_id in (SELECT participant_data_id from (select * FROM ddp_participant_data ) as something
+                                                                              Where something.ddp_instance_id in (select ddp_instance_id from ddp_instance where instance_name = 'RGP')
+                                                                                and JSON_EXTRACT(data, "$.DATE_ENROLLED") IS NOT NULL);
+        </sql>
+    </changeSet>
+    <changeSet id="DDP-7423_update_default_data_sharing_unknown" author="pegah">
+        <sql>
+            UPDATE ddp_participant_data
+            SET data = JSON_SET(data,'$.DATA_SHARING','UNKNOWN')
+            where participant_data_id &lt;&gt; 0 and  participant_data_id in (SELECT participant_data_id from (select * FROM ddp_participant_data ) as something
+                                                                              Where something.ddp_instance_id in (select ddp_instance_id from ddp_instance where instance_name = 'RGP')
+                                                                                and JSON_EXTRACT(data, "$.DATE_ENROLLED") IS  NULL);
+        </sql>
+    </changeSet>
+</databaseChangeLog>

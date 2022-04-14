@@ -32,6 +32,12 @@ COMMANDS:
   create-index <INDEX_FILE>
     create the index pointed to by the given file
 
+  create-script <SCRIPT-FILE>
+    create the script pointed to by the given file
+
+  create-ingest-pipeline <PIPELINE-FILE>
+    create the pipeline pointed to by the given file
+
   upload-role <ROLE_FILE>
     create/update the role pointed to by the given file
 
@@ -78,6 +84,34 @@ create_index() {
     -H "Authorization: Basic $CREDENTIALS" \
     -H 'Content-Type: application/json' \
     -d "@$index_file"
+}
+
+create_script() {
+  local script_file="$1"
+  local script_name="${script_file##*/}"
+  script_name="${script_name%.painless}"
+
+  local script_content='{"script": {"lang": "painless", "source": "'
+  while read line; do
+    script_content="$script_content$line"
+  done < $1
+  script_content="$script_content\" } }'"
+
+  curl -s -X PUT "$BASE_URL/_scripts/$script_name" \
+    -H "Authorization: Basic $CREDENTIALS" \
+    -H 'Content-Type: application/json' \
+    -d "$script_content"
+}
+
+create_ingest_pipeline() {
+  local pipeline_file="$1"
+  local pipeline_name="${pipeline_file##*/}"
+  pipeline_name="${pipeline_name%.json}"
+
+  curl -s -X PUT "$BASE_URL/_ingest/pipeline/$pipeline_name" \
+    -H "Authorization: Basic $CREDENTIALS" \
+    -H 'Content-Type: application/json' \
+    -d "@$pipeline_file"
 }
 
 upload_template() {
@@ -131,6 +165,12 @@ main() {
   case "$3" in
     create-index)
       create_index "$4"
+      ;;
+    create-script)
+      create_script "$4"
+      ;;
+    create-ingest-pipeline)
+      create_ingest_pipeline "$4"
       ;;
     upload-template)
       upload_template "$4"
