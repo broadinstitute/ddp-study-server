@@ -91,11 +91,16 @@ public class GPReceivedKit {
         kitRequestShipping.setReceiveDate(receivedDate);
         kitRequestShipping.setKitLabel(kitLabel);
 
-        DDPInstanceDto ddpInstanceDto =
-                new DDPInstanceDao().getDDPInstanceByInstanceName(maybeBspKitQueryResult.getInstanceName()).orElseThrow();
+        try {
+            DDPInstanceDto ddpInstanceDto =
+                    new DDPInstanceDao().getDDPInstanceByInstanceName(maybeBspKitQueryResult.getInstanceName()).orElseThrow();
 
-        UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.KIT_LABEL,
-                ESObjectConstants.KIT_LABEL, kitLabel).export();
+            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.KIT_LABEL,
+                    ESObjectConstants.KIT_LABEL, kitLabel).export();
+        } catch (Exception e) {
+            logger.error("Failed to update kit receiving to ES for kit w/ label " + kitLabel
+                    + " for pt " + kitRequestShipping.getCollaboratorParticipantId() );
+        }
     }
 
     private static void writeSampleReceivedToES(DDPInstance ddpInstance, BSPKitDto bspKitInfo) {
