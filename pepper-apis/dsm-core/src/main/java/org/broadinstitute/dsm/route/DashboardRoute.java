@@ -82,7 +82,6 @@ public class DashboardRoute extends RequestHandler {
                                                          Map<String, List<AbstractionGroup>> abstractionSummary,
                                                          Map<String, Map<String, Object>> proxyData,
                                                          Map<String, List<ParticipantData>> participantData) {
-        Gson gson = new Gson();
         List<ParticipantWrapperDto> participantList = new ArrayList<>();
         for (String ddpParticipantId : baseList) {
             Participant participant = participantMap != null ? participantMap.get(ddpParticipantId) : null;
@@ -256,7 +255,6 @@ public class DashboardRoute extends RequestHandler {
     public DashboardInformation getMedicalRecordDashboard(@NonNull long start, @NonNull long end, @NonNull String realm) {
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.MEDICAL_RECORD_ACTIVATED);
 
-        Map<String, Map<String, Object>> participantESData = ElasticSearchUtil.getESData(ddpInstance);
         Map<String, Participant> participants = Participant.getParticipants(realm);
         Map<String, List<MedicalRecord>> medicalRecords = MedicalRecord.getMedicalRecords(realm);
         Map<String, List<OncHistoryDetail>> oncHistoryDetails = OncHistoryDetail.getOncHistoryDetails(realm);
@@ -264,99 +262,116 @@ public class DashboardRoute extends RequestHandler {
         Map<String, List<AbstractionActivity>> abstractionActivities = AbstractionActivity.getAllAbstractionActivityByRealm(realm);
         Map<String, List<AbstractionGroup>> abstractionSummary = AbstractionFinal.getAbstractionFinal(realm);
 
-        List<ParticipantWrapperDto> participantWrapperList = addAllData(new ArrayList<>(participantESData.keySet()), participantESData,
-                participants, medicalRecords, oncHistoryDetails, kitRequests, abstractionActivities, abstractionSummary, null, null);
-
         Map<String, Integer> dashboardValues = new HashMap(); //counts only pt
         Map<String, Integer> dashboardValuesDetailed = new HashMap(); //counts number of institutions in total
         Map<String, Integer> dashboardValuesPeriod = new HashMap(); //counts only pt per period
         Map<String, Integer> dashboardValuesPeriodDetailed = new HashMap(); //counts number of institutions in total per period
         //number of pts in ES
-        dashboardValues.put("all", participantWrapperList.size());
-        for (ParticipantWrapperDto wrapper : participantWrapperList) {
-            //es data information
-            Map<String, Object> esData = wrapper.getEsDataAsMap();
-            //count pt enrollment status
-            String enrollmentStatus = (String) esData.get("status");
-            countParameter(dashboardValues, "status." + enrollmentStatus, esData, "status", false);
+        dashboardValues.put("all",new Long(ElasticSearchUtil.getCountParticipantsFromES(ddpInstance)).intValue());
 
-            if (esData.get("profile") != null) {
-                Map<String, Object> profileData = (Map<String, Object>) esData.get("profile");
-                //count pt creation in period
-                countParameterPeriod(dashboardValuesPeriod, "all", profileData, "createdAt", start, end);
-            }
-            if (esData.get("dsm") != null) {
-                Map<String, Object> dsmSpecificInformation = (Map<String, Object>) esData.get("dsm");
-                // count pt count consented to tissue
-                countBooleanParameter(dashboardValues, "tissueConsent", dsmSpecificInformation, "hasConsentedToTissueSample");
-                countBooleanParameter(dashboardValues, "bloodConsent", dsmSpecificInformation, "hasConsentedToBloodDraw");
-            }
-            if (esData.get("activities") != null) {
-                List<Object> surveyList = (ArrayList<Object>) esData.get("activities");
-                for (Object survey : surveyList) {
-                    Map<String, Object> surveyMap = (Map<String, Object>) survey;
-                    String version = (String) surveyMap.get("activityVersion");
-                    String code = (String) surveyMap.get("activityCode");
+        long ptsStatusRegistered = ElasticSearchUtil.getCountParticipantsFromESByFilter(ddpInstance,  " AND data.status = "
+                + "REGISTERED");
+        dashboardValues.put("status.REGISTERED", new Long(ptsStatusRegistered).intValue());
 
-                    if (surveyMap.get("lastUpdatedAt") != null) {
-                        //get number of pt for survey x (which started to fill out survey)
-                        countParameter(dashboardValues, "activity." + code + "." + version, surveyMap, "activityCode", false);
-                        countParameter(dashboardValues, "activity." + code, surveyMap, "activityCode", false);
-                    }
+        long ptsStatusEnrolled = ElasticSearchUtil.getCountParticipantsFromESByFilter(ddpInstance,  " AND data.status = "
+                + "ENROLLED");
+        dashboardValues.put("status.ENROLLED", new Long(ptsStatusEnrolled).intValue());
 
-                    //get number of pt who completed survey x with version z
-                    countParameter(dashboardValues, "activity." + code + "." + version + ".completed", surveyMap,
-                            "completedAt", true);
-                    countParameterPeriod(dashboardValuesPeriod, "activity." + code + "." + version + ".completed", surveyMap,
-                            "completedAt", start, end);
+        long ptsStatusExitedBeforeEnrollment = ElasticSearchUtil.getCountParticipantsFromESByFilter(ddpInstance,  " AND data.status = "
+                + "EXITED_BEFORE_ENROLLMENT");
+        dashboardValues.put("status.EXITED_BEFORE_ENROLLMENT", new Long(ptsStatusExitedBeforeEnrollment).intValue());
 
-                    //get number of pt who completed survey x ignoring version
-                    countParameter(dashboardValues, "activity." + code + ".completed", surveyMap,
-                            "completedAt", true);
-                    countParameterPeriod(dashboardValuesPeriod, "activity." + code + ".completed", surveyMap,
-                            "completedAt", start, end);
-                }
-            }
+        long ptsStatusExitedAfterEnrollment = ElasticSearchUtil.getCountParticipantsFromESByFilter(ddpInstance,  " AND data.status = "
+                + "EXITED_AFTER_ENROLLMENT");
+        dashboardValues.put("status.EXITED_AFTER_ENROLLMENT", new Long(ptsStatusExitedAfterEnrollment).intValue());
 
-            if (wrapper.getParticipant() != null) {
-                if (wrapper.getParticipant().isMinimalMr()) {
-                    incrementCounter(dashboardValues, "minimalMR");
-                }
-            }
+        long ptsHasConsentedToBloodDraw = ElasticSearchUtil.getCountParticipantsFromESByFilter(ddpInstance,  " AND dsm"
+                + ".hasConsentedToBloodDraw = true");
+        dashboardValues.put("bloodConsent", new Long(ptsHasConsentedToBloodDraw).intValue());
 
-            Set<String> foundAtPt = new HashSet<>();
-            Set<String> foundAtPtPeriod = new HashSet<>();
-            if (wrapper.getMedicalRecords() != null && !wrapper.getMedicalRecords().isEmpty()) {
-                countMedicalRecordData(wrapper.getMedicalRecords(), foundAtPt, foundAtPtPeriod, dashboardValuesDetailed,
-                        dashboardValuesPeriodDetailed, start, end,
-                        kitRequests);
-            }
-            if (wrapper.getOncHistoryDetails() != null && !wrapper.getOncHistoryDetails().isEmpty()) {
-                countOncHistoryData(wrapper.getOncHistoryDetails(), foundAtPt, foundAtPtPeriod, dashboardValuesDetailed,
-                        dashboardValuesPeriodDetailed, start, end);
-            }
-            if (wrapper.getKits() != null && !wrapper.getKits().isEmpty()) {
-                countKits(wrapper.getKits(), foundAtPt, foundAtPtPeriod, dashboardValuesDetailed, dashboardValuesPeriodDetailed, start,
-                        end);
-            }
+        long ptsHasConsentedToTissueSample = ElasticSearchUtil.getCountParticipantsFromESByFilter(ddpInstance,  " AND dsm"
+                + ".hasConsentedToTissueSample = true");
+        dashboardValues.put("tissueConsent", new Long(ptsHasConsentedToTissueSample).intValue());
 
-            if (wrapper.getAbstractionActivities() != null && !wrapper.getAbstractionActivities().isEmpty()) {
-                for (AbstractionActivity activity : wrapper.getAbstractionActivities()) {
-                    if (AbstractionUtil.ACTIVITY_FINAL.equals(activity.getActivity())
-                            && AbstractionUtil.STATUS_DONE.equals(activity.getAStatus())) {
-                        incrementCounter(dashboardValues, "abstraction.done");
-                        incrementCounterPeriod(dashboardValuesPeriod, "abstraction.done", activity.getLastChanged(), start, end);
-                    }
-                }
-            }
-
-            for (String found : foundAtPt) {
-                incrementCounter(dashboardValues, found);
-            }
-            for (String found : foundAtPtPeriod) {
-                incrementCounter(dashboardValuesPeriod, found);
-            }
-        }
+//        for (ParticipantWrapperDto wrapper : participantWrapperList) {
+//            //es data information
+//            //count pt enrollment status
+////            String enrollmentStatus = (String) esData.get("status");
+////            countParameter(dashboardValues, "status." + enrollmentStatus, esData, "status", false);
+//
+//
+//            if (esData.get("profile") != null) {
+//                Map<String, Object> profileData = (Map<String, Object>) esData.get("profile");
+//                //count pt creation in period
+//                countParameterPeriod(dashboardValuesPeriod, "all", profileData, "createdAt", start, end);
+//            }
+//
+//            if (esData.get("activities") != null) {
+//                List<Object> surveyList = (ArrayList<Object>) esData.get("activities");
+//                for (Object survey : surveyList) {
+//                    Map<String, Object> surveyMap = (Map<String, Object>) survey;
+//                    String version = (String) surveyMap.get("activityVersion");
+//                    String code = (String) surveyMap.get("activityCode");
+//
+//                    if (surveyMap.get("lastUpdatedAt") != null) {
+//                        //get number of pt for survey x (which started to fill out survey)
+//                        countParameter(dashboardValues, "activity." + code + "." + version, surveyMap, "activityCode", false);
+//                        countParameter(dashboardValues, "activity." + code, surveyMap, "activityCode", false);
+//                    }
+//
+//                    //get number of pt who completed survey x with version z
+//                    countParameter(dashboardValues, "activity." + code + "." + version + ".completed", surveyMap,
+//                            "completedAt", true);
+//                    countParameterPeriod(dashboardValuesPeriod, "activity." + code + "." + version + ".completed", surveyMap,
+//                            "completedAt", start, end);
+//
+//                    //get number of pt who completed survey x ignoring version
+//                    countParameter(dashboardValues, "activity." + code + ".completed", surveyMap,
+//                            "completedAt", true);
+//                    countParameterPeriod(dashboardValuesPeriod, "activity." + code + ".completed", surveyMap,
+//                            "completedAt", start, end);
+//                }
+//            }
+//
+//            if (wrapper.getParticipant() != null) {
+//                if (wrapper.getParticipant().isMinimalMr()) {
+//                    incrementCounter(dashboardValues, "minimalMR");
+//                }
+//            }
+//
+//            Set<String> foundAtPt = new HashSet<>();
+//            Set<String> foundAtPtPeriod = new HashSet<>();
+//            if (wrapper.getMedicalRecords() != null && !wrapper.getMedicalRecords().isEmpty()) {
+//                countMedicalRecordData(wrapper.getMedicalRecords(), foundAtPt, foundAtPtPeriod, dashboardValuesDetailed,
+//                        dashboardValuesPeriodDetailed, start, end,
+//                        kitRequests);
+//            }
+//            if (wrapper.getOncHistoryDetails() != null && !wrapper.getOncHistoryDetails().isEmpty()) {
+//                countOncHistoryData(wrapper.getOncHistoryDetails(), foundAtPt, foundAtPtPeriod, dashboardValuesDetailed,
+//                        dashboardValuesPeriodDetailed, start, end);
+//            }
+//            if (wrapper.getKits() != null && !wrapper.getKits().isEmpty()) {
+//                countKits(wrapper.getKits(), foundAtPt, foundAtPtPeriod, dashboardValuesDetailed, dashboardValuesPeriodDetailed, start,
+//                        end);
+//            }
+//
+//            if (wrapper.getAbstractionActivities() != null && !wrapper.getAbstractionActivities().isEmpty()) {
+//                for (AbstractionActivity activity : wrapper.getAbstractionActivities()) {
+//                    if (AbstractionUtil.ACTIVITY_FINAL.equals(activity.getActivity())
+//                            && AbstractionUtil.STATUS_DONE.equals(activity.getAStatus())) {
+//                        incrementCounter(dashboardValues, "abstraction.done");
+//                        incrementCounterPeriod(dashboardValuesPeriod, "abstraction.done", activity.getLastChanged(), start, end);
+//                    }
+//                }
+//            }
+//
+//            for (String found : foundAtPt) {
+//                incrementCounter(dashboardValues, found);
+//            }
+//            for (String found : foundAtPtPeriod) {
+//                incrementCounter(dashboardValuesPeriod, found);
+//            }
+//        }
         logger.info("Done calculating dashboard. Returning map now");
         return new DashboardInformation(dashboardValues, dashboardValuesDetailed, dashboardValuesPeriod, dashboardValuesPeriodDetailed);
     }

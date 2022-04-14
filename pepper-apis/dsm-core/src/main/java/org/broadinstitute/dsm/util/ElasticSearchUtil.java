@@ -394,6 +394,73 @@ public class ElasticSearchUtil {
         return null;
     }
 
+    public static long getCountParticipantsFromESByFilter(@NonNull DDPInstance instance,
+                                                                                     @NonNull String filter) {
+        String index = instance.getParticipantIndexES();
+        long count = 0;
+        if (StringUtils.isNotBlank(index)) {
+            Map<String, Map<String, Object>> esData = new HashMap<>();
+            logger.info("Collecting ES data from index " + index);
+            try {
+                int scrollSize = 1000;
+                SearchRequest searchRequest = new SearchRequest(index);
+                SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+                SearchResponse response = null;
+                int i = 0;
+                AbstractQueryBuilder query = createESQuery(filter);
+                if (query == null) {
+                    throw new RuntimeException("Couldn't create query from filter " + filter);
+                }
+                searchSourceBuilder.query(query).sort(PROFILE_CREATED_AT, SortOrder.ASC);
+                while (response == null || response.getHits().getHits().length != 0) {
+                    searchSourceBuilder.size(scrollSize);
+                    searchSourceBuilder.from(i * scrollSize);
+                    searchRequest.source(searchSourceBuilder);
+
+                    response = client.search(searchRequest, RequestOptions.DEFAULT);
+                    count = count + response.getHits().totalHits;
+                    i++;
+                }
+            } catch (Exception e) {
+                logger.error("Couldn't get participants from ES for instance " + instance.getName(), e);
+            }
+            logger.info("Got " + esData.size() + " participants from ES for instance " + instance.getName());
+            return count;
+        }
+        return count;
+    }
+
+    public static long getCountParticipantsFromES(@NonNull DDPInstance instance) {
+        String index = instance.getParticipantIndexES();
+        long count = 0;
+        if (StringUtils.isNotBlank(index)) {
+            Map<String, Map<String, Object>> esData = new HashMap<>();
+            logger.info("Collecting ES data from index " + index);
+            try {
+                int scrollSize = 1000;
+                SearchRequest searchRequest = new SearchRequest(index);
+                SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+                SearchResponse response = null;
+                int i = 0;
+                searchSourceBuilder.query(QueryBuilders.matchAllQuery()).sort(PROFILE_CREATED_AT, SortOrder.ASC);
+                while (response == null || response.getHits().getHits().length != 0) {
+                    searchSourceBuilder.size(scrollSize);
+                    searchSourceBuilder.from(i * scrollSize);
+                    searchRequest.source(searchSourceBuilder);
+
+                    response = client.search(searchRequest, RequestOptions.DEFAULT);
+                    count = count + response.getHits().totalHits;
+                    i++;
+                }
+            } catch (Exception e) {
+                logger.error("Couldn't get participants from ES for instance " + instance.getName(), e);
+            }
+            logger.info("Got " + esData.size() + " participants from ES for instance " + instance.getName());
+            return count;
+        }
+        return count;
+    }
+
     public static Map<String, Address> getParticipantAddresses(RestHighLevelClient client, String indexName, Set<String> participantGuids) {
         Gson gson = new Gson();
         Map<String, Address> addressByParticipant = new HashMap<>();
