@@ -51,6 +51,7 @@ import com.auth0.net.AuthRequest;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -93,11 +94,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class DataLoaderTest {
-    private static final Logger LOG = LoggerFactory.getLogger(DataLoaderTest.class);
     private static String PARTICIPANT_DATA_TEST_DATA_LOCATION = "src/test/resources/dm-survey-testdata.json";
     private static OLCService olcService;
     private final String pretendAuth0UserId = "i_am_pretend";
