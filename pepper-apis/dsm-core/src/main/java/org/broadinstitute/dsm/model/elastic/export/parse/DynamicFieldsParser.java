@@ -2,10 +2,7 @@ package org.broadinstitute.dsm.model.elastic.export.parse;
 
 import static org.broadinstitute.dsm.model.Filter.NUMBER;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.StringUtils;
@@ -15,7 +12,7 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class DynamicFieldsParser extends BaseParser {
 
-    private static final Map<String, FieldSettingsDto> fieldSettingsDtoByColumnName = new HashMap<>();
+    static final Map<String, FieldSettingsDto> fieldSettingsDtoByColumnName = new WeakHashMap<>();
     public static final String DATE_TYPE = "DATE";
     public static final String CHECKBOX_TYPE = "CHECKBOX";
     public static final String ACTIVITY_STAFF_TYPE = "ACTIVITY_STAFF";
@@ -79,15 +76,17 @@ public class DynamicFieldsParser extends BaseParser {
 
     protected void getProperDisplayTypeWithPossibleValues() {
         Optional<FieldSettingsDto> fieldSettingsByInstanceNameAndColumnName;
-        if (!fieldSettingsDtoByColumnName.containsKey(super.fieldName)) {
+        String fieldName = super.fieldName;
+        if (!fieldSettingsDtoByColumnName.containsKey(fieldName)) {
             fieldSettingsByInstanceNameAndColumnName =
-                    fieldSettingsDao.getFieldSettingsByInstanceNameAndColumnName(realm, super.fieldName);
-            fieldSettingsByInstanceNameAndColumnName.ifPresent(fieldSetting -> {
-                fieldSettingsDtoByColumnName.put(super.fieldName, fieldSetting);
-            });
+                    fieldSettingsDao.getFieldSettingsByInstanceNameAndColumnName(realm, fieldName);
+            if (fieldSettingsByInstanceNameAndColumnName.isPresent()) {
+                fieldSettingsDtoByColumnName.put(fieldName, fieldSettingsByInstanceNameAndColumnName.get());
+            }
         } else {
-            fieldSettingsByInstanceNameAndColumnName = Optional.of(fieldSettingsDtoByColumnName.get(super.fieldName));
+            fieldSettingsByInstanceNameAndColumnName = Optional.of(fieldSettingsDtoByColumnName.get(fieldName));
         }
+        fieldName = null;
         if (fieldSettingsByInstanceNameAndColumnName.isPresent()) {
             FieldSettingsDto fieldSettings = fieldSettingsByInstanceNameAndColumnName.get();
             displayType = StringUtils.isNotBlank(fieldSettings.getDisplayType())
