@@ -259,6 +259,6 @@ public class OLCServiceTest extends TxnAwareBaseTest {
         String geocodingKey = cfg.getString(ConfigFile.GEOCODING_API_KEY);
         OLCService location = new OLCService(geocodingKey);
         String result = location.calculatePlusCodeWithPrecision(address, location.DEFAULT_OLC_PRECISION);
-        log.info("Result: {}", result);
+        log.debug("Result: {}", result);
     }
 }

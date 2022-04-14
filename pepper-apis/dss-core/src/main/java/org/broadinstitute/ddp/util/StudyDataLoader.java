@@ -91,10 +91,8 @@ import org.jdbi.v3.core.Handle;
 @Slf4j
 public class StudyDataLoader {
     public static final String OTHER = "OTHER";
-    //public static final String NED = "NED";
     public static final String YES = "YES";
     public static final String NO = "NO";
-    public static final String DK = "DK";
     private static final String DEFAULT_PREFERRED_LANGUAGE_CODE = "en";
     private static final String DATSTAT_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     private static final int DSM_DEFAULT_ON_DEMAND_TRIGGER_ID = -2;
@@ -319,8 +317,7 @@ public class StudyDataLoader {
 
     public Map<String, String> verifyAuth0Users(Set<String> emailList) {
         //make auth0 call
-        Map<String, String> auth0EmailMap = auth0Util.getAuth0UsersByEmails(emailList, mgmtToken);
-        return auth0EmailMap;
+        return auth0Util.getAuth0UsersByEmails(emailList, mgmtToken);
     }
 
     public String loadParticipantData(Handle handle, JsonElement datstatData, JsonElement mappingData, String phoneNumber,
@@ -873,7 +870,7 @@ public class StudyDataLoader {
 
         Integer dsmTriggerId = getIntegerValueFromElement(surveyData, "ddp_dsmtriggerid");
         activityInstanceDao.updateOndemandTriggerId(userDto.getUserId(), instanceDto.getId(),
-                dsmTriggerId == null ? DSM_DEFAULT_ON_DEMAND_TRIGGER_ID : dsmTriggerId.intValue());
+                dsmTriggerId == null ? DSM_DEFAULT_ON_DEMAND_TRIGGER_ID : dsmTriggerId);
     }
 
     public void loadFollowupConsentSurveyData(Handle handle,
@@ -1102,7 +1099,6 @@ public class StudyDataLoader {
                 mailAddress = addressService.verifyAddress(mailAddress);
                 mailAddress.setValidationStatus(DsmAddressValidationStatus.DSM_EASYPOST_SUGGESTED_ADDRESS_STATUS);
             } catch (AddressVerificationException e) {
-                //log.warn("Exception while verifying address for user: {} error: {} ", user.getUserGuid(), e);
                 mailAddress.setValidationStatus(DsmAddressValidationStatus.DSM_INVALID_ADDRESS_STATUS);
             }
         }

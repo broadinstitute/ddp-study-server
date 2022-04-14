@@ -135,11 +135,10 @@ public class KitCheckService {
             DsmKitRequestDao kitRequestDao = handle.attach(DsmKitRequestDao.class);
 
             if (success) {
-                Long kitRequestId;
                 int numKits = kitConfiguration.getNumKits();
                 for (int i = 0; i < numKits; i++) {
                     log.info("Creating kit request for {}", userGuid);
-                    kitRequestId = kitRequestDao.createKitRequest(studyGuid, candidate.getUserId(),
+                    Long kitRequestId = kitRequestDao.createKitRequest(studyGuid, candidate.getUserId(),
                             candidate.getAddressId(), kitTypeId, kitConfiguration.needsApproval());
                     log.info("Created kit request id {} for {}. Completed {} out of {} kits",
                             kitRequestId, userGuid, i + 1, numKits);

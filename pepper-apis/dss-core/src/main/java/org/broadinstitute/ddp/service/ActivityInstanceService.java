@@ -60,6 +60,8 @@ import org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderFactory;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.jdbi.v3.core.Handle;
 
+import static org.broadinstitute.ddp.db.dao.ActivityInstanceDao.SubstitutionsWrapper;
+
 @Slf4j
 @AllArgsConstructor
 public class ActivityInstanceService {
@@ -482,9 +484,7 @@ public class ActivityInstanceService {
         Map<Long, Map<String, String>> substitutions;
         try (var substitutionStream = instanceDao.bulkFindSubstitutions(instanceIds)) {
             substitutions = substitutionStream
-                    .collect(Collectors.toMap(
-                            org.broadinstitute.ddp.db.dao.ActivityInstanceDao.SubstitutionsWrapper::getActivityInstanceId,
-                            org.broadinstitute.ddp.db.dao.ActivityInstanceDao.SubstitutionsWrapper::unwrap));
+                    .collect(Collectors.toMap(SubstitutionsWrapper::getActivityInstanceId, SubstitutionsWrapper::unwrap));
         }
         var sharedSnapshot = I18nContentRenderer
                 .newValueProviderBuilder(handle, userId, operatorGuid, studyGuid)
