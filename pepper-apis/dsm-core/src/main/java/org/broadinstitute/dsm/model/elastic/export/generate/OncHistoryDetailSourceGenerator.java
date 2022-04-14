@@ -10,9 +10,9 @@ public class OncHistoryDetailSourceGenerator extends AdditionalCollectionSourceG
     @Override
     protected Map<String, Generator> obtainStrategyByFieldName() {
         return Map.of(
-                FAX_SENT, new OncHistoryDetailFaxSentStrategyDecorator(new FaxSentStrategy(FAX_CONFIRMED, generatorPayload.getValue())),
-                FAX_SENT_2, new OncHistoryDetailFaxSentStrategyDecorator(new FaxSentStrategy(FAX_CONFIRMED_2, generatorPayload.getValue())),
-                FAX_SENT_3, new OncHistoryDetailFaxSentStrategyDecorator(new FaxSentStrategy(FAX_CONFIRMED_3, generatorPayload.getValue())),
+                FAX_SENT, new OncHistoryDetailFaxSentStrategyDecorator(new BaseStrategy(FAX_CONFIRMED, generatorPayload.getValue())),
+                FAX_SENT_2, new OncHistoryDetailFaxSentStrategyDecorator(new BaseStrategy(FAX_CONFIRMED_2, generatorPayload.getValue())),
+                FAX_SENT_3, new OncHistoryDetailFaxSentStrategyDecorator(new BaseStrategy(FAX_CONFIRMED_3, generatorPayload.getValue())),
                 TISSUE_RECEIVED, new OncHistoryDetailTissueReceivedStrategy(),
                 UNABLE_OBTAIN_TISSUE, new OncHistoryDetailUnableObtainTissueStrategy(generatorPayload));
 

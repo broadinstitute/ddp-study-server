@@ -233,7 +233,7 @@ public abstract class BasePatch {
             nameValues.add(setAdditionalValue("oD.request", patch, "sent"));
         } else if (patch.getNameValue().getName().equals("oD.tissueReceived")) {
             nameValues.add(setAdditionalValue("oD.request", patch, "received"));
-        } else if (patch.getNameValue().getName().equals("t.tissueReturnDate")) {
+        } else if (patch.getNameValue().getName().equals("t.returnDate")) {
             if (StringUtils.isNotBlank(patch.getNameValue().getValue().toString())) {
                 nameValues.add(setAdditionalValue("oD.request",
                         new Patch(patch.getParentId(), PARTICIPANT_ID, null, patch.getUser(), patch.getNameValue(), patch.getNameValues(),

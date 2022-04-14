@@ -27,7 +27,8 @@ public class SourceGeneratorFactory implements GeneratorFactory {
                 SmId.class, new SMIDSourceGenerator(),
                 ParticipantData.class, new ParticipantDataSourceGenerator(),
                 OncHistoryDetail.class, new OncHistoryDetailSourceGenerator(),
-                MedicalRecord.class, new MedicalRecordSourceGenerator()
+                MedicalRecord.class, new MedicalRecordSourceGenerator(),
+                Tissue.class, new TissueSourceGenerator()
         );
         return collectionGeneratorByClass.getOrDefault(clazz, new CollectionSourceGenerator());
     }
