@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
@@ -24,12 +25,9 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class TransactionWrapperTest {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TransactionWrapperTest.class);
     private static final String CHANGESET_FILE = "db-testscripts/txnwrappertest.xml";
     private static final String TEST_QUERY = "select test_name from txnwrapper_test";
     private static final String CHANGELOG_TABLE = "DATABASECHANGELOG";
@@ -98,7 +96,7 @@ public class TransactionWrapperTest {
                         gotPoolExhaustedError.set(e.getMessage().toLowerCase().contains("pool"));
                     }
                 } catch (SQLException e) {
-                    LOG.error("Trouble making first connection", e);
+                    log.error("Trouble making first connection", e);
                     fail("Trouble making first connection");
                 }
             });

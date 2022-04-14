@@ -3,6 +3,9 @@ package org.broadinstitute.ddp.filter;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
@@ -14,8 +17,6 @@ import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Filter;
 import spark.Request;
 import spark.Response;
@@ -26,9 +27,8 @@ import spark.route.HttpMethod;
  * in the {@link DDPAuth ddpAuth} parsed from the JWT token.  If the JWT's access matches the route params,  no action
  * is taken. If JWT does not grant access, the route is halted.
  */
+@Slf4j
 public class UserAuthCheckFilter implements Filter {
-
-    private static final Logger LOG = LoggerFactory.getLogger(UserAuthCheckFilter.class);
     private static final AuthPathRegexUtil pathMatcher = new AuthPathRegexUtil();
 
     private final List<AllowlistEntry> tempUserAllowlist = new ArrayList<>();
@@ -104,7 +104,7 @@ public class UserAuthCheckFilter implements Filter {
         String requestedMethod = request.requestMethod();
         String requestedPath = request.pathInfo();
 
-        LOG.info("Attempting to check temporary user with guid '{}' for request '{} {}'", tempUserGuid, requestedMethod, requestedPath);
+        log.info("Attempting to check temporary user with guid '{}' for request '{} {}'", tempUserGuid, requestedMethod, requestedPath);
 
         boolean inAllowlist = false;
         for (AllowlistEntry entry : tempUserAllowlist) {
@@ -115,7 +115,7 @@ public class UserAuthCheckFilter implements Filter {
         }
 
         if (!inAllowlist) {
-            LOG.warn("Request '{} {}' is not in temp-user allowlist", requestedMethod, requestedPath);
+            log.warn("Request '{} {}' is not in temp-user allowlist", requestedMethod, requestedPath);
             throw ResponseUtil.haltError(HttpStatus.SC_UNAUTHORIZED,
                     new ApiError(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, "Request is not in temp-user allowlist"));
         }
@@ -125,14 +125,14 @@ public class UserAuthCheckFilter implements Filter {
 
         boolean canAccess = true;
         if (tempUser == null) {
-            LOG.warn("Could not find temporary user with guid '{}'", tempUserGuid);
+            log.warn("Could not find temporary user with guid '{}'", tempUserGuid);
             canAccess = false;
         } else if (!tempUser.isTemporary()) {
-            LOG.warn("User with guid '{}' is not a temporary user but is used to access"
+            log.warn("User with guid '{}' is not a temporary user but is used to access"
                     + " temp-user allowlisted path without a token", tempUserGuid);
             canAccess = false;
         } else if (tempUser.isExpired()) {
-            LOG.warn("Temporary user with guid '{}' had already expired at time {}ms", tempUserGuid, tempUser.getExpiresAtMillis());
+            log.warn("Temporary user with guid '{}' had already expired at time {}ms", tempUserGuid, tempUser.getExpiresAtMillis());
             canAccess = false;
         }
 
@@ -142,14 +142,10 @@ public class UserAuthCheckFilter implements Filter {
         }
     }
 
-    private class AllowlistEntry {
+    @AllArgsConstructor(access = AccessLevel.PACKAGE)
+    private static class AllowlistEntry {
         private final String method;
         private final String pathRegex;
-
-        AllowlistEntry(String method, String pathRegex) {
-            this.method = method;
-            this.pathRegex = pathRegex;
-        }
 
         public boolean allows(String requestedMethod, String requestedPath) {
             return requestedMethod.equalsIgnoreCase(method) && requestedPath.matches(pathRegex);

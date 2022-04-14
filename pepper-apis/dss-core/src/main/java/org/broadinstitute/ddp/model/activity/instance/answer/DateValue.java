@@ -17,11 +17,10 @@ import java.util.Optional;
 import javax.validation.constraints.Positive;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.transformers.DateTimeFormatUtils;
 import org.hibernate.validator.constraints.Range;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A date value composed of the individual fields, part of a date answer.
@@ -30,10 +29,8 @@ import org.slf4j.LoggerFactory;
  * inclusive range [1, 31]. The year represents the numeric year in the AD calendar scheme. Note
  * there is no year zero. </p>
  */
+@Slf4j
 public class DateValue implements Serializable {
-
-    private static final Logger LOG = LoggerFactory.getLogger(DateValue.class);
-
     @Positive
     @SerializedName("year")
     private Integer year;
@@ -103,7 +100,7 @@ public class DateValue implements Serializable {
                 return Optional.of(LocalDate.of(year, month, day));
             }
         } catch (DateTimeException e) {
-            LOG.warn("Conversion to LocalDate failed", e);
+            log.warn("Conversion to LocalDate failed", e);
         }
         return Optional.empty();
     }
@@ -114,7 +111,7 @@ public class DateValue implements Serializable {
                 return Optional.of(YearMonth.of(year, month));
             }
         } catch (DateTimeException e) {
-            LOG.warn("Conversion to YearMonth failed", e);
+            log.warn("Conversion to YearMonth failed", e);
         }
         return Optional.empty();
     }
@@ -125,7 +122,7 @@ public class DateValue implements Serializable {
                 return Optional.of(MonthDay.of(month, day));
             }
         } catch (DateTimeException e) {
-            LOG.warn("Conversion to MonthDay failed", e);
+            log.warn("Conversion to MonthDay failed", e);
         }
         return Optional.empty();
     }
@@ -158,7 +155,7 @@ public class DateValue implements Serializable {
             try {
                 LocalDate.of(year, month, day);
             } catch (DateTimeException e) {
-                LOG.warn("Full date check failed", e);
+                log.warn("Full date check failed", e);
                 String msg = "day " + day + " is invalid for month " + month + " year " + year;
                 return Optional.of(msg);
             }
@@ -166,7 +163,7 @@ public class DateValue implements Serializable {
             try {
                 MonthDay.of(month, day);
             } catch (DateTimeException e) {
-                LOG.warn("Month day check failed", e);
+                log.warn("Month day check failed", e);
                 String msg = "day " + day + " is invalid for month " + month;
                 return Optional.of(msg);
             }

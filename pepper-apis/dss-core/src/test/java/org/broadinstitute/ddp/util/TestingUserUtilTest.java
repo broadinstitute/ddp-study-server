@@ -7,10 +7,10 @@ import static org.junit.Assert.assertThat;
 
 import java.util.ArrayList;
 
-import com.auth0.exception.Auth0Exception;
 import com.auth0.jwk.JwkProviderBuilder;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.constants.Auth0Constants;
 import org.broadinstitute.ddp.constants.ConfigFile;
@@ -24,16 +24,12 @@ import org.broadinstitute.ddp.security.JWTConverter;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class TestingUserUtilTest extends TxnAwareBaseTest {
-
     private static Auth0Util.TestingUser testingUser;
 
     private static Config auth0Config = cfg.getConfig(ConfigFile.AUTH0);
-    private static final Logger LOG = LoggerFactory.getLogger(TestingUserUtilTest.class);
-
     private static String mgmtApiClientId = auth0Config.getString(Auth0Testing.AUTH0_MGMT_API_CLIENT_ID);
     private static String mgmtApiSecret = auth0Config.getString(Auth0Testing.AUTH0_MGMT_API_CLIENT_SECRET);
     private static String auth0TestClientId = auth0Config.getString(ConfigFile.BACKEND_AUTH0_TEST_CLIENT_ID);
@@ -51,7 +47,7 @@ public class TestingUserUtilTest extends TxnAwareBaseTest {
     }
 
     @AfterClass
-    public static void deleteTestingUser() throws Auth0Exception {
+    public static void deleteTestingUser() {
         if (testingUser != null) {
             if (testingUser.getAuth0Id() != null) {
                 TestingUserUtil.deleteTestUser(testingUser.getAuth0Id(),
@@ -60,7 +56,7 @@ public class TestingUserUtilTest extends TxnAwareBaseTest {
                                                mgmtApiSecret);
             }
         } else {
-            LOG.error("No testingUser initialized; nothing to delete");
+            log.error("No testingUser initialized; nothing to delete");
         }
     }
 
@@ -76,7 +72,7 @@ public class TestingUserUtilTest extends TxnAwareBaseTest {
         testingUser = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, handle -> {
             JdbiClient clientDao = handle.attach(JdbiClient.class);
             long auth0TenantId = handle.attach(JdbiAuth0Tenant.class).findByDomain(domain).getId();
-            if (!clientDao.getClientIdByAuth0ClientAndDomain(auth0TestClientId, domain).isPresent()) {
+            if (clientDao.getClientIdByAuth0ClientAndDomain(auth0TestClientId, domain).isEmpty()) {
                 handle.attach(ClientDao.class)
                         .registerClient(auth0TestClientId, testClientSecret, new ArrayList<>(),
                                 encryptionSecret, auth0TenantId);

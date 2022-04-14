@@ -18,6 +18,7 @@ import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBu
 
 import java.util.Optional;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.content.RendererInitialContextCreator.RenderContextSource;
 import org.broadinstitute.ddp.db.ActivityDefStore;
@@ -39,8 +40,6 @@ import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.question
 import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.question.ValidationRuleCreator;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A builder providing a creation of {@link ActivityInstance} (of type {@link FormInstance}).
@@ -97,10 +96,8 @@ import org.slf4j.LoggerFactory;
  * creator (so it's no need to pass multiple parameters to each creator constructor -
  * only one parameter {@link AIBuilderContext} is passed.
  */
+@Slf4j
 public class ActivityInstanceFromDefinitionBuilder {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ActivityInstanceFromDefinitionBuilder.class);
-
     private final AIBuilderContext context;
 
     ActivityInstanceFromDefinitionBuilder(AIBuilderFactory aiBuilderFactory, Handle handle, AIBuilderParams params) {
@@ -198,7 +195,7 @@ public class ActivityInstanceFromDefinitionBuilder {
     public ActivityInstanceFromDefinitionBuilder startBuild() {
         if (checkStep(CREATE_RENDERER_CONTEXT, START_BUILD)) {
 
-            LOG.debug("Start ActivityInstance building from definition (ActivityDefStore). StudyGuid={}, instanceGuid={}",
+            log.debug("Start ActivityInstance building from definition (ActivityDefStore). StudyGuid={}, instanceGuid={}",
                     context.getStudyGuid(), context.getInstanceGuid());
 
             context.setBuildStep(START_BUILD);
@@ -293,7 +290,7 @@ public class ActivityInstanceFromDefinitionBuilder {
     public ActivityInstanceFromDefinitionBuilder endBuild() {
         if (checkStep(START_BUILD, END_BUILD)) {
 
-            LOG.debug("ActivityInstance built from definition SUCCESSFULLY.");
+            log.debug("ActivityInstance built from definition SUCCESSFULLY.");
 
             context.setBuildStep(END_BUILD);
         }

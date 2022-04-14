@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
@@ -30,12 +31,9 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class RateLimitTest {
-
-    private static final Logger LOG = LoggerFactory.getLogger(RateLimitTest.class);
     public static final String PASS = "{1}";
     public static final String TEST_ROUTE = "/test";
 
@@ -54,7 +52,7 @@ public class RateLimitTest {
          */
         static void startServerWithRateLimits(int apiRateLimit, int burstRateLimit) {
             int port = RouteTestUtil.findOpenPortOrDefault(DEFAULT_PORT);
-            LOG.info("Starting test server on port {}", port);
+            log.info("Starting test server on port {}", port);
             port(port);
             localhost =  "http://localhost:" + port + TEST_ROUTE;
 
@@ -143,7 +141,7 @@ public class RateLimitTest {
                         otherErrors.add("Got response " + statusCode);
                     }
                 } catch (IOException e) {
-                    LOG.info("Rate limit query test exception", e);
+                    log.info("Rate limit query test exception", e);
                     otherErrors.add(e.getMessage());
                     return false;
                 }
@@ -154,7 +152,7 @@ public class RateLimitTest {
         try {
             executorService.invokeAll(healthCheckCalls);
         } catch (InterruptedException e) {
-            LOG.error("Interrupted while running rate limit filter test", e);
+            log.error("Interrupted while running rate limit filter test", e);
         }
 
         executorService.shutdown();
@@ -162,7 +160,7 @@ public class RateLimitTest {
         try {
             executorService.awaitTermination(30, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            LOG.error("Interrupted while shutting down client threads", e);
+            log.error("Interrupted while shutting down client threads", e);
         }
 
         Assert.assertTrue("Unexpected results: " + StringUtils.join(otherErrors, "\n"), otherErrors.isEmpty());
