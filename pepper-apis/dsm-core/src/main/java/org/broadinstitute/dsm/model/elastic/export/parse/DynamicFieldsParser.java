@@ -75,18 +75,7 @@ public class DynamicFieldsParser extends BaseParser {
     }
 
     protected void getProperDisplayTypeWithPossibleValues() {
-        Optional<FieldSettingsDto> fieldSettingsByInstanceNameAndColumnName;
-        String fieldName = super.fieldName;
-        if (!fieldSettingsDtoByColumnName.containsKey(fieldName)) {
-            fieldSettingsByInstanceNameAndColumnName =
-                    fieldSettingsDao.getFieldSettingsByInstanceNameAndColumnName(realm, fieldName);
-            if (fieldSettingsByInstanceNameAndColumnName.isPresent()) {
-                fieldSettingsDtoByColumnName.put(fieldName, fieldSettingsByInstanceNameAndColumnName.get());
-            }
-        } else {
-            fieldSettingsByInstanceNameAndColumnName = Optional.of(fieldSettingsDtoByColumnName.get(fieldName));
-        }
-        fieldName = null;
+        Optional<FieldSettingsDto> fieldSettingsByInstanceNameAndColumnName = getFieldSettingsByColumnName();
         if (fieldSettingsByInstanceNameAndColumnName.isPresent()) {
             FieldSettingsDto fieldSettings = fieldSettingsByInstanceNameAndColumnName.get();
             displayType = StringUtils.isNotBlank(fieldSettings.getDisplayType())
@@ -98,6 +87,27 @@ public class DynamicFieldsParser extends BaseParser {
         } else {
             displayType = StringUtils.EMPTY;
         }
+    }
+
+    private Optional<FieldSettingsDto> getFieldSettingsByColumnName() {
+        Optional<FieldSettingsDto> fieldSettingsByInstanceNameAndColumnName;
+        String fieldName = super.fieldName;
+        if (isNotFieldSettingCached(fieldName)) {
+            fieldSettingsByInstanceNameAndColumnName =
+                    fieldSettingsDao.getFieldSettingsByInstanceNameAndColumnName(realm, fieldName);
+            if (fieldSettingsByInstanceNameAndColumnName.isPresent()) {
+                fieldSettingsDtoByColumnName.put(fieldName, fieldSettingsByInstanceNameAndColumnName.get());
+            }
+        } else {
+            fieldSettingsByInstanceNameAndColumnName = Optional.of(fieldSettingsDtoByColumnName.get(fieldName));
+        }
+        // used only for weakhashmap (fieldSettingsDtoByColumnName) in order to make it eligible for garbage collection
+        fieldName = null;
+        return fieldSettingsByInstanceNameAndColumnName;
+    }
+
+    private boolean isNotFieldSettingCached(String fieldName) {
+        return !fieldSettingsDtoByColumnName.containsKey(fieldName);
     }
 
     @Override

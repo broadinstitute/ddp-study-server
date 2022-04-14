@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.util.StringUtil;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator;
@@ -43,7 +45,7 @@ public class DynamicFieldsParserTest {
         for (int i = 0; i < quantity; i++) {
             String fieldName = getRandomValue();
             dynamicFieldsParser.setFieldName(fieldName);
-            dynamicFieldsParser.parse("");
+            dynamicFieldsParser.parse(StringUtils.EMPTY);
         }
 
         Assert.assertTrue(DynamicFieldsParser.fieldSettingsDtoByColumnName.size() != quantity);
