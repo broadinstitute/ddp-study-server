@@ -47,8 +47,8 @@ public class OncHistoryDetailSourceGeneratorTest {
 
         OncHistoryDetailSourceGenerator sourceGenerator = new OncHistoryDetailSourceGenerator() {
             @Override
-            Generator obtainStrategyByFieldName(String fieldName) {
-                OncHistoryDetailUnableObtainTissueStrategy generatorStrategy = (OncHistoryDetailUnableObtainTissueStrategy) super.obtainStrategyByFieldName(fieldName);
+            protected Generator getStrategy() {
+                OncHistoryDetailUnableObtainTissueStrategy generatorStrategy = (OncHistoryDetailUnableObtainTissueStrategy) super.getStrategy();
                 generatorStrategy.oncHistoryDetailDao = new MockOncHistoryDetailDao();
                 return generatorStrategy;
             }

@@ -1,15 +1,14 @@
 package org.broadinstitute.dsm.model.elastic.export.generate;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 
-public class OncHistoryDetailFaxSentStrategy implements Generator {
+public class OncHistoryDetailFaxSentStrategyDecorator implements Generator {
 
     Generator baseStrategy;
 
-    public OncHistoryDetailFaxSentStrategy(Generator strategy) {
+    public OncHistoryDetailFaxSentStrategyDecorator(Generator strategy) {
         this.baseStrategy = strategy;
     }
 

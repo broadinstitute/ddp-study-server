@@ -2,20 +2,15 @@ package org.broadinstitute.dsm.model.elastic.export.generate;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
-public class MedicalRecordSourceGenerator extends CollectionSourceGenerator {
+public class MedicalRecordSourceGenerator extends AdditionalCollectionSourceGenerator {
 
     @Override
-    protected Optional<Map<String, Object>> getAdditionalData() {
-        return Optional.ofNullable(obtainStrategyByFieldName(getFieldName()).generate());
-    }
-
-    Generator obtainStrategyByFieldName(String fieldName) {
+    protected Map<String, Generator> obtainStrategyByFieldName() {
         Map<String, Generator> strategyByField = new HashMap<>();
-        strategyByField.put("faxSent", new FaxSentStrategy("faxConfirmed", generatorPayload.getValue()));
-        strategyByField.put("faxSent2", new FaxSentStrategy("faxConfirmed2", generatorPayload.getValue()));
-        strategyByField.put("faxSent3", new FaxSentStrategy("faxConfirmed3", generatorPayload.getValue()));
-        return strategyByField.getOrDefault(fieldName, new NullObjectStrategy());
+        strategyByField.put(FAX_SENT, new FaxSentStrategy(FAX_CONFIRMED, generatorPayload.getValue()));
+        strategyByField.put(FAX_SENT_2, new FaxSentStrategy(FAX_CONFIRMED_2, generatorPayload.getValue()));
+        strategyByField.put(FAX_SENT_3, new FaxSentStrategy(FAX_CONFIRMED_3, generatorPayload.getValue()));
+        return strategyByField;
     }
 }
