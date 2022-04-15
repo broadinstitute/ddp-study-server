@@ -41,13 +41,9 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
             if (StringUtils.isBlank(participantId)) {
                 continue;
             }
-            logger.info("Generating data to export to ES for participant: " + participantId);
-            long start = System.currentTimeMillis();
             Object participantDetails = entry.getValue();
             transformObject(participantDetails);
             Map<String, Object> finalMapToUpsert = generate();
-            long stop = System.currentTimeMillis();
-            logger.info("Generating data for participant: " + participantId + " took " + (stop-start)/1000 + " seconds");
             bulkExportFacade.addDataToRequest(finalMapToUpsert, participantId);
             batchCounter++;
         }
