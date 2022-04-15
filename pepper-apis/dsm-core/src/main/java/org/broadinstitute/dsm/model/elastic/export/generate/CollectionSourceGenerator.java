@@ -34,7 +34,7 @@ public class CollectionSourceGenerator extends SourceGenerator {
     @Override
     protected Object getElement(Object element) {
         Map<String, Object> fieldNameElement = new HashMap<>();
-        if (Objects.isNull(element)) {
+        if (Objects.nonNull(element)) {
             fieldNameElement.put(getFieldName(), element);
         }
         return getCollectionElementMap(fieldNameElement);
