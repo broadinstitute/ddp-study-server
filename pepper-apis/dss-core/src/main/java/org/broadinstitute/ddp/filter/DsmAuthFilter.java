@@ -10,13 +10,12 @@ import com.auth0.jwk.JwkProvider;
 import com.auth0.jwk.JwkProviderBuilder;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.Auth0Constants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ClientDao;
 import org.broadinstitute.ddp.security.JWTConverter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Filter;
 import spark.Request;
 import spark.Response;
@@ -27,10 +26,10 @@ import spark.Response;
  *
  * @see <a href="https://auth0.com/docs/architecture-scenarios/application/server-api/part-1#client-credentials-grant">Auth0 Docs: Server + API: Solution Overview</a>
  */
+@Slf4j
 public class DsmAuthFilter implements Filter {
-    private static final Logger LOG = LoggerFactory.getLogger(DsmAuthFilter.class);
     private final JwkProvider jwkProvider;
-    private String dsmAuth0ClientId;
+    private final String dsmAuth0ClientId;
 
     /**
      * Build the filter.
@@ -51,7 +50,7 @@ public class DsmAuthFilter implements Filter {
                 return;
             }
         } else {
-            LOG.warn("Missing {} header on request to path: {}", AUTHORIZATION, request.pathInfo());
+            log.warn("Missing {} header on request to path: {}", AUTHORIZATION, request.pathInfo());
         }
         throw halt(401);
     }
@@ -63,27 +62,27 @@ public class DsmAuthFilter implements Filter {
 
     boolean isTokenValueValid(String tokenValue) {
         if (tokenValue == null) {
-            LOG.error("Did not find token within Authorization header");
+            log.error("Did not find token within Authorization header");
             return false;
         }
         DecodedJWT jwt;
         try {
             jwt = JWTConverter.verifyDDPToken(tokenValue, this.jwkProvider);
         } catch (TokenExpiredException e) {
-            LOG.error("Found expired token", e);
+            log.error("Found expired token", e);
             return false;
         } catch (Exception e) {
-            LOG.error("Could not decode token", e);
+            log.error("Could not decode token", e);
             return false;
         }
         Optional<String> tokenClientId = extractClientIdFromToken(jwt);
-        if (!tokenClientId.isPresent()) {
-            LOG.error("Could not extract Auth0 client id from token");
+        if (tokenClientId.isEmpty()) {
+            log.error("Could not extract Auth0 client id from token");
             return false;
         }
         String domain = jwt.getIssuer();
         if (StringUtils.isBlank(domain)) {
-            LOG.error("Could not extract Auth0 domain from token");
+            log.error("Could not extract Auth0 domain from token");
             return false;
         }
 
@@ -99,7 +98,7 @@ public class DsmAuthFilter implements Filter {
     private Optional<String> extractClientIdFromToken(DecodedJWT jwt) {
         Optional<String> clientId;
         clientId = Optional.ofNullable(jwt.getClaim(Auth0Constants.DDP_CLIENT_CLAIM).asString());
-        if (!clientId.isPresent()) {
+        if (clientId.isEmpty()) {
             //check if sub claim contains the clientId with a suffix.
             //backward compatibility until we see new DSM Tokens
             clientId = Optional.ofNullable(jwt.getClaim("sub"))
@@ -118,7 +117,7 @@ public class DsmAuthFilter implements Filter {
      */
     private boolean isTokenClientValid(String tokenClientId, String auth0Domain) {
         if (!(tokenClientId.equals(this.dsmAuth0ClientId))) {
-            LOG.error("clientId in token did not match expected DSM clientId in configuration. Token clientId {}",
+            log.error("clientId in token did not match expected DSM clientId in configuration. Token clientId {}",
                     tokenClientId);
             return false;
         }
@@ -127,7 +126,7 @@ public class DsmAuthFilter implements Filter {
             return (handle.attach(ClientDao.class).isAuth0ClientActive(tokenClientId, auth0Domain));
         });
         if (!isClientActive) {
-            LOG.error("A configuration for the DSM clientId does not exist or it is not active");
+            log.error("A configuration for the DSM clientId does not exist or it is not active");
         }
         return isClientActive;
 
