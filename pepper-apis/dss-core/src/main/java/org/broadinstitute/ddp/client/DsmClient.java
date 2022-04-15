@@ -19,28 +19,26 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.model.dsm.ParticipantStatus;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.RouteUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A client for DSM services, effectively just a wrapper around the HTTP calls. API paths use SparkJava's syntax for
  * path parameters, the same syntax used in {@link RouteConstants.API}.
  */
+@Slf4j
 public class DsmClient {
-
     public static final String PATH_CANCERS = "/app/cancers";
     public static final String PATH_DRUGS = "/app/drugs";
     public static final String PATH_PARTICIPANT_STATUS = String.format(
             "/info/participantstatus/%s/%s", PathParam.STUDY_GUID, PathParam.USER_GUID);
     public static final int DEFAULT_TIMEOUT_SECS = 10;
 
-    private static final Logger LOG = LoggerFactory.getLogger(DsmClient.class);
     private static final Gson gson = new Gson();
 
     private final URI baseUrl;
@@ -113,11 +111,11 @@ public class DsmClient {
                 List<String> names = gson.fromJson(response.body(), type);
                 return ApiResult.ok(statusCode, names);
             } else {
-                LOG.error("Trouble getting cancer list from {}", baseUrl);
+                log.error("Trouble getting cancer list from {}", baseUrl);
                 return ApiResult.err(statusCode, null);
             }
         } catch (JWTCreationException | IOException | InterruptedException | JsonSyntaxException e) {
-            LOG.error("Trouble getting cancer list from {}", baseUrl, e);
+            log.error("Trouble getting cancer list from {}", baseUrl, e);
             return ApiResult.thrown(e);
         }
     }
@@ -180,7 +178,7 @@ public class DsmClient {
                 return ApiResult.err(statusCode, null);
             }
         } catch (JWTCreationException | IOException | InterruptedException | JsonSyntaxException e) {
-            LOG.error("Trouble looking up status for participant {} in study {}. Response was {}", userGuid, studyGuid, responseBody);
+            log.error("Trouble looking up status for participant {} in study {}. Response was {}", userGuid, studyGuid, responseBody);
             return ApiResult.thrown(e);
         }
     }

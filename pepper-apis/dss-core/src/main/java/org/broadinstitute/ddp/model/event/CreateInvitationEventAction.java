@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.model.event;
 
 import java.time.Instant;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.InvitationFactory;
@@ -14,15 +15,11 @@ import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.service.EventService;
 import org.broadinstitute.ddp.util.MiscUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class CreateInvitationEventAction extends EventAction {
-
-    private static final Logger LOG = LoggerFactory.getLogger(CreateInvitationEventAction.class);
-
-    private String contactEmailQuestionStableId;
-    private boolean markExistingAsVoided;
+    private final String contactEmailQuestionStableId;
+    private final boolean markExistingAsVoided;
 
     public CreateInvitationEventAction(EventConfiguration eventConfiguration, EventConfigurationDto dto) {
         this(eventConfiguration, dto.getContactEmailQuestionStableId(), dto.shouldMarkExistingInvitationsAsVoided());
@@ -52,12 +49,12 @@ public class CreateInvitationEventAction extends EventAction {
             Instant now = Instant.now();
             int numVoided = handle.attach(InvitationDao.class)
                     .bulkMarkVoided(signal.getStudyId(), signal.getParticipantId(), now);
-            LOG.info("Marked {} existing invitations as voided at {}", numVoided, now);
+            log.info("Marked {} existing invitations as voided at {}", numVoided, now);
         }
 
         InvitationDto invitationDto = handle.attach(InvitationFactory.class)
                 .createAgeUpInvitation(signal.getStudyId(), signal.getParticipantId(), contactEmail);
-        LOG.info("Created invitation {} for participant {} in study {}",
+        log.info("Created invitation {} for participant {} in study {}",
                 invitationDto.getInvitationGuid(), signal.getParticipantGuid(), signal.getStudyId());
 
         return new InvitationCreatedSignal(
@@ -76,11 +73,11 @@ public class CreateInvitationEventAction extends EventAction {
         if (signal.getEventTriggerType() == EventTriggerType.ACTIVITY_STATUS) {
             ActivityInstanceStatusChangeSignal statusChangeSignal = (ActivityInstanceStatusChangeSignal) signal;
             long instanceId = statusChangeSignal.getActivityInstanceIdThatChanged();
-            LOG.info("Attempting to fetch contact email answer using triggered signal {}", statusChangeSignal);
+            log.info("Attempting to fetch contact email answer using triggered signal {}", statusChangeSignal);
             answer = answerDao.findAnswerByInstanceIdAndQuestionStableId(
                     instanceId, contactEmailQuestionStableId).orElse(null);
         } else {
-            LOG.info("Attempting to fetch latest contact email answer");
+            log.info("Attempting to fetch latest contact email answer");
             answer = answerDao.findAnswerByLatestInstanceAndQuestionStableId(
                     signal.getParticipantId(), signal.getStudyId(), contactEmailQuestionStableId).orElse(null);
         }
@@ -89,7 +86,7 @@ public class CreateInvitationEventAction extends EventAction {
             throw new DDPException("Could not find answer for contact email question " + contactEmailQuestionStableId);
         }
 
-        LOG.info("Fetched contact email from answer with id {}", answer.getAnswerId());
+        log.info("Fetched contact email from answer with id {}", answer.getAnswerId());
         return answer.getValue().toString();
     }
 }
