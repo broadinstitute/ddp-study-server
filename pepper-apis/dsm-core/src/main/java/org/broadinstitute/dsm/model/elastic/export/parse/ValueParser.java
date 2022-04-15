@@ -4,9 +4,14 @@ import org.apache.commons.lang3.StringUtils;
 
 public class ValueParser extends BaseParser {
 
+    public static final String NULL_AS_STRING = "null";
+
     @Override
     protected Object forNumeric(String value) {
-        if (StringUtils.isBlank(value)) return 0;
+        if (isEmptyOrNullString(value)) {
+            //returning null if numeric value is deleted
+            return null;
+        }
         return Long.valueOf(value);
     }
 
@@ -23,10 +28,15 @@ public class ValueParser extends BaseParser {
 
     @Override
     protected Object forDate(String value) {
-        if (StringUtils.isBlank(value)) {
+        if (isEmptyOrNullString(value)) {
+            //returning null for ES, because ES throws exception if we pass empty string to ES for date fields
             return null;
         }
         return value;
+    }
+
+    private boolean isEmptyOrNullString(String value) {
+        return StringUtils.isBlank(value) || NULL_AS_STRING.equals(value);
     }
 
     @Override
