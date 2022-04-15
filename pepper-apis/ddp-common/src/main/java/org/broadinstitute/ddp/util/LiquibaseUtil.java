@@ -6,7 +6,6 @@ import java.sql.SQLException;
 import java.time.Instant;
 
 import com.typesafe.config.Config;
-
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import liquibase.Contexts;
