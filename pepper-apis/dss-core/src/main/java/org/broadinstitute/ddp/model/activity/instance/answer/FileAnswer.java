@@ -1,9 +1,9 @@
 package org.broadinstitute.ddp.model.activity.instance.answer;
 
+import java.util.List;
+
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
-
-import java.util.List;
 
 public final class FileAnswer extends Answer<List<FileInfo>> {
 

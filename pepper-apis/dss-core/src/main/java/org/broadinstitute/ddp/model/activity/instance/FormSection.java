@@ -1,7 +1,5 @@
 package org.broadinstitute.ddp.model.activity.instance;
 
-import static org.broadinstitute.ddp.constants.SqlConstants.FormSectionTable;
-
 import java.beans.ConstructorProperties;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,6 +9,7 @@ import java.util.function.Consumer;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
+import org.broadinstitute.ddp.constants.SqlConstants.FormSectionTable;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.content.Renderable;

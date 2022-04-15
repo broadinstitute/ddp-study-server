@@ -1,18 +1,18 @@
 package org.broadinstitute.ddp.model.activity.definition.template;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.content.I18nTemplateRenderFacade;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.util.MiscUtil;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
 
 public class Template {
 

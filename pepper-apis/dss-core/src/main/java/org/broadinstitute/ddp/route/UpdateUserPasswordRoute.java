@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.route;
 
 import com.auth0.client.mgmt.ManagementAPI;
-
 import com.auth0.exception.Auth0Exception;
 import com.auth0.json.mgmt.users.User;
 import org.apache.http.HttpStatus;
@@ -20,10 +19,8 @@ import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.UpdateUserLoginDataUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import spark.Request;
 import spark.Response;
 

@@ -8,7 +8,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.broadinstitute.ddp.transformers.Exclude;
 import org.broadinstitute.ddp.util.GsonUtil;
-
 import org.junit.Assert;
 import org.junit.Test;
 

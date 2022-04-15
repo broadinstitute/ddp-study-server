@@ -16,7 +16,6 @@ import static org.hamcrest.Matchers.equalTo;
 
 import java.io.FileNotFoundException;
 
-
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.junit.BeforeClass;
 import org.junit.Test;

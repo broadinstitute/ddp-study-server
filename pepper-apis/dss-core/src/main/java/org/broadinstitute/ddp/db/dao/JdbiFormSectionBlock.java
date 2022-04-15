@@ -1,5 +1,12 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.db.dto.FormBlockDto;
 import org.broadinstitute.ddp.db.dto.SectionBlockMembershipDto;
@@ -18,13 +25,6 @@ import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.stringtemplate4.StringTemplateSqlLocator;
-
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.Collections;
 
 public interface JdbiFormSectionBlock extends SqlObject {
 

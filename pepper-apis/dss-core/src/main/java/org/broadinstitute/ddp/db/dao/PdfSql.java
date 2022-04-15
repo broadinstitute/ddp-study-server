@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.List;
+
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 import org.broadinstitute.ddp.model.pdf.MailingAddressTemplate;
 import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
@@ -13,8 +15,6 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-
-import java.util.List;
 
 public interface PdfSql extends SqlObject {
 

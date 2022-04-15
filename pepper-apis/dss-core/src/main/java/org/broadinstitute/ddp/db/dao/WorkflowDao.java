@@ -1,13 +1,12 @@
 package org.broadinstitute.ddp.db.dao;
 
-import static org.broadinstitute.ddp.constants.SqlConstants.ActivityInstanceTable;
-import static org.broadinstitute.ddp.constants.SqlConstants.StudyActivityTable;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
+import org.broadinstitute.ddp.constants.SqlConstants.ActivityInstanceTable;
+import org.broadinstitute.ddp.constants.SqlConstants.StudyActivityTable;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.json.workflow.WorkflowActivityResponse;
 import org.broadinstitute.ddp.model.pex.Expression;

@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.json.sendgrid;
 
-import javax.validation.constraints.NotEmpty;
 import java.time.Instant;
+import javax.validation.constraints.NotEmpty;
 
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;

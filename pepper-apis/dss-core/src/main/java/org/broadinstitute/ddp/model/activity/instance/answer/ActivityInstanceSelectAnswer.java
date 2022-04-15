@@ -1,10 +1,10 @@
 package org.broadinstitute.ddp.model.activity.instance.answer;
 
+import javax.validation.constraints.NotNull;
+
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
-
-import javax.validation.constraints.NotNull;
 
 public class ActivityInstanceSelectAnswer extends Answer<String> {
 

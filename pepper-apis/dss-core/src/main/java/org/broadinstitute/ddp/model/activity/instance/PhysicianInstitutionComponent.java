@@ -5,7 +5,6 @@ import java.util.function.Consumer;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
-
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.db.dto.InstitutionPhysicianComponentDto;
 import org.broadinstitute.ddp.model.activity.types.ComponentType;

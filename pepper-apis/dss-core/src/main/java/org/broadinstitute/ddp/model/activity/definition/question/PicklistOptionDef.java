@@ -1,11 +1,10 @@
 package org.broadinstitute.ddp.model.activity.definition.question;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;

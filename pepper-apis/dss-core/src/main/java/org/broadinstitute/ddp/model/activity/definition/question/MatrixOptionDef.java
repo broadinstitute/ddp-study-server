@@ -1,12 +1,12 @@
 package org.broadinstitute.ddp.model.activity.definition.question;
 
-import com.google.gson.annotations.SerializedName;
-import org.broadinstitute.ddp.model.activity.definition.template.Template;
-import org.broadinstitute.ddp.util.MiscUtil;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+
+import com.google.gson.annotations.SerializedName;
+import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.util.MiscUtil;
 
 public class MatrixOptionDef {
 

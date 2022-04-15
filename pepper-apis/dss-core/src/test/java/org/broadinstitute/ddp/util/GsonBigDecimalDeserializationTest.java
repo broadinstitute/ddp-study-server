@@ -1,13 +1,13 @@
 package org.broadinstitute.ddp.util;
 
+import static org.junit.Assert.assertEquals;
+
+import java.math.BigDecimal;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.broadinstitute.ddp.json.AnswerSubmission;
 import org.junit.Test;
-
-import java.math.BigDecimal;
-
-import static org.junit.Assert.assertEquals;
 
 public class GsonBigDecimalDeserializationTest {
     @Test

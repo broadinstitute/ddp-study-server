@@ -11,8 +11,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;

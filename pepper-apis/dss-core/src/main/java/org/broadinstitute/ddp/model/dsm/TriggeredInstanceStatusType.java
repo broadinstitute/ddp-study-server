@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.model.dsm;
 
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.route.GetDsmTriggeredInstancesRoute;
 
 /**
  * Status used for activity instances where the

@@ -7,11 +7,11 @@ import static org.broadinstitute.ddp.elastic.ElasticSearchQueryBuilderUtil.orMat
 import static org.broadinstitute.ddp.elastic.ElasticSearchQueryBuilderUtil.queryStringQuery;
 import static org.broadinstitute.ddp.elastic.ElasticSearchQueryUtil.addWildcards;
 import static org.broadinstitute.ddp.elastic.ElasticSearchQueryUtil.normalizeInvitationGuid;
+import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupData.IndexType.PARTICIPANTS_STRUCTURED;
+import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupData.IndexType.USERS;
 import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupData.LookupField.GOVERNED_USERS;
 import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupData.LookupField.INVITATIONS__GUID;
 import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupData.LookupField.PROFILE__GUID;
-import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupData.IndexType.PARTICIPANTS_STRUCTURED;
-import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupData.IndexType.USERS;
 import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupData.PARTICIPANTS_STRUCTURED_SOURCES;
 import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupData.USERS_SOURCES;
 

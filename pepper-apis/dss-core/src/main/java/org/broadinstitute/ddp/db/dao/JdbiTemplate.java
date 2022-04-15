@@ -1,11 +1,10 @@
 package org.broadinstitute.ddp.db.dao;
 
-import static org.broadinstitute.ddp.constants.SqlConstants.TemplateTable;
-
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
+import org.broadinstitute.ddp.constants.SqlConstants.TemplateTable;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;

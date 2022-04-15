@@ -1,11 +1,11 @@
 package org.broadinstitute.ddp.db.dto;
 
-import org.broadinstitute.ddp.model.user.User;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+
+import org.broadinstitute.ddp.model.user.User;
 
 public final class UserActivityInstanceSummary {
     private final User participantUser;

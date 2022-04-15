@@ -1,13 +1,13 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
-
-import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
 
 @Data
 @AllArgsConstructor(onConstructor = @__(@JdbiConstructor))

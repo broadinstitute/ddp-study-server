@@ -1,9 +1,8 @@
 package org.broadinstitute.ddp.db.dao;
 
-import static org.broadinstitute.ddp.constants.SqlConstants.ExpressionTable;
-
 import java.util.Optional;
 
+import org.broadinstitute.ddp.constants.SqlConstants.ExpressionTable;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.model.pex.Expression;
 import org.jdbi.v3.sqlobject.SqlObject;

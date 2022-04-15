@@ -1,12 +1,12 @@
 package org.broadinstitute.ddp.util;
 
+import java.util.List;
+
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
-
-import java.util.List;
 
 public class TranslationUtil {
 

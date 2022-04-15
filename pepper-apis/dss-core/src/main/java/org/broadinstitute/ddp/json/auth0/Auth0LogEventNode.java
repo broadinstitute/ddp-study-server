@@ -9,7 +9,6 @@ import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.NodeType.STR;
 import java.time.Instant;
 import java.util.Map;
 
-
 import com.google.gson.JsonElement;
 
 

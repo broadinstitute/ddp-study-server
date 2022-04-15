@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.Iterator;
+import java.util.List;
+
 import org.broadinstitute.ddp.db.dto.MatrixOptionDto;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
@@ -12,9 +15,6 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.stringtemplate4.StringTemplateSqlLocator;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
-
-import java.util.Iterator;
-import java.util.List;
 
 public interface JdbiMatrixOption extends SqlObject {
 

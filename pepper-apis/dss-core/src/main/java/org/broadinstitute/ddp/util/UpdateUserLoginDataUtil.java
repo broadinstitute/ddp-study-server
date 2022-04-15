@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
-
 import spark.Response;
 
 /**

@@ -1,5 +1,10 @@
 package org.broadinstitute.ddp.model.activity.instance.question;
 
+import java.util.List;
+import java.util.function.Consumer;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
@@ -7,11 +12,6 @@ import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.util.MiscUtil;
-
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import java.util.List;
-import java.util.function.Consumer;
 
 public final class MatrixQuestion extends Question<MatrixAnswer> {
 

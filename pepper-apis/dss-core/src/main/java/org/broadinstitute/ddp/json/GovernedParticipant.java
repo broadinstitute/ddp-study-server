@@ -1,10 +1,10 @@
 package org.broadinstitute.ddp.json;
 
+import java.util.Optional;
+
 import com.google.gson.annotations.SerializedName;
 import lombok.Value;
 import org.broadinstitute.ddp.model.user.UserProfile;
-
-import java.util.Optional;
 
 @Value
 public class GovernedParticipant {

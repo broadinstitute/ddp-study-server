@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.broadinstitute.ddp.model.dsm.Cancer;
-
 import org.junit.Assert;
 import org.junit.Test;
 

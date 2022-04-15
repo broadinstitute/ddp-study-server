@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp.equation;
 
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
+
 import lombok.extern.slf4j.Slf4j;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStreams;
@@ -8,9 +11,6 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.broadinstitute.ddp.pex.lang.EquationLexer;
 import org.broadinstitute.ddp.pex.lang.EquationParser;
 import org.eclipse.jetty.util.StringUtil;
-
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
 
 @Slf4j
 public final class EquationValidator implements ConstraintValidator<ValidEquation, String> {

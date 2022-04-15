@@ -1,5 +1,9 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,10 +11,6 @@ import lombok.Getter;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
-
-import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
 
 @Data
 @AllArgsConstructor(onConstructor = @__(@JdbiConstructor))

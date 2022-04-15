@@ -1,13 +1,13 @@
 package org.broadinstitute.ddp.json;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.gson.annotations.SerializedName;
 import lombok.NoArgsConstructor;
 import lombok.Value;
 import org.broadinstitute.ddp.json.form.BlockVisibility;
 import org.broadinstitute.ddp.model.activity.instance.validation.ActivityValidationFailure;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Value
 @NoArgsConstructor

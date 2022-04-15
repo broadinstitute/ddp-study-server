@@ -4,7 +4,6 @@ import java.util.Optional;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;

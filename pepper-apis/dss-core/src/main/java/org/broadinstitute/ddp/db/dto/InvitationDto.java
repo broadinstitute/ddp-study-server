@@ -1,12 +1,12 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.time.Instant;
+
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
-
-import java.time.Instant;
 
 @Value
 @AllArgsConstructor(onConstructor = @__(@JdbiConstructor))

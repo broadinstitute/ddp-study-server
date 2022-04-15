@@ -25,9 +25,7 @@ import java.util.Map;
 
 import com.auth0.exception.APIException;
 import com.auth0.json.mgmt.Connection;
-
 import io.restassured.http.ContentType;
-
 import org.broadinstitute.ddp.client.ApiResult;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
@@ -38,11 +36,9 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.model.study.PasswordPolicy;
 import org.broadinstitute.ddp.model.study.PasswordPolicy.PolicyType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
-
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
 import spark.HaltException;
 
 public class GetStudyPasswordPolicyRouteTest extends IntegrationTestSuite.TestCase {

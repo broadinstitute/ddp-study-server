@@ -1,14 +1,14 @@
 package org.broadinstitute.ddp.export.json.structured;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.google.gson.annotations.SerializedName;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
 
 public final class MatrixQuestionRecord extends QuestionRecord {
 

@@ -1,11 +1,11 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.io.Serializable;
+
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
-
-import java.io.Serializable;
 
 @Value
 @AllArgsConstructor(onConstructor = @__(@JdbiConstructor))

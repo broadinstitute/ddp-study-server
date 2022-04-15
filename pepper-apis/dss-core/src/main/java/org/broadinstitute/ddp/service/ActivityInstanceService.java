@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.service;
 
 import static org.broadinstitute.ddp.content.RendererInitialContextCreator.RenderContextSource.FORM_RESPONSE_AND_ACTIVITY_DEF;
+import static org.broadinstitute.ddp.db.dao.ActivityInstanceDao.SubstitutionsWrapper;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderParams.createParams;
 import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivitySummary;
 import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivityTranslation;
@@ -59,8 +60,6 @@ import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderFactory;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.jdbi.v3.core.Handle;
-
-import static org.broadinstitute.ddp.db.dao.ActivityInstanceDao.SubstitutionsWrapper;
 
 @Slf4j
 @AllArgsConstructor

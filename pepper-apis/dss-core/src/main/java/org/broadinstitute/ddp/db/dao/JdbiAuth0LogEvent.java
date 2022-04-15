@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.db.dao;
 import java.time.Instant;
 import java.util.Optional;
 
-
 import org.broadinstitute.ddp.json.auth0.Auth0LogEvent;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;

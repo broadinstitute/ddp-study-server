@@ -1,11 +1,11 @@
 package org.broadinstitute.ddp.model.pdf;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class PicklistAnswerSubstitution extends AnswerSubstitution {
     Map<String, String> placeholderMapping;

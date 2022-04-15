@@ -1,8 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
 import static java.util.stream.Collectors.toList;
-import static org.broadinstitute.ddp.constants.SqlConstants.TemplateTable;
-import static org.broadinstitute.ddp.constants.SqlConstants.TemplateVariableTable;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -23,6 +21,8 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
+import org.broadinstitute.ddp.constants.SqlConstants.TemplateTable;
+import org.broadinstitute.ddp.constants.SqlConstants.TemplateVariableTable;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;

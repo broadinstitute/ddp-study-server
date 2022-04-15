@@ -1,10 +1,5 @@
 package org.broadinstitute.ddp.db.dao;
 
-import static org.broadinstitute.ddp.constants.SqlConstants.FormSectionIconSourceTable;
-import static org.broadinstitute.ddp.constants.SqlConstants.FormSectionIconTable;
-import static org.broadinstitute.ddp.constants.SqlConstants.FormSectionTable;
-import static org.broadinstitute.ddp.constants.SqlConstants.ScaleFactorTable;
-
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -15,6 +10,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
+import org.broadinstitute.ddp.constants.SqlConstants.FormSectionIconSourceTable;
+import org.broadinstitute.ddp.constants.SqlConstants.FormSectionIconTable;
+import org.broadinstitute.ddp.constants.SqlConstants.FormSectionTable;
+import org.broadinstitute.ddp.constants.SqlConstants.ScaleFactorTable;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.model.activity.definition.SectionIcon;
 import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;

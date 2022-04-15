@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp.equation;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import lombok.AllArgsConstructor;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStreams;
@@ -7,9 +10,6 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.broadinstitute.ddp.pex.lang.EquationBaseVisitor;
 import org.broadinstitute.ddp.pex.lang.EquationLexer;
 import org.broadinstitute.ddp.pex.lang.EquationParser;
-
-import java.util.HashSet;
-import java.util.Set;
 
 @AllArgsConstructor
 public final class EquationVariablesCollector extends EquationBaseVisitor<Byte> {

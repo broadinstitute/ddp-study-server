@@ -2,7 +2,6 @@ package org.broadinstitute.ddp.db.dao;
 
 import java.time.Instant;
 
-
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;

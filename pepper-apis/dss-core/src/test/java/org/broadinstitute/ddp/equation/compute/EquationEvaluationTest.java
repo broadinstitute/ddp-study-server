@@ -1,11 +1,11 @@
 package org.broadinstitute.ddp.equation.compute;
 
+import java.math.BigDecimal;
+
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.broadinstitute.ddp.equation.EquationEvaluator;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.math.BigDecimal;
 
 public class EquationEvaluationTest {
     @Test(expected = ParseCancellationException.class)

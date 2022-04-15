@@ -1,5 +1,10 @@
 package org.broadinstitute.ddp.model.activity.instance.validation;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import java.util.List;
+
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
@@ -21,11 +26,6 @@ import org.broadinstitute.ddp.util.TestFormActivity;
 import org.jdbi.v3.core.Handle;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.List;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class ComparisonDateRuleTest extends TxnAwareBaseTest {
     private static TestDataSetupUtil.GeneratedTestData testData;

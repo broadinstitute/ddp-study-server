@@ -1,16 +1,16 @@
 package org.broadinstitute.ddp.db.dao;
 
-import org.broadinstitute.ddp.cache.CacheService;
-import org.broadinstitute.ddp.cache.ModelChangeType;
-import org.jdbi.v3.core.Handle;
-import org.redisson.client.RedisException;
-
-import javax.cache.Cache;
-import javax.cache.expiry.Duration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.cache.Cache;
+import javax.cache.expiry.Duration;
+
+import org.broadinstitute.ddp.cache.CacheService;
+import org.broadinstitute.ddp.cache.ModelChangeType;
+import org.jdbi.v3.core.Handle;
+import org.redisson.client.RedisException;
 
 public class MatrixQuestionCachedDao extends SQLObjectWrapper<MatrixQuestionDao> implements MatrixQuestionDao {
     private static Cache<String, GroupOptionRowDtos> questionVersionKeyToGroupOptionRowCache;

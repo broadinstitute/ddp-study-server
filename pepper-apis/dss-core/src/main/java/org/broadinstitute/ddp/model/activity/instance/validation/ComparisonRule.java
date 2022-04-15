@@ -1,5 +1,9 @@
 package org.broadinstitute.ddp.model.activity.instance.validation;
 
+import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.Optional;
+
 import com.google.common.primitives.Longs;
 import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
@@ -15,10 +19,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.types.ComparisonType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
-
-import java.time.LocalDate;
-import java.util.Comparator;
-import java.util.Optional;
 
 @Slf4j
 @Getter

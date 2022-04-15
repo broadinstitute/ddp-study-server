@@ -1,17 +1,17 @@
 package org.broadinstitute.ddp.model.activity.definition.question;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.util.MiscUtil;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 public final class MatrixQuestionDef extends QuestionDef {
 

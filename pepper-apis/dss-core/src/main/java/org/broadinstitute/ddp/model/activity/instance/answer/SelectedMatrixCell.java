@@ -1,10 +1,10 @@
 package org.broadinstitute.ddp.model.activity.instance.answer;
 
+import java.io.Serializable;
+import javax.validation.constraints.NotBlank;
+
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.util.MiscUtil;
-
-import javax.validation.constraints.NotBlank;
-import java.io.Serializable;
 
 public class SelectedMatrixCell implements Serializable {
 

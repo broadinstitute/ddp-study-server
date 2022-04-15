@@ -1,15 +1,15 @@
 package org.broadinstitute.ddp.export.json.structured;
 
+import java.lang.reflect.Type;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.util.GsonUtil;
-
-import java.lang.reflect.Type;
 
 public abstract class QuestionRecord {
 

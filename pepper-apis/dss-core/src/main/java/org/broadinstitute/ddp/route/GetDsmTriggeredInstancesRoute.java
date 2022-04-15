@@ -1,11 +1,10 @@
 package org.broadinstitute.ddp.route;
 
-import static org.broadinstitute.ddp.constants.RouteConstants.PathParam;
-
 import java.util.List;
 
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
+import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DsmOnDemandActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;

@@ -1,12 +1,12 @@
 package org.broadinstitute.ddp.db.dto.validation;
 
+import java.io.Serializable;
+import java.math.BigDecimal;
+
 import lombok.Value;
 import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
-
-import java.io.Serializable;
-import java.math.BigDecimal;
 
 @Value
 public class DecimalRangeRuleDto extends RuleDto implements Serializable {

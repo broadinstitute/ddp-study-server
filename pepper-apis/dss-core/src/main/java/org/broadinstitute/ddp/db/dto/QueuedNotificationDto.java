@@ -1,12 +1,12 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.util.List;
+import java.util.stream.Stream;
+
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
-
-import java.util.List;
-import java.util.stream.Stream;
 
 public final class QueuedNotificationDto extends QueuedEventDto {
     private final NotificationDetailsDto notificationDetailsDto;

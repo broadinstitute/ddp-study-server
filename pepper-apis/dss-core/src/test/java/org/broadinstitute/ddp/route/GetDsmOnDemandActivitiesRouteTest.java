@@ -1,8 +1,6 @@
 package org.broadinstitute.ddp.route;
 
 import static io.restassured.RestAssured.given;
-import static org.broadinstitute.ddp.constants.RouteConstants.API;
-import static org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import static org.broadinstitute.ddp.model.dsm.OnDemandActivity.RepeatType.NONREPEATING;
 import static org.broadinstitute.ddp.model.dsm.OnDemandActivity.RepeatType.REPEATING;
 import static org.hamcrest.Matchers.contains;
@@ -14,8 +12,9 @@ import static org.junit.Assert.assertNotNull;
 import java.time.Instant;
 
 import io.restassured.http.ContentType;
-
 import org.broadinstitute.ddp.constants.ErrorCodes;
+import org.broadinstitute.ddp.constants.RouteConstants.API;
+import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dto.StudyDto;

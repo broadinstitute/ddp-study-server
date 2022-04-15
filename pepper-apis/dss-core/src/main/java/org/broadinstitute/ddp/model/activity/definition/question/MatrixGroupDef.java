@@ -1,11 +1,11 @@
 package org.broadinstitute.ddp.model.activity.definition.question;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.util.MiscUtil;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
 
 public class MatrixGroupDef {
 

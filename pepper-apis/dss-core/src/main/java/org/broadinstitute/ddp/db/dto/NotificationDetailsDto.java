@@ -1,15 +1,15 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 @Value
 @AllArgsConstructor(onConstructor = @__(@JdbiConstructor))

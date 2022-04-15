@@ -4,7 +4,6 @@ import java.util.Optional;
 import java.util.Scanner;
 
 import com.typesafe.config.Config;
-
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.pex.PexException;

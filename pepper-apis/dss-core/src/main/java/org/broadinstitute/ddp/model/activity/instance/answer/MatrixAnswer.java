@@ -1,13 +1,13 @@
 package org.broadinstitute.ddp.model.activity.instance.answer;
 
+import java.util.ArrayList;
+import java.util.List;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.util.MiscUtil;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.List;
 
 public final class MatrixAnswer extends Answer<List<SelectedMatrixCell>> {
 

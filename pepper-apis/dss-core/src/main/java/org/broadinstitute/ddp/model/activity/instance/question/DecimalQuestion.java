@@ -1,15 +1,15 @@
 package org.broadinstitute.ddp.model.activity.instance.question;
 
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.function.Consumer;
+
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.model.activity.instance.answer.DecimalAnswer;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
-
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.function.Consumer;
 
 public final class DecimalQuestion extends Question<DecimalAnswer> {
     @SerializedName("placeholderText")

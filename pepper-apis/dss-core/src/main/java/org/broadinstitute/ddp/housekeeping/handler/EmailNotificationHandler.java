@@ -21,9 +21,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Attachments;
 import com.sendgrid.helpers.mail.objects.Email;
-import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Personalization;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;

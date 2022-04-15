@@ -1,12 +1,12 @@
 package org.broadinstitute.ddp.model.activity.definition.validation;
 
+import javax.validation.constraints.NotNull;
+
 import com.google.gson.annotations.SerializedName;
 import lombok.Value;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.types.ComparisonType;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
-
-import javax.validation.constraints.NotNull;
 
 @Value
 public class ComparisonRuleDef extends RuleDef {

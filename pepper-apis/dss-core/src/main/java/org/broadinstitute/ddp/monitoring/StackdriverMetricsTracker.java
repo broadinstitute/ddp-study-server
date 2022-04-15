@@ -25,7 +25,6 @@ import com.google.monitoring.v3.TimeSeries;
 import com.google.monitoring.v3.TypedValue;
 import com.google.protobuf.Timestamp;
 import com.google.protobuf.util.Timestamps;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;

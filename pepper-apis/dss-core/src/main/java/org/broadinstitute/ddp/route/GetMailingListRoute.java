@@ -12,10 +12,8 @@ import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.json.mailinglist.GetMailingListResponse;
 import org.broadinstitute.ddp.util.ResponseUtil;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import spark.Request;
 import spark.Response;
 import spark.Route;

@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.equation.lang;
 
+import static org.junit.Assert.assertEquals;
+
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -7,8 +9,6 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.broadinstitute.ddp.pex.lang.EquationLexer;
 import org.broadinstitute.ddp.pex.lang.EquationParser;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class EquationParserTest {
     private static final String EXPRESSION = "3.14 + 2.71 * (x + y ^ 2)";

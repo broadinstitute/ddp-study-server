@@ -1,20 +1,20 @@
 package org.broadinstitute.ddp.export.collectors;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.elastic.MappingUtil;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
 import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
-
-import java.util.Map;
-import java.util.LinkedHashMap;
-import java.util.HashMap;
-import java.util.List;
-import java.util.ArrayList;
 
 /**
  * Rule:

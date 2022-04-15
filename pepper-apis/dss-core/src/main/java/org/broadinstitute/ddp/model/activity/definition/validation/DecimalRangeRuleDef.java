@@ -1,12 +1,12 @@
 package org.broadinstitute.ddp.model.activity.definition.validation;
 
+import java.math.BigDecimal;
+import java.util.Optional;
+
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
-
-import java.math.BigDecimal;
-import java.util.Optional;
 
 public class DecimalRangeRuleDef extends RuleDef {
 

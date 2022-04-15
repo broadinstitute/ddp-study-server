@@ -1,5 +1,12 @@
 package org.broadinstitute.ddp.export.collectors;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
@@ -17,13 +24,6 @@ import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Rule:

@@ -2,6 +2,12 @@ package org.broadinstitute.ddp.util;
 
 import static java.lang.String.format;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -30,12 +36,6 @@ import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.service.FormActivityService;
 import org.jdbi.v3.core.Handle;
 import spark.Response;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 
 public class QuestionUtil {

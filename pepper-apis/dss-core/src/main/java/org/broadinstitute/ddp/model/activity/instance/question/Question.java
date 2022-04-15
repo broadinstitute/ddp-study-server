@@ -2,13 +2,12 @@ package org.broadinstitute.ddp.model.activity.instance.question;
 
 import static java.util.stream.Collectors.toList;
 
-import java.util.Objects;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
-
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;

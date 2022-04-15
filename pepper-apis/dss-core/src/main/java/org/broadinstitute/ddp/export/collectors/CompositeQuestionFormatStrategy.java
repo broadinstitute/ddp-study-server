@@ -20,10 +20,10 @@ import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
-import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
+import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 
 /**

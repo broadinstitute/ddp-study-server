@@ -1,13 +1,13 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.io.Serializable;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
-
-import java.io.Serializable;
 
 @Value
 @Builder(toBuilder = true)

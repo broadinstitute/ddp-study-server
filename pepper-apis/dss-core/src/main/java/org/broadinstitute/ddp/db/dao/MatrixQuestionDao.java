@@ -1,9 +1,23 @@
 package org.broadinstitute.ddp.db.dao;
 
+import static java.util.stream.Collectors.toList;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Stream;
+
 import org.broadinstitute.ddp.db.DaoException;
+import org.broadinstitute.ddp.db.dto.MatrixGroupDto;
 import org.broadinstitute.ddp.db.dto.MatrixOptionDto;
 import org.broadinstitute.ddp.db.dto.MatrixRowDto;
-import org.broadinstitute.ddp.db.dto.MatrixGroupDto;
 import org.broadinstitute.ddp.db.dto.RevisionDto;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
@@ -18,20 +32,6 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.stringtemplate4.StringTemplateSqlLocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.Serializable;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.stream.Stream;
-import java.util.LinkedHashMap;
-import java.util.Collection;
-
-import static java.util.stream.Collectors.toList;
 
 public interface MatrixQuestionDao extends SqlObject {
 

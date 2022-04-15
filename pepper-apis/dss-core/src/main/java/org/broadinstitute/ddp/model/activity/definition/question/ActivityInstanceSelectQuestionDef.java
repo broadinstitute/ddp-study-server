@@ -1,12 +1,12 @@
 package org.broadinstitute.ddp.model.activity.definition.question;
 
+import java.util.List;
+import javax.validation.constraints.NotNull;
+
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
-
-import javax.validation.constraints.NotNull;
-import java.util.List;
 
 public final class ActivityInstanceSelectQuestionDef extends QuestionDef {
 

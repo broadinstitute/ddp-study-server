@@ -1,14 +1,14 @@
 package org.broadinstitute.ddp.model.activity.instance.question;
 
+import java.util.NoSuchElementException;
+import java.util.function.Consumer;
+import javax.validation.constraints.NotBlank;
+
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.content.Renderable;
 import org.broadinstitute.ddp.util.MiscUtil;
-
-import javax.validation.constraints.NotBlank;
-import java.util.NoSuchElementException;
-import java.util.function.Consumer;
 
 public class MatrixGroup implements Renderable {
 

@@ -1,8 +1,8 @@
 package org.broadinstitute.ddp.model.activity.definition;
 
 import java.lang.reflect.Type;
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import javax.validation.Valid;

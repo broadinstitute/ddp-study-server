@@ -1,8 +1,6 @@
 package org.broadinstitute.ddp.route;
 
 import static io.restassured.RestAssured.given;
-import static org.broadinstitute.ddp.constants.RouteConstants.API;
-import static org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import static org.broadinstitute.ddp.model.activity.types.InstanceStatusType.CREATED;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
@@ -18,6 +16,8 @@ import java.util.Set;
 import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
 import org.broadinstitute.ddp.constants.ErrorCodes;
+import org.broadinstitute.ddp.constants.RouteConstants.API;
+import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;

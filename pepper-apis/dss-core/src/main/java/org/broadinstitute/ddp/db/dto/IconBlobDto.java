@@ -1,10 +1,10 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.sql.Blob;
+
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.broadinstitute.ddp.model.activity.types.FormType;
-
-import java.sql.Blob;
 
 @Value
 @AllArgsConstructor

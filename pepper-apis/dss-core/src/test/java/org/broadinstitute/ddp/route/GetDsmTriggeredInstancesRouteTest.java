@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.route;
 
 import static io.restassured.RestAssured.given;
-import static org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.everyItem;
@@ -20,6 +19,7 @@ import com.google.gson.reflect.TypeToken;
 import io.restassured.http.ContentType;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
+import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;

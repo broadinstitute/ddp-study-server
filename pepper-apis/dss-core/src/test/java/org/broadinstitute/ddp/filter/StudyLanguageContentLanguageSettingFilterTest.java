@@ -4,7 +4,6 @@ import java.util.Locale;
 
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
-
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -13,7 +12,6 @@ import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.route.IntegrationTestSuite;
 import org.broadinstitute.ddp.route.RouteTestUtil;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
-
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;

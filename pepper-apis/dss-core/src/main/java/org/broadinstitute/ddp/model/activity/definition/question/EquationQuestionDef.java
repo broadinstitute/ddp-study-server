@@ -1,12 +1,12 @@
 package org.broadinstitute.ddp.model.activity.definition.question;
 
+import javax.validation.Valid;
+
 import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import org.broadinstitute.ddp.equation.ValidEquation;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
-
-import javax.validation.Valid;
 
 @Getter
 @SuperBuilder(toBuilder = true)

@@ -1,14 +1,14 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.experimental.Accessors;
 import org.broadinstitute.ddp.model.activity.types.ListStyleHint;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
-
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
 @Value
 @AllArgsConstructor

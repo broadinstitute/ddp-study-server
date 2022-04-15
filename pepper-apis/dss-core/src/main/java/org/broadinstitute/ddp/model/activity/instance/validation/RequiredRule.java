@@ -1,22 +1,22 @@
 package org.broadinstitute.ddp.model.activity.instance.validation;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.DateQuestion;
-import org.broadinstitute.ddp.model.activity.instance.question.MatrixQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.MatrixGroup;
+import org.broadinstitute.ddp.model.activity.instance.question.MatrixQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.MatrixRow;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
-
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * A validation rule that indicates an answer is required.

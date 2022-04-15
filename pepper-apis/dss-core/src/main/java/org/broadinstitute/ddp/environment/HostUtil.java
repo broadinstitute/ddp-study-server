@@ -2,7 +2,6 @@ package org.broadinstitute.ddp.environment;
 
 import java.net.UnknownHostException;
 
-
 import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.RandomStringUtils;

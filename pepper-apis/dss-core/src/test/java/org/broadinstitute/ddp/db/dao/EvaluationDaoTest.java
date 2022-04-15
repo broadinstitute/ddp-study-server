@@ -1,5 +1,14 @@
 package org.broadinstitute.ddp.db.dao;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Optional;
+
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -24,15 +33,6 @@ import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Optional;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 
 public class EvaluationDaoTest extends TxnAwareBaseTest {
     private static TestDataSetupUtil.GeneratedTestData testData;

@@ -1,9 +1,9 @@
 package org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile;
 
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException.Severity.WARN;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.FIELD__DO_NOT_CONTACT;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.FIELD__FIRST_NAME;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.FIELD__LAST_NAME;
-import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.FIELD__DO_NOT_CONTACT;
 
 import java.util.Properties;
 

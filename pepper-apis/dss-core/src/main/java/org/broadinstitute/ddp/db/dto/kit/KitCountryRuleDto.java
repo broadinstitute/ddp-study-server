@@ -1,12 +1,11 @@
 package org.broadinstitute.ddp.db.dto.kit;
 
-import static org.broadinstitute.ddp.constants.SqlConstants.KitCountryRuleTable;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import lombok.AllArgsConstructor;
 import lombok.Value;
+import org.broadinstitute.ddp.constants.SqlConstants.KitCountryRuleTable;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 

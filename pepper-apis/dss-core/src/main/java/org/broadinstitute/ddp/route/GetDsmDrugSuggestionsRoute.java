@@ -8,7 +8,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.json.DrugSuggestionResponse;
@@ -17,11 +16,9 @@ import org.broadinstitute.ddp.model.dsm.DrugStore;
 import org.broadinstitute.ddp.model.suggestion.DrugSuggestion;
 import org.broadinstitute.ddp.model.suggestion.PatternMatch;
 import org.broadinstitute.ddp.util.ResponseUtil;
-
 import org.broadinstitute.ddp.util.StringSuggestionTypeaheadComparator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import spark.Request;
 import spark.Response;
 import spark.Route;

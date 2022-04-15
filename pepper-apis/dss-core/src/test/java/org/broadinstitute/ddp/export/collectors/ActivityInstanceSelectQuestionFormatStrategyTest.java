@@ -1,17 +1,17 @@
 package org.broadinstitute.ddp.export.collectors;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.List;
+import java.util.Map;
+
 import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 public class ActivityInstanceSelectQuestionFormatStrategyTest {
 

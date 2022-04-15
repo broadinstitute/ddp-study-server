@@ -1,14 +1,14 @@
 package org.broadinstitute.ddp.util;
 
+import java.io.IOException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.ProcessResult;
 import org.zeroturnaround.exec.stream.slf4j.Slf4jStream;
-
-import java.io.IOException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Sometimes you just want to spawn a new java process, using the current classpath

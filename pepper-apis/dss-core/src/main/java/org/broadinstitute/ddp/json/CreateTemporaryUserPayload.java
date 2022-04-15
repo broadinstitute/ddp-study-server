@@ -1,10 +1,10 @@
 package org.broadinstitute.ddp.json;
 
+import javax.validation.constraints.NotBlank;
+
 import com.google.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
 import lombok.Value;
-
-import javax.validation.constraints.NotBlank;
 
 @Value
 @AllArgsConstructor

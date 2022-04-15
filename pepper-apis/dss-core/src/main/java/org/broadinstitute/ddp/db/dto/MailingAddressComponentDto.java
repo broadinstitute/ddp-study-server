@@ -1,12 +1,12 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.util.Set;
+
 import lombok.Value;
 import lombok.experimental.Accessors;
 import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
-
-import java.util.Set;
 
 @Value
 public class MailingAddressComponentDto extends ComponentDto {

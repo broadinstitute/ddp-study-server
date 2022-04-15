@@ -1,12 +1,12 @@
 package org.broadinstitute.ddp.model.activity.definition.types;
 
-import com.google.gson.annotations.SerializedName;
-import lombok.AllArgsConstructor;
-import lombok.Value;
-
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+
+import com.google.gson.annotations.SerializedName;
+import lombok.AllArgsConstructor;
+import lombok.Value;
 
 @Value
 @AllArgsConstructor

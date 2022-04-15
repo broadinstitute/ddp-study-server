@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.json;
 
 import com.google.gson.annotations.SerializedName;
-
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.broadinstitute.ddp.json.activity.TranslatedSummary;

@@ -1,5 +1,9 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import org.broadinstitute.ddp.constants.SqlConstants.BlockTable;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dto.BlockDto;
 import org.broadinstitute.ddp.db.dto.NestedActivityBlockDto;
@@ -12,11 +16,6 @@ import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-
-import java.util.Optional;
-import java.util.stream.Stream;
-
-import static org.broadinstitute.ddp.constants.SqlConstants.BlockTable;
 
 public interface JdbiBlock extends SqlObject {
 

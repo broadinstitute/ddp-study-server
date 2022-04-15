@@ -1,12 +1,12 @@
 package org.broadinstitute.ddp.equation.compute;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.google.common.collect.Sets;
 import org.broadinstitute.ddp.equation.EquationVariablesCollector;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.HashSet;
-import java.util.Set;
 
 public class EquationVariablesCollectorTest {
     @Test

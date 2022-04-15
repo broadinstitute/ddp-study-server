@@ -2,50 +2,49 @@ package org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.questio
 
 import static org.broadinstitute.ddp.util.QuestionUtil.isReadOnly;
 
-import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
-import org.broadinstitute.ddp.util.CollectionMiscUtil;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.EquationQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
+import org.broadinstitute.ddp.model.activity.instance.question.ActivityInstanceSelectQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.AgreementQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.BoolQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.CompositeQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.DatePicklistQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.DateQuestion;
-import org.broadinstitute.ddp.model.activity.instance.question.FileQuestion;
-import org.broadinstitute.ddp.model.activity.instance.question.NumericQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.DecimalQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.EquationQuestion;
-import org.broadinstitute.ddp.model.activity.instance.question.PicklistGroup;
-import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
-import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.FileQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.MatrixGroup;
 import org.broadinstitute.ddp.model.activity.instance.question.MatrixOption;
 import org.broadinstitute.ddp.model.activity.instance.question.MatrixQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.MatrixRow;
+import org.broadinstitute.ddp.model.activity.instance.question.NumericQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.PicklistGroup;
+import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
+import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
-import org.broadinstitute.ddp.model.activity.instance.question.ActivityInstanceSelectQuestion;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
+import org.broadinstitute.ddp.util.CollectionMiscUtil;
 
 public class QuestionCreatorHelper {
 

@@ -1,5 +1,9 @@
 package org.broadinstitute.ddp.equation;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.util.Map;
+
 import ch.obermuhlner.math.big.BigDecimalMath;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -9,10 +13,6 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.broadinstitute.ddp.pex.lang.EquationBaseVisitor;
 import org.broadinstitute.ddp.pex.lang.EquationLexer;
 import org.broadinstitute.ddp.pex.lang.EquationParser;
-
-import java.math.BigDecimal;
-import java.math.MathContext;
-import java.util.Map;
 
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 public final class EquationEvaluator extends EquationBaseVisitor<BigDecimal> {

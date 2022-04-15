@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.Optional;
+
 import org.broadinstitute.ddp.db.dto.BlockEnabledExpressionDto;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
@@ -8,8 +10,6 @@ import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
-
-import java.util.Optional;
 
 public interface JdbiBlockEnabledExpression extends SqlObject {
 

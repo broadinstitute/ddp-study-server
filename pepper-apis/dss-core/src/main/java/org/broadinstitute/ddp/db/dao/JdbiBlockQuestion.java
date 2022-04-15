@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.Map;
+import java.util.Optional;
+
 import org.broadinstitute.ddp.db.dto.TypedQuestionId;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.KeyColumn;
@@ -11,9 +14,6 @@ import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-
-import java.util.Map;
-import java.util.Optional;
 
 public interface JdbiBlockQuestion extends SqlObject {
 

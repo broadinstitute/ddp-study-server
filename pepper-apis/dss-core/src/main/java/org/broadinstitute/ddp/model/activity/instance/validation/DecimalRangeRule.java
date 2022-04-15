@@ -1,13 +1,13 @@
 package org.broadinstitute.ddp.model.activity.instance.validation;
 
+import java.math.BigDecimal;
+import java.util.Optional;
+
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.DecimalAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
-
-import java.math.BigDecimal;
-import java.util.Optional;
 
 /**
  * A validation rule that checks numeric integer value is within an optional min/max range, inclusive.

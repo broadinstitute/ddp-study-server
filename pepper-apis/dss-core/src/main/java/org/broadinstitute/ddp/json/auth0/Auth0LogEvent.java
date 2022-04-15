@@ -18,7 +18,6 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Map;
 
-
 import com.google.gson.JsonElement;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;

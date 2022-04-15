@@ -1,9 +1,5 @@
 package org.broadinstitute.ddp.model.activity.definition;
 
-import static org.broadinstitute.ddp.constants.SqlConstants.FormSectionIconTable;
-import static org.broadinstitute.ddp.constants.SqlConstants.FormSectionStateTable;
-import static org.broadinstitute.ddp.constants.SqlConstants.FormSectionTable;
-
 import java.beans.ConstructorProperties;
 import java.lang.reflect.Type;
 import java.net.URL;
@@ -21,6 +17,9 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.gson.annotations.SerializedName;
+import org.broadinstitute.ddp.constants.SqlConstants.FormSectionIconTable;
+import org.broadinstitute.ddp.constants.SqlConstants.FormSectionStateTable;
+import org.broadinstitute.ddp.constants.SqlConstants.FormSectionTable;
 import org.broadinstitute.ddp.model.activity.types.FormSectionState;
 import org.broadinstitute.ddp.util.MiscUtil;
 

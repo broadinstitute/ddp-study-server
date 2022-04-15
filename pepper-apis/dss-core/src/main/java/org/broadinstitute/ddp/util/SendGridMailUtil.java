@@ -6,13 +6,13 @@ import java.net.URL;
 import java.util.Map;
 
 import com.sendgrid.Client;
-import com.sendgrid.helpers.mail.objects.Email;
-import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.Method;
-import com.sendgrid.helpers.mail.objects.Personalization;
 import com.sendgrid.Request;
 import com.sendgrid.Response;
 import com.sendgrid.SendGrid;
+import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Email;
+import com.sendgrid.helpers.mail.objects.Personalization;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;

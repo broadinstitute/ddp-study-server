@@ -1,14 +1,14 @@
 package org.broadinstitute.ddp.export.collectors;
 
-import org.broadinstitute.ddp.content.HtmlConverter;
-import org.broadinstitute.ddp.elastic.MappingUtil;
-import org.broadinstitute.ddp.model.activity.definition.question.EquationQuestionDef;
-import org.broadinstitute.ddp.model.activity.instance.answer.DecimalAnswer;
-
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.broadinstitute.ddp.content.HtmlConverter;
+import org.broadinstitute.ddp.elastic.MappingUtil;
+import org.broadinstitute.ddp.model.activity.definition.question.EquationQuestionDef;
+import org.broadinstitute.ddp.model.activity.instance.answer.DecimalAnswer;
 
 public class EquationQuestionFormatStrategy implements ResponseFormatStrategy<EquationQuestionDef, DecimalAnswer> {
 

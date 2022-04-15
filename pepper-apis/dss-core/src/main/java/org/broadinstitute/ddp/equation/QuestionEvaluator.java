@@ -1,5 +1,10 @@
 package org.broadinstitute.ddp.equation;
 
+import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import one.util.streamex.StreamEx;
@@ -9,11 +14,6 @@ import org.broadinstitute.ddp.json.EquationResponse;
 import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.jdbi.v3.core.Handle;
-
-import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 @AllArgsConstructor

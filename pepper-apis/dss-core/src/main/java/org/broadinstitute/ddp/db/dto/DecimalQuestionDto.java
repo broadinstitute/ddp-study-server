@@ -1,12 +1,12 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.io.Serializable;
+import java.util.Set;
+
 import lombok.Getter;
 import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
-
-import java.io.Serializable;
-import java.util.Set;
 
 @Getter
 public final class DecimalQuestionDto extends QuestionDto implements Serializable {

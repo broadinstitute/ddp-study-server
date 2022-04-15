@@ -1,12 +1,12 @@
 package org.broadinstitute.ddp.db.dto.validation;
 
+import java.io.Serializable;
+
 import lombok.Value;
 import org.broadinstitute.ddp.model.activity.types.ComparisonType;
 import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
-
-import java.io.Serializable;
 
 @Value
 public class ComparisonRuleDto extends RuleDto implements Serializable {

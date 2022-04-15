@@ -1,5 +1,13 @@
 package org.broadinstitute.ddp.export.collectors;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
@@ -10,14 +18,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
 import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
 
 public class MatrixQuestionFormatStrategyTest {
 

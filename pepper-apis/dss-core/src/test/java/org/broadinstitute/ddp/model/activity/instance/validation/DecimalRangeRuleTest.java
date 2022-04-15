@@ -1,5 +1,12 @@
 package org.broadinstitute.ddp.model.activity.instance.validation;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
+
 import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.DecimalAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.DecimalQuestion;
@@ -7,13 +14,6 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class DecimalRangeRuleTest {
 

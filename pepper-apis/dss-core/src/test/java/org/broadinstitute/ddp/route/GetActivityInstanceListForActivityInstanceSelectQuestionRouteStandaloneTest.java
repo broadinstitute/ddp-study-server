@@ -1,5 +1,12 @@
 package org.broadinstitute.ddp.route;
 
+import static org.junit.Assert.assertEquals;
+
+import java.io.IOException;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
+
 import com.google.gson.Gson;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
@@ -26,13 +33,6 @@ import org.jdbi.v3.core.Handle;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.time.Instant;
-import java.util.Collections;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
 
 public class GetActivityInstanceListForActivityInstanceSelectQuestionRouteStandaloneTest
         extends IntegrationTestSuite.TestCase {

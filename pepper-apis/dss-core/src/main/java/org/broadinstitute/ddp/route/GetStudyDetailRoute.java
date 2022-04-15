@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
-
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -25,10 +24,8 @@ import org.broadinstitute.ddp.model.study.StudyDetail;
 import org.broadinstitute.ddp.model.study.StudySettings;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import spark.Request;
 import spark.Response;
 import spark.Route;

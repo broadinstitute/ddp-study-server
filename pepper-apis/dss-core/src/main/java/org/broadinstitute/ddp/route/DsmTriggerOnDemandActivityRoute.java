@@ -1,7 +1,5 @@
 package org.broadinstitute.ddp.route;
 
-import static org.broadinstitute.ddp.constants.RouteConstants.PathParam;
-
 import java.time.Instant;
 import java.util.Set;
 
@@ -9,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
+import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;

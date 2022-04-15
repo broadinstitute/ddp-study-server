@@ -4,10 +4,8 @@ import java.util.List;
 
 import org.broadinstitute.ddp.model.dsm.Cancer;
 import org.broadinstitute.ddp.service.CancerService;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import spark.Request;
 import spark.Response;
 import spark.Route;

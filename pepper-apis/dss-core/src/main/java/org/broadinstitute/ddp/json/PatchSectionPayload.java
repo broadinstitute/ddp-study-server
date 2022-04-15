@@ -1,9 +1,9 @@
 package org.broadinstitute.ddp.json;
 
+import javax.validation.constraints.PositiveOrZero;
+
 import lombok.AllArgsConstructor;
 import lombok.Value;
-
-import javax.validation.constraints.PositiveOrZero;
 
 @Value
 @AllArgsConstructor

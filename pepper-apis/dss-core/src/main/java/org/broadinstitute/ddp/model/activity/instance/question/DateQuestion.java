@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.model.activity.instance.question;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
-
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;

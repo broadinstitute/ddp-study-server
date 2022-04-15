@@ -1,5 +1,17 @@
 package org.broadinstitute.ddp.db.dao;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.cache.DaoBuilder;
@@ -30,18 +42,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 
 @RunWith(Parameterized.class)

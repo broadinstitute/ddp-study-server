@@ -1,16 +1,16 @@
 package org.broadinstitute.ddp.db.dto;
 
+import static org.broadinstitute.ddp.util.CollectionMiscUtil.addNonNullsToSet;
+
+import java.io.Serializable;
+import java.util.Set;
+
 import lombok.Value;
 import org.broadinstitute.ddp.model.activity.types.SuggestionType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
-
-import java.io.Serializable;
-import java.util.Set;
-
-import static org.broadinstitute.ddp.util.CollectionMiscUtil.addNonNullsToSet;
 
 @Value
 public class TextQuestionDto extends QuestionDto implements Serializable {

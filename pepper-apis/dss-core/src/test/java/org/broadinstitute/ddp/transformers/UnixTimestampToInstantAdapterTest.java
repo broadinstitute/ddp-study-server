@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.time.Instant;
 
-
 import com.google.gson.Gson;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;

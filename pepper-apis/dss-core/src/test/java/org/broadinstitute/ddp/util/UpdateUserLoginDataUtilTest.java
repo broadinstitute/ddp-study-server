@@ -4,16 +4,13 @@ import com.auth0.client.mgmt.ManagementAPI;
 import com.auth0.exception.APIException;
 import com.auth0.exception.Auth0Exception;
 import com.auth0.json.mgmt.users.User;
-
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.json.auth0.Auth0CallResponse;
-
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
 import org.mockito.Mockito;
 
 /**

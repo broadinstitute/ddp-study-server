@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.transformers;
 import java.io.IOException;
 import java.time.Instant;
 
-
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;

@@ -2,10 +2,10 @@ package org.broadinstitute.ddp.model.activity.definition.question;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Collection;
-import java.util.Optional;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;

@@ -1,5 +1,10 @@
 package org.broadinstitute.ddp.model.activity.instance.question;
 
+import java.lang.reflect.Type;
+import java.util.List;
+import java.util.function.Consumer;
+import javax.validation.constraints.NotNull;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -10,11 +15,6 @@ import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
-
-import javax.validation.constraints.NotNull;
-import java.lang.reflect.Type;
-import java.util.List;
-import java.util.function.Consumer;
 
 public class ActivityInstanceSelectQuestion extends Question<ActivityInstanceSelectAnswer> {
 

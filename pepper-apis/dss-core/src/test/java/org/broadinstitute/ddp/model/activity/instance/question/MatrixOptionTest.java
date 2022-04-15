@@ -1,12 +1,12 @@
 package org.broadinstitute.ddp.model.activity.instance.question;
 
-import org.broadinstitute.ddp.content.ContentStyle;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
+import org.broadinstitute.ddp.content.ContentStyle;
+import org.junit.Test;
 
 public class MatrixOptionTest {
 

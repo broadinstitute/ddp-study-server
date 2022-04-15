@@ -15,13 +15,13 @@ import java.io.IOException;
 import java.util.List;
 
 import com.google.gson.Gson;
-import com.sendgrid.helpers.mail.objects.Content;
-import com.sendgrid.helpers.mail.objects.Email;
-import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.Method;
 import com.sendgrid.Request;
 import com.sendgrid.Response;
 import com.sendgrid.SendGrid;
+import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Content;
+import com.sendgrid.helpers.mail.objects.Email;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;

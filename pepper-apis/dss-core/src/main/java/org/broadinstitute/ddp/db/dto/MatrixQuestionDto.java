@@ -1,13 +1,13 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.io.Serializable;
+import java.util.Set;
+
 import lombok.Value;
 import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
 import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
-
-import java.io.Serializable;
-import java.util.Set;
 
 @Value
 public class MatrixQuestionDto extends QuestionDto implements Serializable {
