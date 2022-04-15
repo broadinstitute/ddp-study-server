@@ -8,12 +8,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.gson.Gson;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.*;
@@ -23,16 +21,12 @@ import org.broadinstitute.dsm.model.KitDDPSummary;
 import org.broadinstitute.dsm.model.KitRequestsPerDate;
 import org.broadinstitute.dsm.model.KitSubKits;
 import org.broadinstitute.dsm.model.NameValue;
-import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
-import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
-import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
-import org.broadinstitute.dsm.util.AbstractionUtil;
 import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.KitUtil;
@@ -73,36 +67,6 @@ public class DashboardRoute extends RequestHandler {
         this.kitUtil = kitUtil;
     }
 
-    public static List<ParticipantWrapperDto> addAllData(List<String> baseList, Map<String, Map<String, Object>> esDataMap,
-                                                         Map<String, Participant> participantMap,
-                                                         Map<String, List<MedicalRecord>> medicalRecordMap,
-                                                         Map<String, List<OncHistoryDetail>> oncHistoryMap,
-                                                         Map<String, List<KitRequestShipping>> kitRequestMap,
-                                                         Map<String, List<AbstractionActivity>> abstractionActivityMap,
-                                                         Map<String, List<AbstractionGroup>> abstractionSummary,
-                                                         Map<String, Map<String, Object>> proxyData,
-                                                         Map<String, List<ParticipantData>> participantData) {
-        List<ParticipantWrapperDto> participantList = new ArrayList<>();
-        for (String ddpParticipantId : baseList) {
-            Participant participant = participantMap != null ? participantMap.get(ddpParticipantId) : null;
-            Map<String, Object> participantESData = esDataMap.get(ddpParticipantId);
-            if (participantESData != null) {
-                ElasticSearchParticipantDto elasticSearchParticipantDto =
-                        new ElasticSearch().parseSourceMap(participantESData).get();
-                participantList.add(new ParticipantWrapperDto(elasticSearchParticipantDto, participant,
-                        medicalRecordMap != null ? medicalRecordMap.get(ddpParticipantId) : null,
-                        oncHistoryMap != null ? oncHistoryMap.get(ddpParticipantId) : null,
-                        kitRequestMap != null ? kitRequestMap.get(ddpParticipantId) : null,
-                        abstractionActivityMap != null ? abstractionActivityMap.get(ddpParticipantId) : null,
-                        abstractionSummary != null ? abstractionSummary.get(ddpParticipantId) : null,
-                        null,
-                        null));
-            }
-        }
-        logger.info("Returning list w/ " + participantList.size() + " pts now");
-        return participantList;
-    }
-
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         try {
@@ -118,12 +82,13 @@ public class DashboardRoute extends RequestHandler {
                         logger.info("Getting report/dashboard for period " + startDate + " - " + endDate);
                         final long start = SystemUtil.getLongFromDateString(startDate);
                         //set endDate to midnight of that date
+                        String tmpEndDate = endDate;
                         endDate = endDate + " 23:59:59";
                         final long end = SystemUtil.getLongFromDetailDateString(endDate);
                         if (request.url().contains(RoutePath.SAMPLE_REPORT_REQUEST)) {
                             return getShippingReport(userIdRequest, start, end);
                         } else {
-                            return getMedicalRecordDashboard(start, end, RoutePath.getRealm(request));
+                            return getMedicalRecordDashboard(start, end, RoutePath.getRealm(request), startDate, tmpEndDate);
                         }
                     } else {
                         throw new RuntimeException("End date is missing");
@@ -252,128 +217,88 @@ public class DashboardRoute extends RequestHandler {
      *
      * @return DashboardInformation
      */
-    public DashboardInformation getMedicalRecordDashboard(@NonNull long start, @NonNull long end, @NonNull String realm) {
+    public DashboardInformation getMedicalRecordDashboard(@NonNull long start, @NonNull long end, @NonNull String realm,
+                                                          String startDate, String endDate) {
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.MEDICAL_RECORD_ACTIVATED);
 
-        Map<String, Participant> participants = Participant.getParticipants(realm);
-        Map<String, List<MedicalRecord>> medicalRecords = MedicalRecord.getMedicalRecords(realm);
-        Map<String, List<OncHistoryDetail>> oncHistoryDetails = OncHistoryDetail.getOncHistoryDetails(realm);
-        Map<String, List<KitRequestShipping>> kitRequests = KitRequestShipping.getAllKitRequestsByRealm(realm, null, null, true);
-        Map<String, List<AbstractionActivity>> abstractionActivities = AbstractionActivity.getAllAbstractionActivityByRealm(realm);
-        Map<String, List<AbstractionGroup>> abstractionSummary = AbstractionFinal.getAbstractionFinal(realm);
+//        Map<String, Participant> participants = Participant.getParticipants(realm);
+//        Map<String, List<MedicalRecord>> medicalRecords = MedicalRecord.getMedicalRecords(realm);
+//        Map<String, List<OncHistoryDetail>> oncHistoryDetails = OncHistoryDetail.getOncHistoryDetails(realm);
+//        Map<String, List<KitRequestShipping>> kitRequests = KitRequestShipping.getAllKitRequestsByRealm(realm, null, null, true);
+//        Map<String, List<AbstractionActivity>> abstractionActivities = AbstractionActivity.getAllAbstractionActivityByRealm(realm);
+//        Map<String, List<AbstractionGroup>> abstractionSummary = AbstractionFinal.getAbstractionFinal(realm);
 
         Map<String, Integer> dashboardValues = new HashMap(); //counts only pt
         Map<String, Integer> dashboardValuesDetailed = new HashMap(); //counts number of institutions in total
         Map<String, Integer> dashboardValuesPeriod = new HashMap(); //counts only pt per period
         Map<String, Integer> dashboardValuesPeriodDetailed = new HashMap(); //counts number of institutions in total per period
+
         //number of pts in ES
         dashboardValues.put("all",new Long(ElasticSearchUtil.getCountParticipantsFromES(ddpInstance)).intValue());
 
-        long ptsStatusRegistered = ElasticSearchUtil.getCountParticipantsFromESByFilter(ddpInstance,  " AND data.status = "
-                + "REGISTERED");
-        dashboardValues.put("status.REGISTERED", new Long(ptsStatusRegistered).intValue());
+        getCountParticipantsFromESByFilter(dashboardValues, "status.REGISTERED", " AND data.status = REGISTERED", ddpInstance);
+        getCountParticipantsFromESByFilter(dashboardValues, "status.ENROLLED", " AND data.status = ENROLLED", ddpInstance);
+        getCountParticipantsFromESByFilter(dashboardValues, "status.EXITED_BEFORE_ENROLLMENT", " AND data.status = EXITED_BEFORE_ENROLLMENT", ddpInstance);
+        getCountParticipantsFromESByFilter(dashboardValues, "status.EXITED_AFTER_ENROLLMENT", " AND data.status = EXITED_AFTER_ENROLLMENT", ddpInstance);
+        getCountParticipantsFromESByFilter(dashboardValues, "bloodConsent", " AND dsm.hasConsentedToBloodDraw = true", ddpInstance);
+        getCountParticipantsFromESByFilter(dashboardValues, "tissueConsent", " AND dsm.hasConsentedToTissueSample = true", ddpInstance);
+        getCountParticipantsFromESByFilter(dashboardValuesPeriod, "all",
+                " AND profile.createdAt  >= " + startDate + " AND profile" + ".createdAt  <= " + endDate, ddpInstance);
 
-        long ptsStatusEnrolled = ElasticSearchUtil.getCountParticipantsFromESByFilter(ddpInstance,  " AND data.status = "
-                + "ENROLLED");
-        dashboardValues.put("status.ENROLLED", new Long(ptsStatusEnrolled).intValue());
-
-        long ptsStatusExitedBeforeEnrollment = ElasticSearchUtil.getCountParticipantsFromESByFilter(ddpInstance,  " AND data.status = "
-                + "EXITED_BEFORE_ENROLLMENT");
-        dashboardValues.put("status.EXITED_BEFORE_ENROLLMENT", new Long(ptsStatusExitedBeforeEnrollment).intValue());
-
-        long ptsStatusExitedAfterEnrollment = ElasticSearchUtil.getCountParticipantsFromESByFilter(ddpInstance,  " AND data.status = "
-                + "EXITED_AFTER_ENROLLMENT");
-        dashboardValues.put("status.EXITED_AFTER_ENROLLMENT", new Long(ptsStatusExitedAfterEnrollment).intValue());
-
-        long ptsHasConsentedToBloodDraw = ElasticSearchUtil.getCountParticipantsFromESByFilter(ddpInstance,  " AND dsm"
-                + ".hasConsentedToBloodDraw = true");
-        dashboardValues.put("bloodConsent", new Long(ptsHasConsentedToBloodDraw).intValue());
-
-        long ptsHasConsentedToTissueSample = ElasticSearchUtil.getCountParticipantsFromESByFilter(ddpInstance,  " AND dsm"
-                + ".hasConsentedToTissueSample = true");
-        dashboardValues.put("tissueConsent", new Long(ptsHasConsentedToTissueSample).intValue());
-
-//        for (ParticipantWrapperDto wrapper : participantWrapperList) {
-//            //es data information
-//            //count pt enrollment status
-////            String enrollmentStatus = (String) esData.get("status");
-////            countParameter(dashboardValues, "status." + enrollmentStatus, esData, "status", false);
-//
-//
-//            if (esData.get("profile") != null) {
-//                Map<String, Object> profileData = (Map<String, Object>) esData.get("profile");
-//                //count pt creation in period
-//                countParameterPeriod(dashboardValuesPeriod, "all", profileData, "createdAt", start, end);
-//            }
-//
-//            if (esData.get("activities") != null) {
-//                List<Object> surveyList = (ArrayList<Object>) esData.get("activities");
-//                for (Object survey : surveyList) {
-//                    Map<String, Object> surveyMap = (Map<String, Object>) survey;
-//                    String version = (String) surveyMap.get("activityVersion");
-//                    String code = (String) surveyMap.get("activityCode");
-//
-//                    if (surveyMap.get("lastUpdatedAt") != null) {
-//                        //get number of pt for survey x (which started to fill out survey)
-//                        countParameter(dashboardValues, "activity." + code + "." + version, surveyMap, "activityCode", false);
-//                        countParameter(dashboardValues, "activity." + code, surveyMap, "activityCode", false);
-//                    }
-//
-//                    //get number of pt who completed survey x with version z
-//                    countParameter(dashboardValues, "activity." + code + "." + version + ".completed", surveyMap,
-//                            "completedAt", true);
-//                    countParameterPeriod(dashboardValuesPeriod, "activity." + code + "." + version + ".completed", surveyMap,
-//                            "completedAt", start, end);
-//
-//                    //get number of pt who completed survey x ignoring version
-//                    countParameter(dashboardValues, "activity." + code + ".completed", surveyMap,
-//                            "completedAt", true);
-//                    countParameterPeriod(dashboardValuesPeriod, "activity." + code + ".completed", surveyMap,
-//                            "completedAt", start, end);
+        if (ddpInstance.isHasRole()) {
+            getCountParticipantsFromESByFilter(dashboardValues, "minimalMR", " AND r.minimalMr LIKE '1'", ddpInstance);
+            getCountParticipantsFromESByFilter(dashboardValues, "duplicateMedicalRecord", " AND m.duplicate LIKE '1'",
+                    ddpInstance);
+            getCountParticipantsFromESByFilter(dashboardValues, "internationalMedicalRecord",  " AND m.international LIKE '1'",
+                    ddpInstance);
+            getCountParticipantsFromESByFilter(dashboardValues, "medicalRecordWithProblem", " AND m.medicalRecordWithProblem = true",
+                    ddpInstance);
+            getCountParticipantsFromESByFilter(dashboardValues, "unableToObtainMedicalRecord", " AND m.unableToObtainMedicalRecord = true",
+                    ddpInstance);
+            getCountParticipantsFromESByFilter(dashboardValues, "followupRequiredMedicalRecord", " AND m.followupRequiredMedicalRecord = true",
+                    ddpInstance);
+            //MISSING TODO
+//            if (medicalRecord.isFollowupRequired()) {
+//                incrementCounter(dashboardValuesDetailed, "followupRequiredMedicalRecord");
+//                foundAtPT.add("followupRequiredMedicalRecord");
+//                if (medicalRecord.getFollowUps() == null || medicalRecord.getFollowUps().length == 0) {
+//                    incrementCounter(dashboardValuesDetailed, "followupNotRequested");
+//                    foundAtPT.add("followupNotRequested");
 //                }
 //            }
-//
-//            if (wrapper.getParticipant() != null) {
-//                if (wrapper.getParticipant().isMinimalMr()) {
-//                    incrementCounter(dashboardValues, "minimalMR");
-//                }
-//            }
-//
-//            Set<String> foundAtPt = new HashSet<>();
-//            Set<String> foundAtPtPeriod = new HashSet<>();
-//            if (wrapper.getMedicalRecords() != null && !wrapper.getMedicalRecords().isEmpty()) {
-//                countMedicalRecordData(wrapper.getMedicalRecords(), foundAtPt, foundAtPtPeriod, dashboardValuesDetailed,
-//                        dashboardValuesPeriodDetailed, start, end,
-//                        kitRequests);
-//            }
-//            if (wrapper.getOncHistoryDetails() != null && !wrapper.getOncHistoryDetails().isEmpty()) {
-//                countOncHistoryData(wrapper.getOncHistoryDetails(), foundAtPt, foundAtPtPeriod, dashboardValuesDetailed,
-//                        dashboardValuesPeriodDetailed, start, end);
-//            }
-//            if (wrapper.getKits() != null && !wrapper.getKits().isEmpty()) {
-//                countKits(wrapper.getKits(), foundAtPt, foundAtPtPeriod, dashboardValuesDetailed, dashboardValuesPeriodDetailed, start,
-//                        end);
-//            }
-//
-//            if (wrapper.getAbstractionActivities() != null && !wrapper.getAbstractionActivities().isEmpty()) {
-//                for (AbstractionActivity activity : wrapper.getAbstractionActivities()) {
-//                    if (AbstractionUtil.ACTIVITY_FINAL.equals(activity.getActivity())
-//                            && AbstractionUtil.STATUS_DONE.equals(activity.getAStatus())) {
-//                        incrementCounter(dashboardValues, "abstraction.done");
-//                        incrementCounterPeriod(dashboardValuesPeriod, "abstraction.done", activity.getLastChanged(), start, end);
-//                    }
-//                }
-//            }
-//
-//            for (String found : foundAtPt) {
-//                incrementCounter(dashboardValues, found);
-//            }
-//            for (String found : foundAtPtPeriod) {
-//                incrementCounter(dashboardValuesPeriod, found);
-//            }
-//        }
+            getCountParticipantsFromESByFilter(dashboardValues, "paperCRRequired", " AND m.paperCRRequired = true", ddpInstance);
+            getCountParticipantsFromESByFilter(dashboardValues, "reviewMedicalRecord", " AND m.reviewMedicalRecord = true", ddpInstance);
+            getCountParticipantsFromESByFilter(dashboardValues, "unableToObtainTissue", " AND oD.unableToObtainTissue = true", ddpInstance);
+            getCountParticipantsFromESByFilter(dashboardValues, "unableToObtainTissue", " AND oD.unableToObtainTissue = true", ddpInstance);
+            getCountParticipantsFromESByFilter(dashboardValues, "request.review", " AND oD.request = review", ddpInstance);
+            getCountParticipantsFromESByFilter(dashboardValues, "request.sent", " AND oD.request = sent", ddpInstance);
+            getCountParticipantsFromESByFilter(dashboardValues, "request.received", " AND oD.request = received", ddpInstance);
+            getCountParticipantsFromESByFilter(dashboardValues, "request.hold", " AND oD.request = hold", ddpInstance);
+            getCountParticipantsFromESByFilter(dashboardValues, "request.no", " AND oD.request = no", ddpInstance);
+            getCountParticipantsFromESByFilter(dashboardValues, "request.returned", " AND oD.request = returned", ddpInstance);
+            getCountParticipantsFromESByFilter(dashboardValues, "request.request", " AND oD.request = request", ddpInstance);
+
+        }
+
+        Map<String, Map<String, Object>> activityDefinitionsMap = ElasticSearchUtil.getActivityDefinitions(ddpInstance);
+        activityDefinitionsMap.entrySet().stream().forEach(activityName -> {
+            String tmpActivityName = activityName.toString().substring(0, activityName.toString().indexOf("_"));
+            //"activity." + code + "." + version + ".completed"
+            // AND ( ANGIORELEASE.status = 'COMPLETE' )
+            getCountParticipantsFromESByFilter(dashboardValues, "activity." + tmpActivityName + ".completed",
+                    " AND " + tmpActivityName + ".status = 'COMPLETE'", ddpInstance);
+//             AND ANGIORELEASE.completedAt  = '2018-11-26'
+            getCountParticipantsFromESByFilter(dashboardValues, "activity." + tmpActivityName + ".completed",
+                    " AND " + tmpActivityName + ".completedAt >= " + startDate + " AND " + tmpActivityName + ".completedAt  <= " + endDate, ddpInstance);
+        });
+
         logger.info("Done calculating dashboard. Returning map now");
         return new DashboardInformation(dashboardValues, dashboardValuesDetailed, dashboardValuesPeriod, dashboardValuesPeriodDetailed);
+    }
+
+    private void getCountParticipantsFromESByFilter(Map<String, Integer> dashboardValues, String frontendMap, String query, DDPInstance ddpInstance) {
+        long ptsStatusRegistered = ElasticSearchUtil.getCountParticipantsFromESByFilter(ddpInstance, query);
+        dashboardValues.put(frontendMap, new Long(ptsStatusRegistered).intValue());
     }
 
     private void countMedicalRecordData(@NonNull List<MedicalRecord> medicalRecordList, @NonNull Set<String> foundAtPT,
