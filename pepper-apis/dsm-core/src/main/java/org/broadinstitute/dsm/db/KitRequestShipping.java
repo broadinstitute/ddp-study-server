@@ -1061,8 +1061,13 @@ public class KitRequestShipping extends KitRequest {
         } else {
             logger.info("Updated kit w/ dsm_kit_id " + dsmKitId, results.resultException);
 
-            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
-                    ESObjectConstants.DSM_KIT_ID, dsmKitId).export();
+            try {
+                UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
+                        ESObjectConstants.DSM_KIT_ID, dsmKitId).export();
+            } catch (Exception e) {
+                logger.error("Failed to update created label to ES for kit w/ dsm_kit_id " + dsmKitId
+                        + " for pt " + kitRequestShipping.getCollaboratorParticipantId());
+            }
 
         }
     }
