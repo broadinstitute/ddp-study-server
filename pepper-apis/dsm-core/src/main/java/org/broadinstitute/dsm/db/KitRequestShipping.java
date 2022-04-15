@@ -754,9 +754,12 @@ public class KitRequestShipping extends KitRequest {
             kitRequestShipping.setDeactivationReason(deactivationReason);
             kitRequestShipping.setDeactivatedDate(deactivatedDate);
 
-            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
-                    ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId).export();
-
+            try {
+                UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
+                        ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId).export();
+            } catch (Exception e) {
+                logger.error("Failed to update deactivated kit to ES for kit w/ dsm_kit_request_id " + dsmKitRequestId);
+            }
         } else {
             if (easypostApiKey != null) {
                 KitRequestShipping.refundKit(dsmKitRequestId, easypostApiKey, ddpInstanceDto);
