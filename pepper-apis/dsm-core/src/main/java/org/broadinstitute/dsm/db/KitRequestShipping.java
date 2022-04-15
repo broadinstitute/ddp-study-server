@@ -972,9 +972,12 @@ public class KitRequestShipping extends KitRequest {
 
             KitRequestShipping kitRequestShipping = new KitRequestShipping(null, dsmKitId, null, null, null, null);
             kitRequestShipping.setLabelDate(labelDate);
-
-            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
-                    ESObjectConstants.DSM_KIT_ID, dsmKitId).export();
+            try {
+                UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
+                        ESObjectConstants.DSM_KIT_ID, dsmKitId).export();
+            } catch (Exception e) {
+                logger.error("error updating ES kit w/ dsm_kit_id " + dsmKitId);
+            }
         }
     }
 
