@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import com.typesafe.config.ConfigValue;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -21,6 +20,7 @@ import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.address.MailAddress;
+import org.broadinstitute.ddp.model.es.HiddenAlias;
 import org.broadinstitute.ddp.model.study.Participant;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.jdbi.v3.core.Handle;
@@ -178,18 +178,18 @@ public class ExportUtil {
         }
     }
 
-    public static void hideProtectedValue(Participant participant, Map.Entry<String, ConfigValue> entry) {
+    public static void hideProtectedValue(Participant participant, HiddenAlias hiddenAlias) {
         List<Answer> questionIdAnswers = participant.getAllResponses().stream()
                 .filter(activityResponse -> activityResponse instanceof FormResponse)
                 .map(activityResponse -> (FormResponse) activityResponse)
-                .filter(formResponse -> formResponse.hasAnswer(entry.getKey()))
-                .map(formResponse -> formResponse.getAnswer(entry.getKey()))
+                .filter(formResponse -> formResponse.hasAnswer(hiddenAlias.getStableId()))
+                .map(formResponse -> formResponse.getAnswer(hiddenAlias.getStableId()))
                 .collect(Collectors.toList());
         if (questionIdAnswers.size() == 1) {
-            questionIdAnswers.get(0).setValue(entry.getValue().unwrapped());
+            questionIdAnswers.get(0).setValue(hiddenAlias.getAlias());
         } else if (questionIdAnswers.size() > 1) {
             IntStream.range(0, questionIdAnswers.size()).forEach(i ->
-                    questionIdAnswers.get(i).setValue(String.format("%s %d", entry.getValue().unwrapped(), i+1)));
+                    questionIdAnswers.get(i).setValue(String.format("%s %d", hiddenAlias.getAlias(), i + 1)));
         }
     }
 }

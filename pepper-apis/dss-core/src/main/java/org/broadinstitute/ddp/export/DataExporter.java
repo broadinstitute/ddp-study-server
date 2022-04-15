@@ -34,8 +34,6 @@ import java.util.stream.Stream;
 import com.google.gson.Gson;
 import com.opencsv.CSVWriter;
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import com.typesafe.config.ConfigValue;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
@@ -44,6 +42,7 @@ import org.broadinstitute.ddp.content.I18nTemplateRenderFacade;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.EsHiddenValuesDao;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -113,6 +112,7 @@ import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
+import org.broadinstitute.ddp.model.es.HiddenAlias;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
@@ -160,7 +160,6 @@ public class DataExporter {
     private final FileUploadService fileService;
     private final RestHighLevelClient esClient;
     private final AddressService addressService;
-    private final Config protectedColumnsConfig;
 
     public static String makeExportCSVFilename(String studyGuid, Instant timestamp) {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssX").withZone(ZoneOffset.UTC);
@@ -180,7 +179,6 @@ public class DataExporter {
         this.fileService = FileUploadService.fromConfig(cfg);
         this.addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
                 cfg.getString(ConfigFile.GEOCODING_API_KEY));
-        this.protectedColumnsConfig = ConfigFactory.load(ConfigFile.ES_PROTECTED_COLUMNS_CONFIG_FILE);
         try {
             this.esClient = ElasticsearchServiceUtil.getElasticsearchClient(cfg);
         } catch (MalformedURLException e) {
@@ -308,14 +306,15 @@ public class DataExporter {
                                                        boolean exportStructuredDocument) {
         List<ActivityExtract> activityExtracts = extractActivities(handle, studyDto);
         List<Participant> participants = extractParticipantDataSetByIds(handle, studyDto, participantIds);
-        hideProtectedAnswerValues(participants);
+        List<HiddenAlias> hiddenAliases = handle.attach(EsHiddenValuesDao.class).findAliasesByStudy(studyDto.getGuid());
+        hideProtectedAnswerValues(participants, hiddenAliases);
         exportToElasticsearch(handle, studyDto, activityExtracts, participants, exportStructuredDocument);
     }
 
-    private void hideProtectedAnswerValues(List<Participant> participants) {
+    private void hideProtectedAnswerValues(List<Participant> participants, List<HiddenAlias> hiddenAliases) {
         for (Participant participant : participants) {
-            for (Map.Entry<String, ConfigValue> entry : protectedColumnsConfig.getConfig(ConfigFile.ES_PROTECTED_COLUMNS_KEY).entrySet()) {
-                hideProtectedValue(participant, entry);
+            for (HiddenAlias hiddenAlias : hiddenAliases) {
+                hideProtectedValue(participant, hiddenAlias);
             }
         }
     }

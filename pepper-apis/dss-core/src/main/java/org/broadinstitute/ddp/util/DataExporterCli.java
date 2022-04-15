@@ -22,7 +22,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import com.typesafe.config.ConfigValue;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -32,10 +31,12 @@ import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.EsHiddenValuesDao;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.export.ActivityExtract;
 import org.broadinstitute.ddp.export.DataExporter;
+import org.broadinstitute.ddp.model.es.HiddenAlias;
 import org.broadinstitute.ddp.model.study.Participant;
 
 /**
@@ -172,10 +173,10 @@ public class DataExporterCli {
                     .collect(Collectors.toSet()));
 
             System.out.println("[export] extracting participants...");
-            Config protectedColumnsConf = ConfigFactory.load(ConfigFile.ES_PROTECTED_COLUMNS_CONFIG_FILE);
             long start = System.currentTimeMillis();
             List<Participant> participants = exporter.extractParticipantDataSet(handle, studyDto);
-            hideProtectedAnswerValues(participants, protectedColumnsConf.getConfig(ConfigFile.ES_PROTECTED_COLUMNS_KEY).entrySet());
+            List<HiddenAlias> hiddenAliases = handle.attach(EsHiddenValuesDao.class).findAliasesByStudy(studyDto.getGuid());
+            hideProtectedAnswerValues(participants, hiddenAliases);
             long elapsed = System.currentTimeMillis() - start;
             System.out.println(String.format("[export] took %d ms (%.2f s)", elapsed, elapsed / 1000.0));
 
@@ -207,10 +208,10 @@ public class DataExporterCli {
         System.out.println(String.format("[export] entire process took %.2f mins", total / 1000.0 / 60.0));
     }
 
-    private void hideProtectedAnswerValues(List<Participant> participants, Set<Map.Entry<String, ConfigValue>> answerDefaultValues) {
+    private void hideProtectedAnswerValues(List<Participant> participants, List<HiddenAlias> hiddenAliases) {
         for (Participant participant : participants) {
-            for (Map.Entry<String, ConfigValue> entry : answerDefaultValues) {
-                hideProtectedValue(participant, entry);
+            for (HiddenAlias hiddenAlias : hiddenAliases) {
+                hideProtectedValue(participant, hiddenAlias);
             }
         }
     }
