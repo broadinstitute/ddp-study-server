@@ -6,9 +6,12 @@ import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator;
 import org.broadinstitute.dsm.model.elastic.export.generate.Generator;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class UpsertPainlessFacade {
 
+    private static final Logger logger = LoggerFactory.getLogger(UpsertPainlessFacade.class);
     protected String uniqueIdentifier;
     protected String fieldName;
     protected Object fieldValue;
@@ -20,8 +23,16 @@ public abstract class UpsertPainlessFacade {
         this.uniqueIdentifier = uniqueIdentifier;
         this.fieldName = fieldName;
         this.fieldValue = fieldValue;
-        generator = new ParamsGenerator(source, ddpInstanceDto.getInstanceName());
+        setGeneratorElseLogError(source, ddpInstanceDto);
         upsertPainless = new UpsertPainless(generator, ddpInstanceDto.getEsParticipantIndex(), buildScriptBuilder(), buildQueryBuilder());
+    }
+
+    private void setGeneratorElseLogError(Object source, DDPInstanceDto ddpInstanceDto) {
+        try {
+            generator = new ParamsGenerator(source, ddpInstanceDto.getInstanceName());
+        } catch (NullPointerException npe) {
+            logger.error("ddp instance is null, probably instance with such realm does not exist");
+        }
     }
 
     public static UpsertPainlessFacade of(String alias, Object source, DDPInstanceDto ddpInstanceDto, String uniqueIdentifier,
