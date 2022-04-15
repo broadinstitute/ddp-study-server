@@ -12,13 +12,8 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusDto;
 import org.broadinstitute.ddp.elastic.MappingUtil;
 import org.broadinstitute.ddp.export.DataExporter;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ActivityMetadataCollector {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ActivityMetadataCollector.class);
-
     public List<String> emptyRow(boolean hasParent) {
         List<String> row = new ArrayList<>(Arrays.asList("", "", "", "", ""));
         if (hasParent) {

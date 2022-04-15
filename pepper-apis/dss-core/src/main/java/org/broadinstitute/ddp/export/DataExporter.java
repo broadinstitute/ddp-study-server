@@ -33,6 +33,7 @@ import java.util.stream.Stream;
 import com.google.gson.Gson;
 import com.opencsv.CSVWriter;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
@@ -135,16 +136,13 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class DataExporter {
-
     public static final String TIMESTAMP_PATTERN = "MM/dd/yyyy HH:mm:ss";
     public static final DateTimeFormatter TIMESTAMP_FMT = DateTimeFormatter
             .ofPattern(TIMESTAMP_PATTERN).withZone(ZoneOffset.UTC);
 
-    private static final Logger LOG = LoggerFactory.getLogger(DataExporter.class);
     private static final String REQUEST_TYPE = "_doc";
 
     // A cache for user auth0 emails, storing (auth0UserId -> email).
@@ -226,7 +224,7 @@ public class DataExporter {
             }
         }
 
-        LOG.info("[export] found {} activities for study {}", activities.size(), studyGuid);
+        log.info("[export] found {} activities for study {}", activities.size(), studyGuid);
 
         return activities;
     }
@@ -337,7 +335,7 @@ public class DataExporter {
                 batch.add(participant);
                 if (batch.size() == maxExtractSize || !iter.hasNext()) {
                     int extractSize = batch.size();
-                    LOG.info("[export] exporting {} participant records to index {}", extractSize, index);
+                    log.info("[export] exporting {} participant records to index {}", extractSize, index);
 
                     convertInfoToJSONAndExportToES(
                             handle,
@@ -350,11 +348,11 @@ public class DataExporter {
                     exportsSoFar += extractSize;
                     batch.clear();
 
-                    LOG.info("[export] have now exported {} participants out of {} for study {}",
+                    log.info("[export] have now exported {} participants out of {} for study {}",
                             exportsSoFar, participants.size(), studyDto.getGuid());
                 }
             } catch (Exception e) {
-                LOG.error("[export] failed to export participants for study {}, continuing... ", studyDto.getGuid(), e);
+                log.error("[export] failed to export participants for study {}, continuing... ", studyDto.getGuid(), e);
             }
         }
     }
@@ -397,7 +395,7 @@ public class DataExporter {
         try {
             exportDataToElasticSearch(index, allActivityDefs);
         } catch (IOException e) {
-            LOG.error("[export] failed during export to index {}", index, e);
+            log.error("[export] failed during export to index {}", index, e);
         }
 
         return activityExtracts;
@@ -424,7 +422,7 @@ public class DataExporter {
         BulkResponse bulkResponse = esClient.bulk(bulkRequest, RequestOptions.DEFAULT);
 
         if (bulkResponse.hasFailures()) {
-            LOG.error(bulkResponse.buildFailureMessage());
+            log.error(bulkResponse.buildFailureMessage());
         }
     }
 
@@ -493,12 +491,12 @@ public class DataExporter {
                 studyDto,
                 ElasticSearchIndexType.USERS
         );
-        LOG.info("[export] exporting {} user records to index {}", allUsers.size(), index);
+        log.info("[export] exporting {} user records to index {}", allUsers.size(), index);
 
         try {
             exportDataToElasticSearch(index, allUsers);
         } catch (IOException e) {
-            LOG.error("[export] failed during export to index {}", index, e);
+            log.error("[export] failed during export to index {}", index, e);
         }
     }
 
@@ -623,7 +621,7 @@ public class DataExporter {
         BulkResponse bulkResponse = esClient.bulk(bulkRequest, RequestOptions.DEFAULT);
 
         if (bulkResponse.hasFailures()) {
-            LOG.error(bulkResponse.buildFailureMessage());
+            log.error(bulkResponse.buildFailureMessage());
         }
     }
 
@@ -719,7 +717,7 @@ public class DataExporter {
             } catch (Exception e) {
                 String participantGuid = extract.getStatus().getUserGuid();
                 String studyGuid = extract.getStatus().getStudyGuid();
-                LOG.error("Error while formatting data into {} json for participant {} and study {}, skipping",
+                log.error("Error while formatting data into {} json for participant {} and study {}, skipping",
                         exportStructuredDocument ? "structured" : "flat", participantGuid, studyGuid, e);
             }
         }
@@ -754,7 +752,7 @@ public class DataExporter {
             List<ActivityResponse> instances = extract.getResponses(activity.getTag());
             if (!instances.isEmpty()) {
                 if (instances.size() > 1) {
-                    LOG.warn("[export] participant {} has {} instances of activity {} {}, will only export the latest one",
+                    log.warn("[export] participant {} has {} instances of activity {} {}, will only export the latest one",
                             extract.getUser().getGuid(), instances.size(),
                             activity.getDefinition().getActivityCode(), activity.getDefinition().getVersionTag());
                 }
@@ -1110,7 +1108,7 @@ public class DataExporter {
         for (ActivityExtract activity : activities) {
             Integer maxInstances = activity.getMaxInstancesSeen();
             if (maxInstances == null || maxInstances < 1) {
-                LOG.warn("Found max instances count {} for activity tag {}, defaulting to 1", maxInstances, activity.getTag());
+                log.warn("Found max instances count {} for activity tag {}, defaulting to 1", maxInstances, activity.getTag());
                 // NOTE: default to one so we always have one set of columns even if no participant has an instance.
                 maxInstances = 1;
             }
@@ -1179,7 +1177,7 @@ public class DataExporter {
             } catch (Exception e) {
                 String participantGuid = pt.getUser().getGuid();
                 String studyGuid = pt.getStatus().getStudyGuid();
-                LOG.error("Error while formatting data into csv for participant {} and study {}, skipping",
+                log.error("Error while formatting data into csv for participant {} and study {}, skipping",
                         participantGuid, studyGuid, e);
                 continue;
             }
@@ -1187,7 +1185,7 @@ public class DataExporter {
             writer.writeNext(row.toArray(new String[]{}), false);
             numWritten += 1;
 
-            LOG.info("[export] ({}) participant {} for study {}:"
+            log.info("[export] ({}) participant {} for study {}:"
                             + " status={}, hasProfile={}, hasAddress={}, numProviders={}, numInstances={}",
                     numWritten, pt.getUser().getGuid(), studyDto.getGuid(),
                     pt.getStatus().getEnrollmentStatus(), pt.getUser().hasProfile(), pt.getUser().hasAddress(),

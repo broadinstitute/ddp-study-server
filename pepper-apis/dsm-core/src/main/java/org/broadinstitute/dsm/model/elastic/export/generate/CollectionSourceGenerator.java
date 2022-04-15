@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.model.elastic.export.generate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
@@ -32,7 +33,10 @@ public class CollectionSourceGenerator extends SourceGenerator {
 
     @Override
     protected Object getElement(Object element) {
-        Map<String, Object> fieldNameElement = new HashMap<>(Map.of(getFieldName(), element));
+        Map<String, Object> fieldNameElement = new HashMap<>();
+        if (Objects.nonNull(element)) {
+            fieldNameElement.put(getFieldName(), element);
+        }
         return getCollectionElementMap(fieldNameElement);
     }
 

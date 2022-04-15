@@ -3,14 +3,13 @@ package org.broadinstitute.ddp.client;
 import java.io.IOException;
 
 import com.google.gson.Gson;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.util.EntityUtils;
 import org.broadinstitute.ddp.exception.DDPException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Client that will verify user reCaptcha responses against Google's reCaptcha verify service
@@ -18,8 +17,8 @@ import org.slf4j.LoggerFactory;
  * site secret key provided.
  * More info @see <a href="https://developers.google.com/recaptcha">Google reCaptcha</a>
  */
+@Slf4j
 public class GoogleRecaptchaVerifyClient {
-    private static final Logger LOG = LoggerFactory.getLogger(GoogleRecaptchaVerifyClient.class);
     private static final String VERIFY_SERVICE_URL = "https://www.google.com/recaptcha/api/siteverify";
     private final String secret;
 
@@ -27,18 +26,17 @@ public class GoogleRecaptchaVerifyClient {
         this.secret = secret;
     }
 
-
     public GoogleRecaptchaVerifyResponse verifyRecaptchaResponse(String userCaptchaResponse, String clientIpAddress) {
-        LOG.info("Calling reCaptcha verify on response from client with ip: {}", clientIpAddress);
+        log.info("Calling reCaptcha verify on response from client with ip: {}", clientIpAddress);
         String responseJsonString = callVerifyService(userCaptchaResponse, clientIpAddress);
 
         GoogleRecaptchaVerifyResponse verifyResponse = new Gson().fromJson(responseJsonString, GoogleRecaptchaVerifyResponse.class);
         if (verifyResponse == null) {
-            LOG.error("Response from Google Recaptcha verify could not be converted from JSON body: {}", responseJsonString);
+            log.error("Response from Google Recaptcha verify could not be converted from JSON body: {}", responseJsonString);
             throw new DDPException("Error processing Google ReCaptcha verify response");
         }
         if (!verifyResponse.isSuccess()) {
-            LOG.warn("Google Recaptcha verify failed. user response: {}, remoteip: {}, verification response: {}",
+            log.warn("Google Recaptcha verify failed. user response: {}, remoteip: {}, verification response: {}",
                     userCaptchaResponse, clientIpAddress, responseJsonString);
         }
         return verifyResponse;
@@ -61,7 +59,7 @@ public class GoogleRecaptchaVerifyClient {
             HttpResponse httpResponse = execResult.returnResponse();
             String responseJson = EntityUtils.toString(httpResponse.getEntity());
             int responseStatusCode = httpResponse.getStatusLine().getStatusCode();
-            LOG.debug("Received response from Google Recaptcha verify with http status code: {} and body: {}",
+            log.debug("Received response from Google Recaptcha verify with http status code: {} and body: {}",
                     responseStatusCode, responseJson);
             return responseJson;
         } catch (IOException e) {
