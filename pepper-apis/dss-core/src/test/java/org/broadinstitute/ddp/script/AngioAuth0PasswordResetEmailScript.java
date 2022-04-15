@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.auth0.exception.Auth0Exception;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
@@ -15,13 +16,11 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 @Ignore
 // Useful script to help migrate existing studies.
 public class AngioAuth0PasswordResetEmailScript extends TxnAwareBaseTest {
-    private static final Logger LOG = LoggerFactory.getLogger(AngioAuth0PasswordResetEmailScript.class);
     private static final String STUDY_GUID = "ANGIO";
     //private static final String STUDY_GUID = "47D94XZTP3";
     private static final String FROM_NAME = "Andrew Zimmer";
@@ -35,9 +34,7 @@ public class AngioAuth0PasswordResetEmailScript extends TxnAwareBaseTest {
 
     @Before
     public void setup() {
-        TransactionWrapper.useTxn(handle -> {
-            mgmtClient = Auth0ManagementClient.forStudy(handle, STUDY_GUID);
-        });
+        TransactionWrapper.useTxn(handle -> mgmtClient = Auth0ManagementClient.forStudy(handle, STUDY_GUID));
         initializeEmailBlackList();
 
     }
@@ -63,14 +60,14 @@ public class AngioAuth0PasswordResetEmailScript extends TxnAwareBaseTest {
                         auth0Domain, mgmtClient);
             });
         } catch (Auth0Exception e) {
-            LOG.error("Error sending email", e);
+            log.error("Error sending email", e);
         }
 
         try {
             emailGenerator.sendPasswordResetEmails(STUDY_GUID, recipientProfiles, FROM_NAME, FROM_EMAIL, MESSAGE_SUBJECT, BASE_WEBPAGE_URL,
                     SENDGRID_TEMPLATE_ID, mgmtClient);
         } catch (DDPException e) {
-            LOG.error("Exception executing AngioAuth0PasswordResetEmailScript", e);
+            log.error("Exception executing AngioAuth0PasswordResetEmailScript", e);
         }
     }
 
@@ -81,9 +78,7 @@ public class AngioAuth0PasswordResetEmailScript extends TxnAwareBaseTest {
             emailGenerator.sendPasswordResetEmails(STUDY_GUID, userEmailBlackList, FROM_NAME, FROM_EMAIL, MESSAGE_SUBJECT, BASE_WEBPAGE_URL,
                     SENDGRID_TEMPLATE_ID, mgmtClient);
         } catch (DDPException e) {
-            LOG.error("Exception executing AngioAuth0PasswordResetEmailScript", e);
+            log.error("Exception executing AngioAuth0PasswordResetEmailScript", e);
         }
     }
-
-
 }

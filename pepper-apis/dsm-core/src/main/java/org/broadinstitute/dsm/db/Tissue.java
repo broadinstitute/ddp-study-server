@@ -139,9 +139,9 @@ public class Tissue {
     private Integer blocksCount;
     @ColumnName(DBConstants.H_E_COUNT)
     private Integer hECount;
-    private List<TissueSmId> ussSMID;
-    private List<TissueSmId> scrollSMID;
-    private List<TissueSmId> heSMID;
+    private List<SmId> ussSMID;
+    private List<SmId> scrollSMID;
+    private List<SmId> heSMID;
 
     public Tissue() {
     }
@@ -150,8 +150,8 @@ public class Tissue {
                   String tumorType, String hE, String pathologyReport, String collaboratorSampleId, String blockSent,
                   String scrollsReceived, String skId, String smId, String sentGp, String firstSmId, String additionalValuesJson,
                   String expectedReturn, String returnDate, String returnFedexId, String shlWorkNumber, String tumorPercentage,
-                  String tissueSequence, Integer scrollsCount, Integer ussCount, Integer blocksCount, Integer hECount, List<TissueSmId> ussSMIDs,
-                  List<TissueSmId> scrollSMIDs, List<TissueSmId> heSMID) {
+                  String tissueSequence, Integer scrollsCount, Integer ussCount, Integer blocksCount, Integer hECount, List<SmId> ussSMIDs,
+                  List<SmId> scrollSMIDs, List<SmId> heSMID) {
         this.tissueId = tissueId;
         this.oncHistoryDetailId = oncHistoryDetailId;
         this.notes = notes;
@@ -213,7 +213,7 @@ public class Tissue {
             stmt.setString(1, oncHistoryDetailId);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    TissueSmId tissueSmId = getSMIds(rs);
+                    SmId tissueSmId = getSMIds(rs);
                     Tissue tissue;
                     if (tissueSmId != null && tissues.containsKey(tissueSmId.getTissueId())) {
                         tissue = tissues.get(tissueSmId.getTissueId());
@@ -238,8 +238,8 @@ public class Tissue {
         return tissueList;
     }
 
-    public static TissueSmId getSMIds(ResultSet rs) {
-        return TissueSmId.getSMIdsForTissueId(rs);
+    public static SmId getSMIds(ResultSet rs) {
+        return SmId.getSMIdsForTissueId(rs);
     }
 
     public static String createNewTissue(@NonNull String oncHistoryId, @NonNull String user) {
@@ -287,7 +287,7 @@ public class Tissue {
         return hECount;
     }
 
-    public void setSmIdBasedOnType(TissueSmId tissueSmId, ResultSet rs) {
+    public void setSmIdBasedOnType(SmId tissueSmId, ResultSet rs) {
         if (tissueSmId == null || tissueSmId.getSmIdType() == null) {
             return;
         }
@@ -317,5 +317,23 @@ public class Tissue {
 
     public Boolean isDeleted() {
         return deleted;
+    }
+
+    public List<SmId> getScrollSMID() {
+        if (scrollSMID == null)
+            scrollSMID = new ArrayList<>();
+        return scrollSMID;
+    }
+
+    public List<SmId> getUssSMID() {
+        if (null == ussSMID)
+            ussSMID = new ArrayList<>();
+        return ussSMID;
+    }
+
+    public List<SmId> getHeSMID() {
+        if (null == heSMID)
+            heSMID = new ArrayList<>();
+        return heSMID;
     }
 }

@@ -6,8 +6,6 @@ import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__
 import static org.broadinstitute.ddp.model.activity.types.EventActionType.UPDATE_CUSTOM_WORKFLOW;
 import static org.broadinstitute.ddp.model.event.UpdateCustomWorkflowEventAction.generatePayload;
 import static org.junit.Assert.assertEquals;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -19,6 +17,7 @@ import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.ConfigAwareBaseTest;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -27,7 +26,6 @@ import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.slf4j.Logger;
 
 /**
  * Test event publishing/subscribing with PubSub emulator.
@@ -38,10 +36,8 @@ import org.slf4j.Logger;
  * Comment annotation @Ignore.
  * Run test `testEventPublisherSubscriber()`.
  */
+@Slf4j
 public class TaskForDsmPubSubPublisherStandaloneTest extends ConfigAwareBaseTest {
-
-    private static final Logger LOG = getLogger(TaskForDsmPubSubPublisherStandaloneTest.class);
-
     private static final Config conf = ConfigManager.getInstance().getConfig();
 
     private static String expectedTaskType;
@@ -100,7 +96,7 @@ public class TaskForDsmPubSubPublisherStandaloneTest extends ConfigAwareBaseTest
             pubSubTaskSubscriber.addListener(
                     new Subscriber.Listener() {
                         public void failed(Subscriber.State from, Throwable failure) {
-                            LOG.error("Error consume a message", failure);
+                            log.error("Error consume a message", failure);
                         }
                     },
                     callbackExecutor);

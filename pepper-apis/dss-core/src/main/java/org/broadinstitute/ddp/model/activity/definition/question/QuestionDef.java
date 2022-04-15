@@ -2,7 +2,9 @@ package org.broadinstitute.ddp.model.activity.definition.question;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.validation.Valid;
@@ -118,7 +120,7 @@ public abstract class QuestionDef {
     }
 
     public List<RuleDef> getValidations() {
-        return validations;
+        return Optional.ofNullable(validations).orElse(Collections.emptyList());
     }
 
     public Long getQuestionId() {

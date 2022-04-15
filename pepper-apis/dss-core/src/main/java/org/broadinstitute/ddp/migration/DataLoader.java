@@ -15,6 +15,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -32,12 +33,9 @@ import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 class DataLoader {
-
-    private static final Logger LOG = LoggerFactory.getLogger(DataLoader.class);
     private static final String WITHDREW_REASON_CODE = "WITHDREW";
 
     private final Config cfg;
@@ -75,18 +73,18 @@ class DataLoader {
         if (!studyGuid.equals(mapping.getStudyGuid())) {
             throw new LoaderException("Mapping file study guid does not match!");
         }
-        LOG.info("Using mapping file: {}", path);
+        log.info("Using mapping file: {}", path);
         return mapping;
     }
 
     public void processMailingListFiles() {
-        LOG.info("");
+        log.info("");
 
         Set<String> filenames = fileReader.listMailingListFiles();
-        LOG.info("Found {} mailing list files", filenames.size());
+        log.info("Found {} mailing list files", filenames.size());
 
         for (var filename : filenames) {
-            LOG.info("Working on mailing list file: {}", filename);
+            log.info("Working on mailing list file: {}", filename);
             var data = gson.fromJson(fileReader.readContent(filename), MailingListFile.class);
             TransactionWrapper.useTxn(TransactionWrapper.DB.APIS,
                     handle -> loadMailingListContacts(handle, data.getContacts()));
@@ -95,7 +93,7 @@ class DataLoader {
 
     private void loadMailingListContacts(Handle handle, List<MailingListContact> contacts) {
         String padding = "  ";
-        LOG.info(padding + "Mailing list: loading {} contacts", contacts.size());
+        log.info(padding + "Mailing list: loading {} contacts", contacts.size());
 
         List<JdbiMailingList.MailingListEntryDto> entryDtos = new ArrayList<>();
         for (var contact : contacts) {
@@ -115,27 +113,27 @@ class DataLoader {
             int numInserted = counts[i];
             String email = contacts.get(i).getEmail();
             if (numInserted == 0) {
-                LOG.warn(padding + "Mailing list: already contains entry with email '{}'", email);
+                log.warn(padding + "Mailing list: already contains entry with email '{}'", email);
             } else if (numInserted > 1) {
-                LOG.error(padding + "Mailing list: expected to insert 1 row but did {} for email '{}'", numInserted, email);
+                log.error(padding + "Mailing list: expected to insert 1 row but did {} for email '{}'", numInserted, email);
             } else {
                 totalCount++;
             }
         }
 
-        LOG.info(padding + "Mailing list: finished loading {} entries", totalCount);
+        log.info(padding + "Mailing list: finished loading {} entries", totalCount);
     }
 
     public void processParticipantFiles(Report report) {
-        LOG.info("");
+        log.info("");
 
         Set<String> filenames = fileReader.listParticipantFiles();
-        LOG.info("Found {} participant files", filenames.size());
+        log.info("Found {} participant files", filenames.size());
 
         int count = 1;
         int total = filenames.size();
         for (var filename : filenames) {
-            LOG.info("({}/{}) Working on participant file: {}", count, total, filename);
+            log.info("({}/{}) Working on participant file: {}", count, total, filename);
             var data = gson.fromJson(fileReader.readContent(filename), MemberFile.class);
             var row = report.newRow();
 
@@ -145,7 +143,7 @@ class DataLoader {
                 if (isProdRun) {
                     throw e;
                 } else {
-                    LOG.error("Error while processing participant file, continuing", e);
+                    log.error("Error while processing participant file, continuing", e);
                 }
             }
 
@@ -173,11 +171,11 @@ class DataLoader {
         String altPid = participant.getAltPid();
         String shortId = participant.getShortId();
         row.init(altPid, shortId, email);
-        LOG.info(padding + "[user] altpid={}, shortid={}, surveys={}", altPid, shortId, data.getNumSurveys());
+        log.info(padding + "[user] altpid={}, shortid={}, surveys={}", altPid, shortId, data.getNumSurveys());
 
         User user = userLoader.findUserByAltPid(handle, altPid);
         if (user != null) {
-            LOG.warn(padding + "- User has already been loaded, skipping: userGuid={}", user.getGuid());
+            log.warn(padding + "- User has already been loaded, skipping: userGuid={}", user.getGuid());
             row.setUserGuid(user.getGuid());
             row.setUserHruid(user.getHruid());
             row.setExistingUser(true);
@@ -189,13 +187,13 @@ class DataLoader {
         boolean createAccount = cfg.getBoolean(LoaderConfigFile.CREATE_AUTH0_ACCOUNTS);
         var auth0User = userLoader.findAuth0UserByEmail(auth0Connection, email);
         if (auth0User != null && auth0User.getId() != null && !auth0User.getId().isBlank()) {
-            LOG.info(padding + "- Auth0 account exists: email={}, auth0UserId={}", email, auth0User.getId());
+            log.info(padding + "- Auth0 account exists: email={}, auth0UserId={}", email, auth0User.getId());
             row.setAuth0UserId(auth0User.getId());
             row.setExistInAuth0(true);
         } else if (createAccount) {
-            LOG.info(padding + "- Auth0 account doesn't exist but creation flag is enabled");
+            log.info(padding + "- Auth0 account doesn't exist but creation flag is enabled");
             auth0User = userLoader.createAuth0Account(auth0Connection, email);
-            LOG.info(padding + "- Created auth0 account: email={}, auth0UserId={}", email, auth0User.getId());
+            log.info(padding + "- Created auth0 account: email={}, auth0UserId={}", email, auth0User.getId());
             row.setAuth0UserId(auth0User.getId());
             row.setExistInAuth0(false);
         } else {
@@ -205,24 +203,24 @@ class DataLoader {
         String languageCode = mapping.getParticipant().getDefaultLanguage();
         boolean addedToMetadata = userLoader.updateAuth0UserMetadata(auth0User, languageCode);
         if (addedToMetadata) {
-            LOG.info(padding + "- Updated auth0 user metadata with language: {}", languageCode);
+            log.info(padding + "- Updated auth0 user metadata with language: {}", languageCode);
         } else {
-            LOG.info(padding + "- Auth0 user metadata already has language set");
+            log.info(padding + "- Auth0 user metadata already has language set");
         }
 
         user = userLoader.createLegacyUser(handle, participant, auth0User.getId(), languageCode);
-        LOG.info(padding + "- Created migration user: id={}, guid={}, hruid={}",
+        log.info(padding + "- Created migration user: id={}, guid={}, hruid={}",
                 user.getId(), user.getGuid(), user.getHruid());
         row.setUserGuid(user.getGuid());
         row.setUserHruid(user.getHruid());
 
         userLoader.registerUserInStudy(handle, studyGuid, user.getGuid(), participant);
-        LOG.info(padding + "- Registered user {} in study {}", user.getGuid(), studyGuid);
+        log.info(padding + "- Registered user {} in study {}", user.getGuid(), studyGuid);
 
         String inactiveReason = participant.getInactiveReason();
         if (inactiveReason != null && inactiveReason.equals(WITHDREW_REASON_CODE)) {
             userLoader.withdrawUserFromStudy(handle, studyGuid, user.getGuid(), participant);
-            LOG.info(padding + "- User had withdrew so marking as exited from study at {}", participant.getLastModified());
+            log.info(padding + "- User had withdrew so marking as exited from study at {}", participant.getLastModified());
             row.setWithdrew(true);
         }
 
@@ -239,11 +237,11 @@ class DataLoader {
         String sourceSurveyName = activity.getSource();
         var survey = data.getSurveyWrapper(sourceSurveyName);
         if (survey == null) {
-            LOG.info(padding + "Participant does not have survey {}, continuing", sourceSurveyName);
+            log.info(padding + "Participant does not have survey {}, continuing", sourceSurveyName);
             return;
         }
 
-        LOG.info(padding + "[{}] created={}, completed={}, updated={}", sourceSurveyName,
+        log.info(padding + "[{}] created={}, completed={}, updated={}", sourceSurveyName,
                 survey.getCreated(), survey.getFirstCompleted(), survey.getLastUpdated());
         long activityId = getActivityId(handle, activity.getActivityCode());
         var latestVersionDto = getLatestVersion(handle, activityId);
@@ -251,14 +249,14 @@ class DataLoader {
             // They haven't submitted survey and they're on the old version.
             // Let's skip their data and create a blank instance of new version for them.
             var instanceDto = createBlankInstance(handle, user, activityId, survey);
-            LOG.info(padding + "- Survey is not submitted and is an old version");
-            LOG.info(padding + "- Created new blank instance: id={}, guid={}", instanceDto.getId(), instanceDto.getGuid());
+            log.info(padding + "- Survey is not submitted and is an old version");
+            log.info(padding + "- Created new blank instance: id={}, guid={}", instanceDto.getId(), instanceDto.getGuid());
             row.setBlankInstance(true);
             return;
         }
 
         var instanceDto = createMigratedInstance(handle, user, activity, survey, null);
-        LOG.info(padding + "- Created activity instance: id={}, guid={}", instanceDto.getId(), instanceDto.getGuid());
+        log.info(padding + "- Created activity instance: id={}, guid={}", instanceDto.getId(), instanceDto.getGuid());
         loadAnswers(handle, user, instanceDto, activity, survey);
 
         for (var nestedMapping : activity.getNestedActivities()) {
@@ -280,10 +278,10 @@ class DataLoader {
         String padding = "  ";
 
         // KEYS means data is in the parent survey itself, so we use the same object for data, including timestamps.
-        LOG.info(padding + "[{}] parent={}", nestedActivity.getActivityCode(), parentInstanceDto.getActivityCode());
+        log.info(padding + "[{}] parent={}", nestedActivity.getActivityCode(), parentInstanceDto.getActivityCode());
 
         var instanceDto = createMigratedInstance(handle, user, nestedActivity, parentSurvey, parentInstanceDto.getId());
-        LOG.info(padding + "- Created nested activity instance with id={}, guid={}", instanceDto.getId(), instanceDto.getGuid());
+        log.info(padding + "- Created nested activity instance with id={}, guid={}", instanceDto.getId(), instanceDto.getGuid());
 
         loadAnswers(handle, user, instanceDto, nestedActivity, parentSurvey);
     }
@@ -300,8 +298,8 @@ class DataLoader {
             object.add("ddp_created", new JsonPrimitive(parentSurvey.getCreated().toString()));
             var survey = new SurveyWrapper(object);
             var instanceDto = createMigratedInstance(handle, user, nestedActivity, survey, parentInstanceDto.getId());
-            LOG.info(padding + "[{}] parent={}", nestedActivity.getActivityCode(), parentInstanceDto.getActivityCode());
-            LOG.info(padding + "- Created empty nested activity instance with id={}, guid={}",
+            log.info(padding + "[{}] parent={}", nestedActivity.getActivityCode(), parentInstanceDto.getActivityCode());
+            log.info(padding + "- Created empty nested activity instance with id={}, guid={}",
                     instanceDto.getId(), instanceDto.getGuid());
             return;
         }
@@ -309,10 +307,10 @@ class DataLoader {
         int number = 1;
         for (var nested : nestedList) {
             // Each nested object becomes the survey object to use for pulling out data. Use same timestamps as parent.
-            LOG.info(padding + "[{}] parent={} ({})", nestedActivity.getActivityCode(), parentInstanceDto.getActivityCode(), number);
+            log.info(padding + "[{}] parent={} ({})", nestedActivity.getActivityCode(), parentInstanceDto.getActivityCode(), number);
             // Nested instances are sorted by creation time, so add a small time shift so things are ordered properly.
             var instanceDto = createMigratedInstance(handle, user, nestedActivity, parentSurvey, parentInstanceDto.getId(), number);
-            LOG.info(padding + "- Created nested activity instance with id={}, guid={}, created={}",
+            log.info(padding + "- Created nested activity instance with id={}, guid={}, created={}",
                     instanceDto.getId(), instanceDto.getGuid(), Instant.ofEpochMilli(instanceDto.getCreatedAtMillis()));
             loadAnswers(handle, user, instanceDto, nestedActivity, nested);
             number++;
@@ -395,7 +393,7 @@ class DataLoader {
             Answer answer = question.extractAnswer(survey);
             if (answer != null) {
                 answerDao.createAnswer(user.getId(), instanceDto.getId(), answer);
-                // LOG.info(padding + "[{}] type={}, source={}, answerId={}, answerGuid={}",
+                // log.info(padding + "[{}] type={}, source={}, answerId={}, answerGuid={}",
                 //         question.getTarget(), question.getType(), question.getSource(),
                 //         answer.getAnswerId(), answer.getAnswerGuid());
             }
@@ -423,13 +421,13 @@ class DataLoader {
     }
 
     public void processDsmFiles() {
-        LOG.info("");
+        log.info("");
         Set<String> files = fileReader.listParticipantFiles();
-        LOG.info("Found {} participant files for dsm data", files.size());
+        log.info("Found {} participant files for dsm data", files.size());
         int count = 1;
         int total = files.size();
         for (var filename : files) {
-            LOG.info("({}/{}) Working on participant file for dsm data: {}", count, total, filename);
+            log.info("({}/{}) Working on participant file for dsm data: {}", count, total, filename);
             var data = gson.fromJson(fileReader.readContent(filename), MemberFile.class);
             try {
                 processParticipantDsmData(data.getMemberWrapper());
@@ -437,19 +435,19 @@ class DataLoader {
                 if (isProdRun) {
                     throw e;
                 } else {
-                    LOG.error("Error while processing participant file for dsm data, continuing", e);
+                    log.error("Error while processing participant file for dsm data, continuing", e);
                 }
             }
             count++;
         }
 
-        LOG.info("");
+        log.info("");
         files = fileReader.listFamilyMemberFiles();
-        LOG.info("Found {} family member files for dsm data", files.size());
+        log.info("Found {} family member files for dsm data", files.size());
         count = 1;
         total = files.size();
         for (var filename : files) {
-            LOG.info("({}/{}) Working on family member file for dsm data: {}", count, total, filename);
+            log.info("({}/{}) Working on family member file for dsm data: {}", count, total, filename);
             var data = gson.fromJson(fileReader.readContent(filename), MemberFile.class);
             try {
                 DsmDataLoader.useTxn(dsmHandle -> processFamilyMemberDsmData(dsmHandle, data.getMemberWrapper()));
@@ -457,7 +455,7 @@ class DataLoader {
                 if (isProdRun) {
                     throw e;
                 } else {
-                    LOG.error("Error while processing family member file for dsm data, continuing", e);
+                    log.error("Error while processing family member file for dsm data, continuing", e);
                 }
             }
             count++;
@@ -470,14 +468,14 @@ class DataLoader {
             if (isProdRun) {
                 throw new LoaderException("Participant is missing altpid");
             } else {
-                LOG.error("  Participant is missing altpid, skipping");
+                log.error("  Participant is missing altpid, skipping");
                 return;
             }
         }
 
         String familyId = participant.getFamilyId();
         if (StringUtils.isBlank(familyId)) {
-            LOG.error("  Participant is missing family_id, skipping");
+            log.error("  Participant is missing family_id, skipping");
             return;
         }
 
@@ -486,13 +484,13 @@ class DataLoader {
             loadDsmFormData(dsmHandle, altPid, mapping, participant);
         });
         familyIdToParticipantAltPid.put(familyId, altPid);
-        LOG.info("  - Assigned family_id={} to participant altpid={}", familyId, altPid);
+        log.info("  - Assigned family_id={} to participant altpid={}", familyId, altPid);
     }
 
     private void processFamilyMemberDsmData(Handle dsmHandle, MemberWrapper member) {
         String familyId = member.getFamilyId();
         if (StringUtils.isBlank(familyId)) {
-            LOG.error("  Family member is missing family_id, skipping");
+            log.error("  Family member is missing family_id, skipping");
             return;
         }
 
@@ -501,12 +499,12 @@ class DataLoader {
             if (isProdRun) {
                 throw new LoaderException("Could not find participant altpid for family_id: " + familyId);
             } else {
-                LOG.error("  Could not find participant altpid for family_id={}, skipping", familyId);
+                log.error("  Could not find participant altpid for family_id={}, skipping", familyId);
                 return;
             }
         }
 
-        LOG.info("  - Using participant altpid={}", altPid);
+        log.info("  - Using participant altpid={}", altPid);
         loadDsmFormData(dsmHandle, altPid, mapping, member);
     }
 
@@ -519,14 +517,14 @@ class DataLoader {
             }
         }
 
-        LOG.info("  - Participant has additional record data with {} field values", data.size());
+        log.info("  - Participant has additional record data with {} field values", data.size());
         String jsonData = !data.isEmpty() ? gson.toJson(data) : null;
 
         long dsmParticipantId = dsmLoader.createDsmParticipant(dsmHandle, studyGuid, participantAltPid);
-        LOG.info("  - Created dsm participant with id={}", dsmParticipantId);
+        log.info("  - Created dsm participant with id={}", dsmParticipantId);
 
         long recordId = dsmLoader.createParticipantRecord(dsmHandle, studyGuid, dsmParticipantId, jsonData);
-        LOG.info("  - Created participant record with id={}", recordId);
+        log.info("  - Created participant record with id={}", recordId);
     }
 
     private void loadDsmFormData(Handle dsmHandle, String participantAltPid, Mapping mapping, MemberWrapper member) {
@@ -560,25 +558,25 @@ class DataLoader {
             }
         }
 
-        LOG.info("  - Member has dsm form data with {} field values", data.size());
+        log.info("  - Member has dsm form data with {} field values", data.size());
         if (!data.isEmpty()) {
             String json = gson.toJson(data);
             long id = dsmLoader.loadFormData(dsmHandle, studyGuid, participantAltPid, json);
-            LOG.info("  - Inserted member dsm data with id={}", id);
+            log.info("  - Inserted member dsm data with id={}", id);
         }
     }
 
     public void fixFamilyNotes() {
-        LOG.info("");
+        log.info("");
         familyIdToParticipantAltPid.clear();
 
         Set<String> files = fileReader.listParticipantFiles();
-        LOG.info("Found {} participant files", files.size());
+        log.info("Found {} participant files", files.size());
         int count = 0;
         int total = files.size();
         for (var filename : files) {
             count++;
-            LOG.info("({}/{}) Looking at participant file: {}", count, total, filename);
+            log.info("({}/{}) Looking at participant file: {}", count, total, filename);
             var data = gson.fromJson(fileReader.readContent(filename), MemberFile.class);
             try {
                 var participant = data.getMemberWrapper();
@@ -587,41 +585,41 @@ class DataLoader {
                     if (isProdRun) {
                         throw new LoaderException("Participant is missing altpid");
                     } else {
-                        LOG.error("  Participant is missing altpid, skipping");
+                        log.error("  Participant is missing altpid, skipping");
                         continue;
                     }
                 }
                 String familyId = participant.getFamilyId();
                 if (StringUtils.isBlank(familyId)) {
-                    LOG.error("  Participant is missing family_id, skipping");
+                    log.error("  Participant is missing family_id, skipping");
                     continue;
                 }
                 familyIdToParticipantAltPid.put(familyId, altPid);
-                LOG.info("  - Assigned family_id={} to participant altpid={}", familyId, altPid);
+                log.info("  - Assigned family_id={} to participant altpid={}", familyId, altPid);
             } catch (Exception e) {
                 if (isProdRun) {
                     throw e;
                 } else {
-                    LOG.error("Error while processing participant file, continuing", e);
+                    log.error("Error while processing participant file, continuing", e);
                 }
             }
         }
 
-        LOG.info("");
+        log.info("");
         files = fileReader.listFamilyMemberFiles();
-        LOG.info("Found {} family member files", files.size());
+        log.info("Found {} family member files", files.size());
         count = 0;
         total = files.size();
         int numUpdated = 0;
         for (var filename : files) {
             count++;
-            LOG.info("({}/{}) Working on family member file for family notes fix: {}", count, total, filename);
+            log.info("({}/{}) Working on family member file for family notes fix: {}", count, total, filename);
             var data = gson.fromJson(fileReader.readContent(filename), MemberFile.class);
             try {
                 var member = data.getMemberWrapper();
                 String familyId = member.getFamilyId();
                 if (StringUtils.isBlank(familyId)) {
-                    LOG.error("  Family member is missing family_id, skipping");
+                    log.error("  Family member is missing family_id, skipping");
                     continue;
                 }
                 String altPid = familyIdToParticipantAltPid.get(familyId);
@@ -629,14 +627,14 @@ class DataLoader {
                     if (isProdRun) {
                         throw new LoaderException("Could not find participant altpid for family_id: " + familyId);
                     } else {
-                        LOG.error("  Could not find participant altpid for family_id={}, skipping", familyId);
+                        log.error("  Could not find participant altpid for family_id={}, skipping", familyId);
                         continue;
                     }
                 }
-                LOG.info("  - Using participant altpid={}", altPid);
+                log.info("  - Using participant altpid={}", altPid);
 
                 if (!"SELF".equalsIgnoreCase(member.getMemberType())) {
-                    LOG.info("  - Family member is not self/proband, skipping family notes fix");
+                    log.info("  - Family member is not self/proband, skipping family notes fix");
                     continue;
                 }
 
@@ -647,30 +645,30 @@ class DataLoader {
                         values.put(field.getTarget(), value);
                     }
                 }
-                LOG.info("  - Family member has {} field values", values.size());
+                log.info("  - Family member has {} field values", values.size());
                 String jsonData = !values.isEmpty() ? gson.toJson(values) : null;
 
                 DsmDataLoader.useTxn(dsmHandle -> {
                     Long dsmParticipantId = dsmLoader.findDsmParticipantId(dsmHandle, studyGuid, altPid);
                     if (dsmParticipantId == null) {
-                        LOG.error("  Could not find participant id for altpid {}, skipping", altPid);
+                        log.error("  Could not find participant id for altpid {}, skipping", altPid);
                         return;
                     } else {
-                        LOG.info("  - Found dsm participant with id={}", dsmParticipantId);
+                        log.info("  - Found dsm participant with id={}", dsmParticipantId);
                     }
                     dsmLoader.updateParticipantRecord(dsmHandle, dsmParticipantId, jsonData);
-                    LOG.info("  - Updated participant record with new family notes json");
+                    log.info("  - Updated participant record with new family notes json");
                 });
                 numUpdated++;
             } catch (Exception e) {
                 if (isProdRun) {
                     throw e;
                 } else {
-                    LOG.error("Error while processing family member file for family notes fix, continuing", e);
+                    log.error("Error while processing family member file for family notes fix, continuing", e);
                 }
             }
         }
 
-        LOG.info("Updated {} participant records for family notes fix", numUpdated);
+        log.info("Updated {} participant records for family notes fix", numUpdated);
     }
 }
