@@ -4,8 +4,8 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
 
-    <changeSet author="lkapanad" id="es-hide-family-alias">
-        <createTable tableName="es_hidden_alias">
+    <changeSet author="lkapanad" id="study-data-alias">
+        <createTable tableName="study_data_alias">
             <column name="study_guid" type="varchar(10)">
                 <constraints nullable="false"/>
             </column>
@@ -16,39 +16,39 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addUniqueConstraint columnNames="study_guid, stable_id" tableName="es_hidden_alias"/>
+        <addUniqueConstraint columnNames="study_guid, stable_id" tableName="study_data_alias"/>
 
-        <insert tableName="es_hidden_alias">
+        <insert tableName="study_data_alias">
             <column name="study_guid" value="cmi-pancan"/>
             <column name="alias" value="SIBLING"/>
             <column name="stable_id" value="SIBLING_ALIAS"/>
         </insert>
-        <insert tableName="es_hidden_alias">
+        <insert tableName="study_data_alias">
             <column name="study_guid" value="cmi-pancan"/>
             <column name="alias" value="Biological / Birth Parent 1"/>
             <column name="stable_id" value="PARENT1_ALIAS"/>
         </insert>
-        <insert tableName="es_hidden_alias">
+        <insert tableName="study_data_alias">
             <column name="study_guid" value="cmi-pancan"/>
             <column name="alias" value="Biological / Birth Parent 2"/>
             <column name="stable_id" value="PARENT2_ALIAS"/>
         </insert>
-        <insert tableName="es_hidden_alias">
+        <insert tableName="study_data_alias">
             <column name="study_guid" value="cmi-pancan"/>
             <column name="alias" value="CHILD"/>
             <column name="stable_id" value="CHILD_ALIAS"/>
         </insert>
-        <insert tableName="es_hidden_alias">
+        <insert tableName="study_data_alias">
             <column name="study_guid" value="cmi-pancan"/>
             <column name="alias" value="GRANDPARENT"/>
             <column name="stable_id" value="GRANDPARENT_ALIAS"/>
         </insert>
-        <insert tableName="es_hidden_alias">
+        <insert tableName="study_data_alias">
             <column name="study_guid" value="cmi-pancan"/>
             <column name="alias" value="HALF SIBLING"/>
             <column name="stable_id" value="HALF_SIBLING_ALIAS"/>
         </insert>
-        <insert tableName="es_hidden_alias">
+        <insert tableName="study_data_alias">
             <column name="study_guid" value="cmi-pancan"/>
             <column name="alias" value="PARENT SIBLING"/>
             <column name="stable_id" value="PARENT_SIBLING_ALIAS"/>

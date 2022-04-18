@@ -20,7 +20,7 @@ import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.address.MailAddress;
-import org.broadinstitute.ddp.model.es.HiddenAlias;
+import org.broadinstitute.ddp.model.es.StudyDataAlias;
 import org.broadinstitute.ddp.model.study.Participant;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.jdbi.v3.core.Handle;
@@ -178,18 +178,18 @@ public class ExportUtil {
         }
     }
 
-    public static void hideProtectedValue(Participant participant, HiddenAlias hiddenAlias) {
+    public static void hideProtectedValue(Participant participant, StudyDataAlias studyDataAlias) {
         List<Answer> questionIdAnswers = participant.getAllResponses().stream()
                 .filter(activityResponse -> activityResponse instanceof FormResponse)
                 .map(activityResponse -> (FormResponse) activityResponse)
-                .filter(formResponse -> formResponse.hasAnswer(hiddenAlias.getStableId()))
-                .map(formResponse -> formResponse.getAnswer(hiddenAlias.getStableId()))
+                .filter(formResponse -> formResponse.hasAnswer(studyDataAlias.getStableId()))
+                .map(formResponse -> formResponse.getAnswer(studyDataAlias.getStableId()))
                 .collect(Collectors.toList());
         if (questionIdAnswers.size() == 1) {
-            questionIdAnswers.get(0).setValue(hiddenAlias.getAlias());
+            questionIdAnswers.get(0).setValue(studyDataAlias.getAlias());
         } else if (questionIdAnswers.size() > 1) {
             IntStream.range(0, questionIdAnswers.size()).forEach(i ->
-                    questionIdAnswers.get(i).setValue(String.format("%s %d", hiddenAlias.getAlias(), i + 1)));
+                    questionIdAnswers.get(i).setValue(String.format("%s %d", studyDataAlias.getAlias(), i + 1)));
         }
     }
 }
