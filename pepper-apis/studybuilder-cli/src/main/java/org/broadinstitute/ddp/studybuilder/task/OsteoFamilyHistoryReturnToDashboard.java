@@ -53,13 +53,11 @@ public class OsteoFamilyHistoryReturnToDashboard implements CustomTask {
         SqlHelper helper = handle.attach(SqlHelper.class);
         JdbiWorkflowTransition getJdbiWorkflowTransition = handle.attach(JdbiWorkflowTransition.class);
 
-        List<String> activityCodes = new ArrayList<>(List.of("FAMILY_HISTORY", "FAMILY_HISTORY_V2"));
+        String activityCode = "FAMILY_HISTORY";
 
-        for (var activityCode : activityCodes) {
-            long transitionId = helper.findWorkflowTransitionId(studyDto.getId(), activityCode, StateType.THANK_YOU.toString());
-            DBUtils.checkUpdate(1, getJdbiWorkflowTransition.updateIsActiveById(transitionId, false));
-            LOG.info("Disabled workflow transition from activity {} to state {}", activityCode, StateType.THANK_YOU);
-        }
+        long transitionId = helper.findWorkflowTransitionId(studyDto.getId(), activityCode, StateType.THANK_YOU.toString());
+        DBUtils.checkUpdate(1, getJdbiWorkflowTransition.updateIsActiveById(transitionId, false));
+        LOG.info("Disabled workflow transition from activity {} to state {}", activityCode, StateType.THANK_YOU);
     }
 
     private interface SqlHelper extends SqlObject {
