@@ -40,6 +40,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -79,11 +80,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class StudyDataLoaderTest {
-    private static final Logger LOG = LoggerFactory.getLogger(StudyDataLoaderTest.class);
     private static final String PARTICIPANT_DATA_TEST_DATA_LOCATION = "src/test/resources/dm-survey-mbc-testdata-8148.json";
     public static final String QUESTION_STABLE_MAP_FILE = "src/test/resources/question_stableid_map.json";
     private static OLCService olcService;
@@ -401,7 +400,7 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<MedicalProviderDto> medicalProviderDtoArgumentCaptor = ArgumentCaptor.forClass(MedicalProviderDto.class);
         verify(mockMedicalProviderDao, times(3)).insert(medicalProviderDtoArgumentCaptor.capture());
 
-        medicalProviderDtoArgumentCaptor.getAllValues().stream()
+        medicalProviderDtoArgumentCaptor.getAllValues()
                 .forEach(dto -> {
                     if (dto.getInstitutionName().equals("MIT")) {
                         assertEquals("Dr Love",

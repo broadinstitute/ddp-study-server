@@ -4,20 +4,17 @@ import java.util.function.BinaryOperator;
 
 import com.google.cloud.monitoring.v3.MetricServiceClient;
 import com.google.monitoring.v3.Point;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Not a real test, just a useful place to mess around with
  * stackdriver metrics
  */
+@Slf4j
 @Ignore
 public class MonitorTest {
-
-    private static final Logger LOG = LoggerFactory.getLogger(MonitorTest.class);
-
     /**
      * Stackdriver doesn't seem to show the series label unless
      * you have a few different series, so here we send
@@ -42,18 +39,18 @@ public class MonitorTest {
     /**
      * Deletes all metrics--this should basically never be run.
      */
-    private void deleteAllCustomMetrics() throws Exception {
+    private void deleteAllCustomMetrics() {
         for (StackdriverCustomMetric metric : StackdriverCustomMetric.values()) {
 
             try (MetricServiceClient client = MetricsServiceUtil.createClient()) {
                 String metricName =
                         "projects/" + StackdriverMetricsTracker.PROJECT_NAME.getProject() + "/metricDescriptors/custom.googleapis.com/ddp/"
                         + metric.getMetricName();
-                LOG.info("Deleting metric {}", metricName);
+                log.info("Deleting metric {}", metricName);
                 try {
                     client.deleteMetricDescriptor(metricName);
                 } catch (Exception e) {
-                    LOG.error("Could not delete {}", metricName, e);
+                    log.error("Could not delete {}", metricName, e);
                 }
             }
         }
