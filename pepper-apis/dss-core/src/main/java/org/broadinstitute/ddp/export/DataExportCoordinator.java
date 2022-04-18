@@ -21,18 +21,15 @@ import java.util.Set;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.study.Participant;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class DataExportCoordinator {
-
-    private static final Logger LOG = LoggerFactory.getLogger(DataExportCoordinator.class);
-
     private final DataExporter exporter;
     private int batchSize = DEFAULT_BATCH_SIZE;
     private final Set<ElasticSearchIndexType> indices = new HashSet<>();
@@ -67,11 +64,11 @@ public class DataExportCoordinator {
         List<ActivityExtract> activities = withAPIsTxn(handle -> {
             var index = ElasticSearchIndexType.ACTIVITY_DEFINITION;
             if (todoIndices.remove(index)) {
-                LOG.info("Running {} elasticsearch export for study {}", index, studyDto.getGuid());
+                log.info("Running {} elasticsearch export for study {}", index, studyDto.getGuid());
                 long start = Instant.now().toEpochMilli();
                 var extracts = exporter.exportActivityDefinitionsToElasticsearch(handle, studyDto);
                 long elapsed = Instant.now().toEpochMilli() - start;
-                LOG.info("Finished {} elasticsearch export for study {} in {}s", index, studyDto.getGuid(), elapsed / 1000);
+                log.info("Finished {} elasticsearch export for study {} in {}s", index, studyDto.getGuid(), elapsed / 1000);
                 return extracts;
             } else {
                 return exporter.extractActivities(handle, studyDto);
@@ -99,13 +96,13 @@ public class DataExportCoordinator {
         boolean success = true;
         if (!todoIndices.isEmpty()) {
             try {
-                LOG.info("Running paginated participant elasticsearch export for study {}", studyDto.getGuid());
+                log.info("Running paginated participant elasticsearch export for study {}", studyDto.getGuid());
                 long start = Instant.now().toEpochMilli();
                 success = paginatedExportToIndices(studyDto, activities, todoIndices);
                 long elapsed = Instant.now().toEpochMilli() - start;
-                LOG.info("Finished paginated participant elasticsearch export for study {} in {}s", studyDto.getGuid(), elapsed / 1000);
+                log.info("Finished paginated participant elasticsearch export for study {} in {}s", studyDto.getGuid(), elapsed / 1000);
             } catch (Exception e) {
-                LOG.error("Error while running paginated participant elasticsearch for study {}, continuing", studyDto.getGuid(), e);
+                log.error("Error while running paginated participant elasticsearch for study {}, continuing", studyDto.getGuid(), e);
                 success = false;
             }
         }
@@ -128,12 +125,12 @@ public class DataExportCoordinator {
             boolean runSuccess = withAPIsTxn(handle -> {
                 boolean batchSuccess = true;
                 List<Participant> participants = DataExporter.extractParticipantDataSetByIds(handle, studyDto, batch);
-                LOG.info("Extracted {} participants for study {}", participants.size(), studyDto.getGuid());
+                log.info("Extracted {} participants for study {}", participants.size(), studyDto.getGuid());
                 if (indices.contains(ElasticSearchIndexType.PARTICIPANTS_STRUCTURED)) {
                     try {
                         exporter.exportToElasticsearch(handle, studyDto, activities, participants, true);
                     } catch (Exception e) {
-                        LOG.error("Error while running {} elasticsearch export for study {}, continuing",
+                        log.error("Error while running {} elasticsearch export for study {}, continuing",
                                 ElasticSearchIndexType.PARTICIPANTS_STRUCTURED, studyGuid, e);
                         batchSuccess = false;
                     }
@@ -142,7 +139,7 @@ public class DataExportCoordinator {
                     try {
                         exporter.exportToElasticsearch(handle, studyDto, activities, participants, false);
                     } catch (Exception e) {
-                        LOG.error("Error while running {} elasticsearch export for study {}, continuing",
+                        log.error("Error while running {} elasticsearch export for study {}, continuing",
                                 ElasticSearchIndexType.PARTICIPANTS, studyGuid, e);
                         batchSuccess = false;
                     }
@@ -151,7 +148,7 @@ public class DataExportCoordinator {
                     try {
                         exporter.exportUsersToElasticsearch(handle, studyDto, batch);
                     } catch (Exception e) {
-                        LOG.error("Error while running {} elasticsearch export for study {}, continuing",
+                        log.error("Error while running {} elasticsearch export for study {}, continuing",
                                 ElasticSearchIndexType.USERS, studyGuid, e);
                         batchSuccess = false;
                     }
@@ -162,22 +159,22 @@ public class DataExportCoordinator {
 
             fetched += fetchedSize;
         }
-        LOG.info("Processed {} participants for study {}", fetched, studyDto.getGuid());
+        log.info("Processed {} participants for study {}", fetched, studyDto.getGuid());
         return success;
     }
 
     private boolean runCsvExports(StudyDto studyDto, List<ActivityExtract> activities) {
         String studyGuid = studyDto.getGuid();
         try {
-            LOG.info("Running csv export for study {}", studyGuid);
+            log.info("Running csv export for study {}", studyGuid);
             long start = Instant.now().toEpochMilli();
             var iterator = new PaginatedParticipantIterator(studyDto, batchSize);
             exportStudyToGoogleBucket(studyDto, exporter, csvBucket, activities, iterator);
             long elapsed = Instant.now().toEpochMilli() - start;
-            LOG.info("Finished csv export for study {} in {}s", studyGuid, elapsed / 1000);
+            log.info("Finished csv export for study {} in {}s", studyGuid, elapsed / 1000);
             return true;
         } catch (Exception e) {
-            LOG.error("Error while running csv export for study {}, continuing", studyGuid, e);
+            log.error("Error while running csv export for study {}, continuing", studyGuid, e);
             return false;
         }
     }
@@ -210,7 +207,7 @@ public class DataExportCoordinator {
         return () -> {
             try {
                 int total = exporter.exportDataSetAsCsv(studyDto, activities, participants, csvOutputWriter);
-                LOG.info("Written {} participants to csv export for study {}", total, studyDto.getGuid());
+                log.info("Written {} participants to csv export for study {}", total, studyDto.getGuid());
                 // closing here is important! Can't wait until the try block calls close
                 csvOutputWriter.close();
             } catch (IOException e) {
@@ -221,7 +218,7 @@ public class DataExportCoordinator {
 
     boolean saveToGoogleBucket(InputStream csvInputStream, String fileName, String studyGuid, Bucket bucket) {
         Blob blob = bucket.create(fileName, csvInputStream, "text/csv");
-        LOG.info("Uploaded file {} to bucket {} for study {}", blob.getName(), bucket.getName(), studyGuid);
+        log.info("Uploaded file {} to bucket {} for study {}", blob.getName(), bucket.getName(), studyGuid);
         return true;
     }
 

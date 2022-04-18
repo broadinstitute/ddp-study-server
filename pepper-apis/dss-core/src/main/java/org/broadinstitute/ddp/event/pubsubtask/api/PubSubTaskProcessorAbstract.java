@@ -5,23 +5,20 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException.Severity.WARN;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.infoMsg;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.PubSubTaskResultType.SUCCESS;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Properties;
 
 import com.google.gson.Gson;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.util.GsonUtil;
-import org.slf4j.Logger;
 
 
 /**
  * Abstract implementation of processor which processes PubSubTask.
  * {@link PubSubTaskProcessor} implementations should extend this abstract class.
  */
+@Slf4j
 public abstract class PubSubTaskProcessorAbstract implements PubSubTaskProcessor {
-
-    protected static final Logger LOG = getLogger(PubSubTaskProcessorAbstract.class);
-
     protected final Gson gson = GsonUtil.standardGson();
 
     protected String studyGuid;
@@ -30,7 +27,7 @@ public abstract class PubSubTaskProcessorAbstract implements PubSubTaskProcessor
 
     @Override
     public PubSubTaskResult processPubSubTask(PubSubTask pubSubTask) {
-        LOG.info(infoMsg("PubSubTask processing STARTED: {}"), pubSubTask);
+        log.info(infoMsg("PubSubTask processing STARTED: {}"), pubSubTask);
 
         payloadProps = payloadAsProperties(pubSubTask);
 
@@ -42,10 +39,10 @@ public abstract class PubSubTaskProcessorAbstract implements PubSubTaskProcessor
 
         var pubSubTaskResult = createPubSubTaskResultAfterTaskProcessing(pubSubTask);
         if (pubSubTaskResult.getResultType() == SUCCESS) {
-            LOG.info(infoMsg("PubSubTask processing COMPLETED: taskType={}, pubSubTaskResult={}"),
+            log.info(infoMsg("PubSubTask processing COMPLETED: taskType={}, pubSubTaskResult={}"),
                     pubSubTask.getTaskType(), pubSubTaskResult);
         } else {
-            LOG.info(infoMsg("PubSubTask processing COMPLETED: taskType={}, pubSubTaskResult={}"),
+            log.info(infoMsg("PubSubTask processing COMPLETED: taskType={}, pubSubTaskResult={}"),
                     pubSubTask.getTaskType(), pubSubTaskResult);
         }
 

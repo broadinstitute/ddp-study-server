@@ -11,7 +11,7 @@ public class SourceGeneratorFactoryTest {
         SourceGeneratorFactory sourceGeneratorFactory = new SourceGeneratorFactory();
         BaseGenerator.PropertyInfo propertyInfo = new BaseGenerator.PropertyInfo(Tissue.class, true);
         BaseGenerator generator = sourceGeneratorFactory.make(propertyInfo);
-        Assert.assertEquals(TissueSourceGenerator.class, generator.getClass());
+        Assert.assertEquals(ParentChildRelationGenerator.class, generator.getClass());
     }
 
 }

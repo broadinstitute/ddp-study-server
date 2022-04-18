@@ -3,12 +3,11 @@ package org.broadinstitute.ddp.service.participantslookup;
 
 import static org.broadinstitute.ddp.service.participantslookup.error.ParticipantsLookupErrorType.INVALID_RESULT_MAX_COUNT;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.service.participantslookup.error.ParticipantsLookupException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Abstract class defining a service for Pepper participants lookup.<br>
@@ -17,10 +16,8 @@ import org.slf4j.LoggerFactory;
  * be done in different sources: DB, ElasticSearch, etc.).<br>
  * Currently supported only searching in Pepper ElasticSearch database.
  */
+@Slf4j
 public abstract class ParticipantsLookupService {
-
-    protected static final Logger LOG = LoggerFactory.getLogger(ParticipantsLookupService.class);
-
     /**
      * Lookup participants (it can return more than 1 results).
      * The results count is limited by parameter 'resultsMaxCount': so, this method could return no more
@@ -48,7 +45,7 @@ public abstract class ParticipantsLookupService {
             throw new ParticipantsLookupException(INVALID_RESULT_MAX_COUNT, "resultsMaxCount should be greater than 0");
         }
 
-        LOG.info("Participants lookup started (study={}, query=\"{}\"), maxCount={}", studyDto.getGuid(), query, resultsMaxCount);
+        log.info("Participants lookup started (study={}, query=\"{}\"), maxCount={}", studyDto.getGuid(), query, resultsMaxCount);
 
         ParticipantsLookupResult participantsLookupResult = new ParticipantsLookupResult();
 
@@ -57,13 +54,13 @@ public abstract class ParticipantsLookupService {
                 doLookupParticipants(
                         participantLookupType, studyDto, preProcessQuery(query), resultsMaxCount, participantsLookupResult);
             } catch (Exception e) {
-                LOG.error(e.getMessage(), e);
+                log.error(e.getMessage(), e);
                 handleException(e);
                 throw new DDPException(e);
             }
         }
 
-        LOG.info("Participants lookup finished (study={}, query=\"{}\"), found {} rows, fetched {} rows",
+        log.info("Participants lookup finished (study={}, query=\"{}\"), found {} rows, fetched {} rows",
                 studyDto.getGuid(), query, participantsLookupResult.getTotalCount(), participantsLookupResult.getResultRows().size());
 
         return participantsLookupResult;
