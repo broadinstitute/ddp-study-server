@@ -6,11 +6,13 @@ import static java.util.stream.Collectors.toSet;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
@@ -24,8 +26,6 @@ import org.broadinstitute.ddp.util.GuidUtils;
 import org.jdbi.v3.core.Handle;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Script for generating and inserting invite codes.
@@ -38,10 +38,9 @@ import org.slf4j.LoggerFactory;
  * - The directory path of the cloned bad word repo from step 2
  */
 
+@Slf4j
 @Ignore
 public class InsertInvitationRecruitmentCodesScript extends TxnAwareBaseTest {
-
-    private static final Logger LOG = LoggerFactory.getLogger(InsertInvitationRecruitmentCodesScript.class);
     public static final int CODE_LENGTH = 12;
 
     private String generateRecruitmentInvitationCode(String codePrefix) {
@@ -54,7 +53,7 @@ public class InsertInvitationRecruitmentCodesScript extends TxnAwareBaseTest {
 
     private void insertRecruitmentInvitationCodes(String studyGuid, String codePrefix, final int qty, String badWordDirectoryPath) {
         List<String> normalizedBadWords = readAllPossibleBadWords(badWordDirectoryPath);
-        LOG.info("Read a list of bad words of size: {}", normalizedBadWords.size());
+        log.info("Read a list of bad words of size: {}", normalizedBadWords.size());
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
             StudyDto study = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
             if (study == null) {
@@ -64,14 +63,14 @@ public class InsertInvitationRecruitmentCodesScript extends TxnAwareBaseTest {
             do {
                 String newCode = generateRecruitmentInvitationCode(codePrefix);
                 Optional<String> containedBadWord = normalizedBadWords.stream()
-                        .filter(badWord -> newCode.contains(badWord)).findAny();
+                        .filter(newCode::contains).findAny();
                 if (containedBadWord.isEmpty()) {
                     InvitationDto invitation = insertRecruitmentInvitationCode(newCode, study, handle);
                     ++insertedCount;
-                    LOG.info("Invitation code: {} inserted with id {}. {} left", newCode, invitation.getInvitationId(),
+                    log.info("Invitation code: {} inserted with id {}. {} left", newCode, invitation.getInvitationId(),
                             (qty - insertedCount));
                 } else {
-                    LOG.warn("Skipping inserting code: {} because it contains the bad word: {}", newCode, containedBadWord.get());
+                    log.warn("Skipping inserting code: {} because it contains the bad word: {}", newCode, containedBadWord.get());
                 }
             } while (insertedCount < qty);
         });
@@ -81,7 +80,7 @@ public class InsertInvitationRecruitmentCodesScript extends TxnAwareBaseTest {
         List<File> wordFiles;
         try {
             wordFiles = Files.list(Paths.get(directoryPath))
-                    .map(path -> path.toFile())
+                    .map(Path::toFile)
                     .filter(file -> !file.getName().contains("."))
                     .filter(file -> file.getName().toLowerCase().equals(file.getName())) // ignore files with uppercase chars in name
                     .collect(toList());
@@ -90,15 +89,15 @@ public class InsertInvitationRecruitmentCodesScript extends TxnAwareBaseTest {
         }
         List<String> badWordList = wordFiles.stream().flatMap(wordFile -> {
             try {
-                LOG.info("Reading bad word file: {}", wordFile.getAbsolutePath());
-                return ((List<String>) (FileUtils.readLines(wordFile, "UTF-8"))).stream()
-                        .filter(word -> StringUtils.isNotBlank(word));
+                log.info("Reading bad word file: {}", wordFile.getAbsolutePath());
+                return FileUtils.readLines(wordFile, "UTF-8").stream()
+                        .filter(StringUtils::isNotBlank);
             } catch (IOException e) {
                 throw new DDPException("Could not read bad word file:" + wordFile.getAbsolutePath(), e);
             }
         }).collect(toList());
 
-        return badWordList.stream().map(word -> normalizeWord(word)).filter(word -> isWordPossible(word)).collect(toList());
+        return badWordList.stream().map(this::normalizeWord).filter(this::isWordPossible).collect(toList());
     }
 
     private String normalizeWord(String word) {

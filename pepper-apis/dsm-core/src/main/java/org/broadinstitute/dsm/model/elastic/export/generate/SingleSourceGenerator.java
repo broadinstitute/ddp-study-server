@@ -23,7 +23,9 @@ public class SingleSourceGenerator extends SourceGenerator {
     @Override
     protected Map<String, Object> getElement(Object element) {
         logger.info("Constructing single field with value");
-        return new HashMap<>(Map.of(Util.underscoresToCamelCase(getDBElement().getColumnName()), element));
+        Map<String, Object> elementMap = new HashMap<>();
+        elementMap.put(Util.underscoresToCamelCase(getDBElement().getColumnName()), element);
+        return elementMap;
     }
 }
 
