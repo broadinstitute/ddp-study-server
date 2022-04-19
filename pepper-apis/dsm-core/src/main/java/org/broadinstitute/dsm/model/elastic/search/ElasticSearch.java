@@ -281,7 +281,7 @@ public class ElasticSearch implements ElasticSearchable {
 
 
     @Override
-    public List<Map<String, String>> getGuidsByLegacyAltPids(String esParticipantsIndex, List<String> legacyAltPids) {
+    public Map<String, String> getGuidsByLegacyAltPids(String esParticipantsIndex, List<String> legacyAltPids) {
         logger.info("Collecting ES data from index " + esParticipantsIndex);
         SearchResponse response;
         try {
@@ -294,15 +294,29 @@ public class ElasticSearch implements ElasticSearchable {
         } catch (Exception e) {
             throw new RuntimeException("Couldn't get participants from ES for instance " + esParticipantsIndex, e);
         }
-        List<Map<String, String>> guidsByLegacyIds = Arrays.stream(response.getHits().getHits())
+        Map<String, String> guidByLegacyAltPid = new HashMap<>();
+        SearchHit[] records = response.getHits().getHits();
+        extractLegacyAltPidGuidPair(guidByLegacyAltPid, records);
+        logger.info("Got " + records.length + " participants from ES for instance " + esParticipantsIndex);
+        return guidByLegacyAltPid;
+    }
+
+    private void extractLegacyAltPidGuidPair(Map<String, String> guidByLegacyAltPid, SearchHit[] records) {
+        Arrays.stream(records)
                 .map(SearchHit::getSourceAsMap)
-                .filter(sm -> sm.containsKey(ElasticSearchUtil.PROFILE))
-                .map(sm -> sm.get(ElasticSearchUtil.PROFILE))
-                .map(sm -> {
-                    Map<String, String> map = (Map<String, String>) sm;
-                    return Map.of(map.get(ElasticSearchUtil.LEGACY_ALT_PID), map.get(ESObjectConstants.GUID));
-                }).collect(Collectors.toList());
-        logger.info("Got " + guidsByLegacyIds.size() + " participants from ES for instance " + esParticipantsIndex);
-        return guidsByLegacyIds;
+                .filter(this::hasProfile)
+                .map(this::getProfile)
+                .forEach(sm -> {
+                    Map<String, String> map = (Map<String, String>)sm;
+                    guidByLegacyAltPid.put(map.get(ElasticSearchUtil.LEGACY_ALT_PID), map.get(ESObjectConstants.GUID));
+                });
+    }
+
+    private Object getProfile(Map<String, Object> sm) {
+        return sm.get(ElasticSearchUtil.PROFILE);
+    }
+
+    private boolean hasProfile(Map<String, Object> sm) {
+        return sm.containsKey(ElasticSearchUtil.PROFILE);
     }
 }

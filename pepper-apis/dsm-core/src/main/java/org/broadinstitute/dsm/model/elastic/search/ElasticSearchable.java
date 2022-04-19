@@ -32,8 +32,8 @@ public interface ElasticSearchable {
 
     }
 
-    default List<Map<String, String>> getGuidsByLegacyAltPids(String esParticipantsIndex, List<String> legacyAltPids) {
-        return new ArrayList<>();
+    default Map<String, String> getGuidsByLegacyAltPids(String esParticipantsIndex, List<String> legacyAltPids) {
+        return Map.of();
     }
 
 }
