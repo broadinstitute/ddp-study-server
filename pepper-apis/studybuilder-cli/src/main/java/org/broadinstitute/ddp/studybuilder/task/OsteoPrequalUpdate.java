@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.studybuilder.task;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
@@ -29,17 +30,14 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 
+@Slf4j
 public class OsteoPrequalUpdate implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(OsteoPrequalUpdate.class);
     private static final String FILE = "patches/prequal-updates.conf";
     private static final String STUDY_GUID = "CMI-OSTEO";
     private static final String ACTIVITY_CODE = "PREQUAL";
@@ -75,7 +73,7 @@ public class OsteoPrequalUpdate implements CustomTask {
                 "Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
                 STUDY_GUID, ACTIVITY_CODE, versionTag);
         RevisionMetadata meta = new RevisionMetadata(timestamp.toEpochMilli(), adminUser.getId(), reason);
-        LOG.info("Making revision for new changes in blocks");
+        log.info("Making revision for new changes in blocks");
         revisionPrequal(activityId, dataCfg, handle, meta, versionTag);
     }
 
@@ -99,7 +97,7 @@ public class OsteoPrequalUpdate implements CustomTask {
         SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
         RevisionDto revDto = RevisionDto.fromStartMetadata(def.getRevId(), revisionMetadata);
 
-        LOG.info("Trying to insert new block");
+        log.info("Trying to insert new block");
         sectionBlockDao.addBlock(activityId, currentSectionDef.getSectionId(),
                 order, blockDef, revDto);
     }

@@ -13,7 +13,6 @@ import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.TYPE;
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.USER_AGENT;
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.USER_ID;
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.USER_NAME;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,11 +22,11 @@ import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.Auth0LogEventDao;
 import org.broadinstitute.ddp.json.auth0.Auth0LogEvent;
 import org.broadinstitute.ddp.util.GsonRecursiveReader;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
 
 /**
  * The service used for handling Auth0 log events which fired by Auth0 streams
@@ -41,10 +40,8 @@ import org.slf4j.Logger;
  * </ul>
  * NOTE: see Auth0LogEventServiceTest for examples of Auth0 log events JSON docs.
  */
+@Slf4j
 public class Auth0LogEventService {
-
-    private static final Logger LOG = getLogger(Auth0LogEventService.class);
-
     public static final String AUTH0_LOG_EVENT_TITLE = "SAVE Auth0LogEvent";
 
     /**
@@ -83,8 +80,8 @@ public class Auth0LogEventService {
     }
 
     public void logAuth0LogEvent(Auth0LogEvent logEvent) {
-        if (LOG.isDebugEnabled() || LOG.isTraceEnabled()) {
-            LOG.debug(AUTH0_LOG_EVENT_TITLE + "[{}]: type={} ({}), date={}, log_id={}\n"
+        if (log.isDebugEnabled() || log.isTraceEnabled()) {
+            log.debug(AUTH0_LOG_EVENT_TITLE + "[{}]: type={} ({}), date={}, log_id={}\n"
                             + "\tclient_id={}, connection_id={}, user_id={}\n"
                             + "\tuser_agent={}\n"
                             + "\tip={}, email={}\n"
@@ -102,7 +99,7 @@ public class Auth0LogEventService {
                     logEvent.getEmail(),
                     logEvent.getData());
         } else {
-            LOG.info(AUTH0_LOG_EVENT_TITLE + "[{}]: type={} ({}), date={}, user_id={}, log_id={}",
+            log.info(AUTH0_LOG_EVENT_TITLE + "[{}]: type={} ({}), date={}, user_id={}, log_id={}",
                     logEvent.getTenant(),
                     logEvent.getType(),
                     getTypeDescription(logEvent),
@@ -122,7 +119,7 @@ public class Auth0LogEventService {
     public boolean persistAuth0LogEvent(Handle handle, Auth0LogEvent logEvent) {
         var auth0LogEventDao = handle.attach(Auth0LogEventDao.class);
         if (auth0LogEventDao.checkIfSameEventAlreadyPersisted(logEvent)) {
-            LOG.warn(AUTH0_LOG_EVENT_TITLE + " failed. Event with such log_id already was saved. LOG_ID=" + logEvent.getLogId());
+            log.warn(AUTH0_LOG_EVENT_TITLE + " failed. Event with such log_id already was saved. LOG_ID=" + logEvent.getLogId());
             return false;
         } else {
             auth0LogEventDao.insertAuth0LogEvent(logEvent);

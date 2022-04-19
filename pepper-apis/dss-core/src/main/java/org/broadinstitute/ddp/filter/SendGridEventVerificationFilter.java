@@ -4,7 +4,6 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 import static org.broadinstitute.ddp.constants.ErrorCodes.INVALID_PAYLOAD_SIGNATURE;
 import static org.broadinstitute.ddp.constants.ErrorCodes.SIGNATURE_VERIFICATION_ERROR;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
@@ -16,11 +15,11 @@ import java.security.spec.InvalidKeySpecException;
 
 import com.sendgrid.helpers.eventwebhook.EventWebhook;
 import com.sendgrid.helpers.eventwebhook.EventWebhookHeader;
+import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.util.ResponseUtil;
-import org.slf4j.Logger;
 import spark.Filter;
 import spark.Request;
 import spark.Response;
@@ -37,10 +36,8 @@ import spark.Response;
  * stored in a config file.<br>
  * If verification key is not defined in a config, then signature check is skipped.
  */
+@Slf4j
 public class SendGridEventVerificationFilter implements Filter {
-
-    private static final Logger LOG = getLogger(SendGridEventVerificationFilter.class);
-
     private final String cfgParamSendGridEventsVerificationKey;
 
     public SendGridEventVerificationFilter(String cfgParamSendGridEventsVerificationKey) {
@@ -92,7 +89,7 @@ public class SendGridEventVerificationFilter implements Filter {
     }
 
     private void haltError(int status, String code, String msg) {
-        LOG.warn(msg);
+        log.warn(msg);
         throw ResponseUtil.haltError(status, new ApiError(code, msg));
     }
 }

@@ -10,6 +10,7 @@ import java.util.Map;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
@@ -24,12 +25,9 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class OsteoNewFamilyHistory implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(OsteoNewFamilyHistory.class);
     private static final String DATA_FILE = "patches/family-history.conf";
 
     private static final String STUDY_GUID = "CMI-OSTEO";
@@ -70,7 +68,7 @@ public class OsteoNewFamilyHistory implements CustomTask {
     }
 
     private Map<String, Long> insertActivities(Handle handle, StudyDto studyDto, long adminUserId) {
-        LOG.info("Inserting activity configuration...");
+        log.info("Inserting activity configuration...");
         Map<String, Long> result = new HashMap<>();
 
         ActivityBuilder activityBuilder = new ActivityBuilder(cfgPath.getParent(), cfg, varsCfg, studyDto, adminUserId);
@@ -86,7 +84,7 @@ public class OsteoNewFamilyHistory implements CustomTask {
             }
             var activityVersion = activityBuilder.insertActivity(handle, definition, nested, timestamp);
             result.put(definition.getString("activityCode"), activityVersion.getActivityId());
-            LOG.info("Activity configuration {} has been added in study {}", activity, STUDY_GUID);
+            log.info("Activity configuration {} has been added in study {}", activity, STUDY_GUID);
         }
         return result;
     }

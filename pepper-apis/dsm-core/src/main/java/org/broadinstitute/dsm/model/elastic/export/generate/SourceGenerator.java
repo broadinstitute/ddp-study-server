@@ -2,7 +2,9 @@ package org.broadinstitute.dsm.model.elastic.export.generate;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.slf4j.Logger;
@@ -46,8 +48,9 @@ public abstract class SourceGenerator extends BaseGenerator {
         Map<String, Object> dynamicFieldValues = parseJsonToMapFromValue();
         Map<String, Object> transformedMap = new HashMap<>();
         for (Map.Entry<String, Object> entry : dynamicFieldValues.entrySet()) {
+            Object value = entry.getValue();
             parser.setFieldName(entry.getKey());
-            transformedMap.put(Util.underscoresToCamelCase(entry.getKey()), parser.parse(String.valueOf(entry.getValue())));
+            transformedMap.put(Util.underscoresToCamelCase(entry.getKey()), parser.parse(String.valueOf(value)));
         }
         return transformedMap;
     }

@@ -18,6 +18,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.client.AddressVerificationException;
 import org.broadinstitute.ddp.client.EasyPostClient;
@@ -37,16 +38,12 @@ import org.broadinstitute.ddp.model.kit.KitRuleType;
 import org.broadinstitute.ddp.model.kit.KitZipCodeRule;
 import org.broadinstitute.ddp.util.JsonValidationError;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Main entry-point for back-end operations related to mailing address.
  */
+@Slf4j
 public class AddressService {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AddressService.class);
-
     private final EasyPostClient easyPost;
     private final OLCService olcService;
 
@@ -289,10 +286,10 @@ public class AddressService {
                 return optionalAddress;
             } else {
                 try {
-                    LOG.warn("Could not find default address for participant with guid {}. Waiting to retry", participantGuid);
+                    log.warn("Could not find default address for participant with guid {}. Waiting to retry", participantGuid);
                     TimeUnit.SECONDS.sleep(2);
                 } catch (InterruptedException e) {
-                    LOG.error("Sleep while waiting to retry findDefaultAddressForParticipant was interrupted", e);
+                    log.error("Sleep while waiting to retry findDefaultAddressForParticipant was interrupted", e);
                 }
             }
         } while (retries-- > 0);
@@ -346,11 +343,11 @@ public class AddressService {
         List<JsonValidationError> errors = new ArrayList<>();
         JdbiCountryAddressInfo countryInfoDao = buildCountryInfoDao(handle);
         Optional<CountryAddressInfo> countryInfo = countryInfoDao.getCountryAddressInfo(address.getCountry());
-        if (!countryInfo.isPresent()) {
+        if (countryInfo.isEmpty()) {
             errors.add(new JsonValidationError(Collections.singletonList("country"),
                     "Country code: " + address.getCountry() + " is not recognized", address.getCountry()));
         } else {
-            if (!countryInfo.get().getSubnationDisivisionByCode(address.getState()).isPresent()) {
+            if (countryInfo.get().getSubnationDisivisionByCode(address.getState()).isEmpty()) {
                 errors.add(new JsonValidationError(Collections.singletonList("state"),
                         "State code: " + address.getState() + " could not be found", address.getState()));
             }
@@ -371,7 +368,7 @@ public class AddressService {
     public MailAddress verifyAddress(MailAddress address) throws AddressVerificationException {
         var result = easyPost.createAndVerify(address);
         result.runIfThrown(e -> {
-            LOG.warn("Failed to verify address with EasyPost, returning generic error", e);
+            log.warn("Failed to verify address with EasyPost, returning generic error", e);
             throw new AddressVerificationException(buildGenericVerificationError());
         });
         if (result.getStatusCode() == 200) {
@@ -404,12 +401,12 @@ public class AddressService {
 
         List<AddressWarning> warns = new ArrayList<>();
         if (!kitZipCodeRules.isEmpty()) {
-            LOG.info("Checking address zip code against kit configurations for study with id {}", studyId);
+            log.info("Checking address zip code against kit configurations for study with id {}", studyId);
             String zipCode = StringUtils.defaultString(address.getZip(), "");
             for (var rules : kitZipCodeRules) {
                 boolean matched = rules.stream().anyMatch(rule -> rule.validate(handle, zipCode));
                 if (!matched) {
-                    LOG.warn("Address zip code does not match, studyId={} zipCode={}", studyId, zipCode);
+                    log.warn("Address zip code does not match, studyId={} zipCode={}", studyId, zipCode);
                     String msg = AddressWarning.Warn.ZIP_UNSUPPORTED.getMessage();
                     Long warningTmplId = rules.stream()
                             .map(rule -> ((KitZipCodeRule) rule).getWarningMessageTemplateId())

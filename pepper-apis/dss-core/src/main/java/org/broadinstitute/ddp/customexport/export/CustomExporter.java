@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import com.google.gson.Gson;
 import com.opencsv.CSVWriter;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.customexport.collectors.ComplexChildResponseCollector;
 import org.broadinstitute.ddp.customexport.collectors.ParentActivityResponseCollector;
 import org.broadinstitute.ddp.customexport.constants.CustomExportConfigFile;
@@ -48,13 +49,9 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class CustomExporter {
-
-    private static final Logger LOG = LoggerFactory.getLogger(CustomExporter.class);
-
     // A cache for user auth0 emails, storing (auth0UserId -> email).
     private static final Map<String, String> emailStore = new HashMap<>();
     private static final String familyIdHeader = "familyId";
@@ -63,7 +60,6 @@ public class CustomExporter {
     private final String customGuid;
     private final String customActivity;
     private final RestHighLevelClient elasticsearchClient;
-
 
     CustomExporter(Config mainConfig, Config exportConfig) {
         this.exportConfig = exportConfig;
@@ -93,7 +89,7 @@ public class CustomExporter {
             if (familyId != null) {
                 customExportParticipants.add(new CustomExportParticipant(familyId, p));
             } else {
-                LOG.error("Skipped participant with GUID = '{}' from the export batch because dsm.familyId is null",
+                log.error("Skipped participant with GUID = '{}' from the export batch because dsm.familyId is null",
                         p.getUser().getGuid());
             }
         }
@@ -250,14 +246,14 @@ public class CustomExporter {
 
         Optional<ActivityDto> activityDtoOptional = jdbiActivity.findActivityByStudyGuidAndCode(customGuid, customActivity);
         if (activityDtoOptional.isEmpty()) {
-            LOG.error("Activity {} DTO not found for custom export", customActivity);
+            log.error("Activity {} DTO not found for custom export", customActivity);
             return null;
         }
         ActivityDto activityDto = activityDtoOptional.get();
         List<CustomActivityExtract> activities = extractVersionsOfActivity(handle, activityDto, customGuid,
                 exportConfig.getStringList(CustomExportConfigFile.EXCLUDED_ACTIVITY_VERSIONS));
 
-        LOG.info("Custom export found {} versions of activity {}", activities.size(), customActivity);
+        log.info("Custom export found {} versions of activity {}", activities.size(), customActivity);
 
         return activities;
     }
@@ -288,7 +284,7 @@ public class CustomExporter {
         for (CustomActivityExtract activity : activities) {
             Integer maxInstances = activity.getMaxInstancesSeen();
             if (maxInstances == null || maxInstances < 1) {
-                LOG.warn("Found max instances count {} for activity tag {}, defaulting to 1", maxInstances, activity.getTag());
+                log.warn("Found max instances count {} for activity tag {}, defaulting to 1", maxInstances, activity.getTag());
                 // NOTE: default to one so we always have one set of columns even if no participant has an instance.
                 maxInstances = 1;
             }
@@ -473,7 +469,7 @@ public class CustomExporter {
             } catch (Exception e) {
                 String participantGuid = pt.getUser().getGuid();
                 String studyGuid = pt.getStatus().getStudyGuid();
-                LOG.error("Error while formatting data into csv for participant {} and study {}, skipping",
+                log.error("Error while formatting data into csv for participant {} and study {}, skipping",
                         participantGuid, studyGuid, e);
                 continue;
             }
@@ -481,7 +477,7 @@ public class CustomExporter {
             writer.writeNext(row.toArray(new String[]{}), false);
             numWritten += 1;
 
-            LOG.info("[export] ({}) participant {} for study {}:"
+            log.info("[export] ({}) participant {} for study {}:"
                             + " status={}, hasProfile={}, hasAddress={}, numProviders={}, numInstances={}",
                     numWritten, pt.getUser().getGuid(), studyDto.getGuid(),
                     pt.getStatus().getEnrollmentStatus(), pt.getUser().hasProfile(), pt.getUser().hasAddress(),
