@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiQuestionCached;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
@@ -18,21 +19,15 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.copy.CopyLocationType;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class AnswerToProfileCopier {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AnswerToProfileCopier.class);
-
-    private final Handle handle;
     private final long operatorId;
     private final JdbiQuestion jdbiQuestion;
     private final UserProfileDao profileDao;
     private final Map<Long, CompositeQuestionDto> parentDtosByChildId = new HashMap<>();
 
     public AnswerToProfileCopier(Handle handle, long operatorId) {
-        this.handle = handle;
         this.operatorId = operatorId;
         this.jdbiQuestion = new JdbiQuestionCached(handle);
         this.profileDao = handle.attach(UserProfileDao.class);
@@ -47,7 +42,7 @@ public class AnswerToProfileCopier {
             if (sourceAnswer != null) {
                 copySourceAnswer(sourceInstance, sourceAnswer, target);
             } else {
-                LOG.info("No source answer to copy from activity instance {} and question {} to target {}",
+                log.info("No source answer to copy from activity instance {} and question {} to target {}",
                         sourceInstance.getGuid(), sourceQuestion.getStableId(), target);
             }
         }
@@ -87,7 +82,7 @@ public class AnswerToProfileCopier {
                     .findCompositeParentDtoByChildId(sourceQuestion.getId())
                     .orElse(null);
             if (parentDto == null) {
-                LOG.info("No parent composite question found for source question {}", sourceQuestion.getStableId());
+                log.info("No parent composite question found for source question {}", sourceQuestion.getStableId());
                 return null;
             }
             parentDtosByChildId.put(sourceQuestion.getId(), parentDto);
@@ -95,7 +90,7 @@ public class AnswerToProfileCopier {
 
         var parentAnswer = (CompositeAnswer) sourceInstance.getAnswer(parentDto.getStableId());
         if (parentAnswer == null) {
-            LOG.info("No parent composite answer found for source question {}", sourceQuestion.getStableId());
+            log.info("No parent composite answer found for source question {}", sourceQuestion.getStableId());
             return null;
         }
 
@@ -108,7 +103,7 @@ public class AnswerToProfileCopier {
         } else if (answers.size() == 1) {
             return answers.get(0);
         } else {
-            LOG.info("No child composite answers found for source question {}", sourceQuestion.getStableId());
+            log.info("No child composite answers found for source question {}", sourceQuestion.getStableId());
             return null;
         }
     }
