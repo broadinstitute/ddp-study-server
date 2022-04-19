@@ -4,6 +4,7 @@ import org.broadinstitute.dsm.model.elastic.sort.Sort;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 
 import java.util.List;
+import java.util.Map;
 
 public interface ElasticSearchable {
 
@@ -28,6 +29,10 @@ public interface ElasticSearchable {
 
     default void setSortBy(Sort sort) {
 
+    }
+
+    default Map<String, String> getGuidsByLegacyAltPids(String esParticipantsIndex, List<String> legacyAltPids) {
+        return Map.of();
     }
 
 }
