@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.sort.CustomSortBuilder;
 import org.broadinstitute.dsm.model.elastic.sort.Sort;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.elasticsearch.action.search.SearchRequest;
@@ -23,12 +24,10 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.core.CountRequest;
 import org.elasticsearch.client.core.CountResponse;
-import org.elasticsearch.index.query.AbstractQueryBuilder;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
@@ -280,4 +279,44 @@ public class ElasticSearch implements ElasticSearchable {
         return boolQuery;
     }
 
+
+    @Override
+    public Map<String, String> getGuidsByLegacyAltPids(String esParticipantsIndex, List<String> legacyAltPids) {
+        logger.info("Collecting ES data from index " + esParticipantsIndex);
+        SearchResponse response;
+        try {
+            SearchRequest searchRequest = new SearchRequest(esParticipantsIndex);
+            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+            searchSourceBuilder.query(new TermsQueryBuilder(ElasticSearchUtil.PROFILE_LEGACYALTPID, legacyAltPids.toArray()));
+            searchSourceBuilder.fetchSource(new String[] {ElasticSearchUtil.PROFILE_LEGACYALTPID, ElasticSearchUtil.PROFILE_GUID}, null);
+            searchRequest.source(searchSourceBuilder);
+            response = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
+        } catch (Exception e) {
+            throw new RuntimeException("Couldn't get participants from ES for instance " + esParticipantsIndex, e);
+        }
+        Map<String, String> guidByLegacyAltPid = new HashMap<>();
+        SearchHit[] records = response.getHits().getHits();
+        extractLegacyAltPidGuidPair(guidByLegacyAltPid, records);
+        logger.info("Got " + records.length + " participants from ES for instance " + esParticipantsIndex);
+        return guidByLegacyAltPid;
+    }
+
+    private void extractLegacyAltPidGuidPair(Map<String, String> guidByLegacyAltPid, SearchHit[] records) {
+        Arrays.stream(records)
+                .map(SearchHit::getSourceAsMap)
+                .filter(this::hasProfile)
+                .map(this::getProfile)
+                .forEach(sm -> {
+                    Map<String, String> map = (Map<String, String>)sm;
+                    guidByLegacyAltPid.put(map.get(ElasticSearchUtil.LEGACY_ALT_PID), map.get(ESObjectConstants.GUID));
+                });
+    }
+
+    private Object getProfile(Map<String, Object> sm) {
+        return sm.get(ElasticSearchUtil.PROFILE);
+    }
+
+    private boolean hasProfile(Map<String, Object> sm) {
+        return sm.containsKey(ElasticSearchUtil.PROFILE);
+    }
 }
