@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiWorkflowTransition;
@@ -11,16 +12,12 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 
+@Slf4j
 public class OsteoFamilyHistoryReturnToDashboard implements CustomTask {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OsteoFamilyHistoryReturnToDashboard.class);
     private static final String STUDY_GUID = "CMI-OSTEO";
     private Config cfg;
 
@@ -38,13 +35,11 @@ public class OsteoFamilyHistoryReturnToDashboard implements CustomTask {
         SqlHelper helper = handle.attach(SqlHelper.class);
         JdbiWorkflowTransition getJdbiWorkflowTransition = handle.attach(JdbiWorkflowTransition.class);
 
-        List<String> activityCodes = new ArrayList<>(List.of("FAMILY_HISTORY", "FAMILY_HISTORY_V2"));
+        String activityCode = "FAMILY_HISTORY";
 
-        for (var activityCode : activityCodes) {
-            long transitionId = helper.findWorkflowTransitionId(studyDto.getId(), activityCode, StateType.THANK_YOU.toString());
-            DBUtils.checkUpdate(1, getJdbiWorkflowTransition.updateIsActiveById(transitionId, false));
-            LOG.info("Disabled workflow transition from activity {} to state {}", activityCode, StateType.THANK_YOU);
-        }
+        long transitionId = helper.findWorkflowTransitionId(studyDto.getId(), activityCode, StateType.THANK_YOU.toString());
+        DBUtils.checkUpdate(1, getJdbiWorkflowTransition.updateIsActiveById(transitionId, false));
+        log.info("Disabled workflow transition from activity {} to state {}", activityCode, StateType.THANK_YOU);
     }
 
     private interface SqlHelper extends SqlObject {
