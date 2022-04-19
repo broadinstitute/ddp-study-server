@@ -57,7 +57,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class OsteoLovedOneV2 implements CustomTask {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OsteoLovedOneV2.class);
     private static final String ACTIVITY_DATA_FILE = "patches/lovedone-v2.conf";
     private static final String V1_VERSION_TAG = "v1";
 
@@ -98,7 +97,7 @@ public class OsteoLovedOneV2 implements CustomTask {
 
         String activityCode = activityCfg.getString("activityCode");
         String newVersionTag = activityCfg.getString("newVersionTag");
-        LOG.info("Editing activity {}...", activityCode);
+        log.info("Editing activity {}...", activityCode);
 
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
         FormActivityDef activity = findActivityDef(handle, activityCode, V1_VERSION_TAG);
@@ -107,11 +106,11 @@ public class OsteoLovedOneV2 implements CustomTask {
         RevisionMetadata meta = makeActivityRevMetadata(activityCode, newVersionTag);
 
         ActivityVersionDto v2Dto = activityDao.changeVersion(activityId, newVersionTag, meta);
-        LOG.info("Version {} is created with versionId={}, revisionId={}", newVersionTag, v2Dto.getId(), v2Dto.getRevId());
+        log.info("Version {} is created with versionId={}, revisionId={}", newVersionTag, v2Dto.getId(), v2Dto.getRevId());
 
         ActivityVersionDto v1Dto = jdbiVersion.findByActivityCodeAndVersionTag(studyDto.getId(), activityCode, V1_VERSION_TAG)
                 .orElseThrow(() -> new DDPException("Could not find version " + V1_VERSION_TAG));
-        LOG.info("Version {} is terminated with revisionId={}", V1_VERSION_TAG, v1Dto.getRevId());
+        log.info("Version {} is terminated with revisionId={}", V1_VERSION_TAG, v1Dto.getRevId());
 
         // insert new questions to main section at the beginning (Fist name / Last name)
         long sectionId = activity.getSections().get(0).getSectionId();
@@ -123,13 +122,24 @@ public class OsteoLovedOneV2 implements CustomTask {
         Config relation = activityCfg.getConfig("relation");
         addPicklistOption(
                 handle,
-                studyDto.getId(),
                 relation.getString("stableId"),
                 relation.getConfigList("options"),
                 5);
 
-        // disable all component blocks
-        disableAndInsertInsteadNewChild(handle, activityCfg, activityId, activity, meta, v2Dto.getRevId());
+        // disable child question
+        disableCompositeChildQuestion(handle, activityCfg, meta);
+
+        // inserted new question
+        insertNestedBlocks(handle, activityId, activityCfg.getString("compositeParentSid"),
+                activityCfg.getConfig("newNested"), v2Dto.getRevId());
+    }
+
+    private void disableCompositeChildQuestion(Handle handle, Config activityCfg, RevisionMetadata meta) {
+        var questionDao = handle.attach(QuestionDao.class);
+        String questionToDisableSid = activityCfg.getString("childToDisable");
+        long questionToDisableId = findLatestQuestionDto(handle, questionToDisableSid).getId();
+        questionDao.disableTextQuestion(questionToDisableId, meta);
+        log.info("Successfully disabled child question {}", questionToDisableSid);
     }
 
     private RevisionMetadata makeActivityRevMetadata(String activityCode, String newVersionTag) {
@@ -187,84 +197,44 @@ public class OsteoLovedOneV2 implements CustomTask {
         for (var questionCfg : newQuestionsCfg) {
             FormBlockDef compositeBlock = parseFormBlockDef(questionCfg);
             sectionBlockDao.insertBlockForSection(activityId, sectionId, displayOrder++, compositeBlock, revision);
-            LOG.info("Inserted new question {} for activityId {}, sectionId {}, displayOrder {}",
+            log.info("Inserted new question {} for activityId {}, sectionId {}, displayOrder {}",
                     compositeBlock.getQuestions().findFirst().get().getStableId(),
                     activityId, sectionId, displayOrder);
         }
     }
 
-    private void addPicklistOption(Handle handle, long studyId, String questionStableId,
-                                   List<? extends Config> optionsCfg, int displayOrder) {
+    private void addPicklistOption(Handle handle, String questionStableId, List<? extends Config> optionsCfg, int displayOrder) {
 
         PicklistQuestionDao plQuestionDao = handle.attach(PicklistQuestionDao.class);
-        JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
-
-        QuestionDto questionDto = jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId, questionStableId)
-                .orElseThrow(() -> new DDPException("Couldnt find question with stable code " + questionStableId));
+        QuestionDto questionDto = findLatestQuestionDto(handle, questionStableId);
 
         for (var optionCfg : optionsCfg) {
             PicklistOptionDef pickListOptionDef = gson.fromJson(ConfigUtil.toJson(optionCfg), PicklistOptionDef.class);
             plQuestionDao.insertOption(questionDto.getId(), pickListOptionDef, displayOrder++, questionDto.getRevisionId());
-            LOG.info("Added new picklistOption " + pickListOptionDef.getStableId() + " with id "
+            log.info("Added new picklistOption " + pickListOptionDef.getStableId() + " with id "
                     + pickListOptionDef.getOptionId() + " into question " + questionDto.getStableId());
         }
     }
 
-    private void insertNestedBlocks(Handle handle, long activityId, long compositeQuestionId, Config childCfg, long revisionId) {
+    private void insertNestedBlocks(Handle handle, long activityId, String compositeSid, Config childCfg, long revisionId) {
 
         var jdbiCompositeQuestion = handle.attach(JdbiCompositeQuestion.class);
         var questionDao = handle.attach(QuestionDao.class);
+
+        long compositeQuestionId = findLatestQuestionDto(handle, compositeSid).getId();
 
         QuestionDef child = gson.fromJson(ConfigUtil.toJson(childCfg), QuestionDef.class);
 
         questionDao.insertQuestionByType(activityId, child, revisionId);
         jdbiCompositeQuestion.insertChildren(compositeQuestionId, List.of(child.getQuestionId()));
 
-        LOG.info("Inserted child question sid {} for composite block id {}", child.getStableId(), compositeQuestionId);
+        log.info("Inserted child question sid {} for composite block id {} and stable code {}",
+                child.getStableId(), compositeQuestionId, compositeSid);
     }
 
-    private void disableAndInsertInsteadNewChild(Handle handle, Config activityCfg, long activityId,
-                                                 FormActivityDef activity, RevisionMetadata meta, long rev) {
-
-        var questionDao = handle.attach(QuestionDao.class);
-
-        String controlSid = activityCfg.getString("nestedParentSid");
-        String compositeSid = activityCfg.getString("compositeParentSid");
-        String questionToDisableSid = activityCfg.getString("childToDisable");
-
-        Long compositeQuestionId = null;
-
-        for (var section : activity.getSections()) {
-            for (var block : section.getBlocks()) {
-                if (block.getBlockType() == BlockType.CONDITIONAL) {
-                    var conditionalBlockDef = (ConditionalBlockDef) block;
-                    if (conditionalBlockDef.getControl().getStableId().equals(controlSid)) {
-                        for (var nested : conditionalBlockDef.getNested()) {
-                            if (nested.getBlockType() == BlockType.QUESTION) {
-                                QuestionDef questionDef = nested.getQuestions().findFirst().orElseThrow();
-                                if (questionDef.getStableId().equals(compositeSid) &&
-                                        questionDef.getQuestionType() == QuestionType.COMPOSITE) {
-                                    CompositeQuestionDef compositeQuestionDef = (CompositeQuestionDef) questionDef;
-                                    for (var child : compositeQuestionDef.getChildren()) {
-                                        if (child.getStableId().equals(questionToDisableSid)) {
-                                            compositeQuestionId = compositeQuestionDef.getQuestionId();
-                                            questionDao.disableTextQuestion(child.getQuestionId(), meta);
-                                            LOG.info("Successfully disabled child question {}", child.getStableId());
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if (compositeQuestionId == null) {
-            throw new DDPException("Couldn't find question to disable with sid " + questionToDisableSid);
-        }
-
-        insertNestedBlocks(handle, activityId, compositeQuestionId, activityCfg.getConfig("newNested"), rev);
-        LOG.info("Successfully inserted new child");
+    private QuestionDto findLatestQuestionDto(Handle handle, String questionSid) {
+        var jdbiQuestion = handle.attach(JdbiQuestion.class);
+        return jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyDto.getId(), questionSid)
+                .orElseThrow(() -> new DDPException("Couldnt find question with stable code " + questionSid));
     }
 }
