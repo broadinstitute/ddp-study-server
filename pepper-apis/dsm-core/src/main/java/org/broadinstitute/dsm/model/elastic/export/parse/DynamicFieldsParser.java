@@ -2,9 +2,7 @@ package org.broadinstitute.dsm.model.elastic.export.parse;
 
 import static org.broadinstitute.dsm.model.Filter.NUMBER;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.StringUtils;
@@ -14,6 +12,7 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class DynamicFieldsParser extends BaseParser {
 
+    static final Map<String, FieldSettingsDto> fieldSettingsDtoByColumnName = new WeakHashMap<>();
     public static final String DATE_TYPE = "DATE";
     public static final String CHECKBOX_TYPE = "CHECKBOX";
     public static final String ACTIVITY_STAFF_TYPE = "ACTIVITY_STAFF";
@@ -76,8 +75,7 @@ public class DynamicFieldsParser extends BaseParser {
     }
 
     protected void getProperDisplayTypeWithPossibleValues() {
-        Optional<FieldSettingsDto> fieldSettingsByInstanceNameAndColumnName =
-                fieldSettingsDao.getFieldSettingsByInstanceNameAndColumnName(realm, super.fieldName);
+        Optional<FieldSettingsDto> fieldSettingsByInstanceNameAndColumnName = getFieldSettingsByColumnName();
         if (fieldSettingsByInstanceNameAndColumnName.isPresent()) {
             FieldSettingsDto fieldSettings = fieldSettingsByInstanceNameAndColumnName.get();
             displayType = StringUtils.isNotBlank(fieldSettings.getDisplayType())
@@ -89,6 +87,27 @@ public class DynamicFieldsParser extends BaseParser {
         } else {
             displayType = StringUtils.EMPTY;
         }
+    }
+
+    private Optional<FieldSettingsDto> getFieldSettingsByColumnName() {
+        Optional<FieldSettingsDto> fieldSettingsByInstanceNameAndColumnName;
+        String fieldName = super.fieldName;
+        if (isNotFieldSettingCached(fieldName)) {
+            fieldSettingsByInstanceNameAndColumnName =
+                    fieldSettingsDao.getFieldSettingsByInstanceNameAndColumnName(realm, fieldName);
+            if (fieldSettingsByInstanceNameAndColumnName.isPresent()) {
+                fieldSettingsDtoByColumnName.put(fieldName, fieldSettingsByInstanceNameAndColumnName.get());
+            }
+        } else {
+            fieldSettingsByInstanceNameAndColumnName = Optional.of(fieldSettingsDtoByColumnName.get(fieldName));
+        }
+        // used only for weakhashmap (fieldSettingsDtoByColumnName) in order to make it eligible for garbage collection
+        fieldName = null;
+        return fieldSettingsByInstanceNameAndColumnName;
+    }
+
+    private boolean isNotFieldSettingCached(String fieldName) {
+        return !fieldSettingsDtoByColumnName.containsKey(fieldName);
     }
 
     @Override
