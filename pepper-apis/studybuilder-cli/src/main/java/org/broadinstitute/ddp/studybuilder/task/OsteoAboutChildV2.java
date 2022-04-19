@@ -45,6 +45,12 @@ public class OsteoAboutChildV2 implements CustomTask {
     private static final String ACTIVITY_CODE = "ABOUTCHILD";
     private static final String VERSION_TAG = "v2";
 
+    private static final String SUMMARY_TRANS_INSERT = "summary-trans-insert";
+    private static final String SUMMARY_TRANS_INSERT_ACTIVITY_CODE = "activity_code";
+    private static final String SUMMARY_TRANS_INSERT_STATUS_TYPE_CODE = "status_type_code";
+    private static final String SUMMARY_TRANS_INSERT_LANGUAGE_CODE = "language_code";
+    private static final String SUMMARY_TRANS_INSERT_TEXT = "text";
+
     private Config studyCfg;
     private Instant timestamp;
     private Config updatesDataCfg;
@@ -179,6 +185,10 @@ public class OsteoAboutChildV2 implements CustomTask {
         for (Config config : configList) {
             updateSummary(config, handle);
         }
+        configList = updatesDataCfg.getConfigList(SUMMARY_TRANS_INSERT);
+        for (Config config : configList) {
+            insertActivitySummary(config, handle);
+        }
     }
 
     private void updateSummary(Config config, Handle handle) {
@@ -188,7 +198,44 @@ public class OsteoAboutChildV2 implements CustomTask {
         handle.attach(SqlHelper.class).updateVarSubstitutionValue(oldSum, newSum);
     }
 
+    private void insertActivitySummary(Config config, Handle handle) {
+        String activityCode = config.getString(SUMMARY_TRANS_INSERT_ACTIVITY_CODE);
+        String statusTypeCode = config.getString(SUMMARY_TRANS_INSERT_STATUS_TYPE_CODE);
+        String languageCode = config.getString(SUMMARY_TRANS_INSERT_LANGUAGE_CODE);
+        String text = config.getString(SUMMARY_TRANS_INSERT_TEXT);
+
+        handle.attach(SqlHelper.class).insertActivitySummaryTranslation(activityCode, statusTypeCode, languageCode, text);
+    }
+
     private interface SqlHelper extends SqlObject {
+        @SqlUpdate("insert into i18n_study_activity_summary_trans("
+                + "study_activity_id,"
+                + "activity_instance_status_type_id,"
+                + "language_code_id, "
+                + "translation_text)\n"
+                + "select \n"
+                + "\tsa.study_activity_id,\n"
+                + "\t(select activity_instance_status_type_id  "
+                + "\tfrom activity_instance_status_type "
+                + "\twhere activity_instance_status_type_code=:statusTypeCode),\n"
+                + "\t(select language_code_id from language_code where iso_language_code =:languageCode),\n"
+                + "\t:text\n"
+                + "from study_activity sa where sa.study_activity_code =:activityCode;")
+        int _insertActivitySummaryTranslation(
+                @Bind("activityCode") String activityCode,
+                @Bind("statusTypeCode") String statusTypeCode,
+                @Bind("languageCode") String languageCode,
+                @Bind("text") String text
+        );
+
+        default void insertActivitySummaryTranslation(String activityCode, String statusTypeCode, String languageCode, String text) {
+            int numInserted = _insertActivitySummaryTranslation(activityCode, statusTypeCode, languageCode, text);
+            if (numInserted < 1) {
+                throw new DDPException("Expected to insert an activity summary for value="
+                        + activityCode + ", text='" + text + "' but inserted " + numInserted);
+            }
+        }
+
         @SqlUpdate("update i18n_template_substitution set substitution_value = :newValue where substitution_value like :oldValue")
         int _updateVarValueByOldValue(@Bind("oldValue") String oldValue, @Bind("newValue") String newValue);
 
