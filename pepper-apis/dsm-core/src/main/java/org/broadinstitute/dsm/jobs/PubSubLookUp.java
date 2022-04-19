@@ -199,10 +199,12 @@ public class PubSubLookUp {
 
             DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder().withEsParticipantIndex(ddpInstance.getParticipantIndexES())
                     .withInstanceName(ddpInstance.getName()).build();
-
-            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.KIT_LABEL,
-                    ESObjectConstants.KIT_LABEL, testBostonResult.getSampleId()).export();
-
+            try {
+                UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.KIT_LABEL,
+                        ESObjectConstants.KIT_LABEL, testBostonResult.getSampleId()).export();
+            } catch (Exception e) {
+                logger.error("Problem doing the upsert in ES for test result for kit w/ sample Id " + testBostonResult.getSampleId());
+            }
             logger.info("Updated test result for kit with external id " + testBostonResult.getSampleId());
         }
     }
