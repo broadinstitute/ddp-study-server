@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.studybuilder.task;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -12,8 +13,6 @@ import org.broadinstitute.ddp.studybuilder.EventBuilder;
 import org.broadinstitute.ddp.studybuilder.WorkflowBuilder;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -21,8 +20,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 public class OsteoNewActivities implements CustomTask {
-    private static final Logger LOG = LoggerFactory.getLogger(OsteoNewActivities.class);
     private static final String DATA_FILE = "patches/osteo-new-activities.conf";
 
     private static final String STUDY_GUID = "CMI-OSTEO";
@@ -61,7 +60,7 @@ public class OsteoNewActivities implements CustomTask {
     }
 
     private void insertActivities(Handle handle, StudyDto studyDto, long adminUserId) {
-        LOG.info("Inserting activity configuration...");
+        log.info("Inserting activity configuration...");
 
         ActivityBuilder activityBuilder = new ActivityBuilder(cfgPath.getParent(), cfg, varsCfg, studyDto, adminUserId);
 
@@ -75,12 +74,12 @@ public class OsteoNewActivities implements CustomTask {
                 nested.add(nestedDef);
             }
             activityBuilder.insertActivity(handle, definition, nested, timestamp);
-            LOG.info("Activity configuration {} has been added in study {}", activity, STUDY_GUID);
+            log.info("Activity configuration {} has been added in study {}", activity, STUDY_GUID);
         }
     }
 
     private void addEvents(Handle handle, StudyDto studyDto, long adminUserId) {
-        LOG.info("Inserting events configuration...");
+        log.info("Inserting events configuration...");
 
         if (!dataCfg.hasPath("events")) {
             throw new DDPException("There is no 'events' configuration.");
@@ -95,7 +94,7 @@ public class OsteoNewActivities implements CustomTask {
             eventBuilder.insertEvent(handle, eventCfg);
         }
 
-        LOG.info("Events configuration has added in study {}", STUDY_GUID);
+        log.info("Events configuration has added in study {}", STUDY_GUID);
     }
 
     private void addWorkflowTransitions(Handle handle, StudyDto studyDto) {
