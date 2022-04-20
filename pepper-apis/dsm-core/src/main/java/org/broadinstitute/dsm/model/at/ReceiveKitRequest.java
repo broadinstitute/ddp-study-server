@@ -90,8 +90,13 @@ public class ReceiveKitRequest {
         ParticipantData participantData = new ParticipantData.Builder().withData(data).withParticipantDataId((int) participantDataId)
                 .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId()).build();
 
-        UpsertPainlessFacade.of(DBConstants.DDP_PARTICIPANT_DATA_ALIAS, participantData, ddpInstanceDto,
-                ESObjectConstants.PARTICIPANT_DATA_ID, ESObjectConstants.PARTICIPANT_DATA_ID, participantDataId).export();
+        try {
+            UpsertPainlessFacade.of(DBConstants.DDP_PARTICIPANT_DATA_ALIAS, participantData, ddpInstanceDto,
+                    ESObjectConstants.PARTICIPANT_DATA_ID, ESObjectConstants.PARTICIPANT_DATA_ID, participantDataId).export();
+        } catch (Exception e) {
+            logger.error(String.format("Error updating kit data for AT with participant data id: %s in ElasticSearch", participantDataId));
+            e.printStackTrace();
+        }
 
         return true;
     }
