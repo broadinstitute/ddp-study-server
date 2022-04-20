@@ -1,8 +1,6 @@
-package org.broadinstitute.ddp.studybuilder.task;
+package org.broadinstitute.ddp.studybuilder.task.osteo;
 
-import com.google.gson.Gson;
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
@@ -14,18 +12,15 @@ import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.QuestionDao;
-import org.broadinstitute.ddp.db.dao.SectionBlockDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.FormSectionMembershipDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.exception.DDPException;
-import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.ActivityI18nDetail;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
-import org.broadinstitute.ddp.util.ConfigUtil;
-import org.broadinstitute.ddp.util.GsonUtil;
+import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -33,7 +28,6 @@ import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -45,20 +39,13 @@ import java.util.stream.Collectors;
  * One-off task to add adhoc symptom message to TestBoston in deployed environments.
  */
 @Slf4j
-public class OsteoAboutYouV2 implements CustomTask {
+public class OsteoAboutChildV2 implements CustomTask {
 
-    private static final String DATA_FILE = "patches/about-you-v2.conf";
-    private static final String UPDATES_DATA_FILE = "patches/about-you-updates.conf";
-    private static final String TRANS_UPDATE = "trans-update";
-    private static final String TRANS_UPDATE_OLD = "old_text";
-    private static final String TRANS_UPDATE_NEW = "new_text";
     private static final String STUDY_GUID = "CMI-OSTEO";
-    private static final String ACTIVITY_CODE = "ABOUTYOU";
+    private static final String ACTIVITY_CODE = "ABOUTCHILD";
     private static final String VERSION_TAG = "v2";
+    private static final String TRANSLATED_NAME = "About Your Child's Cancer";
 
-    private Config dataCfg;
-    private Config updatesDataCfg;
-    private Gson gson;
     private Config studyCfg;
     private Instant timestamp;
     private RevisionMetadata meta;
@@ -74,31 +61,17 @@ public class OsteoAboutYouV2 implements CustomTask {
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
-        File file = cfgPath.getParent().resolve(DATA_FILE).toFile();
-        if (!file.exists()) {
-            throw new DDPException("Data file is missing: " + file);
-        }
-
-        this.dataCfg = ConfigFactory.parseFile(file);
-
-        File updatesFile = cfgPath.getParent().resolve(UPDATES_DATA_FILE).toFile();
-        if (!updatesFile.exists()) {
-            throw new DDPException("Data file is missing: " + updatesFile);
-        }
-
-        this.updatesDataCfg = ConfigFactory.parseFile(updatesFile);
-
         if (!studyCfg.getString("study.guid").equals(STUDY_GUID)) {
             throw new DDPException("This task is only for the " + STUDY_GUID + " study!");
         }
 
         this.studyCfg = studyCfg;
         this.timestamp = Instant.now();
-        this.gson = GsonUtil.standardGson();
     }
 
     @Override
     public void run(Handle handle) {
+
         helper = handle.attach(SqlHelper.class);
         questionDao = handle.attach(QuestionDao.class);
         jdbiQuestion = handle.attach(JdbiQuestion.class);
@@ -108,8 +81,6 @@ public class OsteoAboutYouV2 implements CustomTask {
         activityI18nDao = handle.attach(ActivityI18nDao.class);
         ActivityDao activityDao = handle.attach(ActivityDao.class);
         JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
-        JdbiFormActivityFormSection jdbiFormActivityFormSection = handle.attach(JdbiFormActivityFormSection.class);
-        SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
         JdbiUmbrellaStudy jdbiUmbrellaStudy = handle.attach(JdbiUmbrellaStudy.class);
         UserDao userDao = handle.attach(UserDao.class);
 
@@ -126,37 +97,29 @@ public class OsteoAboutYouV2 implements CustomTask {
                 studyGuid, ACTIVITY_CODE, VERSION_TAG));
 
         //change version
-        var versionDto = activityDao.changeVersion(activityId, VERSION_TAG, meta);
+        activityDao.changeVersion(activityId, VERSION_TAG, meta);
 
         //update translatedName
-        updateActivityName(activityId, ACTIVITY_CODE, dataCfg.getString("translatedName"));
+        updateActivityName(activityId, ACTIVITY_CODE, TRANSLATED_NAME);
 
         //add new section
         var section = jdbiFormActivityFormSection.findOrderedSectionMemberships(activityId, meta.getTimestamp()).get(0);
         long newFormSectionId = createSectionBefore(activityId, section);
 
-        //add new WHO_IS_FILLING_ABOUTYOU question
-        FormBlockDef blockDef = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("who_filling_q")), FormBlockDef.class);
-
-        sectionBlockDao.insertBlockForSection(
-                activityId, newFormSectionId, QuestionDao.DISPLAY_ORDER_GAP, blockDef, versionDto.getRevId());
-
-        log.info("Question ('WHO_IS_FILLING_ABOUTYOU') successfully added");
+        // Move WHO_IS_FILLING to new section
+        moveQuestionToAnotherSection("WHO_IS_FILLING", newFormSectionId);
 
         // Delete copy configs
         List<String> questionsToDisable = new ArrayList<>(List.of(
-                "HOW_HEAR",
-                "EXPERIENCE",
-                "RACE",
-                "HISPANIC"));
+                "CHILD_HOW_HEAR",
+                "CHILD_EXPERIENCE",
+                "CHILD_RACE",
+                "CHILD_HISPANIC"));
         deleteCopyConfigs(questionsToDisable);
 
         // Disable questions
         long terminatedRevId = jdbiRevision.copyAndTerminate(section.getRevisionId(), meta);
         questionsToDisable.forEach(s -> disableQuestionDto(s, terminatedRevId));
-
-        helper.updateActivityNameAndTitle(activityId, "About Your Cancer", "About Your Cancer");
-        updateTranslationSummaries(handle);
     }
 
     private long createSectionBefore(long activityId, FormSectionMembershipDto beforeSection) {
@@ -169,6 +132,14 @@ public class OsteoAboutYouV2 implements CustomTask {
                 beforeSection.getRevisionId());
 
         return newFormSectionId;
+    }
+
+    private void moveQuestionToAnotherSection(String questionSid, long newFormSectionId) {
+        QuestionDto questionFillingDto = findQuestionBySid(questionSid);
+
+        final long currFillingBlockId = helper.findQuestionBlockId(questionFillingDto.getId());
+        helper.updateFormSectionBlock(newFormSectionId, currFillingBlockId);
+        log.info("Question ('{}') successfully moved to new section={}", questionSid, newFormSectionId);
     }
 
     private void disableQuestionDto(String questionSid, long terminatedRevId) {
@@ -224,32 +195,7 @@ public class OsteoAboutYouV2 implements CustomTask {
         log.info("Updated translatedName for activity {}", activityCode);
     }
 
-    private void updateTranslationSummaries(Handle handle) {
-        List<? extends Config> configList = updatesDataCfg.getConfigList(TRANS_UPDATE);
-        for (Config config : configList) {
-            updateSummary(config, handle);
-        }
-    }
-
-    private void updateSummary(Config config, Handle handle) {
-        String oldSum = String.format("%s%s%s", "%", config.getString(TRANS_UPDATE_OLD), "%");
-        String newSum = config.getString(TRANS_UPDATE_NEW);
-
-        handle.attach(SqlHelper.class).updateVarSubstitutionValue(oldSum, newSum);
-    }
-
     private interface SqlHelper extends SqlObject {
-        @SqlUpdate("update i18n_template_substitution set substitution_value = :newValue where substitution_value like :oldValue")
-        int _updateVarValueByOldValue(@Bind("oldValue") String oldValue, @Bind("newValue") String newValue);
-
-        default void updateVarSubstitutionValue(String oldValue, String value) {
-            int numUpdated = _updateVarValueByOldValue(oldValue, value);
-            if (numUpdated < 1) {
-                throw new DDPException("Expected to update a template variable value for value="
-                        + oldValue + " but updated " + numUpdated);
-            }
-        }
-
         @SqlQuery("select block_id from block__question where question_id = :questionId")
         int findQuestionBlockId(@Bind("questionId") long questionId);
 
@@ -265,17 +211,7 @@ public class OsteoAboutYouV2 implements CustomTask {
         @SqlUpdate("update form_section__block set revision_id = :revisionId where block_id = :blockId")
         void updateFormSectionBlockRevision(@Bind("blockId") long blockId, @Bind("revisionId") long revisionId);
 
-        @SqlUpdate("update i18n_activity_detail set name = :name, title = :title where study_activity_id = :studyActivityId")
-        int _updateActivityNameAndTitle(@Bind("studyActivityId") long studyActivityId,
-                                @Bind("name") String name,
-                                @Bind("title") String title);
-
-        default void updateActivityNameAndTitle(long studyActivityId, String name, String title) {
-            int numUpdated = _updateActivityNameAndTitle(studyActivityId, name, title);
-            if (numUpdated != 1) {
-                throw new DDPException("Expected to update 1 row for studyActivityId="
-                        + studyActivityId + " but updated " + numUpdated);
-            }
-        }
+        @SqlUpdate("update form_section__block set form_section_id = :formSectionId where block_id = :blockId")
+        void updateFormSectionBlock(@Bind("formSectionId") long formSectionId, @Bind("blockId") long blockId);
     }
 }
