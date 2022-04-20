@@ -9,6 +9,7 @@ import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoConsentVersion2;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoDashboardUpdates;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoDdp7601;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoFamilyHistoryReturnToDashboard;
+import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoLovedOneV2;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoMRFv2;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoNewActivities;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoNewFamilyHistory;
