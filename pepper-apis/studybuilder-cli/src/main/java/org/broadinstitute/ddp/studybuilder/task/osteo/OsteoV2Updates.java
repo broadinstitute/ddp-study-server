@@ -1,21 +1,15 @@
-package org.broadinstitute.ddp.studybuilder.task;
+package org.broadinstitute.ddp.studybuilder.task.osteo;
+
+import com.typesafe.config.Config;
+import org.broadinstitute.ddp.studybuilder.task.CustomTask;
+import org.broadinstitute.ddp.studybuilder.task.OsteoAboutChildV2;
+import org.broadinstitute.ddp.studybuilder.task.OsteoNewActivities;
+import org.broadinstitute.ddp.studybuilder.task.OsteoPrequalUpdate;
+import org.jdbi.v3.core.Handle;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.typesafe.config.Config;
-import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoAboutChildV2;
-import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoAboutYouV2;
-import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoConsentAddendumV2;
-import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoConsentVersion2;
-import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoDdp7601;
-import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoMRFv2;
-import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoNewActivities;
-import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoNewFamilyHistory;
-import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoPDFv2;
-import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoPrequalUpdate;
-import org.jdbi.v3.core.Handle;
 
 public class OsteoV2Updates implements CustomTask {
 
