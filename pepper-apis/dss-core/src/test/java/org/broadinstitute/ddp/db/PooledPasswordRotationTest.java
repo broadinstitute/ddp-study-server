@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -15,21 +16,13 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class PooledPasswordRotationTest extends TxnAwareBaseTest  {
-
-    private static final Logger LOG = LoggerFactory.getLogger(PooledPasswordRotationTest.class);
-
     private static final String BOGUS_TEST_PASSWORD = "bogus-test-password";
-
     private static Config configWithUpdatedPassword; // the temporary config file used during this test
-
     private static String originalConfigFileContents;
-
     private static Config originalConfigPlusTestDbValues;
-
     private static Map<String, String> originalConfigOverrides = new HashMap<>();
 
     @BeforeClass
@@ -60,7 +53,7 @@ public class PooledPasswordRotationTest extends TxnAwareBaseTest  {
         try {
             TransactionWrapper.useTxn(handle -> changePassword(handle, BOGUS_TEST_PASSWORD));
         } catch (Exception e) {
-            LOG.error("Could not reset password.  Is the test database using an unusual password?", e);
+            log.error("Could not reset password.  Is the test database using an unusual password?", e);
         }
 
         // write out the original config file plus the dynamically substituted testcontainer db config values
@@ -69,11 +62,10 @@ public class PooledPasswordRotationTest extends TxnAwareBaseTest  {
         TransactionWrapper.closePool();
 
         try {
-            TransactionWrapper.useTxn(handle -> {
-                Assert.fail("Attempt to get a connection should have failed since we changed the password");
-            });
+            TransactionWrapper.useTxn(handle ->
+                    Assert.fail("Attempt to get a connection should have failed since we changed the password"));
         } catch (Exception e) {
-            LOG.info("Login attempt failed as expected, since we rotated the password internally but didn't reload configuration.");
+            log.info("Login attempt failed as expected, since we rotated the password internally but didn't reload configuration.");
             // as expected; password has been reset but the pool doesn't know it yet
         }
 
@@ -83,11 +75,9 @@ public class PooledPasswordRotationTest extends TxnAwareBaseTest  {
         TransactionWrapper.reloadDbPoolConfiguration(false);
 
         try {
-            TransactionWrapper.useTxn(handle -> {
-                LOG.info("Successfully updated password");
-            });
+            TransactionWrapper.useTxn(handle -> log.info("Successfully updated password"));
         } catch (Exception  e)  {
-            LOG.error("Failed to get a connection after updating the config file with new password", e);
+            log.error("Failed to get a connection after updating the config file with new password", e);
         }
     }
 
@@ -104,12 +94,12 @@ public class PooledPasswordRotationTest extends TxnAwareBaseTest  {
                     .orElseThrow(() -> new DDPException("no original password in original config!"));
             TransactionWrapper.useTxn(h -> changePassword(h, originalPassword));
         } catch (Exception e) {
-            LOG.error("Restoring password failed.  Expect many downstream tests to fail.", e);
+            log.error("Restoring password failed.  Expect many downstream tests to fail.", e);
         }
 
         // restore the original config file
         ConfigManager.rewriteConfigFile(originalConfigFileContents);
-        LOG.info("Restored config file after password rotation test");
+        log.info("Restored config file after password rotation test");
 
         // re-apply overrides
         ConfigManager configManager = ConfigManager.getInstance();
@@ -117,6 +107,6 @@ public class PooledPasswordRotationTest extends TxnAwareBaseTest  {
             configManager.overrideValue(override.getKey(), override.getValue());
         }
         TransactionWrapper.reloadDbPoolConfiguration(true);
-        LOG.info("Reset test database config file to its original state.");
+        log.info("Reset test database config file to its original state.");
     }
 }

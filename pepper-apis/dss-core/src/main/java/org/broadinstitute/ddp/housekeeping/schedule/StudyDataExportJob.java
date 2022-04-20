@@ -9,6 +9,7 @@ import java.util.TimeZone;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Bucket;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.ActivityDefStore;
@@ -36,14 +37,10 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 @DisallowConcurrentExecution
 public class StudyDataExportJob implements Job {
-
-    private static final Logger LOG = LoggerFactory.getLogger(StudyDataExportJob.class);
-
     private static DataExporter exporter;
 
     public static JobKey getKey() {
@@ -61,11 +58,11 @@ public class StudyDataExportJob implements Job {
                 .storeDurably(true)
                 .build();
         scheduler.addJob(job, true);
-        LOG.info("Added job {} to scheduler", getKey());
+        log.info("Added job {} to scheduler", getKey());
 
         String schedule = ConfigUtil.getStrIfPresent(cfg, ConfigFile.STUDY_EXPORT_SCHEDULE);
         if (schedule == null || schedule.equalsIgnoreCase("off")) {
-            LOG.warn("Job {} is set to be turned off, no trigger added", getKey());
+            log.warn("Job {} is set to be turned off, no trigger added", getKey());
             return;
         }
 
@@ -79,19 +76,19 @@ public class StudyDataExportJob implements Job {
                 .startNow()
                 .build();
         scheduler.scheduleJob(trigger);
-        LOG.info("Added trigger {} for job {} with schedule '{}'", trigger.getKey(), getKey(), schedule);
+        log.info("Added trigger {} for job {} with schedule '{}'", trigger.getKey(), getKey(), schedule);
     }
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         try {
-            LOG.info("Running job {}", getKey());
+            log.info("Running job {}", getKey());
             long start = Instant.now().toEpochMilli();
             run();
             long elapsed = Instant.now().toEpochMilli() - start;
-            LOG.info("Finished job {}. Took {}s", getKey(), elapsed / 1000);
+            log.info("Finished job {}. Took {}s", getKey(), elapsed / 1000);
         } catch (Exception e) {
-            LOG.error("Error while executing job {}", getKey(), e);
+            log.error("Error while executing job {}", getKey(), e);
             throw new JobExecutionException(e, false);
         }
     }
@@ -104,21 +101,21 @@ public class StudyDataExportJob implements Job {
         GoogleCredentials credentials = GoogleCredentialUtil
                 .initCredentials(cfg.getBoolean(ConfigFile.REQUIRE_DEFAULT_GCP_CREDENTIALS));
         if (credentials == null) {
-            LOG.error("No Google credentials are provided, skipping job {}", getKey());
+            log.error("No Google credentials are provided, skipping job {}", getKey());
             return;
         }
 
         var bucketClient = new GoogleBucketClient(gcpProjectId, credentials);
         Bucket bucket = bucketClient.getBucket(bucketName);
         if (bucket == null) {
-            LOG.error("Could not find google bucket {}, skipping job {}", bucketName, getKey());
+            log.error("Could not find google bucket {}, skipping job {}", bucketName, getKey());
             return;
         }
 
         List<StudyDto> studyDtos = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS,
                 handle -> handle.attach(JdbiUmbrellaStudy.class).findAll());
         Collections.shuffle(studyDtos);
-        LOG.info("Found {} studies for data export", studyDtos.size());
+        log.info("Found {} studies for data export", studyDtos.size());
 
         // Invalidate the caches for a fresh export
         ActivityDefStore.getInstance().clear();
@@ -134,7 +131,7 @@ public class StudyDataExportJob implements Job {
         for (var studyDto : studyDtos) {
             String studyGuid = studyDto.getGuid();
             if (!studyDto.isDataExportEnabled()) {
-                LOG.warn("Study {} does not have data export enabled, skipping data export", studyGuid);
+                log.warn("Study {} does not have data export enabled, skipping data export", studyGuid);
                 continue;
             }
 
@@ -146,7 +143,7 @@ public class StudyDataExportJob implements Job {
                             .addPoint(1, Instant.now().toEpochMilli());
                 }
             } catch (Exception e) {
-                LOG.error("Error while exporting data for study {}, continuing", studyGuid, e);
+                log.error("Error while exporting data for study {}, continuing", studyGuid, e);
             }
         }
     }

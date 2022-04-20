@@ -14,6 +14,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -88,8 +89,6 @@ import org.broadinstitute.ddp.pex.lang.PexParser.StudyQueryContext;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.broadinstitute.ddp.util.CollectionMiscUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A tree walking interpreter for pex.
@@ -110,9 +109,8 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Note that support for dates is very minimal. Only full dates with year-month-day is supported.
  */
+@Slf4j
 public class TreeWalkInterpreter implements PexInterpreter {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TreeWalkInterpreter.class);
     private static final PexFetcher fetcher = new PexFetcher();
 
     @Override
@@ -280,7 +278,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
 
             UserProfile profile = ictx.getHandle().attach(UserProfileDao.class).findProfileByUserGuid(userGuid).orElse(null);
             if (profile == null || profile.getBirthDate() == null) {
-                LOG.warn("User {} in study {} does not have profile or birth date to evaluate age-up policy, defaulting to false",
+                log.warn("User {} in study {} does not have profile or birth date to evaluate age-up policy, defaulting to false",
                         userGuid, studyGuid);
                 return false;
             }

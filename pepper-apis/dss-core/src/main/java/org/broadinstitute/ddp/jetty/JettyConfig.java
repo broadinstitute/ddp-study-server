@@ -6,13 +6,12 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.util.thread.ThreadPool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.ExceptionMapper;
 import spark.embeddedserver.EmbeddedServer;
 import spark.embeddedserver.EmbeddedServerFactory;
@@ -24,16 +23,14 @@ import spark.http.matching.MatcherFilter;
 import spark.route.Routes;
 import spark.staticfiles.StaticFilesConfiguration;
 
+@Slf4j
 public class JettyConfig {
-
-    private static final Logger LOG = LoggerFactory.getLogger(JettyConfig.class);
-
     public static void setupJetty(String preferredSourceIPHeader) {
         if (StringUtils.isBlank(preferredSourceIPHeader)) {
-            LOG.warn("Source IP will be servlet default.  If you're running behind a load balancer or other device, source IP "
+            log.warn("Source IP will be servlet default.  If you're running behind a load balancer or other device, source IP "
                     + "may be incorrect.");
         } else {
-            LOG.warn("Source IP will be taken from header {} if available.", preferredSourceIPHeader);
+            log.warn("Source IP will be taken from header {} if available.", preferredSourceIPHeader);
         }
         EmbeddedServers.add(EmbeddedServers.Identifiers.JETTY, new AppEngineServerFactory(new JettyServer(), preferredSourceIPHeader));
     }

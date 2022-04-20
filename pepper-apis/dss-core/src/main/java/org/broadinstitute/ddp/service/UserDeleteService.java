@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AuthDao;
@@ -51,8 +52,6 @@ import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Deletion of a specified user and data connected to it.
@@ -66,10 +65,8 @@ import org.slf4j.LoggerFactory;
  * (including the auth0 account).</li>
  * </ul>
  */
+@Slf4j
 public class UserDeleteService {
-
-    private static final Logger LOG = LoggerFactory.getLogger(UserDeleteService.class);
-
     private static final String REQUEST_TYPE = "_doc";
 
     private final RestHighLevelClient esClient;
@@ -95,7 +92,7 @@ public class UserDeleteService {
      * @param whoDeleted information about a person who deleted a user (for example it can be an operatorGuid)
      * @param comment    some additional comments if needed
      */
-    public void simpleDelete(Handle handle, User user, String whoDeleted, String comment) throws IOException {
+    public void simpleDelete(Handle handle, User user, String whoDeleted, String comment) {
         delete(handle, user, whoDeleted, comment, false);
     }
 
@@ -108,18 +105,18 @@ public class UserDeleteService {
      * @param whoDeleted information about a person who deleted a user (for example it can be an operatorGuid)
      * @param comment    some additional comments if needed
      */
-    public void fullDelete(Handle handle, User user, String whoDeleted, String comment) throws IOException {
+    public void fullDelete(Handle handle, User user, String whoDeleted, String comment) {
         delete(handle, user, whoDeleted, comment, true);
     }
 
-    private void delete(Handle handle, User user, String whoDeleted, String comment, boolean fullDelete) throws IOException {
-        LOG.info("User {} deletion is STARTED. guid:{}", fullDelete ? "FULL" : "SIMPLE", user.getGuid());
+    private void delete(Handle handle, User user, String whoDeleted, String comment, boolean fullDelete) {
+        log.info("User {} deletion is STARTED. guid:{}", fullDelete ? "FULL" : "SIMPLE", user.getGuid());
         if (fullDelete) {
             checkBeforeDelete(handle, user);
         }
         try {
             deleteUserData(handle, user, fullDelete);
-            LOG.warn("User {} deletion is completed SUCCESSFULLY. "
+            log.warn("User {} deletion is completed SUCCESSFULLY. "
                             + "guid:{}, hruid:{}, e-mail:{}, name:{} {}, dob:{}\n"
                             + "Who deleted: {}\n"
                             + "Comment: {}\n",
@@ -133,7 +130,7 @@ public class UserDeleteService {
                     objToStr(whoDeleted),
                     objToStr(comment));
         } catch (Throwable e) {
-            LOG.error(format(EXCEPTION_MESSAGE_PREFIX__ERROR + e.getMessage(), user.getGuid()), e);
+            log.error(format(EXCEPTION_MESSAGE_PREFIX__ERROR + e.getMessage(), user.getGuid()), e);
             throw new DDPException(format(EXCEPTION_MESSAGE_PREFIX__ERROR + e.getMessage(), user.getGuid()));
         }
     }
@@ -330,7 +327,7 @@ public class UserDeleteService {
     private void deleteElasticSearchData(Handle handle, User user, UserCollectedData userCollectedData, boolean fullDelete)
             throws IOException {
         if (esClient != null && userCollectedData.getStudyGuids().size() > 0) {
-            LOG.info(LOG_MESSAGE_PREFIX__DELETE_FROM_ES + "participants, participants_structured, users", user.getGuid());
+            log.info(LOG_MESSAGE_PREFIX__DELETE_FROM_ES + "participants, participants_structured, users", user.getGuid());
             BulkRequest bulkRequest = new BulkRequest().timeout("2m");
             for (String studyGuid : userCollectedData.getStudyGuids()) {
                 StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
@@ -364,7 +361,7 @@ public class UserDeleteService {
                 if (fullDelete) {
                     throw new DDPException(bulkResponse.buildFailureMessage());
                 } else {
-                    LOG.error(bulkResponse.buildFailureMessage());
+                    log.error(bulkResponse.buildFailureMessage());
                 }
             }
         }
@@ -372,7 +369,7 @@ public class UserDeleteService {
 
     private void deleteAuth0User(User user, Auth0ManagementClient auth0ManagementClient) {
         if (user.getAuth0UserId() != null && auth0ManagementClient != null) {
-            LOG.info(LOG_MESSAGE_PREFIX__DELETE_FROM_AUTH, user.getGuid());
+            log.info(LOG_MESSAGE_PREFIX__DELETE_FROM_AUTH, user.getGuid());
             var result = auth0ManagementClient.deleteAuth0User(user.getAuth0UserId());
             if (result.hasFailure()) {
                 throw new DDPException(result.hasThrown() ? result.getThrown() : result.getError());
@@ -399,12 +396,11 @@ public class UserDeleteService {
      * Check if user has governed users
      */
     public static boolean hasGovernedUsers(Handle handle, String userGuid) {
-        UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
-        return userGovernanceDao.findActiveGovernancesByProxyGuid(userGuid).count() > 0;
+        return handle.attach(UserGovernanceDao.class).findActiveGovernancesByProxyGuid(userGuid).findAny().isPresent();
     }
 
     private static void log(String tablesToDelete, User user) {
-        LOG.info(LOG_MESSAGE_PREFIX__DELETE_FROM_TABLE + tablesToDelete, user.getGuid());
+        log.info(LOG_MESSAGE_PREFIX__DELETE_FROM_TABLE + tablesToDelete, user.getGuid());
     }
 
     private static class UserCollectedData {
