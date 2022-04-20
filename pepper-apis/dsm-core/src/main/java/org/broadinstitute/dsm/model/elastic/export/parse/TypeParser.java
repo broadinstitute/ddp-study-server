@@ -1,9 +1,9 @@
 package org.broadinstitute.dsm.model.elastic.export.parse;
 
+import org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator;
+
 import java.util.HashMap;
 import java.util.Map;
-
-import org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator;
 
 public class TypeParser extends BaseParser {
 
@@ -14,9 +14,9 @@ public class TypeParser extends BaseParser {
             MappingGenerator.ANALYZER, MappingGenerator.CASE_INSENSITIVE_SORT,
             MappingGenerator.FIELD_DATA, true));
     public static final Map<String, Object> TEXT_KEYWORD_MAPPING = new HashMap<>(new HashMap<>(
-                    Map.of(TYPE, TEXT,
-                            FIELDS, new HashMap<>(Map.of(KEYWORD, new HashMap<>(Map.of(TYPE, KEYWORD)),
-                                    MappingGenerator.LOWER_CASE_SORT, TypeParser.LOWER_CASE_SORT)))
+            Map.of(TYPE, TEXT,
+                    FIELDS, new HashMap<>(Map.of(KEYWORD, new HashMap<>(Map.of(TYPE, KEYWORD)),
+                            MappingGenerator.LOWER_CASE_SORT, TypeParser.LOWER_CASE_SORT)))
     ));
     public static final String BOOLEAN = "boolean";
     public static final Map<String, String> BOOLEAN_MAPPING = new HashMap<>(Map.of(MappingGenerator.TYPE, BOOLEAN));
