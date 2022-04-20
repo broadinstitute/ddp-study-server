@@ -1,19 +1,10 @@
-package org.broadinstitute.ddp.studybuilder.task.osteo;
-
-import java.io.File;
-import java.nio.file.Path;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+package org.broadinstitute.ddp.studybuilder.task;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
-import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
 import org.broadinstitute.ddp.db.dao.CopyConfigurationSql;
 import org.broadinstitute.ddp.db.dao.JdbiFormActivityFormSection;
 import org.broadinstitute.ddp.db.dao.JdbiFormSection;
@@ -25,18 +16,21 @@ import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
-import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
-import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
-import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.List;
+import java.util.Set;
 
 /**
  * One-off task to add adhoc symptom message to TestBoston in deployed environments.
@@ -50,6 +44,12 @@ public class OsteoAboutChildV2 implements CustomTask {
     private static final String TRANS_UPDATE_NEW = "new_text";
     private static final String ACTIVITY_CODE = "ABOUTCHILD";
     private static final String VERSION_TAG = "v2";
+
+    private static final String SUMMARY_TRANS_INSERT = "summary-trans-insert";
+    private static final String SUMMARY_TRANS_INSERT_ACTIVITY_CODE = "activity_code";
+    private static final String SUMMARY_TRANS_INSERT_STATUS_TYPE_CODE = "status_type_code";
+    private static final String SUMMARY_TRANS_INSERT_LANGUAGE_CODE = "language_code";
+    private static final String SUMMARY_TRANS_INSERT_TEXT = "text";
 
     private Config studyCfg;
     private Instant timestamp;
@@ -178,13 +178,16 @@ public class OsteoAboutChildV2 implements CustomTask {
         log.info("Copy configs successfully deleted");
         helper.updateActivityNameAndTitle(activityId, "About Your Child’s Cancer", "About Your Child’s Cancer");
         updateTranslationSummaries(handle);
-        updateActivityStatusSummariesInPlace(handle, activityId);
     }
 
     private void updateTranslationSummaries(Handle handle) {
         List<? extends Config> configList = updatesDataCfg.getConfigList(TRANS_UPDATE);
         for (Config config : configList) {
             updateSummary(config, handle);
+        }
+        configList = updatesDataCfg.getConfigList(SUMMARY_TRANS_INSERT);
+        for (Config config : configList) {
+            insertActivitySummary(config, handle);
         }
     }
 
@@ -195,30 +198,44 @@ public class OsteoAboutChildV2 implements CustomTask {
         handle.attach(SqlHelper.class).updateVarSubstitutionValue(oldSum, newSum);
     }
 
-    private void updateActivityStatusSummariesInPlace(Handle handle, long activityId) {
-        Map<InstanceStatusType, String> replacements = Map.of(
-                InstanceStatusType.CREATED, "Please complete this survey to tell us about your child's experiences with osteosarcoma.",
-                InstanceStatusType.IN_PROGRESS, "Please finish this survey to tell us about your child's experiences with osteosarcoma."
-                );
-        var activityI18nDao = handle.attach(ActivityI18nDao.class);
-        List<SummaryTranslation> oldSummaries = activityI18nDao.findSummariesByActivityId(activityId);
-        List<SummaryTranslation> newSummaries = new ArrayList<>();
-        for (var summary : oldSummaries) {
-            String newText = replacements.get(summary.getStatusType());
-            if (newText != null) {
-                newSummaries.add(new SummaryTranslation(
-                        summary.getId().get(),
-                        summary.getActivityId(),
-                        summary.getStatusType(),
-                        summary.getLanguageCode(),
-                        newText));
-            }
-        }
-        activityI18nDao.updateSummaries(newSummaries);
-        log.info("Updated {} status summaries for activity {}", newSummaries.size(), activityId);
+    private void insertActivitySummary(Config config, Handle handle) {
+        String activityCode = config.getString(SUMMARY_TRANS_INSERT_ACTIVITY_CODE);
+        String statusTypeCode = config.getString(SUMMARY_TRANS_INSERT_STATUS_TYPE_CODE);
+        String languageCode = config.getString(SUMMARY_TRANS_INSERT_LANGUAGE_CODE);
+        String text = config.getString(SUMMARY_TRANS_INSERT_TEXT);
+
+        handle.attach(SqlHelper.class).insertActivitySummaryTranslation(activityCode, statusTypeCode, languageCode, text);
     }
 
     private interface SqlHelper extends SqlObject {
+        @SqlUpdate("insert into i18n_study_activity_summary_trans("
+                + "study_activity_id,"
+                + "activity_instance_status_type_id,"
+                + "language_code_id, "
+                + "translation_text)\n"
+                + "select \n"
+                + "\tsa.study_activity_id,\n"
+                + "\t(select activity_instance_status_type_id  "
+                + "\tfrom activity_instance_status_type "
+                + "\twhere activity_instance_status_type_code=:statusTypeCode),\n"
+                + "\t(select language_code_id from language_code where iso_language_code =:languageCode),\n"
+                + "\t:text\n"
+                + "from study_activity sa where sa.study_activity_code =:activityCode;")
+        int _insertActivitySummaryTranslation(
+                @Bind("activityCode") String activityCode,
+                @Bind("statusTypeCode") String statusTypeCode,
+                @Bind("languageCode") String languageCode,
+                @Bind("text") String text
+        );
+
+        default void insertActivitySummaryTranslation(String activityCode, String statusTypeCode, String languageCode, String text) {
+            int numInserted = _insertActivitySummaryTranslation(activityCode, statusTypeCode, languageCode, text);
+            if (numInserted < 1) {
+                throw new DDPException("Expected to insert an activity summary for value="
+                        + activityCode + ", text='" + text + "' but inserted " + numInserted);
+            }
+        }
+
         @SqlUpdate("update i18n_template_substitution set substitution_value = :newValue where substitution_value like :oldValue")
         int _updateVarValueByOldValue(@Bind("oldValue") String oldValue, @Bind("newValue") String newValue);
 
