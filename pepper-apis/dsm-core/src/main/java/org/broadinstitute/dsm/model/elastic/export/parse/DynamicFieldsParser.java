@@ -17,6 +17,13 @@ public class DynamicFieldsParser extends BaseParser {
     public static final String CHECKBOX_TYPE = "CHECKBOX";
     public static final String ACTIVITY_STAFF_TYPE = "ACTIVITY_STAFF";
     public static final String ACTIVITY_TYPE = "ACTIVITY";
+    public static final String TEXT = "TEXT";
+    public static final String TEXT_AREA = "TEXT_AREA";
+    public static final String TAB = "TAB";
+    public static final String RADIO = "RADIO";
+    public static final String GROUP = "GROUP";
+    public static final String OPTIONS = "OPTIONS";
+    public static final String UNKNOWN = "UNKNOWN";
     public FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
     protected String displayType;
     private String possibleValuesJson;
@@ -65,6 +72,12 @@ public class DynamicFieldsParser extends BaseParser {
                     .orElse(forString(element));
         } else if (NUMBER.equals(displayType)) {
             parsedValue = forNumeric(element);
+        } else if (isUnknownType()) {
+            if (parser instanceof ValueParser) {
+                parsedValue = element;
+            } else {
+                parsedValue = null;
+            }
         } else {
             parsedValue = forString(element);
         }
@@ -72,6 +85,10 @@ public class DynamicFieldsParser extends BaseParser {
         displayType = null;
 
         return parsedValue;
+    }
+
+    private boolean isUnknownType() {
+        return UNKNOWN.equals(displayType);
     }
 
     protected void getProperDisplayTypeWithPossibleValues() {
@@ -85,7 +102,7 @@ public class DynamicFieldsParser extends BaseParser {
                     ? fieldSettings.getPossibleValues()
                     : StringUtils.EMPTY;
         } else {
-            displayType = StringUtils.EMPTY;
+            displayType = UNKNOWN;
         }
     }
 

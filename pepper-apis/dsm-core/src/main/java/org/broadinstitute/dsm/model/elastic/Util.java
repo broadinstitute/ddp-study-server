@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.util.StringUtil;
 import org.broadinstitute.dsm.db.*;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DBElement;
@@ -164,7 +165,9 @@ public class Util {
                 finalResult = Map.of(ESObjectConstants.DYNAMIC_FIELDS, transformedMap);
                 break;
             default:
-                finalResult = new HashMap<>(Map.of(underscoresToCamelCase(fieldName), fieldValue));
+                Map<String, Object> result = new HashMap<>();
+                result.put(underscoresToCamelCase(fieldName), StringUtils.isBlank(String.valueOf(fieldValue)) ? null : fieldValue);
+                finalResult = result;
                 break;
         }
         return finalResult;

@@ -54,6 +54,7 @@ public abstract class MappingGenerator extends BaseGenerator {
         for (Map.Entry<String, Object> entry : fieldsByValues.entrySet()) {
             parser.setFieldName(entry.getKey());
             Object eachType = parser.parse(entry.getKey());
+            if (eachType == null) continue;
             resultMap.put(Util.underscoresToCamelCase(entry.getKey()), eachType);
         }
         Map<String, Object> returnMap =
