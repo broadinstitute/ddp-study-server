@@ -1,4 +1,12 @@
-package org.broadinstitute.ddp.studybuilder.task;
+package org.broadinstitute.ddp.studybuilder.task.osteo;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
@@ -32,6 +40,7 @@ import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
+import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
@@ -40,13 +49,6 @@ import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import java.io.File;
-import java.nio.file.Path;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 public class OsteoConsentVersion2 implements CustomTask {

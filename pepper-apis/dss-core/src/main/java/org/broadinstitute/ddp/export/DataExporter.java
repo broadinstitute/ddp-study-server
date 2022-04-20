@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.export;
 
 import static org.broadinstitute.ddp.export.ExportUtil.extractParticipantsFromResultSet;
 import static org.broadinstitute.ddp.export.ExportUtil.getSnapshottedMailAddress;
+import static org.broadinstitute.ddp.export.ExportUtil.hideProtectedValue;
 import static org.broadinstitute.ddp.model.activity.types.ComponentType.MAILING_ADDRESS;
 
 import java.io.BufferedWriter;
@@ -42,6 +43,7 @@ import org.broadinstitute.ddp.content.I18nTemplateRenderFacade;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.StudyDataAliasDao;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -111,6 +113,7 @@ import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
+import org.broadinstitute.ddp.model.es.StudyDataAlias;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
@@ -301,7 +304,17 @@ public class DataExporter {
                                                        boolean exportStructuredDocument) {
         List<ActivityExtract> activityExtracts = extractActivities(handle, studyDto);
         List<Participant> participants = extractParticipantDataSetByIds(handle, studyDto, participantIds);
+        List<StudyDataAlias> studyDataAliases = handle.attach(StudyDataAliasDao.class).findAliasesByStudy(studyDto.getGuid());
+        hideProtectedAnswerValues(participants, studyDataAliases);
         exportToElasticsearch(handle, studyDto, activityExtracts, participants, exportStructuredDocument);
+    }
+
+    private void hideProtectedAnswerValues(List<Participant> participants, List<StudyDataAlias> studyDataAliases) {
+        for (Participant participant : participants) {
+            for (StudyDataAlias hiddenAlias : studyDataAliases) {
+                hideProtectedValue(participant, hiddenAlias);
+            }
+        }
     }
 
     public void exportToElasticsearch(Handle handle, StudyDto studyDto,
