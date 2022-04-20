@@ -15,19 +15,16 @@ import java.util.Map;
 import com.auth0.json.mgmt.Connection;
 import com.auth0.json.mgmt.users.User;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class Auth0ManagementClientTest extends TxnAwareBaseTest {
-
-    private static final Logger LOG = LoggerFactory.getLogger(Auth0ManagementClientTest.class);
-
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static Auth0ManagementClient client;
 
@@ -114,7 +111,7 @@ public class Auth0ManagementClientTest extends TxnAwareBaseTest {
             if (appMetadata != null) {
                 Map userGuidMap = (Map) appMetadata.get(Auth0ManagementClient.APP_METADATA_PEPPER_USER_GUIDS);
                 if (userGuidMap != null) {
-                    LOG.info("Deleted fake client " + fakeClient + " from test user's list of guid.  "
+                    log.info("Deleted fake client " + fakeClient + " from test user's list of guid.  "
                             + testUserGuid + " has " + userGuidMap.size() + " remaining client/guid mappings.");
                 }
             }

@@ -12,8 +12,6 @@ import org.broadinstitute.ddp.route.RouteTestUtil;
 import org.broadinstitute.ddp.security.JWTConverter;
 import org.broadinstitute.ddp.transformers.NullableJsonTransformer;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.ResponseTransformer;
 import spark.Spark;
 
@@ -22,9 +20,6 @@ import spark.Spark;
  * to handle REST endpoints.
  */
 public abstract class SparkServerAwareBaseTest extends TxnAwareBaseTest {
-
-    protected static final Logger LOG = LoggerFactory.getLogger(SparkServerAwareBaseTest.class);
-
     protected static final String RESPONSE_BODY_PARAM_CODE = "code";
 
     protected static final int SPARK_PORT = 5559;

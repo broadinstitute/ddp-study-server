@@ -99,6 +99,45 @@ class PexFetcher {
     }
 
     /**
+     * Get latest agreement answer value for given question. An activity instance needs to exist for user and activity.
+     *
+     * @param ictx         the interpreter context
+     * @param activityCode the activity
+     * @param stableId     the question stable id
+     * @return stream of boolean values
+     */
+    Boolean findLatestAgreementAnswer(InterpreterContext ictx, String userGuid, String activityCode, String stableId,
+                                      long studyId) {
+        try {
+            return ictx.getHandle().attach(PexDao.class)
+                    .findLatestAgreementAnswer(userGuid, activityCode, stableId, studyId);
+        } catch (Exception e) {
+            throw new PexFetchException("Could not fetch agreement answers for form "
+                    + activityCode + " question " + stableId, e);
+        }
+    }
+
+    /**
+     * Get a specific agreement answer value for given question.
+     *
+     * @param ictx                 the interpreter context
+     * @param activityCode         the activity
+     * @param activityInstanceGuid the activity instance guid
+     * @param stableId             the question stable id
+     * @return text value
+     */
+    Boolean findSpecificAgreementAnswer(InterpreterContext ictx, String activityCode, String activityInstanceGuid,
+                                        String stableId) {
+        try {
+            PexDao pexDao = ictx.getHandle().attach(PexDao.class);
+            return pexDao.findSpecificAgreementAnswer(activityInstanceGuid, stableId);
+        } catch (Exception e) {
+            throw new PexFetchException("Could not fetch agreement answer for form "
+                    + activityCode + " of instance " + activityInstanceGuid + ", question" + stableId, e);
+        }
+    }
+
+    /**
      * Get latest date answer value for given question. An activity instance needs to exist for user and activity.
      *
      * @param ictx         the interpreter context
