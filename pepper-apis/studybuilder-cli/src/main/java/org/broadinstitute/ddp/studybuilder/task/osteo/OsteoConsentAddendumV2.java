@@ -1,36 +1,33 @@
-package org.broadinstitute.ddp.studybuilder.task;
-
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import lombok.extern.slf4j.Slf4j;
-import org.broadinstitute.ddp.db.dao.JdbiActivity;
-import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
-import org.broadinstitute.ddp.db.dao.JdbiUser;
-import org.broadinstitute.ddp.db.dao.JdbiWorkflowTransition;
-import org.broadinstitute.ddp.db.dto.ActivityDto;
-import org.broadinstitute.ddp.db.dto.StudyDto;
-import org.broadinstitute.ddp.db.dto.UserDto;
-import org.broadinstitute.ddp.exception.DDPException;
-import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
-import org.broadinstitute.ddp.studybuilder.EventBuilder;
-import org.broadinstitute.ddp.studybuilder.WorkflowBuilder;
-import org.broadinstitute.ddp.util.ConfigUtil;
-import org.jdbi.v3.core.Handle;
-import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.statement.SqlQuery;
+package org.broadinstitute.ddp.studybuilder.task.osteo;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiUser;
+import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
+import org.broadinstitute.ddp.db.dao.KitTypeDao;
+import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.db.dto.UserDto;
+import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.dsm.KitType;
+import org.broadinstitute.ddp.model.kit.KitRuleType;
+import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
+import org.broadinstitute.ddp.studybuilder.EventBuilder;
+import org.broadinstitute.ddp.studybuilder.task.CustomTask;
+import org.broadinstitute.ddp.util.ConfigUtil;
+import org.jdbi.v3.core.Handle;
 
 @Slf4j
-public class OsteoSomaticConsentAddendum implements CustomTask {
+public class OsteoConsentAddendumV2 implements CustomTask {
     private static final String STUDY_GUID = "CMI-OSTEO";
-    private static final String DATA_FILE = "patches/somatic-consent-addendum-val.conf";
+    private static final String DATA_FILE = "patches/addendum-new-activity.conf";
 
     private Path cfgPath;
     private Config cfg;
@@ -60,7 +57,7 @@ public class OsteoSomaticConsentAddendum implements CustomTask {
 
         insertActivity(handle, studyDto, adminUser.getUserId());
         insertEvents(handle, studyDto, adminUser.getUserId());
-        updateWorkflow(handle, studyDto);
+        insertKit(handle, studyDto);
     }
 
     private void insertActivity(Handle handle, StudyDto studyDto, long adminUserId) {
@@ -89,43 +86,32 @@ public class OsteoSomaticConsentAddendum implements CustomTask {
         log.info("Events configuration has added in study {}", STUDY_GUID);
     }
 
-    private void updateWorkflow(Handle handle, StudyDto studyDto) {
-        if (!dataCfg.hasPath("workflows")) {
-            throw new DDPException("There is no 'workflows' configuration.");
+    private void insertKit(Handle handle, StudyDto studyDto) {
+        if (!dataCfg.hasPath("kits")) {
+            throw new DDPException(("there is no 'kits' configuration"));
         }
-        log.info("Inserting events configuration...");
-        SqlHelper helper = handle.attach(SqlHelper.class);
-        JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
-        String[] activities = {"PARENTAL_CONSENT", "CONSENT_ASSENT", "CONSENT"};
-        JdbiWorkflowTransition jdbiWorkflowTransition = handle.attach(JdbiWorkflowTransition.class);
+        log.info("Inserting Kits...");
+        List<? extends Config> kits = dataCfg.getConfigList("kits");
+        for (Config kit : kits) {
+            String type = kit.getString("type");
+            int quantity = kit.getInt("quantity");
+            boolean needsApproval = kit.getBoolean("needsApproval");
+            KitType kitType = handle.attach(KitTypeDao.class).getKitTypeByName(type)
+                    .orElseThrow(() -> new DDPException("Could not find kit type " + type));
+            long kitId = handle.attach(KitConfigurationDao.class)
+                    .insertConfiguration(studyDto.getId(), quantity, kitType.getId(), needsApproval);
+            log.info("Created kit configuration with id={}, type={}, quantity={}, needsApproval={}",
+                    kitId, type, quantity, needsApproval);
 
-        for (String activity : activities) {
-            Optional<ActivityDto> activityDto = jdbiActivity.findActivityByStudyIdAndCode(studyDto.getId(), activity);
-            if (activityDto.isEmpty()) {
-                log.warn("Activity {} can't be found", activity);
-                continue;
+            for (Config rules : kit.getConfigList("rules")) {
+                KitRuleType ruleType = KitRuleType.valueOf(rules.getString("type"));
+                if (ruleType != KitRuleType.PEX) {
+                    throw new DDPException("This task doesn't support kit rule type " + ruleType);
+                }
+                long ruleId = handle.attach(KitConfigurationDao.class).addPexRule(kitId, rules.getString("expression"));
+                log.info("Added pex rule to kit configuration {} with id={}", kitId, ruleId);
+                log.info("Kit configuration has added in study {}", STUDY_GUID);
             }
-
-            long workflowStateId = helper.getWorkflowStateId(activityDto.get().getActivityId());
-            long transitionId = helper.getTransitionId(workflowStateId);
-            int deleteById = jdbiWorkflowTransition.deleteById(transitionId);
-            log.info("deleted activity {} transition for configuration {}", activity, deleteById);
         }
-
-
-        List<? extends Config> workflows = dataCfg.getConfigList("workflows");
-        WorkflowBuilder workflowBuilder = new WorkflowBuilder(cfg, studyDto);
-        for (Config workflow : workflows) {
-            workflowBuilder.insertTransitionSet(handle, workflow);
-        }
-        log.info("Workflow configuration has added in study {}", STUDY_GUID);
-    }
-
-    private interface SqlHelper extends SqlObject {
-        @SqlQuery("select workflow_state_id from workflow_activity_state where study_activity_id = :activityId")
-        long getWorkflowStateId(@Bind("activityId") long activityId);
-
-        @SqlQuery("select workflow_transition_id from workflow_transition where from_state_id = :stateId")
-        long getTransitionId(@Bind("stateId") long stateId);
     }
 }
