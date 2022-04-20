@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.studybuilder.task;
+package org.broadinstitute.ddp.studybuilder.task.osteo;
 
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
@@ -6,6 +6,7 @@ import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
+import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
 import org.broadinstitute.ddp.db.dao.CopyConfigurationSql;
 import org.broadinstitute.ddp.db.dao.JdbiFormActivityFormSection;
 import org.broadinstitute.ddp.db.dao.JdbiFormSection;
@@ -15,13 +16,15 @@ import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.QuestionDao;
 import org.broadinstitute.ddp.db.dao.SectionBlockDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dto.FormSectionMembershipDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
-import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.i18n.ActivityI18nDetail;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
-import org.broadinstitute.ddp.model.user.User;
+import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
+import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
@@ -34,14 +37,17 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * One-off task to add adhoc symptom message to TestBoston in deployed environments.
  */
 @Slf4j
 public class OsteoAboutYouV2 implements CustomTask {
+
     private static final String DATA_FILE = "patches/about-you-v2.conf";
     private static final String UPDATES_DATA_FILE = "patches/about-you-updates.conf";
     private static final String TRANS_UPDATE = "trans-update";
@@ -51,11 +57,21 @@ public class OsteoAboutYouV2 implements CustomTask {
     private static final String ACTIVITY_CODE = "ABOUTYOU";
     private static final String VERSION_TAG = "v2";
 
-    private Config studyCfg;
-    private Instant timestamp;
     private Config dataCfg;
     private Config updatesDataCfg;
     private Gson gson;
+    private Config studyCfg;
+    private Instant timestamp;
+    private RevisionMetadata meta;
+    private long studyId;
+
+    private SqlHelper helper;
+    private QuestionDao questionDao;
+    private JdbiQuestion jdbiQuestion;
+    private JdbiFormSection jdbiFormSection;
+    private JdbiFormActivityFormSection jdbiFormActivityFormSection;
+    private CopyConfigurationSql copyConfigurationSql;
+    private ActivityI18nDao activityI18nDao;
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
@@ -84,104 +100,129 @@ public class OsteoAboutYouV2 implements CustomTask {
 
     @Override
     public void run(Handle handle) {
+        helper = handle.attach(SqlHelper.class);
+        questionDao = handle.attach(QuestionDao.class);
+        jdbiQuestion = handle.attach(JdbiQuestion.class);
+        jdbiFormSection = handle.attach(JdbiFormSection.class);
+        jdbiFormActivityFormSection = handle.attach(JdbiFormActivityFormSection.class);
+        copyConfigurationSql = handle.attach(CopyConfigurationSql.class);
+        activityI18nDao = handle.attach(ActivityI18nDao.class);
+        ActivityDao activityDao = handle.attach(ActivityDao.class);
+        JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
+        JdbiFormActivityFormSection jdbiFormActivityFormSection = handle.attach(JdbiFormActivityFormSection.class);
+        SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
+        JdbiUmbrellaStudy jdbiUmbrellaStudy = handle.attach(JdbiUmbrellaStudy.class);
+        UserDao userDao = handle.attach(UserDao.class);
 
-        final User adminUser = handle.attach(UserDao.class).findUserByGuid(studyCfg.getString("adminUser.guid"))
+        var studyDto = jdbiUmbrellaStudy.findByStudyGuid(studyCfg.getString("study.guid"));
+        var adminUser = userDao.findUserByGuid(studyCfg.getString("adminUser.guid"))
                 .orElseThrow(() -> new DDPException("Could not find admin user by guid"));
 
-        final StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class)
-                .findByStudyGuid(studyCfg.getString("study.guid"));
+        studyId = studyDto.getId();
+        var studyGuid = studyDto.getGuid();
+        long activityId = ActivityBuilder.findActivityId(handle, studyId, ACTIVITY_CODE);
 
-        final SqlHelper helper = handle.attach(SqlHelper.class);
-        final ActivityDao activityDao = handle.attach(ActivityDao.class);
-        final QuestionDao questionDao = handle.attach(QuestionDao.class);
-        final JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
-        final JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
-        final JdbiFormSection jdbiFormSection = handle.attach(JdbiFormSection.class);
-        final JdbiFormActivityFormSection jdbiFormActivityFormSection = handle.attach(JdbiFormActivityFormSection.class);
-        final CopyConfigurationSql copyConfigurationSql = handle.attach(CopyConfigurationSql.class);
-
-        final String studyGuid = studyDto.getGuid();
-        final long studyId = studyDto.getId();
-        final long activityId = ActivityBuilder.findActivityId(handle, studyId, ACTIVITY_CODE);
-
-        final String reason = String.format(
+        meta = new RevisionMetadata(timestamp.toEpochMilli(), adminUser.getId(), String.format(
                 "Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
-                studyGuid, ACTIVITY_CODE, VERSION_TAG);
-        final RevisionMetadata meta = new RevisionMetadata(timestamp.toEpochMilli(), adminUser.getId(), reason);
+                studyGuid, ACTIVITY_CODE, VERSION_TAG));
 
         //change version
         var versionDto = activityDao.changeVersion(activityId, VERSION_TAG, meta);
 
-        // Disable HOW_HEAR
-        QuestionDto questionHowHereDto =
-                jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId, "HOW_HEAR")
-                        .orElseThrow(() -> new DDPException("Could not find question dto by studyId and question sid"));
-
-        final long terminatedRevId = jdbiRevision.copyAndTerminate(questionHowHereDto.getRevisionId(), meta);
-
-        final long currHowHereBlockId = helper.findQuestionBlockId(questionHowHereDto.getId());
-        questionDao.disableTextQuestion(questionHowHereDto.getId(), meta);
-        helper.updateFormSectionBlockRevision(currHowHereBlockId, terminatedRevId);
-        log.info("Question ('HOW_HEAR') successfully disabled");
-
-        // Disable EXPERIENCE
-        QuestionDto questionExperienceDto =
-                jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId, "EXPERIENCE")
-                        .orElseThrow(() -> new DDPException("Could not find question dto by studyId and question sid"));
-
-        final long currExperienceBlockId = helper.findQuestionBlockId(questionExperienceDto.getId());
-        questionDao.disableTextQuestion(questionExperienceDto.getId(), meta);
-        helper.updateFormSectionBlockRevision(currExperienceBlockId, terminatedRevId);
-        log.info("Question ('EXPERIENCE') successfully disabled");
-
-        // Disable RACE
-        QuestionDto questionRaceDto =
-                jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId, "RACE")
-                        .orElseThrow(() -> new DDPException("Could not find question dto by studyId and question sid"));
-
-        final long currRaceBlockId = helper.findQuestionBlockId(questionRaceDto.getId());
-        questionDao.disablePicklistQuestion(questionRaceDto.getId(), meta);
-        helper.updateFormSectionBlockRevision(currRaceBlockId, terminatedRevId);
-        log.info("Question ('RACE') successfully disabled");
-
-        // Disable HISPANIC
-        QuestionDto questionHispanicDto =
-                jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId, "HISPANIC")
-                        .orElseThrow(() -> new DDPException("Could not find question dto by studyId and question sid"));
-
-        final long currHispanicBlockId = helper.findQuestionBlockId(questionHispanicDto.getId());
-        questionDao.disablePicklistQuestion(questionHispanicDto.getId(), meta);
-        helper.updateFormSectionBlockRevision(currHispanicBlockId, terminatedRevId);
-        log.info("Question ('HISPANIC') successfully disabled");
+        //update translatedName
+        updateActivityName(activityId, ACTIVITY_CODE, dataCfg.getString("translatedName"));
 
         //add new section
-        final var firstSection = jdbiFormActivityFormSection
-                .findOrderedSectionMemberships(activityId, meta.getTimestamp()).get(0);
-        final long newFormSectionId = jdbiFormSection.insert(jdbiFormSection.generateUniqueCode(), null);
-        final int sectionOrder = firstSection.getDisplayOrder() - 1;
-        jdbiFormActivityFormSection.insert(activityId, newFormSectionId, versionDto.getRevId(), sectionOrder);
-        log.info("New section successfully created with displayOrder={} and revision={}", sectionOrder, versionDto.getRevId());
+        var section = jdbiFormActivityFormSection.findOrderedSectionMemberships(activityId, meta.getTimestamp()).get(0);
+        long newFormSectionId = createSectionBefore(activityId, section);
 
         //add new WHO_IS_FILLING_ABOUTYOU question
-        SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
-        FormBlockDef raceDef = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("who_filling_q")), FormBlockDef.class);
-        sectionBlockDao.insertBlockForSection(activityId, newFormSectionId, sectionOrder, raceDef, versionDto.getRevId());
+        FormBlockDef blockDef = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("who_filling_q")), FormBlockDef.class);
+
+        sectionBlockDao.insertBlockForSection(
+                activityId, newFormSectionId, QuestionDao.DISPLAY_ORDER_GAP, blockDef, versionDto.getRevId());
+
         log.info("Question ('WHO_IS_FILLING_ABOUTYOU') successfully added");
 
         // Delete copy configs
-        Set<Long> locationIds = helper.findCopyConfigsByQuestionSid(Set.of(
-                questionHowHereDto.getId(),
-                questionExperienceDto.getId(),
-                questionRaceDto.getId(),
-                questionHispanicDto.getId()));
+        List<String> questionsToDisable = new ArrayList<>(List.of(
+                "HOW_HEAR",
+                "EXPERIENCE",
+                "RACE",
+                "HISPANIC"));
+        deleteCopyConfigs(questionsToDisable);
+
+        // Disable questions
+        long terminatedRevId = jdbiRevision.copyAndTerminate(section.getRevisionId(), meta);
+        questionsToDisable.forEach(s -> disableQuestionDto(s, terminatedRevId));
+
+        helper.updateActivityNameAndTitle(activityId, "About Your Cancer", "About Your Cancer");
+        updateTranslationSummaries(handle);
+    }
+
+    private long createSectionBefore(long activityId, FormSectionMembershipDto beforeSection) {
+        final int sectionOrder = beforeSection.getDisplayOrder() - 1;
+        final long newFormSectionId = jdbiFormSection.insert(jdbiFormSection.generateUniqueCode(), null);
+        jdbiFormActivityFormSection.insert(activityId, newFormSectionId, beforeSection.getRevisionId(), sectionOrder);
+
+        log.info("New section successfully created with displayOrder={} and revision={}",
+                sectionOrder,
+                beforeSection.getRevisionId());
+
+        return newFormSectionId;
+    }
+
+    private void disableQuestionDto(String questionSid, long terminatedRevId) {
+
+        QuestionDto questionDto = findQuestionBySid(questionSid);
+
+        if (questionDto.getType().equals(QuestionType.TEXT)) {
+            questionDao.disableTextQuestion(questionDto.getId(), meta);
+        } else if (questionDto.getType().equals(QuestionType.PICKLIST)) {
+            questionDao.disablePicklistQuestion(questionDto.getId(), meta);
+        } else {
+            throw new DDPException("There is no support to question type " + questionDto.getType());
+        }
+
+        final long blockId = helper.findQuestionBlockId(questionDto.getId());
+        helper.updateFormSectionBlockRevision(blockId, terminatedRevId);
+
+        log.info("Question ('{}') successfully disabled", questionSid);
+    }
+
+    private QuestionDto findQuestionBySid(String questionSid) {
+        return jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId, questionSid)
+                .orElseThrow(() -> new DDPException("Could not find question dto (" + questionSid + ")"));
+    }
+
+    private void deleteCopyConfigs(List<String> questionSids) {
+        Set<Long> locationIds = helper.findCopyConfigsByQuestionIds(
+                questionSids.stream().map(s -> findQuestionBySid(s).getId()).collect(Collectors.toSet()));
 
         Set<Long> configPairs = helper.findCopyConfigPairsByLocIds(locationIds);
 
         DBUtils.checkDelete(configPairs.size(), copyConfigurationSql.deleteCopyConfigPairs(configPairs));
         DBUtils.checkDelete(locationIds.size(), copyConfigurationSql.bulkDeleteCopyLocations(locationIds));
         log.info("Copy configs successfully deleted");
-        helper.updateActivityNameAndTitle(activityId, "About Your Cancer", "About Your Cancer");
-        updateTranslationSummaries(handle);
+    }
+
+    private void updateActivityName(long activityId, String activityCode, String name) {
+        ActivityI18nDetail i18nDetail = activityI18nDao
+                .findDetailsByActivityIdAndTimestamp(activityId, Instant.now().toEpochMilli())
+                .iterator().next();
+        var newI18nDetail = new ActivityI18nDetail(
+                i18nDetail.getId(),
+                i18nDetail.getActivityId(),
+                i18nDetail.getLangCodeId(),
+                i18nDetail.getIsoLangCode(),
+                name,
+                i18nDetail.getSecondName(),
+                i18nDetail.getTitle(),
+                i18nDetail.getSubtitle(),
+                i18nDetail.getDescription(),
+                i18nDetail.getRevisionId());
+        activityI18nDao.updateDetails(List.of(newI18nDetail));
+        log.info("Updated translatedName for activity {}", activityCode);
     }
 
     private void updateTranslationSummaries(Handle handle) {
@@ -214,8 +255,8 @@ public class OsteoAboutYouV2 implements CustomTask {
         int findQuestionBlockId(@Bind("questionId") long questionId);
 
         @SqlQuery("select copy_location_id from copy_answer_location where question_stable_code_id in (<questionSid>)")
-        Set<Long> findCopyConfigsByQuestionSid(
-                @BindList(value = "questionSid", onEmpty = BindList.EmptyHandling.NULL) Set<Long> questionSid);
+        Set<Long> findCopyConfigsByQuestionIds(
+                @BindList(value = "questionSid", onEmpty = BindList.EmptyHandling.NULL) Set<Long> questionIds);
 
         @SqlQuery("select copy_configuration_pair_id from copy_configuration_pair "
                 + "where source_location_id in (<locIds>) or target_location_id in (<locIds>)")
