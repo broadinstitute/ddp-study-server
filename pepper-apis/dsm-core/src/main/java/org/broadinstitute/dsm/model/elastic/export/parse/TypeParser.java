@@ -1,10 +1,9 @@
 package org.broadinstitute.dsm.model.elastic.export.parse;
 
-import java.time.LocalDateTime;
+import org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator;
+
 import java.util.HashMap;
 import java.util.Map;
-
-import org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator;
 
 public class TypeParser extends BaseParser {
 
@@ -43,18 +42,6 @@ public class TypeParser extends BaseParser {
 
     @Override
     protected Object forString(String value) {
-        try {
-            LocalDateTime.parse(value);
-            Boolean.parseBoolean(value);
-            Long.parseLong(value);
-        } catch (Exception e) {
-
-        } catch (Exception e) {
-
-        } catch (Exception e) {
-
-        }
-
         return TEXT_KEYWORD_MAPPING;
     }
 
