@@ -7,8 +7,9 @@ import static org.broadinstitute.ddp.constants.ErrorCodes.DATA_PERSIST_ERROR;
 import static org.broadinstitute.ddp.constants.ErrorCodes.MISSING_BODY;
 import static org.broadinstitute.ddp.constants.ErrorCodes.REQUIRED_PARAMETER_MISSING;
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEvent.createInstance;
-import static org.slf4j.LoggerFactory.getLogger;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.json.auth0.Auth0LogEvent;
@@ -16,7 +17,6 @@ import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.service.Auth0LogEventService;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.jdbi.v3.core.JdbiException;
-import org.slf4j.Logger;
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -27,18 +27,13 @@ import spark.Route;
  * <p>JSON (sent in payload) is parsed and auth0 log events are extracted from it.
  * Then log events are logged and persisted into table 'auth0_log_event'.
  */
+@Slf4j
+@AllArgsConstructor
 public class Auth0LogEventRoute implements Route {
-
-    private static final Logger LOG = getLogger(Auth0LogEventRoute.class);
-
     /** Mandatory parameter in the log event URL. Specifies name of auth0 tenant */
     public static final String QUERY_PARAM_TENANT = "tenant";
 
     private final Auth0LogEventService auth0LogEventService;
-
-    public Auth0LogEventRoute(final Auth0LogEventService auth0LogEventService) {
-        this.auth0LogEventService = auth0LogEventService;
-    }
 
     @Override
     public Object handle(Request request, Response response) throws Exception {
@@ -93,7 +88,7 @@ public class Auth0LogEventRoute implements Route {
     }
 
     private void haltError(int status, String code, String msg) {
-        LOG.error(msg);
+        log.error(msg);
         throw ResponseUtil.haltError(status, new ApiError(code, msg));
     }
 }

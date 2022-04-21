@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
@@ -16,8 +18,6 @@ import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
 import org.broadinstitute.ddp.util.RouteUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -25,15 +25,10 @@ import spark.Route;
 /**
  * Returns activity instances for a user in a given study.
  */
+@Slf4j
+@AllArgsConstructor
 public class UserActivityInstanceListRoute implements Route {
-
-    private static final Logger LOG = LoggerFactory.getLogger(UserActivityInstanceListRoute.class);
-
     private final ActivityInstanceService service;
-
-    public UserActivityInstanceListRoute(ActivityInstanceService service) {
-        this.service = service;
-    }
 
     @Override
     public List<ActivityInstanceSummary> handle(Request request, Response response) {
@@ -51,7 +46,7 @@ public class UserActivityInstanceListRoute implements Route {
         String operatorGuid = StringUtils.defaultIfBlank(ddpAuth.getOperator(), userGuid);
         boolean isStudyAdmin = ddpAuth.hasAdminAccessToStudy(studyGuid);
 
-        LOG.info("Looking up activity instances for user {} in study {} by operator {} (isStudyAdmin={})",
+        log.info("Looking up activity instances for user {} in study {} by operator {} (isStudyAdmin={})",
                 userGuid, studyGuid, operatorGuid, isStudyAdmin);
 
         return TransactionWrapper.withTxn(handle -> {

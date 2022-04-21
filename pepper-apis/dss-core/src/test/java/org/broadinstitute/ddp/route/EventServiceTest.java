@@ -58,13 +58,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class EventServiceTest extends IntegrationTestSuite.TestCase {
-
-    private static final Logger LOG = LoggerFactory.getLogger(EventServiceTest.class);
-
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String token;
     private static String url;
@@ -294,7 +289,7 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
                         .findByStudyGuidAfterOrEqualToInstant(testData.getStudyGuid(), timeToCheck)));
 
         assertTrue(usersReturned.stream()
-                .map(user -> user.getUserId())
+                .map(EnrollmentStatusDto::getUserId)
                 .collect(Collectors.toList()).contains(testUserId));
     }
 
@@ -314,31 +309,27 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
         HttpResponse response = createTestPatchAnswerPayloadAndExecuteRequest();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         int countAfter = getNumActivityInstances();
-        Assert.assertTrue(countAfter == countBefore);
+        assertEquals(countAfter, countBefore);
     }
 
     @Test
     public void testActivityInstantiation_Failure_maxInstancesPerUserExceeded() throws Exception {
         TransactionWrapper.useTxn(
-                handle -> {
-                    handle.attach(JdbiActivity.class).updateMaxInstancesPerUserById(
-                            studyActivityToCreateId,
-                            1
-                    );
-                }
+                handle -> handle.attach(JdbiActivity.class).updateMaxInstancesPerUserById(
+                        studyActivityToCreateId,
+                        1
+                )
         );
         String actInstGuid = TransactionWrapper.withTxn(
-                handle -> {
-                    return handle.attach(ActivityInstanceDao.class)
-                            .insertInstance(studyActivityToCreateId, testData.getUserGuid())
-                            .getGuid();
-                }
+                handle -> handle.attach(ActivityInstanceDao.class)
+                        .insertInstance(studyActivityToCreateId, testData.getUserGuid())
+                        .getGuid()
         );
         int countBefore = getNumActivityInstances();
         HttpResponse response = createTestPatchAnswerPayloadAndExecuteRequest();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         int countAfter = getNumActivityInstances();
-        Assert.assertTrue(countAfter == countBefore);
+        assertEquals(countAfter, countBefore);
         TransactionWrapper.useTxn(
                 handle -> {
                     handle.attach(ActivityInstanceDao.class).deleteByInstanceGuid(actInstGuid);
@@ -373,14 +364,12 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
         HttpResponse response = createTestPatchAnswerPayloadAndExecuteRequest();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         int countAfter = getNumActivityInstances();
-        Assert.assertTrue(countAfter == countBefore);
+        assertEquals(countAfter, countBefore);
         TransactionWrapper.useTxn(
-                handle -> {
-                    handle.attach(JdbiEventConfigurationOccurrenceCounter.class).deleteById(
-                            autoInstantiationConfigurationId,
-                            testUserId
-                    );
-                }
+                handle -> handle.attach(JdbiEventConfigurationOccurrenceCounter.class).deleteById(
+                        autoInstantiationConfigurationId,
+                        testUserId
+                )
         );
     }
 
@@ -397,8 +386,7 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
     private HttpResponse createTestPatchAnswerPayloadAndExecuteRequest() throws IOException {
         PatchAnswerPayload data = createTestPatchAnswerPayload();
         Request request = RouteTestUtil.buildAuthorizedPatchRequest(token, url, new Gson().toJson(data));
-        HttpResponse response = request.execute().returnResponse();
-        return response;
+        return request.execute().returnResponse();
     }
 
     private static final class TestData {

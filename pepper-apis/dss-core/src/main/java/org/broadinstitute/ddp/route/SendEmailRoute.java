@@ -7,6 +7,8 @@ import java.util.Optional;
 
 import com.auth0.exception.Auth0Exception;
 import com.auth0.json.mgmt.users.User;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.NotificationTemplateVariables;
@@ -31,21 +33,13 @@ import org.broadinstitute.ddp.model.workflow.WorkflowState;
 import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
+@Slf4j
+@AllArgsConstructor
 public class SendEmailRoute extends ValidatedJsonInputRoute<SendEmailPayload> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(SendEmailRoute.class);
-
     private final WorkflowService workflowService;
-
-
-    public SendEmailRoute(WorkflowService workflowService) {
-        this.workflowService = workflowService;
-    }
 
     @Override
     public Object handle(Request request, Response response, SendEmailPayload payload) throws Exception {
@@ -53,7 +47,7 @@ public class SendEmailRoute extends ValidatedJsonInputRoute<SendEmailPayload> {
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
 
         TransactionWrapper.useTxn(handle -> {
-            LOG.info("Handling email resend for {} in study {}", email, studyGuid);
+            log.info("Handling email resend for {} in study {}", email, studyGuid);
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
             var mgmtClient = Auth0ManagementClient.forStudy(handle, studyGuid);
             List<User> auth0Users;
@@ -66,7 +60,7 @@ public class SendEmailRoute extends ValidatedJsonInputRoute<SendEmailPayload> {
             }
 
             if (auth0Users.isEmpty()) {
-                LOG.info("Attempt to send an email to nonexistent user " + email);
+                log.info("Attempt to send an email to nonexistent user " + email);
             }
 
             boolean foundUser = false;
@@ -84,10 +78,9 @@ public class SendEmailRoute extends ValidatedJsonInputRoute<SendEmailPayload> {
                 }
                 String participantGuid = userDto.getUserGuid();
                 // verify that returned state is an activity state or done state
-                String operatorGuid = participantGuid;
                 Optional<WorkflowState> nextState = workflowService.suggestNextState(
                         handle,
-                        operatorGuid,
+                        participantGuid,
                         participantGuid,
                         studyGuid,
                         StaticState.returningUser()
@@ -117,7 +110,7 @@ public class SendEmailRoute extends ValidatedJsonInputRoute<SendEmailPayload> {
                             workflowStateId);
 
                     if (eventConfigs.isEmpty()) {
-                        LOG.info("{} event configurations for workflow state {} in study {}.  No email will be "
+                        log.info("{} event configurations for workflow state {} in study {}.  No email will be "
                                         + "sent.",
                                 eventConfigs.size(),
                                 workflowStateId,
@@ -140,12 +133,12 @@ public class SendEmailRoute extends ValidatedJsonInputRoute<SendEmailPayload> {
                                 userDto.getUserId(),
                                 templateSubstitutions);
 
-                        LOG.info("Queued queuedEventId {} for email resend to participant {}", queuedEventId,
+                        log.info("Queued queuedEventId {} for email resend to participant {}", queuedEventId,
                                 userDto.getUserGuid());
                     }
 
                 } else {
-                    LOG.info("No applicable workflow states for email resend to {} in study {}.  No email sent.",
+                    log.info("No applicable workflow states for email resend to {} in study {}.  No email sent.",
                             email, studyGuid);
                 }
             }
@@ -154,7 +147,7 @@ public class SendEmailRoute extends ValidatedJsonInputRoute<SendEmailPayload> {
                         handle.attach(EventDao.class)
                                 .getNotificationConfigsForMailingListByEventType(studyGuid, EventTriggerType.USER_NOT_IN_STUDY);
                 if (eventConfigs.isEmpty()) {
-                    LOG.info("{} event configurations for unregistered user with email {} in study {}."
+                    log.info("{} event configurations for unregistered user with email {} in study {}."
                                     + "  No email will be sent.",
                             eventConfigs.size(),
                             email,
@@ -169,7 +162,7 @@ public class SendEmailRoute extends ValidatedJsonInputRoute<SendEmailPayload> {
                             0,
                             email,
                             templateSubstitutions);
-                    LOG.info("Queued queuedEventId {} for email resend to participant not in study with email address {}",
+                    log.info("Queued queuedEventId {} for email resend to participant not in study with email address {}",
                             queuedEventId,
                             email);
                 }
