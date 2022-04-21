@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.ProcessResult;
 import org.zeroturnaround.exec.stream.slf4j.Slf4jStream;
@@ -15,10 +14,8 @@ import java.util.concurrent.TimeUnit;
  * and version of java.  This utility attempts to provide a way to do that
  * in a cross-platform way, using standard java system properties.
  */
+@Slf4j
 public class JavaProcessSpawner {
-
-    private static final Logger logger = LoggerFactory.getLogger(JavaProcessSpawner.class);
-
     /**
      * Starts up a wholly separate java process.  May not be suitable for production code,
      * but good enough for spinning up simulators for testing
@@ -39,7 +36,7 @@ public class JavaProcessSpawner {
             throw new IllegalArgumentException("logging class required.  Otherwise your logs will go into outer space.");
         }
         if (bootTimeInSeconds < 1) {
-            logger.warn("With a boot wait time of " + bootTimeInSeconds + ", clients of " + classWithMainMethod + " may discover that the"
+            log.warn("With a boot wait time of " + bootTimeInSeconds + ", clients of " + classWithMainMethod + " may discover that the"
                     + " process the need has not been started yet.");
         }
 
@@ -55,10 +52,10 @@ public class JavaProcessSpawner {
                 .destroyOnExit().timeout(bootTimeInSeconds, TimeUnit.SECONDS).start().getFuture();
 
         try {
-            logger.info("Pausing for " + bootTimeInSeconds + " seconds while starting " + classWithMainMethod.getName());
+            log.info("Pausing for " + bootTimeInSeconds + " seconds while starting " + classWithMainMethod.getName());
             Thread.sleep(bootTimeInSeconds * 1000);
         } catch (InterruptedException e) {
-            logger.info("Spawned java class " + classWithMainMethod + " interrupted", e);
+            log.info("Spawned java class " + classWithMainMethod + " interrupted", e);
         }
         return processResultFuture;
     }
