@@ -18,8 +18,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.entity.ContentType;
 import org.apache.http.message.BasicNameValuePair;
-import org.broadinstitute.dsm.db.UserSettings;
+import org.broadinstitute.dsm.db.dao.settings.UserSettingsDao;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
+import org.broadinstitute.dsm.db.dto.settings.UserSettingsDto;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.exception.AuthenticationException;
 import org.broadinstitute.dsm.model.auth0.Auth0M2MResponse;
@@ -59,10 +60,12 @@ public class AuthenticationRoute implements Route {
     private final String auth0MgmntAudience;
     private final String audienceNameSpace;
     private UserDao userDao;
+    private UserSettingsDao userSettingsDao;
 
     public AuthenticationRoute(@NonNull Auth0Util auth0Util, @NonNull String auth0Domain,
                                @NonNull String clientSecret,
-                               @NonNull String auth0ClientId, @NonNull String auth0MgmntAudience, @NonNull String audienceNameSpace) {
+                               @NonNull String auth0ClientId, @NonNull String auth0MgmntAudience, @NonNull String audienceNameSpace,
+                               UserSettingsDao userSettingsDao) {
 
         this.auth0Util = auth0Util;
         this.auth0Domain = auth0Domain;
@@ -71,6 +74,7 @@ public class AuthenticationRoute implements Route {
         this.auth0MgmntAudience = auth0MgmntAudience;
         this.audienceNameSpace = audienceNameSpace;
         this.userDao = new UserDao();
+        this.userSettingsDao = userSettingsDao;
     }
 
     @Override
@@ -96,7 +100,8 @@ public class AuthenticationRoute implements Route {
                             String userPermissions = gson.toJson(userDao.getAllUserPermissions(userDto.getUserId()), ArrayList.class);
                             claims.put(userAccessRoles, userPermissions);
                             logger.info(userPermissions);
-                            claims.put(userSettings, gson.toJson(UserSettings.getUserSettings(email), UserSettings.class));
+                            claims.put(userSettings,
+                                    gson.toJson(userSettingsDao.get(userDto.getUserId()).orElseThrow(), UserSettingsDto.class));
                         }
                         claims.put(authUserId, String.valueOf(userDto.getUserId()));
                         claims.put(authUserName, userDto.getName().orElse(""));

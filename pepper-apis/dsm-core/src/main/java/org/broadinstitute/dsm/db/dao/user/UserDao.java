@@ -9,6 +9,7 @@ import lombok.NonNull;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
+import org.broadinstitute.dsm.db.jdbi.JdbiUser;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 public class UserDao implements Dao<UserDto> {
@@ -29,7 +30,7 @@ public class UserDao implements Dao<UserDto> {
 
     @Override
     public Optional<UserDto> get(long userId) {
-        SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.DSM, handle -> {
+        SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
             SimpleResult dbVals = new SimpleResult();
             dbVals.resultValue = handle.attach(JdbiUser.class).getUserByUserId(userId);
             return dbVals;
@@ -43,7 +44,7 @@ public class UserDao implements Dao<UserDto> {
 
     @Override
     public int create(UserDto userDto) {
-        SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.DSM, handle -> {
+        SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
             SimpleResult dbVals = new SimpleResult();
             dbVals.resultValue = handle.attach(JdbiUser.class).insert(userDto.getName().orElse(""), userDto.getEmail().orElse(""));
             return dbVals;
@@ -57,7 +58,7 @@ public class UserDao implements Dao<UserDto> {
 
     @Override
     public int delete(int id) {
-        SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.DSM, handle -> {
+        SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
             SimpleResult dbVals = new SimpleResult();
             dbVals.resultValue = handle.attach(JdbiUser.class).deleteByUserId(id);
             return dbVals;

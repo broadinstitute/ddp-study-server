@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.db.dao.roles;
+package org.broadinstitute.dsm.db.jdbi;
 
 import java.util.Collection;
 import java.util.List;

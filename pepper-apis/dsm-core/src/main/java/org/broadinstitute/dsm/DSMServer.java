@@ -50,6 +50,7 @@ import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetrics;
 import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.dsm.careevolve.Provider;
 import org.broadinstitute.dsm.db.dao.roles.UserRoleDao;
+import org.broadinstitute.dsm.db.dao.settings.UserSettingsDao;
 import org.broadinstitute.dsm.jetty.JettyConfig;
 import org.broadinstitute.dsm.jobs.DDPEventJob;
 import org.broadinstitute.dsm.jobs.DDPRequestJob;
@@ -637,13 +638,14 @@ public class DSMServer {
             }
         });
         setupDDPConfigurationLookup(cfg.getString(ApplicationConfigConstants.DDP));
-
+        UserSettingsDao userSettingsDao = new UserSettingsDao();
         AuthenticationRoute authenticationRoute = new AuthenticationRoute(auth0Util,
                 cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN),
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_SECRET),
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_KEY),
                 cfg.getString(ApplicationConfigConstants.AUTH0_MGT_API_URL),
-                cfg.getString(ApplicationConfigConstants.AUTH0_CLAIM_NAMESPACE)
+                cfg.getString(ApplicationConfigConstants.AUTH0_CLAIM_NAMESPACE),
+                userSettingsDao
         );
         post(UI_ROOT + RoutePath.AUTHENTICATION_REQUEST, authenticationRoute, new JsonTransformer());
 
@@ -667,7 +669,8 @@ public class DSMServer {
         setupPubSubPublisherRoutes(cfg);
 
         //no GET for USER_SETTINGS_REQUEST because UI gets them per AuthenticationRoute
-        patch(UI_ROOT + RoutePath.USER_SETTINGS_REQUEST, new UserSettingRoute(), new JsonTransformer());
+
+        patch(UI_ROOT + RoutePath.USER_SETTINGS_REQUEST, new UserSettingRoute(userSettingsDao), new JsonTransformer());
 
         setupJobs(cfg, kitUtil, notificationUtil, eventUtil);
 

@@ -43,5 +43,8 @@ public class UserUtil {
         return false;
     }
 
+    public static Long getUserIdInLongForm(String userId) {
+        return Long.parseLong(userId);
+    }
 
 }

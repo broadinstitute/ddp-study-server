@@ -8,6 +8,7 @@ import java.util.List;
 import lombok.NonNull;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.dto.user.AssigneeDto;
+import org.broadinstitute.dsm.db.jdbi.JdbiUserRole;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
@@ -48,11 +49,14 @@ public class UserRoleDao {
         }
         logger.info("found " + ((Collection<String>) results.resultValue).size() + " studies for user " + userId);
         List allowedStudies = (List<String>) results.resultValue;
-        SimpleResult finalResults = TransactionWrapper.withTxn(TransactionWrapper.DB.DSM, handle -> {
-            SimpleResult dbVals = new SimpleResult();
-            dbVals.resultValue = handle.attach(JdbiUserRole.class).getAllowedStudiesNameVale(allowedStudies);
-            return dbVals;
-        });
+        SimpleResult finalResults = new SimpleResult();
+        if (allowedStudies != null && allowedStudies.size() > 0) {
+            finalResults = TransactionWrapper.withTxn(TransactionWrapper.DB.DSM, handle -> {
+                SimpleResult dbVals = new SimpleResult();
+                dbVals.resultValue = handle.attach(JdbiUserRole.class).getAllowedStudiesNameVale(allowedStudies);
+                return dbVals;
+            });
+        }
         return (List<NameValue>) finalResults.resultValue;
     }
 

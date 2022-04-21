@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.db.dao.user;
+package org.broadinstitute.dsm.db.jdbi;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +21,7 @@ public interface JdbiUser extends SqlObject {
     @RegisterConstructorMapper (UserDto.class)
     UserDto getUserByUserId(@Bind ("userId") long userId);
 
-    @SqlUpdate ("")
+    @SqlUpdate ("")//todo pegah
     @GetGeneratedKeys
     long insert(@Bind ("name") String name, @Bind ("email") String email);
 
