@@ -43,14 +43,13 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
         while (participantsIterator.hasNext()) {
             Map.Entry<String, Object> entry = participantsIterator.next();
             String participantId = entry.getKey();
-            if (ParticipantUtil.isLegacyAltPid(participantId)) {
-                continue;
+            if (ParticipantUtil.isGuid(participantId)) {
+                Object participantDetails = entry.getValue();
+                transformObject(participantDetails);
+                Map<String, Object> finalMapToUpsert = generate();
+                bulkExportFacade.addDataToRequest(finalMapToUpsert, participantId);
+                batchCounter++;
             }
-            Object participantDetails = entry.getValue();
-            transformObject(participantDetails);
-            Map<String, Object> finalMapToUpsert = generate();
-            bulkExportFacade.addDataToRequest(finalMapToUpsert, participantId);
-            batchCounter++;
             if (batchCounter % BATCH_LIMIT == 0 || !participantsIterator.hasNext()) {
                 totalExported += bulkExportFacade.executeBulkUpsert();
                 bulkExportFacade.clear();

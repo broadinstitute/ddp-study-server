@@ -19,8 +19,8 @@ public class DynamicFieldsMappingMigratorTest {
     @Test
     @Ignore
     public void testExport() {
-        final String index = "participants_structured.rgp.rgp";
-        final String study = "rgp";
+        final String index = "participants_structured.cmi.angio";
+        final String study = "angio";
         List<? extends Exportable> exportables = Arrays.asList(
                 //DynamicFieldsMappingMigrator should be first in the list to make sure that mapping will be exported for first
                 new SMIDMigrator(index, study),
