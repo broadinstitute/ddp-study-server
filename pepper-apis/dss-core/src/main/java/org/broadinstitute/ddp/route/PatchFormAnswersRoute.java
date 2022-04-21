@@ -685,7 +685,7 @@ public class PatchFormAnswersRoute implements Route {
                         + " are restricted to only one row");
             }
 
-            List<Long> childIds = jdbiQuestion.findCompositeChildIdsByParentId(compositeDto.getId());
+            List<Long> childIds = jdbiQuestion.findCompositeChildIdsByParentIdAndInstanceGuid(compositeDto.getId(), instanceGuid);
             Map<String, QuestionDto> childDtos;
             try (var stream = jdbiQuestion.findQuestionDtosByIds(Set.copyOf(childIds))) {
                 childDtos = stream.collect(Collectors.toMap(QuestionDto::getStableId, Function.identity()));
