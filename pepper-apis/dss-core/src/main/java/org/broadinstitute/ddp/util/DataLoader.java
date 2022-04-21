@@ -364,13 +364,11 @@ public class DataLoader {
         AboutYouSurvey aboutYouSurvey = null;
         DatstatSurveyData surveyData = participantData.getParticipantUser().getDatstatsurveydata();
         if (surveyData != null) {
-            //log.info("survey data loaded..");
             aboutYouSurvey = surveyData.getAboutYouSurvey();
         }
         if (aboutYouSurvey == null) {
             log.warn("NO About You Survey !");
             return;
-            //watch out.. early return;
         }
 
         log.info("Populating AboutYou Survey...");

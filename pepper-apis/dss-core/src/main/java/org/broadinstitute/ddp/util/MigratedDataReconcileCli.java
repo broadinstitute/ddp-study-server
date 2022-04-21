@@ -272,7 +272,6 @@ public class MigratedDataReconcileCli {
                 }
             }
             consentSurveyName = consentSurveyName.concat("_v").concat(consentVersion);
-            //log.info("consent survey name: {} .. consent version: {}", consentSurveyName, consentVersion);
             doCompare(csvRecord, userData.get("consentsurvey"), mappingData.get(consentSurveyName));
         }
 
@@ -297,7 +296,6 @@ public class MigratedDataReconcileCli {
         for (JsonElement thisMapData : dataArray) {
             sourceFieldName = thisMapData.getAsJsonObject().get("source_field_name").getAsString();
             targetFieldName = thisMapData.getAsJsonObject().get("target_field_name").getAsString();
-            //log.info("checking source field: {} ... target field: {} ", sourceFieldName, targetFieldName);
             //load source and target values
             targetFieldValue = csvRecord.get(targetFieldName);
             JsonElement sourceDataTypeEl = thisMapData.getAsJsonObject().get("source_field_type");
@@ -309,8 +307,6 @@ public class MigratedDataReconcileCli {
             switch (sourceDataType) {
                 case "Date":
                     sourceFieldValue = getStringValueFromElement(sourceDataEl, sourceFieldName);
-                    //log.info("source field: {} value: {} targetField: {} target value: {}", sourceFieldName, sourceFieldValue,
-                    // targetFieldName, targetFieldValue);
                     if (checkNulls(sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue, csvRecord)) {
                         continue;
                     }
@@ -348,16 +344,11 @@ public class MigratedDataReconcileCli {
                         }
                     } else if (dkSet.contains(sourceFieldValue) && dkSet.contains(targetFieldValue)
                             && !sourceFieldName.contains("country")) {
-                        //dk/DK/Don't know .. consider as match & move on
-                        //log.info("source field Name: {} .. target field Name: {} .. source field Value: {} .. target field Value: {}  ",
-                        //        sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue);
                         sourceFieldValue = targetFieldValue;
                     }
 
                     //compare values
                     if (sourceFieldValue.equalsIgnoreCase(targetFieldValue)) {
-                        //printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
-                        // sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue, true);
                         log.debug("{} and {} values match. source value: {} target value: {} ",
                                 sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue);
                     } else {
@@ -380,8 +371,6 @@ public class MigratedDataReconcileCli {
                     int targetFieldIntValue = Integer.parseInt(targetFieldValue);
 
                     if (sourceFieldIntValue == targetFieldIntValue) {
-                        //printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
-                        // sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue, true);
                         log.debug("{} and {} values match. source value: {} target value: {} ",
                                 sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue);
                     } else {
@@ -582,18 +571,16 @@ public class MigratedDataReconcileCli {
 
         //iterate through groups
         JsonArray groupEls = mappingElement.getAsJsonObject().get("groups").getAsJsonArray();
-        String selectedOptionsStr = null;
+
         List<String> selectedOptions = new ArrayList<>();
         for (JsonElement group : groupEls) {
             String groupName = getStringValueFromElement(group, "source_group_name");
             //get selected picklists options
             JsonElement optionsEl = group.getAsJsonObject().get("options");
-
             JsonArray options;
             if (optionsEl != null && !optionsEl.isJsonNull()) {
                 options = optionsEl.getAsJsonArray();
                 String optionName;
-                selectedOptionsStr = null;
                 for (JsonElement optionEl : options) {
                     String option = optionEl.getAsString();
                     optionName = groupName.concat(".").concat(option);
@@ -608,6 +595,7 @@ public class MigratedDataReconcileCli {
             }
         }
 
+        String selectedOptionsStr = null;
         if (CollectionUtils.isNotEmpty(selectedOptions)) {
             Collections.sort(selectedOptions);
             selectedOptionsStr = String.join(",", selectedOptions);

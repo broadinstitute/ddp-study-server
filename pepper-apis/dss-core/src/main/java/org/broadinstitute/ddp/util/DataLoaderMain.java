@@ -191,7 +191,7 @@ public class DataLoaderMain {
 
         String dbUrl = cfg.getString(ConfigFile.DB_URL);
 
-        log.info("Initializing db pool for " + dbUrl);
+        log.info("Initializing db pool");
         LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
 
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
@@ -251,7 +251,7 @@ public class DataLoaderMain {
                 continue;
                 //not a participant data .. continue to next file.
             }
-            log.info("File Name: {} \n DATA:\n", file.getName(), data);
+            log.info("File Name: {}", file.getName());
             try {
                 participantData = gson.fromJson(data, ParticipantData.class);
 
