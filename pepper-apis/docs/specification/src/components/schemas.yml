@@ -23,7 +23,7 @@ DecimalNumber:
       type: integer
       format: int64
     value:
-      description: the unscaled value 
+      description: the unscaled value
       type: integer
       format: int64
 FormType:
@@ -1992,6 +1992,45 @@ Section:
       type: array
       items:
         $ref: '#/Block'
+Study.Audit:
+  type: object
+  required:
+    - studyGuid
+    - operatorGuid
+    - operatorEMail
+    - userGuid
+    - userEMail
+    - entityType
+    - dateTime
+    - description
+  properties:
+    studyGuid:
+      type: string
+      format: guid
+    operatorGuid:
+      type: string
+      format: guid
+    operatorEMail:
+      type: string
+      format: email
+    userGuid:
+      type: string
+      format: guid
+    userEMail:
+      type: string
+      format: email
+    entityType:
+      type: string
+      enum:
+        - USER
+        - ACTIVITY
+        - INSTANCE
+        - ANSWER
+    dateTime:
+      type: string
+      format: date-time
+    description:
+      type: string
 Study.Summary:
   type: object
   required:
@@ -2894,3 +2933,35 @@ Suggestion.ActivityInstance:
       description: Activity Instance Name, rendered, as could be seen on the dashboard
       type: string
       example: "Medical Record Release Form #2"
+DateRange:
+  type: object
+  required:
+    - from
+    - to
+  properties:
+    from:
+      type: string
+      description: the lower constraint of the range. This value is inclusive. The date format is a full, extended ISO-8601 Calendar date and time in the format `YYYY-MM-DDTHH:MM:SSZ` in the UTC time zone.
+      nullable: true
+      format: date-time
+    to:
+      type: string
+      description: the upper constraint of the range. This value is inclusive. The date format is a full, extended ISO-8601 Calendar date in the format `YYYY-MM-DD` in the UTC time zone.
+      nullable: true
+      format: date-time
+IntegerRange:
+  type: object
+  required:
+    - from
+    - to
+  properties:
+    from:
+      type: integer
+      description: the lower constraint of the range. This value is inclusive.
+      nullable: true
+      format: int64
+    to:
+      type: integer
+      description: the upper constraint of the range. This value is inclusive.
+      nullable: true
+      format: int64

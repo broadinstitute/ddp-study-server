@@ -1,0 +1,95 @@
+post:
+  operationId: studyAudit
+  tags:
+    - Audit
+  summary: StudyAudit
+  description: |
+    Search and filter the log of the study.
+  parameters:
+    - $ref: '../pepper.yml#/components/parameters/studyGuid'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            actionType:
+              description: the action
+              type: string
+              nullable: true
+              enum:
+                - CREATE
+                - READ
+                - UPDATE
+                - DELETE
+                - EXPORT
+            entityType:
+              description: the entity
+              type: string
+              nullable: true
+              enum:
+                - USER
+                - ACTIVITY
+                - INSTANCE
+                - ANSWER
+            dateRange:
+              description: the date range to filter the log
+              $ref: '../pepper.yml#/components/schemas/DateRange'
+              type: object
+              nullable: true
+            userEmail:
+              description: the subject user's e-mail
+              type: string
+              nullable: true
+            userGuid:
+              description: the subject user's GUID (must be specified in case entity type was set to User)
+              type: string
+              nullable: true
+            activityCode:
+              description: the activity code (must be specified in case entity type was set to Activity)
+              nullable: true
+              type: string
+            questionStableId:
+              description: the question stable id (must be specified in case entity type was set to Answer)
+              nullable: true
+              type: string
+            limitation:
+              description: the limitation constraint
+              $ref: '../pepper.yml#/components/schemas/IntegerRange'
+              type: object
+              nullable: true
+            sorting:
+              description: the sorting mode
+              nullable: true
+              type: object
+              properties:
+                column:
+                  description: the column name
+                  nullable: true
+                  type: string
+                direction:
+                  description: the sorting direction
+                  nullable: true
+                  type: string
+                  enum:
+                    - ASCENDING
+                    - DESCENDING
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/StudyAuditResponse'
+    400:
+      description: invitation not valid
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../pepper.yml#/components/schemas/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - INVALID_STUDY
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
