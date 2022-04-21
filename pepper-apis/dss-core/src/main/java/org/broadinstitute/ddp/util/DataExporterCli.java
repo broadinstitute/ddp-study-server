@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.util;
 
+import static org.broadinstitute.ddp.export.ExportUtil.hideProtectedValue;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -29,10 +31,12 @@ import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.StudyDataAliasDao;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.export.ActivityExtract;
 import org.broadinstitute.ddp.export.DataExporter;
+import org.broadinstitute.ddp.model.es.StudyDataAlias;
 import org.broadinstitute.ddp.model.study.Participant;
 
 /**
@@ -171,6 +175,8 @@ public class DataExporterCli {
             System.out.println("[export] extracting participants...");
             long start = System.currentTimeMillis();
             List<Participant> participants = exporter.extractParticipantDataSet(handle, studyDto);
+            List<StudyDataAlias> studyDataAliases = handle.attach(StudyDataAliasDao.class).findAliasesByStudy(studyDto.getGuid());
+            hideProtectedAnswerValues(participants, studyDataAliases);
             long elapsed = System.currentTimeMillis() - start;
             System.out.println(String.format("[export] took %d ms (%.2f s)", elapsed, elapsed / 1000.0));
 
@@ -200,6 +206,14 @@ public class DataExporterCli {
         });
         long total = System.currentTimeMillis() - begin;
         System.out.println(String.format("[export] entire process took %.2f mins", total / 1000.0 / 60.0));
+    }
+
+    private void hideProtectedAnswerValues(List<Participant> participants, List<StudyDataAlias> studyDataAliases) {
+        for (Participant participant : participants) {
+            for (StudyDataAlias hiddenAlias : studyDataAliases) {
+                hideProtectedValue(participant, hiddenAlias);
+            }
+        }
     }
 
     private void runEsExport(String studyGuid, Set<String> participantGuids, boolean exportStructuredDocument) {

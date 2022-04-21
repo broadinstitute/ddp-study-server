@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.UserAnnouncementDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
@@ -11,16 +12,12 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class AnnouncementEventAction extends EventAction {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AnnouncementEventAction.class);
-
-    private long messageTemplateId;
-    private boolean isPermanent;
-    private boolean createForProxies;
+    private final long messageTemplateId;
+    private final boolean isPermanent;
+    private final boolean createForProxies;
 
     public AnnouncementEventAction(EventConfiguration eventConfiguration, EventConfigurationDto dto) {
         super(eventConfiguration, dto);
@@ -49,17 +46,17 @@ public class AnnouncementEventAction extends EventAction {
                 if (!governances.isEmpty()) {
                     for (var governance : governances) {
                         long id = announcementDao.insert(governance.getProxyUserId(), studyId, messageTemplateId, isPermanent);
-                        LOG.info("Created new announcement with id {} for proxy id {} (participant id {}) and study id {}",
+                        log.info("Created new announcement with id {} for proxy id {} (participant id {}) and study id {}",
                                 id, governance.getProxyUserId(), participantId, studyId);
                     }
                 } else {
-                    LOG.error("Participant with id {} has no active proxies in study id {}."
+                    log.error("Participant with id {} has no active proxies in study id {}."
                                     + " Announcement with event configuration id {} will not be created.",
                             participantId, studyId, eventConfiguration.getEventConfigurationId());
                 }
             } else {
                 long id = announcementDao.insert(participantId, studyId, messageTemplateId, isPermanent);
-                LOG.info("Created new announcement with id {} for participant id {} and study id {}", id, participantId, studyId);
+                log.info("Created new announcement with id {} for participant id {} and study id {}", id, participantId, studyId);
             }
         } catch (Exception e) {
             throw new DDPException(String.format(

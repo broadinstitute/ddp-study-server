@@ -21,16 +21,13 @@ import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.typesafe.config.Config;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * A helper for reading contents of data files. This encapsulates complexity of working with buckets versus filesystem.
  */
+@Slf4j
 class FileReader {
-
-    private static final Logger LOG = LoggerFactory.getLogger(FileReader.class);
-
     private final boolean useBucket;
     private final String mailingListFilePrefix;
     private final String participantFilePrefix;
@@ -79,14 +76,14 @@ class FileReader {
             if (bucket == null) {
                 throw new LoaderException("Bucket does not exist: " + bucketName);
             } else {
-                LOG.info("Using bucket for source files: gs://{}/{}", bucketName, bucketDir);
+                log.info("Using bucket for source files: gs://{}/{}", bucketName, bucketDir);
             }
         } else {
             File folder = new File(localDir);
             if (!folder.exists() || !folder.isDirectory()) {
                 throw new LoaderException("Local directory does not exist: " + localDir);
             } else {
-                LOG.info("Using local directory for source files: {}", localDir);
+                log.info("Using local directory for source files: {}", localDir);
             }
         }
     }
