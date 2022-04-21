@@ -164,13 +164,14 @@ public class PutFormAnswersRoute implements Route {
                     List<ActivityValidationFailure> validationFailures = actValidationService.validate(
                             handle, interpreter, userGuid, operatorGuid, instanceGuid, form.getCreatedAtMillis(),
                             form.getActivityId(), preferredUserLangDto.getId());
-                    if (!validationFailures.isEmpty()) {
+                    if (validationFailures.isEmpty()) {
                         //check if study has errorPresentStatus enabled
                         StudyDto studyDto = new JdbiUmbrellaStudyCached(handle).findByStudyGuid(studyGuid);
                         if (studyDto.isErrorPresentStatusEnabled()) {
                             instanceStatusDao.updateOrInsertStatus(instanceDto, InstanceStatusType.ERROR_PRESENT,
                                     Instant.now().toEpochMilli(), operatorUser, participantUser);
-                        } //todo still throw error ?? is status update committed ??
+                            return new PutAnswersResponse(WorkflowResponse.unknown());
+                        }
 
                         String msg = "Activity validation failed";
                         List<String> validationErrorSummaries = validationFailures
