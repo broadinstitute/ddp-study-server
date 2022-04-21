@@ -48,6 +48,7 @@ public class BulkExportFacade {
                         .filter(this::isSuccessfullyExported)
                         .count();
                 logger.info(String.format("%s participants data has been successfully upserted", successfullyExported));
+                logger.warn(bulkResponse.buildFailureMessage());
                 return successfullyExported;
             }
         } catch (IOException e) {
