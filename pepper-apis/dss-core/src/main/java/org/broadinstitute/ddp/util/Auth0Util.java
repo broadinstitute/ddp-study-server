@@ -28,11 +28,12 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import com.typesafe.config.Config;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.fluent.Request;
-import org.apache.http.client.fluent.Response;
 import org.apache.http.entity.ContentType;
 import org.apache.http.util.EntityUtils;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
@@ -45,12 +46,9 @@ import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.json.auth0.Auth0CallResponse;
 import org.broadinstitute.ddp.security.JWTConverter;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class Auth0Util {
-    private static final Logger LOG = LoggerFactory.getLogger(Auth0Util.class);
-
     public static final String USERNAME_PASSWORD_AUTH0_CONN_NAME = "Username-Password-Authentication";
     private static final String HTTPS_PREFIX = "https://";
     public static final String REFRESH_ENDPOINT = "oauth/token";
@@ -88,7 +86,7 @@ public class Auth0Util {
             if (jwkProvider == null) {
                 jwkProvider = new JwkProviderBuilder(auth0Domain).cached(100, 3L, TimeUnit.HOURS).build();
                 jwkProviderMap.put(auth0Domain, jwkProvider);
-                LOG.info("Created new jwk provider for {} ", auth0Domain);
+                log.info("Created new jwk provider for {} ", auth0Domain);
             }
         }
         DecodedJWT verifiedJWT = JWTConverter.verifyDDPToken(idToken, jwkProvider);
@@ -116,7 +114,7 @@ public class Auth0Util {
             studyGuid = enrollmentList.get(0).getStudyGuid();
             //todo need to revisit to handle users registered in multiple studies
         } else {
-            LOG.warn("User : {} not enrolled in any study ", userGuid);
+            log.warn("User : {} not enrolled in any study ", userGuid);
             return false;
         }
 
@@ -125,7 +123,7 @@ public class Auth0Util {
             isValid = verifyAuth0UserCredentials(auth0ClientId, auth0TenantDto.getDomain(),
                     userName, password, studyGuid);
         } catch (IOException e) {
-            LOG.warn("Attempt to verify auth0 user: {} by user credentials failed with error: {}", userGuid, e);
+            log.warn("Attempt to verify auth0 user: {} by user credentials failed with error: {}", userGuid, e);
         }
         return isValid;
     }
@@ -138,18 +136,17 @@ public class Auth0Util {
                 new UserLoginPayload(auth0ClientId, userName, password, studyGuid);
         Request request = Request.Post(auth0Domain + Auth0Util.REFRESH_ENDPOINT)
                 .bodyString(new Gson().toJson(payload), ContentType.APPLICATION_JSON);
-        boolean isValid = request.execute().handleResponse(httpResponse -> {
+        return request.execute().handleResponse(httpResponse -> {
             String responseString = EntityUtils.toString(httpResponse.getEntity());
             int status = httpResponse.getStatusLine().getStatusCode();
             if (status == 200) {
                 return true;
             } else {
-                LOG.warn("Attempt to verify user: {} by user credentials failed with status: {} : Error: {}",
+                log.warn("Attempt to verify user: {} by user credentials failed with status: {} : Error: {}",
                         userName, status, responseString);
                 return false;
             }
         });
-        return isValid;
     }
 
     /**
@@ -163,24 +160,24 @@ public class Auth0Util {
     private static Auth0CallResponse updateUserData(ManagementAPI mgmtAPI, UserDto userDto, User newUserData) {
         // Calling Auth0
         String userGuid = userDto.getUserGuid();
-        LOG.info("Trying to update the data for the user {}. Auth0 user id = {}", userGuid, userDto.getAuth0UserId());
-        User response = null;
+        log.info("Trying to update the data for the user {}. Auth0 user id = {}", userGuid, userDto.getAuth0UserId());
+
         try {
-            response = mgmtAPI.users().update(userDto.getAuth0UserId(), newUserData).execute();
+            mgmtAPI.users().update(userDto.getAuth0UserId(), newUserData).execute();
         } catch (APIException e) {
             // A specific Auth0 API issue occurred. Relay the status code
             String errMsg = "Auth0 API call failed with the code " + e.getStatusCode() + ". Reason: " + e.getMessage()
                     + ". Description: " + e.getDescription();
-            LOG.error(errMsg + ". User GUID: {}, Auth0 user id {}", userGuid, userDto.getAuth0UserId(), e);
+            log.error(errMsg + ". User GUID: {}, Auth0 user id {}", userGuid, userDto.getAuth0UserId(), e);
             return new Auth0CallResponse(e.getStatusCode(), errMsg);
         } catch (Auth0Exception e) {
             // An unspecified Auth0 API issue occurred. Return HTTP 500
             String errMsg = "Auth0 API call failed. Reason: " + e.getMessage();
-            LOG.error(errMsg + ". User GUID: {}, Auth0 user id {}", userGuid, userDto.getAuth0UserId(), e);
+            log.error(errMsg + ". User GUID: {}, Auth0 user id {}", userGuid, userDto.getAuth0UserId(), e);
             return new Auth0CallResponse(500, errMsg);
         }
         // All fine
-        LOG.info("Data for the user {} (Auth0 user id {}) was updated successfully", userGuid, userDto.getAuth0UserId());
+        log.info("Data for the user {} (Auth0 user id {}) was updated successfully", userGuid, userDto.getAuth0UserId());
         return new Auth0CallResponse(200, null);
     }
 
@@ -204,7 +201,7 @@ public class Auth0Util {
         if (isVerified != null) {
             payload.setEmailVerified(isVerified);
         }
-        LOG.info("Trying to set the email to {} for the user {}", newEmail, userDto.getUserGuid());
+        log.info("Trying to set the email to {} for the user {}", newEmail, userDto.getUserGuid());
         return updateUserData(mgmtAPI, userDto, payload);
     }
 
@@ -223,7 +220,7 @@ public class Auth0Util {
     ) {
         User payload = new User();
         payload.setPassword(newPassword);
-        LOG.info("Trying to set the password for the user {}", userDto.getUserGuid());
+        log.info("Trying to set the password for the user {}", userDto.getUserGuid());
         return updateUserData(mgmtAPI, userDto, payload);
     }
 
@@ -241,12 +238,10 @@ public class Auth0Util {
         Request request = Request.Post(baseUrl + REFRESH_ENDPOINT)
                 .bodyString(new Gson().toJson(payload), ContentType.APPLICATION_JSON);
 
-        Response response = null;
-        String responseBody = null;
+        String responseBody;
         try {
-            response = request.execute();
             AtomicBoolean responseOk = new AtomicBoolean(false);
-            responseBody = response.handleResponse(httpResponse -> {
+            responseBody = request.execute().handleResponse(httpResponse -> {
                 responseOk.set(200 == httpResponse.getStatusLine().getStatusCode());
                 return EntityUtils.toString(httpResponse.getEntity());
             });
@@ -271,17 +266,14 @@ public class Auth0Util {
                 .bodyString(new Gson().toJson(payload), ContentType.APPLICATION_JSON);
 
         try {
-            return request.execute().handleResponse(new ResponseHandler<RefreshTokenResponse>() {
-                @Override
-                public RefreshTokenResponse handleResponse(HttpResponse httpResponse) throws IOException {
-                    int status = httpResponse.getStatusLine().getStatusCode();
-                    if (status == 200) {
-                        return new Gson().fromJson(EntityUtils.toString(httpResponse.getEntity()),
-                                RefreshTokenResponse.class);
-                    } else {
-                        throw new RuntimeException("Attempt to refresh token returned " + status + ":"
-                                + EntityUtils.toString(httpResponse.getEntity()));
-                    }
+            return request.execute().handleResponse(httpResponse -> {
+                int status = httpResponse.getStatusLine().getStatusCode();
+                if (status == 200) {
+                    return new Gson().fromJson(EntityUtils.toString(httpResponse.getEntity()),
+                            RefreshTokenResponse.class);
+                } else {
+                    throw new RuntimeException("Attempt to refresh token returned " + status + ":"
+                            + EntityUtils.toString(httpResponse.getEntity()));
                 }
             });
         } catch (IOException e) {
@@ -349,7 +341,7 @@ public class Auth0Util {
                     results.put(user.getEmail(), user.getId());
                 }
             } catch (Auth0Exception e) {
-                LOG.error("Error while retrieving auth0 user ids via email lookup, continuing pagination", e);
+                log.error("Error while retrieving auth0 user ids via email lookup, continuing pagination", e);
             }
         }
 
@@ -376,8 +368,6 @@ public class Auth0Util {
         Map<String, String> results = new HashMap<>();
         List<String> ids = new ArrayList<>(auth0UserIds);
         ManagementAPI auth0Mgmt = new ManagementAPI(baseUrl, mgmtApiToken);
-        String connection = auth0Connection == null || auth0Connection.isBlank()
-                ? USERNAME_PASSWORD_AUTH0_CONN_NAME : auth0Connection;
 
         // IMPORTANT: In order to satisfy certain limits and restrictions, especially URL length limits, we "pagination"
         // through the auth0UserIds. We had issues with 100 auth0UserIds, so 50 in the Lucene query seems like a safe bet.
@@ -401,7 +391,7 @@ public class Auth0Util {
                     results.put(user.getId(), user.getEmail());
                 }
             } catch (Auth0Exception e) {
-                LOG.error("Error while retrieving auth0 user emails, continuing pagination", e);
+                log.error("Error while retrieving auth0 user emails, continuing pagination", e);
             }
         }
 
@@ -432,8 +422,7 @@ public class Auth0Util {
         user.setEmail(emailId);
         user.setPassword(pwd);
         user.setConnection(USERNAME_PASSWORD_AUTH0_CONN_NAME);
-        User createdUser = auth0Mgmt.users().create(user).execute();
-        return createdUser;
+        return auth0Mgmt.users().create(user).execute();
     }
 
     /**
@@ -443,7 +432,7 @@ public class Auth0Util {
     public static void deleteUserFromAuth0(Handle handle, Config cfg, String email) throws Auth0Exception {
         Config auth0Config = cfg.getConfig(ConfigFile.AUTH0);
         String auth0Domain = auth0Config.getString(ConfigFile.DOMAIN);
-        LOG.info("Domain : {} ", auth0Domain);
+        log.info("Domain : {} ", auth0Domain);
 
         Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByDomain(auth0Domain);
         var mgmtClient = new Auth0ManagementClient(
@@ -480,8 +469,9 @@ public class Auth0Util {
      * Wrapper class around {@link User} and {@link TokenHolder} that
      * keeps track of password, user guid, and post-logged-in token.
      */
+    @Data
+    @AllArgsConstructor
     public static class TestingUser {
-
         private Long userId;
         private String userGuid;
         private String userHruid;
@@ -496,76 +486,9 @@ public class Auth0Util {
             this.email = email;
             this.password = password;
         }
-
-        public TestingUser(Long userId, String userGuid, String userHruid, String auth0Id, String email, String password, String token) {
-            this.userId = userId;
-            this.userGuid = userGuid;
-            this.userHruid = userHruid;
-            this.auth0Id = auth0Id;
-            this.email = email;
-            this.password = password;
-            this.token = token;
-        }
-
-        public Long getUserId() {
-            return userId;
-        }
-
-        public void setUserId(Long userId) {
-            this.userId = userId;
-        }
-
-        public String getUserGuid() {
-            return userGuid;
-        }
-
-        public void setUserGuid(String userGuid) {
-            this.userGuid = userGuid;
-        }
-
-        public String getUserHruid() {
-            return userHruid;
-        }
-
-        public void setUserHruid(String userHruid) {
-            this.userHruid = userHruid;
-        }
-
-        public String getAuth0Id() {
-            return auth0Id;
-        }
-
-        public void setAuth0Id(String auth0Id) {
-            this.auth0Id = auth0Id;
-        }
-
-        public String getEmail() {
-            return email;
-        }
-
-        public void setEmail(String email) {
-            this.email = email;
-        }
-
-        public String getPassword() {
-            return password;
-        }
-
-        public void setPassword(String password) {
-            this.password = password;
-        }
-
-        public String getToken() {
-            return token;
-        }
-
-        public void setToken(String token) {
-            this.token = token;
-        }
     }
 
     private static class RefreshTokenPayload {
-
         @SerializedName("grant_type")
         private String grantType = "refresh_token";
 
@@ -588,8 +511,8 @@ public class Auth0Util {
         }
     }
 
+    @Getter
     public static class RefreshTokenResponse {
-
         @SerializedName("id_token")
         private String idToken;
 
@@ -613,23 +536,6 @@ public class Auth0Util {
             this.accessToken = accessToken;
             this.expiresIn = expiresIn;
         }
-
-        public String getAccessToken() {
-            return accessToken;
-        }
-
-        public String getIdToken() {
-            return idToken;
-        }
-
-        public int getExpiresIn() {
-            return expiresIn;
-        }
-
-        public String getRefreshToken() {
-            return refreshToken;
-        }
-
     }
 
     public static class RequestRefreshTokenPayload {
@@ -665,7 +571,6 @@ public class Auth0Util {
     }
 
     private static class UserLoginPayload {
-
         @SerializedName("username")
         private String userName;
 
@@ -682,7 +587,7 @@ public class Auth0Util {
         private String studyGuid;
 
         public UserLoginPayload(String auth0ClientId, String userName, String password, String studyGuid) {
-            clientId = auth0ClientId;
+            this.clientId = auth0ClientId;
             this.userName = userName;
             this.password = password;
             this.studyGuid = studyGuid;

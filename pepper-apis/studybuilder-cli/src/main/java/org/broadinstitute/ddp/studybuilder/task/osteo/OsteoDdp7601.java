@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.studybuilder.task;
+package org.broadinstitute.ddp.studybuilder.task.osteo;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -20,6 +20,7 @@ import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.event.activityinstancecreation.ActivityInstanceCreationEventSyncProcessorDefault;
 import org.broadinstitute.ddp.service.ActivityInstanceCreationService;
 import org.broadinstitute.ddp.studybuilder.EventBuilder;
+import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
@@ -77,7 +78,9 @@ public class OsteoDdp7601 implements CustomTask {
         for (var user : users) {
             consentIds.addAll(user.getConsents().keySet());
         }
-        sqlHelper.setInstancesToHide(consentIds);
+        if (!consentIds.isEmpty()) {
+            sqlHelper.setInstancesToHide(consentIds);
+        }
         for (var consentId : consentIds) {
             jdbiActivity.updateMaxInstancesPerUserById(consentId, null);
         }
