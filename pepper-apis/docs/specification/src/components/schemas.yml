@@ -686,6 +686,7 @@ Block:
       CONTENT: '#/Block.Content'
       GROUP: '#/Block.Grouped'
       QUESTION: '#/Block.Question'
+      TABULAR: '#/Block.Tabular'
   required:
     - blockType
     - blockGuid
@@ -861,6 +862,77 @@ Block.Content:
           type: string
         body:
           type: string
+Block.Tabular:
+  allOf:
+    - $ref: '#/Block'
+    - type: object
+      required:
+        - columnsCount
+        - headers
+        - content
+      properties:
+        blockType:
+          type: string
+          default: TABULAR
+          enum:
+            - TABULAR
+        columnsCount:
+          type: integer
+          minimum: 1
+          description: The total number of the tabular component columns.
+        headers:
+          type: array
+          items:
+            $ref: '#/Block.Tabular.Header'
+        content:
+          type: array
+          items:
+            $ref: '#/Block.Tabular.ContentItem'
+
+Block.Tabular.Header:
+  type: object
+  required:
+    - label
+    - startColumn
+    - endColumn
+  properties:
+    label:
+      type: string
+    startColumn:
+      type: integer
+      minimum: 0
+    endColumn:
+      type: integer
+      minimum: 0
+
+Block.Tabular.ContentItem:
+  type: object
+  required:
+    - mainQuestion
+  properties:
+    firstColumnBooleanQuestion:
+      allOf:
+        - $ref: '#/Question.Boolean'
+        - description: A boolean question that can be situated in first cell of a row as to enable/disable the whole row
+        - nullable: true
+    questionLabel:
+      type: string
+      description: An alternative label for a question row (instead of the question prompt)
+    mainQuestion:
+      $ref: '#/Question'
+    compositeQuestionSettings:
+      type: object
+      required:
+        - spreadChildren
+      properties:
+        spreadChildren:
+          type: boolean
+          description: whether every child of a composite question should take a separate cell
+          default: true
+        internalContent:
+          type: string
+          description: a content that can be between composite question children cells ('or', '/', etc.)
+
 Block.Visibility:
   type: object
   required:
