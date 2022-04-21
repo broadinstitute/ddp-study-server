@@ -139,9 +139,14 @@ public class ParticipantData {
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceId(ddpInstanceId).orElseThrow();
         String participantGuid = Exportable.getParticipantGuid(ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
 
-        UpsertPainlessFacade.of(DBConstants.DDP_PARTICIPANT_DATA_ALIAS, participantData, ddpInstanceDto, "participantDataId", "_id",
-                        participantGuid)
-                .export();
+        try {
+            UpsertPainlessFacade.of(DBConstants.DDP_PARTICIPANT_DATA_ALIAS, participantData, ddpInstanceDto, "participantDataId", "_id",
+                            participantGuid)
+                    .export();
+        } catch (Exception e) {
+            logger.error(String.format("Error inserting participant data for guid: %s in ElasticSearch", participantGuid));
+            e.printStackTrace();
+        }
 
         return createdDataKey;
     }

@@ -3,10 +3,13 @@ package org.broadinstitute.dsm.model.elastic.migration;
 import static org.broadinstitute.dsm.model.elastic.Util.DOC;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -35,17 +38,26 @@ public class BulkExportFacade {
         return updateRequest;
     }
 
-    public void executeBulkUpsert() {
+    public long executeBulkUpsert() {
         RestHighLevelClient client = ElasticSearchUtil.getClientInstance();
         try {
-            logger.info("attempting to upsert participants");
+            logger.info(String.format("attempting to upsert data for %s participants", bulkRequest.requests().size()));
             if (bulkRequest.requests().size() > 0) {
-                client.bulk(bulkRequest, RequestOptions.DEFAULT);
-                logger.info(bulkRequest.requests().size() + " participants have successfully upserted");
+                BulkResponse bulkResponse = client.bulk(bulkRequest, RequestOptions.DEFAULT);
+                long successfullyExported = Arrays.stream(bulkResponse.getItems())
+                        .filter(this::isSuccessfullyExported)
+                        .count();
+                logger.info(String.format("%s participants data has been successfully upserted", successfullyExported));
+                return successfullyExported;
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return 0;
+    }
+
+    private boolean isSuccessfullyExported(BulkItemResponse response) {
+        return !response.isFailed();
     }
 
 

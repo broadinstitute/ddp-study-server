@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="nghurtch" id="rgpForm">
+
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='rgp')"></column>
+            <column name="field_type" value="RGP_PARTICIPANTS"/>
+            <column name="column_name" value="DATSTAT_LASTMODIFIED"/>
+            <column name="column_display" value="DATSTAT_LASTMODIFIED"/>
+            <column name="display_type" value="DATE"/>
+            <column name="deleted" value="1"/>
+        </insert>
+
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='rgp')"></column>
+            <column name="field_type" value="RGP_PARTICIPANTS"/>
+            <column name="column_name" value="DDP_CREATED"/>
+            <column name="column_display" value="DDP_CREATED"/>
+            <column name="display_type" value="DATE"/>
+            <column name="deleted" value="1"/>
+        </insert>
+
+    </changeSet>
+</databaseChangeLog>

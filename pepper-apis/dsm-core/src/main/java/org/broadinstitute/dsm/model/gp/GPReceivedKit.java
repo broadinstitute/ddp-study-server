@@ -34,7 +34,7 @@ public class GPReceivedKit {
         BSPKitDao bspKitDao = new BSPKitDao();
         InstanceSettingsDto instanceSettingsDto = instanceSettings.getInstanceSettings(bspKitQueryResult.getInstanceName());
         instanceSettingsDto.getKitBehaviorChange().flatMap(
-                kitBehavior -> kitBehavior.stream().filter(o -> o.getName().equals(InstanceSettings.INSTANCE_SETTING_RECEIVED)).findFirst())
+                        kitBehavior -> kitBehavior.stream().filter(o -> o.getName().equals(InstanceSettings.INSTANCE_SETTING_RECEIVED)).findFirst())
                 .ifPresentOrElse(received -> {
                     Map<String, Map<String, Object>> participants = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance,
                             ElasticSearchUtil.BY_GUID + bspKitQueryResult.getDdpParticipantId());
@@ -60,8 +60,8 @@ public class GPReceivedKit {
                         updateKitAndExport(kitLabel, bspKitDao, bspKitQueryResult, triggerDDP, receiver);
                     }
                 }, () -> {
-                        updateKitAndExport(kitLabel, bspKitDao, bspKitQueryResult, true, receiver);
-                    });
+                    updateKitAndExport(kitLabel, bspKitDao, bspKitQueryResult, true, receiver);
+                });
 
         String bspParticipantId = bspKitQueryResult.getBspParticipantId();
         String bspSampleId = bspKitQueryResult.getBspSampleId();
@@ -91,15 +91,15 @@ public class GPReceivedKit {
         kitRequestShipping.setReceiveDate(receivedDate);
         kitRequestShipping.setKitLabel(kitLabel);
 
-        try {
-            DDPInstanceDto ddpInstanceDto =
-                    new DDPInstanceDao().getDDPInstanceByInstanceName(maybeBspKitQueryResult.getInstanceName()).orElseThrow();
+        DDPInstanceDto ddpInstanceDto =
+                new DDPInstanceDao().getDDPInstanceByInstanceName(maybeBspKitQueryResult.getInstanceName()).orElseThrow();
 
+        try {
             UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.KIT_LABEL,
                     ESObjectConstants.KIT_LABEL, kitLabel).export();
         } catch (Exception e) {
-            logger.error("Failed to update kit receiving to ES for kit w/ label " + kitLabel
-                    + " for pt " + kitRequestShipping.getCollaboratorParticipantId() );
+            logger.error(String.format("Error updating receive date of kit with label: %s in ElasticSearch", kitLabel));
+            e.printStackTrace();
         }
     }
 
