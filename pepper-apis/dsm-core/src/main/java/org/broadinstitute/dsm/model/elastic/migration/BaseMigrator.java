@@ -74,7 +74,7 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
             String guid = entry.getValue();
             participantRecords.put(guid, obj);
             participantRecords.remove(legacyAltPid, obj);
-        }   
+        }
         return participantRecords;
     }
 

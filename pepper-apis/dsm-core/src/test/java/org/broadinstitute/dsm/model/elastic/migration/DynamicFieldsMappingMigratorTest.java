@@ -17,6 +17,7 @@ public class DynamicFieldsMappingMigratorTest {
     }
 
     @Test
+    @Ignore
     public void testExport() {
         final String index = "participants_structured.cmi.angio";
         final String study = "angio";
