@@ -2,6 +2,9 @@ package org.broadinstitute.ddp.equation;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import one.util.streamex.EntryStream;
+import org.broadinstitute.ddp.equation.containers.AbstractVector;
+import org.broadinstitute.ddp.equation.containers.MultiValueVector;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -23,6 +26,10 @@ public final class EquationEvaluatorBuilder {
     }
 
     public EquationEvaluator build() {
-        return new EquationEvaluator(variables);
+        return new EquationEvaluator(EntryStream.of(variables).mapValues(this::toAbstractVector).toMap());
+    }
+
+    private AbstractVector toAbstractVector(final List<BigDecimal> values) {
+        return new MultiValueVector(values);
     }
 }

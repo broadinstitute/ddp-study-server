@@ -2,10 +2,14 @@ package org.broadinstitute.ddp.equation.compute;
 
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.broadinstitute.ddp.equation.EquationEvaluator;
+import org.broadinstitute.ddp.equation.containers.AbstractVector;
+import org.broadinstitute.ddp.equation.containers.MultiValueVector;
+import org.broadinstitute.ddp.equation.containers.SingleValueVector;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -79,8 +83,7 @@ public class EquationEvaluationTest {
                 .withVariableValues("y", Collections.singletonList(BigDecimal.valueOf(2.0)))
                 .build();
 
-        assertEquals(Collections.singletonList(new BigDecimal("16.69")),
-                evaluator.evaluate("3.14 + 2.71 * (x + y ^ 2)"));
+        assertEquals(expected("16.69"), evaluator.evaluate("3.14 + 2.71 * (x + y ^ 2)"));
     }
 
     @Test
@@ -91,7 +94,38 @@ public class EquationEvaluationTest {
         assertEquals(expected(BigDecimal.TEN), evaluate("(2 + 3) * (5 - 3)"));
     }
 
-    private static void assertEquals(final List<BigDecimal> expected, final List<BigDecimal> actual) {
+    @Test
+    public void testEvaluateWithVector() {
+        final EquationEvaluator evaluator = EquationEvaluator.builder()
+                .withVariableValues("x", Arrays.asList(BigDecimal.ZERO, null, BigDecimal.valueOf(5)))
+                .build();
+
+        assertEquals(expected(Arrays.asList(BigDecimal.ZERO, null, BigDecimal.TEN)),
+                evaluator.evaluate("x * 2.0"));
+    }
+
+    @Test
+    public void testEvaluateWithTwoVectors() {
+        final EquationEvaluator evaluator = EquationEvaluator.builder()
+                .withVariableValues("x", Arrays.asList(BigDecimal.ZERO, null, BigDecimal.ONE))
+                .withVariableValues("y", Arrays.asList(BigDecimal.ONE, BigDecimal.ZERO, BigDecimal.TEN))
+                .build();
+
+        assertEquals(expected(Arrays.asList(BigDecimal.ZERO, null, BigDecimal.TEN)),
+                evaluator.evaluate("x * y"));
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testEvaluateWithVectorsOfIncompatibleSize() {
+        final EquationEvaluator evaluator = EquationEvaluator.builder()
+                .withVariableValues("x", Arrays.asList(BigDecimal.ZERO, BigDecimal.ONE))
+                .withVariableValues("y", Arrays.asList(BigDecimal.ONE, BigDecimal.ZERO, BigDecimal.TEN))
+                .build();
+
+        evaluator.evaluate("x * y");
+    }
+
+    private static void assertEquals(final AbstractVector expected, final AbstractVector actual) {
         Assert.assertEquals(expected.size(), actual.size());
 
         for (int i = 0; i < expected.size(); i++) {
@@ -100,18 +134,28 @@ public class EquationEvaluationTest {
     }
 
     private static void assertEquals(final BigDecimal expected, final BigDecimal actual) {
+        if (expected == null && actual == null) {
+            return;
+        }
+
+        Assert.assertNotNull(actual);
+        Assert.assertNotNull(expected);
         Assert.assertEquals(0, expected.compareTo(actual));
     }
 
-    private List<BigDecimal> evaluate(final String expression) {
+    private AbstractVector evaluate(final String expression) {
         return EquationEvaluator.builder().build().evaluate(expression);
     }
 
-    private List<BigDecimal> expected(final String value) {
+    private AbstractVector expected(final String value) {
         return expected(new BigDecimal(value));
     }
 
-    private List<BigDecimal> expected(final BigDecimal value) {
-        return Collections.singletonList(value);
+    private AbstractVector expected(final BigDecimal value) {
+        return new SingleValueVector(value);
+    }
+
+    private AbstractVector expected(final List<BigDecimal> values) {
+        return new MultiValueVector(values);
     }
 }

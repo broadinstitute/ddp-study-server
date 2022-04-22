@@ -20,7 +20,7 @@ import java.util.Optional;
 
 @Slf4j
 @AllArgsConstructor
-public class QuestionEvaluator {
+public final class QuestionEvaluator {
     private final Map<String, EquationResponse> values = new HashMap<>();
     private final Handle handle;
     private final String instanceGuid;
@@ -37,7 +37,8 @@ public class QuestionEvaluator {
         addValue(QuestionType.EQUATION, equation.getStableId(), EquationEvaluator.builder()
                 .withVariablesValues(getVariablesValuesMap())
                 .build()
-                .evaluate(equation.getExpression()));
+                .evaluate(equation.getExpression())
+                .toList());
 
         return values.get(equation.getStableId());
     }
@@ -78,32 +79,38 @@ public class QuestionEvaluator {
         addValue(question.get().getType(), variable, answers);
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private void addValue(final QuestionType type, final String variable, final List<?> values) {
-        final var answers = (List<Answer>) values;
         switch (type) {
             case NUMERIC:
+                final var numericValues = (List<Answer>) values;
                 this.values.put(variable, new EquationResponse(variable,
-                        StreamEx.of(answers)
+                        StreamEx.of(numericValues)
                                 .map(Answerable::getValue)
                                 .map(this::toLong)
                                 .map(this::toDecimalDef)
                                 .toList()));
                 return;
             case PICKLIST:
+                final var picklistValues = (List<Answer>) values;
                 this.values.put(variable, new EquationResponse(variable,
-                        StreamEx.of(answers)
+                        StreamEx.of(picklistValues)
                                 .map(Answerable::getValue)
                                 .map(this::toString)
                                 .map(this::toDecimalDef)
                                 .toList()));
                 return;
             case EQUATION:
-                var list = (List<BigDecimal>) values;
-                this.values.put(variable, new EquationResponse(variable, StreamEx.of(list).map(this::toDecimalDef).toList()));
+                final var equationValues = (List<BigDecimal>) values;
+                this.values.put(variable, new EquationResponse(variable,
+                        StreamEx.of(equationValues)
+                                .map(this::toDecimalDef)
+                                .toList()));
                 return;
             case DECIMAL:
+                final var decimalValues = (List<Answer>) values;
                 this.values.put(variable, new EquationResponse(variable,
-                        StreamEx.of(answers)
+                        StreamEx.of(decimalValues)
                                 .map(Answerable::getValue)
                                 .map(this::toDecimalDef)
                                 .toList()));
