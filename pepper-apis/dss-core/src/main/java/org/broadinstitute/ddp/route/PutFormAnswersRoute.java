@@ -164,7 +164,7 @@ public class PutFormAnswersRoute implements Route {
                     List<ActivityValidationFailure> validationFailures = actValidationService.validate(
                             handle, interpreter, userGuid, operatorGuid, instanceGuid, form.getCreatedAtMillis(),
                             form.getActivityId(), preferredUserLangDto.getId());
-                    if (validationFailures.isEmpty()) {
+                    if (!validationFailures.isEmpty()) {
                         //check if study has errorPresentStatus enabled
                         StudyDto studyDto = new JdbiUmbrellaStudyCached(handle).findByStudyGuid(studyGuid);
                         if (studyDto.isErrorPresentStatusEnabled()) {
