@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 import com.opencsv.CSVWriter;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -39,8 +40,6 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * To run:
@@ -53,9 +52,8 @@ import org.slf4j.LoggerFactory;
  * <p>Important properties to have in config file:
  * dbUrl, maxConnections, requireDefaultGcpCredentials, googleProjectId, pdfArchiveBucket
  */
+@Slf4j
 public class PdfBootstrapperCli {
-
-    private static final Logger LOG = LoggerFactory.getLogger(PdfBootstrapperCli.class);
     private static final String USAGE = "PdfBootstrapperCli [-h, --help] [OPTIONS]";
     private static final int DISPLAY_WIDTH = 80;
 
@@ -228,7 +226,7 @@ public class PdfBootstrapperCli {
                     log("Uploaded consent pdf file: %s", blobName);
                     consentCount.incrementAndGet();
                 } catch (Exception e) {
-                    LOG.error("Could not generate pdf={} for participantGuid={}",
+                    log.error("Could not generate pdf={} for participantGuid={}",
                             pdfConfiguration.getConfigName(), info.userGuid, e);
                 }
             }
@@ -243,7 +241,7 @@ public class PdfBootstrapperCli {
                     log("Uploaded release pdf file: %s", blobName);
                     releaseCount.incrementAndGet();
                 } catch (Exception e) {
-                    LOG.error("Could not generate pdf={} for participantGuid={}",
+                    log.error("Could not generate pdf={} for participantGuid={}",
                             pdfConfiguration.getConfigName(), info.userGuid, e);
                 }
             }
