@@ -7,7 +7,6 @@ import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.broadinstitute.ddp.equation.containers.AbstractVector;
-import org.broadinstitute.ddp.equation.containers.MultiValueVector;
 import org.broadinstitute.ddp.equation.containers.SingleValueVector;
 import org.broadinstitute.ddp.equation.containers.VectorUtil;
 import org.broadinstitute.ddp.pex.lang.EquationBaseVisitor;
