@@ -8,6 +8,7 @@ import java.util.List;
 
 import com.auth0.json.mgmt.users.User;
 import com.google.gson.Gson;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
 import org.junit.Before;
@@ -15,13 +16,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.junit.MockServerRule;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class Auth0UtilMockedTest {
-
-    private static final Logger LOG = LoggerFactory.getLogger(Auth0UtilMockedTest.class);
-
     @Rule
     public MockServerRule mockServerRule = new MockServerRule(this);
 
@@ -29,17 +26,11 @@ public class Auth0UtilMockedTest {
 
     private Auth0Util auth0Util = null;
 
-    private int fakeExpiration = 99999;
-    private String fakeIdToken = "not a real id token";
-    private String fakeAccessToken = "not a real access token";
-    private String fakeEmail = "fakemeail@datadonationplatform.org";
-    private String fakeConn = "fake connection";
+    private final int fakeExpiration = 99999;
+    private final String fakeIdToken = "not a real id token";
+    private final String fakeAccessToken = "not a real access token";
 
-    private String client = "client";
-    private String code = "code";
-    private String redirectUri = "redirectUri";
-    private String secret = "secret";
-    private Gson gson = new Gson();
+    private final Gson gson = new Gson();
 
     @Before
     public void setupMockAuth0Server() {
@@ -76,8 +67,8 @@ public class Auth0UtilMockedTest {
         try {
             auth0Util.refreshToken("ignored", "ignored", "ignored");
             Assert.fail("Auth0Util should have failed when mock auth0 endpoint return non-2xx");
-        } catch (Exception ignored) {
-            LOG.info("ignoring expected exception from mock", ignored);
+        } catch (Exception e) {
+            log.info("ignoring expected exception from mock", e);
         }
     }
 
@@ -85,6 +76,10 @@ public class Auth0UtilMockedTest {
     public void testGoodExchangeFromCode() {
         mockServerClient = mockServerClient.reset();
 
+        String client = "client";
+        String code = "code";
+        String redirectUri = "redirectUri";
+        String secret = "secret";
         Auth0Util.RequestRefreshTokenPayload payload =
                 new Auth0Util.RequestRefreshTokenPayload(client, secret, code, redirectUri);
         Auth0Util.RefreshTokenResponse mockResponse =
@@ -108,7 +103,9 @@ public class Auth0UtilMockedTest {
     public void testListUsersByEmail() throws Exception {
         mockServerClient = mockServerClient.reset();
         List<User> mockResponse = new ArrayList<>();
+        String fakeConn = "fake connection";
         User user = new User(fakeConn);
+        String fakeEmail = "fakemeail@datadonationplatform.org";
         user.setEmail(fakeEmail);
         mockResponse.add(user);
 
@@ -121,5 +118,4 @@ public class Auth0UtilMockedTest {
         Assert.assertEquals(1, users.size());
         Assert.assertEquals(fakeEmail, users.get(0).getEmail());
     }
-
 }

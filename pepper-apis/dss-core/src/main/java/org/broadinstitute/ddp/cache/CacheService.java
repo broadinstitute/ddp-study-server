@@ -18,6 +18,7 @@ import javax.cache.configuration.MutableConfiguration;
 import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.ConfigManager;
@@ -29,12 +30,9 @@ import org.redisson.api.RedissonClient;
 import org.redisson.codec.FstCodec;
 import org.redisson.config.Config;
 import org.redisson.jcache.JCacheManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-
+@Slf4j
 public class CacheService {
-    private static final Logger LOG = LoggerFactory.getLogger(CacheService.class);
     private static final String LOCAL_CACHE_PREFIX = "LOCAL_CACHE:";
     private static volatile CacheService INSTANCE;
     RedissonClient redissonClient;
@@ -78,7 +76,7 @@ public class CacheService {
                 throw new DDPException("Path for configuration file: " + ConfigFile.JCACHE_CONFIGURATION_FILE + " could not be read");
             }
         } else {
-            LOG.warn("Configuration file not set: " + ConfigFile.JCACHE_CONFIGURATION_FILE + "JCache is not enabled");
+            log.warn("Configuration file not set: " + ConfigFile.JCACHE_CONFIGURATION_FILE + "JCache is not enabled");
             cacheManager = new NullCacheManager();
         }
     }
@@ -142,7 +140,7 @@ public class CacheService {
             cache = cacheManager.createCache(cacheName, cacheConfig);
             if (resetCaches) {
                 cache.clear();
-                LOG.info("Cleared redis cache {}", cacheName);
+                log.info("Cleared redis cache {}", cacheName);
             }
         }
         return (Cache<K, V>) cache;
@@ -165,13 +163,13 @@ public class CacheService {
         if (cacheManager instanceof JCacheManager) {
             cacheManager.getCacheNames().forEach(cacheName -> {
                 cacheManager.getCache(cacheName).clear();
-                LOG.info("Cleared redis cache {}", cacheName);
+                log.info("Cleared redis cache {}", cacheName);
             });
         }
         if (!(cacheManager instanceof NullCacheManager)) {
             redissonClient.getKeys().getKeysByPattern(LOCAL_CACHE_PREFIX + "*").forEach(cacheKey -> {
                 redissonClient.getLocalCachedMap(cacheKey, new FstCodec(), LocalCachedMapOptions.defaults()).delete();
-                LOG.info("Cleared local redis cache {}", cacheKey);
+                log.info("Cleared local redis cache {}", cacheKey);
             });
         }
         resetCaches = true;
@@ -221,7 +219,7 @@ public class CacheService {
 
     public static void main(String[] args) {
         if (args.length > 0 && args[0].startsWith("--clearcache")) {
-            LOG.warn("Clearing all caches");
+            log.warn("Clearing all caches");
         }
         CacheService.getInstance().resetAllCaches();
     }

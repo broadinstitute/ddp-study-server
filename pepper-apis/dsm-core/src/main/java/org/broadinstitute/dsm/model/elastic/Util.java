@@ -15,13 +15,7 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.KitRequestShipping;
-import org.broadinstitute.dsm.db.MedicalRecord;
-import org.broadinstitute.dsm.db.OncHistory;
-import org.broadinstitute.dsm.db.OncHistoryDetail;
-import org.broadinstitute.dsm.db.Participant;
-import org.broadinstitute.dsm.db.ParticipantData;
-import org.broadinstitute.dsm.db.Tissue;
+import org.broadinstitute.dsm.db.*;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.db.structure.TableName;
@@ -44,6 +38,7 @@ public class Util {
                     DBConstants.DDP_PARTICIPANT_RECORD_ALIAS, new BaseGenerator.PropertyInfo(Participant.class, false),
                     DBConstants.DDP_PARTICIPANT_ALIAS, new BaseGenerator.PropertyInfo(Participant.class, false),
                     DBConstants.DDP_ONC_HISTORY_ALIAS, new BaseGenerator.PropertyInfo(OncHistory.class, false),
+                    DBConstants.SM_ID_TABLE_ALIAS, new BaseGenerator.PropertyInfo(SmId.class, true),
                     DBConstants.DDP_KIT_REQUEST_ALIAS, new BaseGenerator.PropertyInfo(KitRequestShipping.class, true)));
     public static final int FIRST_ELEMENT_INDEX = 0;
     public static final String UNDERSCORE_SEPARATOR = "_";

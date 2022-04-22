@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.service;
 import java.util.List;
 import java.util.Optional;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.ConsentElectionDao;
 import org.broadinstitute.ddp.db.StudyActivityDao;
@@ -14,13 +15,9 @@ import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class ConsentService {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ConsentService.class);
-
     private final PexInterpreter interpreter;
     private final StudyActivityDao studyActDao;
     private final ConsentElectionDao consentElectionDao;
@@ -102,7 +99,7 @@ public class ConsentService {
             }
             summary.setElections(elections);
         } else {
-            LOG.info("Fetching latest elections for consent {} without evaluating expressions",
+            log.info("Fetching latest elections for consent {} without evaluating expressions",
                     summary.getActivityCode());
             summary.setElections(consentElectionDao.getLatestElections(handle, summary.getActivityCode(), studyId));
         }
