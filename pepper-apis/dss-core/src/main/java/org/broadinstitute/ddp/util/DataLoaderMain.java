@@ -26,6 +26,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -55,14 +56,11 @@ import org.broadinstitute.ddp.model.migration.DatstatSurveyData;
 import org.broadinstitute.ddp.model.migration.MailingListData;
 import org.broadinstitute.ddp.model.migration.ParticipantData;
 import org.broadinstitute.ddp.service.OLCService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class DataLoaderMain {
-
     private static final String CONFIG_DIR_ENV_VAR = "ddp.testing.configDir";
     private static final String ANGIO_DATA_SERVICE_ACCOUNT_FILE = "angio-gen2-google-bucket-auth.json";
-    private static final Logger LOG = LoggerFactory.getLogger(DataLoaderMain.class);
     private static final String ANGIO_STUDY = "ANGIO";
     private static final String TEST_ANGIO_DATA_BUCKET_NAME = "for_testing_only_angio_irb";
     private static final String ANGIO_DATA_GC_ID = "broad-ddp-angio";
@@ -70,7 +68,7 @@ public class DataLoaderMain {
     private static final String DATSTAT_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     private static final String USAGE = "DataLoaderMain [-h, --help] [OPTIONS]";
     private static List<String> altPidUserList;
-    private Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private List<AngioMigrationRun> migrationRunReport;
     private String reportFileName;
     private String dryRunEmail;
@@ -193,7 +191,7 @@ public class DataLoaderMain {
 
         String dbUrl = cfg.getString(ConfigFile.DB_URL);
 
-        LOG.info("Initializing db pool for " + dbUrl);
+        log.info("Initializing db pool");
         LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
 
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
@@ -213,7 +211,7 @@ public class DataLoaderMain {
             participantData = gson.fromJson(new FileReader(file), ParticipantData.class);
         } catch (JsonSyntaxException e) {
             e.printStackTrace();
-            LOG.error("JSON Exception: while processing participant file: " + e.toString());
+            log.error("JSON Exception: while processing participant file: " + e.toString());
         }
 
         setRunEmail(dryRun, participantData);
@@ -222,7 +220,7 @@ public class DataLoaderMain {
         try {
             createReport(migrationRunReport);
         } catch (Exception e) {
-            LOG.error("Failed to create migration run report. ", e);
+            log.error("Failed to create migration run report. ", e);
         }
 
         if (isDeleteAuth0Email) {
@@ -249,11 +247,11 @@ public class DataLoaderMain {
         for (Blob file : bucket.list().iterateAll()) {
             data = new String(file.getContent());
             if (!file.getName().startsWith("Participant_") && !file.getName().startsWith("LovedOne_")) {
-                LOG.info("Skipping bucket file: {}", file.getName());
+                log.info("Skipping bucket file: {}", file.getName());
                 continue;
                 //not a participant data .. continue to next file.
             }
-            LOG.info("File Name: {} \n DATA:\n", file.getName(), data);
+            log.info("File Name: {}", file.getName());
             try {
                 participantData = gson.fromJson(data, ParticipantData.class);
 
@@ -263,7 +261,7 @@ public class DataLoaderMain {
                 }
             } catch (JsonSyntaxException e) {
                 e.printStackTrace();
-                LOG.error("JSON Exception: while processing participant file: " + e.toString());
+                log.error("JSON Exception: while processing participant file: " + e.toString());
                 continue;
             }
 
@@ -281,7 +279,7 @@ public class DataLoaderMain {
         try {
             createReport(migrationRunReport);
         } catch (Exception e) {
-            LOG.error("Failed to create migration run report. ", e);
+            log.error("Failed to create migration run report. ", e);
         }
 
         if (isDeleteAuth0Email) {
@@ -422,25 +420,25 @@ public class DataLoaderMain {
                     }
 
                     dataLoader.addUserStudyExit(handle, thisData, userGuid, studyGuid);
-                    LOG.debug("Loaded participant: {}", userGuid);
+                    log.debug("Loaded participant: {}", userGuid);
                     isSuccess = true;
                 } else {
-                    LOG.warn("Participant: {} already loaded into pepper. skipping ", userGuid);
+                    log.warn("Participant: {} already loaded into pepper. skipping ", userGuid);
                     previousRun = true;
                 }
             } catch (DataLoader.UserExistsException e) {
                 auth0Collision = true;
-                LOG.error("Failed to load Participant: " + e.getMessage());
+                log.error("Failed to load Participant: " + e.getMessage());
                 e.printStackTrace();
                 handle.rollback();
                 isSuccess = false;
-                LOG.error("Rolled back...");
+                log.error("Rolled back...");
             } catch (Exception e) {
-                LOG.error("Failed to load Participant: " + e.getMessage());
+                log.error("Failed to load Participant: " + e.getMessage());
                 e.printStackTrace();
                 handle.rollback();
                 isSuccess = false;
-                LOG.error("Rolled back...");
+                log.error("Rolled back...");
             }
 
             if (previousRun) {
@@ -489,7 +487,7 @@ public class DataLoaderMain {
                 participantData.getParticipantUser().setOriginalSourceEmail(participantData.getParticipantUser().getSourceEmail());
                 participantData.getParticipantUser().setSourceEmail(updatedEmail);
             }
-            LOG.info("Updated dryrun datamigration test user email: " + updatedEmail);
+            log.info("Updated dryrun datamigration test user email: " + updatedEmail);
         }
     }
 
@@ -522,13 +520,13 @@ public class DataLoaderMain {
                 continue;
                 //not a mailing data .. continue to next file.
             }
-            LOG.info("File Name: {} \n DATA:\n", file.getName(), data);
+            log.info("File Name: {} \n DATA:\n", file.getName(), data);
             TransactionWrapper.withTxn(handle -> {
                 try {
                     MailingListData mailingList = gson.fromJson(data, MailingListData.class);
                     dataLoader.loadMailingListData(handle, mailingList, studyGuid);
                 } catch (Exception e) {
-                    LOG.error("Failed to load Mailing List data: " + e.getMessage());
+                    log.error("Failed to load Mailing List data: " + e.getMessage());
                     e.printStackTrace();
                     handle.rollback();
                 }
@@ -549,9 +547,9 @@ public class DataLoaderMain {
         TransactionWrapper.useTxn(handle -> {
             try {
                 Auth0Util.deleteUserFromAuth0(handle, cfg, email);
-                LOG.info("Deleted auth0 email : " + email);
+                log.info("Deleted auth0 email : " + email);
             } catch (Exception e) {
-                LOG.error("Failed to delete auth0 email : " + email, e);
+                log.error("Failed to delete auth0 email : " + email, e);
             }
         });
     }
@@ -582,7 +580,7 @@ public class DataLoaderMain {
         }
         csvPrinter.close();
 
-        LOG.info("Generated migration run report file");
+        log.info("Generated migration run report file");
     }
 
     private void addRunValues(AngioMigrationRun run, CSVPrinter printer) throws IOException {

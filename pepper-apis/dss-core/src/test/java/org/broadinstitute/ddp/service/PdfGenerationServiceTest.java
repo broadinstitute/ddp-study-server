@@ -41,6 +41,7 @@ import com.itextpdf.kernel.pdf.action.PdfAction;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.property.TextAlignment;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
@@ -57,16 +58,12 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class PdfGenerationServiceTest extends TxnAwareBaseTest {
-
-    private static final Logger LOG = LoggerFactory.getLogger(PdfGenerationServiceTest.class);
-
     private static PdfTestingUtil.PdfInfo pdfInfo;
 
-    private PdfGenerationService pdfGenerationService = new PdfGenerationService();
+    private final PdfGenerationService pdfGenerationService = new PdfGenerationService();
 
     @BeforeClass
     public static void setup() throws Exception {
@@ -159,8 +156,7 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
         form.setGenerateAppearance(true);
         Map<String, Integer> fieldsToBeFound = new HashMap<>();
 
-        for (int i = 0; i < expectedFieldSubstitutions.size(); i++) {
-            String substitution = expectedFieldSubstitutions.get(i);
+        for (String substitution : expectedFieldSubstitutions) {
             if (fieldsToBeFound.containsKey(substitution)) {
                 fieldsToBeFound.put(substitution, fieldsToBeFound.get(substitution) + 1);
             } else {
@@ -193,7 +189,7 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
                         actualCount > 0);
                 continue;
             }
-            LOG.info("Checking field with value {}", foundFieldValue);
+            log.info("Checking field with value {}", foundFieldValue);
             int expectedCount = fieldsToBeFound.getOrDefault(foundFieldValue, 0);
 
             assertEquals("Error finding the field: " + foundFieldValue + ". Expected count: " + expectedCount
@@ -557,9 +553,7 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
         PageSize ps = PageSize.A4;
         pdf.setDefaultPageSize(ps);
 
-        Document document = null;
-        try {
-            document = new Document(pdf);
+        try (Document document = new Document(pdf)) {
             PdfAcroForm form = createDummyAcroForm(document);
 
             Map<String, PdfFormField> fields = form.getFormFields();
@@ -570,8 +564,6 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
             fields.get("experience3").setValue("Yes");
             fields.get("info").setValue("I was 38 years old when I became an MI6 agent.");
             fields.get("dob").setValue("03/15/1993");
-        } finally {
-            document.close();
         }
     }
 
