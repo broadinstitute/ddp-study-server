@@ -26,13 +26,12 @@ import com.google.monitoring.v3.TypedValue;
 import com.google.protobuf.Timestamp;
 import com.google.protobuf.util.Timestamps;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.environment.HostUtil;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.ConfigManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Accumulates stackdriver metrics {@link Point}s and sends them to sendgrid
@@ -40,10 +39,8 @@ import org.slf4j.LoggerFactory;
  * generally not sent to due rate limits.  Instead, the max value recorded between
  * stackdriver transmission times are sent.
  */
+@Slf4j
 public class StackdriverMetricsTracker {
-
-    private static final Logger LOG = LoggerFactory.getLogger(StackdriverMetricsTracker.class);
-
     public static final ProjectName PROJECT_NAME = ProjectName.of(
             ConfigManager.getInstance().getConfig().getString(ConfigFile.GOOGLE_PROJECT_ID));
     public static final boolean DO_STACKDRIVER = ConfigManager.getInstance().getConfig().getBoolean(ConfigFile.SEND_METRICS);
@@ -304,7 +301,7 @@ public class StackdriverMetricsTracker {
                         StackdriverMetricsTransmitter.STACKDRIVER_THROTTLE_MILLIS,
                         TimeUnit.MILLISECONDS);
             } else {
-                LOG.info("Metrics alerting is turned off, skipping scheduling of stackdriver metrics transmissions");
+                log.info("Metrics alerting is turned off, skipping scheduling of stackdriver metrics transmissions");
             }
         }
     }
