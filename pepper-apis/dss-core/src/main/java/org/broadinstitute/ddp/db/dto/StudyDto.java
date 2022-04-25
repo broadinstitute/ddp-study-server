@@ -51,4 +51,8 @@ public class StudyDto implements Serializable {
 
     @ColumnName("default_auth0_connection")
     String defaultAuth0Connection;
+
+    @ColumnName("error_present_status_enabled")
+    boolean errorPresentStatusEnabled;
+
 }

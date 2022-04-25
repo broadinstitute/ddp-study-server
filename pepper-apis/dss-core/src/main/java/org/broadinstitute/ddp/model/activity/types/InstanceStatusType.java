@@ -6,5 +6,6 @@ package org.broadinstitute.ddp.model.activity.types;
 public enum InstanceStatusType {
     CREATED,
     IN_PROGRESS,
-    COMPLETE
+    COMPLETE,
+    ERROR_PRESENT
 }
