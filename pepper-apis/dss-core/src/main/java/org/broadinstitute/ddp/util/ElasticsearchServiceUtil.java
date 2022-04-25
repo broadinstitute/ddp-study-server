@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
@@ -27,15 +28,10 @@ import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public final class ElasticsearchServiceUtil {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ElasticsearchServiceUtil.class);
-
     private static final Map<Integer, RestHighLevelClient> ES_CLIENTS = new HashMap<>();
-
 
     public static Map<ElasticSearchIndexType, String> detectEsIndices(
             StudyDto studyDto, List<ElasticSearchIndexType> elasticSearchIndexTypes) {
@@ -73,12 +69,12 @@ public final class ElasticsearchServiceUtil {
                 new UsernamePasswordCredentials(userName, password));
 
         URL url = new URL(cfg.getString(ConfigFile.ELASTICSEARCH_URL));
-        LOG.info("Using Elasticsearch client URL: {}", url);
+        log.info("Using Elasticsearch client URL: {}", url);
 
         String proxy = ConfigUtil.getStrIfPresent(cfg, ConfigFile.ELASTICSEARCH_PROXY);
         final URL proxyUrl = StringUtils.isNotBlank(proxy) ? new URL(proxy) : null;
         if (proxyUrl != null) {
-            LOG.info("Using Elasticsearch client proxy URL: {}", proxy);
+            log.info("Using Elasticsearch client proxy URL: {}", proxy);
         }
 
         int key = Objects.hash(url, proxyUrl, userName);
@@ -101,7 +97,7 @@ public final class ElasticsearchServiceUtil {
 
         esClient = new RestHighLevelClient(builder);
         ES_CLIENTS.put(key, esClient);
-        LOG.info("Created new Elasticsearch client for URL: {}", url);
+        log.info("Created new Elasticsearch client for URL: {}", url);
 
         return esClient;
     }
