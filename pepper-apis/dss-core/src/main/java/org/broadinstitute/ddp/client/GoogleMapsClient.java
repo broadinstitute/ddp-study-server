@@ -10,8 +10,6 @@ import com.google.maps.errors.OverDailyLimitException;
 import com.google.maps.errors.OverQueryLimitException;
 import com.google.maps.errors.RequestDeniedException;
 import com.google.maps.model.GeocodingResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A client wrapper for various Google Maps services.
@@ -20,9 +18,6 @@ import org.slf4j.LoggerFactory;
  * client is intended to consolidate those API usages into one place.
  */
 public class GoogleMapsClient {
-
-    private static final Logger LOG = LoggerFactory.getLogger(GoogleMapsClient.class);
-
     private final GeoApiContext geoCtx;
 
     public GoogleMapsClient(String apiKey) {

@@ -40,17 +40,9 @@ public class ExcelUtils {
     }
 
     private static void responseFile(spark.Response response, Workbook workbook) throws Exception {
-        File currDir = new File(".");
-        String path = currDir.getAbsolutePath();
-        String strDate = getFormattedDate();
-        String fileLocation = String.format("%sParticipant-%s.xlsx", path.substring(0, path.length() - 1), strDate);
-        try (FileOutputStream outputStream = new FileOutputStream(fileLocation); ServletOutputStream os = response.raw().getOutputStream()){
-            workbook.write(outputStream);
-            File file = new File(fileLocation);
-            setResponseHeaders(response, file.getName());
-            byte[] encoded = Files.readAllBytes(Paths.get(fileLocation));
-            os.write(encoded);
-            Files.deleteIfExists(file.toPath());
+        try (ServletOutputStream os = response.raw().getOutputStream()){
+            setResponseHeaders(response, String.format("Participant-%s.xlsx", getFormattedDate()));
+            workbook.write(os);
         }
     }
 

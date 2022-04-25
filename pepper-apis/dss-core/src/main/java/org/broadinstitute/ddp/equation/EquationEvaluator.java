@@ -3,7 +3,11 @@ package org.broadinstitute.ddp.equation;
 import ch.obermuhlner.math.big.BigDecimalMath;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import org.antlr.v4.runtime.BailErrorStrategy;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.broadinstitute.ddp.pex.lang.EquationBaseVisitor;
+import org.broadinstitute.ddp.pex.lang.EquationLexer;
 import org.broadinstitute.ddp.pex.lang.EquationParser;
 
 import java.math.BigDecimal;
@@ -60,5 +64,19 @@ public final class EquationEvaluator extends EquationBaseVisitor<BigDecimal> {
     @Override
     public BigDecimal visitNumber(final EquationParser.NumberContext ctx) {
         return new BigDecimal(ctx.getText());
+    }
+
+    public BigDecimal evaluate(final String expression) {
+        return visit(buildParser(expression).expression());
+    }
+
+    private EquationLexer buildLexer(final String expression) {
+        return new EquationLexer(CharStreams.fromString(expression));
+    }
+
+    private EquationParser buildParser(final String expression) {
+        final EquationParser parser = new EquationParser(new CommonTokenStream(buildLexer(expression)));
+        parser.setErrorHandler(new BailErrorStrategy());
+        return parser;
     }
 }

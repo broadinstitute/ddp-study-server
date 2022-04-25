@@ -15,6 +15,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
@@ -24,17 +25,13 @@ import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.json.activity.TranslatedSummary;
 import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class I18nUtil {
     // Might want to pull this from a config file at some point, although
     // there is also Locale.getDefault() (bskinner)
     public static final Locale DEFAULT_LOCALE = Locale.ENGLISH;
-
     private static final String DEFAULT_ACCEPTE_LANGUAGE_HEADER = "en-US";
-
-    private static final Logger LOG = LoggerFactory.getLogger(I18nUtil.class);
 
     /**
      * Given a collection of summaries, groups them by GUID and language code
@@ -117,7 +114,7 @@ public class I18nUtil {
                 acceptedRanges = Locale.LanguageRange.parse(acceptLanguageHeader);
             } catch (Exception e) {
                 acceptedRanges = Locale.LanguageRange.parse(DEFAULT_ACCEPTE_LANGUAGE_HEADER);
-                LOG.warn("Error while parsing Accept-Language header '{}', fallback to default Accept-Language header '{}'."
+                log.warn("Error while parsing Accept-Language header '{}', fallback to default Accept-Language header '{}'."
                             + " StudyGuid '{}'.", acceptLanguageHeader, DEFAULT_ACCEPTE_LANGUAGE_HEADER, studyGuid);
             }
         }
@@ -138,7 +135,7 @@ public class I18nUtil {
         if (studyDefault == null) {
             studyDefault = I18nUtil.DEFAULT_LOCALE;
             if (studyGuid != null) {
-                LOG.warn("Study {} does not have a default language, will fallback to {}", studyGuid, studyDefault.getLanguage());
+                log.warn("Study {} does not have a default language, will fallback to {}", studyGuid, studyDefault.getLanguage());
             }
         }
 
@@ -267,7 +264,7 @@ public class I18nUtil {
                     .orElse(null);
             if (userLanguage == null && !studyLanguages.isEmpty()) {
                 userLanguage = studyLanguages.get(0);
-                LOG.warn("Study {} does not have a default language, falling back to {}",
+                log.warn("Study {} does not have a default language, falling back to {}",
                         studyGuid, userLanguage.getLanguageCode());
             }
         }
@@ -275,7 +272,7 @@ public class I18nUtil {
         if (userLanguage != null) {
             return userLanguage.toLanguageDto();
         } else {
-            LOG.warn("Study {} does not have any languages configured, falling back to {}",
+            log.warn("Study {} does not have any languages configured, falling back to {}",
                     studyGuid, LanguageStore.DEFAULT_LANG_CODE);
             return LanguageStore.getDefault();
         }

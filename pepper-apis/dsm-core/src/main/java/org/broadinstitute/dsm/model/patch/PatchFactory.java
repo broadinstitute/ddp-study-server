@@ -21,6 +21,8 @@ public class PatchFactory {
                 }
             } else if (isTissueRelatedOncHistoryId(patch)) {
                 patcher = new TissuePatch(patch);
+            } else if (isSmIdCreation(patch)) {
+                patcher = new SMIDPatch(patch);
             } else if (isParentParticipandDataId(patch)) {
                 patcher = new ParticipantDataPatch(patch);
             } else if (isParticipantIdForRecord(patch)) {
@@ -32,6 +34,10 @@ public class PatchFactory {
         }
         patcher.setElasticSearchExportable(isElasticSearchExportable(patch));
         return patcher;
+    }
+
+    private static boolean isSmIdCreation(Patch patch) {
+        return TissuePatch.TISSUE_ID.equals(patch.getParent());
     }
 
     private static boolean isElasticSearchExportable(Patch patch) {

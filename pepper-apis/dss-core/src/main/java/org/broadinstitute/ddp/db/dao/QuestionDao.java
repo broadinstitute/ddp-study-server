@@ -980,7 +980,7 @@ public interface QuestionDao extends SqlObject {
                                                    List<Rule> untypedRules,
                                                    long langCodeId) {
         JdbiQuestion jdbiQuestion = getJdbiQuestion();
-        List<Long> childIds = jdbiQuestion.findCompositeChildIdsByParentId(dto.getId());
+        List<Long> childIds = jdbiQuestion.findCompositeChildIdsByParentIdAndInstanceGuid(dto.getId(), activityInstanceGuid);
         List<Question> childQuestions;
         try (var stream = jdbiQuestion.findQuestionDtosByIds(childIds)) {
             childQuestions = stream
@@ -2016,7 +2016,7 @@ public interface QuestionDao extends SqlObject {
         }
 
         Map<Long, List<Long>> parentIdToChildIds = getJdbiQuestion()
-                .collectOrderedCompositeChildIdsByParentIds(questionIds);
+                .collectOrderedCompositeChildIdsByParentIdsAndTimestamp(questionIds, timestamp);
 
         Set<Long> allChildIds = new HashSet<>();
         for (var childIds : parentIdToChildIds.values()) {

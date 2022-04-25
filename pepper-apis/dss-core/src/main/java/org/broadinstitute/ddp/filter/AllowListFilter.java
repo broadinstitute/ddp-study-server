@@ -7,22 +7,19 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.util.ResponseUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Filter;
 import spark.Request;
 import spark.Response;
 
+@Slf4j
 public class AllowListFilter implements Filter {
-    private static final Logger LOG = LoggerFactory.getLogger(AllowListFilter.class);
-    private Set<String> ipSet;
+    private final Set<String> ipSet;
 
     public static void allowlist(String path, Collection<String> ips) {
         AllowListFilter filter = new AllowListFilter(ips);
-        before(path, (request, response) -> {
-            filter.handle(request, response);
-        });
+        before(path, filter::handle);
     }
 
     /**
@@ -41,7 +38,7 @@ public class AllowListFilter implements Filter {
             List<String> headerString = request.headers().stream()
                     .map(headerName -> headerName + ": " + request.headers(headerName))
                     .collect(toList());
-            LOG.warn("Unauthorized IP address tried to access service.\nIP: {}\nURL: {}\nMethod: {}\nBody: {}\nHeaders: {}",
+            log.warn("Unauthorized IP address tried to access service.\nIP: {}\nURL: {}\nMethod: {}\nBody: {}\nHeaders: {}",
                     request.ip(), request.url(), request.requestMethod(), request.body(), headerString);
             throw ResponseUtil.halt404PageNotFound(response);
         }
