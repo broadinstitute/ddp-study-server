@@ -16,65 +16,66 @@ post:
           properties:
             actionType:
               description: the action
-              type: string
               nullable: true
-              enum:
-                - CREATE
-                - READ
-                - UPDATE
-                - DELETE
-                - EXPORT
+              type: array
+              items:
+                type: string
+                enum:
+                  - CREATE
+                  - READ
+                  - UPDATE
+                  - DELETE
+                  - EXPORT
             entityType:
               description: the entity
-              type: string
               nullable: true
-              enum:
-                - USER
-                - ACTIVITY
-                - INSTANCE
-                - ANSWER
+              type: array
+              items:
+                type: string
+                enum:
+                  - USER
+                  - ACTIVITY
+                  - INSTANCE
+                  - ANSWER
             dateRange:
               description: the date range to filter the log
-              $ref: '../pepper.yml#/components/schemas/DateRange'
+              nullable: true
               type: object
-              nullable: true
+              $ref: '../pepper.yml#/components/schemas/DateRange'
             userEmail:
-              description: the subject user's e-mail
-              type: string
+              description: the subject user's e-mails
               nullable: true
+              type: array
+              items:
+                type: string
             userGuid:
-              description: the subject user's GUID (must be specified in case entity type was set to User)
-              type: string
+              description: the subject user's GUIDs (must be specified in case entity type was set to User)
               nullable: true
+              type: array
+              items:
+                type: string
             activityCode:
               description: the activity code (must be specified in case entity type was set to Activity)
               nullable: true
-              type: string
+              type: array
+              items:
+                type: string
             questionStableId:
               description: the question stable id (must be specified in case entity type was set to Answer)
               nullable: true
-              type: string
+              type: array
+              items:
+                type: string
             limitation:
               description: the limitation constraint
+              nullable: true
+              type: object
               $ref: '../pepper.yml#/components/schemas/IntegerRange'
-              type: object
-              nullable: true
             sorting:
-              description: the sorting mode
+              description: the sorting options
               nullable: true
               type: object
-              properties:
-                column:
-                  description: the column name
-                  nullable: true
-                  type: string
-                direction:
-                  description: the sorting direction
-                  nullable: true
-                  type: string
-                  enum:
-                    - ASCENDING
-                    - DESCENDING
+              $ref: '../pepper.yml#/components/schemas/Sorting'
   responses:
     200:
       $ref: '../pepper.yml#/components/responses/StudyAuditResponse'

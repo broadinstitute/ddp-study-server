@@ -2965,3 +2965,17 @@ IntegerRange:
       description: the upper constraint of the range. This value is inclusive.
       nullable: true
       format: int64
+Sorting:
+  type: object
+  properties:
+    column:
+      description: the column name
+      nullable: true
+      type: string
+    direction:
+      description: the sorting direction
+      nullable: true
+      type: string
+      enum:
+        - ASCENDING
+        - DESCENDING
