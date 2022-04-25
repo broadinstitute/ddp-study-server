@@ -581,6 +581,8 @@ public class TreeWalkInterpreter implements PexInterpreter {
 
         if (childStableId == null) {
             switch (questionType) {
+                case AGREEMENT:
+                    return applyAgreementAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
                 case BOOLEAN:
                     return applyBoolAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
                 case TEXT:
@@ -645,6 +647,34 @@ public class TreeWalkInterpreter implements PexInterpreter {
                     throw new PexUnsupportedException("Child question " + stableId + " with type "
                             + questionType + " is currently not supported");
             }
+        }
+    }
+
+    private Object applyAgreementAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
+                                                 String userGuid, long studyId, String activityCode,
+                                                 String instanceGuid, String stableId) {
+        if (predicateCtx instanceof HasTruePredicateContext || predicateCtx instanceof HasFalsePredicateContext) {
+            boolean expected = (predicateCtx instanceof HasTruePredicateContext);
+            Boolean value = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestAgreementAnswer(ictx, userGuid, activityCode, stableId, studyId)
+                    : fetcher.findSpecificAgreementAnswer(ictx, activityCode, instanceGuid, stableId);
+            if (value == null) {
+                return false;
+            } else {
+                return value == expected;
+            }
+        } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            Boolean value = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestAgreementAnswer(ictx, userGuid, activityCode, stableId, studyId)
+                    : fetcher.findSpecificAgreementAnswer(ictx, activityCode, instanceGuid, stableId);
+            if (value == null) {
+                String msg = String.format("User %s does not have agreement answer for question %s", userGuid, stableId);
+                throw new PexFetchException(msg);
+            } else {
+                return value;
+            }
+        } else {
+            throw new PexUnsupportedException("Invalid predicate used on agreement answer query: " + predicateCtx.getText());
         }
     }
 
