@@ -1,6 +1,5 @@
 package org.broadinstitute.ddp.db.dto;
 
-import java.io.Serializable;
 import java.util.Set;
 
 import lombok.Value;
@@ -9,7 +8,7 @@ import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 @Value
-public class BooleanQuestionDto extends QuestionDto implements Serializable {
+public class BooleanQuestionDto extends QuestionDto {
     long trueTemplateId;
     long falseTemplateId;
 
