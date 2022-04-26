@@ -913,13 +913,10 @@ public interface QuestionDao extends SqlObject {
                 dto.getPlaceholderTemplateId(),
                 dto.isRestricted(),
                 dto.isDeprecated(),
-                true,
                 dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(),
                 dto.getAdditionalInfoFooterTemplateId(),
-                StreamEx.of(new QuestionCachedDao(getHandle())
-                                .getJdbiEquationQuestion()
-                                .findEquationsByActivityInstanceGuid(activityInstanceGuid))
+                StreamEx.of(getJdbiEquationQuestion().findEquationsByActivityInstanceGuid(activityInstanceGuid))
                         .map(questionEvaluator::evaluate)
                         .filter(Objects::nonNull)
                         .map(EquationAnswer::new)

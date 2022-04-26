@@ -26,11 +26,11 @@ public final class EquationQuestion extends Question<EquationAnswer> {
     private final transient Long placeholderTemplateId;
 
     public EquationQuestion(String stableId, long promptTemplateId, Long placeholderTemplateId,
-                            boolean isRestricted, boolean isDeprecated, Boolean readonly, Long tooltipTemplateId,
+                            boolean isRestricted, boolean isDeprecated, Long tooltipTemplateId,
                             Long additionalInfoHeaderTemplateId, Long additionalInfoFooterTemplateId,
                             List<EquationAnswer> answers, List<Rule<EquationAnswer>> validations,
                             Integer maximumDecimalPlaces, String expression) {
-        super(QuestionType.EQUATION, stableId, promptTemplateId, isRestricted, isDeprecated, readonly, tooltipTemplateId,
+        super(QuestionType.EQUATION, stableId, promptTemplateId, isRestricted, isDeprecated, true, tooltipTemplateId,
                 additionalInfoHeaderTemplateId, additionalInfoFooterTemplateId, answers, validations);
         this.placeholderTemplateId = placeholderTemplateId;
         this.maximumDecimalPlaces = maximumDecimalPlaces;
