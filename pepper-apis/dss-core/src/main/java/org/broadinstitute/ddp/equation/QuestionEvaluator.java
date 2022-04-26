@@ -24,6 +24,7 @@ public class QuestionEvaluator {
 
     public EquationResponse evaluate(final EquationQuestionDto equation) {
         final var variables = new EquationVariablesCollector(equation.getExpression()).collect();
+        log.info("{} variables were found for equation {}", variables.size(), equation.getStableId());
 
         StreamEx.of(variables).remove(values::containsKey).forEach(this::fetchVariableValue);
         if (!StreamEx.of(variables).allMatch(values::containsKey)) {
