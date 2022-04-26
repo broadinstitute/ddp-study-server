@@ -6,7 +6,7 @@
 
     <changeSet author="bskinner" id="add-boolean-render-mode">
         <addColumn tableName="boolean_question">
-            <column name="boolean_render_mode_id" type="bigint">
+            <column name="boolean_render_mode_id" type="bigint" valueComputed="(select boolean_render_mode_id from boolean_render_mode where boolean_render_mode_code = 'RADIO_BUTTONS')">
                 <constraints nullable="false" references="boolean_render_mode(boolean_render_mode_id)" foreignKeyName="boolean_question_boolean_render_mode_fk"/>
             </column>
         </addColumn>
