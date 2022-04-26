@@ -913,7 +913,6 @@ public interface QuestionDao extends SqlObject {
                 dto.getPlaceholderTemplateId(),
                 dto.isRestricted(),
                 dto.isDeprecated(),
-                true,
                 dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(),
                 dto.getAdditionalInfoFooterTemplateId(),
