@@ -2,12 +2,17 @@ package org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.questio
 
 import static org.broadinstitute.ddp.util.QuestionUtil.isReadOnly;
 
+import one.util.streamex.StreamEx;
+import org.broadinstitute.ddp.db.dao.QuestionCachedDao;
+import org.broadinstitute.ddp.equation.QuestionEvaluator;
+import org.broadinstitute.ddp.model.activity.instance.answer.EquationAnswer;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
 import org.broadinstitute.ddp.util.CollectionMiscUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
@@ -243,6 +248,9 @@ public class QuestionCreatorHelper {
 
     EquationQuestion createEquationQuestion(AIBuilderContext ctx, EquationQuestionDef questionDef) {
         QuestionCreator questionCreator = ctx.getAIBuilderFactory().getQuestionCreator();
+
+        var questionEvaluator = new QuestionEvaluator(ctx.getHandle(), ctx.getInstanceGuid());
+
         return new EquationQuestion(
                 questionDef.getStableId(),
                 ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
@@ -257,7 +265,12 @@ public class QuestionCreatorHelper {
                         ctx, questionDef.getAdditionalInfoHeaderTemplate()),
                 ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, questionDef.getAdditionalInfoFooterTemplate()),
-                questionCreator.getAnswers(ctx, questionDef.getStableId()),
+                StreamEx.of(new QuestionCachedDao(ctx.getHandle()).getJdbiEquationQuestion()
+                                .findEquationsByActivityInstanceGuid(ctx.getInstanceGuid()))
+                        .map(questionEvaluator::evaluate)
+                        .filter(Objects::nonNull)
+                        .map(EquationAnswer::new)
+                        .toList(),
                 questionCreator.getValidationRules(ctx, questionDef),
                 questionDef.getMaximumDecimalPlaces(),
                 questionDef.getExpression()
