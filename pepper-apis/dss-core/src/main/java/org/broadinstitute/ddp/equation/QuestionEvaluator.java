@@ -27,7 +27,7 @@ public class QuestionEvaluator {
 
         StreamEx.of(variables).remove(values::containsKey).forEach(this::fetchVariableValue);
         if (!StreamEx.of(variables).allMatch(values::containsKey)) {
-            log.info("The equation can't be evaluated. Not all variables were populated");
+            log.info("The equation {} can't be evaluated. Not all variables were populated", equation.getStableId());
             return null;
         }
 
@@ -95,7 +95,7 @@ public class QuestionEvaluator {
                         Collections.singletonList((DecimalDef) value)));
                 return;
             default:
-                log.warn("The question type {} is not supported by equations", type);
+                log.warn("The question type {} is not supported by equations (variable: {})", type, variable);
         }
     }
 }
