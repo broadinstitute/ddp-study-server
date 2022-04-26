@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="sampath" id="20220419-add-error-present-activity-instance-status">
+        <insert tableName="activity_instance_status_type">
+            <column name="activity_instance_status_type_code" value="ERROR_PRESENT"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="sampath" id="20220420-add-error-present-activity-instance-status-translations">
+        <insert tableName="i18n_activity_instance_status_type_name_trans">
+            <column name="activity_instance_status_type_id"
+                    valueComputed="(select activity_instance_status_type_id from activity_instance_status_type where activity_instance_status_type_code = 'ERROR_PRESENT')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
+            <column name="translation_text" value="Error Present"/>
+        </insert>
+
+        <insert tableName="i18n_activity_instance_status_type_name_trans">
+            <column name="activity_instance_status_type_id"
+                    valueComputed="(select activity_instance_status_type_id from activity_instance_status_type where activity_instance_status_type_code = 'ERROR_PRESENT')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'es')"/>
+            <column name="translation_text" value="error presente"/>
+        </insert>
+
+        <insert tableName="i18n_activity_instance_status_type_name_trans">
+            <column name="activity_instance_status_type_id"
+                    valueComputed="(select activity_instance_status_type_id from activity_instance_status_type where activity_instance_status_type_code = 'ERROR_PRESENT')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ru')"/>
+            <column name="translation_text" value="Присутствует ошибка"/>
+        </insert>
+    </changeSet>
+
+
+</databaseChangeLog>

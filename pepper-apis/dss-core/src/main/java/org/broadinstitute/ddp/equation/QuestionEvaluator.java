@@ -27,10 +27,11 @@ public final class QuestionEvaluator {
 
     public EquationResponse evaluate(final EquationQuestionDto equation) {
         final var variables = new EquationVariablesCollector(equation.getExpression()).collect();
+        log.info("{} variables were found for equation {}", variables.size(), equation.getStableId());
 
         StreamEx.of(variables).remove(values::containsKey).forEach(this::fetchVariableValue);
         if (!StreamEx.of(variables).allMatch(values::containsKey)) {
-            log.info("The equation can't be evaluated. Not all variables were populated");
+            log.info("The equation {} can't be evaluated. Not all variables were populated", equation.getStableId());
             return null;
         }
 
@@ -116,7 +117,7 @@ public final class QuestionEvaluator {
                                 .toList()));
                 return;
             default:
-                log.warn("The question type {} is not supported by equations", type);
+                log.warn("The question type {} is not supported by equations (variable: {})", type, variable);
         }
     }
 

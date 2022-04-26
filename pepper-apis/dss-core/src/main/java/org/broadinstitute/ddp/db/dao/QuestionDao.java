@@ -4,7 +4,9 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -42,6 +44,7 @@ import org.broadinstitute.ddp.db.dto.TextQuestionDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceSelectQuestionDto;
 import org.broadinstitute.ddp.db.dto.TypedQuestionId;
 import org.broadinstitute.ddp.db.dto.validation.RuleDto;
+import org.broadinstitute.ddp.equation.QuestionEvaluator;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
@@ -69,6 +72,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSel
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.EquationAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
@@ -425,7 +429,7 @@ public interface QuestionDao extends SqlObject {
                 question = getDecimalQuestion((DecimalQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
                 break;
             case EQUATION:
-                question = getEquationQuestion((EquationQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
+                question = getEquationQuestion((EquationQuestionDto) dto, activityInstanceGuid);
                 break;
             case AGREEMENT:
                 question = getAgreementQuestion((AgreementQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
@@ -898,23 +902,10 @@ public interface QuestionDao extends SqlObject {
      *
      * @param dto                  the question dto
      * @param activityInstanceGuid the activity instance guid
-     * @param answerIds            list of base answer ids to question (may be empty)
-     * @param untypedRules         list of untyped validations for question (may be empty)
      * @return numeric question object
      */
-    default Question getEquationQuestion(EquationQuestionDto dto, String activityInstanceGuid,
-                                        List<Long> answerIds, List<Rule> untypedRules) {
-        AnswerDao answerDao = getAnswerDao();
-        List<DecimalAnswer> answers = answerIds.stream()
-                .map(answerId -> (DecimalAnswer) answerDao.findAnswerById(answerId)
-                        .orElseThrow(() -> new DaoException("Could not find decimal answer with id " + answerId)))
-                .collect(toList());
-
-        List<Rule<DecimalAnswer>> rules = untypedRules.stream()
-                .map(rule -> (Rule<DecimalAnswer>) rule)
-                .collect(toList());
-
-        boolean isReadonly = QuestionUtil.isReadonly(getHandle(), dto, activityInstanceGuid);
+    default Question getEquationQuestion(EquationQuestionDto dto, String activityInstanceGuid) {
+        var questionEvaluator = new QuestionEvaluator(getHandle(), activityInstanceGuid);
 
         return new EquationQuestion(
                 dto.getStableId(),
@@ -922,12 +913,15 @@ public interface QuestionDao extends SqlObject {
                 dto.getPlaceholderTemplateId(),
                 dto.isRestricted(),
                 dto.isDeprecated(),
-                isReadonly,
                 dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(),
                 dto.getAdditionalInfoFooterTemplateId(),
-                answers,
-                rules,
+                StreamEx.of(getJdbiEquationQuestion().findEquationsByActivityInstanceGuid(activityInstanceGuid))
+                        .map(questionEvaluator::evaluate)
+                        .filter(Objects::nonNull)
+                        .map(EquationAnswer::new)
+                        .toList(),
+                Collections.emptyList(),
                 dto.getMaximumDecimalPlaces(),
                 dto.getExpression());
     }
