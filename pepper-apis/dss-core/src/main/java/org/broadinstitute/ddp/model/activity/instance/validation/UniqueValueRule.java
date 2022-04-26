@@ -7,7 +7,6 @@ import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 
 public class UniqueValueRule extends Rule<TextAnswer> {
-
     /**
      * Instantiates UniqueValueRule object with id.
      */
@@ -29,21 +28,12 @@ public class UniqueValueRule extends Rule<TextAnswer> {
     }
 
     @Override
-    public boolean validate(Question question, TextAnswer answer) {
-        //Take the question , answer and search across All the participant's QA of the study and the same Question.
-        if (answer != null && answer.getValue() != null) {
-            return TransactionWrapper.withTxn((handle) -> {
-                int answerCount =  handle.attach(AnswerSql.class).findAllTextAnswersCountByQuestionIdAndTextAnswer(
-                        question.getQuestionId(), answer.getValue());
+    public boolean validate(final Question question, final TextAnswer answer) {
+        return answer == null || answer.getValue() == null || TransactionWrapper.withTxn(handle -> {
+            int answerCount = handle.attach(AnswerSql.class).findAllTextAnswersCountByQuestionIdAndTextAnswer(
+                    question.getQuestionId(), answer.getValue());
 
-                if ((allowSave && answerCount > 1)  || (!allowSave && answerCount > 0)) {
-                    return false;
-                } else {
-                    return true;
-                }
-            });
-        } else {
-            return true;
-        }
+            return (!allowSave || answerCount <= 1) && (allowSave || answerCount <= 0);
+        });
     }
 }

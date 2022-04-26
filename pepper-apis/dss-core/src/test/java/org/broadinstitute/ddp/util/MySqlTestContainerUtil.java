@@ -8,16 +8,13 @@ import java.util.concurrent.TimeUnit;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigValueFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.exception.DDPException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.MySQLContainer;
 
+@Slf4j
 public class MySqlTestContainerUtil {
-
-    private static final Logger LOG = LoggerFactory.getLogger(MySqlTestContainerUtil.class);
-
     public static final String TESTING_ROOT_USERNAME = "root";
     public static final String TESTING_ROOT_PASSWORD = "test";
 
@@ -43,7 +40,7 @@ public class MySqlTestContainerUtil {
                 }
             }
         } catch (URISyntaxException e) {
-            LOG.error("invalid db url", e);
+            log.error("invalid db url", e);
             return Optional.empty();
         }
         return Optional.empty();
@@ -86,12 +83,12 @@ public class MySqlTestContainerUtil {
             Config cfg = ConfigManager.getInstance().getConfig();
             Boolean useDisposableTestDbs = ConfigUtil.getBoolIfPresent(cfg, ConfigFile.USE_DISPOSABLE_TEST_DB);
             if (useDisposableTestDbs != null && !useDisposableTestDbs) {
-                LOG.warn("Disposable test dbs will not be used. Real database connection urls should be provided in configuration file.");
+                log.warn("Disposable test dbs will not be used. Real database connection urls should be provided in configuration file.");
                 hasInitialized = true;
                 return;
             }
 
-            LOG.info("Starting test dbs.  This may take a while due to docker image fetchery");
+            log.info("Starting test dbs.  This may take a while due to docker image fetchery");
 
             long containerStartTime = System.currentTimeMillis();
             apisDb = new MySQLContainer(MYSQL_VERSION);
@@ -102,7 +99,7 @@ public class MySqlTestContainerUtil {
             apisDb.start();
             housekeepingDb.start();
 
-            LOG.info("It took {}ms to start the test containers.", System.currentTimeMillis() - containerStartTime);
+            log.info("It took {}ms to start the test containers.", System.currentTimeMillis() - containerStartTime);
 
             String apisUrl = getFullJdbcTestUrl(apisDb);
             String housekeepingUrl = getFullJdbcTestUrl(housekeepingDb);
@@ -120,19 +117,19 @@ public class MySqlTestContainerUtil {
             }
 
             Runnable containerShutdown = () -> {
-                LOG.info("Shutting down test databases");
+                log.info("Shutting down test databases");
                 if (apisDb != null) {
                     try {
                         apisDb.stop();
                     } catch (Exception e) {
-                        LOG.error("Trouble shutting down disposable apis db", e);
+                        log.error("Trouble shutting down disposable apis db", e);
                     }
                 }
                 if (housekeepingDb != null) {
                     try {
                         housekeepingDb.stop();
                     } catch (Exception e) {
-                        LOG.error("Trouble shutting down disposable housekeeping db", e);
+                        log.error("Trouble shutting down disposable housekeeping db", e);
                     }
                 }
 
@@ -140,14 +137,14 @@ public class MySqlTestContainerUtil {
             Runtime.getRuntime().addShutdownHook(new Thread(containerShutdown));
 
             try {
-                LOG.info("Pausing for {}ms for test dbs to stabilize", 2000);
+                log.info("Pausing for {}ms for test dbs to stabilize", 2000);
                 TimeUnit.MILLISECONDS.sleep(2000);
             } catch (InterruptedException e) {
-                LOG.info("Wait interrupted", e);
+                log.info("Wait interrupted", e);
             }
             hasInitialized = true;
         } else {
-            LOG.info("Already initialized test dbs");
+            log.info("Already initialized test dbs");
         }
     }
 

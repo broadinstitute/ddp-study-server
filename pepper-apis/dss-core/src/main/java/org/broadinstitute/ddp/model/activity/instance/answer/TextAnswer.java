@@ -5,7 +5,7 @@ import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.hibernate.validator.constraints.Length;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
-public class TextAnswer extends Answer<String> {
+public final class TextAnswer extends Answer<String> {
 
     @SerializedName("value")
     @Length(max = 10000)
