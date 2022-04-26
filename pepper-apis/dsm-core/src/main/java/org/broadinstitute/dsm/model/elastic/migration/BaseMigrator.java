@@ -7,14 +7,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.dsm.model.elastic.export.BaseExporter;
-import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.model.elastic.export.generate.Generator;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import spark.utils.StringUtils;
 
 public abstract class BaseMigrator extends BaseExporter implements Generator {
 
@@ -36,8 +33,7 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
 
     protected void fillBulkRequestWithTransformedMapAndExport(Map<String, Object> participantRecords) {
         participantRecords = replaceLegacyAltPidKeysWithGuids(participantRecords);
-        logger.info("filling bulk request with participants and their details for study: " + realm + " with index: " + index);
-        int batchCounter = 0;
+        logger.info("filling bulk request for participants, for " + object + " for study: " + realm + " with index: " + index);
         long totalExported = 0;
         Iterator<Map.Entry<String, Object>> participantsIterator = participantRecords.entrySet().iterator();
         while (participantsIterator.hasNext()) {
@@ -48,15 +44,22 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
                 transformObject(participantDetails);
                 Map<String, Object> finalMapToUpsert = generate();
                 bulkExportFacade.addDataToRequest(finalMapToUpsert, participantId);
-                batchCounter++;
             }
-            if (batchCounter % BATCH_LIMIT == 0 || !participantsIterator.hasNext()) {
+            if (isReadyToExport(participantsIterator)) {
                 totalExported += bulkExportFacade.executeBulkUpsert();
                 bulkExportFacade.clear();
             }
         }
         logger.info("finished migrating data of " + totalExported + " participants for " + object + " to ES for study: " + realm + " with " +
                 "index: " + index);
+    }
+
+    private boolean isReadyToExport(Iterator<Map.Entry<String, Object>> participantsIterator) {
+        return hasReachedToBatchLimit() || !participantsIterator.hasNext();
+    }
+
+    private boolean hasReachedToBatchLimit() {
+        return bulkExportFacade.size() != 0 && bulkExportFacade.size() % BATCH_LIMIT == 0;
     }
 
     private Map<String, Object> replaceLegacyAltPidKeysWithGuids(Map<String, Object> participantRecords) {
@@ -73,7 +76,7 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
             Object obj = participantRecords.get(legacyAltPid);
             String guid = entry.getValue();
             participantRecords.put(guid, obj);
-            participantRecords.remove(legacyAltPid, obj);
+            participantRecords.remove(legacyAltPid);
         }
         return participantRecords;
     }
