@@ -251,7 +251,6 @@ public class QuestionCreatorHelper {
                         ctx, questionDef.getPlaceholderTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
-                isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
                 ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, questionDef.getTooltipTemplate()),
                 ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
