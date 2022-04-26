@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.HtmlConverter;
-import org.broadinstitute.ddp.model.activity.instance.answer.DecimalAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.EquationAnswer;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 
@@ -13,7 +13,7 @@ import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 
 @Getter
-public final class EquationQuestion extends Question<DecimalAnswer> {
+public final class EquationQuestion extends Question<EquationAnswer> {
     @SerializedName("placeholderText")
     private String placeholderText;
 
@@ -28,7 +28,7 @@ public final class EquationQuestion extends Question<DecimalAnswer> {
     public EquationQuestion(String stableId, long promptTemplateId, Long placeholderTemplateId,
                             boolean isRestricted, boolean isDeprecated, Boolean readonly, Long tooltipTemplateId,
                             Long additionalInfoHeaderTemplateId, Long additionalInfoFooterTemplateId,
-                            List<DecimalAnswer> answers, List<Rule<DecimalAnswer>> validations,
+                            List<EquationAnswer> answers, List<Rule<EquationAnswer>> validations,
                             Integer maximumDecimalPlaces, String expression) {
         super(QuestionType.EQUATION, stableId, promptTemplateId, isRestricted, isDeprecated, readonly, tooltipTemplateId,
                 additionalInfoHeaderTemplateId, additionalInfoFooterTemplateId, answers, validations);
