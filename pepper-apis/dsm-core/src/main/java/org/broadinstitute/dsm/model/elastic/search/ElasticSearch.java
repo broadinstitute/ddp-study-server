@@ -24,7 +24,11 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.core.CountRequest;
 import org.elasticsearch.client.core.CountResponse;
-import org.elasticsearch.index.query.*;
+import org.elasticsearch.index.query.AbstractQueryBuilder;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.index.query.TermsQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
@@ -287,7 +291,8 @@ public class ElasticSearch implements ElasticSearchable {
             SearchRequest searchRequest = new SearchRequest(esParticipantsIndex);
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
             searchSourceBuilder.query(new TermsQueryBuilder(ElasticSearchUtil.PROFILE_LEGACYALTPID, legacyAltPids.toArray()));
-            searchSourceBuilder.fetchSource(new String[] {ElasticSearchUtil.PROFILE_LEGACYALTPID, ElasticSearchUtil.PROFILE_GUID}, null);
+            searchSourceBuilder.size(legacyAltPids.size());
+            searchSourceBuilder.fetchSource(new String[] { ElasticSearchUtil.PROFILE_LEGACYALTPID, ElasticSearchUtil.PROFILE_GUID }, null);
             searchRequest.source(searchSourceBuilder);
             response = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
         } catch (Exception e) {
