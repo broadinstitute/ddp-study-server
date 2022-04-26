@@ -47,7 +47,7 @@ public class AbstractionRoute extends RequestHandler {
                     || UserUtil.checkUserAccess(realm, userId, "mr_qc", userIdReq)) {
                 if (StringUtils.isNotBlank(ddpParticipantId)) {
                     String status = null;
-                    if (jsonObject.has(RequestParameter.STATUS) && !jsonObject.has(RequestParameter.STATUS)) {
+                    if (jsonObject.has(RequestParameter.STATUS)) {
                         status = jsonObject.get(RequestParameter.STATUS).getAsString();
                     }
                     Integer userIdRequest = null;
