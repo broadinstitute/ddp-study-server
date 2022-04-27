@@ -1997,9 +1997,9 @@ Study.Audit:
   required:
     - studyGuid
     - operatorGuid
-    - operatorEMail
+    - operatorEmail
     - userGuid
-    - userEMail
+    - userEmail
     - entityType
     - dateTime
     - description
@@ -2010,13 +2010,13 @@ Study.Audit:
     operatorGuid:
       type: string
       format: guid
-    operatorEMail:
+    operatorEmail:
       type: string
       format: email
     userGuid:
       type: string
       format: guid
-    userEMail:
+    userEmail:
       type: string
       format: email
     entityType:
@@ -2946,7 +2946,7 @@ DateRange:
       format: date-time
     to:
       type: string
-      description: the upper constraint of the range. This value is inclusive. The date format is a full, extended ISO-8601 Calendar date in the format `YYYY-MM-DD` in the UTC time zone.
+      description: the upper constraint of the range. This value is inclusive. The date format is a full, extended ISO-8601 Calendar date and time in the format `YYYY-MM-DDTHH:MM:SSZ` in the UTC time zone.
       nullable: true
       format: date-time
 IntegerRange:

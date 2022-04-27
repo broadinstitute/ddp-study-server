@@ -67,7 +67,7 @@ post:
               items:
                 type: string
             limitation:
-              description: the limitation constraint
+              description: the limitation constraint (specifies the first and the last row of the range to be fetched)
               nullable: true
               type: object
               $ref: '../pepper.yml#/components/schemas/IntegerRange'
