@@ -5,7 +5,6 @@ import java.security.GeneralSecurityException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +20,7 @@ import com.google.api.services.sqladmin.model.Operation;
 import com.google.api.services.sqladmin.model.OperationError;
 import com.google.api.services.sqladmin.model.OperationErrors;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -31,26 +31,23 @@ import org.broadinstitute.ddp.monitoring.PointsReducerFactory;
 import org.broadinstitute.ddp.monitoring.StackdriverCustomMetric;
 import org.broadinstitute.ddp.monitoring.StackdriverMetricsTracker;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class DatabaseBackup {
-
     private static final String CLOUDSQL_CRED_SCOPE = "https://www.googleapis.com/auth/sqlservice.admin";
-    private static final Logger LOG = LoggerFactory.getLogger(DatabaseBackup.class);
     private static final String LABEL_KEY = "db";
     private static final String RUN_STATUS_DONE = "DONE";
     private static final String RUN_STATUS_HOPELESS = "HOPELESS";
     private static final String APP_NAME = "DatabaseBackupApp";
-    private SQLAdmin sqlAdminService;
-    private Config cfg;
+    private final SQLAdmin sqlAdminService;
+    private final Config cfg;
 
     public DatabaseBackup() {
         cfg = ConfigManager.getInstance().getConfig();
         try {
             sqlAdminService = createSqlAdminService();
         } catch (IOException | GeneralSecurityException e) {
-            LOG.error("Failed to initialize SQL Admin ", e);
+            log.error("Failed to initialize SQL Admin ", e);
             throw new DDPException("Failed to initialize SQL Admin ", e);
         }
     }
@@ -77,7 +74,7 @@ public class DatabaseBackup {
             for (BackupJobDto dto : pendingBackups) {
                 Operation response = getOperation(dto.getRunName(), gcpProject);
                 if (response == null) {
-                    LOG.error("Null response for operation: {} get ", dto.getRunName());
+                    log.error("Null response for operation: {} get ", dto.getRunName());
                 } else if (response.getError() != null && CollectionUtils.isNotEmpty(response.getError().getErrors())) {
                     logErrors(dto.getDatabaseName(), response.getError());
                 } else if (RUN_STATUS_DONE.equalsIgnoreCase(response.getStatus())) {
@@ -88,7 +85,7 @@ public class DatabaseBackup {
                     Instant start = Instant.ofEpochMilli(dto.getStartTime());
                     Instant startPlus6Hrs = start.plus(6, ChronoUnit.HOURS);
                     if (Instant.now().isAfter(startPlus6Hrs)) {
-                        LOG.error("Backup job for database instance {} failed to complete.", dto.getDatabaseName());
+                        log.error("Backup job for database instance {} failed to complete.", dto.getDatabaseName());
                         updateBackupJobTable(jdbiBackupJob, dto.getRunName(), null, RUN_STATUS_HOPELESS);
                     }
                 }
@@ -100,7 +97,7 @@ public class DatabaseBackup {
     private void updateBackupJobTable(JdbiBackupJob jdbiBackupJob, String runName, Long endTime, String status) {
         int rowCount = jdbiBackupJob.updateEndTimeStatus(runName, endTime, status);
         if (rowCount != 1) {
-            LOG.error("{} rows updated in backup_job for run name: {} ", rowCount, runName);
+            log.error("{} rows updated in backup_job for run name: {} ", rowCount, runName);
         }
     }
 
@@ -125,7 +122,7 @@ public class DatabaseBackup {
             SQLAdmin.BackupRuns.Insert request = sqlAdminService.backupRuns().insert(project, instance, requestBody);
             response = request.execute();
         } catch (IOException e) {
-            LOG.error("Failed submitting backup request for instance {} ", instance, e);
+            log.error("Failed submitting backup request for instance {} ", instance, e);
             //continue
         }
         return response;
@@ -135,7 +132,7 @@ public class DatabaseBackup {
     private void processResponse(Handle handle, String instance, Operation response) {
 
         if (response == null) {
-            LOG.error("null response from database {} backup request ", instance);
+            log.error("null response from database {} backup request ", instance);
             return;
         } else if (response.getError() != null && CollectionUtils.isNotEmpty(response.getError().getErrors())) {
             logErrors(instance, response.getError());
@@ -148,7 +145,7 @@ public class DatabaseBackup {
         } else {
             saveJobDetails(handle, instance, response);
         }
-        LOG.info("Submitted backup request: {} for DB: {} ", response.getName(), instance);
+        log.info("Submitted backup request: {} for DB: {} ", response.getName(), instance);
     }
 
     private void saveJobDetails(Handle handle, String instance, Operation response) {
@@ -165,17 +162,16 @@ public class DatabaseBackup {
     private void logErrors(String instance, OperationErrors errors) {
         StringBuilder errorStrings = new StringBuilder();
         for (OperationError error : errors.getErrors()) {
-            errorStrings.append("Code: " + error.getCode());
-            errorStrings.append("Kind: " + error.getKind());
-            errorStrings.append("Message: " + error.getMessage());
+            errorStrings.append("Code: ").append(error.getCode());
+            errorStrings.append("Kind: ").append(error.getKind());
+            errorStrings.append("Message: ").append(error.getMessage());
             errorStrings.append("\n");
         }
-        LOG.error(" Errors from database " + instance + "request \n " + errorStrings.toString());
+        log.error("Errors from database " + instance + "request \n " + errorStrings);
     }
 
-
     private void postStackDriverMetric(String instance) {
-        Map<String, String> labels = new HashMap<String, String>();
+        Map<String, String> labels = new HashMap<>();
         labels.put(LABEL_KEY, instance);
 
         new StackdriverMetricsTracker(
@@ -191,7 +187,7 @@ public class DatabaseBackup {
             SQLAdmin.Operations.Get request = sqlAdminService.operations().get(project, operationName);
             response = request.execute();
         } catch (IOException e) {
-            LOG.error("Failed to get backup operation details for run {} ", operationName, e);
+            log.error("Failed to get backup operation details for run {} ", operationName, e);
             //continue to next pending job
         }
 
@@ -205,7 +201,7 @@ public class DatabaseBackup {
 
         GoogleCredential credential = GoogleCredential.getApplicationDefault();
         if (credential.createScopedRequired()) {
-            credential = credential.createScoped(Arrays.asList(CLOUDSQL_CRED_SCOPE));
+            credential = credential.createScoped(List.of(CLOUDSQL_CRED_SCOPE));
         }
 
         return new SQLAdmin.Builder(httpTransport, jsonFactory, credential)
