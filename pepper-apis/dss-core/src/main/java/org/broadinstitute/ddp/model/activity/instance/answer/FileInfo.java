@@ -5,48 +5,28 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
+@Value
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class FileInfo implements Serializable {
+    @ColumnName("file_upload_id")
+    transient long uploadId;
+
+    @ColumnName("file_upload_guid")
+    @SerializedName("uploadGuid")
+    String uploadGuid;
 
     @NotBlank
+    @ColumnName("file_name")
     @SerializedName("fileName")
-    private String fileName;
+    String fileName;
 
     @Positive
+    @ColumnName("file_size")
     @SerializedName("fileSize")
-    private long fileSize;
-
-    private transient long uploadId;
-
-    @SerializedName("uploadGuid")
-    private String uploadGuid;
-
-    @JdbiConstructor
-    public FileInfo(@ColumnName("file_upload_id") long uploadId,
-                    @ColumnName("file_upload_guid") String uploadGuid,
-                    @ColumnName("file_name") String fileName,
-                    @ColumnName("file_size") long fileSize) {
-        this.uploadId = uploadId;
-        this.uploadGuid = uploadGuid;
-        this.fileName = fileName;
-        this.fileSize = fileSize;
-    }
-
-    public long getUploadId() {
-        return uploadId;
-    }
-
-    public String getUploadGuid() {
-        return uploadGuid;
-    }
-
-    public String getFileName() {
-        return fileName;
-    }
-
-    public long getFileSize() {
-        return fileSize;
-    }
+    long fileSize;
 }
