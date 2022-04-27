@@ -31,6 +31,7 @@ import com.auth0.json.mgmt.users.User;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
@@ -94,12 +95,11 @@ import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.service.OLCService;
 import org.broadinstitute.ddp.util.gen2.enums.LovedOneRelationTo;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Parse, load and insert Participant data into pepper-db
  */
+@Slf4j
 public class DataLoader {
     public static final String HEADFACENECK = "HEADFACENECK";
     public static final String SCALP = "SCALP";
@@ -126,7 +126,6 @@ public class DataLoader {
     public static final String CONSENT_ACTIVITY_CODE = "ANGIOCONSENT";
     public static final String FOLLOWUP_CONSENT_ACTIVITY_CODE = "followupconsent";
     public static final String LOVEDONE_ACTIVITY_CODE = "ANGIOLOVEDONE";
-    private static final Logger LOG = LoggerFactory.getLogger(DataLoader.class);
     private static final String USER_MEDICAL_PROVIDER = "USER_MEDICAL_PROVIDER";
     private static final String USER_MEDICAL_PROVIDER_GUID = "USER_MEDICAL_PROVIDER_GUID";
     private static final String DEFAULT_PREFERRED_LANGUAGE_CODE = "en";
@@ -138,7 +137,7 @@ public class DataLoader {
     private static final int DSM_DEFAULT_ON_DEMAND_TRIGGER_ID = -2;
 
     void loadMailingListData(Handle handle, MailingListData data, String studyCode) {
-        LOG.info("load mailinglist");
+        log.info("load mailinglist");
         JdbiMailingList dao = handle.attach(JdbiMailingList.class);
         Long dateCreatedMillis;
         for (MailingListDatum mailingItem : data.getMailingListData()) {
@@ -159,7 +158,7 @@ public class DataLoader {
         JdbiUser jdbiUser = handle.attach(JdbiUser.class);
         String userGuid = jdbiUser.getUserGuidByAltpid(data.getDatstatAltpid());
         if (userGuid != null) {
-            LOG.warn("Looks like  Participant data already loaded: " + userGuid);
+            log.warn("Looks like  Participant data already loaded: " + userGuid);
             return userGuid;
             //watch out.. early return
         }
@@ -211,7 +210,7 @@ public class DataLoader {
         handle.attach(JdbiUserStudyEnrollment.class)
                 .changeUserStudyEnrollmentStatus(userGuid, studyGuid, EnrollmentStatusType.REGISTERED, ddpCreatedAt);
 
-        LOG.info("user guid: " + pepperUser.getUserGuid());
+        log.info("user guid: " + pepperUser.getUserGuid());
         return pepperUser.getUserGuid();
     }
 
@@ -253,7 +252,7 @@ public class DataLoader {
                 break;
 
             default:
-                LOG.error("Invalid activity code passed: {} ", activityCode);
+                log.error("Invalid activity code passed: {} ", activityCode);
                 break;
         }
 
@@ -266,7 +265,7 @@ public class DataLoader {
             Integer submissionStatus = gen2Survey.getDatstatSubmissionstatus();
 
             Long studyActivityId = jdbiActivity.findIdByStudyIdAndCode(studyId, activityCode).get();
-            LOG.info("study activity ID: " + studyActivityId);
+            log.info("study activity ID: " + studyActivityId);
             List<ActivityVersionDto> versionDto = jdbiActivityVersion.findAllVersionsInAscendingOrder(studyActivityId);
             //get version/revision with lowest Timestamp
             Long revisionStart = null;
@@ -333,7 +332,7 @@ public class DataLoader {
                             isReadonly, ddpCreatedAt,
                             submissionId.longValue(), sessionId, surveyVersion).getGuid();
 
-            LOG.info("Created activity instance {} for activity {} and user {}",
+            log.info("Created activity instance {} for activity {} and user {}",
                     instanceGuid, activityCode, participantGuid);
 
             long activityInstanceId = jdbiActivityInstance.getActivityInstanceId(instanceGuid);
@@ -365,16 +364,14 @@ public class DataLoader {
         AboutYouSurvey aboutYouSurvey = null;
         DatstatSurveyData surveyData = participantData.getParticipantUser().getDatstatsurveydata();
         if (surveyData != null) {
-            //LOG.info("survey data loaded..");
             aboutYouSurvey = surveyData.getAboutYouSurvey();
         }
         if (aboutYouSurvey == null) {
-            LOG.warn("NO About You Survey !");
+            log.warn("NO About You Survey !");
             return;
-            //watch out.. early return;
         }
 
-        LOG.info("Populating AboutYou Survey...");
+        log.info("Populating AboutYou Survey...");
 
         // Date of Diagnosis Picklist Month/Year
         DateValue diagnosisDate = new DateValue(aboutYouSurvey.getDiagnosisDateYear(),
@@ -560,14 +557,14 @@ public class DataLoader {
                                       JdbiUserStudyEnrollment jdbiUserStudyEnrollment,
                                       AnswerDao answerDao) throws Exception {
 
-        LOG.info("Populating Release Survey...");
+        log.info("Populating Release Survey...");
         ReleaseSurvey releaseSurvey = null;
         DatstatSurveyData surveyData = participantData.getParticipantUser().getDatstatsurveydata();
         if (surveyData != null) {
             releaseSurvey = surveyData.getReleaseSurvey();
         }
         if (releaseSurvey == null) {
-            LOG.warn("NO Release Survey !");
+            log.warn("NO Release Survey !");
             return;
             //watch out.. early return;
         }
@@ -741,14 +738,14 @@ public class DataLoader {
                                       String instanceGuid,
                                       AnswerDao answerDao) throws Exception {
 
-        LOG.info("Populating Consent Survey...");
+        log.info("Populating Consent Survey...");
         ConsentSurvey consentSurvey = null;
         DatstatSurveyData surveyData = participantData.getParticipantUser().getDatstatsurveydata();
         if (surveyData != null) {
             consentSurvey = surveyData.getConsentSurvey();
         }
         if (consentSurvey == null) {
-            LOG.warn("NO Consent Survey !");
+            log.warn("NO Consent Survey !");
             return;
         }
 
@@ -794,14 +791,14 @@ public class DataLoader {
                                               String participantGuid, String instanceGuid,
                                               AnswerDao answerDao, long userId) throws Exception {
 
-        LOG.info("Populating Followup Consent Survey...");
+        log.info("Populating Followup Consent Survey...");
         FollowupConsentSurvey followupConsentSurvey = null;
         DatstatSurveyData surveyData = participantData.getParticipantUser().getDatstatsurveydata();
         if (surveyData != null) {
             followupConsentSurvey = surveyData.getFollowupConsentSurvey();
         }
         if (followupConsentSurvey == null) {
-            LOG.warn("NO Followup Consent Survey !");
+            log.warn("NO Followup Consent Survey !");
             return;
             //watch out.. early return;
         }
@@ -836,14 +833,14 @@ public class DataLoader {
                                        String instanceGuid,
                                        AnswerDao answerDao) throws Exception {
 
-        LOG.info("Populating LovedOne Survey...");
+        log.info("Populating LovedOne Survey...");
         LovedOneSurvey lovedOneSurvey = null;
         DatstatSurveyData surveyData = participantData.getParticipantUser().getDatstatsurveydata();
         if (surveyData != null) {
             lovedOneSurvey = surveyData.getLovedOneSurvey();
         }
         if (lovedOneSurvey == null) {
-            LOG.warn("NO LovedOne Survey !");
+            log.warn("NO LovedOne Survey !");
             return;
             //watch out.. early return;
         }
@@ -1222,14 +1219,14 @@ public class DataLoader {
         Config auth0Config = cfg.getConfig(ConfigFile.AUTH0);
         String auth0Domain = auth0Config.getString(ConfigFile.DOMAIN);
         String auth0ClientId = auth0Config.getString(ConfigFile.Auth0Testing.AUTH0_CLIENT_ID);
-        LOG.info("Domain : {} ", auth0Domain);
+        log.info("Domain : {} ", auth0Domain);
 
         Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByDomain(auth0Domain);
         StudyClientConfiguration studyClientConfiguration = handle.attach(ClientDao.class).getConfiguration(auth0ClientId, auth0Domain);
         if (studyClientConfiguration == null) {
             throw new Exception("Could not find study for domain " + auth0Domain);
         }
-        LOG.info("Getting StudyClient Config for auth0clientId = " + auth0ClientId + " and domain = " + auth0Domain);
+        log.info("Getting StudyClient Config for auth0clientId = " + auth0ClientId + " and domain = " + auth0Domain);
 
         Auth0Util auth0Util = new Auth0Util(auth0Domain);
         var mgmtClient = new Auth0ManagementClient(
@@ -1307,7 +1304,7 @@ public class DataLoader {
                 data.getDdpParticipantShortid(), createdAtMillis, updatedAtMillis, null);
         mgmtClient.setUserGuidForAuth0User(auth0UserId, auth0ClientId, newUser.getUserGuid());
 
-        LOG.error("User created: Auth0UserId = " + auth0UserId + ", GUID = " + newUserGuid + ", HRUID = " + newUserHruid + ", ALTPID = "
+        log.error("User created: Auth0UserId = " + auth0UserId + ", GUID = " + newUserGuid + ", HRUID = " + newUserHruid + ", ALTPID = "
                 + data.getDatstatAltpid());
         return newUser;
     }
@@ -1388,7 +1385,7 @@ public class DataLoader {
 
         MailAddress address = jdbiMailAddress.insertLegacyAddress(mailAddress, user.getUserGuid(), user.getUserGuid(), ddpCreatedAt);
         jdbiMailAddress.setDefaultAddressForParticipant(address.getGuid());
-        LOG.info("Inserted address id: {}...createdTime: {} ", address.getGuid(), ddpCreatedAt);
+        log.info("Inserted address id: {}...createdTime: {} ", address.getGuid(), ddpCreatedAt);
         return mailAddress;
     }
 
@@ -1419,7 +1416,7 @@ public class DataLoader {
         long kitTypeId = kitTypeDao.getSalivaKitType().getId();
         long kitId = dsmKitRequestDao.createKitRequest(data.getDdpSpitKitRequestId(), studyGuid,
                 addressid, kitTypeId, pepperUserId, epoch, false);
-        LOG.info("Created kit ID: " + kitId);
+        log.info("Created kit ID: " + kitId);
         return kitId;
     }
 
