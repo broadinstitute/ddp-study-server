@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.model.elastic.export.excel;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
