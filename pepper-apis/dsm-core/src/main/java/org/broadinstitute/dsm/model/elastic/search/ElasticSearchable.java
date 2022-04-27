@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.model.elastic.search;
 import org.broadinstitute.dsm.model.elastic.sort.Sort;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 

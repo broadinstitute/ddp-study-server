@@ -59,7 +59,7 @@ public class SendGridClient {
             SendGrid sendGrid = new SendGrid(sendGridKey);
             sendRequestUsingTemplate((Recipient) (recipientList.toArray())[0], sendGridTemplate, sendGrid);
         } catch (Exception ex) {
-            throw new NotificationSentException("An error occurred trying to send emails.");
+            throw new NotificationSentException("An error occurred trying to send emails. " + ex.getMessage());
         }
     }
 
