@@ -9,7 +9,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
 
 public class AuditTrailServiceTest extends TxnAwareBaseTest {
     private static TestDataSetupUtil.GeneratedTestData testData;
@@ -26,24 +25,6 @@ public class AuditTrailServiceTest extends TxnAwareBaseTest {
             handle.attach(JdbiClientUmbrellaStudy.class).insert(testData.getClientId(), study.getId());
 
             assertTrue(AuditTrailService.search(new AuditTrailFilter()).isEmpty());
-
-            handle.rollback();
-        });
-    }
-
-    @Test
-    public void testUser() {
-        TransactionWrapper.useTxn(handle -> {
-            final StudyDto study = TestDataSetupUtil.generateTestStudy(handle, cfg);
-            handle.attach(JdbiClientUmbrellaStudy.class).insert(testData.getClientId(), study.getId());
-
-            AuditTrailService.user(study.getId(),
-                    testData.getUserId(),
-                    testData.getUserId(),
-                    AuditActionType.CREATE,
-                    "User created");
-
-            assertEquals(1, AuditTrailService.search(new AuditTrailFilter()).size());
 
             handle.rollback();
         });
