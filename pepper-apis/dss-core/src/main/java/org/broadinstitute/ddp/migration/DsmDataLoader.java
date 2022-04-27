@@ -10,6 +10,7 @@ import org.jdbi.v3.core.ConnectionException;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.HandleConsumer;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.statement.SqlStatements;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -47,7 +48,7 @@ public class DsmDataLoader {
     }
 
     public static <X extends Exception> void useTxn(HandleConsumer<X> callback) throws X {
-        try (Handle h = jdbi.open()) {
+        try (Handle h = jdbi.open().configure(SqlStatements.class, s -> s.setUnusedBindingAllowed(true))) {
             h.useTransaction(callback);
         } catch (ConnectionException e) {
             throw new LoaderException(e);

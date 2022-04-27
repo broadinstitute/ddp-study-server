@@ -21,6 +21,7 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.HandleCallback;
 import org.jdbi.v3.core.HandleConsumer;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.statement.SqlStatements;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 
 /**
@@ -314,10 +315,9 @@ public class TransactionWrapper {
      * values so that we can rotate the password without rebooting the app.
      */
     private static Handle openJdbiWithAuthRetry(DB db) {
-        Handle h;
         for (int tryCount = 0; tryCount < PASSWORD_ROTATION_MAX_RETRIES; tryCount++) {
             try {
-                return getInstance(db).jdbi.open();
+                return getInstance(db).jdbi.open().configure(SqlStatements.class, s -> s.setUnusedBindingAllowed(true));
             } catch (ConnectionException e) {
                 if (isAuthException(e)) {
                     log.info("Database pool credentials have been rejected; pausing and reloading creds from config file.", e);
