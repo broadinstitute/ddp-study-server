@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -22,7 +23,6 @@ import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
 public class ParticipantRecordData {
     private final Map<Alias, List<ParticipantColumn>> columnAliasEsPathMap;
-//    private final List<ParticipantRecord> participantRecords = new ArrayList<>();
     private final List<String> headerNames = new ArrayList<>();
     private List<Integer> columnSizes = new ArrayList<>();
     public ParticipantRecordData(Map<Alias, List<ParticipantColumn>> columnAliasEsPathMap) {
@@ -114,17 +114,44 @@ public class ParticipantRecordData {
                                 List<LinkedHashMap<String, Object>> questionAnswers =
                                         (List<LinkedHashMap<String, Object>>) foundActivity.get(ElasticSearchUtil.QUESTIONS_ANSWER);
                                 return questionAnswers.stream().filter(qa -> qa.get(ESObjectConstants.STABLE_ID).equals(column.getName()))
-                                        .map(fq -> {
-                                            Object answer = fq.get("answer");
-                                            return answer != null ? answer : fq.get(column.getName());
-                                        }).map(this::mapToCollection)
-                                        .flatMap(Collection::stream).collect(Collectors.toList());
+                                        .map(fq -> getAnswerValue(fq, column.getName()))
+                                        .map(this::mapToCollection)
+                                        .flatMap(Collection::stream)
+                                        .collect(Collectors.toList());
                             }
                         }).orElse(Collections.singletonList(StringUtils.EMPTY));
         if (objects.isEmpty()) {
             return Collections.singletonList(StringUtils.EMPTY);
         }
         return objects;
+    }
+
+    private Object getAnswerValue(LinkedHashMap<String, Object> fq, String columnName) {
+        Collection<?> answer = mapToCollection(fq.get(ESObjectConstants.ANSWER));
+        if (answer.isEmpty()) {
+            answer = mapToCollection(fq.get(columnName));
+        }
+        Object optionDetails = fq.get(ESObjectConstants.OPTIONDETAILS);
+        if (optionDetails != null && !((List<?>) optionDetails).isEmpty()) {
+            removeOptionsFromAnswer(answer, ((List<Map<String, String>>)optionDetails));
+            return Stream.of(answer, getOptionDetails((List<?>) optionDetails)).flatMap(Collection::stream)
+                    .collect(Collectors.toList());
+        }
+
+        return answer;
+    }
+
+    private void removeOptionsFromAnswer(Collection<?> answer, List<Map<String,String>> optionDetails) {
+        List<String> details = optionDetails.stream().map(options -> options.get(ESObjectConstants.OPTION)).collect(Collectors.toList());
+        answer.removeAll(details);
+    }
+
+    private List<String> getOptionDetails(List<?> optionDetails) {
+        return optionDetails.stream().map(optionDetail ->
+                        new StringBuilder(((Map)optionDetail).get(ESObjectConstants.OPTION).toString())
+                        .append(':')
+                        .append(((Map)optionDetail).get(ESObjectConstants.DETAIL)).toString())
+                        .collect(Collectors.toList());
     }
 
     private Collection<?> mapToCollection(Object o) {
