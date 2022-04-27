@@ -45,7 +45,7 @@ public final class AuditTrailService {
                         .operatorGuid(getGuidByUserID(operatorId))
                         .activityInstanceId(activityInstanceId)
                         .actionType(actionType)
-                        .entityType(AuditEntityType.USER)
+                        .entityType(AuditEntityType.ACTIVITY_INSTANCE)
                         .description(description)
                         .build()));
         log.info("{} action was applied to the activity instance {} by {} in terms of study #{}",
@@ -64,7 +64,7 @@ public final class AuditTrailService {
                         .operatorGuid(getGuidByUserID(operatorId))
                         .answerId(answerId)
                         .actionType(actionType)
-                        .entityType(AuditEntityType.USER)
+                        .entityType(AuditEntityType.ANSWER)
                         .description(description)
                         .build()));
         log.info("{} action was applied to the answer {} by {} in terms of study #{}",
