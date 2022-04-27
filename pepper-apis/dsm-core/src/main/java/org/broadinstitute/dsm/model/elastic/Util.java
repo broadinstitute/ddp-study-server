@@ -164,7 +164,9 @@ public class Util {
                 finalResult = Map.of(ESObjectConstants.DYNAMIC_FIELDS, transformedMap);
                 break;
             default:
-                finalResult = new HashMap<>(Map.of(underscoresToCamelCase(fieldName), fieldValue));
+                Map<String, Object> result = new HashMap<>();
+                result.put(underscoresToCamelCase(fieldName), StringUtils.isBlank(String.valueOf(fieldValue)) ? null : fieldValue);
+                finalResult = result;
                 break;
         }
         return finalResult;
