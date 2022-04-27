@@ -32,6 +32,10 @@ public class BulkExportFacade {
         bulkRequest.add(createRequest(mapToUpsert, docId));
     }
 
+    public int size() {
+        return bulkRequest.requests().size();
+    }
+
     private UpdateRequest createRequest(Map mapToUpsert, String docId) {
         UpdateRequest updateRequest = new UpdateRequest(index, DOC, docId);
         updateRequest.doc(mapToUpsert);
@@ -41,13 +45,14 @@ public class BulkExportFacade {
     public long executeBulkUpsert() {
         RestHighLevelClient client = ElasticSearchUtil.getClientInstance();
         try {
-            logger.info(String.format("attempting to upsert data for %s participants", bulkRequest.requests().size()));
             if (bulkRequest.requests().size() > 0) {
+                logger.info(String.format("attempting to upsert data for %s participants", bulkRequest.requests().size()));
                 BulkResponse bulkResponse = client.bulk(bulkRequest, RequestOptions.DEFAULT);
                 long successfullyExported = Arrays.stream(bulkResponse.getItems())
                         .filter(this::isSuccessfullyExported)
                         .count();
                 logger.info(String.format("%s participants data has been successfully upserted", successfullyExported));
+                logger.warn(bulkResponse.buildFailureMessage());
                 return successfullyExported;
             }
         } catch (IOException e) {
