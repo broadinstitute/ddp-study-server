@@ -27,7 +27,7 @@ public class FilterFactory {
         String[] pathSegments = request.uri().split("/");
         String lastSegment = pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : "";
         String jsonBody = request.body();
-        Filterable filterable = queryParamsMap -> Collections.emptyList();
+        Filterable filterable = null;
         switch (lastSegment) {
             case RoutePath.APPLY_FILTER:
             case RoutePath.DOWNLOAD_PARTICIPANT_LIST_ROUTE:

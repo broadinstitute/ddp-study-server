@@ -26,17 +26,14 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class ParticipantRecordData {
     private final Map<Alias, List<ParticipantColumn>> columnAliasEsPathMap;
-    private final List<ParticipantRecord> participantRecords = new ArrayList<>();
     private final List<String> headerNames = new ArrayList<>();
     private List<Integer> columnSizes = new ArrayList<>();
-    private final ParticipantWrapperResult participantData;
-    public ParticipantRecordData(ParticipantWrapperResult participantData,
-                                 Map<Alias, List<ParticipantColumn>> columnAliasEsPathMap) {
+    public ParticipantRecordData(Map<Alias, List<ParticipantColumn>> columnAliasEsPathMap) {
         this.columnAliasEsPathMap = columnAliasEsPathMap;
-        this.participantData = participantData;
     }
 
-    public void processData() {
+    public List<List<String>> processData(ParticipantWrapperResult participantData, boolean isCountPhase) {
+        List<ParticipantRecord> participantRecords = new ArrayList<>();
         for (ParticipantWrapperDto participant : participantData.getParticipants()) {
             ParticipantRecord participantRecord = new ParticipantRecord();
             Map<String, Object> esDataAsMap = participant.getEsDataAsMap();
@@ -55,8 +52,13 @@ public class ParticipantRecordData {
                     participantRecord.add(columnValue);
                 }
             }
-            addParticipant(participantRecord);
+            if (isCountPhase) {
+                initOrUpdateSizes(participantRecord);
+            } else {
+                participantRecords.add(participantRecord);
+            }
         }
+        return getRowData(participantRecords);
 
     }
 
@@ -78,11 +80,6 @@ public class ParticipantRecordData {
         }
     }
 
-    public void addParticipant(ParticipantRecord participantRecord) {
-        this.participantRecords.add(participantRecord);
-        initOrUpdateSizes(participantRecord);
-    }
-
     public List<String> getHeader() {
         int i = 0;
         for (Map.Entry<Alias, List<ParticipantColumn>> aliasListEntry : columnAliasEsPathMap.entrySet()) {
@@ -92,7 +89,7 @@ public class ParticipantRecordData {
         return headerNames;
     }
 
-    public List<List<String>> getRowData() {
+    private List<List<String>> getRowData(List<ParticipantRecord> participantRecords) {
         List<List<String>> rowValues = new ArrayList<>();
         participantRecords.forEach(record -> rowValues.add(record.transposeAndFlatten(columnSizes)));
         return rowValues;
@@ -202,14 +199,5 @@ public class ParticipantRecordData {
             return Collections.singletonList(value);
         }
         return (Collection<?>) value;
-    }
-
-    private boolean isJsonValue(String jsonInString) {
-        try {
-            ObjectMapperSingleton.instance().readTree(jsonInString);
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
     }
 }
