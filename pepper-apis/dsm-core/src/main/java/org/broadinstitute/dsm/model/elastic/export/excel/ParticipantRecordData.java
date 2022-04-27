@@ -22,17 +22,15 @@ import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
 public class ParticipantRecordData {
     private final Map<Alias, List<ParticipantColumn>> columnAliasEsPathMap;
-    private final List<ParticipantRecord> participantRecords = new ArrayList<>();
+//    private final List<ParticipantRecord> participantRecords = new ArrayList<>();
     private final List<String> headerNames = new ArrayList<>();
     private List<Integer> columnSizes = new ArrayList<>();
-    private final ParticipantWrapperResult participantData;
-    public ParticipantRecordData(ParticipantWrapperResult participantData,
-                                 Map<Alias, List<ParticipantColumn>> columnAliasEsPathMap) {
+    public ParticipantRecordData(Map<Alias, List<ParticipantColumn>> columnAliasEsPathMap) {
         this.columnAliasEsPathMap = columnAliasEsPathMap;
-        this.participantData = participantData;
     }
 
-    public void processData() {
+    public List<List<String>> processData(ParticipantWrapperResult participantData, boolean isCountPhase) {
+        List<ParticipantRecord> participantRecords = new ArrayList<>();
         for (ParticipantWrapperDto participant : participantData.getParticipants()) {
             ParticipantRecord participantRecord = new ParticipantRecord();
             Map<String, Object> esDataAsMap = participant.getEsDataAsMap();
@@ -48,14 +46,13 @@ public class ParticipantRecordData {
                     participantRecord.add(columnValue);
                 }
             }
-            addParticipant(participantRecord);
+            if (isCountPhase) {
+                initOrUpdateSizes(participantRecord);
+            } else {
+                participantRecords.add(participantRecord);
+            }
         }
-
-    }
-
-    public void addParticipant(ParticipantRecord participantRecord) {
-        this.participantRecords.add(participantRecord);
-        initOrUpdateSizes(participantRecord);
+        return getRowData(participantRecords);
     }
 
     public List<String> getHeader() {
@@ -67,7 +64,7 @@ public class ParticipantRecordData {
         return headerNames;
     }
 
-    public List<List<String>> getRowData() {
+    private List<List<String>> getRowData(List<ParticipantRecord> participantRecords) {
         List<List<String>> rowValues = new ArrayList<>();
         participantRecords.forEach(record -> rowValues.add(record.transposeAndFlatten(columnSizes)));
         return rowValues;
