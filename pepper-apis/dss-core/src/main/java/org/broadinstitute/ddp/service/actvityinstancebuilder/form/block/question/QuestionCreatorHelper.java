@@ -5,6 +5,7 @@ import static org.broadinstitute.ddp.util.QuestionUtil.isReadOnly;
 import one.util.streamex.StreamEx;
 import org.broadinstitute.ddp.db.dao.QuestionCachedDao;
 import org.broadinstitute.ddp.equation.QuestionEvaluator;
+import org.broadinstitute.ddp.json.EquationResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.EquationAnswer;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
 import org.broadinstitute.ddp.util.CollectionMiscUtil;
@@ -269,6 +270,7 @@ public class QuestionCreatorHelper {
                                 .findEquationsByActivityInstanceGuid(ctx.getInstanceGuid()))
                         .map(questionEvaluator::evaluate)
                         .filter(Objects::nonNull)
+                        .filterBy(EquationResponse::getQuestionStableId, questionDef.getStableId())
                         .map(EquationAnswer::new)
                         .toList(),
                 questionCreator.getValidationRules(ctx, questionDef),

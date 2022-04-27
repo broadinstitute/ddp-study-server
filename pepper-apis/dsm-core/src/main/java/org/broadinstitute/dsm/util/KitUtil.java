@@ -509,8 +509,13 @@ public class KitUtil {
         kitRequestShipping.setMessage(message);
         kitRequestShipping.setDsmKitId(dsmKitId);
 
-        UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
-                ESObjectConstants.DSM_KIT_ID, dsmKitId).export();
+        try {
+            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
+                    ESObjectConstants.DSM_KIT_ID, dsmKitId).export();
+        } catch (Exception e) {
+            logger.error(String.format("Error updating message and status for a kit with dsm kit id: %s", dsmKitId));
+            e.printStackTrace();
+        }
 
         return dbVals;
     }

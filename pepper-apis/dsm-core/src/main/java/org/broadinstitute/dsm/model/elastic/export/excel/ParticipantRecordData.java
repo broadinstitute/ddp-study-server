@@ -10,6 +10,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.dsm.model.ParticipantColumn;
@@ -19,20 +21,18 @@ import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class ParticipantRecordData {
     private final Map<Alias, List<ParticipantColumn>> columnAliasEsPathMap;
-    private final List<ParticipantRecord> participantRecords = new ArrayList<>();
     private final List<String> headerNames = new ArrayList<>();
     private List<Integer> columnSizes = new ArrayList<>();
-    private final ParticipantWrapperResult participantData;
-    public ParticipantRecordData(ParticipantWrapperResult participantData,
-                                 Map<Alias, List<ParticipantColumn>> columnAliasEsPathMap) {
+    public ParticipantRecordData(Map<Alias, List<ParticipantColumn>> columnAliasEsPathMap) {
         this.columnAliasEsPathMap = columnAliasEsPathMap;
-        this.participantData = participantData;
     }
 
-    public void processData() {
+    public List<List<String>> processData(ParticipantWrapperResult participantData, boolean isCountPhase) {
+        List<ParticipantRecord> participantRecords = new ArrayList<>();
         for (ParticipantWrapperDto participant : participantData.getParticipants()) {
             ParticipantRecord participantRecord = new ParticipantRecord();
             Map<String, Object> esDataAsMap = participant.getEsDataAsMap();
@@ -41,6 +41,9 @@ public class ParticipantRecordData {
                 for (ParticipantColumn column : aliasListEntry.getValue()) {
                     String esPath = getEsPath(key, column);
                     Collection<?> nestedValue = getNestedValue(esPath, esDataAsMap);
+                    if (aliasListEntry.getKey().isJson()) {
+                        nestedValue = getJsonValue(nestedValue, column);
+                    }
                     if (aliasListEntry.getKey() == Alias.ACTIVITIES) {
                         nestedValue = getQuestionAnswerValue(nestedValue, column);
                     }
@@ -48,14 +51,32 @@ public class ParticipantRecordData {
                     participantRecord.add(columnValue);
                 }
             }
-            addParticipant(participantRecord);
+            if (isCountPhase) {
+                initOrUpdateSizes(participantRecord);
+            } else {
+                participantRecords.add(participantRecord);
+            }
         }
+        return getRowData(participantRecords);
 
     }
 
-    public void addParticipant(ParticipantRecord participantRecord) {
-        this.participantRecords.add(participantRecord);
-        initOrUpdateSizes(participantRecord);
+    private Collection<?> getJsonValue(Collection<?> nestedValue, ParticipantColumn column) {
+        if (nestedValue.isEmpty()) {
+            return Collections.singletonList(StringUtils.EMPTY);
+        }
+        String jsonString = nestedValue.stream().findFirst().get().toString();
+        JsonNode jsonNode;
+        try {
+            jsonNode = ObjectMapperSingleton.instance().readTree(jsonString);
+            if (jsonNode.has(column.getName())) {
+                return Collections.singletonList(jsonNode.get(column.getName()).asText(StringUtils.EMPTY));
+            } else {
+                return Collections.singletonList(StringUtils.EMPTY);
+            }
+        } catch (JsonProcessingException e) {
+            return Collections.singletonList(StringUtils.EMPTY);
+        }
     }
 
     public List<String> getHeader() {
@@ -67,7 +88,7 @@ public class ParticipantRecordData {
         return headerNames;
     }
 
-    public List<List<String>> getRowData() {
+    private List<List<String>> getRowData(List<ParticipantRecord> participantRecords) {
         List<List<String>> rowValues = new ArrayList<>();
         participantRecords.forEach(record -> rowValues.add(record.transposeAndFlatten(columnSizes)));
         return rowValues;
@@ -146,6 +167,9 @@ public class ParticipantRecordData {
 
     private String getEsPath(Alias alias, ParticipantColumn column) {
         if (alias == Alias.ACTIVITIES) {
+            return alias.getValue();
+        }
+        if (alias.isJson()) {
             return alias.getValue();
         }
         return alias.getValue().isEmpty() ? column.getName() : alias.getValue() + DBConstants.ALIAS_DELIMITER + column.getName();
