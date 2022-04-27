@@ -1,0 +1,19 @@
+{
+  "name": "ddp-rxterms-script",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "tsc && node dist/index.js"
+  },
+  "author": "broad-institute",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^17.0.21",
+      "typescript": "^4.4.4"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.3"
+  }
+}
