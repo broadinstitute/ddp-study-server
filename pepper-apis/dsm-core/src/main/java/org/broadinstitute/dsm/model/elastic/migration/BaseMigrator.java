@@ -38,13 +38,10 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
         participantRecords = replaceLegacyAltPidKeysWithGuids(participantRecords);
         logger.info("filling bulk request with participants and their details for study: " + realm + " with index: " + index);
         int batchCounter = 0;
+        long totalExported = 0;
         Iterator<Map.Entry<String, Object>> participantsIterator = participantRecords.entrySet().iterator();
         while (participantsIterator.hasNext()) {
             Map.Entry<String, Object> entry = participantsIterator.next();
-            if (batchCounter % BATCH_LIMIT == 0 || !participantsIterator.hasNext()) {
-                bulkExportFacade.executeBulkUpsert();
-                bulkExportFacade.clear();
-            }
             String participantId = entry.getKey();
             if (ParticipantUtil.isLegacyAltPid(participantId)) {
                 continue;
@@ -54,8 +51,12 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
             Map<String, Object> finalMapToUpsert = generate();
             bulkExportFacade.addDataToRequest(finalMapToUpsert, participantId);
             batchCounter++;
+            if (batchCounter % BATCH_LIMIT == 0 || !participantsIterator.hasNext()) {
+                totalExported += bulkExportFacade.executeBulkUpsert();
+                bulkExportFacade.clear();
+            }
         }
-        logger.info("finished migrating data of " + batchCounter + " participants for " + object + " to ES for study: " + realm + " with " +
+        logger.info("finished migrating data of " + totalExported + " participants for " + object + " to ES for study: " + realm + " with " +
                 "index: " + index);
     }
 

@@ -539,10 +539,10 @@ public class TestDataSetupUtil {
                 encryptedSecret);
 
         long studyId = handle.attach(JdbiUmbrellaStudy.class).insert(studyName, studyGuid, umbrellaId, webBaseUrl,
-                auth0TenantDto.getId(), studyPrecision, shareParticipantLocation, null, null, null);
+                auth0TenantDto.getId(), studyPrecision, shareParticipantLocation, null, null, null, false);
         return new StudyDto(studyId, studyGuid, studyName, null, webBaseUrl, umbrellaId, auth0TenantDto.getId(),
                 studyPrecision,
-                shareParticipantLocation, null, null, false, null);
+                shareParticipantLocation, null, null, false, null, false);
     }
 
     public static FormActivityDef generateTestFormActivityForUser(Handle handle, String userGuid, String studyGuid) {
