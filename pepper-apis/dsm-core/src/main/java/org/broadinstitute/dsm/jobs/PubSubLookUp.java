@@ -204,7 +204,9 @@ public class PubSubLookUp {
                 UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.KIT_LABEL,
                         ESObjectConstants.KIT_LABEL, testBostonResult.getSampleId()).export();
             } catch (Exception e) {
-                logger.error("Problem doing the upsert in ES for test result for kit w/ sample Id " + testBostonResult.getSampleId());
+                logger.error(String.format("Error updating test result for kit label with label: %s in ElasticSearch",
+                        testBostonResult.getSampleId()));
+                e.printStackTrace();
             }
 
             logger.info("Updated test result for kit with external id " + testBostonResult.getSampleId());

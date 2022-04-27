@@ -36,6 +36,7 @@ import org.jdbi.v3.core.Handle;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -111,11 +112,8 @@ public class OsteoLovedOneV2 implements CustomTask {
 
         // insert new option to picklist LOVEDONE_RELATION_TO
         Config relation = activityCfg.getConfig("relation");
-        addPicklistOption(
-                handle,
-                relation.getString("stableId"),
-                relation.getConfigList("options"),
-                5);
+        changePicklistOptions(
+                handle, relation.getString("stableId"), relation.getConfigList("options"), meta, v2Dto.getRevId());
 
         // disable child question
         disableCompositeChildQuestion(handle, activityCfg, meta);
@@ -194,17 +192,19 @@ public class OsteoLovedOneV2 implements CustomTask {
         }
     }
 
-    private void addPicklistOption(Handle handle, String questionStableId, List<? extends Config> optionsCfg, int displayOrder) {
+    private void changePicklistOptions(Handle handle, String questionStableId, List<? extends Config> optionsCfg,
+                                       RevisionMetadata meta, long revisionId) {
 
         PicklistQuestionDao plQuestionDao = handle.attach(PicklistQuestionDao.class);
         QuestionDto questionDto = findLatestQuestionDto(handle, questionStableId);
 
+        plQuestionDao.disableOptions(questionDto.getId(), meta);
+
+        List<PicklistOptionDef> pickListOptions = new ArrayList<>();
         for (var optionCfg : optionsCfg) {
-            PicklistOptionDef pickListOptionDef = gson.fromJson(ConfigUtil.toJson(optionCfg), PicklistOptionDef.class);
-            plQuestionDao.insertOption(questionDto.getId(), pickListOptionDef, displayOrder++, questionDto.getRevisionId());
-            log.info("Added new picklistOption " + pickListOptionDef.getStableId() + " with id "
-                    + pickListOptionDef.getOptionId() + " into question " + questionDto.getStableId());
+            pickListOptions.add(gson.fromJson(ConfigUtil.toJson(optionCfg), PicklistOptionDef.class));
         }
+        plQuestionDao.insertOptions(questionDto.getId(), pickListOptions, revisionId);
     }
 
     private void insertNestedBlocks(Handle handle, long activityId, String compositeSid, Config childCfg, long revisionId) {

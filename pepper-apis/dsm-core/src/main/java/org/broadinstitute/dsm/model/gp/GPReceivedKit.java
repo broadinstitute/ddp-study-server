@@ -94,8 +94,13 @@ public class GPReceivedKit {
         DDPInstanceDto ddpInstanceDto =
                 new DDPInstanceDao().getDDPInstanceByInstanceName(maybeBspKitQueryResult.getInstanceName()).orElseThrow();
 
-        UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.KIT_LABEL,
-                ESObjectConstants.KIT_LABEL, kitLabel).export();
+        try {
+            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.KIT_LABEL,
+                    ESObjectConstants.KIT_LABEL, kitLabel).export();
+        } catch (Exception e) {
+            logger.error(String.format("Error updating receive date of kit with label: %s in ElasticSearch", kitLabel));
+            e.printStackTrace();
+        }
     }
 
     private static void writeSampleReceivedToES(DDPInstance ddpInstance, BSPKitDto bspKitInfo) {

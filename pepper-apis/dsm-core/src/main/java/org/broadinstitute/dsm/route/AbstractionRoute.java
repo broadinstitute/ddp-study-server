@@ -47,7 +47,7 @@ public class AbstractionRoute extends RequestHandler {
                     || UserUtil.checkUserAccess(realm, userId, "mr_qc", userIdReq)) {
                 if (StringUtils.isNotBlank(ddpParticipantId)) {
                     String status = null;
-                    if (jsonObject.has(RequestParameter.STATUS) && !jsonObject.has(RequestParameter.STATUS)) {
+                    if (jsonObject.has(RequestParameter.STATUS)) {
                         status = jsonObject.get(RequestParameter.STATUS).getAsString();
                     }
                     Integer userIdRequest = null;
@@ -57,7 +57,7 @@ public class AbstractionRoute extends RequestHandler {
                     AbstractionActivity abstractionActivity = null;
                     if (jsonObject.has("abstraction")) {
                         Gson gson = new GsonBuilder().create();
-                        abstractionActivity = gson.fromJson(jsonObject.get("abstraction").getAsString(), AbstractionActivity.class);
+                        abstractionActivity = gson.fromJson(jsonObject.get("abstraction").getAsJsonObject(), AbstractionActivity.class);
                     }
                     if (abstractionActivity != null && userIdRequest != null) {
                         // updated filesUsed
@@ -65,6 +65,7 @@ public class AbstractionRoute extends RequestHandler {
                             return new Result(200, new GsonBuilder().serializeNulls().create()
                                     .toJson(AbstractionActivity.changeAbstractionActivity(abstractionActivity, userIdRequest,
                                             abstractionActivity.getAStatus())));
+
                         } else {
                             //changing activity of abstraction
                             //submit abstraction

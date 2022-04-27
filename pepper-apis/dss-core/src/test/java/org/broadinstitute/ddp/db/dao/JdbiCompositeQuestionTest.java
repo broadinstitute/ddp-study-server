@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
+import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -86,8 +87,16 @@ public class JdbiCompositeQuestionTest extends TxnAwareBaseTest {
                     .getAdditionalItemTemplateId());
             assertTrue(compositeQuestionDto.isAllowMultiple());
 
+            var activityInstance = createActivityInstance(handle, act);
             List<Long> childIds = jdbiQuestion
-                    .collectOrderedCompositeChildIdsByParentIds(Set.of(compositeQuestionDto.getId()))
+                    .collectOrderedCompositeChildIdsByParentIdsAndInstanceGuid(Set.of(compositeQuestionDto.getId()),
+                            activityInstance.getGuid())
+                    .get(compositeQuestionDto.getId());
+            assertEquals(childQuestionDefs.length, childIds.size());
+
+            childIds = jdbiQuestion
+                    .collectOrderedCompositeChildIdsByParentIdsAndTimestamp(Set.of(compositeQuestionDto.getId()),
+                            activityInstance.getCreatedAtMillis())
                     .get(compositeQuestionDto.getId());
             assertEquals(childQuestionDefs.length, childIds.size());
 
@@ -170,5 +179,10 @@ public class JdbiCompositeQuestionTest extends TxnAwareBaseTest {
                 .setInputType(TextInputType.TEXT)
                 .setPrompt(new Template(TemplateType.TEXT, null, "text"))
                 .build();
+    }
+
+    private ActivityInstanceDto createActivityInstance(Handle handle, FormActivityDef form) {
+        return handle.attach(ActivityInstanceDao.class)
+                .insertInstance(form.getActivityId(), testData.getUserGuid());
     }
 }

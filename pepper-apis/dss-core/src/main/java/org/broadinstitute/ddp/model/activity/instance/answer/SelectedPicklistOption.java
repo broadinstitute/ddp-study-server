@@ -4,29 +4,30 @@ import java.io.Serializable;
 import javax.validation.constraints.NotBlank;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Value;
 import org.broadinstitute.ddp.util.MiscUtil;
 import org.hibernate.validator.constraints.Length;
 
+@Value
 public class SelectedPicklistOption implements Serializable {
 
     @NotBlank
     @SerializedName("stableId")
-    private String stableId;
+    String stableId;
 
     @Length(max = 500)
     @SerializedName("detail")
-    private String detailText;
+    String detailText;
 
-    private transient  String parentStableId;
-    private transient  String groupStableId;
+    transient String parentStableId;
+    transient String groupStableId;
 
     public SelectedPicklistOption(String stableId) {
         this(stableId, null);
     }
 
     public SelectedPicklistOption(String stableId, String detailText) {
-        this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
-        this.detailText = detailText;
+        this(stableId, null, null, detailText);
     }
 
     public SelectedPicklistOption(String stableId, String parentStableId, String groupStableId, String detailText) {
@@ -34,21 +35,5 @@ public class SelectedPicklistOption implements Serializable {
         this.groupStableId = groupStableId;
         this.parentStableId = parentStableId;
         this.detailText = detailText;
-    }
-
-    public String getStableId() {
-        return stableId;
-    }
-
-    public String getDetailText() {
-        return detailText;
-    }
-
-    public String getParentStableId() {
-        return parentStableId;
-    }
-
-    public String getGroupStableId() {
-        return groupStableId;
     }
 }
