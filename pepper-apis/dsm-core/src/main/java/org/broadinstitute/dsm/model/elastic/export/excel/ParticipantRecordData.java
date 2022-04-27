@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.dsm.model.ParticipantColumn;
@@ -20,6 +22,7 @@ import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class ParticipantRecordData {
     private final Map<Alias, List<ParticipantColumn>> columnAliasEsPathMap;
@@ -39,6 +42,9 @@ public class ParticipantRecordData {
                 for (ParticipantColumn column : aliasListEntry.getValue()) {
                     String esPath = getEsPath(key, column);
                     Collection<?> nestedValue = getNestedValue(esPath, esDataAsMap);
+                    if (aliasListEntry.getKey().isJson()) {
+                        nestedValue = getJsonValue(nestedValue, column);
+                    }
                     if (aliasListEntry.getKey() == Alias.ACTIVITIES) {
                         nestedValue = getQuestionAnswerValue(nestedValue, column);
                     }
@@ -53,6 +59,25 @@ public class ParticipantRecordData {
             }
         }
         return getRowData(participantRecords);
+
+    }
+
+    private Collection<?> getJsonValue(Collection<?> nestedValue, ParticipantColumn column) {
+        if (nestedValue.isEmpty()) {
+            return Collections.singletonList(StringUtils.EMPTY);
+        }
+        String jsonString = nestedValue.stream().findFirst().get().toString();
+        JsonNode jsonNode;
+        try {
+            jsonNode = ObjectMapperSingleton.instance().readTree(jsonString);
+            if (jsonNode.has(column.getName())) {
+                return Collections.singletonList(jsonNode.get(column.getName()).asText(StringUtils.EMPTY));
+            } else {
+                return Collections.singletonList(StringUtils.EMPTY);
+            }
+        } catch (JsonProcessingException e) {
+            return Collections.singletonList(StringUtils.EMPTY);
+        }
     }
 
     public List<String> getHeader() {
@@ -170,6 +195,9 @@ public class ParticipantRecordData {
 
     private String getEsPath(Alias alias, ParticipantColumn column) {
         if (alias == Alias.ACTIVITIES) {
+            return alias.getValue();
+        }
+        if (alias.isJson()) {
             return alias.getValue();
         }
         return alias.getValue().isEmpty() ? column.getName() : alias.getValue() + DBConstants.ALIAS_DELIMITER + column.getName();
