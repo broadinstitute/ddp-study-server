@@ -165,10 +165,11 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
                 header,
                 footer,
                 rules,
+                true,
+                false,
                 yesOpt,
                 noOpt,
-                true,
-                false);
+                null); // Use the default render mode
         FormActivityDef form = buildSingleBlockForm(testData.getStudyGuid(), "Boolean Activity", new QuestionBlockDef(boolQuestion));
 
         TransactionWrapper.useTxn(handle -> {
