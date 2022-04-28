@@ -1,14 +1,21 @@
 package org.broadinstitute.ddp.db.dao;
 
+import org.broadinstitute.ddp.model.activity.types.BooleanRenderMode;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 
 public interface JdbiBooleanQuestion extends SqlObject {
 
-    @SqlUpdate("insert into boolean_question (question_id,true_template_id,false_template_id)"
-            + " values(:questionId,:trueTemplateId,:falseTemplateId)")
+    @UseStringTemplateSqlLocator
+    @SqlUpdate("insertByRenderModeId")
     int insert(@Bind("questionId") long questionId, @Bind("trueTemplateId") long trueTemplateId,
-               @Bind("falseTemplateId") long falseTemplateId);
+               @Bind("falseTemplateId") long falseTemplateId, long renderModeId);
+
+    @UseStringTemplateSqlLocator
+    @SqlUpdate("insertByRenderModeCode")
+    int insert(@Bind("questionId") long questionId, @Bind("trueTemplateId") long trueTemplateId,
+            @Bind("falseTemplateId") long falseTemplateId, @Bind("renderMode") BooleanRenderMode renderMode);
 
 }
