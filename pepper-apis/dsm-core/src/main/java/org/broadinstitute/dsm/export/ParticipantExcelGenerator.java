@@ -64,7 +64,8 @@ public class ParticipantExcelGenerator {
         workbook.close();
     }
 
-    public void formatSizes() {
+    public void formatSizes(int columnsNumber) {
         sheet.trackAllColumnsForAutoSizing();
+        IntStream.range(0, columnsNumber).forEach(sheet::autoSizeColumn);
     }
 }
