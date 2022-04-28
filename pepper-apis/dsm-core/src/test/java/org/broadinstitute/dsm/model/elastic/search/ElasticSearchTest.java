@@ -1,6 +1,9 @@
 package org.broadinstitute.dsm.model.elastic.search;
 
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -8,6 +11,8 @@ import com.google.gson.Gson;
 import org.broadinstitute.dsm.model.elastic.ESAddress;
 import org.broadinstitute.dsm.model.elastic.ESProfile;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperTest;
+import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.elasticsearch.search.SearchHit;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -96,4 +101,47 @@ public class ElasticSearchTest {
             Assert.fail();
         }
     }
+
+    @Test
+    public void extractLegacyAltPidGuidPair() {
+        ElasticSearch elasticSearch = new ElasticSearch();
+        class MockSearchHitProxy extends SearchHitProxy {
+            private String legacyAltPid;
+            private List<String> proxies;
+            private String guid;
+
+            public MockSearchHitProxy(SearchHit searchHit, String guid, String legacyAltPid, List<String> proxies) {
+                super(searchHit);
+                this.guid = guid;
+                this.proxies = proxies;
+                this.legacyAltPid = legacyAltPid;
+            }
+
+            @Override
+            Map<String, Object> getSourceAsMap() {
+                Map<String, String> profile = Map.of(ElasticSearchUtil.LEGACY_ALT_PID, legacyAltPid, ElasticSearchUtil.GUID,
+                        guid);
+                return Map.of(ElasticSearchUtil.PROFILE, profile,
+                            ElasticSearchUtil.PROXIES, proxies);
+            }
+        }
+        String parentGuid = "TEST1234567891011123";
+        String childGuid = "TEST1234567891011124";
+        String childGuid2 = "TEST1234567891011130";
+        String legacyAltPid = "283hdsjd92j32njsjdbakdj283ndjdadsj2n3n13j";
+        String aloneLegacyAltPid = "283hdsjd92j32njsjdbakdj283ndjdadsj2n3n13k";
+        String aloneGuid = "TEST1234567891011125";
+        MockSearchHitProxy mockSearchHitProxy = new MockSearchHitProxy(null, parentGuid, legacyAltPid, Collections.emptyList());
+        MockSearchHitProxy mockSearchHitProxy2 = new MockSearchHitProxy(null, childGuid, legacyAltPid, List.of(parentGuid));
+        MockSearchHitProxy mockSearchHitProxy3 = new MockSearchHitProxy(null, childGuid2, legacyAltPid, List.of(parentGuid));
+        MockSearchHitProxy mockSearchHitProxy4 = new MockSearchHitProxy(null, aloneGuid, aloneLegacyAltPid, Collections.emptyList());
+        Map<String, String> guidsByLegacyAltPid =
+                elasticSearch.extractLegacyAltPidGuidPair(new MockSearchHitProxy[] {mockSearchHitProxy, mockSearchHitProxy2,
+                        mockSearchHitProxy3, mockSearchHitProxy4});
+        Assert.assertEquals(childGuid, guidsByLegacyAltPid.get(legacyAltPid));
+        Assert.assertEquals(childGuid2, guidsByLegacyAltPid.get(legacyAltPid));
+        Assert.assertEquals(aloneGuid, guidsByLegacyAltPid.get(aloneLegacyAltPid));
+    }
+
+
 }
