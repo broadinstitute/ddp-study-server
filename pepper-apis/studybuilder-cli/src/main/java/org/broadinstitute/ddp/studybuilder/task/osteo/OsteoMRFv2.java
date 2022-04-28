@@ -197,24 +197,6 @@ public class OsteoMRFv2 implements CustomTask {
         QuestionDef agreementQuestion = activity.getClosing().getBlocks().get(1).getQuestions().findFirst().get();
         updateTemplates.traverseQuestion(handle, activityCfg.getConfig("agreement_question"), agreementQuestion, meta.getTimestamp());
 
-        // disable all component blocks
-        for (var section : activity.getSections()) {
-            for (var block : section.getBlocks()) {
-                if (block.getBlockType() == BlockType.COMPONENT) {
-                    sectionBlockDao.disableBlock(block.getBlockId(), meta);
-                    LOG.info("Disabled component blockId {}", block.getBlockId());
-                } else {
-                    throw new DDPException("Unexpected blockType " + block.getBlockType());
-                }
-            }
-        }
-
-        // insert new question to main section (PHYSICIAN component/composite question)
-        long sectionId = activity.getSections().get(0).getSectionId();
-        int displayOrder = SectionBlockDao.DISPLAY_ORDER_GAP;
-        FormBlockDef compositeBlock = parseFormBlockDef(activityCfg.getConfig("physicianComposite"));
-        sectionBlockDao.insertBlockForSection(activityId, sectionId, displayOrder, compositeBlock, v2Dto.getRevId());
-
         // insert new question to closing
         long closeSectionId = activity.getClosing().getSectionId();
         int order = getDisplayOrderOfLastBlock(activity.getClosing());

@@ -1,6 +1,5 @@
 package org.broadinstitute.ddp.studybuilder.task.osteo;
 
-import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
@@ -13,14 +12,12 @@ import org.broadinstitute.ddp.model.activity.definition.i18n.ActivityI18nDetail;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
-import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 import java.io.File;
 import java.nio.file.Path;
@@ -29,7 +26,6 @@ import java.util.List;
 
 public class OsteoDashboardUpdates implements CustomTask {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OsteoDashboardUpdates.class);
 
     private static final String ADULT_CONSENT = "patches/adult-consent-dashboard-update.conf";
     private static final String ADULT_MEDICAL_RELEASE = "patches/adult-mr-dashboard-update.conf";
@@ -46,7 +42,6 @@ public class OsteoDashboardUpdates implements CustomTask {
     private Config varsCfg;
     private Path cfgPath;
     private Config cfg;
-    private Gson gson;
 
     private Config adultConsentCfg;
     private Config adultMedicalReleaseCfg;
@@ -77,7 +72,6 @@ public class OsteoDashboardUpdates implements CustomTask {
 
         cfg = studyCfg;
         timestamp = Instant.now();
-        gson = GsonUtil.standardGson();
     }
 
     @Override
@@ -85,16 +79,19 @@ public class OsteoDashboardUpdates implements CustomTask {
 
         this.activityI18nDao = handle.attach(ActivityI18nDao.class);
 
-        updateDashboard(handle, adultConsentCfg);
-        updateDashboard(handle, adultMedicalReleaseCfg);
-        updateDashboard(handle, adultAboutYouCfg);
-        updateDashboard(handle, adultAboutYouActivityCfg);
+        StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid("CMI-OSTEO");
+        var studyId = studyDto.getId();
 
-        updateDashboard(handle, childConsentCfg);
-        updateDashboard(handle, childMedicalReleaseCfg);
-        updateDashboard(handle, childAboutYouCfg);
+        updateDashboard(handle, adultConsentCfg, studyId);
+        updateDashboard(handle, adultMedicalReleaseCfg, studyId);
+        updateDashboard(handle, adultAboutYouCfg, studyId);
+        updateDashboard(handle, adultAboutYouActivityCfg, studyId);
 
-        updateAboutYouNameDashboard(handle, adultAboutYouCfg);
+        updateDashboard(handle, childConsentCfg, studyId);
+        updateDashboard(handle, childMedicalReleaseCfg, studyId);
+        updateDashboard(handle, childAboutYouCfg, studyId);
+
+        updateAboutYouNameDashboard(handle, adultAboutYouCfg, studyId);
     }
 
     private void initChild() {
@@ -145,12 +142,13 @@ public class OsteoDashboardUpdates implements CustomTask {
 
     }
 
-    private void updateDashboard(Handle handle, Config config) {
+    private void updateDashboard(Handle handle, Config config, long studyId) {
+
         List<? extends Config> configList = config.getConfigList("newTranslatedSummaries");
         List<? extends Config> studyActivityCode = config.getConfigList("activityCode");
         for (Config conf1 : studyActivityCode) {
             String activityCode = conf1.getString("code");
-            int studyActivityId = handle.attach(SqlHelper.class).findStudyActivityId(activityCode);
+            int studyActivityId = handle.attach(SqlHelper.class).findStudyActivityId(activityCode, studyId);
             for (Config conf : configList) {
                 String statusCode = conf.getString("statusCode");
                 int typeId = handle.attach(SqlHelper.class).findTypeId(statusCode);
@@ -160,9 +158,9 @@ public class OsteoDashboardUpdates implements CustomTask {
         }
     }
 
-    private void updateAboutYouNameDashboard(Handle handle, Config config) {
+    private void updateAboutYouNameDashboard(Handle handle, Config config, long studyId) {
         String studyActivityCode = config.getConfigList("activityCode").get(0).getString("code");
-        int studyActivityId = handle.attach(SqlHelper.class).findStudyActivityId(studyActivityCode);
+        int studyActivityId = handle.attach(SqlHelper.class).findStudyActivityId(studyActivityCode, studyId);
         updateActivityDetails(handle, studyActivityId, studyActivityCode);
     }
 
@@ -208,8 +206,8 @@ public class OsteoDashboardUpdates implements CustomTask {
                 + " where activity_instance_status_type_code = :typeCode")
         int findTypeId(@Bind("typeCode") String typeCode);
 
-        @SqlQuery("select study_activity_id from study_activity where study_activity_code = :studyActivityCode")
-        int findStudyActivityId(@Bind("studyActivityCode") String studyActivityCode);
+        @SqlQuery("select study_activity_id from study_activity where study_activity_code = :studyActivityCode and study_id = :studyId")
+        int findStudyActivityId(@Bind("studyActivityCode") String studyActivityCode, @Bind("studyId") long studyId);
     }
 
 }

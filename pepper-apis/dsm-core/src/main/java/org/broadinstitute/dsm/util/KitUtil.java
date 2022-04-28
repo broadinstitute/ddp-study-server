@@ -127,13 +127,13 @@ public class KitUtil {
             EasyPostUtil easyPostUtil = new EasyPostUtil(kitLabelTriggered.getInstanceName());
             Address toAddress = null;
             try {
+                DDPInstance ddpInstance = DDPInstance.getDDPInstance(kitLabelTriggered.getInstanceName());
+
+                //TODO -> before we finally switch to ddpInstanceDao/ddpInstanceDto pair
+                ddpInstanceDto = new DDPInstanceDto.Builder().withInstanceName(ddpInstance.getName())
+                        .withEsParticipantIndex(ddpInstance.getParticipantIndexES()).build();
+
                 if (StringUtils.isBlank(kitLabelTriggered.getAddressIdTo())) {
-
-                    DDPInstance ddpInstance = DDPInstance.getDDPInstance(kitLabelTriggered.getInstanceName());
-
-                    //TODO -> before we finally switch to ddpInstanceDao/ddpInstanceDto pair
-                    ddpInstanceDto = new DDPInstanceDto.Builder().withInstanceName(ddpInstance.getName())
-                            .withEsParticipantIndex(ddpInstance.getParticipantIndexES()).build();
 
                     Map<String, Map<String, Object>> participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance,
                             ElasticSearchUtil.BY_GUID + kitLabelTriggered.getDdpParticipantId());
@@ -509,8 +509,13 @@ public class KitUtil {
         kitRequestShipping.setMessage(message);
         kitRequestShipping.setDsmKitId(dsmKitId);
 
-        UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
-                ESObjectConstants.DSM_KIT_ID, dsmKitId).export();
+        try {
+            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
+                    ESObjectConstants.DSM_KIT_ID, dsmKitId).export();
+        } catch (Exception e) {
+            logger.error(String.format("Error updating message and status for a kit with dsm kit id: %s", dsmKitId));
+            e.printStackTrace();
+        }
 
         return dbVals;
     }

@@ -85,4 +85,9 @@ public class ESObjectConstants {
 
     //question
     public static final String STABLE_ID = "stableId";
+    public static final String OPTIONDETAILS = "optionDetails";
+    public static final String OPTION = "option";
+    public static final String DETAIL = "detail";
+    public static final String ANSWER = "answer";
+
 }

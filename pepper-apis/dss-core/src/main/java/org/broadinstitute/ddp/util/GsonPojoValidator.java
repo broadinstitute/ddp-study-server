@@ -17,9 +17,8 @@ import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Will use Hibernate Validator on a POJO that contains data that has been unmarshalled using GSON.
@@ -33,8 +32,8 @@ import org.slf4j.LoggerFactory;
  * - But reporting the path to the error only works when the Validation annotation is associated with an object
  *   field that get serialized by GSON
  */
+@Slf4j
 public class GsonPojoValidator {
-    private static final Logger LOG = LoggerFactory.getLogger(GsonPojoValidator.class);
     //docs claim validator is thread-safe. Let's share it then
     private static Validator VALIDATOR = null;
 
@@ -143,7 +142,7 @@ public class GsonPojoValidator {
                     //If you got here, you probably annotated with Validation constraint
                     // something that was not a field (e.g. a method)
                     jsonPath.add(currentPathNode.getName());
-                    LOG.warn("Could not reach path in object graph where validation error was reported. Got as far as: "
+                    log.warn("Could not reach path in object graph where validation error was reported. Got as far as: "
                             + StringUtils.join(jsonPath.toArray(new String[0])), e);
                     return null;
                 }
@@ -169,7 +168,7 @@ public class GsonPojoValidator {
                     //Update the current node and get ready to go deeper!
                     currentGraphNode = currentField.get(currentGraphNode);
                 } catch (IllegalAccessException e) {
-                    LOG.error("There was a problem navigating object graph", e);
+                    log.error("There was a problem navigating object graph", e);
                     return null;
                 } finally {
                     //restore change we made to access
@@ -178,7 +177,7 @@ public class GsonPojoValidator {
                     }
                 }
             } else {
-                LOG.error("Could not traverse validation path provided because it included a segment of kind {} in "
+                log.error("Could not traverse validation path provided because it included a segment of kind {} in "
                         + "path {}", currentPathNode.getKind(), gsonPojoPath);
                 return null;
             }
