@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.slf4j.Logger;
@@ -43,11 +44,11 @@ public class CollectionSourceGenerator extends SourceGenerator {
     protected List<Map<String, Object>> getCollectionElementMap(Map<String, Object> element) {
         HashMap<String, Object> mapWithParsedObjects = new HashMap<>(Map.of(getPrimaryKey(), generatorPayload.getRecordId()));
         mapWithParsedObjects.putAll(element);
-        getParentWithId().ifPresent(mapWithParsedObjects::putAll);
+        getAdditionalData().ifPresent(mapWithParsedObjects::putAll);
         return List.of(mapWithParsedObjects);
     }
 
-    protected Optional<Map<String, Object>> getParentWithId() {
+    protected Optional<Map<String, Object>> getAdditionalData() {
         return Optional.empty();
     }
 }

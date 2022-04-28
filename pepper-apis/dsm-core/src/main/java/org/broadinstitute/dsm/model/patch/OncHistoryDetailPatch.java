@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 public class OncHistoryDetailPatch extends BasePatch {
 
     static final Logger logger = LoggerFactory.getLogger(OncHistoryDetailPatch.class);
-    private static final String ONC_HISTORY_DETAIL_ID = "oncHistoryDetailId";
+    public static final String ONC_HISTORY_DETAIL_ID = "oncHistoryDetailId";
 
     static {
         NULL_KEY = new HashMap<>();

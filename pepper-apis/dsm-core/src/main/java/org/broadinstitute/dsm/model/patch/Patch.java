@@ -49,6 +49,8 @@ public class Patch {
     private List<Value> actions;
     private String ddpParticipantId;
 
+    public Patch () {}
+
     //regular patch
     public Patch(String id, String parent, String parentId, String user, NameValue nameValue, List<NameValue> nameValues,
                  String ddpParticipantId) {
