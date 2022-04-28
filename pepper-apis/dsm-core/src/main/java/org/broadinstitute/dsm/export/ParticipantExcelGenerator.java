@@ -56,7 +56,7 @@ public class ParticipantExcelGenerator {
     }
 
     public void writeInResponse(Response response) throws IOException {
-        try (ServletOutputStream os = response.raw().getOutputStream()){
+        try (ServletOutputStream os = response.raw().getOutputStream()) {
             setResponseHeaders(response, String.format("Participant-%s.xlsx", getFormattedDate()));
             workbook.write(os);
         }

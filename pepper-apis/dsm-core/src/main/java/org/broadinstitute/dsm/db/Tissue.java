@@ -191,17 +191,17 @@ public class Tissue {
         }
         Tissue tissue = new Tissue(rs.getLong(DBConstants.TISSUE_ID), rs.getLong(DBConstants.ONC_HISTORY_DETAIL_ID),
                 rs.getString(DBConstants.DDP_TISSUE_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.NOTES),
-                (Integer) rs.getObject(DBConstants.COUNT_RECEIVED), rs.getString(DBConstants.TISSUE_TYPE), rs.getString(DBConstants.TISSUE_SITE),
-                rs.getString(DBConstants.TUMOR_TYPE), rs.getString(DBConstants.H_E), rs.getString(DBConstants.PATHOLOGY_REPORT),
-                rs.getString(DBConstants.COLLABORATOR_SAMPLE_ID), rs.getString(DBConstants.BLOCK_SENT),
-                rs.getString(DBConstants.SCROLLS_RECEIVED), rs.getString(DBConstants.SK_ID), rs.getString(DBConstants.SM_ID),
-                rs.getString(DBConstants.SENT_GP), rs.getString(DBConstants.FIRST_SM_ID),
+                (Integer) rs.getObject(DBConstants.COUNT_RECEIVED), rs.getString(DBConstants.TISSUE_TYPE),
+                rs.getString(DBConstants.TISSUE_SITE), rs.getString(DBConstants.TUMOR_TYPE), rs.getString(DBConstants.H_E),
+                rs.getString(DBConstants.PATHOLOGY_REPORT), rs.getString(DBConstants.COLLABORATOR_SAMPLE_ID),
+                rs.getString(DBConstants.BLOCK_SENT), rs.getString(DBConstants.SCROLLS_RECEIVED), rs.getString(DBConstants.SK_ID),
+                rs.getString(DBConstants.SM_ID), rs.getString(DBConstants.SENT_GP), rs.getString(DBConstants.FIRST_SM_ID),
                 rs.getString(DBConstants.ADDITIONAL_TISSUE_VALUES), rs.getString(DBConstants.EXPECTED_RETURN),
                 rs.getString(DBConstants.TISSUE_RETURN_DATE), rs.getString(DBConstants.RETURN_FEDEX_ID),
                 rs.getString(DBConstants.SHL_WORK_NUMBER), rs.getString(DBConstants.TUMOR_PERCENTAGE),
-                rs.getString(DBConstants.TISSUE_SEQUENCE), (Integer) rs.getObject(DBConstants.SCROLLS_COUNT), (Integer) rs.getObject(DBConstants.USS_COUNT),
-                (Integer) rs.getObject(DBConstants.BLOCKS_COUNT), (Integer) rs.getObject(DBConstants.H_E_COUNT), new ArrayList<>(), new ArrayList<>(),
-                new ArrayList<>());
+                rs.getString(DBConstants.TISSUE_SEQUENCE), (Integer) rs.getObject(DBConstants.SCROLLS_COUNT),
+                (Integer) rs.getObject(DBConstants.USS_COUNT), (Integer) rs.getObject(DBConstants.BLOCKS_COUNT),
+                (Integer) rs.getObject(DBConstants.H_E_COUNT), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         return tissue;
     }
 
@@ -320,20 +320,23 @@ public class Tissue {
     }
 
     public List<SmId> getScrollSMID() {
-        if (scrollSMID == null)
+        if (scrollSMID == null) {
             scrollSMID = new ArrayList<>();
+        }
         return scrollSMID;
     }
 
     public List<SmId> getUssSMID() {
-        if (null == ussSMID)
+        if (null == ussSMID) {
             ussSMID = new ArrayList<>();
+        }
         return ussSMID;
     }
 
     public List<SmId> getHeSMID() {
-        if (null == heSMID)
+        if (null == heSMID) {
             heSMID = new ArrayList<>();
+        }
         return heSMID;
     }
 }

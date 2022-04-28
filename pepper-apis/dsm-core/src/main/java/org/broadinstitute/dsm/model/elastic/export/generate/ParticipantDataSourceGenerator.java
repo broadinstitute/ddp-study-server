@@ -8,7 +8,9 @@ public class ParticipantDataSourceGenerator extends CollectionSourceGenerator {
 
     @Override
     protected List<Map<String, Object>> getCollectionElementMap(Map<String, Object> element) {
-        if (!isFirstParticipantDataCreation()) return super.getCollectionElementMap(element);
+        if (!isFirstParticipantDataCreation()) {
+            return super.getCollectionElementMap(element);
+        }
         Map<String, Object> collectionElementMap = super.getCollectionElementMap(element).get(0);
         fillMapWithParticipantDataFields(collectionElementMap);
         return List.of(collectionElementMap);
@@ -23,11 +25,12 @@ public class ParticipantDataSourceGenerator extends CollectionSourceGenerator {
     private void fillMapWithParticipantDataFields(Map<String, Object> collectionElementMap) {
         ParticipantDataNameValue nameValue = (ParticipantDataNameValue) generatorPayload.getNameValue();
         Field[] participantNameValueFields = nameValue.getClass().getDeclaredFields();
-        for (Field field: participantNameValueFields) {
+        for (Field field : participantNameValueFields) {
             field.setAccessible(true);
             try {
                 collectionElementMap.put(field.getName(), field.get(nameValue));
-            } catch (IllegalAccessException ignore) {}
+            } catch (IllegalAccessException ignore) {
+            }
         }
     }
 

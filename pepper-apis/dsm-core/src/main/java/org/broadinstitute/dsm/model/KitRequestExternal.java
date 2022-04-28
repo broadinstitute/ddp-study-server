@@ -61,11 +61,11 @@ public class KitRequestExternal extends KitRequest {
         kitRequestShipping.setExternalOrderDate(externalOrderDate);
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceId(instanceId).orElseThrow();
         try {
-            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_REQUEST_ID,
-                    ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId).export();
+            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
+                    ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId).export();
         } catch (Exception e) {
-            logger.error(String.format("Error updating external order status with date of kit request shipping with dsm kit request id: " +
-                    "%s in ElasticSearch", dsmKitRequestId));
+            logger.error(String.format("Error updating external order status with date of kit request shipping with dsm kit request id: "
+                    + "%s in ElasticSearch", dsmKitRequestId));
             e.printStackTrace();
         }
     }
@@ -115,11 +115,11 @@ public class KitRequestExternal extends KitRequest {
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceId(ddpInstanceId).orElseThrow();
 
         try {
-            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_REQUEST_ID,
-                    ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId).export();
+            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
+                    ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId).export();
         } catch (Exception e) {
-            logger.error(String.format("Error updating kit request shipping with dsm kit request id: %s in ElasticSearch",
-                    dsmKitRequestId));
+            logger.error(
+                    String.format("Error updating kit request shipping with dsm kit request id: %s in ElasticSearch", dsmKitRequestId));
             e.printStackTrace();
         }
 

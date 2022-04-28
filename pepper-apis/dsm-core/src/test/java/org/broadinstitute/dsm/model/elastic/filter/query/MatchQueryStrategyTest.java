@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
-
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.NestedQueryBuilder;

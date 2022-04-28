@@ -28,6 +28,7 @@ public class ParticipantRecordData {
     private final Map<Alias, List<ParticipantColumn>> columnAliasEsPathMap;
     private final List<String> headerNames = new ArrayList<>();
     private List<Integer> columnSizes = new ArrayList<>();
+
     public ParticipantRecordData(Map<Alias, List<ParticipantColumn>> columnAliasEsPathMap) {
         this.columnAliasEsPathMap = columnAliasEsPathMap;
     }
@@ -84,7 +85,7 @@ public class ParticipantRecordData {
         int i = 0;
         for (Map.Entry<Alias, List<ParticipantColumn>> aliasListEntry : columnAliasEsPathMap.entrySet()) {
             headerNames.addAll(getColumnNamesFor(aliasListEntry, columnSizes.subList(i, i + aliasListEntry.getValue().size())));
-            i+= aliasListEntry.getValue().size();
+            i += aliasListEntry.getValue().size();
         }
         return headerNames;
     }
@@ -98,8 +99,7 @@ public class ParticipantRecordData {
     private void initOrUpdateSizes(ParticipantRecord participantRecord) {
         List<ColumnValue> combinedValues = participantRecord.getValues();
         if (columnSizes.isEmpty()) {
-            columnSizes = combinedValues.stream().map(ColumnValue::getColumnsSize)
-                    .collect(Collectors.toList());
+            columnSizes = combinedValues.stream().map(ColumnValue::getColumnsSize).collect(Collectors.toList());
         } else {
             for (int i = 0; i < columnSizes.size(); i++) {
                 columnSizes.set(i, Math.max(columnSizes.get(i), combinedValues.get(i).getColumnsSize()));
@@ -112,15 +112,16 @@ public class ParticipantRecordData {
         List<String> columns = new ArrayList<>();
         int sameAliasSize = sizes.get(0);
         if (aliasColumns.getKey() != Alias.ACTIVITIES) {
-            IntStream.rangeClosed(1, sizes.get(0)).forEach(value ->
-                    columns.addAll(columnsList.stream().map(column -> String.format("%s %s", column.getDisplay(),
-                                    aliasColumns.getKey().isCollection() && sameAliasSize > 1? value : StringUtils.EMPTY))
-                            .collect(Collectors.toList())));
+            IntStream.rangeClosed(1, sizes.get(0)).forEach(value -> columns.addAll(columnsList.stream()
+                    .map(column -> String.format("%s %s", column.getDisplay(),
+                            aliasColumns.getKey().isCollection() && sameAliasSize > 1 ? value : StringUtils.EMPTY))
+                    .collect(Collectors.toList())));
         } else {
             return IntStream.range(0, columnsList.size()).mapToObj(i -> Pair.of(columnsList.get(i), sizes.get(i)))
-                    .map(entry -> IntStream.rangeClosed(1, entry.getValue())
-                            .mapToObj(currentIndex -> String.format("%s %s", entry.getKey().getDisplay(),
-                                    aliasColumns.getKey().isCollection() && entry.getValue() > 1? currentIndex : StringUtils.EMPTY))
+                    .map(entry -> IntStream.rangeClosed(1, entry.getValue()).mapToObj(
+                                    currentIndex -> String.format("%s %s", entry.getKey().getDisplay(),
+                                            aliasColumns.getKey()
+                                                    .isCollection() && entry.getValue() > 1 ? currentIndex : StringUtils.EMPTY))
                             .collect(Collectors.toList())).flatMap(Collection::stream).collect(Collectors.toList());
         }
 
@@ -139,9 +140,7 @@ public class ParticipantRecordData {
                                 List<LinkedHashMap<String, Object>> questionAnswers =
                                         (List<LinkedHashMap<String, Object>>) foundActivity.get(ElasticSearchUtil.QUESTIONS_ANSWER);
                                 return questionAnswers.stream().filter(qa -> qa.get(ESObjectConstants.STABLE_ID).equals(column.getName()))
-                                        .map(fq -> getAnswerValue(fq, column.getName()))
-                                        .map(this::mapToCollection)
-                                        .flatMap(Collection::stream)
+                                        .map(fq -> getAnswerValue(fq, column.getName())).map(this::mapToCollection).flatMap(Collection::stream)
                                         .collect(Collectors.toList());
                             }
                         }).orElse(Collections.singletonList(StringUtils.EMPTY));
@@ -158,25 +157,22 @@ public class ParticipantRecordData {
         }
         Object optionDetails = fq.get(ESObjectConstants.OPTIONDETAILS);
         if (optionDetails != null && !((List<?>) optionDetails).isEmpty()) {
-            removeOptionsFromAnswer(answer, ((List<Map<String, String>>)optionDetails));
-            return Stream.of(answer, getOptionDetails((List<?>) optionDetails)).flatMap(Collection::stream)
-                    .collect(Collectors.toList());
+            removeOptionsFromAnswer(answer, ((List<Map<String, String>>) optionDetails));
+            return Stream.of(answer, getOptionDetails((List<?>) optionDetails)).flatMap(Collection::stream).collect(Collectors.toList());
         }
 
         return answer;
     }
 
-    private void removeOptionsFromAnswer(Collection<?> answer, List<Map<String,String>> optionDetails) {
+    private void removeOptionsFromAnswer(Collection<?> answer, List<Map<String, String>> optionDetails) {
         List<String> details = optionDetails.stream().map(options -> options.get(ESObjectConstants.OPTION)).collect(Collectors.toList());
         answer.removeAll(details);
     }
 
     private List<String> getOptionDetails(List<?> optionDetails) {
-        return optionDetails.stream().map(optionDetail ->
-                        new StringBuilder(((Map)optionDetail).get(ESObjectConstants.OPTION).toString())
-                        .append(':')
-                        .append(((Map)optionDetail).get(ESObjectConstants.DETAIL)).toString())
-                        .collect(Collectors.toList());
+        return optionDetails.stream()
+                .map(optionDetail -> new StringBuilder(((Map) optionDetail).get(ESObjectConstants.OPTION).toString()).append(':')
+                        .append(((Map) optionDetail).get(ESObjectConstants.DETAIL)).toString()).collect(Collectors.toList());
     }
 
     private Collection<?> mapToCollection(Object o) {
@@ -211,8 +207,9 @@ public class ParticipantRecordData {
                 return Collections.singletonList(StringUtils.EMPTY);
             }
             if (o instanceof Collection) {
-                List<Object> collect = ((Collection<?>) o).stream().map(singleDataMap -> getNestedValue(fieldName.substring(dotIndex + 1),
-                        (Map<String, Object>) singleDataMap)).flatMap(Collection::stream).collect(Collectors.toList());
+                List<Object> collect = ((Collection<?>) o).stream()
+                        .map(singleDataMap -> getNestedValue(fieldName.substring(dotIndex + 1), (Map<String, Object>) singleDataMap))
+                        .flatMap(Collection::stream).collect(Collectors.toList());
                 if (collect.isEmpty()) {
                     return Collections.singletonList(StringUtils.EMPTY);
                 }
@@ -222,7 +219,7 @@ public class ParticipantRecordData {
             }
         }
         Object value = esDataAsMap.getOrDefault(fieldName, StringUtils.EMPTY);
-        if (!(value instanceof Collection )) {
+        if (!(value instanceof Collection)) {
             return Collections.singletonList(value);
         }
         return (Collection<?>) value;
