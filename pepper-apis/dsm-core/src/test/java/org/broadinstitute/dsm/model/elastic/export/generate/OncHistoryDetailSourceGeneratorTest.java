@@ -6,6 +6,7 @@ import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDao;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDto;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
+import org.broadinstitute.dsm.model.patch.Patch;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -18,7 +19,9 @@ public class OncHistoryDetailSourceGeneratorTest {
 
     @Test
     public void testGetAdditionalDataFaxSents() {
-        GeneratorPayload generatorPayload = new GeneratorPayload(new NameValue("oD.faxSent", "2020-01-01"), 25);
+        Patch patch = new Patch();
+        patch.setId("25");
+        GeneratorPayload generatorPayload = new GeneratorPayload(new NameValue("oD.faxSent", "2020-01-01"), patch);
         ValueParser valueParser = new ValueParser();
         valueParser.setPropertyInfo(new BaseGenerator.PropertyInfo(OncHistoryDetail.class, true));
         valueParser.setFieldName("faxSent");
@@ -40,7 +43,9 @@ public class OncHistoryDetailSourceGeneratorTest {
     }
     @Test
     public void testGetAdditionalDataUnableObtain() {
-        GeneratorPayload generatorPayload = new GeneratorPayload(new NameValue("oD.unableObtainTissue", false), -25);
+        Patch patch = new Patch();
+        patch.setId("-25");
+        GeneratorPayload generatorPayload = new GeneratorPayload(new NameValue("oD.unableObtainTissue", false), patch);
         ValueParser valueParser = new ValueParser();
         valueParser.setPropertyInfo(new BaseGenerator.PropertyInfo(OncHistoryDetail.class, true));
         valueParser.setFieldName("unableObtainTissue");

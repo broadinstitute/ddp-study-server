@@ -79,7 +79,7 @@ public abstract class BasePatch {
             return;
         }
         GeneratorPayload generatorPayload =
-                new GeneratorPayload(nameValue, Integer.parseInt(patch.getId()), patch.getParent(), patch.getParentId());
+                new GeneratorPayload(nameValue, patch);
         ExportFacadePayload exportFacadePayload =
                 new ExportFacadePayload(ddpInstance.getParticipantIndexES(), patch.getDdpParticipantId(), generatorPayload,
                         patch.getRealm());

@@ -2,26 +2,19 @@ package org.broadinstitute.dsm.model.elastic.export.generate;
 
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.patch.Patch;
 
 public class GeneratorPayload {
 
+    private Patch patch;
     NameValue nameValue;
-    Integer recordId;
-    private String parent;
-    private String parentId;
 
     public GeneratorPayload() {
     }
 
-    public GeneratorPayload(NameValue nameValue, int recordId) {
+    public GeneratorPayload(NameValue nameValue, Patch patch) {
         this.nameValue = nameValue;
-        this.recordId = recordId;
-    }
-
-    public GeneratorPayload(NameValue nameValue, int recordId, String parent, String parentId) {
-        this(nameValue, recordId);
-        this.parent = parent;
-        this.parentId = parentId;
+        this.patch = patch;
     }
 
     public GeneratorPayload(NameValue nameValue) {
@@ -41,15 +34,15 @@ public class GeneratorPayload {
     }
 
     public Integer getRecordId() {
-        return recordId;
+        return Integer.valueOf(patch.getId());
     }
 
     public String getParent() {
-        return parent;
+        return patch.getParent();
     }
 
     public String getParentId() {
-        return parentId;
+        return patch.getParentId();
     }
 
     public String getCamelCaseFieldName() {
@@ -58,5 +51,9 @@ public class GeneratorPayload {
 
     public String getRawFieldName() {
         return Util.getDBElement(getName()).getColumnName();
+    }
+
+    public String getInstanceName() {
+        return patch.getRealm();
     }
 }

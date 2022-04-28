@@ -18,13 +18,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
-import org.broadinstitute.dsm.model.patch.Patch;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
 import org.broadinstitute.dsm.util.DBUtil;
@@ -86,6 +83,7 @@ public class OncHistoryDetail {
     public static final String PROBLEM_DESTROYED = "destroyed";
     public static final String PROBLEM_OTHER = "other";
     public static final String PROBLEM_OTHER_OLD = "Other";
+    public static final String ONC_HISTORY_DETAIL_ID = "oncHistoryDetailId";
     private static final Logger logger = LoggerFactory.getLogger(OncHistoryDetail.class);
     private static final String SQL_CREATE_ONC_HISTORY =
             "INSERT INTO ddp_onc_history_detail SET medical_record_id = ?, request = ?, last_changed = ?, changed_by = ?";
