@@ -9,6 +9,7 @@ import com.auth0.exception.APIException;
 import com.auth0.json.mgmt.Connection;
 import com.auth0.json.mgmt.users.User;
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.utils.URIBuilder;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
@@ -17,17 +18,13 @@ import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.study.PasswordPolicy;
 import org.broadinstitute.ddp.util.ConfigManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class Auth0Service {
-
     public static final int MAX_GENERATE_PASSWORD_TRIES = 10;
     public static final int DEFAULT_PASSWORD_LENGTH = 36;
     public static final char[] ALPHA_NUMERIC_SPECIALS =
             "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*".toCharArray();
-
-    private static final Logger LOG = LoggerFactory.getLogger(Auth0Service.class);
 
     private final Auth0ManagementClient auth0Mgmt;
     private final String apiBaseUrl;
@@ -53,10 +50,10 @@ public class Auth0Service {
                 .filter(conn -> conn.getStrategy().equals(Auth0ManagementClient.DB_CONNECTION_STRATEGY))
                 .collect(Collectors.toList());
         if (dbConnections.isEmpty()) {
-            LOG.error("Password policies are only set on database connections but none were found for client {}", auth0ClientId);
+            log.error("Password policies are only set on database connections but none were found for client {}", auth0ClientId);
             return null;
         } else if (dbConnections.size() > 1) {
-            LOG.error("More than one database connection found for client {}, will attempt to use default one", auth0ClientId);
+            log.error("More than one database connection found for client {}, will attempt to use default one", auth0ClientId);
             // Attempt to put the default one in front, if there is one.
             dbConnections.sort((conn1, conn2) -> {
                 if (conn1.getName().equals(Auth0ManagementClient.DEFAULT_DB_CONN_NAME)) {
@@ -147,7 +144,7 @@ public class Auth0Service {
                 throw new DDPException("Error creating new auth0 account", err);
             }
         } else {
-            LOG.info("Created auth0 account for user with email {}", email);
+            log.info("Created auth0 account for user with email {}", email);
         }
 
         // Create password reset ticket
@@ -157,7 +154,7 @@ public class Auth0Service {
             Exception e = ticketResult.hasThrown() ? ticketResult.getThrown() : ticketResult.getError();
             throw new DDPException("Error creating password reset ticket", e);
         } else {
-            LOG.info("Created password reset ticket for user with email {}", email);
+            log.info("Created password reset ticket for user with email {}", email);
         }
 
         return new UserWithPasswordTicket(auth0User, ticketResult.getBody());
