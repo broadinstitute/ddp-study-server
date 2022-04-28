@@ -65,11 +65,13 @@ public class DownloadParticipantListRoute extends RequestHandler {
         currentTo = MAX_RESULT_SIZE;
         ParticipantExcelGenerator generator = new ParticipantExcelGenerator();
         generator.createHeader(rowData.getHeader());
+        int columnsNumber;
         while (true) {
             filterable.setFrom(currentFrom);
             filterable.setTo(currentTo);
             ParticipantWrapperResult filteredList = (ParticipantWrapperResult) filterable.filter(request.queryMap());
             List<List<String>> participantRecords = rowData.processData(filteredList, false);
+            columnsNumber = getColumnsNumber(participantRecords);
             if (filteredList.getTotalCount() < currentFrom){
                 break;
             }
@@ -77,10 +79,17 @@ public class DownloadParticipantListRoute extends RequestHandler {
             currentFrom = currentTo;
             currentTo += MAX_RESULT_SIZE;
         }
-        generator.formatSizes();
+        generator.formatSizes(columnsNumber);
         generator.writeInResponse(response);
 
         return response.raw();
+    }
+
+    private int getColumnsNumber(List<List<String>> participantRecords) {
+        if (participantRecords.isEmpty()) {
+            return 0;
+        }
+        return participantRecords.get(0).size();
     }
 
 
