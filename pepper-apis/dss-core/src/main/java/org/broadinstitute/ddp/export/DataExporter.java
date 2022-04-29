@@ -100,6 +100,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
+import org.broadinstitute.ddp.model.activity.instance.answer.DecimalAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
@@ -1062,6 +1063,8 @@ public class DataExporter {
         } else if (answer.getQuestionType() == QuestionType.COMPOSITE) {
             List<AnswerRow> rows = ((CompositeAnswer) answer).getValue();
             return new CompositeQuestionRecord(question.getStableId(), rows);
+        } else if (answer.getQuestionType() == QuestionType.DECIMAL) {
+            return new SimpleQuestionRecord(type, question.getStableId(), ((DecimalAnswer) answer).getValueAsBigDecimal());
         } else {
             return new SimpleQuestionRecord(type, question.getStableId(), answer.getValue());
         }
