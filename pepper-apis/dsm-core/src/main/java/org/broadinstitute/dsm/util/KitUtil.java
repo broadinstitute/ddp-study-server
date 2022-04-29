@@ -127,13 +127,13 @@ public class KitUtil {
             EasyPostUtil easyPostUtil = new EasyPostUtil(kitLabelTriggered.getInstanceName());
             Address toAddress = null;
             try {
+                DDPInstance ddpInstance = DDPInstance.getDDPInstance(kitLabelTriggered.getInstanceName());
+
+                //TODO -> before we finally switch to ddpInstanceDao/ddpInstanceDto pair
+                ddpInstanceDto = new DDPInstanceDto.Builder().withInstanceName(ddpInstance.getName())
+                        .withEsParticipantIndex(ddpInstance.getParticipantIndexES()).build();
+
                 if (StringUtils.isBlank(kitLabelTriggered.getAddressIdTo())) {
-
-                    DDPInstance ddpInstance = DDPInstance.getDDPInstance(kitLabelTriggered.getInstanceName());
-
-                    //TODO -> before we finally switch to ddpInstanceDao/ddpInstanceDto pair
-                    ddpInstanceDto = new DDPInstanceDto.Builder().withInstanceName(ddpInstance.getName())
-                            .withEsParticipantIndex(ddpInstance.getParticipantIndexES()).build();
 
                     Map<String, Map<String, Object>> participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance,
                             ElasticSearchUtil.BY_GUID + kitLabelTriggered.getDdpParticipantId());
