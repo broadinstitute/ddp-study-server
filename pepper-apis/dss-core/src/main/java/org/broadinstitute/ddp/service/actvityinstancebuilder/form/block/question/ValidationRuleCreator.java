@@ -209,6 +209,7 @@ public class ValidationRuleCreator {
     private ComparisonRule createComparisonRule(AIBuilderContext ctx, ComparisonRuleDef ruleDef) {
         return ComparisonRule.builder()
                 .id(ruleDef.getRuleId())
+                .type(ruleDef.getRuleType())
                 .message(findRuleMessage(ctx, ruleDef))
                 .correctionHint(getHintTitle(ctx, ruleDef))
                 .allowSave(ruleDef.getAllowSave())
