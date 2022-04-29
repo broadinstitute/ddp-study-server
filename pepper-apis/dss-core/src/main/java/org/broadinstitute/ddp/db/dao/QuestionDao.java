@@ -913,13 +913,11 @@ public interface QuestionDao extends SqlObject {
                 dto.getPlaceholderTemplateId(),
                 dto.isRestricted(),
                 dto.isDeprecated(),
-                true,
                 dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(),
                 dto.getAdditionalInfoFooterTemplateId(),
-                StreamEx.of(new QuestionCachedDao(getHandle())
-                                .getJdbiEquationQuestion()
-                                .findEquationsByActivityInstanceGuid(activityInstanceGuid))
+                StreamEx.of(getJdbiEquationQuestion().findEquationsByActivityInstanceGuid(activityInstanceGuid))
+                        .filterBy(EquationQuestionDto::getStableId, dto.getStableId())
                         .map(questionEvaluator::evaluate)
                         .filter(Objects::nonNull)
                         .map(EquationAnswer::new)
@@ -1543,7 +1541,10 @@ public interface QuestionDao extends SqlObject {
 
     default void insertQuestion(long activityId, CompositeQuestionDef compositeQuestion, long revisionId) {
         if (!compositeQuestion.isAcceptable()) {
-            throw new DaoException("Composites only support DATE, PICKLIST, TEXT, NUMERIC and DECIMAL child questions");
+            throw new DaoException("Composite questions only support following types for children: "
+                    + StreamEx.of(QuestionType.values())
+                            .filter(QuestionType::isCompositional)
+                            .joining());
         }
 
         insertBaseQuestion(activityId, compositeQuestion, revisionId);

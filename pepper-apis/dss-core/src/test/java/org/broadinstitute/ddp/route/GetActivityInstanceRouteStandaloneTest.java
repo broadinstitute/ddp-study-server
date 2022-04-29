@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -49,13 +50,11 @@ import org.broadinstitute.ddp.db.dao.AuthDao;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
-import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
-import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -67,6 +66,8 @@ import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.EquationQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
@@ -78,12 +79,14 @@ import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionD
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
+import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateFieldRequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.LengthRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DecimalAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
@@ -114,7 +117,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite.TestCaseWithCacheEnabled {
-
     public static final String TEXT_QUESTION_STABLE_ID = "TEXT_Q";
 
     public static final String MIME_TYPE_1 = "image/gif";
@@ -142,10 +144,9 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     private static String essayQuestionStableId;
     private static String activityCode;
     private static long activityId;
-    private static QuestionDto answeredQuestionDto;
     private static TextQuestionDef txt1;
-    private static TextQuestionDef txt2;
     private static CompositeQuestionDef comp1;
+    private static CompositeQuestionDef compositeWithEquation;
     private static FileUpload upload;
 
     @BeforeClass
@@ -193,7 +194,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .setPlaceholderTemplate(placeholderTemplate)
                 .addValidation(new LengthRuleDef(newTemplate(), 5, 300))
                 .build();
-        txt2 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_DRUG", newTemplate())
+        TextQuestionDef txt2 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_DRUG", newTemplate())
                 .setSuggestionType(SuggestionType.DRUG)
                 .build();
         Template txt3Tmpl = Template.html("$foo $ddp.participantFirstName()'s favorite color?");
@@ -217,7 +218,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .build();
         PicklistQuestionDef p3 = PicklistQuestionDef
                 .buildMultiSelect(PicklistRenderMode.LIST, "PL_GROUPS", newTemplate())
-                .addGroup(new PicklistGroupDef("G1", newTemplate(), Arrays.asList(
+                .addGroup(new PicklistGroupDef("G1", newTemplate(), List.of(
                         new PicklistOptionDef(null, "G1_OPT1", newTemplate(),
                                 Template.text("option tooltip"), null, false, false))))
                 .addGroup(new PicklistGroupDef("G2", newTemplate(), Arrays.asList(
@@ -259,7 +260,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 null,
                 newTemplate("info header"),
                 newTemplate("info footer"),
-                Arrays.asList(new RequiredRuleDef(newTemplate())),
+                List.of(new RequiredRuleDef(newTemplate())),
                 true,
                 false);
         FormSectionDef agreementSection = new FormSectionDef(null, TestUtil.wrapQuestions(a1));
@@ -289,7 +290,28 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                         .builder(TextInputType.TEXT, "comp-child" + System.currentTimeMillis(), Template.text("comp child"))
                         .build())
                 .build();
-        var compSection = new FormSectionDef(null, List.of(new QuestionBlockDef(comp1)));
+
+        compositeWithEquation = CompositeQuestionDef.builder()
+                .setStableId("compositeWithEquation" + System.currentTimeMillis())
+                .setPrompt(Template.text("composite"))
+                .addChildrenQuestions(
+                        DecimalQuestionDef
+                                .builder("RECTANGLE_WIDTH", Template.text("This is value"))
+                                .setScale(2)
+                                .build(),
+                        DecimalQuestionDef
+                                .builder("RECTANGLE_HEIGHT", Template.text("This is value"))
+                                .setScale(2)
+                                .build(),
+                        EquationQuestionDef.builder()
+                                .stableId("RECTANGLE_AREA")
+                                .questionType(QuestionType.EQUATION)
+                                .promptTemplate(new Template(TemplateType.TEXT, null, "Equation"))
+                                .validations(new ArrayList<>())
+                                .expression("RECTANGLE_WIDTH * RECTANGLE_HEIGHT")
+                                .build())
+                .build();
+        var compSection = new FormSectionDef(null, TestUtil.wrapQuestions(comp1, compositeWithEquation));
 
         //------------- create SECTION[8] ---------
         FileQuestionDef file1 = FileQuestionDef
@@ -325,6 +347,22 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
 
         FormSectionDef matrixSection = new FormSectionDef(null, TestUtil.wrapQuestions(mqf1, mqf2));
 
+        //------------- create SECTION[10] ---------
+        final DecimalQuestionDef decimalDef = DecimalQuestionDef
+                .builder("DECIMAL_QUESTION", Template.text("This is value"))
+                .setScale(2)
+                .build();
+
+        final EquationQuestionDef equationDef = EquationQuestionDef.builder()
+                .stableId("EQUATION_QUESTION")
+                .questionType(QuestionType.EQUATION)
+                .promptTemplate(new Template(TemplateType.TEXT, null, "Equation"))
+                .validations(new ArrayList<>())
+                .expression("5 * " + decimalDef.getStableId())
+                .build();
+
+        FormSectionDef numericSection = new FormSectionDef(null, TestUtil.wrapQuestions(decimalDef, equationDef));
+
         //------------- create STUDY ACTIVITY ---------
         String parentActCode = "ACT_ROUTE_PARENT" + Instant.now().toEpochMilli();
         activityCode = "ACT_ROUTE_ACT" + Instant.now().toEpochMilli();
@@ -348,6 +386,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .addSection(compSection)
                 .addSection(fileSection)
                 .addSection(matrixSection)
+                .addSection(numericSection)
                 .build();
         activityVersionDto = handle.attach(ActivityDao.class).insertActivity(
                 parentActivity, List.of(activity), RevisionMetadata.now(testData.getUserId(), "add " + activityCode)
@@ -370,11 +409,27 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
 
         answerDao.createAnswer(testData.getUserId(), instanceDto.getId(),
                 new TextAnswer(null, txt1.getStableId(), null, "valid answer"));
-        answeredQuestionDto = handle.attach(JdbiQuestion.class).findQuestionDtoById(txt1.getQuestionId()).get();
+
+        answerDao.createAnswer(testData.getUserId(), instanceDto.getId(),
+                new DecimalAnswer(null, decimalDef.getStableId(), null, new DecimalDef(2)));
+
 
         var compAnswer = new CompositeAnswer(null, comp1.getStableId(), null);
         compAnswer.addRowOfChildAnswers(new TextAnswer(null, comp1.getChildren().get(0).getStableId(), null, "comp child"));
         answerDao.createAnswer(testData.getUserId(), instanceDto.getId(), compAnswer);
+
+        var compositeEquationAnswer = new CompositeAnswer(null, compositeWithEquation.getStableId(), null);
+        compositeEquationAnswer.addRowOfChildAnswers(
+                new DecimalAnswer(null, compositeWithEquation.getChildren().get(0).getStableId(), null, new DecimalDef(1)),
+                new DecimalAnswer(null, compositeWithEquation.getChildren().get(1).getStableId(), null, new DecimalDef(1)));
+        compositeEquationAnswer.addRowOfChildAnswers(
+                new DecimalAnswer(null, compositeWithEquation.getChildren().get(0).getStableId(), null, new DecimalDef(2)),
+                new DecimalAnswer(null, compositeWithEquation.getChildren().get(1).getStableId(), null, null));
+        compositeEquationAnswer.addRowOfChildAnswers(
+                new DecimalAnswer(null, compositeWithEquation.getChildren().get(0).getStableId(), null, new DecimalDef(3)),
+                new DecimalAnswer(null, compositeWithEquation.getChildren().get(1).getStableId(), null, new DecimalDef(3)));
+
+        answerDao.createAnswer(testData.getUserId(), instanceDto.getId(), compositeEquationAnswer);
 
         var fileDao = handle.attach(FileUploadDao.class);
         long userId = testData.getUserId();
@@ -607,6 +662,41 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     }
 
     @Test
+    public void testGet_decimalQuestion() {
+        Response resp = testFor200AndExtractResponse();
+
+        resp.then().assertThat()
+                .body("sections.size()", equalTo(activity.getSections().size()))
+                .body("sections[10].blocks.size()", equalTo(2));
+
+        resp.then().assertThat()
+                .root("sections[10].blocks[0].question")
+                .body("questionType", equalTo(QuestionType.DECIMAL.toString()))
+                .body("stableId", equalTo("DECIMAL_QUESTION"))
+                .body("answers.size()", equalTo(1))
+                .body("answers[0].value.value", equalTo(2000000000000000L))
+                .body("answers[0].value.scale", equalTo(15));
+    }
+
+    @Test
+    public void testGet_equationQuestion() {
+        Response resp = testFor200AndExtractResponse();
+
+        resp.then().assertThat()
+                .body("sections.size()", equalTo(activity.getSections().size()))
+                .body("sections[10].blocks.size()", equalTo(2));
+
+        resp.then().assertThat()
+                .root("sections[10].blocks[1].question")
+                .body("questionType", equalTo(QuestionType.EQUATION.toString()))
+                .body("stableId", equalTo("EQUATION_QUESTION"))
+                .body("answers.size()", equalTo(1))
+                .body("answers.value.size()", equalTo(1))
+                .body("answers[0].value[0].value", equalTo(1000000000000000L))
+                .body("answers[0].value[0].scale", equalTo(14));
+    }
+
+    @Test
     public void testQuestionNumbering() {
         Response resp = testFor200AndExtractResponse();
         resp.then().assertThat()
@@ -622,10 +712,6 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .body("sections[1].blocks[0].question.answers[0].value", equalTo("valid answer"));
         resp.then().assertThat()
                 .body("sections[1].blocks[0].question.answers[0].type", equalTo("TEXT"));
-        //        resp.then().assertThat()
-        //                .body("sections[1].blocks[0].question.answers[0]", hasKey("type"));
-        //        resp.then().assertThat()
-        //                .body("sections[1].blocks[0].question.answers[0]", not(hasKey("questionStableId")));
     }
 
     @Test
@@ -859,49 +945,41 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     @Test
     public void testGet_activityInstanceReadonlyForExitedUser() {
         TransactionWrapper.useTxn(
-                handle -> {
-                    handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(
-                            testData.getUserGuid(),
-                            testData.getStudyGuid(),
-                            EnrollmentStatusType.EXITED_BEFORE_ENROLLMENT
-                    );
-                }
+                handle -> handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(
+                        testData.getUserGuid(),
+                        testData.getStudyGuid(),
+                        EnrollmentStatusType.EXITED_BEFORE_ENROLLMENT
+                )
         );
         Response resp = testFor200AndExtractResponse();
 
         resp.then().assertThat().body("readonly", equalTo(true));
 
         TransactionWrapper.useTxn(
-                handle -> {
-                    handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(
-                            testData.getUserGuid(),
-                            testData.getStudyGuid(),
-                            EnrollmentStatusType.ENROLLED
-                    );
-                }
+                handle -> handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(
+                        testData.getUserGuid(),
+                        testData.getStudyGuid(),
+                        EnrollmentStatusType.ENROLLED
+                )
         );
     }
 
     @Test
     public void given_oneTrueExpr_whenRouteIsCalled_thenItReturnsOkAndResponseDoesntContainFailedValidations() {
         try {
-            TransactionWrapper.useTxn(handle -> {
-                handle.attach(JdbiActivity.class).insertValidation(
-                        RouteTestUtil.createActivityValidationDto(
-                                activity,
-                                "false", "Should never fail", List.of(txt1.getStableId())
-                        ),
-                        testData.getUserId(),
-                        testData.getStudyId(),
-                        activityVersionDto.getRevId()
-                );
-            });
+            TransactionWrapper.useTxn(handle -> handle.attach(JdbiActivity.class).insertValidation(
+                    RouteTestUtil.createActivityValidationDto(
+                            activity,
+                            "false", "Should never fail", List.of(txt1.getStableId())
+                    ),
+                    testData.getUserId(),
+                    testData.getStudyId(),
+                    activityVersionDto.getRevId()
+            ));
             testFor200()
                     .body("sections[1].blocks[0].question.validationFailures", is(nullValue()));
         } finally {
-            TransactionWrapper.useTxn(handle -> {
-                handle.attach(JdbiActivity.class).deleteValidationsByCode(activityId);
-            });
+            TransactionWrapper.useTxn(handle -> handle.attach(JdbiActivity.class).deleteValidationsByCode(activityId));
         }
     }
 
@@ -909,24 +987,20 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     public void given_oneTrueExpr_whenRouteIsCalled_thenItReturnsOkAndResponseContainsFailedValidations() {
         ActivityDefStore.getInstance().clear();
         try {
-            TransactionWrapper.useTxn(handle -> {
-                handle.attach(JdbiActivity.class).insertValidation(
-                        RouteTestUtil.createActivityValidationDto(
-                                activity,
-                                "true", "Should always fail", List.of(txt1.getStableId())
-                        ),
-                        testData.getUserId(),
-                        testData.getStudyId(),
-                        activityVersionDto.getRevId()
-                );
-            });
+            TransactionWrapper.useTxn(handle -> handle.attach(JdbiActivity.class).insertValidation(
+                    RouteTestUtil.createActivityValidationDto(
+                            activity,
+                            "true", "Should always fail", List.of(txt1.getStableId())
+                    ),
+                    testData.getUserId(),
+                    testData.getStudyId(),
+                    activityVersionDto.getRevId()
+            ));
             testFor200()
                     .body("sections[1].blocks[0].question.validationFailures", not(is(nullValue())))
                     .body("sections[1].blocks[0].question.validationFailures.size()", equalTo(1));
         } finally {
-            TransactionWrapper.useTxn(handle -> {
-                handle.attach(JdbiActivity.class).deleteValidationsByCode(activityId);
-            });
+            TransactionWrapper.useTxn(handle -> handle.attach(JdbiActivity.class).deleteValidationsByCode(activityId));
         }
     }
 
@@ -999,12 +1073,30 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     public void test_compositeChildQuestionsShouldNotHaveAnswers() {
         testFor200()
                 .body("guid", equalTo(instanceDto.getGuid()))
-                .body("sections[7].blocks.size()", equalTo(1))
+                .body("sections[7].blocks.size()", equalTo(2))
                 .root("sections[7].blocks[0].question")
                 .body("stableId", equalTo(comp1.getStableId()))
                 .body("answers.size()", equalTo(1))
                 .body("children.size()", equalTo(1))
                 .body("children[0].answers.size()", equalTo(0));
+    }
+
+    @Test
+    public void test_compositeEquationComputed() {
+        testFor200()
+                .body("guid", equalTo(instanceDto.getGuid()))
+                .body("sections[7].blocks.size()", equalTo(2))
+                .root("sections[7].blocks[1].question")
+                .body("stableId", equalTo(compositeWithEquation.getStableId()))
+                .body("answers.size()", equalTo(1))
+                .body("children.size()", equalTo(3))
+                .body("children[2].answers.size()", equalTo(1))
+                .body("children[2].answers[0].value.size()", equalTo(3))
+                .body("children[2].answers[0].value[0].value", equalTo(1000000000000000L))
+                .body("children[2].answers[0].value[0].scale", equalTo(15))
+                .body("children[2].answers[0].value[1]", equalTo(null))
+                .body("children[2].answers[0].value[2].value", equalTo(9000000000000000L))
+                .body("children[2].answers[0].value[2].scale", equalTo(15));
     }
 
     @Test

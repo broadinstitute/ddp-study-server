@@ -292,7 +292,8 @@ public class StudyBuilder {
         String recaptchaSiteKey = ConfigUtil.getStrIfPresent(studyCfg, "recaptchaSiteKey");
         boolean shareLocationInformation = studyCfg.getBoolean("shareParticipantLocation");
         String defaultAuth0Connection = ConfigUtil.getStrIfPresent(studyCfg, "defaultAuth0Connection");
-        boolean errorPresentStatusEnabled = Boolean.TRUE.equals(ConfigUtil.getBoolIfPresent(studyCfg, "errorPresentStatusEnabled"));
+        Boolean errorPresent = ConfigUtil.getBoolIfPresent(studyCfg, "errorPresentStatusEnabled");
+        boolean errorPresentStatusEnabled = errorPresent != null ? errorPresent : false;
 
         JdbiUmbrellaStudy jdbiStudy = handle.attach(JdbiUmbrellaStudy.class);
         StudyDto dto = jdbiStudy.findByStudyGuid(guid);
