@@ -19,7 +19,7 @@ select tv.template_id, tv.variable_name,
            and (i18n_ts_def_rev.end_date is null or :timestamp \< i18n_ts_def_rev.end_date))
        ) as substitution_value
   from template_variable as tv
- where tv.template_id in (\<templateIds\>)
+ where tv.template_id in (\<templateIds>)
 >>
 
 select_all_templates() ::= <<
