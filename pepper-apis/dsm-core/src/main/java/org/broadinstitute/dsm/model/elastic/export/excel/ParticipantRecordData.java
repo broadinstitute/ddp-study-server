@@ -131,7 +131,7 @@ public class ParticipantRecordData {
         List<LinkedHashMap<String, Object>> activities = (List<LinkedHashMap<String, Object>>) nestedValue;
         Collection<?> objects =
                 activities.stream().filter(activity -> activity.get(ElasticSearchUtil.ACTIVITY_CODE).equals(column.getTableAlias()))
-                        .findFirst().map(foundActivity -> {
+                        .map(foundActivity -> {
                             if (Objects.isNull(column.getObject())) {
                                 Object o = foundActivity.get(column.getName());
                                 return mapToCollection(o);
@@ -144,7 +144,7 @@ public class ParticipantRecordData {
                                         .flatMap(Collection::stream)
                                         .collect(Collectors.toList());
                             }
-                        }).orElse(Collections.singletonList(StringUtils.EMPTY));
+                        }).flatMap(Collection::stream).collect(Collectors.toList());
         if (objects.isEmpty()) {
             return Collections.singletonList(StringUtils.EMPTY);
         }
