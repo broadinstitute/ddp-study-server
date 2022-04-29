@@ -52,4 +52,38 @@ public interface JdbiUser extends SqlObject {
             "where u.user_id = :userId")
     List<String> getAllUserPermissions(@Bind ("userId") long userId);
 
+    @GetGeneratedKeys
+    @SqlUpdate ("insert into user (created_by_client_id, auth0_tenant_id, auth0_user_id," +
+            "       guid, hruid, legacy_altpid, legacy_shortid, is_locked, created_at, updated_at, expires_at)" +
+            " select c.client_id, t.auth0_tenant_id, :auth0UserId," +
+            "       :guid, :hruid, :legacyAltPid, :legacyShortId, :isLocked, :createdAt, :updatedAt, :expiresAt" +
+            " from auth0_tenant as t" +
+            " join client as c on c.auth0_tenant_id = t.auth0_tenant_id" +
+            " where t.auth0_domain = :auth0Domain" +
+            " and c.auth0_client_id = :auth0ClientId")
+    long insertUser(
+            @Bind ("auth0Domain") String auth0Domain,
+            @Bind ("auth0ClientId") String auth0ClientId,
+            @Bind ("auth0UserId") String auth0UserId,
+            @Bind ("guid") String guid,
+            @Bind ("hruid") String hruid,
+            @Bind ("legacyAltPid") String legacyAltPid,
+            @Bind ("legacyShortId") String legacyShortId,
+            @Bind ("isLocked") boolean isLocked,
+            @Bind ("createdAt") long createdAt,
+            @Bind ("updatedAt") long updatedAt,
+            @Bind ("expiresAt") Long expiresAt);
+
+    @SqlUpdate ("INSERT INTO user_profile (user_id, first_name, last_name, phone, email) values (:userId, :firstName, :lastName, :phone, :email)")
+    void insertUserProfile(@Bind ("userId") long userId, @Bind ("firstName") String firstName, @Bind ("lastName") String lastName,
+                           @Bind ("phone") String phone, @Bind ("email") String email);
+
+    @SqlQuery ("Select count(*) from user_profile where email = :email")
+    int selectUserProfileByEMail(@Bind ("email") String email);
+
+    @SqlUpdate ("INSERT INTO study_admin (user_id, umbrella_study_id) values (:userId, :studyId)")
+    @GetGeneratedKeys
+    long insertStudyAdmin();
+
+
 }

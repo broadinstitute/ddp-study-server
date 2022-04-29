@@ -9,6 +9,7 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
 public interface JdbiUserRole extends SqlObject {
@@ -67,4 +68,9 @@ public interface JdbiUserRole extends SqlObject {
     @RegisterConstructorMapper (AssigneeDto.class)
     List<AssigneeDto> getAssigneesForStudy(@Bind ("guid") String studyGuid);
 
+    @SqlQuery ("SELECT  name from access_role")
+    List<String> getAllRolesFromOldSchema();
+
+    @SqlBatch ("INSERT INTO permissions (name) VALUES ( :roles )")
+    void insertOldRolesIntoPermissionTable(@Bind ("roles") List<String> roles);
 }

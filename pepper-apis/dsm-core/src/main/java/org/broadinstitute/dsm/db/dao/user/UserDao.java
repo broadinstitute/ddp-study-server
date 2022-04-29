@@ -1,18 +1,23 @@
 package org.broadinstitute.dsm.db.dao.user;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import lombok.NonNull;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.util.DdpDBUtils;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.db.jdbi.JdbiUser;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 public class UserDao implements Dao<UserDto> {
+
+    long EXPIRATION_DURATION_MILLIS = TimeUnit.HOURS.toMillis(24);
 
     public Optional<UserDto> getUserByEmail(@NonNull String email) {
         SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
@@ -116,5 +121,28 @@ public class UserDao implements Dao<UserDto> {
             throw new RuntimeException("Error getting user by id ", results.resultException);
         }
         return (String) results.resultValue;
+    }
+
+    public long insertNewUser(Long clientId,
+                              String auth0Domain, String auth0ClientId,
+                              String auth0UserId, boolean isTemporary) {
+        SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
+            SimpleResult dbVals = new SimpleResult();
+            String userGuid = DdpDBUtils.uniqueUserGuid(handle);
+            String userHruid = DdpDBUtils.uniqueUserHruid(handle);
+
+            long now = Instant.now().toEpochMilli();
+            Long expiresAt = isTemporary ? now + EXPIRATION_DURATION_MILLIS : null;
+
+            handle.attach(JdbiUser.class).insertUser(
+                    auth0Domain, auth0ClientId, auth0UserId,
+                    userGuid, userHruid, null, null,
+                    false, now, now, expiresAt);
+            //            dbVals.resultValue = userId;
+
+            return dbVals;
+        });
+
+        return (long) results.resultValue;
     }
 }

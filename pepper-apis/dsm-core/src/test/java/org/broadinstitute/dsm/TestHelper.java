@@ -9,7 +9,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import com.typesafe.config.ConfigValueFactory;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
@@ -109,12 +108,12 @@ public class TestHelper {
         //  secrets from vault in a config file
         cfg = cfg.withFallback(ConfigFactory.parseFile(new File("config/test-config.conf")));
         // overwrite quartz.jobs
-        cfg = cfg.withValue("quartz.enableJobs", ConfigValueFactory.fromAnyRef("false"));
-        cfg = cfg.withValue("portal.port", ConfigValueFactory.fromAnyRef("9999"));
-        cfg = cfg.withValue("errorAlert.recipientAddress", ConfigValueFactory.fromAnyRef(""));
-        if (!cfg.getString("portal.environment").startsWith("Local")) {
-            throw new RuntimeException("Not local environment");
-        }
+        //        cfg = cfg.withValue("quartz.enableJobs", ConfigValueFactory.fromAnyRef("false"));
+        //        cfg = cfg.withValue("portal.port", ConfigValueFactory.fromAnyRef("9999"));
+        //        cfg = cfg.withValue("errorAlert.recipientAddress", ConfigValueFactory.fromAnyRef(""));
+        //        if (!cfg.getString("portal.environment").startsWith("Local")) {
+        //            throw new RuntimeException("Not local environment");
+        //        }
 
         //        if (!cfg.getString("portal.dbUrl").contains("local")) {
         //            throw new RuntimeException("Not your test db");
@@ -138,17 +137,22 @@ public class TestHelper {
             } else {
                 logger.info("Skipping DB update...");
             }
+            String dssDbUrl = cfg.getString("dss.dbUrl");
+            int dssMaxConnections = cfg.getInt("dss.maxConnections");
 
             if (!skipSsl) {
-            //                TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
-            //                        cfg.getString("portal.dbSslKeyStorePwd"),
-            //                        cfg.getString("portal.dbSslTrustStore"),
-            //                        cfg.getString("portal.dbSslTrustStorePwd"));
+                //                TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
+                //                        cfg.getString("portal.dbSslKeyStorePwd"),
+                //                        cfg.getString("portal.dbSslTrustStore"),
+                //                        cfg.getString("portal.dbSslTrustStorePwd"));
             }
 
             TransactionWrapper.reset();
             TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM,
                     cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS), cfg.getString(ApplicationConfigConstants.DSM_DB_URL)));
+
+            TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.SHARED_DB,
+                    dssMaxConnections, dssDbUrl));
         }
         //
         //        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
