@@ -2275,6 +2275,9 @@ Validation.Comparison:
   allOf:
     - $ref: '#/Validation'
     - type: object
+      required:
+        - reference_question_stable_id
+        - comparison_validation_type
       description: compares the value of the given answer with the answer to the referenced question
       properties:
         rule:
@@ -2284,6 +2287,7 @@ Validation.Comparison:
             - COMPARISON
         reference_question_stable_id:
           type: string
+          format: guid
         comparison_validation_type:
           type: string
           enum:
