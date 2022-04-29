@@ -79,4 +79,11 @@ public class BaseFilter {
         }
     }
 
+    public void setFrom(int from) {
+        this.from = from;
+    }
+
+    public void setTo(int to) {
+        this.to = to;
+    }
 }
