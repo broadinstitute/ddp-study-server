@@ -94,9 +94,13 @@ public class AuthenticationRoute implements Route {
                         Map<String, String> claims = new HashMap<>();
                         UserDto userDto =
                                 userDao.getUserByEmail(email).orElseThrow(() -> new RuntimeException("User " + email + " not found!"));
+                        Map<String, Claim> auth0Claims = Auth0Util.verifyAndParseAuth0TokenClaims(auth0Token, auth0Domain);
                         if (userDto == null) {
                             throw new RuntimeException("User with email " + email + " not found!");
                         } else {
+                            if (StringUtils.isBlank(userDto.getAuth0UserId())) {
+                                userDao.updateAuth0UserId(userDto.getUserId(), auth0Claims.get("sub").asString());
+                            }
                             String userPermissions = gson.toJson(userDao.getAllUserPermissions(userDto.getUserId()), ArrayList.class);
                             claims.put(userAccessRoles, userPermissions);
                             logger.info(userPermissions);
@@ -106,7 +110,7 @@ public class AuthenticationRoute implements Route {
                         claims.put(authUserId, String.valueOf(userDto.getUserId()));
                         claims.put(authUserName, userDto.getName().orElse(""));
                         claims.put(authUserEmail, email);
-                        claims = getDSSClaimsFromOriginalToken(auth0Token, auth0Domain, claims, email);
+                        claims = getDSSClaimsFromOriginalToken(claims, email, auth0Claims, userDto.getGuid());
 
                         try {
                             String dsmToken =
@@ -135,17 +139,16 @@ public class AuthenticationRoute implements Route {
         return response;
     }
 
-    private Map<String, String> getDSSClaimsFromOriginalToken(String auth0Token, String auth0Domain, Map<String, String> claims,
-                                                              String email) {
-        Map<String, Claim> auth0Claims = Auth0Util.verifyAndParseAuth0TokenClaims(auth0Token, auth0Domain);
+    private Map<String, String> getDSSClaimsFromOriginalToken(Map<String, String> claims, String email, Map<String, Claim> auth0Claims,
+                                                              String userGuid) {
+
 
         if (!auth0Claims.containsKey(tenantDomain) || !auth0Claims.containsKey(clientId) || !auth0Claims.containsKey(userId)) {
             throw new RuntimeException("Missing dss claims in auth0 claims, can not authenticate");
         }
         claims.put(tenantDomain, auth0Claims.get(tenantDomain).asString());
         claims.put(clientId, auth0Claims.get(clientId).asString());
-        String guid = userDao.getUserGuid(email);
-        claims.put(userId, guid);
+        claims.put(userId, userGuid);
 
         return claims;
     }

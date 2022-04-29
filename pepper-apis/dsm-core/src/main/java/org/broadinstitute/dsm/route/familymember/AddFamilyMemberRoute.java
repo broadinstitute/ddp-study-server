@@ -47,7 +47,7 @@ public class AddFamilyMemberRoute extends RequestHandler {
             return new Result(400, "Family member information is not provided");
         }
 
-        Integer userIdFromPayload =
+        Long userIdFromPayload =
                 addFamilyMemberPayload.getUserId().orElseThrow(() -> new NoSuchElementException("User id is not provided"));
         if (Integer.parseInt(userId) != userIdFromPayload) {
             throw new RuntimeException("User id was not equal. User id in token " + userId + " user id in request " + userIdFromPayload);

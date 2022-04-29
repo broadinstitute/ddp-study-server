@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.util;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.roles.UserRoleDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +36,11 @@ public class UserUtil {
         if (StringUtils.isBlank(realm)) {
             roles = new UserRoleDao().checkUserAccess(Long.parseLong(userId));
         } else {
-            roles = new UserRoleDao().getUserRolesPeRealm(Long.parseLong(userId), realm);
+            DDPInstance ddpInstance = DDPInstance.getDDPInstance(realm);
+            if (ddpInstance == null) {
+                ddpInstance = DDPInstance.getDDPInstanceByGuid(realm);
+            }
+            roles = new UserRoleDao().getUserRolesPeRealm(Long.parseLong(userId), ddpInstance.getStudyGuid());
         }
         if (roles != null && !roles.isEmpty()) {
             return roles.contains(role);

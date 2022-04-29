@@ -30,7 +30,7 @@ public class UserSettingsDao implements Dao<UserSettingsDto> {
     public void updateUserSettings(long userId, UserSettingsDto userSettingsDto) throws DaoException {
         SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
             SimpleResult dbVals = new SimpleResult();
-            int numRows = handle.attach(JdbiUserSettings.class).updateUserSettings(userSettingsDto.getRowsOnPage(), userId);
+            int numRows = handle.attach(JdbiUserSettings.class).updateUserSettings(userSettingsDto.getRowsPerPage(), userId);
             DBUtil.checkUpdate(1, numRows);
             return dbVals;
         });

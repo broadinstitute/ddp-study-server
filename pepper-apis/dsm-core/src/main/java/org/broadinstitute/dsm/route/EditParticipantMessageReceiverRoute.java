@@ -19,7 +19,7 @@ public class EditParticipantMessageReceiverRoute extends RequestHandler {
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         if (RoutePath.RequestMethod.GET.toString().equals(request.requestMethod())) {
-            EditParticipantMessage messageWithStatus = EditParticipantMessage.getMessageWithStatus(Integer.parseInt(userId));
+            EditParticipantMessage messageWithStatus = EditParticipantMessage.getMessageWithStatus(Long.parseLong(userId));
             int messageId = messageWithStatus.getMessageId();
             String status = messageWithStatus.getMessageStatus();
             String message = messageWithStatus.getReceived_message();

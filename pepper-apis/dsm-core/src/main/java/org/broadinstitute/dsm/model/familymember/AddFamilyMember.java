@@ -65,7 +65,7 @@ public class AddFamilyMember {
         copyProbandData();
         addDefaultValueToData();
         long createdParticipantDataId = this.participantData.insertParticipantData(
-                new UserDao().get(addFamilyMemberPayload.getUserId().orElse(0)).flatMap(UserDto::getEmail).orElse("SYSTEM"));
+                new UserDao().get(addFamilyMemberPayload.getUserId().orElse((long) 0)).flatMap(UserDto::getEmail).orElse("SYSTEM"));
         exportDataToEs();
         return createdParticipantDataId;
     }

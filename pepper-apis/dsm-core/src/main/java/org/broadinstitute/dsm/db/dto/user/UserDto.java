@@ -9,22 +9,24 @@ import org.apache.commons.lang3.StringUtils;
 @Data
 public class UserDto {
     @SerializedName ("user_id")
-    private int userId;
+    private long userId;
     private String guid;
     private String firstName;
     private String lastName;
     private String name;
     private String email;
     private String phoneNumber;
+    private String auth0UserId;
 
-    public UserDto(int userId, String name, String email, String phoneNumber) {
+    public UserDto(long userId, String name, String email, String phoneNumber, String auth0UserId) {
         this.userId = userId;
         this.name = name;
         this.email = email;
         this.phoneNumber = phoneNumber;
+        this.auth0UserId = auth0UserId;
     }
 
-    public int getUserId() {
+    public long getUserId() {
         return this.userId;
     }
 

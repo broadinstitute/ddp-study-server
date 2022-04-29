@@ -9,8 +9,8 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public interface JdbiUserSettings extends SqlObject {
-    @SqlUpdate ("UPDATE user_settings SET rows_on_page = :rowsOnPage WHERE user_id = :userId")
-    int updateUserSettings(@Bind ("rowsOnPage") int rowsOnPage, @Bind ("userId") long userId);
+    @SqlUpdate ("UPDATE user_settings SET rows_per_page = :rowsPerPage WHERE user_id = :userId")
+    int updateUserSettings(@Bind ("rowsPerPage") int rowsPerPage, @Bind ("userId") long userId);
 
     @SqlQuery ("SELECT rows_per_page FROM user_settings settings WHERE user_id = :userId")
     @RegisterConstructorMapper (UserSettingsDto.class)

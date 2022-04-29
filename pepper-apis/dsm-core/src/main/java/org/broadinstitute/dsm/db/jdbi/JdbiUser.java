@@ -13,21 +13,13 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public interface JdbiUser extends SqlObject {
 
-    @SqlQuery ("SELECT u.guid, u.user_id, concat(p.first_name, \" \", p.last_name) as name, p.email, p.phone as phoneNumber FROM user u left join user_profile p on (u.user_id = p.user_id)  WHERE p.email = :userEmail")
+    @SqlQuery ("SELECT u.guid, u.user_id, concat(p.first_name, \" \", p.last_name) as name, p.email, p.phone as phoneNumber, u.auth0_user_id FROM user u left join user_profile p on (u.user_id = p.user_id)  WHERE p.email = :userEmail")
     @RegisterConstructorMapper (UserDto.class)
     UserDto getUserByEmail(@Bind ("userEmail") String userEmail);
 
     @SqlQuery ("SELECT up.user_id, up.first_name, up.last_name, up.email, up.phone_number FROM user_profile up WHERE up.user_id = :userId")
     @RegisterConstructorMapper (UserDto.class)
     UserDto getUserByUserId(@Bind ("userId") long userId);
-
-    @SqlUpdate ("")//todo pegah
-    @GetGeneratedKeys
-    long insert(@Bind ("name") String name, @Bind ("email") String email);
-
-    default long insert(String email) {
-        return insert(email, email);//todo pegah add to both user profile and user
-    }
 
     @SqlQuery ("select guid from user u " +
             "left join user_profile up on (u.user_id = up.user_id)" +
@@ -84,6 +76,9 @@ public interface JdbiUser extends SqlObject {
     @SqlUpdate ("INSERT INTO study_admin (user_id, umbrella_study_id) values (:userId, :studyId)")
     @GetGeneratedKeys
     long insertStudyAdmin();
+
+    @SqlUpdate ("UPDATE user SET auth0_user_id = :auth0UserId WHERE user_id = :userId")
+    void updateAuth0UserId(@Bind ("userId") long userId, @Bind ("auth0UserId") String auth0UserId);
 
 
 }

@@ -127,15 +127,15 @@ public class KitDiscard {
         return exitedKits;
     }
 
-    public static boolean setConfirmed(@NonNull String kitDiscardId, @NonNull Integer userId) {
+    public static boolean setConfirmed(@NonNull String kitDiscardId, @NonNull Long userId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
                     DSMConfig.getSqlFromConfig(ApplicationConfigConstants.SET_USER_CONFIRMED))) {
-                stmt.setInt(1, userId);
+                stmt.setLong(1, userId);
                 stmt.setString(2, APPROVED);
                 stmt.setString(3, kitDiscardId);
-                stmt.setInt(4, userId);
+                stmt.setLong(4, userId);
                 int result = stmt.executeUpdate();
                 if (result == 1) {
                     dbVals.resultValue = true;

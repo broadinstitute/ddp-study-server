@@ -49,20 +49,15 @@ public class UserDao implements Dao<UserDto> {
 
     @Override
     public int create(UserDto userDto) {
-        SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
-            SimpleResult dbVals = new SimpleResult();
-            dbVals.resultValue = handle.attach(JdbiUser.class).insert(userDto.getName().orElse(""), userDto.getEmail().orElse(""));
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Error inserting user by email " + userDto.getEmail(), results.resultException);
-        }
-        return (int) results.resultValue;
+        return -1;
     }
 
     @Override
     public int delete(int id) {
+        return 0;
+    }
+
+    public int delete(Long id) {
         SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
             SimpleResult dbVals = new SimpleResult();
             dbVals.resultValue = handle.attach(JdbiUser.class).deleteByUserId(id);
@@ -79,7 +74,7 @@ public class UserDao implements Dao<UserDto> {
         SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
             SimpleResult dbVals = new SimpleResult();
             List<UserDto> res = handle.attach(JdbiUser.class).getUserMap();
-            Map<Integer, String> map = new HashMap<>();
+            Map<Long, String> map = new HashMap<>();
             if (res != null) {
                 for (UserDto user : res) {
                     user.getName().ifPresentOrElse(name -> map.put(user.getUserId(), name),
@@ -134,15 +129,23 @@ public class UserDao implements Dao<UserDto> {
             long now = Instant.now().toEpochMilli();
             Long expiresAt = isTemporary ? now + EXPIRATION_DURATION_MILLIS : null;
 
-            handle.attach(JdbiUser.class).insertUser(
+            long userId = handle.attach(JdbiUser.class).insertUser(
                     auth0Domain, auth0ClientId, auth0UserId,
                     userGuid, userHruid, null, null,
                     false, now, now, expiresAt);
-            //            dbVals.resultValue = userId;
+            dbVals.resultValue = userId;
 
             return dbVals;
         });
 
         return (long) results.resultValue;
+    }
+
+    public void updateAuth0UserId(long userId, String auth0UserId) {
+        SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
+            SimpleResult dbVals = new SimpleResult();
+            handle.attach(JdbiUser.class).updateAuth0UserId(userId, auth0UserId);
+            return dbVals;
+        });
     }
 }

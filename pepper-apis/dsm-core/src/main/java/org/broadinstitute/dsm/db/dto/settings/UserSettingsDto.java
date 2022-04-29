@@ -1,20 +1,17 @@
 package org.broadinstitute.dsm.db.dto.settings;
 
-import com.google.gson.annotations.SerializedName;
-
 public class UserSettingsDto {
     private static final String USER_ID = "userId";
-    @SerializedName ("rows_per_page")
-    public int rowsOnPage;
+    public int rowsPerPage;
     public long userId;
 
     public UserSettingsDto(int rowsPerPage) {
-        this.rowsOnPage = rowsPerPage;
+        this.rowsPerPage = rowsPerPage;
     }
 
-    public int getRowsOnPage() {
+    public int getRowsPerPage() {
 
-        return this.rowsOnPage;
+        return this.rowsPerPage;
     }
 
     public long getUserId() {

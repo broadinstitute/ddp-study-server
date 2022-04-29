@@ -111,8 +111,6 @@ public class DBTestUtil {
     private static final String SELECT_ASSIGNEE_QUERY = "SELECT * FROM access_user WHERE name = ?";
     private static final String SQL_SELECT_PK_FROM_TABLE = "SELECT %PK FROM %TABLE WHERE participant_id = ? LIMIT 1";
     private static final String SQL_DELETE_PK_FROM_TABLE = "DELETE FROM %TABLE WHERE %PK = ?";
-    private static final String SQL_INSERT_USER = "INSERT INTO access_user (user_id, name, email, is_active) VALUES (?, ?, ?, ?)";
-    private static final String SQL_DELETE_USER_BY_ID = "DELETE FROM access_user WHERE user_id = ?";
     private static final String SQL_DELETE_MESSAGE_BY_USER_ID =
             "DELETE FROM " + "message " + "WHERE " + "user_id = ? " + "ORDER BY published_at DESC " + "LIMIT 1";
 
@@ -485,47 +483,6 @@ public class DBTestUtil {
                         + "tissue_type = ?, tumor_type= ?, sent_gp = ?, sk_id = ?, sm_id = ?, first_sm_id = ?, "
                         + "collaborator_sample_id = ?, last_changed = ?, changed_by = ? WHERE tissue_id = ?", values);
             }
-        }
-    }
-
-    public static void insertUser(@NonNull UserDto userDto, int isActive) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_USER)) {
-                stmt.setInt(1, userDto.getUserId());
-                stmt.setString(2, userDto.getName().orElse(""));
-                stmt.setString(3, userDto.getEmail().orElse(""));
-                stmt.setInt(4, isActive);
-                int result = stmt.executeUpdate();
-                if (result != 1) {
-                    throw new RuntimeException("Error adding new user, it was adding " + result + " rows");
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-        if (results.resultException != null) {
-            throw new RuntimeException("Error inserting user with " + userDto.getUserId(), results.resultException);
-        }
-    }
-
-    public static void deleteUser(int userId) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_USER_BY_ID)) {
-                stmt.setInt(1, userId);
-                int result = stmt.executeUpdate();
-                if (result != 1) {
-                    throw new RuntimeException("Error deleting user, it was deleting " + result + " rows");
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-        if (results.resultException != null) {
-            throw new RuntimeException("Error deleting user with " + userId, results.resultException);
         }
     }
 
@@ -1131,7 +1088,7 @@ public class DBTestUtil {
     }
 
     public static UserDto createTestDsmUser(String name, String email, UserDao userDao, UserDto userDto) {
-        userDto = new UserDto(0, name, email, "");
+        userDto = new UserDto(0, name, email, "", "");
         userDto.setUserId(userDao.create(userDto));
         return userDto;
     }
