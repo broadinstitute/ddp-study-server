@@ -121,14 +121,15 @@ public interface JdbiQuestion extends SqlObject {
                 .map(dto -> (CompositeQuestionDto) dto);
     }
 
-    default List<Long> findCompositeChildIdsByParentId(long parentQuestionId) {
-        return collectOrderedCompositeChildIdsByParentIds(Set.of(parentQuestionId))
+    default List<Long> findCompositeChildIdsByParentIdAndInstanceGuid(long parentQuestionId, String instanceGuid) {
+        return collectOrderedCompositeChildIdsByParentIdsAndInstanceGuid(Set.of(parentQuestionId), instanceGuid)
                 .getOrDefault(parentQuestionId, new ArrayList<>());
     }
 
-    default Map<Long, List<Long>> collectOrderedCompositeChildIdsByParentIds(Iterable<Long> parentQuestionIds) {
+    default Map<Long, List<Long>> collectOrderedCompositeChildIdsByParentIdsAndInstanceGuid(Iterable<Long> parentQuestionIds,
+                                                                                            String instanceGuid) {
         Map<Long, List<Long>> parentIdToChildIds = new HashMap<>();
-        try (var stream = findOrderedCompositeChildIdsByParentIds(parentQuestionIds)) {
+        try (var stream = findOrderedCompositeChildIdsByParentIdsAndInstanceGuid(parentQuestionIds, instanceGuid)) {
             stream.forEach(pair -> parentIdToChildIds
                     .computeIfAbsent(pair.getParentId(), id -> new ArrayList<>())
                     .add(pair.getChildId()));
@@ -138,11 +139,41 @@ public interface JdbiQuestion extends SqlObject {
 
     @SqlQuery("select cqq.parent_question_id, cqq.child_question_id"
             + "  from composite_question__question as cqq"
+            + "  join question as q on q.question_id = cqq.child_question_id"
+            + "  join revision as rev on rev.revision_id = q.revision_id"
+            + "  join activity_instance as ai on ai.study_activity_id = q.study_activity_id"
             + " where cqq.parent_question_id in (<parentIds>)"
+            + "   and ai.activity_instance_guid = :instanceGuid"
+            + "   and rev.start_date <= ai.created_at"
+            + "   and (rev.end_date is null or ai.created_at < rev.end_date)")
+    @RegisterConstructorMapper(CompositeIdPair.class)
+    Stream<CompositeIdPair> findOrderedCompositeChildIdsByParentIdsAndInstanceGuid(
+            @BindList(value = "parentIds", onEmpty = EmptyHandling.NULL) Iterable<Long> parentQuestionIds,
+            @Bind("instanceGuid") String instanceGuid);
+
+    default Map<Long, List<Long>> collectOrderedCompositeChildIdsByParentIdsAndTimestamp(Iterable<Long> parentQuestionIds, long timestamp) {
+        Map<Long, List<Long>> parentIdToChildIds = new HashMap<>();
+        try (var stream = findOrderedCompositeChildIdsByParentIdsAndTimestamp(parentQuestionIds, timestamp)) {
+            stream.forEach(pair -> parentIdToChildIds
+                    .computeIfAbsent(pair.getParentId(), id -> new ArrayList<>())
+                    .add(pair.getChildId()));
+        }
+        return parentIdToChildIds;
+    }
+
+    @SqlQuery("select cqq.parent_question_id, cqq.child_question_id"
+            + "  from composite_question__question as cqq"
+            + "  join question as q on q.question_id = cqq.child_question_id"
+            + "  join revision as rev on rev.revision_id = q.revision_id"
+            + " where cqq.parent_question_id in (<parentIds>)"
+            + "   and rev.start_date <= :timestamp"
+            + "   and (rev.end_date is null or :timestamp < rev.end_date)"
             + " order by cqq.parent_question_id asc, cqq.display_order asc")
     @RegisterConstructorMapper(CompositeIdPair.class)
-    Stream<CompositeIdPair> findOrderedCompositeChildIdsByParentIds(
-            @BindList(value = "parentIds", onEmpty = EmptyHandling.NULL) Iterable<Long> parentQuestionIds);
+    Stream<CompositeIdPair> findOrderedCompositeChildIdsByParentIdsAndTimestamp(
+            @BindList(value = "parentIds", onEmpty = EmptyHandling.NULL) Iterable<Long> parentQuestionIds,
+            @Bind("timestamp") long timestamp);
+
 
     class CompositeIdPair {
         private long parentId;

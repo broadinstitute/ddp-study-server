@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 
 import com.google.gson.Gson;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
@@ -32,17 +33,13 @@ import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.HaltException;
 import spark.Request;
 import spark.Response;
 import spark.utils.SparkUtils;
 
+@Slf4j
 public class RouteUtil {
-
-    private static final Logger LOG = LoggerFactory.getLogger(RouteUtil.class);
-
     private static final String STUDIES_PATH_MARKER = "studies";
     private static final int STUDIES_MARKER_IDX = 4;
     private static final int STUDY_GUID_IDX = 5;
@@ -99,7 +96,7 @@ public class RouteUtil {
             // Massage the value to match enum, and in turn allow a bit of flexibility to clients.
             return ContentStyle.valueOf(value.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
-            LOG.warn("Unable to convert ddp content style header value '{}'", value, e);
+            log.warn("Unable to convert ddp content style header value '{}'", value, e);
             String styleValues = Arrays.stream(ContentStyle.values())
                     .map(ContentStyle::name)
                     .collect(Collectors.joining(", "));
@@ -213,10 +210,10 @@ public class RouteUtil {
     public static void haltIfError(User user, String participantGuid, String studyGuid, String instanceGuid, StudyDto studyDto,
                                    ActivityInstanceDto instanceDto, Response response, boolean isOperatorStudyAdmin) {
         if (instanceDto.getStudyId() != studyDto.getId() || instanceDto.getParticipantId() != user.getId()) {
-            LOG.warn("Activity instance {} does not belong to participant {} in study {}", instanceGuid, participantGuid, studyGuid);
-            LOG.warn("InstanceDTO: " + new Gson().toJson(instanceDto));
-            LOG.warn("User: " + new Gson().toJson(user));
-            LOG.warn("StudyDto: " + new Gson().toJson(studyDto));
+            log.warn("Activity instance {} does not belong to participant {} in study {}", instanceGuid, participantGuid, studyGuid);
+            log.warn("InstanceDTO: " + new Gson().toJson(instanceDto));
+            log.warn("User: " + new Gson().toJson(user));
+            log.warn("StudyDto: " + new Gson().toJson(studyDto));
             String msg = "Could not find activity instance with guid " + instanceGuid;
             throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
         } else if (!isOperatorStudyAdmin && instanceDto.isHidden()) {
@@ -240,7 +237,7 @@ public class RouteUtil {
 
     /**
      * Define this functional interface in order to be possible to do custom error processing.
-     * Another benefit: call of LOG.error() will be done in that class where an error happened
+     * Another benefit: call of log.error() will be done in that class where an error happened
      * (so, in error log we can see a correct class name).
      */
     @FunctionalInterface
@@ -276,13 +273,13 @@ public class RouteUtil {
         StudyDto studyDto = new JdbiUmbrellaStudyCached(handle).findByStudyGuid(studyGuid);
         if (studyDto == null) {
             var err = new ApiError(ErrorCodes.STUDY_NOT_FOUND, "Could not find study with guid " + studyGuid);
-            LOG.warn(err.getMessage());
+            log.warn(err.getMessage());
             throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, err);
         }
         User user = handle.attach(UserDao.class).findUserByGuid(userGuid).orElse(null);
         if (user == null) {
             var err = new ApiError(ErrorCodes.USER_NOT_FOUND, "Could not find user with guid " + userGuid);
-            LOG.warn(err.getMessage());
+            log.warn(err.getMessage());
             throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, err);
         }
         return new UserAndStudy(user, studyDto);
@@ -300,13 +297,13 @@ public class RouteUtil {
         StudyDto studyDto = new JdbiUmbrellaStudyCached(handle).findByStudyGuid(studyGuid);
         if (studyDto == null) {
             var err = new ApiError(ErrorCodes.STUDY_NOT_FOUND, "Could not find study with guid " + studyGuid);
-            LOG.warn(err.getMessage());
+            log.warn(err.getMessage());
             throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, err);
         }
         User user = handle.attach(UserDao.class).findUserByGuidOrAltPid(userGuidOrAltPid).orElse(null);
         if (user == null) {
             var err = new ApiError(ErrorCodes.USER_NOT_FOUND, "Could not find user with guid/legacy_altpid " + userGuidOrAltPid);
-            LOG.warn(err.getMessage());
+            log.warn(err.getMessage());
             throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, err);
         }
         return new UserAndStudy(user, studyDto);
