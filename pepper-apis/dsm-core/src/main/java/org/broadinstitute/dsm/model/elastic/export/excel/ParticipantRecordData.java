@@ -70,7 +70,7 @@ public class ParticipantRecordData {
         String jsonString;
         if (alias.isCollection()) {
             jsonString = nestedValue.stream().filter(val ->
-                            column.getObject().equals(((Map<String, Object>) val).get("fieldTypeId")))
+                            column.getObject().equals(((Map<String, Object>) val).get(ESObjectConstants.FIELD_TYPE_ID)))
                     .findFirst().map(val -> ((Map<String, Object>) val).get(ESObjectConstants.DATA).toString()).orElse(StringUtils.EMPTY);
         } else {
             jsonString = nestedValue.stream().findFirst().get().toString();
