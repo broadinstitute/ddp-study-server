@@ -213,6 +213,7 @@ public class ValidationRuleCreator {
                 .correctionHint(getHintTitle(ctx, ruleDef))
                 .allowSave(ruleDef.getAllowSave())
                 .comparisonType(ruleDef.getComparison())
+                .referenceQuestionStableId(ruleDef.getValueStableId())
                 .referenceQuestionId(TransactionWrapper.withTxn(handle -> handle.attach(QuestionDao.class).getJdbiQuestion()
                                 .findIdByStableIdAndInstanceGuid(ruleDef.getValueStableId(), ctx.getInstanceGuid())
                                 .orElseThrow(() -> new RuntimeException("Can't find question by stable ID & instance GUID"))))

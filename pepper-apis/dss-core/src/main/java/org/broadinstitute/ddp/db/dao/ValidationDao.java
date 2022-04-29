@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.DaoException;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.validation.AgeRangeRuleDto;
 import org.broadinstitute.ddp.db.dto.validation.DateRangeRuleDto;
@@ -253,6 +254,11 @@ public interface ValidationDao extends SqlObject {
                         .correctionHint(hint)
                         .allowSave(dto.isAllowSave())
                         .referenceQuestionId(comparisonRule.getReferenceQuestionId())
+                        .referenceQuestionStableId(TransactionWrapper.withTxn(handle ->
+                                handle.attach(QuestionDao.class).getJdbiQuestion()
+                                        .findQuestionDtoById(comparisonRule.getReferenceQuestionId())
+                                        .map(QuestionDto::getStableId)
+                                        .orElse(null)))
                         .comparisonType(comparisonRule.getType())
                         .type(dto.getRuleType())
                         .build();
