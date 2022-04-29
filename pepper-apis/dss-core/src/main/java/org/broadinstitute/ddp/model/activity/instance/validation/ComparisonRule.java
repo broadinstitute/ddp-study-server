@@ -24,8 +24,10 @@ import java.util.Optional;
 @Getter
 @SuperBuilder(toBuilder = true)
 public class ComparisonRule extends Rule<Answer> {
-    @SerializedName("reference_question_id")
-    private Long referenceQuestionId;
+    private transient Long referenceQuestionId;
+
+    @SerializedName("reference_question_stable_id")
+    private String referenceQuestionStableId;
 
     @SerializedName("comparison_validation_type")
     private ComparisonType comparisonType;
