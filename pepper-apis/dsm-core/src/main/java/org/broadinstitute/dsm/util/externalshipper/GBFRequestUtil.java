@@ -594,7 +594,7 @@ public class GBFRequestUtil implements ExternalShipper {
                         if (StringUtils.isNotBlank(ddpParticipantId)) {
                             KitRequest kitRequest = new KitRequest(rs.getLong(DBConstants.DSM_KIT_REQUEST_ID), ddpParticipantId, null, null,
                                     rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), null, rs.getString(DBConstants.EXTERNAL_ORDER_STATUS),
-                                    rs.getString("subkits." + DBConstants.EXTERNAL_KIT_NAME), rs.getLong(DBConstants.EXTERNAL_ORDER_DATE));
+                                    rs.getString(DBConstants.EXTERNAL_KIT_NAME), rs.getLong(DBConstants.EXTERNAL_ORDER_DATE));
                             try {
                                 // keep track of which request ids we've already asked about, since this
                                 // result set may show subkits with the same external order id
