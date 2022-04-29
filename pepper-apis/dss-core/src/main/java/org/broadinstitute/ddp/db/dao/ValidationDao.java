@@ -16,7 +16,6 @@ import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.DaoException;
-import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.validation.AgeRangeRuleDto;
 import org.broadinstitute.ddp.db.dto.validation.DateRangeRuleDto;
@@ -254,11 +253,7 @@ public interface ValidationDao extends SqlObject {
                         .correctionHint(hint)
                         .allowSave(dto.isAllowSave())
                         .referenceQuestionId(comparisonRule.getReferenceQuestionId())
-                        .referenceQuestionStableId(TransactionWrapper.withTxn(handle ->
-                                handle.attach(QuestionDao.class).getJdbiQuestion()
-                                        .findQuestionDtoById(comparisonRule.getReferenceQuestionId())
-                                        .map(QuestionDto::getStableId)
-                                        .orElse(null)))
+                        .referenceQuestionStableId(comparisonRule.getReferenceQuestionStableId())
                         .comparisonType(comparisonRule.getType())
                         .type(dto.getRuleType())
                         .build();
@@ -575,12 +570,12 @@ public interface ValidationDao extends SqlObject {
                 ruleDef = new UniqueValueRuleDef(hintTmpl);
                 break;
             case COMPARISON:
-                var questionDto = getJdbiQuestion().findQuestionDtoById(dto.getQuestionId());
-                if (questionDto.isEmpty()) {
+                if (getJdbiQuestion().findQuestionDtoById(dto.getQuestionId()).isEmpty()) {
                     throw new DaoException("Question doesn't exist: " + dto.getQuestionId());
                 }
 
-                ruleDef = new ComparisonRuleDef(hintTmpl, questionDto.get().getStableId(), ((ComparisonRuleDto) dto).getType());
+                ruleDef = new ComparisonRuleDef(hintTmpl,
+                        ((ComparisonRuleDto) dto).getReferenceQuestionStableId(), ((ComparisonRuleDto) dto).getType());
                 break;
             case LENGTH:
                 var lengthDto = (LengthRuleDto) dto;
