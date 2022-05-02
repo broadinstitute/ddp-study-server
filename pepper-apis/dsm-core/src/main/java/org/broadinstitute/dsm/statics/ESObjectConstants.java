@@ -8,6 +8,8 @@ public class ESObjectConstants {
     public static final String PARTICIPANT_DATA_ID = "participantDataId";
     public static final String ADDITIONAL_VALUES_JSON = "additionalValuesJson";
 
+    public static final String ADDITIONAL_TISSUE_VALUE_JSON = "additionalTissueValueJson";
+
     //workflows
     public static final String ELASTIC_EXPORT_WORKFLOWS = "ELASTIC_EXPORT.workflows";
     public static final String WORKFLOWS = "workflows";

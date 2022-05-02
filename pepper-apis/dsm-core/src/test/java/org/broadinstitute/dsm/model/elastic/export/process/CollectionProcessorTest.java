@@ -14,6 +14,7 @@ import org.broadinstitute.dsm.model.elastic.export.generate.Collector;
 import org.broadinstitute.dsm.model.elastic.export.generate.GeneratorPayload;
 import org.broadinstitute.dsm.model.elastic.export.parse.BaseParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
+import org.broadinstitute.dsm.model.patch.Patch;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,7 +33,9 @@ public class CollectionProcessorTest {
 
         NameValue nameValue = new NameValue("m.mrProblemText", "mr_updated");
 
-        GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, 5);
+        Patch patch = new Patch();
+        patch.setId("5");
+        GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, patch);
 
         BaseParser valueParser = new ValueParser();
         valueParser.setPropertyInfo(new BaseGenerator.PropertyInfo(MedicalRecord.class, true));
@@ -62,7 +65,9 @@ public class CollectionProcessorTest {
 
         NameValue nameValue = new NameValue("m.mrProblemText", "val");
 
-        GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, 10);
+        Patch patch = new Patch();
+        patch.setId("10");
+        GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, patch);
 
         BaseParser valueParser = new ValueParser();
         valueParser.setPropertyInfo(new BaseGenerator.PropertyInfo(MedicalRecord.class, true));
@@ -89,7 +94,9 @@ public class CollectionProcessorTest {
         ESDsm esDsm = objectMapper.readValue(json, ESDsm.class);
 
         NameValue nameValue = new NameValue("m.type", "TEST_VAL");
-        GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, 5);
+        Patch patch = new Patch();
+        patch.setId("5");
+        GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, patch);
 
         BaseParser valueParser = new ValueParser();
         valueParser.setPropertyInfo(new BaseGenerator.PropertyInfo(MedicalRecord.class, true));
