@@ -30,7 +30,6 @@ public class Patch {
     public static final String PK = "$pk";
     public static final String COL_NAME = "$colName";
     public static final String PARTICIPANT_ID = "participantId";
-    public static final String ONC_HISTORY_ID = "oncHistoryDetailId";
     public static final String PARTICIPANT_DATA_ID = "participantDataId";
     public static final String DDP_PARTICIPANT_ID = "ddpParticipantId";
     private static final Logger logger = LoggerFactory.getLogger(Patch.class);
@@ -48,6 +47,10 @@ public class Patch {
     private String realm;
     private List<Value> actions;
     private String ddpParticipantId;
+
+    public Patch() {
+
+    }
 
     //regular patch
     public Patch(String id, String parent, String parentId, String user, NameValue nameValue, List<NameValue> nameValues,
