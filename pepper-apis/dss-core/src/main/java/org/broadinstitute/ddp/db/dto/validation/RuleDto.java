@@ -17,6 +17,9 @@ public class RuleDto implements Serializable {
     @ColumnName("question_id")
     private final long questionId;
 
+    @ColumnName("question_stable_id")
+    private final String questionStableId;
+
     @ColumnName("validation_id")
     private final long id;
 
@@ -30,6 +33,7 @@ public class RuleDto implements Serializable {
     private final long revisionId;
 
     protected RuleDto(final RuleDto other) {
-        this(other.ruleType, other.questionId, other.id, other.allowSave, other.hintTemplateId, other.revisionId);
+        this(other.ruleType, other.questionId, other.questionStableId,
+                other.id, other.allowSave, other.hintTemplateId, other.revisionId);
     }
 }

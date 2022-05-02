@@ -82,6 +82,7 @@ import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariabl
 import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateFieldRequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateRangeRuleDef;
+import org.broadinstitute.ddp.model.activity.definition.validation.ComparisonRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.LengthRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
@@ -95,6 +96,7 @@ import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.FormSectionState;
+import org.broadinstitute.ddp.model.activity.types.ComparisonType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.NestedActivityRenderHint;
@@ -353,6 +355,12 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .setScale(2)
                 .build();
 
+        final DecimalQuestionDef decimalDefWithValidation = DecimalQuestionDef
+                .builder("DECIMAL_QUESTION_WITH_VALIDATION", Template.text("This is value"))
+                .addValidation(new ComparisonRuleDef(newTemplate(), decimalDef.getStableId(), ComparisonType.GREATER_OR_EQUAL))
+                .setScale(2)
+                .build();
+
         final EquationQuestionDef equationDef = EquationQuestionDef.builder()
                 .stableId("EQUATION_QUESTION")
                 .questionType(QuestionType.EQUATION)
@@ -361,7 +369,8 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .expression("5 * " + decimalDef.getStableId())
                 .build();
 
-        FormSectionDef numericSection = new FormSectionDef(null, TestUtil.wrapQuestions(decimalDef, equationDef));
+        FormSectionDef numericSection = new FormSectionDef(null,
+                TestUtil.wrapQuestions(decimalDef, decimalDefWithValidation, equationDef));
 
         //------------- create STUDY ACTIVITY ---------
         String parentActCode = "ACT_ROUTE_PARENT" + Instant.now().toEpochMilli();
@@ -413,6 +422,8 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         answerDao.createAnswer(testData.getUserId(), instanceDto.getId(),
                 new DecimalAnswer(null, decimalDef.getStableId(), null, new DecimalDef(2)));
 
+        answerDao.createAnswer(testData.getUserId(), instanceDto.getId(),
+                new DecimalAnswer(null, decimalDefWithValidation.getStableId(), null, new DecimalDef(3)));
 
         var compAnswer = new CompositeAnswer(null, comp1.getStableId(), null);
         compAnswer.addRowOfChildAnswers(new TextAnswer(null, comp1.getChildren().get(0).getStableId(), null, "comp child"));
@@ -667,7 +678,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
 
         resp.then().assertThat()
                 .body("sections.size()", equalTo(activity.getSections().size()))
-                .body("sections[10].blocks.size()", equalTo(2));
+                .body("sections[10].blocks.size()", equalTo(3));
 
         resp.then().assertThat()
                 .root("sections[10].blocks[0].question")
@@ -684,10 +695,10 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
 
         resp.then().assertThat()
                 .body("sections.size()", equalTo(activity.getSections().size()))
-                .body("sections[10].blocks.size()", equalTo(2));
+                .body("sections[10].blocks.size()", equalTo(3));
 
         resp.then().assertThat()
-                .root("sections[10].blocks[1].question")
+                .root("sections[10].blocks[2].question")
                 .body("questionType", equalTo(QuestionType.EQUATION.toString()))
                 .body("stableId", equalTo("EQUATION_QUESTION"))
                 .body("answers.size()", equalTo(1))
