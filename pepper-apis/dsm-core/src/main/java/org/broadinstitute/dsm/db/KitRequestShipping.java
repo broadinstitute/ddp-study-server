@@ -65,7 +65,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Data
-@TableName(name = DBConstants.DDP_KIT_REQUEST, alias = DBConstants.DDP_KIT_REQUEST_ALIAS, primaryKey = DBConstants.DSM_KIT_REQUEST_ID, columnPrefix = "")
+@TableName(name = DBConstants.DDP_KIT_REQUEST, alias = DBConstants.DDP_KIT_REQUEST_ALIAS, primaryKey = DBConstants.DSM_KIT_REQUEST_ID,
+        columnPrefix = "")
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class KitRequestShipping extends KitRequest {

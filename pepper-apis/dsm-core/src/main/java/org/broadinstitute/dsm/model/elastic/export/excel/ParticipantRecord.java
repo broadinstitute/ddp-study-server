@@ -31,7 +31,7 @@ public class ParticipantRecord {
                 });
             } else {
                 IntStream.range(0, size).mapToObj(
-                                n -> value.stream().filter(Iterator::hasNext).map(it -> it.next().toString()).collect(Collectors.toList()))
+                        n -> value.stream().filter(Iterator::hasNext).map(it -> it.next().toString()).collect(Collectors.toList()))
                         .flatMap(Collection::stream).forEach(rowStream::add);
             }
         });

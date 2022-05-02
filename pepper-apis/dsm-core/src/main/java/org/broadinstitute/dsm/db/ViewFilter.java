@@ -863,7 +863,7 @@ public class ViewFilter {
                         case 40:
                             break;
                         default:
-                            logger.error("Unknown state " +  state);
+                            logger.error("Unknown state " + state);
                     }
                 }
             }

@@ -1,19 +1,16 @@
 package org.broadinstitute.dsm.model.elastic.export.generate;
 
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.broadinstitute.dsm.db.OncHistoryDetail;
-import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDao;
-import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDto;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
 import org.broadinstitute.dsm.model.patch.Patch;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 public class OncHistoryDetailSourceGeneratorTest {
 
@@ -41,6 +38,7 @@ public class OncHistoryDetailSourceGeneratorTest {
         Assert.assertEquals(expected, ((List) ((Map) actual.get("dsm")).get("oncHistoryDetail")).get(0));
 
     }
+
     @Test
     public void testGetAdditionalDataUnableObtain() {
         Patch patch = new Patch();
@@ -53,7 +51,8 @@ public class OncHistoryDetailSourceGeneratorTest {
         OncHistoryDetailSourceGenerator sourceGenerator = new OncHistoryDetailSourceGenerator() {
             @Override
             protected Generator getStrategy() {
-                OncHistoryDetailUnableObtainTissueStrategy generatorStrategy = (OncHistoryDetailUnableObtainTissueStrategy) super.getStrategy();
+                OncHistoryDetailUnableObtainTissueStrategy generatorStrategy =
+                        (OncHistoryDetailUnableObtainTissueStrategy) super.getStrategy();
                 generatorStrategy.oncHistoryDetailDao = new MockOncHistoryDetailDao();
                 return generatorStrategy;
             }
@@ -72,4 +71,3 @@ public class OncHistoryDetailSourceGeneratorTest {
 
     }
 }
-
