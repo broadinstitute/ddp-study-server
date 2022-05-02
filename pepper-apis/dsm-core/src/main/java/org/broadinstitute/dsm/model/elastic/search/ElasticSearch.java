@@ -303,16 +303,20 @@ public class ElasticSearch implements ElasticSearchable {
     }
 
     Map<String, String> extractLegacyAltPidGuidPair(SearchHitProxy[] records) {
-        Set<String> parents = getParents(records);
+        Set<String> parentsGuids = getParents(records);
         return Arrays.stream(records)
                 .map(SearchHitProxy::getSourceAsMap)
                 .filter(this::hasProfile)
                 .map(this::getProfile)
                 .collect(Collectors.toMap(profileMap -> profileMap.get(ElasticSearchUtil.LEGACY_ALT_PID), profileMap -> profileMap.get(ESObjectConstants.GUID),
                         (prevGuid, currGuid) -> {
-                            if (parents.contains(prevGuid)) return currGuid;
+                            if (isParentGuid(parentsGuids, prevGuid)) return currGuid;
                             else return prevGuid;
                         }));
+    }
+
+    private boolean isParentGuid(Set<String> parentsGuids, String guid) {
+        return parentsGuids.contains(guid);
     }
 
     private Set<String> getParents(SearchHitProxy[] records) {
