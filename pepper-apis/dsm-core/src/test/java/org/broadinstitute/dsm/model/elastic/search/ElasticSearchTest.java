@@ -127,19 +127,16 @@ public class ElasticSearchTest {
         }
         String parentGuid = "TEST1234567891011123";
         String childGuid = "TEST1234567891011124";
-        String childGuid2 = "TEST1234567891011130";
         String legacyAltPid = "283hdsjd92j32njsjdbakdj283ndjdadsj2n3n13j";
         String aloneLegacyAltPid = "283hdsjd92j32njsjdbakdj283ndjdadsj2n3n13k";
         String aloneGuid = "TEST1234567891011125";
         MockSearchHitProxy mockSearchHitProxy = new MockSearchHitProxy(null, parentGuid, legacyAltPid, Collections.emptyList());
         MockSearchHitProxy mockSearchHitProxy2 = new MockSearchHitProxy(null, childGuid, legacyAltPid, List.of(parentGuid));
-        MockSearchHitProxy mockSearchHitProxy3 = new MockSearchHitProxy(null, childGuid2, legacyAltPid, List.of(parentGuid));
         MockSearchHitProxy mockSearchHitProxy4 = new MockSearchHitProxy(null, aloneGuid, aloneLegacyAltPid, Collections.emptyList());
         Map<String, String> guidsByLegacyAltPid =
                 elasticSearch.extractLegacyAltPidGuidPair(new MockSearchHitProxy[] {mockSearchHitProxy, mockSearchHitProxy2,
-                        mockSearchHitProxy3, mockSearchHitProxy4});
+                        mockSearchHitProxy4});
         Assert.assertEquals(childGuid, guidsByLegacyAltPid.get(legacyAltPid));
-        Assert.assertEquals(childGuid2, guidsByLegacyAltPid.get(legacyAltPid));
         Assert.assertEquals(aloneGuid, guidsByLegacyAltPid.get(aloneLegacyAltPid));
     }
 
