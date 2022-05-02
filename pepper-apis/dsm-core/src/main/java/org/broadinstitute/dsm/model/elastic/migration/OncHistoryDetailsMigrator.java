@@ -14,6 +14,7 @@ public class OncHistoryDetailsMigrator extends BaseCollectionMigrator {
 
     @Override
     protected Map<String, Object> getDataByRealm() {
+
         return (Map) OncHistoryDetail.getOncHistoryDetails(realm);
     }
 

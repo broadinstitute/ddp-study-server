@@ -198,7 +198,6 @@ public class EmailRecord {
 
         for (JsonElement reminder : array) {
             Recipient recipient = new Gson().fromJson(recipientJson, Recipient.class);
-            recipient.setEmail(reminder.getAsJsonObject().get("adminRecipient").getAsString());
 
             long epochTime = Utility.getCurrentEpoch();
             addRecord(stmt, epochTime, epochTime + (reminder.getAsJsonObject().get("hours").getAsInt() * SEC_IN_HOUR), reminderType,

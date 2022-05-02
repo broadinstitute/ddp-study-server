@@ -36,7 +36,7 @@ select po.picklist_option_id        as po_picklist_option_id,
 
 queryAllOrderedGroupsAndOptionsByQuestionIdsAndTimestamp() ::= <<
 <selectAllGroupAndOptions()>
- where po.picklist_question_id in (\<questionIds\>)
+ where po.picklist_question_id in (\<questionIds>)
    and option_rev.start_date \<= :timestamp
    and (option_rev.end_date is null or :timestamp \< option_rev.end_date)
    and (group_rev.revision_id is null or
