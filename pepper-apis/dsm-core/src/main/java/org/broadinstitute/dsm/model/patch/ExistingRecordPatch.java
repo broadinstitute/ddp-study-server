@@ -45,7 +45,7 @@ public class ExistingRecordPatch extends BasePatch {
 
     @Override
     public Object patchNameValuePairs() {
-        ESProfile profile =
+        profile =
                 ElasticSearchUtil.getParticipantProfileByGuidOrAltPid(ddpInstance.getParticipantIndexES(), patch.getDdpParticipantId())
                         .orElse(null);
         if (profile == null) {
