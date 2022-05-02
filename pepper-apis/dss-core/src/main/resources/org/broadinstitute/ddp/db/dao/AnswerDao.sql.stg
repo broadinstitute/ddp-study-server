@@ -136,7 +136,7 @@ where ai.activity_instance_guid = :instanceGuid
            join question_stable_code as pqsc on pqsc.question_stable_code_id = pq.question_stable_code_id
           where pqsc.stable_id = :questionStableId
             and pqsc.umbrella_study_id = act.study_id))
-order by response_order
+order by cai.response_order
 >>
 
 findAnswerByInstanceGuidAndQuestionId() ::= <<
