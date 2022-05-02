@@ -8,6 +8,7 @@ import java.util.List;
 import lombok.NonNull;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.dto.user.AssigneeDto;
+import org.broadinstitute.dsm.db.dto.user.UserRoleDto;
 import org.broadinstitute.dsm.db.jdbi.JdbiUserRole;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -120,5 +121,15 @@ public class UserRoleDao {
 
     public static Collection<AssigneeDto> getAssignees(String realm) {
         return UserRoleDao.getAssigneeMap(realm).values();
+    }
+
+    public List<UserRoleDto> getAllUsersWithRoleForRealm(String studyGuid) {
+        List<UserRoleDto> users = new ArrayList<>();
+        SimpleResult result = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
+            SimpleResult dbVals = new SimpleResult();
+            dbVals.resultValue = handle.attach(JdbiUserRole.class).getAllUsersWithRoleInRealm(studyGuid);
+            return dbVals;
+        });
+        return (List<UserRoleDto>) result.resultValue;
     }
 }

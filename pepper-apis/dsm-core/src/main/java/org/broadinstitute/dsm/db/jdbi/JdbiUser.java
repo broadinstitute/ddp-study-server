@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.db.jdbi;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.jdbi.v3.sqlobject.SqlObject;
@@ -73,12 +74,14 @@ public interface JdbiUser extends SqlObject {
     @SqlQuery ("Select count(*) from user_profile where email = :email")
     int selectUserProfileByEMail(@Bind ("email") String email);
 
+    @SqlQuery ("Select user_id from user_profile where email = :email")
+    Optional<Long> selectUserIdByEMail(@Bind ("email") String email);
+
     @SqlUpdate ("INSERT INTO study_admin (user_id, umbrella_study_id) values (:userId, :studyId)")
     @GetGeneratedKeys
     long insertStudyAdmin();
 
     @SqlUpdate ("UPDATE user SET auth0_user_id = :auth0UserId WHERE user_id = :userId")
     void updateAuth0UserId(@Bind ("userId") long userId, @Bind ("auth0UserId") String auth0UserId);
-
 
 }

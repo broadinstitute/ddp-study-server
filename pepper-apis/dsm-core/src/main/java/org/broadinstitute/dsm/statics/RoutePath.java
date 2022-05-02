@@ -100,6 +100,10 @@ public class RoutePath {
     public static final String GoogleAnalytics = "googleAnalytics";
     public static final String DOWNLOAD_PARTICIPANT_LIST_ROUTE = "participantList";
 
+    //user
+    public static final String ADD_NEW_USER = "addUser";
+    public static final String GET_USERS = "getUsers";
+
     public static String getRealm(Request request) {
         QueryParamsMap queryParams = request.queryMap();
         String realm = "";

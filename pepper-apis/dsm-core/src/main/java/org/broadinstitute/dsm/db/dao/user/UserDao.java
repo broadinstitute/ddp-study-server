@@ -5,19 +5,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import lombok.NonNull;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.util.DdpDBUtils;
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.db.jdbi.JdbiUser;
+import org.broadinstitute.dsm.db.jdbi.JdbiUserRole;
+import org.broadinstitute.dsm.db.jdbi.JdbiUserSettings;
+import org.broadinstitute.dsm.exception.DaoException;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.util.DBUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UserDao implements Dao<UserDto> {
-
-    long EXPIRATION_DURATION_MILLIS = TimeUnit.HOURS.toMillis(24);
+    Logger logger = LoggerFactory.getLogger(UserDao.class);
 
     public Optional<UserDto> getUserByEmail(@NonNull String email) {
         SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
@@ -118,25 +124,44 @@ public class UserDao implements Dao<UserDto> {
         return (String) results.resultValue;
     }
 
-    public long insertNewUser(Long clientId,
-                              String auth0Domain, String auth0ClientId,
-                              String auth0UserId, boolean isTemporary) {
+    public long insertNewUser(String auth0Domain, String clientKey, UserDto user, DDPInstance ddpInstance) {
         SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
             SimpleResult dbVals = new SimpleResult();
-            String userGuid = DdpDBUtils.uniqueUserGuid(handle);
-            String userHruid = DdpDBUtils.uniqueUserHruid(handle);
+            Optional<Long> maybeUserId = handle.attach(JdbiUser.class).selectUserIdByEMail(user.getEmail().orElseThrow());
+            long userId;
+            if (!maybeUserId.isEmpty()) {
+                userId = maybeUserId.get();
+                logger.info("user " + user.getEmail() + " already exists, user id: " + userId);
+            } else {
+                String userGuid = DdpDBUtils.uniqueUserGuid(handle);
+                String userHruid = DdpDBUtils.uniqueUserHruid(handle);
+                long now = Instant.now().toEpochMilli();
+                Long expiresAt = null;
 
-            long now = Instant.now().toEpochMilli();
-            Long expiresAt = isTemporary ? now + EXPIRATION_DURATION_MILLIS : null;
+                userId = handle.attach(JdbiUser.class).insertUser(auth0Domain, clientKey, null,
+                        userGuid, userHruid, null, null, false, now, now, expiresAt);
+                String phone = user.getPhoneNumber().orElse("");
+                handle.attach(JdbiUser.class)
+                        .insertUserProfile(Long.valueOf(userId), user.getFirstName(), user.getLastName(), phone,
+                                user.getEmail().orElseThrow());
+                handle.attach(JdbiUserSettings.class).insertNewUserSettings(userId);
 
-            long userId = handle.attach(JdbiUser.class).insertUser(
-                    auth0Domain, auth0ClientId, auth0UserId,
-                    userGuid, userHruid, null, null,
-                    false, now, now, expiresAt);
+                logger.info("Inserted " + user.getEmail().get() + " as userId " + userId + " into DSS database");
+            }
+            try {
+                DBUtil.checkUpdate(
+                        handle.attach(JdbiUserRole.class).insertNewUserRole(userId, DBConstants.NEW_USER_ROLE, ddpInstance.getStudyGuid()),
+                        1);
+            } catch (DaoException e) {
+                dbVals.resultException = e;
+            }
+
             dbVals.resultValue = userId;
-
             return dbVals;
         });
+        if (results.resultException != null) {
+            throw new RuntimeException("Problem inserting new user " + user.getEmail().get(), results.resultException);
+        }
 
         return (long) results.resultValue;
     }

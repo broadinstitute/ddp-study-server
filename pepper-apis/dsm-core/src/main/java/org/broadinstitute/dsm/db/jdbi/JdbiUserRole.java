@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.broadinstitute.dsm.db.dto.user.AssigneeDto;
+import org.broadinstitute.dsm.db.dto.user.UserRoleDto;
 import org.broadinstitute.dsm.model.NameValue;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
@@ -11,6 +12,7 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public interface JdbiUserRole extends SqlObject {
 
@@ -73,4 +75,19 @@ public interface JdbiUserRole extends SqlObject {
 
     @SqlBatch ("INSERT INTO permissions (name) VALUES ( :roles )")
     void insertOldRolesIntoPermissionTable(@Bind ("roles") List<String> roles);
+
+    @SqlUpdate ("INSERT INTO user_role (user_id, role_id) SELECT :userId, role_id from role where name=:roleName and " +
+            "umbrella_id  in (select umbrella_id from umbrella_Study where guid  = :umbrellaGuid )")
+    int insertNewUserRole(@Bind ("userId") long userId, @Bind ("roleName") String roleName, @Bind ("umbrellaGuid") String umbrellaGuid);
+
+    @SqlQuery (
+            "SELECT u.guid, u.user_id, up.first_name, up.last_name, concat(up.first_name, \" \", up.last_name) as name, up.email, up.phone as phoneNumber, u.auth0_user_id, r.name as roleName, r.role_id " +
+                    "FROM user u " +
+                    "left join user_profile up on (u.user_id = up.user_id) " +
+                    "left join user_role ur on (u.user_id = ur.user_id) " +
+                    "left join role r on (r.role_id = ur.role_id) " +
+                    "left join umbrella_study us on (us.umbrella_id = r.umbrella_id) " +
+                    "where us.guid  = :umbrellaGuid ")
+    @RegisterConstructorMapper (UserRoleDto.class)
+    List<UserRoleDto> getAllUsersWithRoleInRealm(@Bind ("umbrellaGuid") String studyGuid);
 }

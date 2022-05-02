@@ -51,6 +51,7 @@ import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.dsm.careevolve.Provider;
 import org.broadinstitute.dsm.db.dao.roles.UserRoleDao;
 import org.broadinstitute.dsm.db.dao.settings.UserSettingsDao;
+import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.jetty.JettyConfig;
 import org.broadinstitute.dsm.jobs.DDPEventJob;
 import org.broadinstitute.dsm.jobs.DDPRequestJob;
@@ -116,6 +117,8 @@ import org.broadinstitute.dsm.route.ViewFilterRoute;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
+import org.broadinstitute.dsm.route.user.GetUserRoute;
+import org.broadinstitute.dsm.route.user.PostUserRoute;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -668,6 +671,8 @@ public class DSMServer {
 
         setupPubSubPublisherRoutes(cfg);
 
+        setupUserAndRoleRoutes(cfg);
+
         //no GET for USER_SETTINGS_REQUEST because UI gets them per AuthenticationRoute
 
         patch(UI_ROOT + RoutePath.USER_SETTINGS_REQUEST, new UserSettingRoute(userSettingsDao), new JsonTransformer());
@@ -686,6 +691,19 @@ public class DSMServer {
             }
         }, new JsonTransformer());
         logger.info("Finished setting up DSM custom routes and jobs...");
+    }
+
+    private void setupUserAndRoleRoutes(Config cfg) {
+        UserDao userDao = new UserDao();
+        UserRoleDao userRoleDao = new UserRoleDao();
+
+        PostUserRoute postUserRoute = new PostUserRoute(userDao, cfg.getString(ApplicationConfigConstants.AUTH0_ACCOUNT),
+                cfg.getString(ApplicationConfigConstants.AUTH0_CLIENT_KEY));
+        post(UI_ROOT + RoutePath.ADD_NEW_USER, postUserRoute, new JsonTransformer());
+
+        GetUserRoute getUserRoute = new GetUserRoute(userRoleDao);
+        get(UI_ROOT + RoutePath.GET_USERS, getUserRoute, new JsonTransformer());
+
     }
 
     private void setupPubSub(@NonNull Config cfg, NotificationUtil notificationUtil) {

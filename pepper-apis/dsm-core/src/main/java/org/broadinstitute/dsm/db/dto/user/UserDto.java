@@ -18,12 +18,16 @@ public class UserDto {
     private String phoneNumber;
     private String auth0UserId;
 
-    public UserDto(long userId, String name, String email, String phoneNumber, String auth0UserId) {
+    public UserDto(long userId, String name, String email, String phoneNumber, String auth0UserId, String guid, String firstName,
+                   String lastName) {
         this.userId = userId;
         this.name = name;
         this.email = email;
         this.phoneNumber = phoneNumber;
         this.auth0UserId = auth0UserId;
+        this.guid = guid;
+        this.firstName = firstName;
+        this.lastName = lastName;
     }
 
     public long getUserId() {
