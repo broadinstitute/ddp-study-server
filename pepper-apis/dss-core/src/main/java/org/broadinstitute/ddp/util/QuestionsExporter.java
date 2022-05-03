@@ -65,13 +65,12 @@ public class QuestionsExporter {
     }
 
     private static void export(final List<QuestionWrapper> questions, final String outputFile) throws IOException {
-        final CsvMapper mapper = CsvMapper.builder()
+        CsvMapper.builder()
                 .addModule(new JavaTimeModule())
                 .configure(JsonGenerator.Feature.IGNORE_UNKNOWN, true)
-                .build();
-
-        mapper.writerFor(QuestionWrapper.class)
-                .with(CsvSchema.builder().setUseHeader(true)
+                .build().writerFor(QuestionWrapper.class)
+                .with(CsvSchema.builder()
+                        .setUseHeader(true)
                         .addColumn("id")
                         .addColumn("stableId")
                         .addColumn("type")
