@@ -63,8 +63,10 @@ public class PancanNewCancer implements CustomTask {
         String groupSid = dataCfg.getString("groupSid");
 
         for (String questionSid : dataCfg.getStringList("questions")) {
-            PicklistOptionDef option = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("option")), PicklistOptionDef.class);
-            insertOptionToGroup(handle, questionSid, groupSid, option);
+            for (Config option : dataCfg.getConfigList("options")) {
+                PicklistOptionDef optionDef = gson.fromJson(ConfigUtil.toJson(option), PicklistOptionDef.class);
+                insertOptionToGroup(handle, questionSid, groupSid, optionDef);
+            }
         }
     }
 
@@ -74,7 +76,6 @@ public class PancanNewCancer implements CustomTask {
         JdbiPicklistGroupedOption picklistGroupedOption = handle.attach(JdbiPicklistGroupedOption.class);
 
         QuestionDto question = findLatestQuestionDto(handle, questionSid);
-
 
         var groupAndOptionDtos = plQuestionDao.findOrderedGroupAndOptionDtos(question.getId(), question.getRevisionStart());
 
@@ -94,7 +95,9 @@ public class PancanNewCancer implements CustomTask {
         if (ids.length != 1) {
             throw new DaoException("Could not add option to group " + groupSid);
         }
-        log.info("Successfully added option to group {} for question {}", groupSid, questionSid);
+
+        log.info("Successfully added option {} with order {} to group {} for question {}",
+                optionDef.getStableId(), order, groupSid, questionSid);
     }
 
     private QuestionDto findLatestQuestionDto(Handle handle, String questionSid) {
