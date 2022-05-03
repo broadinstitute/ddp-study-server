@@ -477,7 +477,7 @@ public interface QuestionDao extends SqlObject {
                 dto.isRestricted(), dto.isDeprecated(), isReadonly, dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
                 boolAnswers, rules, dto.getTrueTemplateId(),
-                dto.getFalseTemplateId());
+                dto.getFalseTemplateId(), dto.getRenderMode());
     }
 
     /**
