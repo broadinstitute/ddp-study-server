@@ -12,6 +12,7 @@ import org.broadinstitute.dsm.model.elastic.export.generate.GeneratorPayload;
 import org.broadinstitute.dsm.model.elastic.export.generate.SourceGeneratorFactory;
 import org.broadinstitute.dsm.model.elastic.export.parse.DynamicFieldsParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
+import org.broadinstitute.dsm.model.patch.Patch;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.junit.Assert;
@@ -32,7 +33,9 @@ public class SingleProcessorTest {
         GeneratorFactory sourceGeneratorFactory = new SourceGeneratorFactory();
         BaseGenerator generator = sourceGeneratorFactory.make(propertyInfo);
         generator.setParser(dynamicFieldsParser);
-        generator.setPayload(new GeneratorPayload(new NameValue("p.additionalValuesJson", "{\"key\":\"value\"}"), 0));
+        Patch patch = new Patch();
+        patch.setId("0");
+        generator.setPayload(new GeneratorPayload(new NameValue("p.additionalValuesJson", "{\"key\":\"value\"}"), patch));
 
         ESDsm esDsm = new ESDsm();
         esDsm.setParticipant(new Participant(2174L, null, null, null, null, null, null,
@@ -58,7 +61,9 @@ public class SingleProcessorTest {
         GeneratorFactory sourceGeneratorFactory = new SourceGeneratorFactory();
         BaseGenerator generator = sourceGeneratorFactory.make(propertyInfo);
         generator.setParser(dynamicFieldsParser);
-        generator.setPayload(new GeneratorPayload(new NameValue("p.additionalValuesJson", "{\"key\":\"value\"}"), 0));
+        Patch patch = new Patch();
+        patch.setId("0");
+        generator.setPayload(new GeneratorPayload(new NameValue("p.additionalValuesJson", "{\"key\":\"value\"}"), patch));
 
         ESDsm esDsm = new ESDsm();
         esDsm.setParticipant(new Participant(2174L, null, null, null, null, null, null,
