@@ -103,6 +103,7 @@ public class RoutePath {
     //user
     public static final String ADD_NEW_USER = "addUser";
     public static final String GET_USERS = "getUsers";
+    public static final String GET_ROLES = "getRoles";
 
     public static String getRealm(Request request) {
         QueryParamsMap queryParams = request.queryMap();

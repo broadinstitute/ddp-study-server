@@ -49,6 +49,7 @@ import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetrics;
 import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.dsm.careevolve.Provider;
+import org.broadinstitute.dsm.db.dao.roles.RoleDao;
 import org.broadinstitute.dsm.db.dao.roles.UserRoleDao;
 import org.broadinstitute.dsm.db.dao.settings.UserSettingsDao;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
@@ -114,6 +115,7 @@ import org.broadinstitute.dsm.route.PatchRoute;
 import org.broadinstitute.dsm.route.TriggerSurveyRoute;
 import org.broadinstitute.dsm.route.UserSettingRoute;
 import org.broadinstitute.dsm.route.ViewFilterRoute;
+import org.broadinstitute.dsm.route.access.GetRoleRoute;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
@@ -696,6 +698,7 @@ public class DSMServer {
     private void setupUserAndRoleRoutes(Config cfg) {
         UserDao userDao = new UserDao();
         UserRoleDao userRoleDao = new UserRoleDao();
+        RoleDao roleDao = new RoleDao();
 
         PostUserRoute postUserRoute = new PostUserRoute(userDao, cfg.getString(ApplicationConfigConstants.AUTH0_ACCOUNT),
                 cfg.getString(ApplicationConfigConstants.AUTH0_CLIENT_KEY));
@@ -703,6 +706,9 @@ public class DSMServer {
 
         GetUserRoute getUserRoute = new GetUserRoute(userRoleDao);
         get(UI_ROOT + RoutePath.GET_USERS, getUserRoute, new JsonTransformer());
+
+        GetRoleRoute getRoleRoute = new GetRoleRoute(roleDao);
+        get(UI_ROOT + RoutePath.GET_ROLES, getRoleRoute, new JsonTransformer());
 
     }
 
