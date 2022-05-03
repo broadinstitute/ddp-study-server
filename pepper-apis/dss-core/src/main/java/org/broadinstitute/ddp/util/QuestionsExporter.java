@@ -142,7 +142,7 @@ public class QuestionsExporter {
         }
 
         public String getValidationTypes() {
-            return StreamEx.of(rules).map(RuleDto::getRuleType).joining();
+            return StreamEx.of(rules).map(RuleDto::toString).joining(";");
         }
     }
 }
