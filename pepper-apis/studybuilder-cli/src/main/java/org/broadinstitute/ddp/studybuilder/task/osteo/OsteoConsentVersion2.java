@@ -1,19 +1,12 @@
 package org.broadinstitute.ddp.studybuilder.task.osteo;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiBlockContent;
 import org.broadinstitute.ddp.db.dao.JdbiBlockNesting;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
@@ -30,6 +23,7 @@ import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.RevisionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
@@ -49,6 +43,14 @@ import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 public class OsteoConsentVersion2 implements CustomTask {
@@ -84,6 +86,11 @@ public class OsteoConsentVersion2 implements CustomTask {
     private Config cfg;
     private Gson gson;
     private long studyId;
+
+    private JdbiActivity jdbiActivity;
+    private JdbiActivityVersion jdbiVersion;
+
+    private ActivityDao activityDao;
 
 
     @Override
@@ -149,6 +156,10 @@ public class OsteoConsentVersion2 implements CustomTask {
                 studyDto.getGuid(), activityCodeConsent, versionTag);
         RevisionMetadata metaConsent = new RevisionMetadata(ts, adminUser.getId(), reasonConsent);
 
+        this.jdbiActivity = handle.attach(JdbiActivity.class);
+        this.jdbiVersion = handle.attach(JdbiActivityVersion.class);
+        this.activityDao = handle.attach(ActivityDao.class);
+
         String reasonParentalConsent = String.format(
                 "Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
                 studyDto.getGuid(), activityCodeParentalConsent, versionTag);
@@ -158,10 +169,67 @@ public class OsteoConsentVersion2 implements CustomTask {
         ActivityVersionDto version2ForConsent = getVersion2(handle, studyDto, metaConsent, activityCodeConsent);
         ActivityVersionDto version2ForParentalConsent = getVersion2(handle, studyDto, metaParentalConsent, activityCodeParentalConsent);
 
+
         updateVariables(handle, metaConsentAssent, version2ForConsentAssent);
         runAdultConsentUpdate(handle, metaConsent, studyDto, activityCodeConsent, version2ForConsent);
         runParentalConsentUpdate(handle, metaParentalConsent, studyDto, activityCodeParentalConsent, version2ForParentalConsent);
         runConsentAssentUpdate(handle, metaConsentAssent, studyDto, activityCodeConsentAssent, version2ForConsentAssent);
+
+        updateIntro(handle, studyDto, metaConsentAssent);
+    }
+
+    private void updateIntro(Handle handle, StudyDto studyDto, RevisionMetadata meta) {
+        String activityCode = consentAssentDataCfg.getString("activityCode");
+
+        SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
+
+        String studyGuid = studyDto.getGuid();
+        ActivityDto activityDto = handle.attach(JdbiActivity.class)
+                .findActivityByStudyGuidAndCode(studyGuid, activityCode)
+                .orElseThrow(() -> new DDPException("Could not find id for activity " + activityCode + " and study id " + studyGuid));
+
+        ActivityVersionDto currentActivityVerDto = activityDao.getJdbiActivityVersion().findByActivityCodeAndVersionTag(
+                studyId, activityCode, "v1").get();
+
+        ActivityDef currActivityDef = activityDao.findDefByDtoAndVersion(activityDto, currentActivityVerDto);
+        FormActivityDef currFormActivityDef = (FormActivityDef) currActivityDef;
+
+        long activityId = ActivityBuilder.findActivityId(handle, studyId, activityCode);
+
+        ActivityVersionDto activityVersionDto = activityDao.changeVersion(activityId, "v3", meta);
+
+        long introBlockId = currFormActivityDef.getIntroduction().getBlocks()
+                .get(0).getBlockId();
+        sectionBlockDao.disableBlock(introBlockId, meta);
+
+        FormBlockDef blockDefForAssent = GsonUtil.standardGson().fromJson(ConfigUtil
+                .toJson(consentAssentDataCfg.getConfig("introductionForAssent")), FormBlockDef.class);
+
+
+        sectionBlockDao.insertBlockForSection(activityId, ((FormActivityDef) currActivityDef).getSections().get(3)
+                .getSectionId(), 0, blockDefForAssent, activityVersionDto.getRevId());
+
+        for (int i = 0; i < 3; i++) {
+            FormBlockDef blockDef = GsonUtil.standardGson().fromJson(ConfigUtil
+                    .toJson(consentAssentDataCfg.getConfig("introduction")), FormBlockDef.class);
+            sectionBlockDao.insertBlockForSection(activityId, ((FormActivityDef) currActivityDef).getSections().get(i)
+                    .getSectionId(), 0, blockDef, activityVersionDto.getRevId());
+        }
+    }
+
+    private FormActivityDef findActivityDef(String activityCode, String versionTag, StudyDto studyDto) {
+        ActivityDto activityDto = jdbiActivity
+                .findActivityByStudyIdAndCode(studyDto.getId(), activityCode)
+                .orElseThrow(() -> new DDPException(
+                        String.format("Couldn't find activity by studyId=%s and activityCode=%s",
+                                studyDto.getId(), activityCode)));
+        ActivityVersionDto versionDto = jdbiVersion
+                .findByActivityCodeAndVersionTag(studyDto.getId(), activityCode, versionTag)
+                .orElseThrow(() -> new DDPException(
+                        String.format("Couldn't find activity version by studyId=%s, activityCode=%s and versionTag=%s",
+                                studyDto.getId(), activityCode, versionTag)));
+        return (FormActivityDef) activityDao
+                .findDefByDtoAndVersion(activityDto, versionDto);
     }
 
     private ActivityVersionDto getVersion2(Handle handle, StudyDto studyDto, RevisionMetadata meta, String activityCode) {
@@ -197,7 +265,7 @@ public class OsteoConsentVersion2 implements CustomTask {
 
 
     private void runConsentAssentUpdate(Handle handle, RevisionMetadata meta, StudyDto studyDto,
-                                          String activityCode, ActivityVersionDto version2) {
+                                        String activityCode, ActivityVersionDto version2) {
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
 
         updateAdultVariables(handle, meta, version2, consentAssentDataCfg);
@@ -209,7 +277,7 @@ public class OsteoConsentVersion2 implements CustomTask {
     }
 
     private void runParentalConsentUpdate(Handle handle, RevisionMetadata meta, StudyDto studyDto,
-                                       String activityCode, ActivityVersionDto version2) {
+                                          String activityCode, ActivityVersionDto version2) {
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
 
         updateAdultVariables(handle, meta, version2, parentalConsentDataCfg);
@@ -243,7 +311,7 @@ public class OsteoConsentVersion2 implements CustomTask {
 
 
     private void revisionAdultVariableTranslation(String varName, String newTemplateText, Handle handle,
-                                             RevisionMetadata meta, ActivityVersionDto version2) {
+                                                  RevisionMetadata meta, ActivityVersionDto version2) {
         List<Long> templateVariableIdByVariableNames = handle.attach(SqlHelper.class).findTemplateVariableIdByVariableNames(varName);
         for (Long tmplVarId : templateVariableIdByVariableNames) {
             JdbiVariableSubstitution jdbiVarSubst = handle.attach(JdbiVariableSubstitution.class);
@@ -365,7 +433,7 @@ public class OsteoConsentVersion2 implements CustomTask {
     }
 
     void insertNestedBlock(Handle handle, long activityId, long parentBlockId, int position,
-                            FormBlockDef nested, long revisionId) {
+                           FormBlockDef nested, long revisionId) {
         JdbiBlockNesting jdbiBlockNesting = handle.attach(JdbiBlockNesting.class);
         int nestedBlockOrder = position * DISPLAY_ORDER_GAP;
 
