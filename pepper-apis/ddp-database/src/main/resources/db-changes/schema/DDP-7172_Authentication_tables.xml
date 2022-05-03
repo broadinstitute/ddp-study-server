@@ -27,7 +27,7 @@
                 <constraints primaryKey="true"/>
             </column>
             <column name="name" type="VARCHAR(500)">
-                <constraints unique="true"/>
+                <constraints nullable="false"/>
             </column>
             <column name="description" type="VARCHAR(2000)"></column>
             <column name="umbrella_id" type="BIGINT"></column>
