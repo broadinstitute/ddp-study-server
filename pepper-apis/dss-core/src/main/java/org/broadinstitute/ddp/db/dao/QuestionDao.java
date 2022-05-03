@@ -917,6 +917,7 @@ public interface QuestionDao extends SqlObject {
                 dto.getAdditionalInfoHeaderTemplateId(),
                 dto.getAdditionalInfoFooterTemplateId(),
                 StreamEx.of(getJdbiEquationQuestion().findEquationsByActivityInstanceGuid(activityInstanceGuid))
+                        .filterBy(EquationQuestionDto::getStableId, dto.getStableId())
                         .map(questionEvaluator::evaluate)
                         .filter(Objects::nonNull)
                         .map(EquationAnswer::new)
