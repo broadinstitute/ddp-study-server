@@ -43,7 +43,7 @@ public class ParticipantRecordData {
                     String esPath = getEsPath(key, column);
                     Collection<?> nestedValue = getNestedValue(esPath, esDataAsMap);
                     if (aliasListEntry.getKey().isJson()) {
-                        nestedValue = getJsonValue(nestedValue, column);
+                        nestedValue = getJsonValue(nestedValue, column, key);
                     }
                     if (aliasListEntry.getKey() == Alias.ACTIVITIES) {
                         nestedValue = getQuestionAnswerValue(nestedValue, column);
@@ -62,11 +62,19 @@ public class ParticipantRecordData {
 
     }
 
-    private Collection<?> getJsonValue(Collection<?> nestedValue, ParticipantColumn column) {
+    private Collection<?> getJsonValue(Collection<?> nestedValue, ParticipantColumn column,
+                                       Alias alias) {
         if (nestedValue.isEmpty()) {
             return Collections.singletonList(StringUtils.EMPTY);
         }
-        String jsonString = nestedValue.stream().findFirst().get().toString();
+        String jsonString;
+        if (alias.isCollection()) {
+            jsonString = nestedValue.stream().filter(val ->
+                            column.getObject().equals(((Map<String, Object>) val).get(ESObjectConstants.FIELD_TYPE_ID)))
+                    .findFirst().map(val -> ((Map<String, Object>) val).get(ESObjectConstants.DATA).toString()).orElse(StringUtils.EMPTY);
+        } else {
+            jsonString = nestedValue.stream().findFirst().get().toString();
+        }
         JsonNode jsonNode;
         try {
             jsonNode = ObjectMapperSingleton.instance().readTree(jsonString);
@@ -131,7 +139,7 @@ public class ParticipantRecordData {
         List<LinkedHashMap<String, Object>> activities = (List<LinkedHashMap<String, Object>>) nestedValue;
         Collection<?> objects =
                 activities.stream().filter(activity -> activity.get(ElasticSearchUtil.ACTIVITY_CODE).equals(column.getTableAlias()))
-                        .findFirst().map(foundActivity -> {
+                        .map(foundActivity -> {
                             if (Objects.isNull(column.getObject())) {
                                 Object o = foundActivity.get(column.getName());
                                 return mapToCollection(o);
@@ -144,7 +152,7 @@ public class ParticipantRecordData {
                                         .flatMap(Collection::stream)
                                         .collect(Collectors.toList());
                             }
-                        }).orElse(Collections.singletonList(StringUtils.EMPTY));
+                        }).flatMap(Collection::stream).collect(Collectors.toList());
         if (objects.isEmpty()) {
             return Collections.singletonList(StringUtils.EMPTY);
         }
