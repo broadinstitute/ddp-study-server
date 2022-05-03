@@ -4,7 +4,7 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
     <changeSet id="DDP-7172_user_profile_columns" author="pegah">
         <addColumn tableName="user_profile">
-            <column name="phone" type="VARCHAR(15)"></column>
+            <column name="phone" type="VARCHAR(25)"></column>
         </addColumn>
         <addColumn tableName="user_profile">
             <column name="email" type="VARCHAR(100)"></column>
@@ -27,7 +27,7 @@
                 <constraints primaryKey="true"/>
             </column>
             <column name="name" type="VARCHAR(500)">
-                <constraints unique="true"/>
+                <constraints nullable="false"/>
             </column>
             <column name="description" type="VARCHAR(2000)"></column>
             <column name="umbrella_id" type="BIGINT"></column>
