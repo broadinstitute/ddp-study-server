@@ -9,6 +9,7 @@ import com.typesafe.config.ConfigFactory;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -18,9 +19,11 @@ import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.PicklistQuestionDao;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dao.QuestionDao;
 import org.broadinstitute.ddp.db.dao.ValidationDao;
+import org.broadinstitute.ddp.db.dto.PicklistOptionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.validation.RuleDto;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
@@ -29,13 +32,14 @@ import org.broadinstitute.ddp.service.I18nTranslationService;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 
 @Slf4j
 public class QuestionsExporter {
     private static final String USAGE = "QuestionsExporter [-h, --help] [OPTIONS]";
+
+    private static Map<Long, String> picklistPossibleAnswers;
     private static CommandLine cmd;
 
     public static void main(String[] args) throws Exception {
@@ -52,15 +56,25 @@ public class QuestionsExporter {
             return;
         }
 
+        log.info("Loading questions...");
         final List<QuestionWrapper> questions = getQuestions(cmd.getOptionValue("study-guid"));
+        log.info("{} questions found", questions.size());
+
         if (questions.isEmpty()) {
             log.info("No questions to export");
             return;
         }
 
-        export(questions, cmd.getOptionValue("output-file"));
+        log.info("Loading possible answers for picklist questions...");
+        picklistPossibleAnswers = getPicklistPossibleAnswers(StreamEx.of(questions)
+                .map(QuestionWrapper::getId)
+                .toList());
+        log.info("{} picklist questions found", picklistPossibleAnswers.size());
 
+        log.info("Exporting questions...");
+        export(questions, cmd.getOptionValue("output-file"));
         log.info("{} questions successfully exported to {} file", questions.size(), cmd.getOptionValue("output-file"));
+
         System.exit(0);
     }
 
@@ -76,6 +90,7 @@ public class QuestionsExporter {
                         .addColumn("type")
                         .addColumn("text")
                         .addColumn("validationTypes")
+                        .addColumn("possibleAnswers")
                         .build())
                 .writeValues(new File(outputFile))
                 .writeAll(questions);
@@ -115,8 +130,34 @@ public class QuestionsExporter {
         return new I18nTranslationService().getTranslation(templateText, cmd.getOptionValue("study-guid"), "en");
     }
 
+    private static Map<Long, String> getPicklistPossibleAnswers(final List<Long> questionIds) {
+        final var picklistOptions = TransactionWrapper.withTxn(handle -> handle.attach(PicklistQuestionDao.class)
+                .findOrderedGroupAndOptionDtos(questionIds, System.currentTimeMillis()));
+        log.info("{} picklist questions found. Loading translations for each of them...", picklistOptions.size());
+
+        return EntryStream.of(picklistOptions)
+                .mapValues(PicklistQuestionDao.GroupAndOptionDtos::getUngroupedOptions)
+                .mapValues(QuestionsExporter::translate)
+                .toMap();
+    }
+
+    private static String translate(final List<PicklistOptionDto> picklistOptions) {
+        log.info("Loading translations for {} possible answers...", picklistOptions.size());
+        if (picklistOptions.size() > 100) {
+            log.info("The limit of possible options is reached. Question skipped");
+            return "";
+        }
+
+        return StreamEx.of(picklistOptions)
+                .map(PicklistOptionDto::getOptionLabelTemplateId)
+                .map(QuestionsExporter::translate)
+                .filter(Objects::nonNull)
+                .joining(";");
+    }
+
     @Value
     @AllArgsConstructor
+    @SuppressWarnings("unused")
     private static class QuestionWrapper {
         QuestionDto question;
         List<RuleDto> rules;
@@ -143,6 +184,14 @@ public class QuestionsExporter {
 
         public String getValidationTypes() {
             return StreamEx.of(rules).map(RuleDto::toString).joining(";");
+        }
+
+        public String getPossibleAnswers() {
+            if (QuestionType.PICKLIST != getType()) {
+                return "";
+            }
+
+            return picklistPossibleAnswers.getOrDefault(getId(), null);
         }
     }
 }
