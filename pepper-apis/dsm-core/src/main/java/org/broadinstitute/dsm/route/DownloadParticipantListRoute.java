@@ -7,10 +7,12 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import org.broadinstitute.dsm.export.ParticipantExcelGenerator;
-import org.broadinstitute.dsm.model.ParticipantColumn;
+import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.sort.Alias;
 import org.broadinstitute.dsm.model.elastic.export.excel.ParticipantRecordData;
 import org.broadinstitute.dsm.model.filter.FilterFactory;
@@ -35,11 +37,12 @@ public class DownloadParticipantListRoute extends RequestHandler {
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         DownloadParticipantListPayload payload =
                 ObjectMapperSingleton.instance().readValue(request.body(), DownloadParticipantListPayload.class);
-        List<ParticipantColumn> columnNames = payload.getColumnNames();
-        Map<Alias, List<ParticipantColumn>> columnAliasEsPathMap =
+        List<Filter> columnNames = payload.getColumnNames();
+        Set<String> options = columnNames.stream().map(Filter::getType).collect(Collectors.toSet());
+        Map<Alias, List<Filter>> columnAliasEsPathMap =
                 new TreeMap<>(Comparator.comparing(Alias::isCollection).thenComparing(Alias::getValue));
         columnNames.forEach(column -> {
-            Alias alias = Alias.of(column);
+            Alias alias = Alias.of(column.getParticipantColumn());
             columnAliasEsPathMap.computeIfAbsent(alias, paths -> new ArrayList<>())
                     .add(column);
         });

@@ -13,7 +13,7 @@ public class ColumnValue {
     private Collection<?> object;
     private final Alias alias;
 
-    public ColumnValue(Alias alias, Collection<?> object) {
+    public ColumnValue(Alias alias, Collection<String> object) {
         this.object = object;
         this.alias = alias;
     }

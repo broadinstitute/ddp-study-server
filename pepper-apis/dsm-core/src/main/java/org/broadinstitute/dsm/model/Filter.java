@@ -6,6 +6,7 @@ import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -67,17 +68,18 @@ public class Filter {
     public static final char CLOSE_PARENTHESIS_CHAR = ')';
     public static final String IS_NULL_TRIMMED = "IS NULL";
 
-    public static String TEXT = "TEXT";
-    public static String OPTIONS = "OPTIONS";
-    public static String DATE = "DATE";
-    public static String DATE_SHORT = "DATE_SHORT";
-    public static String ADDITIONAL_VALUES = "ADDITIONALVALUE";
-    public static String NUMBER = "NUMBER";
-    public static String BOOLEAN = "BOOLEAN";
-    public static String CHECKBOX = "CHECKBOX";
-    public static String COMPOSITE = "COMPOSITE"; //ES type
-    public static String JSON_ARRAY = "JSONARRAY"; //Sample result
-    public static String AGREEMENT = "AGREEMENT";
+    public static final String TEXT = "TEXT";
+    public static final String OPTIONS = "OPTIONS";
+    public static final String DATE = "DATE";
+    public static final String DATE_SHORT = "DATE_SHORT";
+    public static final String ADDITIONAL_VALUES = "ADDITIONALVALUE";
+    public static final String NUMBER = "NUMBER";
+    public static final String BOOLEAN = "BOOLEAN";
+    public static final String CHECKBOX = "CHECKBOX";
+    public static final String COMPOSITE = "COMPOSITE"; //ES type
+    public static final String JSON_ARRAY = "JSONARRAY"; //Sample result
+    public static final String AGREEMENT = "AGREEMENT";
+    public static final String MATRIX = "MATRIX";
 
 
     private boolean range = false;
@@ -91,6 +93,7 @@ public class Filter {
     private String[] selectedOptions;
     private ParticipantColumn participantColumn;
     private String additionalType;
+    private List<NameValue> options;
 
     public Filter() {
     }
@@ -428,5 +431,9 @@ public class Filter {
 
     public void setAdditionalType(String additionalType) {
         this.additionalType = additionalType;
+    }
+
+    public void setOptions(List<NameValue> options) {
+        this.options = options;
     }
 }
