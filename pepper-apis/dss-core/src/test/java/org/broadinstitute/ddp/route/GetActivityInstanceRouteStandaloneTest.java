@@ -82,6 +82,7 @@ import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariabl
 import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateFieldRequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateRangeRuleDef;
+import org.broadinstitute.ddp.model.activity.definition.validation.ComparisonRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.LengthRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
@@ -95,6 +96,7 @@ import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.FormSectionState;
+import org.broadinstitute.ddp.model.activity.types.ComparisonType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.NestedActivityRenderHint;
@@ -146,6 +148,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     private static long activityId;
     private static TextQuestionDef txt1;
     private static CompositeQuestionDef comp1;
+    private static CompositeQuestionDef compositeWithEquation;
     private static FileUpload upload;
 
     @BeforeClass
@@ -289,7 +292,28 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                         .builder(TextInputType.TEXT, "comp-child" + System.currentTimeMillis(), Template.text("comp child"))
                         .build())
                 .build();
-        var compSection = new FormSectionDef(null, List.of(new QuestionBlockDef(comp1)));
+
+        compositeWithEquation = CompositeQuestionDef.builder()
+                .setStableId("compositeWithEquation" + System.currentTimeMillis())
+                .setPrompt(Template.text("composite"))
+                .addChildrenQuestions(
+                        DecimalQuestionDef
+                                .builder("RECTANGLE_WIDTH", Template.text("This is value"))
+                                .setScale(2)
+                                .build(),
+                        DecimalQuestionDef
+                                .builder("RECTANGLE_HEIGHT", Template.text("This is value"))
+                                .setScale(2)
+                                .build(),
+                        EquationQuestionDef.builder()
+                                .stableId("RECTANGLE_AREA")
+                                .questionType(QuestionType.EQUATION)
+                                .promptTemplate(new Template(TemplateType.TEXT, null, "Equation"))
+                                .validations(new ArrayList<>())
+                                .expression("RECTANGLE_WIDTH * RECTANGLE_HEIGHT")
+                                .build())
+                .build();
+        var compSection = new FormSectionDef(null, TestUtil.wrapQuestions(comp1, compositeWithEquation));
 
         //------------- create SECTION[8] ---------
         FileQuestionDef file1 = FileQuestionDef
@@ -331,6 +355,12 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .setScale(2)
                 .build();
 
+        final DecimalQuestionDef decimalDefWithValidation = DecimalQuestionDef
+                .builder("DECIMAL_QUESTION_WITH_VALIDATION", Template.text("This is value"))
+                .addValidation(new ComparisonRuleDef(newTemplate(), decimalDef.getStableId(), ComparisonType.GREATER_OR_EQUAL))
+                .setScale(2)
+                .build();
+
         final EquationQuestionDef equationDef = EquationQuestionDef.builder()
                 .stableId("EQUATION_QUESTION")
                 .questionType(QuestionType.EQUATION)
@@ -339,7 +369,8 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .expression("5 * " + decimalDef.getStableId())
                 .build();
 
-        FormSectionDef numericSection = new FormSectionDef(null, TestUtil.wrapQuestions(decimalDef, equationDef));
+        FormSectionDef numericSection = new FormSectionDef(null,
+                TestUtil.wrapQuestions(decimalDef, decimalDefWithValidation, equationDef));
 
         //------------- create STUDY ACTIVITY ---------
         String parentActCode = "ACT_ROUTE_PARENT" + Instant.now().toEpochMilli();
@@ -391,10 +422,25 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         answerDao.createAnswer(testData.getUserId(), instanceDto.getId(),
                 new DecimalAnswer(null, decimalDef.getStableId(), null, new DecimalDef(2)));
 
+        answerDao.createAnswer(testData.getUserId(), instanceDto.getId(),
+                new DecimalAnswer(null, decimalDefWithValidation.getStableId(), null, new DecimalDef(3)));
 
         var compAnswer = new CompositeAnswer(null, comp1.getStableId(), null);
         compAnswer.addRowOfChildAnswers(new TextAnswer(null, comp1.getChildren().get(0).getStableId(), null, "comp child"));
         answerDao.createAnswer(testData.getUserId(), instanceDto.getId(), compAnswer);
+
+        var compositeEquationAnswer = new CompositeAnswer(null, compositeWithEquation.getStableId(), null);
+        compositeEquationAnswer.addRowOfChildAnswers(
+                new DecimalAnswer(null, compositeWithEquation.getChildren().get(0).getStableId(), null, new DecimalDef(1)),
+                new DecimalAnswer(null, compositeWithEquation.getChildren().get(1).getStableId(), null, new DecimalDef(1)));
+        compositeEquationAnswer.addRowOfChildAnswers(
+                new DecimalAnswer(null, compositeWithEquation.getChildren().get(0).getStableId(), null, new DecimalDef(2)),
+                new DecimalAnswer(null, compositeWithEquation.getChildren().get(1).getStableId(), null, null));
+        compositeEquationAnswer.addRowOfChildAnswers(
+                new DecimalAnswer(null, compositeWithEquation.getChildren().get(0).getStableId(), null, new DecimalDef(3)),
+                new DecimalAnswer(null, compositeWithEquation.getChildren().get(1).getStableId(), null, new DecimalDef(3)));
+
+        answerDao.createAnswer(testData.getUserId(), instanceDto.getId(), compositeEquationAnswer);
 
         var fileDao = handle.attach(FileUploadDao.class);
         long userId = testData.getUserId();
@@ -632,7 +678,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
 
         resp.then().assertThat()
                 .body("sections.size()", equalTo(activity.getSections().size()))
-                .body("sections[10].blocks.size()", equalTo(2));
+                .body("sections[10].blocks.size()", equalTo(3));
 
         resp.then().assertThat()
                 .root("sections[10].blocks[0].question")
@@ -649,10 +695,10 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
 
         resp.then().assertThat()
                 .body("sections.size()", equalTo(activity.getSections().size()))
-                .body("sections[10].blocks.size()", equalTo(2));
+                .body("sections[10].blocks.size()", equalTo(3));
 
         resp.then().assertThat()
-                .root("sections[10].blocks[1].question")
+                .root("sections[10].blocks[2].question")
                 .body("questionType", equalTo(QuestionType.EQUATION.toString()))
                 .body("stableId", equalTo("EQUATION_QUESTION"))
                 .body("answers.size()", equalTo(1))
@@ -1038,12 +1084,30 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     public void test_compositeChildQuestionsShouldNotHaveAnswers() {
         testFor200()
                 .body("guid", equalTo(instanceDto.getGuid()))
-                .body("sections[7].blocks.size()", equalTo(1))
+                .body("sections[7].blocks.size()", equalTo(2))
                 .root("sections[7].blocks[0].question")
                 .body("stableId", equalTo(comp1.getStableId()))
                 .body("answers.size()", equalTo(1))
                 .body("children.size()", equalTo(1))
                 .body("children[0].answers.size()", equalTo(0));
+    }
+
+    @Test
+    public void test_compositeEquationComputed() {
+        testFor200()
+                .body("guid", equalTo(instanceDto.getGuid()))
+                .body("sections[7].blocks.size()", equalTo(2))
+                .root("sections[7].blocks[1].question")
+                .body("stableId", equalTo(compositeWithEquation.getStableId()))
+                .body("answers.size()", equalTo(1))
+                .body("children.size()", equalTo(3))
+                .body("children[2].answers.size()", equalTo(1))
+                .body("children[2].answers[0].value.size()", equalTo(3))
+                .body("children[2].answers[0].value[0].value", equalTo(1000000000000000L))
+                .body("children[2].answers[0].value[0].scale", equalTo(15))
+                .body("children[2].answers[0].value[1]", equalTo(null))
+                .body("children[2].answers[0].value[2].value", equalTo(9000000000000000L))
+                .body("children[2].answers[0].value[2].scale", equalTo(15));
     }
 
     @Test

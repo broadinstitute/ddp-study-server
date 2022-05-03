@@ -45,7 +45,6 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceSelectQuestionDto;
 import org.broadinstitute.ddp.db.dto.TypedQuestionId;
 import org.broadinstitute.ddp.db.dto.validation.RuleDto;
 import org.broadinstitute.ddp.equation.QuestionEvaluator;
-import org.broadinstitute.ddp.json.EquationResponse;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
@@ -918,9 +917,9 @@ public interface QuestionDao extends SqlObject {
                 dto.getAdditionalInfoHeaderTemplateId(),
                 dto.getAdditionalInfoFooterTemplateId(),
                 StreamEx.of(getJdbiEquationQuestion().findEquationsByActivityInstanceGuid(activityInstanceGuid))
+                        .filterBy(EquationQuestionDto::getStableId, dto.getStableId())
                         .map(questionEvaluator::evaluate)
                         .filter(Objects::nonNull)
-                        .filterBy(EquationResponse::getQuestionStableId, dto.getStableId())
                         .map(EquationAnswer::new)
                         .toList(),
                 Collections.emptyList(),
