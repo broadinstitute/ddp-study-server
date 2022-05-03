@@ -50,6 +50,7 @@ public class QuestionsExporter {
 
         final Options options = new Options();
         options.addOption("h", "help", false, "print help message");
+        options.addOption("l", "picklist-limit", true, "Picklist possible answers limit");
         options.addRequiredOption("o", "output-file", true, "Output File");
         options.addRequiredOption("s", "study-guid", true, "Study GUID");
 
@@ -57,6 +58,10 @@ public class QuestionsExporter {
         if (cmd.hasOption("help")) {
             new HelpFormatter().printHelp(USAGE, options);
             return;
+        }
+
+        if (!cmd.hasOption("picklist-limit")) {
+            log.warn("The picklist-limit option wasn't specified. Using default limit: 100");
         }
 
         log.info("Loading questions...");
@@ -146,7 +151,9 @@ public class QuestionsExporter {
 
     private static String translate(final List<PicklistOptionDto> picklistOptions) {
         log.info("Loading translations for {} possible answers...", picklistOptions.size());
-        if (picklistOptions.size() > 100) {
+        if (picklistOptions.size() > Optional.ofNullable(cmd.getOptionValue("picklist-limit"))
+                .map(Integer::parseInt)
+                .orElse(100)) {
             log.info("The limit of possible options is reached. Question skipped");
             return "";
         }
