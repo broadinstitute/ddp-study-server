@@ -95,7 +95,9 @@ public class PancanNewCancer implements CustomTask {
         if (ids.length != 1) {
             throw new DaoException("Could not add option to group " + groupSid);
         }
-        log.info("Successfully added option to group {} for question {}", groupSid, questionSid);
+
+        log.info("Successfully added option {} with order {} to group {} for question {}",
+                optionDef.getStableId(), order, groupSid, questionSid);
     }
 
     private QuestionDto findLatestQuestionDto(Handle handle, String questionSid) {
