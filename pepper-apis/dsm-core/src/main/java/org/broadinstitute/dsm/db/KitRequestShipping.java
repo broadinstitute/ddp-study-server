@@ -841,6 +841,7 @@ public class KitRequestShipping extends KitRequest {
                                       @NonNull String ddpParticipantId, String collaboratorPatientId, String collaboratorSampleId,
                                       @NonNull String createdBy, String addressIdTo, String errorMessage, String externalOrderNumber,
                                       boolean needsApproval, String uploadReason, DDPInstance ddpInstance) {
+        String ddpLabel = StringUtils.isNotBlank(externalOrderNumber) ? null : generateDdpLabelID();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult(0);
             try (PreparedStatement insertKitRequest = conn.prepareStatement(
@@ -851,8 +852,7 @@ public class KitRequestShipping extends KitRequest {
                 insertKitRequest.setString(4, ddpParticipantId);
                 insertKitRequest.setObject(5, collaboratorPatientId);
                 insertKitRequest.setObject(6, collaboratorSampleId);
-                insertKitRequest.setObject(7,
-                        StringUtils.isNotBlank(externalOrderNumber) ? null : generateDdpLabelID()); //ddp_label or shipping_id
+                insertKitRequest.setObject(7, ddpLabel); //ddp_label or shipping_id
                 insertKitRequest.setString(8, createdBy);
                 insertKitRequest.setLong(9, System.currentTimeMillis());
                 insertKitRequest.setObject(10,
@@ -891,17 +891,18 @@ public class KitRequestShipping extends KitRequest {
             kitRequestShipping.setCreatedBy(createdBy);
             kitRequestShipping.setUploadReason(uploadReason);
             kitRequestShipping.setDdpInstanceId(ddpInstance.getDdpInstanceIdAsInt());
+            kitRequestShipping.setDdpLabel(ddpLabel);
 
             DDPInstanceDto ddpInstanceDto =
                     new DDPInstanceDao().getDDPInstanceByInstanceId(Integer.valueOf(ddpInstance.getDdpInstanceId())).orElseThrow();
 
             try {
                 UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
-                        ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DOC_ID,
-                        Exportable.getParticipantGuid(ddpParticipantId, ddpInstance.getParticipantIndexES())).export();
+                    ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DOC_ID,
+                    Exportable.getParticipantGuid(ddpParticipantId, ddpInstance.getParticipantIndexES())).export();
             } catch (Exception e) {
-                logger.error(String.format("Error inserting newly created kit request shipping with dsm kit request id: %s in " +
-                        "ElasticSearch", kitRequestShipping.getDsmKitRequestId()));
+                logger.error(String.format("Error inserting newly created kit request shipping with dsm kit request id: %s in "
+                        + "ElasticSearch", kitRequestShipping.getDsmKitRequestId()));
                 e.printStackTrace();
             }
 
