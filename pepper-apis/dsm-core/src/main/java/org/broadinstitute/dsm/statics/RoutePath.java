@@ -102,6 +102,7 @@ public class RoutePath {
 
     //user
     public static final String ADD_NEW_USER = "addUser";
+    public static final String MODIFY_USER = "modifyUser";
     public static final String GET_USERS = "getUsers";
     public static final String GET_ROLES = "getRoles";
 
