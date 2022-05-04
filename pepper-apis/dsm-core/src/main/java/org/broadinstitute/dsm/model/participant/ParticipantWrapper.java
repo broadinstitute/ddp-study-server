@@ -85,6 +85,7 @@ public class ParticipantWrapper {
                     DsmAbstractQueryBuilder queryBuilder = new DsmAbstractQueryBuilder();
                     queryBuilder.setFilter(filters.get(source));
                     queryBuilder.setParser(parser);
+                    queryBuilder.setEsIndex(getEsParticipantIndex());
                     boolQueryBuilder.must(queryBuilder.build());
                 } else if (ElasticSearchUtil.ES.equals(source)) {
                     //source is not of any study-manager table so it must be ES

@@ -14,6 +14,7 @@ import org.broadinstitute.dsm.model.elastic.filter.query.MatchQueryStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.query.MultipleMatchQueryStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.query.MustExistsQueryStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.query.MustNotExistsQueryStrategy;
+import org.broadinstitute.dsm.model.elastic.filter.query.NonExactMatchQueryStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.query.RangeGTEQueryStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.query.RangeLTEQueryStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.splitter.DateGreaterSplitterStrategy;
@@ -34,7 +35,7 @@ import org.broadinstitute.dsm.model.elastic.filter.splitter.StrDateSplitterStrat
 
 public enum Operator {
 
-    LIKE(Filter.LIKE_TRIMMED, new LikeSplitterStrategy(), new MatchQueryStrategy()),
+    LIKE(Filter.LIKE_TRIMMED, new LikeSplitterStrategy(), new NonExactMatchQueryStrategy()),
     EQUALS(Filter.EQUALS_TRIMMED, new EqualsSplitterStrategy(), new MatchQueryStrategy()),
     GREATER_THAN_EQUALS(Filter.LARGER_EQUALS_TRIMMED, new GreaterThanEqualsSplitterStrategy(), new RangeGTEQueryStrategy()),
     LESS_THAN_EQUALS(Filter.SMALLER_EQUALS_TRIMMED, new LessThanEqualsSplitterStrategy(), new RangeLTEQueryStrategy()),

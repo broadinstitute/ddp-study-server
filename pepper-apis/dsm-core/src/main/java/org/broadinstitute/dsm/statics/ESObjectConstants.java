@@ -91,5 +91,5 @@ public class ESObjectConstants {
     public static final String OPTION = "option";
     public static final String DETAIL = "detail";
     public static final String ANSWER = "answer";
-
+    public static final String FIELD_TYPE_ID = "fieldTypeId";
 }

@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.route;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -14,8 +16,6 @@ import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
 import org.broadinstitute.ddp.util.RouteUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -30,15 +30,10 @@ import java.util.stream.Collectors;
 /**
  *  This route returns the list of activity instances to select in the question
  */
+@Slf4j
+@AllArgsConstructor
 public class GetActivityInstanceListForActivityInstanceSelectQuestionRoute implements Route {
-
-    private static final Logger LOG = LoggerFactory.getLogger(GetActivityInstanceListForActivityInstanceSelectQuestionRoute.class);
-
     private final ActivityInstanceService service;
-
-    public GetActivityInstanceListForActivityInstanceSelectQuestionRoute(ActivityInstanceService service) {
-        this.service = service;
-    }
 
     @Override
     public Object handle(Request request, Response response) {
@@ -47,7 +42,7 @@ public class GetActivityInstanceListForActivityInstanceSelectQuestionRoute imple
         String userGuid = request.params(RouteConstants.PathParam.USER_GUID);
         String stableId = request.params(RouteConstants.PathParam.STABLE_ID);
 
-        LOG.info("Attempting to get data for activity instance question {} for user {} in study {} by operator {}",
+        log.info("Attempting to get data for activity instance question {} for user {} in study {} by operator {}",
                 stableId, userGuid, studyGuid, ddpAuth.getOperator());
 
         String operatorGuid = StringUtils.defaultIfBlank(ddpAuth.getOperator(), userGuid);

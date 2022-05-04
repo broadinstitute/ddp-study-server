@@ -21,33 +21,29 @@ public enum Alias {
     PARTICIPANTDATA(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA), true, false),
     T(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.TISSUE), true, false),
     P(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT), false, false),
-    R(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT), false, false),
+    R(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT), false,false),
     EX(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT), false, false),
-    DSM(ElasticSearchUtil.DSM, false, false), STATUS(ElasticSearchUtil.STATUS, false, false),
-    PROFILE(ElasticSearchUtil.PROFILE, false, false), ADDRESS(ElasticSearchUtil.ADDRESS, false, false),
-    INVITATIONS(ElasticSearchUtil.INVITATIONS, false, false), PROXY(ElasticSearchUtil.PROFILE, false, false),
+    DSM(ElasticSearchUtil.DSM, false, false), STATUS(ElasticSearchUtil.STATUS, false, false), PROFILE(ElasticSearchUtil.PROFILE, false, false),
+    ADDRESS(ElasticSearchUtil.ADDRESS, false, false), INVITATIONS(ElasticSearchUtil.INVITATIONS, false, false), PROXY(ElasticSearchUtil.PROFILE, false, false),
     ACTIVITIES(ElasticSearchUtil.ACTIVITIES, true, false), REGISTRATION(ElasticSearchUtil.ACTIVITIES, true, false),
-    RGP_PARTICIPANT_INFO_GROUP(
-            String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA),
-            false, true), RGP_STUDY_STATUS_GROUP(
-            String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA),
-            false, true), RGP_CONTACT_INFO_GROUP(
-            String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA),
-            false, true), RGP_MEDICAL_RECORDS_GROUP(
-            String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA),
-            false, true), RGP_PARTICIPANTS(
-            String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA),
-            false, true), RGP_RETURN_RESULTS_GROUP(
-            String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA),
-            false, true), RGP_SAMPLE_COLLECTION_GROUP(
-            String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA),
-            false, true), RGP_SURVEY_GROUP(
-            String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA),
-            false, true), RGP_TISSUE_GROUP(
-            String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA),
-            false, true),
-    TAB_GROUPED(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA),
-            false, true), DATA(StringUtils.EMPTY, false, false);
+    RGP_PARTICIPANT_INFO_GROUP(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA), false, true),
+    RGP_STUDY_STATUS_GROUP(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA), false, true),
+    RGP_CONTACT_INFO_GROUP(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA), false, true),
+    RGP_MEDICAL_RECORDS_GROUP(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA), false, true),
+    RGP_PARTICIPANTS(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA), false, true),
+    RGP_RETURN_RESULTS_GROUP(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA), false, true),
+    RGP_SAMPLE_COLLECTION_GROUP(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA), false, true),
+    RGP_SURVEY_GROUP(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA), false, true),
+    RGP_TISSUE_GROUP(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA), false, true),
+    TAB_GROUPED(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA), false, true),
+    AT_GROUP_ELIGIBILITY(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA), true, true),
+    AT_GROUP_MISCELLANEOUS(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA), true, true),
+    AT_GROUP_GENOME_STUDY(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA), true, true),
+    AT_GROUP_ASSENT(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA), true, true),
+    AT_GROUP_CONSENT(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA), true, true),
+    AT_PARTICIPANT_INFO(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA), true, true),
+    AT_PARTICIPANT_EXIT(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA), true, true),
+    DATA(StringUtils.EMPTY, false, false);
 
     Alias(String value, boolean isCollection, boolean isJson) {
         this.value = value;
@@ -85,7 +81,7 @@ public enum Alias {
         return esAlias;
     }
 
-    private static Alias of(String alias) {
+    private static Alias of (String alias) {
         return Enums.getIfPresent(Alias.class, alias.toUpperCase()).or(ACTIVITIES);
     }
 }

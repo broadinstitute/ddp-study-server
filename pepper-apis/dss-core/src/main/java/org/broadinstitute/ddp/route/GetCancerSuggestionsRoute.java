@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -18,8 +20,6 @@ import org.broadinstitute.ddp.model.suggestion.CancerSuggestion;
 import org.broadinstitute.ddp.model.suggestion.PatternMatch;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.StringSuggestionTypeaheadComparator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -27,28 +27,25 @@ import spark.Route;
 /**
  *  This route returns the list of suggestions for the supplied cancer name
  */
+@Slf4j
+@AllArgsConstructor
 public class GetCancerSuggestionsRoute implements Route {
-
-    private static final Logger LOG = LoggerFactory.getLogger(GetCancerSuggestionsRoute.class);
     private static final String CANCER_QUERY_REGEX = "\\w+";
     private static final int DEFAULT_LIMIT = 100;
     private final CancerStore cancerStore;
-
-    public GetCancerSuggestionsRoute(CancerStore cancerStore) {
-        this.cancerStore = cancerStore;
-    }
+    
 
     @Override
     public CancerSuggestionResponse handle(Request request, Response response) {
         String cancerQuery = request.queryParams(RouteConstants.QueryParam.TYPEAHEAD_QUERY);
         String queryLimit = request.queryParams(RouteConstants.QueryParam.TYPEAHEAD_QUERY_LIMIT);
-        int limit = StringUtils.isNotBlank(queryLimit) ? Integer.valueOf(queryLimit) : DEFAULT_LIMIT;
+        int limit = StringUtils.isNotBlank(queryLimit) ? Integer.parseInt(queryLimit) : DEFAULT_LIMIT;
         if (StringUtils.isBlank(cancerQuery)) {
-            LOG.info("Cancer query is blank, returning all results");
+            log.info("Cancer query is blank, returning all results");
             return getUnfilteredCancerSuggestions(cancerQuery, limit);
         } else {
             if (!Pattern.compile(CANCER_QUERY_REGEX, Pattern.UNICODE_CHARACTER_CLASS).matcher(cancerQuery).find()) {
-                LOG.warn("Cancer query contains non-alphanumeric characters!");
+                log.warn("Cancer query contains non-alphanumeric characters!");
                 throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST,
                         new ApiError(ErrorCodes.MALFORMED_CANCER_QUERY, "Invalid cancer query"));
             }

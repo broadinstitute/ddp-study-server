@@ -24,6 +24,7 @@ public class ParticipantExcelGenerator {
 
     public ParticipantExcelGenerator() {
         this.sheet = workbook.createSheet("Participant List");
+        sheet.trackAllColumnsForAutoSizing();
     }
 
     public void createHeader(List<String> headerColumns) {
@@ -65,7 +66,6 @@ public class ParticipantExcelGenerator {
     }
 
     public void formatSizes(int columnsNumber) {
-        sheet.trackAllColumnsForAutoSizing();
         IntStream.range(0, columnsNumber).forEach(sheet::autoSizeColumn);
     }
 }

@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.route;
 
 import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.USER_GUID;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.RouteConstants;
@@ -12,14 +13,11 @@ import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.util.RouteUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
+@Slf4j
 public class CreateMailAddressRoute extends ValidatedMailAddressInputRoute {
-    private static final Logger LOG = LoggerFactory.getLogger(CreateMailAddressRoute.class);
-
     public CreateMailAddressRoute(AddressService addressService) {
         super(addressService);
     }
@@ -28,9 +26,9 @@ public class CreateMailAddressRoute extends ValidatedMailAddressInputRoute {
     public Object handleInputRequest(Request request, Response response, MailAddress dataObject) {
         String participantGuid = request.params(USER_GUID);
         String operatorGuid = RouteUtil.getDDPAuth(request).getOperator();
-        LOG.info("Creating mailing address for participant {} by operator {}", participantGuid, operatorGuid);
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("About to save: {}", getGson().toJson(dataObject));
+        log.info("Creating mailing address for participant {} by operator {}", participantGuid, operatorGuid);
+        if (log.isDebugEnabled()) {
+            log.debug("About to save: {}", getGson().toJson(dataObject));
         }
         MailAddress addedAddress = TransactionWrapper.withTxn(handle -> {
             MailAddress addr = addressService.addAddress(handle, dataObject, participantGuid, operatorGuid);
@@ -41,7 +39,7 @@ public class CreateMailAddressRoute extends ValidatedMailAddressInputRoute {
                     .forEach(enrollmentStatusDto -> {
                         int numQueued = eventDao.addMedicalUpdateTriggeredEventsToQueue(
                                 enrollmentStatusDto.getStudyId(), enrollmentStatusDto.getUserId());
-                        LOG.info("Queued {} medical-update events for participantGuid={} studyGuid={}",
+                        log.info("Queued {} medical-update events for participantGuid={} studyGuid={}",
                                 numQueued, enrollmentStatusDto.getUserGuid(), enrollmentStatusDto.getStudyGuid());
                     });
             handle.attach(DataExportDao.class).queueDataSync(participantGuid);

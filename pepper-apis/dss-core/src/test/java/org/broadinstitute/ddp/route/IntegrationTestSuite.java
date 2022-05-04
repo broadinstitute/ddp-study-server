@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -55,14 +56,13 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 import org.reflections.Reflections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Test suite that runs route integration tests. Boots the app in a separate thread or process
  * before running the tests, if configured to do so. To register a test class with test suite,
  * extend the `TestCase` base class and add the class to the `SuiteClasses` annotation.
  */
+@Slf4j
 @RunWith(Suite.class)
 @SuiteClasses({
         GetActivityInstanceListForActivityInstanceSelectQuestionRouteStandaloneTest.class,
@@ -127,9 +127,7 @@ import org.slf4j.LoggerFactory;
         DeleteUserRouteTest.class
 })
 public class IntegrationTestSuite {
-
     private static final String DEBUG_FLAG = "-agentlib:jdwp";
-    private static final Logger LOG = LoggerFactory.getLogger(IntegrationTestSuite.class);
     private static int callCounter = 0;
 
     @BeforeClass
@@ -156,7 +154,7 @@ public class IntegrationTestSuite {
                 .filter(coveredClass -> !declaredClasses.contains(coveredClass))
                 .collect(Collectors.toList());
 
-        LOG.warn("There are some classes missing from suite: " + missingClasses.toString());
+        log.warn("There are some classes missing from suite: " + missingClasses.toString());
 
         //        if (!missingClasses.isEmpty()) {
         //            fail("There were classes that inherit from TestCase that are not being run in our Suite "
@@ -187,11 +185,11 @@ public class IntegrationTestSuite {
     }
 
     private static void insertTestData() {
-        LOG.warn("Inserting test data!!!!");
+        log.warn("Inserting test data!!!!");
         RouteTestUtil.setupDatabasePool();
         TestDataSetupUtil.insertStaticTestData();
         initializeStaticTestUserData();
-        LOG.warn("Test data has been inserted!!!!");
+        log.warn("Test data has been inserted!!!!");
     }
 
     private static List<Class> ignoredClasses() {
@@ -242,7 +240,7 @@ public class IntegrationTestSuite {
                     JdbiClientUmbrellaStudy jdbiClientUmbrellaStudy = handle.attach(JdbiClientUmbrellaStudy.class);
                     jdbiClientUmbrellaStudy.insert(insertedClientId, studyDto.getId());
                 }
-                LOG.info("Inserted test client {}", insertedClientId);
+                log.info("Inserted test client {}", insertedClientId);
             }
 
             // set the test user's auth0Id according to whatever is in our environment, since
@@ -258,11 +256,11 @@ public class IntegrationTestSuite {
                 String testUserAuth0Id = guidAndAuth0IdTuple.getValue();
                 UserDto testUserDto = jdbiUser.findByUserGuid(testUserGuid);
                 if (testUserDto == null) {
-                    LOG.warn("Could not find test user {}", testUserGuid);
+                    log.warn("Could not find test user {}", testUserGuid);
                 }
                 int numRowsUpdated = jdbiUser.updateAuth0Id(testUserGuid, testUserAuth0Id);
                 if (numRowsUpdated != 1) {
-                    LOG.error("Updated {} rows to for test user {}", numRowsUpdated, testUserGuid);
+                    log.error("Updated {} rows to for test user {}", numRowsUpdated, testUserGuid);
                 }
             }
         });
@@ -295,11 +293,11 @@ public class IntegrationTestSuite {
         serverArgs.put("cachingDisabled", isCacheDisabled + "");
 
         int bootTimeoutSeconds = 30;
-        LOG.info("Starting app on port {}", port);
+        log.info("Starting app on port {}", port);
 
         if (spawnProcess) {
             if (isDebugEnabled()) {
-                LOG.warn("You're running in debug mode but the server side is running in a separate process.  "
+                log.warn("You're running in debug mode but the server side is running in a separate process.  "
                         + "You will need to set the debug port for the server side separately and connect "
                         + "the debugger in a separate remote session.  Alternatively, run the server side in-process");
             }
@@ -308,7 +306,7 @@ public class IntegrationTestSuite {
                 JavaProcessSpawner.spawnMainInSeparateProcess(DataDonationPlatform.class,
                         IntegrationTestSuite.class, bootTimeoutSeconds);
             } catch (IOException e) {
-                LOG.error("App starter failed.", e);
+                log.error("App starter failed.", e);
             }
         } else {
             runDdpServer(isCacheDisabled);
@@ -335,19 +333,19 @@ public class IntegrationTestSuite {
 
     private static void runDdpServer(boolean isCachingDisabled) {
         long startTime = System.currentTimeMillis();
-        LOG.info("Booting ddp...");
+        log.info("Booting ddp...");
         System.setProperty("cachingDisabled", isCachingDisabled + "");
         DataDonationPlatform.main(new String[] {});
 
-        LOG.info("It took {}ms to start ddp", (System.currentTimeMillis() - startTime));
+        log.info("It took {}ms to start ddp", (System.currentTimeMillis() - startTime));
     }
 
     private static void waitForServer(int millisecs) {
         try {
-            LOG.info("Pausing for {}ms for server to stabilize", millisecs);
+            log.info("Pausing for {}ms for server to stabilize", millisecs);
             Thread.sleep(millisecs);
         } catch (InterruptedException e) {
-            LOG.info("Wait interrupted", e);
+            log.info("Wait interrupted", e);
         }
     }
 
@@ -393,11 +391,11 @@ public class IntegrationTestSuite {
             httpClient.execute(new HttpGet(serverUrl));
             return true;
         } catch (HttpHostConnectException e) {
-            LOG.debug("Could not connect to server url. Must not be running");
+            log.debug("Could not connect to server url. Must not be running");
             return false;
         } catch (IOException e) {
             String msg = "There was problem initializing CloseableHttpClient";
-            LOG.error(msg, e);
+            log.error(msg, e);
             throw new DDPException(msg, e);
         }
 
