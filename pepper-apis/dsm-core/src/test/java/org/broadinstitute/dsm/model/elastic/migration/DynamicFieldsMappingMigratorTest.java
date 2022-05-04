@@ -23,15 +23,15 @@ public class DynamicFieldsMappingMigratorTest {
         final String study = "angio";
         List<? extends Exportable> exportables = Arrays.asList(
                 //DynamicFieldsMappingMigrator should be first in the list to make sure that mapping will be exported for first
-                new OncHistoryDetailsMigrator(index, study),
-                new SMIDMigrator(index, study),
                 new DynamicFieldsMappingMigrator(index, study),
                 new KitRequestShippingMigrator(index, study),
                 new ParticipantDataMigrator(index, study),
                 new ParticipantMigrator(index, study),
                 new OncHistoryMigrator(index, study),
                 new MedicalRecordMigrator(index, study),
-                new TissueMigrator(index, study));
+                new OncHistoryDetailsMigrator(index, study),
+                new TissueMigrator(index, study),
+                new SMIDMigrator(index, study));
         exportables.forEach(Exportable::export);
 
     }
