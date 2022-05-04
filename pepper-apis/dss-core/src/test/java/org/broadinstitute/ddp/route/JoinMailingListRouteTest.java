@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.restassured.mapper.ObjectMapperType;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
@@ -33,13 +34,9 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class JoinMailingListRouteTest extends IntegrationTestSuite.TestCase {
-
-    private static final Logger LOG = LoggerFactory.getLogger(JoinMailingListRouteTest.class);
-
     private static TestDataSetupUtil.GeneratedTestData testData;
 
     private static String umbrellaGuid;
@@ -141,7 +138,7 @@ public class JoinMailingListRouteTest extends IntegrationTestSuite.TestCase {
                 if (queuedEvent instanceof QueuedNotificationDto) {
                     QueuedNotificationDto queuedNotification = (QueuedNotificationDto) queuedEvent;
 
-                    LOG.info("Comparing {} against {}", user.getEmailAddress(), queuedNotification.getToEmail());
+                    log.info("Comparing {} against {}", user.getEmailAddress(), queuedNotification.getToEmail());
                     if (user.getEmailAddress().equals(queuedNotification.getToEmail())) {
                         queuedEmail.set(true);
                     }

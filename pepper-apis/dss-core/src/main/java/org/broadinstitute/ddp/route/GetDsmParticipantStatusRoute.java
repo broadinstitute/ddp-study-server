@@ -5,6 +5,7 @@ import static org.broadinstitute.ddp.util.ElasticsearchServiceUtil.getIndexForSt
 import java.io.IOException;
 
 import com.google.gson.Gson;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
@@ -24,8 +25,6 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -33,10 +32,8 @@ import spark.Route;
 /**
  * This route calls DSM and returns the DTO after enriching it with certain information
  */
+@Slf4j
 public class GetDsmParticipantStatusRoute implements Route {
-
-    private static final Logger LOG = LoggerFactory.getLogger(GetDsmParticipantStatusRoute.class);
-
     private final RestHighLevelClient esClient;
     private final Gson gson;
 
@@ -56,7 +53,7 @@ public class GetDsmParticipantStatusRoute implements Route {
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
         String userGuid = request.params(RouteConstants.PathParam.USER_GUID);
 
-        LOG.info("Attempting to fetch DSM participant status for {} in study {}", userGuid, studyGuid);
+        log.info("Attempting to fetch DSM participant status for {} in study {}", userGuid, studyGuid);
 
         response.type(ContentType.APPLICATION_JSON.getMimeType());
         return process(studyGuid, userGuid);
@@ -70,7 +67,7 @@ public class GetDsmParticipantStatusRoute implements Route {
                 .getEnrollmentStatusByUserAndStudyGuids(userGuid, studyGuid)
                 .orElseThrow(() -> {
                     String errMsg = "Participant " + userGuid + " or study " + studyGuid + " not found";
-                    LOG.warn(errMsg);
+                    log.warn(errMsg);
                     throw ResponseUtil.haltError(404, new ApiError(ErrorCodes.NOT_FOUND, errMsg));
                 }));
         try {
@@ -78,14 +75,14 @@ public class GetDsmParticipantStatusRoute implements Route {
             if (info == null) {
                 // Somehow it's not found in ES. For backwards-compatibility we return 404.
                 String errMsg = "Participant " + userGuid + " or study " + studyGuid + " not found";
-                LOG.warn(errMsg);
+                log.warn(errMsg);
                 throw ResponseUtil.haltError(404, new ApiError(ErrorCodes.NOT_FOUND, errMsg));
             }
             return info;
         } catch (IOException e) {
             String errMsg = "Something went wrong during fetching the workflow statuses from ES for study "
                     + studyGuid + " and participant " + userGuid + ".";
-            LOG.error(errMsg, e);
+            log.error(errMsg, e);
             throw ResponseUtil.haltError(500, new ApiError(ErrorCodes.SERVER_ERROR, errMsg));
         }
     }
