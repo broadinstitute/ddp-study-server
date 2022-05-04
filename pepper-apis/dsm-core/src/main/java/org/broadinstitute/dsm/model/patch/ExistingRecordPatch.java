@@ -151,11 +151,15 @@ public class ExistingRecordPatch extends BasePatch {
             }
             // Use participant guid here to avoid multiple ES lookups.
             Object columnValue = participantDataMap.get(columnName);
-            ElasticSearchUtil.writeWorkflow(
-                    WorkflowForES.createInstanceWithStudySpecificData(ddpInstance, profile.getGuid(), columnName, columnValue.toString(),
-                            new WorkflowForES.StudySpecificData(participantDataMap.get(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID),
-                                    participantDataMap.get(FamilyMemberConstants.FIRSTNAME),
-                                    participantDataMap.get(FamilyMemberConstants.LASTNAME))), false);
+            if (columnValue != null) {
+                ElasticSearchUtil.writeWorkflow(
+                        WorkflowForES.createInstanceWithStudySpecificData(ddpInstance, profile.getGuid(), columnName,
+                                columnValue.toString(),
+                                new WorkflowForES.StudySpecificData(
+                                        participantDataMap.get(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID),
+                                        participantDataMap.get(FamilyMemberConstants.FIRSTNAME),
+                                        participantDataMap.get(FamilyMemberConstants.LASTNAME))), false);
+            }
         });
     }
 
