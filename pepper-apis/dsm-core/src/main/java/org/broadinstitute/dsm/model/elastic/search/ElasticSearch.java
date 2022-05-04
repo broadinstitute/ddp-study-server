@@ -1,7 +1,15 @@
 package org.broadinstitute.dsm.model.elastic.search;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import lombok.Setter;
@@ -285,9 +293,9 @@ public class ElasticSearch implements ElasticSearchable {
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
             searchSourceBuilder.query(new TermsQueryBuilder(ElasticSearchUtil.PROFILE_LEGACYALTPID, legacyAltPids.toArray()));
             searchSourceBuilder.size(legacyAltPids.size());
-            searchSourceBuilder.fetchSource(new String[] { ElasticSearchUtil.PROFILE_LEGACYALTPID, ElasticSearchUtil.PROFILE_GUID,
-                            ElasticSearchUtil.PROXIES },
-                    null);
+            searchSourceBuilder.fetchSource(
+                    new String[] { ElasticSearchUtil.PROFILE_LEGACYALTPID, ElasticSearchUtil.PROFILE_GUID, ElasticSearchUtil.PROXIES }, null
+            );
             searchRequest.source(searchSourceBuilder);
             response = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
         } catch (Exception e) {
@@ -308,10 +316,15 @@ public class ElasticSearch implements ElasticSearchable {
                 .map(SearchHitProxy::getSourceAsMap)
                 .filter(this::hasProfile)
                 .map(this::getProfile)
-                .collect(Collectors.toMap(profileMap -> profileMap.get(ElasticSearchUtil.LEGACY_ALT_PID), profileMap -> profileMap.get(ESObjectConstants.GUID),
+                .collect(Collectors.toMap(profileMap ->
+                        profileMap.get(ElasticSearchUtil.LEGACY_ALT_PID),
+                        profileMap -> profileMap.get(ESObjectConstants.GUID),
                         (prevGuid, currGuid) -> {
-                            if (isParentGuid(parentsGuids, prevGuid)) return currGuid;
-                            else return prevGuid;
+                            if (isParentGuid(parentsGuids, prevGuid)) {
+                                return currGuid;
+                            } else {
+                                return prevGuid;
+                            }
                         }));
     }
 
@@ -333,19 +346,6 @@ public class ElasticSearch implements ElasticSearchable {
 
     private boolean hasProfile(Map<String, Object> sourceMap) {
         return sourceMap.containsKey(ElasticSearchUtil.PROFILE);
-    }
-}
-
-class SearchHitProxy {
-
-    private SearchHit searchHit;
-
-    public SearchHitProxy(SearchHit searchHit) {
-        this.searchHit = searchHit;
-    }
-
-    Map<String, Object> getSourceAsMap() {
-        return searchHit.getSourceAsMap();
     }
 
 }
