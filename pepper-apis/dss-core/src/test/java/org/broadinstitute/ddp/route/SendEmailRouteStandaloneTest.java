@@ -12,6 +12,7 @@ import java.util.List;
 import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
 import io.restassured.response.Response;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -41,13 +42,9 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class SendEmailRouteStandaloneTest extends IntegrationTestSuite.TestCase {
-
-    private static final Logger LOG = LoggerFactory.getLogger(SendEmailRouteStandaloneTest.class);
-
     static TestDataSetupUtil.GeneratedTestData testData;
     static String url;
     static Long insertedKnownUserEventConfigId;
@@ -84,19 +81,19 @@ public class SendEmailRouteStandaloneTest extends IntegrationTestSuite.TestCase 
                     if (numRows != 1) {
                         // Note: tests might run in parallel and other tests might have deleted the event already.
                         // So we log a message here instead of failing the test.
-                        LOG.error("Deleted " + numRows + " queued events for configuration id " + insertedKnownUserEventConfigId);
+                        log.error("Deleted " + numRows + " queued events for configuration id " + insertedKnownUserEventConfigId);
                     }
                 }
                 if (insertedUnknownUserEventConfigId != null) {
                     int numRows = handle.attach(QueuedEventDao.class)
                             .deleteQueuedEventsByEventConfigurationId(insertedUnknownUserEventConfigId);
                     if (numRows != 1) {
-                        LOG.error("Deleted " + numRows + " queued events for configuration id " + insertedUnknownUserEventConfigId);
+                        log.error("Deleted " + numRows + " queued events for configuration id " + insertedUnknownUserEventConfigId);
                     }
                 }
             });
         } else {
-            LOG.warn("Skipping removal of event configuration so that housekeeping will send it.  This may impact "
+            log.warn("Skipping removal of event configuration so that housekeeping will send it.  This may impact "
                     + "other tests.");
         }
     }
@@ -205,7 +202,7 @@ public class SendEmailRouteStandaloneTest extends IntegrationTestSuite.TestCase 
 
         long workflowStateId = workflowDao.findWorkflowStateId(new ActivityState(activityId)).get();
 
-        LOG.info("Setup activity {} and workflow state {} for testing email resend for known user", activityId, workflowStateId);
+        log.info("Setup activity {} and workflow state {} for testing email resend for known user", activityId, workflowStateId);
         return workflowState;
     }
 
@@ -246,7 +243,7 @@ public class SendEmailRouteStandaloneTest extends IntegrationTestSuite.TestCase 
         createdActivityInstanceDto = handle.attach(ActivityInstanceDao.class).insertInstance(activity.getActivityId(),
                 testData.getUserGuid());
 
-        LOG.info("Created activity instance {} for testing email resend for user {}", createdActivityInstanceDto
+        log.info("Created activity instance {} for testing email resend for user {}", createdActivityInstanceDto
                 .getGuid(), testData.getStudyGuid());
 
 

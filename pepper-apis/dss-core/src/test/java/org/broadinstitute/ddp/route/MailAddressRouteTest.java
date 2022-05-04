@@ -16,6 +16,7 @@ import java.util.List;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
@@ -45,12 +46,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class MailAddressRouteTest extends IntegrationTestSuite.TestCase {
-
-    private static final Logger LOG = LoggerFactory.getLogger(MailAddressRouteTest.class);
     private static final String TEST_ZIP = "82001";
     private static final String testOLC = "849VCWF8+24";
     private static final OLCPrecision defaultOlcPrecision = OLCPrecision.MEDIUM;
@@ -84,7 +82,7 @@ public class MailAddressRouteTest extends IntegrationTestSuite.TestCase {
 
     @Before
     public void deleteAllTestMailingAddress() throws SQLException {
-        LOG.info("Delete test mailing address");
+        log.info("Delete test mailing address");
         TransactionWrapper.withTxn(handle -> {
             PreparedStatement stmt = handle.getConnection()
                     .prepareStatement("delete from mailing_address where participant_user_id in "
@@ -237,7 +235,7 @@ public class MailAddressRouteTest extends IntegrationTestSuite.TestCase {
         Response res = RouteTestUtil.buildAuthorizedGetRequest(token, buildAddressUrl(mailGuid)).execute();
         HttpResponse httpResponse = res.returnResponse();
         assertEquals(200, httpResponse.getStatusLine().getStatusCode());
-        LOG.info("Returned body : {}", EntityUtils.toString(httpResponse.getEntity()));
+        log.info("Returned body : {}", EntityUtils.toString(httpResponse.getEntity()));
         MailAddress retrievedAddress = gson.fromJson(EntityUtils.toString(httpResponse.getEntity()), MailAddress.class);
         assertNotNull(retrievedAddress);
         return retrievedAddress;
@@ -250,7 +248,7 @@ public class MailAddressRouteTest extends IntegrationTestSuite.TestCase {
 
         int statusCode = httpResponse.getStatusLine().getStatusCode();
         assertEquals(expectedHttpStatus, statusCode);
-        LOG.info("Returned body : {}", EntityUtils.toString(httpResponse.getEntity()));
+        log.info("Returned body : {}", EntityUtils.toString(httpResponse.getEntity()));
         String entity = EntityUtils.toString(httpResponse.getEntity());
         if (statusCode == HttpStatus.SC_OK) {
             MailAddress retrievedAddress = gson.fromJson(entity, MailAddress.class);
@@ -277,13 +275,11 @@ public class MailAddressRouteTest extends IntegrationTestSuite.TestCase {
         Response res = RouteTestUtil.buildAuthorizedGetRequest(token, buildAddressUrlForTestUser(true)).execute();
         HttpResponse httpResponse = res.returnResponse();
         assertEquals(200, httpResponse.getStatusLine().getStatusCode());
-        LOG.info("Returned body : {}", EntityUtils.toString(httpResponse.getEntity()));
+        log.info("Returned body : {}", EntityUtils.toString(httpResponse.getEntity()));
         Type mailAddressListType = new TypeToken<List<MailAddress>>() {
         }.getType();
         String body = EntityUtils.toString(httpResponse.getEntity());
-        List<MailAddress> retrievedAddresses = gson.fromJson(body,
-                mailAddressListType);
-        return retrievedAddresses;
+        return gson.fromJson(body, mailAddressListType);
     }
 
     @Test
@@ -326,7 +322,7 @@ public class MailAddressRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     @Test
-    public void testGetAllAddresses() throws IOException, InterruptedException {
+    public void testGetAllAddresses() throws IOException {
         MailAddress addressToSave = buildValidAddress();
         MailAddress createdAddressFromServer1 = submitValidAddress(addressToSave);
         MailAddress createdAddressFromServer2 = submitValidAddress(addressToSave);
@@ -341,7 +337,7 @@ public class MailAddressRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     @Test
-    public void testAndSetDefaultAddress() throws IOException, InterruptedException {
+    public void testAndSetDefaultAddress() throws IOException {
         String defaultAddressUrl = buildDefaultAddressUrlForTestUser();
         Response resDefault = RouteTestUtil.buildAuthorizedGetRequest(token, defaultAddressUrl).execute();
         assertEquals(HttpStatus.SC_NOT_FOUND, resDefault.returnResponse().getStatusLine().getStatusCode());
