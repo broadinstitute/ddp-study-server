@@ -6,6 +6,7 @@ import java.util.List;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.CancerStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -13,20 +14,16 @@ import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.hamcrest.Matchers;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuite.TestCase {
-
-    private static final Logger LOG = LoggerFactory.getLogger(GetCancerSuggestionsRouteStandaloneTest.class);
     private static final String URL_TEMPLATE = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.CANCER_SUGGESTION;
     private static String token;
 
     @BeforeClass
     public static void setupClass() {
-        TestDataSetupUtil.GeneratedTestData testData = TransactionWrapper.withTxn(handle -> {
-            return TestDataSetupUtil.generateBasicUserTestData(handle);
-        });
+        TestDataSetupUtil.GeneratedTestData testData = TransactionWrapper
+                .withTxn(TestDataSetupUtil::generateBasicUserTestData);
         token = testData.getTestingUser().getToken();
     }
 
@@ -56,7 +53,7 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
 
     @Test
     public void givenOneCancerNameMatchesPattern_whenRouteIsCalled_thenItReturnsListWithValidSingleItem() {
-        CancerStore.getInstance().populate(Arrays.asList(TestData.CANCER_NAME));
+        CancerStore.getInstance().populate(List.of(TestData.CANCER_NAME));
         String url = createUrlFromTemplate(URL_TEMPLATE);
         RestAssured.given().auth().oauth2(token)
         .when().get(url).then().assertThat()
@@ -70,7 +67,7 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
 
     @Test
     public void givenPatternMatchesCancerNameMultipleTimes_whenRouteIsCalled_thenItReturnsSingleMatch() {
-        CancerStore.getInstance().populate(Arrays.asList("Sarcoma"));
+        CancerStore.getInstance().populate(List.of("Sarcoma"));
         String url = createUrlFromTemplate(URL_TEMPLATE, "s");
         RestAssured.given().auth().oauth2(token)
         .when().get(url).then().assertThat()
@@ -119,7 +116,7 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
 
     @Test
     public void givenPatternContainsMetachars_whenRouteIsCalled_thenPatternWorksAsLiteralText() {
-        CancerStore.getInstance().populate(Arrays.asList("Sarcoma (Angiosarcoma cancer)"));
+        CancerStore.getInstance().populate(List.of("Sarcoma (Angiosarcoma cancer)"));
         String url = createUrlFromTemplate(URL_TEMPLATE, "Sarcoma (Angiosarcoma");
         RestAssured.given().auth().oauth2(token)
         .when().get(url).then().assertThat()
@@ -130,7 +127,7 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
 
     @Test
     public void givenCancerNameAndPatternHaveDifferentCase_whenRouteIsCalled_thenPatternMatchesCancerName() {
-        CancerStore.getInstance().populate(Arrays.asList("SARCOMA"));
+        CancerStore.getInstance().populate(List.of("SARCOMA"));
         String url = createUrlFromTemplate(URL_TEMPLATE, "sarcoma");
         RestAssured.given().auth().oauth2(token)
         .when().get(url).then().assertThat()
@@ -159,7 +156,7 @@ public class GetCancerSuggestionsRouteStandaloneTest extends IntegrationTestSuit
 
     @Test
     public void testSanitization() {
-        CancerStore.getInstance().populate(Arrays.asList("foo bar"));
+        CancerStore.getInstance().populate(List.of("foo bar"));
 
         String url = createUrlFromTemplate(URL_TEMPLATE, "[foo");
         RestAssured.given().auth().oauth2(token)

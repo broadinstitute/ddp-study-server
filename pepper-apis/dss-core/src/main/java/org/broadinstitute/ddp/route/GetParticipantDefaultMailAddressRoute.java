@@ -4,31 +4,27 @@ import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.USER_GUI
 
 import java.util.Optional;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.util.ResponseUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
+@Slf4j
+@AllArgsConstructor
 public class GetParticipantDefaultMailAddressRoute implements Route {
-    private static final Logger LOG = LoggerFactory.getLogger(GetParticipantDefaultMailAddressRoute.class);
-
-    private AddressService addressService;
-
-    public GetParticipantDefaultMailAddressRoute(AddressService addressService) {
-        this.addressService = addressService;
-    }
+    private final AddressService addressService;
 
     @Override
     public Object handle(Request request, Response response) {
         String participantGuid = request.params(USER_GUID);
-        LOG.info("Retrieving default mail address for participant: {})", participantGuid);
+        log.info("Retrieving default mail address for participant: {})", participantGuid);
         Optional<MailAddress> optionalAddress = TransactionWrapper.withTxn(handle -> addressService
                 .findDefaultAddressForParticipant(handle, participantGuid));
         if (optionalAddress.isPresent()) {
