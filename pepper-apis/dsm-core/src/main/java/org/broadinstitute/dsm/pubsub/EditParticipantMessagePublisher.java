@@ -60,7 +60,7 @@ public class EditParticipantMessagePublisher {
                                 logger.info(String.valueOf(apiException.getStatusCode().getCode()));
                                 logger.info(String.valueOf(apiException.isRetryable()));
                             }
-                            logger.info("Error publishing message");
+                            logger.error("Error publishing message " + topicId);
                         }
 
                         @Override

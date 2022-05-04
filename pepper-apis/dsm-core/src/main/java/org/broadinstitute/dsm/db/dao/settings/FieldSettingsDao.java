@@ -47,6 +47,7 @@ public class FieldSettingsDao implements Dao<FieldSettingsDto> {
     private static final String BY_FIELD_TYPE = " WHERE field_type = ?";
     private static final String AND_BY_COLUMN_NAME = " AND column_name = ?";
     private static final String AND_BY_COLUMN_NAMES = " AND column_name IN (?)";
+    private static final String AND_BY_ACTION_NOT_NULL = " AND actions IS NOT NULL";
 
     private static final String FIELD_SETTINGS_ID = "field_settings_id";
     private static final String DDP_INSTANCE_ID = "ddp_instance_id";
@@ -256,6 +257,28 @@ public class FieldSettingsDao implements Dao<FieldSettingsDto> {
             throw new RuntimeException("Error getting fieldSettings ", results.resultException);
         }
         return Optional.ofNullable((FieldSettingsDto) results.resultValue);
+    }
+
+    public List<FieldSettingsDto> getFieldSettingWithActionsByInstanceId(int instanceId) {
+        List<FieldSettingsDto> fieldSettingsByColumnNames = new ArrayList<>();
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(GET_FIELD_SETTINGS + BY_INSTANCE_ID + AND_BY_ACTION_NOT_NULL)) {
+                stmt.setInt(1, instanceId);
+                try (ResultSet fieldSettingsByColumnNameRs = stmt.executeQuery()) {
+                    while (fieldSettingsByColumnNameRs.next()) {
+                        fieldSettingsByColumnNames.add(buildFieldSettingsFromResultSet(fieldSettingsByColumnNameRs));
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+        if (results.resultException != null) {
+            throw new RuntimeException("Error getting fieldSettings ", results.resultException);
+        }
+        return fieldSettingsByColumnNames;
     }
 
     public Optional<FieldSettingsDto> getFieldSettingsByFieldTypeAndColumnName(String fieldType, String columnName) {
