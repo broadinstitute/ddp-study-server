@@ -316,6 +316,7 @@ public class DBConstants {
     public static final String MR_QC = "mr_qc";
     public static final String PT_LIST_VIEW = "pt_list_view";
     public static final String USER_ADD = "user_add";
+    public static final String USER_ACCESS = "user_access";
     public static final String NEW_USER_ROLE = "New User";
 
 

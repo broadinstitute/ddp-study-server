@@ -9,8 +9,11 @@ import lombok.NonNull;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.dto.user.AssigneeDto;
 import org.broadinstitute.dsm.db.dto.user.UserRoleDto;
+import org.broadinstitute.dsm.db.jdbi.JdbiRole;
 import org.broadinstitute.dsm.db.jdbi.JdbiUserRole;
+import org.broadinstitute.dsm.exception.DaoException;
 import org.broadinstitute.dsm.model.NameValue;
+import org.broadinstitute.dsm.util.DBUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -131,5 +134,13 @@ public class UserRoleDao {
             return dbVals;
         });
         return (List<UserRoleDto>) result.resultValue;
+    }
+
+    public void updateNewRole(long userId, long roleId, long umbrellaId) throws DaoException {
+        TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
+            DBUtil.checkUpdate(1, handle.attach(JdbiRole.class).updateRoleForUser(userId, roleId, umbrellaId));
+            logger.info("successfully updated role for user id " + userId + " to " + roleId);
+            return null;
+        });
     }
 }

@@ -35,7 +35,7 @@ public class GetRoleRoute extends RequestHandler {
 
         if (StringUtils.isNotBlank(realm)) {
             if (RoutePath.RequestMethod.GET.toString().equals(request.requestMethod())) {
-                if (UserUtil.checkUserAccess(realm, userId, DBConstants.USER_ADD, null)) {
+                if (UserUtil.checkUserAccess(realm, userId, DBConstants.USER_ACCESS, null)) {
                     DDPInstance ddpInstance = DDPInstance.getDDPInstanceByRealmOrGuid(realm);
                     return roleDao.getAllRolesForStudy(ddpInstance.getStudyGuid());
                 } else {

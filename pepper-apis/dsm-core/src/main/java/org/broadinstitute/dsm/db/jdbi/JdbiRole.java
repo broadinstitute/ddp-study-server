@@ -6,6 +6,7 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public interface JdbiRole extends SqlObject {
 
@@ -14,6 +15,15 @@ public interface JdbiRole extends SqlObject {
             "where us.guid =:umbrellaGuid")
     @RegisterConstructorMapper (RoleDto.class)
     List<RoleDto> getAllRolesForStudy(@Bind ("umbrellaGuid") String studyGuid);
+
+    @SqlUpdate ("update user_role  set role_id=:roleId where user_role_id in(   " +
+            "select user_role_id from (select ur.user_role_id from  user_role ur    " +
+            "left join role  r    " +
+            "on (r.role_id = ur.role_id)   " +
+            "where r.umbrella_id = :umbrellaId   " +
+            " and ur.user_id = :userId   " +
+            " ) as sth) and user_role_id <> 0")
+    int updateRoleForUser(@Bind ("userId") long userId, @Bind ("roleId") long roleId, @Bind ("umbrellaId") long umbrellaId);
 
 
 }

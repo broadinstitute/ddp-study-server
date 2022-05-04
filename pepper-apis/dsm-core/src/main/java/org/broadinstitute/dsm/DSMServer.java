@@ -120,6 +120,7 @@ import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
 import org.broadinstitute.dsm.route.user.GetUserRoute;
+import org.broadinstitute.dsm.route.user.ModifyUserRoute;
 import org.broadinstitute.dsm.route.user.PostUserRoute;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
@@ -709,6 +710,9 @@ public class DSMServer {
 
         GetRoleRoute getRoleRoute = new GetRoleRoute(roleDao);
         get(UI_ROOT + RoutePath.GET_ROLES, getRoleRoute, new JsonTransformer());
+
+        ModifyUserRoute modifyUserRoute = new ModifyUserRoute(new UserRoleDao());
+        post(UI_ROOT + RoutePath.MODIFY_USER, modifyUserRoute, new JsonTransformer());
 
     }
 

@@ -41,4 +41,6 @@ public class RoleDao implements Dao<RoleDto> {
     public Optional<RoleDto> get(long id) {
         return Optional.empty();
     }
+
+
 }
