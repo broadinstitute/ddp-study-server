@@ -1,13 +1,16 @@
-package org.broadinstitute.ddp.studybuilder.task.osteo;
+package org.broadinstitute.ddp.studybuilder.task;
 
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
 import org.broadinstitute.ddp.db.dao.CopyConfigurationSql;
+import org.broadinstitute.ddp.db.dao.EventDao;
+import org.broadinstitute.ddp.db.dao.EventTriggerDao;
 import org.broadinstitute.ddp.db.dao.JdbiFormActivityFormSection;
 import org.broadinstitute.ddp.db.dao.JdbiFormSection;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
@@ -18,12 +21,21 @@ import org.broadinstitute.ddp.db.dao.SectionBlockDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.FormSectionMembershipDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
+import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.json.User;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.ActivityI18nDetail;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
+import org.broadinstitute.ddp.model.activity.types.EventActionType;
+import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
+import org.broadinstitute.ddp.model.event.ActivityInstanceCreationEventAction;
+import org.broadinstitute.ddp.model.event.ActivityStatusChangeTrigger;
+import org.broadinstitute.ddp.model.event.EventConfiguration;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
+import org.broadinstitute.ddp.studybuilder.EventBuilder;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonUtil;
@@ -56,6 +68,7 @@ public class OsteoAboutYouV2 implements CustomTask {
     private static final String STUDY_GUID = "CMI-OSTEO";
     private static final String ACTIVITY_CODE = "ABOUTYOU";
     private static final String ACTIVITY_CODE_2 = "ABOUTCHILD";
+    private static final String ACTIVITY_CODE_RELEASE_SELF = "RELEASE_SELF";
     private static final String VERSION_TAG = "v2";
 
     private Config dataCfg;
@@ -161,6 +174,9 @@ public class OsteoAboutYouV2 implements CustomTask {
         helper.updateActivityNameAndTitle(activityId, "About Your Osteosarcoma", "About Your Osteosarcoma");
         helper.updateActivityNameAndTitle(activityId2, "About Your child's Osteosarcoma", "About Your child's Osteosarcoma");
         updateTranslationSummaries(handle);
+
+        // Edit editActivityCreationEvent
+        editActivityCreationEvent(handle, adminUser.getId(), studyDto, activityId);
     }
 
     private long createSectionBefore(long activityId, FormSectionMembershipDto beforeSection) {
@@ -191,6 +207,42 @@ public class OsteoAboutYouV2 implements CustomTask {
         helper.updateFormSectionBlockRevision(blockId, terminatedRevId);
 
         log.info("Question ('{}') successfully disabled", questionSid);
+    }
+
+    private void editActivityCreationEvent(Handle handle, long adminUserId, StudyDto studyDto, long activityId) {
+
+        long releaseSelfActivityId = ActivityBuilder.findActivityId(handle, studyId, ACTIVITY_CODE_RELEASE_SELF);
+
+        EventConfiguration eventReleaseToAboutYou = handle.attach(EventDao.class)
+                .getAllEventConfigurationsByStudyId(studyDto.getId())
+                .stream()
+                .filter(event -> event.getEventTriggerType() == EventTriggerType.ACTIVITY_STATUS
+                        && ((ActivityStatusChangeTrigger) event.getEventTrigger()).getStudyActivityId() == releaseSelfActivityId
+                        && ((ActivityStatusChangeTrigger) event.getEventTrigger()).getInstanceStatusType() == InstanceStatusType.COMPLETE)
+                .filter(event -> event.getEventActionType() == EventActionType.ACTIVITY_INSTANCE_CREATION
+                        && ((ActivityInstanceCreationEventAction) event.getEventAction()).getStudyActivityId() == activityId)
+                .filter(event -> StringUtils.isBlank(event.getCancelExpression()))
+                .findFirst()
+                .orElseThrow(() -> new DDPException("Could not find event RELEASE to ABOUTYOU"));
+
+        helper.disableStudyEvent(eventReleaseToAboutYou.getEventConfigurationId());
+
+        log.info("Inserting events configuration...");
+
+        if (!dataCfg.hasPath("events")) {
+            throw new DDPException("There is no 'events' configuration.");
+        }
+        List<? extends Config> events = dataCfg.getConfigList("events");
+        if (events.size() != 1) {
+            throw new DDPException("Expected " + 1 + " events but got " + events.size());
+        }
+
+        EventBuilder eventBuilder = new EventBuilder(studyCfg, studyDto, adminUserId);
+        for (Config eventCfg : events) {
+            eventBuilder.insertEvent(handle, eventCfg);
+        }
+
+        log.info("Events configuration has added in study {}", STUDY_GUID);
     }
 
     private QuestionDto findQuestionBySid(String questionSid) {
@@ -279,6 +331,17 @@ public class OsteoAboutYouV2 implements CustomTask {
             if (numUpdated != 1) {
                 throw new DDPException("Expected to update 1 row for studyActivityId="
                         + studyActivityId + " but updated " + numUpdated);
+            }
+        }
+
+        @SqlUpdate("update event_configuration set is_active = false where event_configuration_id = :eventId")
+        int _disableStudyEvent(@BindList("eventId") long eventId);
+
+        default void disableStudyEvent(long eventId) {
+            int numUpdated = _disableStudyEvent(eventId);
+            if (numUpdated != 1) {
+                throw new DDPException("Expected to update 1 row for event_configuration_id ="
+                        + eventId + " but updated " + numUpdated);
             }
         }
     }

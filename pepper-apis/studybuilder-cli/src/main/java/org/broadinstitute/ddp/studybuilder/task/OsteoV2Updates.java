@@ -2,7 +2,6 @@ package org.broadinstitute.ddp.studybuilder.task;
 
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoAboutChildV2;
-import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoAboutYouV2;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoAdultConsentFixes;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoConsentAddendumV2;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoConsentVersion2;
