@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.export.painless;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.db.KitRequestShipping;
@@ -21,12 +22,10 @@ public class NestedUpsertPainlessFacadeTest {
     public void setUp() {
         KitRequestShipping kitRequestShipping = new KitRequestShipping();
         kitRequestShipping.setKitLabel("KIT_LABEL");
-        DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder()
-                .build();
-        upsertPainlessFacade = UpsertPainlessFacade.of(
-                DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
-                ESObjectConstants.KIT_LABEL, ESObjectConstants.KIT_LABEL,"KIT_LABEL"
-                );
+        DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder().build();
+        upsertPainlessFacade =
+                UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.KIT_LABEL,
+                        ESObjectConstants.KIT_LABEL, "KIT_LABEL");
     }
 
     @Test

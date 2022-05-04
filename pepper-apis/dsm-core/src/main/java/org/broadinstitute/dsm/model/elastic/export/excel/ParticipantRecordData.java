@@ -63,16 +63,15 @@ public class ParticipantRecordData {
 
     }
 
-    private Collection<?> getJsonValue(Collection<?> nestedValue, ParticipantColumn column,
-                                       Alias alias) {
+    private Collection<?> getJsonValue(Collection<?> nestedValue, ParticipantColumn column, Alias alias) {
         if (nestedValue.isEmpty()) {
             return Collections.singletonList(StringUtils.EMPTY);
         }
         String jsonString;
         if (alias.isCollection()) {
-            jsonString = nestedValue.stream().filter(val ->
-                            column.getObject().equals(((Map<String, Object>) val).get(ESObjectConstants.FIELD_TYPE_ID)))
-                    .findFirst().map(val -> ((Map<String, Object>) val).get(ESObjectConstants.DATA).toString()).orElse(StringUtils.EMPTY);
+            jsonString = nestedValue.stream()
+                    .filter(val -> column.getObject().equals(((Map<String, Object>) val).get(ESObjectConstants.FIELD_TYPE_ID))).findFirst()
+                    .map(val -> ((Map<String, Object>) val).get(ESObjectConstants.DATA).toString()).orElse(StringUtils.EMPTY);
         } else {
             jsonString = nestedValue.stream().findFirst().get().toString();
         }
@@ -147,9 +146,8 @@ public class ParticipantRecordData {
                                 List<LinkedHashMap<String, Object>> questionAnswers =
                                         (List<LinkedHashMap<String, Object>>) foundActivity.get(ElasticSearchUtil.QUESTIONS_ANSWER);
                                 return questionAnswers.stream().filter(qa -> qa.get(ESObjectConstants.STABLE_ID).equals(column.getName()))
-                                        .map(fq -> getAnswerValue(fq, column.getName()))
-                                        .map(this::mapToCollection).flatMap(Collection::stream)
-                                        .collect(Collectors.toList());
+                                        .map(fq -> getAnswerValue(fq, column.getName())).map(this::mapToCollection)
+                                        .flatMap(Collection::stream).collect(Collectors.toList());
                             }
                         }).flatMap(Collection::stream).collect(Collectors.toList());
         if (objects.isEmpty()) {
