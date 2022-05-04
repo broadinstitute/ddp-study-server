@@ -10,17 +10,16 @@ import java.util.Set;
 import com.brsanthu.googleanalytics.GoogleAnalytics;
 import com.brsanthu.googleanalytics.GoogleAnalyticsConfig;
 import com.brsanthu.googleanalytics.request.EventHit;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.model.study.StudySettings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class GoogleAnalyticsMetricsTracker {
-    private static final Logger LOG = LoggerFactory.getLogger(GoogleAnalyticsMetricsTracker.class);
     private static final Integer DEFAULT_BATCH_SIZE = 10;
     private static final String CUSTOM_USER_AGENT = "Custom User Agent";
     private static Map<String, GoogleAnalytics> studyAnalyticsTrackers = new HashMap<>();
@@ -30,7 +29,7 @@ public class GoogleAnalyticsMetricsTracker {
 
     private GoogleAnalyticsMetricsTracker() {
         Map<String, StudySettings> allStudySettings = StudySettingsStore.getInstance().getAllStudySettings();
-        allStudySettings.forEach((studyGuid, studySettings) -> initStudyMetricTracker(studyGuid, studySettings));
+        allStudySettings.forEach(this::initStudyMetricTracker);
     }
 
     public static GoogleAnalyticsMetricsTracker getInstance() {
@@ -58,7 +57,7 @@ public class GoogleAnalyticsMetricsTracker {
                 noAnalyticsTokenStudies.add(studyGuid);
                 return;
             } else if (StringUtils.isEmpty(studySettings.getAnalyticsToken())) {
-                LOG.error("NO analytics token found for study : {} . skipping sending analytics. ", studyGuid);
+                log.error("NO analytics token found for study : {} . skipping sending analytics. ", studyGuid);
                 noAnalyticsTokenStudies.add(studyGuid);
                 return;
             }
@@ -69,7 +68,7 @@ public class GoogleAnalyticsMetricsTracker {
                     .withTrackingId(studySettings.getAnalyticsToken())
                     .build();
             studyAnalyticsTrackers.put(studyGuid, metricTracker);
-            LOG.info("Initialized GA Metrics Tracker for study GUID: {} ", studyGuid);
+            log.info("Initialized GA Metrics Tracker for study GUID: {} ", studyGuid);
         }
     }
 
@@ -109,7 +108,7 @@ public class GoogleAnalyticsMetricsTracker {
 
     public void flushOutMetrics() {
         //lookup all Metrics Trackers and flush out any pending events
-        LOG.info("Flushing out all pending GA events");
+        log.info("Flushing out all pending GA events");
         for (GoogleAnalytics tracker : studyAnalyticsTrackers.values()) {
             tracker.flush();
         }
@@ -141,11 +140,9 @@ public class GoogleAnalyticsMetricsTracker {
                 for (StudyDto studyDto : studyDtos) {
                     //load StudySettings
                     Optional<StudySettings> studySettings = studyDao.findSettings(studyDto.getId());
-                    if (studySettings.isPresent()) {
-                        settingsMap.put(studyDto.getGuid(), studySettings.get());
-                    }
+                    studySettings.ifPresent(settings -> settingsMap.put(studyDto.getGuid(), settings));
                 }
-                LOG.info("Loaded StudySettings for {} studies.", settingsMap.size());
+                log.info("Loaded StudySettings for {} studies.", settingsMap.size());
                 return settingsMap;
             });
         }

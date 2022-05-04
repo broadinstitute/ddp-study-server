@@ -39,7 +39,7 @@ select mo.matrix_option_id           as mo_matrix_option_id,
 
 queryAllOrderedGroupsOptionsRowsByQuestionIdsAndTimestamp() ::= <<
 <selectAllGroupOptionsRows()>
- where mq.question_id in (\<questionIds\>)
+ where mq.question_id in (\<questionIds>)
    and option_rev.start_date \<= :timestamp
    and (option_rev.end_date is null or :timestamp \< option_rev.end_date)
    and row_rev.start_date \<= :timestamp

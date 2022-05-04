@@ -22,12 +22,8 @@ import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ListStudyLanguagesRouteTest extends IntegrationTestSuite.TestCase {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ListStudyLanguagesRouteTest.class);
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String url;
     private static long[] idsToDelete = {-1, -1};

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -24,6 +25,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
@@ -50,6 +53,7 @@ import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
 import org.broadinstitute.ddp.db.dto.DecimalQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
+import org.broadinstitute.ddp.equation.QuestionEvaluator;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.OperationNotAllowedException;
 import org.broadinstitute.ddp.exception.RequiredParameterMissingException;
@@ -71,6 +75,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DecimalAnswer;
@@ -101,36 +106,19 @@ import org.broadinstitute.ddp.util.MiscUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
+@Slf4j
+@AllArgsConstructor
 public class PatchFormAnswersRoute implements Route {
-
-    private static final Logger LOG = LoggerFactory.getLogger(PatchFormAnswersRoute.class);
-
-    private Gson gson;
-    private GsonPojoValidator checker;
-    private FormActivityService formService;
-    private ActivityValidationService actValidationService;
-    private FileUploadService fileService;
-    private PexInterpreter interpreter;
-
-    public PatchFormAnswersRoute(
-            FormActivityService formService,
-            ActivityValidationService actValidationService,
-            FileUploadService fileService,
-            PexInterpreter interpreter
-    ) {
-        this.gson = new Gson();
-        this.checker = new GsonPojoValidator();
-        this.formService = formService;
-        this.actValidationService = actValidationService;
-        this.fileService = fileService;
-        this.interpreter = interpreter;
-    }
+    private final Gson gson = new Gson();
+    private final GsonPojoValidator checker = new GsonPojoValidator();
+    private final FormActivityService formService;
+    private final ActivityValidationService actValidationService;
+    private final FileUploadService fileService;
+    private final PexInterpreter interpreter;
 
     @Override
     public Object handle(Request request, Response response) {
@@ -143,7 +131,7 @@ public class PatchFormAnswersRoute implements Route {
         String operatorGuid = StringUtils.defaultIfBlank(ddpAuth.getOperator(), participantGuid);
         boolean isStudyAdmin = ddpAuth.hasAdminAccessToStudy(studyGuid);
 
-        LOG.info("Attempting to patch answers for activity instance {} for participant {} in study {} by operator {} (isStudyAdmin={})",
+        log.info("Attempting to patch answers for activity instance {} for participant {} in study {} by operator {} (isStudyAdmin={})",
                 instanceGuid, participantGuid, studyGuid, operatorGuid, isStudyAdmin);
 
         PatchAnswerResponse result = TransactionWrapper.withTxn(handle -> {
@@ -153,7 +141,7 @@ public class PatchFormAnswersRoute implements Route {
 
             if (!ActivityType.FORMS.equals(instanceDto.getActivityType())) {
                 String msg = "Activity " + instanceGuid + " is not a form activity that accepts answers";
-                LOG.info(msg);
+                log.info(msg);
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.INVALID_REQUEST, msg));
             }
 
@@ -166,7 +154,7 @@ public class PatchFormAnswersRoute implements Route {
             PatchAnswerResponse res = new PatchAnswerResponse();
             List<AnswerSubmission> submissions = payload.getSubmissions();
             if (submissions == null || submissions.isEmpty()) {
-                LOG.info("No answer submissions to process");
+                log.info("No answer submissions to process");
                 return res;
             }
 
@@ -187,12 +175,12 @@ public class PatchFormAnswersRoute implements Route {
                 if (parentInstanceDto != null && ActivityInstanceUtil.isInstanceReadOnly(parentActivityDef, parentInstanceDto)) {
                     String msg = "Parent activity instance with GUID " + parentInstanceDto.getGuid()
                             + " is read-only, cannot submit answer(s) for child instance " + instanceGuid;
-                    LOG.info(msg);
+                    log.info(msg);
                     throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, msg));
                 }
                 if (ActivityInstanceUtil.isInstanceReadOnly(activityDef, instanceDto)) {
                     String msg = "Activity instance with GUID " + instanceGuid + " is read-only, cannot submit answer(s) for it";
-                    LOG.info(msg);
+                    log.info(msg);
                     throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, msg));
                 }
             }
@@ -216,7 +204,7 @@ public class PatchFormAnswersRoute implements Route {
                     QuestionDef questionDef = activityDef.getQuestionByStableId(questionStableId);
 
                     if (questionDef == null) {
-                        LOG.warn("Could not find questiondef with id: " + questionStableId);
+                        log.warn("Could not find questiondef with id: " + questionStableId);
                     }
 
                     Optional<QuestionDto> optDto = jdbiQuestion.findDtoByStableIdAndInstanceGuid(questionStableId, instanceGuid);
@@ -228,7 +216,7 @@ public class PatchFormAnswersRoute implements Route {
 
                     if (!isStudyAdmin && question.isReadonly()) {
                         String msg = "Question with stable id " + questionStableId + " is read-only, cannot update question";
-                        LOG.info(msg);
+                        log.info(msg);
                         throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.QUESTION_IS_READONLY, msg));
                     }
 
@@ -236,7 +224,7 @@ public class PatchFormAnswersRoute implements Route {
                     Optional<Long> parentQuestionId = jdbiQuestion
                             .findCompositeParentIdByChildId(question.getQuestionId());
                     if (parentQuestionId.isPresent()) {
-                        LOG.warn("Passed question stable ID : " + questionStableId + " is a Composite child question. "
+                        log.warn("Passed question stable ID : " + questionStableId + " is a Composite child question. "
                                 + "Only entire Composite question answer can be updated ");
                         throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, new ApiError(
                                 ErrorCodes.QUESTION_NOT_FOUND, "Only entire Composite question answer can be updated"));
@@ -246,7 +234,7 @@ public class PatchFormAnswersRoute implements Route {
                             submission.getAnswerGuid(), studyGuid, participantGuid, questionDto, submission.getValue());
                     if (answer == null) {
                         String msg = "Answer value does not have expected format for question stable id " + questionStableId;
-                        LOG.info(msg);
+                        log.info(msg);
                         throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
                     }
                     // does this very-specific check need to be here?
@@ -287,7 +275,7 @@ public class PatchFormAnswersRoute implements Route {
                                         questionStableId,
                                         answerDtos.size()
                                 );
-                                LOG.error(errMsg);
+                                log.error(errMsg);
                                 throw ResponseUtil.haltError(response, 500, new ApiError(ErrorCodes.SERVER_ERROR, errMsg));
                             } else if (answerDtos.size() == 1) {
                                 AnswerDto answerDto = answerDtos.get(0);
@@ -310,10 +298,10 @@ public class PatchFormAnswersRoute implements Route {
                             // Did not provide answer guid and no answer exist yet so create one
                             answerGuid = answerDao.createAnswer(operatorUser.getId(), instanceDto.getId(), answer, questionDef)
                                     .getAnswerGuid();
-                            LOG.info("Created answer with guid {} for question stable id {}", answerGuid, questionStableId);
+                            log.info("Created answer with guid {} for question stable id {}", answerGuid, questionStableId);
                         } else {
                             answerDao.updateAnswer(operatorUser.getId(), answerId, answer, questionDef);
-                            LOG.info("Updated answer with guid {} for question stable id {}", answerGuid, questionStableId);
+                            log.info("Updated answer with guid {} for question stable id {}", answerGuid, questionStableId);
                         }
 
                         res.addAnswer(new AnswerResponse(questionStableId, answerGuid));
@@ -321,22 +309,24 @@ public class PatchFormAnswersRoute implements Route {
                 }
                 if (!failedRulesByQuestion.isEmpty()) {
                     String msg = "One or more answer submission(s) failed validation for their question(s)";
-                    LOG.info(msg);
+                    log.info(msg);
                     throw ResponseUtil.haltError(response, 422, new AnswerValidationError(msg, failedRulesByQuestion));
                 }
             } catch (NoSuchElementException e) {
-                LOG.warn(e.getMessage());
+                log.warn(e.getMessage());
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.NO_SUCH_ELEMENT, e.getMessage()));
             } catch (UnexpectedNumberOfElementsException e) {
-                LOG.warn(e.getMessage());
+                log.warn(e.getMessage());
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.UNEXPECTED_NUMBER_OF_ELEMENTS, e.getMessage()));
             } catch (OperationNotAllowedException e) {
-                LOG.warn(e.getMessage());
+                log.warn(e.getMessage());
                 throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED, e.getMessage()));
             } catch (RequiredParameterMissingException e) {
-                LOG.warn(e.getMessage());
+                log.warn(e.getMessage());
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.REQUIRED_PARAMETER_MISSING, e.getMessage()));
             }
+
+            enrichWithEquations(handle, instanceGuid, res);
 
             res.setBlockVisibilities(formService.getBlockVisibilitiesAndEnabled(handle, instanceSummary, activityDef, participantGuid,
                     operatorGuid, instanceGuid));
@@ -345,7 +335,7 @@ public class PatchFormAnswersRoute implements Route {
                     handle, participantGuid, operatorGuid, instanceDto, preferredUserLangDto.getId()
             );
             if (!failures.isEmpty()) {
-                LOG.info("Activity validation failed, reasons: {}", createValidationFailureSummaries(failures));
+                log.info("Activity validation failed, reasons: {}", createValidationFailureSummaries(failures));
                 return enrichPayloadWithValidationFailures(res, failures);
             }
 
@@ -366,12 +356,22 @@ public class PatchFormAnswersRoute implements Route {
         });
 
         response.status(200);
-        LOG.info("Processing PatchFormAnswersRoute took: {} ms", System.currentTimeMillis() - startTime);
+        log.info("Processing PatchFormAnswersRoute took: {} ms", System.currentTimeMillis() - startTime);
         return result;
     }
 
+    private void enrichWithEquations(final Handle handle, final String instanceGuid, final PatchAnswerResponse response) {
+        var questionEvaluator = new QuestionEvaluator(handle, instanceGuid);
+
+        new QuestionCachedDao(handle).getJdbiEquationQuestion().findEquationsByActivityInstanceGuid(instanceGuid)
+                .stream()
+                .map(questionEvaluator::evaluate)
+                .filter(Objects::nonNull)
+                .forEach(response::addEquation);
+    }
+
     private QuestionDto extractQuestionDto(Response response, String questionStableId, Optional<QuestionDto> optQuestionDto) {
-        if (!optQuestionDto.isPresent()) {
+        if (optQuestionDto.isEmpty()) {
             String msg = "Question with stable id " + questionStableId + " is not found in form activity";
             throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.QUESTION_NOT_FOUND, msg));
         }
@@ -382,7 +382,7 @@ public class PatchFormAnswersRoute implements Route {
         String stableId = submission.getQuestionStableId();
         if (StringUtils.isBlank(stableId)) {
             String msg = "An answer submission is missing a question stable id";
-            LOG.info(msg);
+            log.info(msg);
             throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
         }
         return stableId;
@@ -406,7 +406,7 @@ public class PatchFormAnswersRoute implements Route {
                 }
             }
         } catch (JsonSyntaxException e) {
-            LOG.info("Unable to parse request payload: " + e.getMessage());
+            log.info("Unable to parse request payload: " + e.getMessage());
         }
         return payload;
     }
@@ -487,7 +487,7 @@ public class PatchFormAnswersRoute implements Route {
             List<SelectedPicklistOption> selected = gson.fromJson(value, selectedOptionListType);
             return new PicklistAnswer(null, stableId, guid, selected, actInstanceGuid);
         } catch (JsonSyntaxException e) {
-            LOG.warn("Failed to convert submitted answer to a picklist answer", e);
+            log.warn("Failed to convert submitted answer to a picklist answer", e);
             return null;
         }
     }
@@ -530,7 +530,7 @@ public class PatchFormAnswersRoute implements Route {
             });
             return new MatrixAnswer(null, stableId, guid, selected, actInstanceGuid);
         } catch (JsonSyntaxException e) {
-            LOG.warn("Failed to convert submitted answer to a matrix answer", e);
+            log.warn("Failed to convert submitted answer to a matrix answer", e);
             return null;
         }
     }
@@ -595,11 +595,11 @@ public class PatchFormAnswersRoute implements Route {
                 DateValue dateValue = gson.fromJson(value, DateValue.class);
                 return new DateAnswer(null, stableId, guid, dateValue, actInstanceGuid);
             } catch (JsonSyntaxException e) {
-                LOG.warn("Failed to convert submitted answer to a date answer", e);
+                log.warn("Failed to convert submitted answer to a date answer", e);
                 return null;
             }
         } else {
-            LOG.info("Provided answer value for question stable id {} and with "
+            log.info("Provided answer value for question stable id {} and with "
                     + "answer guid {} is not an object", stableId, guid);
             return null;
         }
@@ -658,7 +658,7 @@ public class PatchFormAnswersRoute implements Route {
                                                    String answerGuid, JsonElement value) {
         String parentStableId = compositeDto.getStableId();
         final Consumer<String> haltError = (String msg) -> {
-            LOG.info(msg);
+            log.info(msg);
             throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
         };
 
@@ -671,7 +671,7 @@ public class PatchFormAnswersRoute implements Route {
                         + " are restricted to only one row");
             }
 
-            List<Long> childIds = jdbiQuestion.findCompositeChildIdsByParentId(compositeDto.getId());
+            List<Long> childIds = jdbiQuestion.findCompositeChildIdsByParentIdAndInstanceGuid(compositeDto.getId(), instanceGuid);
             Map<String, QuestionDto> childDtos;
             try (var stream = jdbiQuestion.findQuestionDtosByIds(Set.copyOf(childIds))) {
                 childDtos = stream.collect(Collectors.toMap(QuestionDto::getStableId, Function.identity()));
@@ -713,7 +713,7 @@ public class PatchFormAnswersRoute implements Route {
 
             return compAnswer;
         } else {
-            LOG.info("Provided answer value for question stable id {} and with "
+            log.info("Provided answer value for question stable id {} and with "
                     + "answer guid {} is expected to be a JSON array", parentStableId, answerGuid);
             return null;
         }
@@ -748,7 +748,7 @@ public class PatchFormAnswersRoute implements Route {
                     .collect(Collectors.joining(", "));
             String msg = "Answer submission with stable id " + answer.getQuestionStableId()
                     + " and answer guid " + answer.getAnswerGuid() + " failed check: " + errorMsg;
-            LOG.warn(msg);
+            log.warn(msg);
             throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
         }
         if (QuestionType.DATE.equals(answer.getQuestionType())) {
@@ -757,7 +757,7 @@ public class PatchFormAnswersRoute implements Route {
                 String msg = "Answer submission with stable id " + answer.getQuestionStableId()
                         + " and answer guid " + answer.getAnswerGuid() + " failed check: "
                         + failure.get();
-                LOG.warn(msg);
+                log.warn(msg);
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
             }
         }
@@ -791,7 +791,7 @@ public class PatchFormAnswersRoute implements Route {
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
                         "File uploaded size does not match expected size"));
             case OK:
-                LOG.info("File upload with id {} is uploaded and can be associated with participant's answer", uploadId);
+                log.info("File upload with id {} is uploaded and can be associated with participant's answer", uploadId);
                 break;
             default:
                 throw new DDPException("Unhandled file check result: " + verifyResult);
@@ -811,9 +811,9 @@ public class PatchFormAnswersRoute implements Route {
         answersToCheck.add(answer);
         if (answer.getQuestionType() == QuestionType.COMPOSITE) {
             ((CompositeAnswer) answer).getValue().stream()
-                    .map(answerRow -> answerRow.getValues())
+                    .map(AnswerRow::getValues)
                     .flatMap(Collection::stream)
-                    .filter(each -> each != null)
+                    .filter(Objects::nonNull)
                     .forEach(answersToCheck::add);
         }
 
@@ -830,7 +830,7 @@ public class PatchFormAnswersRoute implements Route {
             if (currentQuestion == null) {
                 String msg = "Could not find question using activity instance guid " + instanceGuid
                         + " and question stable id " + currentAnswer.getQuestionStableId();
-                LOG.warn(msg);
+                log.warn(msg);
                 throw new NoSuchElementException(msg);
             }
 

@@ -1,12 +1,13 @@
 package org.broadinstitute.ddp.route;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -19,8 +20,6 @@ import org.broadinstitute.ddp.model.suggestion.PatternMatch;
 import org.broadinstitute.ddp.util.ResponseUtil;
 
 import org.broadinstitute.ddp.util.StringSuggestionTypeaheadComparator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import spark.Request;
 import spark.Response;
@@ -29,16 +28,12 @@ import spark.Route;
 /**
  *  This route returns the list of suggestions for the supplied drug name
  */
+@Slf4j
+@AllArgsConstructor
 public class GetDsmDrugSuggestionsRoute implements Route {
-
-    private static final Logger LOG = LoggerFactory.getLogger(GetDsmDrugSuggestionsRoute.class);
     private static final String DRUG_QUERY_REGEX = "\\w+";
     private static final int DEFAULT_LIMIT = 100;
     private final DrugStore drugStore;
-
-    public GetDsmDrugSuggestionsRoute(DrugStore drugStore) {
-        this.drugStore = drugStore;
-    }
 
     private DrugSuggestionResponse getUnfilteredDrugSuggestions(String drugQuery, int limit) {
 
@@ -46,7 +41,7 @@ public class GetDsmDrugSuggestionsRoute implements Route {
                 drug -> new DrugSuggestion(
                     new Drug(drug.getName(), null),
                     new ArrayList<>(
-                        Arrays.asList(new PatternMatch(0, drug.getName().length()))
+                            List.of(new PatternMatch(0, drug.getName().length()))
                     )
                 )
         ).limit(limit).collect(Collectors.toList());
@@ -82,18 +77,18 @@ public class GetDsmDrugSuggestionsRoute implements Route {
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
         String drugQuery = request.queryParams(RouteConstants.QueryParam.TYPEAHEAD_QUERY);
         String queryLimit = request.queryParams(RouteConstants.QueryParam.TYPEAHEAD_QUERY_LIMIT);
-        int limit = !StringUtils.isBlank(queryLimit) ? Integer.valueOf(queryLimit) : DEFAULT_LIMIT;
-        LOG.info("Limit was not specified, defaulting it to {}", DEFAULT_LIMIT);
+        int limit = !StringUtils.isBlank(queryLimit) ? Integer.parseInt(queryLimit) : DEFAULT_LIMIT;
+        log.info("Limit was not specified, defaulting it to {}", DEFAULT_LIMIT);
         if (StringUtils.isBlank(studyGuid)) {
-            LOG.warn("Study GUID is blank");
+            log.warn("Study GUID is blank");
             ResponseUtil.halt400ErrorResponse(response, ErrorCodes.MISSING_STUDY_GUID);
         }
         if (StringUtils.isBlank(drugQuery)) {
-            LOG.info("Drug query is blank, returning all results");
+            log.info("Drug query is blank, returning all results");
             return getUnfilteredDrugSuggestions(drugQuery, limit);
         } else {
             if (!Pattern.compile(DRUG_QUERY_REGEX, Pattern.UNICODE_CHARACTER_CLASS).matcher(drugQuery).find()) {
-                LOG.warn("Drug query contains non-alphanumeric characters!");
+                log.warn("Drug query contains non-alphanumeric characters!");
                 ResponseUtil.halt400ErrorResponse(response, ErrorCodes.MALFORMED_DRUG_QUERY);
             }
             return getDrugSuggestions(drugQuery, limit);

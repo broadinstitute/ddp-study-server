@@ -16,15 +16,11 @@ import org.broadinstitute.ddp.db.dto.housekeeping.BackupJobDto;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.jdbi.v3.core.Handle;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class JdbiBackupJobTest extends TxnAwareBaseTest {
-
     private static final String RUN_NAME = "testrun-1234-abcd-1xyz";
     private static final String RUN_STATUS = "PENDING";
     private static final String RUN_DB = "pepper-dev";
-    private static final Logger LOG = LoggerFactory.getLogger(JdbiBackupJobTest.class);
 
     @Test
     public void testJdbiBackupJobMethods() {

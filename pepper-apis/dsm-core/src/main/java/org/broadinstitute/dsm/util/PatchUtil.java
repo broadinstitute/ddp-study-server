@@ -8,18 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.AbstractionActivity;
-import org.broadinstitute.dsm.db.AbstractionFieldValue;
-import org.broadinstitute.dsm.db.AbstractionQCValue;
-import org.broadinstitute.dsm.db.AbstractionReviewValue;
-import org.broadinstitute.dsm.db.Drug;
-import org.broadinstitute.dsm.db.KitRequestShipping;
-import org.broadinstitute.dsm.db.MedicalRecord;
-import org.broadinstitute.dsm.db.OncHistoryDetail;
-import org.broadinstitute.dsm.db.Participant;
-import org.broadinstitute.dsm.db.ParticipantData;
-import org.broadinstitute.dsm.db.Tissue;
-import org.broadinstitute.dsm.db.ViewFilter;
+import org.broadinstitute.dsm.db.*;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DBElement;
@@ -55,6 +44,7 @@ public class PatchUtil {
         getColumnNames(Drug.class);
         getColumnNames(ParticipantData.class);
         getColumnNames(ParticipantRecordDto.class);
+        getColumnNames(SmId.class);
         logger.info("Loaded patch utils");
     }
 

@@ -33,10 +33,12 @@ import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiFormActivitySetting;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.FormActivitySettingDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
+import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.PutAnswersResponse;
@@ -150,10 +152,27 @@ public class PutFormAnswersRoute implements Route {
                     // FIXME: address doesn't get saved until this PUT call finishes, so we couldn't check address here.
                     // checkAddressRequirements(handle, userGuid, form);
 
+                    User participantUser = instanceSummary.getParticipantUser();
+                    User operatorUser = participantUser;
+                    if (!userGuid.equals(operatorGuid)) {
+                        operatorUser = handle.attach(UserDao.class).findUserByGuid(operatorGuid)
+                                .orElseThrow(() -> new DDPException("Could not find operator with guid " + operatorGuid));
+                    }
+
+                    var instanceStatusDao = handle.attach(ActivityInstanceStatusDao.class);
+
                     List<ActivityValidationFailure> validationFailures = actValidationService.validate(
                             handle, interpreter, userGuid, operatorGuid, instanceGuid, form.getCreatedAtMillis(),
                             form.getActivityId(), preferredUserLangDto.getId());
                     if (!validationFailures.isEmpty()) {
+                        //check if study has errorPresentStatus enabled
+                        StudyDto studyDto = new JdbiUmbrellaStudyCached(handle).findByStudyGuid(studyGuid);
+                        if (studyDto.isErrorPresentStatusEnabled()) {
+                            instanceStatusDao.updateOrInsertStatus(instanceDto, InstanceStatusType.ERROR_PRESENT,
+                                    Instant.now().toEpochMilli(), operatorUser, participantUser);
+                            return new PutAnswersResponse(WorkflowResponse.unknown());
+                        }
+
                         String msg = "Activity validation failed";
                         List<String> validationErrorSummaries = validationFailures
                                 .stream().map(ActivityValidationFailure::getErrorMessage).collect(Collectors.toList());
@@ -181,14 +200,6 @@ public class PutFormAnswersRoute implements Route {
                         }
                     }
 
-                    User participantUser = instanceSummary.getParticipantUser();
-                    User operatorUser = participantUser;
-                    if (!userGuid.equals(operatorGuid)) {
-                        operatorUser = handle.attach(UserDao.class).findUserByGuid(operatorGuid)
-                                .orElseThrow(() -> new DDPException("Could not find operator with guid " + operatorGuid));
-                    }
-
-                    var instanceStatusDao = handle.attach(ActivityInstanceStatusDao.class);
                     instanceStatusDao.updateOrInsertStatus(instanceDto, InstanceStatusType.COMPLETE,
                             Instant.now().toEpochMilli(), operatorUser, participantUser);
                     if (parentInstanceDto != null) {
