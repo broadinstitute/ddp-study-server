@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.google.gson.Gson;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -27,23 +28,18 @@ import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class GetParticipantInfoRouteStandaloneTest extends IntegrationTestSuite.TestCase {
-
-    private static final Logger LOG = LoggerFactory.getLogger(GetParticipantInfoRouteStandaloneTest.class);
     private static Gson gson;
 
     private static TestDataSetupUtil.GeneratedTestData testData;
-    private Set<String> mailAddressesToDelete = new HashSet<>();
+    private final Set<String> mailAddressesToDelete = new HashSet<>();
 
     @BeforeClass
     public static void beforeClass() {
         gson = new Gson();
-        TransactionWrapper.useTxn(handle -> {
-            testData = TestDataSetupUtil.generateBasicUserTestData(handle);
-        });
+        TransactionWrapper.useTxn(handle -> testData = TestDataSetupUtil.generateBasicUserTestData(handle));
     }
 
     @After
@@ -57,11 +53,10 @@ public class GetParticipantInfoRouteStandaloneTest extends IntegrationTestSuite.
                 + RouteConstants.API.PARTICIPANTS_INFO_FOR_STUDY.replace(RouteConstants.PathParam.STUDY_GUID, testData.getStudyGuid());
         HttpResponse httpResponse = Request.Get(url).execute().returnResponse();
         assertEquals(expectedHttpStatus, httpResponse.getStatusLine().getStatusCode());
-        LOG.info("Returned body : {}", EntityUtils.toString(httpResponse.getEntity()));
+        log.info("Returned body : {}", EntityUtils.toString(httpResponse.getEntity()));
 
         String entity = EntityUtils.toString(httpResponse.getEntity());
-        StudyParticipantsInfo participantsInfo = gson.fromJson(entity, StudyParticipantsInfo.class);
-        return participantsInfo;
+        return gson.fromJson(entity, StudyParticipantsInfo.class);
     }
 
     @Test

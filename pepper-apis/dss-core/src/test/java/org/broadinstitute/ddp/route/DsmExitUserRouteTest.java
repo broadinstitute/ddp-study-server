@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
@@ -22,13 +23,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class DsmExitUserRouteTest extends DsmRouteTest {
-
-    private static final Logger LOG = LoggerFactory.getLogger(DsmExitUserRouteTest.class);
-
     private static TestDataSetupUtil.GeneratedTestData generatedTestData;
     private static String url;
     private static long userStudyEnrollmentId;
@@ -81,9 +78,7 @@ public class DsmExitUserRouteTest extends DsmRouteTest {
     @After
     public void removeTestData() {
         TransactionWrapper.useTxn(
-                handle -> {
-                    handle.attach(JdbiUserStudyEnrollment.class).deleteById(userStudyEnrollmentId);
-                });
+                handle -> handle.attach(JdbiUserStudyEnrollment.class).deleteById(userStudyEnrollmentId));
     }
 
     /**
@@ -154,15 +149,13 @@ public class DsmExitUserRouteTest extends DsmRouteTest {
     @Test
     public void testTerminateEnrolledUser_Success() throws Exception {
         TransactionWrapper.useTxn(
-                handle -> {
-                    handle.attach(JdbiUserStudyEnrollment.class)
-                            .changeUserStudyEnrollmentStatus(
-                                    generatedTestData.getUserGuid(),
-                                    generatedTestData.getStudyGuid(),
-                                    EnrollmentStatusType.ENROLLED
-                            );
-                });
-        LOG.info("testTerminateUser_Success");
+                handle -> handle.attach(JdbiUserStudyEnrollment.class)
+                        .changeUserStudyEnrollmentStatus(
+                                generatedTestData.getUserGuid(),
+                                generatedTestData.getStudyGuid(),
+                                EnrollmentStatusType.ENROLLED
+                        ));
+        log.info("testTerminateUser_Success");
         HttpResponse response = RouteTestUtil.sendRequestAndReturnResponse(
                 RouteTestUtil.RequestMethod.POST,
                 url,

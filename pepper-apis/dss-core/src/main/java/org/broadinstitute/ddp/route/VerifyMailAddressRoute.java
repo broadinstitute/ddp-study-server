@@ -5,6 +5,8 @@ import java.util.List;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.client.AddressVerificationException;
@@ -21,19 +23,14 @@ import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
+@Slf4j
+@AllArgsConstructor
 public class VerifyMailAddressRoute extends ValidatedJsonInputRoute<VerifyAddressPayload> {
-    private static final Logger LOG = LoggerFactory.getLogger(VerifyMailAddressRoute.class);
     private static final Gson GSON = new GsonBuilder().serializeNulls().create();
-    private AddressService addressService;
-
-    public VerifyMailAddressRoute(AddressService addressService) {
-        this.addressService = addressService;
-    }
+    private final AddressService addressService;
 
     @Override
     protected int getValidationErrorStatus() {
@@ -42,10 +39,10 @@ public class VerifyMailAddressRoute extends ValidatedJsonInputRoute<VerifyAddres
 
     @Override
     public Object handle(Request request, Response response, VerifyAddressPayload payload) {
-        LOG.info("Verifying mail address");
+        log.info("Verifying mail address");
         try {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Verifying address: {}", GSON.toJson(payload));
+            if (log.isDebugEnabled()) {
+                log.debug("Verifying address: {}", GSON.toJson(payload));
             }
             MailAddress entered = payload.toMailAddress();
             MailAddress suggested = addressService.verifyAddress(entered);
@@ -55,15 +52,15 @@ public class VerifyMailAddressRoute extends ValidatedJsonInputRoute<VerifyAddres
                 TransactionWrapper.useTxn(handle -> {
                     StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(payload.getStudyGuid());
                     if (studyDto == null) {
-                        LOG.warn("Could not find study with guid {} for checking address warnings", payload.getStudyGuid());
+                        log.warn("Could not find study with guid {} for checking address warnings", payload.getStudyGuid());
                         throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST,
                                 new ApiError(ErrorCodes.BAD_PAYLOAD, "Invalid study"));
                     }
                     String langCode = RouteUtil.resolveLanguage(request, handle, studyDto.getGuid(),
                             RouteUtil.getDDPAuth(request).getPreferredLocale());
-                    LOG.info("Checking entered address against rules for study {}", studyDto.getGuid());
+                    log.info("Checking entered address against rules for study {}", studyDto.getGuid());
                     warningsForEntered.addAll(addressService.checkStudyAddress(handle, studyDto.getId(), langCode, entered));
-                    LOG.info("Checking suggested address against rules for study {}", studyDto.getGuid());
+                    log.info("Checking suggested address against rules for study {}", studyDto.getGuid());
                     warningsForSuggested.addAll(addressService.checkStudyAddress(handle, studyDto.getId(), langCode, suggested));
                 });
             }
