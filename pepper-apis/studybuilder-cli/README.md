@@ -2,24 +2,15 @@ A command-line tool for building a study on Pepper.
 
 ## Getting Started
 
-The tool has a dependency on `pepper-apis` and that needs to be built
-beforehand. Running the `install` maven command will build and put the
-`pepper-apis` jar in the right place in the local filesystem, so that maven can
-find it later when building `study-builder`.
-
-1. Build and install pepper-apis
     ```
-    $ cd /path/to/ddp/pepper-apis
-    $ mvn -DskipTests clean install
-    $ mvn -DskipTests -f parent-pom.xml install
+2. Build this module
     ```
-2. Build this project
-    ```
-    $ cd ../study-builder
-    $ mvn clean package
+    $ cd .. # to get to top-level pepper-apis directory
+    $ mvn install -pl studybuilder-cli -am -DskipTests 
     ```
 3. Render configurations
     ```
+    $ cd studybuilder-cli   
     $ ./render.sh <version> <env> <study>
     ```
 4. Run the tool
