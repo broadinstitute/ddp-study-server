@@ -124,6 +124,21 @@ where ai.activity_instance_guid = :instanceGuid
 <all_answers_order_by()>
 >>
 
+findAnswersByInstanceGuidAndQuestionStableId() ::= <<
+<all_answers_select()>
+ join study_activity as act on act.study_activity_id = ai.study_activity_id
+where ai.activity_instance_guid = :instanceGuid
+  and ((qsc.stable_id = :questionStableId and qsc.umbrella_study_id = act.study_id)
+      or ans.question_id in (
+         select cqq.child_question_id
+           from composite_question__question as cqq
+           join question as pq on pq.question_id = cqq.parent_question_id
+           join question_stable_code as pqsc on pqsc.question_stable_code_id = pq.question_stable_code_id
+          where pqsc.stable_id = :questionStableId
+            and pqsc.umbrella_study_id = act.study_id))
+order by cai.response_order
+>>
+
 findAnswerByInstanceGuidAndQuestionId() ::= <<
 <all_answers_select()>
  join study_activity as act on act.study_activity_id = ai.study_activity_id

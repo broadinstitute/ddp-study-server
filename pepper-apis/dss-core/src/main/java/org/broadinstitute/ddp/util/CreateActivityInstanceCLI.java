@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -23,17 +24,13 @@ import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * CLI for bulk creation of activity instances for a list of participants.
  */
+@Slf4j
 public class CreateActivityInstanceCLI {
-
     private static final String USAGE = CreateActivityInstanceCLI.class.getSimpleName() + " [OPTIONS]";
-
-    private static final Logger LOG = LoggerFactory.getLogger(CreateActivityInstanceCLI.class);
 
     public static final String STUDY_OPTION = "s";
     public static final String ACTIVITY_CODE_OPTION = "a";
@@ -67,7 +64,7 @@ public class CreateActivityInstanceCLI {
         try {
             ptpGuids = IOUtils.readLines(new FileReader(fileOfParticipantGuids));
         } catch (IOException e) {
-            LOG.error("Could not read " + fileOfParticipantGuids.getAbsolutePath(), e);
+            log.error("Could not read " + fileOfParticipantGuids.getAbsolutePath(), e);
             System.exit(-1);
         }
 
@@ -77,7 +74,7 @@ public class CreateActivityInstanceCLI {
         StringBuilder errors = new StringBuilder();
         StringBuilder summary = new StringBuilder();
 
-        LOG.info("Will attempt to create " + participantGuids.size() + " " + activityCode + " activity instances for " + studyGuid);
+        log.info("Will attempt to create " + participantGuids.size() + " " + activityCode + " activity instances for " + studyGuid);
 
         TransactionWrapper.init(
                 new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, dbUrl));
@@ -88,7 +85,7 @@ public class CreateActivityInstanceCLI {
             Optional<ActivityDto> activityDto = handle.attach(JdbiActivity.class).findActivityByStudyGuidAndCode(studyGuid, activityCode);
 
             if (activityDto.isEmpty()) {
-                LOG.error("Could not find activity " + activityCode + " in study " + studyGuid);
+                log.error("Could not find activity " + activityCode + " in study " + studyGuid);
                 System.exit(-1);
             }
 
@@ -99,29 +96,35 @@ public class CreateActivityInstanceCLI {
 
             for (String participantGuid: participantGuids) {
                 if (userDao.findUserByGuid(participantGuid).isEmpty()) {
-                    errors.append("Could not find user " + participantGuid + ".  No activity instance created.\n");
+                    errors.append("Could not find user ")
+                            .append(participantGuid)
+                            .append(".  No activity instance created.\n");
                     continue;
                 }
                 ActivityInstanceDto createdInstance = activityInstanceDao
                         .insertInstance(studyActivityId, participantGuid, participantGuid, null);
-                summary.append("Created " + activityCode + " instance " + createdInstance.getGuid()
-                        + " for participant " + participantGuid + "\n");
+                summary.append("Created ")
+                        .append(activityCode)
+                        .append(" instance ")
+                        .append(createdInstance.getGuid())
+                        .append(" for participant ")
+                        .append(participantGuid).append("\n");
                 instancesCreated++;
             }
 
             String errorMessage = errors.toString();
             String summaryMessage = summary.toString();
 
-            LOG.info("Created " + instancesCreated + " " + activityCode + " activity instances");
+            log.info("Created " + instancesCreated + " " + activityCode + " activity instances");
             if (StringUtils.isNotBlank(summaryMessage)) {
-                LOG.info(summaryMessage);
+                log.info(summaryMessage);
             }
 
             if (StringUtils.isNotBlank(errorMessage)) {
-                LOG.error(errorMessage);
+                log.error(errorMessage);
                 // put this high level indicator of errors last, so it's right at the bottom of
                 // the terminal window
-                LOG.error("There were errors creating activity instances!");
+                log.error("There were errors creating activity instances!");
             }
         });
 

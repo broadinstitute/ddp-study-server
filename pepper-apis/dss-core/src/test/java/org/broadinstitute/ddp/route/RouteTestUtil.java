@@ -14,6 +14,7 @@ import com.auth0.jwt.JWT;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
@@ -41,16 +42,12 @@ import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.TestingUserUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 
 /**
  * Utilities for route integration tests.
  */
+@Slf4j
 public class RouteTestUtil {
-
-    private static final Logger LOG = LoggerFactory.getLogger(RouteTestUtil.class);
     private static final String SQL_CONF_FILE = "sql.conf";
     private static final int DB_MAX_CONN = 2;
 
@@ -93,14 +90,14 @@ public class RouteTestUtil {
         boolean doDbInitialization = false;
         try {
             TransactionWrapper.getInstance();
-            LOG.info("db pool already initialized");
+            log.info("db pool already initialized");
         } catch (IllegalStateException e) {
             doDbInitialization = true;
         }
 
         if (doDbInitialization) {
             String dbUrl = cfg.getString(TransactionWrapper.DB.APIS.getDbUrlConfigKey());
-            LOG.info("Initializing db pool for {}", dbUrl);
+            log.info("Initializing db pool for {}", dbUrl);
             TransactionWrapper.reset();
             TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, DB_MAX_CONN,
                     dbUrl));
@@ -192,13 +189,9 @@ public class RouteTestUtil {
             String payload
     ) throws Exception {
         String[] dummy = new String[] {url};
-        urlReplacements.entrySet().forEach(
-                es -> {
-                    dummy[0] = dummy[0].replace(es.getKey(), es.getValue());
-                }
-        );
+        urlReplacements.forEach((key, value) -> dummy[0] = dummy[0].replace(key, value));
         String renderedUrl = dummy[0];
-        LOG.info("Sending the " + requestMethod + " request to {}", renderedUrl);
+        log.info("Sending the " + requestMethod + " request to {}", renderedUrl);
         Request request = null;
         if (requestMethod == RequestMethod.GET) {
             request = RouteTestUtil.buildAuthorizedGetRequest(
@@ -224,8 +217,7 @@ public class RouteTestUtil {
                     payload
             );
         }
-        HttpResponse response = request.execute().returnResponse();
-        return response;
+        return request.execute().returnResponse();
     }
 
     private static void setLockFlagForTestUser(boolean isLocked, boolean isAdmin) throws SQLException {
@@ -257,7 +249,7 @@ public class RouteTestUtil {
                 stmt.setBoolean(1, isRevoked);
                 stmt.setString(2, auth0ClientId);
                 int numRowsUpdated = stmt.executeUpdate();
-                LOG.info("updated {} client rows", numRowsUpdated);
+                log.info("updated {} client rows", numRowsUpdated);
             }
             return null;
         });
@@ -305,7 +297,7 @@ public class RouteTestUtil {
                 stmt.setString(1, auth0UserId);
                 int deleted = stmt.executeUpdate();
                 if (deleted != 1) {
-                    LOG.error("Deleted {} rows for auth0 user id {}", deleted, auth0UserId);
+                    log.error("Deleted {} rows for auth0 user id {}", deleted, auth0UserId);
                 }
             } catch (SQLException e) {
                 throw new RuntimeException(e);
@@ -331,14 +323,14 @@ public class RouteTestUtil {
      * Deletes profiles for given user given id.
      */
     public static void deleteProfileForUserId(Handle handle, Long userId) throws SQLException {
-        LOG.info("Deleting profile for user {} ", userId);
+        log.info("Deleting profile for user {} ", userId);
 
         try (PreparedStatement stmt = handle.getConnection()
                 .prepareStatement("delete from user_profile where user_id = ?")) {
             stmt.setLong(1, userId);
             int numRowsDeleted = stmt.executeUpdate();
             if (numRowsDeleted != 1) {
-                LOG.info("Removed {} user_profile rows for user_id {}", numRowsDeleted, userId);
+                log.info("Removed {} user_profile rows for user_id {}", numRowsDeleted, userId);
             }
         }
     }
@@ -354,14 +346,14 @@ public class RouteTestUtil {
                         stmt.setString(1, guid);
                         int deleted = stmt.executeUpdate();
                         if (deleted != 1) {
-                            LOG.error("Deleted {} rows for guid {}", deleted, guid);
+                            log.error("Deleted {} rows for guid {}", deleted, guid);
                         }
                     }
                     try (PreparedStatement stmt = handle.getConnection().prepareStatement(DELETE_USER_BY_GUID_STMT)) {
                         stmt.setString(1, guid);
                         int deleted = stmt.executeUpdate();
                         if (deleted != 1) {
-                            LOG.error("Deleted {} user rows for guid {}", deleted, guid);
+                            log.error("Deleted {} user rows for guid {}", deleted, guid);
                         }
                     }
                 }
@@ -390,9 +382,7 @@ public class RouteTestUtil {
         ActivityValidationDto dto = new ActivityValidationDto(
                 activity.getActivityId(), null, precond, expr, errorMessageTemplate
         );
-        affectedQuestionStableIds.forEach(
-                field -> dto.addAffectedField(field)
-        );
+        affectedQuestionStableIds.forEach(dto::addAffectedField);
         return dto;
     }
 
@@ -409,12 +399,12 @@ public class RouteTestUtil {
             port = portFinder.getLocalPort();
             portFinder.close();
         } catch (IOException e) {
-            LOG.info("Could not find available port, will use fallback: " + fallbackPort);
+            log.info("Could not find available port, will use fallback: " + fallbackPort);
         }
         return port;
     }
 
     public enum RequestMethod {
-        GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, TRACE;
+        GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS, TRACE
     }
 }

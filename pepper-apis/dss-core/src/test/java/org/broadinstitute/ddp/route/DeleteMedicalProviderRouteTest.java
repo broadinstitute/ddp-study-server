@@ -19,46 +19,37 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class DeleteMedicalProviderRouteTest extends IntegrationTestSuite.TestCase {
-
-    private static final Logger LOG = LoggerFactory.getLogger(DeleteMedicalProviderRouteTest.class);
-
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String token;
     private static String url;
 
     private static void insertTestData() {
         TransactionWrapper.useTxn(
-                handle -> {
-                    handle.attach(JdbiMedicalProvider.class).insert(
-                            new MedicalProviderDto(
-                                    null,
-                                    TestMedicalProviderData.GUID,
-                                    testData.getUserId(),
-                                    testData.getStudyId(),
-                                    TestMedicalProviderData.INSTITUTION_TYPE,
-                                    TestMedicalProviderData.INSTITUTION_NAME,
-                                    TestMedicalProviderData.PHYSICIAN_NAME,
-                                    TestMedicalProviderData.CITY,
-                                    TestMedicalProviderData.STATE,
-                                    null,
-                                    null,
-                                    null,
-                                    null
-                            )
-                    );
-                }
+                handle -> handle.attach(JdbiMedicalProvider.class).insert(
+                        new MedicalProviderDto(
+                                null,
+                                TestMedicalProviderData.GUID,
+                                testData.getUserId(),
+                                testData.getStudyId(),
+                                TestMedicalProviderData.INSTITUTION_TYPE,
+                                TestMedicalProviderData.INSTITUTION_NAME,
+                                TestMedicalProviderData.PHYSICIAN_NAME,
+                                TestMedicalProviderData.CITY,
+                                TestMedicalProviderData.STATE,
+                                null,
+                                null,
+                                null,
+                                null
+                        )
+                )
         );
     }
 
     private static void deleteTestData() {
         TransactionWrapper.useTxn(
-                handle -> {
-                    handle.attach(JdbiMedicalProvider.class).deleteByGuid(TestMedicalProviderData.GUID);
-                }
+                handle -> handle.attach(JdbiMedicalProvider.class).deleteByGuid(TestMedicalProviderData.GUID)
         );
     }
 

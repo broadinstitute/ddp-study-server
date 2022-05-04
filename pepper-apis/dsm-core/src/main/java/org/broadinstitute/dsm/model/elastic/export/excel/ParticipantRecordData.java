@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -42,7 +43,7 @@ public class ParticipantRecordData {
                     String esPath = getEsPath(key, column);
                     Collection<?> nestedValue = getNestedValue(esPath, esDataAsMap);
                     if (aliasListEntry.getKey().isJson()) {
-                        nestedValue = getJsonValue(nestedValue, column);
+                        nestedValue = getJsonValue(nestedValue, column, key);
                     }
                     if (aliasListEntry.getKey() == Alias.ACTIVITIES) {
                         nestedValue = getQuestionAnswerValue(nestedValue, column);
@@ -61,11 +62,19 @@ public class ParticipantRecordData {
 
     }
 
-    private Collection<?> getJsonValue(Collection<?> nestedValue, ParticipantColumn column) {
+    private Collection<?> getJsonValue(Collection<?> nestedValue, ParticipantColumn column,
+                                       Alias alias) {
         if (nestedValue.isEmpty()) {
             return Collections.singletonList(StringUtils.EMPTY);
         }
-        String jsonString = nestedValue.stream().findFirst().get().toString();
+        String jsonString;
+        if (alias.isCollection()) {
+            jsonString = nestedValue.stream().filter(val ->
+                            column.getObject().equals(((Map<String, Object>) val).get(ESObjectConstants.FIELD_TYPE_ID)))
+                    .findFirst().map(val -> ((Map<String, Object>) val).get(ESObjectConstants.DATA).toString()).orElse(StringUtils.EMPTY);
+        } else {
+            jsonString = nestedValue.stream().findFirst().get().toString();
+        }
         JsonNode jsonNode;
         try {
             jsonNode = ObjectMapperSingleton.instance().readTree(jsonString);
@@ -130,7 +139,7 @@ public class ParticipantRecordData {
         List<LinkedHashMap<String, Object>> activities = (List<LinkedHashMap<String, Object>>) nestedValue;
         Collection<?> objects =
                 activities.stream().filter(activity -> activity.get(ElasticSearchUtil.ACTIVITY_CODE).equals(column.getTableAlias()))
-                        .findFirst().map(foundActivity -> {
+                        .map(foundActivity -> {
                             if (Objects.isNull(column.getObject())) {
                                 Object o = foundActivity.get(column.getName());
                                 return mapToCollection(o);
@@ -138,17 +147,44 @@ public class ParticipantRecordData {
                                 List<LinkedHashMap<String, Object>> questionAnswers =
                                         (List<LinkedHashMap<String, Object>>) foundActivity.get(ElasticSearchUtil.QUESTIONS_ANSWER);
                                 return questionAnswers.stream().filter(qa -> qa.get(ESObjectConstants.STABLE_ID).equals(column.getName()))
-                                        .map(fq -> {
-                                            Object answer = fq.get("answer");
-                                            return answer != null ? answer : fq.get(column.getName());
-                                        }).map(this::mapToCollection)
-                                        .flatMap(Collection::stream).collect(Collectors.toList());
+                                        .map(fq -> getAnswerValue(fq, column.getName()))
+                                        .map(this::mapToCollection)
+                                        .flatMap(Collection::stream)
+                                        .collect(Collectors.toList());
                             }
-                        }).orElse(Collections.singletonList(StringUtils.EMPTY));
+                        }).flatMap(Collection::stream).collect(Collectors.toList());
         if (objects.isEmpty()) {
             return Collections.singletonList(StringUtils.EMPTY);
         }
         return objects;
+    }
+
+    private Object getAnswerValue(LinkedHashMap<String, Object> fq, String columnName) {
+        Collection<?> answer = mapToCollection(fq.get(ESObjectConstants.ANSWER));
+        if (answer.isEmpty()) {
+            answer = mapToCollection(fq.get(columnName));
+        }
+        Object optionDetails = fq.get(ESObjectConstants.OPTIONDETAILS);
+        if (optionDetails != null && !((List<?>) optionDetails).isEmpty()) {
+            removeOptionsFromAnswer(answer, ((List<Map<String, String>>)optionDetails));
+            return Stream.of(answer, getOptionDetails((List<?>) optionDetails)).flatMap(Collection::stream)
+                    .collect(Collectors.toList());
+        }
+
+        return answer;
+    }
+
+    private void removeOptionsFromAnswer(Collection<?> answer, List<Map<String,String>> optionDetails) {
+        List<String> details = optionDetails.stream().map(options -> options.get(ESObjectConstants.OPTION)).collect(Collectors.toList());
+        answer.removeAll(details);
+    }
+
+    private List<String> getOptionDetails(List<?> optionDetails) {
+        return optionDetails.stream().map(optionDetail ->
+                        new StringBuilder(((Map)optionDetail).get(ESObjectConstants.OPTION).toString())
+                        .append(':')
+                        .append(((Map)optionDetail).get(ESObjectConstants.DETAIL)).toString())
+                        .collect(Collectors.toList());
     }
 
     private Collection<?> mapToCollection(Object o) {
