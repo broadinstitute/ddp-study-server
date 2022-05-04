@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.cache.LanguageStore;
@@ -30,15 +31,12 @@ import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.I18nUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
+@Slf4j
 public class GetStudiesRoute implements Route {
-    private static final Logger LOG = LoggerFactory.getLogger(GetStudiesRoute.class);
-
     @Override
     public Object handle(Request request, Response response) throws Exception {
         String umbrellaGuid = request.queryParams(RouteConstants.QueryParam.UMBRELLA);
@@ -48,7 +46,7 @@ public class GetStudiesRoute implements Route {
             ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, error);
         }
 
-        LOG.debug("Received request for summary of studies under {}", umbrellaGuid);
+        log.debug("Received request for summary of studies under {}", umbrellaGuid);
 
         List<LanguageRange> acceptLanguages;
         String acceptLanguageHeader = request.headers(RouteConstants.Header.ACCEPT_LANGUAGE);

@@ -5,6 +5,8 @@ import static org.broadinstitute.ddp.constants.ErrorCodes.USER_NOT_FOUND;
 import static org.broadinstitute.ddp.route.AdminParticipantsLookupUtil.handleParticipantLookupException;
 import static org.broadinstitute.ddp.service.participantslookup.ParticipantLookupType.BY_PARTICIPANT_GUID;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.json.errors.ApiError;
@@ -12,25 +14,14 @@ import org.broadinstitute.ddp.service.participantslookup.ParticipantsLookupServi
 import org.broadinstitute.ddp.service.participantslookup.error.ParticipantsLookupException;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
-
-/**
- * Participant lookup by GUID route: handles request GET '/studies/{studyGuid}/participants/{userGuid}'.
- */
+@Slf4j
+@AllArgsConstructor
 public class AdminParticipantLookupByGuidRoute implements Route {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AdminParticipantLookupByGuidRoute.class);
-
     private final ParticipantsLookupService participantsLookupService;
-
-    public AdminParticipantLookupByGuidRoute(ParticipantsLookupService participantsLookupService) {
-        this.participantsLookupService = participantsLookupService;
-    }
 
     @Override
     public Object handle(Request request, Response response) throws Exception {
@@ -57,7 +48,7 @@ public class AdminParticipantLookupByGuidRoute implements Route {
     }
 
     public void haltError(int status, String code, String msg) {
-        LOG.warn(msg);
+        log.warn(msg);
         throw ResponseUtil.haltError(status, new ApiError(code, msg));
     }
 }
