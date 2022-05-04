@@ -178,12 +178,22 @@ public class KitStatusChangeRoute extends RequestHandler {
                         if (kitDDPNotification != null) {
                             EventUtil.triggerDDP(conn, kitDDPNotification);
                         }
-                        UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, "ddpLabel",
-                                "ddpLabel", kit).export();
+                        try {
+                            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, "ddpLabel",
+                                    "ddpLabel", kit).export();
+                        } catch (Exception e) {
+                            logger.error(String.format("Error updating ddp label for kit with label: %s", kit));
+                            e.printStackTrace();
+                        }
                     } else if (RoutePath.TRACKING_SCAN_REQUEST.equals(changeType)) {
                         logger.info("Added tracking for kit w/ kit_label " + kit);
-                        UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, "kitLabel",
-                                "kitLabel", addValue).export();
+                        try {
+                            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, "kitLabel",
+                                    "kitLabel", addValue).export();
+                        } catch (Exception e) {
+                            logger.error(String.format("Error updating kit label for kit with label: %s", addValue));
+                            e.printStackTrace();
+                        }
                     } else if (RoutePath.RECEIVED_KIT_REQUEST.equals(changeType)) {
                         logger.info("Updated kitRequest w/ SM-ID kit_label " + kit);
                     }

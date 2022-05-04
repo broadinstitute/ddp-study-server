@@ -6,4 +6,5 @@ public interface GeneratorHelper {
     void setParser(Parser parser);
 
     void setPayload(GeneratorPayload generatorPayload);
+
 }

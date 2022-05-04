@@ -16,10 +16,6 @@ public final class DecimalQuestionDef extends QuestionDef {
     @SerializedName("scale")
     private Integer scale;
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
     public static Builder builder(String stableId, Template prompt) {
         return new Builder()
                 .setStableId(stableId)
