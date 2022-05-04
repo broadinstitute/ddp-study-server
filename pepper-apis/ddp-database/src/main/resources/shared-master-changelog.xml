@@ -5,4 +5,5 @@
     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
     <include file="db-changes/schema/DDP-7172_Authentication_tables.xml" relativeToChangelogFile="true"></include>
     <include file="db-changes/seed/DDP-7234_user_add_permission.xml" relativeToChangelogFile="true"></include>
+    <include file="db-changes/seed/DDP-7235_user_access_permission.xml" relativeToChangelogFile="true"></include>
 </databaseChangeLog>
