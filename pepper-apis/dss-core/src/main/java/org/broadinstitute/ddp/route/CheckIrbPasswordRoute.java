@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.route;
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
@@ -13,15 +14,11 @@ import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.json.security.IrbStudyStudyCredentials;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
+@Slf4j
 public class CheckIrbPasswordRoute extends ValidatedJsonInputRoute<IrbStudyStudyCredentials> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(CheckIrbPasswordRoute.class);
-
     @Override
     public Object handle(Request request, Response response, IrbStudyStudyCredentials paswordHolder) {
         String studyGuid = request.params(PathParam.STUDY_GUID);
@@ -41,14 +38,14 @@ public class CheckIrbPasswordRoute extends ValidatedJsonInputRoute<IrbStudyStudy
                     if (isPasswordApplicable) {
                         // NULL or empty passwords supplied by the user are not allowed
                         if (StringUtils.isBlank(passwordToBeChecked)) {
-                            LOG.info("A password is required for the study with GUID {}, but it was not specified", studyGuid);
+                            log.info("A password is required for the study with GUID {}, but it was not specified", studyGuid);
                             passwordCheckResult = false;
                         } else {
                             // The user-supplied password is well-formed, comparing it with the stored one
                             passwordCheckResult = studyDto.getIrbPassword().equals(passwordToBeChecked);
                             String passwordCheckResultMessage = passwordCheckResult ? "valid" : "invalid";
                             String passwordMasked = passwordToBeChecked.replaceAll("\\w", "*");
-                            LOG.info(
+                            log.info(
                                     "The provided IRB password {} for the study with GUID {} is {}",
                                     passwordMasked, studyGuid, passwordCheckResultMessage
                             );
@@ -56,7 +53,7 @@ public class CheckIrbPasswordRoute extends ValidatedJsonInputRoute<IrbStudyStudy
                     } else {
                         // We assume that having no password for the study means unrestricted access
                         // and thus perform no password check, just log the event
-                        LOG.info("The password is not defined for the study with GUID {}, so access is unrestricted", studyGuid);
+                        log.info("The password is not defined for the study with GUID {}, so access is unrestricted", studyGuid);
                     }
                     Map<String, Boolean> responseBody = new HashMap<>();
                     responseBody.put("result", passwordCheckResult);
