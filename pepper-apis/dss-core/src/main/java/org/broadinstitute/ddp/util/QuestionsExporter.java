@@ -138,17 +138,6 @@ public class QuestionsExporter {
         return new I18nTranslationService().getTranslation(templateText, cmd.getOptionValue("study-guid"), "en");
     }
 
-    private static Map<Long, String> getPicklistPossibleAnswers(final List<Long> questionIds) {
-        final var picklistOptions = TransactionWrapper.withTxn(handle -> handle.attach(PicklistQuestionDao.class)
-                .findOrderedGroupAndOptionDtos(questionIds, System.currentTimeMillis()));
-        log.info("{} picklist questions found. Loading translations for each of them...", picklistOptions.size());
-
-        return EntryStream.of(picklistOptions)
-                .mapValues(PicklistQuestionDao.GroupAndOptionDtos::getUngroupedOptions)
-                .mapValues(QuestionsExporter::translate)
-                .toMap();
-    }
-
     private static String translate(final List<PicklistOptionDto> picklistOptions) {
         log.info("Loading translations for {} possible answers...", picklistOptions.size());
         if (picklistOptions.size() > Optional.ofNullable(cmd.getOptionValue("picklist-limit"))
@@ -163,6 +152,17 @@ public class QuestionsExporter {
                 .map(QuestionsExporter::translate)
                 .filter(Objects::nonNull)
                 .joining(";");
+    }
+
+    private static Map<Long, String> getPicklistPossibleAnswers(final List<Long> questionIds) {
+        final var picklistOptions = TransactionWrapper.withTxn(handle -> handle.attach(PicklistQuestionDao.class)
+                .findOrderedGroupAndOptionDtos(questionIds, System.currentTimeMillis()));
+        log.info("{} picklist questions found. Loading translations for each of them...", picklistOptions.size());
+
+        return EntryStream.of(picklistOptions)
+                .mapValues(PicklistQuestionDao.GroupAndOptionDtos::getUngroupedOptions)
+                .mapValues(QuestionsExporter::translate)
+                .toMap();
     }
 
     @Value

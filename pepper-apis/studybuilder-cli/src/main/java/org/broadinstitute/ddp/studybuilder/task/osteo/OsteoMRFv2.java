@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
@@ -47,8 +48,6 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Task to make additional edits as part of the "Brain Tumor Project" rename.
@@ -56,9 +55,8 @@ import org.slf4j.LoggerFactory;
  * <p>This should be ran right after the BrainRename task. This assumes that activities will have a new version from
  * the BrainRename task, so it will make edits using that as the latest version.
  */
+@Slf4j
 public class OsteoMRFv2 implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(OsteoMRFv2.class);
     private static final String ACTIVITY_DATA_FILE = "patches/mrf-v2.conf";
     private static final String V1_VERSION_TAG = "v1";
 
@@ -165,7 +163,7 @@ public class OsteoMRFv2 implements CustomTask {
     private void updateActivity(Config activityCfg) {
         String activityCode = activityCfg.getString("activityCode");
         String newVersionTag = activityCfg.getString("newVersionTag");
-        LOG.info("Editing activity {}...", activityCode);
+        log.info("Editing activity {}...", activityCode);
 
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
         FormActivityDef activity = findActivityDef(activityCode, V1_VERSION_TAG);
@@ -174,11 +172,11 @@ public class OsteoMRFv2 implements CustomTask {
         RevisionMetadata meta = makeActivityRevMetadata(activityCode, newVersionTag);
 
         ActivityVersionDto v2Dto = activityDao.changeVersion(activityId, newVersionTag, meta);
-        LOG.info("Version {} is created with versionId={}, revisionId={}", newVersionTag, v2Dto.getId(), v2Dto.getRevId());
+        log.info("Version {} is created with versionId={}, revisionId={}", newVersionTag, v2Dto.getId(), v2Dto.getRevId());
 
         ActivityVersionDto v1Dto = jdbiVersion.findByActivityCodeAndVersionTag(studyDto.getId(), activityCode, V1_VERSION_TAG)
                 .orElseThrow(() -> new DDPException("Could not find version " + V1_VERSION_TAG));
-        LOG.info("Version {} is terminated with revisionId={}", V1_VERSION_TAG, v1Dto.getRevId());
+        log.info("Version {} is terminated with revisionId={}", V1_VERSION_TAG, v1Dto.getRevId());
 
         // update translatedNames / translatedTitles
         updateActivityDetails(activityId, activityCfg);
@@ -186,7 +184,7 @@ public class OsteoMRFv2 implements CustomTask {
         // update writeOnce
         boolean writeOnce = activityCfg.getBoolean("newWriteOnce");
         DBUtils.checkUpdate(1, helper.updateActivityWriteOnce(activityId, writeOnce));
-        LOG.info("Changed setting 'writeOnce' to {} for activity {}", writeOnce, activityCode);
+        log.info("Changed setting 'writeOnce' to {} for activity {}", writeOnce, activityCode);
 
         // update introduction
         var updateTemplates = new UpdateTemplatesInPlace();
@@ -219,7 +217,7 @@ public class OsteoMRFv2 implements CustomTask {
 
             PdfVersion terminatedVersion = versions.get(0);
             pdfSql.updateConfigVersion(terminatedVersion.getId(), v1Dto.getRevId());
-            LOG.info("Terminated {} of pdf configuration with name={}, filename={}, displayName={}, versionId={}",
+            log.info("Terminated {} of pdf configuration with name={}, filename={}, displayName={}, versionId={}",
                     terminatedVersion.getVersionTag(), info.getConfigName(), info.getFilename(),
                     info.getDisplayName(), terminatedVersion.getId());
 
@@ -237,7 +235,7 @@ public class OsteoMRFv2 implements CustomTask {
             PdfConfiguration pdfV2 = new PdfConfiguration(newInfo, newVersion);
             List<PdfTemplate> templates = pdfDao.findBaseTemplatesByVersionId(terminatedVersion.getId());
             long versionId = pdfDao.insertNewConfigVersion(pdfV2, templates);
-            LOG.info("Added pdf configuration version for id={} with name={}, filename={}, "
+            log.info("Added pdf configuration version for id={} with name={}, filename={}, "
                             + "displayName={}, versionId={}, versionTag={}",
                     pdfV2.getId(), pdfV2.getConfigName(), pdfV2.getFilename(),
                     pdfV2.getDisplayName(), versionId, pdfV2.getVersion().getVersionTag());
@@ -260,7 +258,7 @@ public class OsteoMRFv2 implements CustomTask {
                 i18nDetail.getDescription(),
                 i18nDetail.getRevisionId());
         activityI18nDao.updateDetails(List.of(newI18nDetail));
-        LOG.info("Updated Activity I18n Detail for activity {}", activityCfg.getString("activityCode"));
+        log.info("Updated Activity I18n Detail for activity {}", activityCfg.getString("activityCode"));
     }
 
     private interface SqlHelper extends SqlObject {
