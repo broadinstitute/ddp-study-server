@@ -55,8 +55,11 @@ public abstract class UpsertPainlessFacade {
         boolQueryBuilder.must(term);
         return buildFinalQuery(boolQueryBuilder);
     }
+
     protected String getFieldName() {
-        if (ESObjectConstants.DOC_ID.equals(fieldName)) { return fieldName; }
+        if (ESObjectConstants.DOC_ID.equals(fieldName)) {
+            return fieldName;
+        }
         return String.join(DBConstants.ALIAS_DELIMITER, buildPath(), fieldName);
     }
 
