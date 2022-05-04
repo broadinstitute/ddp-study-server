@@ -5,6 +5,7 @@ import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.cache.LanguageStore;
@@ -24,26 +25,22 @@ import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
+@Slf4j
 public class AddProfileRoute extends ValidatedJsonInputRoute<Profile> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AddProfileRoute.class);
-
     @Override
     public Object handle(Request request, Response response, Profile profile) throws Exception {
         String userGuid = request.params(RouteConstants.PathParam.USER_GUID);
-        LOG.info("Creating profile for user with guid {}", userGuid);
+        log.info("Creating profile for user with guid {}", userGuid);
 
         UserProfile.SexType sex = null;
         if (profile.getSex() != null) {
             try {
                 sex = UserProfile.SexType.valueOf(profile.getSex());
             } catch (IllegalArgumentException e) {
-                LOG.warn("Provided invalid profile sex type: {}", profile.getSex(), e);
+                log.warn("Provided invalid profile sex type: {}", profile.getSex(), e);
                 throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_SEX,
                         "Provided invalid profile sex type: " + profile.getSex()));
             }
@@ -88,15 +85,15 @@ public class AddProfileRoute extends ValidatedJsonInputRoute<Profile> {
                             .map(User::getAuth0UserId)
                             .orElse(null);
                     if (StringUtils.isNotBlank(auth0UserId)) {
-                        LOG.info("User {} has auth0 account, proceeding to sync user_metadata", userGuid);
+                        log.info("User {} has auth0 account, proceeding to sync user_metadata", userGuid);
                         Map<String, Object> metadata = new HashMap<>();
                         metadata.put(User.METADATA_LANGUAGE, languageDto.getIsoCode());
                         var result = Auth0ManagementClient.forUser(handle, userGuid).updateUserMetadata(auth0UserId, metadata);
                         if (result.hasThrown() || result.hasError()) {
                             var e = result.hasThrown() ? result.getThrown() : result.getError();
-                            LOG.error("Error while updating user_metadata for user {}, user's language may be out-of-sync", userGuid, e);
+                            log.error("Error while updating user_metadata for user {}, user's language may be out-of-sync", userGuid, e);
                         } else {
-                            LOG.info("Updated user_metadata for user {}", userGuid);
+                            log.info("Updated user_metadata for user {}", userGuid);
                         }
                     }
                 }

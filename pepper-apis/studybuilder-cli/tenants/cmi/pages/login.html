@@ -127,6 +127,12 @@
         headerText = '';
         headerLogo = '##ASSETS_BUCKET_URL##/pancan/project-logo.png';
         applyRedesignedStyles();
+    } else if (study_guid === 'cmi-lms') {
+        registerUrl = '##LMS_BASE_URL##/count-me-in';
+        studyColor = '#c59ce4';
+        headerText = '';
+        headerLogo = '##ASSETS_BUCKET_URL##/lms/project-logo.png';
+        applyRedesignedStyles();
     } else {
         console.log('No configuration for ' + study_guid + ', will use defaults');
     }

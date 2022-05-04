@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.route;
 import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.PREVIOUS_LAST_KIT_REQUEST_ID;
 import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.STUDY_GUID;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -12,15 +13,12 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.util.ResponseUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
+@Slf4j
 public class GetDsmKitRequestsRoute implements Route {
-    private static final Logger LOG = LoggerFactory.getLogger(GetDsmKitRequestsRoute.class);
-
     @Override
     public Object handle(Request request, Response response) {
         return TransactionWrapper.withTxn(handle -> {
@@ -28,7 +26,7 @@ public class GetDsmKitRequestsRoute implements Route {
             StudyDto studyDto = new JdbiUmbrellaStudyCached(handle).findByStudyGuid(studyGuid);
             if (studyDto == null) {
                 var err = new ApiError(ErrorCodes.STUDY_NOT_FOUND, "Could not find study with guid " + studyGuid);
-                LOG.warn(err.getMessage());
+                log.warn(err.getMessage());
                 throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, err);
             }
 
@@ -37,7 +35,7 @@ public class GetDsmKitRequestsRoute implements Route {
             if (lastKitRequestGuid != null) {
                 if (kitDao.findKitRequest(lastKitRequestGuid).isEmpty()) {
                     // This might indicate that DSM is out-of-sync with Pepper, so log an error.
-                    LOG.error("DSM asked for kits since last kit request guid {} for study {}"
+                    log.error("DSM asked for kits since last kit request guid {} for study {}"
                             + " but kit guid is not found", lastKitRequestGuid, studyGuid);
                     var err = new ApiError(ErrorCodes.NOT_FOUND, "Could not find kit request with guid " + lastKitRequestGuid);
                     throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, err);
