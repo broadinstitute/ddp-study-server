@@ -2,13 +2,11 @@ package org.broadinstitute.dsm.db.dto.user;
 
 import java.util.Optional;
 
-import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 
 @Data
 public class UserDto {
-    @SerializedName ("user_id")
     private long userId;
     private String guid;
     private String firstName;

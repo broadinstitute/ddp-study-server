@@ -81,7 +81,8 @@ public interface JdbiUserRole extends SqlObject {
     int insertNewUserRole(@Bind ("userId") long userId, @Bind ("roleName") String roleName, @Bind ("umbrellaGuid") String umbrellaGuid);
 
     @SqlQuery (
-            "SELECT u.guid, u.user_id, up.first_name, up.last_name, concat(up.first_name, \" \", up.last_name) as name, up.email, up.phone as phoneNumber, u.auth0_user_id, r.name as roleName, r.role_id " +
+            "SELECT u.guid, u.user_id, up.first_name, up.last_name, concat(up.first_name, \" \", up.last_name) as name, up.email, up.phone as phoneNumber," +
+                    " u.auth0_user_id, r.name as roleName, r.role_id, r.description, r.umbrella_id " +
                     "FROM user u " +
                     "left join user_profile up on (u.user_id = up.user_id) " +
                     "left join user_role ur on (u.user_id = ur.user_id) " +
