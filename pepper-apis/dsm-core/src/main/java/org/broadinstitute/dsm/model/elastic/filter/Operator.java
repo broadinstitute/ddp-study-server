@@ -14,13 +14,28 @@ import org.broadinstitute.dsm.model.elastic.filter.query.MatchQueryStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.query.MultipleMatchQueryStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.query.MustExistsQueryStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.query.MustNotExistsQueryStrategy;
+import org.broadinstitute.dsm.model.elastic.filter.query.NonExactMatchQueryStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.query.RangeGTEQueryStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.query.RangeLTEQueryStrategy;
-import org.broadinstitute.dsm.model.elastic.filter.splitter.*;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.DateGreaterSplitterStrategy;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.DateLowerSplitterStrategy;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.DateSplitterStrategy;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.DiamondEqualsSplitterStrategy;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.EqualsSplitterStrategy;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.GreaterThanEqualsSplitterStrategy;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.IsNotNullSplitterStrategy;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.IsNullSplitterStrategy;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.JsonContainsSplitterStrategy;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.JsonExtractSplitterStrategy;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.LessThanEqualsSplitterStrategy;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.LikeSplitterStrategy;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.MultipleOptionsSplitterStrategy;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.SplitterStrategy;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.StrDateSplitterStrategy;
 
 public enum Operator {
 
-    LIKE(Filter.LIKE_TRIMMED, new LikeSplitterStrategy(), new MatchQueryStrategy()),
+    LIKE(Filter.LIKE_TRIMMED, new LikeSplitterStrategy(), new NonExactMatchQueryStrategy()),
     EQUALS(Filter.EQUALS_TRIMMED, new EqualsSplitterStrategy(), new MatchQueryStrategy()),
     GREATER_THAN_EQUALS(Filter.LARGER_EQUALS_TRIMMED, new GreaterThanEqualsSplitterStrategy(), new RangeGTEQueryStrategy()),
     LESS_THAN_EQUALS(Filter.SMALLER_EQUALS_TRIMMED, new LessThanEqualsSplitterStrategy(), new RangeLTEQueryStrategy()),
@@ -53,7 +68,9 @@ public enum Operator {
         return this.splitterStrategy;
     }
 
-    public BuildQueryStrategy getQueryStrategy() { return this.queryStrategy; }
+    public BuildQueryStrategy getQueryStrategy() {
+        return this.queryStrategy;
+    }
 
     public static Operator getOperator(String value) {
         for (Operator op : Operator.values()) {
