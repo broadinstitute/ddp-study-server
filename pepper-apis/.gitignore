@@ -19,10 +19,12 @@
 hs_err_pid*
 
 # Output and target directories
-**/output/
-**/target/
-**/output-config/
-**/output-build-config/
+output/
+target/
+output-config/
+output-build-config/
+
+# Reports
 surefire-report.html
 
 # rendered secrets

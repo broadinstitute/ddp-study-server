@@ -109,7 +109,7 @@ tcell/logs/
 /appengine/deploy/
 
 # Output and target directories
-**/output/
-**/target/
-**/output-config/
-**/output-build-config/
+output/
+target/
+output-config/
+output-build-config/
