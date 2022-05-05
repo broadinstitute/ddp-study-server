@@ -167,10 +167,10 @@ public class UserDao implements Dao<UserDto> {
         return (long) results.resultValue;
     }
 
-    public void updateAuth0UserId(long userId, String auth0UserId) {
+    public void updateAuth0UserId(long userId, String auth0UserId) throws DaoException {
         SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
             SimpleResult dbVals = new SimpleResult();
-            handle.attach(JdbiUser.class).updateAuth0UserId(userId, auth0UserId);
+            DBUtil.checkUpdate(1, handle.attach(JdbiUser.class).updateAuth0UserId(userId, auth0UserId));
             return dbVals;
         });
     }

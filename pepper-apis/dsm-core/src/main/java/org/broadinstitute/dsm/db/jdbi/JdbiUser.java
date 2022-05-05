@@ -84,6 +84,9 @@ public interface JdbiUser extends SqlObject {
     long insertStudyAdmin();
 
     @SqlUpdate ("UPDATE user SET auth0_user_id = :auth0UserId WHERE user_id = :userId")
-    void updateAuth0UserId(@Bind ("userId") long userId, @Bind ("auth0UserId") String auth0UserId);
+    int updateAuth0UserId(@Bind ("userId") long userId, @Bind ("auth0UserId") String auth0UserId);
+
+    @SqlUpdate ("UPDATE user_profile SET first_name = :firstName, last_name = :lastName WHERE user_id = :userId")
+    int modifyUser(@Bind ("userId") long userId, @Bind ("firstName") String firstName, @Bind ("lastName") String lastName);
 
 }

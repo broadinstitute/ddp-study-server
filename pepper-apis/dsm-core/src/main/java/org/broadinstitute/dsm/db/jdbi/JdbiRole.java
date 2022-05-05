@@ -18,12 +18,14 @@ public interface JdbiRole extends SqlObject {
 
     @SqlUpdate ("update user_role  set role_id=:roleId where user_role_id in(   " +
             "select user_role_id from (select ur.user_role_id from  user_role ur    " +
-            "left join role  r    " +
+            "left join role  r  " +
             "on (r.role_id = ur.role_id)   " +
-            "where r.umbrella_id = :umbrellaId   " +
+            "left join umbrella_study  us  " +
+            "on (r.umbrella_id = us.umbrella_id)" +
+            "where us.guid =:studyGuid   " +
             " and ur.user_id = :userId   " +
             " ) as sth) and user_role_id <> 0")
-    int updateRoleForUser(@Bind ("userId") long userId, @Bind ("roleId") long roleId, @Bind ("umbrellaId") long umbrellaId);
+    int updateRoleForUser(@Bind ("userId") long userId, @Bind ("roleId") long roleId, @Bind ("studyGuid") String studyGuid);
 
 
 }

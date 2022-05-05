@@ -1,9 +1,9 @@
 package org.broadinstitute.dsm.route.user;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.roles.UserRoleDao;
+import org.broadinstitute.dsm.db.dto.user.UserRoleDto;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -39,20 +39,11 @@ public class ModifyUserRoute extends RequestHandler {
             if (RoutePath.RequestMethod.POST.toString().equals(request.requestMethod())) {
                 if (UserUtil.checkUserAccess(realm, userId, DBConstants.USER_ACCESS, null)) {
                     String requestBody = request.body();
-                    JsonObject object = new Gson().fromJson(requestBody, JsonObject.class);
-                    if (!object.has("userId")) {
-                        throw new RuntimeException("userId missing!");
-                    }
-                    if (!object.has("roleId")) {
-                        throw new RuntimeException("roleId missing!");
-                    }
-                    if (!object.has("umbrellaId")) {
-                        throw new RuntimeException("umbrellaId missing!");
-                    }
-                    logger.info("Going to update role for user id " + object.get("userId").getAsLong() + " to " +
-                            object.get("roleId").getAsLong());
-                    userRoleDao.updateNewRole(object.get("userId").getAsLong(), object.get("roleId").getAsLong(),
-                            object.get("umbrellaId").getAsLong());
+                    UserRoleDto modifiedUser = new Gson().fromJson(requestBody, UserRoleDto.class);
+
+                    logger.info("Going to update role for user id " + modifiedUser.getUser().getUserId() + " to " +
+                            modifiedUser.getRole().getRoleId());
+                    userRoleDao.modifyUser(modifiedUser, realm);
 
                     return new Result(200);
                 } else {

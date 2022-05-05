@@ -23,6 +23,7 @@ import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.settings.UserSettingsDto;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.exception.AuthenticationException;
+import org.broadinstitute.dsm.exception.DaoException;
 import org.broadinstitute.dsm.model.auth0.Auth0M2MResponse;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
 import org.broadinstitute.lddp.security.Auth0Util;
@@ -78,7 +79,7 @@ public class AuthenticationRoute implements Route {
     }
 
     @Override
-    public Object handle(Request request, Response response) {
+    public Object handle(Request request, Response response) throws DaoException {
         logger.info("Check user...");
         try {
             JsonObject jsonObject = new JsonParser().parse(request.body()).getAsJsonObject();

@@ -1,5 +1,8 @@
 package org.broadinstitute.dsm.db.jdbi;
 
+import lombok.Data;
+
+@Data
 public class RoleDto {
     long roleId;
     String name;

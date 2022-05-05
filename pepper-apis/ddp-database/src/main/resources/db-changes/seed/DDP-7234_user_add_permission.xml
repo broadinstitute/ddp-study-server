@@ -7,10 +7,4 @@
             <column name="name" type="VARCHAR(500)" value="user_add"></column>
         </insert>
     </changeSet>
-    <changeSet id="DSM_new-user-no-role" author="pegah">
-        <sql>
-            insert into role (name, description, umbrella_id)
-            select "New User", "new user without roles", @id:=umbrella_id from umbrella_study ;
-        </sql>
-    </changeSet>
 </databaseChangeLog>

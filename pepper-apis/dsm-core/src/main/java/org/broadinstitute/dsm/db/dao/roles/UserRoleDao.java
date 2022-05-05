@@ -7,9 +7,13 @@ import java.util.List;
 
 import lombok.NonNull;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dto.user.AssigneeDto;
+import org.broadinstitute.dsm.db.dto.user.RoleDto;
+import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.db.dto.user.UserRoleDto;
 import org.broadinstitute.dsm.db.jdbi.JdbiRole;
+import org.broadinstitute.dsm.db.jdbi.JdbiUser;
 import org.broadinstitute.dsm.db.jdbi.JdbiUserRole;
 import org.broadinstitute.dsm.exception.DaoException;
 import org.broadinstitute.dsm.model.NameValue;
@@ -136,10 +140,25 @@ public class UserRoleDao {
         return (List<UserRoleDto>) result.resultValue;
     }
 
-    public void updateNewRole(long userId, long roleId, long umbrellaId) throws DaoException {
-        TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
-            DBUtil.checkUpdate(1, handle.attach(JdbiRole.class).updateRoleForUser(userId, roleId, umbrellaId));
-            logger.info("successfully updated role for user id " + userId + " to " + roleId);
+    public void modifyUser(UserRoleDto userRoleDto, String realm) {
+        SimpleResult result = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
+            if (userRoleDto.getUser().getUserId() > 0) {
+                UserDto user = userRoleDto.getUser();
+                RoleDto role = userRoleDto.getRole();
+                DDPInstance ddpInstance = DDPInstance.getDDPInstanceByRealmOrGuid(realm);
+                try {
+                    DBUtil.checkUpdate(1,
+                            handle.attach(JdbiUser.class).modifyUser(user.getUserId(), user.getFirstName(), user.getLastName()));
+                    DBUtil.checkUpdate(1, handle.attach(JdbiRole.class)
+                            .updateRoleForUser(user.getUserId(), role.getRoleId(), ddpInstance.getStudyGuid()));
+                } catch (DaoException e) {
+                    throw new RuntimeException("Error occurred while updating user.", e);
+                }
+
+                logger.info("successfully updated role for user id " + user.getUserId() + " to " + role.getRoleId());
+            } else {
+                throw new RuntimeException("");
+            }
             return null;
         });
     }
