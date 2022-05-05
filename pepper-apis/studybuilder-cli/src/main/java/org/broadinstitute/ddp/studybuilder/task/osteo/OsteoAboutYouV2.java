@@ -158,8 +158,7 @@ public class OsteoAboutYouV2 implements CustomTask {
         long terminatedRevId = jdbiRevision.copyAndTerminate(section.getRevisionId(), meta);
         questionsToDisable.forEach(s -> disableQuestionDto(s, terminatedRevId));
 
-        helper.updateActivityNameAndTitle(activityId, "About Your Osteosarcoma", "About Your Osteosarcoma");
-        helper.updateActivityNameAndTitle(activityId2, "About Your child's Osteosarcoma", "About Your child's Osteosarcoma");
+        helper.updateActivityNameAndTitle(activityId, "Survey: About Your Osteosarcoma", "Survey: About Your Osteosarcoma");
         updateTranslationSummaries(handle);
     }
 
