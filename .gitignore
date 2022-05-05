@@ -107,3 +107,9 @@ tcell/logs/
 *.conf
 !study-builder/**/*.conf
 /appengine/deploy/
+
+# Output and target directories
+output/
+target/
+output-config/
+output-build-config/
