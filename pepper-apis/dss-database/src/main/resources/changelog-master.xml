@@ -302,5 +302,6 @@
     <include file="db-changes/schema/DDP-7735-family-alias.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7291-add-error-present-status-flag.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/DDP-7291-add-error-present-activity-instance-status.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/DDP7754-add-new-kit-type.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7248.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
