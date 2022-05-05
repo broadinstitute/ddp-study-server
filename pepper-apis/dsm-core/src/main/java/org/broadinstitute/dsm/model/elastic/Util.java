@@ -165,6 +165,9 @@ public class Util {
                 break;
             default:
                 Map<String, Object> result = new HashMap<>();
+                if (ValueParser.N_A.equals(fieldValue)) {
+                    fieldValue = ValueParser.N_A_SYMBOLIC_DATE;
+                }
                 result.put(underscoresToCamelCase(fieldName), StringUtils.isBlank(String.valueOf(fieldValue)) ? null : fieldValue);
                 finalResult = result;
                 break;
