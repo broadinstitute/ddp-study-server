@@ -6,7 +6,7 @@
 
     <changeSet author="sampath" id="202200505-add-new-kit-type">
         <insert tableName="kit_type">
-            <column name="name" value="BUCHAL_SWABS"/>
+            <column name="name" value="BUCCAL_SWABS"/>
         </insert>
     </changeSet>
 
