@@ -4,8 +4,9 @@ import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
-import org.broadinstitute.dsm.db.dto.user.UserDto;
+import org.broadinstitute.dsm.db.dto.user.UserRoleDto;
 import org.broadinstitute.dsm.security.RequestHandler;
+import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
@@ -40,9 +41,9 @@ public class PostUserRoute extends RequestHandler {
 
         if (StringUtils.isNotBlank(realm)) {
             if (RoutePath.RequestMethod.POST.toString().equals(request.requestMethod())) {
-                if (UserUtil.checkUserAccess(realm, userId, "user_add", null)) {
+                if (UserUtil.checkUserAccess(realm, userId, DBConstants.USER_ADD, null)) {
                     String requestBody = request.body();
-                    UserDto newUser = new Gson().fromJson(requestBody, UserDto.class);
+                    UserRoleDto newUser = new Gson().fromJson(requestBody, UserRoleDto.class);
                     DDPInstance ddpInstance = DDPInstance.getDDPInstanceByRealmOrGuid(realm);
                     userDao.insertNewUser(auth0Account, clientKey, newUser, ddpInstance);
                     return new Result(200);

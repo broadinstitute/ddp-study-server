@@ -12,11 +12,11 @@ import org.broadinstitute.ddp.util.DdpDBUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
+import org.broadinstitute.dsm.db.dto.user.UserRoleDto;
 import org.broadinstitute.dsm.db.jdbi.JdbiUser;
 import org.broadinstitute.dsm.db.jdbi.JdbiUserRole;
 import org.broadinstitute.dsm.db.jdbi.JdbiUserSettings;
 import org.broadinstitute.dsm.exception.DaoException;
-import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DBUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
@@ -124,7 +124,8 @@ public class UserDao implements Dao<UserDto> {
         return (String) results.resultValue;
     }
 
-    public long insertNewUser(String auth0Domain, String clientKey, UserDto user, DDPInstance ddpInstance) {
+    public long insertNewUser(String auth0Domain, String clientKey, UserRoleDto userRoleDto, DDPInstance ddpInstance) {
+        UserDto user = userRoleDto.getUser();
         SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
             SimpleResult dbVals = new SimpleResult();
             Optional<Long> maybeUserId = handle.attach(JdbiUser.class).selectUserIdByEMail(user.getEmail().orElseThrow());
@@ -145,12 +146,12 @@ public class UserDao implements Dao<UserDto> {
                         .insertUserProfile(Long.valueOf(userId), user.getFirstName(), user.getLastName(), phone,
                                 user.getEmail().orElseThrow());
                 handle.attach(JdbiUserSettings.class).insertNewUserSettings(userId);
-
                 logger.info("Inserted " + user.getEmail().get() + " as userId " + userId + " into DSS database");
             }
             try {
                 DBUtil.checkUpdate(
-                        handle.attach(JdbiUserRole.class).insertNewUserRole(userId, DBConstants.NEW_USER_ROLE, ddpInstance.getStudyGuid()),
+                        handle.attach(JdbiUserRole.class)
+                                .insertNewUserRole(userId, userRoleDto.getRole().getRoleName(), ddpInstance.getStudyGuid()),
                         1);
             } catch (DaoException e) {
                 dbVals.resultException = e;
