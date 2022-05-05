@@ -66,11 +66,11 @@ post:
               type: array
               items:
                 type: string
-            limitation:
-              description: the limitation constraint (specifies the first and the last row of the range to be fetched)
+            pagination:
+              description: the pagination constraint (specifies the first and the last row of the range to be fetched)
               nullable: true
               type: object
-              $ref: '../pepper.yml#/components/schemas/IntegerRange'
+              $ref: '../pepper.yml#/components/schemas/Pagination'
             sorting:
               description: the sorting options
               nullable: true
@@ -80,7 +80,7 @@ post:
     200:
       $ref: '../pepper.yml#/components/responses/StudyAuditResponse'
     400:
-      description: invitation not valid
+      description: the study not found
       content:
         application/json:
           schema:

@@ -1995,6 +1995,7 @@ Section:
 Study.Audit:
   type: object
   required:
+    - auditTrailId
     - studyGuid
     - operatorGuid
     - operatorEmail
@@ -2004,6 +2005,9 @@ Study.Audit:
     - dateTime
     - description
   properties:
+    auditTrailId:
+      type: integer
+      format: int64
     studyGuid:
       type: string
       format: guid
@@ -2992,13 +2996,41 @@ IntegerRange:
       description: the upper constraint of the range. This value is inclusive.
       nullable: true
       format: int64
+Pagination:
+  type: object
+  required:
+    - from
+    - count
+  properties:
+    from:
+      type: integer
+      description: the serial number of the first entry to be fetched of the dataset that relevant to search query
+      default: 0
+      nullable: true
+      format: int64
+    count:
+      type: integer
+      description: the number of entries to be fetched
+      default: 50
+      nullable: true
+      format: int64
 Sorting:
   type: object
   properties:
     column:
-      description: the column name
+      description: the column name that will be used for sorting
       nullable: true
       type: string
+      enum:
+        - auditTrailId
+        - studyGuid
+        - operatorGuid
+        - operatorEmail
+        - userGuid
+        - userEmail
+        - entityType
+        - dateTime
+        - description
     direction:
       description: the sorting direction
       nullable: true
