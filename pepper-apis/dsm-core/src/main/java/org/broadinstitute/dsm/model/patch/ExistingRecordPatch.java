@@ -12,7 +12,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.settings.EventTypeDao;
+import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
+import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.export.WorkflowForES;
@@ -20,7 +22,6 @@ import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.model.elastic.ESProfile;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
-import org.broadinstitute.dsm.model.settings.field.FieldSettings;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -141,9 +142,13 @@ public class ExistingRecordPatch extends BasePatch {
     private void writeFamilyMemberWorklow(Patch patch, DDPInstance ddpInstance, ESProfile profile, Map<String, String> participantDataMap) {
         logger.info("Email in patch data matches participant profile email, will update workflows");
         int ddpInstanceIdByGuid = Integer.parseInt(ddpInstance.getDdpInstanceId());
-        FieldSettings fieldSettings = new FieldSettings();
+        FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
+        List<FieldSettingsDto> fieldSettings = fieldSettingsDao.getFieldSettingWithActionsByInstanceId(ddpInstanceIdByGuid);
         participantDataMap.keySet().forEach(columnName -> {
-            if (!fieldSettings.isColumnExportable(ddpInstanceIdByGuid, columnName)) {
+            Optional<FieldSettingsDto> fieldSettingByColumnName =
+                    fieldSettings.stream().filter(fieldSetting -> fieldSetting.getColumnName().equals(columnName)).findFirst();
+
+            if (fieldSettingByColumnName.isEmpty()) {
                 return;
             }
             if (!patch.getFieldId().contains(org.broadinstitute.dsm.model.participant.data.ParticipantData.FIELD_TYPE_PARTICIPANTS)) {
@@ -151,11 +156,14 @@ public class ExistingRecordPatch extends BasePatch {
             }
             // Use participant guid here to avoid multiple ES lookups.
             Object columnValue = participantDataMap.get(columnName);
-            ElasticSearchUtil.writeWorkflow(
-                    WorkflowForES.createInstanceWithStudySpecificData(ddpInstance, profile.getGuid(), columnName, columnValue.toString(),
-                            new WorkflowForES.StudySpecificData(participantDataMap.get(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID),
-                                    participantDataMap.get(FamilyMemberConstants.FIRSTNAME),
-                                    participantDataMap.get(FamilyMemberConstants.LASTNAME))), false);
+            if (columnValue != null) {
+                ElasticSearchUtil.writeWorkflow(
+                        WorkflowForES.createInstanceWithStudySpecificData(ddpInstance, profile.getGuid(), columnName,
+                                columnValue.toString(), new WorkflowForES.StudySpecificData(
+                                        participantDataMap.get(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID),
+                                        participantDataMap.get(FamilyMemberConstants.FIRSTNAME),
+                                        participantDataMap.get(FamilyMemberConstants.LASTNAME))), false);
+            }
         });
     }
 
