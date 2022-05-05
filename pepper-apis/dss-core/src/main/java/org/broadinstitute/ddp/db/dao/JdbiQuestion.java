@@ -77,6 +77,11 @@ public interface JdbiQuestion extends SqlObject {
             @Bind("studyId") long studyId,
             @Bind("questionStableId") String questionStableId);
 
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryQuestionsByStudyGuid")
+    @RegisterConstructorMapper(QuestionDto.class)
+    List<QuestionDto> findByStudyGuid(@Bind("studyGuid") String studyGuid);
+
     @SqlQuery("select study_activity_code from activity_instance_select_activity_code where"
             + " activity_instance_select_question_id = :questionId")
     List<String> getActivityCodesByActivityInstanceSelectQuestionId(@Bind("questionId") Long questionId);

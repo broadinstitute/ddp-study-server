@@ -45,11 +45,11 @@ public class WorkflowStatusUpdate {
         Optional<FieldSettingsDto> fieldSetting =
                 fieldSettingsDao.getFieldSettingByColumnNameAndInstanceId(Integer.parseInt(instance.getDdpInstanceId()), workflow);
         if (fieldSetting.isEmpty()) {
-            logger.warn("Wrong workflow name");
+            logger.warn("Wrong workflow name " + workflow);
         } else {
             FieldSettingsDto setting = fieldSetting.get();
             boolean isOldParticipant = participantDatas.stream()
-                    .anyMatch(participantDataDto -> participantDataDto.getFieldTypeId().equals(setting.getFieldType())
+                    .anyMatch(participantDataDto -> participantDataDto.getFieldTypeId().get().equals(setting.getFieldType())
                             || participantDataDto.getFieldTypeId().orElse("").contains(FamilyMemberConstants.PARTICIPANTS));
             if (isOldParticipant) {
                 participantDatas.forEach(participantDataDto -> {

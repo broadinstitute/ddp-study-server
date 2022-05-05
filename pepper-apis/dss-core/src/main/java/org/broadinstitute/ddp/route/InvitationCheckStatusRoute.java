@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.client.GoogleRecaptchaVerifyClient;
 import org.broadinstitute.ddp.client.GoogleRecaptchaVerifyResponse;
@@ -34,8 +35,6 @@ import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
@@ -44,9 +43,8 @@ import spark.Response;
  *
  * <p>NOTE: this is a public route. Be careful what we return in responses.
  */
+@Slf4j
 public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<InvitationCheckStatusPayload> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(InvitationCheckStatusRoute.class);
     private static final String DEFAULT_INVITE_ERROR_MSG = "Invalid invitation";
     private static final String DEFAULT_ZIP_CODE_ERROR_MSG = "Invalid zip code invitation qualification";
 
@@ -60,7 +58,7 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
         String invitationGuid = payload.getInvitationGuid();
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
-        LOG.info("Attempting to check invitation {} in study {}", invitationGuid, studyGuid);
+        log.info("Attempting to check invitation {} in study {}", invitationGuid, studyGuid);
 
         ApiError error = TransactionWrapper.withTxn(handle -> {
             String langCode = RouteUtil.resolveLanguage(request, handle, studyGuid, null);
@@ -79,16 +77,16 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
                          InvitationCheckStatusPayload payload) {
         StudyDto studyDto = findStudy(handle, studyGuid);
         if (studyDto == null) {
-            LOG.error("Invitation check called for non-existent study with guid {}", studyGuid);
+            log.error("Invitation check called for non-existent study with guid {}", studyGuid);
             return new ApiError(ErrorCodes.INVALID_INVITATION, DEFAULT_INVITE_ERROR_MSG);
         }
 
         if (ddpAuth.hasAdminAccessToStudy(studyGuid) && payload.getRecaptchaToken() == null) {
-            LOG.info("Operator {} is admin for study {} and no reCaptcha token provided, skipping reCaptcha check",
+            log.info("Operator {} is admin for study {} and no reCaptcha token provided, skipping reCaptcha check",
                     ddpAuth.getOperator(), studyGuid);
         } else {
             if (studyDto.getRecaptchaSiteKey() == null) {
-                LOG.error("ReCaptcha has not been enabled for study with guid: {}", studyGuid);
+                log.error("ReCaptcha has not been enabled for study with guid: {}", studyGuid);
                 throw new DDPException("Server configuration problem");
             }
             if (!isUserRecaptchaTokenValid(payload.getRecaptchaToken(), studyDto.getRecaptchaSiteKey(), ipAddress)) {
@@ -101,10 +99,10 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
         List<String> permittedStudies = handle.attach(JdbiClientUmbrellaStudy.class)
                 .findPermittedStudyGuidsByAuth0ClientIdAndAuth0TenantId(payload.getAuth0ClientId(), studyDto.getAuth0TenantId());
         if (permittedStudies.contains(studyGuid)) {
-            LOG.info("Invitation check by client clientId={}, study={}",
+            log.info("Invitation check by client clientId={}, study={}",
                     payload.getAuth0ClientId(), studyGuid);
         } else {
-            LOG.error("Invitation check by client which does not have access to study: clientId={}, study={}",
+            log.error("Invitation check by client which does not have access to study: clientId={}, study={}",
                     payload.getAuth0ClientId(), studyGuid);
             return new ApiError(ErrorCodes.INVALID_INVITATION, getInviteErrorMessage(handle, studyDto.getId(), langCode));
         }
@@ -113,16 +111,16 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
         InvitationDto invitation = invitationDao.findByInvitationGuid(studyDto.getId(), invitationGuid).orElse(null);
         if (invitation == null) {
             // It might just be a typo, so do a warn instead of error log.
-            LOG.warn("Invitation {} does not exist", invitationGuid);
+            log.warn("Invitation {} does not exist", invitationGuid);
             return new ApiError(ErrorCodes.INVALID_INVITATION, getInviteErrorMessage(handle, studyDto.getId(), langCode));
         } else if (invitation.isVoid()) {
-            LOG.warn("Invitation {} is voided", invitationGuid);
+            log.warn("Invitation {} is voided", invitationGuid);
             return new ApiError(ErrorCodes.INVALID_INVITATION, getInviteErrorMessage(handle, studyDto.getId(), langCode));
         } else if (invitation.isAccepted()) {
-            LOG.warn("Invitation {} has already been accepted", invitationGuid);
+            log.warn("Invitation {} has already been accepted", invitationGuid);
             return new ApiError(ErrorCodes.INVALID_INVITATION, getInviteErrorMessage(handle, studyDto.getId(), langCode));
         } else {
-            LOG.info("Invitation {} is valid", invitationGuid);
+            log.info("Invitation {} is valid", invitationGuid);
         }
 
         List<List<KitRule>> kitZipCodeRules = handle.attach(KitConfigurationDao.class)
@@ -135,16 +133,16 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
                 .collect(Collectors.toList());
 
         if (kitZipCodeRules.isEmpty()) {
-            LOG.info("Study {} does not have any kit configurations that has kit zip code rules", studyGuid);
+            log.info("Study {} does not have any kit configurations that has kit zip code rules", studyGuid);
         } else {
-            LOG.info("Study {} has {} kit configurations which has kit zip code rules,"
+            log.info("Study {} has {} kit configurations which has kit zip code rules,"
                             + " checking user's zip code qualification to ensure it matches for all these kits",
                     studyGuid, kitZipCodeRules.size());
             String userZipCode = (String) payload.getQualificationDetails().getOrDefault(QUALIFICATION_ZIP_CODE, "");
             for (var rules : kitZipCodeRules) {
                 boolean matched = rules.stream().anyMatch(rule -> rule.validate(handle, userZipCode));
                 if (!matched) {
-                    LOG.warn("User provided zip code does not match, invitation={} zipCode={}", invitationGuid, userZipCode);
+                    log.warn("User provided zip code does not match, invitation={} zipCode={}", invitationGuid, userZipCode);
                     String msg = DEFAULT_ZIP_CODE_ERROR_MSG;
                     Long errorTmplId = rules.stream()
                             .map(rule -> ((KitZipCodeRule) rule).getErrorMessageTemplateId())
@@ -160,7 +158,7 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
                     return new ApiError(ErrorCodes.INVALID_INVITATION_QUALIFICATIONS, msg);
                 }
             }
-            LOG.info("User provided zip code {} matched for all kit configurations", userZipCode);
+            log.info("User provided zip code {} matched for all kit configurations", userZipCode);
         }
 
         return null;
@@ -174,7 +172,7 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
         var recaptchaVerifier = new GoogleRecaptchaVerifyClient(recaptchaSiteKey);
         GoogleRecaptchaVerifyResponse recaptchaResponse = recaptchaVerifier.verifyRecaptchaResponse(recaptchaToken, clientIpAddress);
         if (!recaptchaResponse.isSuccess()) {
-            LOG.error("Recaptcha validation was unsuccessful: {}", new Gson().toJson(recaptchaResponse));
+            log.error("Recaptcha validation was unsuccessful: {}", new Gson().toJson(recaptchaResponse));
         }
         return recaptchaResponse.isSuccess();
     }

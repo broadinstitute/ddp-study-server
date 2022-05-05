@@ -5,7 +5,11 @@ import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator;
 import org.broadinstitute.dsm.model.elastic.export.generate.Generator;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.TermQueryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,10 +49,27 @@ public abstract class UpsertPainlessFacade {
 
     protected abstract ScriptBuilder buildScriptBuilder();
 
-    protected abstract QueryBuilder buildQueryBuilder();
+    protected QueryBuilder buildQueryBuilder() {
+        BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
+        TermQueryBuilder term = new TermQueryBuilder(getFieldName(), fieldValue);
+        boolQueryBuilder.must(term);
+        return buildFinalQuery(boolQueryBuilder);
+    }
+
+    protected String getFieldName() {
+        if (ESObjectConstants.DOC_ID.equals(fieldName)) {
+            return fieldName;
+        }
+        return String.join(DBConstants.ALIAS_DELIMITER, buildPath(), fieldName);
+    }
+
+    protected String buildPath() {
+        return String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, generator.getPropertyName());
+    }
+
+    protected abstract QueryBuilder buildFinalQuery(BoolQueryBuilder boolQueryBuilder);
 
     public void export() {
         upsertPainless.export();
     }
-
 }

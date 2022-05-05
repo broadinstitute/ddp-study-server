@@ -7,6 +7,7 @@ import java.util.List;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.model.dsm.DrugStore;
@@ -17,20 +18,15 @@ import org.hamcrest.Matchers;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+@Slf4j
 public class GetDsmDrugSuggestionsRouteStandaloneTest extends IntegrationTestSuite.TestCase {
-
-    private static final Logger LOG = LoggerFactory.getLogger(GetDsmDrugSuggestionsRouteStandaloneTest.class);
     private static final String URL_TEMPLATE = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.DSM_DRUG_SUGGESTION;
     private static String token;
 
     @BeforeClass
     public static void setupClass() {
-        TestDataSetupUtil.GeneratedTestData testData = TransactionWrapper.withTxn(handle -> {
-            return TestDataSetupUtil.generateBasicUserTestData(handle);
-        });
+        TestDataSetupUtil.GeneratedTestData testData =
+                TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
         token = testData.getTestingUser().getToken();
     }
 
@@ -52,7 +48,7 @@ public class GetDsmDrugSuggestionsRouteStandaloneTest extends IntegrationTestSui
     public void givenNoDrugNameMatchesPattern_whenRouteIsCalled_thenItReturnsEmptySuggestionList() {
         DrugStore.getInstance().populateDrugList(Collections.emptyList());
         String url = createUrlFromTemplate(URL_TEMPLATE);
-        LOG.info("Calling the route, url = " + url);
+        log.info("Calling the route, url = " + url);
         RestAssured.given().auth().oauth2(token)
         .when().get(url).then().assertThat()
         .statusCode(200).contentType(ContentType.JSON)
@@ -61,9 +57,9 @@ public class GetDsmDrugSuggestionsRouteStandaloneTest extends IntegrationTestSui
 
     @Test
     public void givenOneDrugNameMatchesPattern_whenRouteIsCalled_thenItReturnsListWithValidSingleItem() {
-        DrugStore.getInstance().populateDrugList(Arrays.asList(TestData.DRUG_NAME));
+        DrugStore.getInstance().populateDrugList(List.of(TestData.DRUG_NAME));
         String url = createUrlFromTemplate(URL_TEMPLATE);
-        LOG.info("Calling the route, url = " + url);
+        log.info("Calling the route, url = " + url);
         RestAssured.given().auth().oauth2(token)
         .when().get(url).then().assertThat()
         .statusCode(200).contentType(ContentType.JSON)
@@ -76,9 +72,9 @@ public class GetDsmDrugSuggestionsRouteStandaloneTest extends IntegrationTestSui
 
     @Test
     public void givenPatternMatchesDrugNameMultipleTimes_whenRouteIsCalled_thenItReturnsSingleMatch() {
-        DrugStore.getInstance().populateDrugList(Arrays.asList("aspartam"));
+        DrugStore.getInstance().populateDrugList(List.of("aspartam"));
         String url = createUrlFromTemplate(URL_TEMPLATE, "a");
-        LOG.info("Calling the route, url = " + url);
+        log.info("Calling the route, url = " + url);
         RestAssured.given().auth().oauth2(token)
         .when().get(url).then().assertThat()
         .statusCode(200).contentType(ContentType.JSON)
@@ -91,7 +87,7 @@ public class GetDsmDrugSuggestionsRouteStandaloneTest extends IntegrationTestSui
     public void givenManyDrugNamesMatchPattern_whenRouteIsCalled_thenItReturnsListWithSuggestions() {
         DrugStore.getInstance().populateDrugList(Arrays.asList("Aspirin", "Brand new Aspirin"));
         String url = createUrlFromTemplate(URL_TEMPLATE, "Aspirin");
-        LOG.info("Calling the route, url = " + url);
+        log.info("Calling the route, url = " + url);
         RestAssured.given().auth().oauth2(token)
         .when().get(url).then().assertThat()
         .statusCode(200).contentType(ContentType.JSON)
@@ -107,7 +103,7 @@ public class GetDsmDrugSuggestionsRouteStandaloneTest extends IntegrationTestSui
         DrugStore.getInstance().populateDrugList(Arrays.asList("Aspirin", "Brand new Aspirin", "Acetominophen"));
         String query = "";
         String url = createUrlFromTemplate(URL_TEMPLATE, query);
-        LOG.info("Calling the route, url = " + url);
+        log.info("Calling the route, url = " + url);
         RestAssured.given().auth().oauth2(token)
         .when().get(url).then().assertThat()
         .statusCode(200).contentType(ContentType.JSON)
@@ -121,7 +117,7 @@ public class GetDsmDrugSuggestionsRouteStandaloneTest extends IntegrationTestSui
         DrugStore.getInstance().populateDrugList(Arrays.asList("Aspirin", "Brand new Aspirin", "Acetominophen"));
         String query = "Aspirin!";
         String url = createUrlFromTemplate(URL_TEMPLATE, query);
-        LOG.info("Calling the route, url = " + url);
+        log.info("Calling the route, url = " + url);
         RestAssured.given().auth().oauth2(token)
         .when().get(url).then().assertThat()
         .statusCode(200).contentType(ContentType.JSON);
@@ -129,9 +125,9 @@ public class GetDsmDrugSuggestionsRouteStandaloneTest extends IntegrationTestSui
 
     @Test
     public void givenPatternContainsMetachars_whenRouteIsCalled_thenPatternWorksAsLiteralText() {
-        DrugStore.getInstance().populateDrugList(Arrays.asList("Aspirin (Acetylsalicylic acid)"));
+        DrugStore.getInstance().populateDrugList(List.of("Aspirin (Acetylsalicylic acid)"));
         String url = createUrlFromTemplate(URL_TEMPLATE, "Aspirin (Acetylsalicylic");
-        LOG.info("Calling the route, url = " + url);
+        log.info("Calling the route, url = " + url);
         RestAssured.given().auth().oauth2(token)
         .when().get(url).then().assertThat()
         .statusCode(200).contentType(ContentType.JSON)
@@ -141,9 +137,9 @@ public class GetDsmDrugSuggestionsRouteStandaloneTest extends IntegrationTestSui
 
     @Test
     public void givenDrugNameAndPatternHaveDifferentCase_whenRouteIsCalled_thenPatternMatchesDrugName() {
-        DrugStore.getInstance().populateDrugList(Arrays.asList("ASPIRIN"));
+        DrugStore.getInstance().populateDrugList(List.of("ASPIRIN"));
         String url = createUrlFromTemplate(URL_TEMPLATE, "Aspirin");
-        LOG.info("Calling the route, url = " + url);
+        log.info("Calling the route, url = " + url);
         RestAssured.given().auth().oauth2(token)
         .when().get(url).then().assertThat()
         .statusCode(200).contentType(ContentType.JSON)
@@ -159,7 +155,7 @@ public class GetDsmDrugSuggestionsRouteStandaloneTest extends IntegrationTestSui
         String last = "BAR 2FOO";
         DrugStore.getInstance().populateDrugList(Arrays.asList(second, last, first, third, "no match"));
         String url = createUrlFromTemplate(URL_TEMPLATE, "foo");
-        LOG.info("Calling the route, url = " + url);
+        log.info("Calling the route, url = " + url);
         RestAssured.given().auth().oauth2(token)
                 .when().get(url).then().assertThat()
                 .statusCode(200).contentType(ContentType.JSON)
@@ -172,7 +168,7 @@ public class GetDsmDrugSuggestionsRouteStandaloneTest extends IntegrationTestSui
 
     @Test
     public void testSanitization() {
-        DrugStore.getInstance().populateDrugList(Arrays.asList("foo bar"));
+        DrugStore.getInstance().populateDrugList(List.of("foo bar"));
 
         String url = createUrlFromTemplate(URL_TEMPLATE, "[foo");
         RestAssured.given().auth().oauth2(token)
@@ -191,7 +187,7 @@ public class GetDsmDrugSuggestionsRouteStandaloneTest extends IntegrationTestSui
     public void givenLookupWithCyrillicCharacterThatDoesNotMatchAnything() {
         DrugStore.getInstance().populateDrugList(List.of("ASPIRIN", "SUDAFED"));
         String url = createUrlFromTemplate(URL_TEMPLATE, "ффф");
-        LOG.info("Calling the route, url = " + url);
+        log.info("Calling the route, url = " + url);
         RestAssured.given().auth().oauth2(token)
 
                 .when().get(url).then().assertThat()
