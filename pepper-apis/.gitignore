@@ -18,15 +18,16 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
-target/
+# Output and target directories
+**/output/
+**/target/
+**/output-config/
+**/output-build-config/
 surefire-report.html
 
 # rendered secrets
 config/*.conf
 !config/waf.conf
-output/
-output-config/
-output-build-config/
 docker-compose.yaml
 appengine/deploy/*.conf
 
