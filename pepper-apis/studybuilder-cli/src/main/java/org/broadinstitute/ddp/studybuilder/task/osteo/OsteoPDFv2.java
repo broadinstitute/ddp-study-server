@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.studybuilder.task.osteo;
 import java.nio.file.Path;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.PdfDao;
@@ -14,12 +15,9 @@ import org.broadinstitute.ddp.model.pdf.PdfVersion;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class OsteoPDFv2 implements CustomTask {
-
-    private static final Logger LOG = LoggerFactory.getLogger(OsteoPDFv2.class);
     private static final String V2_VERSION_TAG = "v2";
     public static final String CONSENT = "CONSENT";
     public static final String PARENTAL_CONSENT = "PARENTAL_CONSENT";
@@ -42,7 +40,7 @@ public class OsteoPDFv2 implements CustomTask {
 
     @Override
     public void run(Handle handle) {
-        LOG.info("Adding new data source versions for consents PDFs");
+        log.info("Adding new data source versions for consents PDFs");
         long studyId = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid")).getId();
         addNewConsentDataSourceToReleasePdf(handle, studyId, OSPROJECT_CONSENT, CONSENT);
         addNewConsentDataSourceToReleasePdf(handle, studyId, OSPROJECT_CONSENT_PARENTAL, PARENTAL_CONSENT);
@@ -76,7 +74,7 @@ public class OsteoPDFv2 implements CustomTask {
 
         pdfDao.insertDataSource(version.getId(), new PdfActivityDataSource(activityId, activityVersionId));
 
-        LOG.info("Added activity data source with activityCode={} versionTag={} to pdf {} version {}",
+        log.info("Added activity data source with activityCode={} versionTag={} to pdf {} version {}",
                 activityCode, V2_VERSION_TAG, info.getConfigName(), version.getVersionTag());
     }
     
