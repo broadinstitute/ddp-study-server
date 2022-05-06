@@ -50,8 +50,8 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
                 bulkExportFacade.clear();
             }
         }
-        logger.info("finished migrating data of " + totalExported + " participants for " + object + " to ES for study: " + realm + " with " +
-                "index: " + index);
+        logger.info("finished migrating data of " + totalExported + " participants for " + object + " to ES for study: " + realm + " with "
+                + "index: " + index);
     }
 
     private boolean isReadyToExport(Iterator<Map.Entry<String, Object>> participantsIterator) {
@@ -88,7 +88,9 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
     @Override
     public void export() {
         Map<String, Object> dataByRealm = getDataByRealm();
-        if (dataByRealm.isEmpty()) return;
+        if (dataByRealm.isEmpty()) {
+            return;
+        }
         fillBulkRequestWithTransformedMapAndExport(dataByRealm);
     }
 }

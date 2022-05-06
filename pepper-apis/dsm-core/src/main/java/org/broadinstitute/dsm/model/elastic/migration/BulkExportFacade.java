@@ -52,7 +52,7 @@ public class BulkExportFacade {
                         .filter(this::isSuccessfullyExported)
                         .count();
                 logger.info(String.format("%s participants data has been successfully upserted", successfullyExported));
-                logger.warn(bulkResponse.buildFailureMessage());
+                buildFailureMessage(bulkResponse);
                 return successfullyExported;
             }
         } catch (IOException e) {
@@ -65,6 +65,11 @@ public class BulkExportFacade {
         return !response.isFailed();
     }
 
+    private void buildFailureMessage(BulkResponse bulkResponse) {
+        if (bulkResponse.hasFailures()) {
+            logger.warn(bulkResponse.buildFailureMessage());
+        }
+    }
 
     public void clear() {
         this.bulkRequest.requests().clear();

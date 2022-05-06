@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.model.elastic.export.painless;
 
-public class NestedScriptBuilder implements ScriptBuilder {
+public class NestedScriptBuilder extends BaseScriptBuilder {
 
     private static final String SCRIPT =
             "if (ctx._source.dsm.#propertyName == null) {ctx._source.dsm.#propertyName = [params.dsm.#propertyName]} "
@@ -10,11 +10,10 @@ public class NestedScriptBuilder implements ScriptBuilder {
                     + "else { for(target in targets) { for (entry in params.dsm.#propertyName.entrySet()) { "
                     + "target.put(entry.getKey(), entry.getValue()) } }}}";
 
-    private final String propertyName;
     private final String uniqueIdentifier;
 
     public NestedScriptBuilder(String propertyName, String uniqueIdentifier) {
-        this.propertyName = propertyName;
+        super(propertyName);
         this.uniqueIdentifier = uniqueIdentifier;
     }
 
