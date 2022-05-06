@@ -217,7 +217,9 @@ public class ValidationRuleCreator {
                 .referenceQuestionStableId(ruleDef.getValueStableId())
                 .referenceQuestionId(TransactionWrapper.withTxn(handle -> handle.attach(QuestionDao.class).getJdbiQuestion()
                                 .findIdByStableIdAndInstanceGuid(ruleDef.getValueStableId(), ctx.getInstanceGuid())
-                                .orElseThrow(() -> new RuntimeException("Can't find question by stable ID & instance GUID"))))
+                                .orElseThrow(() -> new RuntimeException(
+                                        String.format("Can't find question by stable ID: %s & instance GUID: %s",
+                                                ruleDef.getValueStableId(), ctx.getInstanceGuid())))))
                 .build();
     }
 
