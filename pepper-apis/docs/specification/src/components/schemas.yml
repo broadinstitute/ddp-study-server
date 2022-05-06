@@ -2980,22 +2980,6 @@ DateRange:
       description: the upper constraint of the range. This value is inclusive. The date format is a full, extended ISO-8601 Calendar date and time in the format `YYYY-MM-DDTHH:MM:SSZ` in the UTC time zone.
       nullable: true
       format: date-time
-IntegerRange:
-  type: object
-  required:
-    - from
-    - to
-  properties:
-    from:
-      type: integer
-      description: the lower constraint of the range. This value is inclusive.
-      nullable: true
-      format: int64
-    to:
-      type: integer
-      description: the upper constraint of the range. This value is inclusive.
-      nullable: true
-      format: int64
 Pagination:
   type: object
   required:
