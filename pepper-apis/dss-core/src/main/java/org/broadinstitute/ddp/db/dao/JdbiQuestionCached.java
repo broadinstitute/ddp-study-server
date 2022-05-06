@@ -74,6 +74,11 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
     }
 
     @Override
+    public Optional<QuestionDto> findLatestDtoByStudyGuidAndQuestionStableId(String studyGuid, String questionStableId) {
+        return delegate.findLatestDtoByStudyGuidAndQuestionStableId(studyGuid, questionStableId);
+    }
+
+    @Override
     public List<QuestionDto> findByStudyGuid(String studyGuid) {
         return delegate.findByStudyGuid(studyGuid);
     }
