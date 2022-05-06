@@ -78,6 +78,13 @@ public interface JdbiQuestion extends SqlObject {
             @Bind("questionStableId") String questionStableId);
 
     @UseStringTemplateSqlLocator
+    @SqlQuery("queryLatestDtoByStudyGuidAndQuestionStableId")
+    @RegisterConstructorMapper(QuestionDto.class)
+    Optional<QuestionDto> findLatestDtoByStudyGuidAndQuestionStableId(
+            @Bind("studyGuid") String studyGuid,
+            @Bind("questionStableId") String questionStableId);
+
+    @UseStringTemplateSqlLocator
     @SqlQuery("queryQuestionsByStudyGuid")
     @RegisterConstructorMapper(QuestionDto.class)
     List<QuestionDto> findByStudyGuid(@Bind("studyGuid") String studyGuid);
