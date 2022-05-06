@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.model.elastic.MockFieldTypeExtractor;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -38,10 +39,9 @@ public class NestedUpsertPainlessFacadeTest {
         kitRequestShipping.setKitLabel("KIT_LABEL");
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder()
                 .build();
-        return UpsertPainlessFacade.of(
-                DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
-                ESObjectConstants.KIT_LABEL, ESObjectConstants.KIT_LABEL,"KIT_LABEL"
-        );
+        UpsertPainlessFacade painlessFacade = new NestedUpsertPainlessFacade(kitRequestShipping, ddpInstanceDto, ESObjectConstants.KIT_LABEL,
+                ESObjectConstants.KIT_LABEL, "KIT_LABEL", new MockFieldTypeExtractor());
+        return painlessFacade;
     }
 
     @Test
@@ -50,7 +50,8 @@ public class NestedUpsertPainlessFacadeTest {
         kitRequestShipping.setKitLabel("KIT_LABEL");
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder().build();
         NestedUpsertPainlessFacade painlessFacade = new NestedUpsertPainlessFacade(
-                kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DOC_ID, "GUID6782"
+                kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DOC_ID, "GUID6782",
+                new MockFieldTypeExtractor()
         );
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
         TermQueryBuilder termQueryBuilder = new TermQueryBuilder(ESObjectConstants.DOC_ID, "GUID6782");
