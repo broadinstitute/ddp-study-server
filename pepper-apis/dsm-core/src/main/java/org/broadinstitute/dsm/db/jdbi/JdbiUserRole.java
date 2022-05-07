@@ -61,9 +61,10 @@ public interface JdbiUserRole extends SqlObject {
             "where ur.user_id = :userId and us.guid=:guid and ut.is_active = 1")
     List<String> getUserRolesPerRealm(@Bind ("userId") long userId, @Bind ("guid") String studyGuid);
 
-    @SqlQuery (" select up.user_id as assigneeId, concat(up.first_name, \" \", up.last_name) as name, email " +
+    @SqlQuery (" select up.user_id as assigneeId, concat(up.first_name, \" \", up.last_name) as name, email, ut.dsm_legacy_id " +
             "    from user_profile up " +
             "    left join user_role ur on (ur.user_id = up.user_id) " +
+            "    left join user ut on (ut.user_id = up.user_id) " +
             "    left join role r on (r.role_id = ur.role_id) " +
             "    left join umbrella u on (r.umbrella_id = u.umbrella_id) " +
             "    left join role_permissions rp on (rp.role_id = ur.role_id) " +
@@ -85,7 +86,7 @@ public interface JdbiUserRole extends SqlObject {
 
     @SqlQuery (
             "SELECT u.guid, u.user_id, up.first_name, up.last_name, concat(up.first_name, \" \", up.last_name) as name, up.email, up.phone as phoneNumber," +
-                    " u.auth0_user_id, u.hruid as shortId, u.is_active, r.name as roleName, r.role_id, r.description, r.umbrella_id " +
+                    " u.auth0_user_id, u.hruid as shortId, u.is_active, u.dsm_legacy_id, r.name as roleName, r.role_id, r.description, r.umbrella_id " +
                     "FROM user u " +
                     "left join user_profile up on (u.user_id = up.user_id) " +
                     "left join user_role ur on (u.user_id = ur.user_id) " +

@@ -8,4 +8,5 @@
     <include file="db-changes/seed/DDP-7235_user_access_permission.xml" relativeToChangelogFile="true"></include>
     <include file="db-changes/schema/DDP-7238_removing_users.xml" relativeToChangelogFile="true"></include>
     <include file="db-changes/seed/DDP-7238_removing_users_permission.xml" relativeToChangelogFile="true"></include>
+    <include file="db-changes/schema/DDP-7883_dsm_legacy_user_id.xml" relativeToChangelogFile="true"></include>
 </databaseChangeLog>

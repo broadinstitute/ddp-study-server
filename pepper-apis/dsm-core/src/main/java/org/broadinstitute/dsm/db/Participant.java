@@ -5,6 +5,7 @@ import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,7 +17,8 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.dao.roles.UserRoleDao;
+import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
+import org.broadinstitute.dsm.db.dao.user.AssigneeDao;
 import org.broadinstitute.dsm.db.dto.user.AssigneeDto;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
@@ -30,8 +32,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Data
-@JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties (ignoreUnknown = true)
+@JsonInclude (JsonInclude.Include.NON_NULL)
 public class Participant {
 
     private static final Logger logger = LoggerFactory.getLogger(Participant.class);
@@ -48,10 +50,10 @@ public class Participant {
             + "AND p.ddp_instance_id = ex.ddp_instance_id) "
             + "WHERE realm.instance_name = ? ";
 
-    @ColumnName(DBConstants.PARTICIPANT_ID)
+    @ColumnName (DBConstants.PARTICIPANT_ID)
     private Long participantId;
 
-    @ColumnName(DBConstants.DDP_PARTICIPANT_ID)
+    @ColumnName (DBConstants.DDP_PARTICIPANT_ID)
     private String ddpParticipantId;
 
     @TableName (
@@ -93,7 +95,7 @@ public class Participant {
             primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
     @ColumnName (DBConstants.CR_SENT)
-    @DbDateConversion(SqlDateConverter.STRING_DAY)
+    @DbDateConversion (SqlDateConverter.STRING_DAY)
     private String crSent;
 
     @TableName (
@@ -102,7 +104,7 @@ public class Participant {
             primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
     @ColumnName (DBConstants.CR_RECEIVED)
-    @DbDateConversion(SqlDateConverter.STRING_DAY)
+    @DbDateConversion (SqlDateConverter.STRING_DAY)
     private String crReceived;
 
     @TableName (
@@ -135,14 +137,11 @@ public class Participant {
             primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
     @ColumnName (DBConstants.ADDITIONAL_VALUES_JSON)
-    @JsonProperty("dynamicFields")
-    @SerializedName("dynamicFields")
+    @JsonProperty ("dynamicFields")
+    @SerializedName ("dynamicFields")
     private String additionalValuesJson;
 
-    @JsonProperty("dynamicFields")
-    public Map<String, Object> getDynamicFields() {
-        return ObjectMapperSingleton.readValue(additionalValuesJson, new TypeReference<Map<String, Object>>() {
-        });
+    public Participant() {
     }
 
     @TableName (
@@ -153,7 +152,12 @@ public class Participant {
     @ColumnName (DBConstants.EXIT_DATE)
     private Long exitDate;
 
-    public Participant() {}
+    //For TissueList
+    public Participant(String participantId, String ddpParticipantId, String assigneeIdTissue) {
+        this(Long.parseLong(participantId), ddpParticipantId, null, assigneeIdTissue, null,
+                null, null, null, null, null,
+                false, false, null, null);
+    }
 
     public Participant(Long participantId, String ddpParticipantId, String assigneeIdMr, String assigneeIdTissue, String instanceName,
                        String created, String reviewed, String crSent, String crReceived, String notes,
@@ -174,27 +178,42 @@ public class Participant {
         this.exitDate = exitDate;
     }
 
-    //For TissueList
-    public Participant(String participantId, String  ddpParticipantId, String  assigneeIdTissue) {
-        this(Long.parseLong(participantId), ddpParticipantId, null, assigneeIdTissue, null,
-                null, null, null, null, null,
-                false, false, null, null);
-    }
-
-    public static Participant getParticipant(@NonNull Map<Long, AssigneeDto> assignees, @NonNull String realm, @NonNull ResultSet rs)
+    public static Participant getParticipant(@NonNull ArrayList<AssigneeDto> assignees, @NonNull String realm, @NonNull ResultSet rs)
             throws SQLException {
         String assigneeMR = null;
         String assigneeTissue = null;
+        Long firstNewUserId = Long.parseLong(String.valueOf(new BookmarkDao().getBookmarkByInstance("FIRST_DSM_USER_ID").orElseThrow()));
         if (assignees != null && !assignees.isEmpty()) {
             String assigneeIdMR = rs.getString(DBConstants.ASSIGNEE_ID_MR);
+            boolean isLegacy = Long.parseLong(assigneeIdMR) < firstNewUserId;
             if (StringUtils.isNotBlank(assigneeIdMR)) {
-                AssigneeDto assigneeDto = assignees.get(Long.parseLong(assigneeIdMR));
-                assigneeMR = assigneeDto.getName().orElse(assigneeDto.getEmail().orElseThrow());
+                AssigneeDto assigneeDto = null;
+                if (!isLegacy) {
+                    assignees.stream().filter(assignee -> assignee.getAssigneeId() == Long.parseLong(assigneeIdMR));
+
+                } else {
+                    assignees.stream().filter(assignee -> assignee.getDSMLegacyId() == Long.parseLong(assigneeIdMR));
+                }
+                if (assigneeDto != null) {
+                    assigneeMR = assigneeDto.getName().orElse(assigneeDto.getEmail().orElseThrow());
+                } else {
+                    throw new RuntimeException("Couldn't find mr assignee by id " + assigneeMR);
+                }
             }
             String assigneeIdTissue = rs.getString(DBConstants.ASSIGNEE_ID_TISSUE);
+            isLegacy = Long.parseLong(assigneeIdTissue) < firstNewUserId;
             if (StringUtils.isNotBlank(assigneeIdTissue)) {
-                AssigneeDto assigneeDto = assignees.get(Long.parseLong(assigneeIdTissue));
-                assigneeTissue = assigneeDto.getName().orElse(assigneeDto.getEmail().orElseThrow());
+                AssigneeDto assigneeDto = null;
+                if (!isLegacy) {
+                    assignees.stream().filter(assignee -> assignee.getAssigneeId() == Long.parseLong(assigneeIdTissue));
+                } else {
+                    assignees.stream().filter(assignee -> assignee.getDSMLegacyId() == Long.parseLong(assigneeIdTissue));
+                }
+                if (assigneeDto != null) {
+                    assigneeTissue = assigneeDto.getName().orElse(assigneeDto.getEmail().orElseThrow());
+                } else {
+                    throw new RuntimeException("Couldn't find tissue assignee by id " + assigneeIdTissue);
+                }
             }
         }
         Participant participant = new Participant(rs.getLong(DBConstants.PARTICIPANT_ID),
@@ -208,18 +227,14 @@ public class Participant {
                 rs.getBoolean(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.MINIMAL_MR),
                 rs.getBoolean(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ABSTRACTION_READY),
                 rs.getString(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ADDITIONAL_VALUES_JSON),
-                (Long)rs.getObject(DBConstants.EXIT_DATE));
+                (Long) rs.getObject(DBConstants.EXIT_DATE));
         return participant;
-    }
-
-    public static Map<String, Participant> getParticipants(@NonNull String realm) {
-        return getParticipants(realm, null);
     }
 
     public static Map<String, Participant> getParticipants(@NonNull String realm, String queryAddition) {
         logger.info("Collection participant information");
         Map<String, Participant> participants = new HashMap<>();
-        HashMap<Long, AssigneeDto> assignees = UserRoleDao.getAssigneeMap(realm);
+        ArrayList<AssigneeDto> assignees = new ArrayList(AssigneeDao.getAssigneeMap(realm).values());
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(DBUtil.getFinalQuery(SQL_SELECT_PARTICIPANT, queryAddition))) {
@@ -240,6 +255,16 @@ public class Participant {
         }
         logger.info("Got " + participants.size() + " participants in DSM DB for " + realm);
         return participants;
+    }
+
+    public static Map<String, Participant> getParticipants(@NonNull String realm) {
+        return getParticipants(realm, null);
+    }
+
+    @JsonProperty ("dynamicFields")
+    public Map<String, Object> getDynamicFields() {
+        return ObjectMapperSingleton.readValue(additionalValuesJson, new TypeReference<Map<String, Object>>() {
+        });
     }
 
     public Boolean isMinimalMr() {
