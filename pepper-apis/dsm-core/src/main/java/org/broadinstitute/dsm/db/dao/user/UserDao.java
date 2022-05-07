@@ -140,7 +140,7 @@ public class UserDao implements Dao<UserDto> {
                 Long expiresAt = null;
 
                 userId = handle.attach(JdbiUser.class).insertUser(auth0Domain, clientKey, null,
-                        userGuid, userHruid, null, null, false, now, now, expiresAt);
+                        userGuid, userHruid, null, null, false, now, now, expiresAt, true);
                 String phone = user.getPhoneNumber().orElse("");
                 handle.attach(JdbiUser.class)
                         .insertUserProfile(Long.valueOf(userId), user.getFirstName(), user.getLastName(), phone,
@@ -172,6 +172,17 @@ public class UserDao implements Dao<UserDto> {
             SimpleResult dbVals = new SimpleResult();
             DBUtil.checkUpdate(1, handle.attach(JdbiUser.class).updateAuth0UserId(userId, auth0UserId));
             return dbVals;
+        });
+    }
+
+    public void deactivateUser(long userId) {
+        TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
+            try {
+                DBUtil.checkUpdate(1, handle.attach(JdbiUser.class).deactivateUser(userId));
+            } catch (DaoException e) {
+                throw new RuntimeException("Problem deactivating user with id " + userId, e);
+            }
+            return null;
         });
     }
 }

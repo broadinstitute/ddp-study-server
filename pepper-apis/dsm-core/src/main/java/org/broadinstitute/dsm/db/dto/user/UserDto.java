@@ -9,15 +9,17 @@ import org.apache.commons.lang3.StringUtils;
 public class UserDto {
     private long userId;
     private String guid;
+    private String shortId;
     private String firstName;
     private String lastName;
     private String name;
     private String email;
     private String phoneNumber;
     private String auth0UserId;
+    private boolean isActive;
 
     public UserDto(long userId, String name, String email, String phoneNumber, String auth0UserId, String guid, String firstName,
-                   String lastName) {
+                   String lastName, String shortId, boolean isActive) {
         this.userId = userId;
         this.name = name;
         this.email = email;
@@ -26,6 +28,8 @@ public class UserDto {
         this.guid = guid;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.shortId = shortId;
+        this.isActive = isActive;
     }
 
     public long getUserId() {

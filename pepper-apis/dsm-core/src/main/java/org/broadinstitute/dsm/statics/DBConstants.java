@@ -510,4 +510,5 @@ public class DBConstants {
     public static final String LABEL_URL_RETURN = "label_url_return";
 
     public static final String PARTICIPANT_RECORD_ID = "participant_record_id";
+    public static final String USER_DELETE = "user_delete";
 }

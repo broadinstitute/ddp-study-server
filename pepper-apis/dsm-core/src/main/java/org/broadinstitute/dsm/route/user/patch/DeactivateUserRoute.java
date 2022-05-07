@@ -1,9 +1,10 @@
-package org.broadinstitute.dsm.route.user;
+package org.broadinstitute.dsm.route.user.patch;
 
-import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.dao.roles.UserRoleDao;
-import org.broadinstitute.dsm.db.dto.user.UserRoleDto;
+import org.broadinstitute.dsm.db.dao.user.UserDao;
+import org.broadinstitute.dsm.route.user.ModifyUserRoute;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -16,13 +17,13 @@ import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
 
-public class ModifyUserRoute extends RequestHandler {
+public class DeactivateUserRoute extends RequestHandler {
 
     Logger logger = LoggerFactory.getLogger(ModifyUserRoute.class);
-    UserRoleDao userRoleDao;
+    UserDao userDao;
 
-    public ModifyUserRoute(UserRoleDao userRoleDao) {
-        this.userRoleDao = userRoleDao;
+    public DeactivateUserRoute(UserDao userDao) {
+        this.userDao = userDao;
     }
 
     @Override
@@ -36,15 +37,16 @@ public class ModifyUserRoute extends RequestHandler {
         }
 
         if (StringUtils.isNotBlank(realm)) {
-            if (RoutePath.RequestMethod.POST.toString().equals(request.requestMethod())) {
-                if (UserUtil.checkUserAccess(realm, userId, DBConstants.USER_ACCESS, null)) {
+            if (RoutePath.RequestMethod.PATCH.toString().equals(request.requestMethod())) {
+                if (UserUtil.checkUserAccess(realm, userId, DBConstants.USER_DELETE, null)) {
                     String requestBody = request.body();
-                    UserRoleDto modifiedUser = new Gson().fromJson(requestBody, UserRoleDto.class);
-
-                    logger.info("Going to update info for user id " + modifiedUser.getUser().getUserId() + " wit new role " +
-                            modifiedUser.getRole().getRoleId());
-                    userRoleDao.modifyUser(modifiedUser, realm);
-
+                    JsonObject jsonObject = new JsonParser().parse(requestBody).getAsJsonObject();
+                    Long toBeDeletedUserId = jsonObject.get("userId").getAsLong();
+                    if (toBeDeletedUserId == null) {
+                        throw new RuntimeException("user Id should not be null");
+                    }
+                    logger.info("Going to deactivate user id " + toBeDeletedUserId);
+                    userDao.deactivateUser(toBeDeletedUserId);
                     return new Result(200);
                 } else {
                     response.status(401);
@@ -56,5 +58,4 @@ public class ModifyUserRoute extends RequestHandler {
         response.status(500);
         return new Result(500, UserErrorMessages.CONTACT_DEVELOPER);
     }
-
 }

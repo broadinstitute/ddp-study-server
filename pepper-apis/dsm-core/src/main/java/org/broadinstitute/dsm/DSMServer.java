@@ -122,6 +122,7 @@ import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
 import org.broadinstitute.dsm.route.user.GetUserRoute;
 import org.broadinstitute.dsm.route.user.ModifyUserRoute;
 import org.broadinstitute.dsm.route.user.PostUserRoute;
+import org.broadinstitute.dsm.route.user.patch.DeactivateUserRoute;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -697,22 +698,21 @@ public class DSMServer {
     }
 
     private void setupUserAndRoleRoutes(Config cfg) {
-        UserDao userDao = new UserDao();
-        UserRoleDao userRoleDao = new UserRoleDao();
-        RoleDao roleDao = new RoleDao();
-
-        PostUserRoute postUserRoute = new PostUserRoute(userDao, cfg.getString(ApplicationConfigConstants.AUTH0_ACCOUNT),
+        PostUserRoute postUserRoute = new PostUserRoute(new UserDao(), cfg.getString(ApplicationConfigConstants.AUTH0_ACCOUNT),
                 cfg.getString(ApplicationConfigConstants.AUTH0_CLIENT_KEY));
         post(UI_ROOT + RoutePath.ADD_NEW_USER, postUserRoute, new JsonTransformer());
 
-        GetUserRoute getUserRoute = new GetUserRoute(userRoleDao);
+        GetUserRoute getUserRoute = new GetUserRoute(new UserRoleDao());
         get(UI_ROOT + RoutePath.GET_USERS, getUserRoute, new JsonTransformer());
 
-        GetRoleRoute getRoleRoute = new GetRoleRoute(roleDao);
+        GetRoleRoute getRoleRoute = new GetRoleRoute(new RoleDao());
         get(UI_ROOT + RoutePath.GET_ROLES, getRoleRoute, new JsonTransformer());
 
         ModifyUserRoute modifyUserRoute = new ModifyUserRoute(new UserRoleDao());
         post(UI_ROOT + RoutePath.MODIFY_USER, modifyUserRoute, new JsonTransformer());
+
+        DeactivateUserRoute deactivateUserRoute = new DeactivateUserRoute(new UserDao());
+        patch(UI_ROOT + RoutePath.DEACTIVATE_USER, deactivateUserRoute, new JsonTransformer());
 
     }
 
