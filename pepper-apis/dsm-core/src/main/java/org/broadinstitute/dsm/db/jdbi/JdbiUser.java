@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.broadinstitute.dsm.db.dto.user.UserDto;
+import org.broadinstitute.dsm.db.dto.user.UserRoleDto;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -93,5 +94,15 @@ public interface JdbiUser extends SqlObject {
 
     @SqlUpdate ("UPDATE user SET is_active = 0 WHERE user_id = :userId")
     int deactivateUser(@Bind ("userId") long userId);
+
+    @SqlQuery (
+            " SELECT u.guid, u.user_id, up.first_name, up.last_name, concat(up.first_name, \" \", up.last_name) as name, up.email, up.phone as phoneNumber, " +
+                    "            u.auth0_user_id, u.hruid as shortId, u.is_active, u.dsm_legacy_id " +
+                    "                    FROM user u " +
+                    "                    left join user_profile up on (u.user_id = up.user_id) " +
+                    "                    left join user_settings us on (u.user_id = us.user_id) " +
+                    "                    where us.user_settings_id <> 0")
+    @RegisterConstructorMapper (UserRoleDto.class)
+    List<UserDto> getAllDSMUsers();
 
 }

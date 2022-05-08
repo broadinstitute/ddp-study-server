@@ -111,6 +111,19 @@ public class UserDao implements Dao<UserDto> {
         return (List<String>) results.resultValue;
     }
 
+    public List<UserDto> getAllDSMUsers() {
+        SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
+            SimpleResult dbVals = new SimpleResult();
+            dbVals.resultValue = handle.attach(JdbiUser.class).getAllDSMUsers();
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Error getting user by id ", results.resultException);
+        }
+        return (List<UserDto>) results.resultValue;
+    }
+
     public String getUserGuid(String email) {
         SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
             SimpleResult dbVals = new SimpleResult();

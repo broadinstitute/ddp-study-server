@@ -94,5 +94,6 @@ public interface JdbiUserRole extends SqlObject {
                     "left join umbrella_study us on (us.umbrella_id = r.umbrella_id) " +
                     "where us.guid  = :umbrellaGuid and u.is_active = 1")
     @RegisterConstructorMapper (UserRoleDto.class)
-    List<UserRoleDto> getAllUsersWithRoleInRealm(@Bind ("umbrellaGuid") String studyGuid);
+    List<UserRoleDto> getAllActiveUsersWithRoleInRealm(@Bind ("umbrellaGuid") String studyGuid);
+
 }

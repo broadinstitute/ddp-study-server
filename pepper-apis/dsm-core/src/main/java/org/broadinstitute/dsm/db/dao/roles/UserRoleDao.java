@@ -115,7 +115,7 @@ public class UserRoleDao {
         List<UserRoleDto> users = new ArrayList<>();
         SimpleResult result = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
             SimpleResult dbVals = new SimpleResult();
-            dbVals.resultValue = handle.attach(JdbiUserRole.class).getAllUsersWithRoleInRealm(studyGuid);
+            dbVals.resultValue = handle.attach(JdbiUserRole.class).getAllActiveUsersWithRoleInRealm(studyGuid);
             logger.info(
                     String.format("Returning a list of %d users for realm %s", ((List<UserRoleDto>) dbVals.resultValue).size(), studyGuid));
             return dbVals;

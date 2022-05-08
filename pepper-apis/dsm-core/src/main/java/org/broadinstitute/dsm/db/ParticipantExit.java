@@ -14,9 +14,9 @@ import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
-import org.broadinstitute.dsm.db.dao.roles.UserRoleDao;
+import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
-import org.broadinstitute.dsm.db.dto.user.UserRoleDto;
+import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -87,14 +87,13 @@ public class ParticipantExit {
                 addParticipantInformation(realm, exitedParticipants.values());
             }
         }
-        getUserNames(exitedParticipants, realm);
+        getUserNames(exitedParticipants);
         return exitedParticipants;
     }
 
-    private static void getUserNames(Map<String, ParticipantExit> exitedParticipants, String realm) {
-        UserRoleDao userRoleDao = new UserRoleDao();
-        DDPInstance ddpInstance = DDPInstance.getDDPInstanceByRealmOrGuid(realm);
-        List<UserRoleDto> userList = userRoleDao.getAllUsersWithRoleForRealm(ddpInstance.getStudyGuid());
+    private static void getUserNames(Map<String, ParticipantExit> exitedParticipants) {
+        UserDao userDao = new UserDao();
+        List<UserDto> userList = userDao.getAllDSMUsers();
         Optional<BookmarkDto> maybeUserIdBookmark = new BookmarkDao().getBookmarkByInstance("FIRST_DSM_USER_ID");
         maybeUserIdBookmark.orElseThrow();
         Long firstNewUserId = maybeUserIdBookmark.get().getValue();
@@ -103,11 +102,11 @@ public class ParticipantExit {
             long userId = participantExit.userId;
             boolean isLegacy = userId < firstNewUserId;
             if (isLegacy) {
-                userList.stream().filter(user -> user.getUser().getDsmLegacyId() == userId).findAny()
-                        .ifPresent(u -> participantExit.user = u.getUser().getName().get());
+                userList.stream().filter(user -> user.getDsmLegacyId() == userId).findAny()
+                        .ifPresent(u -> participantExit.user = u.getName().get());
             } else {
-                userList.stream().filter(user -> user.getUser().getUserId() == userId).findAny()
-                        .ifPresent(u -> participantExit.user = u.getUser().getName().get());
+                userList.stream().filter(user -> user.getUserId() == userId).findAny()
+                        .ifPresent(u -> participantExit.user = u.getName().get());
             }
         }
     }
