@@ -6,11 +6,17 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
+import org.broadinstitute.dsm.db.dao.roles.UserRoleDao;
+import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
+import org.broadinstitute.dsm.db.dto.user.UserRoleDto;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -23,27 +29,30 @@ public class ParticipantExit {
 
     private static final Logger logger = LoggerFactory.getLogger(ParticipantExit.class);
 
-    private static final String SQL_SELECT_EXITED_PT = "SELECT realm.instance_name, ex.ddp_participant_id, u.name, ex.exit_date, ex.in_ddp "
-            + "FROM ddp_participant_exit ex, ddp_instance realm, access_user u WHERE ex.ddp_instance_id = realm.ddp_instance_id "
-            + "AND ex.exit_by = u.user_id AND realm.instance_name = ?";
+    private static final String SQL_SELECT_EXITED_PT =
+            "SELECT realm.instance_name, ex.ddp_participant_id, ex.exit_date, ex.in_ddp, ex.exit_by "
+                    + "FROM ddp_participant_exit ex, ddp_instance realm WHERE ex.ddp_instance_id = realm.ddp_instance_id "
+                    + "AND realm.instance_name = ?";
     private static final String SQL_INSERT_EXIT_PT =
             "INSERT INTO ddp_participant_exit (ddp_instance_id, ddp_participant_id, exit_date, exit_by, in_ddp) " + "VALUES (?,?,?,?,?)";
 
     private final String realm;
     private final String participantId;
-    private final String user;
+    private String user;
+    private long userId;
     private final long exitDate;
     private final boolean inDDP;
 
     private String shortId;
     private String legacyShortId;
 
-    public ParticipantExit(String realm, String participantId, String user, long exitDate, boolean inDDP) {
+    public ParticipantExit(String realm, String participantId, String user, long exitDate, boolean inDDP, long userId) {
         this.realm = realm;
         this.participantId = participantId;
         this.user = user;
         this.exitDate = exitDate;
         this.inDDP = inDDP;
+        this.userId = userId;
     }
 
     public static Map<String, ParticipantExit> getExitedParticipants(@NonNull String realm) {
@@ -61,8 +70,8 @@ public class ParticipantExit {
                         String ddpParticipantId = rs.getString(DBConstants.DDP_PARTICIPANT_ID);
                         exitedParticipants.put(ddpParticipantId,
                                 new ParticipantExit(rs.getString(DBConstants.INSTANCE_NAME), ddpParticipantId,
-                                        rs.getString(DBConstants.NAME), rs.getLong(DBConstants.EXIT_DATE),
-                                        rs.getBoolean(DBConstants.IN_DDP)));
+                                        null, rs.getLong(DBConstants.EXIT_DATE),
+                                        rs.getBoolean(DBConstants.IN_DDP), rs.getLong(DBConstants.EXIT_BY)));
                     }
                 }
             } catch (Exception ex) {
@@ -78,7 +87,29 @@ public class ParticipantExit {
                 addParticipantInformation(realm, exitedParticipants.values());
             }
         }
+        getUserNames(exitedParticipants, realm);
         return exitedParticipants;
+    }
+
+    private static void getUserNames(Map<String, ParticipantExit> exitedParticipants, String realm) {
+        UserRoleDao userRoleDao = new UserRoleDao();
+        DDPInstance ddpInstance = DDPInstance.getDDPInstanceByRealmOrGuid(realm);
+        List<UserRoleDto> userList = userRoleDao.getAllUsersWithRoleForRealm(ddpInstance.getStudyGuid());
+        Optional<BookmarkDto> maybeUserIdBookmark = new BookmarkDao().getBookmarkByInstance("FIRST_DSM_USER_ID");
+        maybeUserIdBookmark.orElseThrow();
+        Long firstNewUserId = maybeUserIdBookmark.get().getValue();
+        for (String key : exitedParticipants.keySet()) {
+            ParticipantExit participantExit = exitedParticipants.get(key);
+            long userId = participantExit.userId;
+            boolean isLegacy = userId < firstNewUserId;
+            if (isLegacy) {
+                userList.stream().filter(user -> user.getUser().getDsmLegacyId() == userId).findAny()
+                        .ifPresent(u -> participantExit.user = u.getUser().getName().get());
+            } else {
+                userList.stream().filter(user -> user.getUser().getUserId() == userId).findAny()
+                        .ifPresent(u -> participantExit.user = u.getUser().getName().get());
+            }
+        }
     }
 
     private static void addParticipantInformation(@NonNull String realm, @NonNull Collection<ParticipantExit> exitedParticipants) {

@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -19,6 +20,7 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
 import org.broadinstitute.dsm.db.dao.user.AssigneeDao;
+import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
 import org.broadinstitute.dsm.db.dto.user.AssigneeDto;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
@@ -182,7 +184,9 @@ public class Participant {
             throws SQLException {
         String assigneeMR = null;
         String assigneeTissue = null;
-        Long firstNewUserId = Long.parseLong(String.valueOf(new BookmarkDao().getBookmarkByInstance("FIRST_DSM_USER_ID").orElseThrow()));
+        Optional<BookmarkDto> maybeUserIdBookmark = new BookmarkDao().getBookmarkByInstance("FIRST_DSM_USER_ID");
+        maybeUserIdBookmark.orElseThrow();
+        Long firstNewUserId = maybeUserIdBookmark.get().getValue();
         if (assignees != null && !assignees.isEmpty()) {
             String assigneeIdMR = rs.getString(DBConstants.ASSIGNEE_ID_MR);
             boolean isLegacy = Long.parseLong(assigneeIdMR) < firstNewUserId;

@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 @Data
 public class UserDto {
     private long userId;
+    private long dsmLegacyId;
     private String guid;
     private String shortId;
     private String firstName;
@@ -19,7 +20,7 @@ public class UserDto {
     private boolean isActive;
 
     public UserDto(long userId, String name, String email, String phoneNumber, String auth0UserId, String guid, String firstName,
-                   String lastName, String shortId, boolean isActive) {
+                   String lastName, String shortId, boolean isActive, long dsmLegacyId) {
         this.userId = userId;
         this.name = name;
         this.email = email;
@@ -30,6 +31,7 @@ public class UserDto {
         this.lastName = lastName;
         this.shortId = shortId;
         this.isActive = isActive;
+        this.dsmLegacyId = dsmLegacyId;
     }
 
     public long getUserId() {
