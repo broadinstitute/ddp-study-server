@@ -303,4 +303,6 @@
     <include file="db-changes/schema/DDP-7291-add-error-present-status-flag.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/DDP-7291-add-error-present-activity-instance-status.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/DDP-7754-add-new-kit-type.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/DDP-7709-add-boolean-render-mode-type.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-7709-add-boolean-render-mode.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
