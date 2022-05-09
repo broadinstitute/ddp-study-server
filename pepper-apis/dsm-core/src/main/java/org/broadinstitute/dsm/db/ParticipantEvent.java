@@ -7,9 +7,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 import lombok.Data;
 import lombok.NonNull;
+import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
+import org.broadinstitute.dsm.db.dao.user.UserDao;
+import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
+import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -29,15 +35,17 @@ public class ParticipantEvent {
                     + "and ev.ddp_participant_id = ?";
     private final String participantId;
     private final String eventType;
-    private final String user;
+    private final long userId;
+    private String user;
     private final long date;
     private String shortId;
 
-    public ParticipantEvent(String participantId, String eventType, String user, long date) {
+    public ParticipantEvent(String participantId, String eventType, String user, long date, long userId) {
         this.participantId = participantId;
         this.eventType = eventType;
         this.user = user;
         this.date = date;
+        this.userId = userId;
     }
 
     public static Collection<ParticipantEvent> getSkippedParticipantEvents(@NonNull String realm) {
@@ -51,7 +59,7 @@ public class ParticipantEvent {
                     while (rs.next()) {
                         skippedParticipantEvents.add(
                                 new ParticipantEvent(rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.EVENT),
-                                        rs.getString(DBConstants.NAME), rs.getLong(DBConstants.DATE)));
+                                        null, rs.getLong(DBConstants.DATE), rs.getLong(DBConstants.DONE_BY)));
                     }
                 }
             } catch (Exception ex) {
@@ -77,7 +85,27 @@ public class ParticipantEvent {
                 }
             }
         }
+        getUserNames(skippedParticipantEvents);
         return skippedParticipantEvents;
+    }
+
+    private static void getUserNames(Collection<ParticipantEvent> skippedParticipantEvents) {
+        UserDao userDao = new UserDao();
+        List<UserDto> userList = userDao.getAllDSMUsers();
+        Optional<BookmarkDto> maybeUserIdBookmark = new BookmarkDao().getBookmarkByInstance("FIRST_DSM_USER_ID");
+        maybeUserIdBookmark.orElseThrow();
+        Long firstNewUserId = maybeUserIdBookmark.get().getValue();
+        skippedParticipantEvents.stream().forEach(participantEvent -> {
+            long userId = participantEvent.userId;
+            boolean isLegacy = userId < firstNewUserId;
+            if (isLegacy) {
+                userList.stream().filter(user -> user.getDsmLegacyId() == userId).findAny()
+                        .ifPresent(u -> participantEvent.user = u.getName().get());
+            } else {
+                userList.stream().filter(user -> user.getUserId() == userId).findAny()
+                        .ifPresent(u -> participantEvent.user = u.getName().get());
+            }
+        });
     }
 
     public static void skipParticipantEvent(@NonNull String ddpParticipantId, @NonNull long currentTime, @NonNull String userId,

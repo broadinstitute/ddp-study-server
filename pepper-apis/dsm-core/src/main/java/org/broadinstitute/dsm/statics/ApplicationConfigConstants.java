@@ -101,7 +101,6 @@ public class ApplicationConfigConstants {
     public static final String INSERT_LABEL_SETTINGS = "portal.insertLabelSettings";
 
     public static final String GET_PARTICIPANT_EVENTS = "portal.selectParticipantEvents";
-    public static final String GET_PARTICIPANT_EVENT = "portal.selectParticipantEvent";
     public static final String INSERT_PARTICIPANT_EVENT = "portal.insertParticipantEvent";
     public static final String INSERT_SURVEY_TRIGGER = "portal.insertSurveyTrigger";
     public static final String GET_KIT_OF_EXITED_PARTICIPANTS = "portal.exitedKits";
