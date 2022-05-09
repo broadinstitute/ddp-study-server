@@ -9,10 +9,14 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import lombok.Data;
 import lombok.NonNull;
+import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
+import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
+import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
@@ -39,6 +43,7 @@ public class KitDiscard {
     private String kitRequestId;
     private String kitDiscardId;
     private String user;
+    private long userId;
     private long exitDate;
     private String kitType;
     private long scanDate;
@@ -67,7 +72,7 @@ public class KitDiscard {
     public KitDiscard(String realm, String ddpParticipantId, String collaboratorParticipantId, String kitRequestId, String kitDiscardId,
                       String user, long exitDate, String kitType, long scanDate, long receivedDate, String kitLabel, String action,
                       String pathBSPScreenshot, String pathSampleImage, String note, int changedById, String changedBy, String userConfirm,
-                      String discardUser, String discardDate) {
+                      String discardUser, String discardDate, long userId) {
         this.realm = realm;
         this.ddpParticipantId = ddpParticipantId;
         this.collaboratorParticipantId = collaboratorParticipantId;
@@ -88,6 +93,7 @@ public class KitDiscard {
         this.userConfirm = userConfirm;
         this.discardUser = discardUser;
         this.discardDate = discardDate;
+        this.userId = userId;
     }
 
     public static List<KitDiscard> getExitedKits(@NonNull String realm) {
@@ -107,12 +113,13 @@ public class KitDiscard {
                         String userConfirm = users.get(userIdConfirm);
                         exitedKits.add(new KitDiscard(rs.getString(DBConstants.INSTANCE_NAME), rs.getString(DBConstants.DDP_PARTICIPANT_ID),
                                 rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID), rs.getString(DBConstants.DSM_KIT_REQUEST_ID),
-                                rs.getString(DBConstants.KIT_DISCARD_ID), rs.getString(DBConstants.NAME), rs.getLong(DBConstants.EXIT_DATE),
+                                rs.getString(DBConstants.KIT_DISCARD_ID), null, rs.getLong(DBConstants.EXIT_DATE),
                                 rs.getString(DBConstants.KIT_TYPE_NAME), rs.getLong(DBConstants.DSM_SCAN_DATE),
                                 rs.getLong(DBConstants.DSM_RECEIVE_DATE), rs.getString(DBConstants.KIT_LABEL),
                                 rs.getString(DBConstants.ACTION), rs.getString(DBConstants.PATH_SCREENSHOT),
                                 rs.getString(DBConstants.PATH_IMAGE), rs.getString(DBConstants.NOTE), userIdChanged, userChanged,
-                                userConfirm, rs.getString(DBConstants.DISCARD_BY), rs.getString(DBConstants.DISCARD_DATE)));
+                                userConfirm, rs.getString(DBConstants.DISCARD_BY), rs.getString(DBConstants.DISCARD_DATE),
+                                rs.getLong(DBConstants.EXIT_BY)));
                     }
                 }
             } catch (Exception ex) {
@@ -124,7 +131,44 @@ public class KitDiscard {
         if (results.resultException != null) {
             logger.error("Couldn't get information of exited kits for " + realm, results.resultException);
         }
+        getUserNames(exitedKits);
         return exitedKits;
+    }
+
+    private static void getUserNames(List<KitDiscard> exitedKits) {
+        UserDao userDao = new UserDao();
+        List<UserDto> userList = userDao.getAllDSMUsers();
+        Optional<BookmarkDto> maybeUserIdBookmark = new BookmarkDao().getBookmarkByInstance("FIRST_DSM_USER_ID");
+        maybeUserIdBookmark.orElseThrow();
+        Long firstNewUserId = maybeUserIdBookmark.get().getValue();
+        exitedKits.stream().forEach(kitDiscard -> {
+            long userId = kitDiscard.userId;
+            boolean isLegacy = userId < firstNewUserId;
+            if (isLegacy) {
+                userList.stream().filter(user -> user.getDsmLegacyId() == userId).findAny()
+                        .ifPresent(u -> kitDiscard.user = u.getName().get());
+            } else {
+                userList.stream().filter(user -> user.getUserId() == userId).findAny()
+                        .ifPresent(u -> kitDiscard.user = u.getName().get());
+            }
+        });
+    }
+
+    private static void getUserNames(KitDiscard kitDiscard) {
+        UserDao userDao = new UserDao();
+        List<UserDto> userList = userDao.getAllDSMUsers();
+        Optional<BookmarkDto> maybeUserIdBookmark = new BookmarkDao().getBookmarkByInstance("FIRST_DSM_USER_ID");
+        maybeUserIdBookmark.orElseThrow();
+        Long firstNewUserId = maybeUserIdBookmark.get().getValue();
+        long userId = kitDiscard.userId;
+        boolean isLegacy = userId < firstNewUserId;
+        if (isLegacy) {
+            userList.stream().filter(user -> user.getDsmLegacyId() == userId).findAny()
+                    .ifPresent(u -> kitDiscard.user = u.getName().get());
+        } else {
+            userList.stream().filter(user -> user.getUserId() == userId).findAny()
+                    .ifPresent(u -> kitDiscard.user = u.getName().get());
+        }
     }
 
     public static boolean setConfirmed(@NonNull String kitDiscardId, @NonNull Long userId) {
@@ -245,13 +289,14 @@ public class KitDiscard {
                         dbVals.resultValue =
                                 new KitDiscard(rs.getString(DBConstants.INSTANCE_NAME), rs.getString(DBConstants.DDP_PARTICIPANT_ID),
                                         rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID), rs.getString(DBConstants.DSM_KIT_REQUEST_ID),
-                                        rs.getString(DBConstants.KIT_DISCARD_ID), rs.getString(DBConstants.NAME),
+                                        rs.getString(DBConstants.KIT_DISCARD_ID), null,
                                         rs.getLong(DBConstants.EXIT_DATE), rs.getString(DBConstants.KIT_TYPE_NAME),
                                         rs.getLong(DBConstants.DSM_SCAN_DATE), rs.getLong(DBConstants.DSM_RECEIVE_DATE),
                                         rs.getString(DBConstants.KIT_LABEL), rs.getString(DBConstants.ACTION),
                                         rs.getString(DBConstants.PATH_SCREENSHOT), rs.getString(DBConstants.PATH_IMAGE),
                                         rs.getString(DBConstants.NOTE), userIdChanged, userChanged, userConfirm,
-                                        rs.getString(DBConstants.DISCARD_BY), rs.getString(DBConstants.DISCARD_DATE));
+                                        rs.getString(DBConstants.DISCARD_BY), rs.getString(DBConstants.DISCARD_DATE),
+                                        rs.getLong(DBConstants.EXIT_BY));
                     } else {
                         throw new RuntimeException("Error getting discard kit back. (Got " + count + " row back)");
                     }
@@ -265,7 +310,9 @@ public class KitDiscard {
         if (results.resultException != null) {
             logger.error("Couldn't get information of discard kit w/ id " + kitDiscardId, results.resultException);
         }
-        return (KitDiscard) results.resultValue;
+        KitDiscard kitDiscard = (KitDiscard) results.resultValue;
+        getUserNames(kitDiscard);
+        return kitDiscard;
 
     }
 
