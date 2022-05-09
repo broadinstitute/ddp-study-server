@@ -79,7 +79,6 @@ public class ApplicationConfigConstants {
     //db queries
     public static final String GET_RECEIVED_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL = "portal.selectReceivedKitForNotification";
     public static final String GET_SENT_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL = "portal.selectSentKitForNotification";
-    public static final String GET_ALLOWED_REALMS_FOR_USER_ROLE_STARTS_LIKE = "portal.selectAllowedRealmsStartsLike";
     public static final String GET_ROLES_LIKE = "portal.getRoles";
     public static final String UPDATE_KIT_REQUEST = "portal.updateKitRequest";
     public static final String INSERT_KIT_TRACKING = "portal.insertKitTrackingRequest";
