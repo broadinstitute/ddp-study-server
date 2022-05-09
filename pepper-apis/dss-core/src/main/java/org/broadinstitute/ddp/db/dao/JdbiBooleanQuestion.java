@@ -11,7 +11,7 @@ public interface JdbiBooleanQuestion extends SqlObject {
     @UseStringTemplateSqlLocator
     @SqlUpdate("insertByRenderModeId")
     int insert(@Bind("questionId") long questionId, @Bind("trueTemplateId") long trueTemplateId,
-               @Bind("falseTemplateId") long falseTemplateId, long renderModeId);
+               @Bind("falseTemplateId") long falseTemplateId, @Bind("renderMode") long renderModeId);
 
     @UseStringTemplateSqlLocator
     @SqlUpdate("insertByRenderModeCode")
