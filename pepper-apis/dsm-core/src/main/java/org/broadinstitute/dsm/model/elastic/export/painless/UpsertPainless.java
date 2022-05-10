@@ -8,6 +8,7 @@ import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.UpdateByQueryRequest;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
@@ -40,11 +41,17 @@ public class UpsertPainless implements Exportable {
         updateByQueryRequest.setMaxRetries(5);
         updateByQueryRequest.setRefresh(true);
         try {
-            clientInstance.updateByQuery(updateByQueryRequest, RequestOptions.DEFAULT);
-            logger.info(String.format("Successfully updated ES data for %s", generator.getPropertyName()));
+            BulkByScrollResponse bulkByScrollResponse = clientInstance.updateByQuery(updateByQueryRequest, RequestOptions.DEFAULT);
+            logger.info(String.format(
+                    "created/updated %s records in ES data for %s", getNumberOfUpserted(bulkByScrollResponse), generator.getPropertyName())
+            );
         } catch (IOException e) {
             throw new RuntimeException("Error occurred while exporting data to ES", e);
         }
+    }
+
+    private long getNumberOfUpserted(BulkByScrollResponse bulkByScrollResponse) {
+        return Math.max(bulkByScrollResponse.getCreated(), bulkByScrollResponse.getUpdated());
     }
 
 }
