@@ -10,6 +10,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.cache.LanguageStore;
@@ -27,20 +28,16 @@ import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
+@Slf4j
 public class PatchProfileRoute implements Route {
-
-    private static final Logger LOG = LoggerFactory.getLogger(PatchProfileRoute.class);
-
     @Override
     public Object handle(Request request, Response response) throws Exception {
         String userGuid = request.params(RouteConstants.PathParam.USER_GUID);
-        LOG.info("Updating profile information for user with guid {}", userGuid);
+        log.info("Updating profile information for user with guid {}", userGuid);
 
         JsonElement data = new JsonParser().parse(request.body());
         if (!data.isJsonObject() || data.getAsJsonObject().entrySet().size() == 0) {
@@ -52,7 +49,7 @@ public class PatchProfileRoute implements Route {
         try {
             payload = new Gson().fromJson(json, Profile.class);
         } catch (Exception e) {
-            LOG.warn("Error while parsing json", e);
+            log.warn("Error while parsing json", e);
             throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.BAD_PAYLOAD, "Error parsing payload"));
         }
 
@@ -127,15 +124,15 @@ public class PatchProfileRoute implements Route {
                         .map(User::getAuth0UserId)
                         .orElse(null);
                 if (StringUtils.isNotBlank(auth0UserId)) {
-                    LOG.info("User {} has auth0 account, proceeding to sync user_metadata", userGuid);
+                    log.info("User {} has auth0 account, proceeding to sync user_metadata", userGuid);
                     Map<String, Object> metadata = new HashMap<>();
                     metadata.put(User.METADATA_LANGUAGE, languageDto == null ? null : languageDto.getIsoCode());
                     var result = Auth0ManagementClient.forUser(handle, userGuid).updateUserMetadata(auth0UserId, metadata);
                     if (result.hasThrown() || result.hasError()) {
                         var e = result.hasThrown() ? result.getThrown() : result.getError();
-                        LOG.error("Error while updating user_metadata for user {}, user's language may be out-of-sync", userGuid, e);
+                        log.error("Error while updating user_metadata for user {}, user's language may be out-of-sync", userGuid, e);
                     } else {
-                        LOG.info("Updated user_metadata for user {}", userGuid);
+                        log.info("Updated user_metadata for user {}", userGuid);
                     }
                 }
             }
@@ -155,7 +152,7 @@ public class PatchProfileRoute implements Route {
         try {
             return UserProfile.SexType.valueOf(sexStr);
         } catch (IllegalArgumentException e) {
-            LOG.warn("Provided invalid profile sex type: {}", sexStr, e);
+            log.warn("Provided invalid profile sex type: {}", sexStr, e);
             String errorMsg = "Provided invalid profile sex type: " + sexStr;
             throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_SEX, errorMsg));
         }
@@ -171,11 +168,11 @@ public class PatchProfileRoute implements Route {
             try {
                 return LocalDate.of(year, month, day);
             } catch (DateTimeException e) {
-                LOG.warn("Invalid birth date", e);
+                log.warn("Invalid birth date", e);
                 throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_DATE, "Invalid birth date"));
             }
         } else {
-            LOG.warn("Full birth date was not provided");
+            log.warn("Full birth date was not provided");
             throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST,
                     new ApiError(ErrorCodes.INVALID_DATE, "Need to provide full birth date"));
         }

@@ -74,6 +74,16 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
     }
 
     @Override
+    public Optional<QuestionDto> findLatestDtoByStudyGuidAndQuestionStableId(String studyGuid, String questionStableId) {
+        return delegate.findLatestDtoByStudyGuidAndQuestionStableId(studyGuid, questionStableId);
+    }
+
+    @Override
+    public List<QuestionDto> findByStudyGuid(String studyGuid) {
+        return delegate.findByStudyGuid(studyGuid);
+    }
+
+    @Override
     public Optional<QuestionDto> findDtoByActivityIdAndQuestionStableId(long activityId, String questionStableId) {
         return delegate.findDtoByActivityIdAndQuestionStableId(activityId, questionStableId);
     }
@@ -205,9 +215,10 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
     }
 
     @Override
-    public Map<Long, List<Long>> collectOrderedCompositeChildIdsByParentIds(Iterable<Long> parentQuestionIds) {
+    public Map<Long, List<Long>> collectOrderedCompositeChildIdsByParentIdsAndInstanceGuid(Iterable<Long> parentQuestionIds,
+                                                                                           String instanceGuid) {
         if (isNullCache(compositeParentIdToChildIdsCache)) {
-            return delegate.collectOrderedCompositeChildIdsByParentIds(parentQuestionIds);
+            return delegate.collectOrderedCompositeChildIdsByParentIdsAndInstanceGuid(parentQuestionIds, instanceGuid);
         } else {
             Set<Long> missingParentIds = new HashSet<>();
             Map<Long, List<Long>> result = new HashMap<>();
@@ -228,7 +239,7 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
             }
 
             if (!missingParentIds.isEmpty()) {
-                var moreChildIds = delegate.collectOrderedCompositeChildIdsByParentIds(missingParentIds);
+                var moreChildIds = delegate.collectOrderedCompositeChildIdsByParentIdsAndInstanceGuid(missingParentIds, instanceGuid);
                 try {
                     compositeParentIdToChildIdsCache.putAll(moreChildIds);
                     for (var entry : moreChildIds.entrySet()) {
@@ -249,8 +260,58 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
     }
 
     @Override
-    public Stream<CompositeIdPair> findOrderedCompositeChildIdsByParentIds(Iterable<Long> parentQuestionIds) {
-        return delegate.findOrderedCompositeChildIdsByParentIds(parentQuestionIds);
+    public Stream<CompositeIdPair> findOrderedCompositeChildIdsByParentIdsAndInstanceGuid(Iterable<Long> parentQuestionIds,
+                                                                                          String instanceGuid) {
+        return delegate.findOrderedCompositeChildIdsByParentIdsAndInstanceGuid(parentQuestionIds, instanceGuid);
+    }
+
+    @Override
+    public Map<Long, List<Long>> collectOrderedCompositeChildIdsByParentIdsAndTimestamp(Iterable<Long> parentQuestionIds, long timestamp) {
+        if (isNullCache(compositeParentIdToChildIdsCache)) {
+            return delegate.collectOrderedCompositeChildIdsByParentIdsAndTimestamp(parentQuestionIds, timestamp);
+        } else {
+            Set<Long> missingParentIds = new HashSet<>();
+            Map<Long, List<Long>> result = new HashMap<>();
+
+            for (var parentId : parentQuestionIds) {
+                try {
+                    var childIds = compositeParentIdToChildIdsCache.get(parentId);
+                    if (childIds != null) {
+                        result.put(parentId, childIds);
+                    } else {
+                        missingParentIds.add(parentId);
+                    }
+                } catch (RedisException e) {
+                    log.warn("Failed to retrieve value from Redis cache: " + compositeParentIdToChildIdsCache.getName()
+                            + " key:" + parentId + " Will try to retrieve from database", e);
+                    missingParentIds.add(parentId);
+                }
+            }
+
+            if (!missingParentIds.isEmpty()) {
+                var moreChildIds = delegate.collectOrderedCompositeChildIdsByParentIdsAndTimestamp(missingParentIds, timestamp);
+                try {
+                    compositeParentIdToChildIdsCache.putAll(moreChildIds);
+                    for (var entry : moreChildIds.entrySet()) {
+                        long parentId = entry.getKey();
+                        for (var childId : entry.getValue()) {
+                            compositeChildIdToParentIdCache.put(childId, parentId);
+                        }
+                    }
+                } catch (RedisException e) {
+                    log.warn("Failed to store values to Redis cache: " + compositeParentIdToChildIdsCache.getName(), e);
+                    RedisConnectionValidator.doTest();
+                }
+                result.putAll(moreChildIds);
+            }
+
+            return result;
+        }
+    }
+
+    @Override
+    public Stream<CompositeIdPair> findOrderedCompositeChildIdsByParentIdsAndTimestamp(Iterable<Long> parentQuestionIds, long timestamp) {
+        return delegate.findOrderedCompositeChildIdsByParentIdsAndTimestamp(parentQuestionIds, timestamp);
     }
 
     @Override

@@ -38,12 +38,22 @@ public class AbstractionWrapper {
     private Collection<AbstractionGroup> review;
     private Collection<AbstractionGroup> qc;
     private Collection<AbstractionGroup> finalFields;
+    private List<AbstractionActivity> abstractionActivities;
 
     public AbstractionWrapper(Collection<AbstractionGroup> abstraction, Collection<AbstractionGroup> review,
                               Collection<AbstractionGroup> qc) {
         this.abstraction = abstraction;
         this.review = review;
         this.qc = qc;
+    }
+
+    public AbstractionWrapper(Collection<AbstractionGroup> abstraction, Collection<AbstractionGroup> review,
+                              Collection<AbstractionGroup> qc,
+                              List<AbstractionActivity> abstractionActivities) {
+        this.abstraction = abstraction;
+        this.review = review;
+        this.qc = qc;
+        this.abstractionActivities = abstractionActivities;
     }
 
     public AbstractionWrapper(Collection<AbstractionGroup> finalFields) {
@@ -53,6 +63,7 @@ public class AbstractionWrapper {
     public static AbstractionWrapper getAbstractionFieldValue(@NonNull String realm, @NonNull String ddpParticipantId) {
         AbstractionActivity activity = AbstractionActivity.getAbstractionActivity(realm, ddpParticipantId, "final");
         if (activity == null || !activity.getAStatus().equals("done")) {
+            List<AbstractionActivity> abstractionActivities = AbstractionActivity.getAbstractionActivity(realm, ddpParticipantId);
             String query =
                     AbstractionUtil.SQL_SELECT_MEDICAL_RECORD_ABSTRACTION.replace(Patch.TABLE, DBConstants.MEDICAL_RECORD_ABSTRACTION)
                             .replace(Patch.PK, DBConstants.MEDICAL_RECORD_ABSTRACTION_ID);
@@ -63,7 +74,7 @@ public class AbstractionWrapper {
             List<AbstractionGroup> review =
                     AbstractionUtil.getAbstractionFieldValue(realm, ddpParticipantId, query, DBConstants.MEDICAL_RECORD_REVIEW_ID);
             List<AbstractionGroup> qc = AbstractionUtil.getQCFieldValue(realm, ddpParticipantId);
-            return new AbstractionWrapper(abstraction, review, qc);
+            return new AbstractionWrapper(abstraction, review, qc, abstractionActivities);
         }
         Map<String, List<AbstractionGroup>> abstractionSummary = AbstractionFinal.getAbstractionFinal(realm);
         if (abstractionSummary != null && !abstractionSummary.isEmpty()) {
