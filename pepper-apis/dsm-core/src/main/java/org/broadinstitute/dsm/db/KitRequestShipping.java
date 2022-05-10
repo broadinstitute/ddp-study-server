@@ -758,8 +758,8 @@ public class KitRequestShipping extends KitRequest {
                 UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
                         ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId).export();
             } catch (Exception e) {
-                logger.error(String.format("Error updating kit request shipping deactivate reason with dsm kit request id: %s in " +
-                        "ElasticSearch", dsmKitRequestId));
+                logger.error(String.format("Error updating kit request shipping deactivate reason with dsm kit request id: %s in "
+                        + "ElasticSearch", dsmKitRequestId));
                 e.printStackTrace();
             }
 
