@@ -3,9 +3,7 @@ package org.broadinstitute.ddp.equation;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import one.util.streamex.StreamEx;
-import org.broadinstitute.ddp.db.dao.JdbiPicklistOption;
 import org.broadinstitute.ddp.db.dao.QuestionCachedDao;
-import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dto.EquationQuestionDto;
 import org.broadinstitute.ddp.json.EquationResponse;
 import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
@@ -37,7 +35,7 @@ public final class QuestionEvaluator {
             return null;
         }
 
-        addValue(equation.getId(), QuestionType.EQUATION, equation.getStableId(), EquationEvaluator.builder()
+        addValue(QuestionType.EQUATION, equation.getStableId(), EquationEvaluator.builder()
                 .withVariablesValues(getVariablesValuesMap())
                 .build()
                 .evaluate(equation.getExpression())
@@ -79,11 +77,11 @@ public final class QuestionEvaluator {
             return;
         }
 
-        addValue(question.get().getId(), question.get().getType(), variable, answers);
+        addValue(question.get().getType(), variable, answers);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private void addValue(final Long questionId, final QuestionType type, final String variable, final List<?> values) {
+    private void addValue(final QuestionType type, final String variable, final List<?> values) {
         switch (type) {
             case NUMERIC:
                 final var numericValues = (List<Answer>) values;
@@ -100,7 +98,7 @@ public final class QuestionEvaluator {
                         StreamEx.of(picklistValues)
                                 .map(Answerable::getValue)
                                 .map(this::toString)
-                                .map(stableId -> toDecimalDef(questionId, stableId))
+                                .map(this::toDecimalDef)
                                 .toList()));
                 return;
             case EQUATION:
@@ -139,20 +137,8 @@ public final class QuestionEvaluator {
         return Optional.ofNullable(value).map(DecimalDef::new).orElse(null);
     }
 
-    private DecimalDef toDecimalDef(final Long questionId, final String stableId) {
-        final var option = handle.attach(JdbiPicklistOption.class).getByStableId(questionId, stableId, instanceGuid);
-        if (option.isEmpty()) {
-            log.warn("Picklist option {} for question {} of study {} wasn't found", stableId, questionId, instanceGuid);
-            return null;
-        }
-
-        final var value = handle.attach(TemplateDao.class).findTextAndVarCountById(option.get().getDetailLabelTemplateId());
-        if (value.isEmpty()) {
-            log.warn("Picklist option {} for question {} of study {} doesn't have value", stableId, questionId, instanceGuid);
-            return null;
-        }
-
-        return value.map(TemplateDao.TextAndVarCount::getText).map(DecimalDef::new).orElse(null);
+    private DecimalDef toDecimalDef(final String value) {
+        return Optional.ofNullable(value).map(DecimalDef::new).orElse(null);
     }
 
     private DecimalDef toDecimalDef(final Long value) {
