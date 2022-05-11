@@ -127,7 +127,8 @@ public class ParticipantRecordData {
             return IntStream.range(0, columnsList.size()).mapToObj(i -> Pair.of(columnsList.get(i), sizes.get(i)))
                     .map(entry -> IntStream.rangeClosed(1, entry.getValue()).mapToObj(
                             currentIndex -> String.format("%s %s", entry.getKey().getDisplay(),
-                                            aliasColumns.getKey().isCollection() && entry.getValue() > 1 ? currentIndex : StringUtils.EMPTY))
+                                            aliasColumns.getKey().isCollection() && entry.getValue() > 1
+                                                    ? currentIndex : StringUtils.EMPTY))
                             .collect(Collectors.toList())).flatMap(Collection::stream).collect(Collectors.toList());
         }
 

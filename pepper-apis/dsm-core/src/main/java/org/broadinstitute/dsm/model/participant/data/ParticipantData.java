@@ -141,9 +141,8 @@ public class ParticipantData {
         String participantGuid = Exportable.getParticipantGuid(ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
 
         try {
-            UpsertPainlessFacade.of(DBConstants.DDP_PARTICIPANT_DATA_ALIAS, participantData, ddpInstanceDto, ESObjectConstants.PARTICIPANT_DATA_ID,
-                            ESObjectConstants.DOC_ID,
-                            participantGuid)
+            UpsertPainlessFacade.of(DBConstants.DDP_PARTICIPANT_DATA_ALIAS, participantData, ddpInstanceDto,
+                            ESObjectConstants.PARTICIPANT_DATA_ID, ESObjectConstants.DOC_ID, participantGuid)
                     .export();
         } catch (Exception e) {
             logger.error(String.format("Error inserting participant data for guid: %s in ElasticSearch", participantGuid));

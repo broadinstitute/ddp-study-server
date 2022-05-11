@@ -115,6 +115,7 @@ public class ElasticSearchTest {
                 return Map.of(ElasticSearchUtil.PROFILE, profile, ElasticSearchUtil.PROXIES, proxies);
             }
         }
+
         String parentGuid = "TEST1234567891011123";
         String childGuid = "TEST1234567891011124";
         String legacyAltPid = "283hdsjd92j32njsjdbakdj283ndjdadsj2n3n13j";
