@@ -42,14 +42,14 @@ public interface ValueProvider {
                 return Collections.singletonList(StringUtils.EMPTY);
             }
             if (o instanceof Collection) {
-                List<Object> collect = ((Collection<?>) o).stream().map(singleDataMap -> getNestedValue(fieldName.substring(dotIndex + 1),
+                List<Object> collect = ((Collection<?>) o).stream().map(singleDataMap -> getNestedValueWrapper(fieldName.substring(dotIndex + 1),
                         (Map<String, Object>) singleDataMap, alias, participantColumn)).flatMap(Collection::stream).collect(Collectors.toList());
                 if (collect.isEmpty()) {
                     return Collections.singletonList(StringUtils.EMPTY);
                 }
                 return collect;
             } else {
-                return getNestedValue(fieldName.substring(dotIndex + 1), (Map<String, Object>) o, alias, participantColumn);
+                return getNestedValueWrapper(fieldName.substring(dotIndex + 1), (Map<String, Object>) o, alias, participantColumn);
             }
         }
         Object value = esDataAsMap.getOrDefault(fieldName, StringUtils.EMPTY);
@@ -80,7 +80,7 @@ public interface ValueProvider {
         List<LinkedHashMap<String, Object>> activities = (List<LinkedHashMap<String, Object>>) nestedValue;
         Collection<?> objects =
                 activities.stream().filter(activity -> activity.get(ElasticSearchUtil.ACTIVITY_CODE).equals(column.getTableAlias()))
-                        .findFirst().map(foundActivity -> {
+                        .map(foundActivity -> {
                             if (Objects.isNull(column.getObject())) {
                                 Object o = foundActivity.get(column.getName());
                                 return mapToCollection(o);
@@ -93,7 +93,7 @@ public interface ValueProvider {
                                         .flatMap(Collection::stream)
                                         .collect(Collectors.toList());
                             }
-                        }).orElse(Collections.singletonList(StringUtils.EMPTY));
+                        }).flatMap(Collection::stream).collect(Collectors.toList());
         if (objects.isEmpty()) {
             return Collections.singletonList(StringUtils.EMPTY);
         }

@@ -1,26 +1,28 @@
 package org.broadinstitute.dsm.model.elastic.export.excel.renderer;
 
-import static org.broadinstitute.dsm.model.Filter.AGREEMENT;
-import static org.broadinstitute.dsm.model.Filter.BOOLEAN;
-import static org.broadinstitute.dsm.model.Filter.CHECKBOX;
-import static org.broadinstitute.dsm.model.Filter.COMPOSITE;
-import static org.broadinstitute.dsm.model.Filter.DATE;
-import static org.broadinstitute.dsm.model.Filter.JSON_ARRAY;
-import static org.broadinstitute.dsm.model.Filter.MATRIX;
-import static org.broadinstitute.dsm.model.Filter.NUMBER;
-import static org.broadinstitute.dsm.model.Filter.OPTIONS;
+import static org.broadinstitute.dsm.model.QuestionType.AGREEMENT;
+import static org.broadinstitute.dsm.model.QuestionType.BOOLEAN;
+import static org.broadinstitute.dsm.model.QuestionType.CHECKBOX;
+import static org.broadinstitute.dsm.model.QuestionType.COMPOSITE;
+import static org.broadinstitute.dsm.model.QuestionType.DATE;
+import static org.broadinstitute.dsm.model.QuestionType.JSON_ARRAY;
+import static org.broadinstitute.dsm.model.QuestionType.MATRIX;
+import static org.broadinstitute.dsm.model.QuestionType.NUMBER;
+import static org.broadinstitute.dsm.model.QuestionType.OPTIONS;
 
 import java.util.Map;
+
+import org.broadinstitute.dsm.model.QuestionType;
 
 public class ValueProviderFactory {
     private final ValueProvider defaultValueProvider = new TextValueProvider();
     private final ValueProvider booleanValueProvider = new BooleanValueProvider();
-    private final Map<String, ValueProvider> valueProviders = Map.of(
+    private final Map<QuestionType, ValueProvider> valueProviders = Map.of(
             CHECKBOX, booleanValueProvider,
             NUMBER, new NumberValueProvider(),
             BOOLEAN, booleanValueProvider,
             COMPOSITE, new CompositeValueProvider(),
-            AGREEMENT, new AgreementValueProvider(),
+            AGREEMENT, booleanValueProvider,
             MATRIX, new MatrixValueProvider(),
             DATE, new DateValueProvider(),
             OPTIONS, new PickListValueProvider(),
@@ -31,6 +33,6 @@ public class ValueProviderFactory {
         if (type == null) {
             return defaultValueProvider;
         }
-        return valueProviders.getOrDefault(type, defaultValueProvider);
+        return valueProviders.getOrDefault(QuestionType.getByValue(type), defaultValueProvider);
     }
 }
