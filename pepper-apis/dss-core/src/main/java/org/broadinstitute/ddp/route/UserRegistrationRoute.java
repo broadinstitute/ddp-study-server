@@ -11,6 +11,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
@@ -60,8 +62,6 @@ import org.broadinstitute.ddp.util.I18nUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
@@ -72,19 +72,13 @@ import spark.Response;
  * ddp user id is returned so that auth0 can add it
  * as the {@link org.broadinstitute.ddp.constants.Auth0Constants#DDP_USER_ID_CLAIM}.
  */
+@Slf4j
+@AllArgsConstructor
 public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrationPayload> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(UserRegistrationRoute.class);
-
     private static final String MODE_LOGIN = "login";
 
     private final PexInterpreter interpreter;
     private final TaskPublisher taskPublisher;
-
-    public UserRegistrationRoute(PexInterpreter interpreter, TaskPublisher taskPublisher) {
-        this.interpreter = interpreter;
-        this.taskPublisher = taskPublisher;
-    }
 
     @Override
     protected int getValidationErrorStatus() {
@@ -102,7 +96,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         final var auth0UserId = new AtomicReference<String>();
         AtomicReference<String> ddpUserGuid = new AtomicReference<>();
 
-        LOG.info("Attempting registration with client {}, study {} and invitation {}", auth0ClientId, studyGuid, invitationGuid);
+        log.info("Attempting registration with client {}, study {} and invitation {}", auth0ClientId, studyGuid, invitationGuid);
 
         return TransactionWrapper.withTxn(handle -> {
             auth0UserId.set(payload.getAuth0UserId());
@@ -116,7 +110,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             }
             if (study == null) {
                 ApiError err = new ApiError(ErrorCodes.STUDY_NOT_FOUND, "Could not find study with guid " + studyGuid);
-                LOG.warn(err.getMessage());
+                log.warn(err.getMessage());
                 throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, err);
             }
 
@@ -124,12 +118,12 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 auth0Domain = handle.attach(JdbiAuth0Tenant.class).findById(study.getAuth0TenantId())
                         .map(Auth0TenantDto::getDomain)
                         .orElse(null);
-                LOG.info("Using auth0 domain {} for local registration", auth0Domain);
+                log.info("Using auth0 domain {} for local registration", auth0Domain);
             }
 
             StudyClientConfiguration clientConfig = handle.attach(ClientDao.class).getConfiguration(auth0ClientId, auth0Domain);
             if (clientConfig == null) {
-                LOG.warn("Attempted to register user {} using Auth0 client {} that is revoked or not found", auth0UserId, auth0ClientId);
+                log.warn("Attempted to register user {} using Auth0 client {} that is revoked or not found", auth0UserId, auth0ClientId);
                 throw halt(HttpStatus.SC_UNAUTHORIZED);
             }
 
@@ -142,7 +136,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 auth0RefreshResponse = auth0Util.getRefreshTokenFromCode(payload.getAuth0Code(), auth0ClientId,
                         auth0ClientSecret, payload.getRedirectUri());
                 auth0UserId.set(Auth0Util.getVerifiedAuth0UserId(auth0RefreshResponse.getIdToken(), auth0Domain));
-                LOG.info("Successfully exchanged auth0 code for auth0UserId {} for local registration", auth0UserId);
+                log.info("Successfully exchanged auth0 code for auth0UserId {} for local registration", auth0UserId);
 
                 // Look for potential user metadata.
                 var getResult = mgmtClient.getAuth0User(auth0UserId.get());
@@ -188,7 +182,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 publishRegisteredPubSubMessage(studyGuid, pair.getParticipantUser().getGuid());
                 ddpUserGuid.set(operatorUser.getGuid());
             } else {
-                LOG.info("Attempting to register existing user {} with client {} and study {}", auth0UserId, auth0ClientId, studyGuid);
+                log.info("Attempting to register existing user {} with client {} and study {}", auth0UserId, auth0ClientId, studyGuid);
                 ddpUserGuid.set(handleExistingUser(response, payload, handle, study, operatorUser, mgmtClient));
             }
 
@@ -231,13 +225,13 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             GovernancePolicy policy = handle.attach(StudyGovernanceDao.class).findPolicyByStudyGuid(studyGuid).orElse(null);
             if (policy != null) {
                 if (policy.hasReachedAgeOfMajority(handle, interpreter, user.getGuid(), operatorGuid)) {
-                    LOG.info("Assigning {} to user {} for invitation {}", auth0UserId, user.getGuid(), invitationGuid);
+                    log.info("Assigning {} to user {} for invitation {}", auth0UserId, user.getGuid(), invitationGuid);
 
                     var numRows = userDao.updateAuth0UserId(user.getGuid(), auth0UserId);
                     if (numRows != 1) {
                         throw new DDPException("Updated " + numRows + " for " + auth0UserId);
                     }
-                    LOG.info("User {} has been associated with auth0 id {}", user.getGuid(), auth0UserId);
+                    log.info("User {} has been associated with auth0 id {}", user.getGuid(), auth0UserId);
 
                     invitationDao.markAccepted(invitation.getInvitationId(), Instant.now());
 
@@ -245,12 +239,12 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                             study.getId(), study.getGuid(), EventTriggerType.GOVERNED_USER_REGISTERED);
                     EventService.getInstance().processAllActionsForEventSignal(handle, signal);
                 } else {
-                    LOG.error("User {} is not allowed to create an account yet because they have not reached age of majority "
+                    log.error("User {} is not allowed to create an account yet because they have not reached age of majority "
                             + " in study {} with invitation {}", user.getGuid(), studyGuid, invitationGuid);
                     ResponseUtil.halt422ErrorResponse(response, ErrorCodes.GOVERNANCE_POLICY_VIOLATION);
                 }
             } else {
-                LOG.error("No governance policy for study {}.  Why is a client registering user {} with invitation {} ?",
+                log.error("No governance policy for study {}.  Why is a client registering user {} with invitation {} ?",
                         studyGuid, auth0UserId, invitationGuid);
                 ResponseUtil.halt422ErrorResponse(response, ErrorCodes.GOVERNANCE_POLICY_VIOLATION);
             }
@@ -259,7 +253,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         } else if (invitation.getInvitationType() == InvitationType.RECRUITMENT) {
             var pair = signUpNewOperator(response, handle, study, auth0UserId, payload, clientConfig, mgmtClient);
             invitationDao.assignAcceptingUser(invitation.getInvitationId(), pair.getParticipantUser().getId(), Instant.now());
-            LOG.info("Assigned invitation {} of type {} to participant user {}", invitation.getInvitationGuid(),
+            log.info("Assigned invitation {} of type {} to participant user {}", invitation.getInvitationGuid(),
                     invitation.getInvitationType(), pair.getParticipantUser().getGuid());
             triggerUserRegisteredEvents(handle, study, pair.getOperatorUser(), pair.getParticipantUser());
             publishRegisteredPubSubMessage(studyGuid, pair.getParticipantUser().getGuid());
@@ -273,7 +267,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                                        UserRegistrationPayload payload, StudyClientConfiguration clientConfig,
                                        Auth0ManagementClient mgmtClient) {
         String studyGuid = study.getGuid();
-        LOG.info("Attempting to register new user {}, with client {}  study {}  {}",
+        log.info("Attempting to register new user {}, with client {}  study {}  {}",
                 auth0UserId, clientConfig.getAuth0ClientId(), studyGuid,
                 payload.getTempUserGuid() != null ? " (temp user " + payload.getTempUserGuid() + ")" : " NO-Temp-User");
 
@@ -283,7 +277,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         GovernancePolicy policy = handle.attach(StudyGovernanceDao.class).findPolicyByStudyGuid(studyGuid).orElse(null);
         User participantUser;
         if (policy == null) {
-            LOG.info("No study governance policy found, continuing with operator user as the study user");
+            log.info("No study governance policy found, continuing with operator user as the study user");
             participantUser = operatorUser;
         } else {
             participantUser = handleGovernancePolicy(response, payload, handle, policy, operatorUser, clientConfig);
@@ -311,7 +305,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         String msg = sb.toString().trim();
         if (StringUtils.isNotBlank(msg)) {
             ApiError err = new ApiError(ErrorCodes.BAD_PAYLOAD, msg);
-            LOG.warn("Missing properties in payload: {}", err.getMessage());
+            log.warn("Missing properties in payload: {}", err.getMessage());
             throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, err);
         }
 
@@ -319,7 +313,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             if (!ZoneId.getAvailableZoneIds().contains(payload.getTimeZone())) {
                 ApiError err = new ApiError(ErrorCodes.BAD_PAYLOAD, String.format(
                         "Provided timezone '%s' is not a recognized region id", payload.getTimeZone()));
-                LOG.warn(err.getMessage());
+                log.warn(err.getMessage());
                 throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, err);
             }
         }
@@ -330,7 +324,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         String tempUserGuid = payload.getTempUserGuid();
         if (tempUserGuid != null) {
             String msg = String.format("Using existing user to upgrade temporary user with guid '%s' is not supported", tempUserGuid);
-            LOG.warn(msg);
+            log.warn(msg);
             throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(ErrorCodes.NOT_SUPPORTED, msg));
         }
 
@@ -346,7 +340,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 numGovernances = govStream.count();
             }
             if (numGovernances > 0) {
-                LOG.info("Existing user {} is a proxy of {} users in study {}", user.getGuid(), numGovernances, study.getGuid());
+                log.info("Existing user {} is a proxy of {} users in study {}", user.getGuid(), numGovernances, study.getGuid());
                 return user.getGuid();
             }
 
@@ -354,13 +348,13 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                     .findAdminAccessibleStudyGuids(user.getGuid())
                     .contains(study.getGuid());
             if (isStudyAdmin) {
-                LOG.info("Existing user {} is an admin in study {}", user.getGuid(), study.getGuid());
+                log.info("Existing user {} is an admin in study {}", user.getGuid(), study.getGuid());
                 return user.getGuid();
             }
 
             if (MODE_LOGIN.equals(payload.getMode())) {
                 String msg = String.format("User needs to register with study '%s' before logging in", study.getGuid());
-                LOG.warn(msg);
+                log.warn(msg);
                 throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(ErrorCodes.SIGNUP_REQUIRED, msg));
             } else {
                 registerUserWithStudy(handle, study, user);
@@ -370,7 +364,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 return user.getGuid();
             }
         } else {
-            LOG.info("Existing user {} is in study {} with status {}", user.getGuid(), study.getGuid(), status);
+            log.info("Existing user {} is in study {} with status {}", user.getGuid(), study.getGuid(), status);
             GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(
                     study.getGuid(), GoogleAnalyticsMetrics.EVENT_CATEGORY_USER_LOGIN,
                     GoogleAnalyticsMetrics.EVENT_ACTION_USER_LOGIN, GoogleAnalyticsMetrics.EVENT_LABEL_USER_LOGIN,
@@ -388,7 +382,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             user = upgradeTemporaryUser(response, userDao, tempUser, auth0UserId);
         } else {
             user = userDao.createUser(auth0Domain, auth0ClientId, auth0UserId);
-            LOG.info("Registered user {} with client {}", auth0UserId, auth0ClientId);
+            log.info("Registered user {} with client {}", auth0UserId, auth0ClientId);
         }
         initializeProfile(handle, user, payload);
         return user;
@@ -401,18 +395,18 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             shouldCreateGoverned = policy.shouldCreateGovernedUser(handle, interpreter, operatorUser.getGuid());
         } catch (Exception e) {
             String msg = "Error while evaluating study governance policy for study " + policy.getStudyGuid();
-            LOG.error(msg, e);
+            log.error(msg, e);
             throw ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR, new ApiError(ErrorCodes.SERVER_ERROR, msg));
         }
         if (!shouldCreateGoverned) {
-            LOG.info("Governance policy evaluated and no governed user will be created");
+            log.info("Governance policy evaluated and no governed user will be created");
             return operatorUser;
         }
 
         UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
         Governance gov = userGovernanceDao.createGovernedUserWithGuidAlias(clientConfig.getClientId(), operatorUser.getId());
         userGovernanceDao.grantGovernedStudy(gov.getId(), policy.getStudyId());
-        LOG.info("Created governed user with guid {} and granted access to study {} for proxy {}",
+        log.info("Created governed user with guid {} and granted access to study {} for proxy {}",
                 gov.getGovernedUserGuid(), policy.getStudyGuid(), operatorUser.getGuid());
 
         User governedUser = handle.attach(UserDao.class).findUserById(gov.getGovernedUserId())
@@ -421,17 +415,17 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
         int numInstancesReassigned = handle.attach(ActivityInstanceDao.class)
                 .reassignInstancesInStudy(policy.getStudyId(), operatorUser.getId(), gov.getGovernedUserId());
-        LOG.info("Re-assigned {} activity instances in study {} from operator {} to governed user {}",
+        log.info("Re-assigned {} activity instances in study {} from operator {} to governed user {}",
                 numInstancesReassigned, policy.getStudyGuid(), operatorUser.getGuid(), gov.getGovernedUserGuid());
 
         int numEventsReassigned = handle.attach(QueuedEventDao.class)
                 .reassignQueuedEventsInStudy(policy.getStudyId(), operatorUser.getId(), gov.getGovernedUserId());
-        LOG.info("Re-assigned {} queued events in study {} from operator {} to governed user {}",
+        log.info("Re-assigned {} queued events in study {} from operator {} to governed user {}",
                 numEventsReassigned, policy.getStudyGuid(), operatorUser.getGuid(), gov.getGovernedUserGuid());
 
         if (!policy.getAgeOfMajorityRules().isEmpty()) {
             handle.attach(StudyGovernanceDao.class).addAgeUpCandidate(policy.getStudyId(), governedUser.getId(), operatorUser.getId());
-            LOG.info("Added governed user {} as age-up candidate in study {}", governedUser.getGuid(), policy.getStudyGuid());
+            log.info("Added governed user {} as age-up candidate in study {}", governedUser.getGuid(), policy.getStudyGuid());
         }
 
         return governedUser;
@@ -445,7 +439,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         if (status == null) {
             EnrollmentStatusType initialStatus = EnrollmentStatusType.REGISTERED;
             jdbiEnrollment.changeUserStudyEnrollmentStatus(user.getGuid(), study.getGuid(), initialStatus);
-            LOG.info("Registered user {} with status {} in study {}", user.getGuid(), initialStatus, study.getGuid());
+            log.info("Registered user {} with status {} in study {}", user.getGuid(), initialStatus, study.getGuid());
 
             //send GA events
             GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(
@@ -458,7 +452,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                     GoogleAnalyticsMetrics.EVENT_ACTION_USER_LOGIN, GoogleAnalyticsMetrics.EVENT_LABEL_USER_LOGIN,
                     null, 1);
         } else {
-            LOG.warn("User {} is already registered in study {} with status {}", user.getGuid(), study.getGuid(), status);
+            log.warn("User {} is already registered in study {} with status {}", user.getGuid(), study.getGuid(), status);
         }
     }
 
@@ -467,19 +461,19 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         var getResult = mgmtClient.getAuth0User(user.getAuth0UserId());
         if (getResult.hasFailure()) {
             var e = getResult.hasThrown() ? getResult.getThrown() : getResult.getError();
-            LOG.error("Auth0 request to retrieve auth0 user {} failed", user.getAuth0UserId(), e);
+            log.error("Auth0 request to retrieve auth0 user {} failed", user.getAuth0UserId(), e);
         } else {
             userEmail = getResult.getBody().getEmail();
         }
         if (StringUtils.isNotBlank(userEmail)) {
             int numDeleted = handle.attach(JdbiMailingList.class).deleteByEmailAndStudyId(userEmail, study.getId());
             if (numDeleted == 1) {
-                LOG.info("Removed user {} from study {} mailing list", user.getAuth0UserId(), study.getGuid());
+                log.info("Removed user {} from study {} mailing list", user.getAuth0UserId(), study.getGuid());
             } else if (numDeleted > 1) {
-                LOG.warn("Removed {} mailing list entries for user {} and study {}", numDeleted, user.getAuth0UserId(), study.getGuid());
+                log.warn("Removed {} mailing list entries for user {} and study {}", numDeleted, user.getAuth0UserId(), study.getGuid());
             }
         } else {
-            LOG.error("No email for user {} to remove them from mailing list of study {}", user.getAuth0UserId(), study.getGuid());
+            log.error("No email for user {} to remove them from mailing list of study {}", user.getAuth0UserId(), study.getGuid());
         }
     }
 
@@ -494,7 +488,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                                                                  String auth0ClientSecret, String refreshToken) {
         // set the ddp user guid in the user's app metadata, keyed by client id so that
         // different deployments can maintain different generated guids
-        LOG.info("Setting auth0 user's metadata so that auth0 user {} has ddp user guid {} for client {}",
+        log.info("Setting auth0 user's metadata so that auth0 user {} has ddp user guid {} for client {}",
                 auth0UserId, ddpUserGuid, auth0ClientId);
         mgmtClient.setUserGuidForAuth0User(auth0UserId, auth0ClientId, ddpUserGuid);
         Auth0Util auth0Util = new Auth0Util(mgmtClient.getDomain());
@@ -506,15 +500,15 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
         if (tempUser == null) {
             String msg = String.format("Could not find temporary user with guid '%s'", tempUserGuid);
-            LOG.warn(msg);
+            log.warn(msg);
             throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.USER_NOT_FOUND, msg));
         } else if (!tempUser.isTemporary()) {
             String msg = String.format("User with guid '%s' is not a temporary user", tempUserGuid);
-            LOG.warn(msg);
+            log.warn(msg);
             throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(ErrorCodes.NOT_SUPPORTED, msg));
         } else if (tempUser.isExpired()) {
             String msg = String.format("Temporary user with guid '%s' has already expired", tempUserGuid);
-            LOG.warn(msg);
+            log.warn(msg);
             throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(ErrorCodes.EXPIRED, msg));
         }
 
@@ -525,10 +519,10 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         String tempUserGuid = tempUser.getGuid();
         try {
             userDao.upgradeUserToPermanentById(tempUser.getId(), auth0UserId);
-            LOG.info("Upgraded temporary user with guid '{}'", tempUserGuid);
+            log.info("Upgraded temporary user with guid '{}'", tempUserGuid);
         } catch (Exception e) {
             String msg = String.format("Error while upgrading temporary user with guid '%s'", tempUserGuid);
-            LOG.error(msg, e);
+            log.error(msg, e);
             throw ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR, new ApiError(ErrorCodes.SERVER_ERROR, msg));
         }
         return userDao.findUserByGuid(tempUserGuid).orElseThrow(() -> new DDPException("Could not find user with guid " + tempUserGuid));
@@ -547,7 +541,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         long languageId = languageDto.getId();
         ZoneId timeZone = DateTimeUtils.parseTimeZone(payload.getTimeZone());
         if (timeZone == null) {
-            LOG.info("No user timezone is provided");
+            log.info("No user timezone is provided");
         }
 
         if (profile == null) {
@@ -558,7 +552,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                     .setTimeZone(timeZone)
                     .build();
             profileDao.createProfile(profile);
-            LOG.info("Initialized user profile for user with guid {}", user.getGuid());
+            log.info("Initialized user profile for user with guid {}", user.getGuid());
         } else {
             boolean shouldUpdate = false;
             var updated = new UserProfile.Builder(profile);
@@ -582,21 +576,21 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
             if (shouldUpdate) {
                 profileDao.updateProfile(updated.build());
-                LOG.info("Updated user profile for user with guid {}", user.getGuid());
+                log.info("Updated user profile for user with guid {}", user.getGuid());
             }
         }
 
         String auth0UserId = user.getAuth0UserId();
         if (StringUtils.isNotBlank(auth0UserId)) {
-            LOG.info("User {} has auth0 account, proceeding to sync user_metadata", user.getGuid());
+            log.info("User {} has auth0 account, proceeding to sync user_metadata", user.getGuid());
             Map<String, Object> metadata = new HashMap<>();
             metadata.put(User.METADATA_LANGUAGE, languageDto.getIsoCode());
             var result = Auth0ManagementClient.forUser(handle, user.getGuid()).updateUserMetadata(auth0UserId, metadata);
             if (result.hasThrown() || result.hasError()) {
                 var e = result.hasThrown() ? result.getThrown() : result.getError();
-                LOG.error("Error while updating user_metadata for user {}, user's language may be out-of-sync", user.getGuid(), e);
+                log.error("Error while updating user_metadata for user {}, user's language may be out-of-sync", user.getGuid(), e);
             } else {
-                LOG.info("Updated user_metadata for user {}", user.getGuid());
+                log.info("Updated user_metadata for user {}", user.getGuid());
             }
         }
     }

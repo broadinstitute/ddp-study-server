@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.route;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -13,17 +14,12 @@ import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.json.medicalprovider.GetMedicalProviderResponse;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 import org.broadinstitute.ddp.util.ResponseUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
-
+@Slf4j
 public class GetMedicalProviderListRoute implements Route {
-
-    private static final Logger LOG = LoggerFactory.getLogger(GetMedicalProviderListRoute.class);
-
     @Override
     public List<GetMedicalProviderResponse> handle(
             Request request, Response response
@@ -42,9 +38,9 @@ public class GetMedicalProviderListRoute implements Route {
                     List<GetMedicalProviderResponse> medicalProviders = handle.attach(JdbiMedicalProvider.class)
                             .getAllByUserGuidStudyGuidAndInstitutionTypeId(participantGuid, studyGuid, institutionTypeId)
                             .stream()
-                            .map(dto -> new GetMedicalProviderResponse(dto))
+                            .map(GetMedicalProviderResponse::new)
                             .collect(Collectors.toList());
-                    LOG.info(
+                    log.info(
                             "Found {} medical providers for the user {} in the study {}",
                             medicalProviders.size(), participantGuid, studyGuid
                     );
@@ -52,5 +48,4 @@ public class GetMedicalProviderListRoute implements Route {
                 }
         );
     }
-
 }

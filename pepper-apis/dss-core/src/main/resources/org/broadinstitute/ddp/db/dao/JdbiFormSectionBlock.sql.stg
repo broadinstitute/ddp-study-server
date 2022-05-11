@@ -19,7 +19,7 @@ select fsb.form_section_id,
   left join expression as ee on ee.expression_id = bee.expression_id
   left join revision as bee_rev on bee_rev.revision_id = bee.revision_id
   join activity_instance as ai on ai.activity_instance_guid = :instanceGuid
- where fsb.form_section_id in (\<sectionIds\>)
+ where fsb.form_section_id in (\<sectionIds>)
    and rev.start_date \<= ai.created_at
    and (rev.end_date is null or ai.created_at \< rev.end_date)
    and (bve.block__expression_id is null or

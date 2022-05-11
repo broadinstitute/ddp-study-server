@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 import javax.validation.ValidationException;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
@@ -31,8 +32,6 @@ import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
@@ -44,10 +43,8 @@ import spark.Response;
  *    200 OK - the notification event was queued or no event configuration exists
  *    404 Not Found - no study, user or notification event type found
  */
+@Slf4j
 public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNotificationPayload> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ReceiveDsmNotificationRoute.class);
-
     @Override
     protected int getValidationErrorStatus() {
         return HttpStatus.SC_BAD_REQUEST;
@@ -58,7 +55,7 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
         String studyGuid = request.params(PathParam.STUDY_GUID);
         String participantGuidOrAltPid = request.params(PathParam.USER_GUID);
 
-        LOG.info("Received DSM notification event for userGuidOrAltPid={}, studyGuid={}, eventType={}, kitRequestId={}, kitReasonType={}",
+        log.info("Received DSM notification event for userGuidOrAltPid={}, studyGuid={}, eventType={}, kitRequestId={}, kitReasonType={}",
                 participantGuidOrAltPid, studyGuid, payload.getEventType(), payload.getKitRequestId(), payload.getKitReasonType());
 
         return TransactionWrapper.withTxn(handle -> {
@@ -76,10 +73,10 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
                         userGuid, status == null ? "<null>" : status, studyGuid, payload.getEventType());
                 if (status == EnrollmentStatusType.EXITED_AFTER_ENROLLMENT) {
                     // Receiving kit notifications for withdrawn participants can occur during normal operations, let's log as a warning.
-                    LOG.warn(msg);
+                    log.warn(msg);
                 } else {
                     // Status is unusual, for example receiving a kit when participant status is still only registered, let's report it.
-                    LOG.error(msg);
+                    log.error(msg);
                 }
                 var err = new ApiError(ErrorCodes.UNSATISFIED_PRECONDITION,
                         "User " + userGuid + " is not enrolled in study " + studyGuid);
@@ -89,7 +86,7 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
             DsmNotificationEventType eventType = payload.parseEventTypeCode().orElseThrow(() -> {
                 var err = new ApiError(ErrorCodes.NOT_FOUND,
                         "Notification event type '" + payload.getEventType() + "' is not recognized");
-                LOG.warn(err.getMessage());
+                log.warn(err.getMessage());
                 return ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, err);
             });
 
@@ -106,7 +103,7 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
             KitReasonType kitReasonType = payload.getKitReasonType() != null
                     ? payload.getKitReasonType() : KitReasonType.NORMAL;
 
-            LOG.info("Running events for userGuid={} and DSM notification eventType={}", userGuid, eventType);
+            log.info("Running events for userGuid={} and DSM notification eventType={}", userGuid, eventType);
             var signal = new DsmNotificationSignal(
                     user.getId(),
                     user.getId(),
@@ -123,7 +120,7 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
             // User data likely changed after executing events, let's request a data sync.
             handle.attach(DataExportDao.class).queueDataSync(user.getId(), studyDto.getId());
 
-            LOG.info("Finished running events for userGuid={} and DSM notification eventType={}", userGuid, eventType);
+            log.info("Finished running events for userGuid={} and DSM notification eventType={}", userGuid, eventType);
             response.status(HttpStatus.SC_OK);
             return null;
         });
@@ -134,7 +131,7 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
         try {
             testResult = getGson().fromJson(payload.getEventData(), TestResult.class);
         } catch (Exception e) {
-            LOG.error("Error while parsing test result event data", e);
+            log.error("Error while parsing test result event data", e);
             var err = new ApiError(ErrorCodes.BAD_PAYLOAD, "Error while parsing event data");
             throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, err);
         }
@@ -151,7 +148,7 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
                 throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, err);
             }
         } catch (ValidationException e) {
-            LOG.error("Error while validating test result event data", e);
+            log.error("Error while validating test result event data", e);
             var err = new ApiError(ErrorCodes.SERVER_ERROR, "Error while validating event data");
             throw ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR, err);
         }
@@ -175,7 +172,7 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
 
         if (record != null && record.getInitialKitSentTime() == null) {
             kitScheduleDao.updateRecordInitialKitSentTime(record.getId(), timestamp);
-            LOG.info("Updated initial kit sent time to {} for participant={}, study={}, kitConfigurationId={}",
+            log.info("Updated initial kit sent time to {} for participant={}, study={}, kitConfigurationId={}",
                     timestamp, user.getGuid(), studyDto.getGuid(), kitConfigId);
         }
     }

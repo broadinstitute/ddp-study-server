@@ -2113,6 +2113,7 @@ Validation:
     mapping:
       AGE_RANGE: '#/Validation.AgeRange'
       COMPLETE: '#/Validation.Complete'
+      COMPARISON: '#/Validation.Comparison'
       DATE_RANGE: '#/Validation.DateRange'
       DAY_REQUIRED: '#/Validation.DayRequired'
       INT_RANGE: '#/Validation.IntRange'
@@ -2342,6 +2343,32 @@ Validation.UniqueValue:
           default: UNIQUE_VALUE
           enum:
             - UNIQUE_VALUE
+Validation.Comparison:
+  allOf:
+    - $ref: '#/Validation'
+    - type: object
+      required:
+        - reference_question_stable_id
+        - comparison_validation_type
+      description: compares the value of the given answer with the answer to the referenced question
+      properties:
+        rule:
+          type: string
+          default: COMPARISON
+          enum:
+            - COMPARISON
+        reference_question_stable_id:
+          type: string
+          format: guid
+        comparison_validation_type:
+          type: string
+          enum:
+            - LESS_OR_EQUAL
+            - GREATER_OR_EQUAL
+            - LESS
+            - GREATER
+            - EQUAL
+            - NOT_EQUAL
 AnnouncementModel:
   type: object
   required:

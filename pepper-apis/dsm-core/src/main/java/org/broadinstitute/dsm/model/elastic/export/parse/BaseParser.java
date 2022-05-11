@@ -35,18 +35,19 @@ public abstract class BaseParser implements Parser {
                 elementMap = forNumeric(element);
             } else if (isBooleanTypeField(field)) {
                 elementMap = forBoolean(element);
+            } else if (isDateTypeField(field)) {
+                elementMap = forDate(element);
             } else {
-                // either text or date in string
-                if (field.getAnnotation(DbDateConversion.class) != null) {
-                    elementMap = forDate(element);
-                } else {
-                    elementMap = forString(element);
-                }
+                elementMap = forString(element);
             }
         } catch (NoSuchFieldException e) {
             throw new RuntimeException(e);
         }
         return elementMap;
+    }
+
+    private boolean isDateTypeField(Field field) {
+        return field.getAnnotation(DbDateConversion.class) != null;
     }
 
     private boolean isBooleanTypeField(Field field) {

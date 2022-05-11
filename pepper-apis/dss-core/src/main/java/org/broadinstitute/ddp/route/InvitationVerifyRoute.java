@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.route;
 import java.time.Instant;
 import java.util.Optional;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -12,8 +13,6 @@ import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.json.invitation.InvitationVerifyPayload;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
@@ -23,22 +22,20 @@ import spark.Response;
  *
  * <p>NOTE: this is a public route. Be careful what we return in responses.
  */
+@Slf4j
 public class InvitationVerifyRoute extends ValidatedJsonInputRoute<InvitationVerifyPayload> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(InvitationVerifyRoute.class);
-
     @Override
     public Object handle(Request request, Response response, InvitationVerifyPayload invitation) throws Exception {
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
         String invitationGuid = invitation.getInvitationGuid();
         Instant verifiedAt = Instant.now();
 
-        LOG.info("Attempting to verify invitation {} in study {}", invitationGuid, studyGuid);
+        log.info("Attempting to verify invitation {} in study {}", invitationGuid, studyGuid);
 
         TransactionWrapper.useTxn(handle -> {
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
             if (studyDto == null) {
-                LOG.warn("Could not find study with guid {}", studyGuid);
+                log.warn("Could not find study with guid {}", studyGuid);
                 return;
             }
 
@@ -48,9 +45,9 @@ public class InvitationVerifyRoute extends ValidatedJsonInputRoute<InvitationVer
             invitationDto.ifPresent(invite -> {
                 if (invite.canBeVerified()) {
                     invitationDao.markVerified(invite.getInvitationId(), verifiedAt);
-                    LOG.info("Invitation {} is verified at {}", invitationGuid, verifiedAt);
+                    log.info("Invitation {} is verified at {}", invitationGuid, verifiedAt);
                 } else {
-                    LOG.warn("Invitation {} has already been verified or voided", invitationGuid);
+                    log.warn("Invitation {} has already been verified or voided", invitationGuid);
                 }
             });
         });
