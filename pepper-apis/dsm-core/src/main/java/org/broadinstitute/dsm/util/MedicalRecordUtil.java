@@ -87,8 +87,14 @@ public class MedicalRecordUtil {
             medicalRecord.setDdpInstanceId(ddpInstanceDto.getDdpInstanceId());
             medicalRecord.setDdpInstitutionId(ddpInstitutionId);
 
-            UpsertPainlessFacade.of(DBConstants.DDP_MEDICAL_RECORD_ALIAS, medicalRecord, ddpInstanceDto,
-                    ESObjectConstants.MEDICAL_RECORDS_ID, ESObjectConstants.DOC_ID, participantGuid).export();
+            try {
+                UpsertPainlessFacade.of(DBConstants.DDP_MEDICAL_RECORD_ALIAS, medicalRecord, ddpInstanceDto,
+                        ESObjectConstants.MEDICAL_RECORDS_ID, ESObjectConstants.DOC_ID, participantGuid).export();
+            } catch (Exception e) {
+                logger.error(String.format("Error inserting new medical record for participant with id: %s in ElasticSearch",
+                        ddpParticipantId));
+                e.printStackTrace();
+            }
         }
     }
 

@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.model.patch;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.util.NotificationUtil;
 
@@ -64,7 +65,7 @@ public class PatchFactory {
     }
 
     private static boolean isTissueRelatedOncHistoryId(Patch patch) {
-        return Patch.ONC_HISTORY_ID.equals(patch.getParent());
+        return OncHistoryDetail.ONC_HISTORY_DETAIL_ID.equals(patch.getParent());
     }
 
     private static boolean isParentParticipandDataId(Patch patch) {

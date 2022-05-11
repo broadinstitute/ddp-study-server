@@ -119,6 +119,9 @@ public class ConfigFile {
     public static final String RESTRICT_REGISTER_ROUTE = "restrictRegisterRoute";
     public static final String RESTRICT_AUTH0_LOG_EVENT_ROUTE = "restrictAuth0LogEventRoute";
 
+    public static final String ES_PROTECTED_COLUMNS_CONFIG_FILE = "ESprotectedColumns.conf";
+    public static final String ES_PROTECTED_COLUMNS_KEY = "columnsWithDefaultValues";
+
     /**
      * Google API key for geocoding
      */

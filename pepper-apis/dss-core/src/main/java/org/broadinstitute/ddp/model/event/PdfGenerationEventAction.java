@@ -3,18 +3,18 @@ package org.broadinstitute.ddp.model.event;
 import java.time.Instant;
 import java.util.HashMap;
 
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
+@Getter
 public class PdfGenerationEventAction extends EventAction {
-    private static final Logger LOG = LoggerFactory.getLogger(PdfGenerationEventAction.class);
-
-    private Long pdfGenerationDocumentConfigurationId;
+    private final Long pdfGenerationDocumentConfigurationId;
 
     public PdfGenerationEventAction(EventConfiguration eventConfiguration, EventConfigurationDto dto) {
         super(eventConfiguration, dto);
@@ -40,11 +40,7 @@ public class PdfGenerationEventAction extends EventAction {
                 eventSignal.getOperatorId(),
                 new HashMap<>());
 
-        LOG.info("Inserted queued event {} for configuration {}", queuedEventId,
+        log.info("Inserted queued event {} for configuration {}", queuedEventId,
                 eventConfiguration.getEventConfigurationId());
-    }
-
-    public Long getPdfGenerationDocumentConfigurationId() {
-        return pdfGenerationDocumentConfigurationId;
     }
 }

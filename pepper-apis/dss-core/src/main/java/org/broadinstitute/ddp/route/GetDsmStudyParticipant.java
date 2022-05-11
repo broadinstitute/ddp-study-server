@@ -5,6 +5,7 @@ import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.USER_GUI
 
 import java.util.Optional;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -13,22 +14,19 @@ import org.broadinstitute.ddp.db.dto.dsm.DsmStudyParticipant;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.util.ResponseUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
+@Slf4j
 public class GetDsmStudyParticipant implements Route {
-    private static final Logger LOG = LoggerFactory.getLogger(GetDsmStudyParticipant.class);
-
     @Override
     public Object handle(Request request, Response response) {
         return TransactionWrapper.withTxn(handle -> {
             String studyGuid = request.params(STUDY_GUID);
             String userGuidOrAltpid = request.params(USER_GUID);
 
-            LOG.info("Retrieving participant for user with GUID: {}", userGuidOrAltpid);
+            log.info("Retrieving participant for user with GUID: {}", userGuidOrAltpid);
 
             DsmStudyParticipantDao dsmStudyParticipantDao = handle.attach(DsmStudyParticipantDao.class);
             Optional<DsmStudyParticipant> optionalParticipant = dsmStudyParticipantDao
@@ -36,7 +34,7 @@ public class GetDsmStudyParticipant implements Route {
             if (optionalParticipant.isPresent()) {
                 return optionalParticipant.get();
             } else {
-                LOG.info("GUID retrieval failed, trying legacy AltPid: {}", userGuidOrAltpid);
+                log.info("GUID retrieval failed, trying legacy AltPid: {}", userGuidOrAltpid);
                 optionalParticipant = dsmStudyParticipantDao
                         .findStudyParticipant(userGuidOrAltpid, studyGuid, EnrollmentStatusType.getAllStates());
 

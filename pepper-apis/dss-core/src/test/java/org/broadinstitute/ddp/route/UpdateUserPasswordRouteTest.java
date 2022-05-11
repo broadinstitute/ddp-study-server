@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -17,11 +18,8 @@ import org.hamcrest.Matchers;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+@Slf4j
 public class UpdateUserPasswordRouteTest extends IntegrationTestSuite.TestCase {
-    private static final Logger LOG = LoggerFactory.getLogger(UpdateUserPasswordRouteTest.class);
     private static final String urlTemplate = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.UPDATE_USER_PASSWORD;
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String token;
@@ -36,9 +34,7 @@ public class UpdateUserPasswordRouteTest extends IntegrationTestSuite.TestCase {
 
     @BeforeClass
     public static void setupClass() {
-        testData = TransactionWrapper.withTxn(handle -> {
-            return TestDataSetupUtil.generateBasicUserTestData(handle);
-        });
+        testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
         token = testData.getTestingUser().getToken();
     }
 
@@ -88,7 +84,7 @@ public class UpdateUserPasswordRouteTest extends IntegrationTestSuite.TestCase {
                     .statusCode(403).contentType(ContentType.JSON)
                     .body("code", Matchers.is(ErrorCodes.USER_NOT_ASSOCIATED_WITH_AUTH0_USER));
         } finally {
-            LOG.info("Restoring old Auth0 user id {}", oldUserAuth0Id);
+            log.info("Restoring old Auth0 user id {}", oldUserAuth0Id);
             TransactionWrapper.useTxn(handle -> handle.attach(JdbiUser.class).updateAuth0Id(testData.getUserGuid(), oldUserAuth0Id));
         }
     }
