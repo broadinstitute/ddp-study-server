@@ -300,6 +300,7 @@ public class DBConstants {
     public static final String ADD_FAMILY_MEMBER = "add_family_member";
     public static final String SHOW_GROUP_FIELDS = "show_group_fields";
     public static final String GBF_SHIPPED_DSS_DELIVERED = "GBF_SHIPPED_DSS_DELIVERED";
+    public static final String DSS_STUDY_ADMIN = "dss_study_admin";
 
     //user role
     public static final String MAILINGLIST_VIEW = "mailingList_view";

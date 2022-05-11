@@ -44,8 +44,8 @@ public class PostUserRoute extends RequestHandler {
                 if (UserUtil.checkUserAccess(realm, userId, DBConstants.USER_ADD, null)) {
                     String requestBody = request.body();
                     UserRoleDto newUser = new Gson().fromJson(requestBody, UserRoleDto.class);
-                    DDPInstance ddpInstance = DDPInstance.getDDPInstanceByRealmOrGuid(realm);
-                    userDao.insertNewUser(auth0Account, clientKey, newUser, ddpInstance);
+                    DDPInstance ddpInstanceWithRole = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.DSS_STUDY_ADMIN);
+                    userDao.insertNewUser(auth0Account, clientKey, newUser, ddpInstanceWithRole);
                     return new Result(200);
                 } else {
                     response.status(401);

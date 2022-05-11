@@ -13,6 +13,7 @@ import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.db.dto.user.UserRoleDto;
+import org.broadinstitute.dsm.db.jdbi.JdbiStudyAdmin;
 import org.broadinstitute.dsm.db.jdbi.JdbiUser;
 import org.broadinstitute.dsm.db.jdbi.JdbiUserRole;
 import org.broadinstitute.dsm.db.jdbi.JdbiUserSettings;
@@ -147,6 +148,11 @@ public class UserDao implements Dao<UserDto> {
                                 user.getEmail().orElseThrow());
                 handle.attach(JdbiUserSettings.class).insertNewUserSettings(userId);
                 logger.info("Inserted " + user.getEmail().get() + " as userId " + userId + " into DSS database");
+                if (ddpInstance.isHasRole()) {
+                    logger.info("Instance " + ddpInstance.getName() +
+                            " has DSS study admin role, going to insert user in the study_admin table");
+                    handle.attach(JdbiStudyAdmin.class).insert(ddpInstance.getStudyGuid(), userId);
+                }
             }
             try {
                 DBUtil.checkUpdate(
