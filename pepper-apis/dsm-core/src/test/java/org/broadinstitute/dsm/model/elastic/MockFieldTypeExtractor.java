@@ -7,7 +7,12 @@ import org.broadinstitute.dsm.model.elastic.mapping.TypeExtractor;
 public class MockFieldTypeExtractor implements TypeExtractor<Map<String, String>> {
     @Override
     public Map<String, String> extract() {
-        return Map.of();
+        return Map.of(
+                "notes", "text",
+                "duplicate", "boolean",
+                "faxSent", "date",
+                "followupRequired", "boolean"
+        );
     }
 
     @Override

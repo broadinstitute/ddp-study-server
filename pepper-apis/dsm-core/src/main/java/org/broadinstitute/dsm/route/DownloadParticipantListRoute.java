@@ -1,12 +1,15 @@
 package org.broadinstitute.dsm.route;
 
+import static org.broadinstitute.dsm.util.ElasticSearchUtil.DEFAULT_FROM;
+import static org.broadinstitute.dsm.util.ElasticSearchUtil.MAX_RESULT_SIZE;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.broadinstitute.dsm.export.ExcelUtils;
+import org.broadinstitute.dsm.export.ParticipantExcelGenerator;
 import org.broadinstitute.dsm.model.ParticipantColumn;
 import org.broadinstitute.dsm.model.elastic.sort.Alias;
 import org.broadinstitute.dsm.model.elastic.export.excel.ParticipantRecordData;
@@ -40,14 +43,53 @@ public class DownloadParticipantListRoute extends RequestHandler {
             columnAliasEsPathMap.computeIfAbsent(alias, paths -> new ArrayList<>())
                     .add(column);
         });
-
+        int currentFrom = DEFAULT_FROM;
+        int currentTo = MAX_RESULT_SIZE;
+        ParticipantRecordData rowData = new ParticipantRecordData(columnAliasEsPathMap);
         Filterable filterable = FilterFactory.of(request);
-        ParticipantWrapperResult filteredList = (ParticipantWrapperResult) filterable.filter(request.queryMap());
+        //counting phase
+        while (true) {
+            filterable.setFrom(currentFrom);
+            filterable.setTo(currentTo);
+            ParticipantWrapperResult filteredList = (ParticipantWrapperResult) filterable.filter(request.queryMap());
+            rowData.processData(filteredList,true);
+            if (filteredList.getTotalCount() < currentFrom){
+                break;
+            }
+            currentFrom = currentTo;
+            currentTo += MAX_RESULT_SIZE;
+        }
 
-        ParticipantRecordData rowData = new ParticipantRecordData(filteredList, columnAliasEsPathMap);
-        rowData.processData();
-        ExcelUtils.createResponseFile(rowData, response);
+        //data processing
+        currentFrom = DEFAULT_FROM;
+        currentTo = MAX_RESULT_SIZE;
+        ParticipantExcelGenerator generator = new ParticipantExcelGenerator();
+        generator.createHeader(rowData.getHeader());
+        int columnsNumber;
+        while (true) {
+            filterable.setFrom(currentFrom);
+            filterable.setTo(currentTo);
+            ParticipantWrapperResult filteredList = (ParticipantWrapperResult) filterable.filter(request.queryMap());
+            List<List<String>> participantRecords = rowData.processData(filteredList, false);
+            columnsNumber = getColumnsNumber(participantRecords);
+            if (filteredList.getTotalCount() < currentFrom){
+                break;
+            }
+            generator.appendData(participantRecords);
+            currentFrom = currentTo;
+            currentTo += MAX_RESULT_SIZE;
+        }
+        generator.formatSizes(columnsNumber);
+        generator.writeInResponse(response);
+
         return response.raw();
+    }
+
+    private int getColumnsNumber(List<List<String>> participantRecords) {
+        if (participantRecords.isEmpty()) {
+            return 0;
+        }
+        return participantRecords.get(0).size();
     }
 
 

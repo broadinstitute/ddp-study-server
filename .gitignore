@@ -105,5 +105,11 @@ tcell/logs/
 # ignore any potential config files with secrets,
 # except study-builder configuration files
 *.conf
-!study-builder/**/*.conf
+!pepper-apis/studybuilder-cli/**/*.conf
 /appengine/deploy/
+
+# Output and target directories
+output/
+target/
+output-config/
+output-build-config/

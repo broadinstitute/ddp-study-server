@@ -79,6 +79,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.EquationQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
@@ -174,6 +175,9 @@ public class PatchFormAnswersRouteStandaloneTest {
     private static String decimalIntegerSid;
     private static String decimalIntegerReqSid;
     private static String decimalIntegerWithMultipleRulesSid;
+
+    private static EquationQuestionDef equationQuestionDef;
+    private static String equationSid;
 
     private static String plistSingle_option1_sid;
     private static String plistSingle_option2_sid;
@@ -292,6 +296,8 @@ public class PatchFormAnswersRouteStandaloneTest {
         decimalIntegerSid = "PATCH_DECIMAL_Q" + timestamp;
         decimalIntegerReqSid = "PATCH_DECIMAL_REQ" + timestamp;
         decimalIntegerWithMultipleRulesSid = "PATCH_DECIMAL_W_MULT_RULES" + timestamp;
+
+        equationSid = "PATCH_EQUATION_Q" + timestamp;
 
         BoolQuestionDef b1 = BoolQuestionDef.builder(boolStableId, newTemplate(), newTemplate(), newTemplate()).build();
         FormSectionDef boolSection = new FormSectionDef(null, TestUtil.wrapQuestions(b1));
@@ -424,6 +430,16 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .build();
         FormSectionDef decimalSection = new FormSectionDef(null, TestUtil.wrapQuestions(decimalQuestionDef, dec2, dec3));
 
+        equationQuestionDef = EquationQuestionDef
+                .builder()
+                .stableId(equationSid)
+                .promptTemplate(newTemplate())
+                .questionType(QuestionType.EQUATION)
+                .expression(String.format("2 * %s", decimalIntegerSid))
+                .build();
+
+        FormSectionDef equationSection = new FormSectionDef(null, TestUtil.wrapQuestions(equationQuestionDef));
+
         fileQuestion = FileQuestionDef.builder("FILE" + timestamp, Template.text("file"))
                 .setMaxFileSize(DEFAULT_MAX_FILE_SIZE_FOR_TEST)
                 .build();
@@ -442,7 +458,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                         Arrays.asList(
                                 boolSection, textSection, textSection2, textSection3, plistSection,
                                 dateSection, compositeSection, essayTextSection, agreementSection,
-                                numericSection, decimalSection, fileSection, matrixSection
+                                numericSection, decimalSection, equationSection, fileSection, matrixSection
                         )
                 )
                 .build();
@@ -2044,6 +2060,9 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .body("answers.size()", equalTo(1))
                 .body("answers[0].stableId", equalTo(decimalIntegerSid))
                 .body("answers[0].answerGuid", not(isEmptyOrNullString()))
+                .body("equations[0].stableId", equalTo(equationSid))
+                .body("equations[0].values[0].value", equalTo(5000000000000000L))
+                .body("equations[0].values[0].scale", equalTo(14))
                 .and().extract().path("answers[0].answerGuid");
 
         answerGuidsToDelete.get(QuestionType.DECIMAL).add(guid);

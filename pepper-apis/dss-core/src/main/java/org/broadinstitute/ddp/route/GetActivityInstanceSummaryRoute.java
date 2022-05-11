@@ -3,6 +3,8 @@ package org.broadinstitute.ddp.route;
 import java.util.List;
 import java.util.Map;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -15,21 +17,14 @@ import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
 import org.broadinstitute.ddp.util.RouteUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
+@Slf4j
+@AllArgsConstructor
 public class GetActivityInstanceSummaryRoute implements Route {
-
-    private static final Logger LOG = LoggerFactory.getLogger(GetActivityInstanceSummaryRoute.class);
-
     private final ActivityInstanceService service;
-
-    public GetActivityInstanceSummaryRoute(ActivityInstanceService service) {
-        this.service = service;
-    }
 
     @Override
     public ActivityInstanceSummary handle(Request request, Response response) {
@@ -42,7 +37,7 @@ public class GetActivityInstanceSummaryRoute implements Route {
         boolean isStudyAdmin = ddpAuth.hasAdminAccessToStudy(studyGuid);
         LanguageDto preferredLangDto = RouteUtil.getUserLanguage(request);
 
-        LOG.info("Fetching summary for activity instance {} and participant {} in study {} by operator {} (isStudyAdmin={})",
+        log.info("Fetching summary for activity instance {} and participant {} in study {} by operator {} (isStudyAdmin={})",
                 instanceGuid, participantGuid, studyGuid, operatorGuid, isStudyAdmin);
 
         return TransactionWrapper.withTxn(handle -> {

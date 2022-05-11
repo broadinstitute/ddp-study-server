@@ -47,6 +47,18 @@ interface PexDao extends SqlObject {
                                    @Bind("stableId") String stableId);
 
     @UseStringTemplateSqlLocator
+    @SqlQuery("queryLatestAgreementAnswerByUserGuidActivityCodeAndQuestionStableId")
+    Boolean findLatestAgreementAnswer(@Bind("userGuid") String userGuid,
+                                      @Bind("activityCode") String activityCode,
+                                      @Bind("stableId") String stableId,
+                                      @Bind("studyId") long studyId);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryAgreementAnswerByStableIdAndActivityInstance")
+    Boolean findSpecificAgreementAnswer(@Bind("activityInstanceGuid") String activityInstanceGuid,
+                                        @Bind("stableId") String stableId);
+
+    @UseStringTemplateSqlLocator
     @SqlQuery("queryLatestTextAnswerByUserGuidActivityCodeAndQuestionStableId")
     String findLatestTextAnswer(@Bind("userGuid") String userGuid,
                                 @Bind("activityCode") String activityCode,

@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
@@ -20,18 +21,12 @@ import org.broadinstitute.ddp.json.medicalprovider.PostPatchMedicalProviderReque
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 import org.broadinstitute.ddp.util.ResponseUtil;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
-
+@Slf4j
 public class PatchMedicalProviderRoute implements Route {
-
-    private static final Logger LOG = LoggerFactory.getLogger(PatchMedicalProviderRoute.class);
-
     /**
      * Implements "skip-if-not-set" semantics used for partial updates for String JSON fields
      * When applied to each entity field, allows to overwrite only ones specified in the request payload
@@ -62,16 +57,15 @@ public class PatchMedicalProviderRoute implements Route {
                 handle -> {
                     Optional<MedicalProviderDto> existingMedicalProviderDtoOpt = handle.attach(JdbiMedicalProvider.class)
                             .getByGuid(medicalProviderGuid);
-                    if (!existingMedicalProviderDtoOpt.isPresent()) {
+                    if (existingMedicalProviderDtoOpt.isEmpty()) {
                         String errMsg = "A medical provider with GUID " + medicalProviderGuid + " you try to update is not found";
                         throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.NOT_FOUND, errMsg));
                     }
                     MedicalProviderDto existingMedicalProviderDto = existingMedicalProviderDtoOpt.get();
-                    PostPatchMedicalProviderRequestPayload medicalProviderToUpdateJson = null;
-                    String institutionName = null;
-                    String physicianName = null;
-                    String city = null;
-                    String state = null;
+                    String institutionName;
+                    String physicianName;
+                    String city;
+                    String state;
                     try {
                         JsonElement data = new JsonParser().parse(request.body());
                         if (!data.isJsonObject() || data.getAsJsonObject().entrySet().size() == 0) {
@@ -121,12 +115,12 @@ public class PatchMedicalProviderRoute implements Route {
                     int numUpdated = handle.attach(MedicalProviderDao.class).updateByGuid(medicalProviderToUpdateDto);
                     if (numUpdated == 1) {
                         handle.attach(DataExportDao.class).queueDataSync(participantGuid, studyGuid);
-                        LOG.info(
+                        log.info(
                                 "The user {} successfully updated a medical provider {} in the study {}",
                                 participantGuid, medicalProviderGuid, studyGuid
                         );
                     } else {
-                        LOG.warn(
+                        log.warn(
                                 "The number of updated medical providers ({}) updated by user {} in the study {} is not equal to 1",
                                 numUpdated, participantGuid, studyGuid
                         );

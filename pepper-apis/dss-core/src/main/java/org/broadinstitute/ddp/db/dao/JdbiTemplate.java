@@ -67,14 +67,12 @@ public interface JdbiTemplate extends SqlObject {
     int updateRevisionIdById(@Bind("templateId") long templateId,
                                 @Bind("revisionId") long revisionId);
 
-    @SqlQuery("SELECT tmpl.template_id AS id, "
-                + " tmpl.template_code AS code, "
-                + " type.template_type_code AS type, "
-                + " tmpl.template_text AS text, "
-                + " tmpl.revision_id "
-                + "FROM template AS tmpl "
-                + "JOIN template_type AS type ON type.template_type_id = tmpl.template_type_id "
-                + "WHERE tmpl.template_id = :templateId ")
+    @SqlQuery("SELECT tmpl.*, "
+            + "       tmpl.revision_id as template_revision_id, "
+            + "       type.template_type_code as template_type "
+            + "FROM template AS tmpl "
+            + "JOIN template_type AS type ON type.template_type_id = tmpl.template_type_id "
+            + "WHERE tmpl.template_id = :templateId ")
     @RegisterConstructorMapper(Template.class)
     Optional<Template> fetch(@Bind("templateId") long templateId);
 }

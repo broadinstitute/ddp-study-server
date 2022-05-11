@@ -20,6 +20,7 @@ import com.google.maps.model.LatLng;
 import com.google.maps.model.PlusCode;
 import com.google.openlocationcode.OpenLocationCode;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.client.ApiResult;
 import org.broadinstitute.ddp.client.GoogleMapsClient;
@@ -36,12 +37,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testcontainers.shaded.org.apache.commons.lang.StringUtils;
 
+@Slf4j
 public class OLCServiceTest extends TxnAwareBaseTest {
-
     private static final String ADDRESS = "415 Main St, Cambridge, MA 02142, USA";
     private static final String PLUSCODE_FULL = "87JC9W76+5G";
     private static final String PLUSCODE_MORE = "87JC9W76+";
@@ -50,7 +49,6 @@ public class OLCServiceTest extends TxnAwareBaseTest {
     private static final String PLUSCODE_LEAST = "87000000+";
     private static final double LAT = 42.362937;
     private static final double LNG = -71.088687;
-    private static final Logger LOG = LoggerFactory.getLogger(OLCServiceTest.class);
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -76,7 +74,7 @@ public class OLCServiceTest extends TxnAwareBaseTest {
     @Test
     public void testGetAllOLCsForEnrolledParticipantsInStudy() {
         var enabledStudy = new StudyDto(1L, "study", "name", "irb", "url", 1L, 1L,
-                OLCPrecision.MEDIUM, true, "email", null, true, null);
+                OLCPrecision.MEDIUM, true, "email", null, true, null, false);
 
         when(mockJdbiStudy.findByStudyGuid(any())).thenReturn(enabledStudy);
         when(mockEnrollment.findAllOLCsForEnrolledParticipantsInStudy(any())).thenReturn(List.of(PLUSCODE_FULL));
@@ -91,7 +89,7 @@ public class OLCServiceTest extends TxnAwareBaseTest {
     @Test
     public void testGetAllOLCsForEnrolledParticipantsInStudy_noParticipantsWithDefaultAddress() {
         var enabledStudy = new StudyDto(1L, "study", "name", "irb", "url", 1L, 1L,
-                OLCPrecision.MEDIUM, true, "email", null, true, null);
+                OLCPrecision.MEDIUM, true, "email", null, true, null, false);
 
         when(mockJdbiStudy.findByStudyGuid(any())).thenReturn(enabledStudy);
         when(mockEnrollment.findAllOLCsForEnrolledParticipantsInStudy(any())).thenReturn(Collections.emptyList());
@@ -103,7 +101,7 @@ public class OLCServiceTest extends TxnAwareBaseTest {
     @Test
     public void testGetAllOLCsForEnrolledParticipantsInStudy_publicDataSharingDisabled() {
         var disabledStudy = new StudyDto(1L, "study", "name", "irb", "url", 1L, 1L,
-                OLCPrecision.MEDIUM, false, "email", null, true, null);
+                OLCPrecision.MEDIUM, false, "email", null, true, null, false);
 
         when(mockJdbiStudy.findByStudyGuid(any())).thenReturn(disabledStudy);
 
@@ -113,7 +111,7 @@ public class OLCServiceTest extends TxnAwareBaseTest {
 
     @Test
     public void testGetAllOLCsForEnrolledParticipantsInStudy_noOlcPrecisionSet() {
-        var noPrecisionStudy = new StudyDto(1L, "study", "name", "irb", "url", 1L, 1L, null, false, "email", null, true, null);
+        var noPrecisionStudy = new StudyDto(1L, "study", "name", "irb", "url", 1L, 1L, null, false, "email", null, true, null, false);
 
         when(mockJdbiStudy.findByStudyGuid(any())).thenReturn(noPrecisionStudy);
 
@@ -261,6 +259,6 @@ public class OLCServiceTest extends TxnAwareBaseTest {
         String geocodingKey = cfg.getString(ConfigFile.GEOCODING_API_KEY);
         OLCService location = new OLCService(geocodingKey);
         String result = location.calculatePlusCodeWithPrecision(address, location.DEFAULT_OLC_PRECISION);
-        LOG.info("Result: {}", result);
+        log.debug("Result: {}", result);
     }
 }

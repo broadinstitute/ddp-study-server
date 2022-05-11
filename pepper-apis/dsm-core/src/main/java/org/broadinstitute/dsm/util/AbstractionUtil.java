@@ -347,8 +347,11 @@ public class AbstractionUtil {
         JsonObject jsonField = new JsonParser().parse(jsonValue).getAsJsonObject();
         Set keySet = jsonField.entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toSet());
         //dateString is not allowed to be null (otherwise user would be able to submit with just estimated selected)
-        return !keySet.contains(DATE_STRING)
-                || (!jsonField.has(DATE_STRING) && !StringUtils.isBlank(jsonField.get(DATE_STRING).getAsString()));
+        String dateString = jsonField.get(DATE_STRING).getAsString();
+        if (keySet.contains(DATE_STRING) && StringUtils.isBlank(dateString)) {
+            return false;
+        }
+        return true;
     }
 
     public static String getDateString(@NonNull String jsonValue) {
