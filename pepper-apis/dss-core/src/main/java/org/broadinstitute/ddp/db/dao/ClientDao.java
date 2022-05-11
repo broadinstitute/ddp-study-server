@@ -109,7 +109,14 @@ public interface ClientDao extends SqlObject {
         return getClientDao().isAuth0ClientIdRevoked(auth0ClientId, auth0Domain).orElse(1) != 1;
     }
 
-    @SqlQuery("select c.*, t.auth0_domain"
+    @SqlQuery("select "
+            + "     c.client_id, "
+            + "     c.auth0_client_id, "
+            + "     c.auth0_signing_secret, "
+            + "     c.web_password_redirect_url, "
+            + "     c.is_revoked, "
+            + "     c.auth0_tenant_id, "
+            + "     t.auth0_domain "
             + "  from client__umbrella_study as cus"
             + "  join client as c on c.client_id = cus.client_id"
             + "  join umbrella_study as us on us.umbrella_study_id = cus.umbrella_study_id"
