@@ -57,7 +57,13 @@ public interface JdbiClient extends SqlObject {
                                                      @Bind("auth0Domain") String auth0Domain);
 
     @SqlQuery("SELECT "
-            + "     c.*, t.auth0_domain "
+            + "     c.client_id, "
+            + "     c.auth0_client_id, "
+            + "     c.auth0_signing_secret, "
+            + "     c.web_password_redirect_url, "
+            + "     c.is_revoked, "
+            + "     c.auth0_tenant_id, "
+            + "     t.auth0_domain "
             + "FROM "
             + "     client c, auth0_tenant t "
             + "WHERE "
@@ -71,7 +77,13 @@ public interface JdbiClient extends SqlObject {
 
     // Left for backward compatiblity
     @SqlQuery("SELECT "
-            + "     c.*, t.auth0_domain "
+            + "     c.client_id, "
+            + "     c.auth0_client_id, "
+            + "     c.auth0_signing_secret, "
+            + "     c.web_password_redirect_url, "
+            + "     c.is_revoked, "
+            + "     c.auth0_tenant_id, "
+            + "     t.auth0_domain "
             + "FROM "
             + "     client c, auth0_tenant t "
             + "WHERE "
@@ -84,7 +96,13 @@ public interface JdbiClient extends SqlObject {
 
     // Left for backward compatiblity
     @SqlQuery("SELECT "
-            + "     c.*, t.auth0_domain "
+            + "     c.client_id, "
+            + "     c.auth0_client_id, "
+            + "     c.auth0_signing_secret, "
+            + "     c.web_password_redirect_url, "
+            + "     c.is_revoked, "
+            + "     c.auth0_tenant_id, "
+            + "     t.auth0_domain "
             + "FROM "
             + "     client c, auth0_tenant t "
             + "WHERE "
