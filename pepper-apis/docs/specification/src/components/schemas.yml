@@ -887,7 +887,7 @@ Block.Tabular:
         content:
           type: array
           items:
-            $ref: '#/Block.Tabular.ContentItem'
+            $ref: '#/Block.Tabular.ContentRow'
 
 Block.Tabular.Header:
   type: object
@@ -905,33 +905,10 @@ Block.Tabular.Header:
       type: integer
       minimum: 0
 
-Block.Tabular.ContentItem:
-  type: object
-  required:
-    - mainQuestion
-  properties:
-    firstColumnBooleanQuestion:
-      allOf:
-        - $ref: '#/Question.Boolean'
-        - description: A boolean question that can be situated in first cell of a row as to enable/disable the whole row
-        - nullable: true
-    questionLabel:
-      type: string
-      description: An alternative label for a question row (instead of the question prompt)
-    mainQuestion:
-      $ref: '#/Question'
-    compositeQuestionSettings:
-      type: object
-      required:
-        - spreadChildren
-      properties:
-        spreadChildren:
-          type: boolean
-          description: whether every child of a composite question should take a separate cell
-          default: true
-        internalContent:
-          type: string
-          description: a content that can be between composite question children cells ('or', '/', etc.)
+Block.Tabular.ContentRow:
+  type: array
+  items:
+    $ref: '#/Question'
 
 Block.Visibility:
   type: object
