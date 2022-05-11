@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -30,22 +31,19 @@ import org.broadinstitute.ddp.model.dsm.Institution;
 import org.broadinstitute.ddp.model.dsm.InstitutionRequests;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
+@Slf4j
 public class GetDsmInstitutionRequestsRoute implements Route {
-    private static final Logger LOG = LoggerFactory.getLogger(GetDsmInstitutionRequestsRoute.class);
-
     @Override
     public Object handle(Request request, Response response) {
-        LOG.info("Starting GetDsmInstitutionRequestRoute.handle");
-        LOG.info("Checking Study and MaxId");
+        log.info("Starting GetDsmInstitutionRequestRoute.handle");
+        log.info("Checking Study and MaxId");
         String studyGuid = request.params(STUDY_GUID);
         if (studyGuid == null) {
-            LOG.error("Study GUID not found in request");
+            log.error("Study GUID not found in request");
             ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST,
                     new ApiError(ErrorCodes.MISSING_STUDY_GUID, "Study GUID is missing"));
             return null;
@@ -53,7 +51,7 @@ public class GetDsmInstitutionRequestsRoute implements Route {
 
         String createdSinceSecondsEpochString = request.params(MAX_ID);
         if (createdSinceSecondsEpochString == null) {
-            LOG.error("maxId not found in request");
+            log.error("maxId not found in request");
             ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY,
                     new ApiError(ErrorCodes.MISSING_MAX_ID, "maxId is missing"));
             return null;
@@ -65,17 +63,17 @@ public class GetDsmInstitutionRequestsRoute implements Route {
             createdSince = Long.parseLong(createdSinceSecondsEpochString) * MILLIS_PER_SECOND;
         } catch (NumberFormatException | DateTimeException e) {
             String error = "Couldn't parse " + createdSinceSecondsEpochString + " as an epoch value";
-            LOG.error(error, e);
+            log.error(error, e);
             ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY,
                     new ApiError(ErrorCodes.BAD_PAYLOAD, error));
             return null;
         }
 
-        List<InstitutionRequests> responses = TransactionWrapper.withTxn(handle -> {
+        return TransactionWrapper.withTxn(handle -> {
             Optional<Long> studyIdOpt = handle.attach(JdbiUmbrellaStudy.class).getIdByGuid(studyGuid);
-            if (!studyIdOpt.isPresent()) {
+            if (studyIdOpt.isEmpty()) {
                 String error = "Study GUID not found in database " + studyGuid;
-                LOG.error(error);
+                log.error(error);
                 ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND,
                         new ApiError(ErrorCodes.MISSING_STUDY_GUID, error));
                 return null;
@@ -90,8 +88,6 @@ public class GetDsmInstitutionRequestsRoute implements Route {
 
             return buildJsonForUsers(handle, enrollmentStatuses, studyIdOpt.get());
         });
-
-        return responses;
     }
 
     private List<InstitutionRequests> buildJsonForUsers(Handle handle, List<EnrollmentStatusDto> enrolledUsers, long studyId) {
@@ -102,7 +98,7 @@ public class GetDsmInstitutionRequestsRoute implements Route {
 
         List<Long> userIds = enrolledUsers
                 .stream()
-                .map(dto -> dto.getUserId())
+                .map(EnrollmentStatusDto::getUserId)
                 .collect(Collectors.toList());
 
         Map<Long, List<MedicalProviderDto>> userIdToMedicalProviderDtoList = handle.attach(JdbiMedicalProvider.class)

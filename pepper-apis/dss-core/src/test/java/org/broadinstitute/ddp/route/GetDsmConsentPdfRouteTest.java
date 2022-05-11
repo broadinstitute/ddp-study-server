@@ -34,18 +34,14 @@ import org.jdbi.v3.core.Handle;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class GetDsmConsentPdfRouteTest extends DsmRouteTest {
-
-    private static final Logger LOG = LoggerFactory.getLogger(GetDsmConsentPdfRouteTest.class);
-    private static String answerText = UUID.randomUUID().toString();
-    private static String configurationName = UUID.randomUUID().toString();
-    private static String pdfFilename = UUID.randomUUID().toString();
+    private static final String answerText = UUID.randomUUID().toString();
+    private static final String configurationName = UUID.randomUUID().toString();
+    private static final String pdfFilename = UUID.randomUUID().toString();
+    private static final String legacyAltPid = "12345.GUID-GUID-GUID";
     private static String url;
     private static PdfTestingUtil.PdfDbInfo pdfDbInfo;
-    private static String legacyAltPid = "12345.GUID-GUID-GUID";
     private static TestDataSetupUtil.GeneratedTestData secondStudy;
     private static TestDataSetupUtil.GeneratedTestData thirdStudy;
 
@@ -137,7 +133,7 @@ public class GetDsmConsentPdfRouteTest extends DsmRouteTest {
     }
 
     @Test
-    public void test_givenConsentExists_whenEndpointCalledWithLegacyAltpid_then200Returned() throws Exception {
+    public void test_givenConsentExists_whenEndpointCalledWithLegacyAltpid_then200Returned() {
         TransactionWrapper.useTxn(handle ->
                 TestDataSetupUtil.setUserEnrollmentStatus(handle, generatedTestData, EnrollmentStatusType.ENROLLED)
         );

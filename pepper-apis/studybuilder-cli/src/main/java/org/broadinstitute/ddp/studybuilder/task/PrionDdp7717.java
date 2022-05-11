@@ -13,7 +13,9 @@ public class PrionDdp7717 implements CustomTask {
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
-        tasks.add(new PrionWorkflowAndEventsUpdate());
+        tasks.add(new PrionPrionRequestUpdate());
+        tasks.add(new UpdateStudyWorkflows());
+        tasks.add(new PrionInsertEvents());
         tasks.add(new UpdateActivityBaseSettings());
         tasks.forEach(t -> t.init(cfgPath, studyCfg, varsCfg));
     }
