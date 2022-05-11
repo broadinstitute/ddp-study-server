@@ -160,7 +160,7 @@ public interface JdbiClient extends SqlObject {
             + "     t.auth0_domain"
             + "  FROM client c "
             + "  LEFT JOIN auth0_tenant t "
-            + "    ON t.auth0_tenant_id = c.auth0_tenant_id"
+            + "    ON t.auth0_tenant_id = c.auth0_tenant_id "
             + "WHERE c.auth0_client_id = :auth0ClientId AND c.auth0_tenant_id = :auth0TenantId")
     @RegisterConstructorMapper(ClientDto.class)
     Optional<ClientDto> findByAuth0ClientIdAndAuth0TenantId(
