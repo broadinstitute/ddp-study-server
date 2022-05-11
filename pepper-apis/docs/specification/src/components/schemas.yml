@@ -1746,6 +1746,9 @@ Question.Composite:
         type: array
         items:
           $ref: '#/Answer.Composite'
+      tabularSeparator:
+        type: string
+        description: a symbol/word to display between composite children in a tabular block
 Question.Date:
   allOf:
   - $ref: '#/Question'
