@@ -50,7 +50,6 @@ import org.jdbi.v3.core.Handle;
 @Slf4j
 public class Auth0Util {
     public static final String USERNAME_PASSWORD_AUTH0_CONN_NAME = "Username-Password-Authentication";
-    private static final String HTTPS_PREFIX = "https://";
     public static final String REFRESH_ENDPOINT = "oauth/token";
     private final String baseUrl;
     // map of cached jwk providers so we don't hammer auth0
@@ -61,26 +60,10 @@ public class Auth0Util {
     }
 
     /**
-     * Parses out leading https and trailing / if
-     * present in the domain name, as auth0 needs the
-     * bare domain as the audience.
-     */
-    private static String parseBareDomain(String domain) {
-        String bareDomain = domain;
-        if (bareDomain.startsWith(HTTPS_PREFIX)) {
-            bareDomain = bareDomain.replace(HTTPS_PREFIX, "");
-            if (bareDomain.endsWith("/")) {
-                bareDomain = bareDomain.substring(0, bareDomain.length() - 1);
-            }
-        }
-        return bareDomain;
-    }
-
-    /**
      * Verifies the JWT and decodes it.  Safe to use everywhere.
      */
     public static String getVerifiedAuth0UserId(String idToken, String auth0Domain) {
-        JwkProvider jwkProvider = null;
+        JwkProvider jwkProvider;
         synchronized (jwkProviderMap) {
             jwkProvider = jwkProviderMap.get(auth0Domain);
             if (jwkProvider == null) {
@@ -593,5 +576,4 @@ public class Auth0Util {
             this.studyGuid = studyGuid;
         }
     }
-
 }
