@@ -63,6 +63,37 @@ public class KitDiscard {
     private String path;
     private String token;
 
+    private static String GET_KIT_OF_EXITED_PARTICIPANTS =
+            "    select   "
+                    + "    realm.instance_name,   "
+                    + "    req.ddp_participant_id,   "
+                    + "    req.bsp_collaborator_participant_id,   "
+                    + "    req.dsm_kit_request_id,   "
+                    + "    ex.exit_date,   "
+                    + "    kit.scan_date,   "
+                    + "    kit.receive_date,   "
+                    + "    ty.kit_type_name,   "
+                    + "    kit.kit_label,   "
+                    + "    dis.kit_discard_id,   "
+                    + "    dis.action,   "
+                    + "    dis.note,   "
+                    + "    dis.path_bsp_screenshot,   "
+                    + "    dis.path_sample_image,   "
+                    + "    dis.changed_by,   "
+                    + "    dis.user_confirm,   "
+                    + "    dis.discard_date,   "
+                    + "    dis.discard_by   "
+                    + "    from   "
+                    + "    ddp_kit_discard dis   "
+                    + "    left join ddp_kit_request req on (req.dsm_kit_request_id = dis.dsm_kit_request_id)   "
+                    + "    left join ddp_kit kit on (req.dsm_kit_request_id = kit.dsm_kit_request_id)   "
+                    + "    left join ddp_instance realm on (realm.ddp_instance_id = req.ddp_instance_id)   "
+                    + "    left join kit_type ty on (req.kit_type_id = ty.kit_type_id)   "
+                    + "    left join ddp_participant_exit ex on (ex.ddp_participant_id = req.ddp_participant_id   "
+                    + "  and ex.ddp_instance_id = req.ddp_instance_id)   "
+                    + "    where req.kit_type_id is not null   "
+                    + "      ";
+
     public KitDiscard(String kitDiscardId, String kitType, String action) {
         this.kitDiscardId = kitDiscardId;
         this.kitType = kitType;
@@ -102,7 +133,7 @@ public class KitDiscard {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
-                    DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_OF_EXITED_PARTICIPANTS)
+                    DSMConfig.getSqlFromConfig(GET_KIT_OF_EXITED_PARTICIPANTS)
                             + QueryExtension.BY_INSTANCE_NAME)) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -129,7 +160,7 @@ public class KitDiscard {
         });
 
         if (results.resultException != null) {
-            logger.error("Couldn't get information of exited kits for " + realm, results.resultException);
+            logger.error("Couldn't get information of exited kits for  " + realm, results.resultException);
         }
         getUserNames(exitedKits);
         return exitedKits;
@@ -191,7 +222,7 @@ public class KitDiscard {
         });
 
         if (results.resultException != null) {
-            logger.error("Error confirming kit discarded w/ dsm_kit_id " + kitDiscardId, results.resultException);
+            logger.error("Error confirming kit discarded w/ dsm_kit_id  " + kitDiscardId, results.resultException);
         }
         return (boolean) results.resultValue;
     }
@@ -220,7 +251,7 @@ public class KitDiscard {
                 int result = stmt.executeUpdate();
                 if (result != 1) {
                     throw new RuntimeException(
-                            "Error updating discard kit " + kitDiscardId + " discarded. It was updating " + result + " rows");
+                            "Error updating discard kit  " + kitDiscardId + " discarded. It was updating  " + result + " rows");
                 }
             } catch (Exception e) {
                 dbVals.resultException = e;
@@ -229,9 +260,9 @@ public class KitDiscard {
         });
 
         if (results.resultException != null) {
-            logger.error("Error updating discard kit w/ dsm_kit_id " + kitDiscardId, results.resultException);
+            logger.error("Error updating discard kit w/ dsm_kit_id  " + kitDiscardId, results.resultException);
         } else {
-            logger.info("Updated discard kit w/ dsm_kit_id " + kitDiscardId, results.resultException);
+            logger.info("Updated discard kit w/ dsm_kit_id  " + kitDiscardId, results.resultException);
         }
     }
 
@@ -247,7 +278,7 @@ public class KitDiscard {
                     try (ResultSet rs = stmt.getGeneratedKeys()) {
                         if (rs.next()) {
                             String discardId = rs.getString(1);
-                            logger.info("Added kit to discard table w/ id " + kitRequestId);
+                            logger.info("Added kit to discard table w/ id  " + kitRequestId);
                             dbVals.resultValue = discardId;
                         }
                     } catch (Exception e) {
@@ -255,7 +286,7 @@ public class KitDiscard {
                     }
                 } else {
                     throw new RuntimeException(
-                            "Error inserting discard kit w/ dsm_kit_id " + kitRequestId + " it was updating " + result + " rows");
+                            "Error inserting discard kit w/ dsm_kit_id  " + kitRequestId + " it was updating  " + result + " rows");
                 }
             } catch (Exception e) {
                 dbVals.resultException = e;
@@ -264,7 +295,7 @@ public class KitDiscard {
         });
 
         if (results.resultException != null) {
-            logger.error("Error inserting discard kit w/ dsm_kit_id " + kitRequestId, results.resultException);
+            logger.error("Error inserting discard kit w/ dsm_kit_id  " + kitRequestId, results.resultException);
         }
         return (String) results.resultValue;
     }
@@ -274,7 +305,7 @@ public class KitDiscard {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
-                    DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_OF_EXITED_PARTICIPANTS)
+                    DSMConfig.getSqlFromConfig(GET_KIT_OF_EXITED_PARTICIPANTS)
                             + QueryExtension.DISCARD_KIT_BY_DISCARD_ID, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
                 stmt.setString(1, kitDiscardId);
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -298,7 +329,7 @@ public class KitDiscard {
                                         rs.getString(DBConstants.DISCARD_BY), rs.getString(DBConstants.DISCARD_DATE),
                                         rs.getLong(DBConstants.EXIT_BY));
                     } else {
-                        throw new RuntimeException("Error getting discard kit back. (Got " + count + " row back)");
+                        throw new RuntimeException("Error getting discard kit back. (Got  " + count + " row back)");
                     }
                 }
             } catch (Exception ex) {
@@ -308,7 +339,7 @@ public class KitDiscard {
         });
 
         if (results.resultException != null) {
-            logger.error("Couldn't get information of discard kit w/ id " + kitDiscardId, results.resultException);
+            logger.error("Couldn't get information of discard kit w/ id  " + kitDiscardId, results.resultException);
         }
         KitDiscard kitDiscard = (KitDiscard) results.resultValue;
         getUserNames(kitDiscard);
@@ -326,7 +357,7 @@ public class KitDiscard {
                 int result = stmt.executeUpdate();
                 if (result != 1) {
                     throw new RuntimeException(
-                            "Error updating discard kit " + kitDiscardId + " action. It was updating " + result + " rows");
+                            "Error updating discard kit  " + kitDiscardId + " action. It was updating  " + result + " rows");
                 }
             } catch (Exception e) {
                 dbVals.resultException = e;
@@ -335,9 +366,9 @@ public class KitDiscard {
         });
 
         if (results.resultException != null) {
-            logger.error("Error updating discard kit w/ dsm_kit_id " + kitDiscardId, results.resultException);
+            logger.error("Error updating discard kit w/ dsm_kit_id  " + kitDiscardId, results.resultException);
         } else {
-            logger.info("Updated discard kit w/ dsm_kit_id " + kitDiscardId, results.resultException);
+            logger.info("Updated discard kit w/ dsm_kit_id  " + kitDiscardId, results.resultException);
         }
     }
 
@@ -353,7 +384,7 @@ public class KitDiscard {
                 int result = stmt.executeUpdate();
                 if (result != 1) {
                     throw new RuntimeException(
-                            "Error updating discard kit " + kitDiscardId + " discarded. It was updating " + result + " rows");
+                            "Error updating discard kit  " + kitDiscardId + " discarded. It was updating  " + result + " rows");
                 }
             } catch (Exception e) {
                 dbVals.resultException = e;
@@ -362,9 +393,9 @@ public class KitDiscard {
         });
 
         if (results.resultException != null) {
-            logger.error("Error updating discard kit w/ dsm_kit_id " + kitDiscardId, results.resultException);
+            logger.error("Error updating discard kit w/ dsm_kit_id  " + kitDiscardId, results.resultException);
         } else {
-            logger.info("Updated discard kit w/ dsm_kit_id " + kitDiscardId, results.resultException);
+            logger.info("Updated discard kit w/ dsm_kit_id  " + kitDiscardId, results.resultException);
         }
     }
 }

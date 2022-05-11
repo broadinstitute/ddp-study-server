@@ -33,6 +33,13 @@ public class ParticipantEvent {
     private static String GET_PARTICIPANT_EVENT =
             "select event  from ddp_participant_event ev where ev.ddp_instance_id = ? "
                     + "and ev.ddp_participant_id = ?";
+    private static String GET_PARTICIPANT_EVENTS = "select ev.event, ev.ddp_participant_id, ev.date, ev.done_by "
+            + "        from ddp_participant_event ev "
+            + "        left join ddp_instance realm on (ev.ddp_instance_id = realm.ddp_instance_id) "
+            + "        left join ddp_participant_exit ex on (ex.ddp_instance_id = ev.ddp_instance_id "
+            + "            and ex.ddp_participant_id = ev.ddp_participant_id) "
+            + "        where ex.ddp_participant_exit_id is null "
+            + "        and instance_name = ?";
     private final String participantId;
     private final String eventType;
     private final long userId;
@@ -53,7 +60,7 @@ public class ParticipantEvent {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
-                    DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_PARTICIPANT_EVENTS))) {
+                    DSMConfig.getSqlFromConfig(GET_PARTICIPANT_EVENTS))) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
