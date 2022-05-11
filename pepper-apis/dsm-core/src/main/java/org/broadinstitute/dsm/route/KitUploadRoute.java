@@ -67,8 +67,7 @@ public class KitUploadRoute extends RequestHandler {
     private static final String SQL_SELECT_CHECK_KIT_ALREADY_EXISTS = "SELECT count(*) as found "
             + "FROM ddp_kit_request request LEFT JOIN ddp_kit kit on (request.dsm_kit_request_id = kit.dsm_kit_request_id) "
             + "LEFT JOIN ddp_participant_exit ex on (ex.ddp_instance_id = request.ddp_instance_id "
-            + "AND ex.ddp_participant_id = request.ddp_participant_id) "
-            + "WHERE ex.ddp_participant_exit_id is null "
+            + "AND ex.ddp_participant_id = request.ddp_participant_id) " + "WHERE ex.ddp_participant_exit_id is null "
             + "AND kit.deactivated_date is null AND request.ddp_instance_id = ? AND request.kit_type_id = ? "
             + "AND request.ddp_participant_id = ?";
     private static final String PARTICIPANT_ID = "participantId";
@@ -342,32 +341,24 @@ public class KitUploadRoute extends RequestHandler {
                            @NonNull String userIdRequest, @NonNull String kitTypeName, String collaboratorParticipantId,
                            String errorMessage, boolean uploadAnyway, List<KitRequest> duplicateKitList, ArrayList<KitRequest> orderKits,
                            String externalOrderNumber, String uploadReason, String carrier) {
-        if (StringUtils.isBlank(ddpInstance.getParticipantIndexES())) {
-            //bringing old code back for RGP (can be removed after migration is finished)
-            if (checkIfKitAlreadyExists(conn, kit.getParticipantId(), ddpInstance.getDdpInstanceId(), kitType.getKitTypeId())
-                    && !uploadAnyway) {
-                duplicateKitList.add(kit);
-            } else {
-                String shippingId = DDPKitRequest.UPLOADED_KIT_REQUEST + KitRequestShipping.createRandom(20);
-                addKitRequest(conn, kitTypeName, kitRequestSettings, ddpInstance, kitType.getKitTypeId(), collaboratorParticipantId,
-                        errorMessage, userIdRequest, easyPostUtil, kit, externalOrderNumber, shippingId, uploadReason, carrier);
-                orderKits.add(kit);
-            }
+        String participantId = kit.getParticipantId();
+        if (StringUtils.isBlank(participantId)) {
+            participantId = kit.getShortId();
+        }
+        String participantGuid =
+                elasticSearch.getParticipantById(ddpInstance.getParticipantIndexES(), participantId).getProfile().map(ESProfile::getGuid)
+                        .orElse("");
+        String participantLegacyAltPid =
+                elasticSearch.getParticipantById(ddpInstance.getParticipantIndexES(), participantId).getProfile()
+                        .map(ESProfile::getLegacyAltPid).orElse("");
+        if (checkAndSetParticipantIdIfKitExists(ddpInstance, conn, kit, participantGuid, participantLegacyAltPid, kitType.getKitTypeId())
+                && !uploadAnyway) {
+            duplicateKitList.add(kit);
         } else {
-            String participantGuid = elasticSearch.getParticipantById(ddpInstance.getParticipantIndexES(), kit.getShortId()).getProfile()
-                    .map(ESProfile::getGuid).orElse("");
-            String participantLegacyAltPid =
-                    elasticSearch.getParticipantById(ddpInstance.getParticipantIndexES(), kit.getShortId()).getProfile()
-                            .map(ESProfile::getLegacyAltPid).orElse("");
-            if (checkAndSetParticipantIdIfKitExists(ddpInstance, conn, kit, participantGuid, participantLegacyAltPid,
-                    kitType.getKitTypeId()) && !uploadAnyway) {
-                duplicateKitList.add(kit);
-            } else {
-                String shippingId = DDPKitRequest.UPLOADED_KIT_REQUEST + KitRequestShipping.createRandom(20);
-                addKitRequest(conn, kitTypeName, kitRequestSettings, ddpInstance, kitType.getKitTypeId(), collaboratorParticipantId,
-                        errorMessage, userIdRequest, easyPostUtil, kit, externalOrderNumber, shippingId, uploadReason, carrier);
-                orderKits.add(kit);
-            }
+            String shippingId = DDPKitRequest.UPLOADED_KIT_REQUEST + KitRequestShipping.createRandom(20);
+            addKitRequest(conn, kitTypeName, kitRequestSettings, ddpInstance, kitType.getKitTypeId(), collaboratorParticipantId,
+                    errorMessage, userIdRequest, easyPostUtil, kit, externalOrderNumber, shippingId, uploadReason, carrier);
+            orderKits.add(kit);
         }
     }
 
