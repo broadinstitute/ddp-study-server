@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NonNull;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
+import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.types.BooleanRenderMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 
@@ -48,12 +49,14 @@ public final class BoolQuestionDef extends QuestionDef {
      * through the use of {@link Builder}.
      *
      * @param stableId the question's stable id
-     * @param isRestricted
+     * @param isRestricted <code>true</code> if the question is restricted
      * @param promptTemplate the template to use when presenting the question prompt
-     * @param additionalInfoHeaderTemplate
-     * @param additionalInfoFooterTemplate
-     * @param validations
-     * @param hideNumber
+     * @param additionalInfoHeaderTemplate the template to use for a text block presented before to the question's main
+     *                  content.
+     * @param additionalInfoFooterTemplate the template to use for a text block presented after the question's content.
+     * @param validations a list of validations any {@link BoolAnswer} must pass in order for the
+     *                  question to be considered answered.
+     * @param hideNumber <code>true</code> if the question's number should not be displayed by the client
      * @param writeOnce <code>true</code> if the question should be considered read-only after the user has saved an
      *                  answer for the question.
      * @param trueTemplate the template to be used for the true option text. May not be <code>null</code>.
