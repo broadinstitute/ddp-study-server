@@ -43,6 +43,24 @@ public final class BoolQuestionDef extends QuestionDef {
                 .setFalseTemplate(falseTemplate);
     }
 
+    /**
+     * Creates a BoolQuestionDef instance. This constructor may be called directly, or a caller may create an instance
+     * through the use of {@link Builder}.
+     *
+     * @param stableId the question's stable id
+     * @param isRestricted
+     * @param promptTemplate the template to use when presenting the question prompt
+     * @param additionalInfoHeaderTemplate
+     * @param additionalInfoFooterTemplate
+     * @param validations
+     * @param hideNumber
+     * @param writeOnce <code>true</code> if the question should be considered read-only after the user has saved an
+     *                  answer for the question.
+     * @param trueTemplate the template to be used for the true option text. May not be <code>null</code>.
+     * @param falseTemplate the template to be used for the false option text. May not be <code>null</code>.
+     * @param renderMode the appearance a client should use when presenting this question. If <code>null</code> is
+     *                   specified, the default value of <code>BooleanRenderMode.RADIO_BUTTONS</code> is used
+     */
     public BoolQuestionDef(final String stableId, final boolean isRestricted,
                             final Template promptTemplate, final Template additionalInfoHeaderTemplate,
                             final Template additionalInfoFooterTemplate, final List<RuleDef> validations,
@@ -61,6 +79,12 @@ public final class BoolQuestionDef extends QuestionDef {
 
         this.trueTemplate = trueTemplate;
         this.falseTemplate = falseTemplate;
+        /*
+            A default value is provided here with the intention of easing the migration of currently designed studies which
+            do not have this value, keeping `renderMode` well-defined inside the rest of the `DSS` backend. This works
+            in conjunction with the Liquibase migration which sets a default value of existing BoolQuestionDef's renderMode
+            in the database.
+         */
         this.renderMode = Optional.ofNullable(renderMode).orElse(BooleanRenderMode.RADIO_BUTTONS);
     }
 
