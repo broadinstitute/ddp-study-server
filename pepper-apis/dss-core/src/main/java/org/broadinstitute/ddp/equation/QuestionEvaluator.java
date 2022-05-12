@@ -13,7 +13,10 @@ import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.jdbi.v3.core.Handle;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.Map;
+import java.util.List;
+import java.util.HashMap;
+import java.util.Optional;
 
 @Slf4j
 @AllArgsConstructor
