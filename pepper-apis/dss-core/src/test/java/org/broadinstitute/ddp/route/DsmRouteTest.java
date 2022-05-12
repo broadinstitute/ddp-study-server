@@ -19,6 +19,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ClientDao;
@@ -30,8 +31,6 @@ import org.broadinstitute.ddp.util.TestDataSetupUtil.GeneratedTestData;
 import org.jdbi.v3.core.Handle;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Handles additional setup required for DSM client based integration tests
@@ -40,11 +39,8 @@ import org.slf4j.LoggerFactory;
  * {@link TestDataSetupUtil} to create a user/profile/study and mail address that
  * is all internally consistent
  */
+@Slf4j
 public class DsmRouteTest extends IntegrationTestSuite.TestCase {
-
-    private static final Logger LOG = LoggerFactory.getLogger(DsmRouteTest.class);
-
-    protected static final String TEST_DSM_CLIENT_NAME = "test-dsm-client";
     protected static GeneratedTestData generatedTestData;
     protected static String userGuid;
     protected static String studyGuid;
@@ -139,7 +135,7 @@ public class DsmRouteTest extends IntegrationTestSuite.TestCase {
 
         CachedDsmCredentials creds = tryCachedDsmCredentials(authDomain, dsmClientId);
         if (creds != null) {
-            LOG.info("Using cached dsm token");
+            log.info("Using cached dsm token");
             return creds.getToken();
         }
 
@@ -166,26 +162,26 @@ public class DsmRouteTest extends IntegrationTestSuite.TestCase {
         try {
             jwt = JWTConverter.verifyDDPToken(creds.getToken(), JWTConverter.defaultProvider(auth0Domain));
             if (jwt == null) {
-                LOG.warn("Unable to verify or decode jwt token for cached dsm credentials");
+                log.warn("Unable to verify or decode jwt token for cached dsm credentials");
                 return null;
             }
         } catch (TokenExpiredException e) {
-            LOG.warn("Cached dsm token expired, not using", e);
+            log.warn("Cached dsm token expired, not using", e);
             return null;
         } catch (Exception e) {
-            LOG.warn("Error while verifying cached dsm jwt token, not using", e);
+            log.warn("Error while verifying cached dsm jwt token, not using", e);
             return null;
         }
 
         if (!auth0Domain.equals(creds.getDomain()) || !auth0ClientId.equals(creds.getClientId())) {
-            LOG.warn("Cached dsm credentials does not match expected values, not using");
+            log.warn("Cached dsm credentials does not match expected values, not using");
             return null;
         }
 
         Instant shortenedExpire = jwt.getExpiresAt().toInstant().minus(1, ChronoUnit.MINUTES);
         Instant now = Instant.now();
         if (now.equals(shortenedExpire) || now.isAfter(shortenedExpire)) {
-            LOG.info("Cached dsm credentials's jwt token has or is about to expire");
+            log.info("Cached dsm credentials's jwt token has or is about to expire");
             return null;
         }
 
@@ -222,18 +218,18 @@ public class DsmRouteTest extends IntegrationTestSuite.TestCase {
             Gson gson = new Gson();
             Path path = defaultCachedFilePath(auth0ClientId);
 
-            LOG.info("Trying to read cached dsm credentials from: {}", path.toAbsolutePath());
+            log.info("Trying to read cached dsm credentials from: {}", path.toAbsolutePath());
 
             if (!Files.exists(path) || !Files.isReadable(path) || !Files.isRegularFile(path)) {
-                LOG.warn("Cached dsm credentials file is missing or invalid, not using");
+                log.warn("Cached dsm credentials file is missing or invalid, not using");
                 return null;
             }
 
             try {
-                var content = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+                var content = Files.readString(path);
                 return gson.fromJson(content, CachedDsmCredentials.class);
             } catch (IOException | JsonSyntaxException e) {
-                LOG.warn("Encountered issues reading cached dsm credentials", e);
+                log.warn("Encountered issues reading cached dsm credentials", e);
                 return null;
             }
         }
@@ -254,13 +250,13 @@ public class DsmRouteTest extends IntegrationTestSuite.TestCase {
 
             try {
                 Files.write(path, content.getBytes(StandardCharsets.UTF_8));
-                LOG.info("Written cached dsm credentials to: {}", path.toAbsolutePath());
+                log.info("Written cached dsm credentials to: {}", path.toAbsolutePath());
             } catch (IOException e) {
-                LOG.warn("Error while writing dsm credentials", e);
+                log.warn("Error while writing dsm credentials", e);
                 try {
                     Files.deleteIfExists(path);
                 } catch (IOException ex) {
-                    LOG.warn("Unable to cleanup cache dsm credentials file", ex);
+                    log.warn("Unable to cleanup cache dsm credentials file", ex);
                 }
             }
         }

@@ -26,6 +26,7 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.export.WorkflowForES;
@@ -104,7 +105,7 @@ public class ElasticSearchUtil {
     public static final String PROPERTIES = "properties";
     public static final byte OUTER_FIELD_INDEX = 0;
     public static final byte INNER_FIELD_INDEX = 1;
-    public static final int MAX_RESULT_SIZE = 10000;
+    public static final int MAX_RESULT_SIZE = 500;
     public static final int DEFAULT_FROM = 0;
     private static final Logger logger = LoggerFactory.getLogger(DDPRequestUtil.class);
     private static final String ACTIVITIES_QUESTIONS_ANSWER = "activities.questionsAnswers";
@@ -187,6 +188,7 @@ public class ElasticSearchUtil {
                     if (proxyUrl != null) {
                         httpClientBuilder.setProxy(new HttpHost(proxyUrl.getHost(), proxyUrl.getPort(), proxyUrl.getProtocol()));
                         httpClientBuilder.setConnectionReuseStrategy(NoConnectionReuseStrategy.INSTANCE);
+                        httpClientBuilder.setDefaultIOReactorConfig(IOReactorConfig.custom().setSoKeepAlive(true).build());
                     }
                     return httpClientBuilder;
                 })

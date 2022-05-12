@@ -14,6 +14,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -88,8 +89,6 @@ import org.broadinstitute.ddp.pex.lang.PexParser.StudyQueryContext;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.broadinstitute.ddp.util.CollectionMiscUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A tree walking interpreter for pex.
@@ -110,9 +109,8 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Note that support for dates is very minimal. Only full dates with year-month-day is supported.
  */
+@Slf4j
 public class TreeWalkInterpreter implements PexInterpreter {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TreeWalkInterpreter.class);
     private static final PexFetcher fetcher = new PexFetcher();
 
     @Override
@@ -280,7 +278,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
 
             UserProfile profile = ictx.getHandle().attach(UserProfileDao.class).findProfileByUserGuid(userGuid).orElse(null);
             if (profile == null || profile.getBirthDate() == null) {
-                LOG.warn("User {} in study {} does not have profile or birth date to evaluate age-up policy, defaulting to false",
+                log.warn("User {} in study {} does not have profile or birth date to evaluate age-up policy, defaulting to false",
                         userGuid, studyGuid);
                 return false;
             }
@@ -583,6 +581,8 @@ public class TreeWalkInterpreter implements PexInterpreter {
 
         if (childStableId == null) {
             switch (questionType) {
+                case AGREEMENT:
+                    return applyAgreementAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
                 case BOOLEAN:
                     return applyBoolAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
                 case TEXT:
@@ -647,6 +647,34 @@ public class TreeWalkInterpreter implements PexInterpreter {
                     throw new PexUnsupportedException("Child question " + stableId + " with type "
                             + questionType + " is currently not supported");
             }
+        }
+    }
+
+    private Object applyAgreementAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
+                                                 String userGuid, long studyId, String activityCode,
+                                                 String instanceGuid, String stableId) {
+        if (predicateCtx instanceof HasTruePredicateContext || predicateCtx instanceof HasFalsePredicateContext) {
+            boolean expected = (predicateCtx instanceof HasTruePredicateContext);
+            Boolean value = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestAgreementAnswer(ictx, userGuid, activityCode, stableId, studyId)
+                    : fetcher.findSpecificAgreementAnswer(ictx, activityCode, instanceGuid, stableId);
+            if (value == null) {
+                return false;
+            } else {
+                return value == expected;
+            }
+        } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            Boolean value = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestAgreementAnswer(ictx, userGuid, activityCode, stableId, studyId)
+                    : fetcher.findSpecificAgreementAnswer(ictx, activityCode, instanceGuid, stableId);
+            if (value == null) {
+                String msg = String.format("User %s does not have agreement answer for question %s", userGuid, stableId);
+                throw new PexFetchException(msg);
+            } else {
+                return value;
+            }
+        } else {
+            throw new PexUnsupportedException("Invalid predicate used on agreement answer query: " + predicateCtx.getText());
         }
     }
 

@@ -9,7 +9,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.dsm.model.ParticipantColumn;
@@ -19,20 +22,18 @@ import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class ParticipantRecordData {
     private final Map<Alias, List<ParticipantColumn>> columnAliasEsPathMap;
-    private final List<ParticipantRecord> participantRecords = new ArrayList<>();
     private final List<String> headerNames = new ArrayList<>();
     private List<Integer> columnSizes = new ArrayList<>();
-    private final ParticipantWrapperResult participantData;
-    public ParticipantRecordData(ParticipantWrapperResult participantData,
-                                 Map<Alias, List<ParticipantColumn>> columnAliasEsPathMap) {
+    public ParticipantRecordData(Map<Alias, List<ParticipantColumn>> columnAliasEsPathMap) {
         this.columnAliasEsPathMap = columnAliasEsPathMap;
-        this.participantData = participantData;
     }
 
-    public void processData() {
+    public List<List<String>> processData(ParticipantWrapperResult participantData, boolean isCountPhase) {
+        List<ParticipantRecord> participantRecords = new ArrayList<>();
         for (ParticipantWrapperDto participant : participantData.getParticipants()) {
             ParticipantRecord participantRecord = new ParticipantRecord();
             Map<String, Object> esDataAsMap = participant.getEsDataAsMap();
@@ -41,6 +42,9 @@ public class ParticipantRecordData {
                 for (ParticipantColumn column : aliasListEntry.getValue()) {
                     String esPath = getEsPath(key, column);
                     Collection<?> nestedValue = getNestedValue(esPath, esDataAsMap);
+                    if (aliasListEntry.getKey().isJson()) {
+                        nestedValue = getJsonValue(nestedValue, column, key);
+                    }
                     if (aliasListEntry.getKey() == Alias.ACTIVITIES) {
                         nestedValue = getQuestionAnswerValue(nestedValue, column);
                     }
@@ -48,14 +52,40 @@ public class ParticipantRecordData {
                     participantRecord.add(columnValue);
                 }
             }
-            addParticipant(participantRecord);
+            if (isCountPhase) {
+                initOrUpdateSizes(participantRecord);
+            } else {
+                participantRecords.add(participantRecord);
+            }
         }
+        return getRowData(participantRecords);
 
     }
 
-    public void addParticipant(ParticipantRecord participantRecord) {
-        this.participantRecords.add(participantRecord);
-        initOrUpdateSizes(participantRecord);
+    private Collection<?> getJsonValue(Collection<?> nestedValue, ParticipantColumn column,
+                                       Alias alias) {
+        if (nestedValue.isEmpty()) {
+            return Collections.singletonList(StringUtils.EMPTY);
+        }
+        String jsonString;
+        if (alias.isCollection()) {
+            jsonString = nestedValue.stream().filter(val ->
+                            column.getObject().equals(((Map<String, Object>) val).get(ESObjectConstants.FIELD_TYPE_ID)))
+                    .findFirst().map(val -> ((Map<String, Object>) val).get(ESObjectConstants.DATA).toString()).orElse(StringUtils.EMPTY);
+        } else {
+            jsonString = nestedValue.stream().findFirst().get().toString();
+        }
+        JsonNode jsonNode;
+        try {
+            jsonNode = ObjectMapperSingleton.instance().readTree(jsonString);
+            if (jsonNode.has(column.getName())) {
+                return Collections.singletonList(jsonNode.get(column.getName()).asText(StringUtils.EMPTY));
+            } else {
+                return Collections.singletonList(StringUtils.EMPTY);
+            }
+        } catch (JsonProcessingException e) {
+            return Collections.singletonList(StringUtils.EMPTY);
+        }
     }
 
     public List<String> getHeader() {
@@ -67,7 +97,7 @@ public class ParticipantRecordData {
         return headerNames;
     }
 
-    public List<List<String>> getRowData() {
+    private List<List<String>> getRowData(List<ParticipantRecord> participantRecords) {
         List<List<String>> rowValues = new ArrayList<>();
         participantRecords.forEach(record -> rowValues.add(record.transposeAndFlatten(columnSizes)));
         return rowValues;
@@ -109,7 +139,7 @@ public class ParticipantRecordData {
         List<LinkedHashMap<String, Object>> activities = (List<LinkedHashMap<String, Object>>) nestedValue;
         Collection<?> objects =
                 activities.stream().filter(activity -> activity.get(ElasticSearchUtil.ACTIVITY_CODE).equals(column.getTableAlias()))
-                        .findFirst().map(foundActivity -> {
+                        .map(foundActivity -> {
                             if (Objects.isNull(column.getObject())) {
                                 Object o = foundActivity.get(column.getName());
                                 return mapToCollection(o);
@@ -117,17 +147,50 @@ public class ParticipantRecordData {
                                 List<LinkedHashMap<String, Object>> questionAnswers =
                                         (List<LinkedHashMap<String, Object>>) foundActivity.get(ElasticSearchUtil.QUESTIONS_ANSWER);
                                 return questionAnswers.stream().filter(qa -> qa.get(ESObjectConstants.STABLE_ID).equals(column.getName()))
-                                        .map(fq -> fq.get(column.getName())).map(this::mapToCollection)
-                                        .flatMap(Collection::stream).collect(Collectors.toList());
+                                        .map(fq -> getAnswerValue(fq, column.getName()))
+                                        .map(this::mapToCollection)
+                                        .flatMap(Collection::stream)
+                                        .collect(Collectors.toList());
                             }
-                        }).orElse(Collections.singletonList(StringUtils.EMPTY));
+                        }).flatMap(Collection::stream).collect(Collectors.toList());
         if (objects.isEmpty()) {
             return Collections.singletonList(StringUtils.EMPTY);
         }
         return objects;
     }
 
+    private Object getAnswerValue(LinkedHashMap<String, Object> fq, String columnName) {
+        Collection<?> answer = mapToCollection(fq.get(ESObjectConstants.ANSWER));
+        if (answer.isEmpty()) {
+            answer = mapToCollection(fq.get(columnName));
+        }
+        Object optionDetails = fq.get(ESObjectConstants.OPTIONDETAILS);
+        if (optionDetails != null && !((List<?>) optionDetails).isEmpty()) {
+            removeOptionsFromAnswer(answer, ((List<Map<String, String>>)optionDetails));
+            return Stream.of(answer, getOptionDetails((List<?>) optionDetails)).flatMap(Collection::stream)
+                    .collect(Collectors.toList());
+        }
+
+        return answer;
+    }
+
+    private void removeOptionsFromAnswer(Collection<?> answer, List<Map<String,String>> optionDetails) {
+        List<String> details = optionDetails.stream().map(options -> options.get(ESObjectConstants.OPTION)).collect(Collectors.toList());
+        answer.removeAll(details);
+    }
+
+    private List<String> getOptionDetails(List<?> optionDetails) {
+        return optionDetails.stream().map(optionDetail ->
+                        new StringBuilder(((Map)optionDetail).get(ESObjectConstants.OPTION).toString())
+                        .append(':')
+                        .append(((Map)optionDetail).get(ESObjectConstants.DETAIL)).toString())
+                        .collect(Collectors.toList());
+    }
+
     private Collection<?> mapToCollection(Object o) {
+        if (o == null) {
+            return Collections.singletonList(StringUtils.EMPTY);
+        }
         if (o instanceof Collection) {
             if (((Collection<?>) o).isEmpty()) {
                 return Collections.singletonList(StringUtils.EMPTY);
@@ -140,6 +203,9 @@ public class ParticipantRecordData {
 
     private String getEsPath(Alias alias, ParticipantColumn column) {
         if (alias == Alias.ACTIVITIES) {
+            return alias.getValue();
+        }
+        if (alias.isJson()) {
             return alias.getValue();
         }
         return alias.getValue().isEmpty() ? column.getName() : alias.getValue() + DBConstants.ALIAS_DELIMITER + column.getName();

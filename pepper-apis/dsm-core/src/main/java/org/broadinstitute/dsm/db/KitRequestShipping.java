@@ -754,8 +754,14 @@ public class KitRequestShipping extends KitRequest {
             kitRequestShipping.setDeactivationReason(deactivationReason);
             kitRequestShipping.setDeactivatedDate(deactivatedDate);
 
-            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
-                    ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId).export();
+            try {
+                UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
+                        ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId).export();
+            } catch (Exception e) {
+                logger.error(String.format("Error updating kit request shipping deactivate reason with dsm kit request id: %s in "
+                        + "ElasticSearch", dsmKitRequestId));
+                e.printStackTrace();
+            }
 
         } else {
             if (easypostApiKey != null) {
@@ -835,6 +841,7 @@ public class KitRequestShipping extends KitRequest {
                                       @NonNull String ddpParticipantId, String collaboratorPatientId, String collaboratorSampleId,
                                       @NonNull String createdBy, String addressIdTo, String errorMessage, String externalOrderNumber,
                                       boolean needsApproval, String uploadReason, DDPInstance ddpInstance) {
+        String ddpLabel = StringUtils.isNotBlank(externalOrderNumber) ? null : generateDdpLabelID();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult(0);
             try (PreparedStatement insertKitRequest = conn.prepareStatement(
@@ -845,8 +852,7 @@ public class KitRequestShipping extends KitRequest {
                 insertKitRequest.setString(4, ddpParticipantId);
                 insertKitRequest.setObject(5, collaboratorPatientId);
                 insertKitRequest.setObject(6, collaboratorSampleId);
-                insertKitRequest.setObject(7,
-                        StringUtils.isNotBlank(externalOrderNumber) ? null : generateDdpLabelID()); //ddp_label or shipping_id
+                insertKitRequest.setObject(7, ddpLabel); //ddp_label or shipping_id
                 insertKitRequest.setString(8, createdBy);
                 insertKitRequest.setLong(9, System.currentTimeMillis());
                 insertKitRequest.setObject(10,
@@ -885,13 +891,20 @@ public class KitRequestShipping extends KitRequest {
             kitRequestShipping.setCreatedBy(createdBy);
             kitRequestShipping.setUploadReason(uploadReason);
             kitRequestShipping.setDdpInstanceId(ddpInstance.getDdpInstanceIdAsInt());
+            kitRequestShipping.setDdpLabel(ddpLabel);
 
             DDPInstanceDto ddpInstanceDto =
                     new DDPInstanceDao().getDDPInstanceByInstanceId(Integer.valueOf(ddpInstance.getDdpInstanceId())).orElseThrow();
 
-            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
+            try {
+                UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
                     ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DOC_ID,
                     Exportable.getParticipantGuid(ddpParticipantId, ddpInstance.getParticipantIndexES())).export();
+            } catch (Exception e) {
+                logger.error(String.format("Error inserting newly created kit request shipping with dsm kit request id: %s in "
+                        + "ElasticSearch", kitRequestShipping.getDsmKitRequestId()));
+                e.printStackTrace();
+            }
 
         }
 
@@ -973,8 +986,14 @@ public class KitRequestShipping extends KitRequest {
             KitRequestShipping kitRequestShipping = new KitRequestShipping(null, dsmKitId, null, null, null, null);
             kitRequestShipping.setLabelDate(labelDate);
 
-            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
+            try {
+                UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
                     ESObjectConstants.DSM_KIT_ID, dsmKitId).export();
+            } catch (Exception e) {
+                logger.error(String.format("Error updating label date of kit request shipping with dsm kit id: %s in ElasticSearch",
+                        dsmKitId));
+                e.printStackTrace();
+            }
         }
     }
 
@@ -1061,8 +1080,14 @@ public class KitRequestShipping extends KitRequest {
         } else {
             logger.info("Updated kit w/ dsm_kit_id " + dsmKitId, results.resultException);
 
-            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
-                    ESObjectConstants.DSM_KIT_ID, dsmKitId).export();
+            try {
+                UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
+                        ESObjectConstants.DSM_KIT_ID, dsmKitId).export();
+            } catch (Exception e) {
+                logger.error(String.format("Error updating kit request shipping with dsm kit id: %s in ElasticSearch",
+                        kitRequestShipping.getDsmKitId()));
+                e.printStackTrace();
+            }
 
         }
     }
@@ -1353,8 +1378,14 @@ public class KitRequestShipping extends KitRequest {
 
         KitRequestShipping kitRequestShipping = new KitRequestShipping(dsmKitRequestId, null, null, null, null, message);
 
-        UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_REQUEST_ID,
-                ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId).export();
+        try {
+            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_REQUEST_ID,
+                    ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId).export();
+        } catch (Exception e) {
+            logger.error(String.format("Error updating error message for kit request shipping with dsm kit request id: %s in ElasticSearch",
+                    dsmKitRequestId));
+            e.printStackTrace();
+        }
     }
 
     public static void reactivateKitRequest(@NonNull String kitRequestId, DDPInstanceDto ddpInstanceDto) {
@@ -1396,8 +1427,14 @@ public class KitRequestShipping extends KitRequest {
             long dsmKitId = KitRequestShipping.writeNewKit(dsmKitRequestId, kitRequestShipping.getEasypostAddressId(), message, false);
             kitRequestShipping.setDsmKitId(dsmKitId);
 
-            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
-                    ESObjectConstants.DSM_KIT_REQUEST_ID, Long.parseLong(dsmKitRequestId)).export();
+            try {
+                UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
+                        ESObjectConstants.DSM_KIT_REQUEST_ID, Long.parseLong(dsmKitRequestId)).export();
+            } catch (Exception e) {
+                logger.error(String.format("Error inserting reactivated kit request shipping with id: %s in ElasticSearch",
+                        dsmKitRequestId));
+                e.printStackTrace();
+            }
         }
     }
 

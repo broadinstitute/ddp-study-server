@@ -49,7 +49,7 @@ public class WorkflowStatusUpdate {
         String ddpParticipantId = attributesMap.get(PARTICIPANT_GUID);
         DDPInstance instance = DDPInstance.getDDPInstanceByGuid(studyGuid);
 
-        if (OSTEO_RECONSENTED_WORKFLOW.equals(workflow) && OSTEO_RECONSENTED_WORKFLOW_STATUS.equals(status)) {
+         if (OSTEO_RECONSENTED_WORKFLOW.equals(workflow) && OSTEO_RECONSENTED_WORKFLOW_STATUS.equals(status)) {
             inTransaction((conn) -> {
                 if (!MedicalRecordUtil.isParticipantInDB(conn, ddpParticipantId, instance.getDdpInstanceId())) {
                     //todo write into ddp_participant
@@ -75,11 +75,11 @@ public class WorkflowStatusUpdate {
             Optional<FieldSettingsDto> fieldSetting =
                     fieldSettingsDao.getFieldSettingByColumnNameAndInstanceId(Integer.parseInt(instance.getDdpInstanceId()), workflow);
             if (fieldSetting.isEmpty()) {
-                logger.warn("Wrong workflow name");
+                logger.warn("Wrong workflow name " + workflow);
             } else {
                 FieldSettingsDto setting = fieldSetting.get();
                 boolean isOldParticipant = participantDatas.stream()
-                        .anyMatch(participantDataDto -> participantDataDto.getFieldTypeId().equals(setting.getFieldType())
+                        .anyMatch(participantDataDto -> participantDataDto.getFieldTypeId().get().equals(setting.getFieldType())
                                 || participantDataDto.getFieldTypeId().orElse("").contains(FamilyMemberConstants.PARTICIPANTS));
                 if (isOldParticipant) {
                     participantDatas.forEach(participantDataDto -> {
@@ -91,6 +91,7 @@ public class WorkflowStatusUpdate {
                 exportToESifNecessary(workflow, status, ddpParticipantId, instance, setting, participantDatas);
             }
         }
+
     }
 
     public static void exportToESifNecessary(String workflow, String status, String ddpParticipantId,

@@ -59,7 +59,7 @@ public class SendGridClient {
             SendGrid sendGrid = new SendGrid(sendGridKey);
             sendRequestUsingTemplate((Recipient) (recipientList.toArray())[0], sendGridTemplate, sendGrid);
         } catch (Exception ex) {
-            throw new NotificationSentException("An error occurred trying to send emails.");
+            throw new NotificationSentException("An error occurred trying to send emails. " + ex.getMessage());
         }
     }
 
@@ -70,12 +70,11 @@ public class SendGridClient {
     private void sendRequestUsingTemplate(@NonNull Recipient recipient, @NonNull String sendGridTemplate, @NonNull SendGrid sendGrid)
             throws Exception {
         logger.info(LOG_PREFIX + " - About to send 1 email request for " + sendGridTemplate + "...");
-        Mail mail = configureTemplateEmail(sendGridTemplate);
-        addToHeader(recipient);
+        Mail mail = configureTemplateEmail(sendGridTemplate, recipient);
         send(sendGrid, mail);
     }
 
-    private void addToHeader(@NonNull Recipient recipient) {
+    private Personalization addToHeader(@NonNull Recipient recipient) {
         Email toEmail = new Email(recipient.getEmail());
 
         Personalization sendGridPersonalization = new Personalization();
@@ -89,15 +88,20 @@ public class SendGridClient {
         for (Map.Entry entry : recipient.getPersonalization().entrySet()) {
             sendGridPersonalization.addSubstitution(entry.getKey().toString(), entry.getValue().toString());
         }
+        return sendGridPersonalization;
     }
 
-    private Mail configureTemplateEmail(@NonNull String template) {
+    private Mail configureTemplateEmail(@NonNull String template, Recipient recipient) {
+        Personalization sendGridPersonalization = addToHeader(recipient);
+
         Email fromEmail = new Email(settings.get("sendGridFrom").getAsString(), settings.get("sendGridFromName").getAsString());
 
         Mail mail = new Mail();
         mail.setFrom(fromEmail);
         mail.setSubject("");
         mail.setTemplateId(template);
+        mail.addPersonalization(sendGridPersonalization);
+
         return mail;
     }
 

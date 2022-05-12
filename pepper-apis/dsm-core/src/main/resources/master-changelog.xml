@@ -86,6 +86,9 @@
     <include file="liquibase/singular/DDP-7322_singularForm_tab3.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/singular/DDP-7322_formFix.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/singular/DDP-7746_singularParticipantFields.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/rgp/DDP-7837_missing_field_settings.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/rgp/DDP-7837_more_missing_field_settings.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/at/DDP-7837_AT_missing_field_settings.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/DDP-7641_ddpKitRequestSetting_AutoIncrement.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/DDP-7641_addOS2.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
