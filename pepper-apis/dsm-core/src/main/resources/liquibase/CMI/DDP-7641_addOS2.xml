@@ -13,10 +13,11 @@
             <column name="view_columns" value="data.ddp,data.hruid,data.firstName,data.lastName,data.status,PARENTAL_CONSENT.completedAt,GERMLINE_CONSENT_ADDENDUM_PEDIATRIC.completedAt,GERMLINE_CONSENT_ADDENDUM.completedAt,CONSENT.completedAt,"/>
             <column name="parent" value="participantList"/>
             <column name="ddp_group_id"
-                    valueComputed="(SELECT ddp_group_id FROM ddp_group WHERE name='cmi')"></column>
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"></column>
             <column name="changed_by" value="SYSTEM"/>
             <column name="last_changed"
-                    valueComputed="select UNIX_TIMESTAMP(NOW())"></column>
+                    valueComputed="(select UNIX_TIMESTAMP(NOW()))"></column>
+            <column name="deleted" value="0"/>
         </insert>
     </changeSet>
     <changeSet author="simone" id="OS-prefilter">
@@ -27,10 +28,11 @@
             <column name="view_columns" value="data.ddp,data.hruid,data.firstName,data.lastName,data.status,PARENTAL_CONSENT.completedAt,GERMLINE_CONSENT_ADDENDUM_PEDIATRIC.completedAt,GERMLINE_CONSENT_ADDENDUM.completedAt,CONSENT.completedAt,"/>
             <column name="parent" value="participantList"/>
             <column name="ddp_group_id"
-                    valueComputed="(SELECT ddp_group_id FROM ddp_group WHERE name='cmi')"></column>
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"></column>
             <column name="changed_by" value="SYSTEM"/>
             <column name="last_changed"
-                    valueComputed="select UNIX_TIMESTAMP(NOW())"></column>
+                    valueComputed="(select UNIX_TIMESTAMP(NOW()))"></column>
+            <column name="deleted" value="0"/>
         </insert>
     </changeSet>
     <changeSet author="simone" id="instanceOS2">
@@ -39,7 +41,7 @@
             <column name="study_guid" value="cmi-osteo"/>
             <column name="display_name" value="OS PE-CGS"/>
             <column name="base_url"
-                    valueComputed="(SELECT base_url FROM ddp_instance WHERE name='osteo')"></column>
+                    valueComputed="(SELECT base_url FROM (SELECT * FROM ddp_instance) AS something WHERE something.instance_name='osteo')"></column>
             <column name="is_active" value="0"/>
             <column name="auth0_token" value="1"/>
             <column name="migrated_ddp" value="0"/>
@@ -57,7 +59,7 @@
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
             <column name="ddp_group_id"
-                    valueComputed="(SELECT ddp_group_id FROM ddp_group WHERE name='cmi')"></column>
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE name='cmi')"></column>
         </insert>
     </changeSet>
 
@@ -74,14 +76,14 @@
     <changeSet author="simone" id="kitType_FFPESection">
         <insert tableName="kit_type">
             <column name="kit_type_name" value="FFPE-SECTION"/>
-            <column name="bsp_material_name" value="Tissue:FFPE Tissue Section"/>
+            <column name="bsp_material_type" value="Tissue:FFPE Tissue Section"/>
             <column name="bsp_receptacle_type" value="Slide"/>
         </insert>
     </changeSet>
     <changeSet author="simone" id="kitType_FFPEScroll">
         <insert tableName="kit_type">
             <column name="kit_type_name" value="FFPE-SCROLL"/>
-            <column name="bsp_material_name" value="Tissue:FFPE Tissue Scroll"/>
+            <column name="bsp_material_type" value="Tissue:FFPE Tissue Scroll"/>
             <column name="bsp_receptacle_type" value="Eppendorf Flip-top [2.0mL]"/>
         </insert>
     </changeSet>
@@ -91,7 +93,7 @@
         <insert tableName="ddp_kit_request_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
-            <column name="ddp_kit_type"
+            <column name="kit_type_id"
                     valueComputed="(SELECT kit_type_id FROM kit_type WHERE kit_type_name='SALIVA')"></column>
             <column name="kit_return_id" value="1"/>
             <column name="carrier_service_to_id"
@@ -103,7 +105,7 @@
         <insert tableName="ddp_kit_request_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
-            <column name="ddp_kit_type"
+            <column name="kit_type_id"
                     valueComputed="(SELECT kit_type_id FROM kit_type WHERE kit_type_name='BLOOD' AND bsp_material_type='Whole Blood:Streck Cell-Free Preserved')"></column>
             <column name="kit_return_id" value="1"/>
             <column name="carrier_service_to_id"
@@ -115,7 +117,7 @@
         <insert tableName="ddp_kit_request_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
-            <column name="ddp_kit_type"
+            <column name="kit_type_id"
                     valueComputed="(SELECT kit_type_id FROM kit_type WHERE kit_type_name='FFPE-SECTION')"></column>
             <column name="kit_return_id" value="1"/>
             <column name="carrier_service_to_id"
@@ -127,7 +129,7 @@
         <insert tableName="ddp_kit_request_settings">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
-            <column name="ddp_kit_type"
+            <column name="kit_type_id"
                     valueComputed="(SELECT kit_type_id FROM kit_type WHERE kit_type_name='FFPE-SCROLL')"></column>
             <column name="kit_return_id" value="1"/>
             <column name="carrier_service_to_id"
@@ -154,7 +156,7 @@
 
 <!--    add instance roles for os2-->
     <changeSet author="simone" id="add_kit_instance_role_1">
-        <insert tableName="ddp_kit_request_settings">
+        <insert tableName="ddp_instance_role">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
             <column name="instance_role_id"
@@ -162,7 +164,7 @@
         </insert>
     </changeSet>
     <changeSet author="simone" id="add_kit_instance_role_2">
-        <insert tableName="ddp_kit_request_settings">
+        <insert tableName="ddp_instance_role">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
             <column name="instance_role_id"
@@ -170,7 +172,7 @@
         </insert>
     </changeSet>
     <changeSet author="simone" id="add_mr_instance_role_1">
-        <insert tableName="ddp_kit_request_settings">
+        <insert tableName="ddp_instance_role">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
             <column name="instance_role_id"
@@ -178,7 +180,7 @@
         </insert>
     </changeSet>
     <changeSet author="simone" id="add_mr_instance_role_2">
-        <insert tableName="ddp_kit_request_settings">
+        <insert tableName="ddp_instance_role">
             <column name="ddp_instance_id"
                     valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='osteo2')"></column>
             <column name="instance_role_id"
