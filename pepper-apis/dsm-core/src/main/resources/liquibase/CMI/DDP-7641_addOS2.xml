@@ -187,4 +187,24 @@
                     valueComputed="(SELECT instance_role_id FROM instance_role WHERE name='medical_record_activated')"></column>
         </insert>
     </changeSet>
+
+    <!--    adding indexes to osteo2-->
+    <changeSet id="updating_instanceOS2" author="Simone">
+        <sql>
+            UPDATE ddp_instance
+            SET es_participant_index = (SELECT es_participant_index FROM (SELECT * FROM ddp_instance) AS something
+                                        WHERE something.instance_name='osteo'),
+                es_activity_definition_index = (SELECT es_activity_definition_index FROM (SELECT * FROM ddp_instance) AS something WHERE something.instance_name='osteo'),
+                es_users_index = (SELECT es_users_index FROM (SELECT * FROM ddp_instance) AS something WHERE
+                    something.instance_name='osteo'),
+                bsp_group = (SELECT bsp_group FROM (SELECT * FROM ddp_instance) AS something WHERE
+                    something.instance_name='osteo'),
+                bsp_collection = (SELECT bsp_collection FROM (SELECT * FROM ddp_instance) AS something WHERE
+                    something.instance_name='osteo'),
+                bsp_organism = 1,
+                collaborator_id_prefix = 'OSPECGS',
+                billing_reference = 'cost object 5000696'
+            WHERE instance_name = 'osteo2'
+        </sql>
+    </changeSet>
 </databaseChangeLog>
