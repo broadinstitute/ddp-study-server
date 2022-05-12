@@ -13,10 +13,7 @@ import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.jdbi.v3.core.Handle;
 
 import java.math.BigDecimal;
-import java.util.Map;
-import java.util.List;
-import java.util.HashMap;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @AllArgsConstructor
@@ -93,10 +90,10 @@ public final class QuestionEvaluator {
                                 .toList()));
                 return;
             case PICKLIST:
-                final var picklistValues = (List<Answer>) values;
+                final var answer = ((List<Answer>) values).get(0);
                 this.values.put(variable, new EquationResponse(variable,
-                        StreamEx.of(picklistValues)
-                                .map(Answerable::getValue)
+                        StreamEx.of(answer.getValue())
+                                .map(List.class::cast)
                                 .map(this::toString)
                                 .map(this::toDecimalDef)
                                 .toList()));
