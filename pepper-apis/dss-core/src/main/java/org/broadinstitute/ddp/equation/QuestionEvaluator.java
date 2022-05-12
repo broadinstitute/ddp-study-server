@@ -102,7 +102,6 @@ public final class QuestionEvaluator {
                                 .map(Iterator::next)
                                 .map(SelectedPicklistOption.class::cast)
                                 .map(SelectedPicklistOption::getStableId)
-                                .map(this::toString)
                                 .map(this::toDecimalDef)
                                 .toList()));
                 return;
@@ -128,10 +127,6 @@ public final class QuestionEvaluator {
 
     private Long toLong(final Object object) {
         return Optional.ofNullable(object).map(Long.class::cast).orElse(null);
-    }
-
-    private String toString(final Object object) {
-        return Optional.ofNullable(object).map(String.class::cast).orElse(null);
     }
 
     private DecimalDef toDecimalDef(final Object object) {
