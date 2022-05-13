@@ -12,9 +12,12 @@ import static org.broadinstitute.dsm.model.QuestionType.OPTIONS;
 
 import java.util.Map;
 
+import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.QuestionType;
 
 public class ValueProviderFactory {
+    private static final String AMBULATION = "AMBULATION";
+    private static final String ACTIVITY_STATUS = "activityStatus";
     private final ValueProvider defaultValueProvider = new TextValueProvider();
     private final ValueProvider booleanValueProvider = new BooleanValueProvider();
     private final Map<QuestionType, ValueProvider> valueProviders = Map.of(
@@ -28,11 +31,23 @@ public class ValueProviderFactory {
             OPTIONS, new PickListValueProvider(),
             JSON_ARRAY, new JsonArrayValueProvider()
     );
+    private final Map<String, ValueProvider> specialValueProviders = Map.of(
+            AMBULATION, new AmbulationValueProvider(),
+            ACTIVITY_STATUS, new ActivityStatusValueProvider()
+    );
 
-    public ValueProvider getValueProvider(String type) {
-        if (type == null) {
+    public ValueProvider getValueProvider(Filter filter) {
+        String name = filter.getParticipantColumn().getName();
+        if (isSpecialColumn(name)) {
+            return specialValueProviders.get(name);
+        }
+        if (filter.getType() == null) {
             return defaultValueProvider;
         }
-        return valueProviders.getOrDefault(QuestionType.getByValue(type), defaultValueProvider);
+        return valueProviders.getOrDefault(QuestionType.getByValue(filter.getType()), defaultValueProvider);
+    }
+
+    private boolean isSpecialColumn(String participantColumn) {
+        return specialValueProviders.containsKey(participantColumn);
     }
 }

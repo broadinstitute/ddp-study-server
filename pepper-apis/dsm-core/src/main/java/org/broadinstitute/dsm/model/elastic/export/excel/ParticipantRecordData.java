@@ -36,7 +36,7 @@ public class ParticipantRecordData {
                 for (Filter column : aliasListEntry.getValue()) {
                     ParticipantColumn participantColumn = column.getParticipantColumn();
                     String esPath = getEsPath(key, participantColumn);
-                    ValueProvider valueProvider = valueProviderFactory.getValueProvider(column.getType());
+                    ValueProvider valueProvider = valueProviderFactory.getValueProvider(column);
                     Collection<String> renderedValues = valueProvider.getValue(esPath, esDataAsMap, aliasListEntry.getKey(), column);
                     ColumnValue columnValue = new ColumnValue(key, renderedValues);
                     participantRecord.add(columnValue);

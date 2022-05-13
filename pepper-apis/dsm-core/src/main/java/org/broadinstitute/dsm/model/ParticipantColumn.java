@@ -2,11 +2,13 @@ package org.broadinstitute.dsm.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
+@NoArgsConstructor
 public class ParticipantColumn {
     private String display;
     private String name;
@@ -18,7 +20,4 @@ public class ParticipantColumn {
         this.tableAlias = tableAlias;
     }
 
-    public ParticipantColumn() {
-
-    }
 }
