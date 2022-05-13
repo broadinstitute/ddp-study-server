@@ -11,6 +11,7 @@ import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
@@ -48,25 +49,53 @@ public class OsteoNewFamilyHistory implements CustomTask {
         long activityOldId = ActivityBuilder.findActivityId(handle, studyDto.getId(), "FAMILY_HISTORY");
 
         for (var conf : dataCfg.getConfigList("eventChanges")) {
-            long activityNewId = ActivityBuilder.findActivityId(handle, studyDto.getId(), conf.getString("activityCode"));
-            long eventActionId = helper.findEventActionIdByActivityIdAndLabel(activityOldId, conf.getString("label"));
-            helper.updateActivityInstanceCreationAction(activityNewId, eventActionId);
-            log.info("Successfully updated event action id {} with label {} study to {}",
-                    eventActionId, conf.getString("label"), conf.getString("activityCode"));
+
+            long eventId = helper.findEventIdByActivityIdAndLabel(activityOldId, conf.getString("label"));
+
+            if (conf.hasPath("disable")) {
+
+                helper.disableEvent(eventId);
+                log.info("Successfully disabled event id {} with label {} study to {}",
+                        eventId, conf.getString("label"), conf.getString("activityCode"));
+
+            } else {
+
+                long activityActionId =
+                        ActivityBuilder.findActivityId(handle, studyDto.getId(), conf.getString("activityCode"));
+
+                long activityTriggerId =
+                        ActivityBuilder.findActivityId(handle, studyDto.getId(), conf.getString("triggerActivityCode"));
+
+                helper.updateActivityInstanceCreationAction(activityActionId, eventId);
+                helper.updateActivityStatusTrigger(activityTriggerId, eventId);
+
+                log.info("Successfully updated event id {} with label {} study to {}",
+                        eventId, conf.getString("label"), conf.getString("activityCode"));
+            }
         }
     }
 
     private interface SqlHelper extends SqlObject {
 
-        @SqlQuery("select aica.activity_instance_creation_action_id from event_configuration ec"
+        @SqlQuery("select ec.event_configuration_id from event_configuration ec"
                 + "   join event_action ea on ec.event_action_id = ea.event_action_id"
                 + "   join activity_instance_creation_action aica on ea.event_action_id = aica.activity_instance_creation_action_id"
                 + " where aica.study_activity_id = :activityId and ec.label = :label")
-        int findEventActionIdByActivityIdAndLabel(@Bind("activityId") long activityId, @Bind("label") String label);
+        int findEventIdByActivityIdAndLabel(@Bind("activityId") long activityId, @Bind("label") String label);
 
         @SqlUpdate("update activity_instance_creation_action "
                 + "set study_activity_id = :newActivityId "
-                + "where activity_instance_creation_action_id = :event_action_id")
-        void updateActivityInstanceCreationAction(@Bind("newActivityId") long newActivityId, @Bind("event_action_id") long eventActionId);
+                + "where activity_instance_creation_action_id = "
+                + "(select event_action_id from event_configuration where event_configuration_id = :eventConfigurationId)")
+        void updateActivityInstanceCreationAction(@Bind("newActivityId") long newActivityId,
+                                                  @Bind("eventConfigurationId") long eventConfigurationId);
+
+        @SqlUpdate("update activity_status_trigger set study_activity_id = :newActivityId where activity_status_trigger_id = "
+                + "(select event_trigger_id from event_configuration where event_configuration_id = :eventConfigurationId)")
+        void updateActivityStatusTrigger(@Bind("newActivityId") long newActivityId,
+                                         @Bind("eventConfigurationId") long eventConfigurationId);
+
+        @SqlUpdate("update event_configuration set is_active = false where event_configuration_id = :eventId")
+        int disableEvent(@BindList("eventId") long eventId);
     }
 }
