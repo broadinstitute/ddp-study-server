@@ -538,7 +538,7 @@ public interface AnswerDao extends SqlObject {
                     String picklistOptionSid = view.getColumn("pa_option_stable_id", String.class);
                     if (picklistOptionSid != null) {
                         var option = new SelectedPicklistOption(picklistOptionSid,
-                                view.getColumn("value", String.class),
+                                view.getColumn("po_value", String.class),
                                 view.getColumn("pa_parent_option_stable_id", String.class),
                                 view.getColumn("pa_group_stable_id", String.class),
                                 view.getColumn("pa_detail_text", String.class));
@@ -687,7 +687,7 @@ public interface AnswerDao extends SqlObject {
                     String picklistOptionSid = view.getColumn("pa_option_stable_id", String.class);
                     if (picklistOptionSid != null) {
                         var option = new SelectedPicklistOption(picklistOptionSid,
-                                view.getColumn("value", String.class),
+                                view.getColumn("po_value", String.class),
                                 view.getColumn("pa_parent_option_stable_id", String.class),
                                 view.getColumn("pa_group_stable_id", String.class),
                                 view.getColumn("pa_detail_text", String.class));
