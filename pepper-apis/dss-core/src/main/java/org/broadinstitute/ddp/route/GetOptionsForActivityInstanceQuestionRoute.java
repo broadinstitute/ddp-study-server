@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.route;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -24,8 +25,6 @@ import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.StringSuggestionTypeaheadComparator;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -38,9 +37,8 @@ import java.util.stream.Collectors;
 /**
  * This route returns the list of suggestions for the supplied Picklist Option label
  */
+@Slf4j
 public class GetOptionsForActivityInstanceQuestionRoute implements Route {
-
-    private static final Logger LOG = LoggerFactory.getLogger(GetOptionsForActivityInstanceQuestionRoute.class);
     private static final int DEFAULT_LIMIT = 100;
     private final I18nContentRenderer renderer;
 
@@ -60,7 +58,7 @@ public class GetOptionsForActivityInstanceQuestionRoute implements Route {
         boolean isStudyAdmin = ddpAuth.hasAdminAccessToStudy(studyGuid);
         String autoCompleteQuery = request.queryParams(RouteConstants.QueryParam.TYPEAHEAD_QUERY);
         String queryLimit = request.queryParams(RouteConstants.QueryParam.TYPEAHEAD_QUERY_LIMIT);
-        int limit = StringUtils.isNotBlank(queryLimit) ? Integer.valueOf(queryLimit) : DEFAULT_LIMIT;
+        int limit = StringUtils.isNotBlank(queryLimit) ? Integer.parseInt(queryLimit) : DEFAULT_LIMIT;
         if (limit > DEFAULT_LIMIT) {
             ResponseUtil.haltError(HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(
                     ErrorCodes.OPERATION_NOT_ALLOWED, "Supported max limit is only " + DEFAULT_LIMIT));
@@ -68,10 +66,10 @@ public class GetOptionsForActivityInstanceQuestionRoute implements Route {
         ContentStyle style = RouteUtil.parseContentStyleHeaderOrHalt(request, response, ContentStyle.STANDARD);
         LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
 
-        LOG.info("Fetching auto complete picklist options for activity instance {} and participant {} in study {} by operator {} "
+        log.info("Fetching auto complete picklist options for activity instance {} and participant {} in study {} by operator {} "
                 + "(isStudyAdmin={})", instanceGuid, participantGuid, studyGuid, operatorGuid, isStudyAdmin);
 
-        RemoteAutoCompleteResponse result = TransactionWrapper.withTxn(handle -> {
+        return TransactionWrapper.withTxn(handle -> {
 
             //Get all options first from ActivityDef (already in memory) then render and match
             long timestamp = Instant.now().toEpochMilli();
@@ -79,7 +77,7 @@ public class GetOptionsForActivityInstanceQuestionRoute implements Route {
             List<PicklistOption> suggestions;
             List<PicklistOption> allOptions = getPicklistOptions(handle, studyGuid, instanceGuid, questionStableId);
             if (StringUtils.isBlank(autoCompleteQuery)) {
-                LOG.info("Option suggestion query is blank, returning all results size to default limit");
+                log.info("Option suggestion query is blank, returning all results size to default limit");
                 suggestions = allOptions.stream().limit(limit).collect(Collectors.toList());
                 renderer.bulkRenderAndApply(handle, suggestions, style, langCodeId, timestamp);
             } else {
@@ -89,8 +87,6 @@ public class GetOptionsForActivityInstanceQuestionRoute implements Route {
 
             return new RemoteAutoCompleteResponse(autoCompleteQuery, suggestions);
         });
-
-        return result;
     }
 
     private List<PicklistOption> getPicklistOptions(Handle handle, String studyGuid,
@@ -98,14 +94,14 @@ public class GetOptionsForActivityInstanceQuestionRoute implements Route {
 
         Optional<ActivityInstanceDto> instanceDtoOpt = handle.attach(JdbiActivityInstance.class)
                 .getByActivityInstanceGuid(activityInstanceGuid);
-        if (!instanceDtoOpt.isPresent()) {
+        if (instanceDtoOpt.isEmpty()) {
             ResponseUtil.haltError(HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(
                     ErrorCodes.ACTIVITY_NOT_FOUND, "Activity not found for Instance: " + activityInstanceGuid));
         }
 
         Optional<FormActivityDef> formActivityDefOpt = ActivityDefStore.getInstance()
                 .findActivityDef(handle, studyGuid, instanceDtoOpt.get());
-        if (!formActivityDefOpt.isPresent()) {
+        if (formActivityDefOpt.isEmpty()) {
             ResponseUtil.haltError(HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(
                     ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, "Could not find activity def for studyGuid: " + studyGuid
                     + " and instanceGuid: " + activityInstanceGuid));

@@ -55,6 +55,7 @@ public class OsteoAboutYouV2 implements CustomTask {
     private static final String TRANS_UPDATE_NEW = "new_text";
     private static final String STUDY_GUID = "CMI-OSTEO";
     private static final String ACTIVITY_CODE = "ABOUTYOU";
+    private static final String ACTIVITY_CODE_2 = "ABOUTCHILD";
     private static final String VERSION_TAG = "v2";
 
     private Config dataCfg;
@@ -121,6 +122,7 @@ public class OsteoAboutYouV2 implements CustomTask {
         studyId = studyDto.getId();
         var studyGuid = studyDto.getGuid();
         long activityId = ActivityBuilder.findActivityId(handle, studyId, ACTIVITY_CODE);
+        long activityId2 = ActivityBuilder.findActivityId(handle, studyId, ACTIVITY_CODE_2);
 
         meta = new RevisionMetadata(timestamp.toEpochMilli(), adminUser.getId(), String.format(
                 "Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
@@ -156,7 +158,7 @@ public class OsteoAboutYouV2 implements CustomTask {
         long terminatedRevId = jdbiRevision.copyAndTerminate(section.getRevisionId(), meta);
         questionsToDisable.forEach(s -> disableQuestionDto(s, terminatedRevId));
 
-        helper.updateActivityNameAndTitle(activityId, "About Your Cancer", "About Your Cancer");
+        helper.updateActivityNameAndTitle(activityId, "Survey: About Your Osteosarcoma", "Survey: About Your Osteosarcoma");
         updateTranslationSummaries(handle);
     }
 

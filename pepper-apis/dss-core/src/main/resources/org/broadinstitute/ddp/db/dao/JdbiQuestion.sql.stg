@@ -29,6 +29,21 @@ where qsc.umbrella_study_id = :studyId
   and rev.end_date is null
 >>
 
+queryLatestDtoByStudyGuidAndQuestionStableId() ::= <<
+<all_questions_select()>
+join umbrella_study us on us.umbrella_study_id = qsc.umbrella_study_id
+where us.guid = :studyGuid
+  and qsc.stable_id = :questionStableId
+  and rev.end_date is null
+>>
+
+queryQuestionsByStudyGuid() ::= <<
+<all_questions_select()>
+join umbrella_study us on us.umbrella_study_id = qsc.umbrella_study_id
+where us.guid = :studyGuid
+and rev.end_date is null
+>>
+
 queryDtoByActivityIdAndQuestionStableId() ::= <<
 <all_questions_select()>
 where q.study_activity_id = :activityId

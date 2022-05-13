@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
@@ -17,28 +18,24 @@ import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
+@Slf4j
 public class GetGovernedStudyParticipantsRoute implements Route {
-
-    private static final Logger LOG = LoggerFactory.getLogger(GetGovernedStudyParticipantsRoute.class);
-
     @Override
     public Object handle(Request request, Response response) {
         String operatorGuid = RouteUtil.getDDPAuth(request).getOperator();
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
-        LOG.info("Attempting to retrieve list of governed study participants for operator {} in study {}", operatorGuid, studyGuid);
+        log.info("Attempting to retrieve list of governed study participants for operator {} in study {}", operatorGuid, studyGuid);
 
         List<GovernedParticipant> participants = TransactionWrapper.withTxn(handle -> {
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
             UserProfileDao userProfileDao = handle.attach(UserProfileDao.class);
             if (studyDto == null) {
                 ApiError err = new ApiError(ErrorCodes.STUDY_NOT_FOUND, "Could not find study with guid " + studyGuid);
-                LOG.warn(err.getMessage());
+                log.warn(err.getMessage());
                 throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, err);
             }
             try (Stream<Governance> govStream = handle.attach(UserGovernanceDao.class)
@@ -49,7 +46,7 @@ public class GetGovernedStudyParticipantsRoute implements Route {
             }
         });
 
-        LOG.info("Found {} governed study participants for operator {} in study {}", participants.size(), operatorGuid, studyGuid);
+        log.info("Found {} governed study participants for operator {} in study {}", participants.size(), operatorGuid, studyGuid);
         return participants;
     }
 }

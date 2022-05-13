@@ -5,6 +5,7 @@ import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.USER_GUI
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -16,13 +17,11 @@ import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
+@Slf4j
 public class UpdateMailAddressRoute extends ValidatedMailAddressInputRoute {
-    private static final Logger LOG = LoggerFactory.getLogger(UpdateMailAddressRoute.class);
     private static final Gson GSON = new GsonBuilder().serializeNulls().create();
 
     public UpdateMailAddressRoute(AddressService addressService) {
@@ -34,10 +33,10 @@ public class UpdateMailAddressRoute extends ValidatedMailAddressInputRoute {
         String participantGuid = request.params(USER_GUID);
         String operatorGuid = RouteUtil.getDDPAuth(request).getOperator();
         String addressGuid = request.params(ADDRESS_GUID);
-        LOG.info("Updating mailing address for participant {} by operator {} with guid: {}",
+        log.info("Updating mailing address for participant {} by operator {} with guid: {}",
                 participantGuid, operatorGuid, addressGuid);
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("About to update: {}", GSON.toJson(updatedMailAddress));
+        if (log.isDebugEnabled()) {
+            log.debug("About to update: {}", GSON.toJson(updatedMailAddress));
         }
 
         return TransactionWrapper.withTxn(handle -> {
@@ -52,7 +51,7 @@ public class UpdateMailAddressRoute extends ValidatedMailAddressInputRoute {
                         .forEach(enrollmentStatusDto -> {
                             int numQueued = eventDao.addMedicalUpdateTriggeredEventsToQueue(
                                     enrollmentStatusDto.getStudyId(), enrollmentStatusDto.getUserId());
-                            LOG.info("Queued {} medical-update events for participantGuid={} studyGuid={}",
+                            log.info("Queued {} medical-update events for participantGuid={} studyGuid={}",
                                     numQueued, enrollmentStatusDto.getUserGuid(), enrollmentStatusDto.getStudyGuid());
                         });
                 handle.attach(DataExportDao.class).queueDataSync(participantGuid);

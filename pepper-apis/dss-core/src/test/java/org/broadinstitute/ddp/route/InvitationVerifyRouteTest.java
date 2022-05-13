@@ -25,15 +25,10 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class InvitationVerifyRouteTest extends IntegrationTestSuite.TestCase {
-
-    private static final Logger LOG = LoggerFactory.getLogger(InvitationVerifyRouteTest.class);
-
     private static TestDataSetupUtil.GeneratedTestData testData;
-    private static Gson gson = new Gson();
+    private static final Gson gson = new Gson();
     private static InvitationDto invitation;
 
     @BeforeClass

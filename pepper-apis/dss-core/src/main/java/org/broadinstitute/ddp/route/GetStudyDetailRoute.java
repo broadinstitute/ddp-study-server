@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.route;
 import java.util.List;
 import java.util.Optional;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 
@@ -26,16 +27,12 @@ import org.broadinstitute.ddp.model.study.StudySettings;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
+@Slf4j
 public class GetStudyDetailRoute implements Route {
-    private static final Logger LOG = LoggerFactory.getLogger(GetStudyDetailRoute.class);
-
     @Override
     public StudyDetail handle(Request request, Response response) {
         final String studyIdentifier = request.params(RouteConstants.PathParam.STUDY_GUID);
@@ -45,7 +42,7 @@ public class GetStudyDetailRoute implements Route {
             throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, error);
         }
 
-        LOG.debug("Received request for details of study {}", studyIdentifier);
+        log.debug("Received request for details of study {}", studyIdentifier);
 
         return TransactionWrapper.withTxn(handle -> {
             JdbiUserStudyEnrollment enrollmentDao = handle.attach(JdbiUserStudyEnrollment.class);
@@ -54,7 +51,7 @@ public class GetStudyDetailRoute implements Route {
 
             StudyDto study = studyDao.findByStudyGuid(studyIdentifier);
             if (null == study) {
-                LOG.info("[{}] Request failed for study with identifier '{}': Study not found", request.ip(), studyIdentifier);
+                log.info("[{}] Request failed for study with identifier '{}': Study not found", request.ip(), studyIdentifier);
                 ApiError error = new ApiError(ErrorCodes.STUDY_NOT_FOUND, "Study " + studyIdentifier + " does not exist");
                 throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, error);
             }
@@ -69,7 +66,7 @@ public class GetStudyDetailRoute implements Route {
             if (null == enrollments) {
                 // According to http://jdbi.org/#__sqlquery, methods that return collections should
                 // always be non-null
-                LOG.warn("JdbiUserStudyEnrollment.findByStudyGuid( {} ) returned a null value", studyIdentifier);
+                log.warn("JdbiUserStudyEnrollment.findByStudyGuid( {} ) returned a null value", studyIdentifier);
                 throw new DDPException("JDBI unexpectedly returned a null collection");
             }
 
