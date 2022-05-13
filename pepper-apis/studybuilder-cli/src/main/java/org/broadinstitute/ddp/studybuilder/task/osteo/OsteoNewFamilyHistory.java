@@ -11,7 +11,6 @@ import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
@@ -96,6 +95,6 @@ public class OsteoNewFamilyHistory implements CustomTask {
                                          @Bind("eventConfigurationId") long eventConfigurationId);
 
         @SqlUpdate("update event_configuration set is_active = false where event_configuration_id = :eventId")
-        int disableEvent(@BindList("eventId") long eventId);
+        int disableEvent(@Bind("eventId") long eventId);
     }
 }

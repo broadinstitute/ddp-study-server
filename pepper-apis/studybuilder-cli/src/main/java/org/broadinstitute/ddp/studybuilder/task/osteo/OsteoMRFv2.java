@@ -277,7 +277,7 @@ public class OsteoMRFv2 implements CustomTask {
         String expression = activityCfg.getString("expression");
         eventIds.forEach(eventId -> {
             long exprId = handle.attach(JdbiExpression.class).insertExpression(expression).getId();
-            helper.updateEventExpressionAndOrder(exprId, 2, eventId);
+            DBUtils.checkUpdate(1, helper.updateEventExpressionAndOrder(exprId, 2, eventId));
         });
     }
 
@@ -313,15 +313,15 @@ public class OsteoMRFv2 implements CustomTask {
         int updateAnnouncementTemplateId(@Bind("msgTemplateId") long msgTemplateId,
                                          @Bind("eventConfigurationId") long eventConfigurationId);
 
-        @SqlQuery("select ec.event_configuration_id from event_configuration ec"
-                + "join activity_instance_creation_action aica on aica.activity_instance_creation_action_id = ec.event_action_id"
+        @SqlQuery("select ec.event_configuration_id from event_configuration ec "
+                + "join activity_instance_creation_action aica on aica.activity_instance_creation_action_id = ec.event_action_id "
                 + "where aica.study_activity_id = :activityId")
         List<Long> findEventConfigurationIdByActivityId(@Bind("activityId") long activityId);
 
-        @SqlQuery("update event_configuration_id set precondition_expression_id = :exprId, execution_order = :order "
-                + "where event_configuration_id = :eventId")
-        void updateEventExpressionAndOrder(@Bind("exprId") long exprId,
-                                           @Bind("order") int order,
-                                           @Bind("eventConfigurationId") long eventConfigurationId);
+        @SqlUpdate("update event_configuration set precondition_expression_id = :exprId, execution_order = :order "
+                + "where event_configuration_id = :eventConfigurationId")
+        int updateEventExpressionAndOrder(@Bind("exprId") long exprId,
+                                          @Bind("order") int order,
+                                          @Bind("eventConfigurationId") long eventConfigurationId);
     }
 }
