@@ -23,13 +23,11 @@ import java.nio.file.Path;
 
 
 @Slf4j
-public class PrionPrionRequestUpdate implements CustomTask {
+public class PrionAddPreconditionToEventUpdate implements CustomTask {
 
     private static final String STUDY_GUID = "PRION";
-
     private static final String CONSENT_SID = "PRIONCONSENT";
     private static final String MEDICAL_SID = "PRIONMEDICAL";
-    private static final String REQUEST_SID = "PRIONREQUEST";
     private static final String expression =
             "user.studies[\"PRION\"].forms[\"PRIONCONSENT\"].questions[\"prion_consent_s7_age\"].answers.hasTrue()";
 
@@ -55,7 +53,6 @@ public class PrionPrionRequestUpdate implements CustomTask {
 
         // Update action ACTIVITY_INSTANCE_CREATION to PRIONREQUEST
         long prionMedicalActivityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), MEDICAL_SID);
-        long prionRequestActivityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), REQUEST_SID);
         long prionConsentActivityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), CONSENT_SID);
 
         var event = handle.attach(EventDao.class).getAllEventConfigurationsByStudyId(studyDto.getId()).stream()
@@ -68,19 +65,16 @@ public class PrionPrionRequestUpdate implements CustomTask {
                 .findFirst()
                 .orElseThrow(() -> new DDPException("Could not find event for activity instance creation " + MEDICAL_SID));
 
+        log.info("Founded event configuration id {}", event.getEventConfigurationId());
+
         long exprId = handle.attach(JdbiExpression.class).insertExpression(expression).getId();
+        log.info("Added expression to database with id {} and text {}", exprId, expression);
+
         DBUtils.checkUpdate(1, helper.updateEventPreExprAndOrder(event.getEventConfigurationId(), exprId));
         log.info("Successfully added preconditionExpr for eventId {}: {}", exprId, expression);
-
-        DBUtils.checkUpdate(1, helper.updateActivityInstanceCreationAction(prionRequestActivityId, prionMedicalActivityId));
-        log.info("Successfully action activity code to {} for eventId {}", REQUEST_SID, event.getEventConfigurationId());
     }
 
     private interface SqlHelper extends SqlObject {
-        @SqlUpdate("update activity_instance_creation_action "
-                + "set study_activity_id = :newActivityId "
-                + "where study_activity_id = :oldActivityId")
-        int updateActivityInstanceCreationAction(@Bind("newActivityId") long newActivityId, @Bind("oldActivityId") long oldActivityId);
 
         @SqlUpdate("update event_configuration set precondition_expression_id = :exprId where event_configuration_id = :eventId")
         int updateEventPreExprAndOrder(@Bind("eventId") long eventId, @Bind("exprId") long exprId);
