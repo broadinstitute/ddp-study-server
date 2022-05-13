@@ -9,6 +9,7 @@ import org.broadinstitute.ddp.json.EquationResponse;
 import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answerable;
+import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.jdbi.v3.core.Handle;
@@ -17,7 +18,6 @@ import java.math.BigDecimal;
 import java.util.Map;
 import java.util.List;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Optional;
 
 @Slf4j
@@ -95,12 +95,10 @@ public final class QuestionEvaluator {
                                 .toList()));
                 return;
             case PICKLIST:
+                final var picklistAnswers = (List<PicklistAnswer>) values;
                 this.values.put(variable, new EquationResponse(variable,
-                        StreamEx.of(values)
-                                .map(List.class::cast)
-                                .map(List::iterator)
-                                .map(Iterator::next)
-                                .map(SelectedPicklistOption.class::cast)
+                        StreamEx.of(picklistAnswers)
+                                .map(PicklistAnswer::getFirstPickedOption)
                                 .map(SelectedPicklistOption::getStableId)
                                 .map(this::toDecimalDef)
                                 .toList()));

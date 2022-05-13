@@ -21,6 +21,9 @@ public final class PicklistOptionDto implements Serializable {
     @ColumnName("picklist_option_stable_id")
     private final String stableId;
 
+    @ColumnName("value")
+    private final String value;
+
     @ColumnName("option_label_template_id")
     private final long optionLabelTemplateId;
 
