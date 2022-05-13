@@ -5,7 +5,19 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
-import org.broadinstitute.ddp.db.dao.*;
+import org.broadinstitute.ddp.db.dao.ActivityDao;
+import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
+import org.broadinstitute.ddp.db.dao.EventDao;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
+import org.broadinstitute.ddp.db.dao.JdbiExpression;
+import org.broadinstitute.ddp.db.dao.JdbiRevision;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiUser;
+import org.broadinstitute.ddp.db.dao.PdfDao;
+import org.broadinstitute.ddp.db.dao.PdfSql;
+import org.broadinstitute.ddp.db.dao.SectionBlockDao;
+import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -259,6 +271,14 @@ public class OsteoMRFv2 implements CustomTask {
 
         DBUtils.checkUpdate(1, helper.updateAnnouncementTemplateId(tmpl.getTemplateId(), event.getEventConfigurationId()));
         log.info("Updated msgTemplateId for announcement event configuration id {}", event.getEventConfigurationId());
+
+        // Update activity instance creation event
+        List<Long> eventIds = helper.findEventConfigurationIdByActivityId(activityId);
+        String expression = activityCfg.getString("expression");
+        eventIds.forEach(eventId -> {
+            long exprId = handle.attach(JdbiExpression.class).insertExpression(expression).getId();
+            helper.updateEventExpressionAndOrder(exprId, 2, eventId);
+        });
     }
 
     private void updateActivityDetails(long activityId, Config activityCfg) {
@@ -292,5 +312,16 @@ public class OsteoMRFv2 implements CustomTask {
                 + "(select event_action_id from event_configuration where event_configuration_id = :eventConfigurationId)")
         int updateAnnouncementTemplateId(@Bind("msgTemplateId") long msgTemplateId,
                                          @Bind("eventConfigurationId") long eventConfigurationId);
+
+        @SqlQuery("select ec.event_configuration_id from event_configuration ec"
+                + "join activity_instance_creation_action aica on aica.activity_instance_creation_action_id = ec.event_action_id"
+                + "where aica.study_activity_id = :activityId")
+        List<Long> findEventConfigurationIdByActivityId(@Bind("activityId") long activityId);
+
+        @SqlQuery("update event_configuration_id set precondition_expression_id = :exprId, execution_order = :order "
+                + "where event_configuration_id = :eventId")
+        void updateEventExpressionAndOrder(@Bind("exprId") long exprId,
+                                           @Bind("order") int order,
+                                           @Bind("eventConfigurationId") long eventConfigurationId);
     }
 }
