@@ -876,7 +876,7 @@ Block.Tabular:
           default: TABULAR
           enum:
             - TABULAR
-        columnsCount:
+        numberOfColumns:
           type: integer
           minimum: 1
           description: The total number of the tabular component columns.
@@ -893,17 +893,15 @@ Block.Tabular.Header:
   type: object
   required:
     - label
-    - startColumn
-    - endColumn
+    - columnSpan
   properties:
     label:
       type: string
-    startColumn:
+    columnSpan:
       type: integer
-      minimum: 0
-    endColumn:
-      type: integer
-      minimum: 0
+      minimum: 1
+      default: 1
+      description: the number of columns this header should occupy in a tabular display
 
 Block.Tabular.ContentRow:
   type: array
@@ -1630,6 +1628,11 @@ Question:
       type: array
       items:
         $ref: '#/ValidationFailure'
+    columnSpan:
+      type: integer
+      minimum: 1
+      default: 1
+      description: The number of columns this question should occupy in a tabular display
 Question.ActivityInstanceSelect:
   allOf:
     - $ref: '#/Question'
