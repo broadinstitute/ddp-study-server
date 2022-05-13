@@ -900,6 +900,7 @@ Block.Tabular.Header:
     columnSpan:
       type: integer
       minimum: 1
+      default: 1
       description: the number of columns this header should occupy in a tabular display
 
 Block.Tabular.ContentRow:
@@ -1630,7 +1631,6 @@ Question:
     columnSpan:
       type: integer
       minimum: 1
-      default: 1
       description: The number of columns this question should occupy in a tabular display
 Question.ActivityInstanceSelect:
   allOf:
