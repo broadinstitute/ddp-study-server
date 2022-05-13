@@ -9,7 +9,7 @@ import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.sort.Alias;
 
 public class AmbulationValueProvider implements ValueProvider {
-    private Map<String, String> valueMappings = Map.of(
+    private final Map<String, String> valueMappings = Map.of(
             "INDEPENDENTLY", "1",
             "MOST_OF_THE_TIME", "2",
             "WITH_ASSISTANCE", "3",
