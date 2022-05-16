@@ -1926,6 +1926,28 @@
                   "type": "date"
                 }
               }
+            },
+            "medicalRecordFinal": {
+              "properties": {
+                "id": {
+                  "type": "keyword"
+                },
+                "medicalRecordFinalId": {
+                  "type": "keyword"
+                },
+                "participantId": {
+                  "type": "keyword"
+                },
+                "medicalRecordAbstractionFieldId": {
+                  "type": "keyword"
+                },
+                "noData": {
+                  "type": "long"
+                },
+                "dataReleaseId": {
+                  "type": "long"
+                }
+              }
             }
           }
         },
