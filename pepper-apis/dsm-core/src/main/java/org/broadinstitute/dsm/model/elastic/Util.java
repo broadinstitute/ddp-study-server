@@ -1,14 +1,10 @@
 package org.broadinstitute.dsm.model.elastic;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -88,6 +84,15 @@ public class Util {
             }
         }
         return String.join(StringUtils.EMPTY, words);
+    }
+
+    public static String spacedLowerCaseToCamelCase(String fieldName) {
+        var separatedBySpace = fieldName.split(" ");
+        var mappedToUppercase = Arrays.stream(separatedBySpace).skip(1).map(word -> word.substring(0, 1).toUpperCase().concat(word.substring(1)));
+        var mappedWords = new LinkedList<String>();
+        mappedWords.addFirst(separatedBySpace[0].toLowerCase());
+        mappedWords.addAll(mappedToUppercase.collect(Collectors.toList()));
+        return String.join(StringUtils.EMPTY, mappedWords);
     }
 
     private static String handleAllUppercase(String word) {
