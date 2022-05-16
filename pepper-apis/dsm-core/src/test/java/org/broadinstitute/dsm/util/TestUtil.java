@@ -10,6 +10,7 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.stream.IntStream;
 
 import com.google.gson.GsonBuilder;
 import com.typesafe.config.Config;
@@ -139,11 +140,9 @@ public class TestUtil {
 
     public static String generateRandomString() {
         Random random = new Random();
-        char[] characters = new char[] {'a','b','c','d','e','g', 'h', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r'};
+        char[] characters = new char[] {'a','b','c','d','e','g', 'h', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', '-', '/', '=', '+', '*', '^', '@', '!', '#', '$', '%', '(', ')'};
         StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < 100; i++) {
-            stringBuilder.append(characters[random.nextInt(characters.length)]);
-        }
+        IntStream.range(1, 100).forEach(iteration -> stringBuilder.append(characters[random.nextInt(characters.length)]));
         return stringBuilder.toString();
     }
 }
