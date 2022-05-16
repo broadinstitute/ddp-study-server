@@ -1,9 +1,17 @@
 package org.broadinstitute.dsm.model.elastic.export.parse;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class MedicalRecordAbstractionFieldTypeParser extends DynamicFieldsParser {
 
     private String type;
-    private BaseParser baseParser;
+    private final BaseParser baseParser;
+    private List<Map<String, String>> possibleValues;
 
     public MedicalRecordAbstractionFieldTypeParser(BaseParser baseParser) {
         this.baseParser = baseParser;
@@ -31,22 +39,40 @@ public class MedicalRecordAbstractionFieldTypeParser extends DynamicFieldsParser
                 break;
             case MULTI_OPTIONS:
                 parsedType = forMultiOptions(columnName);
-
+                break;
+            case MULTI_TYPE_ARRAY:
+                
+                parsedType = forMultiTypeArray(columnName);
+                break;
             default:
-                System.out.println();
+                parsedType = forString(columnName);
         }
-
-        return super.parse(columnName);
+        return parsedType;
     }
 
-    private Object forMultiOptions(String columnName) {
-        
-        return null;
+    private Object forMultiTypeArray(String columnName) {
+        return new HashMap<String, Object>(Map.of(
+                "type", "nested",
+                "properties", new HashMap<>(Map.of(
+
+                ))
+        ));
+    }
+
+    protected Object forMultiOptions(String columnName) {
+        return new HashMap<String, Object>(Map.of(
+                "type", "nested",
+                "properties", new HashMap<>(Map.of(
+                        "other", baseParser.forString(columnName),
+                        "values", new HashMap<>(Map.of(
+                                "type", "nested",
+                                "properties", new HashMap<>(Map.of(
+                                        "value", baseParser.forString(columnName)))))))));
     }
 
     @Override
     protected Object forNumeric(String value) {
-        return baseParser.forNumeric(type);
+        return baseParser.forNumeric(value);
     }
 
     @Override
@@ -56,7 +82,10 @@ public class MedicalRecordAbstractionFieldTypeParser extends DynamicFieldsParser
 
     @Override
     protected Object forDate(String value) {
-        return baseParser.forDate(value);
+        return new HashMap<String, Object>(Map.of(
+                "properties", new HashMap<>(Map.of(
+                        "dateString", baseParser.forDate(value),
+                        "est", baseParser.forBoolean(value)))));
     }
 
     @Override
@@ -64,5 +93,13 @@ public class MedicalRecordAbstractionFieldTypeParser extends DynamicFieldsParser
         return baseParser.forString(value);
     }
 
+
+    public void setPossibleValues(String possibleValues) {
+        this.possibleValues = ObjectMapperSingleton.readValue(possibleValues, new TypeReference<>() {});
+    }
+
+    public List<Map<String, String>> getPossibleValues() {
+        return possibleValues;
+    }
 
 }
