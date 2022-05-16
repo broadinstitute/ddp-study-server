@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import com.itextpdf.layout.element.Tab;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.export.ComponentDataSupplier;
 import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
@@ -173,6 +174,7 @@ public class ActivityResponseCollector {
             case ACTIVITY:
                 break;  // Currently not doing anything for nested activities.
             case CONTENT:
+            case TABULAR:
                 break;  //nothing to do
             case QUESTION:
                 collectQuestionDefinitions(props, ((QuestionBlockDef) blockDef).getQuestion());
@@ -199,6 +201,7 @@ public class ActivityResponseCollector {
             case ACTIVITY:
                 break;  // Currently not doing anything for nested activities.
             case CONTENT:
+            case TABULAR:
                 break;  // nothing to do
             case QUESTION:
                 collectQuestionMappings(props, deprecatedProps, ((QuestionBlockDef) blockDef).getQuestion());
@@ -399,13 +402,13 @@ public class ActivityResponseCollector {
 
     private void flattenHeadersByOrderedDepthTraversal(FormActivityDef def) {
         if (def.getIntroduction() != null) {
-            def.getIntroduction().getBlocks().forEach(block -> collectBlockIntoHeaders(block));
+            def.getIntroduction().getBlocks().forEach(this::collectBlockIntoHeaders);
         }
         for (FormSectionDef sectionDef : def.getSections()) {
-            sectionDef.getBlocks().forEach(block -> collectBlockIntoHeaders(block));
+            sectionDef.getBlocks().forEach(this::collectBlockIntoHeaders);
         }
         if (def.getClosing() != null) {
-            def.getClosing().getBlocks().forEach(block -> collectBlockIntoHeaders(block));
+            def.getClosing().getBlocks().forEach(this::collectBlockIntoHeaders);
         }
     }
 
@@ -414,6 +417,7 @@ public class ActivityResponseCollector {
             case ACTIVITY:
                 break;  // Currently not doing anything for nested activities.
             case CONTENT:
+            case TABULAR:
                 break;  // nothing to do
             case QUESTION:
                 collectQuestionIntoHeaders(((QuestionBlockDef) blockDef).getQuestion());
@@ -540,6 +544,7 @@ public class ActivityResponseCollector {
             case ACTIVITY:
                 break;  // Currently not doing anything for nested activities.
             case CONTENT:
+            case TABULAR:
                 break;  // nothing to do
             case QUESTION:
                 collectQuestionIntoRecord(record, ((QuestionBlockDef) block).getQuestion(), instance);
