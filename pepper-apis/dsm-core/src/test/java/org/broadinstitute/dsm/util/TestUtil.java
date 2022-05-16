@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 import com.google.gson.GsonBuilder;
 import com.typesafe.config.Config;
@@ -134,5 +135,15 @@ public class TestUtil {
         Map<String, String> authHeaders = new HashMap<>();
         authHeaders.put("Authorization", "Bearer " + jwtToken);
         return authHeaders;
+    }
+
+    public static String generateRandomString() {
+        Random random = new Random();
+        char[] characters = new char[] {'a','b','c','d','e','g', 'h', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r'};
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < 100; i++) {
+            stringBuilder.append(characters[random.nextInt(characters.length)]);
+        }
+        return stringBuilder.toString();
     }
 }
