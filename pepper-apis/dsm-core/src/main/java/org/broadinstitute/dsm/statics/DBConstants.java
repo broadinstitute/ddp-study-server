@@ -506,4 +506,7 @@ public class DBConstants {
     public static final String LABEL_URL_RETURN = "label_url_return";
 
     public static final String PARTICIPANT_RECORD_ID = "participant_record_id";
+    public static final String MEDICAL_RECORD_ABSTRACTION_FIELD = "medical_record_abstraction_field";
+    public static final String MEDICAL_RECORD_ABSTRACTION_FIELD_ALIAS = "mra";
+    public static final String FILE_INFO = "file_info";
 }
