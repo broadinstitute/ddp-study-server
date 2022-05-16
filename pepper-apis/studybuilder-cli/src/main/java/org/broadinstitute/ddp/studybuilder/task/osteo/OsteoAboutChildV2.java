@@ -120,6 +120,9 @@ public class OsteoAboutChildV2 implements CustomTask {
         // Disable questions
         long terminatedRevId = jdbiRevision.copyAndTerminate(section.getRevisionId(), meta);
         questionsToDisable.forEach(s -> disableQuestionDto(s, terminatedRevId));
+
+        // Update activity to uneditable
+        helper.updateActivityWriteOnceToTrue(activityId);
     }
 
     private long createSectionBefore(long activityId, FormSectionMembershipDto beforeSection) {
@@ -213,5 +216,8 @@ public class OsteoAboutChildV2 implements CustomTask {
 
         @SqlUpdate("update form_section__block set form_section_id = :formSectionId where block_id = :blockId")
         void updateFormSectionBlock(@Bind("formSectionId") long formSectionId, @Bind("blockId") long blockId);
+
+        @SqlUpdate("update study_activity set is_write_once = true where study_activity_id = :activityId")
+        int updateActivityWriteOnceToTrue(@Bind("activityId") long activityId);
     }
 }

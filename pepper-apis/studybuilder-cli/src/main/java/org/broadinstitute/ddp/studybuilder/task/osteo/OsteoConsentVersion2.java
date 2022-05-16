@@ -176,6 +176,12 @@ public class OsteoConsentVersion2 implements CustomTask {
         runConsentAssentUpdate(handle, metaConsentAssent, studyDto, activityCodeConsentAssent, version2ForConsentAssent);
 
         updateIntro(handle, studyDto, metaConsentAssent);
+
+        long activityAssentConsentId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCodeConsentAssent);
+        long activityPedConsentId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCodeParentalConsent);
+
+        handle.attach(SqlHelper.class).updateActivityNameAndTitle(activityAssentConsentId, "Research Consent & Assent Form");
+        handle.attach(SqlHelper.class).updateActivityNameAndTitle(activityPedConsentId, "Research Consent & Assent Form");
     }
 
     private void updateIntro(Handle handle, StudyDto studyDto, RevisionMetadata meta) {
@@ -543,6 +549,18 @@ public class OsteoConsentVersion2 implements CustomTask {
         @RegisterConstructorMapper(BlockContentDto.class)
         BlockContentDto findContentBlockByBodyText(@Bind("activityId") long activityId, @Bind("text") String bodyTemplateText);
 
+        @SqlUpdate("update i18n_activity_detail set name = :name, title = :title where study_activity_id = :studyActivityId")
+        int _updateActivityNameAndTitle(@Bind("studyActivityId") long studyActivityId,
+                                        @Bind("name") String name,
+                                        @Bind("title") String title);
+
+        default void updateActivityNameAndTitle(long studyActivityId, String name) {
+            int numUpdated = _updateActivityNameAndTitle(studyActivityId, name, name);
+            if (numUpdated != 1) {
+                throw new DDPException("Expected to update 1 row for studyActivityId="
+                        + studyActivityId + " but updated " + numUpdated);
+            }
+        }
     }
 }
 
