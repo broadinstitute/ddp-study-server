@@ -17,6 +17,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.BoolQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.DateQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
+import org.broadinstitute.ddp.model.activity.types.BooleanRenderMode;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
@@ -56,7 +57,7 @@ public class CompleteRuleTest {
     @Test
     public void testValidate_unhanledAnswerTypes_pass() {
         CompleteRule<BoolAnswer> ruleBool = new CompleteRule<>("msg", null, false);
-        BoolQuestion boolQ = new BoolQuestion("sid", 1L, emptyList(), emptyList(), 2L, 3L);
+        BoolQuestion boolQ = new BoolQuestion("sid", 1L, emptyList(), emptyList(), 2L, 3L, BooleanRenderMode.RADIO_BUTTONS);
         assertFalse(ruleBool.validate(boolQ, null));
         assertTrue(ruleBool.validate(boolQ, new BoolAnswer(1L, "q", "a", null)));
         assertTrue(ruleBool.validate(boolQ, new BoolAnswer(1L, "q", "a", false)));

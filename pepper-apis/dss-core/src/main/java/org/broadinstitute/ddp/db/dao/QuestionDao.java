@@ -477,7 +477,7 @@ public interface QuestionDao extends SqlObject {
                 dto.isRestricted(), dto.isDeprecated(), isReadonly, dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
                 boolAnswers, rules, dto.getTrueTemplateId(),
-                dto.getFalseTemplateId());
+                dto.getFalseTemplateId(), dto.getRenderMode());
     }
 
     /**
@@ -1232,7 +1232,8 @@ public interface QuestionDao extends SqlObject {
         templateDao.insertTemplate(boolQuestion.getFalseTemplate(), revisionId);
 
         int numInserted = getJdbiBooleanQuestion().insert(boolQuestion.getQuestionId(),
-                boolQuestion.getTrueTemplate().getTemplateId(), boolQuestion.getFalseTemplate().getTemplateId());
+                boolQuestion.getTrueTemplate().getTemplateId(), boolQuestion.getFalseTemplate().getTemplateId(),
+                boolQuestion.getRenderMode());
         if (numInserted != 1) {
             throw new DaoException("Inserted " + numInserted + " for bool question " + boolQuestion.getStableId());
         }
@@ -2089,7 +2090,10 @@ public interface QuestionDao extends SqlObject {
         Template prompt = templates.get(dto.getPromptTemplateId());
         Template trueTemplate = templates.get(dto.getTrueTemplateId());
         Template falseTemplate = templates.get(dto.getFalseTemplateId());
+
         var builder = BoolQuestionDef.builder(dto.getStableId(), prompt, trueTemplate, falseTemplate);
+        builder.setRenderMode(dto.getRenderMode());
+        
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
         return builder.build();
     }

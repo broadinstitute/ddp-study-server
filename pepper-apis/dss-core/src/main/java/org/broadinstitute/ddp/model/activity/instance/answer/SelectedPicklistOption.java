@@ -10,10 +10,11 @@ import org.hibernate.validator.constraints.Length;
 
 @Value
 public class SelectedPicklistOption implements Serializable {
-
     @NotBlank
     @SerializedName("stableId")
     String stableId;
+
+    transient String value;
 
     @Length(max = 500)
     @SerializedName("detail")
@@ -27,13 +28,14 @@ public class SelectedPicklistOption implements Serializable {
     }
 
     public SelectedPicklistOption(String stableId, String detailText) {
-        this(stableId, null, null, detailText);
+        this(stableId, null, null, null, detailText);
     }
 
-    public SelectedPicklistOption(String stableId, String parentStableId, String groupStableId, String detailText) {
+    public SelectedPicklistOption(String stableId, String value, String parentStableId, String groupStableId, String detailText) {
         this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
         this.groupStableId = groupStableId;
         this.parentStableId = parentStableId;
         this.detailText = detailText;
+        this.value = value;
     }
 }
