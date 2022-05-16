@@ -8,6 +8,7 @@ import java.util.TimeZone;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -21,12 +22,9 @@ import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.security.EncryptionKey;
 import org.broadinstitute.ddp.util.ConfigUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class DataLoaderCli {
-
-    private static final Logger LOG = LoggerFactory.getLogger(DataLoaderCli.class);
     private static final String USAGE = "DataLoaderCli [-h, --help] [OPTIONS]";
     private static final String PROD_MARKER = "prod";
     private static final int DB_MAX_CONNECTIONS = 1;
@@ -53,7 +51,7 @@ public class DataLoaderCli {
 
         String configFilePath = cmd.getOptionValue("config");
         if (StringUtils.isBlank(configFilePath)) {
-            LOG.error("Loader config file is required");
+            log.error("Loader config file is required");
             return;
         }
         Config cfg = ConfigFactory.parseFile(new File(configFilePath));
@@ -63,26 +61,26 @@ public class DataLoaderCli {
         boolean loadDsmData = cmd.hasOption("dsm-data");
         boolean fixFamilyNotes = cmd.hasOption("fix-family-notes");
         if (!loadMailingList && !loadParticipants && !loadDsmData && !fixFamilyNotes) {
-            LOG.info("Nothing to do, exiting...");
+            log.info("Nothing to do, exiting...");
             return;
         }
 
         boolean isProdRun = cmd.hasOption("prod-run");
         if (cfg.getString(LoaderConfigFile.DB_URL).contains(PROD_MARKER)) {
             if (!isProdRun) {
-                LOG.warn("Looks like we're connecting to prod. Must use the `--prod-run` flag!");
+                log.warn("Looks like we're connecting to prod. Must use the `--prod-run` flag!");
                 return;
             }
             if (!cfg.getBoolean(LoaderConfigFile.SOURCE_USE_BUCKET)) {
-                LOG.warn("Looks like we're connecting to prod. Must use bucket for source files!");
+                log.warn("Looks like we're connecting to prod. Must use bucket for source files!");
                 return;
             }
             if (StringUtils.isNotBlank(ConfigUtil.getStrIfPresent(cfg, LoaderConfigFile.DUMMY_EMAIL))) {
-                LOG.warn("Looks like we're connecting to prod. Cannot use dummy emails for prod run!");
+                log.warn("Looks like we're connecting to prod. Cannot use dummy emails for prod run!");
                 return;
             }
             if (cfg.getBoolean(LoaderConfigFile.CREATE_AUTH0_ACCOUNTS)) {
-                LOG.warn("Looks like we're connecting to prod. Cannot do auth0 account creation for prod run!");
+                log.warn("Looks like we're connecting to prod. Cannot do auth0 account creation for prod run!");
                 return;
             }
             System.out.print("Looks like we're connecting to prod. Continue? [y/N] ");
@@ -102,7 +100,7 @@ public class DataLoaderCli {
             outputFilename = cmd.getOptionValue("output");
         }
 
-        LOG.info("Running data migration for study: {}", studyGuid);
+        log.info("Running data migration for study: {}", studyGuid);
         var fileReader = new FileReader(cfg);
         var loader = new DataLoader(cfg, fileReader, isProdRun);
 
@@ -115,7 +113,7 @@ public class DataLoaderCli {
             try {
                 loader.processParticipantFiles(report);
             } catch (Exception e) {
-                LOG.info("Error while processing participant files", e);
+                log.info("Error while processing participant files", e);
                 writeReport(studyGuid, outputFilename, report);
                 return;
             }
@@ -130,8 +128,8 @@ public class DataLoaderCli {
 
         Duration elapsed = Duration.between(start, Instant.now());
         String minutes = String.format("%.2f", elapsed.getSeconds() / 60.0);
-        LOG.info("Total time elapsed: {} minutes ({})", minutes, elapsed.toString());
-        LOG.info("Done");
+        log.info("Total time elapsed: {} minutes ({})", minutes, elapsed);
+        log.info("Done");
     }
 
     private static void initDbConnection(Config cfg) {
@@ -144,10 +142,10 @@ public class DataLoaderCli {
                 TransactionWrapper.DB.APIS, DB_MAX_CONNECTIONS, dbUrl));
         Config sqlConfig = ConfigFactory.parseResources(ConfigFile.SQL_CONF);
         DBUtils.loadDaoSqlCommands(sqlConfig);
-        LOG.info("Initialized db pool: {}", dbUrl);
+        log.info("Initialized db pool: {}", dbUrl);
 
         DsmDataLoader.initDatabasePool(dsmDbUrl, DB_MAX_CONNECTIONS);
-        LOG.info("Initialized dsm db pool: {}", dsmDbUrl);
+        log.info("Initialized dsm db pool: {}", dsmDbUrl);
     }
 
     private static void initResources(Config cfg) {
@@ -161,6 +159,6 @@ public class DataLoaderCli {
             filename = Report.defaultFilename(studyGuid);
         }
         report.write(filename);
-        LOG.info("Saved{}migration report to: {}", report.isPartial() ? " partial " : " ", filename);
+        log.info("Saved{}migration report to: {}", report.isPartial() ? " partial " : " ", filename);
     }
 }

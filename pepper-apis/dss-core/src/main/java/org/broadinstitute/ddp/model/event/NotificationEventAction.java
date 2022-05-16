@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.NotificationTemplateVariables;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
@@ -19,17 +21,14 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
+@Getter
 public class NotificationEventAction extends EventAction {
-
-    private static final Logger LOG = LoggerFactory.getLogger(NotificationEventAction.class);
-
-    private NotificationType notificationType;
-    private NotificationServiceType notificationServiceType;
-    private Long linkedActivityId; // Allowed to be null
-    private List<PdfAttachment> pdfAttachments = new ArrayList<>();
+    private final NotificationType notificationType;
+    private final NotificationServiceType notificationServiceType;
+    private final Long linkedActivityId; // Allowed to be null
+    private final List<PdfAttachment> pdfAttachments = new ArrayList<>();
 
     public NotificationEventAction(EventConfiguration eventConfiguration, EventConfigurationDto dto) {
         super(eventConfiguration, dto);
@@ -45,7 +44,7 @@ public class NotificationEventAction extends EventAction {
                     + "Please set dispatch_to_housekeeping to true");
         }
         long queuedEventId = run(handle, eventSignal);
-        LOG.info("Inserted queued event {} for configuration {}", queuedEventId,
+        log.info("Inserted queued event {} for configuration {}", queuedEventId,
                 eventConfiguration.getEventConfigurationId());
     }
 
@@ -84,7 +83,7 @@ public class NotificationEventAction extends EventAction {
                             "%s event signal for participant %s and study %d does not have invitation context",
                             signal.getEventTriggerType(), signal.getParticipantGuid(), signal.getStudyId()));
                 } else {
-                    LOG.info("Received invitation {} from {} event signal for participant {} and study {}",
+                    log.info("Received invitation {} from {} event signal for participant {} and study {}",
                             invitationDto.getInvitationGuid(), signal.getEventTriggerType(),
                             signal.getParticipantGuid(), signal.getStudyId());
                 }
@@ -97,7 +96,7 @@ public class NotificationEventAction extends EventAction {
                         .orElseThrow(() -> new DDPException(String.format(
                                 "Could not find any non-voided invitations for participant %s and study %d",
                                 signal.getParticipantGuid(), signal.getStudyId())));
-                LOG.info("Found latest non-voided invitation {} for participant {} and study {}",
+                log.info("Found latest non-voided invitation {} for participant {} and study {}",
                         invitationDto.getInvitationGuid(), signal.getParticipantGuid(), signal.getStudyId());
             }
 
@@ -109,27 +108,11 @@ public class NotificationEventAction extends EventAction {
 
             handle.attach(JdbiQueuedNotificationTemplateSubstitution.class)
                     .insert(queuedEventId, NotificationTemplateVariables.DDP_INVITATION_ID, invitationDto.getInvitationGuid());
-            LOG.info("Added invitation id {} as email template substitution to queued event id {}",
+            log.info("Added invitation id {} as email template substitution to queued event id {}",
                     invitationDto.getInvitationGuid(), queuedEventId);
         }
 
         return queuedEventId;
-    }
-
-    public NotificationType getNotificationType() {
-        return notificationType;
-    }
-
-    public NotificationServiceType getNotificationServiceType() {
-        return notificationServiceType;
-    }
-
-    public Long getLinkedActivityId() {
-        return linkedActivityId;
-    }
-
-    public List<PdfAttachment> getPdfAttachments() {
-        return pdfAttachments;
     }
 
     public void addPdfAttachment(PdfAttachment pdfAttachment) {

@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.mapping;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,28 +13,33 @@ import org.elasticsearch.client.indices.GetFieldMappingsResponse;
 
 public class FieldTypeExtractor implements TypeExtractor<Map<String, String>> {
 
+    private static final Map<String, String> cachedFieldTypes = new HashMap<>();
+
     private String[] fields;
     private String index;
 
     @Override
     public Map<String, String> extract() {
-        Map<String, GetFieldMappingsResponse.FieldMappingMetaData> mapping = getMapping().get(index);
-        Map<String, String> fieldTypeMapping = new HashMap<>();
-        for (Map.Entry<String, GetFieldMappingsResponse.FieldMappingMetaData> entry : mapping.entrySet()) {
-            fieldTypeMapping.put(getRightMostFieldName(entry.getKey()), extractType(entry.getKey(), entry.getValue()));
+        if (isFieldNotCached()) {
+            Map<String, GetFieldMappingsResponse.FieldMappingMetaData> mapping = getMapping().get(index);
+            Map<String, String> fieldTypeMapping = new HashMap<>();
+            for (Map.Entry<String, GetFieldMappingsResponse.FieldMappingMetaData> entry : mapping.entrySet()) {
+                fieldTypeMapping.put(getRightMostFieldName(entry.getKey()), extractType(entry.getKey(), entry.getValue()));
+            }
+            cachedFieldTypes.putAll(fieldTypeMapping);
         }
-        return fieldTypeMapping;
+        return cachedFieldTypes;
+    }
+
+    private boolean isFieldNotCached() {
+        return Arrays.stream(fields)
+                .map(this::getRightMostFieldName)
+                .anyMatch(field -> !cachedFieldTypes.containsKey(field));
     }
 
     private String extractType(String fullFieldName, GetFieldMappingsResponse.FieldMappingMetaData value) {
         String key = getRightMostFieldName(fullFieldName);
         return (String) ((Map<String, Object>) value.sourceAsMap().get(key)).get(MappingGenerator.TYPE);
-    }
-
-    private String getRightMostFieldName(String fullFieldName) {
-        String[] splittedFieldName = fullFieldName.split(ElasticSearchUtil.ESCAPE_CHARACTER_DOT_SEPARATOR);
-        String key = splittedFieldName[splittedFieldName.length - 1];
-        return key;
     }
 
     private Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetaData>> getMapping() {

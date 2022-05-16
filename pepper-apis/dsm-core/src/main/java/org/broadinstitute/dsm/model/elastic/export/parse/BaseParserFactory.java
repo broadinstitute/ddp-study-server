@@ -25,6 +25,6 @@ public abstract class BaseParserFactory {
     }
 
     protected boolean isDynamicFields(String fieldName) {
-        return ESObjectConstants.ADDITIONAL_VALUES_JSON.equals(fieldName) || ESObjectConstants.DATA.equals(fieldName);
+        return ESObjectConstants.ADDITIONAL_VALUES_JSON.equals(fieldName) || ESObjectConstants.DATA.equals(fieldName) || ESObjectConstants.ADDITIONAL_TISSUE_VALUE_JSON.equals(fieldName);
     }
 }

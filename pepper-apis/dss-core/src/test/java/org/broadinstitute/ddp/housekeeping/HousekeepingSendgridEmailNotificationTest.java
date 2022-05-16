@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.Housekeeping;
 import org.broadinstitute.ddp.HousekeepingTest;
 import org.broadinstitute.ddp.client.ApiResult;
@@ -49,20 +50,16 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class HousekeepingSendgridEmailNotificationTest extends HousekeepingTest {
-
     public static final int MESSAGE_HANDER_TIMEOUT_SECONDS = 5;
-    private static final Logger LOG = LoggerFactory.getLogger(HousekeepingSendgridEmailNotificationTest.class);
     public static String template;
     public static String templateVersion;
     private static long insertedEventConfigId = -1;
     private static Auth0Util.TestingUser testingUser;
     private static FormActivityDef testActivity;
     private static ActivityInstanceDto testActivityInstance;
-
 
     @BeforeClass
     public static void setupTestData() {
@@ -92,13 +89,13 @@ public class HousekeepingSendgridEmailNotificationTest extends HousekeepingTest 
             testingUser = generatedTestData.getTestingUser();
             long testingUserId = testingUser.getUserId();
             String testingUserGuid = testingUser.getUserGuid();
-            LOG.info("Using generated testing user {} with guid {} and auth0 id {}", testingUserId, testingUserGuid,
+            log.info("Using generated testing user {} with guid {} and auth0 id {}", testingUserId, testingUserGuid,
                     testingUser.getAuth0Id());
 
             // create an activity instance of the created activity for the user
             testActivityInstance = activityInstanceDao.insertInstance(testActivity.getActivityId(),
                     testingUserGuid, testingUserGuid, CREATED, false);
-            LOG.info("Created activity instance {} with guid {}", testActivityInstance.getId(),
+            log.info("Created activity instance {} with guid {}", testActivityInstance.getId(),
                     testActivityInstance.getGuid());
 
             // create pex precondition and cancel conditions
@@ -124,7 +121,7 @@ public class HousekeepingSendgridEmailNotificationTest extends HousekeepingTest 
             int numRowsDeleted = queuedEventDao.deleteQueuedEventsByEventConfigurationId(insertedEventConfigId);
 
             if (numRowsDeleted != 1) {
-                LOG.warn("Deleted " + numRowsDeleted + " queued events for event configuration "
+                log.warn("Deleted " + numRowsDeleted + " queued events for event configuration "
                         + insertedEventConfigId);
             }
         });
@@ -168,7 +165,7 @@ public class HousekeepingSendgridEmailNotificationTest extends HousekeepingTest 
         String emailSentLogEntry = String.format("Sent template %s version %s to %s", template,
                 templateVersion, testingUser.getEmail());
         moveStatusToInProgressAndThenToComplete();
-        LOG.info("Inserted status that should trigger email event processing for activity instance {}",
+        log.info("Inserted status that should trigger email event processing for activity instance {}",
                 testActivityInstance.getGuid());
         boolean wasLogEntryFound = waitForLogging(emailSentLogEntry);
 

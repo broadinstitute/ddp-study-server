@@ -2,6 +2,8 @@ package org.broadinstitute.ddp.route;
 
 import java.time.ZoneId;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -35,19 +37,13 @@ import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
+@Slf4j
+@AllArgsConstructor
 public class GovernedParticipantRegistrationRoute extends ValidatedJsonInputRoute<GovernedUserRegistrationPayload> {
-    private static final Logger LOG = LoggerFactory.getLogger(GovernedParticipantRegistrationRoute.class);
-
     private final TaskPublisher taskPublisher;
-
-    public GovernedParticipantRegistrationRoute(TaskPublisher taskPublisher) {
-        this.taskPublisher = taskPublisher;
-    }
 
     @Override
     public Object handle(Request request, Response response, GovernedUserRegistrationPayload payload) throws Exception {
@@ -72,7 +68,7 @@ public class GovernedParticipantRegistrationRoute extends ValidatedJsonInputRout
             userGovernanceDao.grantGovernedStudy(governance.getId(), study.getId());
             User governedUser = userDao.findUserById(governance.getGovernedUserId())
                     .orElseThrow(() -> new DDPException("Could not find governed user with id " + governance.getGovernedUserId()));
-            LOG.info("Created governed user with guid {} and granted access to study {} for proxy {}",
+            log.info("Created governed user with guid {} and granted access to study {} for proxy {}",
                     governedUser.getGuid(), studyGuid, operatorUser.getGuid());
 
             initializeProfile(handle, governedUser, studyGuid, payload);
@@ -80,12 +76,12 @@ public class GovernedParticipantRegistrationRoute extends ValidatedJsonInputRout
             GovernancePolicy policy = handle.attach(StudyGovernanceDao.class).findPolicyByStudyGuid(studyGuid).orElse(null);
             if (policy != null && !policy.getAgeOfMajorityRules().isEmpty()) {
                 handle.attach(StudyGovernanceDao.class).addAgeUpCandidate(policy.getStudyId(), governedUser.getId(), operatorUser.getId());
-                LOG.info("Added governed user {} as age-up candidate in study {}", governedUser.getGuid(), policy.getStudyGuid());
+                log.info("Added governed user {} as age-up candidate in study {}", governedUser.getGuid(), policy.getStudyGuid());
             }
 
             handle.attach(JdbiUserStudyEnrollment.class)
                     .changeUserStudyEnrollmentStatus(governedUser.getGuid(), studyGuid, EnrollmentStatusType.REGISTERED);
-            LOG.info("Registered user {} with status {} in study {}", governedUser.getGuid(), EnrollmentStatusType.REGISTERED, studyGuid);
+            log.info("Registered user {} with status {} in study {}", governedUser.getGuid(), EnrollmentStatusType.REGISTERED, studyGuid);
 
             handle.attach(DataExportDao.class).queueDataSync(governedUser.getId());
             taskPublisher.publishTask(
@@ -107,7 +103,7 @@ public class GovernedParticipantRegistrationRoute extends ValidatedJsonInputRout
         long languageId = languageDto.getId();
         ZoneId timeZone = DateTimeUtils.parseTimeZone(payload.getTimeZone());
         if (timeZone == null) {
-            LOG.info("No user timezone is provided");
+            log.info("No user timezone is provided");
         }
         UserProfile profile = new UserProfile.Builder(user.getId())
                 .setFirstName(firstName)
@@ -116,6 +112,6 @@ public class GovernedParticipantRegistrationRoute extends ValidatedJsonInputRout
                 .setTimeZone(timeZone)
                 .build();
         profileDao.createProfile(profile);
-        LOG.info("Initialized user profile for user with guid {}", user.getGuid());
+        log.info("Initialized user profile for user with guid {}", user.getGuid());
     }
 }

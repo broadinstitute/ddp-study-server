@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.HtmlConverter;
+import org.broadinstitute.ddp.model.activity.types.BooleanRenderMode;
 import org.junit.Test;
 
 public class BoolQuestionTest {
@@ -21,7 +22,7 @@ public class BoolQuestionTest {
         rendered.put(3L, "<em>very much</em> yes");
         rendered.put(4L, "<strong>definitely</strong> no");
 
-        BoolQuestion question = new BoolQuestion("sid", 1, emptyList(), emptyList(), 3, 4);
+        BoolQuestion question = new BoolQuestion("sid", 1, emptyList(), emptyList(), 3, 4, BooleanRenderMode.RADIO_BUTTONS);
         question.applyRenderedTemplates(rendered::get, ContentStyle.STANDARD);
 
         assertTrue(HtmlConverter.hasSameValue(rendered.get(1L), question.getPrompt()));
@@ -37,7 +38,7 @@ public class BoolQuestionTest {
         rendered.put(2L, "<em>very much</em> yes");
         rendered.put(3L, "<strong>definitely</strong> no");
 
-        BoolQuestion question = new BoolQuestion("sid", 1, emptyList(), emptyList(), 2, 3);
+        BoolQuestion question = new BoolQuestion("sid", 1, emptyList(), emptyList(), 2, 3, BooleanRenderMode.RADIO_BUTTONS);
         question.applyRenderedTemplates(rendered::get, ContentStyle.BASIC);
 
         assertTrue(HtmlConverter.hasSameValue("<b>prompt</b>", question.getPrompt()));

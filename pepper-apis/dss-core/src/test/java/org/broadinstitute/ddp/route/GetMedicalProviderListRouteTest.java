@@ -21,13 +21,8 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class GetMedicalProviderListRouteTest extends IntegrationTestSuite.TestCase {
-
-    private static final Logger LOG = LoggerFactory.getLogger(GetMedicalProviderListRouteTest.class);
-
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String token;
     private static String url;
@@ -98,7 +93,7 @@ public class GetMedicalProviderListRouteTest extends IntegrationTestSuite.TestCa
         List<GetMedicalProviderResponse> testMedicalProviders = medicalProviders.stream()
                 .filter(p -> p.getMedicalProviderGuid().equals(TestMedicalProviderData.GUID))
                 .collect(Collectors.toList());
-        Assert.assertTrue(testMedicalProviders.size() == 1);
+        Assert.assertEquals(1, testMedicalProviders.size());
         return testMedicalProviders.get(0);
     }
 

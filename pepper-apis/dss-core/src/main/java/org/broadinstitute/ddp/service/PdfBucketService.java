@@ -10,21 +10,18 @@ import java.util.Optional;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Storage;
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.GoogleBucketUtil;
 import org.broadinstitute.ddp.util.GoogleCredentialUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class PdfBucketService {
-
-    private static final Logger LOG = LoggerFactory.getLogger(PdfBucketService.class);
-
     private Storage storage;
-    private String bucketName;
-    private boolean useCloudStorage;
+    private final String bucketName;
+    private final boolean useCloudStorage;
 
     public static String getBlobName(String umbrellaGuid, String studyGuid, String userGuid, String pdfConfigName, String pdfVersionTag) {
         return String.format("%s/%s/%s_%s_%s.pdf", umbrellaGuid, studyGuid, userGuid, pdfConfigName, pdfVersionTag);
@@ -38,7 +35,7 @@ public class PdfBucketService {
     public PdfBucketService(Config cfg) {
         boolean useFilesystem = cfg.getBoolean(ConfigFile.PDF_ARCHIVE_USE_FILESYSTEM);
         if (useFilesystem) {
-            LOG.error("Will use local filesystem for storing pdfs. Please double-check configs if this is not desired.");
+            log.error("Will use local filesystem for storing pdfs. Please double-check configs if this is not desired.");
             useCloudStorage = false;
         } else {
             boolean ensureDefault = cfg.getBoolean(ConfigFile.REQUIRE_DEFAULT_GCP_CREDENTIALS);
@@ -83,7 +80,7 @@ public class PdfBucketService {
                 Path filepath = Paths.get(tmpdir, bucketName, blobName);
                 filepath.toAbsolutePath().getParent().toFile().mkdirs();
                 Files.write(filepath, IOUtils.toByteArray(contents));
-                LOG.warn("Stored pdf to local filesystem temp directory: {}", filepath);
+                log.warn("Stored pdf to local filesystem temp directory: {}", filepath);
             } catch (IOException e) {
                 throw new DDPException("Error while storing pdf " + blobName + " to local filesystem", e);
             }
@@ -109,7 +106,7 @@ public class PdfBucketService {
             try {
                 String tmpdir = System.getProperty("java.io.tmpdir");
                 Path filepath = Paths.get(tmpdir, bucketName, blobName);
-                LOG.warn("Fetching pdf from local filesystem temp directory: {}", filepath);
+                log.warn("Fetching pdf from local filesystem temp directory: {}", filepath);
                 if (filepath.toFile().exists()) {
                     return Optional.of(Files.newInputStream(filepath));
                 } else {
