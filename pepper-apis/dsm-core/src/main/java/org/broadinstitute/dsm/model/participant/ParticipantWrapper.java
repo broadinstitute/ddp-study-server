@@ -129,12 +129,14 @@ public class ParticipantWrapper {
                     participant.setReviewed(oncHistory.getReviewed());
                 });
 
-                boolean filterByInstance = "mbc-filter".equals(ddpInstanceDto.getInstanceName());
+                //TODO hardcoded for now, maybe there is a fast dynamic way?
+                boolean filterByInstance = "osteo2".equals(ddpInstanceDto.getInstanceName());
                 List<MedicalRecord> medicalRecord = null;
                 List<OncHistoryDetail> oncHistoryDetails = null;
                 List<KitRequestShipping> kitRequestShipping = null;
                 if (filterByInstance) {
                     //TODO how to make it dynamic - still just comparing realm....
+                    //maybe fine because just osteo for now. quick and dirty?...
                     medicalRecord =
                             esDsm.getMedicalRecord().stream().filter(mR -> ddpInstanceDto.getDdpInstanceId() == mR.getDdpInstanceId())
                                     .collect(Collectors.toList());
