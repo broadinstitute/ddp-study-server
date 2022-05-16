@@ -133,44 +133,27 @@ public class LiquibaseUtil implements AutoCloseable {
     }
 
     /**
-     * Runs the specific changelog file. When migration fails, this will attempt to rollback the changes, as applicable.
+     * Inserts the environment-sensitive tenant used for testing
+     * via the given handle and config.  Returns true if tenant
+     * was inserted, false otherwise.
      */
-    private void runMigrations(String changelogFile) throws LiquibaseException, SQLException {
-        Liquibase liquibase = null;
-        String tag = null;
-        if (ServiceLocator.getInstance() == null) {
-            ServiceLocator.reset();
-        }
-        try {
-            liquibase = new Liquibase(changelogFile, new ClassLoaderResourceAccessor(), new JdbcConnection(dataSource.getConnection()));
-            logLocks(liquibase.listLocks());
+    private static boolean insertLegacyTenant(Handle handle, Config auth0Cfg) {
+        JdbiAuth0Tenant jdbiAuth0Tenant = handle.attach(JdbiAuth0Tenant.class);
+        boolean insertedTenant = false;
+        if (auth0Cfg.hasPath(ConfigFile.DOMAIN) && auth0Cfg.hasPath(ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_ID) &&
+                auth0Cfg.hasPath(ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_SECRET)) {
+            String domain = auth0Cfg.getString(ConfigFile.DOMAIN);
+            String mgmtApiClient = auth0Cfg.getString(ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_ID);
+            String mgmtSecret = auth0Cfg.getString(ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_SECRET);
 
-            tag = generateDatabaseTag();
-            liquibase.tag(tag);
-            log.info("Tagged database with tag {}", tag);
-
-            liquibase.update(new Contexts());
-        } catch (MigrationFailedException originalError) {
-            if (liquibase != null && tag != null) {
-                try {
-                    log.info("Attempting to rollback changesets to tag {}", tag);
-                    liquibase.rollback(tag, new Contexts());
-                    log.info("Successfully rolled back changesets to tag {}", tag);
-                } catch (RollbackFailedException e) {
-                    log.error("Failed to rollback changesets to tag {}, database might be in a bad state", tag, e);
-                }
-            } else {
-                log.error("No liquibase object or tag to rollback changesets");
-            }
-
-            // Propagate original exception back up.
-            throw originalError;
+            String encryptedSecret = AesUtil.encrypt(mgmtSecret, EncryptionKey.getEncryptionKey());
+            Auth0TenantDto tenantDto = jdbiAuth0Tenant.insertIfNotExists(domain, mgmtApiClient, encryptedSecret);
+            log.info("Inserted testing tenant {}", domain);
+            insertedTenant = true;
+        } else {
+            log.info("No legacy domain/mgt secret in config, skipping insert of auth0_tenant data");
         }
-        finally {
-            if (liquibase != null) {
-                liquibase.forceReleaseLocks();
-            }
-        }
+        return insertedTenant;
     }
 
     // todo arz make this work with existing local test script and real deployment
@@ -203,29 +186,44 @@ public class LiquibaseUtil implements AutoCloseable {
     }
 
     /**
-     * Inserts the environment-sensitive tenant used for testing
-     * via the given handle and config.  Returns true if tenant
-     * was inserted, false otherwise.
+     * Runs the specific changelog file. When migration fails, this will attempt to rollback the changes, as applicable.
      */
-    private static boolean insertLegacyTenant(Handle handle, Config auth0Cfg) {
-        JdbiAuth0Tenant jdbiAuth0Tenant = handle.attach(JdbiAuth0Tenant.class);
-        boolean insertedTenant = false;
-        if (auth0Cfg.hasPath(ConfigFile.DOMAIN) && auth0Cfg.hasPath(ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_ID)
-                && auth0Cfg.hasPath(ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_SECRET)) {
-            String domain = auth0Cfg.getString(ConfigFile.DOMAIN);
-            String mgmtApiClient = auth0Cfg.getString(ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_ID);
-            String mgmtSecret = auth0Cfg.getString(ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_SECRET);
-
-            String encryptedSecret = AesUtil.encrypt(mgmtSecret, EncryptionKey.getEncryptionKey());
-            Auth0TenantDto tenantDto = jdbiAuth0Tenant.insertIfNotExists(domain, mgmtApiClient, encryptedSecret);
-            log.info("Inserted testing tenant {}", domain);
-            insertedTenant = true;
-        } else {
-            log.info("No legacy domain/mgt secret in config, skipping insert of auth0_tenant data");
+    private void runMigrations(String changelogFile) throws LiquibaseException, SQLException {
+        Liquibase liquibase = null;
+        String tag = null;
+        if (ServiceLocator.getInstance() == null) {
+            ServiceLocator.reset();
         }
-        return insertedTenant;
-    }
+        try {
+            liquibase = new Liquibase(changelogFile, new ClassLoaderResourceAccessor(), new JdbcConnection(dataSource.getConnection()));
+            logLocks(liquibase.listLocks());
 
+            tag = generateDatabaseTag();
+            liquibase.tag(tag);
+            log.info("Tagged database with tag {}", tag);
+
+            liquibase.update(new Contexts());
+        } catch (MigrationFailedException originalError) {
+            if (liquibase != null && tag != null) {
+                try {
+                    log.info("Attempting to rollback changesets to tag {}", tag);
+                    liquibase.rollback(tag, new Contexts());
+                    log.info("Successfully rolled back changesets to tag {}", tag);
+                } catch (RollbackFailedException e) {
+                    log.error("Failed to rollback changesets to tag {}, database might be in a bad state", tag, e);
+                }
+            } else {
+                log.error("No liquibase object or tag to rollback changesets");
+            }
+
+            // Propagate original exception back up.
+            throw originalError;
+        } finally {
+            if (liquibase != null) {
+                liquibase.forceReleaseLocks();
+            }
+        }
+    }
 
     /**
      * Writes logging information about the locks.
@@ -236,8 +234,8 @@ public class LiquibaseUtil implements AutoCloseable {
             if (databaseChangeLogLocks.length > 0) {
                 hasLocks = true;
                 for (DatabaseChangeLogLock dbLock : databaseChangeLogLocks) {
-                    log.info("Liquibase locked by {} at {}.  Lock id is {} ", dbLock.getLockedBy(),
-                            dbLock.getLockGranted(), dbLock.getId());
+                    log.info("Liquibase locked by {} at {}.  Lock id is {} ", dbLock.getLockedBy(), dbLock.getLockGranted(),
+                            dbLock.getId());
                 }
             }
         }
@@ -260,7 +258,6 @@ public class LiquibaseUtil implements AutoCloseable {
         }
         return String.format("%d-%s", Instant.now().toEpochMilli(), hostname);
     }
-
 
 
 }
