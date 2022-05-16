@@ -321,7 +321,8 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .buildMultiSelect(PicklistRenderMode.LIST, plistMultiSelectSid, newTemplate())
                 .addOption(new PicklistOptionDef(plistMulti_option1_sid, newTemplate()))
                 .addOption(new PicklistOptionDef(plistMulti_option2_sid, newTemplate()))
-                .addOption(PicklistOptionDef.newExclusive(plistMulti_opt3_exclusive_sid, newTemplate()))
+                .addOption(new PicklistOptionDef(plistMulti_opt3_exclusive_sid, newTemplate())
+                        .toBuilder().isExclusive(true).build())
                 .addValidation(new RequiredRuleDef(newTemplate()))
                 .build();
         FormSectionDef plistSection = new FormSectionDef(null, TestUtil.wrapQuestions(p1, p2));

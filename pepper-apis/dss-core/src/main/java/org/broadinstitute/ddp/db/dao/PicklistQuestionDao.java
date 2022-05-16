@@ -139,7 +139,8 @@ public interface PicklistQuestionDao extends SqlObject {
                 options.stream().map(PicklistOptionDef::isDefault).iterator(),
                 Stream.iterate(0, i -> i + DISPLAY_ORDER_GAP).iterator(),
                 revisionId,
-                templateIdList.listIterator(3 * options.size()));
+                templateIdList.listIterator(3 * options.size()),
+                options.stream().map(PicklistOptionDef::getValue).iterator());
 
         int displayOrder = 0;
         int j = 0;
@@ -210,7 +211,7 @@ public interface PicklistQuestionDao extends SqlObject {
 
         long optionId = jdbiOption.insert(questionId, option.getStableId(), optionLabelTmplId, tooltipTmplId,
                 detailLabelTmplId, option.isDetailsAllowed(), option.isExclusive(),
-                option.isDefault(), displayOrder, revisionId, nestedOptionsTmplId);
+                option.isDefault(), displayOrder, revisionId, nestedOptionsTmplId, option.getValue());
         option.setOptionId(optionId);
 
         if (CollectionUtils.isNotEmpty(option.getNestedOptions())) {

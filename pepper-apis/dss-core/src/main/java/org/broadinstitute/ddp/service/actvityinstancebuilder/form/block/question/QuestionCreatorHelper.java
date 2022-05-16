@@ -93,7 +93,8 @@ public class QuestionCreatorHelper {
                 ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, questionDef.getTrueTemplate()),
                 ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
-                        ctx, questionDef.getFalseTemplate())
+                        ctx, questionDef.getFalseTemplate()),
+                questionDef.getRenderMode()
         );
     }
 
