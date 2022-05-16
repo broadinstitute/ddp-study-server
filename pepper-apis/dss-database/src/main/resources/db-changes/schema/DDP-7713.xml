@@ -36,11 +36,7 @@
                 <constraints nullable="false" references="block_tabular(block_tabular_id)" foreignKeyName="block_tabular_header_block_fk"/>
             </column>
 
-            <column name="start_column" type="bigint">
-                <constraints nullable="false" />
-            </column>
-
-            <column name="end_column" type="bigint">
+            <column name="column_span" type="bigint">
                 <constraints nullable="false" />
             </column>
 

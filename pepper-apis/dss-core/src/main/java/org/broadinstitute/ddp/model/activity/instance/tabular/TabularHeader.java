@@ -4,7 +4,6 @@ import lombok.Value;
 
 @Value
 public class TabularHeader {
-    int startColumn;
-    int endColumn;
-    String label;
+    int columnSpan;
+    Long labelTemplateId;
 }

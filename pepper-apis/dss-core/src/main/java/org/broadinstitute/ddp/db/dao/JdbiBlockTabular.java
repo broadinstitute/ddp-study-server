@@ -17,13 +17,11 @@ public interface JdbiBlockTabular extends SqlObject {
 
     @SqlUpdate("INSERT INTO block_tabular_header "
             + "         SET block_tabular_id = :tabularBlockId, "
-            + "             start_column     = :startColumn, "
-            + "             end_column       = :endColumn, "
+            + "             column_span      = :columnSpan, "
             + "             template_id      = :templateId")
     @GetGeneratedKeys
     long insertHeader(@Bind("tabularBlockId") long tabularBlockId,
-                      @Bind("startColumn") int startColumn,
-                      @Bind("endColumn") int endColumn,
+                      @Bind("columnSpan") int columnSpan,
                       @Bind("templateId") long templateId);
 
     @SqlUpdate("INSERT INTO block_tabular_question "

@@ -329,7 +329,7 @@ public interface SectionBlockDao extends SqlObject {
 
         for (final TabularHeaderDef header : block.getHeaders()) {
             final long templateId = getTemplateDao().insertTemplate(header.getLabel(), revisionId);
-            getJdbiBlockTabular().insertHeader(tabularId, header.getStartColumn(), header.getEndColumn(), templateId);
+            getJdbiBlockTabular().insertHeader(tabularId, header.getColumnSpan(), templateId);
         }
         LOG.info("Inserted {} headers for tabular block {}", block.getHeaders().size(), tabularId);
 

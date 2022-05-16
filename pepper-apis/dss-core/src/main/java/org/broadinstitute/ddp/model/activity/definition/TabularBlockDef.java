@@ -43,6 +43,10 @@ public class TabularBlockDef extends FormBlockDef {
         return rowDef.getQuestions().get(column);
     }
 
+    public int getRowsCount() {
+        return rows.size();
+    }
+
     @Override
     public Stream<QuestionDef> getQuestions() {
         return getRows().stream().map(TabularRowDef::getQuestions).flatMap(Collection::stream);

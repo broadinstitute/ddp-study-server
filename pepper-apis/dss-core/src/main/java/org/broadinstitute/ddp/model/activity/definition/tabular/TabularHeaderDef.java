@@ -5,7 +5,6 @@ import org.broadinstitute.ddp.model.activity.definition.template.Template;
 
 @Value
 public class TabularHeaderDef {
-    int startColumn;
-    int endColumn;
+    int columnSpan;
     Template label;
 }
