@@ -1,9 +1,11 @@
 package org.broadinstitute.dsm.model.elastic.export.parse;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,8 +42,8 @@ public class MedicalRecordAbstractionFieldTypeParser extends DynamicFieldsParser
             case MULTI_OPTIONS:
                 parsedType = forMultiOptions(columnName);
                 break;
+            case TABLE:
             case MULTI_TYPE_ARRAY:
-                
                 parsedType = forMultiTypeArray(columnName);
                 break;
             default:
@@ -51,12 +53,18 @@ public class MedicalRecordAbstractionFieldTypeParser extends DynamicFieldsParser
     }
 
     private Object forMultiTypeArray(String columnName) {
-        return new HashMap<String, Object>(Map.of(
+        var innerMapping = new LinkedHashMap<String, Object>();
+        var finalMapping = new HashMap<String, Object>(Map.of(
                 "type", "nested",
-                "properties", new HashMap<>(Map.of(
-
-                ))
-        ));
+                "properties", innerMapping));
+        for (Map<String, String> possibleValue : possibleValues) {
+            var fieldName = possibleValue.get("value");
+            var fieldType = possibleValue.get("type");
+            this.setType(fieldType);
+            var fieldMapping = this.parse(columnName);
+            innerMapping.put(Util.spacedLowerCaseToCamelCase(fieldName), fieldMapping);
+        }
+        return finalMapping;
     }
 
     protected Object forMultiOptions(String columnName) {
@@ -95,7 +103,8 @@ public class MedicalRecordAbstractionFieldTypeParser extends DynamicFieldsParser
 
 
     public void setPossibleValues(String possibleValues) {
-        this.possibleValues = ObjectMapperSingleton.readValue(possibleValues, new TypeReference<>() {});
+        this.possibleValues = ObjectMapperSingleton.readValue(possibleValues, new TypeReference<List>() {
+        });
     }
 
     public List<Map<String, String>> getPossibleValues() {

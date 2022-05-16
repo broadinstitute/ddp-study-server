@@ -3,10 +3,7 @@ package org.broadinstitute.dsm.model.elastic.export.parse;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
@@ -49,6 +46,51 @@ public class MedicalRecordAbstractionFieldTypeParserTest {
                         "est", TypeParser.BOOLEAN_MAPPING))));
 
         var actual = parser.parse("DX Date");
+
+        assertEquals(expected, actual);
+
+    }
+
+
+    @Test
+    public void buildMultiTypeArrayMapping() {
+
+        var possibleValues = "[{\"value\":\"Other Cancer\",\"type\":\"text\"},{\"value\":\"Site Other Cancer\",\"type\":\"text\"},{\"value\":\"Date Other Cancer\",\"type\":\"date\"}]";
+
+        parser.setType("multi_type_array");
+        parser.setPossibleValues(possibleValues);
+
+        var expectedInnerMapping = new LinkedHashMap<String, Object>();
+
+        expectedInnerMapping.put("otherCancer", TypeParser.TEXT_KEYWORD_MAPPING);
+        expectedInnerMapping.put("siteOtherCancer", TypeParser.TEXT_KEYWORD_MAPPING);
+        expectedInnerMapping.put("dateOtherCancer", new HashMap<>(Map.of("properties", Map.of("dateString", TypeParser.DATE_MAPPING,"est", TypeParser.BOOLEAN_MAPPING))));
+
+        var expected = new HashMap<String, Object>(Map.of("type", "nested","properties", expectedInnerMapping));
+
+        var actual = parser.parse("Other Cancers");
+
+        assertEquals(expected, actual);
+
+    }
+
+
+    @Test
+    public void buildComplexMultiTypeArrayMapping() {
+
+        var possibleValues = "[{\"value\":\"Type of Procedure\",\"type\":\"button_select\",\"values\":[{\"value\":\"Biopsy\"},{\"value\":\"Prostatectomy\"},{\"value\":\"Other\"}]},{\"value\":\"TNM Classification\",\"type\":\"button_select\",\"values\":[{\"value\":\"c\"},{\"value\":\"p\"},{\"value\":\"yp\"},{\"value\":\"Other\"}]}]";
+
+        parser.setType("multi_type_array");
+        parser.setPossibleValues(possibleValues);
+
+        var expectedInnerMapping = new LinkedHashMap<String, Object>();
+
+        expectedInnerMapping.put("typeOfProcedure", TypeParser.TEXT_KEYWORD_MAPPING);
+        expectedInnerMapping.put("tnmClassification", TypeParser.TEXT_KEYWORD_MAPPING);
+
+        var expected = new HashMap<String, Object>(Map.of("type", "nested","properties", expectedInnerMapping));
+
+        var actual = parser.parse("TNM");
 
         assertEquals(expected, actual);
 
