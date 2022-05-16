@@ -22,12 +22,12 @@ import org.broadinstitute.dsm.model.elastic.export.parse.TypeParser;
 public class DynamicFieldsMappingMigrator implements Exportable {
 
     public static final String DYNAMIC_FIELDS_WRAPPER_NAME = "dynamicFields";
-    private final String index;
-    private final String study;
-    public DynamicFieldsParser parser;
+    protected final String index;
+    protected final String study;
+    protected DynamicFieldsParser parser;
     public Map<String, Object> propertyMap;
 
-    private ElasticMappingExportAdapter elasticMappingExportAdapter;
+    protected ElasticMappingExportAdapter elasticMappingExportAdapter;
 
     public DynamicFieldsMappingMigrator(String index, String study) {
         this.index = index;
@@ -40,6 +40,13 @@ public class DynamicFieldsMappingMigrator implements Exportable {
 
     @Override
     public void export() {
+        processAndBuildMapping();
+        elasticMappingExportAdapter.setRequestPayload(new RequestPayload(index));
+        elasticMappingExportAdapter.setSource(buildFinalMapping());
+        elasticMappingExportAdapter.export();
+    }
+
+    protected void processAndBuildMapping() {
         FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
         List<FieldSettingsDto> fieldSettingsByStudyName = fieldSettingsDao.getFieldSettingsByInstanceName(study);
         for (FieldSettingsDto fieldSettingsDto : fieldSettingsByStudyName) {
@@ -53,12 +60,9 @@ public class DynamicFieldsMappingMigrator implements Exportable {
                 buildMapping(fieldSettingsDto, new BaseGenerator.PropertyInfo(ParticipantData.class, true));
             }
         }
-        elasticMappingExportAdapter.setRequestPayload(new RequestPayload(index));
-        elasticMappingExportAdapter.setSource(buildFinalMapping());
-        elasticMappingExportAdapter.export();
     }
 
-    private Map<String, Object> buildFinalMapping() {
+    protected Map<String, Object> buildFinalMapping() {
         Map<String, Object> dsmLevelProperties = new HashMap<>(Map.of(PROPERTIES, propertyMap));
         Map<String, Map<String, Object>> dsmLevel = new HashMap<>(Map.of(DSM_OBJECT, dsmLevelProperties));
         Map<String, Object> finalMap = new HashMap<>(Map.of(PROPERTIES, dsmLevel));
