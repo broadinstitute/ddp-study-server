@@ -10,7 +10,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import com.itextpdf.layout.element.Tab;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.export.ComponentDataSupplier;
 import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
