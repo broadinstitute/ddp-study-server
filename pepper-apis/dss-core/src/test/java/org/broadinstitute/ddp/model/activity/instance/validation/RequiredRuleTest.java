@@ -30,6 +30,7 @@ import org.broadinstitute.ddp.model.activity.instance.question.MatrixOption;
 import org.broadinstitute.ddp.model.activity.instance.question.MatrixGroup;
 import org.broadinstitute.ddp.model.activity.instance.question.MatrixRow;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
+import org.broadinstitute.ddp.model.activity.types.BooleanRenderMode;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
@@ -64,7 +65,7 @@ public class RequiredRuleTest {
 
     @Test
     public void testValidate_boolAnswer() {
-        BoolQuestion unused = new BoolQuestion("sid", 1L, emptyList(), emptyList(), 2L, 3L);
+        BoolQuestion unused = new BoolQuestion("sid", 1L, emptyList(), emptyList(), 2L, 3L, BooleanRenderMode.RADIO_BUTTONS);
         RequiredRule<BoolAnswer> rule = new RequiredRule<>("msg", null, false);
         assertFalse(rule.validate(unused, null));
         assertFalse(rule.validate(unused, new BoolAnswer(1L, "q", "a", null)));

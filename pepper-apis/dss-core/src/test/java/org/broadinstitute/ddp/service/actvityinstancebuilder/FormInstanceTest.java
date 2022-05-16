@@ -55,6 +55,7 @@ import org.broadinstitute.ddp.model.activity.instance.question.BoolQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
 import org.broadinstitute.ddp.model.activity.instance.validation.RequiredRule;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
+import org.broadinstitute.ddp.model.activity.types.BooleanRenderMode;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.form.FormInstanceCreatorHelper;
 import org.junit.Assert;
@@ -165,7 +166,8 @@ public class FormInstanceTest {
     @Test
     public void testIsComplete_requiredQuestionWithNoAnswer() {
         RequiredRule<BoolAnswer> req = new RequiredRule<>(1L, null, "required", false);
-        BoolQuestion question = new BoolQuestion("SID", 2, Collections.emptyList(), Collections.singletonList(req), 2, 3);
+        BoolQuestion question = new BoolQuestion("SID", 2, Collections.emptyList(),
+                    Collections.singletonList(req), 2, 3, BooleanRenderMode.RADIO_BUTTONS);
         QuestionBlock block = new QuestionBlock(question);
         FormSection s1 = new FormSection(Collections.singletonList(block));
         FormInstance form = createEmptyTestInstance();
@@ -186,7 +188,7 @@ public class FormInstanceTest {
             for (int blockNumber = 0; blockNumber < 2; blockNumber++) {
                 String stableId = "SID" + formNumber + "_" + blockNumber;
                 blocks.add(new QuestionBlock(new BoolQuestion(stableId, 2, Collections.emptyList(), Collections
-                        .emptyList(), 2, 3)));
+                        .emptyList(), 2, 3, BooleanRenderMode.RADIO_BUTTONS)));
                 expectedNumberForStableId.put(stableId, expectedNumber++);
             }
             form.addBodySections(Collections.singletonList(new FormSection(blocks)));
@@ -199,7 +201,8 @@ public class FormInstanceTest {
                 Collections.emptyList(),
                 Collections.emptyList(),
                 2,
-                3)));
+                3,
+                BooleanRenderMode.RADIO_BUTTONS)));
         FormSection introSection = new FormSection(introBlocks);
         expectedNumberForStableId.put(introQuestionStableId, 1);
 
@@ -210,7 +213,8 @@ public class FormInstanceTest {
                 Collections.emptyList(),
                 Collections.emptyList(),
                 2,
-                3)));
+                3,
+                BooleanRenderMode.RADIO_BUTTONS)));
         FormSection closingSection = new FormSection(closingBlocks);
         expectedNumberForStableId.put(closingQuestionStableId, expectedNumberForStableId.size());
 
@@ -232,7 +236,8 @@ public class FormInstanceTest {
     public void testIsComplete_requiredQuestionWithAnswer() {
         RequiredRule<BoolAnswer> req = new RequiredRule<>(1L, null, "required", false);
         BoolAnswer answer = new BoolAnswer(2L, "SID", "ABC", true);
-        BoolQuestion question = new BoolQuestion("SID", 3, Collections.singletonList(answer), Collections.singletonList(req), 2, 3);
+        BoolQuestion question = new BoolQuestion("SID", 3, Collections.singletonList(answer),
+                Collections.singletonList(req), 2, 3, BooleanRenderMode.RADIO_BUTTONS);
         QuestionBlock block = new QuestionBlock(question);
         FormSection s1 = new FormSection(Collections.singletonList(block));
         FormInstance form = createEmptyTestInstance();
@@ -243,9 +248,11 @@ public class FormInstanceTest {
 
     @Test
     public void testIsComplete_conditionallyShownQuestion() {
-        BoolQuestion control = new BoolQuestion("SID", 1, Collections.emptyList(), Collections.emptyList(), 2, 3);
+        BoolQuestion control = new BoolQuestion("SID", 1, Collections.emptyList(),
+                Collections.emptyList(), 2, 3, BooleanRenderMode.RADIO_BUTTONS);
         RequiredRule<BoolAnswer> req = new RequiredRule<>(1L, null, "required", false);
-        BoolQuestion nested = new BoolQuestion("SID", 2, Collections.emptyList(), Collections.singletonList(req), 4, 5);
+        BoolQuestion nested = new BoolQuestion("SID", 2, Collections.emptyList(),
+                Collections.singletonList(req), 4, 5, BooleanRenderMode.RADIO_BUTTONS);
         ConditionalBlock block = new ConditionalBlock(control);
         block.getNested().add(new QuestionBlock(nested));
 
@@ -266,7 +273,8 @@ public class FormInstanceTest {
     @Test
     public void testIsComplete_groupedQuestionsAreChecked() {
         RequiredRule<BoolAnswer> req = new RequiredRule<>(1L, null, "required", false);
-        BoolQuestion nested = new BoolQuestion("SID", 1, Collections.emptyList(), Collections.singletonList(req), 2, 3);
+        BoolQuestion nested = new BoolQuestion("SID", 1, Collections.emptyList(),
+                Collections.singletonList(req), 2, 3, BooleanRenderMode.RADIO_BUTTONS);
         GroupBlock group = new GroupBlock(null, null);
         group.getNested().add(new QuestionBlock(nested));
 
@@ -293,10 +301,10 @@ public class FormInstanceTest {
     @Test
     public void testCollectHiddenAnswers() {
         var q1 = new QuestionBlock(new BoolQuestion("b1", 1L,
-                List.of(new BoolAnswer(1L, "b1", "1", true)), List.of(), 2L, 3L));
+                List.of(new BoolAnswer(1L, "b1", "1", true)), List.of(), 2L, 3L, BooleanRenderMode.RADIO_BUTTONS));
         q1.setShown(true);
         var q2 = new QuestionBlock(new BoolQuestion("b2", 1L,
-                List.of(new BoolAnswer(2L, "b2", "2", false)), List.of(), 2L, 3L));
+                List.of(new BoolAnswer(2L, "b2", "2", false)), List.of(), 2L, 3L, BooleanRenderMode.RADIO_BUTTONS));
         q2.setShown(false);
         var cond1 = new ConditionalBlock(new TextQuestion("t1", 1L, null,
                 List.of(new TextAnswer(3L, "t1", "3", "cond1")), List.of(), TextInputType.TEXT));
@@ -321,7 +329,7 @@ public class FormInstanceTest {
     @Test
     public void testCollectHiddenAnswers_permanentlyHiddenBlock() {
         var q1 = new QuestionBlock(new BoolQuestion("b1", 1L,
-                List.of(new BoolAnswer(1L, "b1", "1", true)), List.of(), 2L, 3L));
+                List.of(new BoolAnswer(1L, "b1", "1", true)), List.of(), 2L, 3L, BooleanRenderMode.RADIO_BUTTONS));
         q1.setShown(false);
         q1.setShownExpr("false");
         var section = new FormSection(List.of(q1));
