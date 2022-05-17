@@ -1926,6 +1926,33 @@
                   "type": "date"
                 }
               }
+            },
+            "cohortTag": {
+              "type": "nested",
+              "properties": {
+                "cohortTagId": {
+                  "type": "keyword"
+                },
+                "tagName": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "ddpParticipantId": {
+                  "type": "keyword"
+                },
+                "ddpInstanceId": {
+                  "type": "keyword"
+                }
+              }
             }
           }
         },

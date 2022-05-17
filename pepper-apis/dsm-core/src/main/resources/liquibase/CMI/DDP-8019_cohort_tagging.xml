@@ -7,10 +7,10 @@
 
     <changeSet id="DDP-8019_cohort-tagging" author="gmakhara">
         <createTable tableName="cohort_tag">
-            <column name="id" autoIncrement="true" type="INT">
+            <column name="cohort_tag_id" autoIncrement="true" type="INT">
                 <constraints primaryKey="true" nullable="false"></constraints>
             </column>
-            <column name="tag_name" type="VARCHAR(255)">
+            <column name="cohort_tag_name" type="VARCHAR(255)">
                 <constraints nullable="false"></constraints>
             </column>
             <column name="ddp_participant_id" type="VARCHAR(20)">
