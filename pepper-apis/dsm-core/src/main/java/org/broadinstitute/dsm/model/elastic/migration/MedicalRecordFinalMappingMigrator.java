@@ -8,12 +8,15 @@ import org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractio
 import org.broadinstitute.dsm.model.elastic.export.parse.TypeParser;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator.DSM_OBJECT;
 import static org.broadinstitute.dsm.util.ElasticSearchUtil.PROPERTIES;
 
 public class MedicalRecordFinalMappingMigrator extends DynamicFieldsMappingMigrator {
+
+    public static final String MEDICAL_RECORD_FINAL = "medicalRecordFinal";
 
     protected MedicalRecordAbstractionFieldTypeParser parser;
     protected MedicalRecordAbstractionFieldDao<MedicalRecordAbstractionFieldDto> medicalRecordAbstractionFieldDao = MedicalRecordAbstractionFieldDaoImpl.make();
@@ -29,11 +32,10 @@ public class MedicalRecordFinalMappingMigrator extends DynamicFieldsMappingMigra
 
     @Override
     protected void processAndBuildMapping() {
-        var medicalRecordAbstractionFields = medicalRecordAbstractionFieldDao.getMedicalRecordAbstractionFieldsByInstanceName(study);
-        var fieldTypeMappings = new HashMap<>();
-        var dynamicFields = new HashMap<>(Map.of(DYNAMIC_FIELDS_WRAPPER_NAME, new HashMap<>(
-                Map.of(PROPERTIES, fieldTypeMappings))));
-        for (var field : medicalRecordAbstractionFields) {
+        List<MedicalRecordAbstractionFieldDto> medicalRecordAbstractionFields = medicalRecordAbstractionFieldDao.getMedicalRecordAbstractionFieldsByInstanceName(study);
+        Map<String, Object> fieldTypeMappings = new HashMap<>();
+        Map<String, Object> dynamicFields = new HashMap<>(Map.of(DYNAMIC_FIELDS_WRAPPER_NAME, new HashMap<>(Map.of(PROPERTIES, fieldTypeMappings))));
+        for (MedicalRecordAbstractionFieldDto field : medicalRecordAbstractionFields) {
             String displayName = field.getDisplayName();
             Integer orderNumber = field.getOrderNumber();
             String columnName = Util.underscoresToCamelCase(createColumnNameByDisplayNameAndOrderNumber(displayName, orderNumber));
@@ -42,17 +44,16 @@ public class MedicalRecordFinalMappingMigrator extends DynamicFieldsMappingMigra
             parser.setType(fieldType);
             parser.setPossibleValues(possibleValues);
             Object fieldTypeMapping = parser.parse(columnName); // date1 is mapping
-            if (!fieldTypeMappings.containsKey(columnName)) {
+            if (!fieldTypeMappings.containsKey(columnName))
                 fieldTypeMappings.put(columnName, fieldTypeMapping);
-            }
         }
-        propertyMap.put("medicalRecordFinal", new HashMap<>(Map.of(PROPERTIES, dynamicFields)));
+        propertyMap.put(MEDICAL_RECORD_FINAL, new HashMap<>(Map.of(PROPERTIES, dynamicFields)));
     }
 
     @Override
     protected Map<String, Object> buildFinalMapping() {
-        var dsmLevelProperties = new HashMap<String, Object>(Map.of(PROPERTIES, propertyMap));
-        var dsmLevel = new HashMap<String, Object>(Map.of(DSM_OBJECT, dsmLevelProperties));
+        Map<String, Object> dsmLevelProperties = new HashMap<>(Map.of(PROPERTIES, propertyMap));
+        Map<String, Object> dsmLevel = new HashMap<>(Map.of(DSM_OBJECT, dsmLevelProperties));
         return new HashMap<>(Map.of(PROPERTIES, dsmLevel));
 
     }

@@ -7,6 +7,7 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.Gson;
@@ -15,6 +16,7 @@ import org.broadinstitute.dsm.db.*;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.db.structure.TableName;
+import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator;
 import org.broadinstitute.dsm.model.elastic.export.parse.DynamicFieldsParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
@@ -47,6 +49,7 @@ public class Util {
     public static final Gson GSON = new Gson();
     public static final DynamicFieldsParser DYNAMIC_FIELDS_PARSER = new DynamicFieldsParser();
     public static final ValueParser PARSER = new ValueParser();
+    public static final int ONE = 1;
 
     static {
         DYNAMIC_FIELDS_PARSER.setParser(PARSER);
@@ -87,12 +90,19 @@ public class Util {
     }
 
     public static String spacedLowerCaseToCamelCase(String fieldName) {
-        var separatedBySpace = fieldName.split(" ");
-        var mappedToUppercase = Arrays.stream(separatedBySpace).skip(1).map(word -> word.substring(0, 1).toUpperCase().concat(word.substring(1)));
-        var mappedWords = new LinkedList<String>();
-        mappedWords.addFirst(separatedBySpace[0].toLowerCase());
+        String[] separatedBySpace = fieldName.split(Filter.SPACE);
+        Stream<String> mappedToUppercase = Arrays.stream(separatedBySpace).skip(ONE).map(Util::capitalize);
+        String firstWordToLowerCase = separatedBySpace[0].toLowerCase();
+        LinkedList<String> mappedWords = new LinkedList<>();
+        mappedWords.addFirst(firstWordToLowerCase);
         mappedWords.addAll(mappedToUppercase.collect(Collectors.toList()));
         return String.join(StringUtils.EMPTY, mappedWords);
+    }
+
+    private static String capitalize(String word) {
+        return word.substring(0, 1)
+                .toUpperCase()
+                .concat(word.substring(1));
     }
 
     private static String handleAllUppercase(String word) {

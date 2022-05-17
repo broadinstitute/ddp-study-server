@@ -156,13 +156,11 @@ public class UtilTest {
 
     @Test
     public void spacedLowerCaseToCamelCase() {
-
-        var spaced1 = "Spaced field name";
-        var spaced2 = "Another Spaced field name";
+        String spaced1 = "Spaced field name";
+        String spaced2 = "Another Spaced field name";
 
         assertEquals("spacedFieldName", Util.spacedLowerCaseToCamelCase(spaced1));
         assertEquals("anotherSpacedFieldName", Util.spacedLowerCaseToCamelCase(spaced2));
-
     }
 
 }

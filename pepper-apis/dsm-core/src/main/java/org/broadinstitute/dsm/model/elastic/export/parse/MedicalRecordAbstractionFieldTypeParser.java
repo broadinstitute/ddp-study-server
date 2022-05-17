@@ -3,6 +3,9 @@ package org.broadinstitute.dsm.model.elastic.export.parse;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
+import static org.broadinstitute.dsm.statics.DBConstants.*;
+import static org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator.*;
+import static org.broadinstitute.dsm.util.AbstractionUtil.*;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -15,6 +18,10 @@ public class MedicalRecordAbstractionFieldTypeParser extends DynamicFieldsParser
     private final BaseParser baseParser;
     private List<Map<String, String>> possibleValues;
 
+    public static final String OTHER = "other";
+    public static final String VALUES = "values";
+    public static final String EST = "est";
+
     public MedicalRecordAbstractionFieldTypeParser(BaseParser baseParser) {
         this.baseParser = baseParser;
     }
@@ -26,7 +33,7 @@ public class MedicalRecordAbstractionFieldTypeParser extends DynamicFieldsParser
     @Override
     public Object parse(String columnName) {
         Object parsedType;
-        var fieldType = MedicalRecordAbstractionFieldType.of(type);
+        MedicalRecordAbstractionFieldType fieldType = MedicalRecordAbstractionFieldType.of(type);
         switch (fieldType) {
             case DATE:
                 parsedType = forDate(columnName);
@@ -53,29 +60,33 @@ public class MedicalRecordAbstractionFieldTypeParser extends DynamicFieldsParser
     }
 
     private Object forMultiTypeArray(String columnName) {
-        var innerMapping = new LinkedHashMap<String, Object>();
-        var finalMapping = new HashMap<String, Object>(Map.of(
-                "type", "nested",
-                "properties", innerMapping));
+
+        Map<String, Object> innerMapping = new LinkedHashMap<>();
+
+        Map<String, Object> finalMapping = new HashMap<>(Map.of(
+                TYPE, NESTED,
+                PROPERTIES, innerMapping));
+
         for (Map<String, String> possibleValue : possibleValues) {
-            var fieldName = possibleValue.get("value");
-            var fieldType = possibleValue.get("type");
+            String fieldName = Util.spacedLowerCaseToCamelCase(possibleValue.get(VALUE));
+            String fieldType = possibleValue.get(TYPE);
             this.setType(fieldType);
-            var fieldMapping = this.parse(columnName);
-            innerMapping.put(Util.spacedLowerCaseToCamelCase(fieldName), fieldMapping);
+            Object fieldMapping = this.parse(columnName);
+            innerMapping.put(fieldName, fieldMapping);
         }
+
         return finalMapping;
     }
 
     protected Object forMultiOptions(String columnName) {
-        return new HashMap<String, Object>(Map.of(
-                "type", "nested",
-                "properties", new HashMap<>(Map.of(
-                        "other", baseParser.forString(columnName),
-                        "values", new HashMap<>(Map.of(
-                                "type", "nested",
-                                "properties", new HashMap<>(Map.of(
-                                        "value", baseParser.forString(columnName)))))))));
+        return new HashMap<>(Map.of(
+                TYPE, NESTED,
+                PROPERTIES, new HashMap<>(Map.of(
+                        OTHER, baseParser.forString(columnName),
+                        VALUES, new HashMap<>(Map.of(
+                                TYPE, NESTED,
+                                PROPERTIES, new HashMap<>(Map.of(
+                                        VALUES, baseParser.forString(columnName)))))))));
     }
 
     @Override
@@ -90,10 +101,10 @@ public class MedicalRecordAbstractionFieldTypeParser extends DynamicFieldsParser
 
     @Override
     protected Object forDate(String value) {
-        return new HashMap<String, Object>(Map.of(
-                "properties", new HashMap<>(Map.of(
-                        "dateString", baseParser.forDate(value),
-                        "est", baseParser.forBoolean(value)))));
+        return new HashMap<>(Map.of(
+                PROPERTIES, new HashMap<>(Map.of(
+                        DATE_STRING, baseParser.forDate(value),
+                        EST, baseParser.forBoolean(value)))));
     }
 
     @Override

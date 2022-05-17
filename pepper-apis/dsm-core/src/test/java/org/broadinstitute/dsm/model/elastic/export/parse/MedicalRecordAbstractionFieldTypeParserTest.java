@@ -1,10 +1,16 @@
 package org.broadinstitute.dsm.model.elastic.export.parse;
 
+import org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.*;
 
+import static org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator.NESTED;
+import static org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator.PROPERTIES;
+import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldTypeParser.OTHER;
+import static org.broadinstitute.dsm.model.elastic.export.parse.MedicalRecordAbstractionFieldTypeParser.VALUES;
+import static org.broadinstitute.dsm.statics.DBConstants.VALUE;
 import static org.junit.Assert.assertEquals;
 
 public class MedicalRecordAbstractionFieldTypeParserTest {
@@ -21,14 +27,14 @@ public class MedicalRecordAbstractionFieldTypeParserTest {
 
         parser.setType("multi_options");
 
-        var expected = new HashMap<String, Object>(Map.of(
-                "type", "nested",
-                "properties", new HashMap<String, Object>(Map.of(
-                        "other", TypeParser.TEXT_KEYWORD_MAPPING,
-                        "values", new HashMap<String, Object>(Map.of(
-                                "type", "nested",
-                                "properties", new HashMap<String, Object>(Map.of(
-                                        "value", TypeParser.TEXT_KEYWORD_MAPPING))))))));
+        Map<String, Object> expected = new HashMap<>(Map.of(
+                MappingGenerator.TYPE, NESTED,
+                PROPERTIES, new HashMap<>(Map.of(
+                        OTHER, TypeParser.TEXT_KEYWORD_MAPPING,
+                        VALUES, new HashMap<>(Map.of(
+                                MappingGenerator.TYPE, NESTED,
+                                PROPERTIES, new HashMap<>(Map.of(
+                                        VALUES, TypeParser.TEXT_KEYWORD_MAPPING))))))));
 
         var actual = parser.parse("MET_SITES_EVERY");
 

@@ -8,7 +8,7 @@ import org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator;
 
 public abstract class BaseParser implements Parser {
 
-    protected static final String TYPE = "type";
+    public static final String TYPE = "type";
     protected BaseGenerator.PropertyInfo propertyInfo;
     protected String fieldName;
     protected String realm;

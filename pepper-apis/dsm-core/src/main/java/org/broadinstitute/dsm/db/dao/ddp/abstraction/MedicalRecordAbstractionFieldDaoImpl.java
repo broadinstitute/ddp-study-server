@@ -59,7 +59,7 @@ public class MedicalRecordAbstractionFieldDaoImpl implements MedicalRecordAbstra
 
     @Override
     public List<MedicalRecordAbstractionFieldDto> getMedicalRecordAbstractionFieldsByInstanceName(String instanceName) {
-        var records = new ArrayList<MedicalRecordAbstractionFieldDto>();
+        List<MedicalRecordAbstractionFieldDto> records = new ArrayList<>();
         SimpleResult result = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SELECT_ALL_MEDICAL_RECORD_ABSTRACTION_FIELDS_FILTERED_BY_INSTANCE_ID)) {
