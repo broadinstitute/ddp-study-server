@@ -38,8 +38,7 @@ public class GovernancePolicy {
 
     @Nested("scgu")
     Expression shouldCreateGovernedUserExpr;
-    
-    
+
     List<AgeOfMajorityRule> aomRules = new ArrayList<>();
 
     public GovernancePolicy(long studyId, Expression shouldCreateGovernedUserExpr) {
