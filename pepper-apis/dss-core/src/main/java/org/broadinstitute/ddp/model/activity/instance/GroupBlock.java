@@ -77,6 +77,9 @@ public final class GroupBlock extends FormBlock {
         if (!shown) {
             return true;
         }
+        if (!enabled) {
+            return true;
+        }
         for (FormBlock child : nested) {
             if (!child.isComplete()) {
                 return false;

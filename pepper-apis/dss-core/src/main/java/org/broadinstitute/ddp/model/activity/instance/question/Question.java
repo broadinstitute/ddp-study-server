@@ -227,8 +227,11 @@ public abstract class Question<T extends Answer> implements Renderable {
     protected boolean requiredRulesPass(List<T> answerValues) {
         final Optional<Rule> res = validations.stream()
                 .filter(Objects::nonNull)
-                .filter(rule -> RuleType.REQUIRED.equals(rule.getRuleType()))
-                .findFirst();
+                .filter(rule -> RuleType.REQUIRED.equals(rule.getRuleType())
+                        || RuleType.DAY_REQUIRED.equals(rule.getRuleType())
+                        || RuleType.MONTH_REQUIRED.equals(rule.getRuleType())
+                        || RuleType.YEAR_REQUIRED.equals(rule.getRuleType()))
+                .findAny();
         if (res.isEmpty()) {
             return true;
         }

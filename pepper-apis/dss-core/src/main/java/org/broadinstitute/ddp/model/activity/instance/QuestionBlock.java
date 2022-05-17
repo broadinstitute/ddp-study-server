@@ -38,7 +38,7 @@ public class QuestionBlock extends FormBlock implements Numberable {
 
     @Override
     public boolean isComplete() {
-        return !shown || question.passesDeferredValidations();
+        return !shown || !enabled || question.passesDeferredValidations();
     }
 
     @Override
