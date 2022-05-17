@@ -29,6 +29,14 @@ where qsc.umbrella_study_id = :studyId
   and rev.end_date is null
 >>
 
+queryLatestDtoByStudyGuidAndQuestionStableId() ::= <<
+<all_questions_select()>
+join umbrella_study us on us.umbrella_study_id = qsc.umbrella_study_id
+where us.guid = :studyGuid
+  and qsc.stable_id = :questionStableId
+  and rev.end_date is null
+>>
+
 queryQuestionsByStudyGuid() ::= <<
 <all_questions_select()>
 join umbrella_study us on us.umbrella_study_id = qsc.umbrella_study_id
@@ -89,6 +97,9 @@ select qt.question_type_code as question_type,
 
        bq.true_template_id,
        bq.false_template_id,
+       (select boolean_render_mode_code from boolean_render_mode
+         where boolean_render_mode_id = bq.boolean_render_mode_id
+       ) as boolean_render_mode,
 
        (select date_render_mode_code from date_render_mode
          where date_render_mode_id = dq.date_render_mode_id
