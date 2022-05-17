@@ -19,6 +19,7 @@ public class CohortTagDaoImpl implements CohortTagDao {
 
     private static final String SQL_INSERT_COHORT_TAG =
             "INSERT INTO cohort_tag SET cohort_tag_name = ?, ddp_participant_id = ?, ddp_instance_id = ?";
+    private static final String SQL_DELETE_COHORT_TAG_BY_ID = "DELETE FROM cohort_tag WHERE cohort_tag_id = ?";
 
     @Override
     public int create(CohortTag cohortTagDto) {
@@ -54,7 +55,21 @@ public class CohortTagDaoImpl implements CohortTagDao {
 
     @Override
     public int delete(int id) {
-        return 0;
+        SimpleResult simpleResult = inTransaction(conn -> {
+            SimpleResult execResult = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_COHORT_TAG_BY_ID)) {
+                stmt.setInt(1, id);
+                execResult.resultValue = stmt.executeUpdate();
+            } catch (SQLException sqle) {
+                execResult.resultException = sqle;
+            }
+            return execResult;
+        });
+
+        if (simpleResult.resultException != null) {
+            throw new RuntimeException("Error deleting cohort tag with id: " + id, simpleResult.resultException);
+        }
+        return (int) simpleResult.resultValue;
     }
 
     @Override
