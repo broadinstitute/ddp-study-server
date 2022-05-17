@@ -43,14 +43,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class ActivityDefStoreTest extends TxnAwareBaseTest {
-
     private static TestDataSetupUtil.GeneratedTestData testData;
 
     @BeforeClass
     public static void setup() {
-        TransactionWrapper.useTxn(handle -> {
-            testData = TestDataSetupUtil.generateBasicUserTestData(handle);
-        });
+        TransactionWrapper.useTxn(handle -> testData = TestDataSetupUtil.generateBasicUserTestData(handle));
     }
 
     @Test

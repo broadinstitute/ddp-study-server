@@ -1,5 +1,12 @@
 package org.broadinstitute.ddp.studybuilder.task.osteo;
 
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
@@ -28,13 +35,6 @@ import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
-import java.nio.file.Path;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 /**
  * One-off task to add adhoc symptom message to TestBoston in deployed environments.
  */
@@ -44,7 +44,7 @@ public class OsteoAboutChildV2 implements CustomTask {
     private static final String STUDY_GUID = "CMI-OSTEO";
     private static final String ACTIVITY_CODE = "ABOUTCHILD";
     private static final String VERSION_TAG = "v2";
-    private static final String TRANSLATED_NAME = "About Your Child's Cancer";
+    private static final String TRANSLATED_NAME = "Survey: Your Child's Osteosarcoma";
 
     private Config studyCfg;
     private Instant timestamp;
@@ -120,6 +120,9 @@ public class OsteoAboutChildV2 implements CustomTask {
         // Disable questions
         long terminatedRevId = jdbiRevision.copyAndTerminate(section.getRevisionId(), meta);
         questionsToDisable.forEach(s -> disableQuestionDto(s, terminatedRevId));
+
+        // Update activity to uneditable
+        helper.updateActivityWriteOnceToTrue(activityId);
     }
 
     private long createSectionBefore(long activityId, FormSectionMembershipDto beforeSection) {
@@ -213,5 +216,8 @@ public class OsteoAboutChildV2 implements CustomTask {
 
         @SqlUpdate("update form_section__block set form_section_id = :formSectionId where block_id = :blockId")
         void updateFormSectionBlock(@Bind("formSectionId") long formSectionId, @Bind("blockId") long blockId);
+
+        @SqlUpdate("update study_activity set is_write_once = true where study_activity_id = :activityId")
+        int updateActivityWriteOnceToTrue(@Bind("activityId") long activityId);
     }
 }

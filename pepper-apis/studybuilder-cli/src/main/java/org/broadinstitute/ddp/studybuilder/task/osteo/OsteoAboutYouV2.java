@@ -55,7 +55,6 @@ public class OsteoAboutYouV2 implements CustomTask {
     private static final String TRANS_UPDATE_NEW = "new_text";
     private static final String STUDY_GUID = "CMI-OSTEO";
     private static final String ACTIVITY_CODE = "ABOUTYOU";
-    private static final String ACTIVITY_CODE_2 = "ABOUTCHILD";
     private static final String VERSION_TAG = "v2";
 
     private Config dataCfg;
@@ -122,7 +121,6 @@ public class OsteoAboutYouV2 implements CustomTask {
         studyId = studyDto.getId();
         var studyGuid = studyDto.getGuid();
         long activityId = ActivityBuilder.findActivityId(handle, studyId, ACTIVITY_CODE);
-        long activityId2 = ActivityBuilder.findActivityId(handle, studyId, ACTIVITY_CODE_2);
 
         meta = new RevisionMetadata(timestamp.toEpochMilli(), adminUser.getId(), String.format(
                 "Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
@@ -158,9 +156,10 @@ public class OsteoAboutYouV2 implements CustomTask {
         long terminatedRevId = jdbiRevision.copyAndTerminate(section.getRevisionId(), meta);
         questionsToDisable.forEach(s -> disableQuestionDto(s, terminatedRevId));
 
-        helper.updateActivityNameAndTitle(activityId, "About Your Osteosarcoma", "About Your Osteosarcoma");
-        helper.updateActivityNameAndTitle(activityId2, "About Your child's Osteosarcoma", "About Your child's Osteosarcoma");
         updateTranslationSummaries(handle);
+
+        // Update activity to uneditable
+        helper.updateActivityWriteOnceToTrue(activityId);
     }
 
     private long createSectionBefore(long activityId, FormSectionMembershipDto beforeSection) {
@@ -220,12 +219,12 @@ public class OsteoAboutYouV2 implements CustomTask {
                 i18nDetail.getIsoLangCode(),
                 name,
                 i18nDetail.getSecondName(),
-                i18nDetail.getTitle(),
+                name,
                 i18nDetail.getSubtitle(),
                 i18nDetail.getDescription(),
                 i18nDetail.getRevisionId());
         activityI18nDao.updateDetails(List.of(newI18nDetail));
-        log.info("Updated translatedName for activity {}", activityCode);
+        log.info("Updated translatedName and translatedTitle for activity {}", activityCode);
     }
 
     private void updateTranslationSummaries(Handle handle) {
@@ -269,17 +268,7 @@ public class OsteoAboutYouV2 implements CustomTask {
         @SqlUpdate("update form_section__block set revision_id = :revisionId where block_id = :blockId")
         void updateFormSectionBlockRevision(@Bind("blockId") long blockId, @Bind("revisionId") long revisionId);
 
-        @SqlUpdate("update i18n_activity_detail set name = :name, title = :title where study_activity_id = :studyActivityId")
-        int _updateActivityNameAndTitle(@Bind("studyActivityId") long studyActivityId,
-                                @Bind("name") String name,
-                                @Bind("title") String title);
-
-        default void updateActivityNameAndTitle(long studyActivityId, String name, String title) {
-            int numUpdated = _updateActivityNameAndTitle(studyActivityId, name, title);
-            if (numUpdated != 1) {
-                throw new DDPException("Expected to update 1 row for studyActivityId="
-                        + studyActivityId + " but updated " + numUpdated);
-            }
-        }
+        @SqlUpdate("update study_activity set is_write_once = true where study_activity_id = :activityId")
+        int updateActivityWriteOnceToTrue(@Bind("activityId") long activityId);
     }
 }

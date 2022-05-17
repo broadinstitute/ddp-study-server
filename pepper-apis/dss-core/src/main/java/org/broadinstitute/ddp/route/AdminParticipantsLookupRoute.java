@@ -4,6 +4,8 @@ import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.broadinstitute.ddp.route.AdminParticipantsLookupUtil.handleParticipantLookupException;
 import static org.broadinstitute.ddp.service.participantslookup.ParticipantLookupType.FULL_TEXT_SEARCH_BY_QUERY_STRING;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.json.admin.participantslookup.ParticipantsLookupPayload;
@@ -14,8 +16,6 @@ import org.broadinstitute.ddp.service.participantslookup.error.ParticipantsLooku
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
@@ -39,10 +39,9 @@ import spark.Response;
  *     'resultsMaxCount' (and totalCount contains real found count).</li>
  * </ul>
  */
+@Slf4j
+@AllArgsConstructor
 public class AdminParticipantsLookupRoute extends ValidatedJsonInputRoute<ParticipantsLookupPayload> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AdminParticipantsLookupRoute.class);
-
     /**
      * It is temporarily specified in this class, but in the future it should be
      * passed from a client side as a parameter.
@@ -50,12 +49,7 @@ public class AdminParticipantsLookupRoute extends ValidatedJsonInputRoute<Partic
     public static final int DEFAULT_PARTICIPANTS_LOOKUP_RESULT_MAX_COUNT = 500;
 
     private final ParticipantsLookupService participantsLookupService;
-    private final int resultsMaxCount = DEFAULT_PARTICIPANTS_LOOKUP_RESULT_MAX_COUNT;
 
-
-    public AdminParticipantsLookupRoute(ParticipantsLookupService participantsLookupService) {
-        this.participantsLookupService = participantsLookupService;
-    }
 
     @Override
     public Object handle(Request request, Response response, ParticipantsLookupPayload payload) throws Exception {
@@ -68,7 +62,7 @@ public class AdminParticipantsLookupRoute extends ValidatedJsonInputRoute<Partic
 
         try {
             var lookupResult = participantsLookupService.lookupParticipants(
-                    FULL_TEXT_SEARCH_BY_QUERY_STRING, studyDto, query, resultsMaxCount);
+                    FULL_TEXT_SEARCH_BY_QUERY_STRING, studyDto, query, DEFAULT_PARTICIPANTS_LOOKUP_RESULT_MAX_COUNT);
             return new ParticipantsLookupResponse(lookupResult.getTotalCount(), lookupResult.getResultRows());
         } catch (ParticipantsLookupException e) {
             handleParticipantLookupException(e, this::haltError);
@@ -83,7 +77,7 @@ public class AdminParticipantsLookupRoute extends ValidatedJsonInputRoute<Partic
     }
 
     public void haltError(int status, String code, String msg) {
-        LOG.warn(msg);
+        log.warn(msg);
         throw ResponseUtil.haltError(status, new ApiError(code, msg));
     }
 }

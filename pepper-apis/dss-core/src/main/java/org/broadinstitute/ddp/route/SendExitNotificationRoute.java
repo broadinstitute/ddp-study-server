@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -31,15 +32,11 @@ import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
+@Slf4j
 public class SendExitNotificationRoute extends ValidatedJsonInputRoute<StudyExitRequestPayload> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(SendExitNotificationRoute.class);
-
     @Override
     protected int getValidationErrorStatus() {
         return HttpStatus.SC_BAD_REQUEST;
@@ -51,7 +48,7 @@ public class SendExitNotificationRoute extends ValidatedJsonInputRoute<StudyExit
         String userGuid = request.params(RouteConstants.PathParam.USER_GUID);
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
 
-        LOG.info("Attempting to create study exit request for user={}, operator={}, study={}", userGuid, operatorGuid, studyGuid);
+        log.info("Attempting to create study exit request for user={}, operator={}, study={}", userGuid, operatorGuid, studyGuid);
 
         return TransactionWrapper.withTxn(handle -> {
             UserDto userDto = handle.attach(JdbiUser.class).findByUserGuid(userGuid);
@@ -62,14 +59,14 @@ public class SendExitNotificationRoute extends ValidatedJsonInputRoute<StudyExit
                     .orElseThrow(() -> {
                         String msg = String.format("User %s is not in study %s", userGuid, studyGuid);
                         ApiError err = new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED, msg);
-                        LOG.warn(msg);
+                        log.warn(msg);
                         return ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, err);
                     });
 
             if (status.isExited()) {
                 String msg = String.format("User %s in study %s is already exited", userGuid, studyGuid);
                 ApiError err = new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED, msg);
-                LOG.warn(msg);
+                log.warn(msg);
                 throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, err);
             }
 
@@ -78,7 +75,7 @@ public class SendExitNotificationRoute extends ValidatedJsonInputRoute<StudyExit
             if (alreadyRequested) {
                 String msg = String.format("User %s has already made exit request in study %s", userGuid, studyGuid);
                 ApiError err = new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED, msg);
-                LOG.warn(msg);
+                log.warn(msg);
                 throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, err);
             }
 
@@ -88,7 +85,7 @@ public class SendExitNotificationRoute extends ValidatedJsonInputRoute<StudyExit
             if (eventDtos.isEmpty()) {
                 String msg = String.format("Study %s does not support exit requests", studyGuid);
                 ApiError err = new ApiError(ErrorCodes.NOT_SUPPORTED, msg);
-                LOG.warn(msg);
+                log.warn(msg);
                 throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, err);
             }
 
@@ -102,13 +99,13 @@ public class SendExitNotificationRoute extends ValidatedJsonInputRoute<StudyExit
                     queuedEventDao.insertNotification(eventDto.getEventConfigurationId(), 0L,
                             userDto.getUserId(), operatorUser.getId(), vars);
                 } else {
-                    LOG.error("Exit request event configuration with id={} is configured with unsupported actionType={}",
+                    log.error("Exit request event configuration with id={} is configured with unsupported actionType={}",
                             eventDto.getEventConfigurationId(), eventDto.getEventActionType());
                 }
             }
 
             long requestId = studyDao.insertExitRequest(new StudyExitRequest(studyDto.getId(), userDto.getUserId(), payload.getNotes()));
-            LOG.info("Created study exit request with id={} for user={}, study={}", requestId, userGuid, studyGuid);
+            log.info("Created study exit request with id={} for user={}, study={}", requestId, userGuid, studyGuid);
 
             response.status(HttpStatus.SC_NO_CONTENT);
             return "";

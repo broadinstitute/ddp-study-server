@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.route;
 
 import java.util.Set;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -25,15 +26,11 @@ import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.QuestionUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
+@Slf4j
 public class CreateActivityInstanceRoute extends ValidatedJsonInputRoute<ActivityInstanceCreationPayload> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(CreateActivityInstanceRoute.class);
-
     @Override
     protected int getValidationErrorStatus() {
         return HttpStatus.SC_BAD_REQUEST;
@@ -51,7 +48,7 @@ public class CreateActivityInstanceRoute extends ValidatedJsonInputRoute<Activit
         String activityCode = payload.getActivityCode();
         String parentInstanceGuid = payload.getParentInstanceGuid();
 
-        LOG.info("Request to create instance of activity {} in study {} for user {}"
+        log.info("Request to create instance of activity {} in study {} for user {}"
                         + " and parent instance {} by operator {} (isStudyAdmin={})",
                 activityCode, studyGuid, participantGuid, parentInstanceGuid, operatorGuid, isStudyAdmin);
 
@@ -84,7 +81,7 @@ public class CreateActivityInstanceRoute extends ValidatedJsonInputRoute<Activit
 
             // check for max instances
             if (validation.hasTooManyInstances()) {
-                LOG.warn("Participant has {} instances which exceeds max allowed of {}",
+                log.warn("Participant has {} instances which exceeds max allowed of {}",
                         validation.getNumInstancesForUser(), validation.getMaxInstancesPerUser());
                 throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY,
                         new ApiError(ErrorCodes.TOO_MANY_INSTANCES, null));
@@ -99,7 +96,7 @@ public class CreateActivityInstanceRoute extends ValidatedJsonInputRoute<Activit
                     .insertInstance(studyActivityId, operatorGuid, participantGuid, parentInstanceId)
                     .getGuid();
             handle.attach(DataExportDao.class).queueDataSync(participantGuid, studyGuid);
-            LOG.info("Created activity instance {} for activity {} and user {}",
+            log.info("Created activity instance {} for activity {} and user {}",
                     instanceGuid, activityCode, participantGuid);
             res.setInstanceGuid(instanceGuid);
             res.setBlockVisibilities(QuestionUtil.getBlockVisibility(handle,
@@ -118,7 +115,7 @@ public class CreateActivityInstanceRoute extends ValidatedJsonInputRoute<Activit
     }
 
     private void warnAndHalt(Response response, int status, String code, String message) {
-        LOG.warn(message);
+        log.warn(message);
         throw ResponseUtil.haltError(response, status, new ApiError(code, message));
     }
 

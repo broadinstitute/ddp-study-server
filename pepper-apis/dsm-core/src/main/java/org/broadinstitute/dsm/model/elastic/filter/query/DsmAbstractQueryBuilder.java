@@ -21,6 +21,7 @@ public class DsmAbstractQueryBuilder {
     protected static final String DSM_WITH_DOT = ESObjectConstants.DSM + DBConstants.ALIAS_DELIMITER;
     protected String filter;
     protected Parser parser;
+    protected String esIndex;
     protected BoolQueryBuilder boolQueryBuilder;
     protected QueryBuilder queryBuilder;
     protected SplitterStrategy splitter;
@@ -29,6 +30,10 @@ public class DsmAbstractQueryBuilder {
 
     public DsmAbstractQueryBuilder() {
         boolQueryBuilder = new BoolQueryBuilder();
+    }
+
+    public void setEsIndex(String index) {
+        this.esIndex = index;
     }
 
     public void setFilter(String filter) {
@@ -59,7 +64,9 @@ public class DsmAbstractQueryBuilder {
             splitter = operator.getSplitterStrategy();
             splitter.setFilter(filterValue);
             baseQueryBuilder = BaseQueryBuilder.of(splitter.getAlias(), splitter.getFieldName());
-            QueryPayload queryPayload = new QueryPayload(buildPath(), splitter.getInnerProperty(), parser.parse(splitter.getValue()));
+            QueryPayload queryPayload = new QueryPayload(
+                    buildPath(), splitter.getInnerProperty(), parser.parse(splitter.getValue()), esIndex
+            );
             filterStrategy.build(boolQueryBuilder, baseQueryBuilder.buildEachQuery(operator, queryPayload));
         }
     }
