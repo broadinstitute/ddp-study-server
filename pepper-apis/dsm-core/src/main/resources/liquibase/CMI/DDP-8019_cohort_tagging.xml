@@ -17,11 +17,9 @@
                 <constraints nullable="false"></constraints>
             </column>
             <column name="ddp_instance_id" type="INT">
-                <constraints nullable="false" foreignKeyName="ddp_instance_id_fk"
+                <constraints nullable="false" foreignKeyName="ddp_instance_id_id_fk"
                              referencedTableName="ddp_instance" referencedColumnNames="ddp_instance_id"></constraints>
             </column>
-            <column name="changed_by" type="VARCHAR(100)"></column>
-            <column name="last_changed" type="BIGINT"></column>
         </createTable>
     </changeSet>
 </databaseChangeLog>

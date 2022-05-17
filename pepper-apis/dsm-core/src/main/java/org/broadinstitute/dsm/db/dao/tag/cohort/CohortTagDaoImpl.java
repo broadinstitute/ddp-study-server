@@ -8,21 +8,26 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Optional;
 
-import org.broadinstitute.dsm.db.dto.tag.cohort.CohortDto;
+import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTagDto;
 import org.broadinstitute.lddp.db.SimpleResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class CohortDaoImpl implements CohortDao {
+public class CohortTagDaoImpl implements CohortTagDao {
 
+    private static final Logger logger = LoggerFactory.getLogger(CohortTagDaoImpl.class);
 
-    private static final String SQL_INSERT_COHORT_TAG = "INSERT INTO cohort_tag SET tagName = ?, participantId = ?";
+    private static final String SQL_INSERT_COHORT_TAG =
+            "INSERT INTO cohort_tag SET tag_name = ?, ddp_participant_id = ?, ddp_instance_id = ?";
 
     @Override
-    public int create(CohortDto cohortDto) {
+    public int create(CohortTagDto cohortTagDto) {
         SimpleResult simpleResult = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult(-1);
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_COHORT_TAG, Statement.RETURN_GENERATED_KEYS)) {
-                stmt.setString(1, cohortDto.getTagName());
-                stmt.setString(2, cohortDto.getDdpParticipantId());
+                stmt.setString(1, cohortTagDto.getTagName());
+                stmt.setString(2, cohortTagDto.getDdpParticipantId());
+                stmt.setInt(3, cohortTagDto.getDdpInstanceId());
                 stmt.executeUpdate();
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
@@ -36,9 +41,14 @@ public class CohortDaoImpl implements CohortDao {
         });
         if (simpleResult.resultException != null) {
             throw new RuntimeException(
-                    String.format("Error inserting cohort tag for participant with id: %s", cohortDto.getDdpParticipantId()),
+                    String.format("Error inserting cohort tag for participant with id: %s", cohortTagDto.getDdpParticipantId()),
                     simpleResult.resultException);
         }
+        logger.info(
+                String.format(
+                        "Cohort tag: %s has been created successfully for participant with id: %s",
+                        cohortTagDto.getTagName(), cohortTagDto.getDdpParticipantId()
+                ));
         return (int) simpleResult.resultValue;
     }
 
@@ -48,7 +58,7 @@ public class CohortDaoImpl implements CohortDao {
     }
 
     @Override
-    public Optional<CohortDto> get(long id) {
+    public Optional<CohortTagDto> get(long id) {
         return Optional.empty();
     }
 }
