@@ -16,4 +16,8 @@ public class Expression {
 
     @ColumnName("expression_text")
     String text;
+
+    public Expression(final String text) {
+        this(0, null, text);
+    }
 }
