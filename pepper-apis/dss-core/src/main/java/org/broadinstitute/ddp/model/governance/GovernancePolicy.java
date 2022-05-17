@@ -5,8 +5,12 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
+import lombok.AllArgsConstructor;
+import lombok.Value;
+import one.util.streamex.StreamEx;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.pex.Expression;
@@ -20,44 +24,26 @@ import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 /**
  * Represents the governance policy for a study.
  */
+@Value
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class GovernancePolicy {
+    @ColumnName("study_governance_policy_id")
+    long id;
 
-    private long id;
-    private long studyId;
-    private String studyGuid;
-    private Expression shouldCreateGovernedUserExpr;
-    private List<AgeOfMajorityRule> aomRules = new ArrayList<>();
+    @ColumnName("study_id")
+    long studyId;
 
-    @JdbiConstructor
-    public GovernancePolicy(@ColumnName("study_governance_policy_id") long id,
-                            @ColumnName("study_id") long studyId,
-                            @ColumnName("study_guid") String studyGuid,
-                            @Nested("scgu") Expression shouldCreateGovernedUserExpr) {
-        this.id = id;
-        this.studyId = studyId;
-        this.studyGuid = studyGuid;
-        this.shouldCreateGovernedUserExpr = shouldCreateGovernedUserExpr;
-    }
+    @ColumnName("study_guid")
+    String studyGuid;
+
+    @Nested("scgu")
+    Expression shouldCreateGovernedUserExpr;
+    
+    
+    List<AgeOfMajorityRule> aomRules = new ArrayList<>();
 
     public GovernancePolicy(long studyId, Expression shouldCreateGovernedUserExpr) {
-        this.studyId = studyId;
-        this.shouldCreateGovernedUserExpr = shouldCreateGovernedUserExpr;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public long getStudyId() {
-        return studyId;
-    }
-
-    public String getStudyGuid() {
-        return studyGuid;
-    }
-
-    public Expression getShouldCreateGovernedUserExpr() {
-        return shouldCreateGovernedUserExpr;
+        this(0, studyId, null, shouldCreateGovernedUserExpr);
     }
 
     public List<AgeOfMajorityRule> getAgeOfMajorityRules() {
@@ -65,11 +51,7 @@ public class GovernancePolicy {
     }
 
     public void addAgeOfMajorityRule(AgeOfMajorityRule... rules) {
-        for (AgeOfMajorityRule rule : rules) {
-            if (rule != null) {
-                aomRules.add(rule);
-            }
-        }
+        StreamEx.of(rules).filter(Objects::nonNull).forEach(aomRules::add);
     }
 
     public boolean shouldCreateGovernedUser(Handle handle, PexInterpreter interpreter, String userGuid) {
