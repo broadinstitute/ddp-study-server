@@ -12,6 +12,8 @@ import org.elasticsearch.index.query.QueryBuilder;
 
 public class NestedUpsertPainlessFacade extends UpsertPainlessFacade {
 
+    public NestedUpsertPainlessFacade() {}
+
     NestedUpsertPainlessFacade(Object source, DDPInstanceDto ddpInstanceDto,
                                String uniqueIdentifier, String fieldName, Object fieldValue, ScriptBuilder scriptBuilder) {
         super(source, ddpInstanceDto, uniqueIdentifier, fieldName, fieldValue, scriptBuilder);

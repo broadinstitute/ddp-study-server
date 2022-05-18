@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 public abstract class UpsertPainlessFacade {
 
     private static final Logger logger = LoggerFactory.getLogger(UpsertPainlessFacade.class);
+
     private Object source;
     protected String uniqueIdentifier;
     protected String fieldName;
@@ -30,21 +31,22 @@ public abstract class UpsertPainlessFacade {
 
     TypeExtractor<Map<String, String>> typeExtractor;
 
+    public UpsertPainlessFacade() {}
+
     UpsertPainlessFacade(Object source, DDPInstanceDto ddpInstanceDto, String uniqueIdentifier,
                          String fieldName, Object fieldValue, ScriptBuilder scriptBuilder) {
         this(source, uniqueIdentifier, fieldName, fieldValue, ddpInstanceDto);
-        this.typeExtractor = buildFieldTypeExtractor(ddpInstanceDto);
-        upsertPainless = new UpsertPainless(generator, ddpInstanceDto.getEsParticipantIndex(),
-                fillScriptBuilder(scriptBuilder), buildQueryBuilder());
+        buildAndSetFieldTypeExtractor(ddpInstanceDto);
+        buildAndSetUpsertPainless(ddpInstanceDto, scriptBuilder);
     }
+
 
     UpsertPainlessFacade(Object source, DDPInstanceDto ddpInstanceDto, String uniqueIdentifier,
                          String fieldName, Object fieldValue,
                          TypeExtractor<Map<String, String>> typeExtractor, ScriptBuilder scriptBuilder) {
         this(source, uniqueIdentifier, fieldName, fieldValue, ddpInstanceDto);
         this.typeExtractor = typeExtractor;
-        upsertPainless = new UpsertPainless(generator, ddpInstanceDto.getEsParticipantIndex(),
-                fillScriptBuilder(scriptBuilder), buildQueryBuilder());
+        buildAndSetUpsertPainless(ddpInstanceDto, scriptBuilder);
     }
 
     private UpsertPainlessFacade(Object source, String uniqueIdentifier,
@@ -56,20 +58,41 @@ public abstract class UpsertPainlessFacade {
         setGeneratorElseLogError(ddpInstanceDto);
     }
 
+    public void setSource(Object source) {
+        this.source = source;
+    }
+
+    public void setUniqueIdentifier(String uniqueIdentifier) {
+        this.uniqueIdentifier = uniqueIdentifier;
+    }
+
+    public void setFieldName(String fieldName) {
+        this.fieldName = fieldName;
+    }
+
+    public void setFieldValue(Object fieldValue) {
+        this.fieldValue = fieldValue;
+    }
+
+    public void buildAndSetUpsertPainless(DDPInstanceDto ddpInstanceDto, ScriptBuilder scriptBuilder) {
+        this.upsertPainless = new UpsertPainless(generator, ddpInstanceDto.getEsParticipantIndex(),
+                fillScriptBuilder(scriptBuilder), buildQueryBuilder());
+    }
+
     private ScriptBuilder fillScriptBuilder(ScriptBuilder scriptBuilder) {
         scriptBuilder.setPropertyName(generator.getPropertyName());
         scriptBuilder.setUniqueIdentifier(uniqueIdentifier);
         return scriptBuilder;
     }
 
-    private FieldTypeExtractor buildFieldTypeExtractor(DDPInstanceDto ddpInstanceDto) {
+    public void buildAndSetFieldTypeExtractor(DDPInstanceDto ddpInstanceDto) {
         FieldTypeExtractor fieldTypeExtractor = new FieldTypeExtractor();
         fieldTypeExtractor.setIndex(ddpInstanceDto.getEsParticipantIndex());
         fieldTypeExtractor.setFields(buildFieldFullName());
-        return fieldTypeExtractor;
+        this.typeExtractor = fieldTypeExtractor;
     }
 
-    private void setGeneratorElseLogError(DDPInstanceDto ddpInstanceDto) {
+    public void setGeneratorElseLogError(DDPInstanceDto ddpInstanceDto) {
         try {
             generator = new ParamsGenerator(source, ddpInstanceDto.getInstanceName());
         } catch (NullPointerException npe) {
