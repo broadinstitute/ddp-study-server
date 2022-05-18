@@ -99,7 +99,7 @@ public final class QuestionEvaluator {
                 this.values.put(variable, new EquationResponse(variable,
                         StreamEx.of(picklistAnswers)
                                 .map(PicklistAnswer::getFirstPickedOption)
-                                .map(SelectedPicklistOption::getValue)
+                                .map(SelectedPicklistOption::getStableId)
                                 .map(this::toDecimalDef)
                                 .toList()));
                 return;
