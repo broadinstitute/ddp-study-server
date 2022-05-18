@@ -39,5 +39,12 @@ public class ESActivities {
     @SerializedName("status")
     private String status;
 
+    public ESActivities(String activityCode, long lastUpdatedAt) {
+        this.activityCode = activityCode;
+        this.lastUpdatedAt = lastUpdatedAt;
+    }
 
+    public ESActivities() {
+
+    }
 }
