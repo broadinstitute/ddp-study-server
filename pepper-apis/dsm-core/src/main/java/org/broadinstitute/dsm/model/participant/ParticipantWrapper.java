@@ -1,11 +1,6 @@
 package org.broadinstitute.dsm.model.participant;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -29,6 +24,8 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchable;
 import org.broadinstitute.dsm.model.elastic.sort.Sort;
 import org.broadinstitute.dsm.model.elastic.sort.SortBy;
+import org.broadinstitute.dsm.model.filter.prefilter.PreFilter;
+import org.broadinstitute.dsm.model.filter.prefilter.PreFilterPayload;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -118,6 +115,7 @@ public class ParticipantWrapper {
         logger.info("Collecting participant data...");
         List<ParticipantWrapperDto> result = new ArrayList<>();
         List<String> proxyGuids = new ArrayList<>();
+
         for (ElasticSearchParticipantDto elasticSearchParticipantDto : esData.getEsParticipants()) {
 
             elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
@@ -129,31 +127,13 @@ public class ParticipantWrapper {
                     participant.setReviewed(oncHistory.getReviewed());
                 });
 
-                //TODO hardcoded for now, maybe there is a fast dynamic way?
-                boolean filterByInstance = "osteo2".equals(ddpInstanceDto.getInstanceName());
-                List<MedicalRecord> medicalRecord = null;
-                List<OncHistoryDetail> oncHistoryDetails = null;
-                List<KitRequestShipping> kitRequestShipping = null;
-                if (filterByInstance) {
-                    //TODO how to make it dynamic - still just comparing realm....
-                    //maybe fine because just osteo for now. quick and dirty?...
-                    medicalRecord =
-                            esDsm.getMedicalRecord().stream().filter(mR -> ddpInstanceDto.getDdpInstanceId() == mR.getDdpInstanceId())
-                                    .collect(Collectors.toList());
-                    oncHistoryDetails =
-                            esDsm.getOncHistoryDetail().stream().filter(oD -> ddpInstanceDto.getDdpInstanceId() == oD.getDdpInstanceId())
-                                    .collect(Collectors.toList());
-                    kitRequestShipping =
-                            esDsm.getKitRequestShipping().stream().filter(k -> ddpInstanceDto.getDdpInstanceId() == k.getDdpInstanceId())
-                                    .collect(Collectors.toList());
-                } else {
-                    medicalRecord = esDsm.getMedicalRecord();
-                    oncHistoryDetails = esDsm.getOncHistoryDetail();
-                    kitRequestShipping = esDsm.getKitRequestShipping();
-                }
+                Optional<PreFilter> maybePreFilter = PreFilter.fromPayload(PreFilterPayload.of(elasticSearchParticipantDto, ddpInstanceDto));
+                maybePreFilter.ifPresent(PreFilter::filter);
 
+                List<MedicalRecord> medicalRecord = esDsm.getMedicalRecord();
+                List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();
+                List<KitRequestShipping> kitRequestShipping = esDsm.getKitRequestShipping();
                 List<Tissue> tissues = esDsm.getTissue();
-
                 List<SmId> smIds = esDsm.getSmId();
 
                 mapSmIdsToProperTissue(tissues, smIds);
@@ -176,8 +156,6 @@ public class ParticipantWrapper {
                 participantWrapperDto.setAbstractionSummary(Collections.emptyList());
 
                 result.add(participantWrapperDto);
-
-                //TODO filter activity
 
             });
         }
