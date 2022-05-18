@@ -407,6 +407,13 @@ public interface AnswerDao extends SqlObject {
             @Bind("questionStableId") String questionStableId);
 
     @UseStringTemplateSqlLocator
+    @SqlQuery("findAnswersByInstanceGuidAndQuestionStableId")
+    @UseRowReducer(SimpleAnswerWithValueReducer.class)
+    List<Answer> findAnswersByInstanceGuidAndQuestionStableId(
+            @Bind("instanceGuid") String instanceGuid,
+            @Bind("questionStableId") String questionStableId);
+
+    @UseStringTemplateSqlLocator
     @SqlQuery("findAnswerByInstanceGuidAndQuestionId")
     @UseRowReducer(AnswerWithValueReducer.class)
     Optional<Answer> findAnswerByInstanceGuidAndQuestionId(
@@ -531,6 +538,7 @@ public interface AnswerDao extends SqlObject {
                     String picklistOptionSid = view.getColumn("pa_option_stable_id", String.class);
                     if (picklistOptionSid != null) {
                         var option = new SelectedPicklistOption(picklistOptionSid,
+                                view.getColumn("po_value", String.class),
                                 view.getColumn("pa_parent_option_stable_id", String.class),
                                 view.getColumn("pa_group_stable_id", String.class),
                                 view.getColumn("pa_detail_text", String.class));
@@ -596,4 +604,125 @@ public interface AnswerDao extends SqlObject {
             }
         }
     }
+
+    class SimpleAnswerWithValueReducer implements LinkedHashMapRowReducer<Long, Answer> {
+        @Override
+        public void accumulate(Map<Long, Answer> container, RowView view) {
+            reduce(container, view);
+        }
+
+        @Override
+        public Stream<Answer> stream(Map<Long, Answer> container) {
+            return container.values().stream();
+        }
+
+        /**
+         * Same as accumulate, but also returns the answer that was reduced from the row.
+         *
+         * @param container mapping of answer id to answer object
+         * @param view      the row view
+         * @return reduced answer, or null if row is for a child answer
+         */
+        public Answer reduce(Map<Long, Answer> container, RowView view) {
+            long answerId = view.getColumn("answer_id", Long.class);
+            var answerGuid = view.getColumn("answer_guid", String.class);
+            var questionStableId = view.getColumn("question_stable_id", String.class);
+            var type = QuestionType.valueOf(view.getColumn("question_type", String.class));
+            String actInstanceGuid = view.getColumn("activity_instance_guid", String.class);
+
+            Answer answer;
+            switch (type) {
+                case AGREEMENT:
+                    answer = new AgreementAnswer(answerId, questionStableId, answerGuid, view.getColumn("aa_value", Boolean.class),
+                            actInstanceGuid);
+                    break;
+                case BOOLEAN:
+                    answer = new BoolAnswer(answerId, questionStableId, answerGuid, view.getColumn("ba_value", Boolean.class),
+                            actInstanceGuid);
+                    break;
+                case TEXT:
+                    answer = new TextAnswer(answerId, questionStableId, answerGuid, view.getColumn("ta_value", String.class),
+                            actInstanceGuid);
+                    break;
+                case ACTIVITY_INSTANCE_SELECT:
+                    answer = new ActivityInstanceSelectAnswer(answerId,
+                            questionStableId,
+                            answerGuid,
+                            view.getColumn("aia_instance_guid", String.class),
+                            actInstanceGuid);
+                    break;
+                case DATE:
+                    answer = new DateAnswer(answerId, questionStableId, answerGuid,
+                            view.getColumn("da_year", Integer.class),
+                            view.getColumn("da_month", Integer.class),
+                            view.getColumn("da_day", Integer.class),
+                            actInstanceGuid);
+                    break;
+                case FILE:
+                    FileInfo info = null;
+                    answer = container.computeIfAbsent(answerId, id ->
+                            new FileAnswer(answerId, questionStableId, answerGuid, new ArrayList<>(), actInstanceGuid));
+                    Long fileUploadId = view.getColumn("fa_upload_id", Long.class);
+                    if (fileUploadId != null) {
+                        info = new FileInfo(fileUploadId,
+                                view.getColumn("fa_upload_guid", String.class),
+                                view.getColumn("fa_file_name", String.class),
+                                view.getColumn("fa_file_size", Long.class));
+                    }
+                    ((FileAnswer) answer).getValue().add(info);
+                    break;
+                case NUMERIC:
+                    answer = new NumericAnswer(answerId, questionStableId, answerGuid,
+                            view.getColumn("na_int_value", Long.class), actInstanceGuid);
+                    break;
+                case DECIMAL:
+                    answer = new DecimalAnswer(answerId, questionStableId, answerGuid,
+                            Optional.ofNullable(view.getColumn("da_decimal_value", BigDecimal.class))
+                                    .map(DecimalDef::new).orElse(null), actInstanceGuid);
+                    break;
+                case PICKLIST:
+                    var picklistMap = container;
+                    answer = picklistMap.computeIfAbsent(answerId, id ->
+                            new PicklistAnswer(answerId, questionStableId, answerGuid, new ArrayList<>(), actInstanceGuid));
+                    String picklistOptionSid = view.getColumn("pa_option_stable_id", String.class);
+                    if (picklistOptionSid != null) {
+                        var option = new SelectedPicklistOption(picklistOptionSid,
+                                view.getColumn("po_value", String.class),
+                                view.getColumn("pa_parent_option_stable_id", String.class),
+                                view.getColumn("pa_group_stable_id", String.class),
+                                view.getColumn("pa_detail_text", String.class));
+                        ((PicklistAnswer) answer).getValue().add(option);
+                    }
+                    break;
+                case MATRIX:
+                    answer = container.computeIfAbsent(answerId, id ->
+                            new MatrixAnswer(answerId, questionStableId, answerGuid, new ArrayList<>(), actInstanceGuid));
+
+                    String matrixOptionSid = view.getColumn("matrix_option_stable_id", String.class);
+                    String matrixQuestionRowSid = view.getColumn("matrix_row_stable_id", String.class);
+                    String matrixGroupSid = view.getColumn("matrix_group_stable_id", String.class);
+
+                    if (matrixOptionSid != null && matrixQuestionRowSid != null) {
+                        var cell = new SelectedMatrixCell(matrixQuestionRowSid, matrixOptionSid, matrixGroupSid);
+                        ((MatrixAnswer) answer).getValue().add(cell);
+                    }
+
+                    break;
+                case COMPOSITE:
+                    answer = container.computeIfAbsent(answerId, id -> {
+                        var ans = new CompositeAnswer(answerId, questionStableId, answerGuid, actInstanceGuid);
+                        ans.setAllowMultiple(view.getColumn("ca_allow_multiple", Boolean.class));
+                        ans.setUnwrapOnExport(view.getColumn("ca_unwrap_on_export", Boolean.class));
+                        return ans;
+                    });
+                    break;
+                default:
+                    throw new DaoException("Unhandled answer type " + type);
+            }
+
+            container.put(answerId, answer);
+            return answer;
+        }
+    }
+
 }

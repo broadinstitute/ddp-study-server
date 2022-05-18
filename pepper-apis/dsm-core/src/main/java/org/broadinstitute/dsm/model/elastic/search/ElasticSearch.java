@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import lombok.Setter;
@@ -16,6 +17,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.sort.CustomSortBuilder;
 import org.broadinstitute.dsm.model.elastic.sort.Sort;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.elasticsearch.action.search.SearchRequest;
@@ -27,6 +29,7 @@ import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.index.query.TermsQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
@@ -278,6 +281,71 @@ public class ElasticSearch implements ElasticSearchable {
         isGuidMap.forEach((booleanId, idValues) -> boolQuery.should(
                 QueryBuilders.termsQuery(booleanId ? ElasticSearchUtil.PROFILE_GUID : ElasticSearchUtil.PROFILE_LEGACYALTPID, idValues)));
         return boolQuery;
+    }
+
+
+    @Override
+    public Map<String, String> getGuidsByLegacyAltPids(String esParticipantsIndex, List<String> legacyAltPids) {
+        logger.info("Collecting ES data from index " + esParticipantsIndex);
+        SearchResponse response;
+        try {
+            SearchRequest searchRequest = new SearchRequest(esParticipantsIndex);
+            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+            searchSourceBuilder.query(new TermsQueryBuilder(ElasticSearchUtil.PROFILE_LEGACYALTPID, legacyAltPids.toArray()));
+            searchSourceBuilder.size(legacyAltPids.size());
+            searchSourceBuilder.fetchSource(
+                    new String[] { ElasticSearchUtil.PROFILE_LEGACYALTPID, ElasticSearchUtil.PROFILE_GUID, ElasticSearchUtil.PROXIES }, null
+            );
+            searchRequest.source(searchSourceBuilder);
+            response = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
+        } catch (Exception e) {
+            throw new RuntimeException("Couldn't get participants from ES for instance " + esParticipantsIndex, e);
+        }
+        SearchHit[] records = response.getHits().getHits();
+        logger.info("Got " + records.length + " participants from ES for instance " + esParticipantsIndex);
+        SearchHitProxy[] searchHitProxies = Arrays.stream(records)
+                .map(SearchHitProxy::new)
+                .collect(Collectors.toList())
+                .toArray(new SearchHitProxy[] {});
+        return extractLegacyAltPidGuidPair(searchHitProxies);
+    }
+
+    Map<String, String> extractLegacyAltPidGuidPair(SearchHitProxy[] records) {
+        Set<String> parentsGuids = getParents(records);
+        return Arrays.stream(records)
+                .map(SearchHitProxy::getSourceAsMap)
+                .filter(this::hasProfile)
+                .map(this::getProfile)
+                .collect(Collectors.toMap(profileMap ->
+                        profileMap.get(ElasticSearchUtil.LEGACY_ALT_PID),
+                        profileMap -> profileMap.get(ESObjectConstants.GUID),
+                        (prevGuid, currGuid) -> {
+                            if (isParentGuid(parentsGuids, prevGuid)) {
+                                return currGuid;
+                            } else {
+                                return prevGuid;
+                            }
+                        }));
+    }
+
+    private boolean isParentGuid(Set<String> parentsGuids, String guid) {
+        return parentsGuids.contains(guid);
+    }
+
+    private Set<String> getParents(SearchHitProxy[] records) {
+        return Arrays.stream(records)
+                .map(SearchHitProxy::getSourceAsMap)
+                .filter(sourceMap -> sourceMap.containsKey(ElasticSearchUtil.PROXIES))
+                .flatMap(sourceMap -> ((List<String>) sourceMap.get(ElasticSearchUtil.PROXIES)).stream())
+                .collect(Collectors.toSet());
+    }
+
+    private Map<String, String> getProfile(Map<String, Object> sourceMap) {
+        return (Map<String, String>) sourceMap.get(ElasticSearchUtil.PROFILE);
+    }
+
+    private boolean hasProfile(Map<String, Object> sourceMap) {
+        return sourceMap.containsKey(ElasticSearchUtil.PROFILE);
     }
 
 }

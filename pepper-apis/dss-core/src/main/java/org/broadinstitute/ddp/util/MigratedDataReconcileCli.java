@@ -32,6 +32,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -44,13 +45,10 @@ import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class MigratedDataReconcileCli {
-
     private static final String USAGE = "MigratedDataReconcileCli [-h, --help] [OPTIONS]";
-    private static final Logger LOG = LoggerFactory.getLogger(MigratedDataReconcileCli.class);
     private static final String DATA_GC_ID = "broad-ddp-angio";
     private static final String DEFAULT_DATA_TYPE = "String";
     private static final DateFormat DEFAULT_TARGET_DATE_FMT = new SimpleDateFormat("MM/dd/yy HH:mm:ss");
@@ -167,9 +165,9 @@ public class MigratedDataReconcileCli {
         skipFields.add("street1"); //During address validation street is changed to ST ; road to RD .. so on
 
         if (hasGoogleBucket) {
-            LOG.info("Comparing data export content to google bucket participant files. {}", new Date());
+            log.info("Comparing data export content to google bucket participant files. {}", new Date());
             Map<String, Map> altpidBucketDataMap = loadBucketData(); // <altpid, SurveyDataMap>>
-            LOG.info("Loaded Bucket data for {} participants. {}", altpidBucketDataMap.size(), new Date());
+            log.info("Loaded Bucket data for {} participants. {}", altpidBucketDataMap.size(), new Date());
             compareBucketData(csvFileName, altpidBucketDataMap, outputFileName, mappingFileName);
         } else if (hasFile) {
             compareLocalFile(csvFileName, cmd.getOptionValue('l'), outputFileName, mappingFileName);
@@ -200,16 +198,16 @@ public class MigratedDataReconcileCli {
                 missedAltpids.add(altpid);
                 continue;
             }
-            LOG.debug("comparing altpid: {} ... bucket file: {}", altpid, altpidBucketMap.get(altpid));
+            log.debug("comparing altpid: {} ... bucket file: {}", altpid, altpidBucketMap.get(altpid));
             Map<String, JsonElement> userData = altpidBucketMap.get(altpid);
             doCompare(csvRecord, userData, mappingData);
             ptpCounter++;
         }
-        LOG.info("Completed comparing {} participant files. {} ", ptpCounter, new Date());
+        log.info("Completed comparing {} participant files. {} ", ptpCounter, new Date());
         if (!missedAltpids.isEmpty()) {
-            LOG.warn("*** Failed to compare {} altpids: {} ", missedAltpids.size(), Arrays.toString(missedAltpids.toArray()));
+            log.warn("*** Failed to compare {} altpids: {} ", missedAltpids.size(), Arrays.toString(missedAltpids.toArray()));
         } else {
-            LOG.info("NO missed Altpids...");
+            log.info("NO missed Altpids...");
         }
     }
 
@@ -274,7 +272,6 @@ public class MigratedDataReconcileCli {
                 }
             }
             consentSurveyName = consentSurveyName.concat("_v").concat(consentVersion);
-            //LOG.info("consent survey name: {} .. consent version: {}", consentSurveyName, consentVersion);
             doCompare(csvRecord, userData.get("consentsurvey"), mappingData.get(consentSurveyName));
         }
 
@@ -299,7 +296,6 @@ public class MigratedDataReconcileCli {
         for (JsonElement thisMapData : dataArray) {
             sourceFieldName = thisMapData.getAsJsonObject().get("source_field_name").getAsString();
             targetFieldName = thisMapData.getAsJsonObject().get("target_field_name").getAsString();
-            //LOG.info("checking source field: {} ... target field: {} ", sourceFieldName, targetFieldName);
             //load source and target values
             targetFieldValue = csvRecord.get(targetFieldName);
             JsonElement sourceDataTypeEl = thisMapData.getAsJsonObject().get("source_field_type");
@@ -311,8 +307,6 @@ public class MigratedDataReconcileCli {
             switch (sourceDataType) {
                 case "Date":
                     sourceFieldValue = getStringValueFromElement(sourceDataEl, sourceFieldName);
-                    //LOG.info("source field: {} value: {} targetField: {} target value: {}", sourceFieldName, sourceFieldValue,
-                    // targetFieldName, targetFieldValue);
                     if (checkNulls(sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue, csvRecord)) {
                         continue;
                     }
@@ -327,7 +321,7 @@ public class MigratedDataReconcileCli {
                         targetDate = DEFAULT_TARGET_DATE_FMT.parse(targetFieldValue);
                     }
                     if (sourceDate.compareTo(targetDate) == 0) {
-                        LOG.debug("DATES {} and {} values match. Values: {} {} ",
+                        log.debug("DATES {} and {} values match. Values: {} {} ",
                                 sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue);
                     } else {
                         printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
@@ -350,17 +344,12 @@ public class MigratedDataReconcileCli {
                         }
                     } else if (dkSet.contains(sourceFieldValue) && dkSet.contains(targetFieldValue)
                             && !sourceFieldName.contains("country")) {
-                        //dk/DK/Don't know .. consider as match & move on
-                        //LOG.info("source field Name: {} .. target field Name: {} .. source field Value: {} .. target field Value: {}  ",
-                        //        sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue);
                         sourceFieldValue = targetFieldValue;
                     }
 
                     //compare values
                     if (sourceFieldValue.equalsIgnoreCase(targetFieldValue)) {
-                        //printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
-                        // sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue, true);
-                        LOG.debug("{} and {} values match. source value: {} target value: {} ",
+                        log.debug("{} and {} values match. source value: {} target value: {} ",
                                 sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue);
                     } else {
                         printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
@@ -382,9 +371,7 @@ public class MigratedDataReconcileCli {
                     int targetFieldIntValue = Integer.parseInt(targetFieldValue);
 
                     if (sourceFieldIntValue == targetFieldIntValue) {
-                        //printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
-                        // sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue, true);
-                        LOG.debug("{} and {} values match. source value: {} target value: {} ",
+                        log.debug("{} and {} values match. source value: {} target value: {} ",
                                 sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue);
                     } else {
                         printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
@@ -418,7 +405,7 @@ public class MigratedDataReconcileCli {
                     }
 
                     if (sourceFieldBoolVal == targetFieldBoolVal) {
-                        LOG.debug("{} and {} values match. source value: {} target value: {} ",
+                        log.debug("{} and {} values match. source value: {} target value: {} ",
                                 sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue);
                     } else {
                         printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
@@ -443,7 +430,7 @@ public class MigratedDataReconcileCli {
                     }
 
                     if (sourceFieldStatusVal.equalsIgnoreCase(targetFieldValue)) {
-                        LOG.debug("{} and {} values match. source value: {} target value: {} ",
+                        log.debug("{} and {} values match. source value: {} target value: {} ",
                                 sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue);
                     } else {
                         printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
@@ -465,7 +452,7 @@ public class MigratedDataReconcileCli {
                             altSourceValue = "NO";
                         }
                         if (altSourceValue.equalsIgnoreCase(targetFieldValue)) {
-                            LOG.debug("{} and {} values match. source value: {} target value: {} ",
+                            log.debug("{} and {} values match. source value: {} target value: {} ",
                                     sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue);
                         } else {
                             printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
@@ -482,7 +469,7 @@ public class MigratedDataReconcileCli {
                     break;
 
                 default:
-                    LOG.warn(" Default .. Q type: {} not supported", sourceDataType);
+                    log.warn(" Default .. Q type: {} not supported", sourceDataType);
             }
         }
     }
@@ -554,7 +541,7 @@ public class MigratedDataReconcileCli {
             return;
         }
         if (selectedOptionsStr.equalsIgnoreCase(targetValue)) {
-            LOG.debug("Picklist {} and {} values match. Values: {} {} ",
+            log.debug("Picklist {} and {} values match. Values: {} {} ",
                     sourceFieldName, targetFieldName, selectedOptionsStr, targetValue);
         } else {
             printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
@@ -584,18 +571,16 @@ public class MigratedDataReconcileCli {
 
         //iterate through groups
         JsonArray groupEls = mappingElement.getAsJsonObject().get("groups").getAsJsonArray();
-        String selectedOptionsStr = null;
+
         List<String> selectedOptions = new ArrayList<>();
         for (JsonElement group : groupEls) {
             String groupName = getStringValueFromElement(group, "source_group_name");
             //get selected picklists options
             JsonElement optionsEl = group.getAsJsonObject().get("options");
-
             JsonArray options;
             if (optionsEl != null && !optionsEl.isJsonNull()) {
                 options = optionsEl.getAsJsonArray();
                 String optionName;
-                selectedOptionsStr = null;
                 for (JsonElement optionEl : options) {
                     String option = optionEl.getAsString();
                     optionName = groupName.concat(".").concat(option);
@@ -610,6 +595,7 @@ public class MigratedDataReconcileCli {
             }
         }
 
+        String selectedOptionsStr = null;
         if (CollectionUtils.isNotEmpty(selectedOptions)) {
             Collections.sort(selectedOptions);
             selectedOptionsStr = String.join(",", selectedOptions);
@@ -623,7 +609,7 @@ public class MigratedDataReconcileCli {
             return;
         }
         if (selectedOptionsStr.equalsIgnoreCase(sortedTargetValue)) {
-            LOG.debug("Picklist {} and {} values match. Values: {} {} ",
+            log.debug("Picklist {} and {} values match. Values: {} {} ",
                     sourceFieldName, targetFieldName, selectedOptionsStr, sortedTargetValue);
         } else {
             printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
@@ -642,7 +628,7 @@ public class MigratedDataReconcileCli {
             surveyDataMap = dataLoaderMain.loadSourceDataFile(data);
 
         } catch (JsonSyntaxException e) {
-            LOG.error("Exception while processing bucket file : {}", bucketFileName, e);
+            log.error("Exception while processing bucket file : {}", bucketFileName, e);
         }
         return surveyDataMap;
     }
@@ -661,7 +647,7 @@ public class MigratedDataReconcileCli {
         for (Blob file : bucket.list().iterateAll()) {
             participantData = new String(file.getContent());
             if (!file.getName().startsWith("Participant_")) {
-                LOG.info("Skipping bucket file: {}", file.getName());
+                log.info("Skipping bucket file: {}", file.getName());
                 continue;
                 //not participant data .. continue to next file.
             }
@@ -674,7 +660,7 @@ public class MigratedDataReconcileCli {
                     altpidBucketDataMap.put(altpid, surveyDataMap);
                 }
             } catch (JsonSyntaxException e) {
-                LOG.error("Exception while processing participant file: ", e);
+                log.error("Exception while processing participant file: ", e);
                 continue;
             }
         }

@@ -10,10 +10,9 @@ import java.sql.SQLTimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.json.HealthCheckResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -23,10 +22,8 @@ import spark.Route;
  * Returns a JSON body containing a result and its explanation
  * Example: curl localhost:5555/healthcheck
  */
+@Slf4j
 public class HealthCheckRoute implements Route {
-
-    private static final Logger LOG = LoggerFactory.getLogger(HealthCheckRoute.class);
-
     private static final String HC_QUERY = "SELECT 1 FROM umbrella";
     private static final Integer QUERY_TIMEOUT = 20;
     private static final String CUSTOM_PASSWORD_HEADER = "Host";
@@ -69,7 +66,7 @@ public class HealthCheckRoute implements Route {
     public HealthCheckResponse handle(Request request, Response response) throws Exception {
         String password = request.headers(CUSTOM_PASSWORD_HEADER);
         if (!this.password.equals(password)) {
-            LOG.warn("Healthcheck route denied with {} header password {}", CUSTOM_PASSWORD_HEADER, password);
+            log.warn("Healthcheck route denied with {} header password {}", CUSTOM_PASSWORD_HEADER, password);
             halt(401);
         }
 

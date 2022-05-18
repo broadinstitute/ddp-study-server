@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.route;
 
 import java.util.Optional;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
@@ -11,17 +12,12 @@ import org.broadinstitute.ddp.db.dao.JdbiMedicalProvider;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.util.ResponseUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
-
+@Slf4j
 public class DeleteMedicalProviderRoute implements Route {
-
-    private static final Logger LOG = LoggerFactory.getLogger(DeleteMedicalProviderRoute.class);
-
     @Override
     public Object handle(
             Request request, Response response
@@ -33,7 +29,7 @@ public class DeleteMedicalProviderRoute implements Route {
                 handle -> {
                     Optional<MedicalProviderDto> medicalProviderDtoOpt = handle.attach(JdbiMedicalProvider.class)
                             .getByGuid(medicalProviderGuid);
-                    if (!medicalProviderDtoOpt.isPresent()) {
+                    if (medicalProviderDtoOpt.isEmpty()) {
                         String errMsg = "A medical provider with GUID " + medicalProviderGuid + " you try to delete is not found";
                         throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.NOT_FOUND, errMsg));
                     }
@@ -41,7 +37,7 @@ public class DeleteMedicalProviderRoute implements Route {
                     int numDeleted = handle.attach(JdbiMedicalProvider.class).deleteByGuid(medicalProviderGuid);
                     if (numDeleted == 1) {
                         handle.attach(DataExportDao.class).queueDataSync(participantGuid, studyGuid);
-                        LOG.info(
+                        log.info(
                                 "The user {} successfully deleted a medical provider {} in the study {},"
                                         + " institutionName = {}, physicianName = {}, city = {}, state = {}",
                                 participantGuid, medicalProviderGuid, studyGuid,
@@ -49,7 +45,7 @@ public class DeleteMedicalProviderRoute implements Route {
                                 medicalProviderDto.getCity(), medicalProviderDto.getState()
                         );
                     } else {
-                        LOG.warn(
+                        log.warn(
                                 "The number of deleted medical providers ({}) deleted by user {}"
                                         + " in the study {} is not equal to 1",
                                 numDeleted, participantGuid, studyGuid

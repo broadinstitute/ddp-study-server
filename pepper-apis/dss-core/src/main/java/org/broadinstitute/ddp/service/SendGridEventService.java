@@ -1,19 +1,14 @@
 package org.broadinstitute.ddp.service;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.SendGridEventDao;
 import org.broadinstitute.ddp.json.sendgrid.SendGridEvent;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
 
+@Slf4j
 public class SendGridEventService {
-
-    private static final Logger LOG = getLogger(SendGridEventService.class);
-
     private final Gson gson;
 
     public SendGridEventService() {
@@ -26,8 +21,8 @@ public class SendGridEventService {
 
     public void logSendGridEvents(SendGridEvent[] sendGridEvents) {
         for (var event : sendGridEvents) {
-            if (LOG.isDebugEnabled() || LOG.isTraceEnabled()) {
-                LOG.debug("SendGrid-EVENT[{}]: email={}, timestamp={}, sg_event_id={}, reason={}, status={},\n"
+            if (log.isDebugEnabled() || log.isTraceEnabled()) {
+                log.debug("SendGrid-EVENT[{}]: email={}, timestamp={}, sg_event_id={}, reason={}, status={},\n"
                         + "\turl={}, ip={}, sg_message_id={}, response={}, attempt={}, smtp_id={}",
                         event.getEventType(),
                         event.getEmail(),
@@ -42,7 +37,7 @@ public class SendGridEventService {
                         event.getAttempt(),
                         event.getSmtpId());
             } else {
-                LOG.info("SendGrid-EVENT[{}]: timestamp={}, sg_event_id={}, reason={}, status={}",
+                log.info("SendGrid-EVENT[{}]: timestamp={}, sg_event_id={}, reason={}, status={}",
                         event.getEventType(),
                         event.getTimestamp(),
                         event.getSgEventId(),

@@ -686,6 +686,7 @@ Block:
       CONTENT: '#/Block.Content'
       GROUP: '#/Block.Grouped'
       QUESTION: '#/Block.Question'
+      TABULAR: '#/Block.Tabular'
   required:
     - blockType
     - blockGuid
@@ -861,6 +862,52 @@ Block.Content:
           type: string
         body:
           type: string
+Block.Tabular:
+  allOf:
+    - $ref: '#/Block'
+    - type: object
+      required:
+        - columnsCount
+        - headers
+        - content
+      properties:
+        blockType:
+          type: string
+          default: TABULAR
+          enum:
+            - TABULAR
+        numberOfColumns:
+          type: integer
+          minimum: 1
+          description: The total number of the tabular component columns.
+        headers:
+          type: array
+          items:
+            $ref: '#/Block.Tabular.Header'
+        content:
+          type: array
+          items:
+            $ref: '#/Block.Tabular.ContentRow'
+
+Block.Tabular.Header:
+  type: object
+  required:
+    - label
+    - columnSpan
+  properties:
+    label:
+      type: string
+    columnSpan:
+      type: integer
+      minimum: 1
+      default: 1
+      description: the number of columns this header should occupy in a tabular display
+
+Block.Tabular.ContentRow:
+  type: array
+  items:
+    $ref: '#/Question'
+
 Block.Visibility:
   type: object
   required:
@@ -1581,6 +1628,10 @@ Question:
       type: array
       items:
         $ref: '#/ValidationFailure'
+    columnSpan:
+      type: integer
+      minimum: 1
+      description: The number of columns this question should occupy in a tabular display
 Question.ActivityInstanceSelect:
   allOf:
     - $ref: '#/Question'
@@ -1628,12 +1679,19 @@ Question.Boolean:
       - answers
       - trueContent
       - falseContent
+      - renderMode
     properties:
       questionType:
         type: string
         default: BOOLEAN
         enum:
           - BOOLEAN
+      renderMode:
+        type: string
+        default: RADIO_BUTTONS
+        enum:
+          - CHECKBOX
+          - RADIO_BUTTONS
       trueContent:
         type: string
         example: 'Yes'
@@ -1690,6 +1748,9 @@ Question.Composite:
         type: array
         items:
           $ref: '#/Answer.Composite'
+      tabularSeparator:
+        type: string
+        description: a symbol/word to display between composite children in a tabular block
 Question.Date:
   allOf:
   - $ref: '#/Question'
@@ -2034,6 +2095,7 @@ Validation:
     mapping:
       AGE_RANGE: '#/Validation.AgeRange'
       COMPLETE: '#/Validation.Complete'
+      COMPARISON: '#/Validation.Comparison'
       DATE_RANGE: '#/Validation.DateRange'
       DAY_REQUIRED: '#/Validation.DayRequired'
       INT_RANGE: '#/Validation.IntRange'
@@ -2263,6 +2325,32 @@ Validation.UniqueValue:
           default: UNIQUE_VALUE
           enum:
             - UNIQUE_VALUE
+Validation.Comparison:
+  allOf:
+    - $ref: '#/Validation'
+    - type: object
+      required:
+        - reference_question_stable_id
+        - comparison_validation_type
+      description: compares the value of the given answer with the answer to the referenced question
+      properties:
+        rule:
+          type: string
+          default: COMPARISON
+          enum:
+            - COMPARISON
+        reference_question_stable_id:
+          type: string
+          format: guid
+        comparison_validation_type:
+          type: string
+          enum:
+            - LESS_OR_EQUAL
+            - GREATER_OR_EQUAL
+            - LESS
+            - GREATER
+            - EQUAL
+            - NOT_EQUAL
 AnnouncementModel:
   type: object
   required:

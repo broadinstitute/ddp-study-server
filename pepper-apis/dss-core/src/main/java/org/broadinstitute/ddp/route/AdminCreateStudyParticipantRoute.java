@@ -2,6 +2,8 @@ package org.broadinstitute.ddp.route;
 
 import java.time.Instant;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -32,20 +34,13 @@ import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
+@Slf4j
+@AllArgsConstructor
 public class AdminCreateStudyParticipantRoute extends ValidatedJsonInputRoute<CreateStudyParticipantPayload> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AdminCreateStudyParticipantRoute.class);
-
     private final TaskPublisher taskPublisher;
-
-    public AdminCreateStudyParticipantRoute(TaskPublisher taskPublisher) {
-        this.taskPublisher = taskPublisher;
-    }
 
     @Override
     protected int getValidationErrorStatus() {
@@ -58,14 +53,14 @@ public class AdminCreateStudyParticipantRoute extends ValidatedJsonInputRoute<Cr
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
         String invitationGuid = payload.getInvitationGuid();
 
-        LOG.info("Attempting to create participant in study {} with invitation {} by operator {}",
+        log.info("Attempting to create participant in study {} with invitation {} by operator {}",
                 studyGuid, invitationGuid, ddpAuth.getOperator());
 
         return TransactionWrapper.withTxn(handle -> {
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
             if (studyDto == null) {
                 String msg = "Could not find study with guid " + studyGuid;
-                LOG.warn(msg);
+                log.warn(msg);
                 throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.NOT_FOUND, msg));
             }
 
@@ -76,24 +71,24 @@ public class AdminCreateStudyParticipantRoute extends ValidatedJsonInputRoute<Cr
             InvitationDto invitation = invitationDao.findByInvitationGuid(studyDto.getId(), invitationGuid).orElse(null);
             if (invitation == null) {
                 String msg = "Could not find invitation " + invitationGuid;
-                LOG.warn(msg);
+                log.warn(msg);
                 throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.NOT_FOUND, msg));
             } else if (invitation.isVoid()) {
                 String msg = String.format("Invitation %s is voided", invitationGuid);
-                LOG.error(msg);
+                log.error(msg);
                 throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_INVITATION, msg));
             } else if (invitation.isAccepted()) {
                 String msg = String.format("Invitation %s has already been accepted", invitationGuid);
-                LOG.info(msg);
+                log.info(msg);
                 throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_INVITATION, msg));
             } else if (invitation.getUserId() != null) {
                 String msg = String.format("Invitation %s has already been assigned to another user", invitationGuid);
-                LOG.error(msg);
+                log.error(msg);
                 throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_INVITATION, msg));
             }
 
             User user = handle.attach(UserDao.class).createUser(tenantDto.getDomain(), ddpAuth.getClient(), null);
-            LOG.info("Created user with guid {}", user.getGuid());
+            log.info("Created user with guid {}", user.getGuid());
 
             long defaultLangId = new StudyLanguageCachedDao(handle)
                     .findLanguages(studyDto.getId())
@@ -108,14 +103,14 @@ public class AdminCreateStudyParticipantRoute extends ValidatedJsonInputRoute<Cr
                     .setPreferredLangId(defaultLangId)
                     .build();
             handle.attach(UserProfileDao.class).createProfile(profile);
-            LOG.info("Created profile for user {}", user.getGuid());
+            log.info("Created profile for user {}", user.getGuid());
 
             handle.attach(JdbiUserStudyEnrollment.class)
                     .changeUserStudyEnrollmentStatus(user.getGuid(), studyGuid, EnrollmentStatusType.REGISTERED);
-            LOG.info("Registered user {} with status {} in study {}", user.getGuid(), EnrollmentStatusType.REGISTERED, studyGuid);
+            log.info("Registered user {} with status {} in study {}", user.getGuid(), EnrollmentStatusType.REGISTERED, studyGuid);
 
             invitationDao.assignAcceptingUser(invitation.getInvitationId(), user.getId(), Instant.now());
-            LOG.info("Assigned invitation {} to user {}", invitationGuid, user.getGuid());
+            log.info("Assigned invitation {} to user {}", invitationGuid, user.getGuid());
 
             handle.attach(DataExportDao.class).queueDataSync(user.getId());
             taskPublisher.publishTask(

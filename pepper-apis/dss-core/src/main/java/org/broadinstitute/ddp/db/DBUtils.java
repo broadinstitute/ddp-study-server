@@ -8,18 +8,16 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.typesafe.config.Config;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.ddp.constants.SqlConstants.UserTable;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.GuidUtils;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public final class DBUtils {
-    private static Logger LOG = LoggerFactory.getLogger(DBUtils.class);
-
     /**
      * Client-provided stable codes must adhere to this pattern with one or more of the following characters: lowercase alpha, uppercase
      * alpha, numeric digit, underscore, and dash. Coincidentally, this is also what FireCloud allows as the column names.
@@ -128,7 +126,7 @@ public final class DBUtils {
             } catch (RuntimeException e) {
                 if (e.getCause() instanceof SQLIntegrityConstraintViolationException && e.getMessage().contains(guid)) {
                     if (--retriesLeft > 0) {
-                        LOG.warn("Duplicate guid found on insert. Retrying with new guid");
+                        log.warn("Duplicate guid found on insert. Retrying with new guid");
                     } else {
                         throw new DDPException("Ran out of retries", e);
                     }

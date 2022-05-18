@@ -15,6 +15,7 @@ import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.Participant;
+import org.broadinstitute.dsm.db.SmId;
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
@@ -84,6 +85,7 @@ public class ParticipantWrapper {
                     DsmAbstractQueryBuilder queryBuilder = new DsmAbstractQueryBuilder();
                     queryBuilder.setFilter(filters.get(source));
                     queryBuilder.setParser(parser);
+                    queryBuilder.setEsIndex(getEsParticipantIndex());
                     boolQueryBuilder.must(queryBuilder.build());
                 } else if (ElasticSearchUtil.ES.equals(source)) {
                     //source is not of any study-manager table so it must be ES
@@ -131,6 +133,11 @@ public class ParticipantWrapper {
 
                 List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();
                 List<Tissue> tissues = esDsm.getTissue();
+
+                List<SmId> smIds = esDsm.getSmId();
+
+                mapSmIdsToProperTissue(tissues, smIds);
+
                 mapTissueToProperOncHistoryDetail(oncHistoryDetails, tissues);
 
                 List<KitRequestShipping> kitRequestShipping = esDsm.getKitRequestShipping();
@@ -156,6 +163,26 @@ public class ParticipantWrapper {
         }
         fillParticipantWrapperDtosWithProxies(result, proxyGuids);
         return result;
+    }
+
+    private void mapSmIdsToProperTissue(List<Tissue> tissues, List<SmId> smIds) {
+        for (SmId smId : smIds) {
+            Long tissueId = smId.getTissueId();
+            tissues.stream()
+                    .filter(tissue -> tissue.getTissueId().equals(tissueId))
+                    .findFirst().ifPresent(tissue -> fillSmIdsByType(smId, tissue));
+        }
+    }
+
+    private void fillSmIdsByType(SmId smId, Tissue tissue) {
+        String smIdType = smId.getSmIdType();
+        if (SmId.HE.equals(smIdType)) {
+            tissue.getHeSMID().add(smId);
+        } else if (SmId.SCROLLS.equals(smIdType)) {
+            tissue.getScrollSMID().add(smId);
+        } else if (SmId.USS.equals(smIdType)) {
+            tissue.getUssSMID().add(smId);
+        }
     }
 
     //method to avoid ES request for each participant's proxy
