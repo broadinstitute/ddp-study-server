@@ -31,10 +31,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Data
-@TableName(name = DBConstants.DDP_ONC_HISTORY_DETAIL, alias = DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS,
-        primaryKey = DBConstants.ONC_HISTORY_DETAIL_ID, columnPrefix = "")
-@JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@TableName (name = DBConstants.DDP_ONC_HISTORY_DETAIL, alias = DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS, primaryKey = DBConstants.ONC_HISTORY_DETAIL_ID, columnPrefix = "")
+@JsonIgnoreProperties (ignoreUnknown = true)
+@JsonInclude (JsonInclude.Include.NON_NULL)
 public class OncHistoryDetail {
 
     public static final String SQL_SELECT_ONC_HISTORY_DETAIL =
@@ -61,12 +60,12 @@ public class OncHistoryDetail {
                     + "LEFT JOIN sm_id_type smt on (smt.sm_id_type_id = sm.sm_id_type_id ) " + "WHERE realm.instance_name = ? ";
     public static final String SQL_ORDER_BY =
             " ORDER BY p.ddp_participant_id, inst.ddp_institution_id, oD.onc_history_detail_id, t.tissue_id ASC";
-    public static final String SQL_SELECT_ONC_HISTORY_LAST_CHANGED = "SELECT oD.last_changed FROM ddp_institution inst "
-            + "LEFT JOIN ddp_participant as p on (p.participant_id = inst.participant_id) "
-            + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
-            + "LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id AND NOT m.deleted <=> 1) "
-            + "LEFT JOIN ddp_onc_history_detail as oD on (m.medical_record_id = oD.medical_record_id) "
-            + "WHERE p.participant_id = ?";
+    public static final String SQL_SELECT_ONC_HISTORY_LAST_CHANGED = "SELECT oD.last_changed FROM ddp_institution inst " +
+            "LEFT JOIN ddp_participant as p on (p.participant_id = inst.participant_id) " +
+            "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) " +
+            "LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id AND NOT m.deleted <=> 1) " +
+            "LEFT JOIN ddp_onc_history_detail as oD on (m.medical_record_id = oD.medical_record_id) " + "WHERE p.participant_id = ?";
+    public static final String SQL_SELECT_TISSUES_FOR_ONC_HISTORY = "SELECT * from ddp_tissue where onc_history_detail_id = ?";
     public static final String STATUS_REVIEW = "review";
     public static final String STATUS_SENT = "sent";
     public static final String STATUS_RECEIVED = "received";
@@ -90,106 +89,106 @@ public class OncHistoryDetail {
     private static final String SQL_SELECT_ONC_HISTORY =
             "SELECT onc_history_detail_id, medical_record_id, date_px, type_px, location_px, histology, accession_number, facility,"
                     + " phone, fax, notes, additional_values_json, request, fax_sent, fax_sent_by, fax_confirmed, fax_sent_2, "
-                    + "fax_sent_2_by, fax_confirmed_2, fax_sent_3, fax_sent_3_by, fax_confirmed_3,"
-                    + " tissue_received, gender, tissue_problem_option, destruction_policy FROM ddp_onc_history_detail "
-                    + "WHERE NOT (deleted <=> 1)";
+                    + "fax_sent_2_by, fax_confirmed_2, fax_sent_3, fax_sent_3_by, fax_confirmed_3," +
+                    " tissue_received, gender, tissue_problem_option, destruction_policy FROM ddp_onc_history_detail " +
+                    "WHERE NOT (deleted <=> 1)";
     private static final String SQL_INSERT_ONC_HISTORY_DETAIL =
             "INSERT INTO ddp_onc_history_detail SET medical_record_id = ?, request = ?, last_changed = ?, changed_by = ?";
-    @ColumnName(DBConstants.ONC_HISTORY_DETAIL_ID)
+    @ColumnName (DBConstants.ONC_HISTORY_DETAIL_ID)
     private Long oncHistoryDetailId;
 
-    @ColumnName(DBConstants.MEDICAL_RECORD_ID)
+    @ColumnName (DBConstants.MEDICAL_RECORD_ID)
     private Long medicalRecordId;
 
-    @ColumnName(DBConstants.DATE_PX)
-    @DbDateConversion(SqlDateConverter.STRING_DAY)
+    @ColumnName (DBConstants.DATE_PX)
+    @DbDateConversion (SqlDateConverter.STRING_DAY)
     private String datePx;
 
-    @ColumnName(DBConstants.TYPE_PX)
+    @ColumnName (DBConstants.TYPE_PX)
     private String typePx;
 
-    @ColumnName(DBConstants.LOCATION_PX)
+    @ColumnName (DBConstants.LOCATION_PX)
     private String locationPx;
 
-    @ColumnName(DBConstants.HISTOLOGY)
+    @ColumnName (DBConstants.HISTOLOGY)
     private String histology;
 
-    @ColumnName(DBConstants.ACCESSION_NUMBER)
+    @ColumnName (DBConstants.ACCESSION_NUMBER)
     private String accessionNumber;
 
-    @ColumnName(DBConstants.FACILITY)
+    @ColumnName (DBConstants.FACILITY)
     private String facility;
 
-    @ColumnName(DBConstants.PHONE)
+    @ColumnName (DBConstants.PHONE)
     private String phone;
 
-    @ColumnName(DBConstants.FAX)
+    @ColumnName (DBConstants.FAX)
     private String fax;
 
-    @ColumnName(DBConstants.NOTES)
+    @ColumnName (DBConstants.NOTES)
     private String notes;
 
-    @ColumnName(DBConstants.REQUEST)
+    @ColumnName (DBConstants.REQUEST)
     private String request;
 
-    @ColumnName(DBConstants.FAX_SENT)
-    @DbDateConversion(SqlDateConverter.STRING_DAY)
+    @ColumnName (DBConstants.FAX_SENT)
+    @DbDateConversion (SqlDateConverter.STRING_DAY)
     private String faxSent;
 
-    @ColumnName(DBConstants.FAX_SENT_BY)
+    @ColumnName (DBConstants.FAX_SENT_BY)
     private String faxSentBy;
 
-    @ColumnName(DBConstants.FAX_CONFIRMED)
-    @DbDateConversion(SqlDateConverter.STRING_DAY)
+    @ColumnName (DBConstants.FAX_CONFIRMED)
+    @DbDateConversion (SqlDateConverter.STRING_DAY)
     private String faxConfirmed;
 
-    @ColumnName(DBConstants.FAX_SENT_2)
-    @DbDateConversion(SqlDateConverter.STRING_DAY)
+    @ColumnName (DBConstants.FAX_SENT_2)
+    @DbDateConversion (SqlDateConverter.STRING_DAY)
     private String faxSent2;
 
-    @ColumnName(DBConstants.FAX_SENT_2_BY)
+    @ColumnName (DBConstants.FAX_SENT_2_BY)
     private String faxSent2By;
 
-    @ColumnName(DBConstants.FAX_CONFIRMED_2)
-    @DbDateConversion(SqlDateConverter.STRING_DAY)
+    @ColumnName (DBConstants.FAX_CONFIRMED_2)
+    @DbDateConversion (SqlDateConverter.STRING_DAY)
     private String faxConfirmed2;
 
-    @ColumnName(DBConstants.FAX_SENT_3)
-    @DbDateConversion(SqlDateConverter.STRING_DAY)
+    @ColumnName (DBConstants.FAX_SENT_3)
+    @DbDateConversion (SqlDateConverter.STRING_DAY)
     private String faxSent3;
 
-    @ColumnName(DBConstants.FAX_SENT_3_BY)
+    @ColumnName (DBConstants.FAX_SENT_3_BY)
     private String faxSent3By;
 
-    @ColumnName(DBConstants.FAX_CONFIRMED_3)
-    @DbDateConversion(SqlDateConverter.STRING_DAY)
+    @ColumnName (DBConstants.FAX_CONFIRMED_3)
+    @DbDateConversion (SqlDateConverter.STRING_DAY)
     private String faxConfirmed3;
 
-    @ColumnName(DBConstants.TISSUE_RECEIVED)
-    @DbDateConversion(SqlDateConverter.STRING_DAY)
+    @ColumnName (DBConstants.TISSUE_RECEIVED)
+    @DbDateConversion (SqlDateConverter.STRING_DAY)
     private String tissueReceived;
 
-    @ColumnName(DBConstants.TISSUE_PROBLEM_OPTION)
+    @ColumnName (DBConstants.TISSUE_PROBLEM_OPTION)
     private String tissueProblemOption;
 
-    @ColumnName(DBConstants.GENDER)
+    @ColumnName (DBConstants.GENDER)
     private String gender;
 
-    @ColumnName(DBConstants.ADDITIONAL_VALUES_JSON)
-    @JsonProperty("dynamicFields")
-    @SerializedName("dynamicFields")
+    @ColumnName (DBConstants.ADDITIONAL_VALUES_JSON)
+    @JsonProperty ("dynamicFields")
+    @SerializedName ("dynamicFields")
     private String additionalValuesJson;
-    @ColumnName(DBConstants.DESTRUCTION_POLICY)
+    @ColumnName (DBConstants.DESTRUCTION_POLICY)
     private String destructionPolicy;
     private String changedBy;
-    @ColumnName(DBConstants.DELETED)
+    @ColumnName (DBConstants.DELETED)
     private boolean deleted;
-    @ColumnName(DBConstants.UNABLE_OBTAIN_TISSUE)
+    @ColumnName (DBConstants.UNABLE_OBTAIN_TISSUE)
     private boolean unableObtainTissue;
     private String participantId;
     private String ddpParticipantId;
     private List<Tissue> tissues;
-    @ColumnName(DBConstants.DDP_INSTANCE_ID)
+    @ColumnName (DBConstants.DDP_INSTANCE_ID)
     private long ddpInstanceId;
 
     public OncHistoryDetail() {
@@ -322,6 +321,46 @@ public class OncHistoryDetail {
         return (OncHistoryDetail) results.resultValue;
     }
 
+    public static OncHistoryDetail getRandomOncHistoryDetail(@NonNull String oncHistoryDetailId, String realm) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            OncHistoryDetail oncHistoryDetail = null;
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ONC_HISTORY_DETAIL + QueryExtension.BY_ONC_HISTORY_DETAIL_ID)) {
+                stmt.setString(1, realm);
+                stmt.setString(2, oncHistoryDetailId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        oncHistoryDetail = getOncHistoryDetail(rs);
+                    }
+
+                }
+                if (oncHistoryDetail != null) {
+                    ArrayList<Tissue> tissues = new ArrayList<>();
+                    try (PreparedStatement statementTissue = conn.prepareStatement(SQL_SELECT_TISSUES_FOR_ONC_HISTORY)) {
+                        statementTissue.setString(1, oncHistoryDetailId);
+                        try (ResultSet rsTissue = stmt.executeQuery()) {
+                            while (rsTissue.next()) {
+                                tissues.add(Tissue.getTissue(rsTissue));
+                            }
+                            oncHistoryDetail.setTissues(tissues);
+                        }
+                    }
+                }
+                dbVals.resultValue = oncHistoryDetail;
+
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Error getting oncHistoryDetails w/ id " + oncHistoryDetailId, results.resultException);
+        }
+
+        return (OncHistoryDetail) results.resultValue;
+    }
+
     public static Map<String, List<OncHistoryDetail>> getOncHistoryDetails(@NonNull String realm) {
         return getOncHistoryDetails(realm, null);
     }
@@ -332,8 +371,8 @@ public class OncHistoryDetail {
         Map<Long, Tissue> tissues = new HashMap<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(
-                    DBUtil.getFinalQuery(SQL_SELECT_ONC_HISTORY_DETAIL, queryAddition) + SQL_ORDER_BY)) {
+            try (PreparedStatement stmt = conn
+                    .prepareStatement(DBUtil.getFinalQuery(SQL_SELECT_ONC_HISTORY_DETAIL, queryAddition) + SQL_ORDER_BY)) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
                     Map<Long, OncHistoryDetail> oncHistoryMap = new HashMap<>();
@@ -417,8 +456,8 @@ public class OncHistoryDetail {
                     }
                 } else {
                     throw new RuntimeException(
-                            "Error adding new oncHistoryDetail for medicalRecord w/ id " + medicalRecordId + " it was updating " + result
-                                    + " rows");
+                            "Error adding new oncHistoryDetail for medicalRecord w/ id " + medicalRecordId + " it was updating " + result +
+                                    " rows");
                 }
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
@@ -434,7 +473,7 @@ public class OncHistoryDetail {
         }
     }
 
-    @JsonProperty("dynamicFields")
+    @JsonProperty ("dynamicFields")
     public Map<String, Object> getDynamicFields() {
         return ObjectMapperSingleton.readValue(additionalValuesJson, new TypeReference<Map<String, Object>>() {
         });
