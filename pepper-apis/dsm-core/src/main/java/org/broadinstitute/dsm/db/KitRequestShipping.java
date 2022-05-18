@@ -49,6 +49,7 @@ import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.model.ddp.KitDetail;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
+import org.broadinstitute.dsm.model.filter.prefilter.HasDdpInstanceId;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -69,7 +70,7 @@ import org.slf4j.LoggerFactory;
         primaryKey = DBConstants.DSM_KIT_REQUEST_ID, columnPrefix = "")
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class KitRequestShipping extends KitRequest {
+public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
     public static final String SQL_SELECT_KIT_REQUEST_NEW =
             "SELECT kt.kit_type_name, realm.instance_name, request.bsp_collaborator_participant_id, request.bsp_collaborator_sample_id, "
@@ -283,6 +284,10 @@ public class KitRequestShipping extends KitRequest {
     private long ddpInstanceId;
 
     public KitRequestShipping() {
+    }
+
+    public KitRequestShipping(long ddpInstanceId) {
+        this.ddpInstanceId = ddpInstanceId;
     }
 
     public KitRequestShipping(String collaboratorParticipantId, String kitTypeName, Long dsmKitRequestId, Long scanDate, Boolean error,
@@ -1634,5 +1639,10 @@ public class KitRequestShipping extends KitRequest {
             }
         }
         return getParticipantId();
+    }
+
+    @Override
+    public long extractDdpInstanceId() {
+        return getDdpInstanceId();
     }
 }

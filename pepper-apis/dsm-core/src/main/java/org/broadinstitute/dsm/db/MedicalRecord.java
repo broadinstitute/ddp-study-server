@@ -24,6 +24,7 @@ import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.model.FollowUp;
+import org.broadinstitute.dsm.model.filter.prefilter.HasDdpInstanceId;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
 import org.broadinstitute.dsm.statics.RequestParameter;
@@ -41,7 +42,7 @@ import org.slf4j.LoggerFactory;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class MedicalRecord {
+public class MedicalRecord implements HasDdpInstanceId {
 
     public static final String SQL_SELECT_MEDICAL_RECORD = "SELECT p.ddp_participant_id, p.ddp_instance_id, "
             + "inst.institution_id, inst.ddp_institution_id, inst.type, inst.participant_id, "
@@ -249,6 +250,10 @@ public class MedicalRecord {
     public MedicalRecord() {
     }
 
+    public MedicalRecord(long ddpInstanceId) {
+        this.ddpInstanceId = ddpInstanceId;
+    }
+
     public MedicalRecord(long medicalRecordId, long institutionId, String ddpInstitutionId, String type, String name, String contact,
                          String phone, String fax, String faxSent, String faxSentBy, String faxConfirmed, String faxSent2,
                          String faxSent2By, String faxConfirmed2, String faxSent3, String faxSent3By, String faxConfirmed3,
@@ -437,5 +442,10 @@ public class MedicalRecord {
     public Map<String, Object> getDynamicFields() {
         return ObjectMapperSingleton.readValue(additionalValuesJson, new TypeReference<Map<String, Object>>() {
         });
+    }
+
+    @Override
+    public long extractDdpInstanceId() {
+        return getDdpInstanceId();
     }
 }
