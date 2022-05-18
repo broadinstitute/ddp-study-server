@@ -65,7 +65,7 @@ public class OncHistoryDetail {
             "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) " +
             "LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id AND NOT m.deleted <=> 1) " +
             "LEFT JOIN ddp_onc_history_detail as oD on (m.medical_record_id = oD.medical_record_id) " + "WHERE p.participant_id = ?";
-    public static final String SQL_SELECT_TISSUES_FOR_ONC_HISTORY = "SELECT * from ddp_tissue where onc_history_detail_id = ?";
+
     public static final String STATUS_REVIEW = "review";
     public static final String STATUS_SENT = "sent";
     public static final String STATUS_RECEIVED = "received";
@@ -308,46 +308,6 @@ public class OncHistoryDetail {
                         dbVals.resultValue = getOncHistoryDetail(rs);
                     }
                 }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Error getting oncHistoryDetails w/ id " + oncHistoryDetailId, results.resultException);
-        }
-
-        return (OncHistoryDetail) results.resultValue;
-    }
-
-    public static OncHistoryDetail getRandomOncHistoryDetail(@NonNull String oncHistoryDetailId, String realm) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            OncHistoryDetail oncHistoryDetail = null;
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ONC_HISTORY_DETAIL + QueryExtension.BY_ONC_HISTORY_DETAIL_ID)) {
-                stmt.setString(1, realm);
-                stmt.setString(2, oncHistoryDetailId);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        oncHistoryDetail = getOncHistoryDetail(rs);
-                    }
-
-                }
-                if (oncHistoryDetail != null) {
-                    ArrayList<Tissue> tissues = new ArrayList<>();
-                    try (PreparedStatement statementTissue = conn.prepareStatement(SQL_SELECT_TISSUES_FOR_ONC_HISTORY)) {
-                        statementTissue.setString(1, oncHistoryDetailId);
-                        try (ResultSet rsTissue = stmt.executeQuery()) {
-                            while (rsTissue.next()) {
-                                tissues.add(Tissue.getTissue(rsTissue));
-                            }
-                            oncHistoryDetail.setTissues(tissues);
-                        }
-                    }
-                }
-                dbVals.resultValue = oncHistoryDetail;
-
             } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }

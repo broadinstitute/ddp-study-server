@@ -12,6 +12,7 @@ import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.SmId;
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
+import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
 import org.broadinstitute.dsm.db.dao.kit.BSPDummyKitDao;
 import org.broadinstitute.dsm.db.structure.DBElement;
@@ -38,6 +39,12 @@ public class CreateClinicalDummyKitRoute implements Route {
     private final String ffpeScroll = "ffpe-scroll";
     private final String ffpeSection = "ffpe-section";
     private int realm;
+    private OncHistoryDetailDaoImpl oncHistoryDetailDaoImpl;
+
+    public CreateClinicalDummyKitRoute(OncHistoryDetailDaoImpl oncHistoryDetailDao) {
+        this.oncHistoryDetailDaoImpl = oncHistoryDetailDao;
+    }
+
 
     public static void addCollaboratorSampleId(String tissueId, DDPInstance ddpInstance, String ddpParticipantId, String shortId) {
         String collaboratorParticipantId = KitRequestShipping
@@ -129,7 +136,7 @@ public class CreateClinicalDummyKitRoute implements Route {
                     throw new RuntimeException("couldn't find a valid onc history to create dummy");
                 }
                 List<Tissue> tissueIds =
-                        OncHistoryDetail.getRandomOncHistoryDetail(randomOncHistoryDetailId, ddpInstance.getName()).getTissues();
+                        oncHistoryDetailDaoImpl.getRandomOncHistoryDetail(randomOncHistoryDetailId, ddpInstance.getName()).getTissues();
                 String tissueId;
 
                 if (tissueIds.isEmpty()) {
