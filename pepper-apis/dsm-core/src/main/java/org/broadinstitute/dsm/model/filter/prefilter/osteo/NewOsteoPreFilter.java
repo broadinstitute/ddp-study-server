@@ -9,14 +9,18 @@ import org.broadinstitute.dsm.model.filter.prefilter.PreFilter;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class NewOsteoPreFilter extends BasePreFilter {
 
     public static final String CONSENT_ASSENT = "CONSENT_ASSENT";
 
+    private final Predicate<HasDdpInstanceId> matchByDdpInstanceId;
+
     protected NewOsteoPreFilter(ElasticSearchParticipantDto elasticSearchParticipantDto, DDPInstanceDto ddpInstanceDto) {
         super(elasticSearchParticipantDto, ddpInstanceDto);
+        this.matchByDdpInstanceId = hasDdpInstanceId -> hasDdpInstanceId.extractDdpInstanceId() == ddpInstanceDto.getDdpInstanceId();
     }
 
     @Override
@@ -25,15 +29,15 @@ public class NewOsteoPreFilter extends BasePreFilter {
         elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
 
             esDsm.setMedicalRecord(esDsm.getMedicalRecord().stream()
-                    .filter(this::filterByDdpInstanceId)
+                    .filter(matchByDdpInstanceId)
                     .collect(Collectors.toList()));
 
             esDsm.setOncHistoryDetail(esDsm.getOncHistoryDetail().stream()
-                    .filter(this::filterByDdpInstanceId)
+                    .filter(matchByDdpInstanceId)
                     .collect(Collectors.toList()));
 
             esDsm.setKitRequestShipping(esDsm.getKitRequestShipping().stream()
-                    .filter(this::filterByDdpInstanceId)
+                    .filter(matchByDdpInstanceId)
                     .collect(Collectors.toList()));
 
         });
@@ -60,9 +64,5 @@ public class NewOsteoPreFilter extends BasePreFilter {
 
     public static PreFilter of(ElasticSearchParticipantDto elasticSearchParticipantDto, DDPInstanceDto ddpInstanceDto) {
         return new NewOsteoPreFilter(elasticSearchParticipantDto, ddpInstanceDto);
-    }
-
-    private boolean filterByDdpInstanceId(HasDdpInstanceId hasDdpInstanceId) {
-        return hasDdpInstanceId.extractDdpInstanceId() == ddpInstanceDto.getDdpInstanceId();
     }
 }
