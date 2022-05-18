@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.model.filter.prefilter.osteo;
 
-import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
@@ -15,6 +14,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 
@@ -23,7 +23,11 @@ public class NewOsteoPreFilterTest {
     @Test
     public void filter() {
 
-        var esDsm = new ESDsm();
+        int ddpInstanceId = 1;
+        String newOsteoInstanceName = "osteo2";
+        String consentActivityCode = "CONSENT_ASSENT";
+
+        ESDsm esDsm = new ESDsm();
 
         esDsm.setMedicalRecord(new ArrayList<>(List.of(
                 new MedicalRecord(1),
@@ -40,26 +44,36 @@ public class NewOsteoPreFilterTest {
                 new KitRequestShipping(1),
                 new KitRequestShipping(1))));
 
-        var esActivities = new ArrayList<>(List.of(
-                new ESActivities("CONSENT", 12345L),
+        List<ESActivities> esActivities = new ArrayList<>(List.of(
+                new ESActivities(consentActivityCode, 12345L),
                 new ESActivities("PREQUAL", 23456L),
                 new ESActivities("ABOUT_YOU", 11111L)
         ));
 
-        var esDto = new ElasticSearchParticipantDto.Builder()
+        ElasticSearchParticipantDto esDto = new ElasticSearchParticipantDto.Builder()
                 .withActivities(esActivities)
                 .withDsm(esDsm)
                 .build();
 
-        var ddpInstanceDto = new DDPInstanceDto.Builder()
-                .withDdpInstanceId(1)
+        DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder()
+                .withInstanceName(newOsteoInstanceName)
+                .withDdpInstanceId(ddpInstanceId)
                 .build();
 
         Optional<PreFilter> preFilter = PreFilter.fromPayload(PreFilterPayload.of(esDto, ddpInstanceDto));
         preFilter.ifPresent(PreFilter::filter);
 
-        assertEquals(esDsm.getMedicalRecord().size(), 2);
-        assertEquals(esDsm.getOn.size(), 2);
+        assertEquals(2, esDsm.getMedicalRecord().size());
+        assertEquals(List.of(1L, 1L), esDsm.getMedicalRecord().stream().map(MedicalRecord::getDdpInstanceId).collect(Collectors.toList()));
+
+        assertEquals(1, esDsm.getOncHistoryDetail().size());
+        assertEquals(List.of(1L), esDsm.getOncHistoryDetail().stream().map(OncHistoryDetail::getDdpInstanceId).collect(Collectors.toList()));
+
+        assertEquals(3, esDsm.getKitRequestShipping().size());
+        assertEquals(List.of(1L, 1L, 1L), esDsm.getKitRequestShipping().stream().map(KitRequestShipping::getDdpInstanceId).collect(Collectors.toList()));
+
+        assertEquals(1, esDto.getActivities().size());
+        assertEquals("PREQUAL", esDto.getActivities().stream().map(ESActivities::getActivityCode).findFirst().orElse("SomeOtherActivityCode"));
 
     }
 }
