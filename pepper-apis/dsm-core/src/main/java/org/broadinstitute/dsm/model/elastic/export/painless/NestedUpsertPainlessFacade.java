@@ -13,18 +13,14 @@ import org.elasticsearch.index.query.QueryBuilder;
 public class NestedUpsertPainlessFacade extends UpsertPainlessFacade {
 
     NestedUpsertPainlessFacade(Object source, DDPInstanceDto ddpInstanceDto,
-                               String uniqueIdentifier, String fieldName, Object fieldValue) {
-        super(source, ddpInstanceDto, uniqueIdentifier, fieldName, fieldValue);
+                               String uniqueIdentifier, String fieldName, Object fieldValue, ScriptBuilder scriptBuilder) {
+        super(source, ddpInstanceDto, uniqueIdentifier, fieldName, fieldValue, scriptBuilder);
     }
 
     NestedUpsertPainlessFacade(Object source, DDPInstanceDto ddpInstanceDto, String uniqueIdentifier,
-                               String fieldName, Object fieldValue, TypeExtractor<Map<String, String>> typeExtractor) {
-        super(source, ddpInstanceDto, uniqueIdentifier, fieldName, fieldValue, typeExtractor);
-    }
-
-    @Override
-    protected ScriptBuilder buildScriptBuilder() {
-        return new NestedScriptBuilder(generator.getPropertyName(), uniqueIdentifier);
+                               String fieldName, Object fieldValue, TypeExtractor<Map<String, String>> typeExtractor,
+                               ScriptBuilder scriptBuilder) {
+        super(source, ddpInstanceDto, uniqueIdentifier, fieldName, fieldValue, typeExtractor, scriptBuilder);
     }
 
     @Override

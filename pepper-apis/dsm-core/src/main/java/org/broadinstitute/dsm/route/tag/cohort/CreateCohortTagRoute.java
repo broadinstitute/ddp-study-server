@@ -8,6 +8,7 @@ import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
+import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
@@ -36,7 +37,7 @@ public class CreateCohortTagRoute extends RequestHandler  {
         UpsertPainlessFacade.of(
                 DBConstants.COHORT_ALIAS, cohortTagPayload, ddpInstanceDto,
                 ESObjectConstants.DSM_COHORT_TAG_ID, ESObjectConstants.DOC_ID,
-                getGuidIfLegacyAltPid(ddpInstanceDto, cohortTagPayload)).export();
+                getGuidIfLegacyAltPid(ddpInstanceDto, cohortTagPayload), new PutToNestedScriptBuilder()).export();
         return ObjectMapperSingleton.writeValueAsString(justCreatedCohortTagId);
     }
 
