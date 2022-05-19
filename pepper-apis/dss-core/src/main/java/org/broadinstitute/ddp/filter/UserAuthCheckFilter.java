@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.filter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -64,6 +65,27 @@ public class UserAuthCheckFilter implements Filter {
             return;
         }
 
+
+        boolean canAccess = canAccess(request, ddpAuth);
+        int retries = 3;
+        if (!canAccess) {
+            do {
+                try {
+                    TimeUnit.SECONDS.sleep(1);
+                    canAccess = canAccess(request, RouteUtil.computeDDPAuth(request));
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            } while (!canAccess && --retries > 0);
+        }
+
+        if (!canAccess) {
+            throw ResponseUtil.haltError(HttpStatus.SC_UNAUTHORIZED,
+                    new ApiError(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, "Authorization cannot be determined"));
+        }
+    }
+
+    private boolean canAccess(Request request, DDPAuth ddpAuth) {
         String requestedUserGuid = request.params(PathParam.USER_GUID);
         String path = request.pathInfo();
         boolean canAccess = false;
@@ -92,11 +114,7 @@ public class UserAuthCheckFilter implements Filter {
                 || pathMatcher.isStudyStatisticsRoute(path)) {
             canAccess = ddpAuth.isActive();
         }
-
-        if (!canAccess) {
-            throw ResponseUtil.haltError(HttpStatus.SC_UNAUTHORIZED,
-                    new ApiError(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, "Authorization cannot be determined"));
-        }
+        return canAccess;
     }
 
     private void handleTemporaryUser(Request request) {
