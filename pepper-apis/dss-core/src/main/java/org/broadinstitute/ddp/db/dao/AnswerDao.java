@@ -519,8 +519,8 @@ public interface AnswerDao extends SqlObject {
                                 view.getColumn("fa_upload_guid", String.class),
                                 view.getColumn("fa_file_name", String.class),
                                 view.getColumn("fa_file_size", Long.class));
+                        ((FileAnswer) answer).getValue().add(info);
                     }
-                    ((FileAnswer) answer).getValue().add(info);
                     break;
                 case NUMERIC:
                     answer = new NumericAnswer(answerId, questionStableId, answerGuid,
