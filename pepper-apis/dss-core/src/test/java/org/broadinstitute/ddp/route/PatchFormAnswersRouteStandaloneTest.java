@@ -1917,7 +1917,7 @@ public class PatchFormAnswersRouteStandaloneTest {
         answer = TransactionWrapper.withTxn(handle ->
                 new AnswerCachedDao(handle).findAnswerByGuid(guid));
         assertTrue(answer.isPresent());
-        assertNull("answer value should be cleared", ((List<?>) answer.get().getValue()).get(0));
+        assertTrue("cleared answer should have empty list for value", ((List<?>) answer.get().getValue()).isEmpty());
     }
 
     @Test
