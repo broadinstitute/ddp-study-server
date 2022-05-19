@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.db.dto.kit;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,37 +26,36 @@ import org.slf4j.LoggerFactory;
 public class ClinicalKitDto {
 
     private static final Logger logger = LoggerFactory.getLogger(ClinicalKitDto.class);
-    @SerializedName("participant_id")
+    @SerializedName ("participant_id")
     String collaboratorParticipantId;
-    @SerializedName("sample_id")
+    @SerializedName ("sample_id")
     String sampleId;
-    @SerializedName("sample_collection")
+    @SerializedName ("sample_collection")
     String sampleCollection;
-    @SerializedName("material_type")
+    @SerializedName ("material_type")
     String materialType;
-    @SerializedName("vessel_type")
+    @SerializedName ("vessel_type")
     String vesselType;
-    @SerializedName("first_name")
+    @SerializedName ("first_name")
     String firstName;
-    @SerializedName("last_name")
+    @SerializedName ("last_name")
     String lastName;
-    @SerializedName("date_of_birth")
+    @SerializedName ("date_of_birth")
     String dateOfBirth;
-    @SerializedName("sample_type")
+    @SerializedName ("sample_type")
     String sampleType;
-    @SerializedName("gender")
+    @SerializedName ("gender")
     String gender;
-    @SerializedName("accession_number")
+    @SerializedName ("accession_number")
     String accessionNumber;
     @SerializedName ("sample_collection_date")
     String collectionDate;
-    @SerializedName("kit_label")
+    @SerializedName ("kit_label")
     String mfBarcode;
 
     public ClinicalKitDto(String collaboratorParticipantId, String sampleId, String sampleCollection, String materialType,
-                          String vesselType,
-                          String firstName, String lastName, String dateOfBirth, String sampleType, String gender, String accessionNumber,
-                          String mfBarcode) {
+                          String vesselType, String firstName, String lastName, String dateOfBirth, String sampleType, String gender,
+                          String accessionNumber, String mfBarcode) {
         this.collaboratorParticipantId = collaboratorParticipantId;
         this.sampleId = sampleId;
         this.sampleCollection = sampleCollection;
@@ -108,14 +109,23 @@ public class ClinicalKitDto {
         }
 
         try {
-            this.setDateOfBirth(maybeParticipantESDataByParticipantId.get().getDsm().map(ESDsm::getDateOfBirth).orElse(""));
+            String dob = maybeParticipantESDataByParticipantId.get().getDsm().map(ESDsm::getDateOfBirth).orElse("");
+            if (StringUtils.isNotBlank(dob)) {
+                DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+                DateTimeFormatter dateFormatterNew = DateTimeFormatter.ofPattern("MM/dd/uuuu");
+                // string to LocalDateTime
+                LocalDate ldateTime = LocalDate.parse(dob, dateFormatter);
+
+                dob = dateFormatterNew.format(ldateTime);
+            }
+            this.setDateOfBirth(dob);
             this.setFirstName(maybeParticipantESDataByParticipantId.get().getProfile().map(ESProfile::getFirstName).orElse(""));
             this.setLastName(maybeParticipantESDataByParticipantId.get().getProfile().map(ESProfile::getLastName).orElse(""));
             this.setGender(getParticipantGender(maybeParticipantESDataByParticipantId.get(), ddpInstance.getName()));
             String shortId = maybeParticipantESDataByParticipantId.get().getProfile().map(ESProfile::getHruid).orElse("");
-            String collaboratorParticipantId =
-                    KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
-                            ddpInstance.isMigratedDDP(),
+            String collaboratorParticipantId = KitRequestShipping
+                    .getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(), ddpInstance.isMigratedDDP(),
                             ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId, shortId, null);
             this.setCollaboratorParticipantId(collaboratorParticipantId);
         } catch (Exception e) {
@@ -140,17 +150,15 @@ public class ClinicalKitDto {
     }
 
     private String getGenderFromActivities(List<ESActivities> activities) {
-        Optional<ESActivities> maybeAboutYouActivity = activities.stream()
-                .filter(activity -> DDPActivityConstants.ACTIVITY_ABOUT_YOU.equals(activity.getActivityCode()))
-                .findFirst();
+        Optional<ESActivities> maybeAboutYouActivity =
+                activities.stream().filter(activity -> DDPActivityConstants.ACTIVITY_ABOUT_YOU.equals(activity.getActivityCode()))
+                        .findFirst();
         return (String) maybeAboutYouActivity.map(aboutYou -> {
             List<Map<String, Object>> questionsAnswers = aboutYou.getQuestionsAnswers();
             Optional<Map<String, Object>> maybeGenderQuestionAnswer = questionsAnswers.stream()
                     .filter(q -> DDPActivityConstants.ABOUT_YOU_ACTIVITY_GENDER.equals(q.get(DDPActivityConstants.DDP_ACTIVITY_STABLE_ID)))
                     .findFirst();
-            return maybeGenderQuestionAnswer
-                    .map(answer -> answer.get(DDPActivityConstants.ACTIVITY_QUESTION_ANSWER))
-                    .orElse("U");
+            return maybeGenderQuestionAnswer.map(answer -> answer.get(DDPActivityConstants.ACTIVITY_QUESTION_ANSWER)).orElse("U");
         }).orElse("U");
     }
 }
