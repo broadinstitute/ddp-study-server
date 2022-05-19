@@ -95,19 +95,7 @@ import org.broadinstitute.ddp.model.activity.definition.validation.IntRangeRuleD
 import org.broadinstitute.ddp.model.activity.definition.validation.DecimalRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.LengthRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
-import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
-import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
-import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
-import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DecimalAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
-import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
-import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.*;
 import org.broadinstitute.ddp.model.activity.instance.question.CompositeQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
@@ -1899,7 +1887,7 @@ public class PatchFormAnswersRouteStandaloneTest {
         var answer = TransactionWrapper.withTxn(handle ->
                 new AnswerCachedDao(handle).findAnswerByGuid(guid));
         assertTrue(answer.isPresent());
-        assertNull("created answer should have null for value", (List<?>) answer.get().getValue());
+        assertTrue("created answer should have empty list for value", ((List<?>) answer.get().getValue()).isEmpty());
 
         // Set a value then clear it.
         data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, guid, gson.toJsonTree(List.of(upload1.getGuid())))));
