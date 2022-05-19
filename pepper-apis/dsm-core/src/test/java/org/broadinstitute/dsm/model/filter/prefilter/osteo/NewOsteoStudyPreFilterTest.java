@@ -7,8 +7,8 @@ import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.elastic.ESActivities;
 import org.broadinstitute.dsm.model.elastic.ESDsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
-import org.broadinstitute.dsm.model.filter.prefilter.PreFilter;
-import org.broadinstitute.dsm.model.filter.prefilter.PreFilterPayload;
+import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter;
+import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilterPayload;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 
-public class NewOsteoPreFilterTest {
+public class NewOsteoStudyPreFilterTest {
 
     @Test
     public void filter() {
@@ -60,8 +60,8 @@ public class NewOsteoPreFilterTest {
                 .withDdpInstanceId(ddpInstanceId)
                 .build();
 
-        Optional<PreFilter> preFilter = PreFilter.fromPayload(PreFilterPayload.of(esDto, ddpInstanceDto));
-        preFilter.ifPresent(PreFilter::filter);
+        Optional<StudyPreFilter> preFilter = StudyPreFilter.fromPayload(StudyPreFilterPayload.of(esDto, ddpInstanceDto));
+        preFilter.ifPresent(StudyPreFilter::filter);
 
         assertEquals(2, esDsm.getMedicalRecord().size());
         assertEquals(List.of(1L, 1L), esDsm.getMedicalRecord().stream().map(MedicalRecord::getDdpInstanceId).collect(Collectors.toList()));

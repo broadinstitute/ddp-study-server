@@ -3,12 +3,12 @@ package org.broadinstitute.dsm.model.filter.prefilter;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 
-public class PreFilterPayload {
+public abstract class BaseStudyPreFilter implements StudyPreFilter {
 
-    private final ElasticSearchParticipantDto elasticSearchParticipantDto;
-    private final DDPInstanceDto ddpInstanceDto;
+    protected final ElasticSearchParticipantDto elasticSearchParticipantDto;
+    protected final DDPInstanceDto ddpInstanceDto;
 
-    private PreFilterPayload(ElasticSearchParticipantDto elasticSearchParticipantDto, DDPInstanceDto ddpInstanceDto) {
+    protected BaseStudyPreFilter(ElasticSearchParticipantDto elasticSearchParticipantDto, DDPInstanceDto ddpInstanceDto) {
         this.elasticSearchParticipantDto = elasticSearchParticipantDto;
         this.ddpInstanceDto = ddpInstanceDto;
     }
@@ -19,9 +19,5 @@ public class PreFilterPayload {
 
     public DDPInstanceDto getDdpInstanceDto() {
         return ddpInstanceDto;
-    }
-
-    public static PreFilterPayload of(ElasticSearchParticipantDto elasticSearchParticipantDto, DDPInstanceDto ddpInstanceDto) {
-        return new PreFilterPayload(elasticSearchParticipantDto, ddpInstanceDto);
     }
 }

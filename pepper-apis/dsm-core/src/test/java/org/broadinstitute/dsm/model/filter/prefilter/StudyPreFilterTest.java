@@ -10,7 +10,7 @@ import java.util.Optional;
 
 import static org.junit.Assert.assertTrue;
 
-public class PreFilterTest {
+public class StudyPreFilterTest {
 
     @Test
     public void fromPayload() {
@@ -23,8 +23,8 @@ public class PreFilterTest {
 
        ElasticSearchParticipantDto esDto = new ElasticSearchParticipantDto.Builder().build();
 
-       Optional<PreFilter> maybeNewOsteoPreFilter = PreFilter.fromPayload(PreFilterPayload.of(esDto, ddpInstanceDto));
-       Optional<PreFilter> maybeEmpty = PreFilter.fromPayload(PreFilterPayload.of(esDto, new DDPInstanceDto.Builder().build()));
+       Optional<StudyPreFilter> maybeNewOsteoPreFilter = StudyPreFilter.fromPayload(StudyPreFilterPayload.of(esDto, ddpInstanceDto));
+       Optional<StudyPreFilter> maybeEmpty = StudyPreFilter.fromPayload(StudyPreFilterPayload.of(esDto, new DDPInstanceDto.Builder().build()));
 
        assertTrue(maybeNewOsteoPreFilter.get() instanceof NewOsteoPreFilter);
 

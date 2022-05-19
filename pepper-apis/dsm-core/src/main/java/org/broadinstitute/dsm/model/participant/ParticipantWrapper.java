@@ -24,8 +24,8 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchable;
 import org.broadinstitute.dsm.model.elastic.sort.Sort;
 import org.broadinstitute.dsm.model.elastic.sort.SortBy;
-import org.broadinstitute.dsm.model.filter.prefilter.PreFilter;
-import org.broadinstitute.dsm.model.filter.prefilter.PreFilterPayload;
+import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter;
+import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilterPayload;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -127,8 +127,8 @@ public class ParticipantWrapper {
                     participant.setReviewed(oncHistory.getReviewed());
                 });
 
-                Optional<PreFilter> maybePreFilter = PreFilter.fromPayload(PreFilterPayload.of(elasticSearchParticipantDto, ddpInstanceDto));
-                maybePreFilter.ifPresent(PreFilter::filter);
+                Optional<StudyPreFilter> maybePreFilter = StudyPreFilter.fromPayload(StudyPreFilterPayload.of(elasticSearchParticipantDto, ddpInstanceDto));
+                maybePreFilter.ifPresent(StudyPreFilter::filter);
 
                 List<MedicalRecord> medicalRecord = esDsm.getMedicalRecord();
                 List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();

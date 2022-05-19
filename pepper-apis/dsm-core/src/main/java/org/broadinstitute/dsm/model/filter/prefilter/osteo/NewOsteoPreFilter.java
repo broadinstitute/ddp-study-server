@@ -3,16 +3,16 @@ package org.broadinstitute.dsm.model.filter.prefilter.osteo;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.elastic.ESActivities;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
-import org.broadinstitute.dsm.model.filter.prefilter.BasePreFilter;
+import org.broadinstitute.dsm.model.filter.prefilter.BaseStudyPreFilter;
 import org.broadinstitute.dsm.model.filter.prefilter.HasDdpInstanceId;
-import org.broadinstitute.dsm.model.filter.prefilter.PreFilter;
+import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class NewOsteoPreFilter extends BasePreFilter {
+public class NewOsteoPreFilter extends BaseStudyPreFilter {
 
     public static final String CONSENT_ASSENT = "CONSENT_ASSENT";
 
@@ -49,11 +49,11 @@ public class NewOsteoPreFilter extends BasePreFilter {
 
         maybeConsentLastUpdatedAt.ifPresent(consentLastUpdatedAt -> {
 
-            List<ESActivities> activitiesToDisplay = elasticSearchParticipantDto.getActivities().stream()
+            List<ESActivities> filteredActivities = elasticSearchParticipantDto.getActivities().stream()
                     .filter(activity -> isActivityUpdatedAfterConsent(consentLastUpdatedAt, activity))
                     .collect(Collectors.toList());
 
-            elasticSearchParticipantDto.setActivities(activitiesToDisplay);
+            elasticSearchParticipantDto.setActivities(filteredActivities);
 
         });
     }
@@ -62,7 +62,7 @@ public class NewOsteoPreFilter extends BasePreFilter {
         return activity.getLastUpdatedAt() > consentLastUpdatedAt;
     }
 
-    public static PreFilter of(ElasticSearchParticipantDto elasticSearchParticipantDto, DDPInstanceDto ddpInstanceDto) {
+    public static StudyPreFilter of(ElasticSearchParticipantDto elasticSearchParticipantDto, DDPInstanceDto ddpInstanceDto) {
         return new NewOsteoPreFilter(elasticSearchParticipantDto, ddpInstanceDto);
     }
 }

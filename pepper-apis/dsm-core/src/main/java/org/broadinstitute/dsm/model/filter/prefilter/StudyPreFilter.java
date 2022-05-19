@@ -5,14 +5,14 @@ import org.broadinstitute.dsm.model.filter.prefilter.osteo.NewOsteoPreFilter;
 
 import java.util.Optional;
 
-public interface PreFilter {
+public interface StudyPreFilter {
 
     String NEW_OSTEO_INSTANCE_NAME = "osteo2";
 
-    static Optional<PreFilter> fromPayload(PreFilterPayload payload) {
-        DDPInstanceDto ddpInstanceDto = payload.getDdpInstanceDto();
+    static Optional<StudyPreFilter> fromPayload(StudyPreFilterPayload studyPreFilterPayload) {
+        DDPInstanceDto ddpInstanceDto = studyPreFilterPayload.getDdpInstanceDto();
         if (NEW_OSTEO_INSTANCE_NAME.equals(ddpInstanceDto.getInstanceName())) {
-            return Optional.of(NewOsteoPreFilter.of(payload.getElasticSearchParticipantDto(), ddpInstanceDto));
+            return Optional.of(NewOsteoPreFilter.of(studyPreFilterPayload.getElasticSearchParticipantDto(), ddpInstanceDto));
         }
         return Optional.empty();
     }
