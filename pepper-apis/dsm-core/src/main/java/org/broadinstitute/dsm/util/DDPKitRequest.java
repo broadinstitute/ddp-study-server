@@ -85,7 +85,8 @@ public class DDPKitRequest {
                                                                             latestKit.getInstanceID(), latestKit.isMigrated(),
                                                                             latestKit.getCollaboratorIdPrefix(),
                                                                             (String) profile.get("guid"), (String) profile.get("hruid"),
-                                                                            kitRequestSettings.getCollaboratorParticipantLengthOverwrite());
+                                                                            kitRequestSettings.getCollaboratorParticipantLengthOverwrite(),
+                                                                            ddpInstance);
 
                                                             if (kitHasSubKits) {
                                                                 List<KitSubKits> subKits = kitRequestSettings.getSubKits();
