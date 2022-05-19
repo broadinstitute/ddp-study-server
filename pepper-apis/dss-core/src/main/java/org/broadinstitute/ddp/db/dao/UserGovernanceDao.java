@@ -6,6 +6,7 @@ import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.cache.ModelChangeType;
+import org.broadinstitute.ddp.cache.entryprocessor.AddGovernanceEntryProcessor;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.model.governance.Governance;
@@ -33,7 +34,11 @@ public interface UserGovernanceDao extends SqlObject {
     default Governance createGovernedUser(long clientId, long proxyUserId, String alias) {
         User governedUser = getUserDao().createUser(clientId, null);
         long governanceId = getUserGovernanceSql().insertGovernance(proxyUserId, governedUser.getId(), alias, true);
-        CacheService.getInstance().modelUpdated(ModelChangeType.USER, getHandle(), proxyUserId);
+        findGovernanceById(governanceId).ifPresent(governance -> {
+            CacheService.getInstance().applyUpdate(ModelChangeType.USER, proxyUserId,
+                    new AddGovernanceEntryProcessor(), governance);
+        });
+        //CacheService.getInstance().modelUpdated(ModelChangeType.USER, getHandle(), proxyUserId);
         return findGovernanceById(governanceId).orElseThrow(() -> new DaoException("Could not find governance with id " + governanceId));
     }
 

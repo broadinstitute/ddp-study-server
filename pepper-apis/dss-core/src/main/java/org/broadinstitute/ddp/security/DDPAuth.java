@@ -169,4 +169,12 @@ public class DDPAuth implements Serializable {
 
         return Locale.forLanguageTag(preferredLanguage);
     }
+
+    public void addParticipantAccess(ParticipantAccess participantAccess) {
+        if (userPermissions == null) {
+            return;
+        }
+
+        userPermissions.addParticipantAccess(participantAccess);
+    }
 }

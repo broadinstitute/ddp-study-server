@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.model.governance;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,7 +10,7 @@ import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 /**
  * Represents the governance relationship of a user and their proxy, along with the studies they have granted to the proxy.
  */
-public class Governance {
+public class Governance implements Serializable {
 
     private long id;
     private String alias;

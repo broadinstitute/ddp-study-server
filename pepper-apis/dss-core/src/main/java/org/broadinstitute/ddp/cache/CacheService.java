@@ -4,12 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
@@ -17,12 +12,17 @@ import javax.cache.Caching;
 import javax.cache.configuration.MutableConfiguration;
 import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
+import javax.cache.processor.EntryProcessor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.ConfigFile;
+import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.governance.Governance;
+import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.redisson.Redisson;
 import org.redisson.api.LocalCachedMapOptions;
 import org.redisson.api.RLocalCachedMap;
@@ -185,6 +185,18 @@ public class CacheService {
             newListOfCacheNames.add(cacheName);
         }
         modelChangeTypeToCacheName.put(evictionModelChangeType, newListOfCacheNames);
+    }
+
+    public <R> void applyUpdate(ModelChangeType changeType, long id,
+                                EntryProcessor<Long, DDPAuth, R> processor, Governance governance) {
+        findCacheNameByEventType(changeType).forEach(cacheName -> {
+            final Cache cache = cacheManager.getCache(cacheName);
+            if (cache == null) {
+                return;
+            }
+
+            cache.invoke(id, processor, governance);
+        });
     }
 
     public void modelUpdated(ModelChangeType changeType, Handle handle, long id) {

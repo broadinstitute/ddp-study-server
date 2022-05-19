@@ -160,4 +160,8 @@ public class UserPermissions implements Serializable {
     public boolean canUpdateLoginData(String requestedUserGuid) {
         return operatorGuid.equals(requestedUserGuid);
     }
+
+    public void addParticipantAccess(ParticipantAccess participantAccess) {
+        this.participantAccesses.add(participantAccess);
+    }
 }
