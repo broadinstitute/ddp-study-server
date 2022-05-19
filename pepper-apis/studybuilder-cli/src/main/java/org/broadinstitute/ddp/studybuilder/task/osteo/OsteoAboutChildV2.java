@@ -217,7 +217,7 @@ public class OsteoAboutChildV2 implements CustomTask {
         @SqlUpdate("update form_section__block set form_section_id = :formSectionId where block_id = :blockId")
         void updateFormSectionBlock(@Bind("formSectionId") long formSectionId, @Bind("blockId") long blockId);
 
-        @SqlUpdate("update study_activity set is_write_once = true where study_activity_id = :activityId")
+        @SqlUpdate("update study_activity set is_write_once = false where study_activity_id = :activityId")
         int updateActivityWriteOnceToTrue(@Bind("activityId") long activityId);
     }
 }
