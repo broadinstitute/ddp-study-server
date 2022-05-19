@@ -1899,7 +1899,7 @@ public class PatchFormAnswersRouteStandaloneTest {
         var answer = TransactionWrapper.withTxn(handle ->
                 new AnswerCachedDao(handle).findAnswerByGuid(guid));
         assertTrue(answer.isPresent());
-        assertNull("created answer should have null for value", ((List<?>) answer.get().getValue()).get(0));
+        assertNull("created answer should have null for value", (List<?>) answer.get().getValue());
 
         // Set a value then clear it.
         data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, guid, gson.toJsonTree(List.of(upload1.getGuid())))));

@@ -43,9 +43,6 @@ public class FileQuestionFormatStrategy implements ResponseFormatStrategy<FileQu
 
     @Override
     public Map<String, String> collect(FileQuestionDef question, FileAnswer answer) {
-        if (answer.getValue() != null) {
-            answer.getValue().removeAll(Collections.singleton(null));
-        }
         Map<String, String> record = new HashMap<>();
         String uploadGuid = answer.getValue() != null
                 ? answer.getValue().stream().map(FileInfo::getUploadGuid).collect(Collectors.joining(",")) : "";
