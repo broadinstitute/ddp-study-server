@@ -1050,6 +1050,9 @@ public class DataExporter {
             return new DateQuestionRecord(question.getStableId(), value);
         } else if (answer.getQuestionType() == QuestionType.FILE) {
             List<FileInfo> fileInfos = ((FileAnswer) answer).getValue();
+            if (fileInfos != null) {
+                fileInfos.removeAll(Collections.singleton(null));
+            }
             List<Long> uploadIds = fileInfos == null
                     ? Collections.emptyList() :
                     fileInfos.stream().map(FileInfo::getUploadId).collect(Collectors.toList());
