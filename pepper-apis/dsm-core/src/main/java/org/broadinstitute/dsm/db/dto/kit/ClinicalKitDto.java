@@ -116,7 +116,7 @@ public class ClinicalKitDto {
             String collaboratorParticipantId =
                     KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
                             ddpInstance.isMigratedDDP(),
-                            ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId, shortId, null);
+                            ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId, shortId, null, ddpInstance);
             this.setCollaboratorParticipantId(collaboratorParticipantId);
         } catch (Exception e) {
             throw new RuntimeException("Participant doesn't exist / is not valid for kit " + e.getMessage());

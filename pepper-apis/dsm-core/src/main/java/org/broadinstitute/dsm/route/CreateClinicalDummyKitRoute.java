@@ -9,8 +9,8 @@ import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.KitType;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
-import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.SmId;
+import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
 import org.broadinstitute.dsm.db.dao.kit.BSPDummyKitDao;
@@ -69,7 +69,8 @@ public class CreateClinicalDummyKitRoute implements Route {
                 String participantCollaboratorId =
                         KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
                                 ddpInstance.isMigratedDDP(), ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId,
-                                maybeParticipantByParticipantId.get().getProfile().map(ESProfile::getHruid).orElseThrow(), null);
+                                maybeParticipantByParticipantId.get().getProfile().map(ESProfile::getHruid).orElseThrow(), null,
+                                ddpInstance);
                 String collaboratorSampleId =
                         KitRequestShipping.getCollaboratorSampleId(desiredKitType.getKitId(), participantCollaboratorId,
                                 desiredKitType.getName());

@@ -225,7 +225,7 @@ public class KitRequestShipping extends KitRequest {
 
     private String collaboratorParticipantId;
 
-    @ColumnName (DBConstants.BSP_COLLABORATOR_SAMPLE_ID)
+    @ColumnName(DBConstants.BSP_COLLABORATOR_SAMPLE_ID)
     private String bspCollaboratorSampleId;
     private String easypostAddressId;
     private String realm;
@@ -370,14 +370,14 @@ public class KitRequestShipping extends KitRequest {
                         rs.getString(DBConstants.DSM_TRACKING_URL_RETURN), (Long) rs.getObject(DBConstants.DSM_SCAN_DATE),
                         rs.getBoolean(DBConstants.ERROR), rs.getString(DBConstants.MESSAGE),
                         (Long) rs.getObject(DBConstants.DSM_RECEIVE_DATE),
-                        rs.getString(DBConstants.EASYPOST_ADDRESS_ID_TO), (Long)rs.getObject(DBConstants.DSM_DEACTIVATED_DATE),
+                        rs.getString(DBConstants.EASYPOST_ADDRESS_ID_TO), (Long) rs.getObject(DBConstants.DSM_DEACTIVATED_DATE),
                         rs.getString(DBConstants.DEACTIVATION_REASON), rs.getString(DBConstants.KIT_LABEL),
                         rs.getBoolean(DBConstants.EXPRESS), rs.getString(DBConstants.EASYPOST_TO_ID),
-                        (Long)rs.getObject(DBConstants.LABEL_TRIGGERED_DATE), rs.getString(DBConstants.EASYPOST_SHIPMENT_STATUS),
+                        (Long) rs.getObject(DBConstants.LABEL_TRIGGERED_DATE), rs.getString(DBConstants.EASYPOST_SHIPMENT_STATUS),
                         rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), rs.getBoolean(DBConstants.NO_RETURN),
                         rs.getString(DBConstants.EXTERNAL_ORDER_STATUS), rs.getString(DBConstants.CREATED_BY),
                         rs.getString(DBConstants.KIT_TEST_RESULT), rs.getString(DBConstants.UPS_TRACKING_STATUS),
-                        rs.getString(DBConstants.UPS_RETURN_STATUS), (Long)rs.getObject(DBConstants.EXTERNAL_ORDER_DATE),
+                        rs.getString(DBConstants.UPS_RETURN_STATUS), (Long) rs.getObject(DBConstants.EXTERNAL_ORDER_DATE),
                         rs.getBoolean(DBConstants.CARE_EVOLVE), rs.getString(DBConstants.UPLOAD_REASON), null, null, null);
         if (DBUtil.columnExists(rs, DBConstants.UPS_STATUS_DESCRIPTION) && StringUtils.isNotBlank(
                 rs.getString(DBConstants.UPS_STATUS_DESCRIPTION))) {
@@ -758,8 +758,8 @@ public class KitRequestShipping extends KitRequest {
                 UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
                         ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId).export();
             } catch (Exception e) {
-                logger.error(String.format("Error updating kit request shipping deactivate reason with dsm kit request id: %s in " +
-                        "ElasticSearch", dsmKitRequestId));
+                logger.error(String.format("Error updating kit request shipping deactivate reason with dsm kit request id: %s in "
+                        + "ElasticSearch", dsmKitRequestId));
                 e.printStackTrace();
             }
 
@@ -898,8 +898,8 @@ public class KitRequestShipping extends KitRequest {
 
             try {
                 UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
-                    ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DOC_ID,
-                    Exportable.getParticipantGuid(ddpParticipantId, ddpInstance.getParticipantIndexES())).export();
+                        ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DOC_ID,
+                        Exportable.getParticipantGuid(ddpParticipantId, ddpInstance.getParticipantIndexES())).export();
             } catch (Exception e) {
                 logger.error(String.format("Error inserting newly created kit request shipping with dsm kit request id: %s in "
                         + "ElasticSearch", kitRequestShipping.getDsmKitRequestId()));
@@ -1379,8 +1379,9 @@ public class KitRequestShipping extends KitRequest {
         KitRequestShipping kitRequestShipping = new KitRequestShipping(dsmKitRequestId, null, null, null, null, message);
 
         try {
-            UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_REQUEST_ID,
-                    ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId).export();
+            UpsertPainlessFacade
+                    .of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_REQUEST_ID,
+                            ESObjectConstants.DSM_KIT_REQUEST_ID, dsmKitRequestId).export();
         } catch (Exception e) {
             logger.error(String.format("Error updating error message for kit request shipping with dsm kit request id: %s in ElasticSearch",
                     dsmKitRequestId));
@@ -1506,12 +1507,12 @@ public class KitRequestShipping extends KitRequest {
     //move that method to somewhere else...
     public static String getCollaboratorParticipantId(String baseUrl, String instanceId, boolean isMigrated, String collaboratorPrefix,
                                                       String ddpParticipantId, String shortId,
-                                                      String collaboratorParticipantLengthOverwrite) {
+                                                      String collaboratorParticipantLengthOverwrite, DDPInstance ddpInstance) {
         String collaboratorParticipantId = null;
         String id = null;
         boolean noGeneratedID = false;
         //assumption: Gen2 participantId contains "." & Pepper participantId contains NOT "."
-        if (isMigrated && ddpParticipantId.contains(".") && baseUrl != null) {
+        if (isMigrated && ddpParticipantId.contains(".") && baseUrl != null && !ddpInstance.isHasRole()) {
             //gen2 migrated pt -> check if already has any samples
             collaboratorParticipantId = KitUtil.getKitCollaboratorId(ddpParticipantId, instanceId);
             if (StringUtils.isBlank(collaboratorParticipantId)) {
@@ -1636,3 +1637,4 @@ public class KitRequestShipping extends KitRequest {
         return getParticipantId();
     }
 }
+

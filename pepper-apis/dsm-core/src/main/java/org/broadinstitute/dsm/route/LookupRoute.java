@@ -108,11 +108,11 @@ public class LookupRoute extends RequestHandler {
                     if (StringUtils.isBlank(realm)) {
                         throw new RuntimeException("Error getting collaboratorId, realm is missing ");
                     }
-                    DDPInstance ddpInstance = DDPInstance.getDDPInstance(realm);
+                    DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.ADD_FAMILY_MEMBER);
                     String collaboratorParticipantId =
                             KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
                                     ddpInstance.isMigratedDDP(),
-                                    ddpInstance.getCollaboratorIdPrefix(), value, shortId, "4"); //4 was length of CMI in Gen2
+                                    ddpInstance.getCollaboratorIdPrefix(), value, shortId, "4", ddpInstance); //4 was length of CMI in Gen2
                     if (StringUtils.isNotBlank(collaboratorParticipantId)) {
                         //if participant has already a sample collaborator participant id, return just the participant id
                         List<LookupResponse> responseList = new ArrayList<>();

@@ -41,7 +41,7 @@ public class CreateBSPDummyKitRoute implements Route {
             String participantCollaboratorId =
                     KitRequestShipping.getCollaboratorParticipantId(mockDdpInstance.getBaseUrl(), mockDdpInstance.getDdpInstanceId(),
                             mockDdpInstance.isMigratedDDP(),
-                            mockDdpInstance.getCollaboratorIdPrefix(), ddpParticipantId, "", null);
+                            mockDdpInstance.getCollaboratorIdPrefix(), ddpParticipantId, "", null, mockDdpInstance);
             String collaboratorSampleId =
                     KitRequestShipping.getCollaboratorSampleId(kitTypeId, participantCollaboratorId, DUMMY_KIT_TYPE_NAME);
             if (ddpParticipantId != null) {

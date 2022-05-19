@@ -145,7 +145,7 @@ public class KitUploadRoute extends RequestHandler {
                     return "Text file was empty or couldn't be parsed to the agreed format";
                 }
 
-                DDPInstance ddpInstance = DDPInstance.getDDPInstance(realm);
+                DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.ADD_FAMILY_MEMBER);
                 InstanceSettings instanceSettings = new InstanceSettings();
                 InstanceSettingsDto instanceSettingsDto = instanceSettings.getInstanceSettings(realm);
                 StringBuilder specialMessage = new StringBuilder();
@@ -245,7 +245,7 @@ public class KitUploadRoute extends RequestHandler {
                 String collaboratorParticipantId =
                         KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
                                 ddpInstance.isMigratedDDP(), ddpInstance.getCollaboratorIdPrefix(), kit.getParticipantId(),
-                                kit.getShortId(), kitRequestSettings.getCollaboratorParticipantLengthOverwrite());
+                                kit.getShortId(), kitRequestSettings.getCollaboratorParticipantLengthOverwrite(), ddpInstance);
                 //subkits is currently only used by test boston
                 if (kitHasSubKits) {
                     List<KitSubKits> subKits = kitRequestSettings.getSubKits();
