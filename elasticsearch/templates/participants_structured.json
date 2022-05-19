@@ -1933,7 +1933,7 @@
                 "cohortTagId": {
                   "type": "keyword"
                 },
-                "tagName": {
+                "cohortTagName": {
                   "type": "text",
                   "fields": {
                     "keyword": {
