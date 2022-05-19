@@ -187,16 +187,13 @@ public class CacheService {
         modelChangeTypeToCacheName.put(evictionModelChangeType, newListOfCacheNames);
     }
 
-    public <R> void applyUpdate(ModelChangeType changeType, long id,
-                                EntryProcessor<Long, DDPAuth, R> processor, Governance governance) {
-        findCacheNameByEventType(changeType).forEach(cacheName -> {
-            final Cache cache = cacheManager.getCache(cacheName);
-            if (cache == null) {
-                return;
-            }
+    public <R> void applyUpdate(long id, EntryProcessor<Long, DDPAuth, R> processor, Governance governance) {
+        final Cache cache = cacheManager.getCache("jwtToDDPAuth");
+        if (cache == null) {
+            return;
+        }
 
-            cache.invoke(id, processor, governance);
-        });
+        cache.invoke(id, processor, governance);
     }
 
     public void modelUpdated(ModelChangeType changeType, Handle handle, long id) {

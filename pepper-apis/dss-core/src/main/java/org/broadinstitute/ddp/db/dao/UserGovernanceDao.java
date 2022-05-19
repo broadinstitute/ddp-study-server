@@ -35,8 +35,7 @@ public interface UserGovernanceDao extends SqlObject {
         User governedUser = getUserDao().createUser(clientId, null);
         long governanceId = getUserGovernanceSql().insertGovernance(proxyUserId, governedUser.getId(), alias, true);
         findGovernanceById(governanceId).ifPresent(governance -> {
-            CacheService.getInstance().applyUpdate(ModelChangeType.USER, proxyUserId,
-                    new AddGovernanceEntryProcessor(), governance);
+            CacheService.getInstance().applyUpdate(proxyUserId, new AddGovernanceEntryProcessor(), governance);
         });
         //CacheService.getInstance().modelUpdated(ModelChangeType.USER, getHandle(), proxyUserId);
         return findGovernanceById(governanceId).orElseThrow(() -> new DaoException("Could not find governance with id " + governanceId));
