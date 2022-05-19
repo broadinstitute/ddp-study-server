@@ -109,12 +109,18 @@ public class AbstractionRoute extends RequestHandler {
                                                             JsonObject j = array.get(i).getAsJsonObject();
                                                             Set<Map.Entry<String, JsonElement>> entries = j.entrySet();
                                                             for (Map.Entry<String, JsonElement> entry : entries) {
-                                                                String test = entry.getValue().getAsString();
-                                                                if (StringUtils.isNotBlank(test)
-                                                                        && test.indexOf(AbstractionUtil.DATE_STRING) > -1) {
-                                                                    if (!AbstractionUtil.isDateStringSet(test)) {
-                                                                        submit = false;
-                                                                        break;
+                                                                if (entry.getValue() == null) {
+                                                                    submit = false;
+                                                                    break;
+                                                                }
+                                                                if (!entry.getValue().isJsonObject() && !entry.getValue().isJsonNull()) {
+                                                                    String test = entry.getValue().getAsString();
+                                                                    if (StringUtils.isNotBlank(test)
+                                                                            && test.indexOf(AbstractionUtil.DATE_STRING) > -1) {
+                                                                        if (!AbstractionUtil.isDateStringSet(test)) {
+                                                                            submit = false;
+                                                                            break;
+                                                                        }
                                                                     }
                                                                 }
                                                             }

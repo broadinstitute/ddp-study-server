@@ -54,7 +54,7 @@ public class I18nTranslationService {
         if (i18nTranslation != null) {
             log.info("i18n-translations for StudyGuid={}, isoLangCode={} are FOUND.", studyGuid, isoLangCode);
             translations = I18nTranslationStore.INSTANCE.putTranslations(
-                    studyGuid, isoLangCode, jsonToProperties(i18nTranslation.getTanslationDoc()));
+                    studyGuid, isoLangCode, jsonToProperties(i18nTranslation.getTranslationDoc()));
         } else {
             log.warn("i18n-translations for StudyGuid={}, isoLangCode={} are NOT FOUND."
                     + " A default mechanism of translations lookup will be used.", studyGuid, isoLangCode);
