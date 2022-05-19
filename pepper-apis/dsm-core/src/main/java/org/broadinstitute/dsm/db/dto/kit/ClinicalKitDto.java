@@ -19,6 +19,7 @@ import org.broadinstitute.dsm.model.elastic.ESDsm;
 import org.broadinstitute.dsm.model.elastic.ESProfile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.broadinstitute.dsm.util.SystemUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,13 +112,10 @@ public class ClinicalKitDto {
         try {
             String dob = maybeParticipantESDataByParticipantId.get().getDsm().map(ESDsm::getDateOfBirth).orElse("");
             if (StringUtils.isNotBlank(dob)) {
-                DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-                DateTimeFormatter dateFormatterNew = DateTimeFormatter.ofPattern("MM/dd/uuuu");
-                // string to LocalDateTime
-                LocalDate ldateTime = LocalDate.parse(dob, dateFormatter);
-
-                dob = dateFormatterNew.format(ldateTime);
+                DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(SystemUtil.DATE_FORMAT);
+                DateTimeFormatter dateFormatterNew = DateTimeFormatter.ofPattern(SystemUtil.US_DATE_FORMAT);
+                LocalDate localDate = LocalDate.parse(dob, dateFormatter);
+                dob = dateFormatterNew.format(localDate);
             }
             this.setDateOfBirth(dob);
             this.setFirstName(maybeParticipantESDataByParticipantId.get().getProfile().map(ESProfile::getFirstName).orElse(""));
