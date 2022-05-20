@@ -18,17 +18,17 @@ import org.slf4j.LoggerFactory;
 
 public class BSPKitDao implements Dao<BSPKitDto> {
 
-    private final String sqlUpdateKitReceived = "UPDATE ddp_kit kit INNER JOIN( SELECT dsm_kit_request_id, MAX(dsm_kit_id) AS kit_id "
-            + "FROM ddp_kit GROUP BY dsm_kit_request_id) groupedKit ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id "
-            + "AND kit.dsm_kit_id = groupedKit.kit_id SET receive_date = ?, receive_by = ? "
-            + "WHERE kit.receive_date IS NULL AND kit.kit_label = ?";
+    private final String SQL_UPDATE_KIT_RECEIVED = "UPDATE ddp_kit kit INNER JOIN( SELECT dsm_kit_request_id, MAX(dsm_kit_id) AS kit_id " +
+            "FROM ddp_kit GROUP BY dsm_kit_request_id) groupedKit ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id " +
+            "AND kit.dsm_kit_id = groupedKit.kit_id SET receive_date = ?, receive_by = ? " +
+            "WHERE kit.receive_date IS NULL AND kit.kit_label = ?";
     private final String getBspResponseInformationForKit =
-            "select  realm.instance_name,  realm.base_url,  request.bsp_collaborator_sample_id, "
-                    + "        request.bsp_collaborator_participant_id,  realm.bsp_group,  realm.bsp_collection, "
-                    + "        realm.bsp_organism,  realm.notification_recipients,  request.ddp_participant_id, "
-                    + "        kt.kit_type_name,  kt.bsp_material_type,  kt.bsp_receptacle_type, "
-                    + "        (select count(role.name)      from ddp_instance realm2, "
-                    + "    ddp_instance_role inRol,      instance_role role " + "    where realm2.ddp_instance_id = inRol.ddp_instance_id "
+            "select  realm.instance_name,  realm.base_url,  request.bsp_collaborator_sample_id, " +
+                    "        request.bsp_collaborator_participant_id,  realm.bsp_group,  realm.bsp_collection, " +
+                    "        realm.bsp_organism,  realm.notification_recipients,  request.ddp_participant_id, " +
+                    "        kt.kit_type_name,  kt.bsp_material_type,  kt.bsp_receptacle_type, " +
+                    "        (select count(role.name)      from ddp_instance realm2, " +
+                    "    ddp_instance_role inRol,      instance_role role " + "    where realm2.ddp_instance_id = inRol.ddp_instance_id "
                     + "    and inRol.instance_role_id = role.instance_role_id      and role.name = ? "
                     + "    and realm2.ddp_instance_id = realm.ddp_instance_id) as 'has_role', "
                     + "        ex.ddp_participant_exit_id,  kit.deactivated_date  from "
@@ -99,7 +99,7 @@ public class BSPKitDao implements Dao<BSPKitDto> {
     public void setKitReceivedAndTriggerDDP(String kitLabel, boolean triggerDDP, BSPKitDto bspKitDto, String receiver) {
         TransactionWrapper.inTransaction(conn -> {
             boolean firstTimeReceived = false;
-            try (PreparedStatement stmt = conn.prepareStatement(sqlUpdateKitReceived)) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_KIT_RECEIVED)) {
                 stmt.setLong(1, System.currentTimeMillis());
                 stmt.setString(2, receiver);
                 stmt.setString(3, kitLabel);
