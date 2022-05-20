@@ -72,5 +72,4 @@ public class OsteoNewActivities implements CustomTask {
             log.info("Activity configuration {} has been added in study {}", activity, STUDY_GUID);
         }
     }
-
 }

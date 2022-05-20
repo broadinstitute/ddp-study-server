@@ -36,6 +36,8 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -294,8 +296,7 @@ public class StudyDataLoaderMain {
             log.info("Loaded bucket Data altpid count: {} ", bucketData.size());
             String firstAltpid = bucketData.keySet().iterator().next();
             Map<String, JsonElement> surveyData = bucketData.get(firstAltpid);
-            log.info("first altpid : {} .. surveyName: {} ",
-                    firstAltpid, surveyData.keySet().iterator().next(), surveyData.values().size());
+            log.info("first altpid : {} .. surveyName: {}", firstAltpid, surveyData.keySet().iterator().next());
         } else if (hasGoogleBucket) {
             dataLoaderMain.serviceAccountFile = cmd.getOptionValue("gsa");
             dataLoaderMain.googleBucketName = cmd.getOptionValue("gb");
@@ -603,17 +604,17 @@ public class StudyDataLoaderMain {
 
         TransactionWrapper.useTxn(handle -> {
             String userGuid = null;
-            Boolean hasAboutYou = false;
-            Boolean hasConsent = false;
-            Boolean hasTissueConsent = false;
-            Boolean hasBloodConsent = false;
-            Boolean hasRelease = false;
-            Boolean hasBloodRelease = false;
-            Boolean hasFollowup = false;
-            Boolean hasFollowupConsents = false;
-            Boolean isSuccess = false;
-            Boolean previousRun = false;
-            Boolean hasMedical = false;
+            boolean hasAboutYou = false;
+            boolean hasConsent = false;
+            boolean hasTissueConsent = false;
+            boolean hasBloodConsent = false;
+            boolean hasRelease = false;
+            boolean hasBloodRelease = false;
+            boolean hasFollowup = false;
+            boolean hasFollowupConsents = false;
+            boolean isSuccess = false;
+            boolean previousRun = false;
+            boolean hasMedical = false;
             StudyMigrationRun migrationRun;
 
             boolean auth0Collision = false;
@@ -859,15 +860,6 @@ public class StudyDataLoaderMain {
             }
 
             migrationRunReport.add(migrationRun);
-
-            /*
-            dataLoader.verifySourceQsLookedAt("aboutyousurvey", surveyDataMap.get("aboutyousurvey"));
-            dataLoader.verifySourceQsLookedAt("consentsurvey", surveyDataMap.get("consentsurvey"));
-            dataLoader.verifySourceQsLookedAt("bdconsentsurvey", surveyDataMap.get("bdconsentsurvey"));
-            dataLoader.verifySourceQsLookedAt("releasesurvey", surveyDataMap.get("releasesurvey"));
-            dataLoader.verifySourceQsLookedAt("bdreleasesurvey", surveyDataMap.get("bdreleasesurvey"));
-            dataLoader.verifySourceQsLookedAt("followupsurvey", surveyDataMap.get("followupsurvey"));
-            */
         });
 
     }
@@ -980,7 +972,7 @@ public class StudyDataLoaderMain {
                 run.getPepperUserGuid(),
                 run.getEmailAddress(),
                 run.getPreviousRun(),
-                run.getSuccess(),
+                run.isSuccess(),
                 run.getAuth0Collision(),
                 run.getFoundInAuth0(),
                 run.getHasMedical(),
@@ -994,35 +986,12 @@ public class StudyDataLoaderMain {
         );
     }
 
-    private class PreProcessedData {
-        private Map<String, String> userEmailData;
-        private Map<String, MailAddress> userAddressData;
-        private List<String> auth0ExistingEmails;
-        private Map<String, Map> altpidBucketDataMap = new HashMap<>();
-
-        public PreProcessedData(Map<String, String> userEmailData, Map<String, MailAddress> userAddressData,
-                                List<String> auth0ExistingEmails, Map<String, Map> bucketDataMap) {
-            this.userEmailData = userEmailData;
-            this.userAddressData = userAddressData;
-            this.auth0ExistingEmails = auth0ExistingEmails;
-            this.altpidBucketDataMap = bucketDataMap;
-        }
-
-        public Map<String, String> getUserEmailData() {
-            return userEmailData;
-        }
-
-        public Map<String, MailAddress> getUserAddressData() {
-            return userAddressData;
-        }
-
-        public List<String> getAuth0ExistingEmails() {
-            return auth0ExistingEmails;
-        }
-
-        public Map<String, Map> getAltpidBucketDataMap() {
-            return altpidBucketDataMap;
-        }
-
+    @Value
+    @AllArgsConstructor
+    private static class PreProcessedData {
+        Map<String, String> userEmailData;
+        Map<String, MailAddress> userAddressData;
+        List<String> auth0ExistingEmails;
+        Map<String, Map> altpidBucketDataMap;
     }
 }

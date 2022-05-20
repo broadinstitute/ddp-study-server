@@ -46,7 +46,7 @@ public class ClinicalKitDto {
     String gender;
     @SerializedName("accession_number")
     String accessionNumber;
-    @SerializedName("collection_date")
+    @SerializedName ("sample_collection_date")
     String collectionDate;
     @SerializedName("kit_label")
     String mfBarcode;
