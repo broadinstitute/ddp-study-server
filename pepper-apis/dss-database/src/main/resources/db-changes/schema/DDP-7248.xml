@@ -9,37 +9,22 @@
                 <constraints primaryKey="true" primaryKeyName="audit_trail_pk"/>
             </column>
 
-            <column name="study_id" type="bigint" />
-
-            <column name="operator_id" type="bigint">
-                <constraints nullable="true" />
+            <column name="study_id" type="bigint">
+                <constraints nullable="false" />
             </column>
 
-            <column name="subject_user_id" type="bigint">
-                <constraints nullable="true" />
-            </column>
-
-            <column name="activity_instance_id" type="bigint">
-                <constraints nullable="true" />
-            </column>
-
-            <column name="answer_id" type="bigint">
-                <constraints nullable="true" />
-            </column>
+            <column name="operator_id" type="bigint" />
+            <column name="subject_user_id" type="bigint" />
+            <column name="activity_instance_id" type="bigint" />
+            <column name="answer_id" type="bigint" />
 
             <column name="entity_type" type="enum('USER', 'ACTIVITY_INSTANCE', 'ANSWER', 'REPORT')" />
-
             <column name="action_type" type="enum('CREATE', 'READ', 'UPDATE', 'DELETE', 'EXPORT')" />
 
             <column name="time" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
 
-            <column name="operator_guid" type="varchar(50)">
-                <constraints nullable="true" />
-            </column>
-
-            <column name="subject_user_guid" type="varchar(50)">
-                <constraints nullable="true" />
-            </column>
+            <column name="operator_guid" type="varchar(50)" />
+            <column name="subject_user_guid" type="varchar(50)" />
 
             <column name="description" type="text" />
         </createTable>
