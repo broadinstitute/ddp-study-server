@@ -131,6 +131,7 @@ public class OsteoPrequalUpdate implements CustomTask {
 
         changeQuetionStyle(handle, activityId, "PREQUAL_SELF_DESCRIBE");
         changeAgeRestriction(handle, activityId);
+        changePicklist(handle, activityId, dataCfg);
     }
 
     private void changeQuetionStyle(Handle handle, long activityId, String stableId) {
@@ -143,8 +144,21 @@ public class OsteoPrequalUpdate implements CustomTask {
         helper.updatePicklistOption(questionDto.getId(), pickListModeIdByValue);
     }
 
-    private void changePicklist(Handle handle, long activityId){
-
+    private void changePicklist(Handle handle, long activityId, Config dataCfg) {
+        SqlHelper attach = handle.attach(SqlHelper.class);
+        Config picklist = dataCfg.getConfigList("picklist").get(0);
+        String stableId = picklist.getString("stableId");
+        List<? extends Config> list = picklist.getConfigList("list");
+        JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
+        QuestionDto questionDto = jdbiQuestion.findDtoByActivityIdAndQuestionStableId(activityId, stableId).get();
+        long id = questionDto.getId();
+        list.forEach(item -> {
+            String pickId = item.getString("stableId");
+            String newVal = item.getString("new");
+            long picklistLabelTemplateId = attach.getPicklistLabelTemplateId(id, pickId);
+            long templateVariableIdbyTemplateId = attach.getTemplateVariableIdbyTemplateId(picklistLabelTemplateId);
+            attach.updateTemplateText(newVal, templateVariableIdbyTemplateId);
+        });
     }
 
     private void changeAgeRestriction(Handle handle, long activityId) {
@@ -187,6 +201,10 @@ public class OsteoPrequalUpdate implements CustomTask {
 
         @SqlUpdate("update picklist_question set picklist_select_mode_id = :picklist_select_mode_id where question_id = :question_id")
         void updatePicklistOption(@Bind("question_id") long questionId, @Bind("picklist_select_mode_id") long picklistselectModeId);
+
+        @SqlQuery("select option_label_template_id from picklist_option where picklist_question_id = :question_id "
+                + "and picklist_option_stable_id = :stableId")
+        long getPicklistLabelTemplateId(@Bind("question_id") long questionId, @Bind("stableId") String stableId);
 
         @SqlQuery("select error_message_template_id from activity_validation "
                 + "where study_activity_id = :activityId and expression_text like :text")
