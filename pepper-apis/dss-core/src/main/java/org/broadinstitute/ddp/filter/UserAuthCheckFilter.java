@@ -4,7 +4,6 @@ import static spark.Spark.halt;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import lombok.AccessLevel;
@@ -69,25 +68,17 @@ public class UserAuthCheckFilter implements Filter {
         }
 
         boolean canAccess = canAccess(request, ddpAuth);
-        int retries = 3;
         if (!canAccess) {
-            do {
-                try {
-                    TimeUnit.SECONDS.sleep(1);
-                    log.warn("Retrying checking for access with non-cached permission data");
-                    try {
-                        canAccess = canAccess(request, RouteUtil.computeDDPAuth(request));
-                    } catch (TokenExpiredException e) {
-                        log.error("Found expired token for request", e);
-                        halt(401);
-                    } catch (Exception e) {
-                        log.error("Error while converting token for request", e);
-                        halt(401);
-                    }
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            } while (!canAccess && --retries > 0);
+            log.warn("Retrying checking for access with non-cached permission data");
+            try {
+                canAccess = canAccess(request, RouteUtil.computeDDPAuth(request));
+            } catch (TokenExpiredException e) {
+                log.error("Found expired token for request", e);
+                halt(401);
+            } catch (Exception e) {
+                log.error("Error while converting token for request", e);
+                halt(401);
+            }
         }
 
         if (!canAccess) {
