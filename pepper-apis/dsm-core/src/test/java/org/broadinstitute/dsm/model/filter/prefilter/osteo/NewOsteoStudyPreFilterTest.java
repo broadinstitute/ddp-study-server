@@ -24,8 +24,7 @@ public class NewOsteoStudyPreFilterTest {
     public void filter() {
 
         int ddpInstanceId = 1;
-        String newOsteoInstanceName = "osteo2";
-        String consentActivityCode = "CONSENT_ASSENT";
+        String oldOsteoInstanceName = "osteo2";
 
         ESDsm esDsm = new ESDsm();
 
@@ -44,19 +43,12 @@ public class NewOsteoStudyPreFilterTest {
                 new KitRequestShipping(1),
                 new KitRequestShipping(1))));
 
-        List<ESActivities> esActivities = new ArrayList<>(List.of(
-                new ESActivities(consentActivityCode, 12345L),
-                new ESActivities("PREQUAL", 23456L),
-                new ESActivities("ABOUT_YOU", 11111L)
-        ));
-
         ElasticSearchParticipantDto esDto = new ElasticSearchParticipantDto.Builder()
-                .withActivities(esActivities)
                 .withDsm(esDsm)
                 .build();
 
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder()
-                .withInstanceName(newOsteoInstanceName)
+                .withInstanceName(oldOsteoInstanceName)
                 .withDdpInstanceId(ddpInstanceId)
                 .build();
 
@@ -71,9 +63,6 @@ public class NewOsteoStudyPreFilterTest {
 
         assertEquals(3, esDsm.getKitRequestShipping().size());
         assertEquals(List.of(1L, 1L, 1L), esDsm.getKitRequestShipping().stream().map(KitRequestShipping::getDdpInstanceId).collect(Collectors.toList()));
-
-        assertEquals(1, esDto.getActivities().size());
-        assertEquals("PREQUAL", esDto.getActivities().stream().map(ESActivities::getActivityCode).findFirst().orElse("SomeOtherActivityCode"));
 
     }
 }
