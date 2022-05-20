@@ -14,8 +14,22 @@ parameters:
     type: enum
     enum: ["dss", "dsm","api-docs", "nothing"]
     default: "nothing"
+  action:
+    type: enum
+    enum: [ "build-test", "build-test-deploy", "build-test-store", "retrieve-deploy", "nothing" ]
+    default: "nothing"
 
 workflows:
+  build-test-deploy-dev-workflow:
+    when:
+      and:
+        - << pipeline.parameters.on_demand >>
+        - equal: ["dss", << pipeline.parameters.project >>]
+    jobs:
+      - continuation/continue:
+          configuration_path: .circleci/main-config.yml
+          parameters: '{"action":"build-test-deploy","dss": true,"api-docs": false}'
+
   build-test-workflow:
     description: |
       The workflow to run tests on PRs. Will compare the branch to develop and trigger workflows for modified projects
@@ -57,7 +71,7 @@ workflows:
             branches:
               only:
                 - develop
-
+                
       # Build DSS backend, Housekeeping and API docs, test and store build artifacts
       # Triggered on updates or creation of release candidate and hotfix branches with prefix specified in filter.
       # Only DSS projects and API docs affected!

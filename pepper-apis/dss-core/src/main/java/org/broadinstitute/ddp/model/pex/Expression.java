@@ -1,36 +1,23 @@
 package org.broadinstitute.ddp.model.pex;
 
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
+@Value
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class Expression {
+    @ColumnName("expression_id")
+    long id;
 
-    private long id;
-    private String guid;
-    private String text;
+    @ColumnName("expression_guid")
+    String guid;
 
-    @JdbiConstructor
-    public Expression(@ColumnName("expression_id") long id,
-                      @ColumnName("expression_guid") String guid,
-                      @ColumnName("expression_text") String text) {
-        this.id = id;
-        this.guid = guid;
-        this.text = text;
-    }
+    @ColumnName("expression_text")
+    String text;
 
-    public Expression(String text) {
-        this.text = text;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public String getGuid() {
-        return guid;
-    }
-
-    public String getText() {
-        return text;
+    public Expression(final String text) {
+        this(0, null, text);
     }
 }

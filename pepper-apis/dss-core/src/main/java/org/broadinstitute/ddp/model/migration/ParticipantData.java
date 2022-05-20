@@ -1,18 +1,10 @@
 package org.broadinstitute.ddp.model.migration;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Data;
 
-public class ParticipantData {
-
+@Data
+public final class ParticipantData {
     @SerializedName("user")
     private ParticipantUser participantUser;
-
-    public ParticipantUser getParticipantUser() {
-        return participantUser;
-    }
-
-    public void setParticipantUser(ParticipantUser participantUser) {
-        this.participantUser = participantUser;
-    }
-
 }
