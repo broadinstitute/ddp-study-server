@@ -22,12 +22,10 @@ public class NewOsteoStudyPreFilterTest {
 
     @Test
     public void filter() {
-
         int ddpInstanceId = 1;
         String oldOsteoInstanceName = "osteo2";
-
         ESDsm esDsm = new ESDsm();
-
+        
         esDsm.setMedicalRecord(new ArrayList<>(List.of(
                 new MedicalRecord(1),
                 new MedicalRecord(2),
