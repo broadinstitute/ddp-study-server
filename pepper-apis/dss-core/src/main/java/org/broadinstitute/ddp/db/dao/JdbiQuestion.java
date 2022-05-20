@@ -233,6 +233,11 @@ public interface JdbiQuestion extends SqlObject {
         }
     }
 
+    @UseStringTemplateSqlLocator
+    @RegisterConstructorMapper(QuestionDto.class)
+    @SqlQuery("select_basic_question_dtos_by_id")
+    Optional<QuestionDto> findBasicQuestionDtoById(long questionId);
+
     @SqlUpdate("insert into file_question (question_id, max_file_size) values (:questionId, :maxFileSize)")
     int insertFileQuestion(@Bind("questionId") long questionId, @Bind("maxFileSize") long maxFileSize);
 

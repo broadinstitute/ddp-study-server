@@ -411,7 +411,7 @@ public interface ValidationDao extends SqlObject {
     default void insert(long questionId, ComparisonRuleDef rule, long revisionId) {
         insertBaseRule(questionId, rule, revisionId);
 
-        final Optional<QuestionDto> originalQuestion = getJdbiQuestion().findQuestionDtoById(questionId);
+        final Optional<QuestionDto> originalQuestion = getJdbiQuestion().findBasicQuestionDtoById(questionId);
         if (originalQuestion.isEmpty()) {
             throw new DaoException("Question " + questionId + " doesn't exist");
         }
