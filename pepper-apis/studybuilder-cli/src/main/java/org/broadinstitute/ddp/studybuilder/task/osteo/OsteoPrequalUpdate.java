@@ -143,6 +143,10 @@ public class OsteoPrequalUpdate implements CustomTask {
         helper.updatePicklistOption(questionDto.getId(), pickListModeIdByValue);
     }
 
+    private void changePicklist(Handle handle, long activityId){
+
+    }
+
     private void changeAgeRestriction(Handle handle, long activityId) {
         int age = 110;
         String templateText = "Please enter an age between 0 and 110";
