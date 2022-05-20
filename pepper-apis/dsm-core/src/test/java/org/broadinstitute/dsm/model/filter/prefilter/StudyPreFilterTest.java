@@ -56,7 +56,7 @@ public class StudyPreFilterTest {
         try {
             maybeEmpty.get();
         } catch (NoSuchElementException nse) {
-            assertTrue("maybeEmpty.get() represents no value as expected", true);
+            assertTrue("maybeEmpty.get() represents no value, thereby throws NoSuchElementException as expected", true);
         }
 
     }
