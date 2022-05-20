@@ -16,7 +16,6 @@ public class AddGovernanceEntryProcessor implements EntryProcessor<Long, DDPAuth
     public Void process(MutableEntry<Long, DDPAuth> entry, Object... arguments) throws EntryProcessorException {
         final DDPAuth value = entry.getValue();
 
-
         final Governance governance = (Governance) arguments[0];
         final ParticipantAccess participantAccess = new ParticipantAccess(governance.getGovernedUserGuid());
 
