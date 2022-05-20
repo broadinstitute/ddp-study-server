@@ -37,7 +37,7 @@ public class TabularBlockDef extends FormBlockDef {
         
         final TabularRowDef rowDef = rows.get(row);
         if ((column < 0) || (column >= rowDef.getQuestions().size())) {
-            throw new IllegalArgumentException("The column must be a number between 0 and " + rowDef.getQuestions().size());
+            throw new IndexOutOfBoundsException("The column must be a number between 0 and " + rowDef.getQuestions().size());
         }
 
         return rowDef.getQuestions().get(column);

@@ -815,9 +815,6 @@ public interface SectionBlockDao extends SqlObject {
                     .map(BlockTabularQuestionDto::getRow)
                     .max(Integer::compareTo)
                     .orElse(0);
-            if (rowCount == 0) {
-                throw new DaoException("Tabular block " + blockDto.getId() + " doesn't have any rows");
-            }
 
             final var tabularBlock = getJdbiBlockTabular().findByBlockIdAndTimestamp(blockDto.getId(), timestamp);
             final var questionsTable = new QuestionDef[rowCount][tabularBlock.getColumnsCount()];
