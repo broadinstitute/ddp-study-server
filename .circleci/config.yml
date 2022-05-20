@@ -21,9 +21,10 @@ parameters:
 
 workflows:
   build-test-deploy-dev-workflow:
-    and:
-      - << pipeline.parameters.on_demand >>
-      - equal: ["dss", << pipeline.parameters.project >>]
+    when:
+      and:
+        - << pipeline.parameters.on_demand >>
+        - equal: ["dss", << pipeline.parameters.project >>]
     jobs:
       - continuation/continue:
           configuration_path: .circleci/main-config.yml
