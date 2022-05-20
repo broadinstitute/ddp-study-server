@@ -9,10 +9,7 @@
                 <constraints primaryKey="true" primaryKeyName="audit_trail_pk"/>
             </column>
 
-            <column name="study_id" type="bigint">
-                <constraints nullable="false" />
-            </column>
-
+            <column name="study_id" type="bigint" />
             <column name="operator_id" type="bigint" />
             <column name="subject_user_id" type="bigint" />
             <column name="activity_instance_id" type="bigint" />
