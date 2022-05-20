@@ -91,7 +91,7 @@ public class DataLoaderMain {
         options.addOption("e", true, "Dry run test email");
         options.addOption("de", false, "Delete auth0 email");
 
-        /**
+        /*
          Command line options
          "f" : Passs localfile that you want to load into pepper using DataLoaderMain
          example: -f src/test/resources/dm-survey-testdata.json
@@ -113,7 +113,6 @@ public class DataLoaderMain {
          "de" : Delete email(s) that already exist in Auth0 . Once migration run is complete, all participant/user emails that
          exist in Auth0 (marked in output csv report Auth0Collision column) will be deleted
          */
-
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
@@ -239,7 +238,7 @@ public class DataLoaderMain {
         Storage storage = GoogleBucketUtil.getStorage(configDirPath + "/" + ANGIO_DATA_SERVICE_ACCOUNT_FILE,
                 ANGIO_DATA_GC_ID);
         Bucket bucket = storage.get(TEST_ANGIO_DATA_BUCKET_NAME);
-        String data = null;
+        String data;
         ParticipantData participantData = null;
         DataLoader dataLoader = new DataLoader();
         migrationRunReport = new ArrayList<AngioMigrationRun>();
@@ -302,13 +301,13 @@ public class DataLoaderMain {
 
         TransactionWrapper.useTxn(handle -> {
             String userGuid = null;
-            Boolean hasAboutYou = false;
-            Boolean hasConsent = false;
-            Boolean hasRelease = false;
-            Boolean hasLovedOne = false;
-            Boolean hasFollowup = false;
-            Boolean isSuccess = false;
-            Boolean previousRun = false;
+            boolean hasAboutYou = false;
+            boolean hasConsent = false;
+            boolean hasRelease = false;
+            boolean hasLovedOne = false;
+            boolean hasFollowup = false;
+            boolean isSuccess = false;
+            boolean previousRun = false;
             AngioMigrationRun migrationRun;
 
             boolean auth0Collision = false;
@@ -492,13 +491,8 @@ public class DataLoaderMain {
     }
 
     private String generateDryRunEmail() {
-        String[] emailSplit = dryRunEmail.split("\\@");
-        StringBuilder generatedEmail = new StringBuilder(emailSplit[0]);
-        generatedEmail.append("+");
-        generatedEmail.append(System.currentTimeMillis());
-        generatedEmail.append("@");
-        generatedEmail.append(emailSplit[1]);
-        return generatedEmail.toString();
+        final String[] emailSplit = dryRunEmail.split("\\@");
+        return emailSplit[0] + "+" + System.currentTimeMillis() + "@" + emailSplit[1];
     }
 
     public void processGoogleBucketMailingListFiles(Config cfg, String studyGuid) throws Exception {
@@ -594,7 +588,7 @@ public class DataLoaderMain {
                 run.getHasFollowup(),
                 run.getEmailAddress(),
                 run.getPreviousRun(),
-                run.getSuccess(),
+                run.isSuccess(),
                 run.getAuth0Collision()
         );
     }
