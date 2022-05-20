@@ -3,12 +3,18 @@
         xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
 
-    <changeSet id="DDP-2606-backfill-auth0-tenant" author="andrew">
+    <changeSet id="DROP_AUTH0_DOMAIN_COLUMN" author="Dmitrii">
+        <preConditions onError="MARK_RAN" onFail="MARK_RAN">
+            <columnExists tableName="client" columnName="auth0_domain" />
+        </preConditions>
 
         <dropNotNullConstraint tableName="client" columnName="auth0_domain" columnDataType="varchar(255)"/>
+        <dropColumn tableName="client" columnName="auth0_domain"/>
+    </changeSet>
 
+    <changeSet id="DDP-2606-backfill-auth0-tenant" author="andrew">
         <sql>
             update umbrella_study s set s.auth0_tenant_id = (select auth0_tenant_id from auth0_tenant order by auth0_tenant_id asc limit 1)
             where s.auth0_tenant_id is null
@@ -23,8 +29,6 @@
             update user set auth0_tenant_id = (select auth0_tenant_id from auth0_tenant order by auth0_tenant_id asc limit 1)
             where auth0_tenant_id is null
         </sql>
-
-        <dropColumn tableName="client" columnName="auth0_domain"/>
 
         <addNotNullConstraint tableName="client" columnName="auth0_tenant_id" columnDataType="bigint"/>
 

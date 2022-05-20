@@ -306,4 +306,5 @@
     <include file="db-changes/seed/DDP-7709-add-boolean-render-mode-type.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7709-add-boolean-render-mode.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-8012.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-8000.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
