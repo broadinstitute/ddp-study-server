@@ -41,14 +41,14 @@ public class JWTConverterTest extends IntegrationTestSuite.TestCase {
         String expectedClient = testData.getTestingClient().getAuth0ClientId();
 
         JWTConverter jwtConverter = new JWTConverter();
-        DDPAuth ddpAuth = jwtConverter.convertJWTFromHeader("Bearer " + token);
+        DDPAuth ddpAuth = jwtConverter.convertJWTFromHeader("Bearer " + token, true);
 
         assertTrue(ddpAuth.isActive());
         assertEquals(expectedClient, ddpAuth.getClient());
         assertEquals(expectedUserGuid, ddpAuth.getOperator());
 
 
-        DDPAuth ddpAuth2 = jwtConverter.convertJWTFromHeader("Bearer " + token);
+        DDPAuth ddpAuth2 = jwtConverter.convertJWTFromHeader("Bearer " + token, true);
 
         assertTrue(ddpAuth2.isActive());
         assertEquals(expectedClient, ddpAuth2.getClient());
@@ -62,13 +62,13 @@ public class JWTConverterTest extends IntegrationTestSuite.TestCase {
 
         JWTConverter jwtConverter = new JWTConverter();
         jwtConverter.resetCaching();
-        DDPAuth ddpAuth = jwtConverter.convertJWTFromHeader("Bearer " + token);
+        DDPAuth ddpAuth = jwtConverter.convertJWTFromHeader("Bearer " + token, true);
 
         assertTrue(ddpAuth.isActive());
         assertEquals(expectedClient, ddpAuth.getClient());
         assertEquals(expectedUserGuid, ddpAuth.getOperator());
 
-        DDPAuth cachedDdpAuth = jwtConverter.convertJWTFromHeader("Bearer " + token);
+        DDPAuth cachedDdpAuth = jwtConverter.convertJWTFromHeader("Bearer " + token, true);
         assertTrue(cachedDdpAuth.isActive());
         assertEquals(expectedClient, cachedDdpAuth.getClient());
         assertEquals(expectedUserGuid, cachedDdpAuth.getOperator());
