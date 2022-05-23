@@ -31,9 +31,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Data
-@TableName(name = DBConstants.DDP_TISSUE, alias = DBConstants.DDP_TISSUE_ALIAS, primaryKey = DBConstants.TISSUE_ID, columnPrefix = "")
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties(ignoreUnknown = true)
+@TableName (name = DBConstants.DDP_TISSUE, alias = DBConstants.DDP_TISSUE_ALIAS, primaryKey = DBConstants.TISSUE_ID, columnPrefix = "")
+@JsonInclude (JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties (ignoreUnknown = true)
 public class Tissue {
 
     public static final String SQL_SELECT_TISSUE_LAST_CHANGED = "SELECT t.last_changed FROM ddp_institution inst "
@@ -55,89 +55,89 @@ public class Tissue {
                     + "WHERE NOT (t.deleted <=> 1) AND onc_history_detail_id = ?";
     private static final String SQL_INSERT_TISSUE =
             "INSERT INTO ddp_tissue SET onc_history_detail_id = ?, last_changed = ?, changed_by = ?";
-    @TableName(name = DBConstants.DDP_TISSUE, alias = DBConstants.DDP_TISSUE_ALIAS, primaryKey = DBConstants.TISSUE_ID, columnPrefix = "")
-    @ColumnName(DBConstants.TISSUE_ID)
+    @TableName (name = DBConstants.DDP_TISSUE, alias = DBConstants.DDP_TISSUE_ALIAS, primaryKey = DBConstants.TISSUE_ID, columnPrefix = "")
+    @ColumnName (DBConstants.TISSUE_ID)
     private Long tissueId;
 
-    @ColumnName(DBConstants.ONC_HISTORY_DETAIL_ID)
+    @ColumnName (DBConstants.ONC_HISTORY_DETAIL_ID)
     private Long oncHistoryDetailId;
 
-    @ColumnName(DBConstants.NOTES)
+    @ColumnName (DBConstants.NOTES)
     private String notes;
 
-    @ColumnName(DBConstants.COUNT_RECEIVED)
+    @ColumnName (DBConstants.COUNT_RECEIVED)
     private Integer countReceived;
 
-    @ColumnName(DBConstants.TISSUE_TYPE)
+    @ColumnName (DBConstants.TISSUE_TYPE)
     private String tissueType;
 
-    @ColumnName(DBConstants.TISSUE_SITE)
+    @ColumnName (DBConstants.TISSUE_SITE)
     private String tissueSite;
 
-    @ColumnName(DBConstants.TUMOR_TYPE)
+    @ColumnName (DBConstants.TUMOR_TYPE)
     private String tumorType;
 
-    @ColumnName(DBConstants.H_E)
+    @ColumnName (DBConstants.H_E)
     private String hE;
 
-    @ColumnName(DBConstants.PATHOLOGY_REPORT)
+    @ColumnName (DBConstants.PATHOLOGY_REPORT)
     private String pathologyReport;
 
-    @ColumnName(DBConstants.COLLABORATOR_SAMPLE_ID)
+    @ColumnName (DBConstants.COLLABORATOR_SAMPLE_ID)
     private String collaboratorSampleId;
 
-    @ColumnName(DBConstants.BLOCK_SENT)
-    @DbDateConversion(SqlDateConverter.STRING_DAY)
+    @ColumnName (DBConstants.BLOCK_SENT)
+    @DbDateConversion (SqlDateConverter.STRING_DAY)
     private String blockSent;
 
-    @ColumnName(DBConstants.SHL_WORK_NUMBER)
+    @ColumnName (DBConstants.SHL_WORK_NUMBER)
     private String shlWorkNumber;
 
-    @ColumnName(DBConstants.SCROLLS_RECEIVED)
-    @DbDateConversion(SqlDateConverter.STRING_DAY)
+    @ColumnName (DBConstants.SCROLLS_RECEIVED)
+    @DbDateConversion (SqlDateConverter.STRING_DAY)
     private String scrollsReceived;
 
-    @ColumnName(DBConstants.SK_ID)
+    @ColumnName (DBConstants.SK_ID)
     private String skId;
 
-    @ColumnName(DBConstants.SM_ID)
+    @ColumnName (DBConstants.SM_ID)
     private String smId;
 
-    @ColumnName(DBConstants.SENT_GP)
-    @DbDateConversion(SqlDateConverter.STRING_DAY)
+    @ColumnName (DBConstants.SENT_GP)
+    @DbDateConversion (SqlDateConverter.STRING_DAY)
     private String sentGp;
 
     private String changedBy;
 
-    @ColumnName(DBConstants.DELETED)
+    @ColumnName (DBConstants.DELETED)
     private Boolean deleted;
 
-    @ColumnName(DBConstants.FIRST_SM_ID)
+    @ColumnName (DBConstants.FIRST_SM_ID)
     private String firstSmId;
 
-    @ColumnName(DBConstants.ADDITIONAL_TISSUE_VALUES)
-    @JsonProperty("dynamicFields")
-    @SerializedName("dynamicFields")
+    @ColumnName (DBConstants.ADDITIONAL_TISSUE_VALUES)
+    @JsonProperty ("dynamicFields")
+    @SerializedName ("dynamicFields")
     private String additionalValuesJson;
-    @ColumnName(DBConstants.TISSUE_RETURN_DATE)
-    @DbDateConversion(SqlDateConverter.STRING_DAY)
+    @ColumnName (DBConstants.TISSUE_RETURN_DATE)
+    @DbDateConversion (SqlDateConverter.STRING_DAY)
     private String returnDate;
-    @ColumnName(DBConstants.RETURN_FEDEX_ID)
+    @ColumnName (DBConstants.RETURN_FEDEX_ID)
     private String returnFedexId;
-    @ColumnName(DBConstants.EXPECTED_RETURN)
-    @DbDateConversion(SqlDateConverter.STRING_DAY)
+    @ColumnName (DBConstants.EXPECTED_RETURN)
+    @DbDateConversion (SqlDateConverter.STRING_DAY)
     private String expectedReturn;
-    @ColumnName(DBConstants.TUMOR_PERCENTAGE)
+    @ColumnName (DBConstants.TUMOR_PERCENTAGE)
     private String tumorPercentage;
-    @ColumnName(DBConstants.TISSUE_SEQUENCE)
+    @ColumnName (DBConstants.TISSUE_SEQUENCE)
     private String tissueSequence;
-    @ColumnName(DBConstants.SCROLLS_COUNT)
+    @ColumnName (DBConstants.SCROLLS_COUNT)
     private Integer scrollsCount;
-    @ColumnName(DBConstants.USS_COUNT)
+    @ColumnName (DBConstants.USS_COUNT)
     private Integer ussCount;
-    @ColumnName(DBConstants.BLOCKS_COUNT)
+    @ColumnName (DBConstants.BLOCKS_COUNT)
     private Integer blocksCount;
-    @ColumnName(DBConstants.H_E_COUNT)
+    @ColumnName (DBConstants.H_E_COUNT)
     private Integer hECount;
     private List<SmId> ussSMID;
     private List<SmId> scrollSMID;
@@ -276,13 +276,13 @@ public class Tissue {
         }
     }
 
-    @JsonProperty("dynamicFields")
+    @JsonProperty ("dynamicFields")
     public Map<String, Object> getDynamicFields() {
         return ObjectMapperSingleton.readValue(additionalValuesJson, new TypeReference<Map<String, Object>>() {
         });
     }
 
-    @JsonProperty("hECount")
+    @JsonProperty ("hECount")
     public Integer gethECount() {
         return hECount;
     }

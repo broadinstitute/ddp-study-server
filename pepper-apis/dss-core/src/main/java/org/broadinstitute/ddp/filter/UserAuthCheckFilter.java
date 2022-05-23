@@ -1,8 +1,11 @@
 package org.broadinstitute.ddp.filter;
 
+import static spark.Spark.halt;
+
 import java.util.ArrayList;
 import java.util.List;
 
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -64,6 +67,27 @@ public class UserAuthCheckFilter implements Filter {
             return;
         }
 
+        boolean canAccess = canAccess(request, ddpAuth);
+        if (!canAccess) {
+            log.warn("Retrying checking for access with non-cached permission data");
+            try {
+                canAccess = canAccess(request, RouteUtil.computeDDPAuth(request));
+            } catch (TokenExpiredException e) {
+                log.error("Found expired token for request", e);
+                halt(401);
+            } catch (Exception e) {
+                log.error("Error while converting token for request", e);
+                halt(401);
+            }
+        }
+
+        if (!canAccess) {
+            throw ResponseUtil.haltError(HttpStatus.SC_UNAUTHORIZED,
+                    new ApiError(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, "Authorization cannot be determined"));
+        }
+    }
+
+    private boolean canAccess(Request request, DDPAuth ddpAuth) {
         String requestedUserGuid = request.params(PathParam.USER_GUID);
         String path = request.pathInfo();
         boolean canAccess = false;
@@ -92,11 +116,7 @@ public class UserAuthCheckFilter implements Filter {
                 || pathMatcher.isStudyStatisticsRoute(path)) {
             canAccess = ddpAuth.isActive();
         }
-
-        if (!canAccess) {
-            throw ResponseUtil.haltError(HttpStatus.SC_UNAUTHORIZED,
-                    new ApiError(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, "Authorization cannot be determined"));
-        }
+        return canAccess;
     }
 
     private void handleTemporaryUser(Request request) {
