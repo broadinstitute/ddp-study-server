@@ -970,7 +970,9 @@ public class TestDataSetupUtil {
                                 TestConstants.TEST_INSTITUTION_PHONE,
                         wantsAltPid ? TestConstants.TEST_INSTITUTION_LEGACY_GUID : null,
                         random ? "Street" + GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 10) :
-                                TestConstants.TEST_INSTITUTION_STREET
+                                TestConstants.TEST_INSTITUTION_STREET,
+                        random ? "Country" + GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 10) :
+                                TestConstants.TEST_INSTITUTION_COUNTRY
                 ));
         return handle.attach(JdbiMedicalProvider.class).insert(generatedTestData.getMedicalProvider());
     }

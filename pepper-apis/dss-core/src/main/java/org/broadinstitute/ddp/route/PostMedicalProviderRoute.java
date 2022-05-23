@@ -89,7 +89,8 @@ public class PostMedicalProviderRoute implements Route {
                             null,
                             null,
                             null,
-                            null
+                            null,
+                            newMedicalProviderJson.getCountry()
                     );
 
                     int numCreated = handle.attach(MedicalProviderDao.class).insert(newMedicalProviderDto);

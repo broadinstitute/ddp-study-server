@@ -26,6 +26,7 @@ public class MedicalProviderDto {
     String phone;
     String legacyGuid;
     String street;
+    String country;
 
     public boolean isBlank() {
         return StringUtils.isBlank(physicianName)

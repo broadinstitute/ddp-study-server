@@ -716,6 +716,7 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
                 null,
                 null,
                 null,
+                null,
                 null));
 
         String studyGuid = pdfInfo.getData().getStudyGuid();

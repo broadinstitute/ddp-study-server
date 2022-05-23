@@ -94,7 +94,8 @@ public class PostMedicalProviderRouteTest extends IntegrationTestSuite.TestCase 
                 TestMedicalProviderData.INSTITUTION_NAME,
                 TestMedicalProviderData.PHYSICIAN_NAME,
                 TestMedicalProviderData.CITY,
-                TestMedicalProviderData.STATE
+                TestMedicalProviderData.STATE,
+                null
         );
         Request request = RouteTestUtil.buildAuthorizedPostRequest(
                 token,
@@ -141,7 +142,8 @@ public class PostMedicalProviderRouteTest extends IntegrationTestSuite.TestCase 
                 TestMedicalProviderData.INSTITUTION_NAME,
                 TestMedicalProviderData.PHYSICIAN_NAME,
                 TestMedicalProviderData.CITY,
-                TestMedicalProviderData.STATE
+                TestMedicalProviderData.STATE,
+                TestMedicalProviderData.COUNTRY
         );
         Request request = RouteTestUtil.buildAuthorizedPostRequest(
                 token,
@@ -166,6 +168,7 @@ public class PostMedicalProviderRouteTest extends IntegrationTestSuite.TestCase 
         Assert.assertEquals(TestMedicalProviderData.PHYSICIAN_NAME, medicalProviderDto.getPhysicianName());
         Assert.assertEquals(TestMedicalProviderData.CITY, medicalProviderDto.getCity());
         Assert.assertEquals(TestMedicalProviderData.STATE, medicalProviderDto.getState());
+        Assert.assertEquals(TestMedicalProviderData.COUNTRY, medicalProviderDto.getCountry());
         Assert.assertEquals(TestMedicalProviderData.INSTITUTION_TYPE, medicalProviderDto.getInstitutionType());
 
         List<Long> resultList = TransactionWrapper.withTxn(handle -> handle.attach(JdbiUserStudyEnrollment.class)
@@ -191,6 +194,7 @@ public class PostMedicalProviderRouteTest extends IntegrationTestSuite.TestCase 
         long timeBeforeSecondEntry = Instant.now().toEpochMilli();
 
         PostPatchMedicalProviderRequestPayload payload = new PostPatchMedicalProviderRequestPayload(
+                null,
                 null,
                 null,
                 null,
@@ -230,7 +234,8 @@ public class PostMedicalProviderRouteTest extends IntegrationTestSuite.TestCase 
                 TestMedicalProviderData.INSTITUTION_NAME,
                 TestMedicalProviderData.PHYSICIAN_NAME,
                 TestMedicalProviderData.CITY,
-                TestMedicalProviderData.STATE
+                TestMedicalProviderData.STATE,
+                TestMedicalProviderData.COUNTRY
         );
         Request request = RouteTestUtil.buildAuthorizedPostRequest(
                 token,
@@ -267,6 +272,8 @@ public class PostMedicalProviderRouteTest extends IntegrationTestSuite.TestCase 
         public static final String PHYSICIAN_NAME = "House MD";
         public static final String CITY = "West Windsor Township";
         public static final String STATE = "New Jersey";
+
+        public static final String COUNTRY = "US";
 
         public static final String INSTITUTION_URL_COMPONENT = "institution";
     }

@@ -362,6 +362,7 @@ public final class PdfTestingUtil {
                         null,
                         null,
                         null,
+                        null,
                         null));
                 nameIndex++;
             }
@@ -392,6 +393,7 @@ public final class PdfTestingUtil {
                     physicianName,
                     city,
                     state,
+                    null,
                     null,
                     null,
                     null,

@@ -31,11 +31,11 @@ public interface JdbiMedicalProvider extends SqlObject {
      * @return number of inserted rows
      */
     @SqlUpdate(
-            "insert into user_medical_provider (user_id, umbrella_study_id, institution_type_id,"
-                    + " user_medical_provider_guid, institution_name, physician_name, city, state, postal_code, phone, legacy_guid, street)"
+            "insert into user_medical_provider (user_id, umbrella_study_id, institution_type_id, user_medical_provider_guid, "
+                    + " institution_name, physician_name, city, state, country, postal_code, phone, legacy_guid, street)"
                     + " values (:userId, :umbrellaStudyId, "
                     + "   (select institution_type_id from institution_type where institution_type_code = :institutionType), "
-                    + " :userMedicalProviderGuid, :institutionName, :physicianName, :city, :state, :postalCode, "
+                    + " :userMedicalProviderGuid, :institutionName, :physicianName, :city, :state, :country, :postalCode, "
                     + ":phone, :legacyGuid, :street)"
     )
     int insert(@BindBean MedicalProviderDto medicalProviderDto);
@@ -60,7 +60,8 @@ public interface JdbiMedicalProvider extends SqlObject {
     @SqlUpdate(
             "update user_medical_provider set institution_type_id = "
                     + "(select institution_type_id from institution_type where institution_type_code = :institutionType), "
-                    + " institution_name = :institutionName, physician_name = :physicianName, city = :city, state = :state"
+                    + " institution_name = :institutionName, physician_name = :physicianName, city = :city, state = :state, "
+                    + " country = :country"
                     + " where user_medical_provider_guid = :userMedicalProviderGuid"
     )
     int updateByGuid(@BindBean MedicalProviderDto medicalProviderDto);
@@ -118,6 +119,7 @@ public interface JdbiMedicalProvider extends SqlObject {
             + "     ump.physician_name, "
             + "     ump.city, "
             + "     ump.state,"
+            + "     ump.country,"
             + "     ump.postal_code,"
             + "     ump.phone,"
             + "     ump.legacy_guid,"
@@ -141,6 +143,7 @@ public interface JdbiMedicalProvider extends SqlObject {
             + "     ump.physician_name, "
             + "     ump.city, "
             + "     ump.state,"
+            + "     ump.country,"
             + "     ump.postal_code,"
             + "     ump.phone,"
             + "     ump.legacy_guid,"
@@ -163,6 +166,7 @@ public interface JdbiMedicalProvider extends SqlObject {
             + "     ump.physician_name, "
             + "     ump.city, "
             + "     ump.state,"
+            + "     ump.country,"
             + "     ump.postal_code,"
             + "     ump.phone,"
             + "     ump.legacy_guid,"
@@ -193,6 +197,7 @@ public interface JdbiMedicalProvider extends SqlObject {
             + "     ump.physician_name, "
             + "     ump.city, "
             + "     ump.state,"
+            + "     ump.country,"
             + "     ump.postal_code,"
             + "     ump.phone,"
             + "     ump.legacy_guid,"
@@ -221,6 +226,7 @@ public interface JdbiMedicalProvider extends SqlObject {
             + "     ump.physician_name, "
             + "     ump.city, "
             + "     ump.state,"
+            + "     ump.country,"
             + "     ump.postal_code,"
             + "     ump.phone,"
             + "     ump.legacy_guid,"

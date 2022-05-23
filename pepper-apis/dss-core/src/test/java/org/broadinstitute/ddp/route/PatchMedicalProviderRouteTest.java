@@ -54,6 +54,7 @@ public class PatchMedicalProviderRouteTest extends IntegrationTestSuite.TestCase
                                 null,
                                 null,
                                 null,
+                                null,
                                 null
                         )
                 )
@@ -190,7 +191,8 @@ public class PatchMedicalProviderRouteTest extends IntegrationTestSuite.TestCase
                 TestMedicalProviderData.INSTITUTION_NAME,
                 TestMedicalProviderData.PHYSICIAN_NAME.toUpperCase(),
                 TestMedicalProviderData.CITY,
-                TestMedicalProviderData.STATE
+                TestMedicalProviderData.STATE,
+                null
         );
         Request request = RouteTestUtil.buildAuthorizedPatchRequest(
                 token,

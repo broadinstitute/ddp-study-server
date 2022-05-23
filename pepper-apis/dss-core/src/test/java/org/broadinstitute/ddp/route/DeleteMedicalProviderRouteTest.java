@@ -41,6 +41,7 @@ public class DeleteMedicalProviderRouteTest extends IntegrationTestSuite.TestCas
                                 null,
                                 null,
                                 null,
+                                null,
                                 null
                         )
                 )

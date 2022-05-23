@@ -654,7 +654,8 @@ public class DataLoader {
                         physician.getZipcode(),
                         physician.getPhonenumber(),
                         physician.getPhysicianid(),
-                        physician.getStreetaddress()
+                        physician.getStreetaddress(),
+                        physician.getCountry()
                 ));
             }
         }
@@ -679,6 +680,7 @@ public class DataLoader {
                         null,
                         null,
                         institution.getInstitutionId(),
+                        null,
                         null
                 ));
             }
@@ -700,7 +702,7 @@ public class DataLoader {
                     releaseSurvey.getInitialBiopsyState(),
                     null,
                     null,
-                    DEFAULT_DSM_BIOPSY_GUID, null
+                    DEFAULT_DSM_BIOPSY_GUID, null, null
             ));
         }
 

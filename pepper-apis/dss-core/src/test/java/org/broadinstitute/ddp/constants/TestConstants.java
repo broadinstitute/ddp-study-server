@@ -42,6 +42,8 @@ public class TestConstants {
     public static final InstitutionType TEST_INSTITUTION_TYPE = InstitutionType.INSTITUTION;
     public static final String TEST_INSTITUTION_NAME = "Princeton-Plainsboro Teaching Hospital";
     public static final String TEST_INSTITUTION_PHYSICIAN_NAME = "House MD";
+
+    public static final String TEST_INSTITUTION_COUNTRY = "US";
     public static final String TEST_INSTITUTION_CITY = "West Windsor Township";
     public static final String TEST_INSTITUTION_STATE = "New Jersey";
     public static final String TEST_INSTITUTION_ZIP = "02144";

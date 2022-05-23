@@ -23,7 +23,11 @@ public class GetMedicalProviderResponse {
     @SerializedName("state")
     String state;
 
+    @SerializedName("country")
+    String country;
+
     public GetMedicalProviderResponse(final MedicalProviderDto dto) {
-        this(dto.getUserMedicalProviderGuid(), dto.getPhysicianName(), dto.getInstitutionName(), dto.getCity(), dto.getState());
+        this(dto.getUserMedicalProviderGuid(), dto.getPhysicianName(), dto.getInstitutionName(),
+                dto.getCity(), dto.getState(), dto.getCountry());
     }
 }

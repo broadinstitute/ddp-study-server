@@ -93,7 +93,8 @@ public class JdbiMedicalProviderTest extends TxnAwareBaseTest {
                             null,
                             null,
                             null,
-                            null
+                            null,
+                            TestConstants.TEST_INSTITUTION_COUNTRY
                     )
             );
             Optional<MedicalProviderDto> medicalProvider = getTestMedicalProvider(handle);

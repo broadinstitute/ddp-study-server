@@ -44,6 +44,7 @@ public class GetMedicalProviderListRouteTest extends IntegrationTestSuite.TestCa
                                     null,
                                     null,
                                     null,
+                                    null,
                                     null
                             )
                     );
@@ -58,6 +59,7 @@ public class GetMedicalProviderListRouteTest extends IntegrationTestSuite.TestCa
                                     TestMedicalProviderData.PHYSICIAN_NAME,
                                     TestMedicalProviderData.CITY,
                                     TestMedicalProviderData.STATE,
+                                    null,
                                     null,
                                     null,
                                     null,
