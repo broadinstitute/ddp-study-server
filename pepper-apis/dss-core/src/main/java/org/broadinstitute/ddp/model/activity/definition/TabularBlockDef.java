@@ -27,7 +27,7 @@ public class TabularBlockDef extends FormBlockDef {
     
     public QuestionDef get(final int row, final int column) {
         if ((row < 0) || (row >= rows.size())) {
-            throw new IllegalArgumentException("The row must be a number between 0 and " + rows.size());
+            throw new IndexOutOfBoundsException("The row must be a number between 0 and " + rows.size());
         }
         
         final TabularRowDef rowDef = rows.get(row);
