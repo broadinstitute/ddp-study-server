@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.db.dto.tag.cohort;
 
+import java.util.Objects;
+
 import lombok.Data;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.TableName;
@@ -21,4 +23,22 @@ public class CohortTag {
     String ddpParticipantId;
     @ColumnName(DBConstants.DDP_INSTANCE_ID)
     Integer ddpInstanceId;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        CohortTag cohortTag = (CohortTag) o;
+        return cohortTagId.equals(cohortTag.cohortTagId) && cohortTagName.equals(cohortTag.cohortTagName)
+                && ddpParticipantId.equals(cohortTag.ddpParticipantId) && ddpInstanceId.equals(cohortTag.ddpInstanceId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(cohortTagId, cohortTagName, ddpParticipantId, ddpInstanceId);
+    }
 }

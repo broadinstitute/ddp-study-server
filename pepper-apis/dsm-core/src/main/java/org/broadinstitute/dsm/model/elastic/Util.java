@@ -51,7 +51,7 @@ public class Util {
     private static final Pattern CAMEL_CASE_REGEX = Pattern.compile("(([a-z])+([A-z])+(\\.)*)*");
     private static final Pattern UPPER_CASE_REGEX = Pattern.compile("(?=\\p{Upper})");
     public static final Gson GSON = new Gson();
-    public static final DynamicFieldsParser DYNAMIC_FIELDS_PARSER = new DynamicFieldsParser();
+    public static DynamicFieldsParser DYNAMIC_FIELDS_PARSER = new DynamicFieldsParser();
     public static final ValueParser PARSER = new ValueParser();
 
     static {

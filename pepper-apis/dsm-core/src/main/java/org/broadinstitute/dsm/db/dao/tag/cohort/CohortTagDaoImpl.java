@@ -6,9 +6,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
+import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +25,14 @@ public class CohortTagDaoImpl implements CohortTagDao {
     private static final String SQL_INSERT_COHORT_TAG =
             "INSERT INTO cohort_tag SET cohort_tag_name = ?, ddp_participant_id = ?, ddp_instance_id = ?";
     private static final String SQL_DELETE_COHORT_TAG_BY_ID = "DELETE FROM cohort_tag WHERE cohort_tag_id = ?";
+
+    private static final String SQL_GET_TAGS_BY_INSTANCE_NAME = "SELECT * FROM cohort_tag WHERE ddp_instance_id = "
+            + "(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = ?)";
+
+    public static final String COHORT_TAG_ID = "cohort_tag_id";
+    public static final String COHORT_TAG_NAME = "cohort_tag_name";
+    public static final String COHORT_DDP_PARTICIPANT_ID = DBConstants.DDP_PARTICIPANT_ID;
+    public static final String COHORT_DDP_INSTANCE_ID = DBConstants.DDP_INSTANCE_ID;
 
     @Override
     public int create(CohortTag cohortTagDto) {
@@ -75,5 +88,43 @@ public class CohortTagDaoImpl implements CohortTagDao {
     @Override
     public Optional<CohortTag> get(long id) {
         return Optional.empty();
+    }
+
+    @Override
+    public Map<String, List<CohortTag>> getCohortTagsByInstanceName(String instanceName) {
+        Map<String, List<CohortTag>> result = new HashMap<>();
+        SimpleResult simpleResult = inTransaction(conn -> {
+            SimpleResult execResult = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_TAGS_BY_INSTANCE_NAME)) {
+                stmt.setString(1, instanceName);
+                ResultSet resultSet = stmt.executeQuery();
+                while (resultSet.next()) {
+                    String ddpParticipantId = resultSet.getString(COHORT_DDP_PARTICIPANT_ID);
+                    ArrayList<CohortTag> cohortTags = new ArrayList<>();
+                    cohortTags.add(buildCohortTagFrom(resultSet));
+                    result.merge(ddpParticipantId, cohortTags, (prev, curr) -> {
+                        prev.addAll(curr);
+                        return prev;
+                    });
+                }
+            } catch (SQLException sqle) {
+                execResult.resultException = sqle;
+            }
+            return execResult;
+        });
+
+        if (simpleResult.resultException != null) {
+            throw new RuntimeException("Could not fetch cohort tags for instance: " + instanceName, simpleResult.resultException);
+        }
+        return result;
+    }
+
+    private CohortTag buildCohortTagFrom(ResultSet resultSet) throws SQLException {
+        CohortTag cohortTag = new CohortTag();
+        cohortTag.setCohortTagId(resultSet.getInt(COHORT_TAG_ID));
+        cohortTag.setCohortTagName(resultSet.getString(COHORT_TAG_NAME));
+        cohortTag.setDdpParticipantId(resultSet.getString(COHORT_DDP_PARTICIPANT_ID));
+        cohortTag.setDdpInstanceId(resultSet.getInt(COHORT_DDP_INSTANCE_ID));
+        return cohortTag;
     }
 }
