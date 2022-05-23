@@ -6,11 +6,13 @@ import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.SectionBlockDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
+import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.RevisionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -18,6 +20,7 @@ import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
+import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.util.ConfigUtil;
@@ -96,6 +99,7 @@ public class OsteoPrequalUpdate implements CustomTask {
         UpdateTemplatesInPlace updateTemplatesInPlace = new UpdateTemplatesInPlace();
         updateTemplatesInPlace.traverseActivity(handle, ACTIVITY_CODE, prequal, activity, versionDto.getRevStart());
         updateQuestion(handle, dataCfg, activityId);
+        changeQuetionStyle(handle, activityId, "PREQUAL_SELF_DESCRIBE");
     }
 
     private void insertBlock(Handle handle, Config dataCfg, long activityId, ActivityVersionDto def, RevisionMetadata revisionMetadata) {
@@ -115,6 +119,16 @@ public class OsteoPrequalUpdate implements CustomTask {
         log.info("Trying to insert new block");
         sectionBlockDao.addBlock(activityId, currentSectionDef.getSectionId(),
                 order, blockDef, revDto);
+    }
+
+    private void changeQuetionStyle(Handle handle, long activityId, String stableId) {
+        SqlHelper helper = handle.attach(SqlHelper.class);
+        JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
+        QuestionDto questionDto = jdbiQuestion.findDtoByActivityIdAndQuestionStableId(activityId, stableId).get();
+        String value = "MULTIPLE";
+        PicklistSelectMode picklistSelectMode = PicklistSelectMode.valueOf(value);
+        long pickListModeIdByValue = helper.getPickListModeIdByValue(picklistSelectMode);
+        helper.updatePicklistOption(questionDto.getId(), pickListModeIdByValue);
     }
 
     private void updateQuestion(Handle handle, Config dataCfg, long activityId) {
@@ -150,5 +164,10 @@ public class OsteoPrequalUpdate implements CustomTask {
         @SqlQuery("select question_id from question where question_stable_code_id = :stableId")
         long getQuestionId(@Bind("stableId") long stableId);
 
+        @SqlQuery("select picklist_select_mode_id from picklist_select_mode where picklist_select_mode_code = :picklist_select_mode_code")
+        long getPickListModeIdByValue(@Bind("picklist_select_mode_code") PicklistSelectMode picklistSelectMode);
+
+        @SqlUpdate("update picklist_question set picklist_select_mode_id = :picklist_select_mode_id where question_id = :question_id")
+        void updatePicklistOption(@Bind("question_id") long questionId, @Bind("picklist_select_mode_id") long picklistselectModeId);
     }
 }
