@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.model.patch.Patch;
 
@@ -37,7 +38,8 @@ public class TissueSourceGenerator extends ParentChildRelationGenerator {
                 oncHistoryDetail.setRequest(String.valueOf(unableObtainTissueStrategy.generate().get(OncHistoryDetail.STATUS_REQUEST)));
             }
             UpsertPainlessFacade.of(getTableAlias(), oncHistoryDetail, ddpInstanceDto, OncHistoryDetail.ONC_HISTORY_DETAIL_ID,
-                    OncHistoryDetail.ONC_HISTORY_DETAIL_ID, oncHistoryDetailId).export();
+                    OncHistoryDetail.ONC_HISTORY_DETAIL_ID, oncHistoryDetailId,
+                    new PutToNestedScriptBuilder()).export();
         }
         return super.getAdditionalData();
     }
