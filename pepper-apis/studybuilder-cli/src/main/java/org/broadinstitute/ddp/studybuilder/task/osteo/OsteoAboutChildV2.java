@@ -45,6 +45,7 @@ public class OsteoAboutChildV2 implements CustomTask {
     private static final String ACTIVITY_CODE = "ABOUTCHILD";
     private static final String VERSION_TAG = "v2";
     private static final String TRANSLATED_NAME = "Survey: Your Child's Osteosarcoma";
+    private static final String TRANSLATED_TITLE = "Survey: About Your Child's Osteosarcoma";
 
     private Config studyCfg;
     private Instant timestamp;
@@ -100,7 +101,7 @@ public class OsteoAboutChildV2 implements CustomTask {
         activityDao.changeVersion(activityId, VERSION_TAG, meta);
 
         //update translatedName
-        updateActivityName(activityId, ACTIVITY_CODE, TRANSLATED_NAME);
+        updateActivityName(activityId, ACTIVITY_CODE, TRANSLATED_NAME, TRANSLATED_TITLE);
 
         //add new section
         var section = jdbiFormActivityFormSection.findOrderedSectionMemberships(activityId, meta.getTimestamp()).get(0);
@@ -179,7 +180,7 @@ public class OsteoAboutChildV2 implements CustomTask {
         log.info("Copy configs successfully deleted");
     }
 
-    private void updateActivityName(long activityId, String activityCode, String name) {
+    private void updateActivityName(long activityId, String activityCode, String name, String title) {
         ActivityI18nDetail i18nDetail = activityI18nDao
                 .findDetailsByActivityIdAndTimestamp(activityId, Instant.now().toEpochMilli())
                 .iterator().next();
@@ -190,7 +191,7 @@ public class OsteoAboutChildV2 implements CustomTask {
                 i18nDetail.getIsoLangCode(),
                 name,
                 i18nDetail.getSecondName(),
-                i18nDetail.getTitle(),
+                title,
                 i18nDetail.getSubtitle(),
                 i18nDetail.getDescription(),
                 i18nDetail.getRevisionId());
