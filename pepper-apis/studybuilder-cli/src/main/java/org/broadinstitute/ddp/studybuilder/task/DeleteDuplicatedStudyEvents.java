@@ -81,15 +81,19 @@ abstract class DeleteDuplicatedStudyEvents implements CustomTask {
             );
             eventInfos.stream().skip(1).forEach(eventInfo -> {
                 sqlHelper.deleteEventConfiguration(eventInfo.configurationId);
-                if(eventInfo.preconditionExprId!=null)
+                if (eventInfo.preconditionExprId != null) {
                     sqlHelper.deleteEventExpression(eventInfo.preconditionExprId);
-                if(eventInfo.cancelExprId!=null)
+                }
+                if (eventInfo.cancelExprId != null) {
                     sqlHelper.deleteEventExpression(eventInfo.cancelExprId);
-                if(actionTypeCode.equals("ANNOUNCEMENT"))
+                }
+                if (actionTypeCode.equals("ANNOUNCEMENT")) {
                     sqlHelper.deleteUserAnnouncementEventAction(eventInfo.actionId);
+                }
                 sqlHelper.deleteEventAction(eventInfo.actionId);
-                if(triggerTypeCode.equals("ACTIVITY_STATUS"))
+                if (triggerTypeCode.equals("ACTIVITY_STATUS")) {
                     sqlHelper.deleteActivityStatusTrigger(eventInfo.activityStatusTriggerId);
+                }
                 sqlHelper.deleteEventTrigger(eventInfo.triggerId);
             });
         });
@@ -220,7 +224,8 @@ abstract class DeleteDuplicatedStudyEvents implements CustomTask {
         default void deleteActivityStatusTrigger(Long activityStatusTriggerId) {
             int numUpdated = _deleteActivityStatusTrigger(activityStatusTriggerId);
             if (numUpdated > 1) {
-                throw new DDPException("Expected to delete 1 row for activityStatusTriggerId=" + activityStatusTriggerId + " but deleted " + numUpdated);
+                throw new DDPException("Expected to delete 1 row for activityStatusTriggerId="
+                        + activityStatusTriggerId + " but deleted " + numUpdated);
             } else {
                 log.info(" Done: deleted 1 row");
             }
@@ -253,7 +258,7 @@ abstract class DeleteDuplicatedStudyEvents implements CustomTask {
             this.configurationId = configurationId;
             this.preconditionExprId = preconditionExprId;
             this.cancelExprId = cancelExprId;
-            this.activityStatusTriggerId=activityStatusTriggerId;
+            this.activityStatusTriggerId = activityStatusTriggerId;
         }
     }
 
