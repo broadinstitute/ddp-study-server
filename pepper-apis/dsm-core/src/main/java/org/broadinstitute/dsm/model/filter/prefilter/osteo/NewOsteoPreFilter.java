@@ -1,11 +1,15 @@
 package org.broadinstitute.dsm.model.filter.prefilter.osteo;
 
+import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.MedicalRecord;
+import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.filter.prefilter.BaseStudyPreFilter;
 import org.broadinstitute.dsm.model.filter.prefilter.HasDdpInstanceId;
 import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter;
 
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -25,15 +29,23 @@ public class NewOsteoPreFilter extends BaseStudyPreFilter {
     @Override
     public void filter() {
         elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
-            esDsm.setMedicalRecord(esDsm.getMedicalRecord().stream()
+
+            List<MedicalRecord> filteredMedicalRecords = esDsm.getMedicalRecord().stream()
                     .filter(matchByDdpInstanceId)
-                    .collect(Collectors.toList()));
-            esDsm.setOncHistoryDetail(esDsm.getOncHistoryDetail().stream()
+                    .collect(Collectors.toList());
+
+            List<OncHistoryDetail> filteredOncHistoryDetails = esDsm.getOncHistoryDetail().stream()
                     .filter(matchByDdpInstanceId)
-                    .collect(Collectors.toList()));
-            esDsm.setKitRequestShipping(esDsm.getKitRequestShipping().stream()
+                    .collect(Collectors.toList());
+
+            List<KitRequestShipping> filteredKitRequestShippings = esDsm.getKitRequestShipping().stream()
                     .filter(matchByDdpInstanceId)
-                    .collect(Collectors.toList()));
+                    .collect(Collectors.toList());
+
+            esDsm.setMedicalRecord(filteredMedicalRecords);
+            esDsm.setOncHistoryDetail(filteredOncHistoryDetails);
+            esDsm.setKitRequestShipping(filteredKitRequestShippings);
+
         });
 
     }

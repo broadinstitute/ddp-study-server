@@ -23,10 +23,13 @@ public class OldOsteoPreFilter extends BaseStudyPreFilter {
 
     @Override
     public void filter() {
+
         List<ESActivities> filteredActivities = elasticSearchParticipantDto.getActivities().stream()
                 .filter(this::isActivityNotUpdated)
                 .collect(Collectors.toList());
+
         elasticSearchParticipantDto.setActivities(filteredActivities);
+    
     }
 
     private boolean isActivityNotUpdated(ESActivities activity) {
