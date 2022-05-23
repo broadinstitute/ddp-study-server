@@ -232,6 +232,7 @@ public class KitUploadRoute extends RequestHandler {
                 String errorMessage = "";
                 String participantGuid = "";
                 String participantLegacyAltPid = "";
+                String collaboratorParticipantId = "";
                 //if kit has ddpParticipantId use that (RGP!)
                 if (StringUtils.isBlank(kit.getParticipantId())) {
                     ElasticSearchParticipantDto participantByShortId =
@@ -239,13 +240,18 @@ public class KitUploadRoute extends RequestHandler {
                     participantGuid = participantByShortId.getProfile().map(ESProfile::getGuid).orElse("");
                     participantLegacyAltPid = participantByShortId.getProfile().map(ESProfile::getLegacyAltPid).orElse("");
                     kit.setParticipantId(!participantGuid.isEmpty() ? participantGuid : participantLegacyAltPid);
+                    collaboratorParticipantId = KitRequestShipping
+                            .getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
+                                    ddpInstance.isMigratedDDP(),
+                                    ddpInstance.getCollaboratorIdPrefix(), kit.getParticipantId(), kit.getShortId(),
+                                    kitRequestSettings.getCollaboratorParticipantLengthOverwrite());
                 } else {
                     participantGuid = kit.getParticipantId();
+                    collaboratorParticipantId = KitRequestShipping
+                            .getCollaboratorParticipantId(null, ddpInstance.getDdpInstanceId(), ddpInstance.isMigratedDDP(),
+                                    ddpInstance.getCollaboratorIdPrefix(), kit.getParticipantId(), kit.getShortId(),
+                                    kitRequestSettings.getCollaboratorParticipantLengthOverwrite());
                 }
-                String collaboratorParticipantId =
-                        KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
-                                ddpInstance.isMigratedDDP(), ddpInstance.getCollaboratorIdPrefix(), kit.getParticipantId(),
-                                kit.getShortId(), kitRequestSettings.getCollaboratorParticipantLengthOverwrite());
                 //subkits is currently only used by test boston
                 if (kitHasSubKits) {
                     List<KitSubKits> subKits = kitRequestSettings.getSubKits();
