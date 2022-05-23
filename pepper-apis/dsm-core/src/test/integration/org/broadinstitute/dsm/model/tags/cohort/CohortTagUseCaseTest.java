@@ -30,7 +30,7 @@ public class CohortTagUseCaseTest {
 
     public static final String COHORT_TAG_NAME = "TestTag";
     public static final String INSTANCE_NAME = "angio";
-    private static final String GUID = "TEST0000000000009999";
+    public static final String GUID = "TEST0000000000009999";
     static CohortTag cohortTagPayload;
     static DDPInstanceDto ddpInstanceDto;
     static CohortTagDao cohortTagDao;
@@ -64,10 +64,7 @@ public class CohortTagUseCaseTest {
     public void insertIfCohortNotExists() {
         elasticSearchable.createDocumentById(
                 ddpInstanceDto.getEsParticipantIndex(), GUID,
-                Map.of(
-                        ESObjectConstants.DSM, Map.of(),
-                        ElasticSearchUtil.PROFILE, Map.of(ESObjectConstants.GUID, GUID)
-                )
+                buildMapWithDsmAndProfileGuid()
         );
         try {
             waitForCreationInElasticSearch();
@@ -77,6 +74,13 @@ public class CohortTagUseCaseTest {
         } catch (Exception e) {
             Assert.fail();
         }
+    }
+
+    static Map<String, Object> buildMapWithDsmAndProfileGuid() {
+        return Map.of(
+                ESObjectConstants.DSM, Map.of(),
+                ElasticSearchUtil.PROFILE, Map.of(ESObjectConstants.GUID, GUID)
+        );
     }
 
     @Test
@@ -132,7 +136,7 @@ public class CohortTagUseCaseTest {
         return participantDto;
     }
 
-    private void waitForCreationInElasticSearch() throws InterruptedException {
+    static void waitForCreationInElasticSearch() throws InterruptedException {
         Thread.sleep(1000);
     }
 
