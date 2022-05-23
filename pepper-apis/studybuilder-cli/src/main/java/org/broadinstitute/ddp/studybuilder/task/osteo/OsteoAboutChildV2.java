@@ -117,6 +117,8 @@ public class OsteoAboutChildV2 implements CustomTask {
         //update translatedName
         updateActivityName(activityId, ACTIVITY_CODE, TRANSLATED_NAME, TRANSLATED_TITLE);
 
+        updateTranslationSummaries(handle);
+
         //add new section
         var section = jdbiFormActivityFormSection.findOrderedSectionMemberships(activityId, meta.getTimestamp()).get(0);
         long newFormSectionId = createSectionBefore(activityId, section);
