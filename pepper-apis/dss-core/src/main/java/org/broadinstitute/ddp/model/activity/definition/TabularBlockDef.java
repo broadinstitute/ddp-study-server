@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.model.activity.definition;
 
+import lombok.NonNull;
 import lombok.Value;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.tabular.TabularHeaderDef;
@@ -7,8 +8,6 @@ import org.broadinstitute.ddp.model.activity.definition.tabular.TabularRowDef;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -17,12 +16,8 @@ import java.util.stream.Stream;
 @Value
 public class TabularBlockDef extends FormBlockDef {
     int columnsCount;
-
-    @NotEmpty
-    List<@Valid @NotNull TabularHeaderDef> headers = new ArrayList<>();
-
-    @NotEmpty
-    List<@Valid @NotNull TabularRowDef> rows = new ArrayList<>();
+    List<@Valid @NonNull TabularHeaderDef> headers = new ArrayList<>();
+    List<@Valid @NonNull TabularRowDef> rows = new ArrayList<>();
 
     public TabularBlockDef(final int columnsCount) {
         super(BlockType.TABULAR);
