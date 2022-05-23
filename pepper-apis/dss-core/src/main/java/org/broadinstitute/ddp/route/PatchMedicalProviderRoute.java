@@ -97,7 +97,7 @@ public class PatchMedicalProviderRoute implements Route {
                         country = getStringJsonFieldOrDefaultValue(
                                 payload,
                                 PostPatchMedicalProviderRequestPayload.Fields.COUNTRY,
-                                existingMedicalProviderDto.getState()
+                                existingMedicalProviderDto.getCountry()
                         );
                     } catch (JsonSyntaxException e) {
                         String errMsg = "The payload does not represent a valid medical provider entity";
