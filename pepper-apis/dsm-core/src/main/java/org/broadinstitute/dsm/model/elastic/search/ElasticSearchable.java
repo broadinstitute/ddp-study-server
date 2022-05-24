@@ -1,15 +1,13 @@
 package org.broadinstitute.dsm.model.elastic.search;
 
-import org.broadinstitute.dsm.model.elastic.sort.Sort;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.support.replication.ReplicationResponse;
-import org.elasticsearch.index.query.AbstractQueryBuilder;
-
 import java.util.List;
 import java.util.Map;
 
-public interface ElasticSearchable {
+import org.broadinstitute.dsm.model.elastic.sort.Sort;
+import org.elasticsearch.action.support.replication.ReplicationResponse;
+import org.elasticsearch.index.query.AbstractQueryBuilder;
 
+public interface ElasticSearchable {
 
     ElasticSearch getParticipantsWithinRange(String esParticipantsIndex, int from, int to);
 
@@ -40,6 +38,7 @@ public interface ElasticSearchable {
     default ReplicationResponse.ShardInfo createDocumentById(String index, String docId, Map<String, Object> data) {
         return new ReplicationResponse.ShardInfo();
     }
+
     default ReplicationResponse.ShardInfo deleteDocumentById(String index, String docId) {
         return new ReplicationResponse.ShardInfo();
     }
