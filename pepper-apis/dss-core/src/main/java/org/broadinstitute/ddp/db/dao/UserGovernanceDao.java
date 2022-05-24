@@ -54,17 +54,17 @@ public interface UserGovernanceDao extends SqlObject {
     }
 
     default void unassignProxy(long governanceId) {
-        log.debug("Removing governance {}", governanceId);
+        log.info("Removing governance {}", governanceId);
         DBUtils.checkDelete(1, getUserGovernanceSql().deleteGovernanceById(governanceId));
     }
 
     default void enableProxy(long governanceId) {
-        log.debug("Enabling proxy for governance {}", governanceId);
+        log.info("Enabling proxy for governance {}", governanceId);
         DBUtils.checkUpdate(1, getUserGovernanceSql().updateGovernanceIsActiveById(governanceId, true));
     }
 
     default void disableProxy(long governanceId) {
-        log.debug("Disabling proxy for governance {}", governanceId);
+        log.info("Disabling proxy for governance {}", governanceId);
         DBUtils.checkUpdate(1, getUserGovernanceSql().updateGovernanceIsActiveById(governanceId, false));
     }
 
