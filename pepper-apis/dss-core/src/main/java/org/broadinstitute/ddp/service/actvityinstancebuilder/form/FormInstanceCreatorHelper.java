@@ -56,6 +56,8 @@ public class FormInstanceCreatorHelper {
                     } else if (block.getBlockType() == BlockType.ACTIVITY) {
                         // Questions within the nested activity itself are not considered.
                         children = new ArrayList<>();
+                    } else if (block.getBlockType() == BlockType.TABULAR) {
+                        children = new ArrayList<>();
                     } else {
                         throw new DDPException("Unhandled container block type " + block.getBlockType());
                     }

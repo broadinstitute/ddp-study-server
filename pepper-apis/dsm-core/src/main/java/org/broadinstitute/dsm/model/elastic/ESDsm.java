@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.broadinstitute.dsm.db.*;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
+import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 
 @Getter
@@ -65,6 +66,8 @@ public class ESDsm {
 
     List<SmId> smId;
 
+    List<CohortTag> cohortTag;
+
     public List<Tissue> getTissue() {
         if (tissue == null) {
             tissue = Collections.emptyList();
@@ -112,5 +115,12 @@ public class ESDsm {
 
     public Optional<Participant> getParticipant() {
         return Optional.ofNullable(participant);
+    }
+
+    public List<CohortTag> getCohortTag() {
+        if (cohortTag == null) {
+            cohortTag = Collections.emptyList();
+        }
+        return cohortTag;
     }
 }
