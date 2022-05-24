@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.model.elastic.export.painless;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -20,11 +20,9 @@ public class SingleUpsertPainlessFacadeTest {
         Participant participant = new Participant();
         participant.setParticipantId(10L);
         participant.setMinimalMr(true);
-        DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder()
-                .build();
-        upsertPainlessFacade = new SingleUpsertPainlessFacade(
-                participant, ddpInstanceDto, "participantId", "participantId",10L, new MockFieldTypeExtractor(),
-                new AddToSingleScriptBuilder());
+        DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder().build();
+        upsertPainlessFacade = new SingleUpsertPainlessFacade(participant, ddpInstanceDto, "participantId", "participantId", 10L,
+                new MockFieldTypeExtractor(), new AddToSingleScriptBuilder());
     }
 
     @Test
