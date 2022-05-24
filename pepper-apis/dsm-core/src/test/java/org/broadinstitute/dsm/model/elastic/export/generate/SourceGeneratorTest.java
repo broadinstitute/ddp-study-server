@@ -68,7 +68,7 @@ public class SourceGeneratorTest {
         patch.setId("0");
         GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, patch);
         DynamicFieldsParser dynamicFieldsParser = new TestDynamicFieldsParser();
-        dynamicFieldsParser.setParser(new ValueParser());
+        dynamicFieldsParser.setHelperParser(new ValueParser());
         dynamicFieldsParser.setPropertyInfo(new BaseGenerator.PropertyInfo(MedicalRecord.class, true));
         Generator generator = new TestSourceGenerator(dynamicFieldsParser, generatorPayload);
         Map<String, Object> objectMap = generator.generate();

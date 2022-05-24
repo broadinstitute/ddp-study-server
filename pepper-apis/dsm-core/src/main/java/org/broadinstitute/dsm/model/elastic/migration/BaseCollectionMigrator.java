@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.ObjectTransformer;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 
 public abstract class BaseCollectionMigrator extends BaseMigrator {
@@ -26,6 +26,6 @@ public abstract class BaseCollectionMigrator extends BaseMigrator {
 
     @Override
     protected void transformObject(Object object) {
-        transformedList = Util.transformObjectCollectionToCollectionMap((List) object, realm);
+        transformedList = new ObjectTransformer().transformObjectCollectionToCollectionMap((List) object, realm);
     }
 }

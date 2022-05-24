@@ -27,7 +27,7 @@ public class SingleProcessorTest {
         valueParser.setPropertyInfo(propertyInfo);
 
         DynamicFieldsParser dynamicFieldsParser = new DynamicFieldsParser();
-        dynamicFieldsParser.setParser(valueParser);
+        dynamicFieldsParser.setHelperParser(valueParser);
         dynamicFieldsParser.setDisplayType("TEXT");
 
         GeneratorFactory sourceGeneratorFactory = new SourceGeneratorFactory();
@@ -55,7 +55,7 @@ public class SingleProcessorTest {
         ValueParser valueParser = new ValueParser();
 
         DynamicFieldsParser dynamicFieldsParser = new DynamicFieldsParser();
-        dynamicFieldsParser.setParser(valueParser);
+        dynamicFieldsParser.setHelperParser(valueParser);
         dynamicFieldsParser.setDisplayType("TEXT");
 
         GeneratorFactory sourceGeneratorFactory = new SourceGeneratorFactory();

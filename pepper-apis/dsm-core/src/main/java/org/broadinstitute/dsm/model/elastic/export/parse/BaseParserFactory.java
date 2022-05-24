@@ -18,7 +18,7 @@ public abstract class BaseParserFactory {
     protected BaseParser buildDynamicFieldsParser(ExportFacadePayload exportFacadePayload) {
         BaseParser typeParser;
         DynamicFieldsParser dynamicFieldsParser = new DynamicFieldsParser();
-        dynamicFieldsParser.setParser(getInitialParser());
+        dynamicFieldsParser.setHelperParser(getInitialParser());
         dynamicFieldsParser.setRealm(exportFacadePayload.getRealm());
         typeParser = dynamicFieldsParser;
         return typeParser;

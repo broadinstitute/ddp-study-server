@@ -1,7 +1,6 @@
 package org.broadinstitute.dsm.model.elastic;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,14 +16,12 @@ import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.*;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
-import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator;
 import org.broadinstitute.dsm.model.elastic.export.parse.DynamicFieldsParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.broadinstitute.dsm.util.PatchUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
@@ -51,12 +48,6 @@ public class Util {
     private static final Pattern CAMEL_CASE_REGEX = Pattern.compile("(([a-z])+([A-z])+(\\.)*)*");
     private static final Pattern UPPER_CASE_REGEX = Pattern.compile("(?=\\p{Upper})");
     public static final Gson GSON = new Gson();
-    public static DynamicFieldsParser DYNAMIC_FIELDS_PARSER = new DynamicFieldsParser();
-    public static final ValueParser PARSER = new ValueParser();
-
-    static {
-        DYNAMIC_FIELDS_PARSER.setParser(PARSER);
-    }
 
     public static String getQueryTypeFromId(String id) {
         String type;
@@ -105,78 +96,6 @@ public class Util {
         return splittedWords.length < 2;
     }
 
-    public static List<Map<String, Object>> transformObjectCollectionToCollectionMap(List<Object> values, String realm) {
-        List<Map<String, Object>> result = new ArrayList<>();
-        for (Object obj : values) {
-            result.add(transformObjectToMap(obj, realm));
-        }
-        return result;
-    }
-
-    public static Map<String, Object> transformObjectToMap(Object obj, String realm) {
-        Map<String, Object> map = new HashMap<>();
-        List<Field> declaredFields = new ArrayList<>(List.of(obj.getClass().getDeclaredFields()));
-        List<Field> declaredFieldsSuper = new ArrayList<>(List.of(obj.getClass().getSuperclass().getDeclaredFields()));
-        declaredFields.addAll(declaredFieldsSuper);
-        for (Field declaredField : declaredFields) {
-            ColumnName annotation = declaredField.getAnnotation(ColumnName.class);
-            if (annotation == null) {
-                continue;
-            }
-            try {
-                declaredField.setAccessible(true);
-                Object fieldValue = declaredField.get(obj);
-                if (Objects.isNull(fieldValue)) {
-                    continue;
-                }
-                map.putAll(convertToMap(annotation.value(), fieldValue, realm));
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return map;
-    }
-
-    static Map<String, Object> convertToMap(String fieldName, Object fieldValue, String realm) {
-        Map<String, Object> finalResult;
-        switch (fieldName) {
-            case "follow_ups":
-                finalResult = new HashMap<>(Map.of(underscoresToCamelCase(fieldName), new Gson().toJson(fieldValue)));
-                break;
-            case "test_result":
-                List<Map<String, Object>> testResult =
-                        ObjectMapperSingleton.readValue(String.valueOf(fieldValue), new TypeReference<List<Map<String, Object>>>() {
-                        });
-                finalResult = !testResult.isEmpty() ? Map.of(underscoresToCamelCase(fieldName), testResult) : Map.of();
-                break;
-            case "additional_tissue_value_json":
-            case "additional_values_json":
-            case "data":
-                Map<String, Object> objectMap = dynamicFieldsSpecialCase(fieldValue);
-                Map<String, Object> transformedMap = new HashMap<>();
-                for (Map.Entry<String, Object> object : objectMap.entrySet()) {
-                    String field = object.getKey();
-                    DYNAMIC_FIELDS_PARSER.setFieldName(field);
-                    DYNAMIC_FIELDS_PARSER.setRealm(realm);
-                    String elementValue = String.valueOf(object.getValue());
-                    Object parsedValue = DYNAMIC_FIELDS_PARSER.parse(elementValue);
-                    String camelCaseField = underscoresToCamelCase(field);
-                    transformedMap.put(camelCaseField, parsedValue);
-                }
-                finalResult = Map.of(ESObjectConstants.DYNAMIC_FIELDS, transformedMap);
-                break;
-            default:
-                Map<String, Object> result = new HashMap<>();
-                if (ValueParser.N_A.equals(fieldValue)) {
-                    fieldValue = ValueParser.N_A_SYMBOLIC_DATE;
-                }
-                result.put(underscoresToCamelCase(fieldName), StringUtils.isBlank(String.valueOf(fieldValue)) ? null : fieldValue);
-                finalResult = result;
-                break;
-        }
-        return finalResult;
-    }
-
     public static List<Map<String, Object>> convertObjectListToMapList(Object fieldValue) {
         return Objects.isNull(fieldValue) ? new ArrayList<>() :
                 ObjectMapperSingleton.instance().convertValue(fieldValue, new TypeReference<List<Map<String, Object>>>() {
@@ -189,7 +108,7 @@ public class Util {
                 });
     }
 
-    private static Map<String, Object> dynamicFieldsSpecialCase(Object fieldValue) {
+    public static Map<String, Object> dynamicFieldsSpecialCase(Object fieldValue) {
         Map<String, Object> dynamicMap = new HashMap<>();
         if (isJsonInString(fieldValue)) {
             String strValue = (String) fieldValue;

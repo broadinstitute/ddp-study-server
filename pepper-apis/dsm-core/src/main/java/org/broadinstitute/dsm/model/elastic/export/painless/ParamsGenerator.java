@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.model.elastic.export.painless;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.broadinstitute.dsm.model.elastic.ObjectTransformer;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.export.generate.Generator;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -19,7 +20,7 @@ public class ParamsGenerator implements Generator {
 
     @Override
     public Map<String, Object> generate() {
-        Map<String, Object> fieldsMap = Util.transformObjectToMap(source, realm);
+        Map<String, Object> fieldsMap = new ObjectTransformer().transformObjectToMap(source, realm);
         return new HashMap<>(Map.of(ESObjectConstants.DSM,
                 new HashMap<>(Map.of(getPropertyName(), fieldsMap))));
     }

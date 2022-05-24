@@ -33,7 +33,7 @@ public class DynamicFieldsMappingMigrator implements Exportable {
         this.index = index;
         this.study = study;
         this.parser = new DynamicFieldsParser();
-        this.parser.setParser(new TypeParser());
+        this.parser.setHelperParser(new TypeParser());
         this.propertyMap = new HashMap<>();
         elasticMappingExportAdapter = new ElasticMappingExportAdapter();
     }

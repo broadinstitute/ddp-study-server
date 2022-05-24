@@ -95,4 +95,6 @@ public abstract class BaseParser implements Parser {
     protected boolean isWrappedByChar(String value) {
         return StringUtils.isNotBlank(value) && value.charAt(0) == '\'' && value.charAt(value.length() - 1) == '\'';
     }
+
+    public void setHelperParser(BaseParser parser) {}
 }

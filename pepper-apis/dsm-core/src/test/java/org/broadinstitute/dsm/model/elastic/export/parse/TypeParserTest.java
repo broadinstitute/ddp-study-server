@@ -25,7 +25,7 @@ public class TypeParserTest {
         propertyInfo.setFieldName("additionalValuesJson");
 
         DynamicFieldsParser typeParser = new DynamicFieldsParser();
-        typeParser.setParser(new TypeParser());
+        typeParser.setHelperParser(new TypeParser());
         typeParser.setPropertyInfo(propertyInfo);
         typeParser.setFieldName("scooby");
         typeParser.setDisplayType("TEXT");
