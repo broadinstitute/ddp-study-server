@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.service.actvityinstancebuilder.form.block;
 import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.TabularBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.GroupBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
@@ -36,6 +37,8 @@ public class FormBlockCreator {
                 return creatorHelper.createQuestionBlock(ctx, (QuestionBlockDef) formBlockDef);
             case CONDITIONAL:
                 return creatorHelper.createConditionalBlock(ctx, (ConditionalBlockDef) formBlockDef);
+            case TABULAR:
+                return creatorHelper.createTabularBlock(ctx, (TabularBlockDef) formBlockDef);
             default:
                 throw new IllegalStateException("Unexpected value: " + formBlockDef.getBlockType());
         }
