@@ -92,7 +92,7 @@ public class DeleteUserRouteTestAbstract extends IntegrationTestSuite.TestCase {
             JdbiMailAddress addressDao = handle.attach(JdbiMailAddress.class);
             kitsToDelete.forEach(kitDao::deleteKitRequest);
             addressesToDelete.forEach(addressDao::deleteAddress);
-            governancesToDelete.values().stream().flatMap(Collection::stream).forEach(userGovernanceDao::unassignProxy);
+            governancesToDelete.values().stream().flatMap(Collection::stream).distinct().forEach(userGovernanceDao::unassignProxy);
             userGovernanceDao.deleteAllGovernancesForProxy(testData.getUserId());
             for (var user : usersToDelete) {
                 jdbiEnrollment.deleteByUserGuidStudyGuid(user.getGuid(), testData.getStudyGuid());
