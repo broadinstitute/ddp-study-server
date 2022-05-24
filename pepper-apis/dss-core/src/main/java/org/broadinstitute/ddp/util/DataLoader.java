@@ -1329,11 +1329,13 @@ public class DataLoader {
         Boolean isDoNotContact = getBooleanValue(data.getDdpDoNotContact());
         Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(DEFAULT_PREFERRED_LANGUAGE_CODE);
 
-        UserProfile profile = new UserProfile.Builder(user.getUserId())
-                .setFirstName(StringUtils.trim(data.getDatstatFirstname()))
-                .setLastName(StringUtils.trim(data.getDatstatLastname()))
-                .setPreferredLangId(languageCodeId)
-                .setDoNotContact(isDoNotContact)
+        UserProfile profile = UserProfile.builder()
+                .userId(user.getUserId())
+                .firstName(StringUtils.trim(data.getDatstatFirstname()))
+                .lastName(StringUtils.trim(data.getDatstatLastname()))
+                .preferredLangId(languageCodeId)
+                .preferredLangCode(null)
+                .doNotContact(isDoNotContact)
                 .build();
         profileDao.createProfile(profile);
 

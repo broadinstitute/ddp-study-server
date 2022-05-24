@@ -64,14 +64,16 @@ public class AddProfileRoute extends ValidatedJsonInputRoute<Profile> {
                         .map(User::getId)
                         .orElseThrow(() -> new DDPException("Could not find user with guid " + userGuid));
                 try {
-                    profileDao.createProfile(new UserProfile.Builder(userId)
-                            .setFirstName(profile.getFirstName())
-                            .setLastName(profile.getLastName())
-                            .setSexType(sexType)
-                            .setBirthDate(profile.getBirthDate() != null ? LocalDate.parse(profile.getBirthDate()) : null)
-                            .setPreferredLangId(langId)
-                            .setSkipLanguagePopup(profile.getSkipLanguagePopup())
-                            .build());
+                    profileDao.createProfile(UserProfile.builder()
+                                    .userId(userId)
+                                    .firstName(profile.getFirstName())
+                                    .lastName(profile.getLastName())
+                                    .sexType(sexType)
+                                    .birthDate(profile.getBirthDate() != null ? LocalDate.parse(profile.getBirthDate()) : null)
+                                    .preferredLangId(langId)
+                                    .preferredLangCode(null)
+                                    .skipLanguagePopup(profile.getSkipLanguagePopup())
+                                    .build());
                 } catch (DateTimeParseException e) {
                     String errorMsg = "Provided birth date is not a valid date";
                     throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_DATE, errorMsg));

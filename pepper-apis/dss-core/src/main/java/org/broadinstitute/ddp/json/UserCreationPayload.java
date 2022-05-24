@@ -3,10 +3,7 @@ package org.broadinstitute.ddp.json;
 import com.google.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.model.user.UserProfile;
-
-import javax.validation.constraints.NotBlank;
 import java.util.Date;
 
 /**

@@ -545,32 +545,35 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         }
 
         if (profile == null) {
-            profile = new UserProfile.Builder(user.getId())
-                    .setFirstName(firstName)
-                    .setLastName(lastName)
-                    .setPreferredLangId(languageId)
-                    .setTimeZone(timeZone)
+            profile = UserProfile.builder()
+                    .userId(user.getId())
+                    .firstName(firstName)
+                    .lastName(lastName)
+                    .preferredLangId(languageId)
+                    .preferredLangCode(null)
+                    .timeZone(timeZone)
                     .build();
             profileDao.createProfile(profile);
             log.info("Initialized user profile for user with guid {}", user.getGuid());
         } else {
             boolean shouldUpdate = false;
-            var updated = new UserProfile.Builder(profile);
+            var updated = new UserProfile(profile).toBuilder();
 
             if (profile.getFirstName() == null) {
-                updated.setFirstName(firstName);
+                updated.firstName(firstName);
                 shouldUpdate = true;
             }
             if (profile.getLastName() == null) {
-                updated.setLastName(lastName);
+                updated.lastName(lastName);
                 shouldUpdate = true;
             }
             if (profile.getPreferredLangId() == null) {
-                updated.setPreferredLangId(languageId);
+                updated.preferredLangId(languageId);
+                updated.preferredLangCode(null);
                 shouldUpdate = true;
             }
             if (profile.getTimeZone() == null) {
-                updated.setTimeZone(timeZone);
+                updated.timeZone(timeZone);
                 shouldUpdate = true;
             }
 

@@ -105,11 +105,13 @@ public class GovernedParticipantRegistrationRoute extends ValidatedJsonInputRout
         if (timeZone == null) {
             log.info("No user timezone is provided");
         }
-        UserProfile profile = new UserProfile.Builder(user.getId())
-                .setFirstName(firstName)
-                .setLastName(lastName)
-                .setPreferredLangId(languageId)
-                .setTimeZone(timeZone)
+        UserProfile profile = UserProfile.builder()
+                .userId(user.getId())
+                .firstName(firstName)
+                .lastName(lastName)
+                .preferredLangId(languageId)
+                .preferredLangCode(null)
+                .timeZone(timeZone)
                 .build();
         profileDao.createProfile(profile);
         log.info("Initialized user profile for user with guid {}", user.getGuid());

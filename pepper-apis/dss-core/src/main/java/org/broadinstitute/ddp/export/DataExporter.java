@@ -520,7 +520,7 @@ public class DataExporter {
                                         Map<String, Set<String>> governedUsersMap) {
         UserProfile userProfile = user.getProfile();
         if (userProfile == null) {
-            userProfile = new UserProfile.Builder(user.getId()).build();
+            userProfile = UserProfile.builder().userId(user.getId()).build();
         }
         ParticipantProfile profile = new ParticipantProfile(userProfile.getFirstName(), userProfile.getLastName(),
                 user.getGuid(), user.getHruid(), user.getLegacyAltPid(), user.getLegacyShortId(), user.getEmail(),
