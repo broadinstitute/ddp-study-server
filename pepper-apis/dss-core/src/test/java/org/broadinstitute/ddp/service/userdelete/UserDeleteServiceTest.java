@@ -5,8 +5,6 @@ import static org.broadinstitute.ddp.service.UserDeleteService.getUser;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import java.io.IOException;
-
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.user.User;
