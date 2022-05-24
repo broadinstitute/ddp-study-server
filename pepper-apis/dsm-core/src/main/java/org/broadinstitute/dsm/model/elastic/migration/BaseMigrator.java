@@ -64,9 +64,8 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
 
     private Map<String, Object> replaceLegacyAltPidKeysWithGuids(Map<String, Object> participantRecords) {
         participantRecords = new ConcurrentHashMap<>(participantRecords);
-        List<String> legacyAltPids = participantRecords.keySet().stream()
-                .filter(ParticipantUtil::isLegacyAltPid)
-                .collect(Collectors.toList());
+        List<String> legacyAltPids =
+                participantRecords.keySet().stream().filter(ParticipantUtil::isLegacyAltPid).collect(Collectors.toList());
         Map<String, String> guidsByLegacyAltPids = elasticSearch.getGuidsByLegacyAltPids(index, legacyAltPids);
         for (Map.Entry<String, String> entry : guidsByLegacyAltPids.entrySet()) {
             String legacyAltPid = entry.getKey();

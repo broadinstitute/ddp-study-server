@@ -15,7 +15,6 @@ import com.google.gson.reflect.TypeToken;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dao.queue.EventDao;
@@ -78,8 +77,7 @@ public abstract class BasePatch {
         if (!isElasticSearchExportable) {
             return;
         }
-        GeneratorPayload generatorPayload =
-                new GeneratorPayload(nameValue, patch);
+        GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, patch);
         ExportFacadePayload exportFacadePayload =
                 new ExportFacadePayload(ddpInstance.getParticipantIndexES(), patch.getDdpParticipantId(), generatorPayload,
                         patch.getRealm());
@@ -251,7 +249,7 @@ public abstract class BasePatch {
                                     patch.getNameValues(), patch.getDdpParticipantId()), "sent"));
                 }
             }
-        // } else if (patch.getNameValue().getName().equals("oD.unableToObtain") && (boolean) patch.getNameValue().getValue()) {
+            // } else if (patch.getNameValue().getName().equals("oD.unableToObtain") && (boolean) patch.getNameValue().getValue()) {
         } else if (patch.getNameValue().getName().equals("oD.unableObtainTissue") && !(boolean) patch.getNameValue().getValue()) {
             boolean hasReceivedDate = new OncHistoryDetailDaoImpl().hasReceivedDate(getOncHistoryDetailId(patch));
 
@@ -272,8 +270,7 @@ public abstract class BasePatch {
         int oncHistoryDetailId = -1;
         if (patch.getNameValue().getName().contains(DBConstants.DDP_TISSUE_ALIAS + DBConstants.ALIAS_DELIMITER)) {
             oncHistoryDetailId = Integer.parseInt(patch.getParentId());
-        } else if (patch.getNameValue().getName()
-                .contains(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER)) {
+        } else if (patch.getNameValue().getName().contains(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER)) {
             oncHistoryDetailId = Integer.parseInt(patch.getId());
         }
         return oncHistoryDetailId;

@@ -73,8 +73,8 @@ public class OncHistoryDetailDaoImpl implements OncHistoryDetailDao<OncHistoryDe
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             OncHistoryDetail oncHistoryDetail = null;
-            try (PreparedStatement stmt = conn
-                    .prepareStatement(OncHistoryDetail.SQL_SELECT_ONC_HISTORY_DETAIL + QueryExtension.BY_ONC_HISTORY_DETAIL_ID)) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    OncHistoryDetail.SQL_SELECT_ONC_HISTORY_DETAIL + QueryExtension.BY_ONC_HISTORY_DETAIL_ID)) {
                 stmt.setString(1, realm);
                 stmt.setString(2, oncHistoryDetailId);
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -97,16 +97,16 @@ public class OncHistoryDetailDaoImpl implements OncHistoryDetailDao<OncHistoryDe
                                         DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.FAX_SENT_2),
                                 rs.getString(
                                         DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.FAX_SENT_2_BY),
-                                rs.getString(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER +
-                                        DBConstants.FAX_CONFIRMED_2), rs.getString(
+                                rs.getString(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER
+                                        + DBConstants.FAX_CONFIRMED_2), rs.getString(
                                 DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.FAX_SENT_3),
                                 rs.getString(
                                         DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.FAX_SENT_3_BY),
-                                rs.getString(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER +
-                                        DBConstants.FAX_CONFIRMED_3), rs.getString(DBConstants.TISSUE_RECEIVED),
+                                rs.getString(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER
+                                        + DBConstants.FAX_CONFIRMED_3), rs.getString(DBConstants.TISSUE_RECEIVED),
                                 rs.getString(DBConstants.GENDER), rs.getString(
-                                DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER +
-                                        DBConstants.ADDITIONAL_VALUES_JSON), null, rs.getString(DBConstants.TISSUE_PROBLEM_OPTION),
+                                DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER
+                                        + DBConstants.ADDITIONAL_VALUES_JSON), null, rs.getString(DBConstants.TISSUE_PROBLEM_OPTION),
                                 rs.getString(DBConstants.DESTRUCTION_POLICY), rs.getBoolean(DBConstants.UNABLE_OBTAIN_TISSUE),
                                 rs.getString(DBConstants.PARTICIPANT_ID), rs.getString(DBConstants.DDP_PARTICIPANT_ID),
                                 rs.getLong(DBConstants.DDP_INSTANCE_ID));

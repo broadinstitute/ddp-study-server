@@ -23,6 +23,7 @@ import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
@@ -31,6 +32,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
+import org.broadinstitute.ddp.model.activity.types.ComponentType;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
@@ -213,6 +215,17 @@ public class OsteoMRFv2 implements CustomTask {
             order += SectionBlockDao.DISPLAY_ORDER_GAP;
             FormBlockDef blockDef = parseFormBlockDef(blockCfg);
             sectionBlockDao.insertBlockForSection(activityId, closeSectionId, order, blockDef, v2Dto.getRevId());
+        }
+
+        // disable all component blocks
+        for (var section : activity.getSections()) {
+            for (var block : section.getBlocks()) {
+                if (block.getBlockType() == BlockType.COMPONENT
+                        && ((ComponentBlockDef) block).getComponentType() != ComponentType.PHYSICIAN) {
+                    sectionBlockDao.disableBlock(block.getBlockId(), meta);
+                    log.info("Disabled component blockId {}", block.getBlockId());
+                }
+            }
         }
 
         // update study-pdfs.conf
