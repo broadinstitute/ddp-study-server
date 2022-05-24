@@ -8,7 +8,11 @@ import org.broadinstitute.ddp.db.dao.ClientDao;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
+import org.broadinstitute.ddp.db.dao.CenterUserDao;
+import org.broadinstitute.ddp.db.dao.CenterProfileDao;
+import org.broadinstitute.ddp.db.dto.CenterUserDto;
 import org.broadinstitute.ddp.json.UserCreationPayload;
+import org.broadinstitute.ddp.json.UserRegistrationResponse;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import spark.Request;
@@ -32,6 +36,11 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
                 throw new RuntimeException("Tenant wasn't found for study + " + payload.getStudyGuid());
             }
 
+            final var centerDto = handle.attach(CenterProfileDao.class).findById(payload.getCenterId());
+            if (centerDto.isEmpty()) {
+                throw new RuntimeException("Center " + payload.getCenterId() + " does not exist");
+            }
+
             final var clientId = handle.attach(ClientDao.class).getClientDao().insertClient(
                     "DON'T KNOW", "DON'T KNOW", tenantDto.getId(), "DON'T KNOW");
 
@@ -45,7 +54,12 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
                             .birthDate(payload.getBirthDate())
                     .build());
 
-            return null;
+            handle.attach(CenterUserDao.class).insert(CenterUserDto.builder()
+                            .centerId(payload.getCenterId())
+                            .userId(user.getId())
+                            .build());
+
+            return new UserRegistrationResponse(user.getGuid());
         });
     }
 }
