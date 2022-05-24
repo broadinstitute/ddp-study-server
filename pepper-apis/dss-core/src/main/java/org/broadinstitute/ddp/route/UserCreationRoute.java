@@ -37,8 +37,14 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
 
             final var user = handle.attach(UserDao.class).createUser(clientId, "DON'T KNOW");
 
-            //TODO:
-            handle.attach(UserProfileDao.class).createProfile(UserProfile.builder().build());
+            handle.attach(UserProfileDao.class).createProfile(UserProfile.builder()
+                            .userId(user.getId())
+                            .lastName(payload.getLastName())
+                            .firstName(payload.getFirstName())
+                            .sexType(payload.getSex())
+                            .birthDate(payload.getBirthDate())
+                    .build());
+
 
 
             return null;

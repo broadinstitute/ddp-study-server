@@ -4,7 +4,8 @@ import com.google.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.broadinstitute.ddp.model.user.UserProfile;
-import java.util.Date;
+
+import java.time.LocalDate;
 
 /**
  * Payload sent during creation of a new user
@@ -22,7 +23,7 @@ public class UserCreationPayload {
     private String lastName;
 
     @SerializedName("birthDate")
-    private Date birthDate;
+    private LocalDate birthDate;
 
     @SerializedName("sex")
     private UserProfile.SexType sex;
