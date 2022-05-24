@@ -21,8 +21,11 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public interface UserGovernanceDao extends SqlObject {
+    Logger log = LoggerFactory.getLogger(UserGovernanceDao.class);
 
     @CreateSqlObject
     UserDao getUserDao();
@@ -51,14 +54,17 @@ public interface UserGovernanceDao extends SqlObject {
     }
 
     default void unassignProxy(long governanceId) {
+        log.debug("Removing governance {}", governanceId);
         DBUtils.checkDelete(1, getUserGovernanceSql().deleteGovernanceById(governanceId));
     }
 
     default void enableProxy(long governanceId) {
+        log.debug("Enabling proxy for governance {}", governanceId);
         DBUtils.checkUpdate(1, getUserGovernanceSql().updateGovernanceIsActiveById(governanceId, true));
     }
 
     default void disableProxy(long governanceId) {
+        log.debug("Disabling proxy for governance {}", governanceId);
         DBUtils.checkUpdate(1, getUserGovernanceSql().updateGovernanceIsActiveById(governanceId, false));
     }
 
