@@ -45,8 +45,6 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
                             .birthDate(payload.getBirthDate())
                     .build());
 
-
-
             return null;
         });
     }
