@@ -24,4 +24,9 @@ public enum Type {
         }
         return valueOf(type);
     }
+
+    boolean isTextContent() {
+        return this == TEXT || this == TEXTAREA || this == RADIO || this == OPTIONS
+                || this == ACTIVITY || this == COMPOSITE;
+    }
 }
