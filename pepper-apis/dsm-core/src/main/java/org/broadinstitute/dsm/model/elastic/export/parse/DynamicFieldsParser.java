@@ -2,7 +2,10 @@ package org.broadinstitute.dsm.model.elastic.export.parse;
 
 import static org.broadinstitute.dsm.model.Filter.NUMBER;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.WeakHashMap;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.StringUtils;

@@ -89,6 +89,7 @@ import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.GroupBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.PhysicianInstitutionComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.TabularBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
@@ -959,6 +960,9 @@ public class DataExporter {
                             allQuestions.add(questionBlock.getQuestion());
                         }
                     }
+                } else if (formBlock.getBlockType() == BlockType.TABULAR) {
+                    TabularBlockDef tabularBlock = (TabularBlockDef) formBlock;
+                    allQuestions.addAll(tabularBlock.getQuestions().collect(Collectors.toList()));
                 } else if (formBlock.getBlockType() == BlockType.QUESTION) {
                     QuestionBlockDef questionBlock = (QuestionBlockDef) formBlock;
                     allQuestions.add(questionBlock.getQuestion());
