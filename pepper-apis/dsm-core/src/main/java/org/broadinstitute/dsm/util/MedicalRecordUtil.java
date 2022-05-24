@@ -7,6 +7,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
+import java.util.Map;
 
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
@@ -217,6 +219,11 @@ public class MedicalRecordUtil {
         }
         return false;
     }
+
+    public static boolean isParticipantInDB(@NonNull String participantId, @NonNull String instanceId) {
+        return inTransaction((conn) -> isParticipantInDB(conn, participantId, instanceId));
+    }
+
 
     public static boolean updateParticipant(@NonNull Connection conn, @NonNull String participantId, @NonNull String instanceId,
                                             @NonNull long lastVersion, @NonNull String lastUpdated, @NonNull String userId) {
