@@ -16,6 +16,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.*;
+import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.db.structure.TableName;
@@ -39,6 +40,7 @@ public class Util {
                     DBConstants.DDP_PARTICIPANT_ALIAS, new BaseGenerator.PropertyInfo(Participant.class, false),
                     DBConstants.DDP_ONC_HISTORY_ALIAS, new BaseGenerator.PropertyInfo(OncHistory.class, false),
                     DBConstants.SM_ID_TABLE_ALIAS, new BaseGenerator.PropertyInfo(SmId.class, true),
+                    DBConstants.COHORT_ALIAS, new BaseGenerator.PropertyInfo(CohortTag.class, true),
                     DBConstants.DDP_KIT_REQUEST_ALIAS, new BaseGenerator.PropertyInfo(KitRequestShipping.class, true)));
     public static final int FIRST_ELEMENT_INDEX = 0;
     public static final String UNDERSCORE_SEPARATOR = "_";
@@ -49,7 +51,7 @@ public class Util {
     private static final Pattern CAMEL_CASE_REGEX = Pattern.compile("(([a-z])+([A-z])+(\\.)*)*");
     private static final Pattern UPPER_CASE_REGEX = Pattern.compile("(?=\\p{Upper})");
     public static final Gson GSON = new Gson();
-    public static final DynamicFieldsParser DYNAMIC_FIELDS_PARSER = new DynamicFieldsParser();
+    public static DynamicFieldsParser DYNAMIC_FIELDS_PARSER = new DynamicFieldsParser();
     public static final ValueParser PARSER = new ValueParser();
 
     static {
@@ -165,6 +167,9 @@ public class Util {
                 break;
             default:
                 Map<String, Object> result = new HashMap<>();
+                if (ValueParser.N_A.equals(fieldValue)) {
+                    fieldValue = ValueParser.N_A_SYMBOLIC_DATE;
+                }
                 result.put(underscoresToCamelCase(fieldName), StringUtils.isBlank(String.valueOf(fieldValue)) ? null : fieldValue);
                 finalResult = result;
                 break;

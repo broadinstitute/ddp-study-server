@@ -4,6 +4,7 @@ import static org.quartz.CronScheduleBuilder.cronSchedule;
 import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
 import static spark.Spark.afterAfter;
 import static spark.Spark.before;
+import static spark.Spark.delete;
 import static spark.Spark.get;
 import static spark.Spark.halt;
 import static spark.Spark.patch;
@@ -49,6 +50,7 @@ import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetrics;
 import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.dsm.careevolve.Provider;
+import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.jetty.JettyConfig;
 import org.broadinstitute.dsm.jobs.DDPEventJob;
 import org.broadinstitute.dsm.jobs.DDPRequestJob;
@@ -114,6 +116,8 @@ import org.broadinstitute.dsm.route.ViewFilterRoute;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
+import org.broadinstitute.dsm.route.tag.cohort.CreateCohortTagRoute;
+import org.broadinstitute.dsm.route.tag.cohort.DeleteCohortTagRoute;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -551,7 +555,8 @@ public class DSMServer {
         get(API_ROOT + RoutePath.BSP_KIT_QUERY_PATH, new BSPKitRoute(notificationUtil), new JsonTransformer());
         get(API_ROOT + RoutePath.BSP_KIT_REGISTERED, new BSPKitRegisteredRoute(), new JsonTransformer());
         get(API_ROOT + RoutePath.CLINICAL_KIT_ENDPOINT, new ClinicalKitsRoute(notificationUtil), new JsonTransformer());
-        get(API_ROOT + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT, new CreateClinicalDummyKitRoute(), new JsonTransformer());
+        get(API_ROOT + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT, new CreateClinicalDummyKitRoute(new OncHistoryDetailDaoImpl()),
+                new JsonTransformer());
 
         if (!cfg.getBoolean("ui.production")) {
             get(API_ROOT + RoutePath.DUMMY_ENDPOINT, new CreateBSPDummyKitRoute(), new JsonTransformer());
@@ -643,6 +648,8 @@ public class DSMServer {
 
         setupSharedRoutes(kitUtil, notificationUtil, patchUtil);
 
+        setupCohortTagRoutes();
+
         setupPubSubPublisherRoutes(cfg);
 
         //no GET for USER_SETTINGS_REQUEST because UI gets them per AuthenticationRoute
@@ -662,6 +669,11 @@ public class DSMServer {
             }
         }, new JsonTransformer());
         logger.info("Finished setting up DSM custom routes and jobs...");
+    }
+
+    private void setupCohortTagRoutes() {
+        post(UI_ROOT + RoutePath.CREATE_COHORT_TAG, new CreateCohortTagRoute(), new JsonTransformer());
+        delete(UI_ROOT + RoutePath.DELETE_COHORT_TAG, new DeleteCohortTagRoute(), new JsonTransformer());
     }
 
     private void setupPubSub(@NonNull Config cfg, NotificationUtil notificationUtil) {

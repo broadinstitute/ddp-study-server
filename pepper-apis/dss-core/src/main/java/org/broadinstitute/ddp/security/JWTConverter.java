@@ -144,16 +144,18 @@ public class JWTConverter {
         return handle.attach(UserProfileDao.class).findProfileByUserGuid(userGuid).orElse(null);
     }
 
-    private DDPAuth convertJWT(String jwt) {
-        DDPAuth cachedAuth = jwtToDDPAuthCache.get(jwt);
-        if (cachedAuth != null) {
-            log.info("Auth found in cache");
-            TransactionWrapper.useTxn(handle -> {
-                String preferrededLanguage = getPreferredLanguageCodeForUser(handle, cachedAuth.getOperator());
-                cachedAuth.setPreferredLanguage(preferrededLanguage);
+    private DDPAuth convertJWT(String jwt, boolean useCachedIfAvailable) {
+        if (useCachedIfAvailable) {
+            DDPAuth cachedAuth = jwtToDDPAuthCache.get(jwt);
+            if (cachedAuth != null) {
+                log.info("Auth found in cache");
+                TransactionWrapper.useTxn(handle -> {
+                    String preferrededLanguage = getPreferredLanguageCodeForUser(handle, cachedAuth.getOperator());
+                    cachedAuth.setPreferredLanguage(preferrededLanguage);
 
-            });
-            return cachedAuth;
+                });
+                return cachedAuth;
+            }
         }
         DDPAuth ddpAuth =
                 TransactionWrapper.withTxn(handle -> {
@@ -221,11 +223,11 @@ public class JWTConverter {
      * header, validates the JWT, and converts it into
      * {@link DDPAuth a ddp auth object}.
      */
-    public DDPAuth convertJWTFromHeader(String authHeader) {
+    public DDPAuth convertJWTFromHeader(String authHeader, boolean useCachedIfAvailable) {
         DDPAuth ddpAuth;
         String jwt = extractEncodedJwtFromHeader(authHeader);
         if (jwt != null) {
-            ddpAuth = convertJWT(jwt);
+            ddpAuth = convertJWT(jwt, useCachedIfAvailable);
         } else {
             ddpAuth = new DDPAuth();
             ddpAuth.setPreferredLanguage(DEFAULT_ISO_LANGUAGE_CODE);

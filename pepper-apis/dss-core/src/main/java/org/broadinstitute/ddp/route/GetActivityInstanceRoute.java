@@ -195,6 +195,8 @@ public class GetActivityInstanceRoute implements Route {
                             allQuestions.add(questionBlock.getQuestion());
                         }
                     }
+                } else if (formBlock.getBlockType() == BlockType.TABULAR) {
+                    allQuestions.addAll(formBlock.streamQuestions().collect(Collectors.toList()));
                 } else if (formBlock.getBlockType() == BlockType.QUESTION) {
                     QuestionBlock questionBlock = (QuestionBlock) formBlock;
                     allQuestions.add(questionBlock.getQuestion());

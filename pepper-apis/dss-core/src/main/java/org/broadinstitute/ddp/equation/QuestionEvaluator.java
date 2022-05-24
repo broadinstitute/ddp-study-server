@@ -9,6 +9,8 @@ import org.broadinstitute.ddp.json.EquationResponse;
 import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answerable;
+import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.jdbi.v3.core.Handle;
 
@@ -93,11 +95,11 @@ public final class QuestionEvaluator {
                                 .toList()));
                 return;
             case PICKLIST:
-                final var picklistValues = (List<Answer>) values;
+                final var picklistAnswers = (List<PicklistAnswer>) values;
                 this.values.put(variable, new EquationResponse(variable,
-                        StreamEx.of(picklistValues)
-                                .map(Answerable::getValue)
-                                .map(this::toString)
+                        StreamEx.of(picklistAnswers)
+                                .map(PicklistAnswer::getFirstPickedOption)
+                                .map(SelectedPicklistOption::getValue)
                                 .map(this::toDecimalDef)
                                 .toList()));
                 return;
@@ -123,10 +125,6 @@ public final class QuestionEvaluator {
 
     private Long toLong(final Object object) {
         return Optional.ofNullable(object).map(Long.class::cast).orElse(null);
-    }
-
-    private String toString(final Object object) {
-        return Optional.ofNullable(object).map(String.class::cast).orElse(null);
     }
 
     private DecimalDef toDecimalDef(final Object object) {

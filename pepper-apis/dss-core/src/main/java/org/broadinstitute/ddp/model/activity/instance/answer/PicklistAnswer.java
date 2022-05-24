@@ -1,7 +1,9 @@
 package org.broadinstitute.ddp.model.activity.instance.answer;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
@@ -44,5 +46,12 @@ public final class PicklistAnswer extends Answer<List<SelectedPicklistOption>> {
     @Override
     public boolean isEmpty() {
         return value == null || value.isEmpty();
+    }
+
+    public SelectedPicklistOption getFirstPickedOption() {
+        return Optional.ofNullable(value)
+                .map(List::iterator)
+                .map(Iterator::next)
+                .orElse(null);
     }
 }

@@ -2,12 +2,9 @@ package org.broadinstitute.dsm.model.elastic.export.painless;
 
 import static org.junit.Assert.*;
 
-import org.broadinstitute.dsm.db.KitRequestShipping;
-import org.broadinstitute.dsm.db.OncHistory;
 import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.statics.ESObjectConstants;
+import org.broadinstitute.dsm.model.elastic.MockFieldTypeExtractor;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.TermQueryBuilder;
@@ -25,15 +22,9 @@ public class SingleUpsertPainlessFacadeTest {
         participant.setMinimalMr(true);
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder()
                 .build();
-        upsertPainlessFacade = UpsertPainlessFacade.of(
-                DBConstants.DDP_PARTICIPANT_ALIAS, participant, ddpInstanceDto,
-                "participantId", "participantId",10L
-        );
-    }
-
-    @Test
-    public void buildScriptBuilder() {
-        assertTrue(upsertPainlessFacade.buildScriptBuilder() instanceof SingleScriptBuilder);
+        upsertPainlessFacade = new SingleUpsertPainlessFacade(
+                participant, ddpInstanceDto, "participantId", "participantId",10L, new MockFieldTypeExtractor(),
+                new AddToSingleScriptBuilder());
     }
 
     @Test
