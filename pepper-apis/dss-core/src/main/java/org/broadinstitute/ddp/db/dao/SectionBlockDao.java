@@ -20,18 +20,21 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import one.util.streamex.StreamEx;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.BlockGroupHeaderDto;
 import org.broadinstitute.ddp.db.dto.FormBlockDto;
 import org.broadinstitute.ddp.db.dto.FormSectionDto;
 import org.broadinstitute.ddp.db.dto.NestedActivityBlockDto;
+import org.broadinstitute.ddp.db.dto.BlockTabularQuestionDto;
 import org.broadinstitute.ddp.db.dto.RevisionDto;
 import org.broadinstitute.ddp.db.dto.SectionBlockMembershipDto;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
+import org.broadinstitute.ddp.model.activity.definition.TabularBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.GroupBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.MailingAddressComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
@@ -39,6 +42,8 @@ import org.broadinstitute.ddp.model.activity.definition.PhysicianInstitutionComp
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.SectionIcon;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.tabular.TabularHeaderDef;
+import org.broadinstitute.ddp.model.activity.definition.tabular.TabularRowDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.FormSection;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
@@ -90,6 +95,9 @@ public interface SectionBlockDao extends SqlObject {
 
     @CreateSqlObject
     JdbiBlockGroupHeader getJdbiBlockGroupHeader();
+
+    @CreateSqlObject
+    JdbiBlockTabular getJdbiBlockTabular();
 
     @CreateSqlObject
     JdbiBlockNesting getJdbiBlockNesting();
@@ -237,26 +245,44 @@ public interface SectionBlockDao extends SqlObject {
         }
 
         BlockType blockType = block.getBlockType();
-        if (BlockType.CONTENT.equals(blockType)) {
-            getContentBlockDao().insertContentBlock((ContentBlockDef) block, revisionId);
-        } else if (BlockType.QUESTION.equals(blockType)) {
-            questionDao.insertQuestionBlock(activityId, (QuestionBlockDef) block, revisionId);
-        } else if (BlockType.COMPONENT.equals(blockType)) {
-            if (block instanceof MailingAddressComponentDef) {
-                componentDao.insertComponentDef(blockId, (MailingAddressComponentDef) block, revisionId);
-            } else if (block instanceof PhysicianInstitutionComponentDef) {
-                componentDao.insertComponentDef(blockId, (PhysicianInstitutionComponentDef) block, revisionId);
-            } else {
-                throw new DaoException("Unknown component type " + block.getClass().getName());
-            }
-        } else if (BlockType.CONDITIONAL.equals(blockType)) {
-            insertConditionalBlock(activityId, (ConditionalBlockDef) block, revisionId);
-        } else if (BlockType.GROUP.equals(blockType)) {
-            insertGroupBlock(activityId, (GroupBlockDef) block, revisionId);
-        } else if (BlockType.ACTIVITY.equals(blockType)) {
-            insertNestedActivityBlock(activityId, (NestedActivityBlockDef) block, revisionId);
+        if (blockType == null) {
+            throw new DaoException("The block type is not defined");
+        }
+
+        switch (blockType) {
+            case CONTENT:
+                getContentBlockDao().insertContentBlock((ContentBlockDef) block, revisionId);
+                break;
+            case QUESTION:
+                questionDao.insertQuestionBlock(activityId, (QuestionBlockDef) block, revisionId);
+                break;
+            case COMPONENT:
+                insertComponentBlock(block, revisionId, componentDao, blockId);
+                break;
+            case CONDITIONAL:
+                insertConditionalBlock(activityId, (ConditionalBlockDef) block, revisionId);
+                break;
+            case GROUP:
+                insertGroupBlock(activityId, (GroupBlockDef) block, revisionId);
+                break;
+            case TABULAR:
+                insertTabularBlock(activityId, (TabularBlockDef) block, revisionId);
+                break;
+            case ACTIVITY:
+                insertNestedActivityBlock(activityId, (NestedActivityBlockDef) block, revisionId);
+                break;
+            default:
+                throw new DaoException("Unhandled block type " + blockType);
+        }
+    }
+
+    private void insertComponentBlock(FormBlockDef block, long revisionId, ComponentDao componentDao, long blockId) {
+        if (block instanceof MailingAddressComponentDef) {
+            componentDao.insertComponentDef(blockId, (MailingAddressComponentDef) block, revisionId);
+        } else if (block instanceof PhysicianInstitutionComponentDef) {
+            componentDao.insertComponentDef(blockId, (PhysicianInstitutionComponentDef) block, revisionId);
         } else {
-            throw new DaoException("Unhandled block type " + blockType);
+            throw new DaoException("Unknown component type " + block.getClass().getName());
         }
     }
 
@@ -294,6 +320,34 @@ public interface SectionBlockDao extends SqlObject {
         LOG.info("Inserted control question id {} for block id {}", block.getControl().getQuestionId(), block.getBlockId());
 
         insertNestedBlocks(activityId, block.getBlockId(), block.getNested(), revisionId);
+    }
+
+    default void insertTabularBlock(long activityId, TabularBlockDef block, long revisionId) {
+        if (block.getColumnsCount() <= 0) {
+            throw new IllegalArgumentException("The count of columns must be a positive number");
+        }
+
+        final long tabularId = getJdbiBlockTabular().insert(block.getBlockId(), block.getColumnsCount(), revisionId);
+        LOG.info("Inserted tabular block id {} for block id {}", tabularId, block.getBlockId());
+
+        for (final TabularHeaderDef header : block.getHeaders()) {
+            final long templateId = getTemplateDao().insertTemplate(header.getLabel(), revisionId);
+            getJdbiBlockTabular().insertHeader(tabularId, header.getColumnSpan(), templateId);
+        }
+        LOG.info("Inserted {} headers for tabular block {}", block.getHeaders().size(), tabularId);
+
+        for (int row = 0; row < block.getRows().size(); row++) {
+            for (int column = 0; column < block.getRows().get(row).getQuestions().size(); column++) {
+                final var question = block.get(row, column);
+                if (question == null) {
+                    continue;
+                }
+
+                getQuestionDao().insertQuestionByType(activityId, question, revisionId);
+                getJdbiBlockTabular().insertQuestion(tabularId, question.getQuestionId(), column, row);
+            }
+        }
+        LOG.info("Inserted {} rows for tabular block {}", block.getRows().size(), tabularId);
     }
 
     /**
@@ -611,6 +665,7 @@ public interface SectionBlockDao extends SqlObject {
         List<FormBlockDto> questionBlockDtos = new ArrayList<>();
         List<FormBlockDto> componentBlockDtos = new ArrayList<>();
         List<FormBlockDto> conditionalBlockDtos = new ArrayList<>();
+        List<FormBlockDto> tabularBlockDtos = new ArrayList<>();
         List<FormBlockDto> groupBlockDtos = new ArrayList<>();
         List<FormBlockDto> nestedActivityBlockDtos = new ArrayList<>();
 
@@ -631,6 +686,9 @@ public interface SectionBlockDao extends SqlObject {
                 case CONDITIONAL:
                     conditionalBlockDtos.add(blockDto);
                     break;
+                case TABULAR:
+                    tabularBlockDtos.add(blockDto);
+                    break;
                 case GROUP:
                     groupBlockDtos.add(blockDto);
                     break;
@@ -644,6 +702,7 @@ public interface SectionBlockDao extends SqlObject {
         blockDefs.putAll(new QuestionCachedDao(getHandle()).collectBlockDefs(questionBlockDtos, timestamp));
         blockDefs.putAll(getComponentDao().collectBlockDefs(componentBlockDtos, timestamp));
         blockDefs.putAll(collectConditionalBlockDefs(conditionalBlockDtos, timestamp));
+        blockDefs.putAll(collectTabularBlockDefs(tabularBlockDtos, timestamp));
         blockDefs.putAll(collectGroupBlockDefs(groupBlockDtos, timestamp));
         blockDefs.putAll(collectNestedActivityBlockDefs(nestedActivityBlockDtos, timestamp));
 
@@ -723,6 +782,62 @@ public interface SectionBlockDao extends SqlObject {
             blockDef.setBlockGuid(blockDto.getGuid());
             blockDef.setShownExpr(blockDto.getShownExpr());
             blockDef.setEnabledExpr(blockDto.getEnabledExpr());
+
+            blockDefs.put(blockDto.getId(), blockDef);
+        }
+
+        return blockDefs;
+    }
+
+    default Map<Long, TabularBlockDef> collectTabularBlockDefs(Collection<FormBlockDto> blockDtos, long timestamp) {
+        if (blockDtos == null || blockDtos.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        Set<Long> blockIds = new HashSet<>();
+        for (var blockDto : blockDtos) {
+            blockIds.add(blockDto.getId());
+        }
+
+        Map<Long, List<BlockTabularQuestionDto>> questionsByBlocks = StreamEx.of(getJdbiBlockTabular()
+                        .findQuestionsByBlockIdsAndTimestamp(blockIds, timestamp))
+                .groupingBy(BlockTabularQuestionDto::getBlockId);
+
+        Map<Long, QuestionDef> questionDefs = new QuestionCachedDao(getHandle())
+                .collectQuestionDefs(StreamEx.of(questionsByBlocks.values())
+                        .flatMap(Collection::stream)
+                        .map(BlockTabularQuestionDto::getQuestionId)
+                        .toList(), timestamp);
+
+        Map<Long, TabularBlockDef> blockDefs = new HashMap<>();
+        for (var blockDto : blockDtos) {
+            final int rowCount = 1 + StreamEx.of(questionsByBlocks.get(blockDto.getId()))
+                    .map(BlockTabularQuestionDto::getRow)
+                    .max(Integer::compareTo)
+                    .orElse(0);
+
+            final var tabularBlock = getJdbiBlockTabular().findByBlockIdAndTimestamp(blockDto.getId(), timestamp);
+            final var questionsTable = new QuestionDef[rowCount][tabularBlock.getColumnsCount()];
+            for (final BlockTabularQuestionDto tabularQuestion : questionsByBlocks.get(blockDto.getId())) {
+                questionsTable[tabularQuestion.getRow()][tabularQuestion.getColumn()] = questionDefs.get(tabularQuestion.getQuestionId());
+            }
+
+            final var blockDef = new TabularBlockDef(tabularBlock.getColumnsCount());
+            blockDef.setBlockId(blockDto.getId());
+            blockDef.setBlockGuid(blockDto.getGuid());
+            blockDef.setShownExpr(blockDto.getShownExpr());
+            blockDef.setEnabledExpr(blockDto.getEnabledExpr());
+
+            blockDef.getHeaders().addAll(StreamEx.of(getJdbiBlockTabular()
+                            .findHeadersByBlockIdAndTimestamp(blockDto.getId(), timestamp))
+                    .map(tabularHeader -> new TabularHeaderDef(tabularHeader.getColumnSpan(),
+                            getTemplateDao().loadTemplateByIdAndTimestamp(tabularHeader.getTemplateId(), timestamp)))
+                    .toList());
+
+            blockDef.getRows().addAll(StreamEx.of(questionsTable)
+                    .map(Arrays::asList)
+                    .map(TabularRowDef::new)
+                    .toList());
 
             blockDefs.put(blockDto.getId(), blockDef);
         }

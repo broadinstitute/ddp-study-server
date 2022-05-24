@@ -22,6 +22,7 @@ import org.broadinstitute.dsm.db.SmId;
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.ViewFilter;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
+import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
@@ -57,6 +58,7 @@ public class PatchUtil {
         getColumnNames(ParticipantData.class);
         getColumnNames(ParticipantRecordDto.class);
         getColumnNames(SmId.class);
+        getColumnNames(CohortTag.class);
         logger.info("Loaded patch utils");
     }
 

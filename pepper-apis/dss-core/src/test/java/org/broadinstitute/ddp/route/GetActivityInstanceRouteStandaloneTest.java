@@ -61,6 +61,7 @@ import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.TabularBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.SectionIcon;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
@@ -77,6 +78,8 @@ import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.tabular.TabularHeaderDef;
+import org.broadinstitute.ddp.model.activity.definition.tabular.TabularRowDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
 import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
@@ -372,6 +375,36 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         FormSectionDef numericSection = new FormSectionDef(null,
                 TestUtil.wrapQuestions(decimalDef, decimalDefWithValidation, equationDef));
 
+        //------------- create SECTION[11] ---------
+        final DecimalQuestionDef questionLU = DecimalQuestionDef
+                .builder("QUESTION_LU", Template.text("This is value"))
+                .setScale(2)
+                .build();
+
+        final DecimalQuestionDef questionRU = DecimalQuestionDef
+                .builder("QUESTION_RU", Template.text("This is value"))
+                .setScale(2)
+                .build();
+
+        final DecimalQuestionDef questionLB = DecimalQuestionDef
+                .builder("QUESTION_LB", Template.text("This is value"))
+                .setScale(2)
+                .build();
+
+        final DecimalQuestionDef questionRB = DecimalQuestionDef
+                .builder("QUESTION_RB", Template.text("This is value"))
+                .setScale(2)
+                .build();
+
+        var tabularBlock = new TabularBlockDef(2);
+        tabularBlock.getRows().add(new TabularRowDef(Arrays.asList(questionLU, questionRU)));
+        tabularBlock.getRows().add(new TabularRowDef(Arrays.asList(questionLB, questionRB)));
+
+        tabularBlock.getHeaders().add(new TabularHeaderDef(1, Template.text("Left column")));
+        tabularBlock.getHeaders().add(new TabularHeaderDef(1, Template.text("Right column")));
+
+        FormSectionDef tabularSection = new FormSectionDef(null, Collections.singletonList(tabularBlock));
+
         //------------- create STUDY ACTIVITY ---------
         String parentActCode = "ACT_ROUTE_PARENT" + Instant.now().toEpochMilli();
         activityCode = "ACT_ROUTE_ACT" + Instant.now().toEpochMilli();
@@ -396,6 +429,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .addSection(fileSection)
                 .addSection(matrixSection)
                 .addSection(numericSection)
+                .addSection(tabularSection)
                 .build();
         activityVersionDto = handle.attach(ActivityDao.class).insertActivity(
                 parentActivity, List.of(activity), RevisionMetadata.now(testData.getUserId(), "add " + activityCode)
@@ -622,6 +656,23 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .body("picklistOptions[2].groupId", equalTo("G2"))
                 .body("picklistOptions[3].stableId", equalTo("G2_OPT2"))
                 .body("picklistOptions[3].groupId", equalTo("G2"));
+    }
+
+    @Test
+    public void testGet_tabularSection() {
+        testFor200()
+                .body("sections.size()", equalTo(activity.getSections().size()))
+                .body("sections[11].blocks.size()", equalTo(1))
+                .body("sections[11].blocks[0].blockType", equalTo(BlockType.TABULAR.toString()))
+                .body("sections[11].blocks[0].columnsCount", equalTo(2))
+                .body("sections[11].blocks[0].headers.size()", equalTo(2))
+                .body("sections[11].blocks[0].headers[0].columnSpan", equalTo(1))
+                .body("sections[11].blocks[0].headers[1].columnSpan", equalTo(1))
+                .body("sections[11].blocks[0].content.size()", equalTo(2))
+                .body("sections[11].blocks[0].content[0][0].stableId", equalTo("QUESTION_LU"))
+                .body("sections[11].blocks[0].content[0][1].stableId", equalTo("QUESTION_RU"))
+                .body("sections[11].blocks[0].content[1][0].stableId", equalTo("QUESTION_LB"))
+                .body("sections[11].blocks[0].content[1][1].stableId", equalTo("QUESTION_RB"));
     }
 
     @Test

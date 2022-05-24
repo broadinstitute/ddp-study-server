@@ -14,6 +14,8 @@ import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.model.FollowUp;
+import org.broadinstitute.dsm.model.elastic.export.parse.DynamicFieldsParser;
+import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,6 +24,10 @@ public class UtilTest {
 
     @Before
     public void setUp() {
+        FieldSettingsDao.setInstance(getMockFieldSettingsDao());
+    }
+
+    private FieldSettingsDao getMockFieldSettingsDao() {
         class FieldSettingsDaoMock extends FieldSettingsDao {
 
             @Override
@@ -36,9 +42,7 @@ public class UtilTest {
             }
         }
 
-        FieldSettingsDaoMock fieldSettingsDaoMock = new FieldSettingsDaoMock();
-
-        FieldSettingsDao.setInstance(fieldSettingsDaoMock);
+        return new FieldSettingsDaoMock();
     }
 
     @Test
@@ -91,8 +95,9 @@ public class UtilTest {
                 .withFieldTypeId("f")
                 .withData(json)
                 .build();
-
-        Map<String, Object> result = Util.transformObjectToMap(participantData, "angio");
+        Util.DYNAMIC_FIELDS_PARSER = new DynamicFieldsParser();
+        Util.DYNAMIC_FIELDS_PARSER.setParser(new ValueParser());
+        Map<String, Object> result = Util.transformObjectToMap(participantData, "");
         assertEquals("TEST", ((Map) result.get("dynamicFields")).get("ddpInstance"));
         assertEquals("VALUE", ((Map) result.get("dynamicFields")).get("ddpValue"));
         assertEquals(true, ((Map) result.get("dynamicFields")).get("booleanVal"));

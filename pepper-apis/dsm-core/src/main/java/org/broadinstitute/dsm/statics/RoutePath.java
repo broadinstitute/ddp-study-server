@@ -99,6 +99,8 @@ public class RoutePath {
     public static final String GET_PARTICIPANTS_SIZE = "getParticipantsSize";
     public static final String GoogleAnalytics = "googleAnalytics";
     public static final String DOWNLOAD_PARTICIPANT_LIST_ROUTE = "participantList";
+    public static final String CREATE_COHORT_TAG = "createCohortTag";
+    public static final String DELETE_COHORT_TAG = "deleteCohortTag";
 
     public static String getRealm(Request request) {
         QueryParamsMap queryParams = request.queryMap();
