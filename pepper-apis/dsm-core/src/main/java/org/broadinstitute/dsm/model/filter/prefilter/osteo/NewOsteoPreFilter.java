@@ -29,23 +29,18 @@ public class NewOsteoPreFilter extends BaseStudyPreFilter {
     @Override
     public void filter() {
         elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
-
             List<MedicalRecord> filteredMedicalRecords = esDsm.getMedicalRecord().stream()
                     .filter(matchByDdpInstanceId)
                     .collect(Collectors.toList());
-
             List<OncHistoryDetail> filteredOncHistoryDetails = esDsm.getOncHistoryDetail().stream()
                     .filter(matchByDdpInstanceId)
                     .collect(Collectors.toList());
-
             List<KitRequestShipping> filteredKitRequestShippings = esDsm.getKitRequestShipping().stream()
                     .filter(matchByDdpInstanceId)
                     .collect(Collectors.toList());
-
             esDsm.setMedicalRecord(filteredMedicalRecords);
             esDsm.setOncHistoryDetail(filteredOncHistoryDetails);
             esDsm.setKitRequestShipping(filteredKitRequestShippings);
-
         });
 
     }
