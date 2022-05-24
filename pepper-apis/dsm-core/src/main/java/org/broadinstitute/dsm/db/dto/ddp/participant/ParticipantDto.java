@@ -50,6 +50,8 @@ public class ParticipantDto {
             this.lastChanged = lastChanged;
         }
 
+        public Builder() {}
+
         public Builder withParticipantId(int participantId) {
             this.participantId = Optional.of(participantId);
             return this;
