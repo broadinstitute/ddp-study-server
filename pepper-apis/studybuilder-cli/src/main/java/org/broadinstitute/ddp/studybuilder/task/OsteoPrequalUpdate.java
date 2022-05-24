@@ -84,8 +84,8 @@ public class OsteoPrequalUpdate implements CustomTask {
     private void revisionPrequal(long activityId, Config dataCfg, Handle handle, User adminUser,
                                  StudyDto studyDto, RevisionMetadata meta, String versionTag) {
         ActivityVersionDto version2 = handle.attach(ActivityDao.class).changeVersion(activityId, versionTag, meta);
-        insertBlock(handle, dataCfg, activityId, version2, meta);
         traverseActivity(handle, dataCfg, studyDto, adminUser, activityId, version2);
+        insertBlock(handle, dataCfg, activityId, version2, meta);
     }
 
     private void traverseActivity(Handle handle, Config dataCfg, StudyDto studyDto,
