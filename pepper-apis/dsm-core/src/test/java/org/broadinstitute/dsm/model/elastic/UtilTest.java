@@ -3,7 +3,6 @@ package org.broadinstitute.dsm.model.elastic;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +17,6 @@ import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.model.FollowUp;
 import org.broadinstitute.dsm.model.elastic.export.parse.DynamicFieldsParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -120,31 +118,6 @@ public class UtilTest {
         assertTrue((boolean) testResult.get("isCorrected"));
         assertEquals("Negative", testResult.get("result"));
         assertEquals("2020-09-03T12:08:21.657Z", testResult.get("timeCompleted"));
-    }
-
-    @Test
-    public void getParameterizedType() throws NoSuchFieldException {
-        class MockClass {
-            List<Object> listField;
-            FollowUp[] followUps;
-            Object obj;
-        }
-
-        Field listField = MockClass.class.getDeclaredField("listField");
-        Field followUps = MockClass.class.getDeclaredField("followUps");
-        Field obj = MockClass.class.getDeclaredField("obj");
-
-        Class<?> clazz = null;
-        try {
-            clazz = Util.getParameterizedType(listField.getGenericType());
-            assertEquals(Object.class, clazz);
-            clazz = Util.getParameterizedType(followUps.getGenericType());
-            assertEquals(FollowUp.class, clazz);
-            clazz = Util.getParameterizedType(obj.getGenericType());
-            assertEquals(Object.class, clazz);
-        } catch (ClassNotFoundException e) {
-            Assert.fail();
-        }
     }
 
     @Test

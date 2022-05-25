@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.search;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -112,12 +113,24 @@ public class SourceMapDeserializer implements Deserializer {
     private boolean hasSpecialCases(String outerProperty) {
         try {
             Field property = ESDsm.class.getDeclaredField(outerProperty);
-            Class<?> propertyType = Util.getParameterizedType(property.getGenericType());
+            Class<?> propertyType = getParameterizedType(property.getGenericType());
             Field[] declaredFields = propertyType.getDeclaredFields();
             return Arrays.stream(declaredFields).anyMatch(field -> isDynamicField(field) || isTestResult(field));
         } catch (NoSuchFieldException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    Class<?> getParameterizedType(Type genericType) throws ClassNotFoundException {
+        String typeAsString = genericType.toString();
+        String[] types = typeAsString.contains("<") ? typeAsString.split("<") : typeAsString.split("\\[L");
+        if (types.length < 2) {
+            return (Class) genericType;
+        }
+        String parameterizedType = types[1];
+        parameterizedType = parameterizedType.replace(">", "");
+        parameterizedType = parameterizedType.replace(";", "");
+        return Class.forName(parameterizedType);
     }
 
     private boolean isDynamicField(Field field) {

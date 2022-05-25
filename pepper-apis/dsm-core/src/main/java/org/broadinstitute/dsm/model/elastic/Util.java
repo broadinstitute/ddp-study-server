@@ -1,8 +1,5 @@
 package org.broadinstitute.dsm.model.elastic;
 
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -11,8 +8,6 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.MedicalRecord;
@@ -26,12 +21,9 @@ import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator;
-import org.broadinstitute.dsm.model.elastic.export.parse.DynamicFieldsParser;
-import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.broadinstitute.dsm.util.PatchUtil;
-import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class Util {
 
@@ -54,7 +46,6 @@ public class Util {
     public static final String FORWARD_SLASH_SEPARATOR = "/";
     private static final Pattern CAMEL_CASE_REGEX = Pattern.compile("(([a-z])+([A-z])+(\\.)*)*");
     private static final Pattern UPPER_CASE_REGEX = Pattern.compile("(?=\\p{Upper})");
-    public static final Gson GSON = new Gson();
 
     public static String getQueryTypeFromId(String id) {
         String type;
@@ -79,15 +70,29 @@ public class Util {
         if (hasNoUnderscores(splittedWords)) {
             return handleAllUppercase(fieldName);
         }
-        List<StringBuilder> words =
-                Arrays.stream(splittedWords).map(word -> new StringBuilder(word.toLowerCase())).collect(Collectors.toList());
+        return makeCamelCaseFrom(makeWordsLowerCase(splittedWords));
+    }
+
+    private static String makeCamelCaseFrom(List<StringBuilder> words) {
         for (int i = FIRST_ELEMENT_INDEX; i < words.size(); i++) {
             StringBuilder word = words.get(i);
-            if (i != FIRST_ELEMENT_INDEX && word.length() > FIRST_ELEMENT_INDEX) {
-                word.replace(FIRST_ELEMENT_INDEX, 1, String.valueOf(word.charAt(FIRST_ELEMENT_INDEX)).toUpperCase());
+            if (isNotFirstWord(i, word)) {
+                makeFirstLetterUpperCase(word);
             }
         }
         return String.join(StringUtils.EMPTY, words);
+    }
+
+    private static StringBuilder makeFirstLetterUpperCase(StringBuilder word) {
+        return word.replace(FIRST_ELEMENT_INDEX, 1, String.valueOf(word.charAt(FIRST_ELEMENT_INDEX)).toUpperCase());
+    }
+
+    private static boolean isNotFirstWord(int i, StringBuilder word) {
+        return i != FIRST_ELEMENT_INDEX && word.length() > FIRST_ELEMENT_INDEX;
+    }
+
+    private static List<StringBuilder> makeWordsLowerCase(String[] splittedWords) {
+        return Arrays.stream(splittedWords).map(word -> new StringBuilder(word.toLowerCase())).collect(Collectors.toList());
     }
 
     private static String handleAllUppercase(String word) {
@@ -103,64 +108,6 @@ public class Util {
         return splittedWords.length < 2;
     }
 
-    public static List<Map<String, Object>> convertObjectListToMapList(Object fieldValue) {
-        return Objects.isNull(fieldValue) ? new ArrayList<>() :
-                ObjectMapperSingleton.instance().convertValue(fieldValue, new TypeReference<List<Map<String, Object>>>() {
-                });
-    }
-
-    public static Map<String, Object> convertObjectToMap(Object fieldValue) {
-        return Objects.isNull(fieldValue) ? new HashMap<>() :
-                ObjectMapperSingleton.instance().convertValue(fieldValue, new TypeReference<Map<String, Object>>() {
-                });
-    }
-
-    public static Map<String, Object> dynamicFieldsSpecialCase(Object fieldValue) {
-        Map<String, Object> dynamicMap = new HashMap<>();
-        if (isJsonInString(fieldValue)) {
-            String strValue = (String) fieldValue;
-            try {
-                dynamicMap = ObjectMapperSingleton.instance().readValue(strValue, Map.class);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return dynamicMap;
-    }
-
-    private static boolean isJsonInString(Object fieldValue) {
-        return fieldValue instanceof String && StringUtils.isNotBlank((String) fieldValue) && isJson((String) fieldValue);
-    }
-
-    private static boolean isJson(String str) {
-        return getFirstChar(str) == '{' && getLastChar(str) == '}';
-    }
-
-    private static char getLastChar(String strValue) {
-        if (Objects.isNull(strValue) || strValue.length() == 0) {
-            throw new IllegalArgumentException();
-        }
-        return strValue.charAt(strValue.length() - 1);
-    }
-
-    private static char getFirstChar(String strValue) {
-        if (Objects.isNull(strValue) || strValue.length() == 0) {
-            throw new IllegalArgumentException();
-        }
-        return strValue.charAt(0);
-    }
-
-    public static Class<?> getParameterizedType(Type genericType) throws ClassNotFoundException {
-        String typeAsString = genericType.toString();
-        String[] types = typeAsString.contains("<") ? typeAsString.split("<") : typeAsString.split("\\[L");
-        if (types.length < 2) {
-            return (Class) genericType;
-        }
-        String parameterizedType = types[1];
-        parameterizedType = parameterizedType.replace(">", "");
-        parameterizedType = parameterizedType.replace(";", "");
-        return Class.forName(parameterizedType);
-    }
 
     public static String camelCaseToPascalSnakeCase(String camelCase) {
         String[] words = camelCase.split(UPPER_CASE_REGEX.toString());
