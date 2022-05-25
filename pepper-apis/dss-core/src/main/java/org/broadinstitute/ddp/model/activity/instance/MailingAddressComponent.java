@@ -8,7 +8,7 @@ import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.model.activity.types.ComponentType;
 
-public class MailingAddressComponent extends FormComponent {
+public final class MailingAddressComponent extends FormComponent {
 
     @SerializedName("parameters")
     private SerializedFields serializedFields;

@@ -2,19 +2,14 @@ package org.broadinstitute.dsm.model.elastic.export.parse;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.util.StringUtil;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator;
-import org.broadinstitute.dsm.model.elastic.export.parse.DynamicFieldsParser;
-import org.broadinstitute.dsm.model.elastic.export.parse.TypeParser;
-import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -53,7 +48,7 @@ public class DynamicFieldsParserTest {
 
     private static String getRandomValue() {
         Random random = new Random();
-        char[] characters = new char[] {'a','b','c','d','e','g', 'h', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r'};
+        char[] characters = new char[] {'a', 'b', 'c', 'd', 'e', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r'};
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < 100; i++) {
             stringBuilder.append(characters[random.nextInt(characters.length)]);
@@ -67,5 +62,4 @@ public class DynamicFieldsParserTest {
             return Optional.of(new FieldSettingsDto.Builder(1).build());
         }
     }
-
 }
