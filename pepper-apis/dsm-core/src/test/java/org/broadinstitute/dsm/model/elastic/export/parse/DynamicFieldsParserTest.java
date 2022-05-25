@@ -48,7 +48,7 @@ public class DynamicFieldsParserTest {
 
     private static String getRandomValue() {
         Random random = new Random();
-        char[] characters = new char[] {'a','b','c','d','e','g', 'h', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r'};
+        char[] characters = new char[] {'a', 'b', 'c', 'd', 'e', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r'};
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < 100; i++) {
             stringBuilder.append(characters[random.nextInt(characters.length)]);
@@ -62,5 +62,4 @@ public class DynamicFieldsParserTest {
             return Optional.of(new FieldSettingsDto.Builder(1).build());
         }
     }
-
 }
