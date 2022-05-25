@@ -47,6 +47,14 @@ public class Util {
         return makeCamelCaseFrom(makeWordsLowerCase(splittedWords));
     }
 
+    private static boolean hasNoUnderscores(String[] splittedWords) {
+        return splittedWords.length < 2;
+    }
+
+    private static String handleAllUppercase(String word) {
+        return CAMEL_CASE_REGEX.matcher(word).matches() ? word : word.toLowerCase();
+    }
+
     private static String makeCamelCaseFrom(List<StringBuilder> words) {
         for (int i = FIRST_ELEMENT_INDEX; i < words.size(); i++) {
             StringBuilder word = words.get(i);
@@ -57,24 +65,16 @@ public class Util {
         return String.join(StringUtils.EMPTY, words);
     }
 
-    private static void makeFirstLetterUpperCase(StringBuilder word) {
-        word.replace(FIRST_ELEMENT_INDEX, 1, String.valueOf(word.charAt(FIRST_ELEMENT_INDEX)).toUpperCase());
-    }
-
     private static boolean isNotFirstWord(int i, StringBuilder word) {
         return i != FIRST_ELEMENT_INDEX && word.length() > FIRST_ELEMENT_INDEX;
     }
 
+    private static void makeFirstLetterUpperCase(StringBuilder word) {
+        word.replace(FIRST_ELEMENT_INDEX, 1, String.valueOf(word.charAt(FIRST_ELEMENT_INDEX)).toUpperCase());
+    }
+
     private static List<StringBuilder> makeWordsLowerCase(String[] splittedWords) {
         return Arrays.stream(splittedWords).map(word -> new StringBuilder(word.toLowerCase())).collect(Collectors.toList());
-    }
-
-    private static String handleAllUppercase(String word) {
-        return CAMEL_CASE_REGEX.matcher(word).matches() ? word : word.toLowerCase();
-    }
-
-    private static boolean hasNoUnderscores(String[] splittedWords) {
-        return splittedWords.length < 2;
     }
 
 
