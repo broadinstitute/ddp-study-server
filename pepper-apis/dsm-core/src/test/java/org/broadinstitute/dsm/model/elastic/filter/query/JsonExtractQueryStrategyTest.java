@@ -1,12 +1,12 @@
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
-import org.elasticsearch.index.query.*;
-import org.jdbi.v3.core.mapper.Nested;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.ExistsQueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.NestedQueryBuilder;
 import org.junit.Assert;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 public class JsonExtractQueryStrategyTest {
 
@@ -54,6 +54,4 @@ public class JsonExtractQueryStrategyTest {
 
         Assert.assertEquals(expected, nestedQueryBuilder.query());
     }
-
-
 }
