@@ -108,7 +108,7 @@ public class ParticipantUtil {
         return applicantData;
     }
 
-    public static boolean isLegacyAltPid(String pId) {
-        return !isGuid(pId);
+    public static boolean isLegacyAltPid(String participantId) {
+        return !isGuid(participantId);
     }
 }
