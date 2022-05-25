@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import org.broadinstitute.dsm.model.elastic.ObjectTransformer;
 import org.broadinstitute.dsm.model.elastic.export.BaseExporter;
 import org.broadinstitute.dsm.model.elastic.export.generate.Generator;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
@@ -21,6 +22,7 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
     protected final String realm;
     protected final String index;
     protected String object;
+    protected ObjectTransformer objectTransformer;
     private ElasticSearch elasticSearch;
 
     public BaseMigrator(String index, String realm, String object) {
@@ -29,6 +31,7 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
         this.index = index;
         this.object = object;
         elasticSearch = new ElasticSearch();
+        objectTransformer = new ObjectTransformer();
     }
 
     protected void fillBulkRequestWithTransformedMapAndExport(Map<String, Object> participantRecords) {

@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.model.elastic;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,8 +14,6 @@ import org.broadinstitute.dsm.model.elastic.converters.ConverterFactory;
 import org.broadinstitute.dsm.model.elastic.export.parse.BaseParser;
 
 public class ObjectTransformer {
-
-
     private BaseParser parser;
 
     public ObjectTransformer(BaseParser parser) {
@@ -22,15 +21,6 @@ public class ObjectTransformer {
     }
 
     public ObjectTransformer() {
-    }
-
-    Map<String, Object> convertToMap(String fieldName, Object fieldValue, String realm) {
-        ConverterFactory converterFactory = new ConverterFactory(fieldName, fieldValue, realm);
-        Converter converter = converterFactory.of();
-        if (Objects.nonNull(parser)) {
-            converter.setParser(parser);
-        }
-        return converter.convert();
     }
 
     public List<Map<String, Object>> transformObjectCollectionToCollectionMap(List<Object> values, String realm) {
@@ -42,27 +32,47 @@ public class ObjectTransformer {
     }
 
     public Map<String, Object> transformObjectToMap(Object obj, String realm) {
-        Map<String, Object> map = new HashMap<>();
-        List<Field> declaredFields = new ArrayList<>(List.of(obj.getClass().getDeclaredFields()));
-        List<Field> declaredFieldsSuper = new ArrayList<>(List.of(obj.getClass().getSuperclass().getDeclaredFields()));
-        declaredFields.addAll(declaredFieldsSuper);
-        for (Field declaredField : declaredFields) {
+        Map<String, Object> result = new HashMap<>();
+        List<Field> declaredFields = getDeclaredFieldsIncludingSuperClasses(obj.getClass());
+        declaredFields.stream()
+                .filter(field -> field.isAnnotationPresent(ColumnName.class))
+                .forEach(field -> result.putAll(extractAndConvertObjectToMap(obj, realm, field)));
+        return result;
+    }
+
+    private Map<String, Object> extractAndConvertObjectToMap(Object obj, String realm, Field declaredField) {
+        try {
             ColumnName annotation = declaredField.getAnnotation(ColumnName.class);
-            if (annotation == null) {
-                continue;
+            declaredField.setAccessible(true);
+            Object fieldValue = declaredField.get(obj);
+            Map<String, Object> result = Map.of();
+            if (Objects.nonNull(fieldValue)) {
+                result = convertToMap(annotation.value(), fieldValue, realm);
             }
-            try {
-                declaredField.setAccessible(true);
-                Object fieldValue = declaredField.get(obj);
-                if (Objects.isNull(fieldValue)) {
-                    continue;
-                }
-                map.putAll(convertToMap(annotation.value(), fieldValue, realm));
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
+            return result;
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
         }
-        return map;
+    }
+
+    List<Field> getDeclaredFieldsIncludingSuperClasses(Class<?> clazz) {
+        String objClassName = clazz.getSimpleName();
+        if (Object.class.getSimpleName().equals(objClassName)) {
+            return Collections.emptyList();
+        }
+        List<Field> result = new ArrayList<>();
+        result.addAll(new ArrayList<>(List.of(clazz.getDeclaredFields())));
+        result.addAll(getDeclaredFieldsIncludingSuperClasses(clazz.getSuperclass()));
+        return result;
+    }
+
+    private Map<String, Object> convertToMap(String fieldName, Object fieldValue, String realm) {
+        ConverterFactory converterFactory = new ConverterFactory(fieldName, fieldValue, realm);
+        Converter converter = converterFactory.of();
+        if (Objects.nonNull(parser)) {
+            converter.setParser(parser);
+        }
+        return converter.convert();
     }
 
 }

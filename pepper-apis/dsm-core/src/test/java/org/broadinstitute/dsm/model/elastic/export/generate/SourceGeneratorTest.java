@@ -23,7 +23,7 @@ public class SourceGeneratorTest {
     @Test
     public void generateCollection() {
         BaseParser parser = new ValueParser();
-        parser.setPropertyInfo(new BaseGenerator.PropertyInfo(MappingGeneratorTest.TestPropertyClass.class, true));
+        parser.setPropertyInfo(new PropertyInfo(MappingGeneratorTest.TestPropertyClass.class, true));
         Generator generator = new TestSourceGenerator(parser, getGeneratorPayload(TestPatchUtil.MEDICAL_RECORD_COLUMN, "value", 0));
         Map<String, Object> objectMap = generator.generate();
         Assert.assertEquals(objectMap.keySet().stream().findFirst().get(), SourceGenerator.DSM_OBJECT);
@@ -50,7 +50,7 @@ public class SourceGeneratorTest {
     @Test
     public void generateNumeric() {
         BaseParser parser = new ValueParser();
-        parser.setPropertyInfo(new BaseGenerator.PropertyInfo(MappingGeneratorTest.TestPropertyClass.class, true));
+        parser.setPropertyInfo(new PropertyInfo(MappingGeneratorTest.TestPropertyClass.class, true));
         Generator generator = new TestSourceGenerator(parser, getGeneratorPayload(TestPatchUtil.NUMERIC_FIELD, 1, 0));
         Map<String, Object> objectMap = generator.generate();
         Assert.assertEquals(objectMap.keySet().stream().findFirst().get(), SourceGenerator.DSM_OBJECT);
@@ -69,7 +69,7 @@ public class SourceGeneratorTest {
         GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, patch);
         DynamicFieldsParser dynamicFieldsParser = new TestDynamicFieldsParser();
         dynamicFieldsParser.setHelperParser(new ValueParser());
-        dynamicFieldsParser.setPropertyInfo(new BaseGenerator.PropertyInfo(MedicalRecord.class, true));
+        dynamicFieldsParser.setPropertyInfo(new PropertyInfo(MedicalRecord.class, true));
         Generator generator = new TestSourceGenerator(dynamicFieldsParser, generatorPayload);
         Map<String, Object> objectMap = generator.generate();
         Assert.assertEquals(objectMap.keySet().stream().findFirst().get(), SourceGenerator.DSM_OBJECT);

@@ -14,8 +14,8 @@ import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.export.ElasticMappingExportAdapter;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.model.elastic.export.RequestPayload;
-import org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator;
 import org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator;
+import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.model.elastic.export.parse.DynamicFieldsParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.TypeParser;
 
@@ -46,11 +46,11 @@ public class DynamicFieldsMappingMigrator implements Exportable {
             parser.setDisplayType(fieldSettingsDto.getDisplayType());
             parser.setPossibleValuesJson(fieldSettingsDto.getPossibleValues());
             String fieldType = fieldSettingsDto.getFieldType();
-            BaseGenerator.PropertyInfo propertyInfo = Util.TABLE_ALIAS_MAPPINGS.get(fieldType);
+            PropertyInfo propertyInfo = PropertyInfo.TABLE_ALIAS_MAPPINGS.get(fieldType);
             if (propertyInfo != null) {
                 buildMapping(fieldSettingsDto, propertyInfo);
             } else {
-                buildMapping(fieldSettingsDto, new BaseGenerator.PropertyInfo(ParticipantData.class, true));
+                buildMapping(fieldSettingsDto, new PropertyInfo(ParticipantData.class, true));
             }
         }
         elasticMappingExportAdapter.setRequestPayload(new RequestPayload(index));
@@ -65,7 +65,7 @@ public class DynamicFieldsMappingMigrator implements Exportable {
         return finalMap;
     }
 
-    private void buildMapping(FieldSettingsDto fieldSettingsDto, BaseGenerator.PropertyInfo propertyInfo) {
+    private void buildMapping(FieldSettingsDto fieldSettingsDto, PropertyInfo propertyInfo) {
         String columnName = Util.underscoresToCamelCase(fieldSettingsDto.getColumnName());
         String propertyName = propertyInfo.getPropertyName();
         Object typeMap = parser.parse(fieldSettingsDto.getDisplayType());

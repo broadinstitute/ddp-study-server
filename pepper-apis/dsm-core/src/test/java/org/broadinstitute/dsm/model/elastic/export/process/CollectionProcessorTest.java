@@ -8,10 +8,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.elastic.ESDsm;
-import org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator;
 import org.broadinstitute.dsm.model.elastic.export.generate.CollectionSourceGenerator;
 import org.broadinstitute.dsm.model.elastic.export.generate.Collector;
 import org.broadinstitute.dsm.model.elastic.export.generate.GeneratorPayload;
+import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.model.elastic.export.parse.BaseParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
 import org.broadinstitute.dsm.model.patch.Patch;
@@ -38,7 +38,7 @@ public class CollectionProcessorTest {
         GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, patch);
 
         BaseParser valueParser = new ValueParser();
-        valueParser.setPropertyInfo(new BaseGenerator.PropertyInfo(MedicalRecord.class, true));
+        valueParser.setPropertyInfo(new PropertyInfo(MedicalRecord.class, true));
 
         Processor collectionProcessor = new TestCollectionProcessor(esDsm, propertyName, generatorPayload,
                 new CollectionSourceGenerator(valueParser, generatorPayload));
@@ -70,7 +70,7 @@ public class CollectionProcessorTest {
         GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, patch);
 
         BaseParser valueParser = new ValueParser();
-        valueParser.setPropertyInfo(new BaseGenerator.PropertyInfo(MedicalRecord.class, true));
+        valueParser.setPropertyInfo(new PropertyInfo(MedicalRecord.class, true));
 
         CollectionProcessor collectionProcessor = new TestCollectionProcessor(esDsm, propertyName, generatorPayload,
                 new CollectionSourceGenerator(valueParser, generatorPayload));
@@ -99,7 +99,7 @@ public class CollectionProcessorTest {
         GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, patch);
 
         BaseParser valueParser = new ValueParser();
-        valueParser.setPropertyInfo(new BaseGenerator.PropertyInfo(MedicalRecord.class, true));
+        valueParser.setPropertyInfo(new PropertyInfo(MedicalRecord.class, true));
 
         CollectionProcessor collectionProcessor = new TestCollectionProcessor(esDsm, propertyName, generatorPayload,
                 new CollectionSourceGenerator(valueParser, generatorPayload));

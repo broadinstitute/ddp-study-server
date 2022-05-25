@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -19,6 +21,7 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class SourceMapDeserializer implements Deserializer {
 
+    private static final Pattern UPPER_CASE_REGEX = Pattern.compile("(?=\\p{Upper})");
     String outerProperty;
 
     public Optional<ElasticSearchParticipantDto> deserialize(Map<String, Object> sourceMap) {
@@ -104,10 +107,17 @@ public class SourceMapDeserializer implements Deserializer {
     protected Map<String, Object> convertDynamicFieldsFromCamelCaseToPascalCase(Map<String, Object> dynamicFields) {
         Map<String, Object> updatedParticipantDataDynamicFields = new HashMap<>();
         for (Map.Entry<String, Object> entry : dynamicFields.entrySet()) {
-            updatedParticipantDataDynamicFields.put(Util.camelCaseToPascalSnakeCase(entry.getKey()), entry.getValue());
+            updatedParticipantDataDynamicFields.put(camelCaseToPascalSnakeCase(entry.getKey()), entry.getValue());
         }
         dynamicFields = updatedParticipantDataDynamicFields;
         return dynamicFields;
+    }
+
+
+    public String camelCaseToPascalSnakeCase(String camelCase) {
+        String[] words = camelCase.split(UPPER_CASE_REGEX.toString());
+        String pascalSnakeCase = Arrays.stream(words).map(String::toUpperCase).collect(Collectors.joining(Util.UNDERSCORE_SEPARATOR));
+        return pascalSnakeCase;
     }
 
     private boolean hasSpecialCases(String outerProperty) {

@@ -17,6 +17,22 @@ import org.junit.Test;
 public class SourceMapDeserializerTest {
 
     @Test
+    public void camelCaseToPascalSnakeCase() {
+        String camelCase1 = "registrationType";
+        String camelCase2 = "test";
+        String camelCase3 = "medicalRecordsReleaseObtained";
+
+        SourceMapDeserializer sourceMapDeserializer = new SourceMapDeserializer();
+        String pascalSnakeCase1 = sourceMapDeserializer.camelCaseToPascalSnakeCase(camelCase1);
+        String pascalSnakeCase2 = sourceMapDeserializer.camelCaseToPascalSnakeCase(camelCase2);
+        String pascalSnakeCase3 = sourceMapDeserializer.camelCaseToPascalSnakeCase(camelCase3);
+
+        assertEquals("REGISTRATION_TYPE", pascalSnakeCase1);
+        assertEquals("TEST", pascalSnakeCase2);
+        assertEquals("MEDICAL_RECORDS_RELEASE_OBTAINED", pascalSnakeCase3);
+    }
+
+    @Test
     public void getParameterizedType() throws NoSuchFieldException {
         class MockClass {
             List<Object> listField;

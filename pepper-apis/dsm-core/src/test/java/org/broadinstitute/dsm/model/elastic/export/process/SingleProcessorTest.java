@@ -5,10 +5,10 @@ import java.util.Map;
 import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.elastic.ESDsm;
-import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator;
 import org.broadinstitute.dsm.model.elastic.export.generate.GeneratorFactory;
 import org.broadinstitute.dsm.model.elastic.export.generate.GeneratorPayload;
+import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.model.elastic.export.generate.SourceGeneratorFactory;
 import org.broadinstitute.dsm.model.elastic.export.parse.DynamicFieldsParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
@@ -22,7 +22,7 @@ public class SingleProcessorTest {
 
     @Test
     public void processExisting() {
-        BaseGenerator.PropertyInfo propertyInfo = Util.TABLE_ALIAS_MAPPINGS.get(DBConstants.DDP_PARTICIPANT_ALIAS);
+        PropertyInfo propertyInfo = PropertyInfo.TABLE_ALIAS_MAPPINGS.get(DBConstants.DDP_PARTICIPANT_ALIAS);
         ValueParser valueParser = new ValueParser();
         valueParser.setPropertyInfo(propertyInfo);
 
@@ -51,7 +51,7 @@ public class SingleProcessorTest {
 
     @Test
     public void processNew() {
-        BaseGenerator.PropertyInfo propertyInfo = Util.TABLE_ALIAS_MAPPINGS.get(DBConstants.DDP_PARTICIPANT_ALIAS);
+        PropertyInfo propertyInfo = PropertyInfo.TABLE_ALIAS_MAPPINGS.get(DBConstants.DDP_PARTICIPANT_ALIAS);
         ValueParser valueParser = new ValueParser();
 
         DynamicFieldsParser dynamicFieldsParser = new DynamicFieldsParser();
