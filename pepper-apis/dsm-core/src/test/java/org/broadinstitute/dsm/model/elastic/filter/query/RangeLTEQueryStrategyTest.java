@@ -6,8 +6,6 @@ import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
 public class RangeLTEQueryStrategyTest {
 
     @Test

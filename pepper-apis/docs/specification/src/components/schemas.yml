@@ -686,6 +686,7 @@ Block:
       CONTENT: '#/Block.Content'
       GROUP: '#/Block.Grouped'
       QUESTION: '#/Block.Question'
+      TABULAR: '#/Block.Tabular'
   required:
     - blockType
     - blockGuid
@@ -861,6 +862,52 @@ Block.Content:
           type: string
         body:
           type: string
+Block.Tabular:
+  allOf:
+    - $ref: '#/Block'
+    - type: object
+      required:
+        - columnsCount
+        - headers
+        - content
+      properties:
+        blockType:
+          type: string
+          default: TABULAR
+          enum:
+            - TABULAR
+        columnsCount:
+          type: integer
+          minimum: 1
+          description: The total number of the tabular component columns.
+        headers:
+          type: array
+          items:
+            $ref: '#/Block.Tabular.Header'
+        content:
+          type: array
+          items:
+            $ref: '#/Block.Tabular.ContentRow'
+
+Block.Tabular.Header:
+  type: object
+  required:
+    - label
+    - columnSpan
+  properties:
+    label:
+      type: string
+    columnSpan:
+      type: integer
+      minimum: 1
+      default: 1
+      description: the number of columns this header should occupy in a tabular display
+
+Block.Tabular.ContentRow:
+  type: array
+  items:
+    $ref: '#/Question'
+
 Block.Visibility:
   type: object
   required:
@@ -1581,6 +1628,10 @@ Question:
       type: array
       items:
         $ref: '#/ValidationFailure'
+    columnSpan:
+      type: integer
+      minimum: 1
+      description: The number of columns this question should occupy in a tabular display
 Question.ActivityInstanceSelect:
   allOf:
     - $ref: '#/Question'
@@ -1697,6 +1748,9 @@ Question.Composite:
         type: array
         items:
           $ref: '#/Answer.Composite'
+      tabularSeparator:
+        type: string
+        description: a symbol/word to display between composite children in a tabular block
 Question.Date:
   allOf:
   - $ref: '#/Question'

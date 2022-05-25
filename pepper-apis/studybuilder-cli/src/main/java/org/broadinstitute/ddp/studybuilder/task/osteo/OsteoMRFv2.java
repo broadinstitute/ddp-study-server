@@ -1,11 +1,5 @@
 package org.broadinstitute.ddp.studybuilder.task.osteo;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.time.Instant;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -13,30 +7,42 @@ import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
+import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
+import org.broadinstitute.ddp.db.dao.JdbiExpression;
+import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.PdfDao;
 import org.broadinstitute.ddp.db.dao.PdfSql;
 import org.broadinstitute.ddp.db.dao.SectionBlockDao;
+import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.ActivityI18nDetail;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
+import org.broadinstitute.ddp.model.activity.types.ComponentType;
+import org.broadinstitute.ddp.model.activity.types.EventActionType;
+import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.model.event.ActivityStatusChangeTrigger;
 import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
 import org.broadinstitute.ddp.model.pdf.PdfConfiguration;
 import org.broadinstitute.ddp.model.pdf.PdfTemplate;
 import org.broadinstitute.ddp.model.pdf.PdfVersion;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
+import org.broadinstitute.ddp.studybuilder.BuilderUtils;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.broadinstitute.ddp.studybuilder.task.UpdateTemplatesInPlace;
 import org.broadinstitute.ddp.util.ConfigUtil;
@@ -48,6 +54,12 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Task to make additional edits as part of the "Brain Tumor Project" rename.
@@ -205,6 +217,17 @@ public class OsteoMRFv2 implements CustomTask {
             sectionBlockDao.insertBlockForSection(activityId, closeSectionId, order, blockDef, v2Dto.getRevId());
         }
 
+        // disable all component blocks
+        for (var section : activity.getSections()) {
+            for (var block : section.getBlocks()) {
+                if (block.getBlockType() == BlockType.COMPONENT
+                        && ((ComponentBlockDef) block).getComponentType() != ComponentType.PHYSICIAN) {
+                    sectionBlockDao.disableBlock(block.getBlockId(), meta);
+                    log.info("Disabled component blockId {}", block.getBlockId());
+                }
+            }
+        }
+
         // update study-pdfs.conf
         for (var pdfConfigName : activityCfg.getStringList("pdfs")) {
             PdfConfigInfo info = pdfDao.findConfigInfoByStudyIdAndName(studyDto.getId(), pdfConfigName)
@@ -240,6 +263,35 @@ public class OsteoMRFv2 implements CustomTask {
                     pdfV2.getId(), pdfV2.getConfigName(), pdfV2.getFilename(),
                     pdfV2.getDisplayName(), versionId, pdfV2.getVersion().getVersionTag());
         }
+
+        // Update announcements
+        var event = handle.attach(EventDao.class).getAllEventConfigurationsByStudyId(studyDto.getId())
+                .stream()
+                .filter(e -> e.getEventTriggerType().equals(EventTriggerType.ACTIVITY_STATUS)
+                        && ((ActivityStatusChangeTrigger) e.getEventTrigger()).getStudyActivityId() == activityId
+                        && ((ActivityStatusChangeTrigger) e.getEventTrigger()).getInstanceStatusType().equals(InstanceStatusType.COMPLETE))
+                .filter(e -> e.getEventActionType().equals(EventActionType.ANNOUNCEMENT))
+                .findFirst().orElseThrow();
+
+        log.info("Found announcement event configuration id {}", event.getEventConfigurationId());
+
+        Template tmpl = BuilderUtils.parseAndValidateTemplate(activityCfg, "msgTemplate");
+
+        String reason = String.format("Create announcement event message template for study=%s", studyDto.getGuid());
+        long revId = handle.attach(JdbiRevision.class).insertStart(Instant.now().toEpochMilli(), adminUser.getUserId(), reason);
+        handle.attach(TemplateDao.class).insertTemplate(tmpl, revId);
+        log.info(reason);
+
+        DBUtils.checkUpdate(1, helper.updateAnnouncementTemplateId(tmpl.getTemplateId(), event.getEventConfigurationId()));
+        log.info("Updated msgTemplateId for announcement event configuration id {}", event.getEventConfigurationId());
+
+        // Update activity instance creation event
+        List<Long> eventIds = helper.findEventConfigurationIdByActivityId(activityId);
+        String expression = activityCfg.getString("expression");
+        eventIds.forEach(eventId -> {
+            long exprId = handle.attach(JdbiExpression.class).insertExpression(expression).getId();
+            DBUtils.checkUpdate(1, helper.updateEventExpressionAndOrder(exprId, 2, eventId));
+        });
     }
 
     private void updateActivityDetails(long activityId, Config activityCfg) {
@@ -268,5 +320,21 @@ public class OsteoMRFv2 implements CustomTask {
 
         @SqlUpdate("update study_activity set is_write_once = :writeOnce where study_activity_id = :activityId")
         int updateActivityWriteOnce(@Bind("activityId") long activityId, @Bind("writeOnce") boolean writeOnce);
+
+        @SqlUpdate("update user_announcement_event_action set message_template_id = :msgTemplateId where event_action_id ="
+                + "(select event_action_id from event_configuration where event_configuration_id = :eventConfigurationId)")
+        int updateAnnouncementTemplateId(@Bind("msgTemplateId") long msgTemplateId,
+                                         @Bind("eventConfigurationId") long eventConfigurationId);
+
+        @SqlQuery("select ec.event_configuration_id from event_configuration ec "
+                + "join activity_instance_creation_action aica on aica.activity_instance_creation_action_id = ec.event_action_id "
+                + "where aica.study_activity_id = :activityId")
+        List<Long> findEventConfigurationIdByActivityId(@Bind("activityId") long activityId);
+
+        @SqlUpdate("update event_configuration set precondition_expression_id = :exprId, execution_order = :order "
+                + "where event_configuration_id = :eventConfigurationId")
+        int updateEventExpressionAndOrder(@Bind("exprId") long exprId,
+                                          @Bind("order") int order,
+                                          @Bind("eventConfigurationId") long eventConfigurationId);
     }
 }
