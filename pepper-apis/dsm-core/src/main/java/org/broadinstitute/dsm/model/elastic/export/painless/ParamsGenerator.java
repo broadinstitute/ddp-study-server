@@ -20,7 +20,7 @@ public class ParamsGenerator implements Generator {
 
     @Override
     public Map<String, Object> generate() {
-        Map<String, Object> fieldsMap = new ObjectTransformer().transformObjectToMap(source, realm);
+        Map<String, Object> fieldsMap = new ObjectTransformer(realm).transformObjectToMap(source);
         return new HashMap<>(Map.of(ESObjectConstants.DSM,
                 new HashMap<>(Map.of(getPropertyName(), fieldsMap))));
     }

@@ -31,7 +31,7 @@ public abstract class BaseMigrator extends BaseExporter implements Generator {
         this.index = index;
         this.object = object;
         elasticSearch = new ElasticSearch();
-        objectTransformer = new ObjectTransformer();
+        objectTransformer = new ObjectTransformer(realm);
     }
 
     protected void fillBulkRequestWithTransformedMapAndExport(Map<String, Object> participantRecords) {

@@ -42,7 +42,8 @@ public class ObjectTransformerTest {
                 .build();
         DynamicFieldsParser dynamicFieldsParser = new DynamicFieldsParser();
         dynamicFieldsParser.setHelperParser(new ValueParser());
-        Map<String, Object> result = new ObjectTransformer(dynamicFieldsParser).transformObjectToMap(participantData, StringUtils.EMPTY);
+        Map<String, Object> result = new ObjectTransformer(StringUtils.EMPTY, dynamicFieldsParser)
+                .transformObjectToMap(participantData);
         assertEquals("TEST", ((Map) result.get("dynamicFields")).get("ddpInstance"));
         assertEquals("VALUE", ((Map) result.get("dynamicFields")).get("ddpValue"));
         assertEquals(true, ((Map) result.get("dynamicFields")).get("booleanVal"));
@@ -65,8 +66,8 @@ public class ObjectTransformerTest {
 
         List<CohortTag> cohortTags = Arrays.asList(cohortTag, cohortTag2);
 
-        List<Map<String, Object>> actualCohortTagsAsMaps = new ObjectTransformer()
-                .transformObjectCollectionToCollectionMap((List) cohortTags, "");
+        List<Map<String, Object>> actualCohortTagsAsMaps = new ObjectTransformer(StringUtils.EMPTY)
+                .transformObjectCollectionToCollectionMap((List) cohortTags);
 
         Map<String, Object> expectedCohortTagAsMap = Map.of(
                 "cohortTagName", "TestTag",
@@ -96,7 +97,8 @@ public class ObjectTransformerTest {
                 "2020-10-28", "2020-10-28", "2020-10-28",
                 "ptNotes", true, true,
                 "additionalValuesJson", 1934283746283L);
-        Map<String, Object> transformedObject = new ObjectTransformer().transformObjectToMap(participant, StringUtils.EMPTY);
+        Map<String, Object> transformedObject = new ObjectTransformer(StringUtils.EMPTY)
+                .transformObjectToMap(participant);
         assertEquals(1L, transformedObject.get("participantId"));
         assertEquals("QWERTY", transformedObject.get("ddpParticipantId"));
         assertEquals("2020-10-28", transformedObject.get("created"));
@@ -119,7 +121,7 @@ public class ObjectTransformerTest {
             private String simpleField;
         }
 
-        ObjectTransformer objectTransformer = new ObjectTransformer();
+        ObjectTransformer objectTransformer = new ObjectTransformer(StringUtils.EMPTY);
 
         List<Field> actualFields = objectTransformer.getDeclaredFieldsIncludingSuperClasses(SimpleClass.class);
 

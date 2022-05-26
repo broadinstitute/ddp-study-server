@@ -15,39 +15,42 @@ import org.broadinstitute.dsm.model.elastic.export.parse.BaseParser;
 
 public class ObjectTransformer {
     private BaseParser parser;
+    private String realm;
 
-    public ObjectTransformer(BaseParser parser) {
+    public ObjectTransformer(String realm, BaseParser parser) {
+        this(realm);
         this.parser = parser;
     }
 
-    public ObjectTransformer() {
+    public ObjectTransformer(String realm) {
+        this.realm = realm;
     }
 
-    public List<Map<String, Object>> transformObjectCollectionToCollectionMap(List<Object> values, String realm) {
+    public List<Map<String, Object>> transformObjectCollectionToCollectionMap(List<Object> values) {
         List<Map<String, Object>> result = new ArrayList<>();
         for (Object obj : values) {
-            result.add(transformObjectToMap(obj, realm));
+            result.add(transformObjectToMap(obj));
         }
         return result;
     }
 
-    public Map<String, Object> transformObjectToMap(Object obj, String realm) {
+    public Map<String, Object> transformObjectToMap(Object obj) {
         Map<String, Object> result = new HashMap<>();
         List<Field> declaredFields = getDeclaredFieldsIncludingSuperClasses(obj.getClass());
         declaredFields.stream()
                 .filter(field -> field.isAnnotationPresent(ColumnName.class))
-                .forEach(field -> result.putAll(extractAndConvertObjectToMap(obj, realm, field)));
+                .forEach(field -> result.putAll(extractAndConvertObjectToMap(obj, field)));
         return result;
     }
 
-    private Map<String, Object> extractAndConvertObjectToMap(Object obj, String realm, Field declaredField) {
+    private Map<String, Object> extractAndConvertObjectToMap(Object obj, Field declaredField) {
         try {
             ColumnName annotation = declaredField.getAnnotation(ColumnName.class);
             declaredField.setAccessible(true);
             Object fieldValue = declaredField.get(obj);
             Map<String, Object> result = Map.of();
             if (Objects.nonNull(fieldValue)) {
-                result = convertToMap(annotation.value(), fieldValue, realm);
+                result = convertToMap(annotation.value(), fieldValue);
             }
             return result;
         } catch (IllegalAccessException e) {
@@ -66,7 +69,7 @@ public class ObjectTransformer {
         return result;
     }
 
-    private Map<String, Object> convertToMap(String fieldName, Object fieldValue, String realm) {
+    private Map<String, Object> convertToMap(String fieldName, Object fieldValue) {
         ConverterFactory converterFactory = new ConverterFactory(fieldName, fieldValue, realm);
         Converter converter = converterFactory.of();
         if (Objects.nonNull(parser)) {
