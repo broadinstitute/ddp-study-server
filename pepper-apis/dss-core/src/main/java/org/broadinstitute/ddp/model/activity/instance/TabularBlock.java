@@ -57,11 +57,13 @@ public final class TabularBlock extends FormBlock {
 
     @Override
     public void registerTemplateIds(Consumer<Long> registry) {
+        StreamEx.of(headers).map(TabularHeader::getLabelTemplateId).forEach(registry);
         streamQuestions().forEach(question -> question.registerTemplateIds(registry));
     }
 
     @Override
     public void applyRenderedTemplates(Provider<String> rendered, ContentStyle style) {
+        StreamEx.of(headers).forEach(header -> header.setLabel(rendered.get(header.getLabelTemplateId())));
         streamQuestions().forEach(question -> question.applyRenderedTemplates(rendered, style));
     }
 }
