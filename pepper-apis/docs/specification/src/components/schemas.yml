@@ -846,6 +846,10 @@ Block.Question:
           minimum: 1
           nullable: true
           description: the number to label this block, `null` if it shouldn't be numbered
+        columnSpan:
+          type: integer
+          minimum: 1
+          description: The number of columns this question should occupy in a tabular display
 Block.Content:
   allOf:
     - $ref: '#/Block'
@@ -887,7 +891,7 @@ Block.Tabular:
         content:
           type: array
           items:
-            $ref: '#/Question'
+            $ref: '#/Block.Question'
 
 Block.Tabular.Header:
   type: object
@@ -1623,10 +1627,6 @@ Question:
       type: array
       items:
         $ref: '#/ValidationFailure'
-    columnSpan:
-      type: integer
-      minimum: 1
-      description: The number of columns this question should occupy in a tabular display
 Question.ActivityInstanceSelect:
   allOf:
     - $ref: '#/Question'
