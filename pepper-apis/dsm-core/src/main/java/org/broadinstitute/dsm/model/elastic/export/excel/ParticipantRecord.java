@@ -14,6 +14,7 @@ import org.broadinstitute.dsm.model.elastic.sort.Alias;
 
 public class ParticipantRecord {
     private final List<ColumnValue> values = new ArrayList<>();
+
     public List<String> transposeAndFlatten(List<Integer> columnSizes) {
         fillWithEmptyStringsIfNeeded(columnSizes);
         final int size = values.stream().mapToInt(ColumnValue::getColumnsSize).max().orElse(-1);
@@ -29,11 +30,8 @@ public class ParticipantRecord {
                     }
                 });
             } else {
-                IntStream.range(0, size)
-                        .mapToObj(n -> value.stream()
-                                .filter(Iterator::hasNext)
-                                .map(it -> it.next().toString())
-                                .collect(Collectors.toList()))
+                IntStream.range(0, size).mapToObj(
+                        n -> value.stream().filter(Iterator::hasNext).map(it -> it.next().toString()).collect(Collectors.toList()))
                         .flatMap(Collection::stream).forEach(rowStream::add);
             }
         });

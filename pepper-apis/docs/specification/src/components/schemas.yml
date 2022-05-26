@@ -876,7 +876,7 @@ Block.Tabular:
           default: TABULAR
           enum:
             - TABULAR
-        numberOfColumns:
+        columnsCount:
           type: integer
           minimum: 1
           description: The total number of the tabular component columns.
