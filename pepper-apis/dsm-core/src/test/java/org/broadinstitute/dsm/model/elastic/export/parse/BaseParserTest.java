@@ -59,6 +59,7 @@ public class BaseParserTest {
         Object result = parser.parse("typeOfTumor");
         assertEquals("typeOfTumor", result);
     }
+
     @Test
     public void parseNumericValue() {
         BaseParser parser = new ValueParser();
@@ -68,6 +69,7 @@ public class BaseParserTest {
         Object result = parser.parse("2022");
         assertEquals(2022L, result);
     }
+
     @Test
     public void parseBooleanValue() {
         BaseParser parser = new ValueParser();
