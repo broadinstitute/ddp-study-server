@@ -9,7 +9,10 @@
                 <constraints primaryKey="true" primaryKeyName="audit_trail_pk"/>
             </column>
 
-            <column name="study_id" type="bigint" />
+            <column name="study_id" type="bigint">
+                <constraints nullable="false" />
+            </column>
+
             <column name="operator_id" type="bigint" />
             <column name="subject_user_id" type="bigint" />
             <column name="activity_instance_id" type="bigint" />
@@ -28,7 +31,7 @@
 
         <addForeignKeyConstraint baseTableName="audit_trail" baseColumnNames="study_id"
                                  referencedTableName="umbrella_study" referencedColumnNames="umbrella_study_id"
-                                 constraintName="audit_trail_study_id_fk" onDelete="SET NULL"/>
+                                 constraintName="audit_trail_study_id_fk" />
 
         <addForeignKeyConstraint baseTableName="audit_trail" baseColumnNames="operator_id"
                                  referencedTableName="user" referencedColumnNames="user_id"
