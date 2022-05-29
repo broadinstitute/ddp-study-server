@@ -20,6 +20,7 @@ public class InstanceSettingsDto {
     private boolean gbfShippedTriggerDSSDelivered;
     private boolean hasAddressTab;
     private boolean hasComputedObject;
+    private String mercuryOrderCreator;
 
     private InstanceSettingsDto(Builder builder) {
         this.instanceSettingsId = builder.instanceSettingsId;
@@ -35,6 +36,7 @@ public class InstanceSettingsDto {
         this.gbfShippedTriggerDSSDelivered = builder.gbfShippedTriggerDSSDelivered;
         this.hasAddressTab = builder.hasAddressTab;
         this.hasComputedObject = builder.hasComputedObject;
+        this.mercuryOrderCreator = builder.mercuryOrderCreator;
     }
 
     public Optional<Integer> getInstanceSettingsId() {
@@ -89,6 +91,10 @@ public class InstanceSettingsDto {
         return Optional.of(hasComputedObject);
     }
 
+    public Optional<String> getMercuryOrderCreator() {
+        return Optional.of(mercuryOrderCreator);
+    }
+
     public static class Builder {
         public int instanceSettingsId;
         public int ddpInstanceId;
@@ -103,6 +109,7 @@ public class InstanceSettingsDto {
         public boolean gbfShippedTriggerDSSDelivered;
         public boolean hasAddressTab;
         public boolean hasComputedObject;
+        public String mercuryOrderCreator;
 
         public Builder withInstanceSettingsId(int instanceSettingsId) {
             this.instanceSettingsId = instanceSettingsId;

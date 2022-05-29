@@ -39,7 +39,7 @@ public class InstanceSettingsDao implements Dao<InstanceSettingsDto> {
     private static final String SQL_GET_BY_INSTANCE_NAME =
             "SELECT instance_settings_id, ddp_instance_id, mr_cover_pdf, kit_behavior_change, special_format, "
                     + "hide_ES_fields, hide_samples_tab, study_specific_statuses, default_columns, has_invitations, "
-                    + "has_address_tab, has_computed_object, GBF_SHIPPED_DSS_DELIVERED " + "FROM instance_settings "
+                    + "has_address_tab, has_computed_object, GBF_SHIPPED_DSS_DELIVERED, mercury_order_creator " + "FROM instance_settings "
                     + "WHERE ddp_instance_id = (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = ?)";
 
     @Override

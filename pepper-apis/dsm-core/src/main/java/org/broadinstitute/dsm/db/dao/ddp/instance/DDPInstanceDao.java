@@ -47,12 +47,13 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                     + "is_active = ?, bsp_group = ?, bsp_collection = ?, bsp_organism = ?, collaborator_id_prefix = ?,"
                     + "reminder_notification_wks = ?, mr_attention_flag_d = ?, tissue_attention_flag_d = ?, auth0_token = ?,"
                     + "notification_recipients = ?, migrated_ddp = ?, billing_reference = ?, es_participant_index = ?,"
-                    + "es_activity_definition_index = ?, es_users_index = ?, study_pre_filter = ?";
+                    + "es_activity_definition_index = ?, es_users_index = ?, study_pre_filter = ?, research_project = ?";
 
     private static final String SQL_DELETE_DDP_INSTANCE = "DELETE FROM ddp_instance WHERE ddp_instance_id = ?";
     private static final String SQL_SELECT_INSTANCE_WITH_ROLE =
             "SELECT ddp_instance_id, instance_name, base_url, collaborator_id_prefix, migrated_ddp, billing_reference, "
-                    + "es_participant_index, es_activity_definition_index, es_users_index, study_pre_filter, (SELECT count(role.name) "
+                    +
+                    "es_participant_index, es_activity_definition_index, es_users_index, study_pre_filter, research_project, (SELECT count(role.name) "
                     + "FROM ddp_instance realm, ddp_instance_role inRol, instance_role role "
                     + "WHERE realm.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id "
                     + "AND role.name = ? "
@@ -71,8 +72,8 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
             "SELECT  realm.ddp_instance_id, instance_name, study_guid, realm.display_name, base_url, is_active, bsp_group,"
                     + "bsp_collection, bsp_organism, collaborator_id_prefix, reminder_notification_wks,"
                     + "mr_attention_flag_d, tissue_attention_flag_d, auth0_token, notification_recipients, migrated_ddp,"
-                    + "billing_reference, es_participant_index, es_activity_definition_index, es_users_index, study_pre_filter, "
-                    + "query_items "
+                    + "billing_reference, es_participant_index, es_activity_definition_index, es_users_index, study_pre_filter,"
+                    + "research_project, query_items "
                     + "FROM ddp_instance realm LEFT JOIN view_filters filter ON (filter.filter_id = study_pre_filter) ";
     private static final String SQL_SELECT_DDP_INSTANCE_BY_GUID = SQL_BASE_SELECT + "WHERE study_guid = ? ";
     private static final String SQL_SELECT_DDP_INSTANCE_BY_INSTANCE_NAME = SQL_BASE_SELECT + "WHERE instance_name = ? ";
@@ -129,6 +130,7 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                 stmt.setString(18, ddpInstanceDto.getEsActivityDefinitionIndex());
                 stmt.setString(19, ddpInstanceDto.getEsUsersIndex());
                 stmt.setObject(20, ddpInstanceDto.getStudyPreFilter());
+                stmt.setObject(21, ddpInstanceDto.getResearchProject());
                 stmt.executeUpdate();
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {

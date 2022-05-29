@@ -49,6 +49,7 @@ public class DBConstants {
     public static final String CARRIER_ACCESSKEY = "carrier_accesskey";
     public static final String BSP_COLLECTION = "bsp_collection";
     public static final String BSP_ORGANISM = "bsp_organism";
+    public static final String RESEARCH_PROJECT = "research_project";
 
     //kit request
     public static final String DSM_KIT_ID = "dsm_kit_id";
@@ -510,4 +511,7 @@ public class DBConstants {
     public static final String COHORT_TAG_PK = "cohort_tag_id";
     public static final String COHORT_TAG = "cohort_tag";
     public static final String COHORT_TAG_NAME = "cohort_tag_name";
+
+    //instance_settings
+    public static final String CREATOR_ID = "creator_id";
 }
