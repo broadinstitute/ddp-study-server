@@ -271,4 +271,6 @@ public class MedicalRecordUtil {
         }
         return (Number) results.resultValue;
     }
+
+
 }
