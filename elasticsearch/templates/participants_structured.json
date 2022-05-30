@@ -1926,6 +1926,110 @@
                   "type": "date"
                 }
               }
+            },
+            "newOsteoParticipant": {
+              "properties": {
+                "minimalMr": {
+                  "type": "boolean"
+                },
+                "assigneeIdMr": {
+                  "type": "text"
+                },
+                "notes": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "mrAttentionFlagD": {
+                  "type": "long"
+                },
+                "instanceName": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "ddpParticipantId": {
+                  "type": "keyword"
+                },
+                "assigneeIdTissue": {
+                  "type": "text"
+                },
+                "tissueAttentionFlagD": {
+                  "type": "long"
+                },
+                "migratedDdp": {
+                  "type": "boolean"
+                },
+                "participantId": {
+                  "type": "keyword"
+                },
+                "exitBy": {
+                  "type": "long"
+                },
+                "baseUrl": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "auth0Token": {
+                  "type": "boolean"
+                },
+                "crReceived": {
+                  "type": "date"
+                },
+                "oncHistoryId": {
+                  "type": "keyword"
+                },
+                "ddpInstanceId": {
+                  "type": "keyword"
+                },
+                "notificationRecipients": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword"
+                    },
+                    "lower_case_sort": {
+                      "type": "text",
+                      "analyzer": "case_insensitive_sort",
+                      "fielddata": true
+                    }
+                  }
+                },
+                "abstractionReady": {
+                  "type": "boolean"
+                },
+                "crSent": {
+                  "type": "date"
+                },
+                "exitDate": {
+                  "type": "date"
+                }
+              }
             }
           }
         },
