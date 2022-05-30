@@ -52,87 +52,89 @@ public class Participant {
     @ColumnName(DBConstants.DDP_PARTICIPANT_ID)
     private String ddpParticipantId;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_PARTICIPANT,
             alias = DBConstants.DDP_PARTICIPANT_ALIAS,
             primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.ASSIGNEE_ID_MR)
+    @ColumnName(DBConstants.ASSIGNEE_ID_MR)
     private String assigneeIdMr;
 
-    @TableName (
+    private Integer ddpInstanceId;
+
+    @TableName(
             name = DBConstants.DDP_PARTICIPANT,
             alias = DBConstants.DDP_PARTICIPANT_ALIAS,
             primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.ASSIGNEE_ID_TISSUE)
+    @ColumnName(DBConstants.ASSIGNEE_ID_TISSUE)
     private String assigneeIdTissue;
     private String realm;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_ONC_HISTORY,
             alias = DBConstants.DDP_ONC_HISTORY_ALIAS,
             primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.ONC_HISTORY_CREATED)
+    @ColumnName(DBConstants.ONC_HISTORY_CREATED)
     private String created;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_ONC_HISTORY,
             alias = DBConstants.DDP_ONC_HISTORY_ALIAS,
             primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.ONC_HISTORY_REVIEWED)
+    @ColumnName(DBConstants.ONC_HISTORY_REVIEWED)
     private String reviewed;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_PARTICIPANT_RECORD,
             alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
             primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.CR_SENT)
+    @ColumnName(DBConstants.CR_SENT)
     @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String crSent;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_PARTICIPANT_RECORD,
             alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
             primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.CR_RECEIVED)
+    @ColumnName(DBConstants.CR_RECEIVED)
     @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String crReceived;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_PARTICIPANT_RECORD,
             alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
             primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.NOTES)
+    @ColumnName(DBConstants.NOTES)
     private String notes;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_PARTICIPANT_RECORD,
             alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
             primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.MINIMAL_MR)
+    @ColumnName(DBConstants.MINIMAL_MR)
     private Boolean minimalMr;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_PARTICIPANT_RECORD,
             alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
             primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.ABSTRACTION_READY)
+    @ColumnName(DBConstants.ABSTRACTION_READY)
     private Boolean abstractionReady;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_PARTICIPANT_RECORD,
             alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
             primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.ADDITIONAL_VALUES_JSON)
+    @ColumnName(DBConstants.ADDITIONAL_VALUES_JSON)
     @JsonProperty("dynamicFields")
     @SerializedName("dynamicFields")
     private String additionalValuesJson;
@@ -143,15 +145,16 @@ public class Participant {
         });
     }
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_PARTICIPANT_EXIT,
             alias = DBConstants.DDP_PARTICIPANT_EXIT_ALIAS,
             primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.EXIT_DATE)
+    @ColumnName(DBConstants.EXIT_DATE)
     private Long exitDate;
 
-    public Participant() {}
+    public Participant() {
+    }
 
     public Participant(Long participantId, String ddpParticipantId, String assigneeIdMr, String assigneeIdTissue, String instanceName,
                        String created, String reviewed, String crSent, String crReceived, String notes,
@@ -172,8 +175,26 @@ public class Participant {
         this.exitDate = exitDate;
     }
 
+    public Participant(Long participantId, String ddpParticipantId, String assigneeIdMr, Integer ddpInstanceId, String assigneeIdTissue, String realm, String created, String reviewed, String crSent, String crReceived, String notes, Boolean minimalMr, Boolean abstractionReady, String additionalValuesJson, Long exitDate) {
+        this.participantId = participantId;
+        this.ddpParticipantId = ddpParticipantId;
+        this.assigneeIdMr = assigneeIdMr;
+        this.ddpInstanceId = ddpInstanceId;
+        this.assigneeIdTissue = assigneeIdTissue;
+        this.realm = realm;
+        this.created = created;
+        this.reviewed = reviewed;
+        this.crSent = crSent;
+        this.crReceived = crReceived;
+        this.notes = notes;
+        this.minimalMr = minimalMr;
+        this.abstractionReady = abstractionReady;
+        this.additionalValuesJson = additionalValuesJson;
+        this.exitDate = exitDate;
+    }
+
     //For TissueList
-    public Participant(String participantId, String  ddpParticipantId, String  assigneeIdTissue) {
+    public Participant(String participantId, String ddpParticipantId, String assigneeIdTissue) {
         this(Long.parseLong(participantId), ddpParticipantId, null, assigneeIdTissue, null,
                 null, null, null, null, null,
                 false, false, null, null);
@@ -204,7 +225,7 @@ public class Participant {
                 rs.getBoolean(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.MINIMAL_MR),
                 rs.getBoolean(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ABSTRACTION_READY),
                 rs.getString(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ADDITIONAL_VALUES_JSON),
-                (Long)rs.getObject(DBConstants.EXIT_DATE));
+                (Long) rs.getObject(DBConstants.EXIT_DATE));
         return participant;
     }
 
