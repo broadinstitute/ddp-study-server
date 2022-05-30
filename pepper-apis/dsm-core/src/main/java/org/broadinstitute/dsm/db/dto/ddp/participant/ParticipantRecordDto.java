@@ -122,9 +122,23 @@ public class ParticipantRecordDto {
         public long lastChanged;
         public String changedBy;
 
+        public Builder() {
+
+        }
+
         public Builder(int participantId, long lastChanged) {
             this.participantId = participantId;
             this.lastChanged = lastChanged;
+        }
+
+        public Builder withParticipantId(int participantId) {
+            this.participantId = participantId;
+            return this;
+        }
+
+        public Builder withLastChanged(long lastChanged) {
+            this.lastChanged = lastChanged;
+            return this;
         }
 
         public Builder withParticipantRecordId(int participantRecordId) {
@@ -167,7 +181,7 @@ public class ParticipantRecordDto {
             return this;
         }
 
-        public ParticipantRecordDto builder() {
+        public ParticipantRecordDto build() {
             return new ParticipantRecordDto(this);
         }
 

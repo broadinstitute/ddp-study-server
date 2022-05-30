@@ -7,7 +7,6 @@ import lombok.Getter;
 @Getter
 public class ParticipantDto {
 
-
     private Optional<Integer> participantId;
     private Optional<String> ddpParticipantId;
     private Optional<Long> lastVersion;
@@ -31,6 +30,7 @@ public class ParticipantDto {
         this.lastChanged = builder.lastChanged;
         this.changedBy = builder.changedBy;
     }
+
 
     public static class Builder {
 
