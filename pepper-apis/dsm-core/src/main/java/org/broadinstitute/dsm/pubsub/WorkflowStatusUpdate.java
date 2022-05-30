@@ -1,16 +1,11 @@
 package org.broadinstitute.dsm.pubsub;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.MedicalRecord;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantRecordDao;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
@@ -18,12 +13,15 @@ import org.broadinstitute.dsm.export.ExportToES;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
+import org.broadinstitute.dsm.pubsub.study.osteo.OsteoWorkflowStatusUpdate;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
-import org.broadinstitute.dsm.util.DDPMedicalRecordDataRequest;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
-import org.broadinstitute.dsm.util.MedicalRecordUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class WorkflowStatusUpdate {
     public static final String STUDY_GUID = "studyGuid";
@@ -49,27 +47,8 @@ public class WorkflowStatusUpdate {
         String ddpParticipantId = attributesMap.get(PARTICIPANT_GUID);
         DDPInstance instance = DDPInstance.getDDPInstanceByGuid(studyGuid);
 
-         if (OSTEO_RECONSENTED_WORKFLOW.equals(workflow) && OSTEO_RECONSENTED_WORKFLOW_STATUS.equals(status)) {
-            inTransaction((conn) -> {
-                if (!MedicalRecordUtil.isParticipantInDB(conn, ddpParticipantId, instance.getDdpInstanceId())) {
-                    //todo write into ddp_participant
-                    //todo write into ddp_participant_record
-                    //todo write into ES
-                    Map<String, List<MedicalRecord>> medicalRecords = MedicalRecord.getMedicalRecords(instance.getName(),
-                            " AND p.ddp_participant_id = '" + ddpParticipantId + "'");
-                    if ( medicalRecords != null) {
-                        List<MedicalRecord> medicalRecordList = medicalRecords.get(ddpParticipantId);
-                        medicalRecordList.forEach(medicalRecord -> {
-                            //todo writen into ddp_institution
-                            //todo write into ddp_medical_record
-                            //todo write into ES
-                        });
-                    }
-                }
-                return null;
-            });
-            //todo set tag "OS PE-CGS"
-
+         if (isOsteoRelatedStatusUpdate(workflow, status)) {
+             OsteoWorkflowStatusUpdate.of(instance, ddpParticipantId).update();
         } else {
             List<ParticipantData> participantDatas = participantDataDao.getParticipantDataByParticipantId(ddpParticipantId);
             Optional<FieldSettingsDto> fieldSetting =
@@ -92,6 +71,10 @@ public class WorkflowStatusUpdate {
             }
         }
 
+    }
+
+    private static boolean isOsteoRelatedStatusUpdate(String workflow, String status) {
+        return OSTEO_RECONSENTED_WORKFLOW.equals(workflow) && OSTEO_RECONSENTED_WORKFLOW_STATUS.equals(status);
     }
 
     public static void exportToESifNecessary(String workflow, String status, String ddpParticipantId,
