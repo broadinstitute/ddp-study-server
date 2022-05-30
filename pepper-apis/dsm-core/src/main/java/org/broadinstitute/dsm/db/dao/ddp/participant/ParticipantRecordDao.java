@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.db.dao.ddp.participant;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import static org.broadinstitute.dsm.statics.DBConstants.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,6 +19,20 @@ public class ParticipantRecordDao implements Dao<ParticipantRecordDto> {
             "INSERT INTO ddp_participant_record SET participant_id = ?, cr_sent = ?, cr_received = ?, notes = ?, "
                     + "minimal_mr = ?, abstraction_ready = ?, additional_values_json = ?, last_changed = ?, "
                     + "changed_by = ? ON DUPLICATE KEY UPDATE last_changed = ?, changed_by = ?";
+
+    public static final String SQL_FILTER_BY_PARTICIPANT_ID = " WHERE participant_id = ?";
+
+    private static final String SQL_GET_PARTICIPANT_RECORD_DTO_BY_PARTICIPANT_ID = "SELECT * FROM ddp_participant_record" + SQL_FILTER_BY_PARTICIPANT_ID + ";";
+
+
+    private static ParticipantRecordDao participantRecordDao;
+
+    public static ParticipantRecordDao of() {
+        if (participantRecordDao == null) {
+            participantRecordDao = new ParticipantRecordDao();
+        }
+        return participantRecordDao;
+    }
 
     @Override
     public int create(ParticipantRecordDto participantRecordDto) {
@@ -62,4 +77,39 @@ public class ParticipantRecordDao implements Dao<ParticipantRecordDto> {
     public Optional<ParticipantRecordDto> get(long id) {
         return Optional.empty();
     }
+
+    public Optional<ParticipantRecordDto> getParticipantRecordByParticipantId(int participantId) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult executionResult = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_PARTICIPANT_RECORD_DTO_BY_PARTICIPANT_ID)) {
+                stmt.setInt(1, participantId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        executionResult.resultValue = buildParticipantRecordFromResultSet(rs);
+                    }
+                }
+            } catch (SQLException ex) {
+                executionResult.resultException = ex;
+            }
+            return executionResult;
+        });
+        if (results.resultException != null) {
+            throw new RuntimeException("Error getting participant record with " + participantId, results.resultException);
+        }
+        return Optional.ofNullable((ParticipantRecordDto) results.resultValue);
+    }
+
+    private ParticipantRecordDto buildParticipantRecordFromResultSet(ResultSet rs) throws SQLException {
+        return new ParticipantRecordDto.Builder()
+                .withParticipantRecordId(rs.getInt(PARTICIPANT_RECORD_ID))
+                .withCrSent(rs.getString(CR_SENT))
+                .withCrReceived(rs.getString(CR_RECEIVED))
+                .withNotes(rs.getString(NOTES))
+                .withMinimalMr(rs.getInt(MINIMAL_MR))
+                .withAbstractionReady(rs.getInt(ABSTRACTION_READY))
+                .withAdditionalValuesJson(rs.getString(ADDITIONAL_VALUES_JSON))
+                .withChangedBy(rs.getString(CHANGED_BY))
+                .build();
+    }
+
 }
