@@ -55,6 +55,9 @@ public class ESDsm {
     @SerializedName(ESObjectConstants.PARTICIPANT)
     Participant participant;
 
+    @SerializedName(ESObjectConstants.NEW_OSTEO_PARTICIPANT)
+    NewOsteoParticipant newOsteoParticipant;
+
     List<KitRequestShipping> kitRequestShipping;
 
     OncHistory oncHistory;
@@ -71,6 +74,7 @@ public class ESDsm {
         }
         return tissue;
     }
+
     public List<SmId> getSmId() {
         if (smId == null) {
             smId = Collections.emptyList();
@@ -112,5 +116,9 @@ public class ESDsm {
 
     public Optional<Participant> getParticipant() {
         return Optional.ofNullable(participant);
+    }
+
+    public Optional<NewOsteoParticipant> getNewOsteoParticipant() {
+        return Optional.ofNullable(newOsteoParticipant);
     }
 }
