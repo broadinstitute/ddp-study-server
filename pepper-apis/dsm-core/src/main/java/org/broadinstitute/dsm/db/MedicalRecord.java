@@ -239,6 +239,11 @@ public class MedicalRecord implements HasDdpInstanceId {
     private String pathologyPresent;
     @ColumnName(DBConstants.DDP_INSTANCE_ID)
     private long ddpInstanceId;
+    @TableName(name = DBConstants.DDP_MEDICAL_RECORD, alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
+            primaryKey = DBConstants.MEDICAL_RECORD_ID, columnPrefix = "")
+    @ColumnName(DBConstants.DELETED)
+    private Boolean deleted;
+
 
     public MedicalRecord(long medicalRecordId, long institutionId, String ddpInstitutionId, String type) {
         this.medicalRecordId = medicalRecordId;
@@ -382,6 +387,10 @@ public class MedicalRecord implements HasDdpInstanceId {
         }
         logger.info("Got " + medicalRecords.size() + " participants medicalRecords in DSM DB for " + realm);
         return medicalRecords;
+    }
+
+    public static List<MedicalRecord> getMedicalRecordsByInstanceNameAndDdpParticipantId(String instanceName, String ddpParticipantId) {
+        return getMedicalRecords(instanceName, String.format(" AND p.ddp_participant_id = '%s';", ddpParticipantId)).get(ddpParticipantId);
     }
 
     public static Map<String, List<MedicalRecord>> getMedicalRecordsByParticipantIds(@NonNull String realm, List<String> participantIds) {
