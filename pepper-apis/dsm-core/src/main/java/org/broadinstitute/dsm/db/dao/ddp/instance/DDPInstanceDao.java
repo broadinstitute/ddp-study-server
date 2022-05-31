@@ -41,6 +41,7 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
     public static final String ES_USERS_INDEX = "es_users_index";
     public static final String STUDY_PRE_FILTER = "study_pre_filter";
     public static final String QUERY_ITEMS = "query_items";
+    public static final String RESEARCH_PROJECT = "research_project";
 
     private static final String SQL_INSERT_DDP_INSTANCE =
             "INSERT INTO ddp_instance SET  instance_name = ?,  study_guid = ?, display_name = ?, base_url = ?,"
@@ -261,6 +262,7 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                 .withBillingReference(rs.getString(BILLING_REFERENCE)).withEsParticipantIndex(rs.getString(ES_PARTICIPANT_INDEX))
                 .withEsActivityDefinitionIndex(rs.getString(ES_ACTIVITY_DEFINITION_INDEX)).withEsUsersIndex(rs.getString(ES_USERS_INDEX))
                 .withStudyPreFilter(rs.getInt(STUDY_PRE_FILTER)).withQueryItems(rs.getString(QUERY_ITEMS))
+                .withResearchProject(rs.getString(RESEARCH_PROJECT))
                 .build();
     }
 

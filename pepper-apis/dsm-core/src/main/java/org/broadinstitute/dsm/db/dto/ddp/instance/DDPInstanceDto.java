@@ -83,6 +83,7 @@ public class DDPInstanceDto {
         String esUsersIndex;
         Integer studyPreFilter;
         String queryItems;
+        String researchProject;
 
         public Builder() {
         }
@@ -194,6 +195,11 @@ public class DDPInstanceDto {
 
         public Builder withQueryItems(String queryItems) {
             this.queryItems = queryItems;
+            return this;
+        }
+
+        public Builder withResearchProject(String researchProject) {
+            this.researchProject = researchProject;
             return this;
         }
 
