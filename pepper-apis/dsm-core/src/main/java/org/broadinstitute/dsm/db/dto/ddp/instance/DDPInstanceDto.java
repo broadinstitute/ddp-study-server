@@ -36,6 +36,7 @@ public class DDPInstanceDto {
     String esUsersIndex;
     Integer studyPreFilter;
     String queryItems;
+    String researchProject;
 
     private DDPInstanceDto(Builder builder) {
         Class<DDPInstanceDto> ddpInstanceDtoClazz = DDPInstanceDto.class;
