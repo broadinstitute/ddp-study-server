@@ -29,23 +29,21 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.broadinstitute.dsm.statics.DBConstants.*;
-import static org.broadinstitute.dsm.util.SystemUtil.SYSTEM;
-
 public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
+
+    private static final Gson GSON = new Gson();
 
     private final DDPInstance instance;
     private final String ddpParticipantId;
     private final int ddpInstanceIdAsInt;
 
-    private ParticipantDao participantDao;
-    private ParticipantRecordDao participantRecordDao;
-    private DDPInstitutionDao ddpInstitutionDao;
-    private MedicalRecordDao medicalRecordDao;
-    private ElasticSearchable elasticSearch;
-
-    private static final Gson GSON = new Gson();
+    private final ParticipantDao participantDao;
+    private final ParticipantRecordDao participantRecordDao;
+    private final DDPInstitutionDao ddpInstitutionDao;
+    private final MedicalRecordDao medicalRecordDao;
     private final ElasticDataExportAdapter elasticDataExportAdapter;
+    private final ElasticSearchable elasticSearch;
+
 
     private OsteoWorkflowStatusUpdate(DDPInstance instance, String ddpParticipantId) {
         this.instance = instance;
@@ -60,44 +58,36 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
         elasticDataExportAdapter.setRequestPayload(new RequestPayload(instance.getParticipantIndexES(), ddpParticipantId));
     }
 
+
     public static OsteoWorkflowStatusUpdate of(DDPInstance instance, String ddpParticipantId) {
         return new OsteoWorkflowStatusUpdate(instance, ddpParticipantId);
     }
 
     @Override
     public void update() {
-
         String ddpInstanceId = instance.getDdpInstanceId();
         boolean isParticipantInDb = MedicalRecordUtil.isParticipantInDB(ddpParticipantId, ddpInstanceId);
-
-        if (!isParticipantInDb) {
-
+        if (isParticipantInDb) {
             Optional<ParticipantDto> maybeOldOsteoParticipant = participantDao.getParticipantByDdpParticipantIdAndDdpInstanceId(ddpParticipantId, Integer.parseInt(ddpInstanceId));
             Optional<Integer> maybeOldOsteoParticipantId = maybeOldOsteoParticipant.flatMap(ParticipantDto::getParticipantId);
-
             Optional<Integer> maybeNewOsteoParticipantId = maybeOldOsteoParticipant
-                    .map(this::updateParticipantDto)
+                    .map(participantDto -> ParticipantDto.copy(ddpInstanceIdAsInt, participantDto))
                     .map(participantDao::create);
-
             Optional<ParticipantRecordDto> maybeOldOsteoParticipantRecord = maybeOldOsteoParticipantId.flatMap(participantRecordDao::getParticipantRecordByParticipantId);
-
             maybeOldOsteoParticipantRecord.ifPresent(participantRecord -> maybeNewOsteoParticipantId.ifPresent(participantId -> updateAndThenSaveNewParticipantRecord(participantRecord, participantId)));
-
             List<MedicalRecord> newOsteoMedicalRecords = maybeNewOsteoParticipantId.map(this::updateAndThenSaveInstitutionsAndMedicalRecords).orElseThrow();
-
-            String oldOsteoParticipantGuid = maybeOldOsteoParticipant.flatMap(ParticipantDto::getDdpParticipantId).orElseThrow();
-            ElasticSearchParticipantDto esPtDto = elasticSearch.getParticipantById(instance.getParticipantIndexES(), oldOsteoParticipantGuid);
-            esPtDto.getDsm().ifPresent(esDsm -> updateEsDsm(maybeNewOsteoParticipantId.orElseThrow(), newOsteoMedicalRecords, esDsm));
-
+            String oldOsteoDdpParticipantId = maybeOldOsteoParticipant.flatMap(ParticipantDto::getDdpParticipantId).orElseThrow();
+            ElasticSearchParticipantDto esPtDto = elasticSearch.getParticipantById(instance.getParticipantIndexES(), oldOsteoDdpParticipantId);
+            int newOsteoParticipantId = maybeNewOsteoParticipantId.orElseThrow();
+            esPtDto.getDsm().ifPresent(esDsm -> updateEsDsm(newOsteoParticipantId, newOsteoMedicalRecords, esDsm));
             Map<String, Object> esPtDtoAsMap = ObjectMapperSingleton.readValue(GSON.toJson(esPtDto), new TypeReference<Map<String, Object>>() {});
             elasticDataExportAdapter.setSource(esPtDtoAsMap);
             elasticDataExportAdapter.export();
-
         }
     }
 
-    private void updateEsDsm(long maybeNewOsteoParticipantId, List<MedicalRecord> newOsteoMedicalRecords, ESDsm dsm) {
-        dsm.getParticipant().ifPresent(oldOsteoPt -> dsm.setNewOsteoParticipant(NewOsteoParticipant.copy(oldOsteoPt, maybeNewOsteoParticipantId, ddpInstanceIdAsInt)));
+    private void updateEsDsm(long newOsteoParticipantId, List<MedicalRecord> newOsteoMedicalRecords, ESDsm dsm) {
+        dsm.getParticipant().ifPresent(oldOsteoPt -> dsm.setNewOsteoParticipant(NewOsteoParticipant.copy(oldOsteoPt, newOsteoParticipantId, ddpInstanceIdAsInt)));
         List<MedicalRecord> oldOsteoMedicalRecords = dsm.getMedicalRecord();
         List<MedicalRecord> updatedMedicalRecords = Stream.concat(oldOsteoMedicalRecords.stream(), newOsteoMedicalRecords.stream()).collect(Collectors.toList());
         dsm.setMedicalRecord(updatedMedicalRecords);
@@ -118,53 +108,14 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
 
     private int updateAndThenSaveNewInstitution(int newOsteoParticipantId, long institutionId) {
         return ddpInstitutionDao.get(institutionId)
-                .map(oldOsteoInstitution -> updateInstitution(newOsteoParticipantId, oldOsteoInstitution))
+                .map(oldOsteoInstitution -> DDPInstitutionDto.copy(newOsteoParticipantId, oldOsteoInstitution))
                 .map(ddpInstitutionDao::create)
                 .orElseThrow();
     }
 
-    private DDPInstitutionDto updateInstitution(int newOsteoParticipantId, DDPInstitutionDto institution) {
-        return new DDPInstitutionDto.Builder()
-                .withType(institution.getType())
-                .withLastChanged(institution.getLastChanged())
-                .withDdpInstitutionId(institution.getDdpInstitutionId())
-                .withInstitutionId(institution.getInstitutionId())
-                .withParticipantId(newOsteoParticipantId).build();
-    }
-
     private void updateAndThenSaveNewParticipantRecord(ParticipantRecordDto oldOsteoParticipantRecord, int newOsteoParticipantId) {
-        ParticipantRecordDto participantRecordDto = updateParticipantRecord(newOsteoParticipantId, oldOsteoParticipantRecord);
+        ParticipantRecordDto participantRecordDto = ParticipantRecordDto.copy(newOsteoParticipantId, oldOsteoParticipantRecord);
         participantRecordDao.create(participantRecordDto);
-    }
-
-    private ParticipantRecordDto updateParticipantRecord(int newOsteoParticipantId, ParticipantRecordDto oldOsteoParticipantRecord) {
-        return new ParticipantRecordDto.Builder()
-                .withParticipantId(newOsteoParticipantId)
-                .withLastChanged(oldOsteoParticipantRecord.getLastChanged())
-                .withParticipantRecordId(oldOsteoParticipantRecord.getParticipantRecordId().orElseThrow(DataCopyingException.withMessage(PARTICIPANT_RECORD_ID)))
-                .withCrSent(oldOsteoParticipantRecord.getCrSent().orElse(null))
-                .withCrReceived(oldOsteoParticipantRecord.getCrReceived().orElse(null))
-                .withNotes(oldOsteoParticipantRecord.getNotes().orElse(null))
-                .withMinimalMr(oldOsteoParticipantRecord.getMinimalMr().orElseThrow(DataCopyingException.withMessage(MINIMAL_MR)))
-                .withAbstractionReady(oldOsteoParticipantRecord.getAbstractionReady().orElseThrow(DataCopyingException.withMessage(ABSTRACTION_READY)))
-                .withAdditionalValuesJson(oldOsteoParticipantRecord.getAdditionalValuesJson().orElse(null))
-                .withChangedBy(oldOsteoParticipantRecord.getChangedBy().orElse(SYSTEM))
-                .build();
-    }
-
-    private ParticipantDto updateParticipantDto(ParticipantDto participantDto) {
-        return new ParticipantDto.Builder()
-                .withParticipantId(participantDto.getParticipantId().orElseThrow(DataCopyingException.withMessage(PARTICIPANT_ID)))
-                .withDdpParticipantId(participantDto.getDdpParticipantId().orElseThrow(DataCopyingException.withMessage(DDP_INSTANCE_ID)))
-                .withLastVersion(participantDto.getLastVersion().orElseThrow())
-                .withLastVersionDate(participantDto.getLastVersionDate().orElse(null))
-                .withDdpInstanceId(ddpInstanceIdAsInt)
-                .withReleaseCompleted(participantDto.getReleaseCompleted().orElse(false))
-                .withAssigneeIdMr(participantDto.getAssigneeIdMr().orElseThrow(DataCopyingException.withMessage(ASSIGNEE_ID_MR)))
-                .withAssigneeIdTissue(participantDto.getAssigneeIdTissue().orElseThrow(DataCopyingException.withMessage(ASSIGNEE_ID_TISSUE)))
-                .withLastChanged(participantDto.getLastChanged())
-                .withChangedBy(participantDto.getChangedBy().orElse(SYSTEM))
-                .build();
     }
 
 }
