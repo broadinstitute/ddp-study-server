@@ -52,8 +52,8 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
     private static final String SQL_DELETE_DDP_INSTANCE = "DELETE FROM ddp_instance WHERE ddp_instance_id = ?";
     private static final String SQL_SELECT_INSTANCE_WITH_ROLE =
             "SELECT ddp_instance_id, instance_name, base_url, collaborator_id_prefix, migrated_ddp, billing_reference, "
-                    +
-                    "es_participant_index, es_activity_definition_index, es_users_index, study_pre_filter, research_project, (SELECT count(role.name) "
+                    + "es_participant_index, es_activity_definition_index, es_users_index, study_pre_filter, research_project, "
+                    + "(SELECT count(role.name) "
                     + "FROM ddp_instance realm, ddp_instance_role inRol, instance_role role "
                     + "WHERE realm.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id "
                     + "AND role.name = ? "

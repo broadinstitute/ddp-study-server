@@ -20,8 +20,8 @@ public class ParticipantDao implements Dao<ParticipantDto> {
                     + "ON DUPLICATE KEY UPDATE last_changed = ?, changed_by = ?";
 
     private static final String SQL_SELECT_PARTICIPANT_FROM_COLLABORATOR_ID = "SELECT p.ddp_participant_id from ddp_participant p "
-            +
-            "left join ddp_kit_request req on (req.ddp_participant_id = p.ddp_participant_id) where req.bsp_collaborator_participant_id = ? ";
+            + "left join ddp_kit_request req on (req.ddp_participant_id = p.ddp_participant_id) "
+            + "where req.bsp_collaborator_participant_id = ? ";
 
     @Override
     public int create(ParticipantDto participantDto) {
