@@ -19,6 +19,16 @@ public class DDPInstitutionDto {
         this.lastChanged = builder.lastChanged;
     }
 
+    public static DDPInstitutionDto copy(int newParticipantId, DDPInstitutionDto that) {
+        return new DDPInstitutionDto.Builder()
+                .withType(that.getType())
+                .withLastChanged(that.getLastChanged())
+                .withDdpInstitutionId(that.getDdpInstitutionId())
+                .withInstitutionId(that.getInstitutionId())
+                .withParticipantId(newParticipantId)
+                .build();
+    }
+
     public static class Builder {
 
         Integer institutionId;

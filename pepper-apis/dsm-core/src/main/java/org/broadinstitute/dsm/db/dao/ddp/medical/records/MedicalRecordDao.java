@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.db.dao.ddp.medical.records;
 
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.dao.Dao;
-import org.broadinstitute.dsm.db.dao.ddp.institution.DDPInstitutionDao;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 

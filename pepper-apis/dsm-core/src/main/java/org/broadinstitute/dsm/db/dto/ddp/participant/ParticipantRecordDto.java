@@ -9,8 +9,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.broadinstitute.dsm.db.structure.ColumnName;
+import org.broadinstitute.dsm.pubsub.study.osteo.DataCopyingException;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
+
+import static org.broadinstitute.dsm.statics.DBConstants.*;
+import static org.broadinstitute.dsm.util.SystemUtil.SYSTEM;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -58,6 +62,21 @@ public class ParticipantRecordDto {
         this.additionalValuesJson = builder.additionalValuesJson;
         this.lastChanged = builder.lastChanged;
         this.changedBy = builder.changedBy;
+    }
+
+    public static ParticipantRecordDto copy(int newParticipantId, ParticipantRecordDto that) {
+        return new ParticipantRecordDto.Builder()
+                .withParticipantId(newParticipantId)
+                .withLastChanged(that.getLastChanged())
+                .withParticipantRecordId(that.getParticipantRecordId().orElseThrow(DataCopyingException.withMessage(PARTICIPANT_RECORD_ID)))
+                .withCrSent(that.getCrSent().orElse(null))
+                .withCrReceived(that.getCrReceived().orElse(null))
+                .withNotes(that.getNotes().orElse(null))
+                .withMinimalMr(that.getMinimalMr().orElseThrow(DataCopyingException.withMessage(MINIMAL_MR)))
+                .withAbstractionReady(that.getAbstractionReady().orElseThrow(DataCopyingException.withMessage(ABSTRACTION_READY)))
+                .withAdditionalValuesJson(that.getAdditionalValuesJson().orElse(null))
+                .withChangedBy(that.getChangedBy().orElse(SYSTEM))
+                .build();
     }
 
     @JsonProperty("dynamicFields")

@@ -3,6 +3,11 @@ package org.broadinstitute.dsm.db.dto.ddp.participant;
 import java.util.Optional;
 
 import lombok.Getter;
+import org.broadinstitute.dsm.pubsub.study.osteo.DataCopyingException;
+
+import static org.broadinstitute.dsm.statics.DBConstants.*;
+import static org.broadinstitute.dsm.statics.DBConstants.ASSIGNEE_ID_TISSUE;
+import static org.broadinstitute.dsm.util.SystemUtil.SYSTEM;
 
 @Getter
 public class ParticipantDto {
@@ -29,6 +34,21 @@ public class ParticipantDto {
         this.assigneeIdTissue = builder.assigneeIdTissue;
         this.lastChanged = builder.lastChanged;
         this.changedBy = builder.changedBy;
+    }
+
+    public static ParticipantDto copy(int newDdpInstanceId, ParticipantDto that) {
+        return new ParticipantDto.Builder()
+                .withParticipantId(that.getParticipantId().orElseThrow(DataCopyingException.withMessage(PARTICIPANT_ID)))
+                .withDdpParticipantId(that.getDdpParticipantId().orElseThrow(DataCopyingException.withMessage(DDP_INSTANCE_ID)))
+                .withLastVersion(that.getLastVersion().orElseThrow())
+                .withLastVersionDate(that.getLastVersionDate().orElse(null))
+                .withDdpInstanceId(newDdpInstanceId)
+                .withReleaseCompleted(that.getReleaseCompleted().orElse(false))
+                .withAssigneeIdMr(that.getAssigneeIdMr().orElseThrow(DataCopyingException.withMessage(ASSIGNEE_ID_MR)))
+                .withAssigneeIdTissue(that.getAssigneeIdTissue().orElseThrow(DataCopyingException.withMessage(ASSIGNEE_ID_TISSUE)))
+                .withLastChanged(that.getLastChanged())
+                .withChangedBy(that.getChangedBy().orElse(SYSTEM))
+                .build();
     }
 
 
