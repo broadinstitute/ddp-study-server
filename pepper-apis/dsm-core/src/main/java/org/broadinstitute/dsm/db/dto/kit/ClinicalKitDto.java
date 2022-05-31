@@ -151,6 +151,6 @@ public class ClinicalKitDto {
             return maybeGenderQuestionAnswer
                     .map(answer -> answer.get(DDPActivityConstants.ACTIVITY_QUESTION_ANSWER))
                     .orElse("U");
-        }).orElse("U");
+        }).orElse("U"); //todo we have to decide what will happen in this case?
     }
 }

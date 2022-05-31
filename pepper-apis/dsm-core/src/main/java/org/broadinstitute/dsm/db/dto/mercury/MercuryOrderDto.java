@@ -29,7 +29,8 @@ public class MercuryOrderDto {
         this.kitTypeId = kitTypeId;
     }
 
-    public static List<MercuryOrderDto> createAllOrders(String[] barcodes, String ddpParticipantId) throws NoSuchElementException {
+    public static List<MercuryOrderDto> createAllOrders(String[] barcodes, String ddpParticipantId, String orderId)
+            throws NoSuchElementException {
         List<MercuryOrderDto> orders = new ArrayList<>();
         MercuryOrderDao mercuryOrderDao = new MercuryOrderDao();
         for (String barcode : barcodes) {
@@ -40,7 +41,11 @@ public class MercuryOrderDto {
                         barcode, ddpParticipantId);
                 return new NoSuchElementException(message);
             });
-            maybeOrder.ifPresent(order -> orders.add(order));
+            maybeOrder.ifPresent(order -> {
+                order.setOrderId(orderId);
+                order.setOrderDate(System.currentTimeMillis());
+                orders.add(order);
+            });
         }
         return orders;
     }

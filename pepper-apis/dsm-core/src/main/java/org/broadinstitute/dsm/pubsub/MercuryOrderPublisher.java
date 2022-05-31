@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.pubsub;
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -19,9 +20,9 @@ import com.google.pubsub.v1.TopicName;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.InstanceSettings;
 import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderDto;
-import org.broadinstitute.dsm.db.dto.settings.InstanceSettingsDto;
 import org.broadinstitute.dsm.exception.DSMPubSubException;
 import org.broadinstitute.dsm.model.mercury.MercuryPdoOrder;
 import org.broadinstitute.dsm.util.NanoIdUtil;
@@ -33,19 +34,6 @@ public class MercuryOrderPublisher {
 
     public MercuryOrderPublisher(MercuryOrderDao mercuryOrderDao) {
         this.mercuryOrderDao = mercuryOrderDao;
-    }
-
-    private static String createPdoOrderJson(String[] barcodes, DDPInstance ddpInstance) {
-        String researchProject = ddpInstance.getResearchProject();
-
-        String creatorId = new InstanceSettingsDto.Builder()
-                .withDdpInstanceId(Integer.parseInt(ddpInstance.getDdpInstanceId()))
-                .build().getMercuryOrderCreator().orElseThrow();
-        String mercuryOrderId = createMercuryUniqueOrderId();
-        MercuryPdoOrder mercuryPdoOrder = new MercuryPdoOrder(creatorId, mercuryOrderId, researchProject, barcodes);
-        String json = new Gson().toJson(mercuryPdoOrder);
-        return json;
-
     }
 
     private static String createMercuryUniqueOrderId() {
@@ -110,27 +98,40 @@ public class MercuryOrderPublisher {
         }
     }
 
-    public void publishMessage(String[] barcodes, String projectId, String topicId, DDPInstance ddpInstance, String ddpParticipantId) {
+    public void createAndPublishMessage(String[] barcodes, String projectId, String topicId, DDPInstance ddpInstance,
+                                        String ddpParticipantId) {
         log.info("Publishing message to mercury");
-        String json = createPdoOrderJson(barcodes, ddpInstance);
+        String researchProject = ddpInstance.getResearchProject();
+        String creatorId = new InstanceSettings().getInstanceSettings(ddpInstance.getName()).getMercuryOrderCreator().orElseThrow();
+        String mercuryOrderId = createMercuryUniqueOrderId();
+        MercuryPdoOrder mercuryPdoOrder = new MercuryPdoOrder(creatorId, mercuryOrderId, researchProject, barcodes);
+        String json = new Gson().toJson(mercuryPdoOrder);
         if (StringUtils.isNotBlank(json)) {
-            orderOnMercury(projectId, topicId, json, barcodes, ddpParticipantId);
+            orderOnMercury(projectId, topicId, json, barcodes, ddpParticipantId, mercuryOrderId);
         }
 
     }
 
     private void orderOnMercury(String projectId, String topicId, String json, String[] barcodes,
-                                String ddpParticipantId) {
-        List<MercuryOrderDto> newOrders = MercuryOrderDto.createAllOrders(barcodes, ddpParticipantId);
+                                String ddpParticipantId, String orderId) {
+        List<MercuryOrderDto> newOrders = MercuryOrderDto.createAllOrders(barcodes, ddpParticipantId, orderId);
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult result = new SimpleResult();
-            for (MercuryOrderDto order : newOrders) {
-                result = this.mercuryOrderDao.create(order, conn);
-                if (result.resultException != null) {
-                    return result;
+            try {
+                for (MercuryOrderDto order : newOrders) {
+                    result = this.mercuryOrderDao.create(order, conn);
+                    if (result.resultException != null) {
+                        return result;
+                    }
+                }
+                publishWithErrorHandler(projectId, topicId, json);
+            } catch (Exception e) {
+                try {
+                    conn.rollback();
+                } catch (SQLException throwables) {
+                    throwables.printStackTrace();
                 }
             }
-            publishWithErrorHandler(projectId, topicId, json);
             return result;
         });
         if (results.resultException != null) {

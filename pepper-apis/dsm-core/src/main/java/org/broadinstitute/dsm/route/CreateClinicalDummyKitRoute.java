@@ -65,6 +65,8 @@ public class CreateClinicalDummyKitRoute implements Route {
     public Object handle(Request request, Response response) {
         String kitLabel = request.params(RequestParameter.LABEL);
         String kitTypeString = request.params(RequestParameter.KIT_TYPE);
+        String ddpParticipantId = request.params(RequestParameter.PARTICIPANTID);
+        Optional<ElasticSearchParticipantDto> maybeParticipantByParticipantId;
         if (StringUtils.isBlank(kitLabel)) {
             logger.warn("Got a create Clinical Kit request without a kit label!!");
             response.status(500);
@@ -74,22 +76,36 @@ public class CreateClinicalDummyKitRoute implements Route {
         new BookmarkDao().getBookmarkByInstance(CLINICAL_KIT_REALM).ifPresentOrElse(book -> {
             realm = (int) book.getValue();
         }, () -> {
-                throw new RuntimeException("Bookmark doesn't exist for " + CLINICAL_KIT_REALM);
+            throw new RuntimeException("Bookmark doesn't exist for " + CLINICAL_KIT_REALM);
             });
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(realm);
         BSPDummyKitDao bspDummyKitDao = new BSPDummyKitDao();
         if (ddpInstance != null) {
             String kitRequestId = CLINICAL_KIT_PREFIX + KitRequestShipping.createRandom(20);
-            String ddpParticipantId = new BSPDummyKitDao().getRandomParticipantForStudy(ddpInstance);
-            Optional<ElasticSearchParticipantDto> maybeParticipantByParticipantId =
-                    ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
+            if (StringUtils.isBlank(ddpParticipantId)) {
+                int tries = 0;
+                ddpParticipantId = new BSPDummyKitDao().getRandomParticipantForStudy(ddpInstance);
+                maybeParticipantByParticipantId =
+                        ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
+                if (maybeParticipantByParticipantId.isEmpty()) {
+                    throw new RuntimeException("PT not found " + ddpParticipantId);
+                }
+                while (!maybeParticipantByParticipantId.get().getStatus().get().equals("ENROLLED") && tries < 10) {
+                    tries++;
+                    ddpParticipantId = new BSPDummyKitDao().getRandomParticipantForStudy(ddpInstance);
+                    maybeParticipantByParticipantId =
+                            ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
+                }
+                if (tries == 10) {
+                    throw new RuntimeException("No enrolled participants found");
+                }
+            } else {
+                maybeParticipantByParticipantId =
+                        ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
+            }
             List<KitType> kitTypes = KitType.getKitTypes(ddpInstance.getName(), null);
             KitType desiredKitType = kitTypes.stream().filter(k -> kitTypeString.equalsIgnoreCase(k.getName())).findFirst().orElseThrow();
             logger.info("Found kit type " + desiredKitType.getName());
-
-            if (maybeParticipantByParticipantId.isEmpty()) {
-                throw new RuntimeException("PT not found " + ddpParticipantId);
-            }
 
             if (kitTypeString.toLowerCase().indexOf(ffpe) == -1) {
                 String participantCollaboratorId = KitRequestShipping

@@ -560,6 +560,9 @@ public class DSMServer {
         get(API_ROOT + RoutePath.CLINICAL_KIT_ENDPOINT, new ClinicalKitsRoute(notificationUtil), new JsonTransformer());
         get(API_ROOT + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT, new CreateClinicalDummyKitRoute(new OncHistoryDetailDaoImpl()),
                 new JsonTransformer());
+        get(API_ROOT + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT_WITH_PARTICIPANT,
+                new CreateClinicalDummyKitRoute(new OncHistoryDetailDaoImpl()),
+                new JsonTransformer());
 
         if (!cfg.getBoolean("ui.production")) {
             get(API_ROOT + RoutePath.DUMMY_ENDPOINT, new CreateBSPDummyKitRoute(), new JsonTransformer());
@@ -913,7 +916,8 @@ public class DSMServer {
 
         String mercuryTopicId = config.getString(GCP_PATH_TO_DSM_TO_MERCURY_TOPIC);
         PostMercuryOrderRoute postMercuryOrderRoute = new PostMercuryOrderRoute(projectId, mercuryTopicId);
-        post(UI_ROOT + "submitMercuryOrder", postMercuryOrderRoute, new JsonTransformer());
+        //        post(UI_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderRoute, new JsonTransformer());
+        post(API_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderRoute, new JsonTransformer());
 
     }
 

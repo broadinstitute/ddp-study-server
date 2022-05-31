@@ -92,7 +92,7 @@ public class InstanceSettingsDto {
     }
 
     public Optional<String> getMercuryOrderCreator() {
-        return Optional.of(mercuryOrderCreator);
+        return Optional.ofNullable(mercuryOrderCreator);
     }
 
     public static class Builder {
@@ -178,6 +178,11 @@ public class InstanceSettingsDto {
 
         public InstanceSettingsDto build() {
             return new InstanceSettingsDto(this);
+        }
+
+        public Builder withMercuryOrderCreator(String mercuryOrderCreator) {
+            this.mercuryOrderCreator = mercuryOrderCreator;
+            return this;
         }
     }
 }

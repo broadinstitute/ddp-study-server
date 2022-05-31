@@ -17,6 +17,7 @@ import com.google.gson.Gson;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.settings.InstanceSettingsDto;
 import org.broadinstitute.dsm.model.Value;
+import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 public class InstanceSettingsDao implements Dao<InstanceSettingsDto> {
@@ -115,6 +116,7 @@ public class InstanceSettingsDao implements Dao<InstanceSettingsDto> {
                             .withHasInvitations(rs.getBoolean(HAS_INVITATIONS))
                             .withGbfShippedTriggerDssDelivered(rs.getBoolean(GBF_SHIPPED_DSS_DELIVERED))
                             .withHasAddressTab(rs.getBoolean(HAS_ADDRESS_TAB)).withHasComputedObject(rs.getBoolean(HAS_COMPUTED_OBJECT))
+                            .withMercuryOrderCreator(rs.getString(DBConstants.MERCURY_ORDER_CREATOR))
                             .build();
                 }
             }

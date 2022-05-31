@@ -513,5 +513,6 @@ public class DBConstants {
     public static final String COHORT_TAG_NAME = "cohort_tag_name";
 
     //instance_settings
-    public static final String CREATOR_ID = "creator_id";
+    public static final String MERCURY_ORDER_CREATOR = "mercury_order_creator";
+
 }
