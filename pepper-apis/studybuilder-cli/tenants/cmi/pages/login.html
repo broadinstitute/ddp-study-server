@@ -294,7 +294,7 @@
     var lock = new Auth0Lock(config.clientID, config.auth0Domain, realOptions);
 
     function setFavicon(faviconUrl) {
-        const linkFavicon = document.getElementById('app-favicon').href = faviconUrl;
+        document.getElementById('app-favicon').href = faviconUrl;
     }
 
     function addHelp() {
