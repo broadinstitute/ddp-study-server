@@ -1,5 +1,13 @@
 package org.broadinstitute.ddp.studybuilder.task.osteo;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -43,14 +51,6 @@ import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-
-import java.io.File;
-import java.nio.file.Path;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 public class OsteoConsentVersion2 implements CustomTask {
@@ -175,7 +175,7 @@ public class OsteoConsentVersion2 implements CustomTask {
         runParentalConsentUpdate(handle, metaParentalConsent, studyDto, activityCodeParentalConsent, version2ForParentalConsent);
         runConsentAssentUpdate(handle, metaConsentAssent, studyDto, activityCodeConsentAssent, version2ForConsentAssent);
 
-        updateIntro(handle, studyDto, metaConsentAssent);
+        updateIntro(handle, studyDto, metaConsentAssent, version2ForConsentAssent);
 
         long activityAssentConsentId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCodeConsentAssent);
         long activityPedConsentId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCodeParentalConsent);
@@ -184,7 +184,7 @@ public class OsteoConsentVersion2 implements CustomTask {
         handle.attach(SqlHelper.class).updateActivityNameAndTitle(activityPedConsentId, "Research Consent & Assent Form");
     }
 
-    private void updateIntro(Handle handle, StudyDto studyDto, RevisionMetadata meta) {
+    private void updateIntro(Handle handle, StudyDto studyDto, RevisionMetadata meta, ActivityVersionDto ver) {
         String activityCode = consentAssentDataCfg.getString("activityCode");
 
         SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
@@ -202,8 +202,6 @@ public class OsteoConsentVersion2 implements CustomTask {
 
         long activityId = ActivityBuilder.findActivityId(handle, studyId, activityCode);
 
-        ActivityVersionDto activityVersionDto = activityDao.changeVersion(activityId, "v3", meta);
-
         long introBlockId = currFormActivityDef.getIntroduction().getBlocks()
                 .get(0).getBlockId();
         sectionBlockDao.disableBlock(introBlockId, meta);
@@ -213,13 +211,13 @@ public class OsteoConsentVersion2 implements CustomTask {
 
 
         sectionBlockDao.insertBlockForSection(activityId, ((FormActivityDef) currActivityDef).getSections().get(3)
-                .getSectionId(), 0, blockDefForAssent, activityVersionDto.getRevId());
+                .getSectionId(), 0, blockDefForAssent, ver.getRevId());
 
         for (int i = 0; i < 3; i++) {
             FormBlockDef blockDef = GsonUtil.standardGson().fromJson(ConfigUtil
                     .toJson(consentAssentDataCfg.getConfig("introduction")), FormBlockDef.class);
             sectionBlockDao.insertBlockForSection(activityId, ((FormActivityDef) currActivityDef).getSections().get(i)
-                    .getSectionId(), 0, blockDef, activityVersionDto.getRevId());
+                    .getSectionId(), 0, blockDef, ver.getRevId());
         }
     }
 
