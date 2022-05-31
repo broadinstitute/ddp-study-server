@@ -86,6 +86,7 @@
     var studyHelpEmail = 'info@joincountmein.org';
     var language = config.extraParams.language || 'en';
     var loginUrl = config.callbackURL + '/login';
+    var favicon = '';
 
     var registerUrl = '';
     if (study_guid.toLowerCase() === 'angio') {
@@ -99,6 +100,8 @@
         studyColor = '#7154FF';
         headerText = '';
         headerLogo = '##ASSETS_BUCKET_URL##/brain/project-logo.png';
+        favicon = '##BRAIN_BASE_URL##/favicon.ico'
+        setFavicon(favicon);
         applyRedesignedStyles();
     } else if (study_guid === 'cmi-mbc') {
         loginUrl = '##MBC_BASE_URL##/language-redirect?language=' + language + '&destination=' + encodeURIComponent('login-landing/login');
@@ -111,6 +114,8 @@
         studyColor = '#7154FF';
         headerText = '';
         headerLogo = '##ASSETS_BUCKET_URL##/osteo/project-logo.png';
+        favicon = '##OSTEO_BASE_URL##/favicon.ico'
+        setFavicon(favicon);
         applyRedesignedStyles();
     } else if (study_guid === 'cmi-mpc') {
         registerUrl = '##MPC_BASE_URL##/count-me-in';
@@ -127,12 +132,16 @@
         studyColor = '#7154FF';
         headerText = '';
         headerLogo = '##ASSETS_BUCKET_URL##/pancan/project-logo.png';
+        favicon = '##PANCAN_BASE_URL##/favicon.ico'
+        setFavicon(favicon);
         applyRedesignedStyles();
     } else if (study_guid === 'cmi-lms') {
         registerUrl = '##LMS_BASE_URL##/count-me-in';
         studyColor = '#c59ce4';
         headerText = '';
         headerLogo = '##ASSETS_BUCKET_URL##/lms/project-logo.png';
+        favicon = '##LMS_BASE_URL##/favicon.ico'
+        setFavicon(favicon);
         applyRedesignedStyles();
     } else {
         console.log('No configuration for ' + study_guid + ', will use defaults');
@@ -283,6 +292,10 @@
     }
 
     var lock = new Auth0Lock(config.clientID, config.auth0Domain, realOptions);
+
+    function setFavicon(faviconUrl) {
+        const linkFavicon = document.getElementById('app-favicon').href = faviconUrl;
+    }
 
     function addHelp() {
         // we use setInterval because auth0's on() methods for display
