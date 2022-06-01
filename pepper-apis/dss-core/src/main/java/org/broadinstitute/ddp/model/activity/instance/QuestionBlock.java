@@ -10,7 +10,7 @@ import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.util.MiscUtil;
 
-public class QuestionBlock extends FormBlock implements Numberable {
+public final class QuestionBlock extends FormBlock implements Numberable {
 
     @NotNull
     @SerializedName("question")
@@ -38,7 +38,7 @@ public class QuestionBlock extends FormBlock implements Numberable {
 
     @Override
     public boolean isComplete() {
-        return !shown || question.passesDeferredValidations();
+        return !shown || !enabled || question.passesDeferredValidations();
     }
 
     @Override

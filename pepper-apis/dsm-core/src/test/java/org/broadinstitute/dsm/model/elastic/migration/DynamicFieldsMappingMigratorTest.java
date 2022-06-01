@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.migration;
 
 import org.broadinstitute.dsm.TestHelper;
+import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -31,7 +32,8 @@ public class DynamicFieldsMappingMigratorTest {
                 new MedicalRecordMigrator(index, study),
                 new OncHistoryDetailsMigrator(index, study),
                 new TissueMigrator(index, study),
-                new SMIDMigrator(index, study));
+                new SMIDMigrator(index, study),
+                new CohortTagMigrator(index, study, new CohortTagDaoImpl()));
         exportables.forEach(Exportable::export);
 
     }

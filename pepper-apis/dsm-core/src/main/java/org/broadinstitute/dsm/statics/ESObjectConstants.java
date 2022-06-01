@@ -92,4 +92,8 @@ public class ESObjectConstants {
     public static final String DETAIL = "details";
     public static final String ANSWER = "answer";
     public static final String FIELD_TYPE_ID = "fieldTypeId";
+
+    //cohort tags
+    public static final String DSM_COHORT_TAG_ID = "cohortTagId";
+    public static final String COHORT_TAG = "cohortTag";
 }

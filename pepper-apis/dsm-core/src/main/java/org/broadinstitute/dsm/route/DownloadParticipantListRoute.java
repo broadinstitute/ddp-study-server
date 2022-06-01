@@ -55,8 +55,8 @@ public class DownloadParticipantListRoute extends RequestHandler {
             filterable.setFrom(currentFrom);
             filterable.setTo(currentTo);
             ParticipantWrapperResult filteredList = (ParticipantWrapperResult) filterable.filter(request.queryMap());
-            rowData.processData(filteredList,true);
-            if (filteredList.getTotalCount() < currentFrom){
+            rowData.processData(filteredList, true);
+            if (filteredList.getTotalCount() < currentFrom) {
                 break;
             }
             currentFrom = currentTo;
@@ -75,7 +75,7 @@ public class DownloadParticipantListRoute extends RequestHandler {
             ParticipantWrapperResult filteredList = (ParticipantWrapperResult) filterable.filter(request.queryMap());
             List<List<String>> participantRecords = rowData.processData(filteredList, false);
             columnsNumber = getColumnsNumber(participantRecords);
-            if (filteredList.getTotalCount() < currentFrom){
+            if (filteredList.getTotalCount() < currentFrom) {
                 break;
             }
             generator.appendData(participantRecords);

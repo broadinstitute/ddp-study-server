@@ -16,7 +16,7 @@ import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.content.Renderable;
 import org.broadinstitute.ddp.model.activity.definition.SectionIcon;
 
-public class FormSection implements Renderable {
+public final class FormSection implements Renderable {
 
     @SerializedName("name")
     private String name;

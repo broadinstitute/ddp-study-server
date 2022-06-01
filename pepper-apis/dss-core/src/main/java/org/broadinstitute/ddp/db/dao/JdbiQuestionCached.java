@@ -354,4 +354,9 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
             return builder.build();
         }
     }
+
+    @Override
+    public Optional<QuestionDto> findBasicQuestionDtoById(long questionId) {
+        return delegate.findBasicQuestionDtoById(questionId);
+    }
 }
