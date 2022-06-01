@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.broadinstitute.dsm.model.Filter;
-import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
 import org.broadinstitute.dsm.model.elastic.filter.FilterStrategy;
@@ -72,7 +72,7 @@ public class DsmAbstractQueryBuilder {
     }
 
     protected String buildPath() {
-        return DSM_WITH_DOT + Util.TABLE_ALIAS_MAPPINGS.get(splitter.getAlias()).getPropertyName();
+        return DSM_WITH_DOT + PropertyInfo.TABLE_ALIAS_MAPPINGS.get(splitter.getAlias()).getPropertyName();
     }
 
 
