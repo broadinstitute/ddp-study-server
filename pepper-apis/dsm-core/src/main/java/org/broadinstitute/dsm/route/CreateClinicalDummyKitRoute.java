@@ -13,6 +13,7 @@ import org.broadinstitute.dsm.db.SmId;
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
 import org.broadinstitute.dsm.db.dao.kit.BSPDummyKitDao;
 import org.broadinstitute.dsm.db.structure.DBElement;
@@ -40,9 +41,11 @@ public class CreateClinicalDummyKitRoute implements Route {
     private final String ffpeSection = "ffpe-section";
     private int realm;
     private OncHistoryDetailDaoImpl oncHistoryDetailDaoImpl;
+    private ParticipantDao participantDao;
 
     public CreateClinicalDummyKitRoute(OncHistoryDetailDaoImpl oncHistoryDetailDao) {
         this.oncHistoryDetailDaoImpl = oncHistoryDetailDao;
+        participantDao = new ParticipantDao();
     }
 
 
@@ -65,6 +68,9 @@ public class CreateClinicalDummyKitRoute implements Route {
     public Object handle(Request request, Response response) {
         String kitLabel = request.params(RequestParameter.LABEL);
         String kitTypeString = request.params(RequestParameter.KIT_TYPE);
+        String participantId = request.params(RequestParameter.PARTICIPANTID);
+        String ddpParticipantId;
+        Optional<ElasticSearchParticipantDto> maybeParticipantByParticipantId;
         if (StringUtils.isBlank(kitLabel)) {
             logger.warn("Got a create Clinical Kit request without a kit label!!");
             response.status(500);
@@ -80,16 +86,35 @@ public class CreateClinicalDummyKitRoute implements Route {
         BSPDummyKitDao bspDummyKitDao = new BSPDummyKitDao();
         if (ddpInstance != null) {
             String kitRequestId = CLINICAL_KIT_PREFIX + KitRequestShipping.createRandom(20);
-            String ddpParticipantId = new BSPDummyKitDao().getRandomParticipantForStudy(ddpInstance);
-            Optional<ElasticSearchParticipantDto> maybeParticipantByParticipantId =
-                    ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
+            if (StringUtils.isBlank(participantId)) {
+                int tries = 0;
+                ddpParticipantId = new BSPDummyKitDao().getRandomParticipantForStudy(ddpInstance);
+                maybeParticipantByParticipantId =
+                        ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
+                if (maybeParticipantByParticipantId.isEmpty()) {
+                    throw new RuntimeException("PT not found " + ddpParticipantId);
+                }
+                while (!maybeParticipantByParticipantId.get().getStatus().get().equals("ENROLLED") && tries < 10) {
+                    tries++;
+                    ddpParticipantId = new BSPDummyKitDao().getRandomParticipantForStudy(ddpInstance);
+                    maybeParticipantByParticipantId =
+                            ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
+                }
+                if (tries == 10) {
+                    throw new RuntimeException("No enrolled participants found");
+                }
+            } else {
+                Optional<String> maybeParticipantId =
+                        participantDao.getParticipantFromCollaboratorParticipantId(participantId);
+                maybeParticipantId.orElseThrow();
+                ddpParticipantId = maybeParticipantId.get();
+                maybeParticipantByParticipantId =
+                        ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(),
+                                ddpParticipantId);
+            }
             List<KitType> kitTypes = KitType.getKitTypes(ddpInstance.getName(), null);
             KitType desiredKitType = kitTypes.stream().filter(k -> kitTypeString.equalsIgnoreCase(k.getName())).findFirst().orElseThrow();
             logger.info("Found kit type " + desiredKitType.getName());
-
-            if (maybeParticipantByParticipantId.isEmpty()) {
-                throw new RuntimeException("PT not found " + ddpParticipantId);
-            }
 
             if (kitTypeString.toLowerCase().indexOf(ffpe) == -1) {
                 String participantCollaboratorId = KitRequestShipping
