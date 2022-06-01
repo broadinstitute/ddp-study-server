@@ -1,14 +1,17 @@
 package org.broadinstitute.dsm.model.elastic.export.process;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.ESDsm;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.export.generate.Collector;
+import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class CollectionProcessor extends BaseProcessor {
 
@@ -29,7 +32,9 @@ public class CollectionProcessor extends BaseProcessor {
 
     @Override
     protected Object convertObjectToCollection(Object object) {
-        return Util.convertObjectListToMapList(object);
+        return Objects.isNull(object)
+                ? new ArrayList<>()
+                : ObjectMapperSingleton.instance().convertValue(object, new TypeReference<List<Map<String, Object>>>() {});
     }
 
     @Override
