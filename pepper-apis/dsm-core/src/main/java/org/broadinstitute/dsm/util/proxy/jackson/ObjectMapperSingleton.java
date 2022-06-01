@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.util.proxy.jackson;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -19,15 +20,28 @@ public class ObjectMapperSingleton {
     }
 
     public static <T> T readValue(String content, TypeReference<T> typeReference) {
-        content = StringUtils.isBlank(content) ? "{}" : content;
         try {
+            content = ObjectMapperSingleton.getContent(content, typeReference);
             return Helper.objectMapperInstance.readValue(content, typeReference);
         } catch (com.fasterxml.jackson.core.JsonParseException e) {
             throw new JsonParseException(e.getMessage());
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
+
+    private static <T> String getContent(String content, TypeReference<T> typeReference) throws ClassNotFoundException {
+        if (StringUtils.isNotBlank(content)) {
+            return content;
+        }
+        String className = typeReference.getType().getTypeName().split("<")[0];
+        Class<?> clazz = Class.forName(className);
+        if (List.class.isAssignableFrom(clazz)) {
+            return "[{}]";
+        }
+        return "{}";
+    }
+
 
     public static String writeValueAsString(Object value) {
         value = Objects.isNull(value) ? Map.of() : value;
