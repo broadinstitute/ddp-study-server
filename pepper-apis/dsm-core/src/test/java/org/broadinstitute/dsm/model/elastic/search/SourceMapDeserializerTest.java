@@ -1,16 +1,63 @@
 package org.broadinstitute.dsm.model.elastic.search;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.broadinstitute.dsm.model.FollowUp;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class SourceMapDeserializerTest {
+
+    @Test
+    public void camelCaseToPascalSnakeCase() {
+        String camelCase1 = "registrationType";
+        String camelCase2 = "test";
+        String camelCase3 = "medicalRecordsReleaseObtained";
+
+        SourceMapDeserializer sourceMapDeserializer = new SourceMapDeserializer();
+        String pascalSnakeCase1 = sourceMapDeserializer.camelCaseToPascalSnakeCase(camelCase1);
+        String pascalSnakeCase2 = sourceMapDeserializer.camelCaseToPascalSnakeCase(camelCase2);
+        String pascalSnakeCase3 = sourceMapDeserializer.camelCaseToPascalSnakeCase(camelCase3);
+
+        assertEquals("REGISTRATION_TYPE", pascalSnakeCase1);
+        assertEquals("TEST", pascalSnakeCase2);
+        assertEquals("MEDICAL_RECORDS_RELEASE_OBTAINED", pascalSnakeCase3);
+    }
+
+    @Test
+    public void getParameterizedType() throws NoSuchFieldException {
+        class MockClass {
+            List<Object> listField;
+            FollowUp[] followUps;
+            Object obj;
+        }
+
+        Field listField = MockClass.class.getDeclaredField("listField");
+        Field followUps = MockClass.class.getDeclaredField("followUps");
+        Field obj = MockClass.class.getDeclaredField("obj");
+
+        SourceMapDeserializer sourceMapDeserializer = new SourceMapDeserializer();
+
+        Class<?> clazz = null;
+        try {
+            clazz = sourceMapDeserializer.getParameterizedType(listField.getGenericType());
+            assertEquals(Object.class, clazz);
+            clazz = sourceMapDeserializer.getParameterizedType(followUps.getGenericType());
+            assertEquals(FollowUp.class, clazz);
+            clazz = sourceMapDeserializer.getParameterizedType(obj.getGenericType());
+            assertEquals(Object.class, clazz);
+        } catch (ClassNotFoundException e) {
+            Assert.fail();
+        }
+    }
 
     @Test
     public void convertFollowUpsJsonToList() {
