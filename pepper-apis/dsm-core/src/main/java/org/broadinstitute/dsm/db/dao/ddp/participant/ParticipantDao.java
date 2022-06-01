@@ -19,6 +19,10 @@ public class ParticipantDao implements Dao<ParticipantDto> {
                     + "assignee_id_mr, assignee_id_tissue, last_changed, changed_by) VALUES (?,?,?,?,?,?,?,?,?) "
                     + "ON DUPLICATE KEY UPDATE last_changed = ?, changed_by = ?";
 
+    private static final String SQL_SELECT_PARTICIPANT_FROM_COLLABORATOR_ID = "SELECT p.ddp_participant_id from ddp_participant p "
+            + "left join ddp_kit_request req on (req.ddp_participant_id = p.ddp_participant_id) "
+            + "where req.bsp_collaborator_participant_id = ? ";
+
     @Override
     public int create(ParticipantDto participantDto) {
         SimpleResult simpleResult = inTransaction(conn -> {
@@ -64,4 +68,25 @@ public class ParticipantDao implements Dao<ParticipantDto> {
         return Optional.empty();
     }
 
+    public Optional<String> getParticipantFromCollaboratorParticipantId(String participantId) {
+        SimpleResult simpleResult = inTransaction(conn -> {
+            SimpleResult dbVals = new SimpleResult(-1);
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_PARTICIPANT_FROM_COLLABORATOR_ID)) {
+                stmt.setString(1, participantId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        dbVals.resultValue = rs.getString(1);
+                    }
+                }
+            } catch (SQLException e) {
+                dbVals.resultException = e;
+            }
+            return dbVals;
+        });
+        if (simpleResult.resultException != null) {
+            throw new RuntimeException("Error getting participant with collab participant id: " + participantId,
+                    simpleResult.resultException);
+        }
+        return Optional.ofNullable((String) simpleResult.resultValue);
+    }
 }
