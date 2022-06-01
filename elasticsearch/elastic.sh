@@ -125,6 +125,28 @@ upload_template() {
     -d "@$template_file"
 }
 
+update_mapping() {
+  payload="`python3 participants_structured_reader.py`"
+  indexes=`curl -s -X GET "$BASE_URL/_aliases" \
+                -H "Authorization: Basic $CREDENTIALS" \
+                -H 'Content-Type: application/json'`
+  participants_structured=`python3 participants_structured_extractor.py "$indexes"`
+
+  all_indices=""
+  for index in $participants_structured
+  do
+    index_setting=`curl -s -X GET "$BASE_URL/$index/_settings" \
+        -H "Authorization: Basic $CREDENTIALS" \
+        -H 'Content-Type: application/json'`
+    all_indices+="`python3 participants_structured_filter.py "$index_setting" "$index"`"
+  done
+
+  curl -s -X PUT "$BASE_URL/$all_indices/_mapping/_doc" \
+      -H "Authorization: Basic $CREDENTIALS" \
+      -H 'Content-Type: application/json' \
+      -d "$payload"
+}
+
 upload_user() {
   local user_file="$1"
   local user_name="$2"
@@ -174,6 +196,9 @@ main() {
       ;;
     upload-template)
       upload_template "$4"
+      ;;
+    update_mapping)
+      update_mapping
       ;;
     upload-user)
       upload_user "$4" "$5"

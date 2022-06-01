@@ -11,7 +11,7 @@ import org.broadinstitute.dsm.db.Tissue;
 public class SourceGeneratorFactory implements GeneratorFactory {
 
     @Override
-    public BaseGenerator make(BaseGenerator.PropertyInfo propertyInfo) {
+    public BaseGenerator make(PropertyInfo propertyInfo) {
         BaseGenerator generator;
         if (propertyInfo.isCollection()) {
             generator = getCollectionGenerator(propertyInfo.getPropertyClass());
