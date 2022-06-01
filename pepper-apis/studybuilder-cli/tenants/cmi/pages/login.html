@@ -7,6 +7,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
       <link id="app-favicon" rel="icon" type="image/x-icon" href="##BASE_URL##/favicon.ico">
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic,700,700italic|Source+Serif+Pro:600&display=swap" rel="stylesheet" type="text/css">
+    <script>
+        var config = JSON.parse(decodeURIComponent(escape(window.atob('@@config@@'))));
+        var study_guid = config.extraParams.study_guid;
+        document.write('<link rel="icon" type="image/x-icon" href="##ASSETS_BUCKET_URL##/' + study_guid + '/auth0-assets/favicon.ico" />');
+    </script>
 </head>
 <body>
 
