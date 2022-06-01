@@ -114,6 +114,7 @@ import org.broadinstitute.dsm.route.TriggerSurveyRoute;
 import org.broadinstitute.dsm.route.UserSettingRoute;
 import org.broadinstitute.dsm.route.ViewFilterRoute;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
+import org.broadinstitute.dsm.route.mercury.PostMercuryOrderRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
 import org.broadinstitute.dsm.route.tag.cohort.CreateCohortTagRoute;
@@ -180,14 +181,16 @@ public class DSMServer {
     public static final String GCP_PATH_TO_DSS_TO_DSM_SUB = "pubsub.dss_to_dsm_subscription";
     public static final String GCP_PATH_TO_DSM_TO_DSS_TOPIC = "pubsub.dsm_to_dss_topic";
     public static final String GCP_PATH_TO_DSM_TASKS_SUB = "pubsub.dsm_tasks_subscription";
+    public static final String GCP_PATH_TO_DSM_TO_MERCURY_TOPIC = "pubsub.dsm_to_mercury_topic";
+    public static final String GCP_PATH_TO_DSM_TO_MERCURY_SUB = "pubsub.dsm_to_mercury_subscription";
     private static final Logger logger = LoggerFactory.getLogger(DSMServer.class);
     private static final String API_ROOT = "/ddp/";
     private static final String UI_ROOT = "/ui/";
     public static final String SIGNER = "org.broadinstitute.kdux";
     public static final String BSP_SIGNER = "https://dsm-dev.datadonationplatform.org/ddp/";
-    private static final String[] CORS_HTTP_METHODS = new String[] { "GET", "PUT", "POST", "OPTIONS", "PATCH" };
+    private static final String[] CORS_HTTP_METHODS = new String[] {"GET", "PUT", "POST", "OPTIONS", "PATCH"};
     private static final String[] CORS_HTTP_HEADERS =
-            new String[] { "Content-Type", "Authorization", "X-Requested-With", "Content-Length", "Accept", "Origin", "" };
+            new String[] {"Content-Type", "Authorization", "X-Requested-With", "Content-Length", "Accept", "Origin", ""};
     private static final String VAULT_DOT_CONF = "vault.conf";
     private static final String GAE_DEPLOY_DIR = "appengine/deploy";
     private static final String INFO_ROOT = "/info/";
@@ -557,6 +560,9 @@ public class DSMServer {
         get(API_ROOT + RoutePath.CLINICAL_KIT_ENDPOINT, new ClinicalKitsRoute(notificationUtil), new JsonTransformer());
         get(API_ROOT + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT, new CreateClinicalDummyKitRoute(new OncHistoryDetailDaoImpl()),
                 new JsonTransformer());
+        get(API_ROOT + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT_WITH_PARTICIPANT,
+                new CreateClinicalDummyKitRoute(new OncHistoryDetailDaoImpl()),
+                new JsonTransformer());
 
         if (!cfg.getBoolean("ui.production")) {
             get(API_ROOT + RoutePath.DUMMY_ENDPOINT, new CreateBSPDummyKitRoute(), new JsonTransformer());
@@ -907,6 +913,12 @@ public class DSMServer {
 
         EditParticipantMessageReceiverRoute editParticipantMessageReceiverRoute = new EditParticipantMessageReceiverRoute();
         get(UI_ROOT + RoutePath.EDIT_PARTICIPANT_MESSAGE, editParticipantMessageReceiverRoute, new JsonTransformer());
+
+        String mercuryTopicId = config.getString(GCP_PATH_TO_DSM_TO_MERCURY_TOPIC);
+        PostMercuryOrderRoute postMercuryOrderRoute = new PostMercuryOrderRoute(projectId, mercuryTopicId);
+        //        post(UI_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderRoute, new JsonTransformer());
+        post(API_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderRoute, new JsonTransformer());
+
     }
 
     private void setupJobs(@NonNull Config cfg, @NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil,
