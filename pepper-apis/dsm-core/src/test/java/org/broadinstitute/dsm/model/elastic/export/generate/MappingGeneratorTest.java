@@ -100,8 +100,8 @@ public class MappingGeneratorTest {
         GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, patch);
         DynamicFieldsParser parser = new DynamicFieldsParser();
         parser.setDisplayType("TEXT");
-        parser.setParser(new TypeParser());
-        parser.setPropertyInfo(new BaseGenerator.PropertyInfo(MedicalRecord.class, true));
+        parser.setHelperParser(new TypeParser());
+        parser.setPropertyInfo(new PropertyInfo(MedicalRecord.class, true));
         BaseGenerator mappingGenerator = new CollectionMappingGenerator(parser, generatorPayload);
         Map<String, Object> parseJson = mappingGenerator.parseJson();
         Map<String, Object> additionalValuesJson = (Map) parseJson.get("dynamicFields");

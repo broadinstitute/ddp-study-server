@@ -10,18 +10,14 @@ import org.elasticsearch.index.query.QueryBuilder;
 public class SingleUpsertPainlessFacade extends UpsertPainlessFacade {
 
     SingleUpsertPainlessFacade(Object source, DDPInstanceDto ddpInstanceDto,
-                               String uniqueIdentifier, String fieldName, Object fieldValue) {
-        super(source, ddpInstanceDto, uniqueIdentifier, fieldName, fieldValue);
+                               String uniqueIdentifier, String fieldName, Object fieldValue, ScriptBuilder scriptBuilder) {
+        super(source, ddpInstanceDto, uniqueIdentifier, fieldName, fieldValue, scriptBuilder);
     }
 
     SingleUpsertPainlessFacade(Object source, DDPInstanceDto ddpInstanceDto, String uniqueIdentifier,
-                               String fieldName, Object fieldValue, TypeExtractor<Map<String, String>> typeExtractor) {
-        super(source, ddpInstanceDto, uniqueIdentifier, fieldName, fieldValue, typeExtractor);
-    }
-
-    @Override
-    protected ScriptBuilder buildScriptBuilder() {
-        return new SingleScriptBuilder(generator.getPropertyName());
+                               String fieldName, Object fieldValue, TypeExtractor<Map<String, String>> typeExtractor,
+                               ScriptBuilder scriptBuilder) {
+        super(source, ddpInstanceDto, uniqueIdentifier, fieldName, fieldValue, typeExtractor, scriptBuilder);
     }
 
     @Override

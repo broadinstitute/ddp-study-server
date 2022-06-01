@@ -20,8 +20,13 @@ import org.broadinstitute.dsm.model.elastic.sort.Sort;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ParticipantUtil;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.support.replication.ReplicationResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.core.CountRequest;
 import org.elasticsearch.client.core.CountResponse;
@@ -310,6 +315,44 @@ public class ElasticSearch implements ElasticSearchable {
         return extractLegacyAltPidGuidPair(searchHitProxies);
     }
 
+    @Override
+    public ReplicationResponse.ShardInfo createDocumentById(String index, String docId, Map<String, Object> data) {
+
+        try {
+            IndexRequest indexRequest = new IndexRequest(index, "_doc", docId).source(data);
+            IndexResponse response = ElasticSearchUtil.getClientInstance().index(indexRequest, RequestOptions.DEFAULT);
+            if (isSuccessfull(response.getShardInfo())) {
+                logger.info("Document with id: " + docId + " created successfully in index: " + index);
+            } else {
+                logger.error("Document with id: " + docId + " could not be created in index" + index);
+            }
+            return response.getShardInfo();
+        } catch (Exception e) {
+            throw new RuntimeException("Couldn't create participant with index: " + index + " and with id: " + docId, e);
+        }
+    }
+
+    @Override
+    public ReplicationResponse.ShardInfo deleteDocumentById(String index, String docId) {
+        try {
+            DeleteRequest deleteRequest = new DeleteRequest(index, "_doc", docId);
+            DeleteResponse deleteResponse = ElasticSearchUtil.getClientInstance().delete(deleteRequest, RequestOptions.DEFAULT);
+            if (isSuccessfull(deleteResponse.getShardInfo())) {
+                logger.info("Document with id: " + docId + " created successfully in index: " + index);
+            } else {
+                logger.error("Document with id: " + docId + " could not be created in index" + index);
+            }
+            return deleteResponse.getShardInfo();
+        } catch (Exception e) {
+            throw new RuntimeException("Couldn't create participant with index: " + index + " and with id: " + docId, e);
+        }
+    }
+
+    private boolean isSuccessfull(ReplicationResponse.ShardInfo shardInfo) {
+        return shardInfo.getSuccessful() > 0;
+    }
+
+
     Map<String, String> extractLegacyAltPidGuidPair(SearchHitProxy[] records) {
         Set<String> parentsGuids = getParents(records);
         return Arrays.stream(records)
@@ -347,4 +390,5 @@ public class ElasticSearch implements ElasticSearchable {
     private boolean hasProfile(Map<String, Object> sourceMap) {
         return sourceMap.containsKey(ElasticSearchUtil.PROFILE);
     }
+
 }
