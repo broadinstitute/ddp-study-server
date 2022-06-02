@@ -1726,12 +1726,30 @@ Question.Composite:
         description: 'The label to show above entries beyond the initial one'
       children:
         type: array
-        description: 'The child questions to present'
+        description: The child questions to be presented
         items:
-          anyOf:
-            - $ref: '#/Question.Date'
-            - $ref: '#/Question.Picklist'
-            - $ref: '#/Question.Text'
+          type: object
+          required:
+            - shown
+            - enabled
+            - question
+          properties:
+            shown:
+              type: boolean
+              description: |
+                `true` if the child question should be visible to the user, and `false` otherwise
+            enabled:
+              type: boolean
+              description: |
+                `true` if the user should be able to interact with the child question, and `false` otherwise
+            question:
+              anyOf:
+                - $ref: '#/Question.Date'
+                - $ref: '#/Question.Decimal'
+                - $ref: '#/Question.Equation'
+                - $ref: '#/Question.Integer'
+                - $ref: '#/Question.Picklist'
+                - $ref: '#/Question.Text'
       childOrientation:
         type: string
         nullable: true
