@@ -1,5 +1,5 @@
 # To make our config generation "compatible" with official dsdetoolbox, extract what is needed from it (this is not the base image)
-FROM broadinstitute/dsde-toolbox:latest AS dsdetoolbox
+FROM broadinstitute/dsde-toolbox:DDO-1934 AS dsdetoolbox
 
 FROM maven:3.6.3-jdk-11 AS maven
 
@@ -14,11 +14,11 @@ COPY --from=maven /usr/share/maven/ref/settings-docker.xml /usr/share/maven/ref/
 ENV MAVEN_HOME /usr/share/maven
 ENV MAVEN_CONFIG "$USER_HOME_DIR/.m2"
 
-# Copying necessary artifacts to enable configure.rb that lives in our own repo.
-COPY --from=dsdetoolbox /usr/local/bin/consul-template /usr/local/bin/consul-template
+# Copying just configuration used by official DSDE
 COPY --from=dsdetoolbox /etc/consul-template/config/config.json /etc/consul-template/config/config.json
-COPY --from=dsdetoolbox /usr/local/bin/vault /usr/local/bin/vault
 ENV VAULT_ADDR https://clotho.broadinstitute.org:8200
+ENV CONSUL_TEMPLATE_VERSION=0.27.2
+#ENV VAULT_VERSION=0.6.5
 
 RUN apk  --no-cache add \
     curl \
@@ -34,14 +34,23 @@ RUN apk  --no-cache add \
     # to support sheetappend script & OpenAPI build/deploy
     nodejs \
     npm \
-    && rm -rf /var/cache/apk/*
+    && rm -rf /var/cache/apk/* \
+    #    && wget https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip -O /tmp/vault_${VAULT_VERSION}_linux_amd64.zip \
+    && wget --no-check-certificate https://releases.hashicorp.com/consul-template/${CONSUL_TEMPLATE_VERSION}/consul-template_${CONSUL_TEMPLATE_VERSION}_linux_amd64.zip -O /tmp/consul_template_${CONSUL_TEMPLATE_VERSION}_linux_amd64.zip \
+    && cd /tmp  \
+ #   && unzip vault_${VAULT_VERSION}_linux_amd64.zip &&  \
+    && unzip consul_template_${CONSUL_TEMPLATE_VERSION}_linux_amd64.zip  \
+    && mv consul-template /usr/local/bin/  \
+    && chmod 0755 /usr/local/bin/consul-template \
+ #   && chmod 0755 /usr/local/bin/vault \
+    && rm -rf /tmp/*.zip
 
 #extracting sheetappend from ddp-angular repo. At some point we can get this from an npm repo
 WORKDIR /opt
 RUN apk --no-cache add npm subversion && \
-    svn export https://github.com/broadinstitute/ddp-angular/trunk/build-utils && \
-        npm install -g build-utils/sheetappend && \
-        chmod 555 build-utils/reportdeploy.sh
+    svn export https://github.com/broadinstitute/ddp-angular/trunk/build-utils \
+        && npm install -g ./build-utils/sheetappend \
+        && chmod 555 build-utils/reportdeploy.sh
 
 # keep track of git hash
 ARG GIT_SHA
