@@ -27,6 +27,8 @@ On Mac computer we are using:
 We are using multi-platform builds (amd64 and arm64) to create separate versions of images that can run on Intel 
 processor architectures and on Mac M1 architecture.
 
+The `push` option immediately pushes the images to Docker Hub. https://hub.docker.com/r/broadinstitute/study-server-build/tags
+
 Note that in the tag part of the image name we have a specific date. Be aware that the full name of the image, including the tag is referenced
 in the CircleCi YAML configuration files and in the `configure.rb` used to generate configuration files, so make sure you sync everything up if
 you make changes to name.
