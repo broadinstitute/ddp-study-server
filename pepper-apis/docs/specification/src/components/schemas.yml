@@ -1754,32 +1754,33 @@ Question.Composite:
       additionalItemText:
         type: string
         description: 'The label to show above entries beyond the initial one'
+      childVisibility:
+        type: array
+        description: |
+          The set of visibility flags for the child questions. There will always be at least one set of flags in this array, even if no answers are present, in order to represent the default appearance state of the questions.
+        items:
+          type: array
+          items:
+            type: object
+            required:
+              - shown
+              - enabled
+            properties:
+              shown:
+                type: boolean
+              enabled:
+                type: boolean
       children:
         type: array
         description: The child questions to be presented
         items:
-          type: object
-          required:
-            - shown
-            - enabled
-            - question
-          properties:
-            shown:
-              type: boolean
-              description: |
-                `true` if the child question should be visible to the user, and `false` otherwise
-            enabled:
-              type: boolean
-              description: |
-                `true` if the user should be able to interact with the child question, and `false` otherwise
-            question:
-              anyOf:
-                - $ref: '#/Question.Date'
-                - $ref: '#/Question.Decimal'
-                - $ref: '#/Question.Equation'
-                - $ref: '#/Question.Integer'
-                - $ref: '#/Question.Picklist'
-                - $ref: '#/Question.Text'
+          anyOf:
+            - $ref: '#/Question.Date'
+            - $ref: '#/Question.Decimal'
+            - $ref: '#/Question.Equation'
+            - $ref: '#/Question.Integer'
+            - $ref: '#/Question.Picklist'
+            - $ref: '#/Question.Text'
       childOrientation:
         type: string
         nullable: true
