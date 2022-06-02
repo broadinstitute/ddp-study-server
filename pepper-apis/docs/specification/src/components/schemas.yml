@@ -923,6 +923,36 @@ Block.Visibility:
     enabled:
       type: boolean
       description: whether block is enabled or not (used in cases when block inputs should be disabled but still visible)
+
+Composite.Visibility:
+  type: object
+  required:
+    - stableId
+    - children
+  properties:
+    stableId:
+      type: string
+      format: guid
+      description: |
+        The stableId of the composite question which is receiving visibility updates.
+    children:
+      type: array
+      items:
+        type: object
+        required:
+          - stableId
+          - shown
+          - enabled
+        properties:
+          stableId:
+            type: string
+            format: guid
+            description: |
+              The stableId of the composite child question this visibility update applies to.
+          shown:
+            type: boolean
+          enabled:
+            type: boolean
 #####
 #
 # Components
