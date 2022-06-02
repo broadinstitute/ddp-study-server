@@ -853,14 +853,6 @@ jobs:
                   rmdir << parameters.pepper_apis_path >>
             - checkout:
                 path: *repo_path
-            - run:
-                name: Try out consul-template
-                command: |
-                  consul-template -version
-            - run:
-                name: Try out vault
-                command: |
-                  vault -version
             - setup-shared-env
             - compile-all-jars:
                 restore_m2_cache: true
