@@ -24,15 +24,7 @@ import org.broadinstitute.dsm.model.Study;
 import org.broadinstitute.dsm.model.defaultvalues.Defaultable;
 import org.broadinstitute.dsm.model.defaultvalues.DefaultableMaker;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
-import org.broadinstitute.dsm.model.elastic.migration.DynamicFieldsMappingMigrator;
-import org.broadinstitute.dsm.model.elastic.migration.KitRequestShippingMigrator;
-import org.broadinstitute.dsm.model.elastic.migration.MedicalRecordMigrator;
-import org.broadinstitute.dsm.model.elastic.migration.OncHistoryDetailsMigrator;
-import org.broadinstitute.dsm.model.elastic.migration.OncHistoryMigrator;
-import org.broadinstitute.dsm.model.elastic.migration.ParticipantDataMigrator;
-import org.broadinstitute.dsm.model.elastic.migration.ParticipantMigrator;
-import org.broadinstitute.dsm.model.elastic.migration.SMIDMigrator;
-import org.broadinstitute.dsm.model.elastic.migration.TissueMigrator;
+import org.broadinstitute.dsm.model.elastic.migration.*;
 import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,10 +103,10 @@ public class DSMtasksSubscription {
             List<? extends Exportable> exportables = Arrays.asList(
                     //DynamicFieldsMappingMigrator should be first in the list to make sure that mapping will be exported for first
                     new DynamicFieldsMappingMigrator(index, study), new MedicalRecordMigrator(index, study),
-                    new OncHistoryDetailsMigrator(index, study), new OncHistoryMigrator(index, study),
-                    new ParticipantDataMigrator(index, study), new ParticipantMigrator(index, study),
-                    new KitRequestShippingMigrator(index, study), new TissueMigrator(index, study),
-                    new SMIDMigrator(index, study));
+                    new NewOsteoParticipantMigrator(index, study), new OncHistoryDetailsMigrator(index, study),
+                    new OncHistoryMigrator(index, study), new ParticipantDataMigrator(index, study),
+                    new ParticipantMigrator(index, study), new KitRequestShippingMigrator(index, study),
+                    new TissueMigrator(index, study), new SMIDMigrator(index, study));
             exportables.forEach(Exportable::export);
         });
     }
