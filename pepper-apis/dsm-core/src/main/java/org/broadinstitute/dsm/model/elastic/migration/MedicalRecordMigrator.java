@@ -21,11 +21,11 @@ public class MedicalRecordMigrator extends BaseCollectionMigrator {
     @Override
     protected Map<String, Object> getDataByRealm() {
         Map<String, List<MedicalRecord>> medicalRecords = MedicalRecord.getMedicalRecords(realm);
-        AdditionalDataRetriever.fromRealm(realm).ifPresent(dataRetriever -> concatenateMedicalRecords(medicalRecords, dataRetriever));
+        AdditionalRecordsRetriever.fromRealm(realm).ifPresent(dataRetriever -> concatenateMedicalRecords(medicalRecords, dataRetriever));
         return (Map) medicalRecords;
     }
 
-    private void concatenateMedicalRecords(Map<String, List<MedicalRecord>> medicalRecords, AdditionalDataRetriever dataRetriever) {
+    private void concatenateMedicalRecords(Map<String, List<MedicalRecord>> medicalRecords, AdditionalRecordsRetriever dataRetriever) {
         Map<String, List<MedicalRecord>> additionalMedicalRecords = dataRetriever.retrieve();
         additionalMedicalRecords.forEach((guid, records) -> {
             if (medicalRecords.containsKey(guid)) {
@@ -39,22 +39,3 @@ public class MedicalRecordMigrator extends BaseCollectionMigrator {
 
 }
 
-interface AdditionalDataRetriever {
-
-    static Optional<AdditionalDataRetriever> fromRealm(String realm) {
-        return OLD_OSTEO_INSTANCE_NAME.equals(realm)
-                ? Optional.of(new NewOsteoMedicalRecordsRetriever())
-                : Optional.empty();
-    }
-
-    Map<String, List<MedicalRecord>> retrieve();
-
-}
-
-class NewOsteoMedicalRecordsRetriever implements AdditionalDataRetriever {
-
-    @Override
-    public Map<String, List<MedicalRecord>> retrieve() {
-        return MedicalRecord.getMedicalRecords(NEW_OSTEO_INSTANCE_NAME);
-    }
-}

@@ -23,7 +23,7 @@ public class ParticipantDao implements Dao<ParticipantDto> {
                     + "ON DUPLICATE KEY UPDATE last_changed = ?, changed_by = ?";
 
     private static final String SQL_FILTER_BY_DDP_PARTICIPANT_ID = "ddp_participant_id = ?";
-    private static final String SQL_FILTER_BY_DDP_INSTANCE_ID = "ddp_participant_id = ?";
+    private static final String SQL_FILTER_BY_DDP_INSTANCE_ID = "ddp_instance_id = ?";
     private static final String SQL_GET_PARTICIPANT_BY_DDP_PARTICIPANT_ID_AND_DDP_INSTANCE_ID = "SELECT * FROM ddp_participant WHERE " + SQL_FILTER_BY_DDP_PARTICIPANT_ID + " AND " + SQL_FILTER_BY_DDP_INSTANCE_ID + ";";
 
     private static ParticipantDao participantDao;

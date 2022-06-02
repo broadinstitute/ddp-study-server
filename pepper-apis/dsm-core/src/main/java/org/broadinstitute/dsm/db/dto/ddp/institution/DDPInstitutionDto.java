@@ -5,11 +5,11 @@ import lombok.Data;
 @Data
 public class DDPInstitutionDto {
 
-    Integer institutionId;
-    String ddpInstitutionId;
-    String type;
-    Integer participantId;
-    Long lastChanged;
+    private Integer institutionId;
+    private String ddpInstitutionId;
+    private String type;
+    private Integer participantId;
+    private Long lastChanged;
 
     private DDPInstitutionDto(Builder builder) {
         this.institutionId = builder.institutionId;
