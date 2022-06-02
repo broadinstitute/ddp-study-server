@@ -51,8 +51,8 @@ executors:
       - image: broadinstitute/study-server-build:java-2022-06-01A
       # start pubsub emulator
       - image: broadinstitute/study-server-build:pubsub-1
-      - image: cimg/redis:4-alpine
-      - image: cimg/mysql:5.7-ram
+      - image: cimg/redis:5.0
+      - image: cimg/mysql:5.7
         environment: &DB_VARS
           MYSQL_ROOT_PASSWORD: rootpw
           MYSQL_DATABASE: test_db
