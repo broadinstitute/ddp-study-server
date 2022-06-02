@@ -18,9 +18,16 @@ ENV MAVEN_CONFIG "$USER_HOME_DIR/.m2"
 COPY --from=dsdetoolbox /etc/consul-template/config/config.json /etc/consul-template/config/config.json
 ENV VAULT_ADDR https://clotho.broadinstitute.org:8200
 ENV CONSUL_TEMPLATE_VERSION=0.27.2
-#ENV VAULT_VERSION=0.6.5
+ENV VAULT_VERSION=1.4.3
 
-RUN apk  --no-cache add \
+# Set by build
+ARG TARGETARCH
+
+RUN case "${TARGETARCH:-amd64}" in \
+        arm64) export HASHICORP_ARCH='arm64' ;; \
+        amd64) export HASHICORP_ARCH='amd64' ;; \
+    esac; \
+    apk  --no-cache add \
     curl \
     bash \
     jq \
@@ -34,15 +41,17 @@ RUN apk  --no-cache add \
     ruby \
     ruby-json  \
     && rm -rf /var/cache/apk/* \
-#    && wget https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip -O /tmp/vault_${VAULT_VERSION}_linux_amd64.zip \
-    && wget --no-check-certificate https://releases.hashicorp.com/consul-template/${CONSUL_TEMPLATE_VERSION}/consul-template_${CONSUL_TEMPLATE_VERSION}_linux_amd64.zip -O /tmp/consul_template_${CONSUL_TEMPLATE_VERSION}_linux_amd64.zip \
+    # Get the architecture specific builds of vault and consul template
+    && wget https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_${HASHICORP_ARCH}.zip -O /tmp/vault_${VAULT_VERSION}_linux.zip \
+    && wget --no-check-certificate https://releases.hashicorp.com/consul-template/${CONSUL_TEMPLATE_VERSION}/consul-template_${CONSUL_TEMPLATE_VERSION}_linux_${HASHICORP_ARCH}.zip -O /tmp/consul_template_${CONSUL_TEMPLATE_VERSION}_linux.zip \
     && cd /tmp  \
- #   && unzip vault_${VAULT_VERSION}_linux_amd64.zip &&  \
-    && unzip consul_template_${CONSUL_TEMPLATE_VERSION}_linux_amd64.zip  \
-    && mv consul-template /usr/local/bin/  \
+    && unzip vault_${VAULT_VERSION}_linux.zip  \
+    && unzip consul_template_${CONSUL_TEMPLATE_VERSION}_linux.zip  \
+    && mv consul-template vault /usr/local/bin/  \
     && chmod 0755 /usr/local/bin/consul-template \
- #   && chmod 0755 /usr/local/bin/vault \
+    && chmod 0755 /usr/local/bin/vault \
     && rm -rf /tmp/*.zip
+
 # keep track of git hash
 ARG GIT_SHA
 RUN echo $GIT_SHA > /git_sha.txt
