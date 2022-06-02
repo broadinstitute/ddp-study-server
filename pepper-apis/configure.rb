@@ -1,6 +1,6 @@
 #!/usr/bin/ruby -w
 # Docker Image used to call out to generate config files
-$dsde_toolbox_image_name = "broadinstitute/study-server-build:2022-06-01A"
+$dsde_toolbox_image_name = "broadinstitute/dsde-toolbox:DDO-1934"
 # If USE_DOCKER evaluates to false, script will try to call consul-template directly
 # instead of using Docker image built in scripts
 $use_docker = ENV.fetch("USE_DOCKER", "true") == "true"
