@@ -9,7 +9,7 @@ public class SourceGeneratorFactoryTest {
     @Test
     public void processMake() {
         SourceGeneratorFactory sourceGeneratorFactory = new SourceGeneratorFactory();
-        BaseGenerator.PropertyInfo propertyInfo = new BaseGenerator.PropertyInfo(Tissue.class, true);
+        PropertyInfo propertyInfo = new PropertyInfo(Tissue.class, true);
         BaseGenerator generator = sourceGeneratorFactory.make(propertyInfo);
         Assert.assertEquals(TissueSourceGenerator.class, generator.getClass());
     }
