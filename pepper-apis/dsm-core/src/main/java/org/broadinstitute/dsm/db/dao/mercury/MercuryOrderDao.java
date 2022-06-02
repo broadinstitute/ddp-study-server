@@ -6,11 +6,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderDto;
+import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderUseCase;
+import org.broadinstitute.dsm.pubsub.MercuryOrderPublisher;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 
@@ -20,7 +23,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
             + "kit_type_id, barcode) values (?, ?, ?, ?, ?)";
 
     public static String SQL_GET_KIT_FROM_BARCODE =
-            "SELECT p.ddp_participant_id, accession_number, ddp.instance_name, t.collaborator_sample_id, settings.mercury_order_creator, "
+            "SELECT p.ddp_participant_id, accession_number, ddp.instance_name, t.collaborator_sample_id, mercury_order_creator, "
                     + "kit_type_name, ktype.kit_type_id, research_project, bsp_material_type, bsp_receptacle_type, ddp.ddp_instance_id "
                     + "FROM sm_id sm LEFT JOIN ddp_tissue t on (t.tissue_id  = sm.tissue_id) "
                     + "LEFT JOIN ddp_onc_history_detail oD on (oD.onc_history_detail_id = t.onc_history_detail_id) "
@@ -28,7 +31,6 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                     + "LEFT JOIN ddp_institution inst on  (mr.institution_id = inst.institution_id AND NOT mr.deleted <=> 1) "
                     + "LEFT JOIN ddp_participant as p on (p.participant_id = inst.participant_id) "
                     + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
-                    + "LEFT JOIN instance_settings as settings on (ddp.ddp_instance_id = settings.ddp_instance_id) "
                     + "LEFT JOIN sm_id_type sit on (sit.sm_id_type_id = sm.sm_id_type_id) "
                     + "LEFT JOIN kit_type ktype on ( sit.kit_type_id = ktype.kit_type_id) "
                     + "LEFT JOIN ddp_kit_request req on (req.ddp_participant_id = p.ddp_participant_id)"
@@ -48,7 +50,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                     if (rs.next()) {
                         log.info("found related info about barcode " + barcode);
                         MercuryOrderDto mercuryOrderDto = new MercuryOrderDto(rs.getString(DBConstants.DDP_PARTICIPANT_ID),
-                                rs.getString("settings." + DBConstants.MERCURY_ORDER_CREATOR), barcode,
+                                rs.getString(DBConstants.MERCURY_ORDER_CREATOR), barcode,
                                 rs.getInt("ktype." + DBConstants.KIT_TYPE_ID));
                         dbVals.resultValue = mercuryOrderDto;
                     }
@@ -129,5 +131,32 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
             throw new RuntimeException("Error checking if values exist in db", results.resultException);
         }
         return (boolean) results.resultValue;
+    }
+
+    public void orderOnMercury(String projectId, String topicId, String json, String[] barcodes,
+                               String ddpParticipantId, String orderId, MercuryOrderPublisher mercuryOrderPublisher) {
+        List<MercuryOrderDto> newOrders = MercuryOrderUseCase.createAllOrders(barcodes, ddpParticipantId, orderId);
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult result = new SimpleResult();
+            try {
+                for (MercuryOrderDto order : newOrders) {
+                    result = create(order, conn);
+                    if (result.resultException != null) {
+                        return result;
+                    }
+                }
+                mercuryOrderPublisher.publishWithErrorHandler(projectId, topicId, json);
+            } catch (Exception e) {
+                try {
+                    conn.rollback();
+                } catch (SQLException throwables) {
+                    throwables.printStackTrace();
+                }
+            }
+            return result;
+        });
+        if (results.resultException != null) {
+            throw new RuntimeException("Error inserting new order ", results.resultException);
+        }
     }
 }

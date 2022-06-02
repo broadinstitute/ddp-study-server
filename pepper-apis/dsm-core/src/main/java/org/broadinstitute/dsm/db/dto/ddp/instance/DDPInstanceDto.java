@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -37,6 +38,7 @@ public class DDPInstanceDto {
     Integer studyPreFilter;
     String queryItems;
     String researchProject;
+    String mercuryOrderCreator;
 
     private DDPInstanceDto(Builder builder) {
         Class<DDPInstanceDto> ddpInstanceDtoClazz = DDPInstanceDto.class;
@@ -58,6 +60,10 @@ public class DDPInstanceDto {
         }
         notificationRecipients = notificationRecipients.replaceAll("\\s", "");
         return Arrays.asList(notificationRecipients.split(","));
+    }
+
+    public Optional<String> getMercuryOrderCreator() {
+        return Optional.ofNullable(this.mercuryOrderCreator);
     }
 
     public static class Builder {
@@ -84,6 +90,7 @@ public class DDPInstanceDto {
         Integer studyPreFilter;
         String queryItems;
         String researchProject;
+        String mercuryOrderCreator;
 
         public Builder() {
         }
@@ -200,6 +207,11 @@ public class DDPInstanceDto {
 
         public Builder withResearchProject(String researchProject) {
             this.researchProject = researchProject;
+            return this;
+        }
+
+        public Builder withMercuryOrderCreator(String mercuryOrderCreator) {
+            this.mercuryOrderCreator = mercuryOrderCreator;
             return this;
         }
 

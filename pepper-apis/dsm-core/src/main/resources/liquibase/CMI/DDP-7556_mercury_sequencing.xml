@@ -26,11 +26,11 @@
             <column name="mercury_pdo_id" type="VARCHAR(255)"></column>
         </createTable>
     </changeSet>
-    <changeSet id="DDP-_ddp_instance_changes" author="pegah">
+    <changeSet id="DDP-7556_ddp_instance_changes" author="pegah">
         <addColumn tableName="ddp_instance">
             <column name="research_project" type="VARCHAR(200)"></column>
         </addColumn>
-        <addColumn tableName="instance_settings">
+        <addColumn tableName="ddp_instance">
             <column name="mercury_order_creator" type="VARCHAR(200)"></column>
         </addColumn>
     </changeSet>

@@ -21,7 +21,7 @@ public class ParticipantDao implements Dao<ParticipantDto> {
 
     private static final String SQL_SELECT_PARTICIPANT_FROM_COLLABORATOR_ID = "SELECT p.ddp_participant_id from ddp_participant p "
             + "left join ddp_kit_request req on (req.ddp_participant_id = p.ddp_participant_id) "
-            + "where req.bsp_collaborator_participant_id = ? ";
+            + "where req.bsp_collaborator_participant_id = ? and req.ddp_instance_id = ? ";
 
     @Override
     public int create(ParticipantDto participantDto) {
@@ -68,11 +68,12 @@ public class ParticipantDao implements Dao<ParticipantDto> {
         return Optional.empty();
     }
 
-    public Optional<String> getParticipantFromCollaboratorParticipantId(String participantId) {
+    public Optional<String> getParticipantFromCollaboratorParticipantId(String collaboratorParticipantId, String ddpInstanceId) {
         SimpleResult simpleResult = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult(-1);
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_PARTICIPANT_FROM_COLLABORATOR_ID)) {
-                stmt.setString(1, participantId);
+                stmt.setString(1, collaboratorParticipantId);
+                stmt.setString(2, ddpInstanceId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         dbVals.resultValue = rs.getString(1);
@@ -84,7 +85,7 @@ public class ParticipantDao implements Dao<ParticipantDto> {
             return dbVals;
         });
         if (simpleResult.resultException != null) {
-            throw new RuntimeException("Error getting participant with collab participant id: " + participantId,
+            throw new RuntimeException("Error getting participant with collab participant id: " + collaboratorParticipantId,
                     simpleResult.resultException);
         }
         return Optional.ofNullable((String) simpleResult.resultValue);

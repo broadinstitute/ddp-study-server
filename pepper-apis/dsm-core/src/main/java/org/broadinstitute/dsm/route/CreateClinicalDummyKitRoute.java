@@ -94,7 +94,7 @@ public class CreateClinicalDummyKitRoute implements Route {
                 if (maybeParticipantByParticipantId.isEmpty()) {
                     throw new RuntimeException("PT not found " + ddpParticipantId);
                 }
-                while (!maybeParticipantByParticipantId.get().getStatus().get().equals("ENROLLED") && tries < 10) {
+                while (!participantIsEnrolled(maybeParticipantByParticipantId) && tries < 10) {
                     tries++;
                     ddpParticipantId = new BSPDummyKitDao().getRandomParticipantForStudy(ddpInstance);
                     maybeParticipantByParticipantId =
@@ -105,9 +105,8 @@ public class CreateClinicalDummyKitRoute implements Route {
                 }
             } else {
                 Optional<String> maybeParticipantId =
-                        participantDao.getParticipantFromCollaboratorParticipantId(participantId);
-                maybeParticipantId.orElseThrow();
-                ddpParticipantId = maybeParticipantId.get();
+                        participantDao.getParticipantFromCollaboratorParticipantId(participantId, ddpInstance.getDdpInstanceId());
+                ddpParticipantId = maybeParticipantId.orElseThrow();
                 maybeParticipantByParticipantId =
                         ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(),
                                 ddpParticipantId);
@@ -181,6 +180,11 @@ public class CreateClinicalDummyKitRoute implements Route {
         logger.error("Error occurred while adding kit");
         response.status(500);
         return null;
+    }
+
+    private boolean participantIsEnrolled(
+            Optional<ElasticSearchParticipantDto> maybeParticipantByParticipantId) {
+        return maybeParticipantByParticipantId.orElseThrow().getStatus().get().equals("ENROLLED");
     }
 
 
