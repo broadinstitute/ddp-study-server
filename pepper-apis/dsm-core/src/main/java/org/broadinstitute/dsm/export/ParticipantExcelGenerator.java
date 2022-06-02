@@ -4,13 +4,11 @@ import javax.servlet.ServletOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.stream.IntStream;
-
 import com.google.common.net.MediaType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.broadinstitute.dsm.model.elastic.export.excel.ExcelRow;
 import spark.Response;
 
 public class ParticipantExcelGenerator {
@@ -20,18 +18,11 @@ public class ParticipantExcelGenerator {
 
     private final SXSSFSheet sheet;
 
-    private int currentRow = 1;
+    private int currentRow = 0;
 
     public ParticipantExcelGenerator() {
         this.sheet = workbook.createSheet("Participant List");
         sheet.trackAllColumnsForAutoSizing();
-    }
-
-    public void createHeader(List<String> headerColumns) {
-        Row headerRow = sheet.createRow(0);
-        IntStream.range(0, headerColumns.size()).forEach(i -> {
-            headerRow.createCell(i).setCellValue(headerColumns.get(i));
-        });
     }
 
     private void setResponseHeaders(Response response, String filename) {
@@ -40,14 +31,12 @@ public class ParticipantExcelGenerator {
         response.header("Content-Disposition", "attachment;filename=" + filename);
     }
 
-    public void appendData(List<List<String>> rowValues) {
-        for (List<String> rowValue : rowValues) {
-            Row row = sheet.createRow(currentRow);
-            for (int j = 0; j < rowValue.size(); j++) {
-                row.createCell(j).setCellValue(rowValue.get(j));
-            }
-            currentRow++;
+    public void appendData(ExcelRow rowValues) {
+        Row row = sheet.createRow(currentRow);
+        for (int i = 0; i < rowValues.getRowData().size(); i++) {
+            row.createCell(i).setCellValue(rowValues.getRowData().get(i));
         }
+        currentRow++;
     }
 
     private static String getFormattedDate() {
@@ -65,7 +54,4 @@ public class ParticipantExcelGenerator {
         workbook.close();
     }
 
-    public void formatSizes(int columnsNumber) {
-        IntStream.range(0, columnsNumber).forEach(sheet::autoSizeColumn);
-    }
 }

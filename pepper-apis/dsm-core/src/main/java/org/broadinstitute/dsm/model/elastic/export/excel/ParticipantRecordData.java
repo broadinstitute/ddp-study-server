@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.model.elastic.export.excel;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -19,14 +20,13 @@ import org.broadinstitute.dsm.statics.DBConstants;
 
 public class ParticipantRecordData {
     private final Map<Alias, List<Filter>> columnAliasEsPathMap;
-    private final List<String> headerNames = new ArrayList<>();
     private List<Integer> columnSizes = new ArrayList<>();
     private ValueProviderFactory valueProviderFactory = new ValueProviderFactory();
     public ParticipantRecordData(Map<Alias, List<Filter>> columnAliasEsPathMap) {
         this.columnAliasEsPathMap = columnAliasEsPathMap;
     }
 
-    public List<List<String>> processData(ParticipantWrapperResult participantData, boolean isCountPhase) {
+    public List<ExcelRow> processData(ParticipantWrapperResult participantData, boolean isCountPhase) {
         List<ParticipantRecord> participantRecords = new ArrayList<>();
         for (ParticipantWrapperDto participant : participantData.getParticipants()) {
             ParticipantRecord participantRecord = new ParticipantRecord();
@@ -53,6 +53,7 @@ public class ParticipantRecordData {
     }
 
     public List<String> getHeader() {
+        List<String> headerNames = new ArrayList<>();
         int i = 0;
         for (Map.Entry<Alias, List<Filter>> aliasListEntry : columnAliasEsPathMap.entrySet()) {
             headerNames.addAll(getColumnNamesFor(aliasListEntry, columnSizes.subList(i, i + aliasListEntry.getValue().size())));
@@ -61,9 +62,11 @@ public class ParticipantRecordData {
         return headerNames;
     }
 
-    private List<List<String>> getRowData(List<ParticipantRecord> participantRecords) {
-        List<List<String>> rowValues = new ArrayList<>();
-        participantRecords.forEach(record -> rowValues.add(record.transposeAndFlatten(columnSizes)));
+    private List<ExcelRow> getRowData(List<ParticipantRecord> participantRecords) {
+        List<ExcelRow> rowValues = new ArrayList<>();
+        rowValues.add(new ExcelRow(getHeader()));
+        participantRecords.forEach(record -> rowValues.add(new ExcelRow(record.transposeAndFlatten(columnSizes))));
+        rowValues.add(new ExcelRow(Collections.emptyList()));
         return rowValues;
     }
 

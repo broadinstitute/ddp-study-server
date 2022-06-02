@@ -10,7 +10,7 @@ import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.ParticipantColumn;
 import org.broadinstitute.dsm.model.elastic.sort.Alias;
 
-public class PickListValueProvider implements ValueProvider{
+public class PickListValueProvider implements ValueProvider {
 
     @Override
     public Collection<String> getValue(String esPath, Map<String, Object> esDataAsMap, Alias key, Filter column) {
