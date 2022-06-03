@@ -314,7 +314,6 @@ public class TransactionWrapper {
      * values so that we can rotate the password without rebooting the app.
      */
     private static Handle openJdbiWithAuthRetry(DB db) {
-        Handle h;
         for (int tryCount = 0; tryCount < PASSWORD_ROTATION_MAX_RETRIES; tryCount++) {
             try {
                 return getInstance(db).jdbi.open();

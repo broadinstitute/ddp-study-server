@@ -23,7 +23,7 @@ DecimalNumber:
       type: integer
       format: int64
     value:
-      description: the unscaled value 
+      description: the unscaled value
       type: integer
       format: int64
 FormType:
@@ -846,6 +846,10 @@ Block.Question:
           minimum: 1
           nullable: true
           description: the number to label this block, `null` if it shouldn't be numbered
+        columnSpan:
+          type: integer
+          minimum: 1
+          description: The number of columns this question should occupy in a tabular display
 Block.Content:
   allOf:
     - $ref: '#/Block'
@@ -876,7 +880,7 @@ Block.Tabular:
           default: TABULAR
           enum:
             - TABULAR
-        numberOfColumns:
+        columnsCount:
           type: integer
           minimum: 1
           description: The total number of the tabular component columns.
@@ -887,7 +891,7 @@ Block.Tabular:
         content:
           type: array
           items:
-            $ref: '#/Block.Tabular.ContentRow'
+            $ref: '#/Block.Question'
 
 Block.Tabular.Header:
   type: object
@@ -902,11 +906,6 @@ Block.Tabular.Header:
       minimum: 1
       default: 1
       description: the number of columns this header should occupy in a tabular display
-
-Block.Tabular.ContentRow:
-  type: array
-  items:
-    $ref: '#/Question'
 
 Block.Visibility:
   type: object
@@ -1628,10 +1627,6 @@ Question:
       type: array
       items:
         $ref: '#/ValidationFailure'
-    columnSpan:
-      type: integer
-      minimum: 1
-      description: The number of columns this question should occupy in a tabular display
 Question.ActivityInstanceSelect:
   allOf:
     - $ref: '#/Question'
@@ -2046,6 +2041,49 @@ Section:
       type: array
       items:
         $ref: '#/Block'
+Study.Audit:
+  type: object
+  required:
+    - auditTrailId
+    - studyGuid
+    - operatorGuid
+    - operatorEmail
+    - userGuid
+    - userEmail
+    - entityType
+    - dateTime
+    - description
+  properties:
+    auditTrailId:
+      type: integer
+      format: int64
+    studyGuid:
+      type: string
+      format: guid
+    operatorGuid:
+      type: string
+      format: guid
+    operatorEmail:
+      type: string
+      format: email
+    userGuid:
+      type: string
+      format: guid
+    userEmail:
+      type: string
+      format: email
+    entityType:
+      type: string
+      enum:
+        - USER
+        - ACTIVITY
+        - INSTANCE
+        - ANSWER
+    dateTime:
+      type: string
+      format: date-time
+    description:
+      type: string
 Study.Summary:
   type: object
   required:
@@ -2975,3 +3013,61 @@ Suggestion.ActivityInstance:
       description: Activity Instance Name, rendered, as could be seen on the dashboard
       type: string
       example: "Medical Record Release Form #2"
+DateRange:
+  type: object
+  required:
+    - from
+    - to
+  properties:
+    from:
+      type: string
+      description: the lower constraint of the range. This value is inclusive. The date format is a full, extended ISO-8601 Calendar date and time in the format `YYYY-MM-DDTHH:MM:SSZ` in the UTC time zone.
+      nullable: true
+      format: date-time
+    to:
+      type: string
+      description: the upper constraint of the range. This value is inclusive. The date format is a full, extended ISO-8601 Calendar date and time in the format `YYYY-MM-DDTHH:MM:SSZ` in the UTC time zone.
+      nullable: true
+      format: date-time
+Pagination:
+  type: object
+  required:
+    - from
+    - count
+  properties:
+    from:
+      type: integer
+      description: the serial number of the first entry to be fetched of the dataset that relevant to search query
+      default: 0
+      nullable: true
+      format: int64
+    count:
+      type: integer
+      description: the number of entries to be fetched
+      default: 50
+      nullable: true
+      format: int64
+Sorting:
+  type: object
+  properties:
+    column:
+      description: the column name that will be used for sorting
+      nullable: true
+      type: string
+      enum:
+        - auditTrailId
+        - studyGuid
+        - operatorGuid
+        - operatorEmail
+        - userGuid
+        - userEmail
+        - entityType
+        - dateTime
+        - description
+    direction:
+      description: the sorting direction
+      nullable: true
+      type: string
+      enum:
+        - ASCENDING
+        - DESCENDING

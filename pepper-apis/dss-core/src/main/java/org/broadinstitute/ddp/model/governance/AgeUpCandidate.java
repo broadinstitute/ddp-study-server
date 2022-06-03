@@ -2,6 +2,9 @@ package org.broadinstitute.ddp.model.governance;
 
 import java.time.LocalDate;
 
+import lombok.AllArgsConstructor;
+import lombok.Value;
+import lombok.experimental.Accessors;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
@@ -9,79 +12,37 @@ import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 /**
  * Represents a study participant that should be checked for the age-up process.
  */
+@Value
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class AgeUpCandidate {
+    @ColumnName("age_up_candidate_id")
+    long id;
 
-    private long id;
-    private long studyId;
-    private String studyGuid;
-    private long participantUserId;
-    private long operatorUserId;
-    private String participantUserGuid;
-    private String operatorUserGuid;
-    private EnrollmentStatusType status;
-    private LocalDate birthDate;
-    private boolean hasInitiatedPrep;
+    @ColumnName("study_id")
+    long studyId;
 
-    @JdbiConstructor
-    public AgeUpCandidate(@ColumnName("age_up_candidate_id") long id,
-                          @ColumnName("study_id") long studyId,
-                          @ColumnName("study_guid") String studyGuid,
-                          @ColumnName("participant_user_id") long participantUserId,
-                          @ColumnName("operator_user_id") long operatorUserId,
-                          @ColumnName("participant_user_guid") String participantUserGuid,
-                          @ColumnName("operator_user_guid") String operatorUserGuid,
-                          @ColumnName("enrollment_status") EnrollmentStatusType status,
-                          @ColumnName("birth_date") LocalDate birthDate,
-                          @ColumnName("initiated_preparation") boolean hasInitiatedPrep) {
-        this.id = id;
-        this.studyId = studyId;
-        this.studyGuid = studyGuid;
-        this.participantUserId = participantUserId;
-        this.operatorUserId = operatorUserId;
-        this.participantUserGuid = participantUserGuid;
-        this.operatorUserGuid = operatorUserGuid;
-        this.status = status;
-        this.birthDate = birthDate;
-        this.hasInitiatedPrep = hasInitiatedPrep;
-    }
+    @ColumnName("study_guid")
+    String studyGuid;
 
-    public long getId() {
-        return id;
-    }
+    @ColumnName("participant_user_id")
+    long participantUserId;
 
-    public long getOperatorUserId() {
-        return operatorUserId;
-    }
+    @ColumnName("operator_user_id")
+    long operatorUserId;
 
-    public long getStudyId() {
-        return studyId;
-    }
+    @ColumnName("participant_user_guid")
+    String participantUserGuid;
 
-    public String getStudyGuid() {
-        return studyGuid;
-    }
+    @ColumnName("operator_user_guid")
+    String operatorUserGuid;
 
-    public long getParticipantUserId() {
-        return participantUserId;
-    }
+    @ColumnName("enrollment_status")
+    EnrollmentStatusType status;
 
-    public String getParticipantUserGuid() {
-        return participantUserGuid;
-    }
+    @ColumnName("birth_date")
+    LocalDate birthDate;
 
-    public String getOperatorUserGuid() {
-        return operatorUserGuid;
-    }
-
-    public EnrollmentStatusType getStatus() {
-        return status;
-    }
-
-    public LocalDate getBirthDate() {
-        return birthDate;
-    }
-
-    public boolean hasInitiatedPrep() {
-        return hasInitiatedPrep;
-    }
+    @Accessors(fluent = true)
+    @ColumnName("initiated_preparation")
+    boolean hasInitiatedPrep;
 }

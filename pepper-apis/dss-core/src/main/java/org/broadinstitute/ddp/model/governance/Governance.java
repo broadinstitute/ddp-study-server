@@ -2,74 +2,46 @@ package org.broadinstitute.ddp.model.governance;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
+import lombok.AllArgsConstructor;
+import lombok.Value;
+import lombok.experimental.Accessors;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 /**
  * Represents the governance relationship of a user and their proxy, along with the studies they have granted to the proxy.
  */
+@Value
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class Governance {
+    @ColumnName("user_governance_id")
+    long id;
 
-    private long id;
-    private String alias;
-    private long proxyUserId;
-    private String proxyUserGuid;
-    private long governedUserId;
-    private String governedUserGuid;
-    private boolean isActive;
+    @ColumnName("alias")
+    String alias;
 
-    private List<GrantedStudy> grantedStudies = new ArrayList<>();
+    @ColumnName("operator_user_id")
+    long proxyUserId;
 
-    @JdbiConstructor
-    public Governance(@ColumnName("user_governance_id") long id,
-                      @ColumnName("alias") String alias,
-                      @ColumnName("operator_user_id") long proxyUserId,
-                      @ColumnName("operator_user_guid") String proxyUserGuid,
-                      @ColumnName("participant_user_id") long governedUserId,
-                      @ColumnName("participant_user_guid") String governedUserGuid,
-                      @ColumnName("is_active") boolean isActive) {
-        this.id = id;
-        this.alias = alias;
-        this.proxyUserId = proxyUserId;
-        this.proxyUserGuid = proxyUserGuid;
-        this.governedUserId = governedUserId;
-        this.governedUserGuid = governedUserGuid;
-        this.isActive = isActive;
-    }
+    @ColumnName("operator_user_guid")
+    String proxyUserGuid;
 
-    public long getId() {
-        return id;
-    }
+    @ColumnName("participant_user_id")
+    long governedUserId;
 
-    public String getAlias() {
-        return alias;
-    }
+    @ColumnName("participant_user_guid")
+    String governedUserGuid;
 
-    public long getProxyUserId() {
-        return proxyUserId;
-    }
+    @ColumnName("is_active")
+    @Accessors(fluent = true)
+    boolean isActive;
 
-    public String getProxyUserGuid() {
-        return proxyUserGuid;
-    }
+    List<GrantedStudy> grantedStudies = new ArrayList<>();
 
-    public long getGovernedUserId() {
-        return governedUserId;
-    }
-
-    public String getGovernedUserGuid() {
-        return governedUserGuid;
-    }
-
-    public boolean isActive() {
-        return isActive;
-    }
-
-    public void addGrantedStudy(GrantedStudy study) {
-        if (study != null) {
-            grantedStudies.add(study);
-        }
+    public void addGrantedStudy(final GrantedStudy study) {
+        Optional.ofNullable(study).ifPresent(grantedStudies::add);
     }
 
     public List<GrantedStudy> getGrantedStudies() {

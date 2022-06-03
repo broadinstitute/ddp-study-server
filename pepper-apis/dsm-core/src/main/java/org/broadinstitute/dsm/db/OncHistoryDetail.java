@@ -66,8 +66,8 @@ public class OncHistoryDetail implements HasDdpInstanceId {
             + "LEFT JOIN ddp_participant as p on (p.participant_id = inst.participant_id) "
             + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
             + "LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id AND NOT m.deleted <=> 1) "
-            + "LEFT JOIN ddp_onc_history_detail as oD on (m.medical_record_id = oD.medical_record_id) "
-            + "WHERE p.participant_id = ?";
+            + "LEFT JOIN ddp_onc_history_detail as oD on (m.medical_record_id = oD.medical_record_id) " + "WHERE p.participant_id = ?";
+
     public static final String STATUS_REVIEW = "review";
     public static final String STATUS_SENT = "sent";
     public static final String STATUS_RECEIVED = "received";

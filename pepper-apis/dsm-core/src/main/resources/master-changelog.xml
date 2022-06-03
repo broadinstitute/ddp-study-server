@@ -91,4 +91,6 @@
     <include file="liquibase/at/DDP-7837_AT_missing_field_settings.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/DDP-7641_set_kit_request_settings_id_to_auto_increment.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/DDP-7641_addOS2.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/CMI/DDP-8019_cohort_tagging.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/CMI/DDP-7556_mercury_sequencing.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

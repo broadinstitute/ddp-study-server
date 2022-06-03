@@ -102,7 +102,8 @@ public class ParticipantWrapper {
         return DBConstants.DDP_PARTICIPANT_ALIAS.equals(source) || DBConstants.DDP_MEDICAL_RECORD_ALIAS.equals(source)
                 || DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS.equals(source) || DBConstants.DDP_KIT_REQUEST_ALIAS.equals(source)
                 || DBConstants.DDP_TISSUE_ALIAS.equals(source) || DBConstants.DDP_ONC_HISTORY_ALIAS.equals(source)
-                || DBConstants.DDP_PARTICIPANT_DATA_ALIAS.equals(source) || DBConstants.DDP_PARTICIPANT_RECORD_ALIAS.equals(source);
+                || DBConstants.DDP_PARTICIPANT_DATA_ALIAS.equals(source) || DBConstants.DDP_PARTICIPANT_RECORD_ALIAS.equals(source)
+                || DBConstants.COHORT_ALIAS.equals(source);
     }
 
     private void fetchAndPrepareData() {
@@ -166,9 +167,8 @@ public class ParticipantWrapper {
     private void mapSmIdsToProperTissue(List<Tissue> tissues, List<SmId> smIds) {
         for (SmId smId : smIds) {
             Long tissueId = smId.getTissueId();
-            tissues.stream()
-                    .filter(tissue -> tissue.getTissueId().equals(tissueId))
-                    .findFirst().ifPresent(tissue -> fillSmIdsByType(smId, tissue));
+            tissues.stream().filter(tissue -> tissue.getTissueId().equals(tissueId)).findFirst()
+                    .ifPresent(tissue -> fillSmIdsByType(smId, tissue));
         }
     }
 
