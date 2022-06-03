@@ -42,9 +42,6 @@ public class TissueListWrapper {
                 if (esData != null) {
                     results.add(new TissueListWrapper(esData, tissueList));
                 }
-                //                else {
-                //                    throw new RuntimeException("ES DATA not found for DDPParticipantId " + ddpParticipantId);
-                //                }
             }
         }
         long timeEnd = System.currentTimeMillis();
