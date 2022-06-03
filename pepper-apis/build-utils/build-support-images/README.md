@@ -25,7 +25,7 @@ On Mac computer we are using:
 
 ## Additional Notes
 We are using multi-platform builds (amd64 and arm64) to create separate versions of images that can run on Intel 
-processor architectures and on Mac M1 architecture.
+processor architectures and on Apple Silicon.
 
 The `push` option immediately pushes the images to Docker Hub. https://hub.docker.com/r/broadinstitute/study-server-build/tags
 
