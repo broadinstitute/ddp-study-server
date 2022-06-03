@@ -439,14 +439,13 @@ public class OsteoConsentVersion2 implements CustomTask {
     void insertNestedBlock(Handle handle, long activityId, long parentBlockId, int position,
                            FormBlockDef nested, long revisionId) {
         JdbiBlockNesting jdbiBlockNesting = handle.attach(JdbiBlockNesting.class);
-        int nestedBlockOrder = position * DISPLAY_ORDER_GAP;
 
         if (nested.getBlockType().isContainerBlock()) {
             throw new IllegalStateException("Nesting container blocks is not allowed");
         }
 
         handle.attach(SectionBlockDao.class).insertBlockByType(activityId, nested, revisionId);
-        jdbiBlockNesting.insert(parentBlockId, nested.getBlockId(), nestedBlockOrder, revisionId);
+        jdbiBlockNesting.insert(parentBlockId, nested.getBlockId(), position, revisionId);
         log.info("Inserted nested block id {} for parent block id {}", nested.getBlockId(), parentBlockId);
     }
 

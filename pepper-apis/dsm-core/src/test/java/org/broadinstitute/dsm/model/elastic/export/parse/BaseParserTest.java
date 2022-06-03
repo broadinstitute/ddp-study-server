@@ -5,7 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.Tissue;
-import org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator;
+import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -43,7 +43,7 @@ public class BaseParserTest {
     @Test
     public void parseDateValue() {
         BaseParser parser = new ValueParser();
-        BaseGenerator.PropertyInfo propertyInfo = new BaseGenerator.PropertyInfo(Tissue.class, true);
+        PropertyInfo propertyInfo = new PropertyInfo(Tissue.class, true);
         parser.setPropertyInfo(propertyInfo);
         parser.setFieldName("expectedReturn");
         Object result = parser.parse("N/A");
@@ -53,7 +53,7 @@ public class BaseParserTest {
     @Test
     public void parseStringValue() {
         BaseParser parser = new ValueParser();
-        BaseGenerator.PropertyInfo propertyInfo = new BaseGenerator.PropertyInfo(Tissue.class, true);
+        PropertyInfo propertyInfo = new PropertyInfo(Tissue.class, true);
         parser.setPropertyInfo(propertyInfo);
         parser.setFieldName("tumorType");
         Object result = parser.parse("typeOfTumor");
@@ -63,7 +63,7 @@ public class BaseParserTest {
     @Test
     public void parseNumericValue() {
         BaseParser parser = new ValueParser();
-        BaseGenerator.PropertyInfo propertyInfo = new BaseGenerator.PropertyInfo(Tissue.class, true);
+        PropertyInfo propertyInfo = new PropertyInfo(Tissue.class, true);
         parser.setPropertyInfo(propertyInfo);
         parser.setFieldName("oncHistoryDetailId");
         Object result = parser.parse("2022");
@@ -73,7 +73,7 @@ public class BaseParserTest {
     @Test
     public void parseBooleanValue() {
         BaseParser parser = new ValueParser();
-        BaseGenerator.PropertyInfo propertyInfo = new BaseGenerator.PropertyInfo(MedicalRecord.class, true);
+        PropertyInfo propertyInfo = new PropertyInfo(MedicalRecord.class, true);
         parser.setPropertyInfo(propertyInfo);
         parser.setFieldName("duplicate");
         Object result = parser.parse("true");
