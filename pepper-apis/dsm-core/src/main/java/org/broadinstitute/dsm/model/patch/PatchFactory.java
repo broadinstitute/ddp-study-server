@@ -4,7 +4,7 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
-import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.util.NotificationUtil;
 
 public class PatchFactory {
@@ -45,7 +45,7 @@ public class PatchFactory {
         if (Objects.isNull(patch.getTableAlias())) {
             return false;
         }
-        return Util.TABLE_ALIAS_MAPPINGS.containsKey(patch.getTableAlias());
+        return PropertyInfo.TABLE_ALIAS_MAPPINGS.containsKey(patch.getTableAlias());
     }
 
     private static boolean isExistingRecord(Patch patch) {

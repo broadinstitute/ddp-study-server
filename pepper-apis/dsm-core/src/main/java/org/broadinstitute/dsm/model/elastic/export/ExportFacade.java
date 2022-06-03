@@ -11,6 +11,7 @@ import org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator;
 import org.broadinstitute.dsm.model.elastic.export.generate.GeneratorFactory;
 import org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator;
 import org.broadinstitute.dsm.model.elastic.export.generate.MappingGeneratorFactory;
+import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.model.elastic.export.generate.SourceGeneratorFactory;
 import org.broadinstitute.dsm.model.elastic.export.parse.BaseParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.TypeParserFactory;
@@ -47,7 +48,7 @@ public class ExportFacade {
     }
 
     private void upsertMapping() {
-        BaseGenerator.PropertyInfo propertyInfo = getPropertyInfo();
+        PropertyInfo propertyInfo = getPropertyInfo();
         GeneratorFactory generatorFactory = new MappingGeneratorFactory();
         String fieldName = exportFacadePayload.getCamelCaseFieldName();
         propertyInfo.setFieldName(fieldName);
@@ -76,7 +77,7 @@ public class ExportFacade {
     }
 
     private Map<String, Object> processData(ESDsm esDsm) {
-        BaseGenerator.PropertyInfo propertyInfo = getPropertyInfo();
+        PropertyInfo propertyInfo = getPropertyInfo();
         BaseParser valueParser = new ValueParserFactory().of(exportFacadePayload);
         valueParser.setPropertyInfo(propertyInfo);
         GeneratorFactory sourceGeneratorFactory = new SourceGeneratorFactory();
@@ -98,9 +99,9 @@ public class ExportFacade {
         return dataToReturn;
     }
 
-    private BaseGenerator.PropertyInfo getPropertyInfo() {
+    private PropertyInfo getPropertyInfo() {
         DBElement dbElement = PatchUtil.getColumnNameMap().get(exportFacadePayload.getFieldNameWithAlias());
-        return Util.TABLE_ALIAS_MAPPINGS.get(dbElement.getTableAlias());
+        return PropertyInfo.TABLE_ALIAS_MAPPINGS.get(dbElement.getTableAlias());
     }
 
     private void upsertData(Map<String, Object> elasticDataToExport) {

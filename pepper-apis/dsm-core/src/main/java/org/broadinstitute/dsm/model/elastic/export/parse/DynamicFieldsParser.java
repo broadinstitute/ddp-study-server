@@ -33,7 +33,8 @@ public class DynamicFieldsParser extends BaseParser {
         this.possibleValuesJson = possibleValuesJson;
     }
 
-    public void setParser(BaseParser parser) {
+    @Override
+    public void setHelperParser(BaseParser parser) {
         this.parser = parser;
     }
 
