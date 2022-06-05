@@ -8,7 +8,6 @@ FROM google/cloud-sdk:alpine
 #Essentials for Maven
 COPY --from=maven /usr/share/maven /usr/share/maven
 RUN ln -s /usr/share/maven/bin/mvn /usr/bin/mvn
-COPY --from=maven /usr/local/bin/mvn-entrypoint.sh /usr/local/bin/mvn-entrypoint.sh
 COPY --from=maven /usr/share/maven/ref/settings-docker.xml /usr/share/maven/ref/settings-docker.xml
 
 ENV MAVEN_HOME /usr/share/maven
@@ -44,7 +43,7 @@ RUN case "${TARGETARCH:-amd64}" in \
     && rm -rf /var/cache/apk/* \
     # Get the architecture specific builds of vault and consul template
     && wget https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_${HASHICORP_ARCH}.zip -O /tmp/vault_${VAULT_VERSION}_linux.zip \
-    && wget --no-check-certificate https://releases.hashicorp.com/consul-template/${CONSUL_TEMPLATE_VERSION}/consul-template_${CONSUL_TEMPLATE_VERSION}_linux_${HASHICORP_ARCH}.zip -O /tmp/consul_template_${CONSUL_TEMPLATE_VERSION}_linux.zip \
+    && wget https://releases.hashicorp.com/consul-template/${CONSUL_TEMPLATE_VERSION}/consul-template_${CONSUL_TEMPLATE_VERSION}_linux_${HASHICORP_ARCH}.zip -O /tmp/consul_template_${CONSUL_TEMPLATE_VERSION}_linux.zip \
     && cd /tmp  \
     && unzip vault_${VAULT_VERSION}_linux.zip  \
     && unzip consul_template_${CONSUL_TEMPLATE_VERSION}_linux.zip  \
