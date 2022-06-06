@@ -1,9 +1,9 @@
 package org.broadinstitute.dsm.model.elastic.export;
 
-import org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator;
+import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 
 public interface ExportableFactory {
 
-    BaseExporter make(BaseGenerator.PropertyInfo propertyInfo);
+    BaseExporter make(PropertyInfo propertyInfo);
 
 }

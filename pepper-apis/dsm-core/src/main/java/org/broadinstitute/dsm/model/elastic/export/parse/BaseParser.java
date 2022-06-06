@@ -4,16 +4,16 @@ import java.lang.reflect.Field;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
-import org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator;
+import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 
 public abstract class BaseParser implements Parser {
 
     protected static final String TYPE = "type";
-    protected BaseGenerator.PropertyInfo propertyInfo;
+    protected PropertyInfo propertyInfo;
     protected String fieldName;
     protected String realm;
 
-    public void setPropertyInfo(BaseGenerator.PropertyInfo propertyInfo) {
+    public void setPropertyInfo(PropertyInfo propertyInfo) {
         this.propertyInfo = propertyInfo;
     }
 
@@ -95,4 +95,6 @@ public abstract class BaseParser implements Parser {
     protected boolean isWrappedByChar(String value) {
         return StringUtils.isNotBlank(value) && value.charAt(0) == '\'' && value.charAt(value.length() - 1) == '\'';
     }
+
+    public void setHelperParser(BaseParser parser) {}
 }

@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <title>Count Me In</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-      <link id="app-favicon" rel="icon" type="image/x-icon" href="##BASE_URL##/favicon.ico">
+      <link id="app-favicon" rel="icon" type="image/x-icon" href="">
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic,700,700italic|Source+Serif+Pro:600&display=swap" rel="stylesheet" type="text/css">
 </head>
 <body>
@@ -86,6 +86,7 @@
     var studyHelpEmail = 'info@joincountmein.org';
     var language = config.extraParams.language || 'en';
     var loginUrl = config.callbackURL + '/login';
+    var favicon = '';
 
     var registerUrl = '';
     if (study_guid.toLowerCase() === 'angio') {
@@ -94,49 +95,59 @@
         headerText = 'Angiosarcoma Project';
         studyColor = '#ED933A';
         studyHelpEmail = 'info@ascproject.org';
+        favicon = '##ANGIO_BASE_URL##/favicon.ico';
     } else if (study_guid === 'cmi-brain') {
         registerUrl = '##BRAIN_BASE_URL##/count-me-in';
         studyColor = '#7154FF';
         headerText = '';
         headerLogo = '##ASSETS_BUCKET_URL##/brain/project-logo.png';
+        favicon = '##BRAIN_BASE_URL##/favicon.ico'
         applyRedesignedStyles();
     } else if (study_guid === 'cmi-mbc') {
         loginUrl = '##MBC_BASE_URL##/language-redirect?language=' + language + '&destination=' + encodeURIComponent('login-landing/login');
         registerUrl = '##MBC_BASE_URL##/count-me-in';
         headerText = '';
         headerLogo = '##ASSETS_BUCKET_URL##/mbc/project-logo.png';
+        favicon = '##MBC_BASE_URL##/favicon.ico'
         studyColor = '#2bb673';
     } else if (study_guid.toLowerCase() === 'cmi-osteo') {
         registerUrl = '##OSTEO_BASE_URL##/count-me-in';
         studyColor = '#7154FF';
         headerText = '';
         headerLogo = '##ASSETS_BUCKET_URL##/osteo/project-logo.png';
+        favicon = '##OSTEO_BASE_URL##/favicon.ico';
         applyRedesignedStyles();
     } else if (study_guid === 'cmi-mpc') {
         registerUrl = '##MPC_BASE_URL##/count-me-in';
         headerText = '';
         headerLogo = '##ASSETS_BUCKET_URL##/mpc/project-logo.png';
+        favicon = '##MPC_BASE_URL##/favicon.ico';
         studyColor = 'rgb(24, 130, 194)';
     } else if (study_guid === 'cmi-esc') {
         registerUrl = '##ESC_BASE_URL##/count-me-in';
         headerText = '';
         headerLogo = '##ASSETS_BUCKET_URL##/esc/project-logo.png';
+        favicon = '##ESC_BASE_URL##/favicon.ico';
         studyColor = '#3785BF';
     } else if (study_guid === 'cmi-pancan') {
         registerUrl = '##PANCAN_BASE_URL##/count-me-in';
         studyColor = '#7154FF';
         headerText = '';
         headerLogo = '##ASSETS_BUCKET_URL##/pancan/project-logo.png';
+        favicon = '##PANCAN_BASE_URL##/favicon.ico'
         applyRedesignedStyles();
     } else if (study_guid === 'cmi-lms') {
         registerUrl = '##LMS_BASE_URL##/count-me-in';
         studyColor = '#c59ce4';
         headerText = '';
         headerLogo = '##ASSETS_BUCKET_URL##/lms/project-logo.png';
+        favicon = '##LMS_BASE_URL##/favicon.ico'
         applyRedesignedStyles();
     } else {
         console.log('No configuration for ' + study_guid + ', will use defaults');
     }
+
+    setFavicon();
 
     var connection = config.connection;
     var prompt = !prompt;
@@ -283,6 +294,11 @@
     }
 
     var lock = new Auth0Lock(config.clientID, config.auth0Domain, realOptions);
+
+    function setFavicon() {
+        if(favicon) document.getElementById('app-favicon').href = favicon;
+        else console.error('no favicon.ico file provided');
+    }
 
     function addHelp() {
         // we use setInterval because auth0's on() methods for display

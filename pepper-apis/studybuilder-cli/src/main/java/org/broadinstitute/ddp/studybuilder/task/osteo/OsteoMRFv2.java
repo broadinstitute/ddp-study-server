@@ -27,6 +27,7 @@ import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
+import org.broadinstitute.ddp.model.activity.definition.PhysicianComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.ActivityI18nDetail;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
@@ -220,10 +221,19 @@ public class OsteoMRFv2 implements CustomTask {
         // disable all component blocks
         for (var section : activity.getSections()) {
             for (var block : section.getBlocks()) {
-                if (block.getBlockType() == BlockType.COMPONENT
-                        && ((ComponentBlockDef) block).getComponentType() != ComponentType.PHYSICIAN) {
-                    sectionBlockDao.disableBlock(block.getBlockId(), meta);
-                    log.info("Disabled component blockId {}", block.getBlockId());
+                if (block.getBlockType() == BlockType.COMPONENT) {
+                    if (((ComponentBlockDef) block).getComponentType() != ComponentType.PHYSICIAN) {
+                        sectionBlockDao.disableBlock(block.getBlockId(), meta);
+                        log.info("Disabled component blockId {}", block.getBlockId());
+                    } else {
+                        var templateDao = handle.attach(TemplateDao.class);
+                        var physComponentRevId = ((PhysicianComponentDef) block).getComponentRevisionId();
+                        var titleTemplateId = templateDao.insertTemplate(Template.text(""), physComponentRevId);
+                        var subTitleTemplateId = templateDao.insertTemplate(Template.text(""), physComponentRevId);
+                        var physComponentId = helper.findComponentIdByBlockId(block.getBlockId());
+                        DBUtils.checkUpdate(1, helper.updatePhysicianTemplates(titleTemplateId, subTitleTemplateId, physComponentId));
+                        log.info("Successfully updated title and subtitle templates for Physician Component id {}", physComponentId);
+                    }
                 }
             }
         }
@@ -336,5 +346,19 @@ public class OsteoMRFv2 implements CustomTask {
         int updateEventExpressionAndOrder(@Bind("exprId") long exprId,
                                           @Bind("order") int order,
                                           @Bind("eventConfigurationId") long eventConfigurationId);
+
+        @SqlUpdate("update institution_physician_component set title_template_id = :titleTemplateId, "
+                + "        subtitle_template_id = :subtitleTemplateId where institution_physician_component_id = :componentId")
+        int updatePhysicianTemplates(
+                @Bind("titleTemplateId") Long titleTemplateId,
+                @Bind("subtitleTemplateId") Long subtitleTemplateId,
+                @Bind("componentId") long componentId);
+
+        @SqlQuery("select ipc.institution_physician_component_id from institution_physician_component ipc "
+                + "join component c on ipc.institution_physician_component_id = c.component_id "
+                + "join block_component bc on c.component_id = bc.component_id "
+                + "join block b on bc.block_id = b.block_id "
+                + "where b.block_id = :blockId; ")
+        int findComponentIdByBlockId(@Bind("blockId") long blockId);
     }
 }
