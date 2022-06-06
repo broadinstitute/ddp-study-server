@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderDto;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderUseCase;
-import org.broadinstitute.dsm.pubsub.MercuryOrderPublisher;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 
@@ -133,8 +132,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
         return (boolean) results.resultValue;
     }
 
-    public void orderOnMercury(String projectId, String topicId, String json, String[] barcodes,
-                               String ddpParticipantId, String orderId, MercuryOrderPublisher mercuryOrderPublisher) {
+    public void addMercuryOrders(String[] barcodes, String ddpParticipantId, String orderId) {
         List<MercuryOrderDto> newOrders = MercuryOrderUseCase.createAllOrders(barcodes, ddpParticipantId, orderId);
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult result = new SimpleResult();
@@ -145,7 +143,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                         return result;
                     }
                 }
-                mercuryOrderPublisher.publishWithErrorHandler(projectId, topicId, json);
+
             } catch (Exception e) {
                 try {
                     conn.rollback();

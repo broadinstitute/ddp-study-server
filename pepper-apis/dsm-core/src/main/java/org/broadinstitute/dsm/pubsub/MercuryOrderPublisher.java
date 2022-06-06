@@ -63,7 +63,6 @@ public class MercuryOrderPublisher {
             ApiFutures.addCallback(
                     future,
                     new ApiFutureCallback<String>() {
-
                         @Override
                         public void onFailure(Throwable throwable) {
                             if (throwable instanceof ApiException) {
@@ -72,7 +71,7 @@ public class MercuryOrderPublisher {
                                 log.info(String.valueOf(apiException.getStatusCode().getCode()));
                                 log.info(String.valueOf(apiException.isRetryable()));
                             }
-                            log.error("Error publishing message " + topicId);
+                            throw new RuntimeException("Error publishing message " + topicId, throwable);
                         }
 
                         @Override
@@ -111,7 +110,13 @@ public class MercuryOrderPublisher {
         MercuryPdoOrder mercuryPdoOrder = new MercuryPdoOrder(creatorId, mercuryOrderId, researchProject, barcodes);
         String json = new Gson().toJson(mercuryPdoOrder);
         if (StringUtils.isNotBlank(json)) {
-            this.mercuryOrderDao.orderOnMercury(projectId, topicId, json, barcodes, ddpParticipantId, mercuryOrderId, this);
+            try {
+                this.publishWithErrorHandler(projectId, topicId, json);
+                this.mercuryOrderDao.addMercuryOrders(barcodes, ddpParticipantId, mercuryOrderId);
+            } catch (Exception e) {
+                throw new RuntimeException("Unable to  publish to pubsub/ db " + json);
+            }
+
         }
 
     }
