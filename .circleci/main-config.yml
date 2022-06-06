@@ -9,7 +9,7 @@ references:
   tcell_config_file: &tcell_config_file
                        tcell_agent.config
   ci_support_image: &ci_support_image
-                      broadinstitute/study-server-build:2020-04-30A
+                      broadinstitute/study-server-build:2022-06-01A
   root_path: &root_path
                /home/circleci
   repo_path: &repo_path
@@ -48,11 +48,11 @@ references:
 executors:
   test-executor:
     docker:
-      - image: broadinstitute/study-server-build:java-2020-04-20A
+      - image: broadinstitute/study-server-build:java-2022-06-01A
       # start pubsub emulator
       - image: broadinstitute/study-server-build:pubsub-1
-      - image: circleci/redis:4-alpine
-      - image: circleci/mysql:5.7-ram
+      - image: cimg/redis:5.0
+      - image: cimg/mysql:5.7
         environment: &DB_VARS
           MYSQL_ROOT_PASSWORD: rootpw
           MYSQL_DATABASE: test_db
