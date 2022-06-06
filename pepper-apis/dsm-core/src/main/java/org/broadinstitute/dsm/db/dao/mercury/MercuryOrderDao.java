@@ -12,7 +12,6 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderDto;
-import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderUseCase;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 
@@ -38,7 +37,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
 
     public static String SQL_SELECT_ORDER_NUMBER = "Select * from mercury_sequencing where order_id = ?";
 
-    public Optional<MercuryOrderDto> getMercuryOrderFromSMIdOrKitLabel(String barcode, String ddpParticipantId) {
+    public Optional<MercuryOrderDto> getMercuryOrderInfoFromSMIdOrKitLabel(String barcode, String ddpParticipantId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_FROM_BARCODE)) {
@@ -132,8 +131,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
         return (boolean) results.resultValue;
     }
 
-    public void addMercuryOrders(String[] barcodes, String ddpParticipantId, String orderId) {
-        List<MercuryOrderDto> newOrders = MercuryOrderUseCase.createAllOrders(barcodes, ddpParticipantId, orderId);
+    public void insertMercuryOrders(List<MercuryOrderDto> newOrders) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult result = new SimpleResult();
             try {

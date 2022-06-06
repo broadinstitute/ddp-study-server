@@ -13,7 +13,7 @@ public class MercuryOrderUseCase {
         List<MercuryOrderDto> orders = new ArrayList<>();
         MercuryOrderDao mercuryOrderDao = new MercuryOrderDao();
         for (String barcode : barcodes) {
-            Optional<MercuryOrderDto> maybeOrder = mercuryOrderDao.getMercuryOrderFromSMIdOrKitLabel(barcode, ddpParticipantId);
+            Optional<MercuryOrderDto> maybeOrder = mercuryOrderDao.getMercuryOrderInfoFromSMIdOrKitLabel(barcode, ddpParticipantId);
             MercuryOrderDto order = maybeOrder.orElseThrow(() -> {
                 String message = String.format(
                         "Cannot find barcode %s belonging to participant %s",

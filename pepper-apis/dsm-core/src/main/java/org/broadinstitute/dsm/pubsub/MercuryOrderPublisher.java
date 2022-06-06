@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.pubsub;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -19,6 +20,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderDto;
+import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderUseCase;
 import org.broadinstitute.dsm.exception.DSMPubSubException;
 import org.broadinstitute.dsm.model.mercury.MercuryPdoOrder;
 import org.broadinstitute.dsm.util.NanoIdUtil;
@@ -111,8 +114,9 @@ public class MercuryOrderPublisher {
         String json = new Gson().toJson(mercuryPdoOrder);
         if (StringUtils.isNotBlank(json)) {
             try {
+                List<MercuryOrderDto> newOrders = MercuryOrderUseCase.createAllOrders(barcodes, ddpParticipantId, mercuryOrderId);
                 this.publishWithErrorHandler(projectId, topicId, json);
-                this.mercuryOrderDao.addMercuryOrders(barcodes, ddpParticipantId, mercuryOrderId);
+                this.mercuryOrderDao.insertMercuryOrders(newOrders);
             } catch (Exception e) {
                 throw new RuntimeException("Unable to  publish to pubsub/ db " + json);
             }
