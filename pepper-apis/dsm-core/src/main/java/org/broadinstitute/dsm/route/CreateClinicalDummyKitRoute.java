@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.route;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -80,8 +79,8 @@ public class CreateClinicalDummyKitRoute implements Route {
         new BookmarkDao().getBookmarkByInstance(CLINICAL_KIT_REALM).ifPresentOrElse(book -> {
             realm = (int) book.getValue();
         }, () -> {
-                throw new RuntimeException("Bookmark doesn't exist for " + CLINICAL_KIT_REALM);
-            });
+            throw new RuntimeException("Bookmark doesn't exist for " + CLINICAL_KIT_REALM);
+        });
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(realm);
         BSPDummyKitDao bspDummyKitDao = new BSPDummyKitDao();
         if (ddpInstance != null) {
@@ -161,14 +160,17 @@ public class CreateClinicalDummyKitRoute implements Route {
                 }
                 List<Tissue> tissueIds =
                         oncHistoryDetailDaoImpl.getRandomOncHistoryDetail(randomOncHistoryDetailId, ddpInstance.getName()).getTissues();
-                String tissueId;
-
-                if (tissueIds.isEmpty()) {
+                String tissueId = null;
+                if (!tissueIds.isEmpty()) {
+                    Optional<Tissue> tissue = tissueIds.stream().filter(tissue1 ->
+                            StringUtils.isNotBlank(tissue1.getCollaboratorSampleId())
+                    ).findAny();
+                    tissueId = tissue.isPresent() ? String.valueOf(tissue.get().getTissueId()) : null;
+                }
+                if (StringUtils.isBlank(tissueId) || tissueIds.isEmpty()) {
                     tissueId = Tissue.createNewTissue(randomOncHistoryDetailId, ffpeUser);
                     String shortId = maybeParticipant.get().getProfile().map(ESProfile::getHruid).get();
                     addCollaboratorSampleId(tissueId, ddpInstance, ddpParticipantId, shortId);
-                } else {
-                    tissueId = String.valueOf(tissueIds.get(new Random().nextInt(tissueIds.size())).getTissueId());
                 }
                 new TissueSMIDDao().createNewSMIDForTissueWithValue(tissueId, ffpeUser, smIdType, kitLabel);
             }
