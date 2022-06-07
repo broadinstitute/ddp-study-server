@@ -133,7 +133,7 @@ public class CreateClinicalDummyKitRoute implements Route {
             bspDummyKitDao.updateKitLabel(kitLabel, dsmKitRequestId);
             logger.info("Inserted new " + kitTypeString + " for participant " + participantCollaboratorId);
             response.status(200);
-            return response;
+            return null;
         } else {
 
             String smIdType;
