@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.dsm.model.Filter;
@@ -22,6 +23,7 @@ public class ParticipantRecordData {
     private final Map<Alias, List<Filter>> columnAliasEsPathMap;
     private List<Integer> columnSizes = new ArrayList<>();
     private ValueProviderFactory valueProviderFactory = new ValueProviderFactory();
+
     public ParticipantRecordData(Map<Alias, List<Filter>> columnAliasEsPathMap) {
         this.columnAliasEsPathMap = columnAliasEsPathMap;
     }
@@ -57,7 +59,7 @@ public class ParticipantRecordData {
         int i = 0;
         for (Map.Entry<Alias, List<Filter>> aliasListEntry : columnAliasEsPathMap.entrySet()) {
             headerNames.addAll(getColumnNamesFor(aliasListEntry, columnSizes.subList(i, i + aliasListEntry.getValue().size())));
-            i+= aliasListEntry.getValue().size();
+            i += aliasListEntry.getValue().size();
         }
         return headerNames;
     }
@@ -73,8 +75,7 @@ public class ParticipantRecordData {
     private void initOrUpdateSizes(ParticipantRecord participantRecord) {
         List<ColumnValue> combinedValues = participantRecord.getValues();
         if (columnSizes.isEmpty()) {
-            columnSizes = combinedValues.stream().map(ColumnValue::getColumnsSize)
-                    .collect(Collectors.toList());
+            columnSizes = combinedValues.stream().map(ColumnValue::getColumnsSize).collect(Collectors.toList());
         } else {
             for (int i = 0; i < columnSizes.size(); i++) {
                 columnSizes.set(i, Math.max(columnSizes.get(i), combinedValues.get(i).getColumnsSize()));
@@ -87,15 +88,16 @@ public class ParticipantRecordData {
         List<String> columns = new ArrayList<>();
         int sameAliasSize = sizes.get(0);
         if (aliasColumns.getKey() != Alias.ACTIVITIES) {
-            IntStream.rangeClosed(1, sizes.get(0)).forEach(value ->
-                    columns.addAll(columnsList.stream().map(column -> String.format("%s %s", column.getParticipantColumn().getDisplay(),
-                                    aliasColumns.getKey().isCollection() && sameAliasSize > 1? value : StringUtils.EMPTY))
-                            .collect(Collectors.toList())));
+            IntStream.rangeClosed(1, sizes.get(0)).forEach(value -> columns.addAll(columnsList.stream()
+                    .map(column -> String.format("%s %s", column.getParticipantColumn().getDisplay(),
+                            aliasColumns.getKey().isCollection() && sameAliasSize > 1 ? value : StringUtils.EMPTY))
+                    .collect(Collectors.toList())));
         } else {
             return IntStream.range(0, columnsList.size()).mapToObj(i -> Pair.of(columnsList.get(i), sizes.get(i)))
-                    .map(entry -> IntStream.rangeClosed(1, entry.getValue())
-                            .mapToObj(currentIndex -> String.format("%s %s", entry.getKey().getParticipantColumn().getDisplay(),
-                                    aliasColumns.getKey().isCollection() && entry.getValue() > 1? currentIndex : StringUtils.EMPTY))
+                    .map(entry -> IntStream.rangeClosed(1, entry.getValue()).mapToObj(
+                                    currentIndex -> String.format("%s %s", entry.getKey().getParticipantColumn().getDisplay(),
+                                            aliasColumns.getKey().isCollection() && entry.getValue() > 1
+                                                    ? currentIndex : StringUtils.EMPTY))
                             .collect(Collectors.toList())).flatMap(Collection::stream).collect(Collectors.toList());
         }
 

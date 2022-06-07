@@ -33,6 +33,7 @@ public interface ValueProvider {
         }
         return nestedValueWrapper;
     }
+
     private Collection<?> getNestedValueWrapper(String fieldName, Map<String, Object> esDataAsMap,
                                                 Alias alias, ParticipantColumn participantColumn) {
         int dotIndex = fieldName.indexOf('.');
@@ -42,8 +43,10 @@ public interface ValueProvider {
                 return Collections.singletonList(StringUtils.EMPTY);
             }
             if (o instanceof Collection) {
-                List<Object> collect = ((Collection<?>) o).stream().map(singleDataMap -> getNestedValueWrapper(fieldName.substring(dotIndex + 1),
-                        (Map<String, Object>) singleDataMap, alias, participantColumn)).flatMap(Collection::stream).collect(Collectors.toList());
+                List<Object> collect =
+                        ((Collection<?>) o).stream().map(singleDataMap -> getNestedValueWrapper(fieldName.substring(dotIndex + 1),
+                                        (Map<String, Object>) singleDataMap, alias, participantColumn)).flatMap(Collection::stream)
+                                .collect(Collectors.toList());
                 if (collect.isEmpty()) {
                     return Collections.singletonList(StringUtils.EMPTY);
                 }
@@ -53,11 +56,12 @@ public interface ValueProvider {
             }
         }
         Object value = esDataAsMap.getOrDefault(fieldName, StringUtils.EMPTY);
-        if (!(value instanceof Collection )) {
+        if (!(value instanceof Collection)) {
             return Collections.singletonList(value);
         }
         return (Collection<?>) value;
     }
+
     private Collection<?> getJsonValue(Collection<?> nestedValue, ParticipantColumn column) {
         if (nestedValue.isEmpty()) {
             return Collections.singletonList(StringUtils.EMPTY);
@@ -107,7 +111,7 @@ public interface ValueProvider {
         }
         Object optionDetails = fq.get(ESObjectConstants.OPTIONDETAILS);
         if (optionDetails != null && !((List<?>) optionDetails).isEmpty()) {
-            removeOptionsFromAnswer(answer, ((List<Map<String, String>>)optionDetails));
+            removeOptionsFromAnswer(answer, ((List<Map<String, String>>) optionDetails));
             return Stream.of(answer, getOptionDetails((List<?>) optionDetails)).flatMap(Collection::stream)
                     .collect(Collectors.toList());
         }
@@ -115,16 +119,16 @@ public interface ValueProvider {
         return answer;
     }
 
-    private void removeOptionsFromAnswer(Collection<?> answer, List<Map<String,String>> optionDetails) {
+    private void removeOptionsFromAnswer(Collection<?> answer, List<Map<String, String>> optionDetails) {
         List<String> details = optionDetails.stream().map(options -> options.get(ESObjectConstants.OPTION)).collect(Collectors.toList());
         answer.removeAll(details);
     }
 
     private List<String> getOptionDetails(List<?> optionDetails) {
         return optionDetails.stream().map(optionDetail ->
-                        new StringBuilder(((Map)optionDetail).get(ESObjectConstants.OPTION).toString())
+                        new StringBuilder(((Map) optionDetail).get(ESObjectConstants.OPTION).toString())
                                 .append(':')
-                                .append(((Map)optionDetail).get(ESObjectConstants.DETAIL)).toString())
+                                .append(((Map) optionDetail).get(ESObjectConstants.DETAIL)).toString())
                 .collect(Collectors.toList());
     }
 

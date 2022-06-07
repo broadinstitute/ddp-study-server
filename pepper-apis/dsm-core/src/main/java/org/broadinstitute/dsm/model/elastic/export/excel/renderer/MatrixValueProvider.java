@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.sort.Alias;
 
-public class MatrixValueProvider implements ValueProvider{
+public class MatrixValueProvider implements ValueProvider {
     @Override
     public Collection<String> getValue(String esPath, Map<String, Object> esDataAsMap, Alias key, Filter column) {
         Collection<?> nestedValue = getNestedValue(esPath, esDataAsMap, key, column.getParticipantColumn());

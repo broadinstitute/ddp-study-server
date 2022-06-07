@@ -8,6 +8,7 @@ import org.broadinstitute.dsm.export.ParticipantExcelGenerator;
 public class ParticipantConsumer {
     private final BlockingQueue<ExcelRow> participantsQueue;
     private final ParticipantExcelGenerator generator = new ParticipantExcelGenerator();
+
     public ParticipantConsumer(BlockingQueue<ExcelRow> participantsQueue) {
         this.participantsQueue = participantsQueue;
     }

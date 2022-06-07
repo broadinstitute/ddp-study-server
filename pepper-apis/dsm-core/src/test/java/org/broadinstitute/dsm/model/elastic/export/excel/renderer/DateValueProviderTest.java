@@ -24,5 +24,4 @@ public class DateValueProviderTest {
         Collection<String> renderedValues = valueProvider.getValue("dateJoined", esData, Alias.DATA, filter);
         assertEquals(Collections.singletonList("17-05-2022 05:05:05"), renderedValues);
     }
-
 }

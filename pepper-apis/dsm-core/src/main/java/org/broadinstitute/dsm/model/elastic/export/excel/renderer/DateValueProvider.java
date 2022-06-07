@@ -14,6 +14,7 @@ import org.broadinstitute.dsm.model.elastic.sort.Alias;
 
 public class DateValueProvider implements ValueProvider {
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+
     public Collection<String> getValue(String esPath, Map<String, Object> esDataAsMap, Alias key, Filter column) {
         Collection<?> nestedValue = getNestedValue(esPath, esDataAsMap, key, column.getParticipantColumn());
         return nestedValue.stream().map(value -> {

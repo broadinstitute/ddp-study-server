@@ -30,21 +30,29 @@ public enum Alias {
     ACTIVITIES(ElasticSearchUtil.ACTIVITIES, true, false), REGISTRATION(ElasticSearchUtil.ACTIVITIES, true, false),
     RGP_PARTICIPANT_INFO_GROUP(
             String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA),
-            false, true), RGP_STUDY_STATUS_GROUP(
+            false, true),
+    RGP_STUDY_STATUS_GROUP(
             String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA),
-            false, true), RGP_CONTACT_INFO_GROUP(
+            false, true),
+    RGP_CONTACT_INFO_GROUP(
             String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA),
-            false, true), RGP_MEDICAL_RECORDS_GROUP(
+            false, true),
+    RGP_MEDICAL_RECORDS_GROUP(
             String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA),
-            false, true), RGP_PARTICIPANTS(
+            false, true),
+    RGP_PARTICIPANTS(
             String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA),
-            false, true), RGP_RETURN_RESULTS_GROUP(
+            false, true),
+    RGP_RETURN_RESULTS_GROUP(
             String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA),
-            false, true), RGP_SAMPLE_COLLECTION_GROUP(
+            false, true),
+    RGP_SAMPLE_COLLECTION_GROUP(
             String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA),
-            false, true), RGP_SURVEY_GROUP(
+            false, true),
+    RGP_SURVEY_GROUP(
             String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA),
-            false, true), RGP_TISSUE_GROUP(
+            false, true),
+    RGP_TISSUE_GROUP(
             String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA),
             false, true),
     TAB_GROUPED(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA),
