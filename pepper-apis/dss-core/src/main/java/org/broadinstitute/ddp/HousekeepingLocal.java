@@ -30,16 +30,20 @@ import org.broadinstitute.ddp.customexport.housekeeping.schedule.CustomExportJob
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.*;
+import org.broadinstitute.ddp.db.dao.EventDao;
+import org.broadinstitute.ddp.db.dao.StudyDao;
+import org.broadinstitute.ddp.db.dao.QueuedEventDao;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
+import org.broadinstitute.ddp.db.dao.JdbiMessageDestination;
+import org.broadinstitute.ddp.db.dao.DataExportDao;
+import org.broadinstitute.ddp.db.dao.JdbiQueuedEvent;
+import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiEvent;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiMessage;
 import org.broadinstitute.ddp.event.FileScanResultReceiver;
 import org.broadinstitute.ddp.event.HousekeepingTaskReceiver;
-import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskConnectionService;
-import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException;
-import org.broadinstitute.ddp.event.pubsubtask.impl.PubSubTaskProcessorFactoryImpl;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.MessageBuilderException;
 import org.broadinstitute.ddp.exception.NoSendableEmailAddressException;
@@ -52,7 +56,15 @@ import org.broadinstitute.ddp.housekeeping.handler.PdfGenerationHandler;
 import org.broadinstitute.ddp.housekeeping.message.HousekeepingMessage;
 import org.broadinstitute.ddp.housekeeping.message.NotificationMessage;
 import org.broadinstitute.ddp.housekeeping.message.PdfGenerationMessage;
-import org.broadinstitute.ddp.housekeeping.schedule.*;
+import org.broadinstitute.ddp.housekeeping.schedule.CheckAgeUpJob;
+import org.broadinstitute.ddp.housekeeping.schedule.CheckKitsJob;
+import org.broadinstitute.ddp.housekeeping.schedule.DataSyncJob;
+import org.broadinstitute.ddp.housekeeping.schedule.DatabaseBackupCheckJob;
+import org.broadinstitute.ddp.housekeeping.schedule.DatabaseBackupJob;
+import org.broadinstitute.ddp.housekeeping.schedule.FileUploadCleanupJob;
+import org.broadinstitute.ddp.housekeeping.schedule.TemporaryUserCleanupJob;
+import org.broadinstitute.ddp.housekeeping.schedule.StudyDataExportJob;
+import org.broadinstitute.ddp.housekeeping.schedule.OnDemandExportJob;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.event.ActivityInstanceCreationEventAction;
 import org.broadinstitute.ddp.model.event.EventConfiguration;
@@ -70,21 +82,36 @@ import org.broadinstitute.ddp.schedule.JobScheduler;
 import org.broadinstitute.ddp.service.PdfBucketService;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.broadinstitute.ddp.service.PdfService;
-import org.broadinstitute.ddp.util.*;
+import org.broadinstitute.ddp.util.ConfigManager;
+import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
+import org.broadinstitute.ddp.util.LiquibaseUtil;
+import org.broadinstitute.ddp.util.GoogleCredentialUtil;
+import org.broadinstitute.ddp.util.ConfigUtil;
+
 import org.jdbi.v3.core.Handle;
 import org.quartz.Scheduler;
 import spark.Spark;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.*;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
-import static org.broadinstitute.ddp.constants.ConfigFile.PUBSUB_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT;
-import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskConnectionService.DEFAULT_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT_SEC;
+import java.util.function.Consumer;
 
 @Slf4j
 public class HousekeepingLocal {
@@ -210,21 +237,8 @@ public class HousekeepingLocal {
 
         final PubSubConnectionManager pubsubConnectionManager = new PubSubConnectionManager(usePubSubEmulator);
 
-//        PubSubTaskConnectionService pubSubTaskConnectionService = new PubSubTaskConnectionService(
-//                pubsubConnectionManager,
-//                pubSubProject,
-//                cfg.getString(ConfigFile.PUBSUB_TASKS_SUB),
-//                cfg.getString(ConfigFile.PUBSUB_TASKS_RESULT_TOPIC),
-//                ConfigUtil.getIntOrElse(cfg, PUBSUB_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT,
-//                        DEFAULT_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT_SEC),
-//                new PubSubTaskProcessorFactoryImpl());
-//        try {
-//            pubSubTaskConnectionService.create();
-//        } catch (PubSubTaskException e) {
-//            log.error("Failed to init PubSubTask API", e);
-//        }
-
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
+
             JdbiMessageDestination messageDestinationDao = handle.attach(JdbiMessageDestination.class);
             for (String topicName : messageDestinationDao.getAllTopics()) {
                 log.info("Initializing subscription for topic {}", topicName);
@@ -443,14 +457,6 @@ public class HousekeepingLocal {
         if (scheduler != null) {
             JobScheduler.shutdownScheduler(scheduler, true);
         }
-
-//        if (pubSubTaskConnectionService != null) {
-//            try {
-//                pubSubTaskConnectionService.destroy();
-//            } catch (PubSubTaskException e) {
-//                log.error("Failed to shutdown PubSubTask API", e);
-//            }
-//        }
 
         log.info("Housekeeping is shutting down");
     }
