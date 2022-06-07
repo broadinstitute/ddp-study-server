@@ -212,6 +212,7 @@ public class Housekeeping {
         boolean usePubSubEmulator = cfg.getBoolean(ConfigFile.USE_PUBSUB_EMULATOR);
         String housekeepingDbUrl = cfg.getString(TransactionWrapper.DB.HOUSEKEEPING.getDbUrlConfigKey());
         String apisDbUrl = cfg.getString(TransactionWrapper.DB.APIS.getDbUrlConfigKey());
+        String housekeepingLocalSetup = cfg.getString(ConfigFile.GOOGLE_PROJECT_ID);
 
         Config sqlConfig = ConfigFactory.load(ConfigFile.SQL_CONFIG_FILE);
         DBUtils.loadDaoSqlCommands(sqlConfig);
