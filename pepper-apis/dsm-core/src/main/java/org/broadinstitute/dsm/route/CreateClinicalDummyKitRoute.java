@@ -42,6 +42,7 @@ public class CreateClinicalDummyKitRoute implements Route {
     private int realm;
     private OncHistoryDetailDaoImpl oncHistoryDetailDaoImpl;
     private ParticipantDao participantDao;
+    private boolean fixedParticipantId = false;
 
     public CreateClinicalDummyKitRoute(OncHistoryDetailDaoImpl oncHistoryDetailDao) {
         this.oncHistoryDetailDaoImpl = oncHistoryDetailDao;
@@ -66,6 +67,7 @@ public class CreateClinicalDummyKitRoute implements Route {
 
     @Override
     public Object handle(Request request, Response response) {
+        fixedParticipantId = false;
         String kitLabel = request.params(RequestParameter.LABEL);
         String kitTypeString = request.params(RequestParameter.KIT_TYPE);
         String participantId = request.params(RequestParameter.PARTICIPANTID);
@@ -78,10 +80,11 @@ public class CreateClinicalDummyKitRoute implements Route {
         }
         logger.info("Got a new Clinical Kit request with kit label " + kitLabel + " and kit type " + kitTypeString);
         new BookmarkDao().getBookmarkByInstance(CLINICAL_KIT_REALM).ifPresentOrElse(book -> {
-            realm = (int) book.getValue();
-        }, () -> {
-                throw new RuntimeException("Bookmark doesn't exist for " + CLINICAL_KIT_REALM);
-            });
+                    realm = (int) book.getValue();
+                },
+                () -> {
+                    throw new RuntimeException("Bookmark doesn't exist for " + CLINICAL_KIT_REALM);
+                });
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(realm);
         BSPDummyKitDao bspDummyKitDao = new BSPDummyKitDao();
         if (ddpInstance != null) {
@@ -104,6 +107,7 @@ public class CreateClinicalDummyKitRoute implements Route {
                     throw new RuntimeException("No enrolled participants found");
                 }
             } else {
+                fixedParticipantId = true;
                 Optional<String> maybeParticipantId =
                         participantDao.getParticipantFromCollaboratorParticipantId(participantId);
                 maybeParticipantId.orElseThrow();
@@ -130,6 +134,7 @@ public class CreateClinicalDummyKitRoute implements Route {
                                 participantCollaboratorId, collaboratorSampleId, USER_ID, "", "", "", false, "", ddpInstance);
                 bspDummyKitDao.updateKitLabel(kitLabel, dsmKitRequestId);
             } else {
+
                 String smIdType;
                 if (kitTypeString.equalsIgnoreCase(ffpeScroll)) {
                     smIdType = SmId.SCROLLS;
@@ -138,27 +143,44 @@ public class CreateClinicalDummyKitRoute implements Route {
                 } else {
                     throw new RuntimeException("The FFPE kit type does not match any of the valid types " + kitTypeString);
                 }
-                int tries = 0;
-                String randomOncHistoryDetailId = bspDummyKitDao.getRandomOncHistoryForStudy(ddpInstance.getName());
-                OncHistoryDetail oncHistoryDetail = OncHistoryDetail.getOncHistoryDetail(randomOncHistoryDetailId, ddpInstance.getName());
-                ddpParticipantId = oncHistoryDetail.getDdpParticipantId();
-                Optional<ElasticSearchParticipantDto> maybeParticipant =
-                        ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
-                logger.info("found randomOncHistoryDetailId " + randomOncHistoryDetailId);
-                logger.info("found short id " + maybeParticipant.get().getProfile().map(ESProfile::getHruid));
-                while (tries < 10 && (oncHistoryDetail == null || StringUtils.isBlank(oncHistoryDetail.getAccessionNumber())
-                        || maybeParticipant.isEmpty() || maybeParticipant.get().getProfile().map(ESProfile::getHruid).isEmpty())) {
+                String randomOncHistoryDetailId;
+                OncHistoryDetail oncHistoryDetail;
+
+                if (fixedParticipantId) {
+                    randomOncHistoryDetailId =
+                            bspDummyKitDao.getRandomOncHistoryForParticipant(ddpInstance.getName(), ddpParticipantId);
+                    if (StringUtils.isBlank(randomOncHistoryDetailId)) {
+                        return "Participant doesn't have an eligible onc history/tissue";
+                    }
+                    oncHistoryDetail =
+                            OncHistoryDetail.getOncHistoryDetail(randomOncHistoryDetailId, ddpInstance.getName());
+                    logger.info("found randomOncHistoryDetailId " + randomOncHistoryDetailId + " for participant " + ddpParticipantId);
+                } else {
+                    int tries = 0;
                     randomOncHistoryDetailId = bspDummyKitDao.getRandomOncHistoryForStudy(ddpInstance.getName());
-                    oncHistoryDetail = OncHistoryDetail.getOncHistoryDetail(randomOncHistoryDetailId, ddpInstance.getName());
+                    oncHistoryDetail =
+                            OncHistoryDetail.getOncHistoryDetail(randomOncHistoryDetailId, ddpInstance.getName());
                     ddpParticipantId = oncHistoryDetail.getDdpParticipantId();
-                    maybeParticipant =
+                    maybeParticipantByParticipantId =
                             ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
                     logger.info("found randomOncHistoryDetailId " + randomOncHistoryDetailId);
-                    logger.info("found short id " + maybeParticipant.get().getProfile().map(ESProfile::getHruid));
-                    tries++;
-                }
-                if (tries >= 10) {
-                    throw new RuntimeException("couldn't find a valid onc history to create dummy");
+                    logger.info("found short id " + maybeParticipantByParticipantId.get().getProfile().map(ESProfile::getHruid));
+                    while (tries < 10 && (oncHistoryDetail == null || StringUtils.isBlank(oncHistoryDetail.getAccessionNumber())
+                            || maybeParticipantByParticipantId.isEmpty()
+                            || maybeParticipantByParticipantId.get().getProfile().map(ESProfile::getHruid).isEmpty())) {
+                        randomOncHistoryDetailId = bspDummyKitDao.getRandomOncHistoryForStudy(ddpInstance.getName());
+                        oncHistoryDetail = OncHistoryDetail.getOncHistoryDetail(randomOncHistoryDetailId, ddpInstance.getName());
+                        ddpParticipantId = oncHistoryDetail.getDdpParticipantId();
+                        maybeParticipantByParticipantId =
+                                ElasticSearchUtil
+                                        .getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
+                        logger.info("found randomOncHistoryDetailId " + randomOncHistoryDetailId);
+                        logger.info("found short id " + maybeParticipantByParticipantId.get().getProfile().map(ESProfile::getHruid));
+                        tries++;
+                    }
+                    if (tries >= 10) {
+                        throw new RuntimeException("couldn't find a valid onc history to create dummy");
+                    }
                 }
                 List<Tissue> tissueIds =
                         oncHistoryDetailDaoImpl.getRandomOncHistoryDetail(randomOncHistoryDetailId, ddpInstance.getName()).getTissues();
@@ -166,16 +188,17 @@ public class CreateClinicalDummyKitRoute implements Route {
 
                 if (tissueIds.isEmpty()) {
                     tissueId = Tissue.createNewTissue(randomOncHistoryDetailId, ffpeUser);
-                    String shortId = maybeParticipant.get().getProfile().map(ESProfile::getHruid).get();
+                    String shortId = maybeParticipantByParticipantId.get().getProfile().map(ESProfile::getHruid).get();
                     addCollaboratorSampleId(tissueId, ddpInstance, ddpParticipantId, shortId);
                 } else {
                     tissueId = String.valueOf(tissueIds.get(new Random().nextInt(tissueIds.size())).getTissueId());
                 }
                 new TissueSMIDDao().createNewSMIDForTissueWithValue(tissueId, ffpeUser, smIdType, kitLabel);
+
+                logger.info("Kit added successfully");
+                response.status(200);
+                return null;
             }
-            logger.info("Kit added successfully");
-            response.status(200);
-            return null;
 
         }
         logger.error("Error occurred while adding kit");
