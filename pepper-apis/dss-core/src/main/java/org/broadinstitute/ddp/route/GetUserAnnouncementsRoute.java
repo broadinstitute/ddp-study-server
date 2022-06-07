@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.route;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -18,9 +19,11 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.UserAnnouncementDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
+import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserAnnouncement;
 import org.broadinstitute.ddp.security.DDPAuth;
@@ -66,10 +69,21 @@ public class GetUserAnnouncementsRoute implements Route {
 
             UserAnnouncementDao announcementDao = handle.attach(UserAnnouncementDao.class);
 
-            List<UserAnnouncement> announcements;
+            List<UserAnnouncement> announcements = new ArrayList<>();
+
             try (Stream<UserAnnouncement> annStream = announcementDao
                     .findAllForUserAndStudy(user.getId(), studyDto.getId())) {
-                announcements = annStream.collect(Collectors.toList());
+                announcements.addAll(annStream.collect(Collectors.toList()));
+            }
+
+            try (Stream<Governance> govStream = handle.attach(UserGovernanceDao.class)
+                    .findActiveGovernancesByProxyAndStudyGuids(userGuid, studyGuid)) {
+                govStream.forEach(participant -> {
+                    try (Stream<UserAnnouncement> annStream = announcementDao
+                            .findAllForUserAndStudy(participant.getGovernedUserId(), studyDto.getId())) {
+                        announcements.addAll(annStream.collect(Collectors.toList()));
+                    }
+                });
             }
 
             log.info("Found {} announcements for user {} and study {}", announcements.size(), userGuid, studyGuid);
