@@ -56,6 +56,7 @@ RUN case "${TARGETARCH:-amd64}" in \
 WORKDIR /opt
 RUN apk --no-cache add npm subversion && \
     svn export https://github.com/broadinstitute/ddp-angular/trunk/build-utils \
+        && npm install ./build-utils/sheetappend \
         && npm install -g ./build-utils/sheetappend \
         && chmod 555 build-utils/reportdeploy.sh
 
