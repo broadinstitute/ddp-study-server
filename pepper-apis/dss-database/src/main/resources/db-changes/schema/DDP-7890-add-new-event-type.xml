@@ -5,6 +5,11 @@
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
 
     <changeSet author="zura_bokuchava" id="add-dsm-notification-event-type-for-stoolkit-29-04-22">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM dsm_notification_event_type WHERE dsm_notification_event_type_code='STOOL_RECEIVED';
+            </sqlCheck>
+        </preConditions>
         <insert tableName="dsm_notification_event_type">
             <column name="dsm_notification_event_type_code" value="STOOL_RECEIVED"/>
         </insert>
