@@ -5,11 +5,11 @@ import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskConnectionSe
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -40,6 +40,10 @@ import com.google.pubsub.v1.Subscription;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Options;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
@@ -203,6 +207,18 @@ public class Housekeeping {
     }
 
     public static void start(String[] args, SendGridSupplier sendGridSupplier) {
+        boolean housekeepingLocalSetup = false;
+        try {
+            Options options = new Options();
+            options.addOption(null, "local-housekeeping", false, "starts housekeeping as local service");
+            CommandLineParser parser = new DefaultParser();
+            CommandLine cmd = parser.parse(options, args);
+            housekeepingLocalSetup = cmd.hasOption("local-housekeeping");
+            log.info("Housekeeping local setup ");
+        } catch (Exception e) {
+            log.info("Housekeeping regular setup ");
+        }
+
         LogbackConfigurationPrinter.printLoggingConfiguration();
         Config cfg = ConfigManager.getInstance().getConfig();
         boolean doLiquibase = cfg.getBoolean(ConfigFile.DO_LIQUIBASE);
@@ -210,9 +226,11 @@ public class Housekeeping {
         String pubSubProject = cfg.getString(ConfigFile.GOOGLE_PROJECT_ID);
 
         boolean usePubSubEmulator = cfg.getBoolean(ConfigFile.USE_PUBSUB_EMULATOR);
-        String housekeepingDbUrl = cfg.getString(TransactionWrapper.DB.HOUSEKEEPING.getDbUrlConfigKey());
         String apisDbUrl = cfg.getString(TransactionWrapper.DB.APIS.getDbUrlConfigKey());
-        String housekeepingLocalSetup = cfg.getString(ConfigFile.GOOGLE_PROJECT_ID);
+
+        final String housekeepingDbUrl = housekeepingLocalSetup ? apisDbUrl
+                : cfg.getString(TransactionWrapper.DB.HOUSEKEEPING.getDbUrlConfigKey());
+        final String proxy = housekeepingLocalSetup ? null : ConfigUtil.getStrIfPresent(cfg, ConfigFile.Sendgrid.PROXY);
 
         Config sqlConfig = ConfigFactory.load(ConfigFile.SQL_CONFIG_FILE);
         DBUtils.loadDaoSqlCommands(sqlConfig);
@@ -233,24 +251,27 @@ public class Housekeeping {
         }
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
 
-        setupScheduler(cfg);
+        setupScheduler(cfg, housekeepingLocalSetup);
         setupTaskReceiver(cfg, pubSubProject);
         setupFileScanResultReceiver(cfg, pubSubProject);
 
         final PubSubConnectionManager pubsubConnectionManager = new PubSubConnectionManager(usePubSubEmulator);
 
-        PubSubTaskConnectionService pubSubTaskConnectionService = new PubSubTaskConnectionService(
-                pubsubConnectionManager,
-                pubSubProject,
-                cfg.getString(ConfigFile.PUBSUB_TASKS_SUB),
-                cfg.getString(ConfigFile.PUBSUB_TASKS_RESULT_TOPIC),
-                ConfigUtil.getIntOrElse(cfg, PUBSUB_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT,
-                        DEFAULT_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT_SEC),
-                new PubSubTaskProcessorFactoryImpl());
-        try {
-            pubSubTaskConnectionService.create();
-        } catch (PubSubTaskException e) {
-            log.error("Failed to init PubSubTask API", e);
+        PubSubTaskConnectionService pubSubTaskConnectionService = null;
+        if (!housekeepingLocalSetup) {
+            pubSubTaskConnectionService = new PubSubTaskConnectionService(
+                    pubsubConnectionManager,
+                    pubSubProject,
+                    cfg.getString(ConfigFile.PUBSUB_TASKS_SUB),
+                    cfg.getString(ConfigFile.PUBSUB_TASKS_RESULT_TOPIC),
+                    ConfigUtil.getIntOrElse(cfg, PUBSUB_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT,
+                            DEFAULT_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT_SEC),
+                    new PubSubTaskProcessorFactoryImpl());
+            try {
+                pubSubTaskConnectionService.create();
+            } catch (PubSubTaskException e) {
+                log.error("Failed to init PubSubTask API", e);
+            }
         }
 
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
@@ -265,7 +286,7 @@ public class Housekeeping {
                 Subscription subscription = pubsubConnectionManager
                         .createSubscriptionIfNotExists(projectSubscriptionName, projectTopicName);
                 // in the real world, listen differently
-                setupMessageReceiver(pubsubConnectionManager, projectSubscriptionName, cfg, sendGridSupplier);
+                setupMessageReceiver(pubsubConnectionManager, projectSubscriptionName, cfg, sendGridSupplier, proxy);
             }
         });
 
@@ -484,10 +505,10 @@ public class Housekeeping {
         log.info("Housekeeping is shutting down");
     }
 
-    private static void setupScheduler(Config cfg) {
+    private static void setupScheduler(Config cfg, boolean housekeepingLocalSetup) {
         boolean runScheduler = cfg.getBoolean(ConfigFile.RUN_SCHEDULER);
         boolean enableHKeepTasks = cfg.getBoolean(ConfigFile.PUBSUB_ENABLE_HKEEP_TASKS);
-        if (runScheduler || enableHKeepTasks) {
+        if (!housekeepingLocalSetup && (runScheduler || enableHKeepTasks)) {
             log.info("Booting job scheduler...");
             scheduler = JobScheduler.initializeWith(cfg);
             try {
@@ -710,14 +731,14 @@ public class Housekeeping {
     }
 
     private static void setupMessageReceiver(PubSubConnectionManager pubsubConnectionManager, ProjectSubscriptionName
-            projectSubscriptionName, Config cfg, SendGridSupplier sendGridSupplier) {
+            projectSubscriptionName, Config cfg, SendGridSupplier sendGridSupplier, String proxy) {
         PdfService pdfService = new PdfService();
         PdfBucketService pdfBucketService = new PdfBucketService(cfg);
         PdfGenerationService pdfGenerationService = new PdfGenerationService();
         PdfGenerationHandler pdfGenerationHandler = new PdfGenerationHandler(pdfService, pdfBucketService, pdfGenerationService);
         Gson gson = new Gson();
         if (sendGridSupplier == null) {
-            sendGridSupplier = apiKey -> new SendGridClient(apiKey, ConfigUtil.getStrIfPresent(cfg, ConfigFile.Sendgrid.PROXY));
+            sendGridSupplier = apiKey -> new SendGridClient(apiKey, proxy);
         }
         final SendGridSupplier sendGridProvider = sendGridSupplier;
         try {

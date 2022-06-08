@@ -40,6 +40,9 @@ public class ConfigFile {
     // whether to run the housekeeping scheduler or not
     public static final String RUN_SCHEDULER = "runScheduler";
 
+    // whether this is housekeeping local setup or not
+    public static final String HOUSEKEEPING_LOCAL_SETUP = "housekeepingLocalSetup";
+
     // whether to ensure usage of default GCP credentials or not
     public static final String REQUIRE_DEFAULT_GCP_CREDENTIALS = "requireDefaultGcpCredentials";
 
