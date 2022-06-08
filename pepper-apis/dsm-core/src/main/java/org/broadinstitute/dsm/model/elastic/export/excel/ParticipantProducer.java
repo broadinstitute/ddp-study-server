@@ -22,8 +22,8 @@ public class ParticipantProducer {
     private final BlockingQueue<ExcelRow> participantsQueue;
     private final ExecutorService executorService = Executors.newFixedThreadPool(2);
 
-    public ParticipantProducer(Filterable filter, QueryParamsMap queryParamsMap,
-                               Map<Alias, List<Filter>> columnAliasEsPathMap, BlockingQueue<ExcelRow> participantsQueue) {
+    public ParticipantProducer(Filterable filter, QueryParamsMap queryParamsMap, Map<Alias, List<Filter>> columnAliasEsPathMap,
+                               BlockingQueue<ExcelRow> participantsQueue) {
         this.filter = filter;
         this.queryParamsMap = queryParamsMap;
         this.participantsQueue = participantsQueue;
@@ -38,7 +38,8 @@ public class ParticipantProducer {
 
     private class ParticipantDataProcessor implements Runnable {
         private final boolean isCount;
-        private ParticipantDataProcessor (boolean isCount) {
+
+        private ParticipantDataProcessor(boolean isCount) {
             this.isCount = isCount;
         }
 
@@ -54,7 +55,7 @@ public class ParticipantProducer {
                 if (!isCount) {
                     participantsQueue.addAll(participantRows);
                 }
-                if (filteredList.getTotalCount() < currentFrom) {
+                if (filteredList.getTotalCount() < currentTo) {
                     break;
                 }
                 currentFrom = currentTo;
