@@ -1,0 +1,25 @@
+
+
+service: pepper-backend
+runtime: java11
+instance_class: B8
+
+manual_scaling:
+  instances: 3
+
+
+vpc_access_connector:
+  name: "projects/broad-ddp-dev/locations/us-central1/connectors/appengine-default-connect"
+
+network:
+  instance_tag: study-server # necessary for firewall rules so that DSM will accept https requests from pepper
+
+entrypoint: java -javaagent:tcell/tcellagent.jar -Xmx1640m -jar DataDonationPlatform.jar
+
+# GAE does not like the "=" character in entrypoint and does not support "." in environment variables
+env_variables:
+  config_file: application.conf
+  TCELL_AGENT_HOST_IDENTIFIER: study-server
+  TCELL_AGENT_CACHE_DIR: /tmp
+
+

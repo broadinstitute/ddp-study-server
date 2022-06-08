@@ -1,0 +1,37 @@
+{{with $environment := env "ENVIRONMENT"}}
+{{with $gae := env "GAE"}}
+service: pepper-backend
+runtime: java11
+instance_class: B8
+{{if eq $environment "prod"}}
+manual_scaling:
+  instances: 3
+{{else if eq $environment "staging"}}
+manual_scaling:
+  instances: 1
+{{else if eq $environment "dev"}}
+manual_scaling:
+  instances: 3
+{{else}}
+basic_scaling:
+  max_instances: 4
+  idle_timeout: 20m
+{{end}}
+
+vpc_access_connector:
+  name: "projects/broad-ddp-{{$environment}}/locations/us-central1/connectors/appengine-default-connect"
+
+network:
+  instance_tag: study-server # necessary for firewall rules so that DSM will accept https requests from pepper
+{{if and (or (eq $environment "prod") (eq $environment "staging") (eq $environment "dev") (eq $environment "test")) (eq $gae "true") }}
+entrypoint: java -javaagent:tcell/tcellagent.jar -agentpath:/opt/cprof/profiler_java_agent.so=-cprof_enable_heap_sampling=true,-cprof_service=pepper-backend,-cprof_cpu_use_per_thread_timers=true,-logtostderr -Xmx1640m -jar DataDonationPlatform.jar
+{{else}}
+entrypoint: java -javaagent:tcell/tcellagent.jar -Xmx1640m -jar DataDonationPlatform.jar
+{{end}}
+# GAE does not like the "=" character in entrypoint and does not support "." in environment variables
+env_variables:
+  config_file: application.conf
+  TCELL_AGENT_HOST_IDENTIFIER: study-server
+  TCELL_AGENT_CACHE_DIR: /tmp
+{{end}}
+{{end}}
