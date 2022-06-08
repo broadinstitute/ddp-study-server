@@ -293,9 +293,6 @@ public class KitUploadRoute extends RequestHandler {
         if (checkIfKitAlreadyExists(conn, bspCollaboratorParticipantId, ddpInstance.getDdpInstanceId(), kitTypeId)) {
             return true;
         }
-        if (checkIfKitAlreadyExists(conn, bspCollaboratorParticipantId, ddpInstance.getDdpInstanceId(), kitTypeId)) {
-            return true;
-        }
         return false;
     }
 
