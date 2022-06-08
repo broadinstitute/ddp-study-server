@@ -56,6 +56,9 @@ public interface ValueProvider {
             }
         }
         Object value = esDataAsMap.getOrDefault(fieldName, StringUtils.EMPTY);
+        if (fieldName.equals(ESObjectConstants.COHORT_TAG_NAME)) {
+            value = esDataAsMap.getOrDefault(ESObjectConstants.COHORT_TAG, StringUtils.EMPTY);
+        }
         if (!(value instanceof Collection)) {
             return Collections.singletonList(value);
         }
@@ -66,18 +69,21 @@ public interface ValueProvider {
         if (nestedValue.isEmpty()) {
             return Collections.singletonList(StringUtils.EMPTY);
         }
-        String jsonString = nestedValue.stream().findFirst().get().toString();
-        JsonNode jsonNode;
-        try {
-            jsonNode = ObjectMapperSingleton.instance().readTree(jsonString);
-            if (jsonNode.has(column.getName())) {
-                return Collections.singletonList(jsonNode.get(column.getName()).asText(StringUtils.EMPTY));
-            } else {
-                return Collections.singletonList(StringUtils.EMPTY);
+
+        Collection<?> jsonValues = nestedValue.stream().map(value -> {
+            JsonNode jsonNode;
+            try {
+                jsonNode = ObjectMapperSingleton.instance().readTree(value.toString());
+                if (jsonNode.has(column.getName())) {
+                    return jsonNode.get(column.getName()).asText(StringUtils.EMPTY);
+                } else {
+                    return StringUtils.EMPTY;
+                }
+            } catch (JsonProcessingException e) {
+                return StringUtils.EMPTY;
             }
-        } catch (JsonProcessingException e) {
-            return Collections.singletonList(StringUtils.EMPTY);
-        }
+        }).collect(Collectors.toList());
+        return jsonValues;
     }
 
     private Collection<?> getQuestionAnswerValue(Object nestedValue, ParticipantColumn column) {

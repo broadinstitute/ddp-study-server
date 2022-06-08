@@ -9,6 +9,7 @@ import static org.broadinstitute.dsm.model.QuestionType.JSON_ARRAY;
 import static org.broadinstitute.dsm.model.QuestionType.MATRIX;
 import static org.broadinstitute.dsm.model.QuestionType.NUMBER;
 import static org.broadinstitute.dsm.model.QuestionType.OPTIONS;
+import static org.broadinstitute.dsm.model.QuestionType.RADIO;
 
 import java.util.Map;
 
@@ -20,6 +21,7 @@ public class ValueProviderFactory {
     private static final String ACTIVITY_STATUS = "activityStatus";
     private final ValueProvider defaultValueProvider = new TextValueProvider();
     private final ValueProvider booleanValueProvider = new BooleanValueProvider();
+    private final ValueProvider pickListValueProvider = new PickListValueProvider();
     private final Map<QuestionType, ValueProvider> valueProviders = Map.of(
             CHECKBOX, booleanValueProvider,
             NUMBER, new NumberValueProvider(),
@@ -28,8 +30,9 @@ public class ValueProviderFactory {
             AGREEMENT, booleanValueProvider,
             MATRIX, new MatrixValueProvider(),
             DATE, new DateValueProvider(),
-            OPTIONS, new PickListValueProvider(),
-            JSON_ARRAY, new JsonArrayValueProvider()
+            OPTIONS, pickListValueProvider,
+            JSON_ARRAY, new JsonArrayValueProvider(),
+            RADIO, pickListValueProvider
     );
     private final Map<String, ValueProvider> specialValueProviders = Map.of(
             AMBULATION, new AmbulationValueProvider(),

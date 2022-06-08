@@ -10,7 +10,8 @@ public enum QuestionType {
     DATE("DATE"),
     OPTIONS("OPTIONS"),
     TEXT("TEXT"),
-    JSON_ARRAY("JSON_ARRAY");
+    JSON_ARRAY("JSON_ARRAY"),
+    RADIO("RADIO");
 
     private final String value;
 
