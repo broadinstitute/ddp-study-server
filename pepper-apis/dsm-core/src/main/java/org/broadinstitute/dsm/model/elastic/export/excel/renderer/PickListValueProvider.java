@@ -9,6 +9,7 @@ import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.ParticipantColumn;
 import org.broadinstitute.dsm.model.elastic.sort.Alias;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
 
 public class PickListValueProvider implements ValueProvider {
 
@@ -18,6 +19,13 @@ public class PickListValueProvider implements ValueProvider {
         List<NameValue> options = column.getOptions();
         if (options == null) {
             return nestedValue.stream().map(Object::toString).collect(Collectors.toList());
+        }
+
+        if (ESObjectConstants.PARTICIPANT_DATA.equals(column.getParticipantColumn().getTableAlias())) {
+            return nestedValue.stream().map(val -> options.stream()
+                            .filter(nameValue -> nameValue.getValue().equals(val))
+                            .map(NameValue::getName).findFirst().orElse(val.toString()))
+                    .collect(Collectors.toList());
         }
         return nestedValue.stream().map(val -> options.stream()
                         .filter(nameValue -> nameValue.getName().equals(val))
