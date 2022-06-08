@@ -386,6 +386,9 @@ public class UpdateTemplatesInPlace implements CustomTask {
             case AGREEMENT:
                 // Nothing else to do.
                 break;
+            case FILE:
+                // Nothing else to do.
+                break;
             case BOOLEAN:
                 BoolQuestionDef boolQuestion = (BoolQuestionDef) question;
                 extractAndCompare(handle, prefix, boolQuestion.getTrueTemplate(), questionCfg, "trueTemplate");
