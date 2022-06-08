@@ -47,10 +47,10 @@ public class DownloadParticipantListRoute extends RequestHandler {
         });
         BlockingQueue<ExcelRow> participantRows = new ArrayBlockingQueue<>(MAX_RESULT_SIZE);
         Filterable filterable = FilterFactory.of(request);
-        new ParticipantProducer(filterable, request.queryMap(), columnAliasEsPathMap, participantRows).start();
+        new ParticipantProducer(filterable, request.queryMap(), columnAliasEsPathMap,
+                participantRows).start();
         ParticipantExcelGenerator generator = new ParticipantConsumer(participantRows).get();
         generator.writeInResponse(response);
-
         return response.raw();
     }
 
