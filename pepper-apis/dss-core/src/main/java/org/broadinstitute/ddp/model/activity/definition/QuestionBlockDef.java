@@ -16,17 +16,31 @@ public final class QuestionBlockDef extends FormBlockDef {
     @SerializedName("question")
     private QuestionDef question;
 
+    @SerializedName("columnSpan")
+    int columnSpan;
+
     public QuestionBlockDef(QuestionDef question) {
         super(BlockType.QUESTION);
         this.question = MiscUtil.checkNonNull(question, "question");
+    }
+
+    public QuestionBlockDef(QuestionDef question, int columnSpan) {
+        super(BlockType.QUESTION);
+        this.question = MiscUtil.checkNonNull(question, "question");
+        this.columnSpan = columnSpan;
     }
 
     public QuestionDef getQuestion() {
         return question;
     }
 
+    public int getColumnSpan() {
+        return columnSpan;
+    }
+
     @Override
     public Stream<QuestionDef> getQuestions() {
         return Stream.of(question);
     }
+
 }

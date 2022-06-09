@@ -25,4 +25,7 @@ public class BlockTabularQuestionDto {
 
     @ColumnName("_row")
     int row;
+
+    @ColumnName("column_span")
+    int columnSpan;
 }

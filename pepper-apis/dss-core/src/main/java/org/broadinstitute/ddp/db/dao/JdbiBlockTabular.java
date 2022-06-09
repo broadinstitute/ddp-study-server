@@ -36,12 +36,14 @@ public interface JdbiBlockTabular extends SqlObject {
             + "         SET block_tabular_id = :tabularBlockId, "
             + "             question_id      = :questionId, "
             + "             _column          = :column, "
-            + "             _row             = :row")
+            + "             _row             = :row,"
+            + "             column_span   = :columnSpan")
     @GetGeneratedKeys
     long insertQuestion(@Bind("tabularBlockId") long tabularBlockId,
                         @Bind("questionId") long questionId,
                         @Bind("column") int column,
-                        @Bind("row") int row);
+                        @Bind("row") int row,
+                        @Bind("columnSpan") int columnSpan);
 
     @SqlQuery("SELECT bt.*"
             + "  FROM block_tabular as bt"
