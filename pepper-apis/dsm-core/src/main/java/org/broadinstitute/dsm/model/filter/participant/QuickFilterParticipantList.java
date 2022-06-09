@@ -24,9 +24,6 @@ public class QuickFilterParticipantList extends BaseFilterParticipantList {
             requestForFiltering = ViewFilter.parseFilteringQuery(requestForFiltering.getFilterQuery(), requestForFiltering);
         }
         Filter[] filters = requestForFiltering.getFilters();
-        if (filters != null) {
-            participantWrapperResult = filterParticipantList(filters, PatchUtil.getColumnNameMap());
-        }
-        return participantWrapperResult;
+        return filterParticipantList(filters, PatchUtil.getColumnNameMap());
     }
 }
