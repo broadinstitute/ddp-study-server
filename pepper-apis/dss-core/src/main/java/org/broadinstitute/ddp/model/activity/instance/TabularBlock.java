@@ -31,22 +31,8 @@ public final class TabularBlock extends FormBlock {
         this.rows = rows;
     }
 
-    /*public Question get(final int row, final int column) {
-        if (row < 0 || row >= rows.size()) {
-            throw new IndexOutOfBoundsException("The row must be between 0 and " + rows.size());
-        }
-
-        final List<Question> cellsRow = rows.get(row);
-        if (column < 0 || column >= cellsRow.size()) {
-            throw new IndexOutOfBoundsException("The column must be between 0 and " + cellsRow.size());
-        }
-
-        return cellsRow.get(column);
-    }*/
-
     @Override
     public Stream<Question> streamQuestions() {
-        //return StreamEx.of(rows).flatMap(Collection::stream).filter(Objects::nonNull);
         return StreamEx.of(rows).filter(Objects::nonNull);
     }
 
