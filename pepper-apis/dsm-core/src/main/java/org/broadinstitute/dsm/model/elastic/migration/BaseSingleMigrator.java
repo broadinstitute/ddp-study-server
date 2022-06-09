@@ -3,7 +3,6 @@ package org.broadinstitute.dsm.model.elastic.migration;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 
 public abstract class BaseSingleMigrator extends BaseMigrator {
@@ -21,6 +20,6 @@ public abstract class BaseSingleMigrator extends BaseMigrator {
 
     @Override
     protected void transformObject(Object object) {
-        transformedObject = Util.transformObjectToMap(object, realm);
+        transformedObject = objectTransformer.transformObjectToMap(object);
     }
 }

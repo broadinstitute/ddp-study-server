@@ -1,9 +1,10 @@
 package org.broadinstitute.ddp.model.activity.instance.tabular;
 
-import lombok.Value;
+import lombok.Data;
 
-@Value
-public class TabularHeader {
-    int columnSpan;
-    Long labelTemplateId;
+@Data
+public final class TabularHeader {
+    private final int columnSpan;
+    private final Long labelTemplateId;
+    private String label;
 }

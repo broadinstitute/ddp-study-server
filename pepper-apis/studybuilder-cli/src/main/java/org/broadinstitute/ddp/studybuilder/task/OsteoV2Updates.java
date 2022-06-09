@@ -42,7 +42,6 @@ public class OsteoV2Updates implements CustomTask {
         // Last
         tasks.add(new OsteoInsertEvents());
         tasks.add(new UpdateStudyWorkflows());
-        tasks.add(new OsteoDeleteDuplicatedEvents());
         tasks.forEach(t -> t.init(cfgPath, studyCfg, varsCfg));
     }
 
