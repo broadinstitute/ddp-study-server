@@ -34,6 +34,7 @@ import org.broadinstitute.ddp.util.CollectionMiscUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class FormBlockCreatorHelper {
 
@@ -100,7 +101,8 @@ public class FormBlockCreatorHelper {
                     .getTemplateRenderHelper().addTemplate(ctx, headerDef.getLabel())));
         }
 
-        //count the headers and add to column count
+        //count the row propmpts and add to column count
+        //int promptCount = allQuestions.stream().filter(question -> question.getTextPrompt() != null).collect(Collectors.toList()).size();
         return new TabularBlock(tabularBlockDef.getColumnsCount(), headers, allQuestions);
     }
 
