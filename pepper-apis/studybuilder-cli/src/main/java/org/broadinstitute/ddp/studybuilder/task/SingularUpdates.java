@@ -14,6 +14,7 @@ public class SingularUpdates implements CustomTask {
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
         tasks.add(new SingularPatientSurveyUpdate());
+        tasks.add(new SingularConsentAssentUpdate());
 
         // Last
         tasks.add(new SingularInsertEvents());
