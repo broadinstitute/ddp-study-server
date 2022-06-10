@@ -19,8 +19,8 @@ public class MedicalRecordDao implements Dao<MedicalRecord> {
     public static final String SQL_INSERT_NEW_MEDICAL_RECORD = "INSERT INTO ddp_medical_record (institution_id, name, contact, phone, " +
             "fax, fax_sent, fax_sent_by, fax_confirmed, fax_sent_2, fax_sent_2_by, fax_confirmed_2, fax_sent_3, fax_sent_3_by, fax_confirmed_3, " +
             "mr_received, mr_document, mr_problem, mr_problem_text, unable_obtain, unable_obtain_text, followup_required, followup_required_text, " +
-            "duplicate, international, cr_required, pathology_present, notes, follow_ups, additional_values_json, last_changed, changed_by, mr_document_file_names, deleted " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+            "duplicate, international, cr_required, pathology_present, notes, follow_ups, additional_values_json, last_changed, changed_by, mr_document_file_names, deleted) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
     private static MedicalRecordDao medicalRecordDao;
 
@@ -87,7 +87,7 @@ public class MedicalRecordDao implements Dao<MedicalRecord> {
         stmt.setLong(30, System.currentTimeMillis());
         stmt.setString(31, SystemUtil.SYSTEM);
         stmt.setString(32, medicalRecord.getMrDocumentFileNames());
-        stmt.setBoolean(33, medicalRecord.getDeleted());
+        stmt.setBoolean(33, medicalRecord.getDeleted() != null);
     }
 
     @Override

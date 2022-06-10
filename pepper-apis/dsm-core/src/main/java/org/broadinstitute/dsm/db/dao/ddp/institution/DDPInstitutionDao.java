@@ -15,7 +15,9 @@ import static org.broadinstitute.dsm.statics.DBConstants.*;
 
 public class DDPInstitutionDao implements Dao<DDPInstitutionDto> {
 
-    public static final String SQL_INSERT_NEW_DDP_INSTITUTION = "INSERT INTO ddp_institution (ddp_institution_id, type, participant_id, last_changed, VALUES (?,?,?,?);";
+
+    public static final String SQL_INSERT_NEW_DDP_INSTITUTION = "INSERT INTO ddp_institution SET ddp_institution_id = ?, type = ?, participant_id = ?, last_changed = ?";
+
     public static final String SQL_SELECT_INSTITUTION_BY_INSTITUTION_ID = "SELECT * FROM ddp_institution WHERE institution_id = ?;";
 
     private static DDPInstitutionDao ddpInstitutionDao;
@@ -70,8 +72,7 @@ public class DDPInstitutionDao implements Dao<DDPInstitutionDto> {
             SimpleResult dbVals = new SimpleResult(-1);
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_INSTITUTION_BY_INSTITUTION_ID)) {
                 stmt.setLong(1, institutionId);
-                stmt.executeUpdate();
-                try (ResultSet rs = stmt.getGeneratedKeys()) {
+                try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         result.resultValue = buildInstitutionFromResultSet(rs);
                     }
