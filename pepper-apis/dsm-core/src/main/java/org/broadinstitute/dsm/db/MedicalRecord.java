@@ -390,7 +390,7 @@ public class MedicalRecord implements HasDdpInstanceId {
     }
 
     public static List<MedicalRecord> getMedicalRecordsByInstanceNameAndDdpParticipantId(String instanceName, String ddpParticipantId) {
-        return getMedicalRecords(instanceName, String.format(" AND p.ddp_participant_id = '%s';", ddpParticipantId)).get(ddpParticipantId);
+        return getMedicalRecords(instanceName, String.format(" AND p.ddp_participant_id = '%s'", ddpParticipantId)).getOrDefault(ddpParticipantId, new ArrayList<>());
     }
 
     public static Map<String, List<MedicalRecord>> getMedicalRecordsByParticipantIds(@NonNull String realm, List<String> participantIds) {
