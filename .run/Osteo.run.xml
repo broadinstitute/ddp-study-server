@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Osteo" type="JarApplication">
+    <option name="JAR_PATH" value="$PROJECT_DIR$/pepper-apis/studybuilder-cli/target/StudyBuilder.jar" />
+    <option name="VM_PARAMETERS" value="-Dconfig.file=.\output-config\application.conf" />
+    <option name="PROGRAM_PARAMETERS" value="--vars ./output-config/vars.conf studies/osteo/study.conf --substitution ./studies/osteo/subs.conf --update-emails" />
+    <option name="WORKING_DIRECTORY" value="C:\Users\Quantori\Desktop\ddp-study-server\pepper-apis\studybuilder-cli" />
+    <option name="ALTERNATIVE_JRE_PATH" />
+    <method v="2" />
+  </configuration>
+</component>
