@@ -10,13 +10,13 @@ public class OsteoWorkflowStatusUpdateTest {
     @Ignore
     public void update() {
 
-        String osteo2DdpInstanceId = "27";
-        String osteo2InstanceName = "osteo2";
-        String osteo2ParticipantESIndex = "participants_structured.cmi.cmi-osteo";
+        String oldOsteoInstanceId = "35";
+        String oldOsteoInstanceName = "Osteo";
+        String oldOsteoESIndex = "participants_structured.cmi.cmi-osteo";
 
-        DDPInstance ddpInstance = new DDPInstance(osteo2DdpInstanceId, osteo2InstanceName, null, null, false,
+        DDPInstance ddpInstance = new DDPInstance(oldOsteoInstanceId, oldOsteoInstanceName, null, null, false,
                 0, 0, false, null,
-                false, null, osteo2ParticipantESIndex, null, null, null);
+                false, null, oldOsteoESIndex, null, null, null);
 
         String osteo2DdpParticipantId = "guid";
 
