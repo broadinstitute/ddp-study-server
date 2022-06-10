@@ -2,15 +2,12 @@ package org.broadinstitute.dsm.model.elastic.migration;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.broadinstitute.dsm.db.MedicalRecord;
+import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
-
-import static org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter.NEW_OSTEO_INSTANCE_NAME;
-import static org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter.OLD_OSTEO_INSTANCE_NAME;
 
 public class MedicalRecordMigrator extends BaseCollectionMigrator {
 
@@ -21,12 +18,17 @@ public class MedicalRecordMigrator extends BaseCollectionMigrator {
     @Override
     protected Map<String, Object> getDataByRealm() {
         Map<String, List<MedicalRecord>> medicalRecords = MedicalRecord.getMedicalRecords(realm);
-        AdditionalRecordsRetriever.fromRealm(realm).ifPresent(dataRetriever -> concatenateMedicalRecords(medicalRecords, dataRetriever));
+        updateMedicalRecordsIfRequired(medicalRecords);
         return (Map) medicalRecords;
     }
 
-    private void concatenateMedicalRecords(Map<String, List<MedicalRecord>> medicalRecords, AdditionalRecordsRetriever dataRetriever) {
-        Map<String, List<MedicalRecord>> additionalMedicalRecords = dataRetriever.retrieve();
+    private void updateMedicalRecordsIfRequired(Map<String, List<MedicalRecord>> medicalRecords) {
+        AdditionalMedicalRecordsRetriever.fromRealm(realm)
+                .ifPresent(retriever -> concatenateMedicalRecords(medicalRecords, retriever));
+    }
+
+    private void concatenateMedicalRecords(Map<String, List<MedicalRecord>> medicalRecords, AdditionalMedicalRecordsRetriever retriever) {
+        Map<String, List<MedicalRecord>> additionalMedicalRecords = retriever.retrieve();
         additionalMedicalRecords.forEach((guid, records) -> {
             if (medicalRecords.containsKey(guid)) {
                 List<MedicalRecord> mergedMedicalRecords = Stream.concat(medicalRecords.get(guid).stream(), records.stream()).collect(Collectors.toList());
