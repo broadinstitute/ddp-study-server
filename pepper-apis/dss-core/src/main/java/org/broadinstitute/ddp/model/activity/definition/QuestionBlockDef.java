@@ -38,6 +38,10 @@ public final class QuestionBlockDef extends FormBlockDef {
         return columnSpan;
     }
 
+    public void setColumnSpan(int columnSpan) {
+        this.columnSpan = columnSpan;
+    }
+
     @Override
     public Stream<QuestionDef> getQuestions() {
         return Stream.of(question);

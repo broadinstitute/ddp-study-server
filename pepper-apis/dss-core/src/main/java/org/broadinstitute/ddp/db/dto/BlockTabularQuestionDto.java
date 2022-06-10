@@ -28,4 +28,19 @@ public class BlockTabularQuestionDto {
 
     @ColumnName("column_span")
     int columnSpan;
+
+    @ColumnName("question_block_id")
+    long questionBlockId;
+
+    //BlockDto blockDto;
+
+    @ColumnName("block_guid")
+    String blockGuid;
+
+    @ColumnName("shown_expr")
+    String shownExpr;
+
+    @ColumnName("enabled_expr")
+    String enabledExpr;
+
 }

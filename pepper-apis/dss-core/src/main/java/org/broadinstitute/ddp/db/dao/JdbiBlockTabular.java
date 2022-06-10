@@ -64,10 +64,12 @@ public interface JdbiBlockTabular extends SqlObject {
     @RegisterConstructorMapper(BlockTabularHeaderDto.class)
     List<BlockTabularHeaderDto> findHeadersByBlockIdAndTimestamp(@Bind("blockId") long blockId, @Bind("timestamp") long timestamp);
 
-    @SqlQuery("SELECT btq.*, bt.block_id"
+    @SqlQuery("SELECT btq.*, bt.block_id, bq.block_id as question_block_id, b.block_guid, 'true' as shown_expr, 'true' as enabled_expr"
             + "  FROM block_tabular_question as btq"
             + "  JOIN block_tabular as bt ON bt.block_tabular_id = btq.block_tabular_id"
             + "  JOIN question as q ON q.question_id = btq.question_id"
+            + "  left join block__question bq on bq.question_id = q.question_id"
+            + "  left join block b on b.block_id = bq.block_id"
             + "  JOIN revision as rev ON rev.revision_id = q.revision_id"
             + " WHERE bt.block_id in (<blockIds>)"
             + "   AND rev.start_date <= :timestamp"

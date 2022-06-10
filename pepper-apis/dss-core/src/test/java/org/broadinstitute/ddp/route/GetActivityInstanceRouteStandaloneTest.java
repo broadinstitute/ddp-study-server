@@ -381,27 +381,36 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .builder("QUESTION_LU", Template.text("This is value"))
                 .setScale(2)
                 .build();
+        final QuestionBlockDef questionBlockDefLU = new QuestionBlockDef(questionLU);
 
         final DecimalQuestionDef questionRU = DecimalQuestionDef
                 .builder("QUESTION_RU", Template.text("This is value"))
                 .setScale(2)
                 .build();
+        final QuestionBlockDef questionBlockDefRU = new QuestionBlockDef(questionRU);
 
         final DecimalQuestionDef questionLB = DecimalQuestionDef
                 .builder("QUESTION_LB", Template.text("This is value"))
                 .setScale(2)
                 .build();
+        final QuestionBlockDef questionBlockDefLB = new QuestionBlockDef(questionLB);
 
         final DecimalQuestionDef questionRB = DecimalQuestionDef
                 .builder("QUESTION_RB", Template.text("This is value"))
                 .setScale(2)
                 .build();
+        final QuestionBlockDef questionBlockDefRB = new QuestionBlockDef(questionRB);
 
         var tabularBlock = new TabularBlockDef(2);
-        tabularBlock.getRows().add(new TabularRowDef(Arrays.asList(
-                (new TabularColumnDef(1, questionLU)), (new TabularColumnDef(1, questionRU)))));
-        tabularBlock.getRows().add(new TabularRowDef(Arrays.asList(
-                (new TabularColumnDef(1, questionLB)), (new TabularColumnDef(1, questionRB)))));
+        var tabularRowDef = new TabularRowDef();
+        tabularRowDef.getTabularColumnDefs().add(questionBlockDefLU);
+        tabularRowDef.getTabularColumnDefs().add(questionBlockDefRU);
+        tabularBlock.getRows().add(tabularRowDef);
+
+        var tabularRowDef2 = new TabularRowDef();
+        tabularRowDef2.getTabularColumnDefs().add(questionBlockDefLU);
+        tabularRowDef2.getTabularColumnDefs().add(questionBlockDefRU);
+        tabularBlock.getRows().add(tabularRowDef2);
 
         //tabularBlock.getRows().add(new TabularRowDef(Arrays.asList(questionLU, questionRU)));
         //tabularBlock.getRows().add(new TabularRowDef(Arrays.asList(questionLB, questionRB)));

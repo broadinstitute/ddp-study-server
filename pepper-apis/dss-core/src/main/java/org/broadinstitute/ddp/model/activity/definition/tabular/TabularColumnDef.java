@@ -2,19 +2,19 @@ package org.broadinstitute.ddp.model.activity.definition.tabular;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.Value;
-import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 
 import javax.validation.constraints.NotEmpty;
 
 @Value
 public class TabularColumnDef {
 
-    @NotEmpty
+    //@NotEmpty
     @SerializedName("columnSpan")
     int columnSpan;
 
     @NotEmpty
     @SerializedName("question")
-    QuestionDef question;
+    QuestionBlockDef question;
 
 }

@@ -220,6 +220,7 @@ public class ActivityDefTranslationsProcessor {
     }
 
     private void enrichQuestionWithTranslations(QuestionDef questionDef) {
+        log.info("-----question: {}", questionDef.getStableId());
         addTemplateTranslations(questionDef.getPromptTemplate(), allTranslations);
         addTemplateTranslations(questionDef.getTooltipTemplate(), allTranslations);
         addTemplateTranslations(questionDef.getAdditionalInfoHeaderTemplate(), allTranslations);

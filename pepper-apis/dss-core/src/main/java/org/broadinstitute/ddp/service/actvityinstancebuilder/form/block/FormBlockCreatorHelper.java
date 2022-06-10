@@ -74,22 +74,23 @@ public class FormBlockCreatorHelper {
         return new ComponentBlock(formComponent);
     }
 
+    //todo.. no data into tabularBlockDef
     TabularBlock createTabularBlock(AIBuilderContext ctx, TabularBlockDef tabularBlockDef) {
-        final List<Question> allQuestions = new ArrayList<>();
+        final List<QuestionBlockDef> allQuestions = new ArrayList<>();
         for (int row = 0; row < tabularBlockDef.getRowsCount(); row++) {
             final List<Question> questionsRow = new ArrayList<>();
             for (int column = 0; column < tabularBlockDef.getColumnsCount(); column++) {
-                final TabularColumnDef columnDef = tabularBlockDef.get(row, column);
-                final QuestionDef questionDef = columnDef.getQuestion();
-                final Integer columnSpan = columnDef.getColumnSpan();
-                if (questionDef == null) {
+                final QuestionBlockDef questionBlockDef = tabularBlockDef.get(row, column);
+                //final QuestionDef questionDef = columnDef.getQuestion();
+                //final Integer columnSpan = questionBlockDef.getColumnSpan();
+                if (questionBlockDef == null) {
                     questionsRow.add(null);
                     continue;
                 }
 
-                Question question = ctx.getAIBuilderFactory().getQuestionCreator().createQuestion(ctx, questionDef);
-                question.setColumnSpan(columnSpan);
-                allQuestions.add(question);
+                Question question = ctx.getAIBuilderFactory().getQuestionCreator().createQuestion(ctx, questionBlockDef.getQuestion());
+                //question.setColumnSpan(columnSpan);
+                allQuestions.add(questionBlockDef);
             }
         }
 

@@ -42,7 +42,6 @@ import org.broadinstitute.ddp.model.activity.definition.PhysicianInstitutionComp
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.SectionIcon;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.tabular.TabularColumnDef;
 import org.broadinstitute.ddp.model.activity.definition.tabular.TabularHeaderDef;
 import org.broadinstitute.ddp.model.activity.definition.tabular.TabularRowDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
@@ -339,16 +338,18 @@ public interface SectionBlockDao extends SqlObject {
 
         for (int row = 0; row < block.getRows().size(); row++) {
             for (int column = 0; column < block.getRows().get(row).getTabularColumnDefs().size(); column++) {
-                final var tabularColumnDef = block.get(row, column);
+                final var questionBlockDef = block.get(row, column);
 
-                final var questionDef = tabularColumnDef.getQuestion();
-                if (questionDef == null) {
+                //final var questionDef = tabularColumnDef.getQuestion();
+                if (questionBlockDef == null || questionBlockDef.getQuestion() == null) {
                     continue;
                 }
 
-                Integer columnSpan = tabularColumnDef.getColumnSpan();
-                getQuestionDao().insertQuestionByType(activityId, questionDef, revisionId);
-                getJdbiBlockTabular().insertQuestion(tabularId, questionDef.getQuestionId(),
+                Integer columnSpan = questionBlockDef.getColumnSpan();
+                //todo question blockID ??
+                insertBlockByType(activityId, questionBlockDef, revisionId);
+                //getQuestionDao().insertQuestionBlock(activityId, questionBlockDef, revisionId);
+                getJdbiBlockTabular().insertQuestion(tabularId, questionBlockDef.getQuestion().getQuestionId(),
                         column, row, columnSpan);
             }
         }
@@ -807,12 +808,16 @@ public interface SectionBlockDao extends SqlObject {
         Map<Long, List<BlockTabularQuestionDto>> questionsByBlocks = StreamEx.of(getJdbiBlockTabular()
                         .findQuestionsByBlockIdsAndTimestamp(blockIds, timestamp))
                 .groupingBy(BlockTabularQuestionDto::getBlockId);
-
-        Map<Long, QuestionDef> questionDefs = new QuestionCachedDao(getHandle())
+        //todo below key is tabluar_bock_id rather than blockQuestionID !! newly added
+        Map<Long, QuestionBlockDef> questionBlockDefs = new QuestionCachedDao(getHandle())
+                .collectTabularBlockDefs(StreamEx.of(questionsByBlocks.values()).flatMap(Collection::stream)
+                        .collect(Collectors.toList()), timestamp);
+        //todo look for cache blockToQuestion
+        /*Map<Long, QuestionDef> questionDefs = new QuestionCachedDao(getHandle())
                 .collectQuestionDefs(StreamEx.of(questionsByBlocks.values())
                         .flatMap(Collection::stream)
                         .map(BlockTabularQuestionDto::getQuestionId)
-                        .toList(), timestamp);
+                        .toList(), timestamp);*/
 
         Map<Long, TabularBlockDef> blockDefs = new HashMap<>();
         for (var blockDto : blockDtos) {
@@ -822,12 +827,12 @@ public interface SectionBlockDao extends SqlObject {
                     .orElse(0);
 
             final var tabularBlock = getJdbiBlockTabular().findByBlockIdAndTimestamp(blockDto.getId(), timestamp);
-            final var questionsTable = new TabularColumnDef[rowCount][tabularBlock.getColumnsCount()];
+            final var questionsTable = new QuestionBlockDef[rowCount][tabularBlock.getColumnsCount()];
             for (final BlockTabularQuestionDto tabularQuestion : questionsByBlocks.get(blockDto.getId())) {
-                questionsTable[tabularQuestion.getRow()][tabularQuestion.getColumn()] = new TabularColumnDef(
-                        tabularQuestion.getColumnSpan(), questionDefs.get(tabularQuestion.getQuestionId()));
+                //questionsTable[tabularQuestion.getRow()][tabularQuestion.getColumn()] = questionBlockDefs.get(tabularQuestion.getQuestionId());
+                questionsTable[tabularQuestion.getRow()][tabularQuestion.getColumn()] = questionBlockDefs.get(tabularQuestion.getQuestionBlockId());
             }
-
+            //todo .. get from cache or already laoded QBDefs
             final var blockDef = new TabularBlockDef(tabularBlock.getColumnsCount());
             blockDef.setBlockId(blockDto.getId());
             blockDef.setBlockGuid(blockDto.getGuid());
@@ -841,12 +846,14 @@ public interface SectionBlockDao extends SqlObject {
                     .toList());
 
             List<TabularRowDef> rowDefs = new ArrayList<>();
-            for (TabularColumnDef[] row : questionsTable) {
-                List<TabularColumnDef> columnDefs = new ArrayList<>();
-                for (TabularColumnDef col : row) {
-                    columnDefs.add(col);
+            for (QuestionBlockDef[] row : questionsTable) {
+                TabularRowDef rowDef = new TabularRowDef();
+                //List<QuestionBlockDef> columnDefs = new ArrayList<>(); //todo all nulls
+                for (QuestionBlockDef col : row) {
+                    //columnDefs.add(col);
+                    rowDef.getTabularColumnDefs().add(col);
                 }
-                rowDefs.add(new TabularRowDef(columnDefs));
+                rowDefs.add(rowDef);
             }
             blockDef.getRows().addAll(rowDefs);
 

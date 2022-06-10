@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.model.activity.definition;
 import lombok.NonNull;
 import lombok.Value;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.tabular.TabularColumnDef;
 import org.broadinstitute.ddp.model.activity.definition.tabular.TabularHeaderDef;
 import org.broadinstitute.ddp.model.activity.definition.tabular.TabularRowDef;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
@@ -26,7 +25,7 @@ public class TabularBlockDef extends FormBlockDef {
         this.columnsCount = columnsCount;
     }
     
-    public TabularColumnDef get(final int row, final int column) {
+    public QuestionBlockDef get(final int row, final int column) {
         if ((row < 0) || (row >= rows.size())) {
             throw new IndexOutOfBoundsException("The row must be a number between 0 and " + rows.size());
         }
@@ -49,7 +48,7 @@ public class TabularBlockDef extends FormBlockDef {
         List<TabularRowDef> rowDefs = getRows().stream().collect(Collectors.toList());
         List<QuestionDef> questionDefList = new ArrayList<>();
         for (TabularRowDef rowDef : rowDefs) {
-            for (TabularColumnDef colDef: rowDef.getTabularColumnDefs()) {
+            for (QuestionBlockDef colDef: rowDef.getTabularColumnDefs()) {
                 if (colDef != null) {
                     questionDefList.add(colDef.getQuestion());
                 }
