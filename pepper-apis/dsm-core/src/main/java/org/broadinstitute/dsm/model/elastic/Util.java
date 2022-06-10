@@ -1,8 +1,6 @@
 package org.broadinstitute.dsm.model.elastic;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -20,6 +18,17 @@ public class Util {
     public static final String ESCAPE_CHARACTER = "\\";
     public static final String FORWARD_SLASH_SEPARATOR = "/";
     private static final Pattern CAMEL_CASE_REGEX = Pattern.compile("(([a-z])+([A-z])+(\\.)*)*");
+
+    // Must be used only for instance fields that are wrapped by Optional<A> data structure in order to avoid default values.
+    // Some fields might be mapped to database ID-s and giving them default values is not good.
+    // Better alternative will be to keep them as nulls in order to keep consistency.
+    public static <A> A orElseNull(Optional<A> optionalNumber, A defaultValue) {
+        try {
+            return optionalNumber.get().equals(defaultValue) ? null : optionalNumber.get();
+        } catch (NoSuchElementException nse) {
+            return null;
+        }
+    }
 
     public static String getQueryTypeFromId(String id) {
         String type;

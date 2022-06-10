@@ -50,7 +50,7 @@ public class MedicalRecordUtil {
                     + "WHERE part.participant_id = inst.participant_id AND rec.institution_id = inst.institution_id "
                     + "AND NOT rec.deleted <=> 1 AND part.participant_id = ? AND inst.type = ?";
 
-    public static void writeNewMedicalRecordIntoDb(Connection conn, String query, String institutionId, String ddpParticipantId,
+    public static void  writeNewMedicalRecordIntoDb(Connection conn, String query, String institutionId, String ddpParticipantId,
                                                    String instanceName, String ddpInstitutionId) {
         Integer mrId = null;
         if (conn != null) {
