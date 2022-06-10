@@ -7,7 +7,7 @@ import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.model.mercury.MercuryOrderRequest;
+import org.broadinstitute.dsm.model.mercury.MercuryOrderDummyRequest;
 import org.broadinstitute.dsm.pubsub.MercuryOrderPublisher;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
@@ -18,21 +18,21 @@ import spark.Response;
 import spark.Route;
 
 @Slf4j
-public class PostMercuryOrderRoute implements Route {
+public class PostMercuryOrderDummyRoute implements Route {
     private String projectId;
     private String topicId;
     private MercuryOrderPublisher mercuryOrderPublisher = new MercuryOrderPublisher(new MercuryOrderDao(), new ParticipantDao());
 
-    public PostMercuryOrderRoute(String projectId, String topicId) {
+    public PostMercuryOrderDummyRoute(String projectId, String topicId) {
         this.projectId = projectId;
         this.topicId = topicId;
     }
 
-    public void publishMessage(MercuryOrderRequest mercuryOrderRequest, DDPInstanceDto ddpInstance, String userId) {
+    public void publishMessage(MercuryOrderDummyRequest mercuryOrderRequest, DDPInstanceDto ddpInstance, String userId) {
         log.info("Publishing message to Mercury");
         mercuryOrderPublisher
                 .createAndPublishMessage(mercuryOrderRequest.getKitLabels(), projectId, topicId, ddpInstance,
-                        mercuryOrderRequest.getDdpParticipantId(), mercuryOrderRequest.getCollaboratorParticipantId(), userId);
+                        mercuryOrderRequest.getCollaboratorParticipantId(), userId);
     }
 
 
@@ -45,7 +45,7 @@ public class PostMercuryOrderRoute implements Route {
         } else if (request.url().contains("/ddp")) {
             userId = "GP_UNIT_TEST";
         }
-        MercuryOrderRequest mercuryOrderRequest = new Gson().fromJson(requestBody, MercuryOrderRequest.class);
+        MercuryOrderDummyRequest mercuryOrderRequest = new Gson().fromJson(requestBody, MercuryOrderDummyRequest.class);
         if (!isValidRequest(mercuryOrderRequest)) {
             log.error("Request not valid");
             return new Result(500, "Request body is not valid");
@@ -60,9 +60,8 @@ public class PostMercuryOrderRoute implements Route {
 
     }
 
-    private boolean isValidRequest(MercuryOrderRequest mercuryOrderRequest) {
-        return (StringUtils.isNotBlank(mercuryOrderRequest.getCollaboratorParticipantId())
-                || StringUtils.isNotBlank(mercuryOrderRequest.getDdpParticipantId())) && mercuryOrderRequest.getKitLabels() != null
+    private boolean isValidRequest(MercuryOrderDummyRequest mercuryOrderRequest) {
+        return (StringUtils.isNotBlank(mercuryOrderRequest.getCollaboratorParticipantId())) && mercuryOrderRequest.getKitLabels() != null
                 && mercuryOrderRequest.getKitLabels().length > 0 && StringUtils.isNotBlank(mercuryOrderRequest.getRealm());
     }
 }

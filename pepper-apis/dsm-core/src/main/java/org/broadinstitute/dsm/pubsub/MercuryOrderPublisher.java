@@ -102,13 +102,11 @@ public class MercuryOrderPublisher {
     }
 
     public void createAndPublishMessage(String[] barcodes, String projectId, String topicId, DDPInstanceDto ddpInstance,
-                                        String ddpParticipantId, String collaboratorParticipantId, String userId) {
-        if (requestHadCollaboratorId(ddpParticipantId, collaboratorParticipantId)) {
-            Optional<String> maybeParticipantId =
-                    participantDao.getParticipantFromCollaboratorParticipantId(collaboratorParticipantId,
-                            String.valueOf(ddpInstance.getDdpInstanceId()));
-            ddpParticipantId = maybeParticipantId.orElseThrow();
-        }
+                                        String collaboratorParticipantId, String userId) {
+        Optional<String> maybeParticipantId =
+                participantDao.getParticipantFromCollaboratorParticipantId(collaboratorParticipantId,
+                        String.valueOf(ddpInstance.getDdpInstanceId()));
+        String ddpParticipantId = maybeParticipantId.orElseThrow();
         log.info("Publishing message to mercury");
         String researchProject = ddpInstance.getResearchProject().orElseThrow();
         String creatorId = ddpInstance.getMercuryOrderCreator().orElseThrow();
@@ -129,8 +127,5 @@ public class MercuryOrderPublisher {
 
     }
 
-    private boolean requestHadCollaboratorId(String ddpParticipantId, String collaboratorParticipantId) {
-        return StringUtils.isBlank(ddpParticipantId) && StringUtils.isNotBlank(collaboratorParticipantId);
-    }
 
 }
