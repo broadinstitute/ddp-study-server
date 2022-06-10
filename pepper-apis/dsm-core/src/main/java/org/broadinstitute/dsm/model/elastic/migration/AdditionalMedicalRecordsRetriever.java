@@ -8,9 +8,9 @@ import java.util.Optional;
 
 import static org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter.OLD_OSTEO_INSTANCE_NAME;
 
-interface AdditionalRecordsRetriever {
+interface AdditionalMedicalRecordsRetriever {
 
-    static Optional<AdditionalRecordsRetriever> fromRealm(String realm) {
+    static Optional<AdditionalMedicalRecordsRetriever> fromRealm(String realm) {
         return OLD_OSTEO_INSTANCE_NAME.equals(realm)
                 ? Optional.of(new NewOsteoMedicalRecordsRetriever())
                 : Optional.empty();
