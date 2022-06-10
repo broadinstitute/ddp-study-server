@@ -78,7 +78,6 @@ import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.tabular.TabularColumnDef;
 import org.broadinstitute.ddp.model.activity.definition.tabular.TabularHeaderDef;
 import org.broadinstitute.ddp.model.activity.definition.tabular.TabularRowDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
@@ -403,17 +402,14 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
 
         var tabularBlock = new TabularBlockDef(2);
         var tabularRowDef = new TabularRowDef();
-        tabularRowDef.getTabularColumnDefs().add(questionBlockDefLU);
-        tabularRowDef.getTabularColumnDefs().add(questionBlockDefRU);
+        tabularRowDef.getQuestions().add(questionBlockDefLU);
+        tabularRowDef.getQuestions().add(questionBlockDefRU);
         tabularBlock.getRows().add(tabularRowDef);
 
         var tabularRowDef2 = new TabularRowDef();
-        tabularRowDef2.getTabularColumnDefs().add(questionBlockDefLU);
-        tabularRowDef2.getTabularColumnDefs().add(questionBlockDefRU);
+        tabularRowDef2.getQuestions().add(questionBlockDefLB);
+        tabularRowDef2.getQuestions().add(questionBlockDefRB);
         tabularBlock.getRows().add(tabularRowDef2);
-
-        //tabularBlock.getRows().add(new TabularRowDef(Arrays.asList(questionLU, questionRU)));
-        //tabularBlock.getRows().add(new TabularRowDef(Arrays.asList(questionLB, questionRB)));
 
         tabularBlock.getHeaders().add(new TabularHeaderDef(1, Template.text("Left column")));
         tabularBlock.getHeaders().add(new TabularHeaderDef(1, Template.text("Right column")));

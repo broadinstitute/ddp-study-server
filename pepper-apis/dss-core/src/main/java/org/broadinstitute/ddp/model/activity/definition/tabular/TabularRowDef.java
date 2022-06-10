@@ -12,12 +12,9 @@ import java.util.List;
 
 @Value
 public class TabularRowDef {
-    //@NotEmpty
-    //@SerializedName("columns")
-    //List<TabularColumnDef> tabularColumnDefs;
 
     @NotEmpty
-    @SerializedName("columns")
-    private List<@Valid @NotNull QuestionBlockDef> tabularColumnDefs = new ArrayList<>();
+    @SerializedName("questions")
+    private List<@Valid @NotNull QuestionBlockDef> questions = new ArrayList<>();
 
 }

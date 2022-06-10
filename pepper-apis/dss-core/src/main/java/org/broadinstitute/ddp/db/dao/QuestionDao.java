@@ -1844,13 +1844,13 @@ public interface QuestionDao extends SqlObject {
             blockDef.setBlockGuid(blockDto.getGuid());
             blockDef.setShownExpr(blockDto.getShownExpr());
             blockDef.setEnabledExpr(blockDto.getEnabledExpr());
-
             blockDefs.put(blockDto.getId(), blockDef);
         }
 
         return blockDefs;
     }
 
+    //todo.. do we need below or can use above method !!
     default Map<Long, QuestionBlockDef> collectTabularBlockDefs(Collection<BlockTabularQuestionDto> blockDtos, long timestamp) {
         if (blockDtos == null || blockDtos.isEmpty()) {
             return new HashMap<>();
@@ -1870,12 +1870,11 @@ public interface QuestionDao extends SqlObject {
             long questionId = blockIdToQuestionId.get(blockDto.getQuestionBlockId());
             QuestionDef questionDef = questionDefs.get(questionId);
 
-            var blockDef = new QuestionBlockDef(questionDef);
+            var blockDef = new QuestionBlockDef(questionDef, blockDto.getColumnSpan());
             blockDef.setBlockId(blockDto.getQuestionBlockId());
             blockDef.setBlockGuid(blockDto.getBlockGuid());
             blockDef.setShownExpr(blockDto.getShownExpr());
             blockDef.setEnabledExpr(blockDto.getEnabledExpr());
-            blockDef.setColumnSpan(blockDto.getColumnSpan());
             blockDefs.put(blockDto.getQuestionBlockId(), blockDef);
         }
 

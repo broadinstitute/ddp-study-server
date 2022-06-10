@@ -31,12 +31,12 @@ public class TabularBlockDef extends FormBlockDef {
         }
         
         final TabularRowDef rowDef = rows.get(row);
-        if ((column < 0) || (column >= rowDef.getTabularColumnDefs().size())) {
+        if ((column < 0) || (column >= rowDef.getQuestions().size())) {
             throw new IndexOutOfBoundsException("The column must be a number between 0 and "
-                    + rowDef.getTabularColumnDefs().size());
+                    + rowDef.getQuestions().size());
         }
 
-        return rowDef.getTabularColumnDefs().get(column);
+        return rowDef.getQuestions().get(column);
     }
 
     public int getRowsCount() {
@@ -48,13 +48,12 @@ public class TabularBlockDef extends FormBlockDef {
         List<TabularRowDef> rowDefs = getRows().stream().collect(Collectors.toList());
         List<QuestionDef> questionDefList = new ArrayList<>();
         for (TabularRowDef rowDef : rowDefs) {
-            for (QuestionBlockDef colDef: rowDef.getTabularColumnDefs()) {
+            for (QuestionBlockDef colDef: rowDef.getQuestions()) {
                 if (colDef != null) {
                     questionDefList.add(colDef.getQuestion());
                 }
             }
         }
-
         return questionDefList.stream();
 
     }

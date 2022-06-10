@@ -37,7 +37,7 @@ public interface JdbiBlockTabular extends SqlObject {
             + "             question_id      = :questionId, "
             + "             _column          = :column, "
             + "             _row             = :row,"
-            + "             column_span   = :columnSpan")
+            + "             column_span      = :columnSpan")
     @GetGeneratedKeys
     long insertQuestion(@Bind("tabularBlockId") long tabularBlockId,
                         @Bind("questionId") long questionId,
@@ -64,12 +64,17 @@ public interface JdbiBlockTabular extends SqlObject {
     @RegisterConstructorMapper(BlockTabularHeaderDto.class)
     List<BlockTabularHeaderDto> findHeadersByBlockIdAndTimestamp(@Bind("blockId") long blockId, @Bind("timestamp") long timestamp);
 
-    @SqlQuery("SELECT btq.*, bt.block_id, bq.block_id as question_block_id, b.block_guid, 'true' as shown_expr, 'true' as enabled_expr"
+    @SqlQuery("SELECT btq.*, bt.block_id, bq.block_id as question_block_id, b.block_guid, "
+            + "     e2.expression_text as 'shown_expr', e1.expression_text as 'enabled_expr'"
             + "  FROM block_tabular_question as btq"
             + "  JOIN block_tabular as bt ON bt.block_tabular_id = btq.block_tabular_id"
             + "  JOIN question as q ON q.question_id = btq.question_id"
-            + "  left join block__question bq on bq.question_id = q.question_id"
-            + "  left join block b on b.block_id = bq.block_id"
+            + "  JOIN block__question bq on bq.question_id = q.question_id"
+            + "  JOIN block b on b.block_id = bq.block_id"
+            + "  LEFT JOIN block__expression be on be.block_id = b.block_id "
+            + "  LEFT JOIN expression e1 on e1.expression_id = be.expression_id "
+            + "  LEFT JOIN block_enabled_expression bee on bee.block_id = b.block_id "
+            + "  LEFT JOIN expression e2 on e2.expression_id = bee.expression_id "
             + "  JOIN revision as rev ON rev.revision_id = q.revision_id"
             + " WHERE bt.block_id in (<blockIds>)"
             + "   AND rev.start_date <= :timestamp"

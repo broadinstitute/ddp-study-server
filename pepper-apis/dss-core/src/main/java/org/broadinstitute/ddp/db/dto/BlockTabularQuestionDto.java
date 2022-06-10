@@ -32,8 +32,6 @@ public class BlockTabularQuestionDto {
     @ColumnName("question_block_id")
     long questionBlockId;
 
-    //BlockDto blockDto;
-
     @ColumnName("block_guid")
     String blockGuid;
 

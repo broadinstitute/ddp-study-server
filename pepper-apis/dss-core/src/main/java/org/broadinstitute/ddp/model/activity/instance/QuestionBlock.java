@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.model.activity.instance;
 
 import java.util.function.Consumer;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
@@ -19,12 +20,21 @@ public final class QuestionBlock extends FormBlock implements Numberable {
     @SerializedName(DISPLAY_NUMBER)
     private Integer displayNumber;
 
+    @Nullable
+    @SerializedName("columnSpan")
+    protected Integer columnSpan;
+
     private transient boolean hideDisplayNumber;
 
-    public QuestionBlock(Question question) {
+    public QuestionBlock(Question question, Integer columnSpan) {
         super(BlockType.QUESTION);
         this.question = MiscUtil.checkNonNull(question, "question");
+        this.columnSpan = columnSpan;
         hideDisplayNumber = question.shouldHideQuestionNumber();
+    }
+
+    public QuestionBlock(Question question) {
+        this(question, null);
     }
 
     public Question getQuestion() {

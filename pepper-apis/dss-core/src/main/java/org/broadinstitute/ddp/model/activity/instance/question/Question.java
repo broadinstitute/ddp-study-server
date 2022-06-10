@@ -71,10 +71,6 @@ public abstract class Question<T extends Answer> implements Renderable {
     @SerializedName("validationFailures")
     protected List<ActivityValidationFailure> activityValidationFailures;
 
-    @Nullable
-    @SerializedName("columnSpan")
-    protected Integer columnSpan;
-
     protected transient long questionId;
     protected transient boolean isRestricted;
     protected transient boolean isDeprecated;
@@ -200,10 +196,6 @@ public abstract class Question<T extends Answer> implements Renderable {
 
     public void setActivityValidationFailures(List<ActivityValidationFailure> activityValidationFailures) {
         this.activityValidationFailures = activityValidationFailures;
-    }
-
-    public void setColumnSpan(@Nullable Integer columnSpan) {
-        this.columnSpan = columnSpan;
     }
 
     /**

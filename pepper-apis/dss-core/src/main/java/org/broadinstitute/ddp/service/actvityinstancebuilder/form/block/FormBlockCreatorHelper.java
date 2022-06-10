@@ -4,8 +4,6 @@ import org.broadinstitute.ddp.db.dto.ComponentDto;
 import org.broadinstitute.ddp.db.dto.InstitutionPhysicianComponentDto;
 import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.TabularBlockDef;
-import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.tabular.TabularColumnDef;
 import org.broadinstitute.ddp.model.activity.definition.tabular.TabularHeaderDef;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
@@ -74,23 +72,20 @@ public class FormBlockCreatorHelper {
         return new ComponentBlock(formComponent);
     }
 
-    //todo.. no data into tabularBlockDef
     TabularBlock createTabularBlock(AIBuilderContext ctx, TabularBlockDef tabularBlockDef) {
-        final List<QuestionBlockDef> allQuestions = new ArrayList<>();
+        final List<QuestionBlock> allQuestions = new ArrayList<>();
         for (int row = 0; row < tabularBlockDef.getRowsCount(); row++) {
             final List<Question> questionsRow = new ArrayList<>();
             for (int column = 0; column < tabularBlockDef.getColumnsCount(); column++) {
                 final QuestionBlockDef questionBlockDef = tabularBlockDef.get(row, column);
-                //final QuestionDef questionDef = columnDef.getQuestion();
-                //final Integer columnSpan = questionBlockDef.getColumnSpan();
                 if (questionBlockDef == null) {
                     questionsRow.add(null);
                     continue;
                 }
-
+                final Integer columnSpan = questionBlockDef.getColumnSpan();
                 Question question = ctx.getAIBuilderFactory().getQuestionCreator().createQuestion(ctx, questionBlockDef.getQuestion());
-                //question.setColumnSpan(columnSpan);
-                allQuestions.add(questionBlockDef);
+                QuestionBlock questionBlock = new QuestionBlock(question, columnSpan);
+                allQuestions.add(questionBlock);
             }
         }
 
@@ -101,9 +96,7 @@ public class FormBlockCreatorHelper {
                     .getTemplateRenderHelper().addTemplate(ctx, headerDef.getLabel())));
         }
 
-        //count the row prompts/header count and add to column count !!
-        return new TabularBlock(tabularBlockDef.getColumnsCount() + headers.size(), headers, allQuestions);
-        //return new TabularBlock(tabularBlockDef.getColumnsCount(), headers, allQuestions);
+        return new TabularBlock(tabularBlockDef.getColumnsCount(), headers, allQuestions);
     }
 
     ConditionalBlock createConditionalBlock(AIBuilderContext ctx, ConditionalBlockDef conditionalBlockDef) {
