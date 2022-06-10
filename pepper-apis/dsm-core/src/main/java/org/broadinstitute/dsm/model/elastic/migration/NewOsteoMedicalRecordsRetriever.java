@@ -7,7 +7,7 @@ import java.util.Map;
 
 import static org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter.NEW_OSTEO_INSTANCE_NAME;
 
-class NewOsteoMedicalRecordsRetriever implements AdditionalRecordsRetriever {
+class NewOsteoMedicalRecordsRetriever implements AdditionalMedicalRecordsRetriever {
 
     @Override
     public Map<String, List<MedicalRecord>> retrieve() {
