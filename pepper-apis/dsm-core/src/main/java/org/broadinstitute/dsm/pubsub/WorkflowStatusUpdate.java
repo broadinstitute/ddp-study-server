@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter.OLD_OSTEO_INSTANCE_NAME;
+
 public class WorkflowStatusUpdate {
     public static final String STUDY_GUID = "studyGuid";
     public static final String PARTICIPANT_GUID = "participantGuid";
@@ -45,11 +47,12 @@ public class WorkflowStatusUpdate {
 
         String studyGuid = attributesMap.get(STUDY_GUID);
         String ddpParticipantId = attributesMap.get(PARTICIPANT_GUID);
-        DDPInstance instance = DDPInstance.getDDPInstanceByGuid(studyGuid);
 
-         if (isOsteoRelatedStatusUpdate(workflow, status)) {
-             OsteoWorkflowStatusUpdate.of(instance, ddpParticipantId).update();
+        if (isOsteoRelatedStatusUpdate(workflow, status)) {
+            DDPInstance instance = DDPInstance.getDDPInstanceByInstanceName(OLD_OSTEO_INSTANCE_NAME);
+            OsteoWorkflowStatusUpdate.of(instance, ddpParticipantId).update();
         } else {
+            DDPInstance instance = DDPInstance.getDDPInstanceByGuid(studyGuid);
             List<ParticipantData> participantDatas = participantDataDao.getParticipantDataByParticipantId(ddpParticipantId);
             Optional<FieldSettingsDto> fieldSetting =
                     fieldSettingsDao.getFieldSettingByColumnNameAndInstanceId(Integer.parseInt(instance.getDdpInstanceId()), workflow);
