@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class UtilTest {
@@ -46,5 +47,21 @@ public class UtilTest {
         assertEquals("column", transformed3);
         assertEquals("column", transformed4);
         assertEquals("columnName", transformed5);
+    }
+
+    @Test
+    public void normalizeOptionalInteger() {
+        Optional<Integer> one = Optional.of(1);
+        Optional<Integer> integerDefaultValue = Optional.of(0);
+        Assert.assertEquals(1, (Object) Util.orElseNull(one, 0));
+        Assert.assertNull(Util.orElseNull(integerDefaultValue, 0));
+    }
+
+    @Test
+    public void normalizeOptionalDouble() {
+        Optional<Double> one = Optional.of(1.0);
+        Optional<Double> doubleDefaultValue = Optional.of(0.0);
+        Assert.assertEquals(1.0, (Object) Util.orElseNull(one, 0.0));
+        Assert.assertNull(Util.orElseNull(doubleDefaultValue, 0.0));
     }
 }

@@ -8,6 +8,9 @@ public class NewOsteoParticipant extends Participant {
         super(participantId, ddpParticipantId, assigneeIdMr, ddpInstanceId, assigneeIdTissue, realm, created, reviewed, crSent, crReceived, notes, minimalMr, abstractionReady, additionalValuesJson, exitDate);
     }
 
+    // empty constructor needed for jackson library
+    public NewOsteoParticipant() {}
+
     public static NewOsteoParticipant copy(Participant that, Long newParticipantId, Integer newDdpInstanceId) {
         return new NewOsteoParticipant(
                 newParticipantId,
