@@ -3,10 +3,10 @@ package org.broadinstitute.dsm.db.dto.ddp.participant;
 import java.util.Optional;
 
 import lombok.Getter;
+import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.pubsub.study.osteo.DataCopyingException;
 
 import static org.broadinstitute.dsm.statics.DBConstants.*;
-import static org.broadinstitute.dsm.statics.DBConstants.ASSIGNEE_ID_TISSUE;
 import static org.broadinstitute.dsm.util.SystemUtil.SYSTEM;
 
 @Getter
@@ -37,20 +37,20 @@ public class ParticipantDto {
     }
 
     public static ParticipantDto copy(int newDdpInstanceId, ParticipantDto that) {
+        Integer assigneeIdMr = Util.orElseNull(that.getAssigneeIdMr(), 0);
+        Integer assigneeIdTissue = Util.orElseNull(that.getAssigneeIdTissue(), 0);
         return new ParticipantDto.Builder()
-                .withParticipantId(that.getParticipantId().orElseThrow(DataCopyingException.withMessage(PARTICIPANT_ID)))
                 .withDdpParticipantId(that.getDdpParticipantId().orElseThrow(DataCopyingException.withMessage(DDP_INSTANCE_ID)))
                 .withLastVersion(that.getLastVersion().orElseThrow())
                 .withLastVersionDate(that.getLastVersionDate().orElse(null))
                 .withDdpInstanceId(newDdpInstanceId)
-                .withReleaseCompleted(that.getReleaseCompleted().orElse(false))
-                .withAssigneeIdMr(that.getAssigneeIdMr().orElseThrow(DataCopyingException.withMessage(ASSIGNEE_ID_MR)))
-                .withAssigneeIdTissue(that.getAssigneeIdTissue().orElseThrow(DataCopyingException.withMessage(ASSIGNEE_ID_TISSUE)))
+                .withReleaseCompleted(that.getReleaseCompleted().orElse(null))
+                .withAssigneeIdMr(assigneeIdMr)
+                .withAssigneeIdTissue(assigneeIdTissue)
                 .withLastChanged(that.getLastChanged())
                 .withChangedBy(that.getChangedBy().orElse(SYSTEM))
                 .build();
     }
-
 
     public static class Builder {
 
@@ -97,18 +97,18 @@ public class ParticipantDto {
             return this;
         }
 
-        public Builder withReleaseCompleted(boolean releaseCompleted) {
-            this.releaseCompleted = Optional.of(releaseCompleted);
+        public Builder withReleaseCompleted(Boolean releaseCompleted) {
+            this.releaseCompleted = Optional.ofNullable(releaseCompleted);
             return this;
         }
 
-        public Builder withAssigneeIdMr(int assigneeIdMr) {
-            this.assigneeIdMr = Optional.of(assigneeIdMr);
+        public Builder withAssigneeIdMr(Integer assigneeIdMr) {
+            this.assigneeIdMr = Optional.ofNullable(assigneeIdMr);
             return this;
         }
 
-        public Builder withAssigneeIdTissue(int assigneeIdTissue) {
-            this.assigneeIdTissue = Optional.of(assigneeIdTissue);
+        public Builder withAssigneeIdTissue(Integer assigneeIdTissue) {
+            this.assigneeIdTissue = Optional.ofNullable(assigneeIdTissue);
             return this;
         }
 
