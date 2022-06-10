@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter.NEW_OSTEO_INSTANCE_NAME;
-import static org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter.OLD_OSTEO_INSTANCE_NAME;
 
 public class NewOsteoParticipantMigrator extends ParticipantMigrator {
 
@@ -17,12 +16,12 @@ public class NewOsteoParticipantMigrator extends ParticipantMigrator {
     }
 
     @Override
-    protected Map<String, Participant> getParticipantsByRealm(String ignored) {
+    protected Map<String, Participant> getParticipantsByRealm(String realm) {
         return super.getParticipantsByRealm(NEW_OSTEO_INSTANCE_NAME);
     }
 
     @Override
-    protected Map<String, ParticipantExit> getExitedParticipantsByRealm(String ignored) {
+    protected Map<String, ParticipantExit> getExitedParticipantsByRealm(String realm) {
         return super.getExitedParticipantsByRealm(NEW_OSTEO_INSTANCE_NAME);
     }
 }

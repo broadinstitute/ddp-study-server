@@ -115,7 +115,7 @@ public class DSMtasksSubscription {
                     //DynamicFieldsMappingMigrator should be first in the list to make sure that mapping will be exported for first
                     new DynamicFieldsMappingMigrator(index, study), new MedicalRecordMigrator(index, study),
                     new OncHistoryDetailsMigrator(index, study), new OncHistoryMigrator(index, study),
-                    new ParticipantDataMigrator(index, study), new NewOsteoParticipantMigrator(index, study),
+                    new ParticipantDataMigrator(index, study), AdditionalParticipantMigratorFactory.of(index, study),
                     new ParticipantMigrator(index, study), new KitRequestShippingMigrator(index, study),
                     new TissueMigrator(index, study), new SMIDMigrator(index, study),
                     new CohortTagMigrator(index, study, new CohortTagDaoImpl()));
