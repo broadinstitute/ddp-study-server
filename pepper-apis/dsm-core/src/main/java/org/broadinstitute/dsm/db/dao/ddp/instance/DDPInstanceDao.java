@@ -10,6 +10,7 @@ import java.util.Optional;
 
 import lombok.NonNull;
 import org.broadinstitute.dsm.db.dao.Dao;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
@@ -63,6 +64,8 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                     + "WHERE is_active = 1";
     private static final String SQL_GET_INSTANCE_ID_BY_GUID =
             "SELECT ddp_instance_id FROM ddp_instance WHERE study_guid = ? ";
+    private static final String SQL_GET_INSTANCE_ID_BY_INSTANCE_NAME =
+            "SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = ? ";
     private static final String SQL_GET_PARTICIPANT_ES_INDEX_BY_ID =
             "SELECT es_participant_index FROM ddp_instance WHERE ddp_instance_id = ?";
     private static final String SQL_GET_PARTICIPANT_ES_INDEX_BY_STUDY_GUID =
@@ -79,6 +82,17 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
     private static final String SQL_SELECT_DDP_INSTANCE_BY_GUID = SQL_BASE_SELECT + "WHERE study_guid = ? ";
     private static final String SQL_SELECT_DDP_INSTANCE_BY_INSTANCE_NAME = SQL_BASE_SELECT + "WHERE instance_name = ? ";
     private static final String SQL_SELECT_DDP_INSTANCE_BY_INSTANCE_ID = SQL_BASE_SELECT + "WHERE ddp_instance_id = ? ";
+
+
+    private static DDPInstanceDao ddpInstanceDao;
+
+    public static DDPInstanceDao of() {
+        if (ddpInstanceDao == null) {
+            ddpInstanceDao = new DDPInstanceDao();
+        }
+        return ddpInstanceDao;
+    }
+
 
     public static boolean getRole(@NonNull String realm, @NonNull String role) {
         SimpleResult results = inTransaction((conn) -> {
@@ -360,5 +374,29 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
             throw new RuntimeException("Couldn't get ddp instance for " + ddpInstanceId, results.resultException);
         }
         return Optional.ofNullable((DDPInstanceDto) results.resultValue);
+    }
+
+    public int getDDPInstanceIdByInstanceName(String instanceName) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_INSTANCE_ID_BY_INSTANCE_NAME)) {
+                stmt.setString(1, instanceName);
+                try (ResultSet instanceIdRs = stmt.executeQuery()) {
+                    if (instanceIdRs.next()) {
+                        dbVals.resultValue = instanceIdRs.getInt(DBConstants.DDP_INSTANCE_ID);
+                    }
+                } catch (SQLException e) {
+                    throw new RuntimeException("Error getting information for " + instanceName, e);
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Couldn't get realm information for " + instanceName, results.resultException);
+        }
+        return (int) results.resultValue;
     }
 }
