@@ -93,4 +93,6 @@
     <include file="liquibase/CMI/DDP-7641_addOS2.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/DDP-8019_cohort_tagging.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/DDP-7556_mercury_sequencing.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/CMI/DDP-7641_bookmark_osteo2.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/CMI/DDP-7641_apply_OS_tag_to_old_osteo_pts.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
