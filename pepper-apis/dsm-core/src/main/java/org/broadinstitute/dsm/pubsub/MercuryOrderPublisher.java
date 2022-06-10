@@ -17,6 +17,7 @@ import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.xerces.impl.dv.util.Base64;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -24,6 +25,7 @@ import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderDto;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderUseCase;
 import org.broadinstitute.dsm.exception.DSMPubSubException;
 import org.broadinstitute.dsm.model.mercury.MercuryPdoOrder;
+import org.broadinstitute.dsm.model.mercury.MercuryPdoOrderBase;
 import org.broadinstitute.dsm.util.NanoIdUtil;
 
 @Slf4j
@@ -50,12 +52,13 @@ public class MercuryOrderPublisher {
             throws IOException, InterruptedException {
         TopicName topicName = TopicName.of(projectId, topicId);
         Publisher publisher = null;
+        String message = Base64.encode(messageData.getBytes());
 
         try {
             // Create a publisher instance with default settings bound to the topic
             publisher = Publisher.newBuilder(topicName).build();
 
-            ByteString data = ByteString.copyFromUtf8(messageData);
+            ByteString data = ByteString.copyFromUtf8(message);
             PubsubMessage pubsubMessage = PubsubMessage.newBuilder()
                     .setData(data).build();
 
@@ -99,7 +102,7 @@ public class MercuryOrderPublisher {
     }
 
     public void createAndPublishMessage(String[] barcodes, String projectId, String topicId, DDPInstanceDto ddpInstance,
-                                        String ddpParticipantId, String collaboratorParticipantId) {
+                                        String ddpParticipantId, String collaboratorParticipantId, String userId) {
         if (requestHadCollaboratorId(ddpParticipantId, collaboratorParticipantId)) {
             Optional<String> maybeParticipantId =
                     participantDao.getParticipantFromCollaboratorParticipantId(collaboratorParticipantId,
@@ -107,18 +110,19 @@ public class MercuryOrderPublisher {
             ddpParticipantId = maybeParticipantId.orElseThrow();
         }
         log.info("Publishing message to mercury");
-        String researchProject = ddpInstance.getResearchProject();
+        String researchProject = ddpInstance.getResearchProject().orElseThrow();
         String creatorId = ddpInstance.getMercuryOrderCreator().orElseThrow();
         String mercuryOrderId = createMercuryUniqueOrderId();
         MercuryPdoOrder mercuryPdoOrder = new MercuryPdoOrder(creatorId, mercuryOrderId, researchProject, barcodes);
-        String json = new Gson().toJson(mercuryPdoOrder);
+        MercuryPdoOrderBase mercuryPdoOrderBase = new MercuryPdoOrderBase(mercuryPdoOrder);
+        String json = new Gson().toJson(mercuryPdoOrderBase);
         if (StringUtils.isNotBlank(json)) {
             try {
-                List<MercuryOrderDto> newOrders = MercuryOrderUseCase.createAllOrders(barcodes, ddpParticipantId, mercuryOrderId);
+                List<MercuryOrderDto> newOrders = MercuryOrderUseCase.createAllOrders(barcodes, ddpParticipantId, mercuryOrderId, userId);
                 this.publishWithErrorHandler(projectId, topicId, json);
                 this.mercuryOrderDao.insertMercuryOrders(newOrders);
             } catch (Exception e) {
-                throw new RuntimeException("Unable to  publish to pubsub/ db " + json);
+                throw new RuntimeException("Unable to  publish to pubsub/ db " + json, e);
             }
 
         }

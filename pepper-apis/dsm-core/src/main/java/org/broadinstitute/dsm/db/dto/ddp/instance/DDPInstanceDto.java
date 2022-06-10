@@ -66,6 +66,10 @@ public class DDPInstanceDto {
         return Optional.ofNullable(this.mercuryOrderCreator);
     }
 
+    public Optional<String> getResearchProject() {
+        return Optional.ofNullable(this.researchProject);
+    }
+
     public static class Builder {
         Integer ddpInstanceId;
         String instanceName;

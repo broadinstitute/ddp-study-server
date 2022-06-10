@@ -133,7 +133,8 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                 stmt.setString(18, ddpInstanceDto.getEsActivityDefinitionIndex());
                 stmt.setString(19, ddpInstanceDto.getEsUsersIndex());
                 stmt.setObject(20, ddpInstanceDto.getStudyPreFilter());
-                stmt.setObject(21, ddpInstanceDto.getResearchProject());
+                stmt.setObject(21, ddpInstanceDto.getResearchProject().orElse(null));
+                stmt.setObject(22, ddpInstanceDto.getMercuryOrderCreator().orElse(null));
                 stmt.executeUpdate();
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {

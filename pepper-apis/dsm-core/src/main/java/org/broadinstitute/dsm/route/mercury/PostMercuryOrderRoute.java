@@ -10,7 +10,9 @@ import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.mercury.MercuryOrderRequest;
 import org.broadinstitute.dsm.pubsub.MercuryOrderPublisher;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
+import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.lddp.handlers.util.Result;
+import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -26,27 +28,34 @@ public class PostMercuryOrderRoute implements Route {
         this.topicId = topicId;
     }
 
-    public void publishMessage(MercuryOrderRequest mercuryOrderRequest, DDPInstanceDto ddpInstance) {
+    public void publishMessage(MercuryOrderRequest mercuryOrderRequest, DDPInstanceDto ddpInstance, String userId) {
         log.info("Publishing message to Mercury");
         mercuryOrderPublisher
                 .createAndPublishMessage(mercuryOrderRequest.getKitLabels(), projectId, topicId, ddpInstance,
-                        mercuryOrderRequest.getDdpParticipantId(), mercuryOrderRequest.getCollaboratorParticipantId());
+                        mercuryOrderRequest.getDdpParticipantId(), mercuryOrderRequest.getCollaboratorParticipantId(), userId);
     }
 
 
     public Object handle(Request request, Response response) {
         String requestBody = request.body();
+        QueryParamsMap queryParams = request.queryMap();
+        String userId = "";
+        if (queryParams.value(UserUtil.USER_ID) != null) {
+            userId = queryParams.get(UserUtil.USER_ID).value();
+        } else if (request.url().contains("/ddp")) {
+            userId = "GP_UNIT_TEST";
+        }
         MercuryOrderRequest mercuryOrderRequest = new Gson().fromJson(requestBody, MercuryOrderRequest.class);
         if (!isValidRequest(mercuryOrderRequest)) {
             log.error("Request not valid");
-            return new Result(500, UserErrorMessages.CONTACT_DEVELOPER);
+            return new Result(500, "Request body is not valid");
         }
         DDPInstanceDto ddpInstance = new DDPInstanceDao().getDDPInstanceByInstanceName(mercuryOrderRequest.getRealm()).orElseThrow();
         if (ddpInstance == null) {
             log.error("Realm was null for " + mercuryOrderRequest.getRealm());
             return new Result(500, UserErrorMessages.CONTACT_DEVELOPER);
         }
-        publishMessage(mercuryOrderRequest, ddpInstance);
+        publishMessage(mercuryOrderRequest, ddpInstance, userId);
         return new Result(200);
 
     }
