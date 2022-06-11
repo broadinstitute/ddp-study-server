@@ -6,7 +6,6 @@ import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
