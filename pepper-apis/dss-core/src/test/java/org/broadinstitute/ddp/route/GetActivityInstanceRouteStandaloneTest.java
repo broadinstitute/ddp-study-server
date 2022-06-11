@@ -682,10 +682,10 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .body("sections[11].blocks[0].headers[1].columnSpan", equalTo(1))
                 .body("sections[11].blocks[0].headers[1].label", equalTo("Right column"))
                 .body("sections[11].blocks[0].content.size()", equalTo(4))
-                .body("sections[11].blocks[0].content[0].stableId", equalTo("QUESTION_LU"))
-                .body("sections[11].blocks[0].content[1].stableId", equalTo("QUESTION_RU"))
-                .body("sections[11].blocks[0].content[2].stableId", equalTo("QUESTION_LB"))
-                .body("sections[11].blocks[0].content[3].stableId", equalTo("QUESTION_RB"));
+                .body("sections[11].blocks[0].content[0].question.stableId", equalTo("QUESTION_LU"))
+                .body("sections[11].blocks[0].content[1].question.stableId", equalTo("QUESTION_RU"))
+                .body("sections[11].blocks[0].content[2].question.stableId", equalTo("QUESTION_LB"))
+                .body("sections[11].blocks[0].content[3].question.stableId", equalTo("QUESTION_RB"));
     }
 
     @Test
