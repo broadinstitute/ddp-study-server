@@ -337,7 +337,7 @@ public interface SectionBlockDao extends SqlObject {
         LOG.info("Inserted {} headers for tabular block {}", block.getHeaders().size(), tabularId);
 
         for (int row = 0; row < block.getRows().size(); row++) {
-            for (int column = 0; column < block.getRows().get(row).getTabularColumnDefs().size(); column++) {
+            for (int column = 0; column < block.getRows().get(row).getQuestions().size(); column++) {
                 final var questionBlockDef = block.get(row, column);
 
                 if (questionBlockDef == null || questionBlockDef.getQuestion() == null) {
@@ -839,7 +839,7 @@ public interface SectionBlockDao extends SqlObject {
             for (QuestionBlockDef[] row : questionsTable) {
                 TabularRowDef rowDef = new TabularRowDef();
                 for (QuestionBlockDef col : row) {
-                    rowDef.getTabularColumnDefs().add(col);
+                    rowDef.getQuestions().add(col);
                 }
                 rowDefs.add(rowDef);
             }
