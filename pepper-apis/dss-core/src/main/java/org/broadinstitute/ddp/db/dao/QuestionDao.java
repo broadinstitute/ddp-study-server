@@ -1850,7 +1850,6 @@ public interface QuestionDao extends SqlObject {
         return blockDefs;
     }
 
-    //todo.. do we need below or can use above method !!
     default Map<Long, QuestionBlockDef> collectTabularBlockDefs(Collection<BlockTabularQuestionDto> blockDtos, long timestamp) {
         if (blockDtos == null || blockDtos.isEmpty()) {
             return new HashMap<>();

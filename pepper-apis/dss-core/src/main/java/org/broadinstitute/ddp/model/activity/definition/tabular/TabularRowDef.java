@@ -15,6 +15,6 @@ public class TabularRowDef {
 
     @NotEmpty
     @SerializedName("questions")
-    private List<@Valid @NotNull QuestionBlockDef> questions = new ArrayList<>();
+    private List<@Valid QuestionBlockDef> questions = new ArrayList<>();
 
 }

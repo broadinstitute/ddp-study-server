@@ -339,7 +339,6 @@ public interface SectionBlockDao extends SqlObject {
         for (int row = 0; row < block.getRows().size(); row++) {
             for (int column = 0; column < block.getRows().get(row).getQuestions().size(); column++) {
                 final var questionBlockDef = block.get(row, column);
-
                 if (questionBlockDef == null || questionBlockDef.getQuestion() == null) {
                     continue;
                 }

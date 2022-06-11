@@ -82,10 +82,8 @@ public class FormBlockCreatorHelper {
                     questionsRow.add(null);
                     continue;
                 }
-                final Integer columnSpan = questionBlockDef.getColumnSpan();
                 Question question = ctx.getAIBuilderFactory().getQuestionCreator().createQuestion(ctx, questionBlockDef.getQuestion());
-                QuestionBlock questionBlock = new QuestionBlock(question, columnSpan);
-                allQuestions.add(questionBlock);
+                allQuestions.add(new QuestionBlock(question, questionBlockDef.getColumnSpan()));
             }
         }
 
