@@ -83,7 +83,11 @@ public class FormBlockCreatorHelper {
                     continue;
                 }
                 Question question = ctx.getAIBuilderFactory().getQuestionCreator().createQuestion(ctx, questionBlockDef.getQuestion());
-                allQuestions.add(new QuestionBlock(question, questionBlockDef.getColumnSpan()));
+                QuestionBlock questionBlock = new QuestionBlock(question, questionBlockDef.getColumnSpan());
+                questionBlock.setGuid(questionBlockDef.getBlockGuid());
+                questionBlock.setShownExpr(questionBlockDef.getShownExpr());
+                questionBlock.setEnabledExpr(questionBlockDef.getEnabledExpr());
+                allQuestions.add(questionBlock);
             }
         }
 

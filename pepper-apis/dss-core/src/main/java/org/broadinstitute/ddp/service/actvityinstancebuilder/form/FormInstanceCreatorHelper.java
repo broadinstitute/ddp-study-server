@@ -8,13 +8,7 @@ import java.util.Map;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.exception.DDPException;
-import org.broadinstitute.ddp.model.activity.instance.ConditionalBlock;
-import org.broadinstitute.ddp.model.activity.instance.FormBlock;
-import org.broadinstitute.ddp.model.activity.instance.FormInstance;
-import org.broadinstitute.ddp.model.activity.instance.FormSection;
-import org.broadinstitute.ddp.model.activity.instance.GroupBlock;
-import org.broadinstitute.ddp.model.activity.instance.MailingAddressComponent;
-import org.broadinstitute.ddp.model.activity.instance.Numberable;
+import org.broadinstitute.ddp.model.activity.instance.*;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.PexInterpreter;
@@ -57,7 +51,7 @@ public class FormInstanceCreatorHelper {
                         // Questions within the nested activity itself are not considered.
                         children = new ArrayList<>();
                     } else if (block.getBlockType() == BlockType.TABULAR) {
-                        children = new ArrayList<>();
+                        children = ((TabularBlock) block).getAllQuestionBlocks();
                     } else {
                         throw new DDPException("Unhandled container block type " + block.getBlockType());
                     }

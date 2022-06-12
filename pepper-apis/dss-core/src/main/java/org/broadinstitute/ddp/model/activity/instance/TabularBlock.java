@@ -52,4 +52,9 @@ public final class TabularBlock extends FormBlock {
         StreamEx.of(headers).forEach(header -> header.setLabel(rendered.get(header.getLabelTemplateId())));
         streamQuestions().forEach(question -> question.applyRenderedTemplates(rendered, style));
     }
+
+    public List<FormBlock> getAllQuestionBlocks() {
+        return StreamEx.of(rows).nonNull().collect(Collectors.toList());
+    }
+
 }
