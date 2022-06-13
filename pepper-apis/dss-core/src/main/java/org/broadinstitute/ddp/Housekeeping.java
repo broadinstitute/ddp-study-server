@@ -5,11 +5,11 @@ import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskConnectionSe
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -40,6 +40,10 @@ import com.google.pubsub.v1.Subscription;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Options;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
@@ -203,15 +207,37 @@ public class Housekeeping {
     }
 
     public static void start(String[] args, SendGridSupplier sendGridSupplier) {
+        boolean housekeepingLocalSetup = false;
+        boolean usePubSubEmulator = false;
+        try {
+            Options options = new Options();
+            options.addOption(null, "local-housekeeping", false, "starts housekeeping as local service");
+            options.addOption(null, "emulator", false, "starts housekeeping as local emulator client");
+            CommandLineParser parser = new DefaultParser();
+            CommandLine cmd = parser.parse(options, args);
+            housekeepingLocalSetup = cmd.hasOption("local-housekeeping");
+            usePubSubEmulator = !housekeepingLocalSetup && cmd.hasOption("emulator");
+        } catch (Exception e) {
+            log.info("command line parameters parse error");
+        }
+
         LogbackConfigurationPrinter.printLoggingConfiguration();
         Config cfg = ConfigManager.getInstance().getConfig();
         boolean doLiquibase = cfg.getBoolean(ConfigFile.DO_LIQUIBASE);
         int maxConnections = cfg.getInt(ConfigFile.HOUSEKEEPING_NUM_POOLED_CONNECTIONS);
         String pubSubProject = cfg.getString(ConfigFile.GOOGLE_PROJECT_ID);
 
-        boolean usePubSubEmulator = cfg.getBoolean(ConfigFile.USE_PUBSUB_EMULATOR);
-        String housekeepingDbUrl = cfg.getString(TransactionWrapper.DB.HOUSEKEEPING.getDbUrlConfigKey());
+        if (!usePubSubEmulator) {
+            usePubSubEmulator = !housekeepingLocalSetup && cfg.getBoolean(ConfigFile.USE_PUBSUB_EMULATOR);
+        }
         String apisDbUrl = cfg.getString(TransactionWrapper.DB.APIS.getDbUrlConfigKey());
+
+        final String housekeepingDbUrl = (usePubSubEmulator || housekeepingLocalSetup)
+                ? apisDbUrl
+                : cfg.getString(TransactionWrapper.DB.HOUSEKEEPING.getDbUrlConfigKey());
+        final String proxy = (usePubSubEmulator || housekeepingLocalSetup)
+                ? null
+                : ConfigUtil.getStrIfPresent(cfg, ConfigFile.Sendgrid.PROXY);
 
         Config sqlConfig = ConfigFactory.load(ConfigFile.SQL_CONFIG_FILE);
         DBUtils.loadDaoSqlCommands(sqlConfig);
@@ -232,24 +258,27 @@ public class Housekeeping {
         }
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
 
-        setupScheduler(cfg);
+        setupScheduler(cfg, !housekeepingLocalSetup && !usePubSubEmulator);
         setupTaskReceiver(cfg, pubSubProject);
         setupFileScanResultReceiver(cfg, pubSubProject);
 
         final PubSubConnectionManager pubsubConnectionManager = new PubSubConnectionManager(usePubSubEmulator);
 
-        PubSubTaskConnectionService pubSubTaskConnectionService = new PubSubTaskConnectionService(
-                pubsubConnectionManager,
-                pubSubProject,
-                cfg.getString(ConfigFile.PUBSUB_TASKS_SUB),
-                cfg.getString(ConfigFile.PUBSUB_TASKS_RESULT_TOPIC),
-                ConfigUtil.getIntOrElse(cfg, PUBSUB_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT,
-                        DEFAULT_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT_SEC),
-                new PubSubTaskProcessorFactoryImpl());
-        try {
-            pubSubTaskConnectionService.create();
-        } catch (PubSubTaskException e) {
-            log.error("Failed to init PubSubTask API", e);
+        PubSubTaskConnectionService pubSubTaskConnectionService = null;
+        if (!housekeepingLocalSetup) {
+            pubSubTaskConnectionService = new PubSubTaskConnectionService(
+                    pubsubConnectionManager,
+                    pubSubProject,
+                    cfg.getString(ConfigFile.PUBSUB_TASKS_SUB),
+                    cfg.getString(ConfigFile.PUBSUB_TASKS_RESULT_TOPIC),
+                    ConfigUtil.getIntOrElse(cfg, PUBSUB_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT,
+                            DEFAULT_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT_SEC),
+                    new PubSubTaskProcessorFactoryImpl());
+            try {
+                pubSubTaskConnectionService.create();
+            } catch (PubSubTaskException e) {
+                log.error("Failed to init PubSubTask API", e);
+            }
         }
 
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
@@ -264,7 +293,7 @@ public class Housekeeping {
                 Subscription subscription = pubsubConnectionManager
                         .createSubscriptionIfNotExists(projectSubscriptionName, projectTopicName);
                 // in the real world, listen differently
-                setupMessageReceiver(pubsubConnectionManager, projectSubscriptionName, cfg, sendGridSupplier);
+                setupMessageReceiver(pubsubConnectionManager, projectSubscriptionName, cfg, sendGridSupplier, proxy);
             }
         });
 
@@ -387,7 +416,7 @@ public class Housekeeping {
                                                             .orElse(false);
                                                     if (shouldDeleteEvent) {
                                                         log.warn("Unable to create message for event with "
-                                                                + "queued_event_id={}, proceeding to delete",
+                                                                        + "queued_event_id={}, proceeding to delete",
                                                                 pendingEvent.getQueuedEventId(), e);
                                                         queuedEventDao.deleteAllByQueuedEventId(
                                                                 pendingEvent.getQueuedEventId());
@@ -395,8 +424,8 @@ public class Housekeeping {
                                                         // event.
                                                     } else {
                                                         log.error("Could not create message for event with "
-                                                                + "queued_event_id={}"
-                                                                + " because there is no email address to sent to",
+                                                                        + "queued_event_id={}"
+                                                                        + " because there is no email address to sent to",
                                                                 pendingEvent.getQueuedEventId(), e);
                                                     }
                                                 } catch (MessageBuilderException e) {
@@ -483,10 +512,10 @@ public class Housekeeping {
         log.info("Housekeeping is shutting down");
     }
 
-    private static void setupScheduler(Config cfg) {
+    private static void setupScheduler(Config cfg, boolean allowed) {
         boolean runScheduler = cfg.getBoolean(ConfigFile.RUN_SCHEDULER);
         boolean enableHKeepTasks = cfg.getBoolean(ConfigFile.PUBSUB_ENABLE_HKEEP_TASKS);
-        if (runScheduler || enableHKeepTasks) {
+        if (allowed && (runScheduler || enableHKeepTasks)) {
             log.info("Booting job scheduler...");
             scheduler = JobScheduler.initializeWith(cfg);
             try {
@@ -709,14 +738,14 @@ public class Housekeeping {
     }
 
     private static void setupMessageReceiver(PubSubConnectionManager pubsubConnectionManager, ProjectSubscriptionName
-            projectSubscriptionName, Config cfg, SendGridSupplier sendGridSupplier) {
+            projectSubscriptionName, Config cfg, SendGridSupplier sendGridSupplier, String proxy) {
         PdfService pdfService = new PdfService();
         PdfBucketService pdfBucketService = new PdfBucketService(cfg);
         PdfGenerationService pdfGenerationService = new PdfGenerationService();
         PdfGenerationHandler pdfGenerationHandler = new PdfGenerationHandler(pdfService, pdfBucketService, pdfGenerationService);
         Gson gson = new Gson();
         if (sendGridSupplier == null) {
-            sendGridSupplier = apiKey -> new SendGridClient(apiKey, ConfigUtil.getStrIfPresent(cfg, ConfigFile.Sendgrid.PROXY));
+            sendGridSupplier = apiKey -> new SendGridClient(apiKey, proxy);
         }
         final SendGridSupplier sendGridProvider = sendGridSupplier;
         try {
@@ -760,31 +789,7 @@ public class Housekeeping {
                                                         + " is not in the pepper database");
                                             }
 
-                                            var sendGridKey = notificationMessage.getApiKey();
-
-                                            /*
-                                                SendGrid keys are in the format:
-                                                SG.<key-id>.<key>
-                                                The <key-id> part is not considered secret, and
-                                                can be used to refer to the key directly (SendGrid's
-                                                APIs allow for this as well)
-                                            */
-                                            var keyParts = sendGridKey.split("\\.");
-
-                                            /*
-                                            Be a little careful here. If the key doesn't match
-                                                the exact format we're looking for, note that there's
-                                                an issue with the format, and don't log anything else.
-                                            This is to avoid a situation where the format changes and
-                                                we accidentally write the entire key to the log.
-                                            */
-                                            if (keyParts.length == 3 && keyParts[0].equals("SG")) {
-                                                log.info("creating EmailNotificationHandler using SendGrid key id {}", keyParts[1]);
-                                            } else {
-                                                log.warn("SendGrid API key is in an unexpected format.");
-                                            }
-
-                                            new EmailNotificationHandler(sendGridProvider.get(sendGridKey),
+                                            new EmailNotificationHandler(sendGridProvider.get(notificationMessage.getApiKey()),
                                                     pdfService, pdfBucketService, pdfGenerationService)
                                                     .handleMessage(notificationMessage);
 
