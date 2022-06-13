@@ -782,7 +782,31 @@ public class Housekeeping {
                                                         + " is not in the pepper database");
                                             }
 
-                                            new EmailNotificationHandler(sendGridProvider.get(notificationMessage.getApiKey()),
+                                            var sendGridKey = notificationMessage.getApiKey();
+
+                                            /*
+                                                SendGrid keys are in the format:
+                                                SG.<key-id>.<key>
+                                                The <key-id> part is not considered secret, and
+                                                can be used to refer to the key directly (SendGrid's
+                                                APIs allow for this as well)
+                                            */
+                                            var keyParts = sendGridKey.split("\\.");
+
+                                            /*
+                                            Be a little careful here. If the key doesn't match
+                                                the exact format we're looking for, note that there's
+                                                an issue with the format, and don't log anything else.
+                                            This is to avoid a situation where the format changes and
+                                                we accidentally write the entire key to the log.
+                                            */
+                                            if (keyParts.length == 3 && keyParts[0].equals("SG")) {
+                                                log.info("creating EmailNotificationHandler using SendGrid key id {}", keyParts[1]);
+                                            } else {
+                                                log.warn("SendGrid API key is in an unexpected format.");
+                                            }
+
+                                            new EmailNotificationHandler(sendGridProvider.get(sendGridKey),
                                                     pdfService, pdfBucketService, pdfGenerationService)
                                                     .handleMessage(notificationMessage);
 
