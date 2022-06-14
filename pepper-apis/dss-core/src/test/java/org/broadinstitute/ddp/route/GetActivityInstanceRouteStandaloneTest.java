@@ -79,7 +79,6 @@ import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.tabular.TabularHeaderDef;
-import org.broadinstitute.ddp.model.activity.definition.tabular.TabularRowDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
 import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
@@ -401,11 +400,11 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         final QuestionBlockDef questionBlockDefRB = new QuestionBlockDef(questionRB);
 
         var tabularBlock = new TabularBlockDef(2);
-        tabularBlock.getBlocks().add(questionBlockDefLB);
-        tabularBlock.getBlocks().add(questionBlockDefRB);
+        tabularBlock.getQuestionBlocks().add(questionBlockDefLB);
+        tabularBlock.getQuestionBlocks().add(questionBlockDefRB);
 
-        tabularBlock.getBlocks().add(questionBlockDefLU);
-        tabularBlock.getBlocks().add(questionBlockDefRU);
+        tabularBlock.getQuestionBlocks().add(questionBlockDefLU);
+        tabularBlock.getQuestionBlocks().add(questionBlockDefRU);
 
         tabularBlock.getHeaders().add(new TabularHeaderDef(1, Template.text("Left column")));
         tabularBlock.getHeaders().add(new TabularHeaderDef(1, Template.text("Right column")));

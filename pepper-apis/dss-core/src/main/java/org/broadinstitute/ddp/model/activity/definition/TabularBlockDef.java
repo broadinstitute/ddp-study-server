@@ -16,18 +16,16 @@ import java.util.stream.Stream;
 public class TabularBlockDef extends FormBlockDef {
     int columnsCount;
     List<@Valid @NonNull TabularHeaderDef> headers = new ArrayList<>();
-
-    List<@Valid QuestionBlockDef> blocks = new ArrayList<>();
+    List<@Valid QuestionBlockDef> questionBlocks = new ArrayList<>();
 
     public TabularBlockDef(final int columnsCount) {
         super(BlockType.TABULAR);
-
         this.columnsCount = columnsCount;
     }
 
     @Override
     public Stream<QuestionDef> getQuestions() {
-        return StreamEx.of(getBlocks())
+        return StreamEx.of(getQuestionBlocks())
                 .map(QuestionBlockDef::getQuestion)
                 .nonNull();
     }

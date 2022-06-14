@@ -74,7 +74,7 @@ public class FormBlockCreatorHelper {
 
     TabularBlock createTabularBlock(AIBuilderContext ctx, TabularBlockDef tabularBlockDef) {
         final List<QuestionBlock> allQuestions = new ArrayList<>();
-        for (QuestionBlockDef questionBlockDef : tabularBlockDef.getBlocks()) {
+        for (QuestionBlockDef questionBlockDef : tabularBlockDef.getQuestionBlocks()) {
             if (questionBlockDef == null) {
                 continue;
             }
