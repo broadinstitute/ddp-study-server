@@ -181,7 +181,7 @@ public class OsteoConsentVersion2 implements CustomTask {
         long activityPedConsentId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCodeParentalConsent);
 
         handle.attach(SqlHelper.class).updateActivityNameAndTitle(activityAssentConsentId, "Research Consent & Assent Form");
-        handle.attach(SqlHelper.class).updateActivityNameAndTitle(activityPedConsentId, "Research Consent");
+        handle.attach(SqlHelper.class).updateActivityNameAndTitle(activityPedConsentId, "Research Consent Form");
     }
 
     private void updateIntro(Handle handle, StudyDto studyDto, RevisionMetadata meta, ActivityVersionDto ver) {
