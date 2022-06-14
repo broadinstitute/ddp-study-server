@@ -60,14 +60,6 @@
                 <constraints nullable="false" references="block_tabular(block_tabular_id)" foreignKeyName="block_tabular_question_block_fk"/>
             </column>
 
-            <column name="_column" type="bigint">
-                <constraints nullable="false" />
-            </column>
-
-            <column name="_row" type="bigint">
-                <constraints nullable="false" />
-            </column>
-
             <column name="question_id" type="bigint">
                 <constraints nullable="false"
                              references="question(question_id)"
