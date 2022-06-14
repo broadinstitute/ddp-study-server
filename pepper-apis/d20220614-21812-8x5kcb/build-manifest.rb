@@ -1,6 +1,0 @@
-render "testing-inmemorydb.conf.ctmpl"
-copy_secret "itextkey",nil,"itextkey.xml"
-render "local-java-props.txt.ctmpl"
-copy_file "post_deploy_smoketest.sh"
-copy_secret "housekeeping-service-account.json"
-copy_file "waf.conf"
