@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.model.activity.definition;
 
 import lombok.NonNull;
 import lombok.Value;
+import one.util.streamex.StreamEx;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.tabular.TabularHeaderDef;
 import org.broadinstitute.ddp.model.activity.definition.tabular.TabularRowDef;
@@ -9,8 +10,8 @@ import org.broadinstitute.ddp.model.activity.types.BlockType;
 
 import javax.validation.Valid;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Value
@@ -45,15 +46,10 @@ public class TabularBlockDef extends FormBlockDef {
 
     @Override
     public Stream<QuestionDef> getQuestions() {
-        List<TabularRowDef> rowDefs = getRows().stream().collect(Collectors.toList());
-        List<QuestionDef> questionDefList = new ArrayList<>();
-        for (TabularRowDef rowDef : rowDefs) {
-            for (QuestionBlockDef colDef: rowDef.getQuestions()) {
-                if (colDef != null) {
-                    questionDefList.add(colDef.getQuestion());
-                }
-            }
-        }
-        return questionDefList.stream();
+        return StreamEx.of(getRows())
+                .map(TabularRowDef::getQuestions)
+                .flatMap(Collection::stream)
+                .nonNull()
+                .map(QuestionBlockDef::getQuestion);
     }
 }
