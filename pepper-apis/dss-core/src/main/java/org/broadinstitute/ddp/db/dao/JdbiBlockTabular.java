@@ -56,7 +56,8 @@ public interface JdbiBlockTabular extends SqlObject {
             + "  JOIN revision as rev ON rev.revision_id = bt.revision_id"
             + " WHERE bt.block_id = :blockId"
             + "   AND rev.start_date <= :timestamp"
-            + "   AND (rev.end_date is null or :timestamp < rev.end_date)")
+            + "   AND (rev.end_date is null or :timestamp < rev.end_date)"
+            + " order by bth.block_tabular_header_id")
     @RegisterConstructorMapper(BlockTabularHeaderDto.class)
     List<BlockTabularHeaderDto> findHeadersByBlockIdAndTimestamp(@Bind("blockId") long blockId, @Bind("timestamp") long timestamp);
 
