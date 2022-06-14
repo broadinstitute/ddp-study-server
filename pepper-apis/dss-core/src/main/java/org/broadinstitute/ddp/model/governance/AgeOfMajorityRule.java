@@ -3,64 +3,37 @@ package org.broadinstitute.ddp.model.governance;
 import java.time.LocalDate;
 import java.util.Optional;
 
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 /**
  * Represents rule that helps determine if participant has reached the moment of age-of-majority, and for calculating that date.
  */
+@Value
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class AgeOfMajorityRule {
+    @ColumnName("age_of_majority_rule_id")
+    long id;
 
-    private long id;
-    private long policyId;
-    private String condition;
-    private int age;
-    private Integer prepMonths;
-    private int order;
+    @ColumnName("study_governance_policy_id")
+    long policyId;
 
-    @JdbiConstructor
-    public AgeOfMajorityRule(@ColumnName("age_of_majority_rule_id") long id,
-                             @ColumnName("study_governance_policy_id") long policyId,
-                             @ColumnName("condition_expression") String condition,
-                             @ColumnName("age") int age,
-                             @ColumnName("preparation_months") Integer prepMonths,
-                             @ColumnName("execution_order") int order) {
-        this.id = id;
-        this.policyId = policyId;
-        this.condition = condition;
-        this.age = age;
-        this.prepMonths = prepMonths;
-        this.order = order;
-    }
+    @ColumnName("condition_expression")
+    String condition;
+
+    @ColumnName("age")
+    int age;
+
+    @ColumnName("preparation_months")
+    Integer prepMonths;
+
+    @ColumnName("execution_order")
+    int order;
 
     public AgeOfMajorityRule(String condition, int age, Integer prepMonths) {
-        this.condition = condition;
-        this.age = age;
-        this.prepMonths = prepMonths;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public long getPolicyId() {
-        return policyId;
-    }
-
-    public String getCondition() {
-        return condition;
-    }
-
-    public int getAge() {
-        return age;
-    }
-
-    public Integer getPrepMonths() {
-        return prepMonths;
-    }
-
-    public int getOrder() {
-        return order;
+        this(0, 0, condition, age, prepMonths, 0);
     }
 
     public LocalDate getDateOfMajority(LocalDate birthDate) {

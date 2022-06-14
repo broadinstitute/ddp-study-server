@@ -9,14 +9,18 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import lombok.AccessLevel;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 
+@Data
+@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 public abstract class FormBlockDef {
-
     @NotNull
     @SerializedName("blockType")
-    private BlockType blockType;
+    private final BlockType blockType;
 
     @SerializedName("blockGuid")
     private String blockGuid;
@@ -31,68 +35,12 @@ public abstract class FormBlockDef {
     private transient Long shownExprId;
     private transient Long enabledExprId;
 
-    FormBlockDef(BlockType blockType) {
-        this.blockType = blockType;
-    }
-
-    public BlockType getBlockType() {
-        return blockType;
-    }
-
-    public String getBlockGuid() {
-        return blockGuid;
-    }
-
-    public void setBlockGuid(String blockGuid) {
-        this.blockGuid = blockGuid;
-    }
-
-    public Long getBlockId() {
-        return blockId;
-    }
-
-    public void setBlockId(Long blockId) {
-        this.blockId = blockId;
-    }
-
-    public String getShownExpr() {
-        return shownExpr;
-    }
-
-    public void setShownExpr(String shownExpr) {
-        this.shownExpr = shownExpr;
-    }
-
-    public Long getShownExprId() {
-        return shownExprId;
-    }
-
-    public Long getEnabledExprId() {
-        return enabledExprId;
-    }
-
-    public String getEnabledExpr() {
-        return enabledExpr;
-    }
-
-    public void setEnabledExpr(String enabledExpr) {
-        this.enabledExpr = enabledExpr;
-    }
-
-    public void setShownExprId(Long shownExprId) {
-        this.shownExprId = shownExprId;
-    }
-
-    public void setEnabledExprId(Long enabledExprId) {
-        this.enabledExprId = enabledExprId;
-    }
-
     public abstract Stream<QuestionDef> getQuestions();
 
     public static class Deserializer implements JsonDeserializer<FormBlockDef> {
         @Override
         public FormBlockDef deserialize(JsonElement elem, Type type, JsonDeserializationContext ctx) throws JsonParseException {
-            BlockType blockType = parseBlockType(elem);
+            final BlockType blockType = parseBlockType(elem);
             switch (blockType) {
                 case ACTIVITY:
                     return ctx.deserialize(elem, NestedActivityBlockDef.class);
@@ -104,6 +52,8 @@ public abstract class FormBlockDef {
                     return ctx.deserialize(elem, ComponentBlockDef.class);
                 case CONDITIONAL:
                     return ctx.deserialize(elem, ConditionalBlockDef.class);
+                case TABULAR:
+                    return ctx.deserialize(elem, TabularBlockDef.class);
                 case GROUP:
                     return ctx.deserialize(elem, GroupBlockDef.class);
                 default:
@@ -111,7 +61,7 @@ public abstract class FormBlockDef {
             }
         }
 
-        private BlockType parseBlockType(JsonElement elem) {
+        private BlockType parseBlockType(final JsonElement elem) {
             try {
                 return BlockType.valueOf(elem.getAsJsonObject().get("blockType").getAsString());
             } catch (Exception e) {

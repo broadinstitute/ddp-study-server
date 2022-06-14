@@ -13,7 +13,6 @@ import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoMRFv2;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoNewActivities;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoNewFamilyHistory;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoPDFv2;
-import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoPrequalUpdate;
 import org.jdbi.v3.core.Handle;
 
 import java.nio.file.Path;

@@ -128,6 +128,9 @@ public class QuestionUtil {
                     List<FormBlockDef> children;
                     if (block.getBlockType() == BlockType.CONDITIONAL) {
                         children = ((ConditionalBlockDef) block).getNested();
+                    } else if (block.getBlockType() == BlockType.TABULAR) {
+                        questions.addAll(block.getQuestions().collect(Collectors.toList()));
+                        children = new ArrayList<>();
                     } else if (block.getBlockType() == BlockType.GROUP) {
                         children = ((GroupBlockDef) block).getNested();
                     } else if (block.getBlockType() == BlockType.ACTIVITY) {

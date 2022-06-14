@@ -53,5 +53,10 @@ public enum DsmNotificationEventType {
     /**
      * Message sent by DSM on stoolkit sent/scanned event.
      */
-    STOOL_SENT
+    STOOL_SENT,
+
+    /**
+     * Message sent by DSM on stool received event.
+     */
+    STOOL_RECEIVED
 }
