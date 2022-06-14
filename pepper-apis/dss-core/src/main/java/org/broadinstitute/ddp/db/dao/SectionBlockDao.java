@@ -338,6 +338,7 @@ public interface SectionBlockDao extends SqlObject {
             if (questionBlockDef == null || questionBlockDef.getQuestion() == null) {
                 continue;
             }
+            insertBlockByType(activityId, questionBlockDef, revisionId);
             getJdbiBlockTabular().insertQuestion(tabularId, questionBlockDef.getQuestion().getQuestionId(),
                     questionBlockDef.getColumnSpan());
         }
