@@ -5,10 +5,12 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Getter;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.util.MiscUtil;
 
+@Getter
 public final class QuestionBlockDef extends FormBlockDef {
 
     @Valid
@@ -17,7 +19,7 @@ public final class QuestionBlockDef extends FormBlockDef {
     private QuestionDef question;
 
     @SerializedName("columnSpan")
-    int columnSpan;
+    private int columnSpan;
 
     public QuestionBlockDef(QuestionDef question) {
         super(BlockType.QUESTION);
@@ -28,14 +30,6 @@ public final class QuestionBlockDef extends FormBlockDef {
         super(BlockType.QUESTION);
         this.question = MiscUtil.checkNonNull(question, "question");
         this.columnSpan = columnSpan;
-    }
-
-    public QuestionDef getQuestion() {
-        return question;
-    }
-
-    public int getColumnSpan() {
-        return columnSpan;
     }
 
     @Override

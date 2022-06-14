@@ -33,7 +33,7 @@ public final class TabularBlock extends FormBlock {
 
     @Override
     public Stream<Question> streamQuestions() {
-        return StreamEx.of(rows).nonNull().map(QuestionBlock::getQuestion).collect(Collectors.toList()).stream();
+        return StreamEx.of(rows).nonNull().map(QuestionBlock::getQuestion);
     }
 
     @Override

@@ -342,10 +342,8 @@ public interface SectionBlockDao extends SqlObject {
                 if (questionBlockDef == null || questionBlockDef.getQuestion() == null) {
                     continue;
                 }
-                Integer columnSpan = questionBlockDef.getColumnSpan();
-                insertBlockByType(activityId, questionBlockDef, revisionId);
                 getJdbiBlockTabular().insertQuestion(tabularId, questionBlockDef.getQuestion().getQuestionId(),
-                        column, row, columnSpan);
+                        column, row, questionBlockDef.getColumnSpan());
             }
         }
         LOG.info("Inserted {} rows for tabular block {}", block.getRows().size(), tabularId);

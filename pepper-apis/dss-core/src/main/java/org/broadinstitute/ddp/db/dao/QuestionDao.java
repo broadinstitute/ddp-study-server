@@ -1855,10 +1855,7 @@ public interface QuestionDao extends SqlObject {
             return new HashMap<>();
         }
 
-        Set<Long> blockIds = new HashSet<>();
-        for (var blockDto : blockDtos) {
-            blockIds.add(blockDto.getQuestionBlockId());
-        }
+        final var blockIds = StreamEx.of(blockDtos).map(BlockTabularQuestionDto::getQuestionBlockId).toSet();
 
         Map<Long, Long> blockIdToQuestionId = getJdbiBlockQuestion()
                 .findQuestionIdsByBlockIdsAndTimestamp(blockIds, timestamp);
