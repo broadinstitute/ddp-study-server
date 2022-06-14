@@ -75,7 +75,8 @@ public interface JdbiBlockTabular extends SqlObject {
             + "  JOIN revision as rev ON rev.revision_id = q.revision_id"
             + " WHERE bt.block_id in (<blockIds>)"
             + "   AND rev.start_date <= :timestamp"
-            + "   AND (rev.end_date is null or :timestamp < rev.end_date)")
+            + "   AND (rev.end_date is null or :timestamp < rev.end_date)"
+            + " order by bq.block_id")
     @RegisterConstructorMapper(BlockTabularQuestionDto.class)
     List<BlockTabularQuestionDto> findQuestionsByBlockIdsAndTimestamp(
             @BindList(value = "blockIds", onEmpty = BindList.EmptyHandling.NULL) Iterable<Long> blockIds,
