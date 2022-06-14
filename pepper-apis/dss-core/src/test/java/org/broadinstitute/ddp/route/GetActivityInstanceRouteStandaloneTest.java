@@ -401,19 +401,14 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         final QuestionBlockDef questionBlockDefRB = new QuestionBlockDef(questionRB);
 
         var tabularBlock = new TabularBlockDef(2);
-        var tabularRowDef = new TabularRowDef();
-        tabularRowDef.getQuestions().add(questionBlockDefLU);
-        tabularRowDef.getQuestions().add(questionBlockDefRU);
-        tabularBlock.getRows().add(tabularRowDef);
+        tabularBlock.getBlocks().add(questionBlockDefLB);
+        tabularBlock.getBlocks().add(questionBlockDefRB);
 
-        var tabularRowDef2 = new TabularRowDef();
-        tabularRowDef2.getQuestions().add(questionBlockDefLB);
-        tabularRowDef2.getQuestions().add(questionBlockDefRB);
-        tabularBlock.getRows().add(tabularRowDef2);
+        tabularBlock.getBlocks().add(questionBlockDefLU);
+        tabularBlock.getBlocks().add(questionBlockDefRU);
 
         tabularBlock.getHeaders().add(new TabularHeaderDef(1, Template.text("Left column")));
         tabularBlock.getHeaders().add(new TabularHeaderDef(1, Template.text("Right column")));
-
         FormSectionDef tabularSection = new FormSectionDef(null, Collections.singletonList(tabularBlock));
 
         //------------- create STUDY ACTIVITY ---------

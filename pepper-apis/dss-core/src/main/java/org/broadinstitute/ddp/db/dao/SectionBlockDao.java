@@ -43,7 +43,6 @@ import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.SectionIcon;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.tabular.TabularHeaderDef;
-import org.broadinstitute.ddp.model.activity.definition.tabular.TabularRowDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.FormSection;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
@@ -335,18 +334,14 @@ public interface SectionBlockDao extends SqlObject {
             getJdbiBlockTabular().insertHeader(tabularId, header.getColumnSpan(), templateId);
         }
         LOG.info("Inserted {} headers for tabular block {}", block.getHeaders().size(), tabularId);
-
-        for (int row = 0; row < block.getRows().size(); row++) {
-            for (int column = 0; column < block.getRows().get(row).getQuestions().size(); column++) {
-                final var questionBlockDef = block.get(row, column);
-                if (questionBlockDef == null || questionBlockDef.getQuestion() == null) {
-                    continue;
-                }
-                getJdbiBlockTabular().insertQuestion(tabularId, questionBlockDef.getQuestion().getQuestionId(),
-                        column, row, questionBlockDef.getColumnSpan());
+        for (QuestionBlockDef questionBlockDef : block.getBlocks()) {
+            if (questionBlockDef == null || questionBlockDef.getQuestion() == null) {
+                continue;
             }
+            getJdbiBlockTabular().insertQuestion(tabularId, questionBlockDef.getQuestion().getQuestionId(),
+                    questionBlockDef.getColumnSpan());
         }
-        LOG.info("Inserted {} rows for tabular block {}", block.getRows().size(), tabularId);
+        LOG.info("Inserted {} question blocks for tabular block {}", block.getBlocks().size(), tabularId);
     }
 
     /**
@@ -808,18 +803,14 @@ public interface SectionBlockDao extends SqlObject {
 
         Map<Long, TabularBlockDef> blockDefs = new HashMap<>();
         for (var blockDto : blockDtos) {
-            final int rowCount = 1 + StreamEx.of(questionsByBlocks.get(blockDto.getId()))
-                    .map(BlockTabularQuestionDto::getRow)
-                    .max(Integer::compareTo)
-                    .orElse(0);
 
-            final var tabularBlock = getJdbiBlockTabular().findByBlockIdAndTimestamp(blockDto.getId(), timestamp);
-            final var questionsTable = new QuestionBlockDef[rowCount][tabularBlock.getColumnsCount()];
+            List<QuestionBlockDef> blockDefList = new ArrayList<>();
+
             for (final BlockTabularQuestionDto tabularQuestion : questionsByBlocks.get(blockDto.getId())) {
-                questionsTable[tabularQuestion.getRow()][tabularQuestion.getColumn()] = questionBlockDefs.get(
-                        tabularQuestion.getQuestionBlockId());
+                blockDefList.add(questionBlockDefs.get(tabularQuestion.getQuestionBlockId()));
             }
 
+            final var tabularBlock = getJdbiBlockTabular().findByBlockIdAndTimestamp(blockDto.getId(), timestamp);
             final var blockDef = new TabularBlockDef(tabularBlock.getColumnsCount());
             blockDef.setBlockId(blockDto.getId());
             blockDef.setBlockGuid(blockDto.getGuid());
@@ -832,15 +823,7 @@ public interface SectionBlockDao extends SqlObject {
                             getTemplateDao().loadTemplateByIdAndTimestamp(tabularHeader.getTemplateId(), timestamp)))
                     .toList());
 
-            List<TabularRowDef> rowDefs = new ArrayList<>();
-            for (QuestionBlockDef[] row : questionsTable) {
-                TabularRowDef rowDef = new TabularRowDef();
-                for (QuestionBlockDef col : row) {
-                    rowDef.getQuestions().add(col);
-                }
-                rowDefs.add(rowDef);
-            }
-            blockDef.getRows().addAll(rowDefs);
+            blockDef.getBlocks().addAll(blockDefList);
 
             blockDefs.put(blockDto.getId(), blockDef);
         }

@@ -20,12 +20,6 @@ public class BlockTabularQuestionDto {
     @ColumnName("block_id")
     long blockId;
 
-    @ColumnName("_column")
-    int column;
-
-    @ColumnName("_row")
-    int row;
-
     @ColumnName("column_span")
     int columnSpan;
 

@@ -63,7 +63,7 @@ public class FormBlockCreatorHelper {
                         mailingAddressComponentDef.shouldRequirePhone()
                 );
                 // remember mailing address component in order to save to it addressGuid (stored in activity instance substitutions)
-                ctx.setMailingAddressComponent((MailingAddressComponent)formComponent);
+                ctx.setMailingAddressComponent((MailingAddressComponent) formComponent);
                 break;
             default:
                 throw new IllegalStateException("Unexpected value: " + componentBlockDef.getComponentType());
@@ -74,21 +74,16 @@ public class FormBlockCreatorHelper {
 
     TabularBlock createTabularBlock(AIBuilderContext ctx, TabularBlockDef tabularBlockDef) {
         final List<QuestionBlock> allQuestions = new ArrayList<>();
-        for (int row = 0; row < tabularBlockDef.getRowsCount(); row++) {
-            final List<Question> questionsRow = new ArrayList<>();
-            for (int column = 0; column < tabularBlockDef.getColumnsCount(); column++) {
-                final QuestionBlockDef questionBlockDef = tabularBlockDef.get(row, column);
-                if (questionBlockDef == null) {
-                    questionsRow.add(null);
-                    continue;
-                }
-                Question question = ctx.getAIBuilderFactory().getQuestionCreator().createQuestion(ctx, questionBlockDef.getQuestion());
-                QuestionBlock questionBlock = new QuestionBlock(question, questionBlockDef.getColumnSpan());
-                questionBlock.setGuid(questionBlockDef.getBlockGuid());
-                questionBlock.setShownExpr(questionBlockDef.getShownExpr());
-                questionBlock.setEnabledExpr(questionBlockDef.getEnabledExpr());
-                allQuestions.add(questionBlock);
+        for (QuestionBlockDef questionBlockDef : tabularBlockDef.getBlocks()) {
+            if (questionBlockDef == null) {
+                continue;
             }
+            Question question = ctx.getAIBuilderFactory().getQuestionCreator().createQuestion(ctx, questionBlockDef.getQuestion());
+            QuestionBlock questionBlock = new QuestionBlock(question, questionBlockDef.getColumnSpan());
+            questionBlock.setGuid(questionBlockDef.getBlockGuid());
+            questionBlock.setShownExpr(questionBlockDef.getShownExpr());
+            questionBlock.setEnabledExpr(questionBlockDef.getEnabledExpr());
+            allQuestions.add(questionBlock);
         }
 
         final List<TabularHeader> headers = new ArrayList<>();
