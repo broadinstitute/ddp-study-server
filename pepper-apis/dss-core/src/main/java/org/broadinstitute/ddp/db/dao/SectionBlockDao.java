@@ -334,13 +334,12 @@ public interface SectionBlockDao extends SqlObject {
             getJdbiBlockTabular().insertHeader(tabularId, header.getColumnSpan(), templateId);
         }
         LOG.info("Inserted {} headers for tabular block {}", block.getHeaders().size(), tabularId);
-        for (QuestionBlockDef questionBlockDef : block.getBlocks()) {
-            if (questionBlockDef == null || questionBlockDef.getQuestion() == null) {
-                continue;
+        for (FormBlockDef formBlockDef : block.getBlocks()) {
+            insertBlockByType(activityId, formBlockDef, revisionId);
+            if (formBlockDef.getBlockType().isQuestionBlock()) {
+                getJdbiBlockTabular().insertQuestion(tabularId, ((QuestionBlockDef) formBlockDef).getQuestion().getQuestionId(),
+                        ((QuestionBlockDef) formBlockDef).getColumnSpan());
             }
-            insertBlockByType(activityId, questionBlockDef, revisionId);
-            getJdbiBlockTabular().insertQuestion(tabularId, questionBlockDef.getQuestion().getQuestionId(),
-                    questionBlockDef.getColumnSpan());
         }
         LOG.info("Inserted {} question blocks for tabular block {}", block.getBlocks().size(), tabularId);
     }
@@ -804,9 +803,7 @@ public interface SectionBlockDao extends SqlObject {
 
         Map<Long, TabularBlockDef> blockDefs = new HashMap<>();
         for (var blockDto : blockDtos) {
-
             List<QuestionBlockDef> blockDefList = new ArrayList<>();
-
             for (final BlockTabularQuestionDto tabularQuestion : questionsByBlocks.get(blockDto.getId())) {
                 blockDefList.add(questionBlockDefs.get(tabularQuestion.getQuestionBlockId()));
             }
@@ -825,7 +822,6 @@ public interface SectionBlockDao extends SqlObject {
                     .toList());
 
             blockDef.getBlocks().addAll(blockDefList);
-
             blockDefs.put(blockDto.getId(), blockDef);
         }
 

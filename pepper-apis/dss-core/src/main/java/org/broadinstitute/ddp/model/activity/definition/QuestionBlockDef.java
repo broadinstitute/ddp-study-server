@@ -18,18 +18,9 @@ public final class QuestionBlockDef extends FormBlockDef {
     @SerializedName("question")
     private QuestionDef question;
 
-    @SerializedName("columnSpan")
-    private int columnSpan;
-
     public QuestionBlockDef(QuestionDef question) {
         super(BlockType.QUESTION);
         this.question = MiscUtil.checkNonNull(question, "question");
-    }
-
-    public QuestionBlockDef(QuestionDef question, int columnSpan) {
-        super(BlockType.QUESTION);
-        this.question = MiscUtil.checkNonNull(question, "question");
-        this.columnSpan = columnSpan;
     }
 
     @Override

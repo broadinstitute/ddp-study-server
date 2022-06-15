@@ -1866,11 +1866,12 @@ public interface QuestionDao extends SqlObject {
             long questionId = blockIdToQuestionId.get(blockDto.getQuestionBlockId());
             QuestionDef questionDef = questionDefs.get(questionId);
 
-            var blockDef = new QuestionBlockDef(questionDef, blockDto.getColumnSpan());
+            var blockDef = new QuestionBlockDef(questionDef);
             blockDef.setBlockId(blockDto.getQuestionBlockId());
             blockDef.setBlockGuid(blockDto.getBlockGuid());
             blockDef.setShownExpr(blockDto.getShownExpr());
             blockDef.setEnabledExpr(blockDto.getEnabledExpr());
+            blockDef.setColumnSpan(blockDto.getColumnSpan());
             blockDefs.put(blockDto.getQuestionBlockId(), blockDef);
         }
 

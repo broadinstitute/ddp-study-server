@@ -19,21 +19,21 @@ public final class TabularBlock extends FormBlock {
     private final List<TabularHeader> headers;
 
     @SerializedName("content")
-    private final List<QuestionBlock> rows;
+    private final List<FormBlock> blocks;
 
     private final int columnsCount;
 
-    public TabularBlock(int columnsCount, List<TabularHeader> headers, List<QuestionBlock> rows) {
+    public TabularBlock(int columnsCount, List<TabularHeader> headers, List<FormBlock> blocks) {
         super(BlockType.TABULAR);
 
         this.columnsCount = columnsCount;
         this.headers = headers;
-        this.rows = rows;
+        this.blocks = blocks;
     }
 
     @Override
     public Stream<Question> streamQuestions() {
-        return StreamEx.of(rows).nonNull().map(QuestionBlock::getQuestion);
+        return getBlocks().stream().flatMap(cblock -> cblock.streamQuestions());
     }
 
     @Override
@@ -54,7 +54,7 @@ public final class TabularBlock extends FormBlock {
     }
 
     public List<FormBlock> getAllQuestionBlocks() {
-        return StreamEx.of(rows).nonNull().collect(Collectors.toList());
+        return StreamEx.of(blocks).nonNull().collect(Collectors.toList());
     }
 
 }

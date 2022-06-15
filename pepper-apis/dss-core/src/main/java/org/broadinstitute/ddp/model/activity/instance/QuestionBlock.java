@@ -20,10 +20,6 @@ public final class QuestionBlock extends FormBlock implements Numberable {
     @SerializedName(DISPLAY_NUMBER)
     private Integer displayNumber;
 
-    @Nullable
-    @SerializedName("columnSpan")
-    protected Integer columnSpan;
-
     private transient boolean hideDisplayNumber;
 
     public QuestionBlock(Question question, Integer columnSpan) {
