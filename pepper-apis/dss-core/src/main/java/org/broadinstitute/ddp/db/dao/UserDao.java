@@ -28,6 +28,8 @@ import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import lombok.val;
+
 public interface UserDao extends SqlObject {
 
     Logger LOG = LoggerFactory.getLogger(UserDao.class);
@@ -46,6 +48,18 @@ public interface UserDao extends SqlObject {
     @CreateSqlObject
     UserSql getUserSql();
 
+
+    default User createUser() {
+        val handle = getHandle();
+        val userGuid = DBUtils.uniqueUserGuid(handle);
+        val userHruid = DBUtils.uniqueUserHruid(handle);
+
+        val userSql = getUserSql();
+
+        userSql.insertByClientIdOrAuth0Ids(byClientId, clientId, auth0Domain, auth0ClientId, auth0UserId, guid, hruid, legacyAltPid, legacyShortId, isLocked, createdAt, updatedAt, expiresAt)
+
+
+    }
 
     default User createUser(String auth0Domain, String auth0ClientId, String auth0UserId) {
         return createUserByClientIdOrAuth0Ids(false, null, auth0Domain, auth0ClientId, auth0UserId, false);
