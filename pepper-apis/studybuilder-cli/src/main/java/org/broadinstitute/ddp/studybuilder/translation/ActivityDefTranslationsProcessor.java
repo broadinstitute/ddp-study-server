@@ -6,12 +6,10 @@ import static org.broadinstitute.ddp.studybuilder.translation.TranslationsEnrich
 import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
-import one.util.streamex.StreamEx;
 import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
-import org.broadinstitute.ddp.model.activity.definition.TabularBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.GroupBlockDef;
@@ -35,7 +33,6 @@ import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
-import org.broadinstitute.ddp.model.activity.definition.tabular.TabularHeaderDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
@@ -120,9 +117,9 @@ public class ActivityDefTranslationsProcessor {
             case CONDITIONAL:
                 enrichConditionalBlockWithTranslations((ConditionalBlockDef) blockDef);
                 break;
-            case TABULAR:
-                enrichTabularBlockWithTranslations((TabularBlockDef) blockDef);
-                break;
+            //            case TABULAR:
+            //                enrichTabularBlockWithTranslations((TabularBlockDef) blockDef);
+            //                break;
             case GROUP:
                 enrichGroupBlockWithTranslations((GroupBlockDef) blockDef);
                 break;
@@ -164,13 +161,13 @@ public class ActivityDefTranslationsProcessor {
         }
     }
 
-    private void enrichTabularBlockWithTranslations(TabularBlockDef blockDef) {
-        StreamEx.of(blockDef.getHeaders())
-                .map(TabularHeaderDef::getLabel)
-                .forEach(label -> addTemplateTranslations(label, allTranslations));
-
-        StreamEx.of(blockDef.getQuestions()).forEach(this::enrichQuestionWithTranslations);
-    }
+    //    private void enrichTabularBlockWithTranslations(TabularBlockDef blockDef) {
+    //        StreamEx.of(blockDef.getHeaders())
+    //                .map(TabularHeaderDef::getLabel)
+    //                .forEach(label -> addTemplateTranslations(label, allTranslations));
+    //
+    //        StreamEx.of(blockDef.getQuestions()).forEach(this::enrichQuestionWithTranslations);
+    //    }
 
     private void enrichGroupBlockWithTranslations(GroupBlockDef blockDef) {
         addTemplateTranslations(blockDef.getTitleTemplate(), allTranslations);
