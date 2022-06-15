@@ -2,7 +2,6 @@ package org.broadinstitute.ddp.model.activity.instance;
 
 import java.util.function.Consumer;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
