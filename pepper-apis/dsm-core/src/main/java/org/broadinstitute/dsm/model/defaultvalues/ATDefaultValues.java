@@ -27,7 +27,6 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
     public static final String ACTIVITY_CODE_PREQUAL = "PREQUAL";
     public static final String PREQUAL_SELF_DESCRIBE = "PREQUAL_SELF_DESCRIBE";
     public static final String QUESTION_ANSWER = "answer";
-    public static final String SELF_DESCRIBE_CHILD_DIAGNOSED = "CHILD_DIAGNOSED";
     public static final String SELF_DESCRIBE_DIAGNOSED = "DIAGNOSED";
     private static final Logger logger = LoggerFactory.getLogger(ATDefaultValues.class);
     private static final String GENOME_STUDY_FIELD_TYPE = "AT_GROUP_GENOME_STUDY";
@@ -68,7 +67,7 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         return ACTIVITY_CODE_PREQUAL.equals(activity.getActivityCode()) && (activity.getQuestionsAnswers().stream()
                 .filter(anwers -> PREQUAL_SELF_DESCRIBE.equals(anwers.get(DDPActivityConstants.DDP_ACTIVITY_STABLE_ID))).anyMatch(
                         answers -> ((List) answers.get(QUESTION_ANSWER)).stream().anyMatch(
-                                answer -> SELF_DESCRIBE_CHILD_DIAGNOSED.equals(answer) || SELF_DESCRIBE_DIAGNOSED.equals(answer))));
+                                answer -> SELF_DESCRIBE_DIAGNOSED.equals(answer))));
     }
 
     private boolean insertGenomicIdForParticipant() {
