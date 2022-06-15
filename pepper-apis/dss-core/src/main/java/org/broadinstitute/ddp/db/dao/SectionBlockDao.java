@@ -334,7 +334,7 @@ public interface SectionBlockDao extends SqlObject {
             getJdbiBlockTabular().insertHeader(tabularId, header.getColumnSpan(), templateId);
         }
         LOG.info("Inserted {} headers for tabular block {}", block.getHeaders().size(), tabularId);
-        for (QuestionBlockDef questionBlockDef : block.getQuestionBlocks()) {
+        for (QuestionBlockDef questionBlockDef : block.getBlocks()) {
             if (questionBlockDef == null || questionBlockDef.getQuestion() == null) {
                 continue;
             }
@@ -342,7 +342,7 @@ public interface SectionBlockDao extends SqlObject {
             getJdbiBlockTabular().insertQuestion(tabularId, questionBlockDef.getQuestion().getQuestionId(),
                     questionBlockDef.getColumnSpan());
         }
-        LOG.info("Inserted {} question blocks for tabular block {}", block.getQuestionBlocks().size(), tabularId);
+        LOG.info("Inserted {} question blocks for tabular block {}", block.getBlocks().size(), tabularId);
     }
 
     /**
@@ -824,7 +824,7 @@ public interface SectionBlockDao extends SqlObject {
                             getTemplateDao().loadTemplateByIdAndTimestamp(tabularHeader.getTemplateId(), timestamp)))
                     .toList());
 
-            blockDef.getQuestionBlocks().addAll(blockDefList);
+            blockDef.getBlocks().addAll(blockDefList);
 
             blockDefs.put(blockDto.getId(), blockDef);
         }

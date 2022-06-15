@@ -74,10 +74,7 @@ public class FormBlockCreatorHelper {
 
     TabularBlock createTabularBlock(AIBuilderContext ctx, TabularBlockDef tabularBlockDef) {
         final List<QuestionBlock> allQuestions = new ArrayList<>();
-        for (QuestionBlockDef questionBlockDef : tabularBlockDef.getQuestionBlocks()) {
-            if (questionBlockDef == null) {
-                continue;
-            }
+        for (QuestionBlockDef questionBlockDef : tabularBlockDef.getBlocks()) {
             Question question = ctx.getAIBuilderFactory().getQuestionCreator().createQuestion(ctx, questionBlockDef.getQuestion());
             QuestionBlock questionBlock = new QuestionBlock(question, questionBlockDef.getColumnSpan());
             questionBlock.setGuid(questionBlockDef.getBlockGuid());

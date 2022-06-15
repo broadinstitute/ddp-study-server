@@ -400,8 +400,8 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         final QuestionBlockDef questionBlockDefRB = new QuestionBlockDef(questionRB);
 
         var tabularBlock = new TabularBlockDef(2);
-        tabularBlock.getQuestionBlocks().addAll(Arrays.asList(questionBlockDefLU, questionBlockDefRU));
-        tabularBlock.getQuestionBlocks().addAll(Arrays.asList(questionBlockDefLB, questionBlockDefRB));
+        tabularBlock.getBlocks().addAll(Arrays.asList(questionBlockDefLU, questionBlockDefRU));
+        tabularBlock.getBlocks().addAll(Arrays.asList(questionBlockDefLB, questionBlockDefRB));
 
         tabularBlock.getHeaders().add(new TabularHeaderDef(1, Template.text("Left column")));
         tabularBlock.getHeaders().add(new TabularHeaderDef(1, Template.text("Right column")));
