@@ -31,6 +31,9 @@ public abstract class FormBlockDef {
     @SerializedName("enabledExpr")
     private String enabledExpr;
 
+    @SerializedName("columnSpan")
+    private int columnSpan;
+
     private transient Long blockId;
     private transient Long shownExprId;
     private transient Long enabledExprId;
