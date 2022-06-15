@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="DDP-7556_mercury_roles" author="pegah">
+        <insert tableName="instance_role">
+            <column name="name" value="has_mercury_order_sequencing"></column>
+        </insert>
+        <insert tableName="access_role">
+            <column name="name" value="mercury_order_sequencing"></column>
+        </insert>
+    </changeSet>
+    <changeSet id="DDP-7556_mercury_sequencing_order_table_changes" author="pegah">
+        <addColumn tableName="mercury_sequencing">
+            <column name="sample_id" type="INT"></column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

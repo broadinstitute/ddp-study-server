@@ -32,7 +32,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
 
     public static String SQL_GET_KIT_FROM_BARCODE_SM_ID =
             "SELECT p.ddp_participant_id, kit_type_name, ktype.kit_type_id,  ddp.ddp_instance_id ,sm.sm_id_value, ddp.mercury_order_creator"
-                    + "FROM  ddp_participant as p "
+                    + " FROM  ddp_participant as p "
                     + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
                     + "LEFT JOIN ddp_institution inst on  (inst.participant_id = p.participant_id) "
                     + "LEFT JOIN ddp_medical_record mr on (mr.institution_id = inst.institution_id AND NOT mr.deleted <=> 1) "

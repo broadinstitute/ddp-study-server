@@ -513,5 +513,7 @@ public class DBConstants {
     public static final String COHORT_TAG = "cohort_tag";
     public static final String COHORT_TAG_NAME = "cohort_tag_name";
 
+    public static final String MERCURY_ORDER_DATE = "sequence.order_date";
+
 
 }
