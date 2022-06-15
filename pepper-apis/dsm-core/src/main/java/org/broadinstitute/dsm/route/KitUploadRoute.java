@@ -66,10 +66,8 @@ public class KitUploadRoute extends RequestHandler {
     private static final Logger logger = LoggerFactory.getLogger(KitUploadRoute.class);
     private static final String SQL_SELECT_CHECK_KIT_ALREADY_EXISTS = "SELECT count(*) as found "
             + "FROM ddp_kit_request request LEFT JOIN ddp_kit kit on (request.dsm_kit_request_id = kit.dsm_kit_request_id) "
-            + "LEFT JOIN ddp_participant_exit ex on (ex.ddp_instance_id = request.ddp_instance_id "
-            + "AND ex.ddp_participant_id = request.ddp_participant_id) " + "WHERE ex.ddp_participant_exit_id is null "
-            + "AND kit.deactivated_date is null AND request.ddp_instance_id = ? AND request.kit_type_id = ? "
-            + "AND request.ddp_participant_id = ?";
+            + "WHERE kit.deactivated_date IS NULL AND request.ddp_instance_id = ? AND request.kit_type_id = ? "
+            + "AND request.bsp_collaborator_participant_id = ?";
     private static final String PARTICIPANT_ID = "participantId";
     private static final String SHORT_ID = "shortId";
     private static final String SIGNATURE = "signature";
@@ -263,11 +261,12 @@ public class KitUploadRoute extends RequestHandler {
                             shippingId += "_" + j;
                         }
                         //check with ddp_participant_id if participant already has a kit in DSM db
-                        boolean isKitExsist =
-                                checkAndSetParticipantIdIfKitExists(ddpInstance, conn, kit, participantGuid, participantLegacyAltPid,
+                        boolean doesKitExist = checkAndSetParticipantIdIfKitExists(ddpInstance, conn, collaboratorParticipantId,
                                         subKit.getKitTypeId());
-
-                        if (isKitExsist && !uploadAnyway) {
+                        if (doesKitExist) {
+                            kit.setParticipantId(!participantGuid.isEmpty() ? participantGuid : participantLegacyAltPid);
+                        }
+                        if (doesKitExist && !uploadAnyway) {
                             alreadyExists = true;
                         } else {
                             for (int i = 0; i < subKit.getKitCount(); i++) {
@@ -295,17 +294,12 @@ public class KitUploadRoute extends RequestHandler {
         }
     }
 
-    private boolean checkAndSetParticipantIdIfKitExists(DDPInstance ddpInstance, Connection conn, KitRequest kit, String participantGuid,
-                                                        String participantLegacyAltPid, int kitTypeId) {
-        boolean isKitExsist = false;
-        if (checkIfKitAlreadyExists(conn, participantGuid, ddpInstance.getDdpInstanceId(), kitTypeId)) {
-            isKitExsist = true;
-            kit.setParticipantId(participantGuid);
-        } else if (checkIfKitAlreadyExists(conn, participantLegacyAltPid, ddpInstance.getDdpInstanceId(), kitTypeId)) {
-            isKitExsist = true;
-            kit.setParticipantId(participantLegacyAltPid);
+    private boolean checkAndSetParticipantIdIfKitExists(DDPInstance ddpInstance, Connection conn, String bspCollaboratorParticipantId,
+                                                        int kitTypeId) {
+        if (checkIfKitAlreadyExists(conn, bspCollaboratorParticipantId, ddpInstance.getDdpInstanceId(), kitTypeId)) {
+            return true;
         }
-        return isKitExsist;
+        return false;
     }
 
     private void handleNormalKit(@NonNull Connection conn, @NonNull DDPInstance ddpInstance, @NonNull KitType kitType,
@@ -347,17 +341,7 @@ public class KitUploadRoute extends RequestHandler {
                            @NonNull String userIdRequest, @NonNull String kitTypeName, String collaboratorParticipantId,
                            String errorMessage, boolean uploadAnyway, List<KitRequest> duplicateKitList, ArrayList<KitRequest> orderKits,
                            String externalOrderNumber, String uploadReason, String carrier) {
-        String participantId = kit.getParticipantId();
-        if (StringUtils.isBlank(participantId)) {
-            participantId = kit.getShortId();
-        }
-        String participantGuid =
-                elasticSearch.getParticipantById(ddpInstance.getParticipantIndexES(), participantId).getProfile().map(ESProfile::getGuid)
-                        .orElse("");
-        String participantLegacyAltPid =
-                elasticSearch.getParticipantById(ddpInstance.getParticipantIndexES(), participantId).getProfile()
-                        .map(ESProfile::getLegacyAltPid).orElse("");
-        if (checkAndSetParticipantIdIfKitExists(ddpInstance, conn, kit, participantGuid, participantLegacyAltPid, kitType.getKitTypeId())
+        if (checkAndSetParticipantIdIfKitExists(ddpInstance, conn, collaboratorParticipantId, kitType.getKitTypeId())
                 && !uploadAnyway) {
             duplicateKitList.add(kit);
         } else {
@@ -631,13 +615,13 @@ public class KitUploadRoute extends RequestHandler {
         return null;
     }
 
-    public boolean checkIfKitAlreadyExists(@NonNull Connection conn, @NonNull String ddpParticipantId, @NonNull String instanceId,
-                                           @NonNull int kitTypeId) {
+    public boolean checkIfKitAlreadyExists(@NonNull Connection conn, @NonNull String bspCollaboratorParticipantId,
+                                           @NonNull String instanceId, @NonNull int kitTypeId) {
         SimpleResult dbVals = new SimpleResult(0);
         try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_CHECK_KIT_ALREADY_EXISTS)) {
             stmt.setString(1, instanceId);
             stmt.setInt(2, kitTypeId);
-            stmt.setString(3, ddpParticipantId);
+            stmt.setString(3, bspCollaboratorParticipantId);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     dbVals.resultValue = rs.getInt(DBConstants.FOUND);
@@ -652,7 +636,7 @@ public class KitUploadRoute extends RequestHandler {
         if (dbVals.resultValue == null) {
             throw new RuntimeException("Error getting id of new kit request ");
         }
-        logger.info("Found " + dbVals.resultValue + " kit requests for ddp_participant_id " + ddpParticipantId);
+        logger.info("Found " + dbVals.resultValue + " kit requests for bsp_collaborator_participant_id " + bspCollaboratorParticipantId);
         return (int) dbVals.resultValue > 0;
     }
 }
