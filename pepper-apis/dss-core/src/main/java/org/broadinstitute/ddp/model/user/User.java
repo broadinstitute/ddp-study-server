@@ -3,21 +3,18 @@ package org.broadinstitute.ddp.model.user;
 import java.time.Instant;
 import java.util.Optional;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.experimental.SuperBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
+
 
 /**
  * Representation of a user in the system, with associations to it's profile and address which are considered
  * system-wide resources.
  */
 @Data
-@SuperBuilder(toBuilder = true)
-@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class User {
 
     public static final String METADATA_FIRST_NAME = "first_name";
@@ -77,18 +74,6 @@ public class User {
 
     public Optional<String> getAuth0UserId() {
         return Optional.ofNullable(auth0UserId);
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public UserProfile getProfile() {
-        return profile;
-    }
-
-    public void setProfile(UserProfile profile) {
-        this.profile = profile;
     }
 
     public boolean hasProfile() {
