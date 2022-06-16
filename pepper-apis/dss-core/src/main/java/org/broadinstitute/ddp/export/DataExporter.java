@@ -543,7 +543,7 @@ public class DataExporter {
 
         Map<String, User> users = resultset
                 .peek(user -> {
-                    String auth0UserId = user.getAuth0UserId();
+                    String auth0UserId = user.getAuth0UserId().orElse(StringUtils.EMPTY);
                     if (StringUtils.isBlank(auth0UserId)) {
                         return;
                     }
@@ -744,7 +744,7 @@ public class DataExporter {
      *
      * @param activities the list of activity data for a study
      * @param extract    the participant data for the study
-     * @return
+     * @return a json streen representing the participant's data
      */
     private String formatParticipantToFlatJSON(Handle handle, List<ActivityExtract> activities,
                                                Participant extract) {

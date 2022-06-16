@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
@@ -458,7 +459,20 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
     private void unregisterEmailFromStudyMailingList(Handle handle, StudyDto study, User user, Auth0ManagementClient mgmtClient) {
         String userEmail = null;
-        var getResult = mgmtClient.getAuth0User(user.getAuth0UserId());
+
+        /*
+         * make sure users which do not have an auth0 identifier are handled.
+         * Returning may be fine here, but since the non-auth0 accounts may still have an
+         * email address, there is some extra work do to.
+         * #ddp7931
+         */
+        if (user.getAuth0UserId().isPresent() == false) {
+            throw new NotImplementedException("handle users which do not have an auth0 account safely");
+        }
+
+        var auth0UserId = user.getAuth0UserId().get();
+
+        var getResult = mgmtClient.getAuth0User(auth0UserId);
         if (getResult.hasFailure()) {
             var e = getResult.hasThrown() ? getResult.getThrown() : getResult.getError();
             log.error("Auth0 request to retrieve auth0 user {} failed", user.getAuth0UserId(), e);
@@ -583,7 +597,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             }
         }
 
-        String auth0UserId = user.getAuth0UserId();
+        var auth0UserId = user.getAuth0UserId().orElse(StringUtils.EMPTY);
         if (StringUtils.isNotBlank(auth0UserId)) {
             log.info("User {} has auth0 account, proceeding to sync user_metadata", user.getGuid());
             Map<String, Object> metadata = new HashMap<>();

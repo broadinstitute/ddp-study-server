@@ -139,7 +139,7 @@ public class ExportUtil {
             Map<String, String> usersMissingEmails,
             ActivityInstanceDao instanceDao) {
 
-        String auth0UserId = pt.getUser().getAuth0UserId();
+        String auth0UserId = pt.getUser().getAuth0UserId().orElse(StringUtils.EMPTY);
         if (StringUtils.isBlank(auth0UserId)) {
             return;
         }

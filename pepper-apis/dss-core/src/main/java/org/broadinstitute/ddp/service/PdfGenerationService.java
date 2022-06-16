@@ -30,6 +30,7 @@ import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
@@ -267,13 +268,25 @@ public class PdfGenerationService {
         }
 
         if (hasEmailSource) {
-            var mgmtClient = Auth0ManagementClient.forStudy(handle, config.getStudyGuid());
-            var studyDto = new JdbiUmbrellaStudyCached(handle).findByStudyGuid(config.getStudyGuid());
-            String auth0UserId = participant.getUser().getAuth0UserId();
-            Map<String, String> emailResults = new Auth0Util(mgmtClient.getDomain())
-                    .getEmailsByAuth0UserIdsAndConnection(Sets.newHashSet(auth0UserId), mgmtClient.getToken(),
-                            studyDto.getDefaultAuth0Connection());
-            participant.getUser().setEmail(emailResults.get(auth0UserId));
+            var user = participant.getUser();
+
+            if (user.getAuth0UserId().isPresent()) {
+                var auth0UserId = user.getAuth0UserId().get();
+                var mgmtClient = Auth0ManagementClient.forStudy(handle, config.getStudyGuid());
+                var studyDto = new JdbiUmbrellaStudyCached(handle).findByStudyGuid(config.getStudyGuid());
+                Map<String, String> emailResults = new Auth0Util(mgmtClient.getDomain())
+                        .getEmailsByAuth0UserIdsAndConnection(Sets.newHashSet(auth0UserId), mgmtClient.getToken(),
+                                studyDto.getDefaultAuth0Connection());
+                user.setEmail(emailResults.get(auth0UserId));
+            } else {
+                /*
+                 * Users without an auth0 account _may_ still have an email.
+                 * This is currently intended to be added to the user profile, and
+                 * will need to be fetched here.
+                 * #ddp7031
+                 */
+                throw new NotImplementedException("needs to handle non-auth0 email");
+            }
         }
 
         return participant;

@@ -82,9 +82,13 @@ public class AddProfileRoute extends ValidatedJsonInputRoute<Profile> {
                 }
 
                 if (languageDto != null) {
+                    /*
+                     * Ensure proper behavior for auth0-less accounts
+                     * #ddp7931
+                     */
                     String auth0UserId = handle.attach(UserDao.class)
                             .findUserByGuid(userGuid)
-                            .map(User::getAuth0UserId)
+                            .flatMap(User::getAuth0UserId)
                             .orElse(null);
                     if (StringUtils.isNotBlank(auth0UserId)) {
                         log.info("User {} has auth0 account, proceeding to sync user_metadata", userGuid);
