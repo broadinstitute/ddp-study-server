@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.studybuilder.task;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
@@ -24,7 +25,7 @@ import org.broadinstitute.ddp.model.event.NotificationType;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 @Slf4j
 public class SingularDeleteEmailEvents implements CustomTask {
@@ -85,6 +86,8 @@ public class SingularDeleteEmailEvents implements CustomTask {
         InstanceStatusType instanceStatusType = InstanceStatusType.valueOf(triggerCfg.getString("statusType"));
         List<EventConfiguration> concreteEvents = allEvents.stream()
                 .filter(e -> e.getEventTriggerType() == type)
+                .filter(e -> Objects.nonNull(e.getPreconditionExpression()))
+                .filter(e -> e.getPreconditionExpression().equals(eventCfg.getString("preconditionExpr")))
                 .filter(e -> e.getEventTrigger() instanceof ActivityStatusChangeTrigger)
                 .filter(e -> ((ActivityStatusChangeTrigger) e.getEventTrigger()).getStudyActivityId() == activityId)
                 .filter(e -> ((ActivityStatusChangeTrigger) e.getEventTrigger()).getInstanceStatusType() == instanceStatusType)
@@ -100,8 +103,8 @@ public class SingularDeleteEmailEvents implements CustomTask {
     }
 
     private interface SqlHelper extends SqlObject {
-        @SqlQuery("delete from event_configuration where event_configuration_id = :id")
-        int deleteEventById(@Bind("id") long eventId);
+        @SqlUpdate("delete from event_configuration where event_configuration_id = :id")
+        void deleteEventById(@Bind("id") long eventId);
 
         default long findActivityIdByStudyIdAndCode(long studyId, String activityCode) {
             return getHandle().attach(JdbiActivity.class)
