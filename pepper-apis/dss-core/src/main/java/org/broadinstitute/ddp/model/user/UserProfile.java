@@ -13,7 +13,7 @@ import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 @Value
 @SuperBuilder(toBuilder = true)
 @AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
-public class  UserProfile implements Serializable {
+public class UserProfile implements Serializable {
     @ColumnName("user_id")
     long userId;
 
@@ -47,12 +47,15 @@ public class  UserProfile implements Serializable {
     @ColumnName("skip_language_popup")
     Boolean skipLanguagePopup;
 
+    @ColumnName("email")
+    String email;
+
     public enum SexType {
         FEMALE, MALE, INTERSEX, PREFER_NOT_TO_ANSWER
     }
 
     public UserProfile(final UserProfile o) {
         this(o.userId, o.firstName, o.lastName, o.sexType, o.birthDate, o.preferredLangId, o.preferredLangCode,
-                o.timeZone, o.doNotContact, o.isDeceased, o.skipLanguagePopup);
+                o.timeZone, o.doNotContact, o.isDeceased, o.skipLanguagePopup, o.email);
     }
 }
