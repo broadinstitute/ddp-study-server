@@ -61,7 +61,7 @@ ActivityAnswersPatchResponse:
             description: |
               list of visibility updates for composite questions
             items:
-              $ref: '../pepper.yml#/components/schema/Composite.Visibility'
+              $ref: '../pepper.yml#/components/schemas/Composite.Visibility'
           validationFailures:
             type: array
             items:
