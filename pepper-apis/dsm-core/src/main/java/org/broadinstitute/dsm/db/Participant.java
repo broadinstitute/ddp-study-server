@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Participant {
+public class Participant implements Cloneable {
 
     private static final Logger logger = LoggerFactory.getLogger(Participant.class);
 
@@ -261,5 +261,14 @@ public class Participant {
 
     public Boolean isMinimalMr() {
         return minimalMr;
+    }
+
+    @Override
+    public Participant clone() {
+        try {
+            return (Participant) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
     }
 }

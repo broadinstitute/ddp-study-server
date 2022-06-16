@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.Gson;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.MedicalRecord;
+import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.institution.DDPInstitutionDao;
 import org.broadinstitute.dsm.db.dao.ddp.medical.records.MedicalRecordDao;
@@ -88,7 +89,7 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
             Optional<ParticipantDto> maybeOldOsteoParticipant = participantDao.getParticipantByDdpParticipantIdAndDdpInstanceId(ddpParticipantId, Integer.parseInt(ddpInstanceId));
             Optional<Integer> maybeOldOsteoParticipantId = maybeOldOsteoParticipant.flatMap(ParticipantDto::getParticipantId);
             Optional<Integer> maybeNewOsteoParticipantId = maybeOldOsteoParticipant
-                    .map(participantDto -> ParticipantDto.copy(newOsteoInstanceId, participantDto))
+                    .map(this::updateParticipantDto)
                     .map(participantDao::create);
             cohortTagDao.create(newCohortTag);
             Optional<ParticipantRecordDto> maybeOldOsteoParticipantRecord = maybeOldOsteoParticipantId.flatMap(participantRecordDao::getParticipantRecordByParticipantId);
@@ -105,6 +106,12 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
         }
     }
 
+    private ParticipantDto updateParticipantDto(ParticipantDto participantDto) {
+        ParticipantDto clonedParticipantDto = participantDto.clone();
+        participantDto.setDdpInstanceId(newOsteoInstanceId);
+        return clonedParticipantDto;
+    }
+
     private void writeDataToES(Map<String, Object> esPtDtoAsMap) {
         logger.info(String.format("Exporting values in ES for %s", NEW_OSTEO_INSTANCE_NAME));
         elasticDataExportAdapter.setSource(esPtDtoAsMap);
@@ -112,11 +119,18 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
     }
 
     private void updateEsDsm(long newOsteoParticipantId, List<MedicalRecord> newOsteoMedicalRecords, ESDsm dsm) {
-        dsm.getParticipant().ifPresent(oldOsteoPt -> dsm.setNewOsteoParticipant(NewOsteoParticipant.copy(oldOsteoPt, newOsteoParticipantId, newOsteoInstanceId)));
+        dsm.getParticipant().ifPresent(oldOsteoPt -> updateNewOsteoParticipant(newOsteoParticipantId, dsm, oldOsteoPt));
         dsm.setCohortTag(Stream.concat(dsm.getCohortTag().stream(), Stream.of(newCohortTag)).collect(Collectors.toList()));
         List<MedicalRecord> oldOsteoMedicalRecords = dsm.getMedicalRecord();
         List<MedicalRecord> updatedMedicalRecords = Stream.concat(oldOsteoMedicalRecords.stream(), newOsteoMedicalRecords.stream()).collect(Collectors.toList());
         dsm.setMedicalRecord(updatedMedicalRecords);
+    }
+
+    private void updateNewOsteoParticipant(long newOsteoParticipantId, ESDsm dsm, Participant oldOsteoPt) {
+        NewOsteoParticipant newOsteoPt = (NewOsteoParticipant) oldOsteoPt.clone();
+        newOsteoPt.setParticipantId(newOsteoParticipantId);
+        newOsteoPt.setDdpInstanceId(newOsteoInstanceId);
+        dsm.setNewOsteoParticipant(newOsteoPt);
     }
 
     private List<MedicalRecord> updateAndThenSaveInstitutionsAndMedicalRecords(int newOsteoParticipantId) {
@@ -134,14 +148,21 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
 
     private int updateAndThenSaveNewInstitution(int newOsteoParticipantId, long institutionId) {
         return ddpInstitutionDao.get(institutionId)
-                .map(oldOsteoInstitution -> DDPInstitutionDto.copy(newOsteoParticipantId, oldOsteoInstitution))
+                .map(oldOsteoInstitution -> updateInstitutionDto(newOsteoParticipantId, oldOsteoInstitution))
                 .map(ddpInstitutionDao::create)
                 .orElseThrow();
     }
 
+    private DDPInstitutionDto updateInstitutionDto(int newOsteoParticipantId, DDPInstitutionDto oldOsteoInstitution) {
+        DDPInstitutionDto clonedDdpInstitutionDto = oldOsteoInstitution.clone();
+        clonedDdpInstitutionDto.setParticipantId(newOsteoParticipantId);
+        return clonedDdpInstitutionDto;
+    }
+
     private void updateAndThenSaveNewParticipantRecord(ParticipantRecordDto oldOsteoParticipantRecord, int newOsteoParticipantId) {
-        ParticipantRecordDto participantRecordDto = ParticipantRecordDto.copy(newOsteoParticipantId, oldOsteoParticipantRecord);
-        participantRecordDao.create(participantRecordDto);
+        ParticipantRecordDto clonedParticipantRecordDto = oldOsteoParticipantRecord.clone();
+        clonedParticipantRecordDto.setParticipantId(newOsteoParticipantId);
+        participantRecordDao.create(clonedParticipantRecordDto);
     }
 
 }

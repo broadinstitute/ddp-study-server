@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.db.dao.ddp.institution;
 
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.ddp.institution.DDPInstitutionDto;
+import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 import java.sql.PreparedStatement;
@@ -11,7 +12,6 @@ import java.sql.Statement;
 import java.util.Optional;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-import static org.broadinstitute.dsm.statics.DBConstants.*;
 
 public class DDPInstitutionDao implements Dao<DDPInstitutionDto> {
 
@@ -20,18 +20,8 @@ public class DDPInstitutionDao implements Dao<DDPInstitutionDto> {
 
     public static final String SQL_SELECT_INSTITUTION_BY_INSTITUTION_ID = "SELECT * FROM ddp_institution WHERE institution_id = ?;";
 
-    private static DDPInstitutionDao ddpInstitutionDao;
-
-    // for testing purposes
-    protected DDPInstitutionDao() {
-
-    }
-
     public static DDPInstitutionDao of() {
-        if (ddpInstitutionDao == null) {
-            ddpInstitutionDao = new DDPInstitutionDao();
-        }
-        return ddpInstitutionDao;
+        return new DDPInstitutionDao();
     }
 
     @Override
@@ -91,11 +81,11 @@ public class DDPInstitutionDao implements Dao<DDPInstitutionDto> {
 
     private DDPInstitutionDto buildInstitutionFromResultSet(ResultSet rs) throws SQLException {
         return new DDPInstitutionDto.Builder()
-                .withInstitutionId(rs.getInt(INSTITUTION_ID))
-                .withDdpInstitutionId(rs.getString(DDP_INSTITUTION_ID))
-                .withType(rs.getString(TYPE))
-                .withParticipantId(rs.getInt(PARTICIPANT_ID))
-                .withLastChanged(rs.getLong(LAST_CHANGED))
+                .withInstitutionId(rs.getInt(DBConstants.INSTITUTION_ID))
+                .withDdpInstitutionId(rs.getString(DBConstants.DDP_INSTITUTION_ID))
+                .withType(rs.getString(DBConstants.TYPE))
+                .withParticipantId(rs.getInt(DBConstants.PARTICIPANT_ID))
+                .withLastChanged(rs.getLong(DBConstants.LAST_CHANGED))
                 .build();
     }
 }

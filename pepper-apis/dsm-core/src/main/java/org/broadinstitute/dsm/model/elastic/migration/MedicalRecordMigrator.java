@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.broadinstitute.dsm.db.MedicalRecord;
-import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 
 public class MedicalRecordMigrator extends BaseCollectionMigrator {

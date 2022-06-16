@@ -25,10 +25,7 @@ public class MedicalRecordDao implements Dao<MedicalRecord> {
     private static MedicalRecordDao medicalRecordDao;
 
     public static MedicalRecordDao of() {
-        if (medicalRecordDao == null) {
-            medicalRecordDao = new MedicalRecordDao();
-        }
-        return medicalRecordDao;
+        return new MedicalRecordDao();
     }
 
     @Override

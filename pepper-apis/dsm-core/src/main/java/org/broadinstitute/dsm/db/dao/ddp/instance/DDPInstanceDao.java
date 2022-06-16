@@ -10,7 +10,6 @@ import java.util.Optional;
 
 import lombok.NonNull;
 import org.broadinstitute.dsm.db.dao.Dao;
-import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
@@ -83,16 +82,9 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
     private static final String SQL_SELECT_DDP_INSTANCE_BY_INSTANCE_NAME = SQL_BASE_SELECT + "WHERE instance_name = ? ";
     private static final String SQL_SELECT_DDP_INSTANCE_BY_INSTANCE_ID = SQL_BASE_SELECT + "WHERE ddp_instance_id = ? ";
 
-
-    private static DDPInstanceDao ddpInstanceDao;
-
     public static DDPInstanceDao of() {
-        if (ddpInstanceDao == null) {
-            ddpInstanceDao = new DDPInstanceDao();
-        }
-        return ddpInstanceDao;
+        return new DDPInstanceDao();
     }
-
 
     public static boolean getRole(@NonNull String realm, @NonNull String role) {
         SimpleResult results = inTransaction((conn) -> {

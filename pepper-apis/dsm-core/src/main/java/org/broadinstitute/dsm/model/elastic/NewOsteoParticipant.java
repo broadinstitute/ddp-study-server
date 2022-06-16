@@ -11,22 +11,4 @@ public class NewOsteoParticipant extends Participant {
     // empty constructor needed for jackson library
     public NewOsteoParticipant() {}
 
-    public static NewOsteoParticipant copy(Participant that, Long newParticipantId, Integer newDdpInstanceId) {
-        return new NewOsteoParticipant(
-                newParticipantId,
-                that.getDdpParticipantId(),
-                that.getAssigneeIdMr(),
-                newDdpInstanceId,
-                that.getAssigneeIdTissue(),
-                that.getRealm(),
-                that.getCreated(),
-                that.getReviewed(),
-                that.getCrSent(),
-                that.getCrReceived(),
-                that.getNotes(),
-                that.getMinimalMr(),
-                that.getAbstractionReady(),
-                that.getAdditionalValuesJson(),
-                that.getExitDate());
-    }
 }

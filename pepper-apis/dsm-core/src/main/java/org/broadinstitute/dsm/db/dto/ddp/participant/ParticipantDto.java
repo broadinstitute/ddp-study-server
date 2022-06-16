@@ -10,7 +10,7 @@ import static org.broadinstitute.dsm.statics.DBConstants.*;
 import static org.broadinstitute.dsm.util.SystemUtil.SYSTEM;
 
 @Getter
-public class ParticipantDto {
+public class ParticipantDto implements Cloneable {
 
     private Optional<Integer> participantId;
     private Optional<String> ddpParticipantId;
@@ -36,20 +36,17 @@ public class ParticipantDto {
         this.changedBy = builder.changedBy;
     }
 
-    public static ParticipantDto copy(int newDdpInstanceId, ParticipantDto that) {
-        Integer assigneeIdMr = Util.orElseNull(that.getAssigneeIdMr(), 0);
-        Integer assigneeIdTissue = Util.orElseNull(that.getAssigneeIdTissue(), 0);
-        return new ParticipantDto.Builder()
-                .withDdpParticipantId(that.getDdpParticipantId().orElseThrow(DataCopyingException.withMessage(DDP_INSTANCE_ID)))
-                .withLastVersion(that.getLastVersion().orElseThrow())
-                .withLastVersionDate(that.getLastVersionDate().orElse(null))
-                .withDdpInstanceId(newDdpInstanceId)
-                .withReleaseCompleted(that.getReleaseCompleted().orElse(null))
-                .withAssigneeIdMr(assigneeIdMr)
-                .withAssigneeIdTissue(assigneeIdTissue)
-                .withLastChanged(that.getLastChanged())
-                .withChangedBy(that.getChangedBy().orElse(SYSTEM))
-                .build();
+    public void setDdpInstanceId(int ddpInstanceId) {
+        this.ddpInstanceId = ddpInstanceId;
+    }
+
+    @Override
+    public ParticipantDto clone() {
+        try {
+            return (ParticipantDto) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
     }
 
     public static class Builder {

@@ -3,7 +3,7 @@ package org.broadinstitute.dsm.db.dto.ddp.institution;
 import lombok.Data;
 
 @Data
-public class DDPInstitutionDto {
+public class DDPInstitutionDto implements Cloneable {
 
     private Integer institutionId;
     private String ddpInstitutionId;
@@ -19,14 +19,13 @@ public class DDPInstitutionDto {
         this.lastChanged = builder.lastChanged;
     }
 
-    public static DDPInstitutionDto copy(int newParticipantId, DDPInstitutionDto that) {
-        return new DDPInstitutionDto.Builder()
-                .withType(that.getType())
-                .withLastChanged(that.getLastChanged())
-                .withDdpInstitutionId(that.getDdpInstitutionId())
-                .withInstitutionId(that.getInstitutionId())
-                .withParticipantId(newParticipantId)
-                .build();
+    @Override
+    public DDPInstitutionDto clone() {
+        try {
+            return (DDPInstitutionDto) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
     }
 
     public static class Builder {

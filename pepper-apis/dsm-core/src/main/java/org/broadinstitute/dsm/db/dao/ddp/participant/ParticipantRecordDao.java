@@ -1,7 +1,6 @@
 package org.broadinstitute.dsm.db.dao.ddp.participant;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-import static org.broadinstitute.dsm.statics.DBConstants.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,6 +10,7 @@ import java.util.Optional;
 
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
+import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 public class ParticipantRecordDao implements Dao<ParticipantRecordDto> {
@@ -28,10 +28,7 @@ public class ParticipantRecordDao implements Dao<ParticipantRecordDto> {
     private static ParticipantRecordDao participantRecordDao;
 
     public static ParticipantRecordDao of() {
-        if (participantRecordDao == null) {
-            participantRecordDao = new ParticipantRecordDao();
-        }
-        return participantRecordDao;
+        return new ParticipantRecordDao();
     }
 
     @Override
@@ -101,14 +98,14 @@ public class ParticipantRecordDao implements Dao<ParticipantRecordDto> {
 
     private ParticipantRecordDto buildParticipantRecordFromResultSet(ResultSet rs) throws SQLException {
         return new ParticipantRecordDto.Builder()
-                .withParticipantRecordId(rs.getInt(PARTICIPANT_RECORD_ID))
-                .withCrSent(rs.getString(CR_SENT))
-                .withCrReceived(rs.getString(CR_RECEIVED))
-                .withNotes(rs.getString(NOTES))
-                .withMinimalMr(rs.getInt(MINIMAL_MR))
-                .withAbstractionReady(rs.getInt(ABSTRACTION_READY))
-                .withAdditionalValuesJson(rs.getString(ADDITIONAL_VALUES_JSON))
-                .withChangedBy(rs.getString(CHANGED_BY))
+                .withParticipantRecordId(rs.getInt(DBConstants.PARTICIPANT_RECORD_ID))
+                .withCrSent(rs.getString(DBConstants.CR_SENT))
+                .withCrReceived(rs.getString(DBConstants.CR_RECEIVED))
+                .withNotes(rs.getString(DBConstants.NOTES))
+                .withMinimalMr(rs.getInt(DBConstants.MINIMAL_MR))
+                .withAbstractionReady(rs.getInt(DBConstants.ABSTRACTION_READY))
+                .withAdditionalValuesJson(rs.getString(DBConstants.ADDITIONAL_VALUES_JSON))
+                .withChangedBy(rs.getString(DBConstants.CHANGED_BY))
                 .build();
     }
 

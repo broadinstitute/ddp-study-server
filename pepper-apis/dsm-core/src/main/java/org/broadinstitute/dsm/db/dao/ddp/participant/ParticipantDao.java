@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.db.dao.ddp.participant;
 import lombok.NonNull;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
+import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 import java.sql.PreparedStatement;
@@ -12,7 +13,6 @@ import java.sql.Statement;
 import java.util.Optional;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-import static org.broadinstitute.dsm.statics.DBConstants.*;
 
 public class ParticipantDao implements Dao<ParticipantDto> {
 
@@ -30,13 +30,8 @@ public class ParticipantDao implements Dao<ParticipantDto> {
     private static final String SQL_FILTER_BY_DDP_INSTANCE_ID = "ddp_instance_id = ?";
     private static final String SQL_GET_PARTICIPANT_BY_DDP_PARTICIPANT_ID_AND_DDP_INSTANCE_ID = "SELECT * FROM ddp_participant WHERE " + SQL_FILTER_BY_DDP_PARTICIPANT_ID + " AND " + SQL_FILTER_BY_DDP_INSTANCE_ID + ";";
 
-    private static ParticipantDao participantDao;
-
     public static ParticipantDao of() {
-        if (participantDao == null) {
-            participantDao = new ParticipantDao();
-        }
-        return participantDao;
+        return new ParticipantDao();
     }
 
     @Override
@@ -129,16 +124,16 @@ public class ParticipantDao implements Dao<ParticipantDto> {
 
     private ParticipantDto buildParticipantFromResultSet(ResultSet rs) throws SQLException {
         return new ParticipantDto.Builder()
-                .withParticipantId(rs.getInt(PARTICIPANT_ID))
-                .withDdpParticipantId(rs.getString(DDP_PARTICIPANT_ID))
-                .withLastVersion(rs.getLong(LAST_VERSION))
-                .withLastVersionDate(rs.getString(LAST_VERSION_DATE))
-                .withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID))
-                .withReleaseCompleted(rs.getBoolean(RELEASE_COMPLETED))
-                .withAssigneeIdMr(rs.getInt(ASSIGNEE_ID_MR))
-                .withAssigneeIdTissue(rs.getInt(ASSIGNEE_ID_TISSUE))
-                .withLastChanged(rs.getLong(LAST_CHANGED))
-                .withChangedBy(rs.getString(CHANGED_BY))
+                .withParticipantId(rs.getInt(DBConstants.PARTICIPANT_ID))
+                .withDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID))
+                .withLastVersion(rs.getLong(DBConstants.LAST_VERSION))
+                .withLastVersionDate(rs.getString(DBConstants.LAST_VERSION_DATE))
+                .withDdpInstanceId(rs.getInt(DBConstants.DDP_INSTANCE_ID))
+                .withReleaseCompleted(rs.getBoolean(DBConstants.RELEASE_COMPLETED))
+                .withAssigneeIdMr(rs.getInt(DBConstants.ASSIGNEE_ID_MR))
+                .withAssigneeIdTissue(rs.getInt(DBConstants.ASSIGNEE_ID_TISSUE))
+                .withLastChanged(rs.getLong(DBConstants.LAST_CHANGED))
+                .withChangedBy(rs.getString(DBConstants.CHANGED_BY))
                 .build();
     }
 

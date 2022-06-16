@@ -16,12 +16,12 @@ public class NewOsteoParticipantMigrator extends ParticipantMigrator {
     }
 
     @Override
-    protected Map<String, Participant> getParticipantsByRealm(String realm) {
+    protected Map<String, Participant> getParticipantsByRealm(String ignored) {
         return super.getParticipantsByRealm(NEW_OSTEO_INSTANCE_NAME);
     }
 
     @Override
-    protected Map<String, ParticipantExit> getExitedParticipantsByRealm(String realm) {
+    protected Map<String, ParticipantExit> getExitedParticipantsByRealm(String ignored) {
         return super.getExitedParticipantsByRealm(NEW_OSTEO_INSTANCE_NAME);
     }
 }
