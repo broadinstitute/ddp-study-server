@@ -4,7 +4,6 @@ import org.broadinstitute.ddp.db.dto.ComponentDto;
 import org.broadinstitute.ddp.db.dto.InstitutionPhysicianComponentDto;
 import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.TabularBlockDef;
-import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.tabular.TabularHeaderDef;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
@@ -18,6 +17,7 @@ import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.instance.ComponentBlock;
 import org.broadinstitute.ddp.model.activity.instance.ConditionalBlock;
 import org.broadinstitute.ddp.model.activity.instance.ContentBlock;
+import org.broadinstitute.ddp.model.activity.instance.FormBlock;
 import org.broadinstitute.ddp.model.activity.instance.FormComponent;
 import org.broadinstitute.ddp.model.activity.instance.TabularBlock;
 import org.broadinstitute.ddp.model.activity.instance.GroupBlock;
@@ -64,7 +64,7 @@ public class FormBlockCreatorHelper {
                         mailingAddressComponentDef.shouldRequirePhone()
                 );
                 // remember mailing address component in order to save to it addressGuid (stored in activity instance substitutions)
-                ctx.setMailingAddressComponent((MailingAddressComponent)formComponent);
+                ctx.setMailingAddressComponent((MailingAddressComponent) formComponent);
                 break;
             default:
                 throw new IllegalStateException("Unexpected value: " + componentBlockDef.getComponentType());
@@ -74,21 +74,10 @@ public class FormBlockCreatorHelper {
     }
 
     TabularBlock createTabularBlock(AIBuilderContext ctx, TabularBlockDef tabularBlockDef) {
-        final List<List<Question>> rows = new ArrayList<>();
-        for (int row = 0; row < tabularBlockDef.getRowsCount(); row++) {
-            final List<Question> questionsRow = new ArrayList<>();
-            for (int column = 0; column < tabularBlockDef.getColumnsCount(); column++) {
-                final QuestionDef questionDef = tabularBlockDef.get(row, column);
-                if (questionDef == null) {
-                    questionsRow.add(null);
-                    continue;
-                }
 
-                questionsRow.add(ctx.getAIBuilderFactory().getQuestionCreator().createQuestion(ctx, questionDef));
-            }
-
-            rows.add(questionsRow);
-        }
+        List<FormBlock> allTabularBlocks = CollectionMiscUtil.createListFromAnotherList(tabularBlockDef.getBlocks(),
+                (formBlockDef) -> ctx.getAIBuilderFactory().getFormBlockCreator()
+                        .createBlock(ctx, formBlockDef));
 
         final List<TabularHeader> headers = new ArrayList<>();
         for (int header = 0; header < tabularBlockDef.getHeaders().size(); header++) {
@@ -97,7 +86,7 @@ public class FormBlockCreatorHelper {
                     .getTemplateRenderHelper().addTemplate(ctx, headerDef.getLabel())));
         }
 
-        return new TabularBlock(tabularBlockDef.getColumnsCount(), headers, rows);
+        return new TabularBlock(tabularBlockDef.getColumnsCount(), headers, allTabularBlocks);
     }
 
     ConditionalBlock createConditionalBlock(AIBuilderContext ctx, ConditionalBlockDef conditionalBlockDef) {

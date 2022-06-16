@@ -79,7 +79,6 @@ import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.tabular.TabularHeaderDef;
-import org.broadinstitute.ddp.model.activity.definition.tabular.TabularRowDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
 import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
@@ -380,29 +379,32 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .builder("QUESTION_LU", Template.text("This is value"))
                 .setScale(2)
                 .build();
+        final QuestionBlockDef questionBlockDefLU = new QuestionBlockDef(questionLU);
 
         final DecimalQuestionDef questionRU = DecimalQuestionDef
                 .builder("QUESTION_RU", Template.text("This is value"))
                 .setScale(2)
                 .build();
+        final QuestionBlockDef questionBlockDefRU = new QuestionBlockDef(questionRU);
 
         final DecimalQuestionDef questionLB = DecimalQuestionDef
                 .builder("QUESTION_LB", Template.text("This is value"))
                 .setScale(2)
                 .build();
+        final QuestionBlockDef questionBlockDefLB = new QuestionBlockDef(questionLB);
 
         final DecimalQuestionDef questionRB = DecimalQuestionDef
                 .builder("QUESTION_RB", Template.text("This is value"))
                 .setScale(2)
                 .build();
+        final QuestionBlockDef questionBlockDefRB = new QuestionBlockDef(questionRB);
 
         var tabularBlock = new TabularBlockDef(2);
-        tabularBlock.getRows().add(new TabularRowDef(Arrays.asList(questionLU, questionRU)));
-        tabularBlock.getRows().add(new TabularRowDef(Arrays.asList(questionLB, questionRB)));
+        tabularBlock.getBlocks().addAll(Arrays.asList(questionBlockDefLU, questionBlockDefRU));
+        tabularBlock.getBlocks().addAll(Arrays.asList(questionBlockDefLB, questionBlockDefRB));
 
         tabularBlock.getHeaders().add(new TabularHeaderDef(1, Template.text("Left column")));
         tabularBlock.getHeaders().add(new TabularHeaderDef(1, Template.text("Right column")));
-
         FormSectionDef tabularSection = new FormSectionDef(null, Collections.singletonList(tabularBlock));
 
         //------------- create STUDY ACTIVITY ---------
@@ -670,11 +672,11 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .body("sections[11].blocks[0].headers[0].label", equalTo("Left column"))
                 .body("sections[11].blocks[0].headers[1].columnSpan", equalTo(1))
                 .body("sections[11].blocks[0].headers[1].label", equalTo("Right column"))
-                .body("sections[11].blocks[0].content.size()", equalTo(2))
-                .body("sections[11].blocks[0].content[0][0].stableId", equalTo("QUESTION_LU"))
-                .body("sections[11].blocks[0].content[0][1].stableId", equalTo("QUESTION_RU"))
-                .body("sections[11].blocks[0].content[1][0].stableId", equalTo("QUESTION_LB"))
-                .body("sections[11].blocks[0].content[1][1].stableId", equalTo("QUESTION_RB"));
+                .body("sections[11].blocks[0].content.size()", equalTo(4))
+                .body("sections[11].blocks[0].content[0].question.stableId", equalTo("QUESTION_LU"))
+                .body("sections[11].blocks[0].content[1].question.stableId", equalTo("QUESTION_RU"))
+                .body("sections[11].blocks[0].content[2].question.stableId", equalTo("QUESTION_LB"))
+                .body("sections[11].blocks[0].content[3].question.stableId", equalTo("QUESTION_RB"));
     }
 
     @Test

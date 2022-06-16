@@ -25,6 +25,7 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.AgreementQuestionDto;
 import org.broadinstitute.ddp.db.dto.BooleanQuestionDto;
+import org.broadinstitute.ddp.db.dto.BlockTabularQuestionDto;
 import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
 import org.broadinstitute.ddp.db.dto.DateQuestionDto;
 import org.broadinstitute.ddp.db.dto.FileQuestionDto;
@@ -1843,8 +1844,35 @@ public interface QuestionDao extends SqlObject {
             blockDef.setBlockGuid(blockDto.getGuid());
             blockDef.setShownExpr(blockDto.getShownExpr());
             blockDef.setEnabledExpr(blockDto.getEnabledExpr());
-
             blockDefs.put(blockDto.getId(), blockDef);
+        }
+
+        return blockDefs;
+    }
+
+    default Map<Long, QuestionBlockDef> collectTabularBlockDefs(Collection<BlockTabularQuestionDto> blockDtos, long timestamp) {
+        if (blockDtos == null || blockDtos.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        final var blockIds = StreamEx.of(blockDtos).map(BlockTabularQuestionDto::getQuestionBlockId).toSet();
+
+        Map<Long, Long> blockIdToQuestionId = getJdbiBlockQuestion()
+                .findQuestionIdsByBlockIdsAndTimestamp(blockIds, timestamp);
+        Map<Long, QuestionDef> questionDefs = collectQuestionDefs(blockIdToQuestionId.values(), timestamp);
+
+        Map<Long, QuestionBlockDef> blockDefs = new HashMap<>();
+        for (var blockDto : blockDtos) {
+            long questionId = blockIdToQuestionId.get(blockDto.getQuestionBlockId());
+            QuestionDef questionDef = questionDefs.get(questionId);
+
+            var blockDef = new QuestionBlockDef(questionDef);
+            blockDef.setBlockId(blockDto.getQuestionBlockId());
+            blockDef.setBlockGuid(blockDto.getBlockGuid());
+            blockDef.setShownExpr(blockDto.getShownExpr());
+            blockDef.setEnabledExpr(blockDto.getEnabledExpr());
+            blockDef.setColumnSpan(blockDto.getColumnSpan());
+            blockDefs.put(blockDto.getQuestionBlockId(), blockDef);
         }
 
         return blockDefs;
