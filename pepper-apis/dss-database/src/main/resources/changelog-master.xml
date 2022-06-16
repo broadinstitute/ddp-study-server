@@ -310,5 +310,6 @@
     <include file="db-changes/schema/DDP-7248.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7890-add-new-event-type.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7931.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-7931-internal-user-accounts.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7931-profile-email.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
