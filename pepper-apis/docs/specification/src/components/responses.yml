@@ -55,6 +55,13 @@ ActivityAnswersPatchResponse:
             description: list of updated block visibilities
             items:
               $ref: '../pepper.yml#/components/schemas/Block.Visibility'
+          compositeVisibility:
+            type: array
+            nullable: true
+            description: |
+              list of visibility updates for composite questions
+            items:
+              $ref: '../pepper.yml#/components/schemas/Composite.Visibility'
           validationFailures:
             type: array
             items:

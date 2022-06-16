@@ -923,6 +923,36 @@ Block.Visibility:
     enabled:
       type: boolean
       description: whether block is enabled or not (used in cases when block inputs should be disabled but still visible)
+
+Composite.Visibility:
+  type: object
+  required:
+    - stableId
+    - children
+  properties:
+    stableId:
+      type: string
+      format: guid
+      description: |
+        The stableId of the composite question which is receiving visibility updates.
+    children:
+      type: array
+      items:
+        type: object
+        required:
+          - stableId
+          - shown
+          - enabled
+        properties:
+          stableId:
+            type: string
+            format: guid
+            description: |
+              The stableId of the composite child question this visibility update applies to.
+          shown:
+            type: boolean
+          enabled:
+            type: boolean
 #####
 #
 # Components
@@ -1724,12 +1754,31 @@ Question.Composite:
       additionalItemText:
         type: string
         description: 'The label to show above entries beyond the initial one'
+      childVisibility:
+        type: array
+        description: |
+          The set of visibility flags for the child questions. There will always be at least one set of flags in this array, even if no answers are present, in order to represent the default appearance state of the questions.
+        items:
+          type: array
+          items:
+            type: object
+            required:
+              - shown
+              - enabled
+            properties:
+              shown:
+                type: boolean
+              enabled:
+                type: boolean
       children:
         type: array
-        description: 'The child questions to present'
+        description: The child questions to be presented
         items:
           anyOf:
             - $ref: '#/Question.Date'
+            - $ref: '#/Question.Decimal'
+            - $ref: '#/Question.Equation'
+            - $ref: '#/Question.Integer'
             - $ref: '#/Question.Picklist'
             - $ref: '#/Question.Text'
       childOrientation:
