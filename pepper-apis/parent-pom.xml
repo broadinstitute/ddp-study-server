@@ -264,7 +264,7 @@
         <!-- utilities for parsing and templating -->
         <dependency>
             <groupId>org.apache.velocity</groupId>
-            <artifactId>velocity</artifactId>
+            <artifactId>velocity-engine-core</artifactId>
             <version>2.3</version>
         </dependency>
         <dependency>
@@ -465,7 +465,7 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-servlets</artifactId>
-            <version>9.4.39-2</version>
+            <version>9.4.41.v20210516</version>
         </dependency>
         <dependency>
             <groupId>org.redisson</groupId>

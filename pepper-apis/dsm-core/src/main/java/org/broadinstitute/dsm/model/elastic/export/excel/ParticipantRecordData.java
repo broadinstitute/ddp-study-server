@@ -28,9 +28,9 @@ public class ParticipantRecordData {
         this.columnAliasEsPathMap = columnAliasEsPathMap;
     }
 
-    public List<ExcelRow> processData(ParticipantWrapperResult participantData, boolean isCountPhase) {
+    public List<ExcelRow> processToExcel(List<ParticipantWrapperDto> participantDtos) {
         List<ParticipantRecord> participantRecords = new ArrayList<>();
-        for (ParticipantWrapperDto participant : participantData.getParticipants()) {
+        for (ParticipantWrapperDto participant : participantDtos) {
             ParticipantRecord participantRecord = new ParticipantRecord();
             Map<String, Object> esDataAsMap = participant.getEsDataAsMap();
             for (Map.Entry<Alias, List<Filter>> aliasListEntry : columnAliasEsPathMap.entrySet()) {
@@ -44,14 +44,10 @@ public class ParticipantRecordData {
                     participantRecord.add(columnValue);
                 }
             }
-            if (isCountPhase) {
-                initOrUpdateSizes(participantRecord);
-            } else {
-                participantRecords.add(participantRecord);
-            }
+            initOrUpdateSizes(participantRecord);
+            participantRecords.add(participantRecord);
         }
         return getRowData(participantRecords);
-
     }
 
     public List<String> getHeader() {
