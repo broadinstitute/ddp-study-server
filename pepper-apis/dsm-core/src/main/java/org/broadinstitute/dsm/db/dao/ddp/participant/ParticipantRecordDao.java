@@ -12,8 +12,12 @@ import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ParticipantRecordDao implements Dao<ParticipantRecordDto> {
+
+    private static final Logger logger = LoggerFactory.getLogger(ParticipantRecordDao.class);
 
     private static final String SQL_INSERT_PARTICIPANT =
             "INSERT INTO ddp_participant_record SET participant_id = ?, cr_sent = ?, cr_received = ?, notes = ?, "
@@ -24,15 +28,13 @@ public class ParticipantRecordDao implements Dao<ParticipantRecordDto> {
 
     private static final String SQL_GET_PARTICIPANT_RECORD_DTO_BY_PARTICIPANT_ID = "SELECT * FROM ddp_participant_record" + SQL_FILTER_BY_PARTICIPANT_ID + ";";
 
-
-    private static ParticipantRecordDao participantRecordDao;
-
     public static ParticipantRecordDao of() {
         return new ParticipantRecordDao();
     }
 
     @Override
     public int create(ParticipantRecordDto participantRecordDto) {
+        logger.info(String.format("Attempting to create a new participant_record with participant_id = %s", participantRecordDto.getParticipantId()));
         SimpleResult simpleResult = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult(-1);
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_PARTICIPANT, Statement.RETURN_GENERATED_KEYS)) {
@@ -62,6 +64,7 @@ public class ParticipantRecordDao implements Dao<ParticipantRecordDto> {
             throw new RuntimeException("Error inserting participant record for participant id: " + participantRecordDto.getParticipantId(),
                     simpleResult.resultException);
         }
+        logger.info(String.format("A new participant_record with participant_id = %s has been created successfully", participantRecordDto.getParticipantId()));
         return (int) simpleResult.resultValue;
     }
 
@@ -76,6 +79,7 @@ public class ParticipantRecordDao implements Dao<ParticipantRecordDto> {
     }
 
     public Optional<ParticipantRecordDto> getParticipantRecordByParticipantId(int participantId) {
+        logger.info(String.format("Attempting to find participant_record in DB with participant_id = %s", participantId));
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult executionResult = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_PARTICIPANT_RECORD_DTO_BY_PARTICIPANT_ID)) {
@@ -93,6 +97,7 @@ public class ParticipantRecordDao implements Dao<ParticipantRecordDto> {
         if (results.resultException != null) {
             throw new RuntimeException("Error getting participant record with " + participantId, results.resultException);
         }
+        logger.info(String.format("Got participant_record from DB with participant_id = %s", participantId));
         return Optional.ofNullable((ParticipantRecordDto) results.resultValue);
     }
 

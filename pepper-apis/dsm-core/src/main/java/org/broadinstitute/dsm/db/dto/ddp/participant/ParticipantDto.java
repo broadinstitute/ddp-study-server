@@ -40,6 +40,14 @@ public class ParticipantDto implements Cloneable {
         this.ddpInstanceId = ddpInstanceId;
     }
 
+    public void setAssigneeIdMr(Integer assigneeIdMr) {
+        this.assigneeIdMr = Optional.ofNullable(assigneeIdMr);
+    }
+
+    public void setAssigneeIdTissue(Integer assigneeIdTissue) {
+        this.assigneeIdTissue = Optional.ofNullable(assigneeIdTissue);
+    }
+
     @Override
     public ParticipantDto clone() {
         try {

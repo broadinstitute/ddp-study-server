@@ -1,9 +1,12 @@
 package org.broadinstitute.dsm.db.dao.ddp.institution;
 
 import org.broadinstitute.dsm.db.dao.Dao;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantRecordDao;
 import org.broadinstitute.dsm.db.dto.ddp.institution.DDPInstitutionDto;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,6 +18,7 @@ import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 public class DDPInstitutionDao implements Dao<DDPInstitutionDto> {
 
+    private static final Logger logger = LoggerFactory.getLogger(DDPInstitutionDao.class);
 
     public static final String SQL_INSERT_NEW_DDP_INSTITUTION = "INSERT INTO ddp_institution SET ddp_institution_id = ?, type = ?, participant_id = ?, last_changed = ?";
 
@@ -26,6 +30,7 @@ public class DDPInstitutionDao implements Dao<DDPInstitutionDto> {
 
     @Override
     public int create(DDPInstitutionDto ddpInstitutionDto) {
+        logger.info(String.format("Attempting to create a new institution with participant_id = %s", ddpInstitutionDto.getParticipantId()));
         SimpleResult simpleResult = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult(-1);
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_NEW_DDP_INSTITUTION, Statement.RETURN_GENERATED_KEYS)) {
@@ -47,6 +52,7 @@ public class DDPInstitutionDao implements Dao<DDPInstitutionDto> {
         if (simpleResult.resultException != null) {
             throw new RuntimeException("Error inserting participant with id: " + ddpInstitutionDto.getParticipantId(), simpleResult.resultException);
         }
+        logger.info(String.format("A new institution with participant_id = %s has been created successfully", ddpInstitutionDto.getParticipantId()));
         return (int) simpleResult.resultValue;
     }
 
@@ -57,6 +63,7 @@ public class DDPInstitutionDao implements Dao<DDPInstitutionDto> {
 
     @Override
     public Optional<DDPInstitutionDto> get(long institutionId) {
+        logger.info(String.format("Attempting to find the institution in DB with institution_id = %s", institutionId));
         SimpleResult result = new SimpleResult();
         SimpleResult simpleResult = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult(-1);
@@ -75,6 +82,7 @@ public class DDPInstitutionDao implements Dao<DDPInstitutionDto> {
         if (simpleResult.resultException != null) {
             throw new RuntimeException("Error while fetching institutions with institution id: " + institutionId, simpleResult.resultException);
         }
+        logger.info(String.format("Got the institution from DB with institution_id = %s", institutionId));
         return Optional.of((DDPInstitutionDto) result.resultValue);
     }
 

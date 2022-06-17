@@ -18,22 +18,27 @@ public class DynamicFieldsMappingMigratorTest {
     }
 
     @Test
-    @Ignore
     public void testExport() {
-        final String index = "participants_structured.cmi.angio";
-        final String study = "angio";
+        final String index = "participants_structured.cmi.cmi-osteo";
+        final String study = "osteo";
+
         List<? extends Exportable> exportables = Arrays.asList(
-                //DynamicFieldsMappingMigrator should be first in the list to make sure that mapping will be exported for first
-                new DynamicFieldsMappingMigrator(index, study),
-                new KitRequestShippingMigrator(index, study),
-                new ParticipantDataMigrator(index, study),
-                new ParticipantMigrator(index, study),
-                new OncHistoryMigrator(index, study),
-                new MedicalRecordMigrator(index, study),
-                new OncHistoryDetailsMigrator(index, study),
-                new TissueMigrator(index, study),
-                new SMIDMigrator(index, study),
-                new CohortTagMigrator(index, study, new CohortTagDaoImpl()));
+                AdditionalParticipantMigratorFactory.of(index, study)
+        );
+
+//        List<? extends Exportable> exportables = Arrays.asList(
+//                //DynamicFieldsMappingMigrator should be first in the list to make sure that mapping will be exported for first
+//                new DynamicFieldsMappingMigrator(index, study),
+//                new KitRequestShippingMigrator(index, study),
+//                new ParticipantDataMigrator(index, study),
+//                new ParticipantMigrator(index, study),
+//                new OncHistoryMigrator(index, study),
+//                AdditionalParticipantMigratorFactory.of(index, study),
+//                new MedicalRecordMigrator(index, study),
+//                new OncHistoryDetailsMigrator(index, study),
+//                new TissueMigrator(index, study),
+//                new SMIDMigrator(index, study),
+//                new CohortTagMigrator(index, study, new CohortTagDaoImpl()));
         exportables.forEach(Exportable::export);
 
     }

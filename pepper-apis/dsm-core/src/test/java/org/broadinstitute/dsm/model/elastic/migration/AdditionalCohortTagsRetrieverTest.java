@@ -1,0 +1,25 @@
+package org.broadinstitute.dsm.model.elastic.migration;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.NoSuchElementException;
+
+public class AdditionalCohortTagsRetrieverTest {
+
+    @Test
+    public void createInstance() {
+        var realm = "Osteo";
+        Assert.assertTrue(AdditionalCohortTagsRetriever.fromRealm(realm).get() instanceof NewOsteoCohortTagsRetriever);
+    }
+
+    @Test
+    public void createEmpty() {
+        var realm = "gibberish";
+        try {
+            AdditionalCohortTagsRetriever.fromRealm(realm).get();
+        } catch (NoSuchElementException nse) {
+            Assert.assertTrue("if NoSuchElementException is caught then it should be Optional.empty() as expected", true);
+        }
+    }
+}

@@ -2,8 +2,11 @@ package org.broadinstitute.dsm.db.dao.ddp.medical.records;
 
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.dao.Dao;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantRecordDao;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,13 +19,13 @@ import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 public class MedicalRecordDao implements Dao<MedicalRecord> {
 
+    private static final Logger logger = LoggerFactory.getLogger(MedicalRecordDao.class);
+
     public static final String SQL_INSERT_NEW_MEDICAL_RECORD = "INSERT INTO ddp_medical_record (institution_id, name, contact, phone, " +
             "fax, fax_sent, fax_sent_by, fax_confirmed, fax_sent_2, fax_sent_2_by, fax_confirmed_2, fax_sent_3, fax_sent_3_by, fax_confirmed_3, " +
             "mr_received, mr_document, mr_problem, mr_problem_text, unable_obtain, unable_obtain_text, followup_required, followup_required_text, " +
             "duplicate, international, cr_required, pathology_present, notes, follow_ups, additional_values_json, last_changed, changed_by, mr_document_file_names, deleted) " +
             "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-
-    private static MedicalRecordDao medicalRecordDao;
 
     public static MedicalRecordDao of() {
         return new MedicalRecordDao();
@@ -30,6 +33,7 @@ public class MedicalRecordDao implements Dao<MedicalRecord> {
 
     @Override
     public int create(MedicalRecord medicalRecord) {
+        logger.info(String.format("Attempting to create a new medical_record with institution_id = %s", medicalRecord.getInstitutionId()));
         SimpleResult simpleResult = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult(-1);
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_NEW_MEDICAL_RECORD, Statement.RETURN_GENERATED_KEYS)) {
@@ -48,6 +52,7 @@ public class MedicalRecordDao implements Dao<MedicalRecord> {
         if (simpleResult.resultException != null) {
             throw new RuntimeException("Error while inserting medical record with institution id: " + medicalRecord.getInstitutionId(), simpleResult.resultException);
         }
+        logger.info(String.format("A new medical_record with institution_id = %s has been created successfully", medicalRecord.getInstitutionId()));
         return (int) simpleResult.resultValue;
     }
 

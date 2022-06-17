@@ -3,8 +3,11 @@ package org.broadinstitute.dsm.db.dao.ddp.participant;
 import lombok.NonNull;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
+import org.broadinstitute.dsm.pubsub.study.osteo.OsteoWorkflowStatusUpdate;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,6 +19,7 @@ import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 public class ParticipantDao implements Dao<ParticipantDto> {
 
+    private static final Logger logger = LoggerFactory.getLogger(ParticipantDao.class);
 
     private static final String SQL_INSERT_PARTICIPANT =
             "INSERT INTO ddp_participant (ddp_participant_id, last_version, last_version_date, ddp_instance_id, release_completed, "
@@ -36,6 +40,7 @@ public class ParticipantDao implements Dao<ParticipantDto> {
 
     @Override
     public int create(ParticipantDto participantDto) {
+        logger.info(String.format("Attempting to create a new participant with ddp_participant_id = %s", participantDto.getDdpParticipantId().orElse("")));
         SimpleResult simpleResult = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult(-1);
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_PARTICIPANT, Statement.RETURN_GENERATED_KEYS)) {
@@ -66,6 +71,7 @@ public class ParticipantDao implements Dao<ParticipantDto> {
             throw new RuntimeException("Error inserting participant with id: " + participantDto.getDdpParticipantId().orElse(""),
                     simpleResult.resultException);
         }
+        logger.info(String.format("A new participant with ddp_participant_id = %s has been created successfully", participantDto.getDdpParticipantId().orElse("")));
         return (int) simpleResult.resultValue;
     }
 
@@ -101,6 +107,7 @@ public class ParticipantDao implements Dao<ParticipantDto> {
         return Optional.ofNullable((String) simpleResult.resultValue);
     }
     public Optional<ParticipantDto> getParticipantByDdpParticipantIdAndDdpInstanceId(@NonNull String ddpParticipantId, int ddpInstanceId) {
+        logger.info(String.format("Attempting to find participant with ddp_participant_id = %s and ddp_instance_id = %s in DB", ddpParticipantId, ddpInstanceId));
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult executionResult = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_PARTICIPANT_BY_DDP_PARTICIPANT_ID_AND_DDP_INSTANCE_ID)) {
@@ -119,6 +126,7 @@ public class ParticipantDao implements Dao<ParticipantDto> {
         if (results.resultException != null) {
             throw new RuntimeException("Error getting participant data with " + ddpParticipantId, results.resultException);
         }
+        logger.info(String.format("Got participant with ddp_participant_id = %s and ddp_instance_id = %s", ddpParticipantId, ddpInstanceId));
         return Optional.ofNullable((ParticipantDto) results.resultValue);
     }
 

@@ -17,7 +17,7 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.model.elastic.ESDsm;
-import org.broadinstitute.dsm.model.elastic.NewOsteoParticipant;
+import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.export.ElasticDataExportAdapter;
 import org.broadinstitute.dsm.model.elastic.export.RequestPayload;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
@@ -102,32 +102,35 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
             Map<String, Object> esPtDtoAsMap = ObjectMapperSingleton.readValue(GSON.toJson(esPtDto), new TypeReference<Map<String, Object>>() {});
             writeDataToES(esPtDtoAsMap);
         } else {
-            logger.info(String.format("Participant with id %s does not exist", ddpParticipantId));
+            logger.warn(String.format("Participant with id %s does not exist", ddpParticipantId));
         }
     }
 
     private ParticipantDto updateParticipantDto(ParticipantDto participantDto) {
         ParticipantDto clonedParticipantDto = participantDto.clone();
-        participantDto.setDdpInstanceId(newOsteoInstanceId);
+        clonedParticipantDto.setDdpInstanceId(newOsteoInstanceId);
+        clonedParticipantDto.setAssigneeIdMr(Util.orElseNull(participantDto.getAssigneeIdMr(), 0));
+        clonedParticipantDto.setAssigneeIdTissue(Util.orElseNull(participantDto.getAssigneeIdTissue(), 0));
         return clonedParticipantDto;
     }
 
     private void writeDataToES(Map<String, Object> esPtDtoAsMap) {
-        logger.info(String.format("Exporting values in ES for %s", NEW_OSTEO_INSTANCE_NAME));
         elasticDataExportAdapter.setSource(esPtDtoAsMap);
         elasticDataExportAdapter.export();
     }
 
     private void updateEsDsm(long newOsteoParticipantId, List<MedicalRecord> newOsteoMedicalRecords, ESDsm dsm) {
+        logger.info("Attempting to update the `dsm` object in ES");
         dsm.getParticipant().ifPresent(oldOsteoPt -> updateNewOsteoParticipant(newOsteoParticipantId, dsm, oldOsteoPt));
         dsm.setCohortTag(Stream.concat(dsm.getCohortTag().stream(), Stream.of(newCohortTag)).collect(Collectors.toList()));
         List<MedicalRecord> oldOsteoMedicalRecords = dsm.getMedicalRecord();
         List<MedicalRecord> updatedMedicalRecords = Stream.concat(oldOsteoMedicalRecords.stream(), newOsteoMedicalRecords.stream()).collect(Collectors.toList());
         dsm.setMedicalRecord(updatedMedicalRecords);
+        logger.info("`dsm` object was updated successfully");
     }
 
     private void updateNewOsteoParticipant(long newOsteoParticipantId, ESDsm dsm, Participant oldOsteoPt) {
-        NewOsteoParticipant newOsteoPt = (NewOsteoParticipant) oldOsteoPt.clone();
+        Participant newOsteoPt = oldOsteoPt.clone();
         newOsteoPt.setParticipantId(newOsteoParticipantId);
         newOsteoPt.setDdpInstanceId(newOsteoInstanceId);
         dsm.setNewOsteoParticipant(newOsteoPt);
