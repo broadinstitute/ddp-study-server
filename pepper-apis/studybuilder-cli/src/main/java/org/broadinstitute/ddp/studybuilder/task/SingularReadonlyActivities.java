@@ -82,10 +82,10 @@ public class SingularReadonlyActivities implements CustomTask {
                     .orElseThrow(() -> new DDPException("Could not find activity id for " + activityCode));
         }
 
-        @SqlQuery("select ai.activity_instance_id from activity_instance ai join activity_instance_status ais on " +
-                "ai.activity_instance_id = ais.activity_instance_id where study_activity_id=:studyActivityId and " +
-                "ais.activity_instance_status_type_id=(select activity_instance_status_type_id from activity_instance_status_type " +
-                "where activity_instance_status_type_code='COMPLETE')")
+        @SqlQuery("select ai.activity_instance_id from activity_instance ai join activity_instance_status ais on "
+                + "ai.activity_instance_id = ais.activity_instance_id where study_activity_id=:studyActivityId and "
+                + "ais.activity_instance_status_type_id=(select activity_instance_status_type_id from activity_instance_status_type "
+                + "where activity_instance_status_type_code='COMPLETE')")
         List<Long> getDoneActivities(@Bind("studyActivityId") long studyActivityId);
     }
 
