@@ -21,10 +21,15 @@ public final class QuestionBlock extends FormBlock implements Numberable {
 
     private transient boolean hideDisplayNumber;
 
-    public QuestionBlock(Question question) {
+    public QuestionBlock(Question question, Integer columnSpan) {
         super(BlockType.QUESTION);
         this.question = MiscUtil.checkNonNull(question, "question");
+        this.columnSpan = columnSpan;
         hideDisplayNumber = question.shouldHideQuestionNumber();
+    }
+
+    public QuestionBlock(Question question) {
+        this(question, null);
     }
 
     public Question getQuestion() {
