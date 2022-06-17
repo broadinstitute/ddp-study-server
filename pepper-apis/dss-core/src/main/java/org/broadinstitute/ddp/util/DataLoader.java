@@ -1300,7 +1300,7 @@ public class DataLoader {
 
         long userId = userDao.insertMigrationUser(auth0UserId, newUserGuid, pepperClientId.get(), newUserHruid,
                 data.getDatstatAltpid(), data.getDdpParticipantShortid(), createdAtMillis, updatedAtMillis);
-        UserDto newUser = new UserDto(userId, auth0UserId, newUserGuid, newUserHruid, data.getDatstatAltpid(),
+        UserDto newUser = new UserDto(userId, auth0UserId, null, newUserGuid, newUserHruid, data.getDatstatAltpid(),
                 data.getDdpParticipantShortid(), createdAtMillis, updatedAtMillis, null);
         mgmtClient.setUserGuidForAuth0User(auth0UserId, auth0ClientId, newUser.getUserGuid());
 

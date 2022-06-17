@@ -712,8 +712,12 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
     public void testRegister_mailingList_emailNotRequiredWhenAlreadyRegisteredWithStudy() {
         // Note: user1 is registered with study1, but user1 does not exist as an auth0 user.
 
-        String auth0UserIdForUser1 = TransactionWrapper.withTxn(handle ->
-                handle.attach(JdbiUser.class).findByUserId(user1Id).getAuth0UserId());
+        String auth0UserIdForUser1 = TransactionWrapper.withTxn(handle -> {
+            return handle.attach(JdbiUser.class)
+                    .findByUserId(user1Id)
+                    .getAuth0UserId()
+                    .orElseThrow();
+        });
 
         UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserIdForUser1, auth0ClientId,
                 study1.getGuid(), auth0Domain);

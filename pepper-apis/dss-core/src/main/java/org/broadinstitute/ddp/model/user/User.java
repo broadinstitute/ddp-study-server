@@ -33,9 +33,6 @@ public class User {
     private long createdAt;
     private long updatedAt;
     private Long expiresAt;
-
-    // Auth0 account email. Often not needed and expensive to compute since it requires an API call to Auth0,
-    // so fill this manually when necessary.
     private String email;
 
     private UserProfile profile;
@@ -53,7 +50,8 @@ public class User {
                 @ColumnName("auth0_user_id") String auth0UserId,
                 @ColumnName("created_at") long createdAt,
                 @ColumnName("updated_at") long updatedAt,
-                @ColumnName("expires_at") Long expiresAt) {
+                @ColumnName("expires_at") Long expiresAt,
+                @ColumnName("email") String email) {
         this.id = id;
         this.guid = guid;
         this.hruid = hruid;
@@ -66,6 +64,7 @@ public class User {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.expiresAt = expiresAt;
+        this.email = email;
     }
 
     public Optional<Long> getAuth0TenantId() {
@@ -74,6 +73,10 @@ public class User {
 
     public Optional<String> getAuth0UserId() {
         return Optional.ofNullable(auth0UserId);
+    }
+
+    public Optional<String> getEmail() {
+        return Optional.ofNullable(email);
     }
 
     public boolean hasProfile() {
@@ -94,5 +97,14 @@ public class User {
 
     public boolean hasAuth0Account() {
         return StringUtils.isNotEmpty(auth0UserId);
+    }
+
+    /**
+     * An account is considered to be internal if it has an assigned email address,
+     * but does not have an associated Auth0 account.
+     * @return true if the account is internal, false otherwise.
+     */
+    public boolean isInternalAccount() {
+        return (hasAuth0Account() == false) && (StringUtils.isNotEmpty(email));
     }
 }

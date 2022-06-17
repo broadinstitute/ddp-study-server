@@ -48,17 +48,14 @@ public interface UserDao extends SqlObject {
     @CreateSqlObject
     UserSql getUserSql();
 
-
-    default User createUser() {
+    default User createUser(String email) {
         val handle = getHandle();
         val userGuid = DBUtils.uniqueUserGuid(handle);
         val userHruid = DBUtils.uniqueUserHruid(handle);
 
         val userSql = getUserSql();
 
-        userSql.insertByClientIdOrAuth0Ids(byClientId, clientId, auth0Domain, auth0ClientId, auth0UserId, guid, hruid, legacyAltPid, legacyShortId, isLocked, createdAt, updatedAt, expiresAt)
-
-
+        return null;
     }
 
     default User createUser(String auth0Domain, String auth0ClientId, String auth0UserId) {

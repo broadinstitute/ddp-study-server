@@ -556,7 +556,12 @@ public class AngioConsentVersion2 implements CustomTask {
         Set<String> auth0UserIds = new HashSet<>();
         Map<Long, UserDto> usersMap = handle.attach(JdbiUser.class)
                 .findByUserIds(userIds).stream()
-                .peek(userDto -> auth0UserIds.add(userDto.getAuth0UserId()))
+                .filter(userDto -> userDto.getAuth0UserId().isPresent())
+                .peek(userDto -> {
+                    if (userDto.getAuth0UserId().isPresent()) {
+                        auth0UserIds.add(userDto.getAuth0UserId().get());
+                    }
+                })
                 .collect(Collectors.toMap(UserDto::getUserId, userDto -> userDto));
 
         Map<String, String> emailsMap = new Auth0Util(cfg.getString("tenant.domain"))

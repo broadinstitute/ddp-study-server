@@ -328,7 +328,8 @@ public class DataExporterTest extends TxnAwareBaseTest {
                         null,
                         0,
                         0,
-                        0L));
+                        0L,
+                        null));
 
         assertNull(participant.getBirthDate());
         assertNull(participant.getDateOfMajority());
@@ -786,8 +787,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
                     EnrollmentStatusType.ENROLLED, timestamp, null);
 
             User user = new User(1L, TEST_USER_GUID, "blah-hruid", "blah-legacy-altpid", "blah-shortid",
-                    false, 1L, 1L, "auth", timestamp, timestamp, null);
-            user.setEmail("test@datadonationplatform.org");
+                    false, 1L, 1L, "auth", timestamp, timestamp, null, "test@datadonationplatform.org");
             user.setProfile(new UserProfile(1L, "first-foo", "last-bar", null, null, 1L, "en", null, true, null, null));
             if (!emptyAddress) {
                 MailAddress address = new MailAddress("foo bar", "85 Main St", "Apt 2", "Boston", "MA", "US", "02115", "6171112233", null,

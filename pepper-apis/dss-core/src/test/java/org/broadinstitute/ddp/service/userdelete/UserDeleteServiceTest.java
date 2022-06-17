@@ -34,7 +34,7 @@ public class UserDeleteServiceTest extends DeleteUserRouteTestAbstract {
         DeleteUserRouteTestAbstract.setup();
         userWithGovernedUsers = new User(testData.getUserId(), testData.getUserGuid(), "testUser-hruid",
                 "testUser-altpid", "testUser-shortid",
-                false, 1L, 1L, "auth", 0, 0, null);
+                false, 1L, 1L, "auth", 0, 0, null, null);
     }
 
     @AfterClass

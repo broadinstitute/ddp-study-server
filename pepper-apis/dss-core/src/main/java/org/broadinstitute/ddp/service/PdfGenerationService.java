@@ -681,7 +681,7 @@ public class PdfGenerationService {
         if ("hruid".equals(fieldName)) {
             value = user.getHruid();
         } else if ("email".equals(fieldName)) {
-            value = user.getEmail();
+            value = user.getEmail().orElse(null);
         } else if ("first_name".equals(fieldName)) {
             value = user.hasProfile() ? user.getProfile().getFirstName() : null;
         } else if ("last_name".equals(fieldName)) {

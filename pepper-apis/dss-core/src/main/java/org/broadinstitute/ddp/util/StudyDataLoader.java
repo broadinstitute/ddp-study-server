@@ -1023,7 +1023,7 @@ public class StudyDataLoader {
 
         long userId = userDao.insertMigrationUser(auth0UserId, userGuid, clientDto.getId(), userHruid,
                 altpid, shortId, createdAtMillis, updatedAtMillis);
-        UserDto newUser = new UserDto(userId, auth0UserId, userGuid, userHruid, altpid,
+        UserDto newUser = new UserDto(userId, auth0UserId, null, userGuid, userHruid, altpid,
                 shortId, createdAtMillis, updatedAtMillis, null);
         mgmtClient.setUserGuidForAuth0User(auth0UserId, clientDto.getAuth0ClientId(), newUser.getUserGuid());
 

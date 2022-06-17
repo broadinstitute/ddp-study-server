@@ -523,7 +523,7 @@ public class DataExporter {
             userProfile = UserProfile.builder().userId(user.getId()).build();
         }
         ParticipantProfile profile = new ParticipantProfile(userProfile.getFirstName(), userProfile.getLastName(),
-                user.getGuid(), user.getHruid(), user.getLegacyAltPid(), user.getLegacyShortId(), user.getEmail(),
+                user.getGuid(), user.getHruid(), user.getLegacyAltPid(), user.getLegacyShortId(), user.getEmail().orElse(null),
                 userProfile.getPreferredLangCode(), userProfile.getDoNotContact(), user.getCreatedAt());
 
         Set<String> proxies = new HashSet<>();
@@ -811,7 +811,7 @@ public class DataExporter {
                 .setHruid(participantUser.getHruid())
                 .setLegacyAltPid(participantUser.getLegacyAltPid())
                 .setLegacyShortId(participantUser.getLegacyShortId())
-                .setEmail(participantUser.getEmail())
+                .setEmail(participantUser.getEmail().orElse(null))
                 .setCreatedAt(participantUser.getCreatedAt());
         ParticipantProfile participantProfile = builder.build();
 

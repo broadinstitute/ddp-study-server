@@ -368,7 +368,7 @@ public class StudyDataLoaderTest {
         when(mockHandle.attach(JdbiUserStudyLegacyData.class)).thenReturn(mockJdbiUserStudyLegacyData);
         when(mockHandle.attach(JdbiUserStudyEnrollment.class)).thenReturn(mockJdbiUserStudyEnrollment);
         long now = Instant.now().toEpochMilli();
-        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
+        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null, pretendUserGuid, pretendUserGuid, null,
                 null, now, now, null);
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
                 1L, 2L, null, false, null, null, false, null, false);
@@ -459,7 +459,7 @@ public class StudyDataLoaderTest {
         when(mockHandle.attach(JdbiMedicalProvider.class)).thenReturn(mockJdbiMedicalProvider);
         when(mockHandle.attach(JdbiInstitutionType.class)).thenReturn(mockInstitutionType);
         long now = Instant.now().toEpochMilli();
-        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
+        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null, pretendUserGuid, pretendUserGuid, null,
                 null, now, now, null);
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
                 1L, 2L, null, false, null, null, false, null, false);
@@ -517,7 +517,7 @@ public class StudyDataLoaderTest {
         AnswerDao mockAnswerDao = mock(AnswerDao.class);
 
         long now = Instant.now().toEpochMilli();
-        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
+        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null, pretendUserGuid, pretendUserGuid, null,
                 null, now, now, null);
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
                 1L, 2L, null, false, null, null, false, null, false);
@@ -704,7 +704,7 @@ public class StudyDataLoaderTest {
         when(mockHandle.attach(any())).thenReturn(mockDao);
 
         long now = Instant.now().toEpochMilli();
-        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
+        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null, pretendUserGuid, pretendUserGuid, null,
                 null, now, now, null);
         mailAddress = mockDataLoader.getUserAddress(mockHandle,
                 participantData,
@@ -754,7 +754,7 @@ public class StudyDataLoaderTest {
         doNothing().when(mockProfileDao).createProfile(any(UserProfile.class));
 
         long now = Instant.now().toEpochMilli();
-        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
+        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null, pretendUserGuid, pretendUserGuid, null,
                 null, now, now, null);
 
         mockDataLoader.addUserProfile(
@@ -852,7 +852,7 @@ public class StudyDataLoaderTest {
     public void testLoadFollowUpConsent() throws Exception {
 
         long now = Instant.now().toEpochMilli();
-        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
+        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null, pretendUserGuid, pretendUserGuid, null,
                 null, now, now, null);
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
                 1L, 2L, null, false, null, null, false, null, false);
@@ -978,7 +978,7 @@ public class StudyDataLoaderTest {
     public void testLoadTissueConsent() throws Exception {
 
         long now = Instant.now().toEpochMilli();
-        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
+        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null, pretendUserGuid, pretendUserGuid, null,
                 null, now, now, null);
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
                 1L, 2L, null, false, null, null, false, null, false);
@@ -1040,7 +1040,7 @@ public class StudyDataLoaderTest {
     public void testLoadBloodConsent() throws Exception {
 
         long now = Instant.now().toEpochMilli();
-        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null,
+        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null, pretendUserGuid, pretendUserGuid, null,
                 null, now, now, null);
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
                 1L, 2L, null, false, null, null, false, null, false);
