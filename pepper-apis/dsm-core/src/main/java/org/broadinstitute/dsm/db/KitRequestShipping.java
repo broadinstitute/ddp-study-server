@@ -102,7 +102,8 @@ public class KitRequestShipping extends KitRequest {
                     + "kit.easypost_shipment_status, kit.scan_date, kit.label_date, kit.error, kit.message, "
                     + "kit.receive_date, kit.deactivated_date, kit.easypost_address_id_to, kit.deactivation_reason, tracking.tracking_id,"
                     + " kit.kit_label, kit.express, kit.test_result, kit.needs_approval, kit.authorization, kit.denial_reason, "
-                    + "kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order FROM ddp_kit kit "
+                    +
+                    "kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order, kit.collection_date FROM ddp_kit kit "
                     + "INNER JOIN (SELECT dsm_kit_request_id, MAX(dsm_kit_id) AS kit_id FROM ddp_kit "
                     + "GROUP BY dsm_kit_request_id) groupedKit ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id "
                     + "AND kit.dsm_kit_id = groupedKit.kit_id LEFT JOIN ddp_kit_tracking tracking "
@@ -283,6 +284,8 @@ public class KitRequestShipping extends KitRequest {
     @ColumnName(DBConstants.DDP_INSTANCE_ID)
     private long ddpInstanceId;
 
+    private String collectionDate;
+
     public KitRequestShipping() {
     }
 
@@ -293,21 +296,21 @@ public class KitRequestShipping extends KitRequest {
         this(null, collaboratorParticipantId, null, null, null, kitTypeName, dsmKitRequestId, null, null, null, null, null, null, null,
                 scanDate, error, null, receiveDate, null, deactivatedDate, null, null, null, null, null, null, externalOrderNumber, null,
                 externalOrderStatus, null, testResult, upsTrackingStatus, upsReturnStatus, externalOrderDate, careEvolve, uploadReason,
-                null, null, null);
+                null, null, null, null);
     }
 
     public KitRequestShipping(String participantId, String collaboratorParticipantId, String dsmKitId, String realm, String trackingToId,
                               String receiveDateString, String hruid, String gender) {
         this(participantId, collaboratorParticipantId, null, null, realm, null, null, null, null, null, trackingToId, null, null, null,
                 null, null, null, null, null, null, null, dsmKitId, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, receiveDateString, hruid, gender);
+                null, null, receiveDateString, hruid, gender, null);
     }
 
     public KitRequestShipping(Long dsmKitRequestId, Long dsmKitId, String easypostToId, String easypostAddressId, Boolean error,
                               String message) {
         this(null, null, null, null, null, null, dsmKitRequestId, dsmKitId, null, null, null, null, null, null, null, error, message, null,
                 easypostAddressId, null, null, null, null, easypostToId, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null);
+                null, null, null, null, null);
     }
 
     // shippingId = ddp_label !!!
@@ -319,7 +322,7 @@ public class KitRequestShipping extends KitRequest {
                               String easypostToId, Long labelDate, String easypostShipmentStatus, String externalOrderNumber,
                               Boolean noReturn, String externalOrderStatus, String createdBy, String testResult, String upsTrackingStatus,
                               String upsReturnStatus, Long externalOrderDate, Boolean careEvolve, String uploadReason,
-                              String receiveDateString, String hruid, String gender) {
+                              String receiveDateString, String hruid, String gender, String collectionDate) {
         super(dsmKitRequestId, participantId, null, shippingId, externalOrderNumber, null, externalOrderStatus, null, externalOrderDate);
         this.collaboratorParticipantId = collaboratorParticipantId;
         this.bspCollaboratorSampleId = bspCollaboratorSampleId;
@@ -354,6 +357,7 @@ public class KitRequestShipping extends KitRequest {
         this.receiveDateString = receiveDateString;
         this.hruid = hruid;
         this.gender = gender;
+        this.collectionDate = collectionDate;
     }
 
     public static KitRequestShipping getKitRequestShipping(@NonNull ResultSet rs) throws SQLException {
@@ -371,15 +375,16 @@ public class KitRequestShipping extends KitRequest {
                         rs.getString(DBConstants.DSM_TRACKING_URL_RETURN), (Long) rs.getObject(DBConstants.DSM_SCAN_DATE),
                         rs.getBoolean(DBConstants.ERROR), rs.getString(DBConstants.MESSAGE),
                         (Long) rs.getObject(DBConstants.DSM_RECEIVE_DATE),
-                        rs.getString(DBConstants.EASYPOST_ADDRESS_ID_TO), (Long)rs.getObject(DBConstants.DSM_DEACTIVATED_DATE),
+                        rs.getString(DBConstants.EASYPOST_ADDRESS_ID_TO), (Long) rs.getObject(DBConstants.DSM_DEACTIVATED_DATE),
                         rs.getString(DBConstants.DEACTIVATION_REASON), rs.getString(DBConstants.KIT_LABEL),
                         rs.getBoolean(DBConstants.EXPRESS), rs.getString(DBConstants.EASYPOST_TO_ID),
-                        (Long)rs.getObject(DBConstants.LABEL_TRIGGERED_DATE), rs.getString(DBConstants.EASYPOST_SHIPMENT_STATUS),
+                        (Long) rs.getObject(DBConstants.LABEL_TRIGGERED_DATE), rs.getString(DBConstants.EASYPOST_SHIPMENT_STATUS),
                         rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), rs.getBoolean(DBConstants.NO_RETURN),
                         rs.getString(DBConstants.EXTERNAL_ORDER_STATUS), rs.getString(DBConstants.CREATED_BY),
                         rs.getString(DBConstants.KIT_TEST_RESULT), rs.getString(DBConstants.UPS_TRACKING_STATUS),
-                        rs.getString(DBConstants.UPS_RETURN_STATUS), (Long)rs.getObject(DBConstants.EXTERNAL_ORDER_DATE),
-                        rs.getBoolean(DBConstants.CARE_EVOLVE), rs.getString(DBConstants.UPLOAD_REASON), null, null, null);
+                        rs.getString(DBConstants.UPS_RETURN_STATUS), (Long) rs.getObject(DBConstants.EXTERNAL_ORDER_DATE),
+                        rs.getBoolean(DBConstants.CARE_EVOLVE), rs.getString(DBConstants.UPLOAD_REASON), null, null, null,
+                        rs.getString(DBConstants.COLLECTION_DATE));
         if (DBUtil.columnExists(rs, DBConstants.UPS_STATUS_DESCRIPTION) && StringUtils.isNotBlank(
                 rs.getString(DBConstants.UPS_STATUS_DESCRIPTION))) {
             String upsPackageTrackingNumber = rs.getString(DBConstants.UPS_PACKAGE_TABLE_ABBR + DBConstants.UPS_TRACKING_NUMBER);

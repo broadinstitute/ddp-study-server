@@ -26,7 +26,7 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
                     + "LEFT JOIN mercury_sequencing sequence on (sequence.sample_id  = t.tissue_id )"
                     + "WHERE oD.tissue_received IS NOT NULL AND p.ddp_participant_id = ? AND ddp.instance_name = ? ";
 
-    public static String SQL_GET_ELIGIBLE_SMAPLES =
+    public static String SQL_GET_ELIGIBLE_SAMPLES =
             "SELECT req.ddp_kit_request_id, req.bsp_collaborator_sample_id as sample,  sequence.order_date "
                     + "    FROM ddp_kit_request req  "
                     + "    LEFT JOIN ddp_kit kit on (req.dsm_kit_request_id = kit.dsm_kit_request_id) "
@@ -77,7 +77,7 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
             if (dbVals.resultException != null) {
                 return dbVals;
             }
-            try (PreparedStatement statement = conn.prepareStatement(SQL_GET_ELIGIBLE_SMAPLES)) {
+            try (PreparedStatement statement = conn.prepareStatement(SQL_GET_ELIGIBLE_SAMPLES)) {
                 statement.setString(1, ddpParticipantId);
                 statement.setString(2, realm);
                 try (ResultSet rs = statement.executeQuery()) {

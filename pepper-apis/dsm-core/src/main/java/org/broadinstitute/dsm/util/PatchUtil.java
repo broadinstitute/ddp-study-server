@@ -12,6 +12,7 @@ import org.broadinstitute.dsm.db.AbstractionActivity;
 import org.broadinstitute.dsm.db.AbstractionFieldValue;
 import org.broadinstitute.dsm.db.AbstractionQCValue;
 import org.broadinstitute.dsm.db.AbstractionReviewValue;
+import org.broadinstitute.dsm.db.DDPKitDto;
 import org.broadinstitute.dsm.db.Drug;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.MedicalRecord;
@@ -53,6 +54,7 @@ public class PatchUtil {
         getColumnNames(AbstractionActivity.class);
         getColumnNames(ViewFilter.class);
         getColumnNames(KitRequestShipping.class);
+        getColumnNames(DDPKitDto.class);
         getColumnNames(KitRequest.class);
         getColumnNames(Drug.class);
         getColumnNames(ParticipantData.class);

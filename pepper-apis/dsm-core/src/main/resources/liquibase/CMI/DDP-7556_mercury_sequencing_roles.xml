@@ -18,4 +18,15 @@
             <column name="sample_id" type="INT"></column>
         </addColumn>
     </changeSet>
+    <changeSet id="DDP-7556_ddp_kit_changes" author="pegah">
+        <addColumn tableName="ddp_kit">
+            <column name="collection_date" type="VARCHAR(45)"></column>
+        </addColumn>
+        <addColumn tableName="ddp_kit">
+            <column name="last_changed" type="BIGINT"></column>
+        </addColumn>
+        <addColumn tableName="ddp_kit">
+            <column name="changed_by" type="VARCHAR(45)"></column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

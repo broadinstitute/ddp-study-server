@@ -39,6 +39,7 @@ public class GetMercuryEligibleSamplesRoute extends RequestHandler {
             return new Result(500, UserErrorMessages.NO_RIGHTS);
         }
         ArrayList<MercurySampleDto> eligibleSamples = mercurySampleDao.findEligibleSamples(ddpParticipantId, realm);
+        log.info(String.format("Returning a list of %d samples", eligibleSamples.size()));
         return eligibleSamples;
     }
 
