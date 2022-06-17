@@ -74,7 +74,7 @@ public class SingularReadonlyActivities implements CustomTask {
 
     private interface SqlHelper extends SqlObject {
         @SqlUpdate("update activity_instance set is_readonly=true where study_activity_id in (:studyActivityId)")
-        void updateActivityInstances( @Bind("studyActivityId") List<Long> studyActivityId);
+        void updateActivityInstances(@Bind("studyActivityId") List<Long> studyActivityId);
 
         default long findActivityIdByStudyIdAndCode(long studyId, String activityCode) {
             return getHandle().attach(JdbiActivity.class)
