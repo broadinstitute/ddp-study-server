@@ -47,15 +47,12 @@ public class UserProfile implements Serializable {
     @ColumnName("skip_language_popup")
     Boolean skipLanguagePopup;
 
-    @ColumnName("email")
-    String email;
-
     public enum SexType {
         FEMALE, MALE, INTERSEX, PREFER_NOT_TO_ANSWER
     }
 
     public UserProfile(final UserProfile o) {
         this(o.userId, o.firstName, o.lastName, o.sexType, o.birthDate, o.preferredLangId, o.preferredLangCode,
-                o.timeZone, o.doNotContact, o.isDeceased, o.skipLanguagePopup, o.email);
+                o.timeZone, o.doNotContact, o.isDeceased, o.skipLanguagePopup);
     }
 }

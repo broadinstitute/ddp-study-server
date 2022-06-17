@@ -21,7 +21,7 @@ public interface UserProfileSql extends SqlObject {
     @SqlUpdate("insert into user_profile (user_id, first_name, last_name, sex, birth_date,"
             + "        preferred_language_id, time_zone, do_not_contact, is_deceased, skip_language_popup, email)"
             + " values (:userId, :firstName, :lastName, :sex, :birthDate,"
-            + " :langId, :tz, :doNotContact, :isDeceased, :skipLanguagePopup, :email)")
+            + " :langId, :tz, :doNotContact, :isDeceased, :skipLanguagePopup)")
     long insert(@Bind("userId") long userId,
                 @Bind("firstName") String firstName,
                 @Bind("lastName") String lastName,
@@ -31,8 +31,7 @@ public interface UserProfileSql extends SqlObject {
                 @Bind("tz") ZoneId timeZone,
                 @Bind("doNotContact") Boolean doNotContact,
                 @Bind("isDeceased") Boolean isDeceased,
-                @Bind("skipLanguagePopup") Boolean skipLanguagePopup,
-                @Bind("email") String email);
+                @Bind("skipLanguagePopup") Boolean skipLanguagePopup);
 
     //
     // upserts
@@ -57,7 +56,7 @@ public interface UserProfileSql extends SqlObject {
     @SqlUpdate("update user_profile"
             + "    set first_name = :firstName, last_name = :lastName, sex = :sex, birth_date = :birthDate,"
             + "        preferred_language_id = :langId, do_not_contact = :doNotContact, is_deceased = :isDeceased,"
-            + "        skip_language_popup = :skipLanguagePopup, time_zone = :tz, email = :email"
+            + "        skip_language_popup = :skipLanguagePopup, time_zone = :tz"
             + "  where user_id = :userId")
     int update(@Bind("userId") long userId,
                @Bind("firstName") String firstName,
@@ -68,8 +67,7 @@ public interface UserProfileSql extends SqlObject {
                @Bind("tz") ZoneId timeZone,
                @Bind("doNotContact") Boolean doNotContact,
                @Bind("isDeceased") Boolean isDeceased,
-               @Bind("skipLanguagePopup") Boolean skipLanguagePopup,
-               @Bind("email") String email);
+               @Bind("skipLanguagePopup") Boolean skipLanguagePopup);
 
     @SqlUpdate("update user_profile set first_name = :firstName where user_id = :userId")
     int updateFirstName(@Bind("userId") long userId, @Bind("firstName") String firstName);
