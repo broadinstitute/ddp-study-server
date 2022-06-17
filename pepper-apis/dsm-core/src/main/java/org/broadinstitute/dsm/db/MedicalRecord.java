@@ -298,7 +298,8 @@ public class MedicalRecord implements HasDdpInstanceId {
     }
 
     public static List<MedicalRecord> getMedicalRecordsByInstanceNameAndDdpParticipantId(String instanceName, String ddpParticipantId) {
-        return getMedicalRecords(instanceName, String.format(AND_DDP_PARTICIPANT_ID, ddpParticipantId)).getOrDefault(ddpParticipantId, new ArrayList<>());
+        return getMedicalRecords(instanceName, String.format(AND_DDP_PARTICIPANT_ID, ddpParticipantId))
+                .getOrDefault(ddpParticipantId, new ArrayList<>());
     }
 
     public static Map<String, List<MedicalRecord>> getMedicalRecordsByParticipantIds(@NonNull String realm, List<String> participantIds) {
@@ -316,33 +317,6 @@ public class MedicalRecord implements HasDdpInstanceId {
         } catch (IOException e) {
             throw new RuntimeException("Couldn't get participants and institutions for ddpInstance " + ddpInstance.getName(), e);
         }
-    }
-
-    public static List<MedicalRecord> getInstitutions(@NonNull String realm, @NonNull String ddpParticipantId) {
-        List<MedicalRecord> medicalRecords = new ArrayList<>();
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_MEDICAL_RECORD + QueryExtension.BY_DDP_PARTICIPANT_ID)) {
-                stmt.setString(1, realm);
-                stmt.setString(2, ddpParticipantId);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-                        medicalRecords.add(
-                                new MedicalRecord(rs.getLong(DBConstants.MEDICAL_RECORD_ID), rs.getLong(DBConstants.INSTITUTION_ID),
-                                        rs.getString(DBConstants.DDP_INSTITUTION_ID), rs.getString(DBConstants.TYPE)));
-                    }
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Error getting medicalRecords of participant " + ddpParticipantId, results.resultException);
-        }
-
-        return medicalRecords;
     }
 
     @JsonProperty("followupRequired")
