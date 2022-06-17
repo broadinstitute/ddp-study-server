@@ -1,12 +1,6 @@
 package org.broadinstitute.dsm.db.dao.ddp.institution;
 
-import org.broadinstitute.dsm.db.dao.Dao;
-import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantRecordDao;
-import org.broadinstitute.dsm.db.dto.ddp.institution.DDPInstitutionDto;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,13 +8,20 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Optional;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import org.broadinstitute.dsm.db.dao.Dao;
+
+import org.broadinstitute.dsm.db.dto.ddp.institution.DDPInstitutionDto;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DDPInstitutionDao implements Dao<DDPInstitutionDto> {
 
     private static final Logger logger = LoggerFactory.getLogger(DDPInstitutionDao.class);
 
-    public static final String SQL_INSERT_NEW_DDP_INSTITUTION = "INSERT INTO ddp_institution SET ddp_institution_id = ?, type = ?, participant_id = ?, last_changed = ?";
+    public static final String SQL_INSERT_NEW_DDP_INSTITUTION = "INSERT INTO ddp_institution SET ddp_institution_id = ?,"
+            + " type = ?, participant_id = ?, last_changed = ?";
 
     public static final String SQL_SELECT_INSTITUTION_BY_INSTITUTION_ID = "SELECT * FROM ddp_institution WHERE institution_id = ?;";
 
@@ -50,9 +51,11 @@ public class DDPInstitutionDao implements Dao<DDPInstitutionDto> {
             return dbVals;
         });
         if (simpleResult.resultException != null) {
-            throw new RuntimeException("Error inserting participant with id: " + ddpInstitutionDto.getParticipantId(), simpleResult.resultException);
+            throw new RuntimeException("Error inserting participant with id: "
+                    + ddpInstitutionDto.getParticipantId(), simpleResult.resultException);
         }
-        logger.info(String.format("A new institution with participant_id = %s has been created successfully", ddpInstitutionDto.getParticipantId()));
+        logger.info(String.format("A new institution with participant_id = %s has been created successfully",
+                ddpInstitutionDto.getParticipantId()));
         return (int) simpleResult.resultValue;
     }
 
@@ -80,7 +83,8 @@ public class DDPInstitutionDao implements Dao<DDPInstitutionDto> {
             return dbVals;
         });
         if (simpleResult.resultException != null) {
-            throw new RuntimeException("Error while fetching institutions with institution id: " + institutionId, simpleResult.resultException);
+            throw new RuntimeException("Error while fetching institutions with institution id: " + institutionId,
+                    simpleResult.resultException);
         }
         logger.info(String.format("Got the institution from DB with institution_id = %s", institutionId));
         return Optional.of((DDPInstitutionDto) result.resultValue);

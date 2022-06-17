@@ -1,6 +1,11 @@
 package org.broadinstitute.dsm.model.participant;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -128,8 +133,8 @@ public class ParticipantWrapper {
                     participant.setReviewed(oncHistory.getReviewed());
                 });
 
-                Optional<StudyPreFilter> maybeStudyPreFilter = StudyPreFilter.fromPayload(StudyPreFilterPayload.of(elasticSearchParticipantDto, ddpInstanceDto));
-                maybeStudyPreFilter.ifPresent(StudyPreFilter::filter);
+                StudyPreFilter.fromPayload(StudyPreFilterPayload.of(elasticSearchParticipantDto, ddpInstanceDto))
+                        .ifPresent(StudyPreFilter::filter);
 
                 List<MedicalRecord> medicalRecord = esDsm.getMedicalRecord();
                 List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();

@@ -1,22 +1,23 @@
+
 package org.broadinstitute.dsm.model.filter.prefilter.osteo;
 
-import org.broadinstitute.dsm.db.KitRequestShipping;
-import org.broadinstitute.dsm.db.MedicalRecord;
-import org.broadinstitute.dsm.db.OncHistoryDetail;
-import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.model.elastic.ESActivities;
-import org.broadinstitute.dsm.model.elastic.ESDsm;
-import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
-import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter;
-import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilterPayload;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
+import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.MedicalRecord;
+import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.model.elastic.ESDsm;
+import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
+import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter;
+import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilterPayload;
+import org.junit.Test;
+
 
 public class NewOsteoStudyPreFilterTest {
 
@@ -57,10 +58,12 @@ public class NewOsteoStudyPreFilterTest {
         assertEquals(List.of(1L, 1L), esDsm.getMedicalRecord().stream().map(MedicalRecord::getDdpInstanceId).collect(Collectors.toList()));
 
         assertEquals(1, esDsm.getOncHistoryDetail().size());
-        assertEquals(List.of(1L), esDsm.getOncHistoryDetail().stream().map(OncHistoryDetail::getDdpInstanceId).collect(Collectors.toList()));
+        assertEquals(List.of(1L), esDsm.getOncHistoryDetail().stream().map(OncHistoryDetail::getDdpInstanceId)
+                .collect(Collectors.toList()));
 
         assertEquals(3, esDsm.getKitRequestShipping().size());
-        assertEquals(List.of(1L, 1L, 1L), esDsm.getKitRequestShipping().stream().map(KitRequestShipping::getDdpInstanceId).collect(Collectors.toList()));
+        assertEquals(List.of(1L, 1L, 1L), esDsm.getKitRequestShipping().stream().map(KitRequestShipping::getDdpInstanceId)
+                .collect(Collectors.toList()));
 
     }
 }

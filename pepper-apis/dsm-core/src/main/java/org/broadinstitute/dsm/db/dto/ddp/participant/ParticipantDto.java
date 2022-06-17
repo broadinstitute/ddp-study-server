@@ -3,11 +3,6 @@ package org.broadinstitute.dsm.db.dto.ddp.participant;
 import java.util.Optional;
 
 import lombok.Getter;
-import org.broadinstitute.dsm.model.elastic.Util;
-import org.broadinstitute.dsm.pubsub.study.osteo.DataCopyingException;
-
-import static org.broadinstitute.dsm.statics.DBConstants.*;
-import static org.broadinstitute.dsm.util.SystemUtil.SYSTEM;
 
 @Getter
 public class ParticipantDto implements Cloneable {

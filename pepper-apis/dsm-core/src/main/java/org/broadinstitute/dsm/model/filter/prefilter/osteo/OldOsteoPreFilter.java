@@ -1,13 +1,14 @@
 package org.broadinstitute.dsm.model.filter.prefilter.osteo;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.elastic.ESActivities;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.filter.prefilter.BaseStudyPreFilter;
 import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter;
 
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class OldOsteoPreFilter extends BaseStudyPreFilter {
 

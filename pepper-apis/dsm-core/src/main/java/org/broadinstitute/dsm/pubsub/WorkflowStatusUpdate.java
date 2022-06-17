@@ -1,12 +1,18 @@
 package org.broadinstitute.dsm.pubsub;
 
+import static org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter.OLD_OSTEO_INSTANCE_NAME;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
-import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantRecordDao;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.export.ExportToES;
@@ -18,12 +24,6 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import static org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter.OLD_OSTEO_INSTANCE_NAME;
 
 public class WorkflowStatusUpdate {
     public static final String STUDY_GUID = "studyGuid";
@@ -49,8 +49,9 @@ public class WorkflowStatusUpdate {
         String ddpParticipantId = attributesMap.get(PARTICIPANT_GUID);
 
         if (isOsteoRelatedStatusUpdate(workflow, status)) {
-            DDPInstance instance = DDPInstance.getDDPInstanceByInstanceName(OLD_OSTEO_INSTANCE_NAME);
-            OsteoWorkflowStatusUpdate.of(instance, ddpParticipantId).update();
+            Optional<DDPInstanceDto> maybeDDPInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(OLD_OSTEO_INSTANCE_NAME);
+            maybeDDPInstanceDto.ifPresentOrElse(ddpInstanceDto -> OsteoWorkflowStatusUpdate.of(ddpInstanceDto, ddpParticipantId).update(),
+                    () -> logger.info(String.format("Could not find ddp_instance with instance_name %s", OLD_OSTEO_INSTANCE_NAME)));
         } else {
             DDPInstance instance = DDPInstance.getDDPInstanceByGuid(studyGuid);
             List<ParticipantData> participantDatas = participantDataDao.getParticipantDataByParticipantId(ddpParticipantId);

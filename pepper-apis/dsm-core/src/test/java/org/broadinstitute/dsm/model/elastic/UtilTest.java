@@ -1,17 +1,14 @@
 package org.broadinstitute.dsm.model.elastic;
 
-import java.util.List;
-import java.util.Map;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 import java.util.Optional;
 
-import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
-import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
-import org.junit.Assert;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 public class UtilTest {
 

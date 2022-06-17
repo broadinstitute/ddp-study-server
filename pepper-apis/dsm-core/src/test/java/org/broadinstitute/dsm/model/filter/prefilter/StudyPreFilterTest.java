@@ -1,15 +1,16 @@
+
 package org.broadinstitute.dsm.model.filter.prefilter;
+
+import static org.junit.Assert.assertTrue;
+
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.filter.prefilter.osteo.NewOsteoPreFilter;
 import org.broadinstitute.dsm.model.filter.prefilter.osteo.OldOsteoPreFilter;
 import org.junit.Test;
-
-import java.util.NoSuchElementException;
-import java.util.Optional;
-
-import static org.junit.Assert.assertTrue;
 
 public class StudyPreFilterTest {
 
@@ -33,10 +34,10 @@ public class StudyPreFilterTest {
 
     }
 
-
     @Test
     public void buildEmpty() {
-        Optional<StudyPreFilter> maybeEmpty = StudyPreFilter.fromPayload(StudyPreFilterPayload.of(null, new DDPInstanceDto.Builder().build()));
+        Optional<StudyPreFilter> maybeEmpty = StudyPreFilter.fromPayload(StudyPreFilterPayload.of(null,
+                new DDPInstanceDto.Builder().build()));
         try {
             maybeEmpty.get();
         } catch (NoSuchElementException nse) {

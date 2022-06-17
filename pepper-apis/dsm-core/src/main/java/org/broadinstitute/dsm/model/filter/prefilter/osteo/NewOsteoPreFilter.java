@@ -1,4 +1,9 @@
+
 package org.broadinstitute.dsm.model.filter.prefilter.osteo;
+
+import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.MedicalRecord;
@@ -8,10 +13,6 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.filter.prefilter.BaseStudyPreFilter;
 import org.broadinstitute.dsm.model.filter.prefilter.HasDdpInstanceId;
 import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter;
-
-import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 public class NewOsteoPreFilter extends BaseStudyPreFilter {
 

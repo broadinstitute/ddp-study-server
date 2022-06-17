@@ -1,26 +1,36 @@
 package org.broadinstitute.dsm.pubsub.study.osteo;
 
-import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.TestHelper;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
 public class OsteoWorkflowStatusUpdateTest {
 
+
+    @BeforeClass
+    public static void setUp() {
+        TestHelper.setupDB();
+    }
+
     @Test
     @Ignore
     public void update() {
 
-        String oldOsteoInstanceId = "35";
+        int oldOsteoInstanceId = 11;
         String oldOsteoInstanceName = "Osteo";
         String oldOsteoESIndex = "participants_structured.cmi.cmi-osteo";
 
-        DDPInstance ddpInstance = new DDPInstance(oldOsteoInstanceId, oldOsteoInstanceName, null, null, false,
-                0, 0, false, null,
-                false, null, oldOsteoESIndex, null, null, null);
+        DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder()
+                .withDdpInstanceId(oldOsteoInstanceId)
+                .withInstanceName(oldOsteoInstanceName)
+                .withEsParticipantIndex(oldOsteoESIndex)
+                .build();
 
-        String osteo2DdpParticipantId = "guid";
+        String oldOsteoParticipantGuid = "artificial guid";
 
-        OsteoWorkflowStatusUpdate osteoWorkflowStatusUpdate = OsteoWorkflowStatusUpdate.of(ddpInstance, osteo2DdpParticipantId);
+        OsteoWorkflowStatusUpdate osteoWorkflowStatusUpdate = OsteoWorkflowStatusUpdate.of(ddpInstanceDto, oldOsteoParticipantGuid);
         osteoWorkflowStatusUpdate.update();
 
     }

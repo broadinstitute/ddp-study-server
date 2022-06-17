@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.model.elastic.migration;
 
 import org.junit.Assert;

@@ -1,11 +1,11 @@
 package org.broadinstitute.dsm.model.elastic.migration;
 
-import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
-import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
+import static org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter.OLD_OSTEO_INSTANCE_NAME;
 
 import java.util.Optional;
 
-import static org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter.OLD_OSTEO_INSTANCE_NAME;
+import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
+import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 
 public interface AdditionalCohortTagsRetriever extends AdditionalRecordsRetriever<CohortTag> {
 

@@ -1,10 +1,10 @@
 package org.broadinstitute.dsm.model.filter.prefilter;
 
+import java.util.Optional;
+
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.filter.prefilter.osteo.NewOsteoPreFilter;
 import org.broadinstitute.dsm.model.filter.prefilter.osteo.OldOsteoPreFilter;
-
-import java.util.Optional;
 
 public interface StudyPreFilter {
 

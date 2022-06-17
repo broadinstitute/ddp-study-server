@@ -345,13 +345,6 @@ public class MedicalRecord implements HasDdpInstanceId {
         return medicalRecords;
     }
 
-    public static MedicalRecord copy(int newOsteoInstitutionId, int newMedicalRecordId, MedicalRecord that) {
-        return new MedicalRecord(newMedicalRecordId, newOsteoInstitutionId, that.getDdpInstitutionId(), that.getType(), that.getName(), that.getContact(), that.getPhone(),
-                that.getFax(), that.getFaxSent(), that.getFaxSentBy(), that.getFaxConfirmed(), that.getFaxSent2(), that.getFaxSent2By(), that.getFaxConfirmed2(), that.getFaxSent3(), that.getFaxSent3By(), that.getFaxConfirmed3(),
-                that.getMrReceived(), that.getMrDocument(), that.getMrDocumentFileNames(), that.isMrProblem(), that.getMrProblemText(), that.isUnableObtain(), that.isDuplicate(), that.isInternational(), that.isCrRequired(), that.getPathologyPresent(),
-                that.getNotes(), that.isReviewMedicalRecord(), that.getFollowUps(), that.isFollowupRequired(), that.getFollowupRequiredText(), that.getAdditionalValuesJson(), that.getUnableObtainText(), that.getDdpParticipantId(), that.getDdpInstanceId());
-    }
-
     @JsonProperty("followupRequired")
     public boolean isFollowupRequired() {
         return followupRequired;

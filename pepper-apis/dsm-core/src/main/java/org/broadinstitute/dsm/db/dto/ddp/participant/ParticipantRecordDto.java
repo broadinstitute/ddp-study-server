@@ -9,12 +9,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.broadinstitute.dsm.db.structure.ColumnName;
-import org.broadinstitute.dsm.pubsub.study.osteo.DataCopyingException;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
-
-import static org.broadinstitute.dsm.statics.DBConstants.*;
-import static org.broadinstitute.dsm.util.SystemUtil.SYSTEM;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)

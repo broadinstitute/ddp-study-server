@@ -26,7 +26,8 @@ public class ParticipantRecordDao implements Dao<ParticipantRecordDto> {
 
     public static final String SQL_FILTER_BY_PARTICIPANT_ID = " WHERE participant_id = ?";
 
-    private static final String SQL_GET_PARTICIPANT_RECORD_DTO_BY_PARTICIPANT_ID = "SELECT * FROM ddp_participant_record" + SQL_FILTER_BY_PARTICIPANT_ID + ";";
+    private static final String SQL_GET_PARTICIPANT_RECORD_DTO_BY_PARTICIPANT_ID = "SELECT * FROM ddp_participant_record"
+            + SQL_FILTER_BY_PARTICIPANT_ID + ";";
 
     public static ParticipantRecordDao of() {
         return new ParticipantRecordDao();
@@ -34,7 +35,8 @@ public class ParticipantRecordDao implements Dao<ParticipantRecordDto> {
 
     @Override
     public int create(ParticipantRecordDto participantRecordDto) {
-        logger.info(String.format("Attempting to create a new participant_record with participant_id = %s", participantRecordDto.getParticipantId()));
+        logger.info(String.format("Attempting to create a new participant_record with participant_id = %s",
+                participantRecordDto.getParticipantId()));
         SimpleResult simpleResult = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult(-1);
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_PARTICIPANT, Statement.RETURN_GENERATED_KEYS)) {
@@ -64,7 +66,8 @@ public class ParticipantRecordDao implements Dao<ParticipantRecordDto> {
             throw new RuntimeException("Error inserting participant record for participant id: " + participantRecordDto.getParticipantId(),
                     simpleResult.resultException);
         }
-        logger.info(String.format("A new participant_record with participant_id = %s has been created successfully", participantRecordDto.getParticipantId()));
+        logger.info(String.format("A new participant_record with participant_id = %s has been created successfully",
+                participantRecordDto.getParticipantId()));
         return (int) simpleResult.resultValue;
     }
 

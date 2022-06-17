@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.model.filter.prefilter;
 
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;

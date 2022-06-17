@@ -461,30 +461,6 @@ public class DDPInstance {
         return ddpInstances;
     }
 
-    public static DDPInstance getDDPInstanceByInstanceName(String instanceName) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ALL_ACTIVE_REALMS + QueryExtension.BY_INSTANCE_NAME)) {
-                stmt.setString(1, instanceName);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        dbVals.resultValue = getDDPInstanceFormResultSet(rs);
-                    }
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error getting information for realm with instance name " + instanceName, e);
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Couldn't get realm information for realm with instance name " + instanceName, results.resultException);
-        }
-        return (DDPInstance) results.resultValue;
-    }
-
     public int getDdpInstanceIdAsInt() {
         return Integer.parseInt(ddpInstanceId);
     }
