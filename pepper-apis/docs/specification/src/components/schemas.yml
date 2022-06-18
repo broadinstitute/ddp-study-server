@@ -23,7 +23,7 @@ DecimalNumber:
       type: integer
       format: int64
     value:
-      description: the unscaled value 
+      description: the unscaled value
       type: integer
       format: int64
 FormType:
@@ -686,6 +686,7 @@ Block:
       CONTENT: '#/Block.Content'
       GROUP: '#/Block.Grouped'
       QUESTION: '#/Block.Question'
+      TABULAR: '#/Block.Tabular'
   required:
     - blockType
     - blockGuid
@@ -845,6 +846,10 @@ Block.Question:
           minimum: 1
           nullable: true
           description: the number to label this block, `null` if it shouldn't be numbered
+        columnSpan:
+          type: integer
+          minimum: 1
+          description: The number of columns this question should occupy in a tabular display
 Block.Content:
   allOf:
     - $ref: '#/Block'
@@ -861,6 +866,47 @@ Block.Content:
           type: string
         body:
           type: string
+Block.Tabular:
+  allOf:
+    - $ref: '#/Block'
+    - type: object
+      required:
+        - columnsCount
+        - headers
+        - content
+      properties:
+        blockType:
+          type: string
+          default: TABULAR
+          enum:
+            - TABULAR
+        columnsCount:
+          type: integer
+          minimum: 1
+          description: The total number of the tabular component columns.
+        headers:
+          type: array
+          items:
+            $ref: '#/Block.Tabular.Header'
+        content:
+          type: array
+          items:
+            $ref: '#/Block.Question'
+
+Block.Tabular.Header:
+  type: object
+  required:
+    - label
+    - columnSpan
+  properties:
+    label:
+      type: string
+    columnSpan:
+      type: integer
+      minimum: 1
+      default: 1
+      description: the number of columns this header should occupy in a tabular display
+
 Block.Visibility:
   type: object
   required:
@@ -877,6 +923,36 @@ Block.Visibility:
     enabled:
       type: boolean
       description: whether block is enabled or not (used in cases when block inputs should be disabled but still visible)
+
+Composite.Visibility:
+  type: object
+  required:
+    - stableId
+    - children
+  properties:
+    stableId:
+      type: string
+      format: guid
+      description: |
+        The stableId of the composite question which is receiving visibility updates.
+    children:
+      type: array
+      items:
+        type: object
+        required:
+          - stableId
+          - shown
+          - enabled
+        properties:
+          stableId:
+            type: string
+            format: guid
+            description: |
+              The stableId of the composite child question this visibility update applies to.
+          shown:
+            type: boolean
+          enabled:
+            type: boolean
 #####
 #
 # Components
@@ -1678,12 +1754,31 @@ Question.Composite:
       additionalItemText:
         type: string
         description: 'The label to show above entries beyond the initial one'
+      childVisibility:
+        type: array
+        description: |
+          The set of visibility flags for the child questions. There will always be at least one set of flags in this array, even if no answers are present, in order to represent the default appearance state of the questions.
+        items:
+          type: array
+          items:
+            type: object
+            required:
+              - shown
+              - enabled
+            properties:
+              shown:
+                type: boolean
+              enabled:
+                type: boolean
       children:
         type: array
-        description: 'The child questions to present'
+        description: The child questions to be presented
         items:
           anyOf:
             - $ref: '#/Question.Date'
+            - $ref: '#/Question.Decimal'
+            - $ref: '#/Question.Equation'
+            - $ref: '#/Question.Integer'
             - $ref: '#/Question.Picklist'
             - $ref: '#/Question.Text'
       childOrientation:
@@ -1697,6 +1792,9 @@ Question.Composite:
         type: array
         items:
           $ref: '#/Answer.Composite'
+      tabularSeparator:
+        type: string
+        description: a symbol/word to display between composite children in a tabular block
 Question.Date:
   allOf:
   - $ref: '#/Question'
@@ -1992,6 +2090,49 @@ Section:
       type: array
       items:
         $ref: '#/Block'
+Study.Audit:
+  type: object
+  required:
+    - auditTrailId
+    - studyGuid
+    - operatorGuid
+    - operatorEmail
+    - userGuid
+    - userEmail
+    - entityType
+    - dateTime
+    - description
+  properties:
+    auditTrailId:
+      type: integer
+      format: int64
+    studyGuid:
+      type: string
+      format: guid
+    operatorGuid:
+      type: string
+      format: guid
+    operatorEmail:
+      type: string
+      format: email
+    userGuid:
+      type: string
+      format: guid
+    userEmail:
+      type: string
+      format: email
+    entityType:
+      type: string
+      enum:
+        - USER
+        - ACTIVITY
+        - INSTANCE
+        - ANSWER
+    dateTime:
+      type: string
+      format: date-time
+    description:
+      type: string
 Study.Summary:
   type: object
   required:
@@ -2921,3 +3062,61 @@ Suggestion.ActivityInstance:
       description: Activity Instance Name, rendered, as could be seen on the dashboard
       type: string
       example: "Medical Record Release Form #2"
+DateRange:
+  type: object
+  required:
+    - from
+    - to
+  properties:
+    from:
+      type: string
+      description: the lower constraint of the range. This value is inclusive. The date format is a full, extended ISO-8601 Calendar date and time in the format `YYYY-MM-DDTHH:MM:SSZ` in the UTC time zone.
+      nullable: true
+      format: date-time
+    to:
+      type: string
+      description: the upper constraint of the range. This value is inclusive. The date format is a full, extended ISO-8601 Calendar date and time in the format `YYYY-MM-DDTHH:MM:SSZ` in the UTC time zone.
+      nullable: true
+      format: date-time
+Pagination:
+  type: object
+  required:
+    - from
+    - count
+  properties:
+    from:
+      type: integer
+      description: the serial number of the first entry to be fetched of the dataset that relevant to search query
+      default: 0
+      nullable: true
+      format: int64
+    count:
+      type: integer
+      description: the number of entries to be fetched
+      default: 50
+      nullable: true
+      format: int64
+Sorting:
+  type: object
+  properties:
+    column:
+      description: the column name that will be used for sorting
+      nullable: true
+      type: string
+      enum:
+        - auditTrailId
+        - studyGuid
+        - operatorGuid
+        - operatorEmail
+        - userGuid
+        - userEmail
+        - entityType
+        - dateTime
+        - description
+    direction:
+      description: the sorting direction
+      nullable: true
+      type: string
+      enum:
+        - ASCENDING
+        - DESCENDING
