@@ -6,6 +6,7 @@ import lombok.experimental.Accessors;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
+import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -20,6 +21,10 @@ public final class PicklistOptionDto implements Serializable {
 
     @ColumnName("picklist_option_stable_id")
     private final String stableId;
+
+    @Nullable
+    @ColumnName("value")
+    private final String value;
 
     @ColumnName("option_label_template_id")
     private final long optionLabelTemplateId;

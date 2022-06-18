@@ -10,7 +10,7 @@ import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.util.MiscUtil;
 
-public class QuestionBlock extends FormBlock implements Numberable {
+public final class QuestionBlock extends FormBlock implements Numberable {
 
     @NotNull
     @SerializedName("question")
@@ -21,10 +21,15 @@ public class QuestionBlock extends FormBlock implements Numberable {
 
     private transient boolean hideDisplayNumber;
 
-    public QuestionBlock(Question question) {
+    public QuestionBlock(Question question, Integer columnSpan) {
         super(BlockType.QUESTION);
         this.question = MiscUtil.checkNonNull(question, "question");
+        this.columnSpan = columnSpan;
         hideDisplayNumber = question.shouldHideQuestionNumber();
+    }
+
+    public QuestionBlock(Question question) {
+        this(question, null);
     }
 
     public Question getQuestion() {
@@ -38,7 +43,7 @@ public class QuestionBlock extends FormBlock implements Numberable {
 
     @Override
     public boolean isComplete() {
-        return !shown || question.passesDeferredValidations();
+        return !shown || !enabled || question.passesDeferredValidations();
     }
 
     @Override

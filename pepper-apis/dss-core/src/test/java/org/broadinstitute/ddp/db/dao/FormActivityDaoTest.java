@@ -87,6 +87,7 @@ import org.broadinstitute.ddp.model.activity.instance.validation.LengthRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.RegexRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
+import org.broadinstitute.ddp.model.activity.types.BooleanRenderMode;
 import org.broadinstitute.ddp.model.activity.types.ComponentType;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
@@ -165,10 +166,11 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
                 header,
                 footer,
                 rules,
+                true,
+                false,
                 yesOpt,
                 noOpt,
-                true,
-                false);
+                BooleanRenderMode.RADIO_BUTTONS);
         FormActivityDef form = buildSingleBlockForm(testData.getStudyGuid(), "Boolean Activity", new QuestionBlockDef(boolQuestion));
 
         TransactionWrapper.useTxn(handle -> {
@@ -873,8 +875,10 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
 
             questionSection.getBlocks().add(new QuestionBlockDef(PicklistQuestionDef
                     .builder(PicklistSelectMode.MULTIPLE, PicklistRenderMode.LIST, "PICKLIST", Template.text("picklist prompt"))
-                    .addOption(PicklistOptionDef.newExclusive("OP1", Template.text("exclusive"), Template.text("with details")))
-                    .addOption(PicklistOptionDef.newExclusive("OP2", Template.text("exclusive no details")))
+                    .addOption(new PicklistOptionDef("OP1", Template.text("exclusive"), Template.text("with details"))
+                            .toBuilder().isExclusive(true).build())
+                    .addOption(new PicklistOptionDef("OP2", Template.text("exclusive no details"))
+                            .toBuilder().isExclusive(true).build())
                     .addOption(new PicklistOptionDef("OP3", Template.text("option"), Template.text("with details")))
                     .addOption(new PicklistOptionDef("OP4", Template.text("option no details")))
                     .setRestricted(true)

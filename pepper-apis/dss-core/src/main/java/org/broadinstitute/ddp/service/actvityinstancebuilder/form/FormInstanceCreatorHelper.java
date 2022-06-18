@@ -13,6 +13,7 @@ import org.broadinstitute.ddp.model.activity.instance.FormBlock;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormSection;
 import org.broadinstitute.ddp.model.activity.instance.GroupBlock;
+import org.broadinstitute.ddp.model.activity.instance.TabularBlock;
 import org.broadinstitute.ddp.model.activity.instance.MailingAddressComponent;
 import org.broadinstitute.ddp.model.activity.instance.Numberable;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
@@ -56,6 +57,8 @@ public class FormInstanceCreatorHelper {
                     } else if (block.getBlockType() == BlockType.ACTIVITY) {
                         // Questions within the nested activity itself are not considered.
                         children = new ArrayList<>();
+                    } else if (block.getBlockType() == BlockType.TABULAR) {
+                        children = ((TabularBlock) block).getAllQuestionBlocks();
                     } else {
                         throw new DDPException("Unhandled container block type " + block.getBlockType());
                     }
