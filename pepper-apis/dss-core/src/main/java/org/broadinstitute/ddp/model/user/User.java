@@ -75,6 +75,13 @@ public class User {
         return Optional.ofNullable(auth0UserId);
     }
 
+    /**
+     * Returns the email associated with the user.
+     * 
+     * <p>If this is an "internal" account, this field is
+     * required
+     * @return
+     */
     public Optional<String> getEmail() {
         return Optional.ofNullable(email);
     }
@@ -102,6 +109,7 @@ public class User {
     /**
      * An account is considered to be internal if it has an assigned email address,
      * but does not have an associated Auth0 account.
+     * 
      * @return true if the account is internal, false otherwise.
      */
     public boolean isInternalAccount() {

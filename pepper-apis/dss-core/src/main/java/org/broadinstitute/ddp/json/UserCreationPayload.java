@@ -3,7 +3,7 @@ package org.broadinstitute.ddp.json;
 import com.google.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.broadinstitute.ddp.model.user.UserProfile;
+import lombok.NonNull;
 
 import java.time.LocalDate;
 
@@ -13,21 +13,32 @@ import java.time.LocalDate;
 @Data
 @AllArgsConstructor
 public class UserCreationPayload {
+    @NonNull
+    @SerializedName("email")
+    private String email;
+
+    @NonNull
     @SerializedName("studyGuid")
     private String studyGuid;
 
+    @NonNull
     @SerializedName("firstName")
     private String firstName;
 
+    @NonNull
     @SerializedName("lastName")
     private String lastName;
 
+    @NonNull
     @SerializedName("birthDate")
     private LocalDate birthDate;
 
-    @SerializedName("sex")
-    private UserProfile.SexType sex;
+    @SerializedName("informedConsentDate")
+    private LocalDate informedConsentDate;
+
+    @SerializedName("assentDate")
+    private LocalDate assentDate;
 
     @SerializedName("centerId")
-    private Long centerId;
+    private String centerId;
 }
