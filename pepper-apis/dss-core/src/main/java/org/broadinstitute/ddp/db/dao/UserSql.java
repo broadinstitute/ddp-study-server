@@ -26,6 +26,17 @@ public interface UserSql extends SqlObject {
             @Bind("createdAt") long createdAt,
             @Bind("updatedAt") long updatedAt,
             @Bind("expiresAt") Long expiresAt);
+    
+    @GetGeneratedKeys
+    @UseStringTemplateSqlLocator
+    @SqlUpdate("insertUserByEmail")
+    long insertByEmail( @Bind("createdByClientId") long createdByClientId,
+                    @Bind("guid") String guid,
+                    @Bind("email") String email,
+                    @Bind("hruid") String hruid,
+                    @Bind("isLocked") boolean isLocked,
+                    @Bind("createdAt") long createdAt,
+                    @Bind("updatedAt") long updatedAt);
 
     @SqlUpdate("update user set auth0_user_id = :auth0UserId, expires_at = null where user_id = :id")
     int updateAuth0UserIdAndClearExpiresAtById(@Bind("id") long userId, @Bind("auth0UserId") String auth0UserId);

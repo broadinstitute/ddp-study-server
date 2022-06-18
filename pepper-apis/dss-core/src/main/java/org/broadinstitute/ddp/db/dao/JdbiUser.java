@@ -23,7 +23,7 @@ public interface JdbiUser extends SqlObject {
     long getUserIdByGuid(@Bind("userGuid") String userGuid);
 
     @SqlQuery("select user_id from user where email = :email")
-    long getUserIdByEmail(@Bind("email") String email);
+    Long getUserIdByEmail(@Bind("email") String email);
 
     @SqlQuery("select guid from user where legacy_altpid = :altpid")
     String getUserGuidByAltpid(@Bind("altpid") String altpid);

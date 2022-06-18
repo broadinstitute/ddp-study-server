@@ -26,6 +26,11 @@ queryUserByGuid() ::= <<
 where u.guid = :guid
 >>
 
+queryUserByEmail() ::= <<
+<select_user()>
+where u.email = :email
+>>
+
 queryUserByHruid() ::= <<
 <select_user()>
 where u.hruid = :hruid

@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
+import org.broadinstitute.ddp.db.NotFoundException;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
@@ -48,14 +49,43 @@ public interface UserDao extends SqlObject {
     @CreateSqlObject
     UserSql getUserSql();
 
-    default User createUser(String email) {
+    /**
+     * Creates a new user given the OAuth Client ID of the requestor,
+     * and the desired email for the new user.
+     * 
+     * <p>Since this method can return a user, if one already exists, the created by
+     * client id may not match the one provided.
+     * @param createdByClientId the OAuth Client ID creating the user
+     * @param email the desired email for the new user
+     * @return The new user, or an existing one if a user with that email already exists
+     */
+    default User createUserByEmail(String email, String oauthClientId, String oauthDomain) {
         val handle = getHandle();
-        val userGuid = DBUtils.uniqueUserGuid(handle);
-        val userHruid = DBUtils.uniqueUserHruid(handle);
+        
+        var user = findUserByEmail(email);
+        if (user.isPresent()) {
+            // User already exists!
+            return user.get();
+        }
+
+        var internalClientId = handle.attach(ClientDao.class)
+            .getClientIdByAuth0ClientAndDomain(oauthClientId, oauthDomain);
+        
+        if (internalClientId == null) {
+            throw new NotFoundException("Client ID '" + oauthClientId + "' in domain '" + oauthDomain + "' was not found");
+        }
+
+        // The user doesn't seem to exist yet, so do the more expensive
+        // checks (since userGuid and userHruid may require multiple
+        // DB round trips)
+        val guid = DBUtils.uniqueUserGuid(handle);
+        val hruid = DBUtils.uniqueUserHruid(handle);
 
         val userSql = getUserSql();
+        long now = Instant.now().toEpochMilli();
 
-        return null;
+        long userId = userSql.insertByEmail(internalClientId, guid, email, hruid, false, now, now);
+        return findUserById(userId).orElseThrow(() -> new DaoException("Internal inconsistency: user with id " + userId + " was created, but can not be found."));
     }
 
     default User createUser(String auth0Domain, String auth0ClientId, String auth0UserId) {
@@ -99,6 +129,11 @@ public interface UserDao extends SqlObject {
     @SqlQuery("queryUserByGuid")
     @RegisterConstructorMapper(User.class)
     Optional<User> findUserByGuid(@Bind("guid") String userGuid);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryUserByEmail")
+    @RegisterConstructorMapper(User.class)
+    Optional<User> findUserByEmail(@Bind("email") String email);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryUserByHruid")
