@@ -4,13 +4,11 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
 
-    <changeSet author="Dmitrii Eliseev" id="2022-05-11-drop-auth0_domain-column-from-client-table">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <columnExists tableName="client" columnName="auth0_domain"/>
-            </not>
-        </preConditions>
-
-        <dropColumn tableName="client" columnName="auth0_domain"/>
+    <changeSet author="Dmitrii Eliseev" id="2022-05-13-extend_picklist_option_table_with_value_field">
+        <addColumn tableName="picklist_option">
+            <column name="value" type="varchar(100)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
     </changeSet>
 </databaseChangeLog>
