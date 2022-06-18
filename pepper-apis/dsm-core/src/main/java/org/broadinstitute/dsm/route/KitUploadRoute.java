@@ -66,11 +66,8 @@ public class KitUploadRoute extends RequestHandler {
     private static final Logger logger = LoggerFactory.getLogger(KitUploadRoute.class);
     private static final String SQL_SELECT_CHECK_KIT_ALREADY_EXISTS = "SELECT count(*) as found "
             + "FROM ddp_kit_request request LEFT JOIN ddp_kit kit on (request.dsm_kit_request_id = kit.dsm_kit_request_id) "
-            + "LEFT JOIN ddp_participant_exit ex on (ex.ddp_instance_id = request.ddp_instance_id "
-            + "AND ex.ddp_participant_id = request.ddp_participant_id) "
-            + "WHERE ex.ddp_participant_exit_id is null "
-            + "AND kit.deactivated_date is null AND request.ddp_instance_id = ? AND request.kit_type_id = ? "
-            + "AND request.ddp_participant_id = ?";
+            + "WHERE kit.deactivated_date IS NULL AND request.ddp_instance_id = ? AND request.kit_type_id = ? "
+            + "AND request.bsp_collaborator_participant_id = ?";
     private static final String PARTICIPANT_ID = "participantId";
     private static final String SHORT_ID = "shortId";
     private static final String SIGNATURE = "signature";
@@ -118,6 +115,11 @@ public class KitUploadRoute extends RequestHandler {
                 shippingCarrier.set(queryParams.get("carrier").value());
             }
 
+            AtomicBoolean skipAddressValidation = new AtomicBoolean(false);
+            if (queryParams.value("skipAddressValidation") != null) {
+                skipAddressValidation.set(queryParams.get("skipAddressValidation").booleanValue());
+            }
+
             AtomicBoolean uploadAnyway = new AtomicBoolean(false);
             if (queryParams.value("uploadAnyway") != null) {
                 uploadAnyway.set(queryParams.get("uploadAnyway").booleanValue());
@@ -145,15 +147,12 @@ public class KitUploadRoute extends RequestHandler {
                 InstanceSettings instanceSettings = new InstanceSettings();
                 InstanceSettingsDto instanceSettingsDto = instanceSettings.getInstanceSettings(realm);
                 StringBuilder specialMessage = new StringBuilder();
-                Value upload = instanceSettingsDto.getKitBehaviorChange()
-                        .map(kitBehavior -> {
-                            Optional<Value> maybeKitBehaviorValue =
-                                    kitBehavior.stream().filter(o -> o.getName().equals(InstanceSettings.INSTANCE_SETTING_UPLOAD))
-                                            .findFirst();
-                            maybeKitBehaviorValue.ifPresent(value -> specialMessage.append(value.getValue()));
-                            return maybeKitBehaviorValue.orElse(null);
-                        })
-                        .orElse(null);
+                Value upload = instanceSettingsDto.getKitBehaviorChange().map(kitBehavior -> {
+                    Optional<Value> maybeKitBehaviorValue =
+                            kitBehavior.stream().filter(o -> o.getName().equals(InstanceSettings.INSTANCE_SETTING_UPLOAD)).findFirst();
+                    maybeKitBehaviorValue.ifPresent(value -> specialMessage.append(value.getValue()));
+                    return maybeKitBehaviorValue.orElse(null);
+                }).orElse(null);
 
                 HashMap<String, KitType> kitTypes = KitType.getKitLookup();
                 String key = kitTypeName + "_" + ddpInstance.getDdpInstanceId();
@@ -171,15 +170,15 @@ public class KitUploadRoute extends RequestHandler {
                 logger.info("Setup EasyPost...");
                 EasyPostUtil easyPostUtil = new EasyPostUtil(ddpInstance.getName());
 
-                Map<String, KitRequest> invalidAddressList = checkAddress(kitUploadObjects, kitRequestSettings.getPhone());
+                Map<String, KitRequest> invalidAddressList =
+                        checkAddress(kitUploadObjects, kitRequestSettings.getPhone(), skipAddressValidation.get(), easyPostUtil);
                 List<KitRequest> duplicateKitList = new ArrayList<>();
                 List<KitRequest> specialKitList = new ArrayList<>();
                 ArrayList<KitRequest> orderKits = new ArrayList<>();
 
                 TransactionWrapper.inTransaction(conn -> {
                     uploadKit(ddpInstance, kitType, kitUploadObjects, kitHasSubKits, kitRequestSettings, easyPostUtil, userIdRequest,
-                            kitTypeName,
-                            uploadAnyway.get(), invalidAddressList, duplicateKitList, orderKits, specialKitList, upload,
+                            kitTypeName, uploadAnyway.get(), invalidAddressList, duplicateKitList, orderKits, specialKitList, upload,
                             kitUploadReason.get(), shippingCarrier.get(), conn);
 
                     //only order if external shipper name is set for that kit request
@@ -220,12 +219,10 @@ public class KitUploadRoute extends RequestHandler {
     }
 
     private void uploadKit(@NonNull DDPInstance ddpInstance, @NonNull KitType kitType, List<KitRequest> kitUploadObjects,
-                           boolean kitHasSubKits,
-                           @NonNull KitRequestSettings kitRequestSettings, @NonNull EasyPostUtil easyPostUtil,
-                           @NonNull String userIdRequest,
-                           @NonNull String kitTypeName, boolean uploadAnyway, Map<String, KitRequest> invalidAddressList,
-                           List<KitRequest> duplicateKitList, ArrayList<KitRequest> orderKits, List<KitRequest> specialKitList,
-                           Value behavior, String uploadReason, String carrier, Connection conn) {
+                           boolean kitHasSubKits, @NonNull KitRequestSettings kitRequestSettings, @NonNull EasyPostUtil easyPostUtil,
+                           @NonNull String userIdRequest, @NonNull String kitTypeName, boolean uploadAnyway,
+                           Map<String, KitRequest> invalidAddressList, List<KitRequest> duplicateKitList, ArrayList<KitRequest> orderKits,
+                           List<KitRequest> specialKitList, Value behavior, String uploadReason, String carrier, Connection conn) {
 
         for (KitRequest kit : kitUploadObjects) {
             String externalOrderNumber = DDPKitRequest.generateExternalOrderNumber();
@@ -245,9 +242,8 @@ public class KitUploadRoute extends RequestHandler {
                 }
                 String collaboratorParticipantId =
                         KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
-                                ddpInstance.isMigratedDDP(),
-                                ddpInstance.getCollaboratorIdPrefix(), kit.getParticipantId(), kit.getShortId(),
-                                kitRequestSettings.getCollaboratorParticipantLengthOverwrite());
+                                ddpInstance.isMigratedDDP(), ddpInstance.getCollaboratorIdPrefix(), kit.getParticipantId(),
+                                kit.getShortId(), kitRequestSettings.getCollaboratorParticipantLengthOverwrite());
                 //subkits is currently only used by test boston
                 if (kitHasSubKits) {
                     List<KitSubKits> subKits = kitRequestSettings.getSubKits();
@@ -259,11 +255,12 @@ public class KitUploadRoute extends RequestHandler {
                             shippingId += "_" + j;
                         }
                         //check with ddp_participant_id if participant already has a kit in DSM db
-                        boolean isKitExsist =
-                                checkAndSetParticipantIdIfKitExists(ddpInstance, conn, kit, participantGuid, participantLegacyAltPid,
+                        boolean doesKitExist = checkAndSetParticipantIdIfKitExists(ddpInstance, conn, collaboratorParticipantId,
                                         subKit.getKitTypeId());
-
-                        if (isKitExsist && !uploadAnyway) {
+                        if (doesKitExist) {
+                            kit.setParticipantId(!participantGuid.isEmpty() ? participantGuid : participantLegacyAltPid);
+                        }
+                        if (doesKitExist && !uploadAnyway) {
                             alreadyExists = true;
                         } else {
                             for (int i = 0; i < subKit.getKitCount(); i++) {
@@ -291,38 +288,30 @@ public class KitUploadRoute extends RequestHandler {
         }
     }
 
-    private boolean checkAndSetParticipantIdIfKitExists(DDPInstance ddpInstance, Connection conn, KitRequest kit, String participantGuid,
-                                                        String participantLegacyAltPid, int kitTypeId) {
-        boolean isKitExsist = false;
-        if (checkIfKitAlreadyExists(conn, participantGuid, ddpInstance.getDdpInstanceId(), kitTypeId)) {
-            isKitExsist = true;
-            kit.setParticipantId(participantGuid);
-        } else if (checkIfKitAlreadyExists(conn, participantLegacyAltPid, ddpInstance.getDdpInstanceId(), kitTypeId)) {
-            isKitExsist = true;
-            kit.setParticipantId(participantLegacyAltPid);
+    private boolean checkAndSetParticipantIdIfKitExists(DDPInstance ddpInstance, Connection conn, String bspCollaboratorParticipantId,
+                                                        int kitTypeId) {
+        if (checkIfKitAlreadyExists(conn, bspCollaboratorParticipantId, ddpInstance.getDdpInstanceId(), kitTypeId)) {
+            return true;
         }
-        return isKitExsist;
+        return false;
     }
 
     private void handleNormalKit(@NonNull Connection conn, @NonNull DDPInstance ddpInstance, @NonNull KitType kitType,
-                                 @NonNull KitRequest kit,
-                                 @NonNull KitRequestSettings kitRequestSettings, @NonNull EasyPostUtil easyPostUtil,
-                                 @NonNull String userIdRequest,
-                                 @NonNull String kitTypeName, String collaboratorParticipantId, String errorMessage, boolean uploadAnyway,
+                                 @NonNull KitRequest kit, @NonNull KitRequestSettings kitRequestSettings,
+                                 @NonNull EasyPostUtil easyPostUtil, @NonNull String userIdRequest, @NonNull String kitTypeName,
+                                 String collaboratorParticipantId, String errorMessage, boolean uploadAnyway,
                                  List<KitRequest> duplicateKitList, ArrayList<KitRequest> orderKits, List<KitRequest> specialKitList,
-                                 Value behavior, String externalOrderNumber,
-                                 String uploadReason, String carrier) {
+                                 Value behavior, String externalOrderNumber, String uploadReason, String carrier) {
         if (behavior != null && StringUtils.isNotBlank(ddpInstance.getParticipantIndexES()) && !uploadAnyway) {
-            Map<String, Map<String, Object>> participants = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance,
-                    ElasticSearchUtil.BY_GUID + kit.getParticipantId());
+            Map<String, Map<String, Object>> participants =
+                    ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance, ElasticSearchUtil.BY_GUID + kit.getParticipantId());
             Map<String, Object> participant = participants.get(kit.getParticipantId());
             boolean specialKit = InstanceSettings.shouldKitBehaveDifferently(participant, behavior);
             if (specialKit) {
                 if (InstanceSettings.TYPE_ALERT.equals(behavior.getType())) {
                     specialKitList.add(kit);
                 } else if (InstanceSettings.TYPE_NOTIFICATION.equals(behavior.getType())) {
-                    String message = "Kit uploaded for participant " + kit.getParticipantId() + ". \n"
-                            + behavior.getValue();
+                    String message = "Kit uploaded for participant " + kit.getParticipantId() + ". \n" + behavior.getValue();
                     notificationUtil.sentNotification(ddpInstance.getNotificationRecipient(), message,
                             NotificationUtil.UNIVERSAL_NOTIFICATION_TEMPLATE, NotificationUtil.DSM_SUBJECT);
                 } else {
@@ -343,46 +332,24 @@ public class KitUploadRoute extends RequestHandler {
 
     private void handleKit(@NonNull Connection conn, @NonNull DDPInstance ddpInstance, @NonNull KitType kitType, @NonNull KitRequest kit,
                            @NonNull KitRequestSettings kitRequestSettings, @NonNull EasyPostUtil easyPostUtil,
-                           @NonNull String userIdRequest,
-                           @NonNull String kitTypeName, String collaboratorParticipantId, String errorMessage, boolean uploadAnyway,
-                           List<KitRequest> duplicateKitList, ArrayList<KitRequest> orderKits, String externalOrderNumber,
-                           String uploadReason, String carrier) {
-        if (StringUtils.isBlank(
-                ddpInstance.getParticipantIndexES())) {
-            //bringing old code back for RGP (can be removed after migration is finished)
-            if (checkIfKitAlreadyExists(conn, kit.getParticipantId(), ddpInstance.getDdpInstanceId(), kitType.getKitTypeId())
-                    && !uploadAnyway) {
-                duplicateKitList.add(kit);
-            } else {
-                String shippingId = DDPKitRequest.UPLOADED_KIT_REQUEST + KitRequestShipping.createRandom(20);
-                addKitRequest(conn, kitTypeName, kitRequestSettings, ddpInstance, kitType.getKitTypeId(),
-                        collaboratorParticipantId, errorMessage, userIdRequest, easyPostUtil, kit, externalOrderNumber, shippingId,
-                        uploadReason, carrier);
-                orderKits.add(kit);
-            }
+                           @NonNull String userIdRequest, @NonNull String kitTypeName, String collaboratorParticipantId,
+                           String errorMessage, boolean uploadAnyway, List<KitRequest> duplicateKitList, ArrayList<KitRequest> orderKits,
+                           String externalOrderNumber, String uploadReason, String carrier) {
+        if (checkAndSetParticipantIdIfKitExists(ddpInstance, conn, collaboratorParticipantId, kitType.getKitTypeId())
+                && !uploadAnyway) {
+            duplicateKitList.add(kit);
         } else {
-            String participantGuid = elasticSearch.getParticipantById(ddpInstance.getParticipantIndexES(), kit.getShortId()).getProfile()
-                    .map(ESProfile::getGuid).orElse("");
-            String participantLegacyAltPid =
-                    elasticSearch.getParticipantById(ddpInstance.getParticipantIndexES(), kit.getShortId()).getProfile()
-                            .map(ESProfile::getLegacyAltPid).orElse("");
-            if (checkAndSetParticipantIdIfKitExists(ddpInstance, conn, kit, participantGuid, participantLegacyAltPid,
-                    kitType.getKitTypeId()) && !uploadAnyway) {
-                duplicateKitList.add(kit);
-            } else {
-                String shippingId = DDPKitRequest.UPLOADED_KIT_REQUEST + KitRequestShipping.createRandom(20);
-                addKitRequest(conn, kitTypeName, kitRequestSettings, ddpInstance, kitType.getKitTypeId(),
-                        collaboratorParticipantId, errorMessage, userIdRequest, easyPostUtil, kit, externalOrderNumber, shippingId,
-                        uploadReason, carrier);
-                orderKits.add(kit);
-            }
+            String shippingId = DDPKitRequest.UPLOADED_KIT_REQUEST + KitRequestShipping.createRandom(20);
+            addKitRequest(conn, kitTypeName, kitRequestSettings, ddpInstance, kitType.getKitTypeId(), collaboratorParticipantId,
+                    errorMessage, userIdRequest, easyPostUtil, kit, externalOrderNumber, shippingId, uploadReason, carrier);
+            orderKits.add(kit);
         }
     }
 
     private void addKitRequest(Connection conn, String kitTypeName, KitRequestSettings kitRequestSettings, DDPInstance ddpInstance,
                                int kitTypeId, String collaboratorParticipantId, String errorMessage, String userId,
-                               EasyPostUtil easyPostUtil,
-                               KitRequest kit, String externalOrderNumber, String shippingId, String uploadReason, String carrier) {
+                               EasyPostUtil easyPostUtil, KitRequest kit, String externalOrderNumber, String shippingId,
+                               String uploadReason, String carrier) {
         String collaboratorSampleId = null;
         String bspCollaboratorSampleType = kitTypeName;
         String addressId = null;
@@ -398,10 +365,9 @@ public class KitUploadRoute extends RequestHandler {
         if (StringUtils.isNotBlank(kitRequestSettings.getExternalShipper())) {
             collaboratorSampleId =
                     KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, kitTypeId);
-            KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), shippingId,
-                    kitTypeId, kit.getParticipantId().trim(), collaboratorParticipantId,
-                    collaboratorSampleId, userId, addressId,
-                    errorMessage, externalOrderNumber, false, uploadReason, ddpInstance);
+            KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), shippingId, kitTypeId, kit.getParticipantId().trim(),
+                    collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage, externalOrderNumber, false,
+                    uploadReason, ddpInstance);
             kit.setDdpLabel(shippingId);
             kit.setExternalOrderNumber(externalOrderNumber);
         } else {
@@ -419,10 +385,9 @@ public class KitUploadRoute extends RequestHandler {
                     errorMessage += "collaboratorSampleId was too long ";
                 }
             }
-            KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), shippingId,
-                    kitTypeId, kit.getParticipantId().trim(), collaboratorParticipantId,
-                    collaboratorSampleId, userId, addressId,
-                    errorMessage, kit.getExternalOrderNumber(), false, uploadReason, ddpInstance);
+            KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), shippingId, kitTypeId, kit.getParticipantId().trim(),
+                    collaboratorParticipantId, collaboratorSampleId, userId, addressId, errorMessage, kit.getExternalOrderNumber(), false,
+                    uploadReason, ddpInstance);
             kit.setDdpLabel(shippingId);
         }
     }
@@ -483,19 +448,18 @@ public class KitUploadRoute extends RequestHandler {
 
             KitUploadObject participantKitToUpload;
             if (nameInOneColumn) {
-                participantKitToUpload = new KitUploadObject(null, participantDataByFieldName.get(PARTICIPANT_ID), shortId,
-                        null, participantDataByFieldName.get(SIGNATURE),
-                        participantDataByFieldName.get(STREET1), participantDataByFieldName.get(STREET2),
-                        participantDataByFieldName.get(CITY),
+                participantKitToUpload = new KitUploadObject(null, participantDataByFieldName.get(PARTICIPANT_ID), shortId, null,
+                        participantDataByFieldName.get(SIGNATURE), participantDataByFieldName.get(STREET1),
+                        participantDataByFieldName.get(STREET2), participantDataByFieldName.get(CITY),
                         participantDataByFieldName.get(STATE), participantDataByFieldName.get(POSTAL_CODE),
                         participantDataByFieldName.get(COUNTRY), participantDataByFieldName.getOrDefault(PHONE_NUMBER, null));
             } else {
                 participantKitToUpload = new KitUploadObject(null, participantDataByFieldName.get(PARTICIPANT_ID), shortId,
                         participantDataByFieldName.get(FIRST_NAME), participantDataByFieldName.get(LAST_NAME),
                         participantDataByFieldName.get(STREET1), participantDataByFieldName.get(STREET2),
-                        participantDataByFieldName.get(CITY),
-                        participantDataByFieldName.get(STATE), participantDataByFieldName.get(POSTAL_CODE),
-                        participantDataByFieldName.get(COUNTRY), participantDataByFieldName.getOrDefault(PHONE_NUMBER, null));
+                        participantDataByFieldName.get(CITY), participantDataByFieldName.get(STATE),
+                        participantDataByFieldName.get(POSTAL_CODE), participantDataByFieldName.get(COUNTRY),
+                        participantDataByFieldName.getOrDefault(PHONE_NUMBER, null));
             }
             kitRequestsToUpload.add(participantKitToUpload);
 
@@ -530,8 +494,7 @@ public class KitUploadRoute extends RequestHandler {
         return lastNonEmptyRowIndex;
     }
 
-    private String userExistsInRealm(DDPInstance ddpInstanceByRealm,
-                                     Map<String, String> participantDataByFieldName) throws Exception {
+    private String userExistsInRealm(DDPInstance ddpInstanceByRealm, Map<String, String> participantDataByFieldName) throws Exception {
         String participantIdFromDoc = participantDataByFieldName.get(SHORT_ID).trim();
         String participantFirstNameFromDoc = participantDataByFieldName.get(FIRST_NAME).trim().toLowerCase();
         String participantLastNameFromDoc = participantDataByFieldName.get(LAST_NAME).trim().toLowerCase();
@@ -572,7 +535,9 @@ public class KitUploadRoute extends RequestHandler {
         return message;
     }
 
-    public Map<String, KitRequest> checkAddress(List<KitRequest> kitUploadObjects, String phone) {
+
+    public Map<String, KitRequest> checkAddress(List<KitRequest> kitUploadObjects, String phone, boolean skipAddressValidation,
+                                                EasyPostUtil easyPostUtil) {
         Map<String, KitRequest> noValidAddress = new HashMap<>();
         for (KitRequest o : kitUploadObjects) {
             KitUploadObject object = (KitUploadObject) o;
@@ -585,17 +550,27 @@ public class KitUploadRoute extends RequestHandler {
                     name += object.getFirstName() + " ";
                 }
                 name += object.getLastName();
-                DeliveryAddress deliveryAddress = new DeliveryAddress(object.getStreet1(), object.getStreet2(),
-                        object.getCity(), object.getState(), object.getPostalCode(), object.getCountry(),
-                        name, phone);
-                deliveryAddress.validate();
 
-                if (deliveryAddress.isValid()) {
-                    //store the address back
-                    object.setEasyPostAddressId(deliveryAddress.getId());
+                if (skipAddressValidation) {
+                    try {
+                        Address address = easyPostUtil.createBroadAddress(name, object.getStreet1(), object.getStreet2(), object.getCity(),
+                                object.getPostalCode(), object.getState(), object.getCountry(), phone);
+                        object.setEasyPostAddressId(address.getId());
+                    } catch (EasyPostException e) {
+                        logger.error("Easypost couldn't create an address for " + object.getShortId());
+                    }
                 } else {
-                    logger.info("Address is not valid " + object.getShortId());
-                    noValidAddress.put(object.getShortId(), object);
+                    DeliveryAddress deliveryAddress =
+                            new DeliveryAddress(object.getStreet1(), object.getStreet2(), object.getCity(), object.getState(),
+                                    object.getPostalCode(), object.getCountry(), name, phone);
+                    deliveryAddress.validate();
+                    if (deliveryAddress.isValid()) {
+                        //store the address back
+                        object.setEasyPostAddressId(deliveryAddress.getId());
+                    } else {
+                        logger.info("Address is not valid " + object.getShortId());
+                        noValidAddress.put(object.getShortId(), object);
+                    }
                 }
             } else {
                 noValidAddress.put(object.getShortId(), object);
@@ -634,13 +609,13 @@ public class KitUploadRoute extends RequestHandler {
         return null;
     }
 
-    public boolean checkIfKitAlreadyExists(@NonNull Connection conn, @NonNull String ddpParticipantId,
+    public boolean checkIfKitAlreadyExists(@NonNull Connection conn, @NonNull String bspCollaboratorParticipantId,
                                            @NonNull String instanceId, @NonNull int kitTypeId) {
         SimpleResult dbVals = new SimpleResult(0);
         try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_CHECK_KIT_ALREADY_EXISTS)) {
             stmt.setString(1, instanceId);
             stmt.setInt(2, kitTypeId);
-            stmt.setString(3, ddpParticipantId);
+            stmt.setString(3, bspCollaboratorParticipantId);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     dbVals.resultValue = rs.getInt(DBConstants.FOUND);
@@ -655,7 +630,7 @@ public class KitUploadRoute extends RequestHandler {
         if (dbVals.resultValue == null) {
             throw new RuntimeException("Error getting id of new kit request ");
         }
-        logger.info("Found " + dbVals.resultValue + " kit requests for ddp_participant_id " + ddpParticipantId);
+        logger.info("Found " + dbVals.resultValue + " kit requests for bsp_collaborator_participant_id " + bspCollaboratorParticipantId);
         return (int) dbVals.resultValue > 0;
     }
 }

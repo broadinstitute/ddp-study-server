@@ -5,8 +5,7 @@ import java.util.Optional;
 import lombok.Getter;
 
 @Getter
-public class ParticipantDto {
-
+public class ParticipantDto implements Cloneable {
 
     private Optional<Integer> participantId;
     private Optional<String> ddpParticipantId;
@@ -32,6 +31,27 @@ public class ParticipantDto {
         this.changedBy = builder.changedBy;
     }
 
+    public void setDdpInstanceId(int ddpInstanceId) {
+        this.ddpInstanceId = ddpInstanceId;
+    }
+
+    public void setAssigneeIdMr(Integer assigneeIdMr) {
+        this.assigneeIdMr = Optional.ofNullable(assigneeIdMr);
+    }
+
+    public void setAssigneeIdTissue(Integer assigneeIdTissue) {
+        this.assigneeIdTissue = Optional.ofNullable(assigneeIdTissue);
+    }
+
+    @Override
+    public ParticipantDto clone() {
+        try {
+            return (ParticipantDto) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
+    }
+
     public static class Builder {
 
         private Optional<Integer> participantId = Optional.empty();
@@ -49,6 +69,8 @@ public class ParticipantDto {
             this.ddpInstanceId = ddpInstanceId;
             this.lastChanged = lastChanged;
         }
+
+        public Builder() {}
 
         public Builder withParticipantId(int participantId) {
             this.participantId = Optional.of(participantId);
@@ -75,18 +97,18 @@ public class ParticipantDto {
             return this;
         }
 
-        public Builder withReleaseCompleted(boolean releaseCompleted) {
-            this.releaseCompleted = Optional.of(releaseCompleted);
+        public Builder withReleaseCompleted(Boolean releaseCompleted) {
+            this.releaseCompleted = Optional.ofNullable(releaseCompleted);
             return this;
         }
 
-        public Builder withAssigneeIdMr(int assigneeIdMr) {
-            this.assigneeIdMr = Optional.of(assigneeIdMr);
+        public Builder withAssigneeIdMr(Integer assigneeIdMr) {
+            this.assigneeIdMr = Optional.ofNullable(assigneeIdMr);
             return this;
         }
 
-        public Builder withAssigneeIdTissue(int assigneeIdTissue) {
-            this.assigneeIdTissue = Optional.of(assigneeIdTissue);
+        public Builder withAssigneeIdTissue(Integer assigneeIdTissue) {
+            this.assigneeIdTissue = Optional.ofNullable(assigneeIdTissue);
             return this;
         }
 

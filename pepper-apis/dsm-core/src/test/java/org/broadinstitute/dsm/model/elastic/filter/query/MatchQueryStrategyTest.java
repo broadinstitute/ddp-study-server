@@ -12,12 +12,14 @@ import org.junit.Test;
 public class MatchQueryStrategyTest {
 
     Operator equals;
+
     @Before
     public void setUp() {
         equals = Operator.EQUALS;
         equals.getQueryStrategy().setExtractor(new MockFieldTypeExtractor());
 
     }
+
     @Test
     public void matchQueryBuildBoolean() {
         QueryPayload duplicatePayload = new QueryPayload("dsm.medicalRecord", "duplicate", new Boolean[] {true});
@@ -26,6 +28,7 @@ public class MatchQueryStrategyTest {
         MatchQueryBuilder expectedMatchQueryBuilder = new MatchQueryBuilder("dsm.medicalRecord.duplicate", true);
         Assert.assertEquals(expectedMatchQueryBuilder, queryBuilder.query());
     }
+
     @Test
     public void exactMatchQueryBuildText() {
         QueryPayload duplicatePayload = new QueryPayload("dsm.medicalRecord", "notes", new String[] {"test note"});
@@ -34,6 +37,7 @@ public class MatchQueryStrategyTest {
         MatchQueryBuilder expectedMatchQueryBuilder = new MatchQueryBuilder("dsm.medicalRecord.notes.keyword", "test note");
         Assert.assertEquals(expectedMatchQueryBuilder, queryBuilder.query());
     }
+
     @Test
     public void exactMatchQueryBuildDate() {
         QueryPayload duplicatePayload = new QueryPayload("dsm.medicalRecord", "faxSent", new String[] {"09/22/2020"});
@@ -42,6 +46,7 @@ public class MatchQueryStrategyTest {
         MatchQueryBuilder expectedMatchQueryBuilder = new MatchQueryBuilder("dsm.medicalRecord.faxSent", "09/22/2020");
         Assert.assertEquals(expectedMatchQueryBuilder, queryBuilder.query());
     }
+
     @Test
     public void exactMatchQueryBuildNumeric() {
         QueryPayload duplicatePayload = new QueryPayload("dsm.tissue", "ussCount", new String[] {"5"});

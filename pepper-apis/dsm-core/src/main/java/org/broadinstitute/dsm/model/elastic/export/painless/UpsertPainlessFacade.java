@@ -7,6 +7,7 @@ import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator;
 import org.broadinstitute.dsm.model.elastic.export.generate.Generator;
+import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.model.elastic.export.parse.TypeParser;
 import org.broadinstitute.dsm.model.elastic.mapping.FieldTypeExtractor;
 import org.broadinstitute.dsm.model.elastic.mapping.TypeExtractor;
@@ -21,6 +22,7 @@ import org.slf4j.LoggerFactory;
 public abstract class UpsertPainlessFacade {
 
     private static final Logger logger = LoggerFactory.getLogger(UpsertPainlessFacade.class);
+
     private Object source;
     protected String uniqueIdentifier;
     protected String fieldName;
@@ -30,38 +32,68 @@ public abstract class UpsertPainlessFacade {
 
     TypeExtractor<Map<String, String>> typeExtractor;
 
-    UpsertPainlessFacade(Object source, DDPInstanceDto ddpInstanceDto, String uniqueIdentifier,
-                         String fieldName, Object fieldValue) {
-        this(source, uniqueIdentifier, fieldName, fieldValue);
-        setGeneratorElseLogError(ddpInstanceDto);
-        this.typeExtractor = buildFieldTypeExtractor(ddpInstanceDto);
-        upsertPainless = new UpsertPainless(generator, ddpInstanceDto.getEsParticipantIndex(), buildScriptBuilder(), buildQueryBuilder());
-    }
+    public UpsertPainlessFacade() {}
 
     UpsertPainlessFacade(Object source, DDPInstanceDto ddpInstanceDto, String uniqueIdentifier,
-                         String fieldName, Object fieldValue, TypeExtractor<Map<String, String>> typeExtractor) {
-        this(source, uniqueIdentifier, fieldName, fieldValue);
-        setGeneratorElseLogError(ddpInstanceDto);
+                         String fieldName, Object fieldValue, ScriptBuilder scriptBuilder) {
+        this(source, uniqueIdentifier, fieldName, fieldValue, ddpInstanceDto);
+        buildAndSetFieldTypeExtractor(ddpInstanceDto);
+        buildAndSetUpsertPainless(ddpInstanceDto, scriptBuilder);
+    }
+
+
+    UpsertPainlessFacade(Object source, DDPInstanceDto ddpInstanceDto, String uniqueIdentifier,
+                         String fieldName, Object fieldValue,
+                         TypeExtractor<Map<String, String>> typeExtractor, ScriptBuilder scriptBuilder) {
+        this(source, uniqueIdentifier, fieldName, fieldValue, ddpInstanceDto);
         this.typeExtractor = typeExtractor;
-        upsertPainless = new UpsertPainless(generator, ddpInstanceDto.getEsParticipantIndex(), buildScriptBuilder(), buildQueryBuilder());
+        buildAndSetUpsertPainless(ddpInstanceDto, scriptBuilder);
     }
 
     private UpsertPainlessFacade(Object source, String uniqueIdentifier,
-                                 String fieldName, Object fieldValue) {
+                                 String fieldName, Object fieldValue, DDPInstanceDto ddpInstanceDto) {
         this.source = source;
         this.uniqueIdentifier = uniqueIdentifier;
         this.fieldName = fieldName;
         this.fieldValue = fieldValue;
+        setGeneratorElseLogError(ddpInstanceDto);
     }
 
-    private FieldTypeExtractor buildFieldTypeExtractor(DDPInstanceDto ddpInstanceDto) {
+    public void setSource(Object source) {
+        this.source = source;
+    }
+
+    public void setUniqueIdentifier(String uniqueIdentifier) {
+        this.uniqueIdentifier = uniqueIdentifier;
+    }
+
+    public void setFieldName(String fieldName) {
+        this.fieldName = fieldName;
+    }
+
+    public void setFieldValue(Object fieldValue) {
+        this.fieldValue = fieldValue;
+    }
+
+    public void buildAndSetUpsertPainless(DDPInstanceDto ddpInstanceDto, ScriptBuilder scriptBuilder) {
+        this.upsertPainless = new UpsertPainless(generator, ddpInstanceDto.getEsParticipantIndex(),
+                fillScriptBuilder(scriptBuilder), buildQueryBuilder());
+    }
+
+    private ScriptBuilder fillScriptBuilder(ScriptBuilder scriptBuilder) {
+        scriptBuilder.setPropertyName(generator.getPropertyName());
+        scriptBuilder.setUniqueIdentifier(uniqueIdentifier);
+        return scriptBuilder;
+    }
+
+    public void buildAndSetFieldTypeExtractor(DDPInstanceDto ddpInstanceDto) {
         FieldTypeExtractor fieldTypeExtractor = new FieldTypeExtractor();
         fieldTypeExtractor.setIndex(ddpInstanceDto.getEsParticipantIndex());
         fieldTypeExtractor.setFields(buildFieldFullName());
-        return fieldTypeExtractor;
+        this.typeExtractor = fieldTypeExtractor;
     }
 
-    private void setGeneratorElseLogError(DDPInstanceDto ddpInstanceDto) {
+    public void setGeneratorElseLogError(DDPInstanceDto ddpInstanceDto) {
         try {
             generator = new ParamsGenerator(source, ddpInstanceDto.getInstanceName());
         } catch (NullPointerException npe) {
@@ -70,14 +102,12 @@ public abstract class UpsertPainlessFacade {
     }
 
     public static UpsertPainlessFacade of(String alias, Object source, DDPInstanceDto ddpInstanceDto, String uniqueIdentifier,
-                                          String fieldName, Object fieldValue) {
-        BaseGenerator.PropertyInfo propertyInfo = Util.TABLE_ALIAS_MAPPINGS.get(alias);
+                                          String fieldName, Object fieldValue, ScriptBuilder scriptBuilder) {
+        PropertyInfo propertyInfo = PropertyInfo.TABLE_ALIAS_MAPPINGS.get(alias);
         return propertyInfo.isCollection()
-                ? new NestedUpsertPainlessFacade(source, ddpInstanceDto, uniqueIdentifier, fieldName, fieldValue)
-                : new SingleUpsertPainlessFacade(source, ddpInstanceDto, uniqueIdentifier, fieldName, fieldValue);
+                ? new NestedUpsertPainlessFacade(source, ddpInstanceDto, uniqueIdentifier, fieldName, fieldValue, scriptBuilder)
+                : new SingleUpsertPainlessFacade(source, ddpInstanceDto, uniqueIdentifier, fieldName, fieldValue, scriptBuilder);
     }
-
-    protected abstract ScriptBuilder buildScriptBuilder();
 
     protected QueryBuilder buildQueryBuilder() {
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
