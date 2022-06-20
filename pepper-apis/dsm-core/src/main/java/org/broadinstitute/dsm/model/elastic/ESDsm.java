@@ -62,6 +62,9 @@ public class ESDsm {
     @SerializedName(ESObjectConstants.PARTICIPANT)
     Participant participant;
 
+    @SerializedName(ESObjectConstants.NEW_OSTEO_PARTICIPANT)
+    Participant newOsteoParticipant;
+
     List<KitRequestShipping> kitRequestShipping;
 
     OncHistory oncHistory;
@@ -129,5 +132,9 @@ public class ESDsm {
             cohortTag = Collections.emptyList();
         }
         return cohortTag;
+    }
+
+    public Optional<Participant> getNewOsteoParticipant() {
+        return Optional.ofNullable(newOsteoParticipant);
     }
 }
