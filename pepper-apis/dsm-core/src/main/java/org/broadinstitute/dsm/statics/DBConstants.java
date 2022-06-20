@@ -506,7 +506,13 @@ public class DBConstants {
 
     public static final String LABEL_URL_RETURN = "label_url_return";
 
+    public static final String LAST_VERSION_DATE = LAST_VERSION + "_date";
+
+    // ddp_participant
     public static final String PARTICIPANT_RECORD_ID = "participant_record_id";
+    public static final String RELEASE_COMPLETED = "release_completed";
+
+    // cohort
     public static final String COHORT_ALIAS = "c";
     public static final String COHORT_TAG_PK = "cohort_tag_id";
     public static final String COHORT_TAG = "cohort_tag";

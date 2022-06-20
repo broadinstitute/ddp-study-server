@@ -1,6 +1,8 @@
 package org.broadinstitute.dsm.model.elastic;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.util.Optional;
 
@@ -47,4 +49,25 @@ public class UtilTest {
         assertEquals("column", transformed4);
         assertEquals("columnName", transformed5);
     }
+
+    @Test
+    public void orElseNullInteger() {
+        Optional<Integer> defaultVal = Optional.of(0);
+        Optional<Integer> nonDefaultVal = Optional.of(100);
+        Integer shouldBeNull = Util.orElseNull(defaultVal, 0);
+        Integer shouldBeNonNull = Util.orElseNull(nonDefaultVal, 0);
+        assertNull(shouldBeNull);
+        assertNotNull(shouldBeNonNull);
+    }
+
+    @Test
+    public void orElseNullDouble() {
+        Optional<Double> defaultVal = Optional.of(0.0);
+        Optional<Double> nonDefaultVal = Optional.of(42.0);
+        Double shouldBeNull = Util.orElseNull(defaultVal, 0.0);
+        Double shouldBeNonNull = Util.orElseNull(nonDefaultVal, 0.0);
+        assertNull(shouldBeNull);
+        assertNotNull(shouldBeNonNull);
+    }
+
 }
