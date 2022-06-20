@@ -15,7 +15,7 @@ public interface ActivityCategoryDao extends SqlObject {
 
     @SqlQuery("select * from activity_category where activity_id = :activityId")
     @RegisterConstructorMapper(ActivityCategoryDto.class)
-    ActivityCategoryDao findByActivityId(@Bind("activityId") String activityId);
+    ActivityCategoryDto findByActivityId(@Bind("activityId") long activityId);
 
     @SqlUpdate("insert into activity_category (activity_id, activity_category_code, activity_category_name) "
             + "values (:activityId, :categoryCode, :categoryName)")

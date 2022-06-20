@@ -650,6 +650,16 @@ public abstract class ActivityDef {
             this.showActivityStatus = showActivityStatus;
             return self();
         }
+
+        public T setGroup(FormGroupDef formGroup) {
+            this.formGroup = formGroup;
+            return self();
+        }
+
+        public T setCategory(ActivityCategoryDef category) {
+            this.category = category;
+            return self();
+        }
     }
 
     public static class Deserializer implements JsonDeserializer<ActivityDef> {

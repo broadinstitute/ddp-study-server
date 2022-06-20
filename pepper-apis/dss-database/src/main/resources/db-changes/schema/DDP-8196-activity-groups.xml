@@ -19,7 +19,7 @@
             </column>
         </createTable>
 
-        <createTable tableName="activity_group">
+        <createTable tableName="form_group">
             <column name="form_id" type="bigint" autoIncrement="true" startWith="1">
                 <constraints primaryKey="true"/>
             </column>
@@ -35,14 +35,18 @@
             </column>
         </createTable>
 
-        <addForeignKeyConstraint baseTableName="activity_group" baseColumnNames="section_id" constraintName="section_group_fk"
+        <addForeignKeyConstraint baseTableName="form_group" baseColumnNames="section_id" constraintName="section_group_fk"
                                  referencedTableName="form_section" referencedColumnNames="form_section_id"/>
 
-        <addForeignKeyConstraint baseTableName="activity_group" baseColumnNames="activity_id" constraintName="formgroup_activity_id_fk"
+        <addForeignKeyConstraint baseTableName="form_group" baseColumnNames="activity_id" constraintName="formgroup_activity_id_fk"
                                  referencedTableName="study_activity" referencedColumnNames="study_activity_id"/>
 
         <addForeignKeyConstraint baseTableName="activity_category" baseColumnNames="activity_id" constraintName="category_activity_id_fk"
                                  referencedTableName="study_activity" referencedColumnNames="study_activity_id"/>
+
+        <addUniqueConstraint tableName="activity_category" columnNames="activity_id"/>
+
+        <addUniqueConstraint tableName="form_group" columnNames="activity_id, section_id"/>
 
     </changeSet>
 

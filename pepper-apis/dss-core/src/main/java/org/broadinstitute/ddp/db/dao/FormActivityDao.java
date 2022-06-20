@@ -10,11 +10,15 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections4.ListUtils;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
+import org.broadinstitute.ddp.db.dto.ActivityCategoryDto;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.db.dto.ActivityFormGroupDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.FormActivitySettingDto;
+import org.broadinstitute.ddp.model.activity.definition.ActivityCategoryDef;
 import org.broadinstitute.ddp.model.activity.definition.ConsentActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.FormGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.ActivityI18nDetail;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
@@ -249,6 +253,8 @@ public interface FormActivityDao extends SqlObject {
     default FormActivityDef findDefByDtoAndVersion(ActivityDto activityDto, String versionTag, long versionId, long revisionStart) {
         FormType type = getJdbiActivity().findFormTypeByActivityId(activityDto.getActivityId());
         String studyGuid = getJdbiUmbrellaStudy().findGuidByStudyId(activityDto.getStudyId());
+        ActivityFormGroupDto formGroupDto = getActivityGroupDao().findByOnlyActivityId(activityDto.getActivityId());
+        ActivityCategoryDto categoryDto = getActivityCategoryDao().findByActivityId(activityDto.getActivityId());
 
         FormActivityDef.FormBuilder builder = FormActivityDef
                 .formBuilder(type, activityDto.getActivityCode(), versionTag, studyGuid)
@@ -268,7 +274,9 @@ public interface FormActivityDao extends SqlObject {
                 .setCanDeleteInstances(activityDto.canDeleteInstances())
                 .setCanDeleteFirstInstance(activityDto.canDeleteFirstInstance())
                 .setIsFollowup(activityDto.isFollowup())
-                .setShowActivityStatus(activityDto.showActivityStatus());
+                .setShowActivityStatus(activityDto.showActivityStatus())
+                .setGroup(FormGroupDef.from(formGroupDto))
+                .setCategory(ActivityCategoryDef.from(categoryDto));
 
         List<Translation> names = new ArrayList<>();
         List<Translation> secondNames = new ArrayList<>();

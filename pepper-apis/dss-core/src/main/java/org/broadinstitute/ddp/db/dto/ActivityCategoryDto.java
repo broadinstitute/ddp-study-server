@@ -13,17 +13,17 @@ public class ActivityCategoryDto implements Serializable {
     @ColumnName("activity_category_id")
     private long id;
 
+    @ColumnName("activity_id")
+    private Long activityId;
+
     @ColumnName("activity_category_code")
-    private long categoryCode;
+    private String categoryCode;
 
     @ColumnName("activity_category_name")
     private String activityCategoryName;
 
-    @ColumnName("activity_id")
-    private Long activityId;
-
     protected ActivityCategoryDto(final ActivityCategoryDto other) {
-        this(other.id, other.categoryCode, other.activityCategoryName, other.activityId);
+        this(other.id, other.activityId, other.categoryCode, other.activityCategoryName);
     }
 
 }
