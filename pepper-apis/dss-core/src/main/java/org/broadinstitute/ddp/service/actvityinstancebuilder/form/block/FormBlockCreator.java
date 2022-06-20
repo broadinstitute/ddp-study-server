@@ -50,6 +50,7 @@ public class FormBlockCreator {
             formBlock.setGuid(formBlockDef.getBlockGuid());
             formBlock.setShownExpr(formBlockDef.getShownExpr());
             formBlock.setEnabledExpr(formBlockDef.getEnabledExpr());
+            formBlock.setColumnSpan(formBlockDef.getColumnSpan());
         }
     }
 }
