@@ -57,7 +57,7 @@ public class ParticipantRecordPatch extends BasePatch {
         ParticipantRecordDto participantRecordDto =
                 new ParticipantRecordDto.Builder(participantId, System.currentTimeMillis())
                         .withChangedBy("SYSTEM")
-                        .builder();
+                        .build();
         new ParticipantRecordDao().create(participantRecordDto);
     }
 
