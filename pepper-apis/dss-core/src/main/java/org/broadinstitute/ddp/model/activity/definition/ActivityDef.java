@@ -146,6 +146,13 @@ public abstract class ActivityDef {
     protected transient Long activityId;
     protected transient Long versionId;
 
+    @SerializedName("form")
+    protected FormGroupDef formGroup;
+
+    @SerializedName("category")
+    protected ActivityCategoryDef category;
+
+
     ActivityDef(
             ActivityType activityType,
             String parentActivityCode,
@@ -373,6 +380,14 @@ public abstract class ActivityDef {
         return showActivityStatus;
     }
 
+    public FormGroupDef getFormGroup() {
+        return formGroup;
+    }
+
+    public ActivityCategoryDef getCategory() {
+        return category;
+    }
+
     /**
      * Builder that helps construct common elements of an activity definition.
      *
@@ -407,6 +422,9 @@ public abstract class ActivityDef {
         protected boolean canDeleteInstances;
         protected Boolean canDeleteFirstInstance;
         protected boolean showActivityStatus;
+        protected FormGroupDef formGroup;
+        protected ActivityCategoryDef category;
+
 
         /**
          * Returns the subclass builder instance to enable method chaining.
@@ -434,6 +452,8 @@ public abstract class ActivityDef {
             activity.canDeleteInstances = canDeleteInstances;
             activity.canDeleteFirstInstance = canDeleteFirstInstance;
             activity.showActivityStatus = showActivityStatus;
+            activity.formGroup = formGroup;
+            activity.category = category;
         }
 
         public T setParentActivityCode(String parentActivityCode) {

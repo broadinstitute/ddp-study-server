@@ -25,6 +25,9 @@ public class FormSectionDef {
     @SerializedName("blocks")
     private List<@Valid @NotNull FormBlockDef> blocks;
 
+    @SerializedName("form")
+    protected FormGroupDef formGroup;
+
     private transient Long sectionId;
 
     public FormSectionDef(String sectionCode, List<FormBlockDef> blocks) {
@@ -79,5 +82,13 @@ public class FormSectionDef {
 
     public void setSectionId(Long sectionId) {
         this.sectionId = sectionId;
+    }
+
+    public FormGroupDef getFormGroup() {
+        return formGroup;
+    }
+
+    public void setFormGroup(FormGroupDef formGroup) {
+        this.formGroup = formGroup;
     }
 }

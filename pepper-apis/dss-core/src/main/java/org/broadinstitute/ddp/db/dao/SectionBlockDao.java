@@ -122,6 +122,9 @@ public interface SectionBlockDao extends SqlObject {
     @CreateSqlObject
     FormSectionIconDao getFormSectionIconDao();
 
+    @CreateSqlObject
+    ActivityGroupDao getActivityFormDao();
+
 
     /**
      * Create new sections and their related block data for given activity body. The display order of sections and blocks
@@ -167,6 +170,10 @@ public interface SectionBlockDao extends SqlObject {
 
         long formSectionId = jdbiFormSection.insert(section.getSectionCode(), nameTemplateId);
         section.setSectionId(formSectionId);
+
+        if (section.getFormGroup() != null) {
+            getActivityFormDao().insert(activityId, formSectionId, section.getFormGroup().getCode(), section.getFormGroup().getName());
+        }
 
         if (section.hasIcons()) {
             for (SectionIcon icon : section.getIcons()) {

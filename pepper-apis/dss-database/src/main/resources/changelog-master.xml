@@ -309,4 +309,5 @@
     <include file="db-changes/schema/DDP-7713.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7248.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7890-add-new-event-type.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-8196-activity-groups.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

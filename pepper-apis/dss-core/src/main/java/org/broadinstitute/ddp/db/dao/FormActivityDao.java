@@ -57,6 +57,12 @@ public interface FormActivityDao extends SqlObject {
     @CreateSqlObject
     TemplateDao getTemplateDao();
 
+    @CreateSqlObject
+    ActivityGroupDao getActivityGroupDao();
+
+    @CreateSqlObject
+    ActivityCategoryDao getActivityCategoryDao();
+
 
     // Convenience helper for inserting activity without any nested activities.
     default void insertActivity(FormActivityDef activity, long revisionId) {
@@ -111,6 +117,13 @@ public interface FormActivityDao extends SqlObject {
 
         // First create the base parent.
         long activityId = insertBaseActivity(studyId, activity);
+
+        if (activity.getFormGroup() != null) {
+            getActivityGroupDao().insert(activityId, null, activity.getFormGroup().getCode(), activity.getFormGroup().getName());
+        }
+        if (activity.getCategory() != null) {
+            getActivityCategoryDao().insert(activityId, activity.getCategory().getCode(), activity.getCategory().getName());
+        }
 
         // Then create the child activities and link those to the parent.
         for (var nested : nestedActivities) {
