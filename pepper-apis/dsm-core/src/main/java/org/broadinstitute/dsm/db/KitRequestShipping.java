@@ -84,7 +84,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     + "kit.receive_date, kit.deactivated_date, kit.easypost_address_id_to, kit.deactivation_reason, "
                     + "(select t.tracking_id from ddp_kit_tracking t where t.kit_label = kit.kit_label) as tracking_id, "
                     + "kit.kit_label, kit.express, kit.test_result, kit.needs_approval, kit.authorization, kit.denial_reason, "
-                    + "kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order " + "FROM ddp_kit_request request "
+                    + "kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order, kit.collection_date " +
+                    "FROM ddp_kit_request request "
                     + "LEFT JOIN ddp_kit kit on (kit.dsm_kit_request_id = request.dsm_kit_request_id) "
                     + "LEFT JOIN ddp_instance realm on (realm.ddp_instance_id = request.ddp_instance_id) "
                     + "LEFT JOIN kit_type kt on (request.kit_type_id = kt.kit_type_id) ";
@@ -124,7 +125,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     + "kit.receive_date, kit.deactivated_date, kit.easypost_address_id_to, kit.deactivation_reason, "
                     + "(select t.tracking_id from ddp_kit_tracking t where t.kit_label = kit.kit_label) as tracking_id, "
                     + "kit.kit_label, kit.express, kit.test_result, kit.needs_approval, kit.authorization, kit.denial_reason, "
-                    + "kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order, "
+                    + "kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order, kit.collection_date, "
                     + "activity.ups_status_description, pack.tracking_number " + "FROM ddp_kit_request request "
                     + "LEFT JOIN ddp_kit kit on (kit.dsm_kit_request_id = request.dsm_kit_request_id) "
                     + "LEFT JOIN ddp_instance realm on (realm.ddp_instance_id = request.ddp_instance_id) "
@@ -1473,9 +1474,9 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                         String realm = rs.getString(DBConstants.INSTANCE_NAME);
                         if (Arrays.asList(realms).contains(realm)) { //only if user has right to see that realm
                             String ddpParticipantId = rs.getString(DBConstants.DDP_PARTICIPANT_ID);
-                            String bspParticipantId = rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID);
+                            String bspSampleId = rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID);
                             String kitTypeName = rs.getString(DBConstants.KIT_TYPE_NAME);
-                            String key = ddpParticipantId + "_" + bspParticipantId + "_" + kitTypeName;
+                            String key = ddpParticipantId + "_" + bspSampleId + "_" + kitTypeName;
                             KitRequestShipping kitRequest = getKitRequestShipping(rs);
                             kitRequests.put(key, kitRequest);
                         }
