@@ -24,6 +24,23 @@ public class CohortTag {
     @ColumnName(DBConstants.DDP_INSTANCE_ID)
     Integer ddpInstanceId;
 
+    public CohortTag(Integer cohortTagId, String cohortTagName, String ddpParticipantId, Integer ddpInstanceId) {
+        this.cohortTagId = cohortTagId;
+        this.cohortTagName = cohortTagName;
+        this.ddpParticipantId = ddpParticipantId;
+        this.ddpInstanceId = ddpInstanceId;
+    }
+
+    public CohortTag(String cohortTagName, String ddpParticipantId, Integer ddpInstanceId) {
+        this.cohortTagName = cohortTagName;
+        this.ddpParticipantId = ddpParticipantId;
+        this.ddpInstanceId = ddpInstanceId;
+    }
+
+    public CohortTag() {
+
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
