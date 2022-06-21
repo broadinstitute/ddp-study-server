@@ -32,7 +32,7 @@ public class PostMercuryOrderDummyRoute implements Route {
         log.info("Publishing message to Mercury");
         mercuryOrderPublisher
                 .createAndPublishMessage(mercuryOrderRequest.getKitLabels(), projectId, topicId, ddpInstance,
-                        mercuryOrderRequest.getCollaboratorParticipantId(), userId);
+                        mercuryOrderRequest.getCollaboratorParticipantId(), userId, null);
     }
 
 

@@ -117,6 +117,7 @@ import org.broadinstitute.dsm.route.ViewFilterRoute;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
 import org.broadinstitute.dsm.route.mercury.GetMercuryEligibleSamplesRoute;
 import org.broadinstitute.dsm.route.mercury.PostMercuryOrderDummyRoute;
+import org.broadinstitute.dsm.route.mercury.PostMercuryOrderRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
 import org.broadinstitute.dsm.route.tag.cohort.CreateCohortTagRoute;
@@ -184,7 +185,7 @@ public class DSMServer {
     public static final String GCP_PATH_TO_DSM_TO_DSS_TOPIC = "pubsub.dsm_to_dss_topic";
     public static final String GCP_PATH_TO_DSM_TASKS_SUB = "pubsub.dsm_tasks_subscription";
     public static final String GCP_PATH_TO_DSM_TO_MERCURY_TOPIC = "pubsub.dsm_to_mercury_topic";
-    public static final String GCP_PATH_TO_DSM_TO_MERCURY_SUB = "pubsub.dsm_to_mercury_subscription";
+    public static final String GCP_PATH_TO_MERCURY_TO_DSM_SUB = "pubsub.mercury_to_dsm_subscription";
     private static final Logger logger = LoggerFactory.getLogger(DSMServer.class);
     private static final String API_ROOT = "/ddp/";
     private static final String UI_ROOT = "/ui/";
@@ -689,6 +690,7 @@ public class DSMServer {
         String subscriptionId = cfg.getString(GCP_PATH_TO_PUBSUB_SUB);
         String dsmToDssSubscriptionId = cfg.getString(GCP_PATH_TO_DSS_TO_DSM_SUB);
         String dsmTasksSubscriptionId = cfg.getString(GCP_PATH_TO_DSM_TASKS_SUB);
+        String mercuryDsmSubscriptionId = cfg.getString(GCP_PATH_TO_MERCURY_TO_DSM_SUB);
 
         logger.info("Setting up pubsub for {}/{}", projectId, subscriptionId);
 
@@ -739,6 +741,12 @@ public class DSMServer {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+//        try {
+//            MercuryOrderStatusListener.subscribeToOrderStatus(projectId, mercuryDsmSubscriptionId);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
 
         logger.info("Pubsub setup complete");
     }
@@ -921,7 +929,7 @@ public class DSMServer {
 
         String mercuryTopicId = config.getString(GCP_PATH_TO_DSM_TO_MERCURY_TOPIC);
         PostMercuryOrderDummyRoute postMercuryOrderDummyRoute = new PostMercuryOrderDummyRoute(projectId, mercuryTopicId);
-        //        post(UI_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderDummyRoute, new JsonTransformer());
+        post(UI_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, new PostMercuryOrderRoute(projectId, mercuryTopicId), new JsonTransformer());
         post(API_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderDummyRoute, new JsonTransformer());
 
     }

@@ -16,7 +16,7 @@ import org.broadinstitute.lddp.db.SimpleResult;
 
 public class MercurySampleDao implements Dao<MercurySampleDto> {
     public static String SQL_GET_ELIGIBLE_TISSUES =
-            "SELECT collaborator_sample_id, t.sent_gp, oD.date_px, oD.tissue_received, sequence.order_date, t.tissue_id   "
+            "SELECT collaborator_sample_id, t.sent_gp, oD.date_px, oD.tissue_received, sequence.order_date, t.tissue_id    "
                     + "FROM  ddp_participant as p    "
                     + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id)    "
                     + "LEFT JOIN ddp_institution inst on  (inst.participant_id = p.participant_id)    "
@@ -24,7 +24,17 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
                     + "LEFT JOIN ddp_onc_history_detail oD on (mr.medical_record_id = oD.medical_record_id AND NOT oD.deleted <=> 1)    "
                     + "LEFT JOIN ddp_tissue t on (oD.onc_history_detail_id = t.onc_history_detail_id AND NOT t.deleted <=> 1)    "
                     + "LEFT JOIN mercury_sequencing sequence on (sequence.sample_id  = t.tissue_id )"
-                    + "WHERE oD.tissue_received IS NOT NULL AND p.ddp_participant_id = ? AND ddp.instance_name = ? ";
+                    + "WHERE oD.tissue_received IS NOT NULL AND p.ddp_participant_id = ? AND ddp.instance_name = ? "
+                    + "AND  IFNULL(t.uss_count, 0) = (SELECT count(*) "
+                    + "from sm_id sm "
+                    + "left join sm_id_type smtype on (sm.sm_id_type_id = smtype.sm_id_type_id) "
+                    + "where smtype.sm_id_type = \"uss\" and sm.tissue_id = t.tissue_id) "
+                    + "AND "
+                    + "IFNULL(t.scrolls_count, 0) = (SELECT count(*) "
+                    + "from sm_id sm "
+                    + "left join sm_id_type smtype on (sm.sm_id_type_id = smtype.sm_id_type_id) "
+                    + "where smtype.sm_id_type = \"scrolls\" and sm.tissue_id = t.tissue_id ) ";
+
 
     public static String SQL_GET_ELIGIBLE_SAMPLES =
             "SELECT req.ddp_kit_request_id, req.bsp_collaborator_sample_id,  sequence.order_date, collection_date, req.dsm_kit_request_id "

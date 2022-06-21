@@ -6,9 +6,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import org.broadinstitute.dsm.db.dao.ddp.kitrequest.KitRequestDao;
+import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
 import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
+import org.broadinstitute.dsm.db.dao.mercury.MercurySampleDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 
 public class MercuryOrderUseCase {
+    private static TissueSMIDDao tissueSMIDDao = new TissueSMIDDao();
+    private static KitRequestDao kitRequestDao = new KitRequestDao();
+
     public static List<MercuryOrderDto> createAllOrders(String[] barcodes, String ddpParticipantId, String orderId, String userId)
             throws NoSuchElementException {
         List<MercuryOrderDto> orders = new ArrayList<>();
@@ -28,5 +35,17 @@ public class MercuryOrderUseCase {
             orders.add(order);
         });
         return orders;
+    }
+
+    public static ArrayList<String> createBarcodes(MercurySampleDto[] mercurySampleDtos, DDPInstanceDto ddpInstance) {
+        ArrayList<String> barcodes = new ArrayList<>();
+        for (MercurySampleDto mercurySampleDto : mercurySampleDtos) {
+            if (mercurySampleDto.sampleType.equals(MercurySampleDao.TISSUE_SAMPLE_TYPE)) {
+                barcodes.addAll(tissueSMIDDao.getSequencingSmIdsForTissue(mercurySampleDto.sampleId));
+            } else if (mercurySampleDto.sampleType.equals(MercurySampleDao.KIT_SAMPLE_TYPE)) {
+                barcodes.addAll(kitRequestDao.getKitLabelFromDsmKitRequestId(mercurySampleDto.sampleId));
+            }
+        }
+        return barcodes;
     }
 }

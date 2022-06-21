@@ -19,13 +19,15 @@ public class MercuryOrderDto {
     String mercuryPdoId;
     String createdBy;
     int ddpInstanceId;
+    long sampleId;
 
-    public MercuryOrderDto(String ddpParticipantId, String creatorId, String barcode, int kitTypeId, int ddpInstanceId) {
+    public MercuryOrderDto(String ddpParticipantId, String creatorId, String barcode, int kitTypeId, int ddpInstanceId, long sampleId) {
         this.ddpParticipantId = ddpParticipantId;
         this.creatorId = creatorId;
         this.barcode = barcode;
         this.kitTypeId = kitTypeId;
         this.ddpInstanceId = ddpInstanceId;
+        this.sampleId = sampleId;
     }
 
     public Optional<String> getCreatedBy() {

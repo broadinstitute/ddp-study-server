@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.ddp.kitrequest.ESSamplesDto;
 import org.broadinstitute.dsm.db.dto.ddp.kitrequest.KitRequestDto;
@@ -16,6 +17,7 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 
+@Slf4j
 public class KitRequestDao implements Dao<KitRequestDto> {
 
     public static final String SQL_SELECT_ES_SAMPLE =
@@ -27,6 +29,9 @@ public class KitRequestDao implements Dao<KitRequestDto> {
                     + "ddp_kit_request_settings krs ON (kr.ddp_instance_id = krs.ddp_instance_id "
                     + "AND kr.kit_type_id = krs.kit_type_id)  LEFT JOIN "
                     + "carrier_service cs ON (krs.carrier_service_to_id = cs.carrier_service_id)";
+
+    public static final String SQL_GET_KIT_LABEL =
+            "select kit_label from ddp_kit where dsm_kit_request_id = ?";
 
     public static final String BY_INSTANCE_ID = " WHERE kr.ddp_instance_id = ?";
 
@@ -144,5 +149,33 @@ public class KitRequestDao implements Dao<KitRequestDto> {
             throw new RuntimeException("Couldn't get kit request id for " + bspSampleId, results.resultException);
         }
         return (String) results.resultValue;
+    }
+
+    public ArrayList<String> getKitLabelFromDsmKitRequestId(long dsmKitRequestId) {
+        ArrayList<String> kitLabels = new ArrayList<>();
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_LABEL)) {
+                stmt.setLong(1, dsmKitRequestId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        kitLabels.add(rs.getString(DBConstants.KIT_LABEL));
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Couldn't get kit label for kit " + dsmKitRequestId, results.resultException);
+        }
+        if (kitLabels.size() != 1) {
+            throw new RuntimeException(
+                    "Found an invalid number of kit labes for kit " + dsmKitRequestId + " current size is " + kitLabels.size());
+        }
+        log.info("Got " + kitLabels.get(0) + " sequencing kit labels in DSM DB for " + dsmKitRequestId);
+        return kitLabels;
     }
 }

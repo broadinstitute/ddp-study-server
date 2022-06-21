@@ -102,11 +102,16 @@ public class MercuryOrderPublisher {
     }
 
     public void createAndPublishMessage(String[] barcodes, String projectId, String topicId, DDPInstanceDto ddpInstance,
-                                        String collaboratorParticipantId, String userId) {
-        Optional<String> maybeParticipantId =
-                participantDao.getParticipantFromCollaboratorParticipantId(collaboratorParticipantId,
-                        String.valueOf(ddpInstance.getDdpInstanceId()));
-        String ddpParticipantId = maybeParticipantId.orElseThrow();
+                                        String collaboratorParticipantId, String userId, String ddpParticipantId) {
+        if (StringUtils.isBlank(collaboratorParticipantId) && StringUtils.isBlank(ddpParticipantId)) {
+            throw new RuntimeException("Invalid input!");
+        }
+        if (StringUtils.isBlank(ddpParticipantId)) {
+            Optional<String> maybeParticipantId =
+                    participantDao.getParticipantFromCollaboratorParticipantId(collaboratorParticipantId,
+                            String.valueOf(ddpInstance.getDdpInstanceId()));
+            ddpParticipantId = maybeParticipantId.orElseThrow();
+        }
         log.info("Publishing message to mercury");
         String researchProject = ddpInstance.getResearchProject().orElseThrow();
         String creatorId = ddpInstance.getMercuryOrderCreator().orElseThrow();
