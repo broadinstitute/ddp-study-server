@@ -10,8 +10,8 @@ import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
-import org.broadinstitute.ddp.db.NotFoundException;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.jdbi.v3.core.Handle;
@@ -28,8 +28,6 @@ import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import lombok.val;
 
 public interface UserDao extends SqlObject {
 
@@ -57,35 +55,29 @@ public interface UserDao extends SqlObject {
      * client id may not match the one provided.
      * @param createdByClientId the OAuth Client ID creating the user
      * @param email the desired email for the new user
-     * @return The new user, or an existing one if a user with that email already exists
+     * @return The new user, or null if the user already exists
      */
-    default User createUserByEmail(String email, String oauthClientId, String oauthDomain) {
-        val handle = getHandle();
+    default User createUserByEmail(String email) {
+        final var handle = getHandle();
         
         var user = findUserByEmail(email);
         if (user.isPresent()) {
             // User already exists!
-            return user.get();
-        }
-
-        var internalClientId = handle.attach(ClientDao.class)
-            .getClientIdByAuth0ClientAndDomain(oauthClientId, oauthDomain);
-        
-        if (internalClientId == null) {
-            throw new NotFoundException("Client ID '" + oauthClientId + "' in domain '" + oauthDomain + "' was not found");
+            throw new DDPException("user creation failed: user with email already exists");
         }
 
         // The user doesn't seem to exist yet, so do the more expensive
         // checks (since userGuid and userHruid may require multiple
         // DB round trips)
-        val guid = DBUtils.uniqueUserGuid(handle);
-        val hruid = DBUtils.uniqueUserHruid(handle);
+        final var guid = DBUtils.uniqueUserGuid(handle);
+        final var hruid = DBUtils.uniqueUserHruid(handle);
 
-        val userSql = getUserSql();
+        final var userSql = getUserSql();
         long now = Instant.now().toEpochMilli();
 
-        long userId = userSql.insertByEmail(internalClientId, guid, email, hruid, false, now, now);
-        return findUserById(userId).orElseThrow(() -> new DaoException("Internal inconsistency: user with id " + userId + " was created, but can not be found."));
+        long userId = userSql.insertByEmail(guid, email, hruid, false, now, now);
+        return findUserById(userId).orElseThrow(() -> new DaoException("Internal inconsistency: user with id "
+            + userId + " was created, but can not be found."));
     }
 
     default User createUser(String auth0Domain, String auth0ClientId, String auth0UserId) {
