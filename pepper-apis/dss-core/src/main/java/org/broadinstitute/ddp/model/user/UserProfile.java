@@ -15,7 +15,7 @@ import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 @AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class UserProfile implements Serializable {
     @ColumnName("user_id")
-    long userId;
+    Long userId;
 
     @ColumnName("first_name")
     String firstName;

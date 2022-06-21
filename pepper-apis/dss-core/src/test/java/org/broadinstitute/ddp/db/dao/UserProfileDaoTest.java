@@ -38,7 +38,7 @@ public class UserProfileDaoTest extends TxnAwareBaseTest {
 
             UserProfile actual = handle.attach(UserProfileDao.class).findProfileByUserGuid(user.getGuid()).orElse(null);
             assertNotNull(actual);
-            assertEquals(user.getId(), actual.getUserId());
+            assertEquals(Long.valueOf(user.getId()), actual.getUserId());
             assertEquals("first", actual.getFirstName());
             assertEquals("last", actual.getLastName());
             assertNull(actual.getSexType());

@@ -696,7 +696,7 @@ public class DataLoaderTest {
         ArgumentCaptor<UserProfile> userProfileCaptor = ArgumentCaptor.forClass(UserProfile.class);
         verify(mockProfileDao, times(1)).createProfile(userProfileCaptor.capture());
 
-        assertEquals(pretendUserId, userProfileCaptor.getValue().getUserId());
+        assertEquals(Long.valueOf(pretendUserId), userProfileCaptor.getValue().getUserId());
 
         assertEquals("First1539381231204", userProfileCaptor.getValue().getFirstName());
         assertEquals("Last1539381231204", userProfileCaptor.getValue().getLastName());
