@@ -368,7 +368,7 @@ public class UserDeleteService {
     }
 
     private void deleteAuth0User(User user, Auth0ManagementClient auth0ManagementClient) {
-        if (user.getAuth0UserId().isPresent() == false) {
+        if (user.getAuth0UserId().isEmpty()) {
             return;
         }
 

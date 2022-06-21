@@ -466,7 +466,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
          * email address, there is some extra work do to.
          * #ddp7931
          */
-        if (user.getAuth0UserId().isPresent() == false) {
+        if (user.getAuth0UserId().isEmpty()) {
             throw new NotImplementedException("handle users which do not have an auth0 account safely");
         }
 
