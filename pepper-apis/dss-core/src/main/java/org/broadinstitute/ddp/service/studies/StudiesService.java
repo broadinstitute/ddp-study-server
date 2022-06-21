@@ -1,7 +1,5 @@
 package org.broadinstitute.ddp.service.studies;
 
-import java.util.Optional;
-
 import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
