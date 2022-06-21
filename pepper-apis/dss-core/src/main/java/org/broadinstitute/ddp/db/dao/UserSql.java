@@ -43,4 +43,20 @@ public interface UserSql extends SqlObject {
 
     @SqlUpdate("update user set legacy_altpid = :altpid where user_id = :id")
     int updateLegacyAltPidById(@Bind("id") long userId, @Bind("altpid") String legacyAltPid);
+
+    @SqlUpdate("UPDATE user SET"
+            + "created_by_client_id = :createdByClientId, "
+            + "auth0_tenant_id = :auth0TenantId, "
+            + "auth0_user_id = :auth0UserId, "
+            + "is_locked = :isLocked, "
+            + "updated_at = :updatedAt, "
+            + "expires_at = :expiresAt "
+            + "WHERE user_id = :userId")
+    int updateUser(@Bind("userId") long userId,
+            @Bind("createdByClientId") Long createdByClientId,
+            @Bind("auth0TenantId") Long auth0TenantId,
+            @Bind("auth0UserId") String auth0UserId,
+            @Bind("isLocked") boolean isLocked,
+            @Bind("updatedAt") long updatedAt,
+            @Bind("expiresAt") Long expiresAt);
 }
