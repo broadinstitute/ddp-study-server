@@ -10,13 +10,11 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
-
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
-import org.broadinstitute.ddp.exception.DDPException;
-
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.ddp.exception.DDPException;
 
 @Slf4j
 public class JavaHeapDumper {
@@ -63,7 +61,7 @@ public class JavaHeapDumper {
         try {
             var methodImpl = clazz.getMethod("dumpHeap", String.class, boolean.class);
             methodImpl.invoke(mxBean, fileName, live);
-        } catch(NoSuchMethodException nsme) {
+        } catch (NoSuchMethodException nsme) {
             log.error("MX Bean {} does not implement dumpHeap(String, boolean), skipping heap dump", diagnosticBeanName);
 
             // At this point, it's not clear if this error rises to the level
@@ -73,12 +71,12 @@ public class JavaHeapDumper {
             // consider changing this to wrap & throw as a runtime exception if needs
             // change.
             return false;
-        } catch(IllegalAccessException iae) {
+        } catch (IllegalAccessException iae) {
             log.error("MX Bean {} does not allow access to dumpHeap(String, boolean), skipping heap dump", diagnosticBeanName);
 
             // See the previous comment in the NoSuchMethodException handler.
             return false;
-        } catch(InvocationTargetException ite) {
+        } catch (InvocationTargetException ite) {
             var cause = ite.getCause();
             if (cause == null) {
                 // The cause may be null, not sure what sort of error conditions that would
@@ -103,7 +101,7 @@ public class JavaHeapDumper {
     }
 
     public boolean dumpHeap(String fileName) throws IOException {
-        var platformDiagnostics = new HashMap<String,String>();
+        var platformDiagnostics = new HashMap<String, String>();
         platformDiagnostics.put(JavaHeapDumper.OPENJ9_MXBEAN_NAME, "openj9.lang.management.OpenJ9DiagnosticsMXBean");
         platformDiagnostics.put(JavaHeapDumper.HOTSPOT_MXBEAN_NAME, "com.sun.management.HotSpotDiagnosticMXBean");
 
@@ -112,12 +110,12 @@ public class JavaHeapDumper {
 
             try {
                 diagnosticBeanName = new ObjectName(diagnosticNames.getKey());
-            } catch(MalformedObjectNameException ex) {
+            } catch (MalformedObjectNameException ex) {
                 log.error("Malformed javax.management object name: {}", ex);
                 throw new JavaHeapDumpException(ex);
             }
 
-            if(ManagementFactory.getPlatformMBeanServer().isRegistered(diagnosticBeanName)) {
+            if (ManagementFactory.getPlatformMBeanServer().isRegistered(diagnosticBeanName)) {
                 final var mxBeanName = diagnosticNames.getValue();
                 log.info("Using diagnostics mxbean {}", mxBeanName);
 
@@ -140,8 +138,8 @@ public class JavaHeapDumper {
         var localDumpFile = Paths.get(DEFAULT_LOCAL_PATH, fileName).toFile();
         if (localDumpFile.exists()) {
             log.info("Created local dump file: {} with size: {}",
-                localDumpFile.getAbsolutePath(),
-                localDumpFile.length());
+                    localDumpFile.getAbsolutePath(),
+                    localDumpFile.length());
         } else {
             log.error("Could not find dump file at: {}/{}", DEFAULT_LOCAL_PATH, fileName);
             throw new JavaHeapDumpException("Could not locate local dump file");
