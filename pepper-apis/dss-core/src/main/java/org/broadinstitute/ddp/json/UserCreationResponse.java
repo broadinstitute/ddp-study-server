@@ -34,9 +34,7 @@ public class UserCreationResponse {
     public UserCreationResponse(User user, UserProfile profile) {
         this.guid = user.getGuid();
         this.hruid = user.getHruid();
-        this.email = user.getEmail().orElseThrow(() -> {
-            
-        });
+        this.email = user.getEmail().orElseThrow(() -> new IllegalStateException("participant must have a valid email"));
         this.profile = new Profile(profile);
     }
 }
