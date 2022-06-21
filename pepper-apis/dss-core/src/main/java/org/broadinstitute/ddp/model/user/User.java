@@ -27,7 +27,7 @@ public class User {
     private String legacyAltPid;
     private String legacyShortId;
     private boolean isLocked;
-    private long createdByClientId;
+    private Long createdByClientId;
     private Long auth0TenantId;
     private String auth0UserId;
     private long createdAt;
@@ -45,7 +45,7 @@ public class User {
                 @ColumnName("legacy_altpid") String legacyAltPid,
                 @ColumnName("legacy_shortid") String legacyShortId,
                 @ColumnName("is_locked") boolean isLocked,
-                @ColumnName("created_by_client_id") long createdByClientId,
+                @ColumnName("created_by_client_id") Long createdByClientId,
                 @ColumnName("auth0_tenant_id") Long auth0TenantId,
                 @ColumnName("auth0_user_id") String auth0UserId,
                 @ColumnName("created_at") long createdAt,

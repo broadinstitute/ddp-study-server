@@ -36,7 +36,7 @@ public class UserGovernanceDaoTest extends TxnAwareBaseTest {
 
             User governed = handle.attach(UserDao.class).findUserById(gov.getGovernedUserId()).get();
             assertNull(governed.getAuth0UserId());
-            assertEquals(testData.getClientId(), governed.getCreatedByClientId());
+            assertEquals(testData.getClientId(), governed.getCreatedByClientId().longValue());
 
             handle.rollback();
         });
@@ -55,7 +55,7 @@ public class UserGovernanceDaoTest extends TxnAwareBaseTest {
 
             User governed = handle.attach(UserDao.class).findUserById(gov.getGovernedUserId()).get();
             assertNull(governed.getAuth0UserId());
-            assertEquals(testData.getClientId(), governed.getCreatedByClientId());
+            assertEquals(testData.getClientId(), governed.getCreatedByClientId().longValue());
 
             handle.rollback();
         });

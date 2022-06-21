@@ -30,8 +30,7 @@ public interface UserSql extends SqlObject {
     @GetGeneratedKeys
     @UseStringTemplateSqlLocator
     @SqlUpdate("insertUserByEmail")
-    long insertByEmail( @Bind("createdByClientId") long createdByClientId,
-                    @Bind("guid") String guid,
+    long insertByEmail(@Bind("guid") String guid,
                     @Bind("email") String email,
                     @Bind("hruid") String hruid,
                     @Bind("isLocked") boolean isLocked,
