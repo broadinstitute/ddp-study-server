@@ -7,8 +7,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.ddp.db.dao.CenterProfileDao;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
+import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.user.User;
+import org.broadinstitute.ddp.service.EventService;
 import org.broadinstitute.ddp.service.participants.ParticipantsCreateService.ParticipantCreateError.Code;
 import org.broadinstitute.ddp.service.studies.StudiesService;
 import org.broadinstitute.ddp.service.studies.StudiesService.StudiesServiceError;
@@ -136,11 +141,42 @@ public class ParticipantsCreateService {
             throw new ParticipantCreateError(Code.STUDY_REGISTRATION_FAILED, message, sse);
         }
 
+        // Assumes the operator and the user are one in the same in this case.
+        // Need to check this assumption, however.
+        notifyParticipantWasRegistered(studyGuid, newUserGuid, newUserGuid);
+
         return newUser;
     }
  
     public User createWithAuth0(String userId, String tenantDomain) throws ParticipantCreateError {
         throw new ParticipantCreateError(Code.NOT_IMPLEMENTED,
                 "Auth0 participant account creation not implemented");
+    }
+
+    private void notifyParticipantWasRegistered(String studyGuid, String operatorGuid, String participantGuid) {
+        var studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+        var userDao = handle.attach(JdbiUser.class);
+        var operator = userDao.findByUserGuid(operatorGuid);
+        var participant = userDao.findByUserGuid(participantGuid);
+
+        var signal = new EventSignal(
+                operator.getUserId(),
+                participant.getUserId(),
+                participant.getUserGuid(),
+                operator.getUserGuid(),
+                studyDto.getId(),
+                studyDto.getGuid(),
+                EventTriggerType.USER_REGISTERED);
+        EventService.getInstance().processAllActionsForEventSignal(handle, signal);
+
+        /* This is from UserRegistrationRoute.java,
+         * but in that class I can't clearly see where `taskPublisher`
+         * is being set. Thoughts?
+         */
+        /*
+        taskPublisher.publishTask(
+                    TaskPubSubPublisher.TASK_PARTICIPANT_REGISTERED,
+                    payload, studyGuid, participantGuid);
+        */
     }
 }
