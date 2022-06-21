@@ -59,6 +59,7 @@ public class RouteConstants {
         public static final String INVITATION_CHECK = fmt(BASE + "/studies/%s/invitation-check", PathParam.STUDY_GUID);
 
         public static final String USER_ALL = fmt(BASE + "/user/%s/*", PathParam.USER_GUID);
+        public static final String USERS = fmt(BASE + "/user", PathParam.USER_GUID);
         public static final String USER_SPECIFIC = fmt(BASE + "/user/%s", PathParam.USER_GUID);
         public static final String UPDATE_USER_PASSWORD = USER_SPECIFIC + "/password";
         public static final String UPDATE_USER_EMAIL = USER_SPECIFIC + "/email";

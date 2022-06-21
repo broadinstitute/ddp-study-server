@@ -32,7 +32,7 @@ import spark.Response;
 public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPayload> {
     @Override
     protected int getValidationErrorStatus() {
-        return HttpStatus.SC_BAD_REQUEST;
+        return HttpStatus.SC_UNPROCESSABLE_ENTITY;
     }
 
     @Override

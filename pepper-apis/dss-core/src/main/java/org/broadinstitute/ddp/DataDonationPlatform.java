@@ -367,7 +367,7 @@ public class DataDonationPlatform {
         }
 
         post(API.REGISTRATION, new UserRegistrationRoute(interpreter, new TaskPubSubPublisher()), responseSerializer);
-        post(API.USER_SPECIFIC, new UserCreationRoute(), responseSerializer);
+        post(API.USERS, new UserCreationRoute(), responseSerializer);
         post(API.TEMP_USERS, new CreateTemporaryUserRoute(), responseSerializer);
 
         post(API.SENDGRID_EVENT, new SendGridEventRoute(new SendGridEventService()), responseSerializer);
