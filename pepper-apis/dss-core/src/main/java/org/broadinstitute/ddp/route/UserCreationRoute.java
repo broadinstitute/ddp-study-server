@@ -52,13 +52,9 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
         * Grab the requesting client id out of the token
         * so it can be referred back to after we create the user
         */ 
-        /* Disabled for testing purposes
-        final var token = JWT.decode(auth.getToken());
-        final var domain = token.getIssuer();
-        final var requestorClientId = token.getClaim(Auth0Constants.DDP_CLIENT_CLAIM).asString();
-        final var operatorId = token.getClaim(Auth0Constants.DDP_USER_ID_CLAIM).asString();
-        */
-
+        final var requestorClientId = auth.getClient();
+        final var operatorId = auth.getOperator();
+        final var domain = auth.getIssuer();
         final var studyGuid = payload.getStudyGuid();
 
         // Not sure if this is the proper check, but this is
@@ -108,7 +104,7 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
                     .getClientIdByAuth0ClientAndDomain(requestorClientId, domain);
             if (internalClientId.isEmpty()) {
                 var error = new ApiError(ErrorCodes.NOT_FOUND,
-                        String.format("unrecognized Auth0 client %s in the tenant with domain %s.",
+                        String.format("Auth0 client '%s' is not authorized for '%s'.",
                             requestorClientId, domain));
                 throw ResponseUtil.haltError(HttpStatus.SC_UNAUTHORIZED, error);
             }
@@ -142,7 +138,7 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
             var result = handle.attach(UserDao.class)
                     .getUserSql()
                     .updateUser(newUser.getId(),
-                        null, //internalClientId.get(),
+                        internalClientId.orElse(null),
                         newUser.getAuth0TenantId().orElse(null),
                         newUser.getAuth0UserId().orElse(null),
                         newUser.isLocked(),
