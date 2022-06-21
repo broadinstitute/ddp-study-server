@@ -19,7 +19,7 @@ public interface UserProfileSql extends SqlObject {
 
     @GetGeneratedKeys
     @SqlUpdate("insert into user_profile (user_id, first_name, last_name, sex, birth_date,"
-            + "        preferred_language_id, time_zone, do_not_contact, is_deceased, skip_language_popup, email)"
+            + "        preferred_language_id, time_zone, do_not_contact, is_deceased, skip_language_popup)"
             + " values (:userId, :firstName, :lastName, :sex, :birthDate,"
             + " :langId, :tz, :doNotContact, :isDeceased, :skipLanguagePopup)")
     long insert(@Bind("userId") long userId,
