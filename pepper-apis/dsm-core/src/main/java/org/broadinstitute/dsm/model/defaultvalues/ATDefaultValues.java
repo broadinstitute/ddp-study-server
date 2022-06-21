@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.model.defaultvalues;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -12,7 +11,6 @@ import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
-import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
 import org.broadinstitute.dsm.model.elastic.ESActivities;
 import org.broadinstitute.dsm.model.elastic.ESProfile;
 import org.broadinstitute.dsm.model.settings.field.FieldSettings;
@@ -21,14 +19,13 @@ import org.slf4j.LoggerFactory;
 
 public class ATDefaultValues extends BasicDefaultDataMaker {
 
+    private static final Logger logger = LoggerFactory.getLogger(ATDefaultValues.class);
+
     public static final String EXIT_STATUS = "EXITSTATUS";
     public static final String AT_PARTICIPANT_EXIT = "AT_PARTICIPANT_EXIT";
     public static final String AT_GENOMIC_ID = "at_genomic_id";
-    public static final String ACTIVITY_CODE_PREQUAL = "PREQUAL";
-    public static final String PREQUAL_SELF_DESCRIBE = "PREQUAL_SELF_DESCRIBE";
-    public static final String QUESTION_ANSWER = "answer";
-    public static final String SELF_DESCRIBE_DIAGNOSED = "DIAGNOSED";
-    private static final Logger logger = LoggerFactory.getLogger(ATDefaultValues.class);
+    public static final String ACTIVITY_CODE_REGISTRATION = "REGISTRATION";
+    public static final String COMPLETE = "COMPLETE";
     private static final String GENOME_STUDY_FIELD_TYPE = "AT_GROUP_GENOME_STUDY";
     private static final String GENOME_STUDY_CPT_ID = "GENOME_STUDY_CPT_ID";
     private static final String PREFIX = "DDP_ATCP_";
@@ -36,12 +33,11 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
 
     @Override
     protected boolean setDefaultData() {
-
         if (isParticipantDataInES()) {
             return false;
         }
 
-        if (isSelfOrDependentParticipant()) {
+        if (isParticipantRegistrationComplete()) {
             return insertGenomicIdForParticipant() && insertExitStatusForParticipant();
         } else {
             //in case if 3rd registration option is chosen in prequalifier of ATCP
@@ -56,18 +52,15 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
     }
 
 
-    boolean isSelfOrDependentParticipant() {
+    boolean isParticipantRegistrationComplete() {
         if (elasticSearchParticipantDto.getActivities().isEmpty()) {
             return false;
         }
-        return elasticSearchParticipantDto.getActivities().stream().anyMatch(this::isPrequalAndSelfOrDependent);
+        return elasticSearchParticipantDto.getActivities().stream().anyMatch(this::isRegistrationComplete);
     }
 
-    private boolean isPrequalAndSelfOrDependent(ESActivities activity) {
-        return ACTIVITY_CODE_PREQUAL.equals(activity.getActivityCode()) && (activity.getQuestionsAnswers().stream()
-                .filter(anwers -> PREQUAL_SELF_DESCRIBE.equals(anwers.get(DDPActivityConstants.DDP_ACTIVITY_STABLE_ID))).anyMatch(
-                        answers -> ((List) answers.get(QUESTION_ANSWER)).stream().anyMatch(
-                                answer -> SELF_DESCRIBE_DIAGNOSED.equals(answer))));
+    private boolean isRegistrationComplete(ESActivities activity) {
+        return ACTIVITY_CODE_REGISTRATION.equals(activity.getActivityCode()) && COMPLETE.equals(activity.getStatus());
     }
 
     private boolean insertGenomicIdForParticipant() {
@@ -113,7 +106,7 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         try {
             participantData.insertParticipantData("SYSTEM");
             logger.info("values: " + data.keySet().stream().collect(Collectors.joining(", ", "[", "]"))
-                    + " were created for participant with id: " + ddpParticipantId + " at " + GENOME_STUDY_FIELD_TYPE);
+                    + " were created at PARTICIPANT_REGISTERED pubsub task for participant with id: " + ddpParticipantId + " at " + fieldTypeId);
             return true;
         } catch (RuntimeException re) {
             return false;
@@ -123,6 +116,5 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
     private void setDataAccess(Dao dao) {
         this.dataAccess = dao;
     }
-
 
 }
