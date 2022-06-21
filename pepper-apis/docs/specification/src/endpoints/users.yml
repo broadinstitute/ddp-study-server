@@ -10,7 +10,7 @@ post:
     $ref: '../components/request-bodies.yml#/ParticipantCreateRequest'
   responses:
     '200':
-      $ref: '../components/responses.yml#ParticipantCreateResponse'
+      $ref: '../components/responses.yml#/UserCreationResponse'
     '422':
       description: |
         The request was formatted properly, but an error occurred when validating the payload.
