@@ -77,10 +77,7 @@ public class User {
 
     /**
      * Returns the email associated with the user.
-     * 
-     * <p>If this is an "internal" account, this field is
-     * required
-     * @return
+     * @return an email address, if the user has one
      */
     public Optional<String> getEmail() {
         return Optional.ofNullable(email);
