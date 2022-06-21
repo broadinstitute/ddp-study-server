@@ -7,12 +7,13 @@
   "medical_records": "We may also contact the hospitals or centers where you told us {{\#if proxy_guid}}your child was{{else}}you were{{/if}} treated to request copies of {{\#if proxy_guid}}your child's{{else}}your{{/if}} medical records. If you have opted in to share stored tumor samples, we may request a small portion of {{\#if proxy_guid}}your child's{{else}}your{{/if}} samples from the hospitals or centers where they are stored. After we have analyzed these, we will return any unused tumor samples to the pathology department that sent them to us.",
   "contact": "If you have questions at any point and would like to talk to a member of our study staff, please reach out to us at
     <a href='mailto:${contact.email}' target='_blank' style='color: #7154ff; text-decoration: none; cursor: pointer;'>${contact.email}</a>
-    or call <a href='tel:${contact.phone}' style='color: #7154ff; text-decoration: none; cursor: pointer;'>${contact.phone}</a>.",
+    or <a href='tel:${contact.phone}' style='color: #7154ff; text-decoration: none; cursor: pointer;'>${contact.phone}</a>.",
   "closing": "Sincerely,",
   "study_team": "The Count Me In Team",
   "footnote": "For additional updates, follow us on
-    <a href='${social.twitter}' target='_blank' style='color: #7154ff; text-decoration: none; cursor: pointer;'>Twitter</a>,
-    <a href='${social.facebook}' target='_blank' style='color: #7154ff; text-decoration: none; cursor: pointer;'>Facebook</a>."
+    <a href='${i18n.en.social.facebook}'  target='_blank' style='color: #7154ff; text-decoration: none; cursor: pointer;'>Facebook</a>,
+    <a href='${i18n.en.social.instagram}' target='_blank' style='color: #7154ff; text-decoration: none; cursor: pointer;'>Instagram</a> or
+    <a href='${i18n.en.social.twitter}'   target='_blank' style='color: #7154ff; text-decoration: none; cursor: pointer;'>Twitter</a>."
 })
 
 #parse("release_completed.tmpl.html")
