@@ -2,7 +2,9 @@ package org.broadinstitute.dsm.model.elastic;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -20,6 +22,14 @@ public class Util {
     public static final String ESCAPE_CHARACTER = "\\";
     public static final String FORWARD_SLASH_SEPARATOR = "/";
     private static final Pattern CAMEL_CASE_REGEX = Pattern.compile("(([a-z])+([A-z])+(\\.)*)*");
+
+    public static <A> A orElseNull(Optional<A> optionalValue, A defaultValue) {
+        try {
+            return optionalValue.get().equals(defaultValue) ? null : optionalValue.get();
+        } catch (NoSuchElementException nse) {
+            return null;
+        }
+    }
 
     public static String getQueryTypeFromId(String id) {
         String type;

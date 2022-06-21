@@ -43,14 +43,12 @@ public class MedicalRecordUtil {
             "INSERT INTO ddp_medical_record SET institution_id = ?, last_changed = ?, changed_by = ?";
     private static final String SQL_SELECT_PARTICIPANT_EXISTS = "SELECT count(ddp_participant_id) as participantCount FROM ddp_participant "
             + "WHERE ddp_participant_id = ? AND ddp_instance_id = ?";
-    private static final String SQL_SELECT_PARTICIPANT_LAST_VERSION =
-            "SELECT last_version FROM ddp_participant WHERE ddp_participant_id = ? AND ddp_instance_id = ?";
     private static final String SQL_SELECT_MEDICAL_RECORD_ID_AND_TYPE_FOR_PARTICIPANT =
             "SELECT rec.medical_record_id, inst.type FROM ddp_institution inst, ddp_participant part, ddp_medical_record rec "
                     + "WHERE part.participant_id = inst.participant_id AND rec.institution_id = inst.institution_id "
                     + "AND NOT rec.deleted <=> 1 AND part.participant_id = ? AND inst.type = ?";
 
-    public static void writeNewMedicalRecordIntoDb(Connection conn, String query, String institutionId, String ddpParticipantId,
+    public static void  writeNewMedicalRecordIntoDb(Connection conn, String query, String institutionId, String ddpParticipantId,
                                                    String instanceName, String ddpInstitutionId) {
         Integer mrId = null;
         if (conn != null) {
@@ -222,6 +220,11 @@ public class MedicalRecordUtil {
         return false;
     }
 
+    public static boolean isParticipantInDB(@NonNull String participantId, @NonNull String instanceId) {
+        return inTransaction((conn) -> isParticipantInDB(conn, participantId, instanceId));
+    }
+
+
     public static boolean updateParticipant(@NonNull Connection conn, @NonNull String participantId, @NonNull String instanceId,
                                             @NonNull long lastVersion, @NonNull String lastUpdated, @NonNull String userId) {
         try (PreparedStatement updateParticipant = conn.prepareStatement(SQL_UPDATE_PARTICIPANT)) {
@@ -268,4 +271,6 @@ public class MedicalRecordUtil {
         }
         return (Number) results.resultValue;
     }
+
+
 }

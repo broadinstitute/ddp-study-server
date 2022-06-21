@@ -16,6 +16,7 @@ public class SingularUpdates implements CustomTask {
         tasks.add(new SingularReadonlyActivities());
         tasks.add(new SingularDeleteEmailEvents());
         tasks.add(new SingularPatientSurveyUpdate());
+        tasks.add(new SingularMRFUploadUpdates());
 
         // Last
         tasks.add(new SingularInsertEvents());
