@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.model.elastic.export.painless;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -55,5 +56,27 @@ public class ScriptBuilderTest {
                 + "{ ctx._source.dsm.cohortTag.removeIf(tag -> tag.cohortTagId == params.dsm.cohortTag.cohortTagId); }";
 
         Assert.assertEquals(expectedScript, script);
+    }
+
+    @Test
+    public void buildAddListToNested() {
+        String propertyName = "cohortTag";
+        String propertyName2 = "kitRequestShipping";
+
+        ScriptBuilder builder = new AddListToNestedScriptBuilder(propertyName);
+        String script = builder.build();
+
+        String expectedScript = "if (ctx._source.dsm.cohortTag == null) {ctx._source.dsm.cohortTag = params.dsm.cohortTag} "
+                + "else { ctx._source.dsm.cohortTag.addAll(params.dsm.cohortTag) }";
+
+        builder.setPropertyName(propertyName2);
+        String script2 = builder.build();
+        String expectedScript2 = "if (ctx._source.dsm.kitRequestShipping == null) "
+                + "{ctx._source.dsm.kitRequestShipping = params.dsm.kitRequestShipping} "
+                + "else { ctx._source.dsm.kitRequestShipping.addAll(params.dsm.kitRequestShipping) }";
+
+        Assert.assertEquals(expectedScript, script);
+        Assert.assertEquals(expectedScript2, script2);
+
     }
 }
