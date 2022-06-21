@@ -95,7 +95,7 @@ public abstract class UpsertPainlessFacade {
 
     public void setGeneratorElseLogError(DDPInstanceDto ddpInstanceDto) {
         try {
-            generator = new ParamsGenerator(source, ddpInstanceDto.getInstanceName());
+            generator = new ParamsGeneratorFactory(source, ddpInstanceDto.getInstanceName()).instance();
         } catch (NullPointerException npe) {
             logger.error("ddp instance is null, probably instance with such realm does not exist");
         }
