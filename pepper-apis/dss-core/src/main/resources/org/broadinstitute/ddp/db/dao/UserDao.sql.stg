@@ -12,7 +12,8 @@ select u.user_id,
        u.auth0_user_id,
        u.created_at,
        u.updated_at,
-       u.expires_at
+       u.expires_at,
+       u.email
   from user as u
 >>
 
