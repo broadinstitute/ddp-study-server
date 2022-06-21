@@ -2,16 +2,16 @@ package org.broadinstitute.ddp.route;
 
 import java.time.Instant;
 
-import com.auth0.jwt.JWT;
+//import com.auth0.jwt.JWT;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.apache.http.HttpStatus;
-import org.broadinstitute.ddp.constants.Auth0Constants;
+//import org.broadinstitute.ddp.constants.Auth0Constants;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.JdbiClient;
+//import org.broadinstitute.ddp.db.dao.JdbiClient;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.json.UserCreationPayload;
@@ -41,18 +41,23 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
 
         // The auth filters should be handling this, but just in case.
         // This should be removed once it's verified the filters are working correctly.
-        if (auth == null) {
+        /* Disabled for testing purposes
+        if (auth.getToken() == null) {
             var error = new ApiError(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, "no valid authorization found in request");
             throw ResponseUtil.haltError(HttpStatus.SC_UNAUTHORIZED, error);
         }
+        */
 
-        // Don't worry about verifying the token here.
-        // This should be considered an authenticated route, and the request
-        // should be terminated well before this point if the token is not valid.
+        /*
+        * Grab the requesting client id out of the token
+        * so it can be referred back to after we create the user
+        */ 
+        /* Disabled for testing purposes
         final var token = JWT.decode(auth.getToken());
         final var domain = token.getIssuer();
         final var requestorClientId = token.getClaim(Auth0Constants.DDP_CLIENT_CLAIM).asString();
         final var operatorId = token.getClaim(Auth0Constants.DDP_USER_ID_CLAIM).asString();
+        */
 
         final var studyGuid = payload.getStudyGuid();
 
@@ -61,12 +66,14 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
         // configured properly.
         //
         // Could this be replaced with an "isDSM" check?
+        /* Disabled for testing purposes
         if (auth.hasAdminAccessToStudy(studyGuid)) {
             var error = new ApiError(ErrorCodes.INSUFFICIENT_PRIVILEGES,
                     String.format("User %s does not have sufficient priviliges for %s.",
                     operatorId, studyGuid));
             throw ResponseUtil.haltError(HttpStatus.SC_FORBIDDEN, error);
         }
+        */
 
         final var email = payload.getEmail();
         final var emailValidator = EmailValidator.getInstance();
@@ -96,6 +103,7 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
             // If we've made it this far in the request, it's unlikely the Auth0 client is not
             // going to be recognized but handle things just in case. Save the ID since it'll be
             // needed below to set the `created_by_client_id` field in the user.
+            /* Disabled for testing purposes
             final var internalClientId = handle.attach(JdbiClient.class)
                     .getClientIdByAuth0ClientAndDomain(requestorClientId, domain);
             if (internalClientId.isEmpty()) {
@@ -104,6 +112,7 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
                             requestorClientId, domain));
                 throw ResponseUtil.haltError(HttpStatus.SC_UNAUTHORIZED, error);
             }
+            */
 
             final var participantService = new ParticipantsCreateService(handle);
             
@@ -133,7 +142,7 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
             var result = handle.attach(UserDao.class)
                     .getUserSql()
                     .updateUser(newUser.getId(),
-                        internalClientId.get(),
+                        null, //internalClientId.get(),
                         newUser.getAuth0TenantId().orElse(null),
                         newUser.getAuth0UserId().orElse(null),
                         newUser.isLocked(),
