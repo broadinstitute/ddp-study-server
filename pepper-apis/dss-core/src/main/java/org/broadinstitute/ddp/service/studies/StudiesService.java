@@ -115,11 +115,6 @@ public class StudiesService {
 
     private boolean studyExists(String studyGuid) {
         var studyId = handle.attach(JdbiUmbrellaStudy.class).getIdByGuid(studyGuid);
-        if (studyId.isPresent()) {
-            // If a study with the passed guid was found, return true
-            return true;
-        } else {
-            return false;
-        }
+        return studyId.isPresent();
     }
 }
