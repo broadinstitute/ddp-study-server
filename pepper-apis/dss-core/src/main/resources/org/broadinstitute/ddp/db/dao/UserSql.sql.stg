@@ -15,7 +15,7 @@ select c.client_id, t.auth0_tenant_id, :auth0UserId,
 <endif>
 >>
 
-insertUserByEmail ::= <<
+insertUserByEmail() ::= <<
 INSERT INTO user (created_at, guid, hruid, is_locked, updated_at, email)
   VALUES (:createdAt, :guid, :hruid, :isLocked, :updatedAt, :email)
 >>

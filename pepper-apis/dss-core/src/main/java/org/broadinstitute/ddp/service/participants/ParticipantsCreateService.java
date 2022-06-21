@@ -51,7 +51,7 @@ public class ParticipantsCreateService {
         private Code code;
 
         public ParticipantCreateError(Code code) {
-            super();
+            super(code.toString());
             this.code = code;
         }
 
@@ -97,7 +97,7 @@ public class ParticipantsCreateService {
     public User createWithEmail(@NonNull String email, String studyGuid, String centerGuid) throws ParticipantCreateError {
 
         var emailValidator = EmailValidator.getInstance();
-        if (emailValidator.isValid(email)) {
+        if (emailValidator.isValid(email) == false) {
             throw new ParticipantCreateError(Code.MALFORMED_EMAIL);
         }
 
