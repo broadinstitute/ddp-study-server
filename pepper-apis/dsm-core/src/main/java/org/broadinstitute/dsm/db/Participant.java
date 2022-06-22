@@ -51,48 +51,58 @@ public class Participant implements Cloneable {
     @ColumnName(DBConstants.DDP_PARTICIPANT_ID)
     private String ddpParticipantId;
 
-    @TableName(name = DBConstants.DDP_PARTICIPANT, alias = DBConstants.DDP_PARTICIPANT_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT, alias = DBConstants.DDP_PARTICIPANT_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID,
+            columnPrefix = "")
     @ColumnName(DBConstants.ASSIGNEE_ID_MR)
     private String assigneeIdMr;
 
     private Integer ddpInstanceId;
 
-    @TableName(name = DBConstants.DDP_PARTICIPANT, alias = DBConstants.DDP_PARTICIPANT_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT, alias = DBConstants.DDP_PARTICIPANT_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID,
+            columnPrefix = "")
     @ColumnName(DBConstants.ASSIGNEE_ID_TISSUE)
     private String assigneeIdTissue;
     private String realm;
 
-    @TableName(name = DBConstants.DDP_ONC_HISTORY, alias = DBConstants.DDP_ONC_HISTORY_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
+    @TableName(name = DBConstants.DDP_ONC_HISTORY, alias = DBConstants.DDP_ONC_HISTORY_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID,
+            columnPrefix = "")
     @ColumnName(DBConstants.ONC_HISTORY_CREATED)
     private String created;
 
-    @TableName(name = DBConstants.DDP_ONC_HISTORY, alias = DBConstants.DDP_ONC_HISTORY_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
+    @TableName(name = DBConstants.DDP_ONC_HISTORY, alias = DBConstants.DDP_ONC_HISTORY_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID,
+            columnPrefix = "")
     @ColumnName(DBConstants.ONC_HISTORY_REVIEWED)
     private String reviewed;
 
-    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.CR_SENT)
     @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String crSent;
 
-    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.CR_RECEIVED)
     @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String crReceived;
 
-    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.NOTES)
     private String notes;
 
-    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.MINIMAL_MR)
     private Boolean minimalMr;
 
-    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.ABSTRACTION_READY)
     private Boolean abstractionReady;
 
-    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.ADDITIONAL_VALUES_JSON)
     @JsonProperty("dynamicFields")
     @SerializedName("dynamicFields")
@@ -104,7 +114,8 @@ public class Participant implements Cloneable {
         });
     }
 
-    @TableName(name = DBConstants.DDP_PARTICIPANT_EXIT, alias = DBConstants.DDP_PARTICIPANT_EXIT_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT_EXIT, alias = DBConstants.DDP_PARTICIPANT_EXIT_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.EXIT_DATE)
     private Long exitDate;
 
