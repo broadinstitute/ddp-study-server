@@ -368,12 +368,16 @@ public class UserDeleteService {
     }
 
     private void deleteAuth0User(User user, Auth0ManagementClient auth0ManagementClient) {
-        if (user.getAuth0UserId() != null && auth0ManagementClient != null) {
-            log.info(LOG_MESSAGE_PREFIX__DELETE_FROM_AUTH, user.getGuid());
-            var result = auth0ManagementClient.deleteAuth0User(user.getAuth0UserId());
-            if (result.hasFailure()) {
-                throw new DDPException(result.hasThrown() ? result.getThrown() : result.getError());
-            }
+        if (user.hasAuth0Account() == false) {
+            return;
+        }
+
+        log.info(LOG_MESSAGE_PREFIX__DELETE_FROM_AUTH, user.getGuid());
+
+        var auth0UserId = user.getAuth0UserId().get();
+        var result = auth0ManagementClient.deleteAuth0User(auth0UserId);
+        if (result.hasFailure()) {
+            throw new DDPException(result.hasThrown() ? result.getThrown() : result.getError());
         }
     }
 
