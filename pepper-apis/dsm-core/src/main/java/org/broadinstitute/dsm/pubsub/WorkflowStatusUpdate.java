@@ -18,6 +18,8 @@ import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.export.ExportToES;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Value;
+import org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues;
+import org.broadinstitute.dsm.model.defaultvalues.BasicDefaultDataMaker;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.pubsub.study.osteo.OsteoWorkflowStatusUpdate;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -33,6 +35,7 @@ public class WorkflowStatusUpdate {
     public static final String DSS = "DSS";
     public static final String OSTEO_RECONSENTED_WORKFLOW = "OSTEO_RECONSENTED";
     public static final String OSTEO_RECONSENTED_WORKFLOW_STATUS = "Complete";
+    public static final String ATCP_STUDY_GUID = "ATCP";
 
     private static final Gson gson = new Gson();
 
@@ -72,9 +75,22 @@ public class WorkflowStatusUpdate {
                     addNewParticipantDataWithStatus(workflow, status, ddpParticipantId, setting);
                 }
                 exportToESifNecessary(workflow, status, ddpParticipantId, instance, setting, participantDatas);
+                if (isATRelatedStatusUpdate(studyGuid)) {
+                    boolean hasGenomicStudyGroup = participantDatas.stream()
+                            .anyMatch(participantDataDto -> ATDefaultValues.GENOME_STUDY_FIELD_TYPE.equals(
+                                    participantDataDto.getFieldTypeId().get()));
+                    if(!hasGenomicStudyGroup) {
+                        ATDefaultValues basicDefaultDataMaker = new ATDefaultValues();
+                        basicDefaultDataMaker.generateDefaults(studyGuid, ddpParticipantId);
+                    }
+                }
             }
         }
 
+    }
+
+    private static boolean isATRelatedStatusUpdate(String studyGuid) {
+        return ATCP_STUDY_GUID.equals(studyGuid);
     }
 
     private static boolean isOsteoRelatedStatusUpdate(String workflow, String status) {
@@ -124,8 +140,7 @@ public class WorkflowStatusUpdate {
     public static int addNewParticipantDataWithStatus(String workflow, String status, String ddpParticipantId, FieldSettingsDto setting) {
         JsonObject dataJsonObject = new JsonObject();
         dataJsonObject.addProperty(workflow, status);
-        int participantDataId;
-        participantDataId = participantDataDao.create(
+        int participantDataId = participantDataDao.create(
                 new ParticipantData.Builder()
                         .withDdpParticipantId(ddpParticipantId)
                         .withDdpInstanceId(setting.getDdpInstanceId())

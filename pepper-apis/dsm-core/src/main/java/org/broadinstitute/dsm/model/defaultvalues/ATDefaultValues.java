@@ -26,14 +26,14 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
     public static final String AT_GENOMIC_ID = "at_genomic_id";
     public static final String ACTIVITY_CODE_REGISTRATION = "REGISTRATION";
     public static final String COMPLETE = "COMPLETE";
-    private static final String GENOME_STUDY_FIELD_TYPE = "AT_GROUP_GENOME_STUDY";
+    public static final String GENOME_STUDY_FIELD_TYPE = "AT_GROUP_GENOME_STUDY";
     private static final String GENOME_STUDY_CPT_ID = "GENOME_STUDY_CPT_ID";
     private static final String PREFIX = "DDP_ATCP_";
     private Dao dataAccess;
 
     @Override
     protected boolean setDefaultData() {
-        if (isParticipantDataInES()) {
+        if (isParticipantDataNotInES()) {
             return false;
         }
 
@@ -46,7 +46,7 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         }
     }
 
-    private boolean isParticipantDataInES() {
+    private boolean isParticipantDataNotInES() {
         logger.info("Participant does not have profile and activities in ES yet...");
         return elasticSearchParticipantDto.getProfile().isEmpty() && elasticSearchParticipantDto.getActivities().isEmpty();
     }
