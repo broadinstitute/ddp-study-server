@@ -53,9 +53,6 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
 
 
     boolean isParticipantRegistrationComplete() {
-        if (elasticSearchParticipantDto.getActivities().isEmpty()) {
-            return false;
-        }
         return elasticSearchParticipantDto.getActivities().stream().anyMatch(this::isRegistrationComplete);
     }
 
