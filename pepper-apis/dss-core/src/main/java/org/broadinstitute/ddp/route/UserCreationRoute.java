@@ -9,9 +9,12 @@ import org.apache.commons.validator.routines.EmailValidator;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiClient;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
+import org.broadinstitute.ddp.event.publish.TaskPublisher;
+import org.broadinstitute.ddp.event.publish.pubsub.TaskPubSubPublisher;
 import org.broadinstitute.ddp.json.UserCreationPayload;
 import org.broadinstitute.ddp.json.UserCreationResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
@@ -28,6 +31,8 @@ import spark.Response;
 @Slf4j
 @AllArgsConstructor
 public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPayload> {
+    private final TaskPublisher taskPublisher;
+    
     @Override
     protected int getValidationErrorStatus() {
         return HttpStatus.SC_UNPROCESSABLE_ENTITY;
@@ -136,6 +141,17 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
                 var error = new ApiError(ErrorCodes.NOT_FOUND, "failed to create a new user profile");
                 return ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, error);
             }
+
+            // Necessary for Housekeeping to perform a data sync operation
+            // to get the new user into ES
+            taskPublisher.publishTask(
+                    TaskPubSubPublisher.TASK_PARTICIPANT_REGISTERED,
+                    StringUtils.EMPTY, // No payload necessary here
+                    studyGuid,
+                    newUser.getGuid());
+
+            // Suggested by @ssettipalli
+            handle.attach(DataExportDao.class).queueDataSync(newUser.getGuid());
 
             return new UserCreationResponse(newUser, profile);
         });

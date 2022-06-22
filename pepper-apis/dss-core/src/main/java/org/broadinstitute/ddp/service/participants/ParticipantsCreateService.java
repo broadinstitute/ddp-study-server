@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.service.participants;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.ddp.db.dao.CenterProfileDao;
@@ -72,7 +71,7 @@ public class ParticipantsCreateService {
     }
 
     @NonNull
-    private Handle handle;
+    private final Handle handle;
 
     public ParticipantsCreateService(@NonNull Handle handle) {
         this.handle = handle;
@@ -134,6 +133,9 @@ public class ParticipantsCreateService {
             throw new ParticipantCreateError(Code.STUDY_DOES_NOT_EXIST, message);
         }
 
+
+        // TODO: Check for the user's existence in the DB first, or catch
+        // the exception that's thrown when a user alreacy exists
         var newUser = handle.attach(UserDao.class)
                 .createUserByEmail(email);
 
@@ -174,15 +176,5 @@ public class ParticipantsCreateService {
                 studyDto.getGuid(),
                 EventTriggerType.USER_REGISTERED);
         EventService.getInstance().processAllActionsForEventSignal(handle, signal);
-
-        /* This is from UserRegistrationRoute.java,
-         * but in that class I can't clearly see where `taskPublisher`
-         * is being set. Thoughts?
-         */
-        /*
-        taskPublisher.publishTask(
-                    TaskPubSubPublisher.TASK_PARTICIPANT_REGISTERED,
-                    payload, studyGuid, participantGuid);
-        */
     }
 }
