@@ -40,10 +40,9 @@ public interface JdbiClient extends SqlObject {
             + "     AND t.auth0_domain = :auth0Domain"
     )
     @RegisterConstructorMapper(StudyClientConfiguration.class)
-    Optional<StudyClientConfiguration> getStudyClientConfigurationByClientAndDomain(@Bind("auth0ClientId") String
-                                                                                     auth0ClientId,
-                                                                                    @Bind("auth0Domain") String
-                                                                                     auth0Domain);
+    Optional<StudyClientConfiguration> getStudyClientConfigurationByClientAndDomain(
+            @Bind("auth0ClientId") String auth0ClientId,
+            @Bind("auth0Domain") String auth0Domain);
 
     @SqlQuery("SELECT "
             + "     c.client_id "
@@ -75,7 +74,7 @@ public interface JdbiClient extends SqlObject {
             @Bind("auth0Domain") String auth0Domain
     );
 
-    // Left for backward compatiblity
+    // Left for backward compatibility
     @SqlQuery("SELECT "
             + "     c.client_id, "
             + "     c.auth0_client_id, "
@@ -90,11 +89,9 @@ public interface JdbiClient extends SqlObject {
             + "     c.auth0_client_id = :auth0ClientId AND t.auth0_tenant_id = c.auth0_tenant_id"
     )
     @RegisterConstructorMapper(ClientDto.class)
-    Optional<ClientDto> getClientByAuth0ClientId(
-            @Bind("auth0ClientId") String auth0ClientId
-    );
+    Optional<ClientDto> getClientByAuth0ClientId(@Bind("auth0ClientId") String auth0ClientId);
 
-    // Left for backward compatiblity
+    // Left for backward compatibility
     @SqlQuery("SELECT "
             + "     c.client_id, "
             + "     c.auth0_client_id, "
@@ -125,30 +122,13 @@ public interface JdbiClient extends SqlObject {
     Optional<Integer> isAuth0ClientIdRevoked(@Bind("auth0ClientId") String auth0ClientId,
                                              @Bind("auth0Domain") String auth0Domain);
 
-    @SqlUpdate("DELETE FROM "
-            + "     client "
-            + "WHERE "
-            + "     auth0_client_id = :auth0ClientId AND auth0_tenant_id = :auth0TenantId"
-    )
-    int deleteByAuth0ClientIdAndAuth0TenantId(
-            @Bind("auth0ClientId") String auth0ClientId,
-            @Bind("auth0TenantId") long auth0TenantId
-    );
-
     @SqlUpdate("DELETE FROM client WHERE client_id = :id")
     int deleteByClientId(@Bind("id") long id);
 
-    @SqlQuery("SELECT "
-            + "     client_id "
-            + "FROM "
-            + "     client "
-            + "WHERE "
-            + "     auth0_client_id = :auth0ClientId AND auth0_tenant_id = :auth0TenantId"
-    )
+    @SqlQuery("SELECT client_id FROM client WHERE auth0_client_id = :auth0ClientId AND auth0_tenant_id = :auth0TenantId")
     Optional<Long> getClientIdByAuth0ClientIdAndAuth0TenantId(
             @Bind("auth0ClientId") String auth0ClientId,
-            @Bind("auth0TenantId") long auth0TenantId
-    );
+            @Bind("auth0TenantId") long auth0TenantId);
 
     @SqlQuery("SELECT "
             + "     c.client_id, "
@@ -190,8 +170,6 @@ public interface JdbiClient extends SqlObject {
             @Bind("auth0Domain") String auth0Domain
     );
 
-    @SqlQuery(
-            "SELECT COUNT(*) FROM client WHERE auth0_client_id = :auth0ClientId"
-    )
+    @SqlQuery("SELECT COUNT(*) FROM client WHERE auth0_client_id = :auth0ClientId")
     int countClientsWithSameAuth0ClientId(@Bind("auth0ClientId") String auth0ClientId);
 }
