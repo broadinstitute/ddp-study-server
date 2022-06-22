@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -127,7 +128,11 @@ public class DataSyncJob implements Job {
 
         if (!usersToRefreshEmails.isEmpty()) {
             Set<String> auth0UserIds = handle.attach(JdbiUser.class).findByUserIds(new ArrayList<>(usersToRefreshEmails))
-                    .stream().map(UserDto::getAuth0UserId).collect(Collectors.toSet());
+                    .stream()
+                    .map(UserDto::getAuth0UserId)
+                    .filter(Optional::isPresent)
+                    .map(Optional<String>::get)
+                    .collect(Collectors.toSet());
             DataExporter.evictCachedAuth0Emails(auth0UserIds);
         }
 

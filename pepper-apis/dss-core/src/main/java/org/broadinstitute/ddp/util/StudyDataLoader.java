@@ -1023,7 +1023,7 @@ public class StudyDataLoader {
 
         long userId = userDao.insertMigrationUser(auth0UserId, userGuid, clientDto.getId(), userHruid,
                 altpid, shortId, createdAtMillis, updatedAtMillis);
-        UserDto newUser = new UserDto(userId, auth0UserId, userGuid, userHruid, altpid,
+        UserDto newUser = new UserDto(userId, auth0UserId, null, userGuid, userHruid, altpid,
                 shortId, createdAtMillis, updatedAtMillis, null);
         mgmtClient.setUserGuidForAuth0User(auth0UserId, clientDto.getAuth0ClientId(), newUser.getUserGuid());
 
@@ -1052,11 +1052,13 @@ public class StudyDataLoader {
         Boolean isDoNotContact = getBooleanValueFromElement(data, "ddp_do_not_contact");
         Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(DEFAULT_PREFERRED_LANGUAGE_CODE);
 
-        UserProfile profile = new UserProfile.Builder(user.getUserId())
-                .setFirstName(StringUtils.trim(data.getAsJsonObject().get("datstat_firstname").getAsString()))
-                .setLastName(StringUtils.trim(data.getAsJsonObject().get("datstat_lastname").getAsString()))
-                .setPreferredLangId(languageCodeId)
-                .setDoNotContact(isDoNotContact)
+        UserProfile profile = UserProfile.builder()
+                .userId(user.getUserId())
+                .firstName(StringUtils.trim(data.getAsJsonObject().get("datstat_firstname").getAsString()))
+                .lastName(StringUtils.trim(data.getAsJsonObject().get("datstat_lastname").getAsString()))
+                .preferredLangId(languageCodeId)
+                .preferredLangCode(null)
+                .doNotContact(isDoNotContact)
                 .build();
         profileDao.createProfile(profile);
 

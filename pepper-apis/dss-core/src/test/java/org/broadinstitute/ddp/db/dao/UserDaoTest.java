@@ -126,10 +126,15 @@ public class UserDaoTest extends TxnAwareBaseTest {
     private void populateData(Handle handle, User tempUser) {
         long langId = LanguageStore.getDefault().getId();
 
-        handle.attach(UserProfileDao.class).createProfile(
-                new UserProfile.Builder(tempUser.getId())
-                        .setFirstName("first").setLastName("last").setPreferredLangId(langId).setDoNotContact(false)
-                        .setSkipLanguagePopup(false).build());
+        handle.attach(UserProfileDao.class).createProfile(UserProfile.builder()
+                        .userId(tempUser.getId())
+                        .firstName("first")
+                        .lastName("last")
+                        .preferredLangId(langId)
+                        .preferredLangCode(null)
+                        .doNotContact(false)
+                        .skipLanguagePopup(false)
+                        .build());
 
         ActivityInstanceDto instance = handle.attach(ActivityInstanceDao.class)
                 .insertInstance(form.getActivityId(), tempUser.getGuid());
