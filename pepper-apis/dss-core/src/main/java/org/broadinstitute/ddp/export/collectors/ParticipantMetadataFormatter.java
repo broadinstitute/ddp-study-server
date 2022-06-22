@@ -95,7 +95,7 @@ public class ParticipantMetadataFormatter {
             formatted.add(user.hasProfile() ? user.getProfile().getLastName() : "");
         }
         if (!exclude.contains("email")) {
-            formatted.add(StringUtils.defaultString(user.getEmail(), ""));
+            formatted.add(user.getEmail().orElse(StringUtils.EMPTY));
         }
         if (!exclude.contains("do_not_contact")) {
             formatted.add(doNotContact == null ? "false" : doNotContact.toString());

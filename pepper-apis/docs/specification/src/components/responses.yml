@@ -531,3 +531,31 @@ RemoteAutoCompleteOptionsResponse:
             type: array
             items:
               $ref: '../pepper.yml#/components/schemas/PicklistOption'
+UserCreationResponse:
+  description: details about the created user
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - guid
+          - hruid
+          - email
+          - center
+          - profile
+        properties:
+          guid:
+            type: string
+            format: guid
+          hruid:
+            type: string
+            format: guid
+          email:
+            type: string
+            format: email
+          center:
+            type: string
+            format: guid
+            nullable: true
+          profile:
+            $ref: 'schemas.yml#/ProfileModel'

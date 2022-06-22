@@ -2,7 +2,7 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
     <include file="db-changes/schema/baseline-language.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/baseline-client-user.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/baseline-umbrella-study.xml" relativeToChangelogFile="true"/>
@@ -309,5 +309,9 @@
     <include file="db-changes/schema/DDP-7713.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7248.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7890-add-new-event-type.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-7931.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-7931-internal-user-accounts.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-7931-user-email.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-7931-user-created-by-not-required.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-8196-activity-groups.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
