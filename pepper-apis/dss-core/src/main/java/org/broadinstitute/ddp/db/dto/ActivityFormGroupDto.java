@@ -1,17 +1,28 @@
 package org.broadinstitute.ddp.db.dto;
 
 import java.io.Serializable;
+import java.lang.reflect.Type;
 
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
-@Data
 @AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
+@NoArgsConstructor
+@Setter
+@Getter
 public class ActivityFormGroupDto implements Serializable {
-    @ColumnName("form_id")
-    private long id;
+    @ColumnName("category_code")
+    private String categoryCode;
+
+    @ColumnName("category_name")
+    private String categoryName;
 
     @ColumnName("form_code")
     private String formCode;
@@ -19,14 +30,20 @@ public class ActivityFormGroupDto implements Serializable {
     @ColumnName("form_name")
     private String formName;
 
-    @ColumnName("activity_id")
-    private Long activityId;
+    @ColumnName("parent_form_code")
+    private String parentFormCode;
 
-    @ColumnName("section_id")
-    private Long sectionId;
 
-    protected ActivityFormGroupDto(final ActivityFormGroupDto other) {
-        this(other.id, other.formCode, other.formName, other.activityId, other.sectionId);
+    public static class Deserializer implements JsonDeserializer<ActivityFormGroupDto> {
+        @Override
+        public ActivityFormGroupDto deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) {
+            String formCode = json.getAsString();
+            if (formCode == null) {
+                return null;
+            }
+            ActivityFormGroupDto formGroupDto = new ActivityFormGroupDto();
+            formGroupDto.setFormCode(formCode);
+            return formGroupDto;
+        }
     }
-
 }

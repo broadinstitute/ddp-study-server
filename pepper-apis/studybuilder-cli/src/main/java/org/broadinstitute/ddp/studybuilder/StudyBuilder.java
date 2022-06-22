@@ -5,11 +5,13 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.DBUtils;
+import org.broadinstitute.ddp.db.dao.ActivityCategoryDao;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiClient;
@@ -37,6 +39,7 @@ import org.broadinstitute.ddp.db.dto.StudyI18nDto;
 import org.broadinstitute.ddp.db.dto.UmbrellaDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.definition.FormGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
 import org.broadinstitute.ddp.model.dsm.KitType;
@@ -107,6 +110,7 @@ public class StudyBuilder {
         insertSendgrid(handle, studyDto.getId());
         insertKits(handle, studyDto.getId(), adminDto.getUserId());
         insertStatistics(handle, studyDto.getId());
+        insertCategories(handle, studyDto.getId());
 
         Path dirPath = cfgPath.getParent();
         new ActivityBuilder(dirPath, cfg, varsCfg, studyDto, adminDto.getUserId()).run(handle);
@@ -675,6 +679,47 @@ public class StudyBuilder {
             log.info("Created statistics configuration with id={}, type={}, stableId={}, value={}",
                     statConfigId, typeName, stableId, value);
         }
+    }
+
+
+    private void insertCategories(Handle handle, long studyId) {
+        if (!cfg.hasPath("categories")) {
+            return;
+        }
+        ActivityCategoryDao categoryDao = handle.attach(ActivityCategoryDao.class);
+        for (Config categoryEntry : cfg.getConfigList("categories")) {
+            String categoryName = categoryEntry.getString("categoryName");
+            String categoryCode = categoryEntry.getString("categoryCode");
+            List<FormGroupDef> subForms =
+                    categoryEntry.getConfigList("subForms").stream().map(this::getSubForm).collect(Collectors.toList());
+            Long categoryId = categoryDao.insertCategory(studyId, categoryCode, categoryName);
+            subForms.forEach(subForm -> insertSubForm(categoryDao, categoryId, subForm));
+        }
+    }
+
+    private void insertSubForm(ActivityCategoryDao categoryDao, long categoryId, FormGroupDef subForm) {
+        long formId = categoryDao.insertSubForm(categoryId, null, subForm.getCode(), subForm.getName());
+        if (subForm.getSubForms() != null) {
+            subForm.getSubForms().forEach(sub -> insertNestedSubForm(categoryDao, categoryId, formId, sub));
+        }
+    }
+
+    private void insertNestedSubForm(ActivityCategoryDao categoryDao, long categoryId, Long parentFormId, FormGroupDef subForm) {
+        long formId = categoryDao.insertSubForm(categoryId, parentFormId, subForm.getCode(), subForm.getName());
+        if (subForm.getSubForms() != null) {
+            subForm.getSubForms().forEach(sub -> insertNestedSubForm(categoryDao, categoryId, formId, sub));
+        }
+    }
+
+    private FormGroupDef getSubForm(Config formCfg) {
+        String formName = formCfg.getString("formName");
+        String formCode = formCfg.getString("formCode");
+        FormGroupDef.FormGroupDefBuilder formBuilder = FormGroupDef.builder().code(formCode).name(formName);
+        if (formCfg.hasPath("subForms")) {
+            List<FormGroupDef> subForms = formCfg.getConfigList("subForms").stream().map(this::getSubForm).collect(Collectors.toList());
+            formBuilder.subForms(subForms);
+        }
+        return formBuilder.build();
     }
 
     public interface StudyInvalidationHelper extends SqlObject {

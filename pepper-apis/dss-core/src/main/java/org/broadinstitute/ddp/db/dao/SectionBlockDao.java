@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 import one.util.streamex.StreamEx;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
-import org.broadinstitute.ddp.db.dto.ActivityFormGroupDto;
 import org.broadinstitute.ddp.db.dto.BlockGroupHeaderDto;
 import org.broadinstitute.ddp.db.dto.FormBlockDto;
 import org.broadinstitute.ddp.db.dto.FormSectionDto;
@@ -34,7 +33,6 @@ import org.broadinstitute.ddp.db.dto.SectionBlockMembershipDto;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
-import org.broadinstitute.ddp.model.activity.definition.FormGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.TabularBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.GroupBlockDef;
@@ -124,10 +122,6 @@ public interface SectionBlockDao extends SqlObject {
     @CreateSqlObject
     FormSectionIconDao getFormSectionIconDao();
 
-    @CreateSqlObject
-    ActivityGroupDao getActivityFormDao();
-
-
     /**
      * Create new sections and their related block data for given activity body. The display order of sections and blocks
      * will be the order as given in the lists. The numbering used for display order is ascending but not necessarily
@@ -172,10 +166,6 @@ public interface SectionBlockDao extends SqlObject {
 
         long formSectionId = jdbiFormSection.insert(section.getSectionCode(), nameTemplateId);
         section.setSectionId(formSectionId);
-
-        if (section.getFormGroup() != null) {
-            getActivityFormDao().insert(activityId, formSectionId, section.getFormGroup().getCode(), section.getFormGroup().getName());
-        }
 
         if (section.hasIcons()) {
             for (SectionIcon icon : section.getIcons()) {
@@ -648,9 +638,6 @@ public interface SectionBlockDao extends SqlObject {
             var sectionDef = new FormSectionDef(sectionDto.getSectionCode(), blockDefs);
             sectionDef.setSectionId(sectionDto.getId());
             sectionDef.setNameTemplate(templates.getOrDefault(sectionDto.getNameTemplateId(), null));
-
-            ActivityFormGroupDto formGroup = getActivityFormDao().findBySectionId(sectionDto.getId());
-            sectionDef.setFormGroup(FormGroupDef.from(formGroup));
 
             Collection<SectionIcon> sectionIcons = getFormSectionIconDao().findAllBySectionId(sectionDto.getId());
             for (SectionIcon sectionIcon : sectionIcons) {

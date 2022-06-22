@@ -14,6 +14,7 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import org.broadinstitute.ddp.db.dto.ActivityFormGroupDto;
 import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
@@ -146,12 +147,8 @@ public abstract class ActivityDef {
     protected transient Long activityId;
     protected transient Long versionId;
 
-    @SerializedName("form")
-    protected FormGroupDef formGroup;
-
-    @SerializedName("category")
-    protected ActivityCategoryDef category;
-
+    @SerializedName("formCode")
+    protected ActivityFormGroupDto formGroupDto;
 
     ActivityDef(
             ActivityType activityType,
@@ -380,12 +377,8 @@ public abstract class ActivityDef {
         return showActivityStatus;
     }
 
-    public FormGroupDef getFormGroup() {
-        return formGroup;
-    }
-
-    public ActivityCategoryDef getCategory() {
-        return category;
+    public String getFormCode() {
+        return formGroupDto != null ? formGroupDto.getFormCode() : null;
     }
 
     /**
@@ -422,9 +415,7 @@ public abstract class ActivityDef {
         protected boolean canDeleteInstances;
         protected Boolean canDeleteFirstInstance;
         protected boolean showActivityStatus;
-        protected FormGroupDef formGroup;
-        protected ActivityCategoryDef category;
-
+        private ActivityFormGroupDto formGroup;
 
         /**
          * Returns the subclass builder instance to enable method chaining.
@@ -452,8 +443,7 @@ public abstract class ActivityDef {
             activity.canDeleteInstances = canDeleteInstances;
             activity.canDeleteFirstInstance = canDeleteFirstInstance;
             activity.showActivityStatus = showActivityStatus;
-            activity.formGroup = formGroup;
-            activity.category = category;
+            activity.formGroupDto = formGroup;
         }
 
         public T setParentActivityCode(String parentActivityCode) {
@@ -651,15 +641,11 @@ public abstract class ActivityDef {
             return self();
         }
 
-        public T setGroup(FormGroupDef formGroup) {
+        public T setGroup(ActivityFormGroupDto formGroup) {
             this.formGroup = formGroup;
             return self();
         }
 
-        public T setCategory(ActivityCategoryDef category) {
-            this.category = category;
-            return self();
-        }
     }
 
     public static class Deserializer implements JsonDeserializer<ActivityDef> {

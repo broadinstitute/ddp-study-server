@@ -6,26 +6,24 @@
 
     <changeSet author="lkapanad" id="activity-groups">
         <createTable tableName="activity_category">
-            <column name="activity_category_id" type="bigint" autoIncrement="true" startWith="1">
+            <column name="category_id" type="bigint" autoIncrement="true" startWith="1">
                 <constraints primaryKey="true"/>
             </column>
-            <column name="activity_id" type="bigint">
+            <column name="study_id" type="bigint">
             </column>
-            <column name="activity_category_name" type="varchar(50)">
+            <column name="category_name" type="varchar(50)">
                 <constraints nullable="false"/>
             </column>
-            <column name="activity_category_code" type="varchar(50)">
+            <column name="category_code" type="varchar(50)">
                 <constraints nullable="false"/>
             </column>
         </createTable>
 
-        <createTable tableName="form_group">
+        <createTable tableName="category_group">
             <column name="form_id" type="bigint" autoIncrement="true" startWith="1">
                 <constraints primaryKey="true"/>
             </column>
-            <column name="activity_id" type="bigint">
-            </column>
-            <column name="section_id" type="bigint">
+            <column name="category_id" type="bigint">
             </column>
             <column name="form_code" type="varchar(50)">
                 <constraints nullable="false"/>
@@ -33,20 +31,37 @@
             <column name="form_name" type="varchar(50)">
                 <constraints nullable="false"/>
             </column>
+            <column name="parent_form_id" type="bigint">
+            </column>
         </createTable>
 
-        <addForeignKeyConstraint baseTableName="form_group" baseColumnNames="section_id" constraintName="section_group_fk"
-                                 referencedTableName="form_section" referencedColumnNames="form_section_id"/>
+        <createTable tableName="activity_group">
+            <column name="activity_id" type="bigint">
+            </column>
+            <column name="form_id" type="bigint">
+            </column>
+        </createTable>
 
-        <addForeignKeyConstraint baseTableName="form_group" baseColumnNames="activity_id" constraintName="formgroup_activity_id_fk"
+        <addForeignKeyConstraint baseTableName="activity_group" baseColumnNames="activity_id" constraintName="activity_group_activity_id_fk"
                                  referencedTableName="study_activity" referencedColumnNames="study_activity_id"/>
 
-        <addForeignKeyConstraint baseTableName="activity_category" baseColumnNames="activity_id" constraintName="category_activity_id_fk"
-                                 referencedTableName="study_activity" referencedColumnNames="study_activity_id"/>
+        <addForeignKeyConstraint baseTableName="activity_group" baseColumnNames="form_id" constraintName="activity_group_form_id_fk"
+                                 referencedTableName="category_group" referencedColumnNames="form_id"/>
 
-        <addUniqueConstraint tableName="activity_category" columnNames="activity_id"/>
+        <addForeignKeyConstraint baseTableName="category_group" baseColumnNames="category_id" constraintName="category_group_category_id_fk"
+                                 referencedTableName="activity_category" referencedColumnNames="category_id"/>
 
-        <addUniqueConstraint tableName="form_group" columnNames="activity_id, section_id"/>
+        <addForeignKeyConstraint baseTableName="category_group" baseColumnNames="parent_form_id" constraintName="category_group_parent_id_fk"
+                                 referencedTableName="category_group" referencedColumnNames="form_id" onDelete="SET NULL"/>
+
+        <addForeignKeyConstraint baseTableName="activity_category" baseColumnNames="study_id" constraintName="activity_category_study_id_fk"
+                                 referencedTableName="umbrella_study" referencedColumnNames="umbrella_study_id" />
+
+        <addUniqueConstraint tableName="activity_category" columnNames="category_code"/>
+
+        <addUniqueConstraint tableName="category_group" columnNames="form_code"/>
+
+        <addUniqueConstraint tableName="activity_group" columnNames="activity_id"/>
 
     </changeSet>
 
