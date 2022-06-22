@@ -113,7 +113,7 @@ public class StudiesService {
         }
     }
 
-    private boolean studyExists(String studyGuid) {
+    public boolean studyExists(String studyGuid) {
         var studyId = handle.attach(JdbiUmbrellaStudy.class).getIdByGuid(studyGuid);
         return studyId.isPresent();
     }

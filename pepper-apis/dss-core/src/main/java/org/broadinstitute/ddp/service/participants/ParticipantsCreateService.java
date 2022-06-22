@@ -126,10 +126,16 @@ public class ParticipantsCreateService {
                 "Associating participants with a center is not implemented");
         }
 
+        var studyService = new StudiesService(handle);
+
+        // Make sure the study exists before we create a new user
+        if (studyService.studyExists(studyGuid) == false) {
+            var message = String.format("study %s could not be found", studyGuid);
+            throw new ParticipantCreateError(Code.STUDY_DOES_NOT_EXIST, message);
+        }
+
         var newUser = handle.attach(UserDao.class)
                 .createUserByEmail(email);
-
-        var studyService = new StudiesService(handle);
 
         // Going to be using this in a couple of places, so set it aside
         final var newUserGuid = newUser.getGuid();
