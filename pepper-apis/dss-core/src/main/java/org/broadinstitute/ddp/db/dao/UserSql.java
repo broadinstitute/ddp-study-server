@@ -43,7 +43,7 @@ public interface UserSql extends SqlObject {
     @SqlUpdate("update user set legacy_altpid = :altpid where user_id = :id")
     int updateLegacyAltPidById(@Bind("id") long userId, @Bind("altpid") String legacyAltPid);
 
-    @SqlUpdate("UPDATE user SET"
+    @SqlUpdate("UPDATE user SET "
             + "created_by_client_id = :createdByClientId, "
             + "auth0_tenant_id = :auth0TenantId, "
             + "auth0_user_id = :auth0UserId, "
