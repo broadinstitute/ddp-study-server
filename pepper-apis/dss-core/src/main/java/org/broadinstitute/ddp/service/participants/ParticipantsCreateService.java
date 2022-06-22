@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.service.participants;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.ddp.db.dao.CenterProfileDao;
@@ -72,7 +71,7 @@ public class ParticipantsCreateService {
     }
 
     @NonNull
-    private Handle handle;
+    private final Handle handle;
 
     public ParticipantsCreateService(@NonNull Handle handle) {
         this.handle = handle;
@@ -126,10 +125,19 @@ public class ParticipantsCreateService {
                 "Associating participants with a center is not implemented");
         }
 
+        var studyService = new StudiesService(handle);
+
+        // Make sure the study exists before we create a new user
+        if (studyService.studyExists(studyGuid) == false) {
+            var message = String.format("study %s could not be found", studyGuid);
+            throw new ParticipantCreateError(Code.STUDY_DOES_NOT_EXIST, message);
+        }
+
+
+        // TODO: Check for the user's existence in the DB first, or catch
+        // the exception that's thrown when a user alreacy exists
         var newUser = handle.attach(UserDao.class)
                 .createUserByEmail(email);
-
-        var studyService = new StudiesService(handle);
 
         // Going to be using this in a couple of places, so set it aside
         final var newUserGuid = newUser.getGuid();
@@ -168,15 +176,5 @@ public class ParticipantsCreateService {
                 studyDto.getGuid(),
                 EventTriggerType.USER_REGISTERED);
         EventService.getInstance().processAllActionsForEventSignal(handle, signal);
-
-        /* This is from UserRegistrationRoute.java,
-         * but in that class I can't clearly see where `taskPublisher`
-         * is being set. Thoughts?
-         */
-        /*
-        taskPublisher.publishTask(
-                    TaskPubSubPublisher.TASK_PARTICIPANT_REGISTERED,
-                    payload, studyGuid, participantGuid);
-        */
     }
 }
