@@ -86,6 +86,13 @@ public interface ValueProvider {
         return jsonValues;
     }
 
+    /**
+     * @param nestedValue the activities entry from elasticSearch
+     * @param column the column of interest
+     * @return a collection of all answer values to the given question, consolidating across multiple responses if needed.
+     * For example, if a participant has completed Medical History twice, this will consolidate answers from both responses
+     * This will also include optional detail text filled in for multiple-choice responses.
+     */
     private Collection<?> getQuestionAnswerValue(Object nestedValue, ParticipantColumn column) {
         List<LinkedHashMap<String, Object>> activities = (List<LinkedHashMap<String, Object>>) nestedValue;
         Collection<?> objects =
@@ -97,7 +104,8 @@ public interface ValueProvider {
                             } else {
                                 List<LinkedHashMap<String, Object>> questionAnswers =
                                         (List<LinkedHashMap<String, Object>>) foundActivity.get(ElasticSearchUtil.QUESTIONS_ANSWER);
-                                return questionAnswers.stream().filter(qa -> qa.get(ESObjectConstants.STABLE_ID).equals(column.getName()))
+
+                                return questionAnswers.stream().filter(qa -> questionAnswerMatches(qa, column.getName()) )
                                         .map(fq -> getAnswerValue(fq, column.getName()))
                                         .map(this::mapToCollection)
                                         .flatMap(Collection::stream)
@@ -108,6 +116,17 @@ public interface ValueProvider {
             return Collections.singletonList(StringUtils.EMPTY);
         }
         return objects;
+    }
+
+    /**
+     * @return whether the question matches the columne, including both direct answers to the question, and additional details provided.
+     * (e.g. fill-in answers to "other, please specify") which are given stableIds of
+     * {questionId}_{optionId}_DETAILS
+     */
+    private boolean questionAnswerMatches(LinkedHashMap<String, Object> questionAnswer, String columnName) {
+        String stableId = (String) questionAnswer.get(ESObjectConstants.STABLE_ID);
+        return stableId.equals(columnName) ||
+                stableId.startsWith(columnName) && stableId.endsWith("_DETAILS");
     }
 
     private Object getAnswerValue(LinkedHashMap<String, Object> fq, String columnName) {
