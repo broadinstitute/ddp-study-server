@@ -41,7 +41,7 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
         * so it can be referred back to after we create the user
         */ 
         final var requestorClientId = auth.getClient();
-        final var domain = auth.getIssuer();
+        final var domain = auth.getDomain();
         final var studyGuid = payload.getStudyGuid();
 
         final var email = payload.getEmail();

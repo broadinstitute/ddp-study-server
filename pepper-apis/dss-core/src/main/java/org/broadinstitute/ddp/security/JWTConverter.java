@@ -181,7 +181,6 @@ public class JWTConverter {
                     Long userId;
                     try {
                         DecodedJWT validToken = verifyDDPToken(jwt, jwkProvider);
-                        String issuer = validToken.getIssuer();
                         String ddpUserGuid = validToken.getClaim(Auth0Constants.DDP_USER_ID_CLAIM).asString();
                         UserPermissions userPermissions = handle.attach(AuthDao.class)
                                 .findUserPermissions(ddpUserGuid, auth0ClientId, auth0Domain);
@@ -194,7 +193,7 @@ public class JWTConverter {
                             userId = userProfile.getUserId();
                         }
                         String preferredLanguage = getPreferredLanguageCodeForUser(userProfile, ddpUserGuid);
-                        txnDdpAuth = new DDPAuth(issuer, auth0ClientId, ddpUserGuid, jwt, userPermissions, preferredLanguage);
+                        txnDdpAuth = new DDPAuth(auth0Domain, auth0ClientId, ddpUserGuid, jwt, userPermissions, preferredLanguage);
                     } catch (Exception e) {
                         log.warn("Could not verify token. User "
                                 + decodedJwt.getClaim(Auth0Constants.DDP_USER_ID_CLAIM).asString()
