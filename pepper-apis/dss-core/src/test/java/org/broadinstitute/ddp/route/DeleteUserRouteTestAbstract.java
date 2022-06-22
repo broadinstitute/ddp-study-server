@@ -116,12 +116,14 @@ public class DeleteUserRouteTestAbstract extends IntegrationTestSuite.TestCase {
         User user = userDao.findUserById(userId).orElseThrow(() -> new Exception("Could not find user: " + userId));
         if (userProfile != null) {
             handle.attach(UserProfileDao.class).createProfile(
-                    new UserProfile.Builder(userId)
-                            .setFirstName(userProfile.getFirstName())
-                            .setLastName(userProfile.getLastName())
-                            .setBirthDate(userProfile.getBirthDate())
-                            .setPreferredLangId(userProfile.getPreferredLangId())
-                            .setSexType(userProfile.getSexType())
+                    UserProfile.builder()
+                            .userId(userId)
+                            .firstName(userProfile.getFirstName())
+                            .lastName(userProfile.getLastName())
+                            .birthDate(userProfile.getBirthDate())
+                            .preferredLangId(userProfile.getPreferredLangId())
+                            .preferredLangCode(null)
+                            .sexType(userProfile.getSexType())
                             .build()
             );
             user.setProfile(userProfile);

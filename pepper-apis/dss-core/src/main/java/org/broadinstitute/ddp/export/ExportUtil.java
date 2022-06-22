@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -139,16 +138,19 @@ public class ExportUtil {
             Map<String, String> usersMissingEmails,
             ActivityInstanceDao instanceDao) {
 
-        String auth0UserId = pt.getUser().getAuth0UserId();
-        if (StringUtils.isBlank(auth0UserId)) {
+        var user = pt.getUser();
+
+        if (user.hasAuth0Account() == false) {
             return;
         }
 
-        String email = emailStore.get(auth0UserId);
+        var auth0UserId = user.getAuth0UserId().get();
+
+        var email = emailStore.get(auth0UserId);
         if (email == null) {
             usersMissingEmails.put(auth0UserId, pt.getUser().getGuid());
         } else {
-            pt.getUser().setEmail(email);
+            user.setEmail(email);
         }
 
         Set<Long> instanceIds = pt.getAllResponses().stream()

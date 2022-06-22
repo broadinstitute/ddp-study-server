@@ -37,6 +37,11 @@ public class ErrorCodes {
     public static final String MISSING_GOVERNANCE_ALIAS = "MISSING_GOVERNANCE_ALIAS";
     public static final String NON_UNIQUE_GOVERNANCE_ALIAS = "NON_UNIQUE_GOVERNANCE_ALIAS";
     public static final String AUTH_CANNOT_BE_DETERMINED = "AUTH_CANNOT_BE_DETERMINED";
+
+    /**
+     * The client does not have sufficient privileges to complete the requested action.
+     */
+    public static final String INSUFFICIENT_PRIVILEGES = "INSUFFICIENT_PRIVILEGES";
     public static final String INVALID_LANGUAGE_PREFERENCE = "INVALID_LANGUAGE_PREFERENCE";
     public static final String INVALID_SEX = "INVALID_SEX";
     public static final String INVALID_DATE = "INVALID_DATE";

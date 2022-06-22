@@ -1567,7 +1567,7 @@ ProfileModel:
         deprecated: true
       birthDate:
         type: string
-        format: date
+        format: iso8601-date
         example: 1999-09-19
       sex:
         type: string

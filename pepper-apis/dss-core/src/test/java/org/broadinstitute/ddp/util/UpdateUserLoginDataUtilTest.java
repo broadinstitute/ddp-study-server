@@ -32,13 +32,14 @@ public class UpdateUserLoginDataUtilTest extends TxnAwareBaseTest {
         return new UserDto(
             testingUser.getUserId(),
             testingUser.getAuth0Id(),
+            null,
             testingUser.getUserGuid(),
             null,
             null,
             null,
             0,
             0,
-                null
+            null
         );
     }
 

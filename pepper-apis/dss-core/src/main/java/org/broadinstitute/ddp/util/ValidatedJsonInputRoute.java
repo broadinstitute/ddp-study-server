@@ -99,7 +99,7 @@ public abstract class ValidatedJsonInputRoute<T> implements Route {
      * Override if you want a customized Gson.
      */
     protected Gson buildGson() {
-        return new Gson();
+        return GsonUtil.standardGson();
     }
 
     /**
