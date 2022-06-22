@@ -24,7 +24,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doCallRealMethod;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -631,7 +631,9 @@ public class DataLoaderTest {
         when(mockHandle.attach(any())).thenReturn(mockDao);
 
         long now = Instant.now().toEpochMilli();
-        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null, null, now, now, null);
+        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null,
+                pretendUserGuid, pretendUserGuid, null,
+                null, now, now, null);
         mockDataLoader.addUserAddress(mockHandle, userDto,
                 participantData.getParticipantUser().getDatstatparticipantdata(),
                 participantData.getParticipantUser().getDatstatsurveydata().getReleaseSurvey(), mockJdbiMailAddress, olcService);
@@ -676,10 +678,15 @@ public class DataLoaderTest {
         when(mockJdbiLanguageCode.getLanguageCodeId(anyString())).thenReturn(pretendLanguageCodeId);
 
         UserProfileDao mockProfileDao = mock(UserProfileDao.class);
-        doNothing().when(mockProfileDao).createProfile(any(UserProfile.class));
+
+        // The value returned by `doReturn` is not used in `addUserProfile` below, so
+        // returning `null` here will work.
+        doReturn(null).when(mockProfileDao).createProfile(any(UserProfile.class));
 
         long now = Instant.now().toEpochMilli();
-        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null, null, now, now, null);
+        UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null,
+                pretendUserGuid, pretendUserGuid, null,
+                null, now, now, null);
 
         mockDataLoader.addUserProfile(
                 userDto,
@@ -692,7 +699,7 @@ public class DataLoaderTest {
         ArgumentCaptor<UserProfile> userProfileCaptor = ArgumentCaptor.forClass(UserProfile.class);
         verify(mockProfileDao, times(1)).createProfile(userProfileCaptor.capture());
 
-        assertEquals(pretendUserId, userProfileCaptor.getValue().getUserId());
+        assertEquals(Long.valueOf(pretendUserId), userProfileCaptor.getValue().getUserId());
 
         assertEquals("First1539381231204", userProfileCaptor.getValue().getFirstName());
         assertEquals("Last1539381231204", userProfileCaptor.getValue().getLastName());

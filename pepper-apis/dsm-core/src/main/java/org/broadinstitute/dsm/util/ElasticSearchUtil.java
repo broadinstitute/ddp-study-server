@@ -335,13 +335,13 @@ public class ElasticSearchUtil {
 
     public static Optional<ElasticSearchParticipantDto> fetchESDataByParticipantId(String index, String participantId,
                                                                                    RestHighLevelClient client) throws IOException {
-        String matchQueryName = ParticipantUtil.isGuid(participantId) ? "profile.guid" : "profile.legacyAltPid";
+        String matchQueryName = ParticipantUtil.isGuid(participantId) ? PROFILE_GUID : PROFILE_LEGACYALTPID;
         return Optional.of(getElasticSearchForGivenMatch(index, participantId, client, matchQueryName));
     }
 
     public static ElasticSearchParticipantDto fetchESDataByAltpid(String index, String altpid, RestHighLevelClient client)
             throws IOException {
-        String matchQueryName = "profile.legacyAltPid";
+        String matchQueryName = PROFILE_LEGACYALTPID;
         return getElasticSearchForGivenMatch(index, altpid, client, matchQueryName);
     }
 
@@ -409,7 +409,7 @@ public class ElasticSearchUtil {
 
 
         BoolQueryBuilder qb = QueryBuilders.boolQuery();
-        qb.must(QueryBuilders.termsQuery("profile.guid", participantGuids));
+        qb.must(QueryBuilders.termsQuery(PROFILE_GUID, participantGuids));
 
         searchSourceBuilder.fetchSource(new String[] {PROFILE, ADDRESS}, null);
         searchSourceBuilder.query(qb).sort(PROFILE_CREATED_AT, SortOrder.ASC).docValueField(ADDRESS).docValueField(PROFILE);

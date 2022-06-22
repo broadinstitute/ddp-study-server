@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
@@ -458,22 +459,36 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
     private void unregisterEmailFromStudyMailingList(Handle handle, StudyDto study, User user, Auth0ManagementClient mgmtClient) {
         String userEmail = null;
-        var getResult = mgmtClient.getAuth0User(user.getAuth0UserId());
+
+        /*
+         * make sure users which do not have an auth0 identifier are handled.
+         * Returning may be fine here, but since the non-auth0 accounts may still have an
+         * email address, there is some extra work do to.
+         * #ddp7931
+         */
+        if (user.hasAuth0Account() == false) {
+            throw new NotImplementedException("handle users which do not have an auth0 account safely");
+        }
+
+        var auth0UserId = user.getAuth0UserId().get();
+
+        var getResult = mgmtClient.getAuth0User(auth0UserId);
         if (getResult.hasFailure()) {
             var e = getResult.hasThrown() ? getResult.getThrown() : getResult.getError();
-            log.error("Auth0 request to retrieve auth0 user {} failed", user.getAuth0UserId(), e);
+            log.error("Auth0 request to retrieve auth0 user {} failed", auth0UserId, e);
         } else {
             userEmail = getResult.getBody().getEmail();
         }
+        
         if (StringUtils.isNotBlank(userEmail)) {
             int numDeleted = handle.attach(JdbiMailingList.class).deleteByEmailAndStudyId(userEmail, study.getId());
             if (numDeleted == 1) {
-                log.info("Removed user {} from study {} mailing list", user.getAuth0UserId(), study.getGuid());
+                log.info("Removed user {} from study {} mailing list", auth0UserId, study.getGuid());
             } else if (numDeleted > 1) {
-                log.warn("Removed {} mailing list entries for user {} and study {}", numDeleted, user.getAuth0UserId(), study.getGuid());
+                log.warn("Removed {} mailing list entries for user {} and study {}", numDeleted, auth0UserId, study.getGuid());
             }
         } else {
-            log.error("No email for user {} to remove them from mailing list of study {}", user.getAuth0UserId(), study.getGuid());
+            log.error("No email for user {} to remove them from mailing list of study {}", auth0UserId, study.getGuid());
         }
     }
 
@@ -545,32 +560,35 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         }
 
         if (profile == null) {
-            profile = new UserProfile.Builder(user.getId())
-                    .setFirstName(firstName)
-                    .setLastName(lastName)
-                    .setPreferredLangId(languageId)
-                    .setTimeZone(timeZone)
+            profile = UserProfile.builder()
+                    .userId(user.getId())
+                    .firstName(firstName)
+                    .lastName(lastName)
+                    .preferredLangId(languageId)
+                    .preferredLangCode(null)
+                    .timeZone(timeZone)
                     .build();
             profileDao.createProfile(profile);
             log.info("Initialized user profile for user with guid {}", user.getGuid());
         } else {
             boolean shouldUpdate = false;
-            var updated = new UserProfile.Builder(profile);
+            var updated = new UserProfile(profile).toBuilder();
 
             if (profile.getFirstName() == null) {
-                updated.setFirstName(firstName);
+                updated.firstName(firstName);
                 shouldUpdate = true;
             }
             if (profile.getLastName() == null) {
-                updated.setLastName(lastName);
+                updated.lastName(lastName);
                 shouldUpdate = true;
             }
             if (profile.getPreferredLangId() == null) {
-                updated.setPreferredLangId(languageId);
+                updated.preferredLangId(languageId);
+                updated.preferredLangCode(null);
                 shouldUpdate = true;
             }
             if (profile.getTimeZone() == null) {
-                updated.setTimeZone(timeZone);
+                updated.timeZone(timeZone);
                 shouldUpdate = true;
             }
 
@@ -580,7 +598,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             }
         }
 
-        String auth0UserId = user.getAuth0UserId();
+        var auth0UserId = user.getAuth0UserId().orElse(StringUtils.EMPTY);
         if (StringUtils.isNotBlank(auth0UserId)) {
             log.info("User {} has auth0 account, proceeding to sync user_metadata", user.getGuid());
             Map<String, Object> metadata = new HashMap<>();

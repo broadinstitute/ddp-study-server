@@ -86,7 +86,7 @@ public class DeleteUserRoute implements Route {
         }
 
         // The user to be deleted cannot have an Auth0 account
-        if (user.getAuth0UserId() != null) {
+        if (user.hasAuth0Account()) {
             String message = "User with guid '" + userGuid
                     + "' has auth0 account associated. Deleting of such users is not supported.";
             return new CheckError(HttpStatus.SC_UNPROCESSABLE_ENTITY,
