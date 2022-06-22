@@ -23,6 +23,7 @@ public class DDPAuthTest {
     public static final String STUDY_WITH_ACCESS = "the study";
     public static final String CLIENT_GUID = "c123";
     public static final String PREFERRED_LANGUAGE = "en";
+    public static final String ISSUER = "https://test.issuer.example/";
 
     private DDPAuth userWithAccessToOneParticipantInOneStudy;
 
@@ -42,17 +43,17 @@ public class DDPAuthTest {
 
         UserPermissions userPermissions = new UserPermissions(LOGGED_IN_OPERATOR_GUID, false,
                 false, aclForClientStudy, aclForOtherParticipants, new ArrayList<>());
-        userWithAccessToOneParticipantInOneStudy = new DDPAuth(CLIENT_GUID, LOGGED_IN_OPERATOR_GUID,
+        userWithAccessToOneParticipantInOneStudy = new DDPAuth(ISSUER, CLIENT_GUID, LOGGED_IN_OPERATOR_GUID,
                 userPermissions, PREFERRED_LANGUAGE);
 
         UserPermissions revokedClientPermissions = new UserPermissions(LOGGED_IN_OPERATOR_GUID, false,
                 true, aclForClientStudy, aclForOtherParticipants, new ArrayList<>());
-        userWithRevokedClient = new DDPAuth(CLIENT_GUID, LOGGED_IN_OPERATOR_GUID,
+        userWithRevokedClient = new DDPAuth(ISSUER, CLIENT_GUID, LOGGED_IN_OPERATOR_GUID,
                 revokedClientPermissions, PREFERRED_LANGUAGE);
 
         UserPermissions lockedAccountPermissions = new UserPermissions(LOGGED_IN_OPERATOR_GUID,
                 false, true, aclForClientStudy, aclForOtherParticipants, new ArrayList<>());
-        userWithLockedAccount = new DDPAuth(CLIENT_GUID, LOGGED_IN_OPERATOR_GUID,
+        userWithLockedAccount = new DDPAuth(ISSUER, CLIENT_GUID, LOGGED_IN_OPERATOR_GUID,
                 lockedAccountPermissions, PREFERRED_LANGUAGE);
 
     }
@@ -62,7 +63,7 @@ public class DDPAuthTest {
      */
     @Test
     public void testNoAccessForMissingFields() {
-        DDPAuth ddpAuth = new DDPAuth(null, null, null, null);
+        DDPAuth ddpAuth = new DDPAuth(null, null, null, null, null);
         Assert.assertFalse(ddpAuth.isActive());
         Assert.assertFalse(ddpAuth.canAccessGovernedUsers("123"));
         Assert.assertFalse(ddpAuth.canAccessUserProfile(null, "456"));
@@ -167,13 +168,13 @@ public class DDPAuthTest {
     @Test
     public void testAdmin_accessStudyData() {
         var permissions = new UserPermissions("operator", false, false, List.of("study"), List.of(), List.of());
-        var auth = new DDPAuth("client", "operator", permissions, "en");
+        var auth = new DDPAuth(ISSUER, "client", "operator", permissions, "en");
         Assert.assertFalse(
                 "should not allow access because operator is not admin or proxy",
                 auth.canAccessStudyDataForUser("user", "study"));
 
         permissions = new UserPermissions("operator", false, false, List.of("study"), List.of(), List.of("study"));
-        auth = new DDPAuth("client", "operator", permissions, "en");
+        auth = new DDPAuth(ISSUER, "client", "operator", permissions, "en");
         Assert.assertTrue(
                 "should allow access because operator is admin for study",
                 auth.canAccessStudyDataForUser("user", "study"));
@@ -188,13 +189,13 @@ public class DDPAuthTest {
                 .when(mockEnroll).getAllLatestEnrollmentsForUser(any());
 
         var permissions = new UserPermissions("operator", false, false, List.of("study"), List.of(), List.of());
-        var auth = new DDPAuth("client", "operator", permissions, "en");
+        var auth = new DDPAuth(ISSUER, "client", "operator", permissions, "en");
         Assert.assertFalse(
                 "should not allow access because operator is not admin of study",
                 auth.canAccessUserProfile(mockHandle, "user"));
 
         permissions = new UserPermissions("operator", false, false, List.of("study"), List.of(), List.of("study"));
-        auth = new DDPAuth("client", "operator", permissions, "en");
+        auth = new DDPAuth(ISSUER, "client", "operator", permissions, "en");
         Assert.assertTrue(
                 "should allow access because operator is admin for study",
                 auth.canAccessUserProfile(mockHandle, "user"));

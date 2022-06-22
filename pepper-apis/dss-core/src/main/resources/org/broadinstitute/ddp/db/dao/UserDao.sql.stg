@@ -12,7 +12,8 @@ select u.user_id,
        u.auth0_user_id,
        u.created_at,
        u.updated_at,
-       u.expires_at
+       u.expires_at,
+       u.email
   from user as u
 >>
 
@@ -24,6 +25,11 @@ where u.user_id = :id
 queryUserByGuid() ::= <<
 <select_user()>
 where u.guid = :guid
+>>
+
+queryUserByEmail() ::= <<
+<select_user()>
+where u.email = :email
 >>
 
 queryUserByHruid() ::= <<
@@ -56,6 +62,7 @@ select u.user_id              as u_user_id,
        u.created_at           as u_created_at,
        u.updated_at           as u_updated_at,
        u.expires_at           as u_expires_at,
+       u.email                as u_email,
        up.user_id               as p_user_id,
        up.first_name            as p_first_name,
        up.last_name             as p_last_name,
