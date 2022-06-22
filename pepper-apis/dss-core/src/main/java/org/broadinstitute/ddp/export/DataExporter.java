@@ -543,10 +543,12 @@ public class DataExporter {
 
         Map<String, User> users = resultset
                 .peek(user -> {
-                    String auth0UserId = user.getAuth0UserId().orElse(StringUtils.EMPTY);
-                    if (StringUtils.isBlank(auth0UserId)) {
+                    if (user.hasAuth0Account() == false) {
                         return;
                     }
+                    
+                    var auth0UserId = user.getAuth0UserId().get();
+
                     String email = emailStore.get(auth0UserId);
                     if (email == null) {
                         usersMissingEmails.put(auth0UserId, user.getGuid());

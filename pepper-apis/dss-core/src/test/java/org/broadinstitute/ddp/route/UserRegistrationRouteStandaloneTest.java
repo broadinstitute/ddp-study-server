@@ -963,7 +963,7 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
                 assertTrue(updatedInvitation.getAcceptedAt().isBefore(Instant.now()));
 
                 User requeriedUser = handle.attach(UserDao.class).findUserByGuid(user.get().getGuid()).get();
-                assertEquals(auth0UserId, requeriedUser.getAuth0UserId());
+                assertEquals(auth0UserId, requeriedUser.getAuth0UserId().get());
 
                 EnrollmentStatusType status = handle.attach(JdbiUserStudyEnrollment.class)
                         .getEnrollmentStatusByUserAndStudyIds(user.get().getId(), testStudy.get().getId())
@@ -1028,7 +1028,7 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
             TransactionWrapper.useTxn(handle -> {
                 var userDao = handle.attach(UserDao.class);
                 createdUser.set(userDao.findUserByGuid(createdUserGuid).get());
-                assertEquals(fakeAuth0UserId, createdUser.get().getAuth0UserId());
+                assertEquals(fakeAuth0UserId, createdUser.get().getAuth0UserId().get());
 
                 var updatedInvitation = handle.attach(InvitationDao.class)
                         .findByInvitationGuid(testStudy.get().getId(), invitationGuid).get();

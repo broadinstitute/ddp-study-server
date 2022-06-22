@@ -71,6 +71,12 @@ public class User {
         return Optional.ofNullable(auth0TenantId);
     }
 
+    /**
+     * Returns the user's Auth0 id, if the user has one.
+     * 
+     * <p>If {@link User#hasAuth0Account()} returns true, the user is guaranteed
+     * to have an Auth0 id present.
+     */
     public Optional<String> getAuth0UserId() {
         return Optional.ofNullable(auth0UserId);
     }

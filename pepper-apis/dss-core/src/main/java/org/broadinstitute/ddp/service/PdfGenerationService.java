@@ -270,7 +270,7 @@ public class PdfGenerationService {
         if (hasEmailSource) {
             var user = participant.getUser();
 
-            if (user.getAuth0UserId().isPresent()) {
+            if (user.hasAuth0Account()) {
                 var auth0UserId = user.getAuth0UserId().get();
                 var mgmtClient = Auth0ManagementClient.forStudy(handle, config.getStudyGuid());
                 var studyDto = new JdbiUmbrellaStudyCached(handle).findByStudyGuid(config.getStudyGuid());

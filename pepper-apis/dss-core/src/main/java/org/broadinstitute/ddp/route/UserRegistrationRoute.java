@@ -466,7 +466,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
          * email address, there is some extra work do to.
          * #ddp7931
          */
-        if (user.getAuth0UserId().isEmpty()) {
+        if (user.hasAuth0Account() == false) {
             throw new NotImplementedException("handle users which do not have an auth0 account safely");
         }
 
@@ -475,19 +475,20 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         var getResult = mgmtClient.getAuth0User(auth0UserId);
         if (getResult.hasFailure()) {
             var e = getResult.hasThrown() ? getResult.getThrown() : getResult.getError();
-            log.error("Auth0 request to retrieve auth0 user {} failed", user.getAuth0UserId(), e);
+            log.error("Auth0 request to retrieve auth0 user {} failed", auth0UserId, e);
         } else {
             userEmail = getResult.getBody().getEmail();
         }
+        
         if (StringUtils.isNotBlank(userEmail)) {
             int numDeleted = handle.attach(JdbiMailingList.class).deleteByEmailAndStudyId(userEmail, study.getId());
             if (numDeleted == 1) {
-                log.info("Removed user {} from study {} mailing list", user.getAuth0UserId(), study.getGuid());
+                log.info("Removed user {} from study {} mailing list", auth0UserId, study.getGuid());
             } else if (numDeleted > 1) {
-                log.warn("Removed {} mailing list entries for user {} and study {}", numDeleted, user.getAuth0UserId(), study.getGuid());
+                log.warn("Removed {} mailing list entries for user {} and study {}", numDeleted, auth0UserId, study.getGuid());
             }
         } else {
-            log.error("No email for user {} to remove them from mailing list of study {}", user.getAuth0UserId(), study.getGuid());
+            log.error("No email for user {} to remove them from mailing list of study {}", auth0UserId, study.getGuid());
         }
     }
 

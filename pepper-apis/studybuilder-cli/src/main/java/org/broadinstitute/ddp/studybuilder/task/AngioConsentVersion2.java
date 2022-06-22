@@ -597,7 +597,7 @@ public class AngioConsentVersion2 implements CustomTask {
                         + " for activity instance " + instance.getGuid());
             }
 
-            String email = emailsMap.get(userDto.getAuth0UserId());
+            String email = emailsMap.get(userDto.getAuth0UserId().orElse(null));
             if (email == null) {
                 log.warn("Email not available for user with guid={}", userDto.getUserGuid());
             }
