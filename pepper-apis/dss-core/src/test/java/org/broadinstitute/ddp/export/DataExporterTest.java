@@ -267,7 +267,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
             MailAddress nonDefaultAddress = actual.getNonDefaultMailAddresses().values().iterator().next();
             assertEquals(snapshottedAdress.getGuid(), nonDefaultAddress.getGuid());
 
-            assertEquals(testData.getTestingUser().getEmail(), actual.getUser().getEmail());
+            assertEquals(Optional.of(testData.getTestingUser().getEmail()), actual.getUser().getEmail());
 
             assertTrue(actual.getUser().hasProfile());
             assertEquals(testData.getProfile().getFirstName(), actual.getUser().getProfile().getFirstName());
