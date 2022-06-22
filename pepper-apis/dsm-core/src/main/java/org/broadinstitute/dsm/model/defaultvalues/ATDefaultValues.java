@@ -106,7 +106,8 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         try {
             participantData.insertParticipantData("SYSTEM");
             logger.info("values: " + data.keySet().stream().collect(Collectors.joining(", ", "[", "]"))
-                    + " were created at PARTICIPANT_REGISTERED pubsub task for participant with id: " + ddpParticipantId + " at " + fieldTypeId);
+                    + " were created at PARTICIPANT_REGISTERED pubsub task for participant with id: " + ddpParticipantId + " at "
+                    + fieldTypeId);
             return true;
         } catch (RuntimeException re) {
             return false;
