@@ -800,7 +800,7 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
             // Permanent in this case means no expiration and has auth0_user_id.
             UserDto actualUser = handle.attach(JdbiUser.class).findByUserGuid(actualUserGuid);
             assertNull(actualUser.getExpiresAtMillis());
-            assertEquals(fakeAuth0Id, actualUser.getAuth0UserId());
+            assertEquals(fakeAuth0Id, actualUser.getAuth0UserId().get());
 
             UserProfile profile = handle.attach(UserProfileDao.class).findProfileByUserId(actualUser.getUserId()).get();
             Long enLanguageCodeId = LanguageStore.getDefault().getId();
