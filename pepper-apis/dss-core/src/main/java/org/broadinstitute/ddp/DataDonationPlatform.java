@@ -367,6 +367,8 @@ public class DataDonationPlatform {
         }
 
         post(API.REGISTRATION, new UserRegistrationRoute(interpreter, new TaskPubSubPublisher()), responseSerializer);
+
+        before(API.USERS, new StudyAdminAuthFilter());
         post(API.USERS, new UserCreationRoute(), responseSerializer);
         post(API.TEMP_USERS, new CreateTemporaryUserRoute(), responseSerializer);
 
