@@ -17,7 +17,6 @@ import org.broadinstitute.ddp.json.UserCreationResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
-import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.participants.ParticipantsCreateService;
 import org.broadinstitute.ddp.service.participants.ParticipantsCreateService.ParticipantCreateError;
 import org.broadinstitute.ddp.util.ResponseUtil;
@@ -37,35 +36,13 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
     @Override
     public Object handle(Request request, Response response, UserCreationPayload payload) throws Exception {
         var auth = RouteUtil.getDDPAuth(request);
-
-        if (false && auth.isAuthenticated() == false) {
-            var error = new ApiError(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, "Authentication required.");
-            throw ResponseUtil.haltError(HttpStatus.SC_FORBIDDEN, error);
-        } else {
-            /* LIE */
-            auth = new DDPAuth("https://domain.example", "abcTESTCLIENTdef", "OPERATOR", "totallyAValidJWT", null, "en");
-        }
-
         /*
         * Grab the requesting client id out of the token
         * so it can be referred back to after we create the user
         */ 
         final var requestorClientId = auth.getClient();
-        final var operatorId = auth.getOperator();
         final var domain = auth.getIssuer();
         final var studyGuid = payload.getStudyGuid();
-
-        // Not sure if this is the proper check, but this is
-        // just to add some sort of safeguard until the filters are
-        // configured properly.
-        //
-        // Could this be replaced with an "isDSM" check?
-        if (false && auth.hasAdminAccessToStudy(studyGuid) == false) {
-            var error = new ApiError(ErrorCodes.INSUFFICIENT_PRIVILEGES,
-                    String.format("User %s does not have sufficient priviliges for %s.",
-                    operatorId, studyGuid));
-            throw ResponseUtil.haltError(HttpStatus.SC_FORBIDDEN, error);
-        }
 
         final var email = payload.getEmail();
         final var emailValidator = EmailValidator.getInstance();
@@ -98,12 +75,10 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
             final var internalClientId = handle.attach(JdbiClient.class)
                     .getClientIdByAuth0ClientAndDomain(requestorClientId, domain);
             if (internalClientId.isEmpty()) {
-                /* Disabled for testing!
                 var error = new ApiError(ErrorCodes.NOT_FOUND,
                         String.format("Auth0 client '%s' is not authorized for '%s'.",
                             requestorClientId, domain));
                 throw ResponseUtil.haltError(HttpStatus.SC_UNAUTHORIZED, error);
-                */
             }
 
             final var participantService = new ParticipantsCreateService(handle);

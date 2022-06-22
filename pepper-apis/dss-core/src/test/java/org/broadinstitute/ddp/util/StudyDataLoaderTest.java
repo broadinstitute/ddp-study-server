@@ -751,6 +751,9 @@ public class StudyDataLoaderTest {
         when(mockJdbiLanguageCode.getLanguageCodeId(anyString())).thenReturn(pretendLanguageCodeId);
 
         UserProfileDao mockProfileDao = mock(UserProfileDao.class);
+
+        // The value returned by `doReturn` is not used in `addUserProfile` below, so
+        // returning `null` here will work.
         doReturn(null).when(mockProfileDao).createProfile(any(UserProfile.class));
 
         long now = Instant.now().toEpochMilli();
