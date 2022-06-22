@@ -154,6 +154,7 @@ import org.broadinstitute.ddp.route.UpdateUserEmailRoute;
 import org.broadinstitute.ddp.route.UpdateUserPasswordRoute;
 import org.broadinstitute.ddp.route.UserActivityInstanceListRoute;
 import org.broadinstitute.ddp.route.UserRegistrationRoute;
+import org.broadinstitute.ddp.route.UserCreationRoute;
 import org.broadinstitute.ddp.route.VerifyMailAddressRoute;
 import org.broadinstitute.ddp.schedule.DsmCancerLoaderJob;
 import org.broadinstitute.ddp.schedule.DsmDrugLoaderJob;
@@ -334,9 +335,7 @@ public class DataDonationPlatform {
 
         before("*", new HttpHeaderMDCFilter(X_FORWARDED_FOR));
         before("*", new MDCLogBreadCrumbFilter());
-        before("*", (Request request, Response response) -> {
-            MDC.put(MDC_STUDY, RouteUtil.parseStudyGuid(request.pathInfo()));
-        });
+        before("*", (Request request, Response response) -> MDC.put(MDC_STUDY, RouteUtil.parseStudyGuid(request.pathInfo())));
         enableCORS("*", String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
         setupCatchAllErrorHandling();
 
@@ -368,6 +367,9 @@ public class DataDonationPlatform {
         }
 
         post(API.REGISTRATION, new UserRegistrationRoute(interpreter, new TaskPubSubPublisher()), responseSerializer);
+
+        before(API.USERS, new StudyAdminAuthFilter());
+        post(API.USERS, new UserCreationRoute(), responseSerializer);
         post(API.TEMP_USERS, new CreateTemporaryUserRoute(), responseSerializer);
 
         post(API.SENDGRID_EVENT, new SendGridEventRoute(new SendGridEventService()), responseSerializer);

@@ -81,7 +81,7 @@ public enum EnrollmentStatusType {
     /**
      * Returns whether or not this status allows for communications
      * to the participant
-     * @return
+     * @return true if the participant has opted-in to receiving communications, false otherwise.
      */
     public boolean shouldReceiveCommunications() {
         return shouldReceiveCommunications;

@@ -520,10 +520,10 @@ public class DataExporter {
                                         Map<String, Set<String>> governedUsersMap) {
         UserProfile userProfile = user.getProfile();
         if (userProfile == null) {
-            userProfile = new UserProfile.Builder(user.getId()).build();
+            userProfile = UserProfile.builder().userId(user.getId()).build();
         }
         ParticipantProfile profile = new ParticipantProfile(userProfile.getFirstName(), userProfile.getLastName(),
-                user.getGuid(), user.getHruid(), user.getLegacyAltPid(), user.getLegacyShortId(), user.getEmail(),
+                user.getGuid(), user.getHruid(), user.getLegacyAltPid(), user.getLegacyShortId(), user.getEmail().orElse(null),
                 userProfile.getPreferredLangCode(), userProfile.getDoNotContact(), user.getCreatedAt());
 
         Set<String> proxies = new HashSet<>();
@@ -543,10 +543,12 @@ public class DataExporter {
 
         Map<String, User> users = resultset
                 .peek(user -> {
-                    String auth0UserId = user.getAuth0UserId();
-                    if (StringUtils.isBlank(auth0UserId)) {
+                    if (user.hasAuth0Account() == false) {
                         return;
                     }
+                    
+                    var auth0UserId = user.getAuth0UserId().get();
+
                     String email = emailStore.get(auth0UserId);
                     if (email == null) {
                         usersMissingEmails.put(auth0UserId, user.getGuid());
@@ -744,7 +746,7 @@ public class DataExporter {
      *
      * @param activities the list of activity data for a study
      * @param extract    the participant data for the study
-     * @return
+     * @return a json streen representing the participant's data
      */
     private String formatParticipantToFlatJSON(Handle handle, List<ActivityExtract> activities,
                                                Participant extract) {
@@ -811,7 +813,7 @@ public class DataExporter {
                 .setHruid(participantUser.getHruid())
                 .setLegacyAltPid(participantUser.getLegacyAltPid())
                 .setLegacyShortId(participantUser.getLegacyShortId())
-                .setEmail(participantUser.getEmail())
+                .setEmail(participantUser.getEmail().orElse(null))
                 .setCreatedAt(participantUser.getCreatedAt());
         ParticipantProfile participantProfile = builder.build();
 
