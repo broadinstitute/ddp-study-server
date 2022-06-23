@@ -7,7 +7,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.db.dto.tag.cohort.BulkCohortTag;
+import org.broadinstitute.dsm.db.dto.tag.cohort.BulkCohortTagPayload;
 import org.broadinstitute.dsm.model.filter.participant.BaseFilterParticipantList;
 import org.broadinstitute.dsm.model.filter.participant.ManualFilterParticipantList;
 import org.broadinstitute.dsm.model.filter.participant.QuickFilterParticipantList;
@@ -24,21 +24,21 @@ public class BulkCreateCohortTagRoute extends RequestHandler {
     protected Object processRequest(Request request, Response response, String userId) throws Exception {
         String realm = Optional.ofNullable(request.queryMap().get(RoutePath.REALM).value()).orElseThrow().toLowerCase();
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
-        BulkCohortTag bulkCohortTag = ObjectMapperSingleton.readValue(request.body(), new TypeReference<BulkCohortTag>() {
+        BulkCohortTagPayload bulkCohortTagPayload = ObjectMapperSingleton.readValue(request.body(), new TypeReference<BulkCohortTagPayload>() {
         });
 
-        if (isSelectedPatients(bulkCohortTag)) {
+        if (isSelectedPatients(bulkCohortTagPayload)) {
 
         } else {
             BaseFilterParticipantList filter = new ManualFilterParticipantList(StringUtils.EMPTY);
-            if (Objects.nonNull(bulkCohortTag.getManualFilter())) {
-                filter = new ManualFilterParticipantList(bulkCohortTag.getManualFilter());
-            } else if (Objects.nonNull(bulkCohortTag.getSavedFilter())) {
+            if (Objects.nonNull(bulkCohortTagPayload.getManualFilter())) {
+                filter = new ManualFilterParticipantList(bulkCohortTagPayload.getManualFilter());
+            } else if (Objects.nonNull(bulkCohortTagPayload.getSavedFilter())) {
 
-                if (StringUtils.isNotBlank(bulkCohortTag.getSavedFilter().getFilterName())) {
+                if (StringUtils.isNotBlank(bulkCohortTagPayload.getSavedFilter().getFilterName())) {
                     filter = new QuickFilterParticipantList();
-                } else if (Objects.nonNull(bulkCohortTag.getSavedFilter().getFilters())
-                        && bulkCohortTag.getSavedFilter().getFilters().length > 0) {
+                } else if (Objects.nonNull(bulkCohortTagPayload.getSavedFilter().getFilters())
+                        && bulkCohortTagPayload.getSavedFilter().getFilters().length > 0) {
                     filter = new SavedFilterParticipantList();
                 }
             }
@@ -52,8 +52,8 @@ public class BulkCreateCohortTagRoute extends RequestHandler {
         return null;
     }
 
-    private boolean isSelectedPatients(BulkCohortTag bulkCohortTag) {
-        return Objects.nonNull(bulkCohortTag.getSelectedPatients()) && bulkCohortTag.getSelectedPatients().size() > 0;
+    private boolean isSelectedPatients(BulkCohortTagPayload bulkCohortTagPayload) {
+        return Objects.nonNull(bulkCohortTagPayload.getSelectedPatients()) && bulkCohortTagPayload.getSelectedPatients().size() > 0;
     }
 }
 

@@ -1,11 +1,9 @@
 package org.broadinstitute.dsm.model.elastic.export.painless;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
-import org.broadinstitute.dsm.model.elastic.export.generate.Generator;
 import org.junit.Assert;
 import org.junit.Test;
 

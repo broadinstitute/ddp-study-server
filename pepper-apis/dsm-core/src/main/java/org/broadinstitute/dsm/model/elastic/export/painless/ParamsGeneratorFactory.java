@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.model.elastic.export.painless;
 
 import java.util.List;
 
-import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.model.elastic.export.generate.Generator;
 
 public class ParamsGeneratorFactory {

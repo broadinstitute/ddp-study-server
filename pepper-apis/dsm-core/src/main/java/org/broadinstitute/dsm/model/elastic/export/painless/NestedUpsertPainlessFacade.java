@@ -34,7 +34,9 @@ public class NestedUpsertPainlessFacade extends UpsertPainlessFacade {
     }
 
     private boolean isDocId() {
-        return ESObjectConstants.DOC_ID.equals(uniqueIdentifier) || ESObjectConstants.DOC_ID.equals(getFieldName());
+        return ESObjectConstants.DOC_ID.equals(uniqueIdentifier)
+                || ESObjectConstants.DOC_ID.equals(getFieldName())
+                || containsGuid(getFieldName());
     }
 
 }

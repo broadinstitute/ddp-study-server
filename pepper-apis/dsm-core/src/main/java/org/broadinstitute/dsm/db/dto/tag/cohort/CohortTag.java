@@ -13,7 +13,7 @@ import org.broadinstitute.dsm.statics.DBConstants;
         alias = DBConstants.COHORT_ALIAS,
         primaryKey = DBConstants.COHORT_TAG_PK,
         columnPrefix = "")
-public class CohortTag {
+public class CohortTag implements Cloneable {
 
     @ColumnName(DBConstants.COHORT_TAG_PK)
     Integer cohortTagId;
@@ -57,5 +57,15 @@ public class CohortTag {
     @Override
     public int hashCode() {
         return Objects.hash(cohortTagId, cohortTagName, ddpParticipantId, ddpInstanceId);
+    }
+
+    @Override
+    public CohortTag clone() {
+        try {
+            CohortTag clone = (CohortTag) super.clone();
+            return clone;
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
     }
 }

@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.model.elastic.export.painless;
 
-import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -61,19 +60,29 @@ public class ScriptBuilderTest {
     @Test
     public void buildAddListToNested() {
         String propertyName = "cohortTag";
-        String propertyName2 = "kitRequestShipping";
+        String propertyName2 = "medicalRecord";
+        String uniqueIdentifier = "ddpParticipantId";
 
-        ScriptBuilder builder = new AddListToNestedScriptBuilder(propertyName);
+        ScriptBuilder builder = new AddListToNestedByGuidScriptBuilder(propertyName, uniqueIdentifier);
         String script = builder.build();
 
-        String expectedScript = "if (ctx._source.dsm.cohortTag == null) {ctx._source.dsm.cohortTag = params.dsm.cohortTag} "
-                + "else { ctx._source.dsm.cohortTag.addAll(params.dsm.cohortTag) }";
+        String expectedScript = "if (ctx._source.dsm.cohortTag == null) { ArrayList listToAdd = new ArrayList(); "
+                + "for(property in params.dsm.cohortTag) "
+                + "{ if (ctx._source.profile.guid == property.ddpParticipantId) { listToAdd.add(property); } } "
+                + "ctx._source.dsm.cohortTag = listToAdd; } else { ArrayList listToAdd = new ArrayList(); "
+                + "for(property in params.dsm.cohortTag) "
+                + "{ if (ctx._source.profile.guid == property.ddpParticipantId) { listToAdd.add(property); } } "
+                + "ctx._source.dsm.cohortTag.addAll(listToAdd) }";
 
         builder.setPropertyName(propertyName2);
         String script2 = builder.build();
-        String expectedScript2 = "if (ctx._source.dsm.kitRequestShipping == null) "
-                + "{ctx._source.dsm.kitRequestShipping = params.dsm.kitRequestShipping} "
-                + "else { ctx._source.dsm.kitRequestShipping.addAll(params.dsm.kitRequestShipping) }";
+        String expectedScript2 = "if (ctx._source.dsm.medicalRecord == null) { ArrayList listToAdd = new ArrayList(); "
+                + "for(property in params.dsm.medicalRecord) "
+                + "{ if (ctx._source.profile.guid == property.ddpParticipantId) { listToAdd.add(property); } } "
+                + "ctx._source.dsm.medicalRecord = listToAdd; } else { ArrayList listToAdd = new ArrayList(); "
+                + "for(property in params.dsm.medicalRecord) "
+                + "{ if (ctx._source.profile.guid == property.ddpParticipantId) { listToAdd.add(property); } } "
+                + "ctx._source.dsm.medicalRecord.addAll(listToAdd) }";
 
         Assert.assertEquals(expectedScript, script);
         Assert.assertEquals(expectedScript2, script2);
