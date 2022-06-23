@@ -43,8 +43,7 @@ public class Participant implements Cloneable {
             + "LEFT JOIN ddp_onc_history o on (o.participant_id = p.participant_id) "
             + "LEFT JOIN ddp_participant_record r on (r.participant_id = p.participant_id) "
             + "LEFT JOIN ddp_participant_exit ex on (p.ddp_participant_id = ex.ddp_participant_id "
-            + "AND p.ddp_instance_id = ex.ddp_instance_id) "
-            + "WHERE realm.instance_name = ? ";
+            + "AND p.ddp_instance_id = ex.ddp_instance_id) " + "WHERE realm.instance_name = ? ";
 
     @ColumnName(DBConstants.PARTICIPANT_ID)
     private Long participantId;
@@ -52,88 +51,58 @@ public class Participant implements Cloneable {
     @ColumnName(DBConstants.DDP_PARTICIPANT_ID)
     private String ddpParticipantId;
 
-    @TableName(
-            name = DBConstants.DDP_PARTICIPANT,
-            alias = DBConstants.DDP_PARTICIPANT_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
+    @TableName(name = DBConstants.DDP_PARTICIPANT, alias = DBConstants.DDP_PARTICIPANT_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
     @ColumnName(DBConstants.ASSIGNEE_ID_MR)
     private String assigneeIdMr;
 
     private Integer ddpInstanceId;
 
-    @TableName(
-            name = DBConstants.DDP_PARTICIPANT,
-            alias = DBConstants.DDP_PARTICIPANT_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
+    @TableName(name = DBConstants.DDP_PARTICIPANT, alias = DBConstants.DDP_PARTICIPANT_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
     @ColumnName(DBConstants.ASSIGNEE_ID_TISSUE)
     private String assigneeIdTissue;
     private String realm;
 
-    @TableName(
-            name = DBConstants.DDP_ONC_HISTORY,
-            alias = DBConstants.DDP_ONC_HISTORY_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
+    @TableName(name = DBConstants.DDP_ONC_HISTORY, alias = DBConstants.DDP_ONC_HISTORY_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
     @ColumnName(DBConstants.ONC_HISTORY_CREATED)
     private String created;
 
-    @TableName(
-            name = DBConstants.DDP_ONC_HISTORY,
-            alias = DBConstants.DDP_ONC_HISTORY_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
+    @TableName(name = DBConstants.DDP_ONC_HISTORY, alias = DBConstants.DDP_ONC_HISTORY_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
     @ColumnName(DBConstants.ONC_HISTORY_REVIEWED)
     private String reviewed;
 
-    @TableName(
-            name = DBConstants.DDP_PARTICIPANT_RECORD,
-            alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
-            columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.CR_SENT)
     @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String crSent;
 
-    @TableName(
-            name = DBConstants.DDP_PARTICIPANT_RECORD,
-            alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
-            columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.CR_RECEIVED)
     @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String crReceived;
 
-    @TableName(
-            name = DBConstants.DDP_PARTICIPANT_RECORD,
-            alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
-            columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.NOTES)
     private String notes;
 
-    @TableName(
-            name = DBConstants.DDP_PARTICIPANT_RECORD,
-            alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
-            columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.MINIMAL_MR)
     private Boolean minimalMr;
 
-    @TableName(
-            name = DBConstants.DDP_PARTICIPANT_RECORD,
-            alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
-            columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.ABSTRACTION_READY)
     private Boolean abstractionReady;
 
-    @TableName(
-            name = DBConstants.DDP_PARTICIPANT_RECORD,
-            alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
-            columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.ADDITIONAL_VALUES_JSON)
     @JsonProperty("dynamicFields")
     @SerializedName("dynamicFields")
@@ -145,11 +114,8 @@ public class Participant implements Cloneable {
         });
     }
 
-    @TableName(
-            name = DBConstants.DDP_PARTICIPANT_EXIT,
-            alias = DBConstants.DDP_PARTICIPANT_EXIT_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
-            columnPrefix = "")
+    @TableName(name = DBConstants.DDP_PARTICIPANT_EXIT, alias = DBConstants.DDP_PARTICIPANT_EXIT_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.EXIT_DATE)
     private Long exitDate;
 
@@ -157,8 +123,8 @@ public class Participant implements Cloneable {
     }
 
     public Participant(Long participantId, String ddpParticipantId, String assigneeIdMr, String assigneeIdTissue, String instanceName,
-                       String created, String reviewed, String crSent, String crReceived, String notes,
-                       Boolean minimalMr, Boolean abstractionReady, String additionalValuesJson, Long exitDate) {
+                       String created, String reviewed, String crSent, String crReceived, String notes, Boolean minimalMr,
+                       Boolean abstractionReady, String additionalValuesJson, Long exitDate) {
         this.participantId = participantId;
         this.ddpParticipantId = ddpParticipantId;
         this.assigneeIdMr = assigneeIdMr;
@@ -175,7 +141,9 @@ public class Participant implements Cloneable {
         this.exitDate = exitDate;
     }
 
-    public Participant(Long participantId, String ddpParticipantId, String assigneeIdMr, Integer ddpInstanceId, String assigneeIdTissue, String realm, String created, String reviewed, String crSent, String crReceived, String notes, Boolean minimalMr, Boolean abstractionReady, String additionalValuesJson, Long exitDate) {
+    public Participant(Long participantId, String ddpParticipantId, String assigneeIdMr, Integer ddpInstanceId, String assigneeIdTissue,
+                       String realm, String created, String reviewed, String crSent, String crReceived, String notes, Boolean minimalMr,
+                       Boolean abstractionReady, String additionalValuesJson, Long exitDate) {
         this.participantId = participantId;
         this.ddpParticipantId = ddpParticipantId;
         this.assigneeIdMr = assigneeIdMr;
@@ -195,9 +163,8 @@ public class Participant implements Cloneable {
 
     //For TissueList
     public Participant(String participantId, String ddpParticipantId, String assigneeIdTissue) {
-        this(Long.parseLong(participantId), ddpParticipantId, null, assigneeIdTissue, null,
-                null, null, null, null, null,
-                false, false, null, null);
+        this(Long.parseLong(participantId), ddpParticipantId, null, assigneeIdTissue, null, null, null, null, null, null, false, false,
+                null, null);
     }
 
     public static Participant getParticipant(@NonNull Map<String, Assignee> assignees, @NonNull String realm, @NonNull ResultSet rs)
@@ -214,18 +181,17 @@ public class Participant implements Cloneable {
                 assigneeTissue = assignees.get(assigneeIdTissue).getName();
             }
         }
-        Participant participant = new Participant(rs.getLong(DBConstants.PARTICIPANT_ID),
-                rs.getString(DBConstants.DDP_PARTICIPANT_ID),
-                assigneeMR, assigneeTissue, realm,
-                rs.getString(DBConstants.ONC_HISTORY_CREATED),
-                rs.getString(DBConstants.ONC_HISTORY_REVIEWED),
-                rs.getString(DBConstants.CR_SENT),
-                rs.getString(DBConstants.CR_RECEIVED),
-                rs.getString(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.NOTES),
-                rs.getBoolean(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.MINIMAL_MR),
-                rs.getBoolean(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ABSTRACTION_READY),
-                rs.getString(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ADDITIONAL_VALUES_JSON),
-                (Long) rs.getObject(DBConstants.EXIT_DATE));
+        Participant participant =
+                new Participant(rs.getLong(DBConstants.PARTICIPANT_ID), rs.getString(DBConstants.DDP_PARTICIPANT_ID), assigneeMR,
+                        assigneeTissue, realm, rs.getString(DBConstants.ONC_HISTORY_CREATED),
+                        rs.getString(DBConstants.ONC_HISTORY_REVIEWED), rs.getString(DBConstants.CR_SENT),
+                        rs.getString(DBConstants.CR_RECEIVED),
+                        rs.getString(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.NOTES),
+                        rs.getBoolean(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.MINIMAL_MR),
+                        rs.getBoolean(
+                                DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ABSTRACTION_READY),
+                        rs.getString(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER
+                                + DBConstants.ADDITIONAL_VALUES_JSON), (Long) rs.getObject(DBConstants.EXIT_DATE));
         return participant;
     }
 
