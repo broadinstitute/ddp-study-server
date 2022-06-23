@@ -20,7 +20,7 @@ import org.jdbi.v3.core.Handle;
  */
 public class DDPAuth implements Serializable {
 
-    private String issuer = null;
+    private String domain = null;
     private String client = null;
 
     /**
@@ -41,10 +41,10 @@ public class DDPAuth implements Serializable {
      * Instantiates DDPAuth object.
      */
     public DDPAuth(
-            String issuer, String clientGuid, String operatorGuid, String token,
+            String domain, String clientGuid, String operatorGuid, String token,
             UserPermissions userPermissions, String preferredLanguage
     ) {
-        this.issuer = issuer;
+        this.domain = domain;
         this.client = clientGuid;
         this.operator = operatorGuid;
         this.token = token;
@@ -96,8 +96,8 @@ public class DDPAuth implements Serializable {
         return token;
     }
 
-    public String getIssuer() {
-        return issuer;
+    public String getDomain() {
+        return domain;
     }
 
     /**
