@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.broadinstitute.dsm.TestHelper;
@@ -133,7 +134,10 @@ public class CohortTagUseCaseTest {
                     Arrays.asList(COHORT_TAG_NAME + 1, COHORT_TAG_NAME + 2), Arrays.asList(GUID, GUID2)
             );
             cohortTagUseCase.setBulkCohortTag(bulkCohortTag);
-            bulkCreatedCohortTagsIds.addAll(cohortTagUseCase.bulkInsert());
+
+            List<CohortTag> cohortTags = cohortTagUseCase.bulkInsert();
+            List<Integer> cohortTagsIds = cohortTags.stream().map(CohortTag::getCohortTagId).collect(Collectors.toList());
+            bulkCreatedCohortTagsIds.addAll(cohortTagsIds);
 
             ElasticSearchParticipantDto elasticSearchParticipantDto = getElasticSearchParticipantDto(GUID);
             ElasticSearchParticipantDto elasticSearchParticipantDto2 = getElasticSearchParticipantDto(GUID2);
