@@ -43,7 +43,7 @@ public class Participant implements Cloneable {
             + "LEFT JOIN ddp_onc_history o on (o.participant_id = p.participant_id) "
             + "LEFT JOIN ddp_participant_record r on (r.participant_id = p.participant_id) "
             + "LEFT JOIN ddp_participant_exit ex on (p.ddp_participant_id = ex.ddp_participant_id "
-            + "AND p.ddp_instance_id = ex.ddp_instance_id) " + "WHERE realm.instance_name = ? ";
+            + "AND p.ddp_instance_id = ex.ddp_instance_id) WHERE realm.instance_name = ? ";
 
     @ColumnName(DBConstants.PARTICIPANT_ID)
     private Long participantId;
