@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 public abstract class BasicDefaultDataMaker implements Defaultable {
 
-    protected static final Logger logger = LoggerFactory.getLogger(RgpAutomaticProbandDataCreator.class);
+    protected static final Logger logger = LoggerFactory.getLogger(BasicDefaultDataMaker.class);
 
     protected final FieldSettings fieldSettings = new FieldSettings();
     protected final BookmarkDao bookmarkDao = new BookmarkDao();
