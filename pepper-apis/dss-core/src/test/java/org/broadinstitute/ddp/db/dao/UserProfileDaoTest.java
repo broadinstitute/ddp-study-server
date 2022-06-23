@@ -28,16 +28,17 @@ public class UserProfileDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             User user = handle.attach(UserDao.class).createTempUser(testData.getClientId());
 
-            UserProfile profile = new UserProfile.Builder(user.getId())
-                    .setFirstName("first")
-                    .setLastName("last")
-                    .setBirthDate(LocalDate.of(1987, 3, 14))
+            UserProfile profile = UserProfile.builder()
+                    .userId(user.getId())
+                    .firstName("first")
+                    .lastName("last")
+                    .birthDate(LocalDate.of(1987, 3, 14))
                     .build();
             handle.attach(UserProfileDao.class).createProfile(profile);
 
             UserProfile actual = handle.attach(UserProfileDao.class).findProfileByUserGuid(user.getGuid()).orElse(null);
             assertNotNull(actual);
-            assertEquals(user.getId(), actual.getUserId());
+            assertEquals(Long.valueOf(user.getId()), actual.getUserId());
             assertEquals("first", actual.getFirstName());
             assertEquals("last", actual.getLastName());
             assertNull(actual.getSexType());

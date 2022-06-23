@@ -101,7 +101,7 @@ public class StudyPasswordResetEmailGenerator {
      * @param redirectUrlAfterPasswordReset URL to redirect User after succesful password reset
      * @param sendgridTemplateId the SendGrid template id for the message
      * @param mgmtClient the Auth0 management client
-     * @return
+     * @return true if the password reset email was sent, false otherwise
      */
     public boolean sendPasswordResetEmails(String studyGuid, List<ProfileWithEmail> addresseeProfiles, String fromEmailName,
                                            String fromEmailAddress, String emailSubject, String redirectUrlAfterPasswordReset,
@@ -200,8 +200,8 @@ public class StudyPasswordResetEmailGenerator {
     }
 
     List<ProfileWithEmail> findUserProfilesForParticipantsNotExitedThatCanBeContacted(String studyGuid,
-                                                                                              Auth0ManagementClient mgmtClient,
-                                                                                              Handle handle) {
+                                                                            Auth0ManagementClient mgmtClient,
+                                                                            Handle handle) {
         List<EnrollmentStatusDto> allStudyEnrollments = handle.attach(JdbiUserStudyEnrollment.class).findByStudyGuid(studyGuid);
 
         final UserProfileDao profileDao = handle.attach(UserProfileDao.class);
@@ -209,11 +209,23 @@ public class StudyPasswordResetEmailGenerator {
         return allStudyEnrollments.stream()
                 .filter(each -> !each.getEnrollmentStatus().isExited() && each.getEnrollmentStatus().shouldReceiveCommunications())
                 .map(userEnrollment -> {
-                    UserProfile profile = profileDao.findProfileByUserId(userEnrollment.getUserId()).orElse(null);
-                    UserDto userDto = userDao.findByUserId(userEnrollment.getUserId());
-                    String userEmail = userDto != null ? getUserEmail(userDto.getAuth0UserId(), mgmtClient) : null;
-                    return new ProfileWithEmail(profile, userEmail);
+                    var userId = userEnrollment.getUserId();
+                    var userDto = userDao.findByUserId(userId);
+                    if (userDto == null) {
+                        // This will be filtered out in the next step of the stream
+                        return new ProfileWithEmail(null, null);
+                    }
+
+                    var profile = profileDao.findProfileByUserId(userId).orElse(null);
+
+                    String email = null;
+                    if (userDto.getAuth0UserId().isPresent()) {
+                        email = getUserEmail(userDto.getAuth0UserId().get(), mgmtClient);
+                    }
+
+                    return new ProfileWithEmail(profile, email);
                 })
+                .filter(profile -> (profile.getProfile() != null) && (profile.getEmailAddress() != null))
                 .filter(profileWithEmail -> !profileWithEmail.getProfile().getDoNotContact())
                 .collect(toList());
     }

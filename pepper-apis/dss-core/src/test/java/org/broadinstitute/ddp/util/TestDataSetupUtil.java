@@ -593,27 +593,29 @@ public class TestDataSetupUtil {
      */
     public static UserProfile createTestingProfile(Handle handle, long userId, boolean random) {
         Random rand = new Random();
-        UserProfile profile = new UserProfile.Builder(userId)
-                .setFirstName(random
+        UserProfile profile = UserProfile.builder()
+                .userId(userId)
+                .firstName(random
                         ? "John" + GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 10)
                         : TestConstants.TEST_USER_PROFILE_FIRST_NAME)
-                .setLastName(random
+                .lastName(random
                         ? "Doe" + GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 10)
                         : TestConstants.TEST_USER_PROFILE_LAST_NAME)
-                .setSexType(random
+                .sexType(random
                         ? UserProfile.SexType.values()[rand.nextInt(UserProfile.SexType.values().length)]
                         : TestConstants.TEST_USER_PROFILE_SEX)
-                .setBirthDate(LocalDate.of(
+                .birthDate(LocalDate.of(
                         random ? rand.ints(1800, 2017).findFirst().getAsInt()
                                 : TestConstants.TEST_USER_PROFILE_BIRTH_YEAR,
                         random ? rand.ints(1, 12).findFirst().getAsInt()
                                 : TestConstants.TEST_USER_PROFILE_BIRTH_MONTH,
                         random ? rand.ints(1, 28).findFirst().getAsInt()
                                 : TestConstants.TEST_USER_PROFILE_BIRTH_DAY))
-                .setPreferredLangId(LanguageStore
+                .preferredLangId(LanguageStore
                         .get(TestConstants.TEST_USER_PROFILE_PREFERRED_LANGUAGE)
                         .getId())
-                .setSkipLanguagePopup(random
+                .preferredLangCode(null)
+                .skipLanguagePopup(random
                         ? rand.nextBoolean()
                         : TestConstants.TEST_USER_PROFILE_SKIP_LANGUAGE_POPUP)
                 .build();

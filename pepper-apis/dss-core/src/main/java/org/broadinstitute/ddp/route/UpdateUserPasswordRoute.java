@@ -39,10 +39,15 @@ public class UpdateUserPasswordRoute extends ValidatedJsonInputRoute<UpdateUserP
                     UpdateUserLoginDataUtil.validateUserForLoginDataUpdateEligibility(userDto, response);
 
                     ManagementAPI mgmtAPI = Auth0Util.getManagementApiInstanceForUser(userDto.getUserGuid(), handle);
+
+                    // Check in UpdateUserLoginDataUtil::validateUserForLoginDataUpdateEligibility guarantee
+                    // that the auth0 user id is not null at this point
+                    var auth0UserId = userDto.getAuth0UserId().get();
+
                     //get auth0 username or email to verify credentials
                     User auth0User;
                     try {
-                        auth0User = mgmtAPI.users().get(userDto.getAuth0UserId(), null).execute();
+                        auth0User = mgmtAPI.users().get(auth0UserId, null).execute();
                     } catch (Auth0Exception e) {
                         ApiError err = new ApiError(ErrorCodes.USER_NOT_FOUND_IN_AUTH0, String.format(
                                 "Auth0User not found for user %s ", userGuid));

@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.db.dao;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
@@ -35,8 +34,8 @@ public class UserGovernanceDaoTest extends TxnAwareBaseTest {
             assertTrue(gov.getGrantedStudies().isEmpty());
 
             User governed = handle.attach(UserDao.class).findUserById(gov.getGovernedUserId()).get();
-            assertNull(governed.getAuth0UserId());
-            assertEquals(testData.getClientId(), governed.getCreatedByClientId());
+            assertFalse(governed.hasAuth0Account());
+            assertEquals(testData.getClientId(), governed.getCreatedByClientId().longValue());
 
             handle.rollback();
         });
@@ -54,8 +53,8 @@ public class UserGovernanceDaoTest extends TxnAwareBaseTest {
             assertTrue(gov.getGrantedStudies().isEmpty());
 
             User governed = handle.attach(UserDao.class).findUserById(gov.getGovernedUserId()).get();
-            assertNull(governed.getAuth0UserId());
-            assertEquals(testData.getClientId(), governed.getCreatedByClientId());
+            assertFalse(governed.hasAuth0Account());
+            assertEquals(testData.getClientId(), governed.getCreatedByClientId().longValue());
 
             handle.rollback();
         });

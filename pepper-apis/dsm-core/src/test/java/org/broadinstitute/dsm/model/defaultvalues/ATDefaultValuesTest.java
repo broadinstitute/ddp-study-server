@@ -1,10 +1,7 @@
 package org.broadinstitute.dsm.model.defaultvalues;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
-import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
 import org.broadinstitute.dsm.model.elastic.ESActivities;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.junit.Assert;
@@ -17,16 +14,12 @@ public class ATDefaultValuesTest {
         ATDefaultValues defaultValues = new ATDefaultValues();
 
         ESActivities esActivities = new ESActivities();
-        esActivities.setActivityCode(ATDefaultValues.ACTIVITY_CODE_PREQUAL);
-        esActivities.setQuestionsAnswers(Collections.singletonList(Map.of(
-                DDPActivityConstants.DDP_ACTIVITY_STABLE_ID, ATDefaultValues.PREQUAL_SELF_DESCRIBE,
-                ATDefaultValues.QUESTION_ANSWER, List.of(ATDefaultValues.SELF_DESCRIBE_CHILD_DIAGNOSED))));
+        esActivities.setActivityCode(ATDefaultValues.ACTIVITY_CODE_REGISTRATION);
+        esActivities.setStatus(ATDefaultValues.COMPLETE);
 
         ESActivities esActivities2 = new ESActivities();
-        esActivities2.setActivityCode(ATDefaultValues.ACTIVITY_CODE_PREQUAL);
-        esActivities2.setQuestionsAnswers(Collections.singletonList(Map.of(
-                DDPActivityConstants.DDP_ACTIVITY_STABLE_ID, ATDefaultValues.PREQUAL_SELF_DESCRIBE,
-                ATDefaultValues.QUESTION_ANSWER, List.of(ATDefaultValues.SELF_DESCRIBE_CHILD_DIAGNOSED))));
+        esActivities2.setActivityCode(ATDefaultValues.ACTIVITY_CODE_REGISTRATION);
+        esActivities2.setStatus(ATDefaultValues.COMPLETE);
 
         ElasticSearchParticipantDto participantDto = new ElasticSearchParticipantDto.Builder()
                 .withActivities(List.of(esActivities))
@@ -34,10 +27,10 @@ public class ATDefaultValuesTest {
 
         defaultValues.elasticSearchParticipantDto = participantDto;
 
-        Assert.assertTrue(defaultValues.isSelfOrDependentParticipant());
+        Assert.assertTrue(defaultValues.isParticipantRegistrationComplete());
 
         participantDto.setActivities(List.of(esActivities2));
 
-        Assert.assertTrue(defaultValues.isSelfOrDependentParticipant());
+        Assert.assertTrue(defaultValues.isParticipantRegistrationComplete());
     }
 }
