@@ -40,6 +40,7 @@ import spark.Response;
 public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<CreateUserActivityUploadPayload> {
     private final FileUploadService service;
     private static final int MB_IN_BYTES = 1048576;
+
     @Override
     protected int getValidationErrorStatus() {
         return HttpStatus.SC_BAD_REQUEST;
