@@ -68,12 +68,12 @@ public class WorkflowStatusUpdate {
                                 || participantDataDto.getFieldTypeId().orElse("").contains(FamilyMemberConstants.PARTICIPANTS));
                 if (isOldParticipant) {
                     participantDatas.forEach(participantDataDto -> {
-                        updateProbandStatusInDB(workflow, status, participantDataDto, studyGuid);
+                        updateProbandStatusInDB(workflow, status, participantDataDto, setting);
                     });
                 } else {
                     addNewParticipantDataWithStatus(workflow, status, ddpParticipantId, setting);
                 }
-                exportToESifNecessary(workflow, status, ddpParticipantId, instance, setting, participantDatas);
+                exportWorkflowToESifNecessary(workflow, status, ddpParticipantId, instance, setting, participantDatas);
 
                 try {
                     if (isATRelatedStatusUpdate(studyGuid)) {
@@ -91,7 +91,6 @@ public class WorkflowStatusUpdate {
                 }
             }
         }
-
     }
 
     private static boolean isATRelatedStatusUpdate(String studyGuid) {
@@ -103,8 +102,8 @@ public class WorkflowStatusUpdate {
         return OSTEO_RECONSENTED_WORKFLOW.equals(workflow) && OSTEO_RECONSENTED_WORKFLOW_STATUS.equals(status);
     }
 
-    public static void exportToESifNecessary(String workflow, String status, String ddpParticipantId, DDPInstance instance,
-                                             FieldSettingsDto setting, List<ParticipantData> participantDatas) {
+    public static void exportWorkflowToESifNecessary(String workflow, String status, String ddpParticipantId, DDPInstance instance,
+                                                     FieldSettingsDto setting, List<ParticipantData> participantDatas) {
         String actions = setting.getActions();
         if (actions == null) {
             return;
@@ -154,13 +153,15 @@ public class WorkflowStatusUpdate {
         return participantDataId;
     }
 
-    public static void updateProbandStatusInDB(String workflow, String status, ParticipantData participantData, String studyGuid) {
+    public static void updateProbandStatusInDB(String workflow, String status, ParticipantData participantData, FieldSettingsDto setting) {
         String oldData = participantData.getData().orElse(null);
         if (oldData == null) {
             return;
         }
         JsonObject dataJsonObject = gson.fromJson(oldData, JsonObject.class);
-        if ((participantData.getFieldTypeId().orElse("").contains("GROUP") || isProband(gson.fromJson(dataJsonObject, Map.class)))) {
+        if ((participantData.getFieldTypeId().orElse("").equals(setting.getFieldType())
+                || isProband(gson.fromJson(dataJsonObject, Map.class)))) {
+            logger.info("Updating setting.getFieldType() " + setting.getFieldType() + " with workflow " + workflow);
             dataJsonObject.addProperty(workflow, status);
             participantDataDao.updateParticipantDataColumn(
                     new ParticipantData.Builder().withParticipantDataId(participantData.getParticipantDataId())
