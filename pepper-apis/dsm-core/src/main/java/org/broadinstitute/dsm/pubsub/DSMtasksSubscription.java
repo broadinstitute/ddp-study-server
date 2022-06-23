@@ -130,7 +130,6 @@ public class DSMtasksSubscription {
             consumer.ack();
             return;
         }
-        ;
         Arrays.stream(Study.values()).filter(study -> study.toString().equals(studyGuid.toUpperCase())).findFirst()
                 .ifPresentOrElse(study -> {
                     Defaultable defaultable = DefaultableMaker.makeDefaultable(study);

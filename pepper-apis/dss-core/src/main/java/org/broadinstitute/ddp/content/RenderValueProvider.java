@@ -225,6 +225,10 @@ public class RenderValueProvider {
      */
     public String checkAnswer(String questionStableId, String optionStableId,
                               String stringIfMatches, String stringOtherwise) {
+        //only used during elastic export
+        if (useDefaultsForDdpMethods) {
+            return String.format("%s/%s", stringIfMatches, stringOtherwise);
+        }
         Answer answer = null;
         if (formResponse != null) {
             answer = formResponse.getAnswer(questionStableId);

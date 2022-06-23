@@ -59,6 +59,7 @@ public class RouteConstants {
         public static final String INVITATION_CHECK = fmt(BASE + "/studies/%s/invitation-check", PathParam.STUDY_GUID);
 
         public static final String USER_ALL = fmt(BASE + "/user/%s/*", PathParam.USER_GUID);
+        public static final String USERS = fmt(BASE + "/user", PathParam.USER_GUID);
         public static final String USER_SPECIFIC = fmt(BASE + "/user/%s", PathParam.USER_GUID);
         public static final String UPDATE_USER_PASSWORD = USER_SPECIFIC + "/password";
         public static final String UPDATE_USER_EMAIL = USER_SPECIFIC + "/email";
@@ -196,7 +197,6 @@ public class RouteConstants {
         public static final String ADDRESS_GUID = ":addressGuid";
         public static final String MEDICAL_PROVIDER_GUID = ":medicalProviderGuid";
         public static final String INSTITUTION_TYPE = ":institutionType";
-        public static final String INVITATION_ID = ":invitationId";
         public static final String QUESTION_STABLE_ID = ":questionStableId";
     }
 
@@ -206,7 +206,6 @@ public class RouteConstants {
         public static final String FROM = "from";
         public static final String ACTIVITY_CODE = "activityCode";
         public static final String INSTANCE_GUID = "instanceGuid";
-        public static final String IRB_PASSWORD = "irbPassword";
         public static final String AUTH0_CLIENT_ID  = "clientId";
         public static final String AUTH0_DOMAIN  = "domain";
         public static final String EMAIL = "email";
@@ -217,5 +216,4 @@ public class RouteConstants {
         public static final String ERROR_CODE = "errorCode";
         public static final String SENDGRID_EVENT_REQUEST_BODY = "requestBody";
     }
-
 }
