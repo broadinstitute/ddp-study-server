@@ -43,7 +43,7 @@ public class UpdateEmailHandler {
         if (userDto == null) {
             errMsg = "User " + userDto.getUserGuid() + " does not exist in Pepper";
         }
-        if (userDto.getAuth0UserId() == null) {
+        if (userDto.getAuth0UserId().isEmpty()) {
             errMsg = "User " + userDto.getUserGuid() + " is not associated with the Auth0 user " + userDto.getAuth0UserId();
         }
         if (errMsg != null) {

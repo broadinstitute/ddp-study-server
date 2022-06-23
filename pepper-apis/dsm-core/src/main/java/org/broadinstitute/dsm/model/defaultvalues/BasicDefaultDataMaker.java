@@ -39,6 +39,7 @@ public abstract class BasicDefaultDataMaker implements Defaultable {
         }
         instance = DDPInstance.getDDPInstance(studyGuid);
         elasticSearchParticipantDto = maybeParticipantESDataByParticipantId.get();
+        logger.info("Calling setDefaultData for index: " + esParticipantIndex + " and participantId: " + participantId);
         return setDefaultData();
     }
 }

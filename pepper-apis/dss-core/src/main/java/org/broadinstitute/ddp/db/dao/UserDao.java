@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.jdbi.v3.core.Handle;
@@ -46,6 +47,38 @@ public interface UserDao extends SqlObject {
     @CreateSqlObject
     UserSql getUserSql();
 
+    /**
+     * Creates a new user given the OAuth Client ID of the requestor,
+     * and the desired email for the new user.
+     * 
+     * <p>Since this method can return a user, if one already exists, the created by
+     * client id may not match the one provided.
+     * @param createdByClientId the OAuth Client ID creating the user
+     * @param email the desired email for the new user
+     * @return The new user, or null if the user already exists
+     */
+    default User createUserByEmail(String email) {
+        final var handle = getHandle();
+        
+        var user = findUserByEmail(email);
+        if (user.isPresent()) {
+            // User already exists!
+            throw new DDPException("user creation failed: user with email already exists");
+        }
+
+        // The user doesn't seem to exist yet, so do the more expensive
+        // checks (since userGuid and userHruid may require multiple
+        // DB round trips)
+        final var guid = DBUtils.uniqueUserGuid(handle);
+        final var hruid = DBUtils.uniqueUserHruid(handle);
+
+        final var userSql = getUserSql();
+        long now = Instant.now().toEpochMilli();
+
+        long userId = userSql.insertByEmail(guid, email, hruid, false, now, now);
+        return findUserById(userId).orElseThrow(() -> new DaoException("Internal inconsistency: user with id "
+            + userId + " was created, but can not be found."));
+    }
 
     default User createUser(String auth0Domain, String auth0ClientId, String auth0UserId) {
         return createUserByClientIdOrAuth0Ids(false, null, auth0Domain, auth0ClientId, auth0UserId, false);
@@ -88,6 +121,11 @@ public interface UserDao extends SqlObject {
     @SqlQuery("queryUserByGuid")
     @RegisterConstructorMapper(User.class)
     Optional<User> findUserByGuid(@Bind("guid") String userGuid);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryUserByEmail")
+    @RegisterConstructorMapper(User.class)
+    Optional<User> findUserByEmail(@Bind("email") String email);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryUserByHruid")
