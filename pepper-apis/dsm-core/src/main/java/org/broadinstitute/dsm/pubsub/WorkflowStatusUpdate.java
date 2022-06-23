@@ -74,11 +74,13 @@ public class WorkflowStatusUpdate {
                     addNewParticipantDataWithStatus(workflow, status, ddpParticipantId, setting);
                 }
                 exportToESifNecessary(workflow, status, ddpParticipantId, instance, setting, participantDatas);
+
                 try {
                     if (isATRelatedStatusUpdate(studyGuid)) {
                         boolean hasGenomicStudyGroup = participantDatas.stream().anyMatch(
                                 participantDataDto -> ATDefaultValues.GENOME_STUDY_FIELD_TYPE.equals(
                                         participantDataDto.getFieldTypeId().get()));
+                        logger.info("ddpParticipantId: " + ddpParticipantId + " hasGenomicStudyGroup " + hasGenomicStudyGroup);
                         if (!hasGenomicStudyGroup) {
                             ATDefaultValues basicDefaultDataMaker = new ATDefaultValues();
                             basicDefaultDataMaker.generateDefaults(studyGuid, ddpParticipantId);
@@ -93,6 +95,7 @@ public class WorkflowStatusUpdate {
     }
 
     private static boolean isATRelatedStatusUpdate(String studyGuid) {
+        logger.info("studyGuid: " + studyGuid);
         return ATCP_STUDY_GUID.equals(studyGuid);
     }
 
