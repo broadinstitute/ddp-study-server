@@ -8,7 +8,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -150,7 +150,7 @@ public class AdminCreateStudyParticipantRouteStandaloneTest extends IntegrationT
 
             TransactionWrapper.useTxn(handle -> {
                 var createdUser = handle.attach(UserDao.class).findUserByGuid(userGuid).get();
-                assertNull("should not have auth0 account", createdUser.getAuth0UserId());
+                assertFalse("should not have auth0 account", createdUser.hasAuth0Account());
                 assertTrue("should have user profile", handle.attach(UserProfileDao.class)
                         .findProfileByUserGuid(userGuid).isPresent());
 
