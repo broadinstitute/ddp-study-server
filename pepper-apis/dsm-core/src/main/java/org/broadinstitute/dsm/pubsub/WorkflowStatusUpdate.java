@@ -34,7 +34,7 @@ public class WorkflowStatusUpdate {
     public static final String DSS = "DSS";
     public static final String OSTEO_RECONSENTED_WORKFLOW = "OSTEO_RECONSENTED";
     public static final String OSTEO_RECONSENTED_WORKFLOW_STATUS = "Complete";
-    public static final String ATCP_STUDY_GUID = "ATCP";
+    public static final String ATCP_STUDY_GUID = "atcp";
 
     private static final Gson gson = new Gson();
 
@@ -96,7 +96,7 @@ public class WorkflowStatusUpdate {
 
     private static boolean isATRelatedStatusUpdate(String studyGuid) {
         logger.info("studyGuid: " + studyGuid);
-        return ATCP_STUDY_GUID.equals(studyGuid);
+        return ATCP_STUDY_GUID.equalsIgnoreCase(studyGuid);
     }
 
     private static boolean isOsteoRelatedStatusUpdate(String workflow, String status) {
