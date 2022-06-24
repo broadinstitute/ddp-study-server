@@ -6,8 +6,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
-import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.db.dto.tag.cohort.BulkCohortTagPayload;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.model.elastic.ESProfile;
 import org.broadinstitute.dsm.model.elastic.export.painless.AddListToNestedByGuidScriptBuilder;
@@ -15,15 +13,11 @@ import org.broadinstitute.dsm.model.elastic.export.painless.NestedUpsertPainless
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.filter.Filterable;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
-import spark.QueryParamsMap;
 
 public class FilteredOrAllPatientsCohortStrategy extends BaseCohortStrategy {
     private static final int THRESHOLD = 500;
 
-    public FilteredOrAllPatientsCohortStrategy(QueryParamsMap queryMap,
-                                               DDPInstanceDto ddpInstanceDto,
-                                               BulkCohortTagPayload bulkCohortTagPayload) {
-        super(queryMap, ddpInstanceDto, bulkCohortTagPayload);
+    public FilteredOrAllPatientsCohortStrategy() {
     }
 
     @Override
@@ -37,7 +31,7 @@ public class FilteredOrAllPatientsCohortStrategy extends BaseCohortStrategy {
 
         setInitialRange(filter);
 
-        ParticipantWrapperResult filteredResult = filter.filter(queryMap);
+        ParticipantWrapperResult filteredResult = filter.filter(getQueryMap());
 
         long totalPages = calculateTotalPages(filteredResult);
 
@@ -45,12 +39,12 @@ public class FilteredOrAllPatientsCohortStrategy extends BaseCohortStrategy {
             if (isNotFirstPage(i)) {
                 filter.setFrom(i * THRESHOLD);
                 filter.setTo((i + 1) * THRESHOLD);
-                filteredResult = filter.filter(queryMap);
+                filteredResult = filter.filter(getQueryMap());
             }
             List<String> selectedPatients = extractSelectedPatientsGuids(filteredResult);
             BulkCohortTag bulkCohortTag = new BulkCohortTag(bulkCohortTagPayload.getCohortTags(), selectedPatients);
             CohortTagUseCase cohortTagUseCase =
-                    new CohortTagUseCase(bulkCohortTag, ddpInstanceDto, new CohortTagDaoImpl(), new ElasticSearch(),
+                    new CohortTagUseCase(bulkCohortTag, getDDPInstanceDto(), new CohortTagDaoImpl(), new ElasticSearch(),
                             new NestedUpsertPainlessFacade(), new AddListToNestedByGuidScriptBuilder());
             List<CohortTag> createdCohortTags = cohortTagUseCase.bulkInsert();
             resultToReturn.addAll(createdCohortTags);

@@ -6,14 +6,20 @@ import spark.QueryParamsMap;
 
 public abstract class BaseCohortStrategy implements CohortStrategy {
 
-    protected QueryParamsMap queryMap;
-    protected DDPInstanceDto ddpInstanceDto;
     protected BulkCohortTagPayload bulkCohortTagPayload;
 
-    public BaseCohortStrategy(QueryParamsMap queryMap, DDPInstanceDto ddpInstanceDto,
-                              BulkCohortTagPayload bulkCohortTagPayload) {
-        this.queryMap = queryMap;
-        this.ddpInstanceDto = ddpInstanceDto;
+    public BaseCohortStrategy() {}
+
+    @Override
+    public void setBulkCohortTagPayload(BulkCohortTagPayload bulkCohortTagPayload) {
         this.bulkCohortTagPayload = bulkCohortTagPayload;
+    }
+
+    protected DDPInstanceDto getDDPInstanceDto() {
+        return bulkCohortTagPayload.getDdpInstanceDto();
+    }
+
+    protected QueryParamsMap getQueryMap() {
+        return bulkCohortTagPayload.getQueryMap();
     }
 }
