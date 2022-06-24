@@ -16,7 +16,7 @@ public class BulkCohortTagCreationStrategyFactoryTest {
         BulkCohortTagPayload bulkCohortTagPayload = new BulkCohortTagPayload();
         bulkCohortTagPayload.setSelectedPatients(Arrays.asList("P1", "P2"));
         BulkCohortTagCreationStrategyFactory bulkCohortTagCreationStrategyFactory =
-                new BulkCohortTagCreationStrategyFactory(null, null, bulkCohortTagPayload, null);
+                new BulkCohortTagCreationStrategyFactory(null, null, bulkCohortTagPayload);
 
         CohortStrategy strategy = bulkCohortTagCreationStrategyFactory.instance();
         assertTrue(strategy instanceof SelectedPatientsCohortStrategy);
@@ -24,12 +24,12 @@ public class BulkCohortTagCreationStrategyFactoryTest {
         bulkCohortTagPayload = new BulkCohortTagPayload();
         bulkCohortTagPayload.setSavedFilter(new ViewFilter());
         bulkCohortTagCreationStrategyFactory
-                = new BulkCohortTagCreationStrategyFactory(null, null, bulkCohortTagPayload, null);
+                = new BulkCohortTagCreationStrategyFactory(null, null, bulkCohortTagPayload);
         assertTrue(bulkCohortTagCreationStrategyFactory.instance() instanceof FilteredOrAllPatientsCohortStrategy);
 
         bulkCohortTagPayload = new BulkCohortTagPayload();
         bulkCohortTagCreationStrategyFactory
-                = new BulkCohortTagCreationStrategyFactory(null, null, bulkCohortTagPayload, null);
+                = new BulkCohortTagCreationStrategyFactory(null, null, bulkCohortTagPayload);
         assertTrue(bulkCohortTagCreationStrategyFactory.instance() instanceof FilteredOrAllPatientsCohortStrategy);
 
     }
