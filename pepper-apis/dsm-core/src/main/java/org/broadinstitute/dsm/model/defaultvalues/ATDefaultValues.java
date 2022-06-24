@@ -33,7 +33,13 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
 
     @Override
     protected boolean setDefaultData() {
+        if (elasticSearchParticipantDto == null) {
+            logger.info("elasticSearchParticipantDto was null");
+            return false;
+        }
+
         if (isParticipantDataNotInES()) {
+            logger.info("Participant does not have profile and activities in ES yet...");
             return false;
         }
 
@@ -47,7 +53,6 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
     }
 
     private boolean isParticipantDataNotInES() {
-        logger.info("Participant does not have profile and activities in ES yet...");
         return elasticSearchParticipantDto.getProfile().isEmpty() && elasticSearchParticipantDto.getActivities().isEmpty();
     }
 
@@ -70,10 +75,9 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
 
     private String getGenomicIdValue(String hruid) {
         this.setDataAccess(new BookmarkDao());
-        BookmarkDao dataAccess = (BookmarkDao) this.dataAccess;
-        Optional<BookmarkDto> maybeGenomicId = dataAccess.getBookmarkByInstance(AT_GENOMIC_ID);
+        Optional<BookmarkDto> maybeGenomicId = ((BookmarkDao) dataAccess).getBookmarkByInstance(AT_GENOMIC_ID);
         return maybeGenomicId.map(bookmarkDto -> {
-            dataAccess.updateBookmarkValueByBookmarkId(bookmarkDto.getBookmarkId(), bookmarkDto.getValue() + 1);
+            ((BookmarkDao) dataAccess).updateBookmarkValueByBookmarkId(bookmarkDto.getBookmarkId(), bookmarkDto.getValue() + 1);
             return String.valueOf(bookmarkDto.getValue());
         }).orElse(hruid);
     }

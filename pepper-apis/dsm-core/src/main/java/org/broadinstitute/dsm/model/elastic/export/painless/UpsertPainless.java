@@ -46,7 +46,14 @@ public class UpsertPainless implements Exportable {
                     "created/updated %s records in ES data for %s", getNumberOfUpserted(bulkByScrollResponse), generator.getPropertyName())
             );
         } catch (IOException e) {
-            throw new RuntimeException("Error occurred while exporting data to ES", e);
+            try {
+                BulkByScrollResponse bulkByScrollResponse = clientInstance.updateByQuery(updateByQueryRequest, RequestOptions.DEFAULT);
+                logger.info(String.format("created/updated %s records in ES data for %s", getNumberOfUpserted(bulkByScrollResponse),
+                        generator.getPropertyName())
+                );
+            } catch (IOException retryE) {
+                throw new RuntimeException("Error occurred while exporting data to ES", retryE);
+            }
         }
     }
 
