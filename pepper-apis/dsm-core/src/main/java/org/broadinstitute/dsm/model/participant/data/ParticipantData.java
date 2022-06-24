@@ -143,8 +143,9 @@ public class ParticipantData {
 
         try {
             UpsertPainlessFacade.of(DBConstants.DDP_PARTICIPANT_DATA_ALIAS, participantData, ddpInstanceDto,
-                    ESObjectConstants.PARTICIPANT_DATA_ID, ESObjectConstants.PARTICIPANT_DATA_ID, createdDataKey,
-                    new PutToNestedScriptBuilder()).export();
+                            ESObjectConstants.PARTICIPANT_DATA_ID, ESObjectConstants.DOC_ID,
+                            participantGuid, new PutToNestedScriptBuilder())
+                    .export();
         } catch (Exception e) {
             logger.error(String.format("Error inserting participant data for guid: %s in ElasticSearch", participantGuid));
             e.printStackTrace();
