@@ -14,25 +14,25 @@ public class OsteoV2Updates implements CustomTask {
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
-//        tasks.add(new OsteoNewActivities());
-//        tasks.add(new OsteoConsentVersion2());
-//        tasks.add(new OsteoDdp7601());
-//        tasks.add(new OsteoAboutYouV2());
-//        tasks.add(new OsteoPrequalUpdate());
-//        tasks.add(new OsteoAboutChildV2());
-//        tasks.add(new OsteoMRFv2());
-//        tasks.add(new OsteoPDFv2());
-//        tasks.add(new OsteoAdultConsentFixes());
-//        tasks.add(new OsteoActivityDetailsUpdate());
-//        tasks.add(new OsteoLovedOneV2());
-//        tasks.add(new OsteoGovernanceFix());
-//        tasks.add(new OsteoNewFamilyHistory());
-//
-//        // Last
-//        tasks.add(new OsteoInsertEvents());
-//        tasks.add(new UpdateStudyWorkflows());
-//        tasks.add(new UpdateStudyWorkflows());
+        tasks.add(new OsteoNewActivities());
+        tasks.add(new OsteoConsentVersion2());
+        tasks.add(new OsteoDdp7601());
+        tasks.add(new OsteoAboutYouV2());
+        tasks.add(new OsteoPrequalUpdate());
+        tasks.add(new OsteoAboutChildV2());
+        tasks.add(new OsteoMRFv2());
         tasks.add(new OsteoUpdatePDFConfigurationV2());
+        tasks.add(new OsteoPDFv2());
+        tasks.add(new OsteoAdultConsentFixes());
+        tasks.add(new OsteoActivityDetailsUpdate());
+        tasks.add(new OsteoLovedOneV2());
+        tasks.add(new OsteoGovernanceFix());
+        tasks.add(new OsteoNewFamilyHistory());
+
+        // Last
+        tasks.add(new OsteoInsertEvents());
+        tasks.add(new UpdateStudyWorkflows());
+        tasks.add(new UpdateStudyWorkflows());
         tasks.forEach(t -> t.init(cfgPath, studyCfg, varsCfg));
     }
 
