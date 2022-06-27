@@ -240,7 +240,7 @@ public class StudyBuilder {
         return dto;
     }
 
-    private UmbrellaDto getUmbrellaOrInsert(Handle handle) {
+    public UmbrellaDto getUmbrellaOrInsert(Handle handle) {
         Config umbrellaCfg = cfg.getConfig("umbrella");
         String name = umbrellaCfg.getString("name");
         String guid = umbrellaCfg.getString("guid");
@@ -271,7 +271,7 @@ public class StudyBuilder {
         return dto;
     }
 
-    private StudyDto getStudyOrInsert(Handle handle, long tenantId, long umbrellaId) {
+    public StudyDto getStudyOrInsert(Handle handle, long tenantId, long umbrellaId) {
         Config studyCfg = cfg.getConfig("study");
         String name = studyCfg.getString("name");
         String guid = studyCfg.getString("guid");
@@ -397,7 +397,7 @@ public class StudyBuilder {
         return dto;
     }
 
-    private UserDto getAdminUserOrInsert(Handle handle, long clientId) {
+    public UserDto getAdminUserOrInsert(Handle handle, long clientId) {
         Config adminCfg = cfg.getConfig("adminUser");
         String guid = adminCfg.getString("guid");
 

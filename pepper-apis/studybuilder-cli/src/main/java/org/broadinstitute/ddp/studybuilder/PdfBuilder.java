@@ -138,7 +138,7 @@ public class PdfBuilder {
                 baseTemplateid, studyDto.getGuid(), pageType);
     }
 
-    void run(Handle handle) {
+    public void run(Handle handle) {
         if (!cfg.hasPath("pdfs")) {
             return;
         }
