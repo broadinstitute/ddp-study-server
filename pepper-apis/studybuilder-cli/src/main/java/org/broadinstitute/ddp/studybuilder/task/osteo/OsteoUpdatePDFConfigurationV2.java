@@ -1,9 +1,9 @@
 package org.broadinstitute.ddp.studybuilder.task.osteo;
 
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
-import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.PdfDao;
 import org.broadinstitute.ddp.db.dto.*;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -16,33 +16,37 @@ import org.broadinstitute.ddp.studybuilder.StudyBuilder;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.jdbi.v3.core.Handle;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 
 @Slf4j
-public class OsteoPDFConfigurationUpdateV2 implements CustomTask {
+public class OsteoUpdatePDFConfigurationV2 implements CustomTask {
+
     private static final String V2_VERSION_TAG = "v2";
-    public static final String CONSENT = "CONSENT";
-    public static final String PARENTAL_CONSENT = "PARENTAL_CONSENT";
-    public static final String CONSENT_ASSENT = "CONSENT_ASSENT";
-    public static final String RELEASE_SELF = "RELEASE_SELF";
-    public static final String RELEASE_MINOR = "RELEASE_MINOR";
-    public static final String OSPROJECT_CONSENT = "osproject-consent";
-    public static final String OSPROJECT_CONSENT_PARENTAL = "osproject-consent-parental";
-    public static final String OSPROJECT_CONSENT_ASSENT = "osproject-consent-assent";
-    public static final String OSPROJECT_RELEASE = "osproject-release";
-    public static final String OSPROJECT_RELEASE_PARENTAL = "osproject-release-parental";
-    public static final String OSPROJECT_RELEASE_CONSENT_ASSENT = "osproject-release-consent-assent";
+    private static final String DATA_FILE = "patches/study-pdf-configuration.conf";
+    private static final String STUDY_GUID = "CMI-OSTEO";
 
     private Path cfgPath;
     private Config studyCfg;
     private Config varsCfg;
+    private Config dataCfg;
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
-        this.cfgPath=cfgPath;
+
+        if (!studyCfg.getString("study.guid").equals(STUDY_GUID)) {
+            throw new DDPException("This task is only for the " + STUDY_GUID + " study!");
+        }
+        this.cfgPath = cfgPath;
         this.studyCfg = studyCfg;
-        this.varsCfg=varsCfg;
+        this.varsCfg = varsCfg;
+
+        File file = cfgPath.getParent().resolve(DATA_FILE).toFile();
+        if (!file.exists()) {
+            throw new DDPException("Data file is missing: " + file);
+        }
+        this.dataCfg = ConfigFactory.parseFile(file).resolveWith(varsCfg);
     }
 
     @Override
@@ -60,7 +64,7 @@ public class OsteoPDFConfigurationUpdateV2 implements CustomTask {
                 .findFirst()
                 .orElse(clientDtos.get(0));
         UserDto adminDto = builder.getAdminUserOrInsert(handle, webClient.getId());
-        new PdfBuilder(dirPath, studyCfg, studyDto, adminDto.getUserId()).run(handle);
+        new PdfBuilder(dirPath, dataCfg, studyDto, adminDto.getUserId()).run(handle);
 
     }
 

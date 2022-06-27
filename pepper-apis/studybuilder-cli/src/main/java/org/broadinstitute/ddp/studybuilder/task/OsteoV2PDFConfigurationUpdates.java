@@ -14,7 +14,7 @@ public class OsteoV2PDFConfigurationUpdates implements CustomTask {
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
-        tasks.add(new OsteoPDFConfigurationUpdateV2());
+        tasks.add(new OsteoUpdatePDFConfigurationV2());
         tasks.forEach(t -> t.init(cfgPath, studyCfg, varsCfg));
     }
 
