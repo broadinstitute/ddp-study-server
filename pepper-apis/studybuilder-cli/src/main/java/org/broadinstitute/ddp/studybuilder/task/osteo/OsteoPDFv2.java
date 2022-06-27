@@ -24,12 +24,15 @@ public class OsteoPDFv2 implements CustomTask {
     public static final String CONSENT_ASSENT = "CONSENT_ASSENT";
     public static final String RELEASE_SELF = "RELEASE_SELF";
     public static final String RELEASE_MINOR = "RELEASE_MINOR";
+    public static final String CONSENT_ADDENDUM = "CONSENT_ADDENDUM";
+
     public static final String OSPROJECT_CONSENT = "osproject-consent";
     public static final String OSPROJECT_CONSENT_PARENTAL = "osproject-consent-parental";
     public static final String OSPROJECT_CONSENT_ASSENT = "osproject-consent-assent";
     public static final String OSPROJECT_RELEASE = "osproject-release";
     public static final String OSPROJECT_RELEASE_PARENTAL = "osproject-release-parental";
     public static final String OSPROJECT_RELEASE_CONSENT_ASSENT = "osproject-release-consent-assent";
+    public static final String OSPROJECT_CONSENT_ADDENDUM = "osproject-consent-addendum";
 
     private Config cfg;
 
@@ -51,6 +54,7 @@ public class OsteoPDFv2 implements CustomTask {
         addNewConsentDataSourceToReleasePdf(handle, studyId, OSPROJECT_RELEASE_PARENTAL, RELEASE_MINOR);
         addNewConsentDataSourceToReleasePdf(handle, studyId, OSPROJECT_RELEASE_CONSENT_ASSENT, CONSENT_ASSENT);
         addNewConsentDataSourceToReleasePdf(handle, studyId, OSPROJECT_RELEASE_CONSENT_ASSENT, RELEASE_MINOR);
+        addNewConsentDataSourceToReleasePdf(handle, studyId, OSPROJECT_CONSENT_ADDENDUM, CONSENT_ADDENDUM);
     }
 
     private void addNewConsentDataSourceToReleasePdf(Handle handle, long studyId, String pdfName, String activityCode) {
