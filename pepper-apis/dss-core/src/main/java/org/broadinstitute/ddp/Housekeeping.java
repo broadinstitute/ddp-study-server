@@ -232,7 +232,7 @@ public class Housekeeping {
         }
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
 
-//        setupScheduler(cfg);
+        //        setupScheduler(cfg);
         setupTaskReceiver(cfg, pubSubProject);
         setupFileScanResultReceiver(cfg, pubSubProject);
 
