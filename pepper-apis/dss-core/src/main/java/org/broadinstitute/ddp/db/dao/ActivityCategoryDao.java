@@ -7,11 +7,8 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public interface ActivityCategoryDao extends SqlObject {
-    Logger LOG = LoggerFactory.getLogger(ActivityCategoryDao.class);
 
     @SqlUpdate("insert into activity_category (study_id, category_code, category_name) "
             + "values (:studyId, :categoryCode, :categoryName)")
@@ -22,12 +19,12 @@ public interface ActivityCategoryDao extends SqlObject {
     @SqlUpdate("insert into category_group (category_id, parent_form_id, form_code, form_name) "
             + "values (:categoryId, :parentFormId, :categoryCode, :categoryName)")
     @GetGeneratedKeys
-    Long insertSubForm(@Bind("categoryId") Long categoryId, @Bind("parentFormId") Long parentFormId,
-                       @Bind("categoryCode") String code, @Bind("categoryName") String name);
+    Long insertCategoryGroup(@Bind("categoryId") Long categoryId, @Bind("parentFormId") Long parentFormId,
+                             @Bind("categoryCode") String code, @Bind("categoryName") String name);
 
 
     @SqlQuery("select form_id from category_group where form_code=:formCode")
-    long findByFormCode(String formCode);
+    long findFormIdByCode(String formCode);
 
 
     @SqlQuery("select ac.category_code, ac.category_name, cg.form_code as form_code, cg.form_name as form_name,"

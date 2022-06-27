@@ -5,11 +5,8 @@ import java.util.List;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
-
-@Getter
-@Setter
+import lombok.Data;
+@Data
 @Builder
 public class ActivityCategoryDef {
     @SerializedName("categoryCode")

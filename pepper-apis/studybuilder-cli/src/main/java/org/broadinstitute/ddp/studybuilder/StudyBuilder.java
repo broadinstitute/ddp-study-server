@@ -698,14 +698,14 @@ public class StudyBuilder {
     }
 
     private void insertSubForm(ActivityCategoryDao categoryDao, long categoryId, FormGroupDef subForm) {
-        long formId = categoryDao.insertSubForm(categoryId, null, subForm.getCode(), subForm.getName());
+        long formId = categoryDao.insertCategoryGroup(categoryId, null, subForm.getCode(), subForm.getName());
         if (subForm.getSubForms() != null) {
             subForm.getSubForms().forEach(sub -> insertNestedSubForm(categoryDao, categoryId, formId, sub));
         }
     }
 
     private void insertNestedSubForm(ActivityCategoryDao categoryDao, long categoryId, Long parentFormId, FormGroupDef subForm) {
-        long formId = categoryDao.insertSubForm(categoryId, parentFormId, subForm.getCode(), subForm.getName());
+        long formId = categoryDao.insertCategoryGroup(categoryId, parentFormId, subForm.getCode(), subForm.getName());
         if (subForm.getSubForms() != null) {
             subForm.getSubForms().forEach(sub -> insertNestedSubForm(categoryDao, categoryId, formId, sub));
         }

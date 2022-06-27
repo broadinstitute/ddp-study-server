@@ -25,10 +25,10 @@
             </column>
             <column name="category_id" type="bigint">
             </column>
-            <column name="form_code" type="varchar(50)">
+            <column name="form_code" type="varchar(200)">
                 <constraints nullable="false"/>
             </column>
-            <column name="form_name" type="varchar(50)">
+            <column name="form_name" type="varchar(200)">
                 <constraints nullable="false"/>
             </column>
             <column name="parent_form_id" type="bigint">

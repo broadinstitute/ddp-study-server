@@ -7,16 +7,14 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 @AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 @NoArgsConstructor
-@Setter
-@Getter
+@Data
 public class ActivityFormGroupDto implements Serializable {
     @ColumnName("category_code")
     private String categoryCode;

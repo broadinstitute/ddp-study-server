@@ -117,7 +117,7 @@ public interface FormActivityDao extends SqlObject {
         long activityId = insertBaseActivity(studyId, activity);
 
         if (activity.getFormCode() != null) {
-            long formId = getActivityCategoryDao().findByFormCode(activity.getFormCode());
+            long formId = getActivityCategoryDao().findFormIdByCode(activity.getFormCode());
             getActivityCategoryDao().insertActivityGroup(activityId, formId);
         }
 

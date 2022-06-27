@@ -5,11 +5,9 @@ import java.util.List;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
+@Data
 @Builder
 public class FormGroupDef {
     @SerializedName("formCode")
