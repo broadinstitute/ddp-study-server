@@ -54,7 +54,7 @@ public class OsteoPDFv2 implements CustomTask {
         addNewConsentDataSourceToReleasePdf(handle, studyId, OSPROJECT_RELEASE_PARENTAL, RELEASE_MINOR);
         addNewConsentDataSourceToReleasePdf(handle, studyId, OSPROJECT_RELEASE_CONSENT_ASSENT, CONSENT_ASSENT);
         addNewConsentDataSourceToReleasePdf(handle, studyId, OSPROJECT_RELEASE_CONSENT_ASSENT, RELEASE_MINOR);
-        addNewConsentDataSourceToReleasePdf(handle, studyId, OSPROJECT_CONSENT_ADDENDUM, CONSENT_ADDENDUM);
+        //        addNewConsentDataSourceToReleasePdf(handle, studyId, OSPROJECT_CONSENT_ADDENDUM, CONSENT_ADDENDUM);
     }
 
     private void addNewConsentDataSourceToReleasePdf(Handle handle, long studyId, String pdfName, String activityCode) {

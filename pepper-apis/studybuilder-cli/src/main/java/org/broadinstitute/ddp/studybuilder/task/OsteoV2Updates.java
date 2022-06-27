@@ -21,7 +21,6 @@ public class OsteoV2Updates implements CustomTask {
         tasks.add(new OsteoPrequalUpdate());
         tasks.add(new OsteoAboutChildV2());
         tasks.add(new OsteoMRFv2());
-        tasks.add(new OsteoUpdatePDFConfigurationV2());
         tasks.add(new OsteoPDFv2());
         tasks.add(new OsteoAdultConsentFixes());
         tasks.add(new OsteoActivityDetailsUpdate());
@@ -33,6 +32,8 @@ public class OsteoV2Updates implements CustomTask {
         tasks.add(new OsteoInsertEvents());
         tasks.add(new UpdateStudyWorkflows());
         tasks.add(new UpdateStudyWorkflows());
+
+        tasks.add(new OsteoUpdatePDFConfigurationV2());
         tasks.forEach(t -> t.init(cfgPath, studyCfg, varsCfg));
     }
 
