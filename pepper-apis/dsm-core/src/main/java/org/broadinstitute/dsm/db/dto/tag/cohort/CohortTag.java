@@ -24,6 +24,8 @@ public class CohortTag implements Cloneable {
     @ColumnName(DBConstants.DDP_INSTANCE_ID)
     Integer ddpInstanceId;
 
+    String createdBy;
+
     public CohortTag(Integer cohortTagId, String cohortTagName, String ddpParticipantId, Integer ddpInstanceId) {
         this.cohortTagId = cohortTagId;
         this.cohortTagName = cohortTagName;

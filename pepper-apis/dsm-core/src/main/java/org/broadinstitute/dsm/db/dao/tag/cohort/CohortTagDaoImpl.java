@@ -23,7 +23,7 @@ public class CohortTagDaoImpl implements CohortTagDao {
     private static final Logger logger = LoggerFactory.getLogger(CohortTagDaoImpl.class);
 
     private static final String SQL_INSERT_COHORT_TAG =
-            "INSERT INTO cohort_tag(cohort_tag_name, ddp_participant_id, ddp_instance_id) VALUES (?,?,?)";
+            "INSERT INTO cohort_tag(cohort_tag_name, ddp_participant_id, ddp_instance_id, created, created_by) VALUES (?,?,?,?,?)";
     private static final String SQL_DELETE_COHORT_TAG_BY_ID = "DELETE FROM cohort_tag WHERE cohort_tag_id = ?";
 
     private static final String SQL_GET_TAGS_BY_INSTANCE_NAME = "SELECT * FROM cohort_tag WHERE ddp_instance_id = "
@@ -42,6 +42,8 @@ public class CohortTagDaoImpl implements CohortTagDao {
                 stmt.setString(1, cohortTagDto.getCohortTagName());
                 stmt.setString(2, cohortTagDto.getDdpParticipantId());
                 stmt.setInt(3, cohortTagDto.getDdpInstanceId());
+                stmt.setLong(4, System.currentTimeMillis());
+                stmt.setString(5, cohortTagDto.getCreatedBy());
                 stmt.executeUpdate();
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
@@ -129,6 +131,8 @@ public class CohortTagDaoImpl implements CohortTagDao {
                     stmt.setString(1, tag.getCohortTagName());
                     stmt.setString(2, tag.getDdpParticipantId());
                     stmt.setInt(3, tag.getDdpInstanceId());
+                    stmt.setLong(4, System.currentTimeMillis());
+                    stmt.setString(5, tag.getCreatedBy());
                     stmt.addBatch();
                 }
                 stmt.executeBatch();
