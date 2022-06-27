@@ -179,6 +179,9 @@ public class WorkflowStatusUpdate {
         }
     }
 
+    /**
+     * writing ddp_participant_data into dsm.participantData object
+     */
     private static void writeParticipantDataInES(ParticipantData participantData) {
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceId(participantData.getDdpInstanceId())
                 .orElseThrow();
