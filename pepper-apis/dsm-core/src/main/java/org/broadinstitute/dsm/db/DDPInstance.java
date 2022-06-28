@@ -28,7 +28,8 @@ public class DDPInstance {
     public static final String SQL_SELECT_ALL_ACTIVE_REALMS =
             "SELECT ddp_instance_id, instance_name, base_url, collaborator_id_prefix, es_participant_index, es_activity_definition_index, "
                     + "es_users_index, mr_attention_flag_d, tissue_attention_flag_d, auth0_token, notification_recipients, migrated_ddp, "
-                    + "billing_reference, study_guid, research_project, display_name, mercury_order_creator  FROM ddp_instance WHERE is_active = 1";
+                    + "billing_reference, study_guid, research_project, display_name, mercury_order_creator  "
+                    + "FROM ddp_instance WHERE is_active = 1";
     public static final String SQL_SELECT_GROUP =
             "SELECT ddp_group_id from ddp_instance_group g LEFT JOIN ddp_instance realm ON (g.ddp_instance_id = realm.ddp_instance_id) "
                     + "WHERE instance_name =?";

@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.exception;
 
-public class DaoException extends Exception {//todo pegah move from DSS to common
+public class DaoException extends Exception {
 
     public DaoException() {
     }

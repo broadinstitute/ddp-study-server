@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.db.dao.settings;
 
-
 import java.util.Optional;
 
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -27,16 +26,6 @@ public class UserSettingsDao implements Dao<UserSettingsDto> {
         return (long) results.resultValue;
     }
 
-    public void updateUserSettings(long userId, UserSettingsDto userSettingsDto) throws DaoException {
-        SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
-            SimpleResult dbVals = new SimpleResult();
-            int numRows = handle.attach(JdbiUserSettings.class).updateUserSettings(userSettingsDto.getRowsPerPage(), userId);
-            DBUtil.checkUpdate(1, numRows);
-            return dbVals;
-        });
-
-    }
-
     @Override
     public int create(UserSettingsDto userSettingsDto) {
         return 0;
@@ -59,5 +48,15 @@ public class UserSettingsDao implements Dao<UserSettingsDto> {
             throw new RuntimeException("Error getting user settings for user Id" + id, results.resultException);
         }
         return Optional.ofNullable((UserSettingsDto) results.resultValue);
+    }
+
+    public void updateUserSettings(long userId, UserSettingsDto userSettingsDto) throws DaoException {
+        SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
+            SimpleResult dbVals = new SimpleResult();
+            int numRows = handle.attach(JdbiUserSettings.class).updateUserSettings(userSettingsDto.getRowsPerPage(), userId);
+            DBUtil.checkUpdate(1, numRows);
+            return dbVals;
+        });
+
     }
 }

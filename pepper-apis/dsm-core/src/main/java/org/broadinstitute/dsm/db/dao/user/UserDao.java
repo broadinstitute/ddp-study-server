@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class UserDao implements Dao<UserDto> {
+
     Logger logger = LoggerFactory.getLogger(UserDao.class);
 
     public Optional<UserDto> getUserByEmail(@NonNull String email) {
@@ -162,8 +163,8 @@ public class UserDao implements Dao<UserDto> {
                 handle.attach(JdbiUserSettings.class).insertNewUserSettings(userId);
                 logger.info("Inserted " + user.getEmail().get() + " as userId " + userId + " into DSS database");
                 if (ddpInstance.isHasRole()) {
-                    logger.info("Instance " + ddpInstance.getName() +
-                            " has DSS study admin role, going to insert user in the study_admin table");
+                    logger.info("Instance " + ddpInstance.getName()
+                            + " has DSS study admin role, going to insert user in the study_admin table");
                     handle.attach(JdbiStudyAdmin.class).insert(ddpInstance.getStudyGuid(), userId);
                 }
             }
