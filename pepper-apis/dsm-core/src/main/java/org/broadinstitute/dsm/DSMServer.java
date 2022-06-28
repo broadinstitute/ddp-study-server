@@ -51,6 +51,8 @@ import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetrics;
 import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.dsm.careevolve.Provider;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
+import org.broadinstitute.dsm.db.dao.mercury.ClinicalOrderDao;
+import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.db.dao.mercury.MercurySampleDao;
 import org.broadinstitute.dsm.jetty.JettyConfig;
 import org.broadinstitute.dsm.jobs.DDPEventJob;
@@ -63,6 +65,7 @@ import org.broadinstitute.dsm.jobs.NotificationJob;
 import org.broadinstitute.dsm.jobs.PubSubLookUp;
 import org.broadinstitute.dsm.log.SlackAppender;
 import org.broadinstitute.dsm.pubsub.DSMtasksSubscription;
+import org.broadinstitute.dsm.pubsub.MercuryOrderStatusListener;
 import org.broadinstitute.dsm.pubsub.PubSubResultMessageSubscription;
 import org.broadinstitute.dsm.route.AbstractionFormControlRoute;
 import org.broadinstitute.dsm.route.AbstractionRoute;
@@ -742,11 +745,11 @@ public class DSMServer {
             e.printStackTrace();
         }
 
-//        try {
-//            MercuryOrderStatusListener.subscribeToOrderStatus(projectId, mercuryDsmSubscriptionId);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+        try {
+            MercuryOrderStatusListener.subscribeToOrderStatus(projectId, mercuryDsmSubscriptionId);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         logger.info("Pubsub setup complete");
     }
@@ -842,9 +845,6 @@ public class DSMServer {
 
         post(UI_ROOT + RoutePath.DOWNLOAD_PARTICIPANT_LIST_ROUTE, new DownloadParticipantListRoute());
 
-        GetMercuryEligibleSamplesRoute getMercuryEligibleSamplesRoute = new GetMercuryEligibleSamplesRoute(new MercurySampleDao());
-        get(UI_ROOT + RoutePath.MERCURY_SAMPLES_ROUTE, getMercuryEligibleSamplesRoute, new JsonTransformer());
-
     }
 
     private void setupMRAbstractionRoutes() {
@@ -931,6 +931,12 @@ public class DSMServer {
         PostMercuryOrderDummyRoute postMercuryOrderDummyRoute = new PostMercuryOrderDummyRoute(projectId, mercuryTopicId);
         post(UI_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, new PostMercuryOrderRoute(projectId, mercuryTopicId), new JsonTransformer());
         post(API_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderDummyRoute, new JsonTransformer());
+
+        GetMercuryEligibleSamplesRoute getMercuryEligibleSamplesRoute = new GetMercuryEligibleSamplesRoute(
+                new MercurySampleDao(), new MercuryOrderDao(), new ClinicalOrderDao(), projectId, mercuryTopicId);
+        get(UI_ROOT + RoutePath.MERCURY_SAMPLES_ROUTE, getMercuryEligibleSamplesRoute, new JsonTransformer());
+
+        get(UI_ROOT + RoutePath.GET_MERCURY_ORDERS_ROUTE, getMercuryEligibleSamplesRoute, new JsonTransformer());
 
     }
 
