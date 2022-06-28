@@ -20,6 +20,7 @@ select ans.answer_id,
        deca.decimal_value  as da_decimal_value,
        na.int_value         as na_int_value,
        po.picklist_option_stable_id as pa_option_stable_id,
+       po.value as po_value,
        (select ppo.picklist_option_stable_id from picklist_nested_option as pno join picklist_option as ppo
          on ppo.picklist_option_id = pno.parent_option_id
          where pno.nested_option_id = po.picklist_option_id
@@ -136,7 +137,7 @@ where ai.activity_instance_guid = :instanceGuid
            join question_stable_code as pqsc on pqsc.question_stable_code_id = pq.question_stable_code_id
           where pqsc.stable_id = :questionStableId
             and pqsc.umbrella_study_id = act.study_id))
-order by response_order
+order by cai.response_order
 >>
 
 findAnswerByInstanceGuidAndQuestionId() ::= <<

@@ -67,6 +67,6 @@ public final class GroupBlockDef extends FormBlockDef {
 
     @Override
     public Stream<QuestionDef> getQuestions() {
-        return getNested().stream().flatMap(cblock -> cblock.getQuestions());
+        return getNested().stream().flatMap(FormBlockDef::getQuestions);
     }
 }

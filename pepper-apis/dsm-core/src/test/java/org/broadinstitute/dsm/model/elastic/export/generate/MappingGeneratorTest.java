@@ -16,6 +16,7 @@ import org.broadinstitute.dsm.model.elastic.export.parse.BaseParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.DynamicFieldsParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.broadinstitute.dsm.model.elastic.export.parse.TypeParser;
+import org.broadinstitute.dsm.model.patch.Patch;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -23,7 +24,9 @@ public class MappingGeneratorTest {
 
 
     public static GeneratorPayload getGeneratorPayload(String columnName, Object value, int recordId) {
-        return new GeneratorPayload(new NameValue(columnName, value), recordId) {
+        Patch patch = new Patch();
+        patch.setId(String.valueOf(recordId));
+        return new GeneratorPayload(new NameValue(columnName, value), patch) {
             @Override
             public String getCamelCaseFieldName() {
                 return Util.underscoresToCamelCase(columnName);
@@ -92,11 +95,13 @@ public class MappingGeneratorTest {
     @Test
     public void parseJson() {
         NameValue nameValue = new NameValue("m.additionalValuesJson", "{\"DDP_INSTANCE\": \"TEST\"}");
-        GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, 0);
+        Patch patch = new Patch();
+        patch.setId("0");
+        GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, patch);
         DynamicFieldsParser parser = new DynamicFieldsParser();
         parser.setDisplayType("TEXT");
-        parser.setParser(new TypeParser());
-        parser.setPropertyInfo(new BaseGenerator.PropertyInfo(MedicalRecord.class, true));
+        parser.setHelperParser(new TypeParser());
+        parser.setPropertyInfo(new PropertyInfo(MedicalRecord.class, true));
         BaseGenerator mappingGenerator = new CollectionMappingGenerator(parser, generatorPayload);
         Map<String, Object> parseJson = mappingGenerator.parseJson();
         Map<String, Object> additionalValuesJson = (Map) parseJson.get("dynamicFields");

@@ -27,7 +27,7 @@ public class TokenConverterFilter implements Filter {
     @Override
     public void handle(Request request, Response response) {
         try {
-            DDPAuth ddpAuth = jwtConverter.convertJWTFromHeader(request.headers(AUTHORIZATION));
+            DDPAuth ddpAuth = jwtConverter.convertJWTFromHeader(request.headers(AUTHORIZATION), true);
             request.attribute(DDP_TOKEN, ddpAuth);
         } catch (TokenExpiredException e) {
             log.error("Found expired token for request", e);

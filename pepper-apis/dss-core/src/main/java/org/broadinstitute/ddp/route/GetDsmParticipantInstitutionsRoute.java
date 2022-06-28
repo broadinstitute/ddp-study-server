@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -40,23 +41,20 @@ import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
+@Slf4j
 public class GetDsmParticipantInstitutionsRoute implements Route {
-    private static final Logger logger = LoggerFactory.getLogger(GetDsmParticipantInstitutionsRoute.class);
-
     @Override
     public Object handle(Request request, Response response) {
         return TransactionWrapper.withTxn(handle -> {
-            logger.info("Starting GetDsmParticipantInstitutionsRoute.handle");
-            logger.info("Checking Study GUID");
+            log.info("Starting GetDsmParticipantInstitutionsRoute.handle");
+            log.info("Checking Study GUID");
             String studyGuid = request.params(STUDY_GUID);
             if (studyGuid == null) {
-                logger.error("Study GUID not found in request");
+                log.error("Study GUID not found in request");
                 throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST,
                         new ApiError(ErrorCodes.MISSING_STUDY_GUID, "Study GUID is missing"));
             }
@@ -64,7 +62,7 @@ public class GetDsmParticipantInstitutionsRoute implements Route {
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
             if (studyDto == null) {
                 String errorMessage = "Study not found for: " + studyGuid;
-                logger.error(errorMessage);
+                log.error(errorMessage);
                 throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND,
                         new ApiError(ErrorCodes.STUDY_NOT_FOUND, errorMessage));
             }
@@ -83,7 +81,7 @@ public class GetDsmParticipantInstitutionsRoute implements Route {
                 try {
                     return buildJsonForParticipants(handle, includedUsers, studyDto.getId(), response, studyGuid);
                 } catch (Exception e) {
-                    logger.error("Could not build JSON response", e);
+                    log.error("Could not build JSON response", e);
                     throw ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR,
                             new ApiError(ErrorCodes.SERVER_ERROR, "Could not build JSON response"));
                 }
@@ -113,7 +111,7 @@ public class GetDsmParticipantInstitutionsRoute implements Route {
 
         if (activityMappings.isEmpty()) {
             String errorMessage = "Activity mapping: " + ActivityMappingType.MEDICAL_RELEASE + " not found for: " + studyGuid;
-            logger.error(errorMessage);
+            log.error(errorMessage);
             throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND,
                     new ApiError(ErrorCodes.STUDY_NOT_FOUND, errorMessage));
         }
@@ -132,7 +130,7 @@ public class GetDsmParticipantInstitutionsRoute implements Route {
             List<MedicalProviderDto> medicalProviderDtoList = user.getValue();
 
             if (medicalProviderDtoList.isEmpty()) {
-                logger.debug("Encountered user who has completed survey but has no institutions");
+                log.debug("Encountered user who has completed survey but has no institutions");
                 continue;
             }
 
@@ -157,10 +155,9 @@ public class GetDsmParticipantInstitutionsRoute implements Route {
             Optional<EnrollmentStatusDto> userExitedBeforeEnrollment = enrollmentStatusDtos.stream()
                     .filter(enrollmentStatusDto ->
                             enrollmentStatusDto.getEnrollmentStatus() == EnrollmentStatusType.EXITED_BEFORE_ENROLLMENT)
-                    .sorted(Comparator.comparing(EnrollmentStatusDto::getValidFromMillis).reversed())
-                    .findFirst();
+                    .max(Comparator.comparing(EnrollmentStatusDto::getValidFromMillis));
             if (userExitedBeforeEnrollment.isPresent()) {
-                logger.error("Found user " + userGuid + " exited before enrollment");
+                log.error("Found user " + userGuid + " exited before enrollment");
                 throw ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR,
                         new ApiError(ErrorCodes.SERVER_ERROR, "Could not build JSON response"));
             }
@@ -172,7 +169,7 @@ public class GetDsmParticipantInstitutionsRoute implements Route {
                     .orElse(null);
 
             if (latestInstance == null) {
-                logger.error("No completed release survey found for user " + userGuid);
+                log.error("No completed release survey found for user " + userGuid);
                 throw ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR,
                         new ApiError(ErrorCodes.SERVER_ERROR, "Could not build JSON response"));
             }

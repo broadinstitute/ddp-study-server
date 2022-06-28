@@ -5,31 +5,23 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.google.gson.Gson;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.broadinstitute.dsm.util.proxy.jackson.JsonParseException;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public abstract class BaseGenerator implements Generator, Collector, GeneratorHelper {
 
     public static final String DSM_OBJECT = "dsm";
     public static final String PROPERTIES = "properties";
-    protected static final Gson GSON = new Gson();
-    private static final Logger logger = LoggerFactory.getLogger(BaseGenerator.class);
     protected Parser parser;
     protected GeneratorPayload generatorPayload;
-    private DBElement dbElement;
 
     public BaseGenerator(Parser parser, GeneratorPayload generatorPayload) {
         this.parser = Objects.requireNonNull(parser);
         this.generatorPayload = Objects.requireNonNull(generatorPayload);
-        dbElement = Util.getDBElement(getNameValue().getName());
     }
 
     public BaseGenerator() {
@@ -55,17 +47,16 @@ public abstract class BaseGenerator implements Generator, Collector, GeneratorHe
         return Util.getDBElement(getNameValue().getName());
     }
 
-    //setter method to set dbElement for testing only!!!
-    public void setDBElement(DBElement dbElement) {
-        this.dbElement = dbElement;
+    protected PropertyInfo getOuterPropertyByAlias() {
+        return PropertyInfo.TABLE_ALIAS_MAPPINGS.get(getTableAlias());
     }
 
-    protected PropertyInfo getOuterPropertyByAlias() {
-        return Util.TABLE_ALIAS_MAPPINGS.get(getDBElement().getTableAlias());
+    protected String getTableAlias() {
+        return getDBElement().getTableAlias();
     }
 
     protected String getPrimaryKey() {
-        return getOuterPropertyByAlias().getPrimaryKey();
+        return getOuterPropertyByAlias().getPrimaryKeyAsCamelCase();
     }
 
     @Override
@@ -110,50 +101,6 @@ public abstract class BaseGenerator implements Generator, Collector, GeneratorHe
     protected abstract Object getElement(Object type);
 
     public abstract Object construct();
-
-    public static class PropertyInfo {
-
-        private Class<?> propertyClass;
-        private boolean isCollection;
-        private String fieldName;
-
-
-        public PropertyInfo(Class<?> propertyClass, boolean isCollection) {
-            this.propertyClass = Objects.requireNonNull(propertyClass);
-            this.isCollection = isCollection;
-        }
-
-        public void setIsCollection(boolean isCollection) {
-            this.isCollection = isCollection;
-        }
-
-        public String getPropertyName() {
-            return Util.capitalCamelCaseToLowerCamelCase(propertyClass.getSimpleName());
-        }
-
-        public String getPrimaryKey() {
-            return Util.getPrimaryKeyFromClass(propertyClass);
-        }
-
-        public boolean isCollection() {
-            return isCollection;
-        }
-
-        public String getFieldName() {
-            if (StringUtils.isBlank(this.fieldName)) {
-                this.fieldName = "";
-            }
-            return this.fieldName;
-        }
-
-        public void setFieldName(String fieldName) {
-            this.fieldName = Objects.requireNonNull(fieldName);
-        }
-
-        public Class<?> getPropertyClass() {
-            return propertyClass;
-        }
-    }
 
 }
 

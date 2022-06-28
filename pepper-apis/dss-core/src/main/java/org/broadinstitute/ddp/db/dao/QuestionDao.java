@@ -25,6 +25,7 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.AgreementQuestionDto;
 import org.broadinstitute.ddp.db.dto.BooleanQuestionDto;
+import org.broadinstitute.ddp.db.dto.BlockTabularQuestionDto;
 import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
 import org.broadinstitute.ddp.db.dto.DateQuestionDto;
 import org.broadinstitute.ddp.db.dto.FileQuestionDto;
@@ -45,7 +46,6 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceSelectQuestionDto;
 import org.broadinstitute.ddp.db.dto.TypedQuestionId;
 import org.broadinstitute.ddp.db.dto.validation.RuleDto;
 import org.broadinstitute.ddp.equation.QuestionEvaluator;
-import org.broadinstitute.ddp.json.EquationResponse;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
@@ -478,7 +478,7 @@ public interface QuestionDao extends SqlObject {
                 dto.isRestricted(), dto.isDeprecated(), isReadonly, dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
                 boolAnswers, rules, dto.getTrueTemplateId(),
-                dto.getFalseTemplateId());
+                dto.getFalseTemplateId(), dto.getRenderMode());
     }
 
     /**
@@ -918,9 +918,9 @@ public interface QuestionDao extends SqlObject {
                 dto.getAdditionalInfoHeaderTemplateId(),
                 dto.getAdditionalInfoFooterTemplateId(),
                 StreamEx.of(getJdbiEquationQuestion().findEquationsByActivityInstanceGuid(activityInstanceGuid))
+                        .filterBy(EquationQuestionDto::getStableId, dto.getStableId())
                         .map(questionEvaluator::evaluate)
                         .filter(Objects::nonNull)
-                        .filterBy(EquationResponse::getQuestionStableId, dto.getStableId())
                         .map(EquationAnswer::new)
                         .toList(),
                 Collections.emptyList(),
@@ -1233,7 +1233,8 @@ public interface QuestionDao extends SqlObject {
         templateDao.insertTemplate(boolQuestion.getFalseTemplate(), revisionId);
 
         int numInserted = getJdbiBooleanQuestion().insert(boolQuestion.getQuestionId(),
-                boolQuestion.getTrueTemplate().getTemplateId(), boolQuestion.getFalseTemplate().getTemplateId());
+                boolQuestion.getTrueTemplate().getTemplateId(), boolQuestion.getFalseTemplate().getTemplateId(),
+                boolQuestion.getRenderMode());
         if (numInserted != 1) {
             throw new DaoException("Inserted " + numInserted + " for bool question " + boolQuestion.getStableId());
         }
@@ -1843,8 +1844,35 @@ public interface QuestionDao extends SqlObject {
             blockDef.setBlockGuid(blockDto.getGuid());
             blockDef.setShownExpr(blockDto.getShownExpr());
             blockDef.setEnabledExpr(blockDto.getEnabledExpr());
-
             blockDefs.put(blockDto.getId(), blockDef);
+        }
+
+        return blockDefs;
+    }
+
+    default Map<Long, QuestionBlockDef> collectTabularBlockDefs(Collection<BlockTabularQuestionDto> blockDtos, long timestamp) {
+        if (blockDtos == null || blockDtos.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        final var blockIds = StreamEx.of(blockDtos).map(BlockTabularQuestionDto::getQuestionBlockId).toSet();
+
+        Map<Long, Long> blockIdToQuestionId = getJdbiBlockQuestion()
+                .findQuestionIdsByBlockIdsAndTimestamp(blockIds, timestamp);
+        Map<Long, QuestionDef> questionDefs = collectQuestionDefs(blockIdToQuestionId.values(), timestamp);
+
+        Map<Long, QuestionBlockDef> blockDefs = new HashMap<>();
+        for (var blockDto : blockDtos) {
+            long questionId = blockIdToQuestionId.get(blockDto.getQuestionBlockId());
+            QuestionDef questionDef = questionDefs.get(questionId);
+
+            var blockDef = new QuestionBlockDef(questionDef);
+            blockDef.setBlockId(blockDto.getQuestionBlockId());
+            blockDef.setBlockGuid(blockDto.getBlockGuid());
+            blockDef.setShownExpr(blockDto.getShownExpr());
+            blockDef.setEnabledExpr(blockDto.getEnabledExpr());
+            blockDef.setColumnSpan(blockDto.getColumnSpan());
+            blockDefs.put(blockDto.getQuestionBlockId(), blockDef);
         }
 
         return blockDefs;
@@ -2090,7 +2118,10 @@ public interface QuestionDao extends SqlObject {
         Template prompt = templates.get(dto.getPromptTemplateId());
         Template trueTemplate = templates.get(dto.getTrueTemplateId());
         Template falseTemplate = templates.get(dto.getFalseTemplateId());
+
         var builder = BoolQuestionDef.builder(dto.getStableId(), prompt, trueTemplate, falseTemplate);
+        builder.setRenderMode(dto.getRenderMode());
+        
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
         return builder.build();
     }

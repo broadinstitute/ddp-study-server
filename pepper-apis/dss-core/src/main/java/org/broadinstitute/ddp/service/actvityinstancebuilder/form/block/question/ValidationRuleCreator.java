@@ -9,6 +9,7 @@ import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.QuestionDao;
 import org.broadinstitute.ddp.db.dao.ValidationDao;
+import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.AgeRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.CompleteRuleDef;
@@ -207,15 +208,21 @@ public class ValidationRuleCreator {
     }
 
     private ComparisonRule createComparisonRule(AIBuilderContext ctx, ComparisonRuleDef ruleDef) {
+        QuestionDto questionDto = TransactionWrapper.withTxn(handle -> handle.attach(QuestionDao.class).getJdbiQuestion()
+                .findLatestDtoByStudyGuidAndQuestionStableId(ctx.getStudyGuid(), ruleDef.getValueStableId())
+                .orElseThrow(() -> new RuntimeException(
+                        String.format("Can't find question by stable ID: %s & Study GUID: %s",
+                                ruleDef.getValueStableId(), ctx.getStudyGuid()))));
+
         return ComparisonRule.builder()
                 .id(ruleDef.getRuleId())
+                .type(ruleDef.getRuleType())
                 .message(findRuleMessage(ctx, ruleDef))
                 .correctionHint(getHintTitle(ctx, ruleDef))
                 .allowSave(ruleDef.getAllowSave())
                 .comparisonType(ruleDef.getComparison())
-                .referenceQuestionId(TransactionWrapper.withTxn(handle -> handle.attach(QuestionDao.class).getJdbiQuestion()
-                                .findIdByStableIdAndInstanceGuid(ruleDef.getValueStableId(), ctx.getInstanceGuid())
-                                .orElseThrow(() -> new RuntimeException("Can't find question by stable ID & instance GUID"))))
+                .referenceQuestionStableId(ruleDef.getValueStableId())
+                .referenceQuestionId(questionDto.getId())
                 .build();
     }
 

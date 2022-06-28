@@ -18,12 +18,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
-import org.broadinstitute.dsm.model.patch.Patch;
+import org.broadinstitute.dsm.model.filter.prefilter.HasDdpInstanceId;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
 import org.broadinstitute.dsm.util.DBUtil;
@@ -37,7 +36,7 @@ import org.slf4j.LoggerFactory;
         primaryKey = DBConstants.ONC_HISTORY_DETAIL_ID, columnPrefix = "")
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class OncHistoryDetail {
+public class OncHistoryDetail implements HasDdpInstanceId {
 
     public static final String SQL_SELECT_ONC_HISTORY_DETAIL =
             "SELECT p.ddp_participant_id, p.ddp_instance_id, p.participant_id, oD.onc_history_detail_id, oD.request, oD.deleted, "
@@ -67,8 +66,8 @@ public class OncHistoryDetail {
             + "LEFT JOIN ddp_participant as p on (p.participant_id = inst.participant_id) "
             + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
             + "LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id AND NOT m.deleted <=> 1) "
-            + "LEFT JOIN ddp_onc_history_detail as oD on (m.medical_record_id = oD.medical_record_id) "
-            + "WHERE p.participant_id = ?";
+            + "LEFT JOIN ddp_onc_history_detail as oD on (m.medical_record_id = oD.medical_record_id) " + "WHERE p.participant_id = ?";
+
     public static final String STATUS_REVIEW = "review";
     public static final String STATUS_SENT = "sent";
     public static final String STATUS_RECEIVED = "received";
@@ -85,6 +84,7 @@ public class OncHistoryDetail {
     public static final String PROBLEM_DESTROYED = "destroyed";
     public static final String PROBLEM_OTHER = "other";
     public static final String PROBLEM_OTHER_OLD = "Other";
+    public static final String ONC_HISTORY_DETAIL_ID = "oncHistoryDetailId";
     private static final Logger logger = LoggerFactory.getLogger(OncHistoryDetail.class);
     private static final String SQL_CREATE_ONC_HISTORY =
             "INSERT INTO ddp_onc_history_detail SET medical_record_id = ?, request = ?, last_changed = ?, changed_by = ?";
@@ -94,15 +94,13 @@ public class OncHistoryDetail {
                     + "fax_sent_2_by, fax_confirmed_2, fax_sent_3, fax_sent_3_by, fax_confirmed_3,"
                     + " tissue_received, gender, tissue_problem_option, destruction_policy FROM ddp_onc_history_detail "
                     + "WHERE NOT (deleted <=> 1)";
-    private static final String SQL_SELECT_TISSUE_RECEIVED =
-            "SELECT tissue_received FROM ddp_onc_history_detail WHERE onc_history_detail_id = ?";
     private static final String SQL_INSERT_ONC_HISTORY_DETAIL =
             "INSERT INTO ddp_onc_history_detail SET medical_record_id = ?, request = ?, last_changed = ?, changed_by = ?";
     @ColumnName(DBConstants.ONC_HISTORY_DETAIL_ID)
-    private long oncHistoryDetailId;
+    private Long oncHistoryDetailId;
 
     @ColumnName(DBConstants.MEDICAL_RECORD_ID)
-    private long medicalRecordId;
+    private Long medicalRecordId;
 
     @ColumnName(DBConstants.DATE_PX)
     @DbDateConversion(SqlDateConverter.STRING_DAY)
@@ -198,7 +196,11 @@ public class OncHistoryDetail {
     public OncHistoryDetail() {
     }
 
-    public OncHistoryDetail(long oncHistoryDetailId, long medicalRecordId, String datePx, String typePx, String locationPx,
+    public OncHistoryDetail(long ddpInstanceId) {
+        this.ddpInstanceId = ddpInstanceId;
+    }
+
+    public OncHistoryDetail(Long oncHistoryDetailId, Long medicalRecordId, String datePx, String typePx, String locationPx,
                             String histology, String accessionNumber, String facility, String phone, String fax, String notes,
                             String request, String faxSent, String faxSentBy, String faxConfirmed, String faxSent2, String faxSent2By,
                             String faxConfirmed2, String faxSent3, String faxSent3By, String faxConfirmed3, String tissueReceived,
@@ -234,7 +236,7 @@ public class OncHistoryDetail {
         this.unableObtainTissue = unableObtainTissue;
     }
 
-    public OncHistoryDetail(long oncHistoryDetailId, long medicalRecordId, String datePx, String typePx, String locationPx,
+    public OncHistoryDetail(Long oncHistoryDetailId, Long medicalRecordId, String datePx, String typePx, String locationPx,
                             String histology, String accessionNumber, String facility, String phone, String fax, String notes,
                             String request, String faxSent, String faxSentBy, String faxConfirmed, String faxSent2, String faxSent2By,
                             String faxConfirmed2, String faxSent3, String faxSent3By, String faxConfirmed3, String tissueReceived,
@@ -437,42 +439,6 @@ public class OncHistoryDetail {
         }
     }
 
-    public static Boolean hasReceivedDate(@NonNull Patch patch) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_TISSUE_RECEIVED)) {
-                if (patch.getNameValue().getName().contains(DBConstants.DDP_TISSUE_ALIAS + DBConstants.ALIAS_DELIMITER)) {
-                    stmt.setString(1, patch.getParentId());
-                } else if (patch.getNameValue().getName()
-                        .contains(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS + DBConstants.ALIAS_DELIMITER)) {
-                    stmt.setString(1, patch.getId());
-                }
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        String receivedDate = rs.getString(DBConstants.TISSUE_RECEIVED);
-                        if (StringUtils.isNotBlank(receivedDate)) {
-                            dbVals.resultValue = true;
-                        } else {
-                            dbVals.resultValue = false;
-                        }
-                    } else {
-                        dbVals.resultException = new RuntimeException(" The patch id was not found in the table!");
-                    }
-                } catch (SQLException ex) {
-                    dbVals.resultException = ex;
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-        if (results.resultException != null) {
-            throw new RuntimeException(" Error getting the received date of the OncHistory with Id:" + patch.getParentId(),
-                    results.resultException);
-        }
-        return (Boolean) results.resultValue;
-    }
-
     @JsonProperty("dynamicFields")
     public Map<String, Object> getDynamicFields() {
         return ObjectMapperSingleton.readValue(additionalValuesJson, new TypeReference<Map<String, Object>>() {
@@ -490,5 +456,10 @@ public class OncHistoryDetail {
             tissues = new ArrayList<>();
         }
         return tissues;
+    }
+
+    @Override
+    public long extractDdpInstanceId() {
+        return getDdpInstanceId();
     }
 }

@@ -11,10 +11,11 @@ public enum BlockType {
     // Container blocks.
     ACTIVITY,
     CONDITIONAL,
+    TABULAR,
     GROUP;
 
     public boolean isContainerBlock() {
-        return Arrays.asList(ACTIVITY, CONDITIONAL, GROUP).contains(this);
+        return Arrays.asList(ACTIVITY, CONDITIONAL, GROUP, TABULAR).contains(this);
     }
 
     public boolean isQuestionBlock() {

@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.cache.LanguageStore;
@@ -25,8 +26,6 @@ import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
@@ -34,10 +33,8 @@ import spark.Response;
  * Route that adds a person to the mailing address for a study
  * so that the person can stay informed of developments in the study
  */
+@Slf4j
 public class JoinMailingListRoute extends ValidatedJsonInputRoute<JoinMailingListPayload> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(JoinMailingListRoute.class);
-
     public Object handle(Request request, Response response, JoinMailingListPayload payload) throws Exception {
         // The two types of ways of using this endpoint are to join a a mailing list for a specific study,
         // or to join a mailing list for a particular umbrella.
@@ -116,10 +113,10 @@ public class JoinMailingListRoute extends ValidatedJsonInputRoute<JoinMailingLis
                     (rowsInserted == 0 || rowsInserted == 1) && StringUtils.isNotEmpty(payload.getStudyGuid());
 
             if (rowsInserted == 0) {
-                LOG.info("{} is already on the contact list for study {} or umbrella {}", payload.getEmailAddress(),
+                log.info("{} is already on the contact list for study {} or umbrella {}", payload.getEmailAddress(),
                         payload.getStudyGuid(), payload.getUmbrellaGuid());
             } else if (rowsInserted == 1) {
-                LOG.info("Added {} to the contact list for study {} or umbrella {}", payload.getEmailAddress(),
+                log.info("Added {} to the contact list for study {} or umbrella {}", payload.getEmailAddress(),
                         payload.getStudyGuid(), payload.getUmbrellaGuid());
             } else {
                 throw new DaoException(String.format("%s rows were inserted for the contact list for study %s or umbrella %s and email %s",
@@ -134,7 +131,7 @@ public class JoinMailingListRoute extends ValidatedJsonInputRoute<JoinMailingLis
                         eventDao.getNotificationConfigsForMailingListByEventType(payload.getStudyGuid(), JOIN_MAILING_LIST);
 
                 if (eventConfigs.isEmpty()) {
-                    LOG.info("No email configured for mailing list for {}, nothing to send to {}.",
+                    log.info("No email configured for mailing list for {}, nothing to send to {}.",
                             payload.getStudyGuid(),
                             payload.getEmailAddress());
                 }
@@ -144,7 +141,7 @@ public class JoinMailingListRoute extends ValidatedJsonInputRoute<JoinMailingLis
                             0,
                             payload.getEmailAddress(),
                             Collections.<String, String>emptyMap());
-                    LOG.info("Queued mailing list email send to {}", payload.getEmailAddress());
+                    log.info("Queued mailing list email send to {}", payload.getEmailAddress());
                 }
             }
         });

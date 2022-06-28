@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
@@ -36,29 +38,16 @@ import org.broadinstitute.ddp.service.ActivityInstanceService;
 import org.broadinstitute.ddp.service.ActivityValidationService;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
+@Slf4j
+@AllArgsConstructor
 public class GetActivityInstanceRoute implements Route {
-
-    private static final Logger LOG = LoggerFactory.getLogger(GetActivityInstanceRoute.class);
-
-    private ActivityInstanceService actInstService;
-    private ActivityValidationService actValidationService;
-    private PexInterpreter interpreter;
-
-    public GetActivityInstanceRoute(
-            ActivityInstanceService actInstService,
-            ActivityValidationService actValidationService,
-            PexInterpreter interpreter
-    ) {
-        this.actInstService = actInstService;
-        this.actValidationService = actValidationService;
-        this.interpreter = interpreter;
-    }
+    private final ActivityInstanceService actInstService;
+    private final ActivityValidationService actValidationService;
+    private final PexInterpreter interpreter;
 
     @Override
     public Object handle(Request request, Response response) {
@@ -73,7 +62,7 @@ public class GetActivityInstanceRoute implements Route {
         String operatorGuid = StringUtils.defaultIfBlank(ddpAuth.getOperator(), userGuid);
         boolean isStudyAdmin = ddpAuth.hasAdminAccessToStudy(studyGuid);
 
-        LOG.info("Attempting to retrieve activity instance {} for participant {} in study {} by operator {} (isStudyAdmin={})",
+        log.info("Attempting to retrieve activity instance {} for participant {} in study {} by operator {} (isStudyAdmin={})",
                 instanceGuid, userGuid, studyGuid, operatorGuid, isStudyAdmin);
 
         ActivityInstance result = TransactionWrapper.withTxn(handle -> {
@@ -82,7 +71,7 @@ public class GetActivityInstanceRoute implements Route {
                     response, handle, userGuid, studyGuid, instanceGuid, isStudyAdmin);
 
             ContentStyle style = RouteUtil.parseContentStyleHeaderOrHalt(request, response, ContentStyle.STANDARD);
-            LOG.info("Using ddp content style {} to format activity content", style);
+            log.info("Using ddp content style {} to format activity content", style);
 
             Optional<EnrollmentStatusType> enrollmentStatus = handle.attach(JdbiUserStudyEnrollment.class)
                     .getEnrollmentStatusByUserAndStudyGuids(userGuid, studyGuid);
@@ -90,7 +79,7 @@ public class GetActivityInstanceRoute implements Route {
             LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
             String isoLangCode = preferredUserLanguage.getIsoCode();
 
-            LOG.info("Attempting to find a translation for the following language: {}", isoLangCode);
+            log.info("Attempting to find a translation for the following language: {}", isoLangCode);
             Optional<ActivityInstance> inst = getActivityInstance(
                     handle, userGuid, operatorGuid, studyGuid, instanceGuid, style, isoLangCode);
 
@@ -104,7 +93,7 @@ public class GetActivityInstanceRoute implements Route {
                 throw new DDPException(errMsg);
             }
 
-            LOG.info("Found a translation to the '{}' language code for the activity instance with GUID {}",
+            log.info("Found a translation to the '{}' language code for the activity instance with GUID {}",
                     isoLangCode, instanceGuid);
             ActivityInstance activityInstance = inst.get();
             activityInstance.setParentInstanceGuid(instanceDto.getParentInstanceGuid());
@@ -128,7 +117,7 @@ public class GetActivityInstanceRoute implements Route {
                 null, 1);
 
         watch.stop();
-        LOG.debug("ActivityInstance reading TOTAL time: " + watch.getTime());
+        log.debug("ActivityInstance reading TOTAL time: " + watch.getTime());
 
         return result;
     }
@@ -150,7 +139,7 @@ public class GetActivityInstanceRoute implements Route {
         );
 
         watch.stop();
-        LOG.debug("ActivityInstance reading time: " + watch.getTime());
+        log.debug("ActivityInstance reading time: " + watch.getTime());
 
         return inst;
     }
@@ -167,13 +156,12 @@ public class GetActivityInstanceRoute implements Route {
         }
         String msg = "Activity validation failed";
         List<String> validationErrorSummaries = validationFailures
-                .stream().map(failure -> failure.getErrorMessage()).collect(Collectors.toList());
-        LOG.info(msg + ", reasons: {}", validationErrorSummaries);
-        ActivityInstance enrichedInstance = enrichFormQuestionsWithActivityValidationFailures(
+                .stream().map(ActivityValidationFailure::getErrorMessage).collect(Collectors.toList());
+        log.info(msg + ", reasons: {}", validationErrorSummaries);
+        return enrichFormQuestionsWithActivityValidationFailures(
                 (FormInstance) activityInstance,
                 validationFailures
         );
-        return enrichedInstance;
     }
 
     private FormInstance enrichFormQuestionsWithActivityValidationFailures(
@@ -207,6 +195,8 @@ public class GetActivityInstanceRoute implements Route {
                             allQuestions.add(questionBlock.getQuestion());
                         }
                     }
+                } else if (formBlock.getBlockType() == BlockType.TABULAR) {
+                    allQuestions.addAll(formBlock.streamQuestions().collect(Collectors.toList()));
                 } else if (formBlock.getBlockType() == BlockType.QUESTION) {
                     QuestionBlock questionBlock = (QuestionBlock) formBlock;
                     allQuestions.add(questionBlock.getQuestion());

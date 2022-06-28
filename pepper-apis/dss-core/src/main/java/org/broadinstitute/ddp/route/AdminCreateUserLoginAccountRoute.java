@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.auth0.json.mgmt.Connection;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
@@ -31,15 +32,11 @@ import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
+@Slf4j
 public class AdminCreateUserLoginAccountRoute extends ValidatedJsonInputRoute<CreateUserLoginAccountPayload> {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AdminCreateUserLoginAccountRoute.class);
-
     @Override
     protected Class<CreateUserLoginAccountPayload> getTargetClass(Request request) {
         return CreateUserLoginAccountPayload.class;
@@ -56,7 +53,7 @@ public class AdminCreateUserLoginAccountRoute extends ValidatedJsonInputRoute<Cr
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
         String userGuid = request.params(RouteConstants.PathParam.USER_GUID);
 
-        LOG.info("Attempting to create login account for user {} in study {} by operator {}",
+        log.info("Attempting to create login account for user {} in study {} by operator {}",
                 userGuid, studyGuid, ddpAuth.getOperator());
 
         response.type(ContentType.APPLICATION_JSON.getMimeType());
@@ -64,7 +61,7 @@ public class AdminCreateUserLoginAccountRoute extends ValidatedJsonInputRoute<Cr
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
             if (studyDto == null) {
                 String msg = "Could not find study with guid " + studyGuid;
-                LOG.warn(msg);
+                log.warn(msg);
                 throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.NOT_FOUND, msg));
             }
 
@@ -72,7 +69,7 @@ public class AdminCreateUserLoginAccountRoute extends ValidatedJsonInputRoute<Cr
             User user = userDao.findUserByGuid(userGuid).orElse(null);
             if (user == null) {
                 String msg = "Could not find user with guid " + userGuid;
-                LOG.warn(msg);
+                log.warn(msg);
                 throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.NOT_FOUND, msg));
             }
 
@@ -80,22 +77,22 @@ public class AdminCreateUserLoginAccountRoute extends ValidatedJsonInputRoute<Cr
                     .getEnrollmentStatusByUserAndStudyIds(user.getId(), studyDto.getId())
                     .orElse(null);
             if (status == null) {
-                LOG.error("Attempted to create login account for user not in study, userGuid={}, studyGuid={}", userGuid, studyGuid);
+                log.error("Attempted to create login account for user not in study, userGuid={}, studyGuid={}", userGuid, studyGuid);
                 throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.NOT_FOUND, "User not in study"));
             } else if (status.isExited()) {
-                LOG.error("Attempted to create login account for exited user, userGuid={}, studyGuid={}", userGuid, studyGuid);
+                log.error("Attempted to create login account for exited user, userGuid={}, studyGuid={}", userGuid, studyGuid);
                 throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.NOT_FOUND, "User not in study"));
             } else {
-                LOG.info("Found user {} in study {} with status {}", userGuid, studyGuid, status);
+                log.info("Found user {} in study {} with status {}", userGuid, studyGuid, status);
             }
 
             if (user.hasAuth0Account()) {
-                LOG.error("Attempted to create login account for user with an existing auth0 account, userGuid={}, studyGuid={}",
+                log.error("Attempted to create login account for user with an existing auth0 account, userGuid={}, studyGuid={}",
                         userGuid, studyGuid);
                 throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST,
                         new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED, "User already has login account"));
             } else if (user.isTemporary()) {
-                LOG.error("Attempted to create login account for temporary user, userGuid={}, studyGuid={}", userGuid, studyGuid);
+                log.error("Attempted to create login account for temporary user, userGuid={}, studyGuid={}", userGuid, studyGuid);
                 throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST,
                         new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED, "User is a temporary user"));
             }
@@ -109,7 +106,7 @@ public class AdminCreateUserLoginAccountRoute extends ValidatedJsonInputRoute<Cr
                     .filter(client -> client.getWebPasswordRedirectUrl() != null)
                     .collect(Collectors.toList());
             if (webClients.size() != 1) {
-                LOG.error("Expected to find one client with web password redirect url"
+                log.error("Expected to find one client with web password redirect url"
                                 + " for study {} but found {}, unable to proceed with login account creation",
                         studyGuid, webClients.size());
                 throw ResponseUtil.haltError(HttpStatus.SC_INTERNAL_SERVER_ERROR,
@@ -124,7 +121,7 @@ public class AdminCreateUserLoginAccountRoute extends ValidatedJsonInputRoute<Cr
             try {
                 dbConn = auth0Service.findClientDBConnection(auth0ClientId);
             } catch (Exception e) {
-                LOG.warn("Error getting client connections for auth0 client {}", auth0ClientId, e);
+                log.warn("Error getting client connections for auth0 client {}", auth0ClientId, e);
                 throw ResponseUtil.haltError(HttpStatus.SC_INTERNAL_SERVER_ERROR,
                         new ApiError(ErrorCodes.SERVER_ERROR, "Error looking up client"));
             }
@@ -132,7 +129,7 @@ public class AdminCreateUserLoginAccountRoute extends ValidatedJsonInputRoute<Cr
                 throw ResponseUtil.haltError(HttpStatus.SC_INTERNAL_SERVER_ERROR,
                         new ApiError(ErrorCodes.SERVER_ERROR, "Error looking up client"));
             } else {
-                LOG.info("Using database connection with name {} for client {}", dbConn.getName(), auth0ClientId);
+                log.info("Using database connection with name {} for client {}", dbConn.getName(), auth0ClientId);
             }
 
             // Construct redirect URL
@@ -140,23 +137,23 @@ public class AdminCreateUserLoginAccountRoute extends ValidatedJsonInputRoute<Cr
             try {
                 redirectUrl = auth0Service.generatePasswordResetRedirectUrl(auth0ClientId, auth0Domain);
             } catch (Exception e) {
-                LOG.error("Error constructing password reset redirect URL for user {}", user.getGuid(), e);
+                log.error("Error constructing password reset redirect URL for user {}", user.getGuid(), e);
                 throw ResponseUtil.haltError(HttpStatus.SC_INTERNAL_SERVER_ERROR,
                         new ApiError(ErrorCodes.SERVER_ERROR, "Error looking up client"));
             }
-            LOG.info("User will be redirected here after password reset: {}", redirectUrl);
+            log.info("User will be redirected here after password reset: {}", redirectUrl);
 
             // Create the login account
             Auth0Service.UserWithPasswordTicket userWithTicket;
             try {
                 userWithTicket = auth0Service.createUserWithPasswordTicket(dbConn, payload.getEmail(), redirectUrl);
             } catch (Exception e) {
-                LOG.error("Error creating auth0 account for user {}", user.getGuid(), e);
+                log.error("Error creating auth0 account for user {}", user.getGuid(), e);
                 throw ResponseUtil.haltError(HttpStatus.SC_INTERNAL_SERVER_ERROR,
                         new ApiError(ErrorCodes.SERVER_ERROR, "Error setting up login account"));
             }
             if (userWithTicket == null) {
-                LOG.warn("Email already exists in connection {}", dbConn.getName());
+                log.warn("Email already exists in connection {}", dbConn.getName());
                 throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST,
                         new ApiError(ErrorCodes.EMAIL_ALREADY_EXISTS, "Email already exists"));
             }
@@ -164,7 +161,7 @@ public class AdminCreateUserLoginAccountRoute extends ValidatedJsonInputRoute<Cr
             // Link auth0 user id
             var auth0User = userWithTicket.getUser();
             userDao.assignAuth0UserId(user.getGuid(), auth0User.getId());
-            LOG.info("Assigned auth0 user id to user {}", user.getGuid());
+            log.info("Assigned auth0 user id to user {}", user.getGuid());
 
             // Run downstream study events
             User operator = userDao.findUserByGuid(ddpAuth.getOperator())

@@ -3,7 +3,6 @@ package org.broadinstitute.dsm.model.elastic.filter.query;
 import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.model.elastic.filter.FilterParser;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
-import org.broadinstitute.dsm.model.elastic.filter.splitter.JsonContainsSplitterStrategy;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.NestedQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;

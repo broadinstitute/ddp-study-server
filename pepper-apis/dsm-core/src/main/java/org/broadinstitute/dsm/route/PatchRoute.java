@@ -13,15 +13,12 @@ import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.PatchUtil;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
 //Class needs to be refactored as soon as possible!!!
 public class PatchRoute extends RequestHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(PatchRoute.class);
     private static final Gson GSON = new GsonBuilder().serializeNulls().create();
 
     private NotificationUtil notificationUtil;

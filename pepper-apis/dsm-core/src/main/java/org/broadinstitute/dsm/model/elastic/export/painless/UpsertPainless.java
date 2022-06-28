@@ -8,6 +8,7 @@ import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.UpdateByQueryRequest;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
@@ -39,12 +40,27 @@ public class UpsertPainless implements Exportable {
         updateByQueryRequest.setScript(painless);
         updateByQueryRequest.setMaxRetries(5);
         updateByQueryRequest.setRefresh(true);
-        try {
-            clientInstance.updateByQuery(updateByQueryRequest, RequestOptions.DEFAULT);
-            logger.info(String.format("Successfully updated ES data for %s", generator.getPropertyName()));
-        } catch (IOException e) {
-            throw new RuntimeException("Error occurred while exporting data to ES", e);
+        for (int tryNum = 1; tryNum < 3; tryNum++) {
+            if (executeExport(clientInstance, updateByQueryRequest, tryNum)) {
+                break;
+            }
         }
+    }
+
+    private boolean executeExport(RestHighLevelClient clientInstance, UpdateByQueryRequest updateByQueryRequest, int i) {
+        try {
+            BulkByScrollResponse bulkByScrollResponse = clientInstance.updateByQuery(updateByQueryRequest, RequestOptions.DEFAULT);
+            logger.info(String.format("created/updated %s records in ES data for %s", getNumberOfUpserted(bulkByScrollResponse),
+                    generator.getPropertyName()));
+            return true;
+        } catch (IOException e) {
+            logger.info("Error occurred while exporting data to ES, on try number " + i, e);
+            return false;
+        }
+    }
+
+    private long getNumberOfUpserted(BulkByScrollResponse bulkByScrollResponse) {
+        return Math.max(bulkByScrollResponse.getCreated(), bulkByScrollResponse.getUpdated());
     }
 
 }

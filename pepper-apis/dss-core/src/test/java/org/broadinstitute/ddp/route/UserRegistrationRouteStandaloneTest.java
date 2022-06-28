@@ -41,6 +41,7 @@ import com.typesafe.config.Config;
 import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
 import io.restassured.response.Response;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.Auth0Constants;
@@ -104,13 +105,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.TestCase {
-
-    private static final Logger LOG = LoggerFactory.getLogger(UserRegistrationRouteStandaloneTest.class);
-
     private static final String EN_LANG_CODE = "en";
 
     private static Publisher mockPublisher;
@@ -133,8 +130,8 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
     private static String user2Guid;
     private static String user3Guid;
 
-    private Set<String> auth0UserIdsToDelete = new HashSet<>();
-    private Set<String> userGuidsToDelete = new HashSet<>();
+    private final Set<String> auth0UserIdsToDelete = new HashSet<>();
+    private final Set<String> userGuidsToDelete = new HashSet<>();
 
     @BeforeClass
     public static void setup() throws Exception {
@@ -270,26 +267,22 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
     @Test
     public void testTwoUsersSeparatedByDelta() throws InterruptedException {
         long timeBeforeFirstUser = Instant.now().toEpochMilli();
-        TransactionWrapper.useTxn(handle -> {
-            handle.attach(JdbiUserStudyEnrollment.class)
-                    .changeUserStudyEnrollmentStatus(user1Guid, study1.getGuid(), EnrollmentStatusType.ENROLLED);
-        });
+        TransactionWrapper.useTxn(handle -> handle.attach(JdbiUserStudyEnrollment.class)
+                .changeUserStudyEnrollmentStatus(user1Guid, study1.getGuid(), EnrollmentStatusType.ENROLLED));
         Thread.sleep(500);
         long timeInBetweenFirstAndSecondUser = Instant.now().toEpochMilli();
-        TransactionWrapper.useTxn(handle -> {
-            handle.attach(JdbiUserStudyEnrollment.class)
-                    .changeUserStudyEnrollmentStatus(user2Guid, study1.getGuid(), EnrollmentStatusType.ENROLLED);
-        });
+        TransactionWrapper.useTxn(handle -> handle.attach(JdbiUserStudyEnrollment.class)
+                .changeUserStudyEnrollmentStatus(user2Guid, study1.getGuid(), EnrollmentStatusType.ENROLLED));
 
         List<EnrollmentStatusDto> shouldBeBothUsers =
                 TransactionWrapper.withTxn(handle -> handle.attach(JdbiUserStudyEnrollment.class)
                         .findByStudyGuidAfterOrEqualToInstant(study1.getGuid(), timeBeforeFirstUser));
 
         List<Long> userIds = shouldBeBothUsers.stream()
-                .map(s -> s.getUserId())
+                .map(EnrollmentStatusDto::getUserId)
                 .collect(toList());
 
-        assertTrue(userIds.size() == 2);
+        assertEquals(2, userIds.size());
         assertTrue(userIds.contains(user1Id));
         assertTrue(userIds.contains(user2Id));
 
@@ -298,19 +291,17 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
                         .findByStudyGuidAfterOrEqualToInstant(study1.getGuid(), timeInBetweenFirstAndSecondUser));
 
         userIds = shouldBeSecondUser.stream()
-                .map(s -> s.getUserId())
+                .map(EnrollmentStatusDto::getUserId)
                 .collect(toList());
 
-        assertTrue(userIds.size() == 1);
+        assertEquals(1, userIds.size());
         assertTrue(userIds.contains(user2Id));
     }
 
     @Test
     public void testSameUserWithSecondUpsert() throws InterruptedException {
-        TransactionWrapper.useTxn(handle -> {
-            handle.attach(JdbiUserStudyEnrollment.class)
-                    .changeUserStudyEnrollmentStatus(user1Guid, study1.getGuid(), EnrollmentStatusType.ENROLLED);
-        });
+        TransactionWrapper.useTxn(handle -> handle.attach(JdbiUserStudyEnrollment.class)
+                .changeUserStudyEnrollmentStatus(user1Guid, study1.getGuid(), EnrollmentStatusType.ENROLLED));
         Thread.sleep(500);
         long timeInBetweenFirstAndSecondUpsert = Instant.now().toEpochMilli();
 
@@ -320,25 +311,23 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
 
         assertTrue(shouldBeNoUsers.isEmpty());
 
-        TransactionWrapper.useTxn(handle -> {
-            handle.attach(JdbiUserStudyEnrollment.class)
-                    .changeUserStudyEnrollmentStatus(user1Guid, study1.getGuid(), EnrollmentStatusType.ENROLLED);
-        });
+        TransactionWrapper.useTxn(handle -> handle.attach(JdbiUserStudyEnrollment.class)
+                .changeUserStudyEnrollmentStatus(user1Guid, study1.getGuid(), EnrollmentStatusType.ENROLLED));
 
         List<EnrollmentStatusDto> nowUserShouldBeThere =
                 TransactionWrapper.withTxn(handle -> handle.attach(JdbiUserStudyEnrollment.class)
                         .findByStudyGuidAfterOrEqualToInstant(study1.getGuid(), timeInBetweenFirstAndSecondUpsert));
 
         List<Long> userIds = nowUserShouldBeThere.stream()
-                .map(s -> s.getUserId())
+                .map(EnrollmentStatusDto::getUserId)
                 .collect(toList());
 
-        assertTrue(userIds.size() == 1);
+        assertEquals(1, userIds.size());
         assertTrue(userIds.contains(user1Id));
     }
 
     @Test
-    public void testTwoUsersTwoStudies() throws InterruptedException {
+    public void testTwoUsersTwoStudies() {
         long timeBeforeFirstUser = Instant.now().toEpochMilli();
         TransactionWrapper.useTxn(handle -> {
             handle.attach(JdbiUserStudyEnrollment.class)
@@ -353,10 +342,10 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
 
         List<Long> userIds = shouldBeOneUser.stream()
                 .filter(enrolledUser -> enrolledUser.getEnrollmentStatus() == EnrollmentStatusType.ENROLLED)
-                .map(s -> s.getUserId())
+                .map(EnrollmentStatusDto::getUserId)
                 .collect(toList());
 
-        assertTrue("We expected 1, but found " + userIds.size() + " users", userIds.size() == 1);
+        assertEquals("We expected 1, but found " + userIds.size() + " users", 1, userIds.size());
         assertTrue(userIds.contains(user1Id));
     }
 
@@ -425,7 +414,7 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
     }
 
     @Test
-    public void testRegister_newUser() throws Exception {
+    public void testRegister_newUser() {
         String testAuth0UserId = TransactionWrapper.withTxn(handle -> {
             // Have to create a completely new user that only exists in Auth0, so that email-lookup-by-user will not
             // fail and we can test that user/profile is created post-registration.
@@ -715,9 +704,7 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
                 assertFalse("should have removed mailing list entry", actual.isPresent());
             });
         } finally {
-            TransactionWrapper.useTxn(handle -> {
-                handle.attach(JdbiMailingList.class).deleteById(mailListEntryId);
-            });
+            TransactionWrapper.useTxn(handle -> handle.attach(JdbiMailingList.class).deleteById(mailListEntryId));
         }
     }
 
@@ -725,8 +712,12 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
     public void testRegister_mailingList_emailNotRequiredWhenAlreadyRegisteredWithStudy() {
         // Note: user1 is registered with study1, but user1 does not exist as an auth0 user.
 
-        String auth0UserIdForUser1 = TransactionWrapper.withTxn(handle ->
-                handle.attach(JdbiUser.class).findByUserId(user1Id).getAuth0UserId());
+        String auth0UserIdForUser1 = TransactionWrapper.withTxn(handle -> {
+            return handle.attach(JdbiUser.class)
+                    .findByUserId(user1Id)
+                    .getAuth0UserId()
+                    .orElseThrow();
+        });
 
         UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserIdForUser1, auth0ClientId,
                 study1.getGuid(), auth0Domain);
@@ -809,7 +800,7 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
             // Permanent in this case means no expiration and has auth0_user_id.
             UserDto actualUser = handle.attach(JdbiUser.class).findByUserGuid(actualUserGuid);
             assertNull(actualUser.getExpiresAtMillis());
-            assertEquals(fakeAuth0Id, actualUser.getAuth0UserId());
+            assertEquals(fakeAuth0Id, actualUser.getAuth0UserId().get());
 
             UserProfile profile = handle.attach(UserProfileDao.class).findProfileByUserId(actualUser.getUserId()).get();
             Long enLanguageCodeId = LanguageStore.getDefault().getId();
@@ -944,7 +935,7 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
 
                 governancePolicy.set(createGovernancePolicy(testStudyId));
                 governancePolicy.set(studyGovernanceDao.createPolicy(governancePolicy.get()));
-                LOG.info("Created governance policy {} for study {}", governancePolicy.get().getId(), governancePolicy.get().getStudyId());
+                log.info("Created governance policy {} for study {}", governancePolicy.get().getId(), governancePolicy.get().getStudyId());
 
                 // Create a downstream non-dispatched event that sets user study status to enrolled
                 long triggerId = handle.attach(EventTriggerDao.class)
@@ -972,7 +963,7 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
                 assertTrue(updatedInvitation.getAcceptedAt().isBefore(Instant.now()));
 
                 User requeriedUser = handle.attach(UserDao.class).findUserByGuid(user.get().getGuid()).get();
-                assertEquals(auth0UserId, requeriedUser.getAuth0UserId());
+                assertEquals(auth0UserId, requeriedUser.getAuth0UserId().get());
 
                 EnrollmentStatusType status = handle.attach(JdbiUserStudyEnrollment.class)
                         .getEnrollmentStatusByUserAndStudyIds(user.get().getId(), testStudy.get().getId())
@@ -1037,7 +1028,7 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
             TransactionWrapper.useTxn(handle -> {
                 var userDao = handle.attach(UserDao.class);
                 createdUser.set(userDao.findUserByGuid(createdUserGuid).get());
-                assertEquals(fakeAuth0UserId, createdUser.get().getAuth0UserId());
+                assertEquals(fakeAuth0UserId, createdUser.get().getAuth0UserId().get());
 
                 var updatedInvitation = handle.attach(InvitationDao.class)
                         .findByInvitationGuid(testStudy.get().getId(), invitationGuid).get();

@@ -4,16 +4,16 @@ import java.lang.reflect.Field;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
-import org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator;
+import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 
 public abstract class BaseParser implements Parser {
 
     protected static final String TYPE = "type";
-    protected BaseGenerator.PropertyInfo propertyInfo;
+    protected PropertyInfo propertyInfo;
     protected String fieldName;
     protected String realm;
 
-    public void setPropertyInfo(BaseGenerator.PropertyInfo propertyInfo) {
+    public void setPropertyInfo(PropertyInfo propertyInfo) {
         this.propertyInfo = propertyInfo;
     }
 
@@ -35,18 +35,19 @@ public abstract class BaseParser implements Parser {
                 elementMap = forNumeric(element);
             } else if (isBooleanTypeField(field)) {
                 elementMap = forBoolean(element);
+            } else if (isDateTypeField(field)) {
+                elementMap = forDate(element);
             } else {
-                // either text or date in string
-                if (field.getAnnotation(DbDateConversion.class) != null) {
-                    elementMap = forDate(element);
-                } else {
-                    elementMap = forString(element);
-                }
+                elementMap = forString(element);
             }
         } catch (NoSuchFieldException e) {
             throw new RuntimeException(e);
         }
         return elementMap;
+    }
+
+    private boolean isDateTypeField(Field field) {
+        return field.getAnnotation(DbDateConversion.class) != null;
     }
 
     private boolean isBooleanTypeField(Field field) {
@@ -94,4 +95,6 @@ public abstract class BaseParser implements Parser {
     protected boolean isWrappedByChar(String value) {
         return StringUtils.isNotBlank(value) && value.charAt(0) == '\'' && value.charAt(value.length() - 1) == '\'';
     }
+
+    public void setHelperParser(BaseParser parser) {}
 }

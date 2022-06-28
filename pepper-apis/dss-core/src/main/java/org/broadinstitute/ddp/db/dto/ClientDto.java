@@ -30,7 +30,7 @@ public class ClientDto {
     @ColumnName("auth0_domain")
     String auth0Domain;
 
-    public String getAuth0DecryptedSecret(String encryptionKey) {
+    public String getAuth0DecryptedSecret(final String encryptionKey) {
         return AesUtil.decrypt(auth0EncryptedSecret, encryptionKey);
     }
 }

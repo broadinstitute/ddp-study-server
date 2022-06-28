@@ -12,7 +12,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.settings.EventTypeDao;
+import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
+import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.export.WorkflowForES;
@@ -20,7 +22,7 @@ import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.model.elastic.ESProfile;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
-import org.broadinstitute.dsm.model.settings.field.FieldSettings;
+import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
@@ -45,9 +47,8 @@ public class ExistingRecordPatch extends BasePatch {
 
     @Override
     public Object patchNameValuePairs() {
-        profile =
-                ElasticSearchUtil.getParticipantProfileByGuidOrAltPid(ddpInstance.getParticipantIndexES(), patch.getDdpParticipantId())
-                        .orElse(null);
+        profile = ElasticSearchUtil.getParticipantProfileByGuidOrAltPid(ddpInstance.getParticipantIndexES(), patch.getDdpParticipantId())
+                .orElse(null);
         if (profile == null) {
             logger.error("Unable to find ES profile for participant with guid/altpid: {}, continuing w/ patch", patch.getParentId());
         }
@@ -89,9 +90,8 @@ public class ExistingRecordPatch extends BasePatch {
             if (isSent(question)) {
                 if (question.get("email") != null && question.get("question") != null) {
                     notificationUtil.sentAbstractionExpertQuestion(userDto.getEmail().orElse(""), userDto.getName().orElse(""),
-                            question.get("email").getAsString(),
-                            patch.getFieldName(), question.get("question").getAsString(), notificationUtil.getTemplate(
-                                    "DSM_ABSTRACTION_EXPERT_QUESTION"));
+                            question.get("email").getAsString(), patch.getFieldName(), question.get("question").getAsString(),
+                            notificationUtil.getTemplate("DSM_ABSTRACTION_EXPERT_QUESTION"));
                 }
                 question.addProperty(STATUS, "done");
                 writeBack = true;
@@ -108,7 +108,7 @@ public class ExistingRecordPatch extends BasePatch {
     }
 
     private boolean isSent(JsonObject question) {
-        return question.get(STATUS) != null && question.get(STATUS).equals("sent");
+        return question.get(STATUS) != null && question.get(STATUS).equals(ESObjectConstants.SENT);
     }
 
     private void controlWorkflowByEmail(Patch patch, NameValue nameValue, DDPInstance ddpInstance, ESProfile profile) {
@@ -116,22 +116,23 @@ public class ExistingRecordPatch extends BasePatch {
             return;
         }
         try {
-            Map<String, String> participantDataMap = GSON.fromJson(nameValue.getValue().toString(), Map.class);
-            org.broadinstitute.dsm.model.participant.data.ParticipantData participantData =
-                    new org.broadinstitute.dsm.model.participant.data.ParticipantData(Integer.parseInt(patch.getId()),
-                            patch.getParentId(), Integer.parseInt(ddpInstance.getDdpInstanceId()), patch.getFieldId(),
-                            participantDataMap);
-
-            if (participantData.hasFamilyMemberApplicantEmail(profile)) {
-                writeFamilyMemberWorklow(patch, ddpInstance, profile, participantDataMap);
-            } else {
-                Map<String, Object> esMap = ElasticSearchUtil
-                        .getObjectsMap(ddpInstance.getParticipantIndexES(), profile.getGuid(),
-                                ESObjectConstants.WORKFLOWS);
-                if (Objects.isNull(esMap) || esMap.isEmpty()) {
-                    return;
+            if ((DBConstants.DDP_PARTICIPANT_DATA_ALIAS + DBConstants.ALIAS_DELIMITER + ElasticSearchUtil.DATA).equals(
+                    nameValue.getName())) {
+                Map<String, String> participantDataMap = GSON.fromJson(nameValue.getValue().toString(), Map.class);
+                org.broadinstitute.dsm.model.participant.data.ParticipantData participantData =
+                        new org.broadinstitute.dsm.model.participant.data.ParticipantData(Integer.parseInt(patch.getId()),
+                                patch.getParentId(), Integer.parseInt(ddpInstance.getDdpInstanceId()), patch.getFieldId(),
+                                participantDataMap);
+                if (participantData.hasFamilyMemberApplicantEmail(profile)) {
+                    writeFamilyMemberWorklow(patch, ddpInstance, profile, participantDataMap);
+                } else {
+                    Map<String, Object> esMap = ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), profile.getGuid(),
+                            ESObjectConstants.WORKFLOWS);
+                    if (Objects.isNull(esMap) || esMap.isEmpty()) {
+                        return;
+                    }
+                    removeFamilyMemberWorkflowData(ddpInstance, profile, participantDataMap, esMap);
                 }
-                removeFamilyMemberWorkflowData(ddpInstance, profile, participantDataMap, esMap);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -141,26 +142,33 @@ public class ExistingRecordPatch extends BasePatch {
     private void writeFamilyMemberWorklow(Patch patch, DDPInstance ddpInstance, ESProfile profile, Map<String, String> participantDataMap) {
         logger.info("Email in patch data matches participant profile email, will update workflows");
         int ddpInstanceIdByGuid = Integer.parseInt(ddpInstance.getDdpInstanceId());
-        FieldSettings fieldSettings = new FieldSettings();
-        participantDataMap.forEach((columnName, columnValue) -> {
-            if (!fieldSettings.isColumnExportable(ddpInstanceIdByGuid, columnName)) {
+        FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
+        List<FieldSettingsDto> fieldSettings = fieldSettingsDao.getFieldSettingWithActionsByInstanceId(ddpInstanceIdByGuid);
+        participantDataMap.keySet().forEach(columnName -> {
+            Optional<FieldSettingsDto> fieldSettingByColumnName =
+                    fieldSettings.stream().filter(fieldSetting -> fieldSetting.getColumnName().equals(columnName)).findFirst();
+
+            if (fieldSettingByColumnName.isEmpty()) {
                 return;
             }
             if (!patch.getFieldId().contains(org.broadinstitute.dsm.model.participant.data.ParticipantData.FIELD_TYPE_PARTICIPANTS)) {
                 return;
             }
             // Use participant guid here to avoid multiple ES lookups.
-            ElasticSearchUtil.writeWorkflow(WorkflowForES.createInstanceWithStudySpecificData(ddpInstance,
-                    profile.getGuid(), columnName, columnValue, new WorkflowForES.StudySpecificData(
-                            participantDataMap.get(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID),
-                            participantDataMap.get(FamilyMemberConstants.FIRSTNAME),
-                            participantDataMap.get(FamilyMemberConstants.LASTNAME))), false);
+            Object columnValue = participantDataMap.get(columnName);
+            if (columnValue != null) {
+                ElasticSearchUtil.writeWorkflow(
+                        WorkflowForES.createInstanceWithStudySpecificData(ddpInstance, profile.getGuid(), columnName,
+                                columnValue.toString(), new WorkflowForES.StudySpecificData(
+                                        participantDataMap.get(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID),
+                                        participantDataMap.get(FamilyMemberConstants.FIRSTNAME),
+                                        participantDataMap.get(FamilyMemberConstants.LASTNAME))), false);
+            }
         });
     }
 
     private void removeFamilyMemberWorkflowData(DDPInstance ddpInstance, ESProfile profile, Map<String, String> participantDataMap,
-                                                Map<String, Object> esMap) throws
-            IOException {
+                                                Map<String, Object> esMap) throws IOException {
         logger.info("Email in patch data does not match participant profile email, will remove workflows");
         CopyOnWriteArrayList<Map<String, Object>> workflowsList =
                 new CopyOnWriteArrayList<>((List<Map<String, Object>>) esMap.get(ESObjectConstants.WORKFLOWS));

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import lombok.Setter;
@@ -19,8 +20,13 @@ import org.broadinstitute.dsm.model.elastic.sort.Sort;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.ParticipantUtil;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.support.replication.ReplicationResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.core.CountRequest;
 import org.elasticsearch.client.core.CountResponse;
@@ -292,7 +298,9 @@ public class ElasticSearch implements ElasticSearchable {
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
             searchSourceBuilder.query(new TermsQueryBuilder(ElasticSearchUtil.PROFILE_LEGACYALTPID, legacyAltPids.toArray()));
             searchSourceBuilder.size(legacyAltPids.size());
-            searchSourceBuilder.fetchSource(new String[] { ElasticSearchUtil.PROFILE_LEGACYALTPID, ElasticSearchUtil.PROFILE_GUID }, null);
+            searchSourceBuilder.fetchSource(
+                    new String[] { ElasticSearchUtil.PROFILE_LEGACYALTPID, ElasticSearchUtil.PROFILE_GUID, ElasticSearchUtil.PROXIES }, null
+            );
             searchRequest.source(searchSourceBuilder);
             response = ElasticSearchUtil.getClientInstance().search(searchRequest, RequestOptions.DEFAULT);
         } catch (Exception e) {
@@ -300,15 +308,79 @@ public class ElasticSearch implements ElasticSearchable {
         }
         SearchHit[] records = response.getHits().getHits();
         logger.info("Got " + records.length + " participants from ES for instance " + esParticipantsIndex);
-        return extractLegacyAltPidGuidPair(records);
+        SearchHitProxy[] searchHitProxies = Arrays.stream(records)
+                .map(SearchHitProxy::new)
+                .collect(Collectors.toList())
+                .toArray(new SearchHitProxy[] {});
+        return extractLegacyAltPidGuidPair(searchHitProxies);
     }
 
-    private Map<String, String> extractLegacyAltPidGuidPair(SearchHit[] records) {
+    @Override
+    public ReplicationResponse.ShardInfo createDocumentById(String index, String docId, Map<String, Object> data) {
+
+        try {
+            IndexRequest indexRequest = new IndexRequest(index, "_doc", docId).source(data);
+            IndexResponse response = ElasticSearchUtil.getClientInstance().index(indexRequest, RequestOptions.DEFAULT);
+            if (isSuccessfull(response.getShardInfo())) {
+                logger.info("Document with id: " + docId + " created successfully in index: " + index);
+            } else {
+                logger.error("Document with id: " + docId + " could not be created in index" + index);
+            }
+            return response.getShardInfo();
+        } catch (Exception e) {
+            throw new RuntimeException("Couldn't create participant with index: " + index + " and with id: " + docId, e);
+        }
+    }
+
+    @Override
+    public ReplicationResponse.ShardInfo deleteDocumentById(String index, String docId) {
+        try {
+            DeleteRequest deleteRequest = new DeleteRequest(index, "_doc", docId);
+            DeleteResponse deleteResponse = ElasticSearchUtil.getClientInstance().delete(deleteRequest, RequestOptions.DEFAULT);
+            if (isSuccessfull(deleteResponse.getShardInfo())) {
+                logger.info("Document with id: " + docId + " created successfully in index: " + index);
+            } else {
+                logger.error("Document with id: " + docId + " could not be created in index" + index);
+            }
+            return deleteResponse.getShardInfo();
+        } catch (Exception e) {
+            throw new RuntimeException("Couldn't create participant with index: " + index + " and with id: " + docId, e);
+        }
+    }
+
+    private boolean isSuccessfull(ReplicationResponse.ShardInfo shardInfo) {
+        return shardInfo.getSuccessful() > 0;
+    }
+
+
+    Map<String, String> extractLegacyAltPidGuidPair(SearchHitProxy[] records) {
+        Set<String> parentsGuids = getParents(records);
         return Arrays.stream(records)
-                .map(SearchHit::getSourceAsMap)
+                .map(SearchHitProxy::getSourceAsMap)
                 .filter(this::hasProfile)
                 .map(this::getProfile)
-                .collect(Collectors.toMap(m1 -> m1.get(ElasticSearchUtil.LEGACY_ALT_PID), m2 -> m2.get(ESObjectConstants.GUID)));
+                .collect(Collectors.toMap(profileMap ->
+                        profileMap.get(ElasticSearchUtil.LEGACY_ALT_PID),
+                        profileMap -> profileMap.get(ESObjectConstants.GUID),
+                        (prevGuid, currGuid) -> {
+                            if (isParentGuid(parentsGuids, prevGuid)) {
+                                return currGuid;
+                            } else {
+                                return prevGuid;
+                            }
+                        }));
+    }
+
+    private boolean isParentGuid(Set<String> parentsGuids, String guid) {
+        return parentsGuids.contains(guid);
+    }
+
+    private Set<String> getParents(SearchHitProxy[] records) {
+        return Arrays.stream(records)
+                .map(SearchHitProxy::getSourceAsMap)
+                .filter(sourceMap -> sourceMap.containsKey(ElasticSearchUtil.PROXIES))
+                .flatMap(sourceMap -> ((List<String>) sourceMap.get(ElasticSearchUtil.PROXIES)).stream())
+                .collect(Collectors.toSet());
     }
 
     private Map<String, String> getProfile(Map<String, Object> sourceMap) {
@@ -318,4 +390,5 @@ public class ElasticSearch implements ElasticSearchable {
     private boolean hasProfile(Map<String, Object> sourceMap) {
         return sourceMap.containsKey(ElasticSearchUtil.PROFILE);
     }
+
 }

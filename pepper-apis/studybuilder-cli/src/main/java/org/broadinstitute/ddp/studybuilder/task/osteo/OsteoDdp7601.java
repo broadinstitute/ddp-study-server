@@ -1,25 +1,14 @@
 package org.broadinstitute.ddp.studybuilder.task.osteo;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import org.broadinstitute.ddp.db.DaoException;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
-import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.event.activityinstancecreation.ActivityInstanceCreationEventSyncProcessorDefault;
 import org.broadinstitute.ddp.service.ActivityInstanceCreationService;
-import org.broadinstitute.ddp.studybuilder.EventBuilder;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
@@ -29,15 +18,19 @@ import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
-import lombok.extern.slf4j.Slf4j;
+
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 @Slf4j
 public class OsteoDdp7601 implements CustomTask {
     private static final String STUDY_GUID = "CMI-OSTEO";
-    private static final String DATA_FILE = "patches/DDP-7601-new-event-for-dsm.conf";
 
-    private Config dataCfg;
     private Config studyCfg;
 
     @Override
@@ -45,35 +38,17 @@ public class OsteoDdp7601 implements CustomTask {
         if (!studyCfg.getString("study.guid").equals(STUDY_GUID)) {
             throw new DDPException("This task is only for the " + STUDY_GUID + " study!");
         }
-        File file = cfgPath.getParent().resolve(DATA_FILE).toFile();
-        if (!file.exists()) {
-            throw new DDPException("Data file is missing: " + file);
-        }
         this.studyCfg = studyCfg;
-        this.dataCfg = ConfigFactory.parseFile(file).resolveWith(varsCfg);
     }
 
     @Override
     public void run(Handle handle) {
-        var guid = studyCfg.getString("adminUser.guid");
-        var adminUser = handle.attach(UserDao.class)
-                .findUserByGuid(guid)
-                .orElseThrow(() -> new DaoException("Could not find participant user with guid: " + guid));
-
         var studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(STUDY_GUID);
-        var eventBuilder = new EventBuilder(studyCfg, studyDto, adminUser.getId());
-
-        log.info("Adding new event for DSM notification.");
-
-        Config eventDataCfg = dataCfg.getConfigList("events").get(0);
-
-        eventBuilder.insertEvent(handle, eventDataCfg);
-
-        log.info("Added new event for DSM notification.");
 
         SqlHelper sqlHelper = handle.attach(SqlHelper.class);
         List<SqlHelper.UserInfo> users = sqlHelper.getUsersInfo();
         JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
+
         Set<Long> consentIds = new HashSet<>();
         for (var user : users) {
             consentIds.addAll(user.getConsents().keySet());

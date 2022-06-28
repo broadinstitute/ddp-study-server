@@ -3,24 +3,29 @@ package org.broadinstitute.ddp.model.activity.instance.question;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
-import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
+import org.broadinstitute.ddp.model.activity.types.BooleanRenderMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
+import lombok.NonNull;
 
 public final class BoolQuestion extends Question<BoolAnswer> {
 
-    @NotNull
+    @NonNull
     @SerializedName("trueContent")
     private String trueContent;
 
-    @NotNull
+    @NonNull
     @SerializedName("falseContent")
     private String falseContent;
+
+    @NonNull
+    @SerializedName("renderMode")
+    private BooleanRenderMode renderMode;
 
     private transient long trueTemplateId;
     private transient long falseTemplateId;
@@ -29,7 +34,7 @@ public final class BoolQuestion extends Question<BoolAnswer> {
             boolean isRestricted, boolean isDeprecated, Boolean readonly, Long tooltipTemplateId,
             Long additionalInfoHeaderTemplateId, Long additionalInfoFooterTemplateId,
             List<BoolAnswer> answers, List<Rule<BoolAnswer>> validations,
-            long trueTemplateId, long falseTemplateId) {
+            long trueTemplateId, long falseTemplateId, BooleanRenderMode renderMode) {
         super(QuestionType.BOOLEAN,
                 stableId,
                 promptTemplateId,
@@ -43,11 +48,12 @@ public final class BoolQuestion extends Question<BoolAnswer> {
                 validations);
         this.trueTemplateId = trueTemplateId;
         this.falseTemplateId = falseTemplateId;
+        this.renderMode = renderMode;
     }
 
     public BoolQuestion(String stableId, long promptTemplateId,
                         List<BoolAnswer> answers, List<Rule<BoolAnswer>> validations,
-                        long trueTemplateId, long falseTemplateId) {
+                        long trueTemplateId, long falseTemplateId, BooleanRenderMode renderMode) {
         this(stableId,
                 promptTemplateId,
                 false,
@@ -59,7 +65,8 @@ public final class BoolQuestion extends Question<BoolAnswer> {
                 answers,
                 validations,
                 trueTemplateId,
-                falseTemplateId);
+                falseTemplateId,
+                renderMode);
     }
 
     public String getTrueContent() {
