@@ -20,6 +20,7 @@ import org.jdbi.v3.core.Handle;
  */
 public class DDPAuth implements Serializable {
 
+    private String domain = null;
     private String client = null;
 
     /**
@@ -40,8 +41,10 @@ public class DDPAuth implements Serializable {
      * Instantiates DDPAuth object.
      */
     public DDPAuth(
-            String clientGuid, String operatorGuid, String token, UserPermissions userPermissions, String preferredLanguage
+            String domain, String clientGuid, String operatorGuid, String token,
+            UserPermissions userPermissions, String preferredLanguage
     ) {
+        this.domain = domain;
         this.client = clientGuid;
         this.operator = operatorGuid;
         this.token = token;
@@ -50,9 +53,10 @@ public class DDPAuth implements Serializable {
     }
 
     public DDPAuth(
-            String clientGuid, String operatorGuid, UserPermissions userPermissions, String preferredLanguage
+            String issuer, String clientGuid, String operatorGuid,
+            UserPermissions userPermissions, String preferredLanguage
     ) {
-        this(clientGuid, operatorGuid, null, userPermissions, preferredLanguage);
+        this(issuer, clientGuid, operatorGuid, null, userPermissions, preferredLanguage);
     }
 
     /**
@@ -92,6 +96,10 @@ public class DDPAuth implements Serializable {
         return token;
     }
 
+    public String getDomain() {
+        return domain;
+    }
+
     /**
      * Checks whether this user's account or the client used to login
      * the account have been locked or revoked.  Under normal use,
@@ -109,6 +117,16 @@ public class DDPAuth implements Serializable {
             return false;
         }
 
+    }
+
+    /**
+     * Returns true if the user is considered active, and a valid
+     * token was sent with their request
+     * @return true if the session is authenticated
+     */
+    public boolean isAuthenticated() {
+        return (StringUtils.isNotBlank(token))
+            && isActive();
     }
 
     public String getClient() {
