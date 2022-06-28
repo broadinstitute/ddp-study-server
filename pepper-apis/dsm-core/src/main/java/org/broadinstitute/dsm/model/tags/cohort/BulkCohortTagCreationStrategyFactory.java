@@ -8,7 +8,7 @@ public class BulkCohortTagCreationStrategyFactory {
     private BulkCohortTagPayload bulkCohortTagPayload;
     private static final Map<CreateOption, CohortStrategy> strategyMap = Map.of(
             CreateOption.ALL_PATIENTS, new FilteredOrAllPatientsCohortStrategy(),
-            CreateOption.SELECTED_PATIENTS, new SelectedPatientsCohortStrategy()
+            CreateOption.SELECTED_PATIENTS, new BaseCohortStrategy()
     );
 
     public BulkCohortTagCreationStrategyFactory(BulkCohortTagPayload bulkCohortTagPayload) {

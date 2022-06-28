@@ -8,6 +8,7 @@ import lombok.Data;
 public class BulkCohortTag {
     protected List<String> cohortTags;
     protected List<String> selectedPatients;
+    protected String createdBy;
 
     public BulkCohortTag(List<String> cohortTags, List<String> selectedPatients) {
         this.cohortTags = cohortTags;

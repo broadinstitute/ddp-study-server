@@ -82,9 +82,11 @@ public class CohortTagUseCase {
 
     private List<CohortTag> createCohortTagObjectsFromStringTags() {
         List<CohortTag> cohortTagsToCreate = new ArrayList<>();
+        String createdBy = bulkCohortTag.getCreatedBy();
         for (String participantId: bulkCohortTag.getSelectedPatients()) {
             for (String tag: bulkCohortTag.getCohortTags()) {
                 CohortTag cohortTag = new CohortTag(tag, participantId, ddpInstanceDto.getDdpInstanceId());
+                cohortTag.setCreatedBy(createdBy);
                 cohortTagsToCreate.add(cohortTag);
             }
         }

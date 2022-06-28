@@ -5,17 +5,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.model.elastic.ESProfile;
-import org.broadinstitute.dsm.model.elastic.export.painless.AddListToNestedByGuidScriptBuilder;
-import org.broadinstitute.dsm.model.elastic.export.painless.NestedUpsertPainlessFacade;
-import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.filter.Filterable;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
 
 public class FilteredOrAllPatientsCohortStrategy extends BaseCohortStrategy {
     private static final int THRESHOLD = 500;
+    private ParticipantWrapperResult filteredResult;
 
     public FilteredOrAllPatientsCohortStrategy() {
     }
@@ -31,7 +28,7 @@ public class FilteredOrAllPatientsCohortStrategy extends BaseCohortStrategy {
 
         setInitialRange(filter);
 
-        ParticipantWrapperResult filteredResult = filter.filter(getQueryMap());
+        filteredResult = filter.filter(getQueryMap());
 
         long totalPages = calculateTotalPages(filteredResult);
 
@@ -41,22 +38,15 @@ public class FilteredOrAllPatientsCohortStrategy extends BaseCohortStrategy {
                 filter.setTo((i + 1) * THRESHOLD);
                 filteredResult = filter.filter(getQueryMap());
             }
-            List<String> selectedPatients = extractSelectedPatientsGuids(filteredResult);
-            BulkCohortTag bulkCohortTag = new BulkCohortTag(bulkCohortTagPayload.getCohortTags(), selectedPatients);
-            CohortTagUseCase cohortTagUseCase =
-                    new CohortTagUseCase(bulkCohortTag, getDDPInstanceDto(), new CohortTagDaoImpl(), new ElasticSearch(),
-                            new NestedUpsertPainlessFacade(), new AddListToNestedByGuidScriptBuilder());
-            List<CohortTag> createdCohortTags = cohortTagUseCase.bulkInsert();
-            resultToReturn.addAll(createdCohortTags);
+            resultToReturn.addAll(super.create());
         }
         return resultToReturn;
     }
 
     private void setInitialRange(Filterable<ParticipantWrapperResult> filter) {
         int from = 0;
-        int to = THRESHOLD;
         filter.setFrom(from);
-        filter.setTo(to);
+        filter.setTo(THRESHOLD);
     }
 
     private long calculateTotalPages(ParticipantWrapperResult firstResult) {
@@ -72,7 +62,12 @@ public class FilteredOrAllPatientsCohortStrategy extends BaseCohortStrategy {
         return i != 0;
     }
 
-    private List<String> extractSelectedPatientsGuids(ParticipantWrapperResult filteredResult) {
+    @Override
+    protected List<String> getSelectedPatients() {
+        return extractSelectedPatientsGuids();
+    }
+
+    private List<String> extractSelectedPatientsGuids() {
         return filteredResult.getParticipants().stream()
                 .map(participantWrapperDto -> participantWrapperDto.getEsData().getProfile().map(ESProfile::getGuid))
                 .filter(Optional::isPresent)
