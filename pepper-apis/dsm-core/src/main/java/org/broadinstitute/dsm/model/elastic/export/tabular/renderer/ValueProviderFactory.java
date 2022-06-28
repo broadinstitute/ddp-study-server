@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.model.elastic.export.excel.renderer;
+package org.broadinstitute.dsm.model.elastic.export.tabular.renderer;
 
 import static org.broadinstitute.dsm.model.QuestionType.AGREEMENT;
 import static org.broadinstitute.dsm.model.QuestionType.BOOLEAN;
@@ -48,6 +48,16 @@ public class ValueProviderFactory {
             return defaultValueProvider;
         }
         return valueProviders.getOrDefault(QuestionType.getByValue(filter.getType()), defaultValueProvider);
+    }
+
+    public ValueProvider getFormValueProvider(String participantColumnName, String questionType) {
+        if (isSpecialColumn(participantColumnName)) {
+            return specialValueProviders.get(participantColumnName);
+        }
+        if (questionType == null) {
+            return defaultValueProvider;
+        }
+        return valueProviders.getOrDefault(QuestionType.getByValue(questionType), defaultValueProvider);
     }
 
     private boolean isSpecialColumn(String participantColumn) {

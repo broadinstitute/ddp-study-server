@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.model.elastic.export.excel.renderer;
+package org.broadinstitute.dsm.model.elastic.export.tabular.renderer;
 
 
 import static org.junit.Assert.assertEquals;

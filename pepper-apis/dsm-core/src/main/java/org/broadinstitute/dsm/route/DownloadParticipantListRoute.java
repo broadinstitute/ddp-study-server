@@ -3,23 +3,25 @@ package org.broadinstitute.dsm.route;
 import static org.broadinstitute.dsm.util.ElasticSearchUtil.DEFAULT_FROM;
 import static org.broadinstitute.dsm.util.ElasticSearchUtil.MAX_RESULT_SIZE;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 
-import org.broadinstitute.dsm.export.ParticipantExcelGenerator;
+import com.google.common.net.MediaType;
+import lombok.Getter;
+import lombok.Setter;
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.model.Filter;
-import org.broadinstitute.dsm.model.elastic.export.excel.*;
-import org.broadinstitute.dsm.model.elastic.sort.Alias;
+import org.broadinstitute.dsm.model.elastic.export.tabular.*;
 import org.broadinstitute.dsm.model.filter.FilterFactory;
 import org.broadinstitute.dsm.model.filter.Filterable;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
 import org.broadinstitute.dsm.security.RequestHandler;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +33,8 @@ public class DownloadParticipantListRoute extends RequestHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(DownloadParticipantListRoute.class);
 
+    private static final String FILE_DATE_FORMAT = "yyyy-MM-dd";
+
     public DownloadParticipantListRoute() {
     }
 
@@ -38,30 +42,28 @@ public class DownloadParticipantListRoute extends RequestHandler {
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         DownloadParticipantListPayload payload =
                 ObjectMapperSingleton.instance().readValue(request.body(), DownloadParticipantListPayload.class);
-        List<Filter> columnNames = payload.getColumnNames();
-        Map<Alias, List<Filter>> columnAliasEsPathMap =
-                new TreeMap<>(Comparator.comparing(Alias::isCollection).thenComparing(Alias::getValue));
-        columnNames.forEach(column -> {
-            Alias alias = Alias.of(column.getParticipantColumn());
-            columnAliasEsPathMap.computeIfAbsent(alias, paths -> new ArrayList<>())
-                    .add(column);
-        });
+
+        String realm = RoutePath.getRealm(request);
+        DDPInstance instance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.MEDICAL_RECORD_ACTIVATED);
+
+        TabularParticipantParser parser = new TabularParticipantParser(payload.getColumnNames(), instance);
 
         Filterable filterable = FilterFactory.of(request);
+        List<ParticipantWrapperDto> participants = fetchParticipantEsData(filterable, request.queryMap());
+        List<ModuleExportConfig> exportConfigs = parser.generateExportConfigs();
+        List<Map<String, String>> participantValueMaps = parser.parse(exportConfigs, participants);
 
-        List<ExcelRow> participantRows = fetchParticipantRows(filterable, request.queryMap(), columnAliasEsPathMap);
+        response.type(MediaType.TSV_UTF_8.toString());
+        response.header("Access-Control-Expose-Headers", "Content-Disposition");
+        response.header("Content-Disposition", "attachment;filename=" + getExportFilename());
 
-        ParticipantExcelGenerator generator = new ParticipantExcelGenerator();
-        for(ExcelRow row : participantRows) {
-            generator.appendData(row);
-        }
-        generator.writeInResponse(response);
+        TabularParticipantExporter exporter = new TabularParticipantExporter(exportConfigs, participantValueMaps);
+        exporter.writeTable(response.raw().getWriter());
         return response.raw();
     }
 
     /** Fetches participant information from ElasticSearch in batches of MAX_RESULT_SIZE  */
-    private List<ExcelRow> fetchParticipantRows(Filterable filter, QueryParamsMap queryParamsMap, Map<Alias, List<Filter>> columnAliasEsPathMap) {
-        ParticipantRecordData rowData = new ParticipantRecordData(columnAliasEsPathMap);
+    private static List<ParticipantWrapperDto> fetchParticipantEsData(Filterable filter, QueryParamsMap queryParamsMap) {
         List<ParticipantWrapperDto> allResults = new ArrayList<ParticipantWrapperDto>();
         int currentFrom = DEFAULT_FROM;
         int currentTo = MAX_RESULT_SIZE;
@@ -80,7 +82,22 @@ public class DownloadParticipantListRoute extends RequestHandler {
             currentTo += MAX_RESULT_SIZE;
         }
 
-        List<ExcelRow> participantRows = rowData.processToExcel(allResults);
-        return participantRows;
+        return allResults;
+    }
+
+    private static String getExportFilename() {
+        LocalDate date = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(FILE_DATE_FORMAT);
+        String exportFileName = String.format("Participant-%s.tsv", date.format(formatter));
+        return exportFileName;
+    }
+
+    @Getter
+    @Setter
+    private static class DownloadParticipantListPayload {
+        private List<Filter> columnNames;
     }
 }
+
+
+
