@@ -140,8 +140,8 @@ public class LiquibaseUtil implements AutoCloseable {
     private static boolean insertLegacyTenant(Handle handle, Config auth0Cfg) {
         JdbiAuth0Tenant jdbiAuth0Tenant = handle.attach(JdbiAuth0Tenant.class);
         boolean insertedTenant = false;
-        if (auth0Cfg.hasPath(ConfigFile.DOMAIN) && auth0Cfg.hasPath(ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_ID) &&
-                auth0Cfg.hasPath(ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_SECRET)) {
+        if (auth0Cfg.hasPath(ConfigFile.DOMAIN) && auth0Cfg.hasPath(ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_ID)
+                && auth0Cfg.hasPath(ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_SECRET)) {
             String domain = auth0Cfg.getString(ConfigFile.DOMAIN);
             String mgmtApiClient = auth0Cfg.getString(ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_ID);
             String mgmtSecret = auth0Cfg.getString(ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_SECRET);

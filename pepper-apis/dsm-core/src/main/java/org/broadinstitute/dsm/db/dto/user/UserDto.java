@@ -8,7 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 
 @Data
 public class UserDto {
-    @SerializedName ("user_id")
+    @SerializedName("user_id")
     private long userId;
     private String guid;
     private String firstName;
