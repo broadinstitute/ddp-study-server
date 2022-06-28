@@ -1,10 +1,8 @@
 package org.broadinstitute.dsm.pubsub;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import com.google.api.core.ApiFuture;
@@ -19,21 +17,26 @@ import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.InstanceSettings;
+import org.apache.xerces.impl.dv.util.Base64;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderDto;
+import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderUseCase;
 import org.broadinstitute.dsm.exception.DSMPubSubException;
 import org.broadinstitute.dsm.model.mercury.MercuryPdoOrder;
+import org.broadinstitute.dsm.model.mercury.MercuryPdoOrderBase;
 import org.broadinstitute.dsm.util.NanoIdUtil;
-import org.broadinstitute.lddp.db.SimpleResult;
 
 @Slf4j
 public class MercuryOrderPublisher {
     private static MercuryOrderDao mercuryOrderDao;
+    private static ParticipantDao participantDao;
 
-    public MercuryOrderPublisher(MercuryOrderDao mercuryOrderDao) {
+    public MercuryOrderPublisher(MercuryOrderDao mercuryOrderDao,
+                                 ParticipantDao participantDao) {
         this.mercuryOrderDao = mercuryOrderDao;
+        this.participantDao = participantDao;
     }
 
     private static String createMercuryUniqueOrderId() {
@@ -49,12 +52,13 @@ public class MercuryOrderPublisher {
             throws IOException, InterruptedException {
         TopicName topicName = TopicName.of(projectId, topicId);
         Publisher publisher = null;
+        String message = Base64.encode(messageData.getBytes());
 
         try {
             // Create a publisher instance with default settings bound to the topic
             publisher = Publisher.newBuilder(topicName).build();
 
-            ByteString data = ByteString.copyFromUtf8(messageData);
+            ByteString data = ByteString.copyFromUtf8(message);
             PubsubMessage pubsubMessage = PubsubMessage.newBuilder()
                     .setData(data).build();
 
@@ -65,7 +69,6 @@ public class MercuryOrderPublisher {
             ApiFutures.addCallback(
                     future,
                     new ApiFutureCallback<String>() {
-
                         @Override
                         public void onFailure(Throwable throwable) {
                             if (throwable instanceof ApiException) {
@@ -74,7 +77,7 @@ public class MercuryOrderPublisher {
                                 log.info(String.valueOf(apiException.getStatusCode().getCode()));
                                 log.info(String.valueOf(apiException.isRetryable()));
                             }
-                            log.error("Error publishing message " + topicId);
+                            throw new RuntimeException("Error publishing message " + topicId, throwable);
                         }
 
                         @Override
@@ -98,44 +101,31 @@ public class MercuryOrderPublisher {
         }
     }
 
-    public void createAndPublishMessage(String[] barcodes, String projectId, String topicId, DDPInstance ddpInstance,
-                                        String ddpParticipantId) {
+    public void createAndPublishMessage(String[] barcodes, String projectId, String topicId, DDPInstanceDto ddpInstance,
+                                        String collaboratorParticipantId, String userId) {
+        Optional<String> maybeParticipantId =
+                participantDao.getParticipantFromCollaboratorParticipantId(collaboratorParticipantId,
+                        String.valueOf(ddpInstance.getDdpInstanceId()));
+        String ddpParticipantId = maybeParticipantId.orElseThrow();
         log.info("Publishing message to mercury");
-        String researchProject = ddpInstance.getResearchProject();
-        String creatorId = new InstanceSettings().getInstanceSettings(ddpInstance.getName()).getMercuryOrderCreator().orElseThrow();
+        String researchProject = ddpInstance.getResearchProject().orElseThrow();
+        String creatorId = ddpInstance.getMercuryOrderCreator().orElseThrow();
         String mercuryOrderId = createMercuryUniqueOrderId();
         MercuryPdoOrder mercuryPdoOrder = new MercuryPdoOrder(creatorId, mercuryOrderId, researchProject, barcodes);
-        String json = new Gson().toJson(mercuryPdoOrder);
+        MercuryPdoOrderBase mercuryPdoOrderBase = new MercuryPdoOrderBase(mercuryPdoOrder);
+        String json = new Gson().toJson(mercuryPdoOrderBase);
         if (StringUtils.isNotBlank(json)) {
-            orderOnMercury(projectId, topicId, json, barcodes, ddpParticipantId, mercuryOrderId);
-        }
-
-    }
-
-    private void orderOnMercury(String projectId, String topicId, String json, String[] barcodes,
-                                String ddpParticipantId, String orderId) {
-        List<MercuryOrderDto> newOrders = MercuryOrderDto.createAllOrders(barcodes, ddpParticipantId, orderId);
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult result = new SimpleResult();
             try {
-                for (MercuryOrderDto order : newOrders) {
-                    result = this.mercuryOrderDao.create(order, conn);
-                    if (result.resultException != null) {
-                        return result;
-                    }
-                }
-                publishWithErrorHandler(projectId, topicId, json);
+                List<MercuryOrderDto> newOrders = MercuryOrderUseCase.createAllOrders(barcodes, ddpParticipantId, mercuryOrderId, userId);
+                this.publishWithErrorHandler(projectId, topicId, json);
+                this.mercuryOrderDao.insertMercuryOrders(newOrders);
             } catch (Exception e) {
-                try {
-                    conn.rollback();
-                } catch (SQLException throwables) {
-                    throwables.printStackTrace();
-                }
+                throw new RuntimeException("Unable to  publish to pubsub/ db " + json, e);
             }
-            return result;
-        });
-        if (results.resultException != null) {
-            throw new RuntimeException("Error inserting new order ", results.resultException);
+
         }
+
     }
+
+
 }

@@ -42,19 +42,21 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
     public static final String STUDY_PRE_FILTER = "study_pre_filter";
     public static final String QUERY_ITEMS = "query_items";
     public static final String RESEARCH_PROJECT = "research_project";
+    public static final String MERCURY_ORDER_CREATOR = "mercury_order_creator";
 
     private static final String SQL_INSERT_DDP_INSTANCE =
             "INSERT INTO ddp_instance SET  instance_name = ?,  study_guid = ?, display_name = ?, base_url = ?,"
                     + "is_active = ?, bsp_group = ?, bsp_collection = ?, bsp_organism = ?, collaborator_id_prefix = ?,"
                     + "reminder_notification_wks = ?, mr_attention_flag_d = ?, tissue_attention_flag_d = ?, auth0_token = ?,"
                     + "notification_recipients = ?, migrated_ddp = ?, billing_reference = ?, es_participant_index = ?,"
-                    + "es_activity_definition_index = ?, es_users_index = ?, study_pre_filter = ?, research_project = ?";
+                    + "es_activity_definition_index = ?, es_users_index = ?, study_pre_filter = ?, research_project = ?, "
+                    + "mercury_order_creator= ? ";
 
     private static final String SQL_DELETE_DDP_INSTANCE = "DELETE FROM ddp_instance WHERE ddp_instance_id = ?";
     private static final String SQL_SELECT_INSTANCE_WITH_ROLE =
             "SELECT ddp_instance_id, instance_name, base_url, collaborator_id_prefix, migrated_ddp, billing_reference, "
                     + "es_participant_index, es_activity_definition_index, es_users_index, study_pre_filter, research_project, "
-                    + "(SELECT count(role.name) "
+                    + "mercury_order_creator, (SELECT count(role.name) "
                     + "FROM ddp_instance realm, ddp_instance_role inRol, instance_role role "
                     + "WHERE realm.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id "
                     + "AND role.name = ? "
@@ -76,7 +78,7 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                     + "bsp_collection, bsp_organism, collaborator_id_prefix, reminder_notification_wks,"
                     + "mr_attention_flag_d, tissue_attention_flag_d, auth0_token, notification_recipients, migrated_ddp,"
                     + "billing_reference, es_participant_index, es_activity_definition_index, es_users_index, study_pre_filter,"
-                    + "research_project, query_items "
+                    + "research_project, query_items, mercury_order_creator "
                     + "FROM ddp_instance realm LEFT JOIN view_filters filter ON (filter.filter_id = study_pre_filter) ";
     private static final String SQL_SELECT_DDP_INSTANCE_BY_INSTANCE_NAME = SQL_BASE_SELECT + "WHERE instance_name = ? ";
     private static final String SQL_SELECT_DDP_INSTANCE_BY_INSTANCE_ID = SQL_BASE_SELECT + "WHERE ddp_instance_id = ? ";
@@ -136,7 +138,8 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                 stmt.setString(18, ddpInstanceDto.getEsActivityDefinitionIndex());
                 stmt.setString(19, ddpInstanceDto.getEsUsersIndex());
                 stmt.setObject(20, ddpInstanceDto.getStudyPreFilter());
-                stmt.setObject(21, ddpInstanceDto.getResearchProject());
+                stmt.setObject(21, ddpInstanceDto.getResearchProject().orElse(null));
+                stmt.setObject(22, ddpInstanceDto.getMercuryOrderCreator().orElse(null));
                 stmt.executeUpdate();
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
@@ -242,7 +245,7 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                 .withBillingReference(rs.getString(BILLING_REFERENCE)).withEsParticipantIndex(rs.getString(ES_PARTICIPANT_INDEX))
                 .withEsActivityDefinitionIndex(rs.getString(ES_ACTIVITY_DEFINITION_INDEX)).withEsUsersIndex(rs.getString(ES_USERS_INDEX))
                 .withStudyPreFilter(rs.getInt(STUDY_PRE_FILTER)).withQueryItems(rs.getString(QUERY_ITEMS))
-                .withResearchProject(rs.getString(RESEARCH_PROJECT))
+                .withResearchProject(rs.getString(RESEARCH_PROJECT)).withMercuryOrderCreator(rs.getString(MERCURY_ORDER_CREATOR))
                 .build();
     }
 

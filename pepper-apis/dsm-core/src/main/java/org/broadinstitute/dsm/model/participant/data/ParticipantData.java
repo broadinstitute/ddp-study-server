@@ -138,8 +138,8 @@ public class ParticipantData {
         participantData.setParticipantDataId(createdDataKey);
         logger.info(String.format("Successfully inserted data for participant: %s in db", this.ddpParticipantId));
 
-        DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceId(ddpInstanceId).orElseThrow();
-        String participantGuid = Exportable.getParticipantGuid(ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
+        DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceId(this.ddpInstanceId).orElseThrow();
+        String participantGuid = Exportable.getParticipantGuid(this.ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
 
         try {
             UpsertPainlessFacade.of(DBConstants.DDP_PARTICIPANT_DATA_ALIAS, participantData, ddpInstanceDto,
@@ -150,7 +150,6 @@ public class ParticipantData {
             logger.error(String.format("Error inserting participant data for guid: %s in ElasticSearch", participantGuid));
             e.printStackTrace();
         }
-
         return createdDataKey;
     }
 
