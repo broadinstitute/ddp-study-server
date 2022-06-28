@@ -17,7 +17,7 @@ import org.broadinstitute.lddp.db.SimpleResult;
 
 public class UserDao implements Dao<UserDto> {
 
-    long EXPIRATION_DURATION_MILLIS = TimeUnit.HOURS.toMillis(24);
+    private static long EXPIRATION_DURATION_MILLIS = TimeUnit.HOURS.toMillis(24);
 
     public Optional<UserDto> getUserByEmail(@NonNull String email) {
         SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
