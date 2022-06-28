@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
-import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
 import org.elasticsearch.index.query.QueryBuilder;
 
@@ -11,7 +11,7 @@ public abstract class BaseQueryBuilder {
 
     public static BaseQueryBuilder of(String alias, String fieldName) {
         BaseQueryBuilder queryBuilder;
-        boolean isCollection = Util.TABLE_ALIAS_MAPPINGS.get(alias).isCollection();
+        boolean isCollection = PropertyInfo.TABLE_ALIAS_MAPPINGS.get(alias).isCollection();
         if (isCollection) {
             if (TestResultCollectionQueryBuilder.TEST_RESULT.equals(fieldName)) {
                 queryBuilder =

@@ -11,7 +11,7 @@ public class ScriptBuilderTest {
         String propertyName = "kitRequestShipping";
         String uniqueIdentifier = "kitRequestId";
 
-        ScriptBuilder builder = new NestedScriptBuilder(propertyName, uniqueIdentifier);
+        ScriptBuilder builder = new PutToNestedScriptBuilder(propertyName, uniqueIdentifier);
         String script = builder.build();
 
         String expectedScript =
@@ -31,13 +31,28 @@ public class ScriptBuilderTest {
 
         String propertyName = "kitRequestShipping";
 
-        ScriptBuilder builder = new SingleScriptBuilder(propertyName);
+        ScriptBuilder builder = new AddToSingleScriptBuilder(propertyName);
         String script = builder.build();
 
         String expectedScript = "" + "if (ctx._source.dsm.kitRequestShipping == null) "
                 + "{ctx._source.dsm.kitRequestShipping = params.dsm.kitRequestShipping} " + "else {"
                 + "for (entry in params.dsm.kitRequestShipping.entrySet()) "
                 + "{ ctx._source.dsm.kitRequestShipping.put(entry.getKey(), entry.getValue()) }" + "}";
+
+        Assert.assertEquals(expectedScript, script);
+    }
+
+    @Test
+    public void buildRemoveFromNested() {
+
+        String propertyName = "cohortTag";
+        String uniqueIdentifier = "cohortTagId";
+
+        ScriptBuilder builder = new RemoveFromNestedScriptBuilder(propertyName, uniqueIdentifier);
+        String script = builder.build();
+
+        String expectedScript = "" + "if (ctx._source.dsm.cohortTag != null) "
+                + "{ ctx._source.dsm.cohortTag.removeIf(tag -> tag.cohortTagId == params.dsm.cohortTag.cohortTagId); }";
 
         Assert.assertEquals(expectedScript, script);
     }

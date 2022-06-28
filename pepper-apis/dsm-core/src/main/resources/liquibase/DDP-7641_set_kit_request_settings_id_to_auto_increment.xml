@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="nghurtch" id="set_kit_request_settings_id_to_auto_increment">
+        <addAutoIncrement
+                columnDataType="int"
+        		columnName="ddp_kit_request_settings_id"
+        		incrementBy="1"
+        		tableName="ddp_kit_request_settings"/>
+    </changeSet>
+
+</databaseChangeLog>

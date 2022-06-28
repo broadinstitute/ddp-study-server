@@ -11,11 +11,11 @@ import java.util.TreeMap;
 
 import org.broadinstitute.dsm.export.ParticipantExcelGenerator;
 import org.broadinstitute.dsm.model.ParticipantColumn;
-import org.broadinstitute.dsm.model.elastic.sort.Alias;
+import org.broadinstitute.dsm.model.elastic.export.excel.DownloadParticipantListPayload;
 import org.broadinstitute.dsm.model.elastic.export.excel.ParticipantRecordData;
+import org.broadinstitute.dsm.model.elastic.sort.Alias;
 import org.broadinstitute.dsm.model.filter.FilterFactory;
 import org.broadinstitute.dsm.model.filter.Filterable;
-import org.broadinstitute.dsm.model.elastic.export.excel.DownloadParticipantListPayload;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
@@ -40,8 +40,7 @@ public class DownloadParticipantListRoute extends RequestHandler {
                 new TreeMap<>(Comparator.comparing(Alias::isCollection).thenComparing(Alias::getValue));
         columnNames.forEach(column -> {
             Alias alias = Alias.of(column);
-            columnAliasEsPathMap.computeIfAbsent(alias, paths -> new ArrayList<>())
-                    .add(column);
+            columnAliasEsPathMap.computeIfAbsent(alias, paths -> new ArrayList<>()).add(column);
         });
         int currentFrom = DEFAULT_FROM;
         int currentTo = MAX_RESULT_SIZE;
@@ -52,8 +51,8 @@ public class DownloadParticipantListRoute extends RequestHandler {
             filterable.setFrom(currentFrom);
             filterable.setTo(currentTo);
             ParticipantWrapperResult filteredList = (ParticipantWrapperResult) filterable.filter(request.queryMap());
-            rowData.processData(filteredList,true);
-            if (filteredList.getTotalCount() < currentFrom){
+            rowData.processData(filteredList, true);
+            if (filteredList.getTotalCount() < currentFrom) {
                 break;
             }
             currentFrom = currentTo;
@@ -72,7 +71,7 @@ public class DownloadParticipantListRoute extends RequestHandler {
             ParticipantWrapperResult filteredList = (ParticipantWrapperResult) filterable.filter(request.queryMap());
             List<List<String>> participantRecords = rowData.processData(filteredList, false);
             columnsNumber = getColumnsNumber(participantRecords);
-            if (filteredList.getTotalCount() < currentFrom){
+            if (filteredList.getTotalCount() < currentFrom) {
                 break;
             }
             generator.appendData(participantRecords);

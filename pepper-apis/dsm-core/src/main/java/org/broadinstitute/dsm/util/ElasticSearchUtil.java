@@ -231,7 +231,7 @@ public class ElasticSearchUtil {
                 SearchResponse response = null;
                 int i = 0;
                 searchSourceBuilder.query(QueryBuilders.matchQuery("profile.hruid", participantHruid))
-                        .sort(PROFILE_CREATED_AT, SortOrder.ASC);
+                        .sort(PROFILE_CREATED_AT, SortOrder.DESC);
                 while (response == null || response.getHits().getHits().length != 0) {
                     searchSourceBuilder.size(scrollSize);
                     searchSourceBuilder.from(i * scrollSize);
@@ -250,7 +250,7 @@ public class ElasticSearchUtil {
     }
 
 
-    public static Map<String, Map<String, Object>> getDDPParticipantsFromES(@NonNull String realm,
+    public static Map<String, Map<String, Object>> getDDPParticipantsFromES(@NonNull String instanceDisplayName,
                                                                             @NonNull String index,
                                                                             RestHighLevelClient client) {
         Map<String, Map<String, Object>> esData = new HashMap<>();
@@ -262,32 +262,32 @@ public class ElasticSearchUtil {
                 SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
                 SearchResponse response = null;
                 int i = 0;
-                searchSourceBuilder.query(QueryBuilders.matchAllQuery()).sort(PROFILE_CREATED_AT, SortOrder.ASC);
+                searchSourceBuilder.query(QueryBuilders.matchAllQuery()).sort(PROFILE_CREATED_AT, SortOrder.DESC);
                 while (response == null || response.getHits().getHits().length != 0) {
                     searchSourceBuilder.size(scrollSize);
                     searchSourceBuilder.from(i * scrollSize);
                     searchRequest.source(searchSourceBuilder);
 
                     response = client.search(searchRequest, RequestOptions.DEFAULT);
-                    addingParticipantStructuredHits(response, esData, realm, index);
+                    addingParticipantStructuredHits(response, esData, instanceDisplayName, index);
                     i++;
                 }
             } catch (Exception e) {
-                throw new RuntimeException("Couldn't get participants from ES for instance " + realm, e);
+                throw new RuntimeException("Couldn't get participants from ES for instance " + instanceDisplayName, e);
             }
-            logger.info("Got " + esData.size() + " participants from ES for instance " + realm);
+            logger.info("Got " + esData.size() + " participants from ES for instance " + instanceDisplayName);
         }
         return esData;
     }
 
-    public static Map<String, Map<String, Object>> getDDPParticipantsFromES(@NonNull String realm, @NonNull String index) {
+    public static Map<String, Map<String, Object>> getDDPParticipantsFromES(@NonNull String instanceDisplayName, @NonNull String index) {
         Map<String, Map<String, Object>> esData = new HashMap<>();
         if (StringUtils.isNotBlank(index)) {
             logger.info("Collecting ES data from index: " + index);
             try {
-                esData = getDDPParticipantsFromES(realm, index, client);
+                esData = getDDPParticipantsFromES(instanceDisplayName, index, client);
             } catch (Exception e) {
-                logger.error("Couldn't get participants from ES for instance " + realm, e);
+                logger.error("Couldn't get participants from ES for instance " + instanceDisplayName, e);
             }
             logger.info("Finished collecting ES data");
         }
@@ -335,13 +335,13 @@ public class ElasticSearchUtil {
 
     public static Optional<ElasticSearchParticipantDto> fetchESDataByParticipantId(String index, String participantId,
                                                                                    RestHighLevelClient client) throws IOException {
-        String matchQueryName = ParticipantUtil.isGuid(participantId) ? "profile.guid" : "profile.legacyAltPid";
+        String matchQueryName = ParticipantUtil.isGuid(participantId) ? PROFILE_GUID : PROFILE_LEGACYALTPID;
         return Optional.of(getElasticSearchForGivenMatch(index, participantId, client, matchQueryName));
     }
 
     public static ElasticSearchParticipantDto fetchESDataByAltpid(String index, String altpid, RestHighLevelClient client)
             throws IOException {
-        String matchQueryName = "profile.legacyAltPid";
+        String matchQueryName = PROFILE_LEGACYALTPID;
         return getElasticSearchForGivenMatch(index, altpid, client, matchQueryName);
     }
 
@@ -350,7 +350,7 @@ public class ElasticSearchUtil {
         SearchRequest searchRequest = new SearchRequest(index);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         SearchResponse response = null;
-        searchSourceBuilder.query(QueryBuilders.matchQuery(matchQueryName, id)).sort(PROFILE_CREATED_AT, SortOrder.ASC);
+        searchSourceBuilder.query(QueryBuilders.matchQuery(matchQueryName, id)).sort(PROFILE_CREATED_AT, SortOrder.DESC);
         searchSourceBuilder.size(1);
         searchSourceBuilder.from(0);
         searchRequest.source(searchSourceBuilder);
@@ -377,7 +377,7 @@ public class ElasticSearchUtil {
                 if (query == null) {
                     throw new RuntimeException("Couldn't create query from filter " + filter);
                 }
-                searchSourceBuilder.query(query).sort(PROFILE_CREATED_AT, SortOrder.ASC);
+                searchSourceBuilder.query(query).sort(PROFILE_CREATED_AT, SortOrder.DESC);
                 while (response == null || response.getHits().getHits().length != 0) {
                     searchSourceBuilder.size(scrollSize);
                     searchSourceBuilder.from(i * scrollSize);
@@ -409,10 +409,10 @@ public class ElasticSearchUtil {
 
 
         BoolQueryBuilder qb = QueryBuilders.boolQuery();
-        qb.must(QueryBuilders.termsQuery("profile.guid", participantGuids));
+        qb.must(QueryBuilders.termsQuery(PROFILE_GUID, participantGuids));
 
         searchSourceBuilder.fetchSource(new String[] {PROFILE, ADDRESS}, null);
-        searchSourceBuilder.query(qb).sort(PROFILE_CREATED_AT, SortOrder.ASC).docValueField(ADDRESS).docValueField(PROFILE);
+        searchSourceBuilder.query(qb).sort(PROFILE_CREATED_AT, SortOrder.DESC).docValueField(ADDRESS).docValueField(PROFILE);
         while (pageNumber == 0 || hitNumber < totalHits) {
             searchSourceBuilder.size(scrollSize);
             searchSourceBuilder.from(pageNumber * scrollSize);
@@ -1326,10 +1326,10 @@ public class ElasticSearchUtil {
     }
 
     public static void addingParticipantStructuredHits(@NonNull SearchResponse response, Map<String, Map<String, Object>> esData,
-                                                       String ddp, String index) {
+                                                       String instanceDisplayName, String index) {
         for (SearchHit hit : response.getHits()) {
             Map<String, Object> sourceMap = hit.getSourceAsMap();
-            sourceMap.put("ddp", ddp);
+            sourceMap.put("ddp", instanceDisplayName);
             if (sourceMap.containsKey(PROFILE)) {
                 if (ElasticSearchUtil.isESUsersIndex(index)) {
                     esData.put(hit.getId(), sourceMap);
@@ -1685,7 +1685,7 @@ public class ElasticSearchUtil {
 
     public static Map<String, Map<String, Object>> getESData(@NonNull DDPInstance instance) {
         if (StringUtils.isNotBlank(instance.getParticipantIndexES())) {
-            return getDDPParticipantsFromES(instance.getName(), instance.getParticipantIndexES());
+            return getDDPParticipantsFromES(instance.getDisplayName(), instance.getParticipantIndexES());
         }
         return null;
     }

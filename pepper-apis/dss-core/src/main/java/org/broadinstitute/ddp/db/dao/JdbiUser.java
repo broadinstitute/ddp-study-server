@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.db.dao;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.broadinstitute.ddp.db.dto.UserDto;
@@ -20,6 +21,9 @@ public interface JdbiUser extends SqlObject {
 
     @SqlQuery("select user_id from user where guid = :userGuid")
     long getUserIdByGuid(@Bind("userGuid") String userGuid);
+
+    @SqlQuery("select user_id from user where email = :email")
+    Long getUserIdByEmail(@Bind("email") String email);
 
     @SqlQuery("select guid from user where legacy_altpid = :altpid")
     String getUserGuidByAltpid(@Bind("altpid") String altpid);
@@ -60,6 +64,10 @@ public interface JdbiUser extends SqlObject {
     @SqlQuery("select * from user where guid = :guid")
     @RegisterConstructorMapper(UserDto.class)
     UserDto findByUserGuid(@Bind("guid") String userGuid);
+
+    @SqlQuery("select * from user where email = :email")
+    @RegisterConstructorMapper(UserDto.class)
+    Optional<UserDto> findByEmail(String email);
 
     @SqlQuery("select * from user where user_id in (<userIds>)")
     @RegisterConstructorMapper(UserDto.class)

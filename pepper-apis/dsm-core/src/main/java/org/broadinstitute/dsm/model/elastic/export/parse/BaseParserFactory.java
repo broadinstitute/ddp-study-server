@@ -18,13 +18,14 @@ public abstract class BaseParserFactory {
     protected BaseParser buildDynamicFieldsParser(ExportFacadePayload exportFacadePayload) {
         BaseParser typeParser;
         DynamicFieldsParser dynamicFieldsParser = new DynamicFieldsParser();
-        dynamicFieldsParser.setParser(getInitialParser());
+        dynamicFieldsParser.setHelperParser(getInitialParser());
         dynamicFieldsParser.setRealm(exportFacadePayload.getRealm());
         typeParser = dynamicFieldsParser;
         return typeParser;
     }
 
     protected boolean isDynamicFields(String fieldName) {
-        return ESObjectConstants.ADDITIONAL_VALUES_JSON.equals(fieldName) || ESObjectConstants.DATA.equals(fieldName) || ESObjectConstants.ADDITIONAL_TISSUE_VALUE_JSON.equals(fieldName);
+        return ESObjectConstants.ADDITIONAL_VALUES_JSON.equals(fieldName) || ESObjectConstants.DATA.equals(fieldName)
+                || ESObjectConstants.ADDITIONAL_TISSUE_VALUE_JSON.equals(fieldName);
     }
 }

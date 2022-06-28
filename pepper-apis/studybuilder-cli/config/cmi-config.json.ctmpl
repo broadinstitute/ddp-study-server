@@ -1,6 +1,6 @@
 {{with $environment := env "ENVIRONMENT"}}
 {{with $version := env "VERSION"}}
-{{with $response := vault (printf "secret/pepper/%s/%s/cmi/conf" $environment $version)}}
+{{with $response := secret (printf "secret/pepper/%s/%s/cmi/conf" $environment $version)}}
 {{with $conf := $response.Data}}
 
 {
@@ -21,28 +21,28 @@
     "LOCALHOST_LOGOUTS": "",
     "LOCALHOST_ORIGINS": "",
   {{end}}
-  {{with $resp := vault (printf "secret/pepper/%s/%s/angio/conf" $environment $version)}}
+  {{with $resp := secret (printf "secret/pepper/%s/%s/angio/conf" $environment $version)}}
     "ANGIO_BASE_URL": "{{$resp.Data.baseWebUrl}}",
   {{end}}
-  {{with $resp := vault (printf "secret/pepper/%s/%s/brain/conf" $environment $version)}}
+  {{with $resp := secret (printf "secret/pepper/%s/%s/brain/conf" $environment $version)}}
     "BRAIN_BASE_URL": "{{$resp.Data.baseWebUrl}}",
   {{end}}
-  {{with $resp := vault (printf "secret/pepper/%s/%s/mbc/conf" $environment $version)}}
+  {{with $resp := secret (printf "secret/pepper/%s/%s/mbc/conf" $environment $version)}}
     "MBC_BASE_URL": "{{$resp.Data.baseWebUrl}}",
   {{end}}
-  {{with $resp := vault (printf "secret/pepper/%s/%s/osteo/conf" $environment $version)}}
+  {{with $resp := secret (printf "secret/pepper/%s/%s/osteo/conf" $environment $version)}}
     "OSTEO_BASE_URL": "{{$resp.Data.baseWebUrl}}",
   {{end}}
-  {{with $resp := vault (printf "secret/pepper/%s/%s/mpc/conf" $environment $version)}}
+  {{with $resp := secret (printf "secret/pepper/%s/%s/mpc/conf" $environment $version)}}
     "MPC_BASE_URL": "{{$resp.Data.baseWebUrl}}",
   {{end}}
-  {{with $resp := vault (printf "secret/pepper/%s/%s/esc/conf" $environment $version)}}
+  {{with $resp := secret (printf "secret/pepper/%s/%s/esc/conf" $environment $version)}}
     "ESC_BASE_URL": "{{$resp.Data.baseWebUrl}}",
   {{end}}
-  {{with $resp := vault (printf "secret/pepper/%s/%s/pancan/conf" $environment $version)}}
+  {{with $resp := secret (printf "secret/pepper/%s/%s/pancan/conf" $environment $version)}}
     "PANCAN_BASE_URL": "{{$resp.Data.baseWebUrl}}",
   {{end}}
-  {{with $resp := vault (printf "secret/pepper/%s/%s/lms/conf" $environment $version)}}
+  {{with $resp := secret (printf "secret/pepper/%s/%s/lms/conf" $environment $version)}}
     "LMS_BASE_URL": "{{$resp.Data.baseWebUrl}}",
   {{end}}
     "ASSETS_BUCKET_URL": "{{$conf.assetsBucketUrl}}",

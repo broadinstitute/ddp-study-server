@@ -46,7 +46,7 @@ public class ClinicalKitDto {
     String gender;
     @SerializedName("accession_number")
     String accessionNumber;
-    @SerializedName("collection_date")
+    @SerializedName ("sample_collection_date")
     String collectionDate;
     @SerializedName("kit_label")
     String mfBarcode;
@@ -151,6 +151,6 @@ public class ClinicalKitDto {
             return maybeGenderQuestionAnswer
                     .map(answer -> answer.get(DDPActivityConstants.ACTIVITY_QUESTION_ANSWER))
                     .orElse("U");
-        }).orElse("U");
+        }).orElse("U"); //todo we have to decide what will happen in this case?
     }
 }

@@ -217,7 +217,7 @@ public class SendGridClient {
      * @param templateId the template id
      * @return result with active version id, id can be null if no active ones
      */
-    public ApiResult<String, Void> getTemplateActiveVersionId(String templateId) {
+    public ApiResult<String, String> getTemplateActiveVersionId(String templateId) {
         Request request = new Request();
         request.setMethod(Method.GET);
         request.setEndpoint(PATH_TEMPLATES + "/" + templateId);
@@ -225,7 +225,7 @@ public class SendGridClient {
             Response response = sendGrid.api(request);
             int statusCode = response.getStatusCode();
             if (statusCode != 200) {
-                return ApiResult.err(statusCode, null);
+                return ApiResult.err(statusCode, response.getBody());
             }
 
             Template template = gson.fromJson(response.getBody(), Template.class);
