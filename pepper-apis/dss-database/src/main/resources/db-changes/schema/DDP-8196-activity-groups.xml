@@ -19,7 +19,7 @@
             </column>
         </createTable>
 
-        <createTable tableName="category_group">
+        <createTable tableName="activity_category_group">
             <column name="form_id" type="bigint" autoIncrement="true" startWith="1">
                 <constraints primaryKey="true"/>
             </column>
@@ -46,20 +46,20 @@
                                  referencedTableName="study_activity" referencedColumnNames="study_activity_id"/>
 
         <addForeignKeyConstraint baseTableName="activity_group" baseColumnNames="form_id" constraintName="activity_group_form_id_fk"
-                                 referencedTableName="category_group" referencedColumnNames="form_id"/>
+                                 referencedTableName="activity_category_group" referencedColumnNames="form_id"/>
 
-        <addForeignKeyConstraint baseTableName="category_group" baseColumnNames="category_id" constraintName="category_group_category_id_fk"
+        <addForeignKeyConstraint baseTableName="activity_category_group" baseColumnNames="category_id" constraintName="activity_category_group_category_id_fk"
                                  referencedTableName="activity_category" referencedColumnNames="category_id"/>
 
-        <addForeignKeyConstraint baseTableName="category_group" baseColumnNames="parent_form_id" constraintName="category_group_parent_id_fk"
-                                 referencedTableName="category_group" referencedColumnNames="form_id" onDelete="SET NULL"/>
+        <addForeignKeyConstraint baseTableName="activity_category_group" baseColumnNames="parent_form_id" constraintName="activity_category_group_parent_id_fk"
+                                 referencedTableName="activity_category_group" referencedColumnNames="form_id" onDelete="SET NULL"/>
 
         <addForeignKeyConstraint baseTableName="activity_category" baseColumnNames="study_id" constraintName="activity_category_study_id_fk"
                                  referencedTableName="umbrella_study" referencedColumnNames="umbrella_study_id" />
 
         <addUniqueConstraint tableName="activity_category" columnNames="category_code"/>
 
-        <addUniqueConstraint tableName="category_group" columnNames="form_code"/>
+        <addUniqueConstraint tableName="activity_category_group" columnNames="form_code"/>
 
         <addUniqueConstraint tableName="activity_group" columnNames="activity_id"/>
 

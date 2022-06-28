@@ -148,7 +148,9 @@ public abstract class ActivityDef {
     protected transient Long versionId;
 
     @SerializedName("formCode")
-    protected ActivityFormGroupDto formGroupDto;
+    protected String formCode;
+
+    private ActivityFormGroupDto activityForm;
 
     ActivityDef(
             ActivityType activityType,
@@ -378,7 +380,7 @@ public abstract class ActivityDef {
     }
 
     public String getFormCode() {
-        return formGroupDto != null ? formGroupDto.getFormCode() : null;
+        return formCode;
     }
 
     /**
@@ -415,7 +417,7 @@ public abstract class ActivityDef {
         protected boolean canDeleteInstances;
         protected Boolean canDeleteFirstInstance;
         protected boolean showActivityStatus;
-        private ActivityFormGroupDto formGroup;
+        protected ActivityFormGroupDto formGroup;
 
         /**
          * Returns the subclass builder instance to enable method chaining.
@@ -443,7 +445,8 @@ public abstract class ActivityDef {
             activity.canDeleteInstances = canDeleteInstances;
             activity.canDeleteFirstInstance = canDeleteFirstInstance;
             activity.showActivityStatus = showActivityStatus;
-            activity.formGroupDto = formGroup;
+            activity.formCode = formGroup != null ? formGroup.getFormCode() : null;
+            activity.activityForm = formGroup;
         }
 
         public T setParentActivityCode(String parentActivityCode) {

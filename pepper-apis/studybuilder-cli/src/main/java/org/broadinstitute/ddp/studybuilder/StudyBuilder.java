@@ -691,7 +691,7 @@ public class StudyBuilder {
             String categoryName = categoryEntry.getString("categoryName");
             String categoryCode = categoryEntry.getString("categoryCode");
             List<FormGroupDef> subForms =
-                    categoryEntry.getConfigList("subForms").stream().map(this::getSubForm).collect(Collectors.toList());
+                    categoryEntry.getConfigList("activities").stream().map(this::getSubForm).collect(Collectors.toList());
             Long categoryId = categoryDao.insertCategory(studyId, categoryCode, categoryName);
             subForms.forEach(subForm -> insertSubForm(categoryDao, categoryId, subForm));
         }
@@ -716,7 +716,7 @@ public class StudyBuilder {
         String formCode = formCfg.getString("formCode");
         FormGroupDef.FormGroupDefBuilder formBuilder = FormGroupDef.builder().code(formCode).name(formName);
         if (formCfg.hasPath("subForms")) {
-            List<FormGroupDef> subForms = formCfg.getConfigList("subForms").stream().map(this::getSubForm).collect(Collectors.toList());
+            List<FormGroupDef> subForms = formCfg.getConfigList("activities").stream().map(this::getSubForm).collect(Collectors.toList());
             formBuilder.subForms(subForms);
         }
         return formBuilder.build();
