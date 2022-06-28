@@ -113,20 +113,6 @@
             <artifactId>jwks-rsa</artifactId>
         </dependency>
 
-        <!-- for mbc decryption -->
-        <dependency>
-            <groupId>org.jruby</groupId>
-            <artifactId>jruby-complete</artifactId>
-            <!-- <version>9.1.15.0</version> -->
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/org.postgresql/postgresql -->
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <!-- <version>42.1.4</version> -->
-        </dependency>
-
         <!-- autogenerates getters, setters, and other boilerplate code -->
         <dependency>
             <groupId>org.projectlombok</groupId>

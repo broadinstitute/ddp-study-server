@@ -20,6 +20,7 @@ import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiMedicalProvider;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
+import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.json.medicalprovider.PostMedicalProviderResponsePayload;
@@ -33,22 +34,15 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class PostMedicalProviderRouteTest extends IntegrationTestSuite.TestCase {
-
-    private static final Logger LOG = LoggerFactory.getLogger(PostMedicalProviderRouteTest.class);
-
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String token;
     private static String url;
 
     private static void deleteTestData() {
         TransactionWrapper.useTxn(
-                handle -> {
-                    handle.attach(JdbiMedicalProvider.class).deleteByGuid(TestMedicalProviderData.GUID);
-                }
+                handle -> handle.attach(JdbiMedicalProvider.class).deleteByGuid(TestMedicalProviderData.GUID)
         );
     }
 
@@ -134,11 +128,10 @@ public class PostMedicalProviderRouteTest extends IntegrationTestSuite.TestCase 
 
     @Test
     public void testPostMedicalProvider_201UserHasCompletedStudy() throws Exception {
-        TransactionWrapper.useTxn(handle -> {
-            handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(testData.getUserGuid(),
-                    testData.getStudyGuid(),
-                    EnrollmentStatusType.ENROLLED);
-        });
+        TransactionWrapper.useTxn(handle -> handle.attach(JdbiUserStudyEnrollment.class)
+                .changeUserStudyEnrollmentStatus(testData.getUserGuid(),
+                        testData.getStudyGuid(),
+                        EnrollmentStatusType.ENROLLED));
 
         Thread.sleep(500); // This is because EligibilityInclusion is >=
 
@@ -178,21 +171,20 @@ public class PostMedicalProviderRouteTest extends IntegrationTestSuite.TestCase 
         List<Long> resultList = TransactionWrapper.withTxn(handle -> handle.attach(JdbiUserStudyEnrollment.class)
                 .findByStudyGuidAfterOrEqualToInstant(testData.getStudyGuid(), timeBeforeSecondEntry))
                 .stream()
-                .map(obj -> obj.getUserId())
+                .map(EnrollmentStatusDto::getUserId)
                 .collect(Collectors.toList());
 
 
-        assertTrue(resultList.size() == 1);
+        assertEquals(1, resultList.size());
         assertTrue(resultList.contains(testData.getUserId()));
     }
 
     @Test
     public void testPostMedicalProvider_CompletedStudyBlankMedicalProvider() throws Exception {
-        TransactionWrapper.useTxn(handle -> {
-            handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(testData.getUserGuid(),
-                    testData.getStudyGuid(),
-                    EnrollmentStatusType.ENROLLED);
-        });
+        TransactionWrapper.useTxn(handle -> handle.attach(JdbiUserStudyEnrollment.class)
+                .changeUserStudyEnrollmentStatus(testData.getUserGuid(),
+                        testData.getStudyGuid(),
+                        EnrollmentStatusType.ENROLLED));
 
         Thread.sleep(500); // This is because EligibilityInclusion is >=
 
@@ -225,11 +217,11 @@ public class PostMedicalProviderRouteTest extends IntegrationTestSuite.TestCase 
         List<Long> resultList = TransactionWrapper.withTxn(handle -> handle.attach(JdbiUserStudyEnrollment.class)
                 .findByStudyGuidAfterOrEqualToInstant(testData.getStudyGuid(), timeBeforeSecondEntry))
                 .stream()
-                .map(obj -> obj.getUserId())
+                .map(EnrollmentStatusDto::getUserId)
                 .collect(Collectors.toList());
 
 
-        assertTrue(resultList.size() == 0);
+        assertEquals(0, resultList.size());
     }
 
     @Test

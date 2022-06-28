@@ -22,6 +22,7 @@ import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.kitrequest.KitRequestDto;
 import org.broadinstitute.dsm.model.KitDDPNotification;
 import org.broadinstitute.dsm.model.at.ReceiveKitRequest;
+import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
@@ -180,7 +181,7 @@ public class KitStatusChangeRoute extends RequestHandler {
                         }
                         try {
                             UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, "ddpLabel",
-                                    "ddpLabel", kit).export();
+                                    "ddpLabel", kit, new PutToNestedScriptBuilder()).export();
                         } catch (Exception e) {
                             logger.error(String.format("Error updating ddp label for kit with label: %s", kit));
                             e.printStackTrace();
@@ -189,7 +190,7 @@ public class KitStatusChangeRoute extends RequestHandler {
                         logger.info("Added tracking for kit w/ kit_label " + kit);
                         try {
                             UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, "kitLabel",
-                                    "kitLabel", addValue).export();
+                                    "kitLabel", addValue, new PutToNestedScriptBuilder()).export();
                         } catch (Exception e) {
                             logger.error(String.format("Error updating kit label for kit with label: %s", addValue));
                             e.printStackTrace();

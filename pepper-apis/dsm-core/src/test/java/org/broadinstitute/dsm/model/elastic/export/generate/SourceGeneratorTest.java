@@ -14,6 +14,7 @@ import org.broadinstitute.dsm.model.elastic.export.parse.BaseParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.DynamicFieldsParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
+import org.broadinstitute.dsm.model.patch.Patch;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -22,7 +23,7 @@ public class SourceGeneratorTest {
     @Test
     public void generateCollection() {
         BaseParser parser = new ValueParser();
-        parser.setPropertyInfo(new BaseGenerator.PropertyInfo(MappingGeneratorTest.TestPropertyClass.class, true));
+        parser.setPropertyInfo(new PropertyInfo(MappingGeneratorTest.TestPropertyClass.class, true));
         Generator generator = new TestSourceGenerator(parser, getGeneratorPayload(TestPatchUtil.MEDICAL_RECORD_COLUMN, "value", 0));
         Map<String, Object> objectMap = generator.generate();
         Assert.assertEquals(objectMap.keySet().stream().findFirst().get(), SourceGenerator.DSM_OBJECT);
@@ -36,7 +37,9 @@ public class SourceGeneratorTest {
     }
 
     private GeneratorPayload getGeneratorPayload(String columnName, Object value, int recordId) {
-        return new GeneratorPayload(new NameValue(columnName, value), recordId) {
+        Patch patch = new Patch();
+        patch.setId(String.valueOf(recordId));
+        return new GeneratorPayload(new NameValue(columnName, value), patch) {
             @Override
             public String getCamelCaseFieldName() {
                 return Util.underscoresToCamelCase(columnName);
@@ -47,7 +50,7 @@ public class SourceGeneratorTest {
     @Test
     public void generateNumeric() {
         BaseParser parser = new ValueParser();
-        parser.setPropertyInfo(new BaseGenerator.PropertyInfo(MappingGeneratorTest.TestPropertyClass.class, true));
+        parser.setPropertyInfo(new PropertyInfo(MappingGeneratorTest.TestPropertyClass.class, true));
         Generator generator = new TestSourceGenerator(parser, getGeneratorPayload(TestPatchUtil.NUMERIC_FIELD, 1, 0));
         Map<String, Object> objectMap = generator.generate();
         Assert.assertEquals(objectMap.keySet().stream().findFirst().get(), SourceGenerator.DSM_OBJECT);
@@ -61,10 +64,12 @@ public class SourceGeneratorTest {
     @Test
     public void generateFromJson() {
         NameValue nameValue = new NameValue("additional_values_json", "{\"DDP_INSTANCE\": \"TEST\", \"DDP_VALUE\": \"VALUE\"}");
-        GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, 0);
+        Patch patch = new Patch();
+        patch.setId("0");
+        GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, patch);
         DynamicFieldsParser dynamicFieldsParser = new TestDynamicFieldsParser();
-        dynamicFieldsParser.setParser(new ValueParser());
-        dynamicFieldsParser.setPropertyInfo(new BaseGenerator.PropertyInfo(MedicalRecord.class, true));
+        dynamicFieldsParser.setHelperParser(new ValueParser());
+        dynamicFieldsParser.setPropertyInfo(new PropertyInfo(MedicalRecord.class, true));
         Generator generator = new TestSourceGenerator(dynamicFieldsParser, generatorPayload);
         Map<String, Object> objectMap = generator.generate();
         Assert.assertEquals(objectMap.keySet().stream().findFirst().get(), SourceGenerator.DSM_OBJECT);

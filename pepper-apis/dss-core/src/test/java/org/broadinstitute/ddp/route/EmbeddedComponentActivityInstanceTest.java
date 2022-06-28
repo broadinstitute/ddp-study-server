@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.List;
 
 import io.restassured.http.ContentType;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -39,17 +40,14 @@ import org.broadinstitute.ddp.util.TestDataSetupUtil.GeneratedTestData;
 import org.jdbi.v3.core.Handle;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class EmbeddedComponentActivityInstanceTest extends IntegrationTestSuite.TestCase {
-
     public static final String ADD_INSTITUTION = "Add Institution";
     public static final String ADD_PHYSICIAN = "Add Physician";
     public static final String INSTITUTION_TITLE = "Institution";
     public static final String INSTITUTION_SUBTITLE = "Your Institutions";
     public static final String PHYSICIAN_TITLE = "Your Physicians";
-    static final Logger LOG = LoggerFactory.getLogger(EmbeddedComponentActivityInstanceTest.class);
     public static final String INSTANCE_GUID = "instanceGuid";
 
     // these vars are all set during @Before so that tests can use generated test data
@@ -68,15 +66,14 @@ public class EmbeddedComponentActivityInstanceTest extends IntegrationTestSuite.
         }
         Template titleTemplate = buildTemplate("title", INSTITUTION_TITLE, false);
         Template subtitleTemplate = buildTemplate("subtitle", INSTITUTION_SUBTITLE, false);
-        InstitutionComponentDef institutionComponentDef = new InstitutionComponentDef(allowMultiple,
+
+        return new InstitutionComponentDef(allowMultiple,
                 addButtonTemplate,
                 titleTemplate,
                 subtitleTemplate,
                 institutionType,
                 showFields,
                 false);
-
-        return institutionComponentDef;
     }
 
     private static Template buildTemplate(String seed, String englishText, boolean isPlainText) {
@@ -101,14 +98,13 @@ public class EmbeddedComponentActivityInstanceTest extends IntegrationTestSuite.
             addButtonTemplate = buildTemplate("addButton", ADD_PHYSICIAN, true);
         }
         Template titleTemplate = buildTemplate("physicianTitle", PHYSICIAN_TITLE, false);
-        PhysicianComponentDef physicianComponentDef = new PhysicianComponentDef(allowMultiple,
+        return new PhysicianComponentDef(allowMultiple,
                 addButtonTemplate,
                 titleTemplate,
                 null,
                 institutionType,
                 showFields,
                 false);
-        return physicianComponentDef;
     }
 
     /**
@@ -154,7 +150,7 @@ public class EmbeddedComponentActivityInstanceTest extends IntegrationTestSuite.
             String userGuid = testData.getTestingUser().getUserGuid();
             createdActivityInstance = activityInstanceDao.insertInstance(testForm.getActivityId(), userGuid, userGuid,
                     CREATED, false);
-            LOG.info("Created test activity instance {} for activity {} for user {}", createdActivityInstance
+            log.info("Created test activity instance {} for activity {} for user {}", createdActivityInstance
                     .getGuid(), testForm.getActivityCode(), userGuid);
         });
 

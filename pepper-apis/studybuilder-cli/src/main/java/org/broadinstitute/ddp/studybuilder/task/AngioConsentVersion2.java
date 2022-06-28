@@ -556,7 +556,12 @@ public class AngioConsentVersion2 implements CustomTask {
         Set<String> auth0UserIds = new HashSet<>();
         Map<Long, UserDto> usersMap = handle.attach(JdbiUser.class)
                 .findByUserIds(userIds).stream()
-                .peek(userDto -> auth0UserIds.add(userDto.getAuth0UserId()))
+                .filter(userDto -> userDto.getAuth0UserId().isPresent())
+                .peek(userDto -> {
+                    if (userDto.getAuth0UserId().isPresent()) {
+                        auth0UserIds.add(userDto.getAuth0UserId().get());
+                    }
+                })
                 .collect(Collectors.toMap(UserDto::getUserId, userDto -> userDto));
 
         Map<String, String> emailsMap = new Auth0Util(cfg.getString("tenant.domain"))
@@ -592,7 +597,7 @@ public class AngioConsentVersion2 implements CustomTask {
                         + " for activity instance " + instance.getGuid());
             }
 
-            String email = emailsMap.get(userDto.getAuth0UserId());
+            String email = emailsMap.get(userDto.getAuth0UserId().orElse(null));
             if (email == null) {
                 log.warn("Email not available for user with guid={}", userDto.getUserGuid());
             }

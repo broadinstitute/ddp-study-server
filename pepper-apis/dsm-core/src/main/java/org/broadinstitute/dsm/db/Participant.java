@@ -34,9 +34,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Data
-@JsonIgnoreProperties (ignoreUnknown = true)
-@JsonInclude (JsonInclude.Include.NON_NULL)
-public class Participant {
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class Participant implements Cloneable {
 
     private static final Logger logger = LoggerFactory.getLogger(Participant.class);
 
@@ -49,22 +49,20 @@ public class Participant {
             + "LEFT JOIN ddp_onc_history o on (o.participant_id = p.participant_id) "
             + "LEFT JOIN ddp_participant_record r on (r.participant_id = p.participant_id) "
             + "LEFT JOIN ddp_participant_exit ex on (p.ddp_participant_id = ex.ddp_participant_id "
-            + "AND p.ddp_instance_id = ex.ddp_instance_id) "
-            + "WHERE realm.instance_name = ? ";
+            + "AND p.ddp_instance_id = ex.ddp_instance_id) WHERE realm.instance_name = ? ";
 
-    @ColumnName (DBConstants.PARTICIPANT_ID)
+    @ColumnName(DBConstants.PARTICIPANT_ID)
     private Long participantId;
 
-    @ColumnName (DBConstants.DDP_PARTICIPANT_ID)
+    @ColumnName(DBConstants.DDP_PARTICIPANT_ID)
     private String ddpParticipantId;
 
-    @TableName (
-            name = DBConstants.DDP_PARTICIPANT,
-            alias = DBConstants.DDP_PARTICIPANT_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
+    @TableName(name = DBConstants.DDP_PARTICIPANT, alias = DBConstants.DDP_PARTICIPANT_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.ASSIGNEE_ID_MR)
+    @ColumnName(DBConstants.ASSIGNEE_ID_MR)
     private String assigneeIdMr;
+
+    private Integer ddpInstanceId;
 
     @TableName (
             name = DBConstants.DDP_PARTICIPANT,
@@ -91,21 +89,15 @@ public class Participant {
     @ColumnName (DBConstants.ONC_HISTORY_REVIEWED)
     private String reviewed;
 
-    @TableName (
-            name = DBConstants.DDP_PARTICIPANT_RECORD,
-            alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
-            columnPrefix = "")
-    @ColumnName (DBConstants.CR_SENT)
+    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
+    @ColumnName(DBConstants.CR_SENT)
     @DbDateConversion (SqlDateConverter.STRING_DAY)
     private String crSent;
 
-    @TableName (
-            name = DBConstants.DDP_PARTICIPANT_RECORD,
-            alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
-            columnPrefix = "")
-    @ColumnName (DBConstants.CR_RECEIVED)
+    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
+    @ColumnName(DBConstants.CR_RECEIVED)
     @DbDateConversion (SqlDateConverter.STRING_DAY)
     private String crReceived;
 
@@ -133,17 +125,17 @@ public class Participant {
     @ColumnName (DBConstants.ABSTRACTION_READY)
     private Boolean abstractionReady;
 
-    @TableName (
-            name = DBConstants.DDP_PARTICIPANT_RECORD,
-            alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID,
-            columnPrefix = "")
-    @ColumnName (DBConstants.ADDITIONAL_VALUES_JSON)
+    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
+    @ColumnName(DBConstants.ADDITIONAL_VALUES_JSON)
     @JsonProperty ("dynamicFields")
     @SerializedName ("dynamicFields")
     private String additionalValuesJson;
 
-    public Participant() {
+    @JsonProperty("dynamicFields")
+    public Map<String, Object> getDynamicFields() {
+        return ObjectMapperSingleton.readValue(additionalValuesJson, new TypeReference<Map<String, Object>>() {
+        });
     }
 
     @TableName (
@@ -154,6 +146,8 @@ public class Participant {
     @ColumnName (DBConstants.EXIT_DATE)
     private Long exitDate;
 
+    public Participant() {
+    }
     //For TissueList
     public Participant(String participantId, String ddpParticipantId, String assigneeIdTissue) {
         this(Long.parseLong(participantId), ddpParticipantId, null, assigneeIdTissue, null,
@@ -162,13 +156,33 @@ public class Participant {
     }
 
     public Participant(Long participantId, String ddpParticipantId, String assigneeIdMr, String assigneeIdTissue, String instanceName,
-                       String created, String reviewed, String crSent, String crReceived, String notes,
-                       Boolean minimalMr, Boolean abstractionReady, String additionalValuesJson, Long exitDate) {
+                       String created, String reviewed, String crSent, String crReceived, String notes, Boolean minimalMr,
+                       Boolean abstractionReady, String additionalValuesJson, Long exitDate) {
         this.participantId = participantId;
         this.ddpParticipantId = ddpParticipantId;
         this.assigneeIdMr = assigneeIdMr;
         this.assigneeIdTissue = assigneeIdTissue;
         this.realm = instanceName;
+        this.created = created;
+        this.reviewed = reviewed;
+        this.crSent = crSent;
+        this.crReceived = crReceived;
+        this.notes = notes;
+        this.minimalMr = minimalMr;
+        this.abstractionReady = abstractionReady;
+        this.additionalValuesJson = additionalValuesJson;
+        this.exitDate = exitDate;
+    }
+
+    public Participant(Long participantId, String ddpParticipantId, String assigneeIdMr, Integer ddpInstanceId, String assigneeIdTissue,
+                       String realm, String created, String reviewed, String crSent, String crReceived, String notes, Boolean minimalMr,
+                       Boolean abstractionReady, String additionalValuesJson, Long exitDate) {
+        this.participantId = participantId;
+        this.ddpParticipantId = ddpParticipantId;
+        this.assigneeIdMr = assigneeIdMr;
+        this.ddpInstanceId = ddpInstanceId;
+        this.assigneeIdTissue = assigneeIdTissue;
+        this.realm = realm;
         this.created = created;
         this.reviewed = reviewed;
         this.crSent = crSent;
@@ -220,19 +234,22 @@ public class Participant {
                 }
             }
         }
-        Participant participant = new Participant(rs.getLong(DBConstants.PARTICIPANT_ID),
-                rs.getString(DBConstants.DDP_PARTICIPANT_ID),
-                assigneeMR, assigneeTissue, realm,
-                rs.getString(DBConstants.ONC_HISTORY_CREATED),
-                rs.getString(DBConstants.ONC_HISTORY_REVIEWED),
-                rs.getString(DBConstants.CR_SENT),
-                rs.getString(DBConstants.CR_RECEIVED),
-                rs.getString(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.NOTES),
-                rs.getBoolean(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.MINIMAL_MR),
-                rs.getBoolean(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ABSTRACTION_READY),
-                rs.getString(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ADDITIONAL_VALUES_JSON),
-                (Long) rs.getObject(DBConstants.EXIT_DATE));
+        Participant participant =
+                new Participant(rs.getLong(DBConstants.PARTICIPANT_ID), rs.getString(DBConstants.DDP_PARTICIPANT_ID), assigneeMR,
+                        assigneeTissue, realm, rs.getString(DBConstants.ONC_HISTORY_CREATED),
+                        rs.getString(DBConstants.ONC_HISTORY_REVIEWED), rs.getString(DBConstants.CR_SENT),
+                        rs.getString(DBConstants.CR_RECEIVED),
+                        rs.getString(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.NOTES),
+                        rs.getBoolean(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.MINIMAL_MR),
+                        rs.getBoolean(
+                                DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.ABSTRACTION_READY),
+                        rs.getString(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS + DBConstants.ALIAS_DELIMITER
+                                + DBConstants.ADDITIONAL_VALUES_JSON), (Long) rs.getObject(DBConstants.EXIT_DATE));
         return participant;
+    }
+
+    public static Map<String, Participant> getParticipants(@NonNull String realm) {
+        return getParticipants(realm, null);
     }
 
     public static Map<String, Participant> getParticipants(@NonNull String realm, String queryAddition) {
@@ -261,17 +278,16 @@ public class Participant {
         return participants;
     }
 
-    public static Map<String, Participant> getParticipants(@NonNull String realm) {
-        return getParticipants(realm, null);
-    }
-
-    @JsonProperty ("dynamicFields")
-    public Map<String, Object> getDynamicFields() {
-        return ObjectMapperSingleton.readValue(additionalValuesJson, new TypeReference<Map<String, Object>>() {
-        });
-    }
-
     public Boolean isMinimalMr() {
         return minimalMr;
+    }
+
+    @Override
+    public Participant clone() {
+        try {
+            return (Participant) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
     }
 }

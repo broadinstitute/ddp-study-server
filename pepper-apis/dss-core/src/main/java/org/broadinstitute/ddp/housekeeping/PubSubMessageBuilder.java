@@ -109,8 +109,13 @@ public class PubSubMessageBuilder {
                 } else {
                     // otherwise, lookup address information for the auth0 account
                     UserDao userDao = apisHandle.attach(UserDao.class);
+                    // TODO: This is going to need some refactoring in order to 
+                    // properly handle a auth0-less user account (namely, reference a
+                    // internal email address).
+                    // #userRegistration #ddp7931
                     String auth0UserId = userDao.findUserByGuid(participantGuid)
-                            .map(org.broadinstitute.ddp.model.user.User::getAuth0UserId).orElse(null);
+                            .flatMap(org.broadinstitute.ddp.model.user.User::getAuth0UserId)
+                            .orElse(null);
 
                     if (auth0UserId == null) {
                         List<Governance> governances;
@@ -144,8 +149,13 @@ public class PubSubMessageBuilder {
                                     participantGuid, studyGuid, gov.getProxyUserGuid());
                         }
 
+                        /*
+                         * Handle needed changes for the auth0less user registration
+                         * #ddp7931
+                         */
                         auth0UserId = userDao.findUserById(gov.getProxyUserId())
-                                .map(org.broadinstitute.ddp.model.user.User::getAuth0UserId).orElse(null);
+                                .flatMap(org.broadinstitute.ddp.model.user.User::getAuth0UserId)
+                                .orElse(null);
 
                         // add personalizations for proxy
                         UserProfile profile = apisHandle.attach(UserProfileDao.class)

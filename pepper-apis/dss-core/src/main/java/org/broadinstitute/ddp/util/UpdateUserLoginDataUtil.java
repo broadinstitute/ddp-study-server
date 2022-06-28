@@ -19,17 +19,18 @@ public class UpdateUserLoginDataUtil {
      */
     public static void validateUserForLoginDataUpdateEligibility(UserDto userDto, Response response) {
         if (userDto == null) {
-            String errMsg = "User " + userDto.getUserGuid() + " does not exist in Pepper";
-            log.error(errMsg);
+            String errMsg = "User was not found";
+            log.warn(errMsg);
             throw ResponseUtil.haltError(
                     response,
                     404,
                     new ApiError(ErrorCodes.USER_NOT_FOUND, errMsg)
             );
         }
-        if (userDto.getAuth0UserId() == null) {
-            String errMsg = "User " + userDto.getUserGuid() + " is not associated with the Auth0 user " + userDto.getAuth0UserId();
-            log.error(errMsg);
+
+        if (userDto.getAuth0UserId().isEmpty()) {
+            String errMsg = "User " + userDto.getUserGuid() + " is not associated with an Auth0 account";
+            log.warn(errMsg);
             throw ResponseUtil.haltError(
                     response,
                     403,

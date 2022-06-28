@@ -253,6 +253,7 @@ public interface ValidationDao extends SqlObject {
                         .correctionHint(hint)
                         .allowSave(dto.isAllowSave())
                         .referenceQuestionId(comparisonRule.getReferenceQuestionId())
+                        .referenceQuestionStableId(comparisonRule.getReferenceQuestionStableId())
                         .comparisonType(comparisonRule.getType())
                         .type(dto.getRuleType())
                         .build();
@@ -410,7 +411,7 @@ public interface ValidationDao extends SqlObject {
     default void insert(long questionId, ComparisonRuleDef rule, long revisionId) {
         insertBaseRule(questionId, rule, revisionId);
 
-        final Optional<QuestionDto> originalQuestion = getJdbiQuestion().findQuestionDtoById(questionId);
+        final Optional<QuestionDto> originalQuestion = getJdbiQuestion().findBasicQuestionDtoById(questionId);
         if (originalQuestion.isEmpty()) {
             throw new DaoException("Question " + questionId + " doesn't exist");
         }
@@ -569,12 +570,8 @@ public interface ValidationDao extends SqlObject {
                 ruleDef = new UniqueValueRuleDef(hintTmpl);
                 break;
             case COMPARISON:
-                var questionDto = getJdbiQuestion().findQuestionDtoById(dto.getQuestionId());
-                if (questionDto.isEmpty()) {
-                    throw new DaoException("Question doesn't exist: " + dto.getQuestionId());
-                }
-
-                ruleDef = new ComparisonRuleDef(hintTmpl, questionDto.get().getStableId(), ((ComparisonRuleDto) dto).getType());
+                ruleDef = new ComparisonRuleDef(hintTmpl,
+                        ((ComparisonRuleDto) dto).getReferenceQuestionStableId(), ((ComparisonRuleDto) dto).getType());
                 break;
             case LENGTH:
                 var lengthDto = (LengthRuleDto) dto;

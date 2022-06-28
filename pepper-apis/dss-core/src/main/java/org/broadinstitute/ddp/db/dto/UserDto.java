@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.db.dto;
 
 import java.time.Instant;
+import java.util.Optional;
 
 import lombok.AllArgsConstructor;
 import lombok.Value;
@@ -15,6 +16,9 @@ public class UserDto {
 
     @ColumnName("auth0_user_id")
     String auth0UserId;
+
+    @ColumnName("email")
+    String email;
 
     @ColumnName("guid")
     String userGuid;
@@ -36,6 +40,14 @@ public class UserDto {
 
     @ColumnName("expires_at")
     Long expiresAtMillis;
+
+    public Optional<String> getAuth0UserId() {
+        return Optional.ofNullable(auth0UserId);
+    }
+
+    public Optional<String> getEmail() {
+        return Optional.ofNullable(email);
+    }
 
     public boolean isTemporary() {
         return expiresAtMillis != null;

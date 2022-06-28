@@ -8,6 +8,8 @@ public class ESObjectConstants {
     public static final String PARTICIPANT_DATA_ID = "participantDataId";
     public static final String ADDITIONAL_VALUES_JSON = "additionalValuesJson";
 
+    public static final String ADDITIONAL_TISSUE_VALUE_JSON = "additionalTissueValueJson";
+
     //workflows
     public static final String ELASTIC_EXPORT_WORKFLOWS = "ELASTIC_EXPORT.workflows";
     public static final String WORKFLOWS = "workflows";
@@ -89,5 +91,10 @@ public class ESObjectConstants {
     public static final String OPTION = "option";
     public static final String DETAIL = "detail";
     public static final String ANSWER = "answer";
+    public static final String FIELD_TYPE_ID = "fieldTypeId";
 
+    //cohort tags
+    public static final String DSM_COHORT_TAG_ID = "cohortTagId";
+    public static final String COHORT_TAG = "cohortTag";
+    public static final String NEW_OSTEO_PARTICIPANT = "newOsteoParticipant";
 }

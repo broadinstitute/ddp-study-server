@@ -54,7 +54,7 @@ public class BaseFilter {
             ViewFilter requestForFiltering;
             try {
                 requestForFiltering =
-                        StringUtils.isNotBlank(jsonBody) ? ObjectMapperSingleton.instance().readValue(jsonBody, ViewFilter.class ) : null;
+                        StringUtils.isNotBlank(jsonBody) ? ObjectMapperSingleton.instance().readValue(jsonBody, ViewFilter.class) : null;
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -70,9 +70,13 @@ public class BaseFilter {
         } else if (savedFilters != null) {
             filters = savedFilters;
         }
-        this.from = NumberUtils.toInt(queryParamsMap.get(LIST_RANGE_FROM).value(), ElasticSearchUtil.DEFAULT_FROM);
-        this.to = NumberUtils.toInt(queryParamsMap.get(LIST_RANGE_TO).value(), ElasticSearchUtil.MAX_RESULT_SIZE);
 
+        if (queryParamsMap.hasKey(LIST_RANGE_FROM)) {
+            this.from = NumberUtils.toInt(queryParamsMap.get(LIST_RANGE_FROM).value(), ElasticSearchUtil.DEFAULT_FROM);
+        }
+        if (queryParamsMap.hasKey(LIST_RANGE_TO)) {
+            this.to = NumberUtils.toInt(queryParamsMap.get(LIST_RANGE_TO).value(), ElasticSearchUtil.MAX_RESULT_SIZE);
+        }
         if (queryParamsMap.hasKey(SortBy.SORT_BY)) {
             this.sortBy = ObjectMapperSingleton.readValue(queryParamsMap.get(SortBy.SORT_BY).value(), new TypeReference<SortBy>() {
             });

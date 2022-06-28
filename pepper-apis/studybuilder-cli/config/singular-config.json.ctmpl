@@ -1,0 +1,39 @@
+{{$environment := env "ENVIRONMENT"}}
+{{$version := env "VERSION"}}
+{{with $response := secret (printf "secret/pepper/%s/%s/singular/conf" $environment $version)}}
+{{with $conf := $response.Data}}
+
+{
+  "AUTH0_DOMAIN": "{{$conf.auth0.deployDomain}}",
+  "AUTH0_CLIENT_ID": "{{$conf.auth0.deployClientId}}",
+  "AUTH0_CLIENT_SECRET": "{{$conf.auth0.deployClientSecret}}",
+  "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
+  {{if eq $environment "dev"}}
+    "LOCALHOST_CALLBACKS": ",http://localhost:4200/auth,http://localhost:4200/login-landing,https://singular-dot-broad-ddp-dev.uc.r.appspot.com/auth,https://singular-dot-broad-ddp-dev.uc.r.appspot.com/login-landing",
+    "LOCALHOST_LOGOUTS": ",http://localhost:4200,http://localhost:4200/error,http://localhost:4200/session-expired,https://singular-dot-broad-ddp-dev.uc.r.appspot.com,https://singular-dot-broad-ddp-dev.uc.r.appspot.com/error,https://singular-dot-broad-ddp-dev.uc.r.appspot.com/session-expired",
+    "LOCALHOST_ORIGINS": ",http://localhost:4200,https://singular-dot-broad-ddp-dev.uc.r.appspot.com",
+  {{else}}
+    "LOCALHOST_CALLBACKS": "",
+    "LOCALHOST_LOGOUTS": "",
+    "LOCALHOST_ORIGINS": "",
+  {{end}}
+    "SERVER_BASE_URL": "{{$conf.serverBaseUrl}}",
+    "BASE_URL": "{{$conf.baseWebUrl}}",
+    "ASSETS_BUCKET_NAME": "{{$conf.assetsBucketName}}",
+    "STUDY_EMAIL": "{{$conf.studyEmail}}",
+    "SENDGRID_EMAIL": "{{$conf.sendgridFromEmail}}",
+    "SENDGRID_TOKEN": "{{$conf.sendgridApiKey}}",
+    "PASSWORD_REDIRECT_URL": "{{$conf.passwordRedirectUrl}}",
+    "EMAIL_FROM_NAME": "{{$conf.sendgridFromName}}",
+    "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}"
+  },
+  "AUTH0_ALLOW_DELETE": false,
+  "INCLUDED_PROPS": {},
+  "EXCLUDED_PROPS": {},
+  "AUTH0_EXCLUDED_RULES": [],
+  "AUTH0_EXCLUDED_CLIENTS": [],
+  "AUTH0_EXCLUDED_RESOURCE_SERVERS": []
+}
+
+{{end}}
+{{end}}

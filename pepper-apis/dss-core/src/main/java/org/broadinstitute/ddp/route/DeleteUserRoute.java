@@ -4,6 +4,8 @@ import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.USER_GUI
 
 import java.io.IOException;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -19,20 +21,14 @@ import org.broadinstitute.ddp.service.UserDeleteService;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
+@Slf4j
+@AllArgsConstructor
 public class DeleteUserRoute implements Route {
-    private static final Logger LOG = LoggerFactory.getLogger(DeleteUserRoute.class);
-
     private final UserDeleteService userDeleteService;
-
-    public DeleteUserRoute(UserDeleteService userDeleteService) {
-        this.userDeleteService = userDeleteService;
-    }
 
     @Override
     public Object handle(Request request, Response response) throws IOException {
@@ -40,7 +36,7 @@ public class DeleteUserRoute implements Route {
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
         String operatorGuid = ddpAuth.getOperator();
 
-        LOG.info("Trying to delete user with GUID: {}, operator GUID: {}", userGuid, operatorGuid);
+        log.info("Trying to delete user with GUID: {}, operator GUID: {}", userGuid, operatorGuid);
 
         if (userGuid.equals(operatorGuid)) {
             String message = "Users cannot delete themselves";
@@ -90,7 +86,7 @@ public class DeleteUserRoute implements Route {
         }
 
         // The user to be deleted cannot have an Auth0 account
-        if (user.getAuth0UserId() != null) {
+        if (user.hasAuth0Account()) {
             String message = "User with guid '" + userGuid
                     + "' has auth0 account associated. Deleting of such users is not supported.";
             return new CheckError(HttpStatus.SC_UNPROCESSABLE_ENTITY,

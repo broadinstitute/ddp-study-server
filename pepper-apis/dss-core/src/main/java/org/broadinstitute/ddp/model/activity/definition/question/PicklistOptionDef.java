@@ -8,10 +8,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Getter;
+import lombok.experimental.Accessors;
+import lombok.experimental.SuperBuilder;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.util.MiscUtil;
 
+@Getter
+@SuperBuilder(toBuilder = true)
 public class PicklistOptionDef {
+    private transient Long optionId;
 
     @NotBlank
     @SerializedName("stableId")
@@ -30,47 +36,33 @@ public class PicklistOptionDef {
     @SerializedName("detailLabelTemplate")
     private Template detailLabelTemplate;
 
+    @Accessors(fluent = true)
     @SerializedName("allowDetails")
     private boolean isDetailsAllowed;
 
+    @Accessors(fluent = true)
     @SerializedName("exclusive")
     private boolean isExclusive;
 
+    @Accessors(fluent = true)
     @SerializedName("default")
     private boolean isDefault;
 
     @SerializedName("nestedOptionsLabelTemplate")
     private Template nestedOptionsLabelTemplate;
 
+    @SerializedName("value")
+    private String value;
+
     @SerializedName("nestedOptions")
     private List<@Valid @NotNull PicklistOptionDef> nestedOptions = new ArrayList<>();
 
-    private transient Long optionId;
-
-    public static PicklistOptionDef newExclusive(String stableId, Template optionLabelTemplate) {
-        PicklistOptionDef optionDef = new PicklistOptionDef(stableId, optionLabelTemplate);
-        optionDef.isExclusive = true;
-        return optionDef;
-    }
-
-    public static PicklistOptionDef newExclusive(String stableId, Template optionLabelTemplate, Template detailLabelTemplate) {
-        PicklistOptionDef optionDef = new PicklistOptionDef(stableId, optionLabelTemplate, detailLabelTemplate);
-        optionDef.isExclusive = true;
-        return optionDef;
-    }
-
-    /**
-     * Constructs a picklist option definition object without a detail field.
-     */
     public PicklistOptionDef(String stableId, Template optionLabelTemplate) {
         this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
         this.optionLabelTemplate = MiscUtil.checkNonNull(optionLabelTemplate, "optionLabelTemplate");
         this.isDetailsAllowed = false;
     }
 
-    /**
-     * Constructs a picklist option definition object with a detail field. The detail label is required.
-     */
     public PicklistOptionDef(String stableId, Template optionLabelTemplate, Template detailLabelTemplate) {
         this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
         this.optionLabelTemplate = MiscUtil.checkNonNull(optionLabelTemplate, "optionLabelTemplate");
@@ -118,48 +110,7 @@ public class PicklistOptionDef {
         this.nestedOptions = nestedOptions;
     }
 
-    public String getStableId() {
-        return stableId;
-    }
-
-    public Template getOptionLabelTemplate() {
-        return optionLabelTemplate;
-    }
-
-    public Template getTooltipTemplate() {
-        return tooltipTemplate;
-    }
-
-    public Template getDetailLabelTemplate() {
-        return detailLabelTemplate;
-    }
-
-    public boolean isDetailsAllowed() {
-        return isDetailsAllowed;
-    }
-
-    public boolean isExclusive() {
-        return isExclusive;
-    }
-
-    public boolean isDefault() {
-        return isDefault;
-    }
-
-    public Long getOptionId() {
-        return optionId;
-    }
-
     public void setOptionId(Long optionId) {
         this.optionId = optionId;
     }
-
-    public List<PicklistOptionDef> getNestedOptions() {
-        return nestedOptions;
-    }
-
-    public Template getNestedOptionsLabelTemplate() {
-        return nestedOptionsLabelTemplate;
-    }
-
 }

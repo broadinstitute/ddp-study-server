@@ -77,6 +77,18 @@ public interface JdbiQuestion extends SqlObject {
             @Bind("studyId") long studyId,
             @Bind("questionStableId") String questionStableId);
 
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryLatestDtoByStudyGuidAndQuestionStableId")
+    @RegisterConstructorMapper(QuestionDto.class)
+    Optional<QuestionDto> findLatestDtoByStudyGuidAndQuestionStableId(
+            @Bind("studyGuid") String studyGuid,
+            @Bind("questionStableId") String questionStableId);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryQuestionsByStudyGuid")
+    @RegisterConstructorMapper(QuestionDto.class)
+    List<QuestionDto> findByStudyGuid(@Bind("studyGuid") String studyGuid);
+
     @SqlQuery("select study_activity_code from activity_instance_select_activity_code where"
             + " activity_instance_select_question_id = :questionId")
     List<String> getActivityCodesByActivityInstanceSelectQuestionId(@Bind("questionId") Long questionId);
@@ -220,6 +232,11 @@ public interface JdbiQuestion extends SqlObject {
             return stream.findFirst();
         }
     }
+
+    @UseStringTemplateSqlLocator
+    @RegisterConstructorMapper(QuestionDto.class)
+    @SqlQuery("select_basic_question_dtos_by_id")
+    Optional<QuestionDto> findBasicQuestionDtoById(long questionId);
 
     @SqlUpdate("insert into file_question (question_id, max_file_size) values (:questionId, :maxFileSize)")
     int insertFileQuestion(@Bind("questionId") long questionId, @Bind("maxFileSize") long maxFileSize);

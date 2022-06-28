@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.util;
 import static java.lang.String.format;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.broadinstitute.ddp.constants.ErrorCodes.STUDY_NOT_FOUND;
+import static org.broadinstitute.ddp.constants.RouteConstants.Header.AUTHORIZATION;
 import static org.broadinstitute.ddp.constants.RouteConstants.Header.BEARER;
 
 import java.util.Arrays;
@@ -32,6 +33,7 @@ import org.broadinstitute.ddp.filter.TokenConverterFilter;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.security.DDPAuth;
+import org.broadinstitute.ddp.security.JWTConverter;
 import org.jdbi.v3.core.Handle;
 import spark.HaltException;
 import spark.Request;
@@ -56,6 +58,10 @@ public class RouteUtil {
             ddpAuth = new DDPAuth();
         }
         return ddpAuth;
+    }
+
+    public static DDPAuth computeDDPAuth(Request req) {
+        return new JWTConverter().convertJWTFromHeader(req.headers(AUTHORIZATION), false);
     }
 
     public static LanguageDto getUserLanguage(Request req) {

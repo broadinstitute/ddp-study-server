@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.route;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -17,21 +19,14 @@ import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.broadinstitute.ddp.util.QuestionUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
+@Slf4j
+@AllArgsConstructor
 public class DeleteActivityInstanceRoute implements Route {
-
-    private static final Logger LOG = LoggerFactory.getLogger(DeleteActivityInstanceRoute.class);
-
     private final ActivityInstanceService service;
-
-    public DeleteActivityInstanceRoute(ActivityInstanceService service) {
-        this.service = service;
-    }
 
     @Override
     public Object handle(Request request, Response response) {
@@ -43,7 +38,7 @@ public class DeleteActivityInstanceRoute implements Route {
         String operatorGuid = StringUtils.defaultIfBlank(ddpAuth.getOperator(), participantGuid);
         boolean isStudyAdmin = ddpAuth.hasAdminAccessToStudy(studyGuid);
 
-        LOG.info("Attempting to delete activity instance {} for participant {} in study {} by operator {} (isStudyAdmin={})",
+        log.info("Attempting to delete activity instance {} for participant {} in study {} by operator {} (isStudyAdmin={})",
                 instanceGuid, participantGuid, studyGuid, operatorGuid, isStudyAdmin);
 
         ActivityInstanceDeletionResponse res = new ActivityInstanceDeletionResponse();
@@ -81,13 +76,13 @@ public class DeleteActivityInstanceRoute implements Route {
                     found.getUser(), found.getStudyDto(), operatorGuid, isStudyAdmin));
         });
 
-        LOG.info("Deleted activity instance {}", instanceGuid);
+        log.info("Deleted activity instance {}", instanceGuid);
         response.status(HttpStatus.SC_OK);
         return res;
     }
 
     private void throwNotAllowed(Response response, String message) {
-        LOG.warn(message);
+        log.warn(message);
         throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY,
                 new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED, message));
     }

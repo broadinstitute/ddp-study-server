@@ -321,7 +321,8 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .buildMultiSelect(PicklistRenderMode.LIST, plistMultiSelectSid, newTemplate())
                 .addOption(new PicklistOptionDef(plistMulti_option1_sid, newTemplate()))
                 .addOption(new PicklistOptionDef(plistMulti_option2_sid, newTemplate()))
-                .addOption(PicklistOptionDef.newExclusive(plistMulti_opt3_exclusive_sid, newTemplate()))
+                .addOption(new PicklistOptionDef(plistMulti_opt3_exclusive_sid, newTemplate())
+                        .toBuilder().isExclusive(true).build())
                 .addValidation(new RequiredRuleDef(newTemplate()))
                 .build();
         FormSectionDef plistSection = new FormSectionDef(null, TestUtil.wrapQuestions(p1, p2));
@@ -1898,7 +1899,7 @@ public class PatchFormAnswersRouteStandaloneTest {
         var answer = TransactionWrapper.withTxn(handle ->
                 new AnswerCachedDao(handle).findAnswerByGuid(guid));
         assertTrue(answer.isPresent());
-        assertNull("created answer should have null for value", ((List<?>) answer.get().getValue()).get(0));
+        assertTrue("created answer should have empty list for value", ((List<?>) answer.get().getValue()).isEmpty());
 
         // Set a value then clear it.
         data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, guid, gson.toJsonTree(List.of(upload1.getGuid())))));
@@ -1916,7 +1917,7 @@ public class PatchFormAnswersRouteStandaloneTest {
         answer = TransactionWrapper.withTxn(handle ->
                 new AnswerCachedDao(handle).findAnswerByGuid(guid));
         assertTrue(answer.isPresent());
-        assertNull("answer value should be cleared", ((List<?>) answer.get().getValue()).get(0));
+        assertTrue("cleared answer should have empty list for value", ((List<?>) answer.get().getValue()).isEmpty());
     }
 
     @Test

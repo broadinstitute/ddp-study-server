@@ -86,15 +86,10 @@ public class Sort {
     }
 
     protected String getKeywordIfText(Type innerType) {
-        if (isTextContent(innerType) && isFieldTextType()) {
+        if (innerType.isTextContent() && isFieldTextType()) {
             return buildPath(LOWER_CASE_SORT);
         }
         return StringUtils.EMPTY;
-    }
-
-    private boolean isTextContent(Type innerType) {
-        return innerType == Type.TEXT || innerType == Type.TEXTAREA || innerType == Type.RADIO || innerType == Type.OPTIONS
-                || innerType == Type.ACTIVITY;
     }
 
     private boolean isFieldTextType() {

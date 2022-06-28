@@ -4,8 +4,8 @@ import static org.broadinstitute.ddp.util.QuestionUtil.isReadOnly;
 
 import one.util.streamex.StreamEx;
 import org.broadinstitute.ddp.db.dao.QuestionCachedDao;
+import org.broadinstitute.ddp.db.dto.EquationQuestionDto;
 import org.broadinstitute.ddp.equation.QuestionEvaluator;
-import org.broadinstitute.ddp.json.EquationResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.EquationAnswer;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
 import org.broadinstitute.ddp.util.CollectionMiscUtil;
@@ -93,7 +93,8 @@ public class QuestionCreatorHelper {
                 ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, questionDef.getTrueTemplate()),
                 ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
-                        ctx, questionDef.getFalseTemplate())
+                        ctx, questionDef.getFalseTemplate()),
+                questionDef.getRenderMode()
         );
     }
 
@@ -268,9 +269,9 @@ public class QuestionCreatorHelper {
                         ctx, questionDef.getAdditionalInfoFooterTemplate()),
                 StreamEx.of(new QuestionCachedDao(ctx.getHandle()).getJdbiEquationQuestion()
                                 .findEquationsByActivityInstanceGuid(ctx.getInstanceGuid()))
+                        .filterBy(EquationQuestionDto::getStableId, questionDef.getStableId())
                         .map(questionEvaluator::evaluate)
                         .filter(Objects::nonNull)
-                        .filterBy(EquationResponse::getQuestionStableId, questionDef.getStableId())
                         .map(EquationAnswer::new)
                         .toList(),
                 questionCreator.getValidationRules(ctx, questionDef),

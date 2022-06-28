@@ -161,10 +161,12 @@ class UserLoader {
         }
 
         var langDto = LanguageStore.get(languageCode);
-        var profile = new UserProfile.Builder(userId)
-                .setFirstName(participant.getFirstName())
-                .setLastName(lastName)
-                .setPreferredLangId(langDto.getId())
+        var profile = UserProfile.builder()
+                .userId(userId)
+                .firstName(participant.getFirstName())
+                .lastName(lastName)
+                .preferredLangId(langDto.getId())
+                .preferredLangCode(null)
                 .build();
         handle.attach(UserProfileDao.class).createProfile(profile);
 

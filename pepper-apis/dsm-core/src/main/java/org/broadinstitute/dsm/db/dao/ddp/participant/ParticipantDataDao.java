@@ -74,8 +74,11 @@ public class ParticipantDataDao implements Dao<ParticipantData> {
             return dbVals;
         });
         if (simpleResult.resultException != null) {
-            throw new RuntimeException("Error inserting ddp participant data ", simpleResult.resultException);
+            throw new RuntimeException(String.format("Could not create data for participant data with id: %s for participant with guid: %s",
+                    participantData.getParticipantDataId(), participantData.getDdpParticipantId()));
         }
+        logger.info(String.format("Created data for participant data with id: %s for participant with guid: %s",
+                participantData.getParticipantDataId(), participantData.getDdpParticipantId()));
         return (int) simpleResult.resultValue;
 
     }
