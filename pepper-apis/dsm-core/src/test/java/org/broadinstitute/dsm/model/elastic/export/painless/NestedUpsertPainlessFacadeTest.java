@@ -2,6 +2,9 @@ package org.broadinstitute.dsm.model.elastic.export.painless;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -13,6 +16,7 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.NestedQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.index.query.TermsQueryBuilder;
 import org.junit.Test;
 
 public class NestedUpsertPainlessFacadeTest {
@@ -74,5 +78,28 @@ public class NestedUpsertPainlessFacadeTest {
         boolQueryBuilder.must(cohortTagIdTerm);
         NestedQueryBuilder expected = new NestedQueryBuilder(nestedPath, boolQueryBuilder, ScoreMode.Avg);
         assertEquals(expected, actual);
+    }
+
+    @Test
+    public void buildQueryBuilderForAddCohortListToNested() {
+        List<String> guids = Arrays.asList("TEST01", "TEST02");
+        List<CohortTag> cohortTags = Arrays.asList(
+                new CohortTag(10, "testTag", "TEST01", 11),
+                new CohortTag(11, "testTag1", "TEST02", 11)
+        );
+        DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder().build();
+        NestedUpsertPainlessFacade painlessFacade =
+                new NestedUpsertPainlessFacade(cohortTags, ddpInstanceDto, ESObjectConstants.GUID,
+                        String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.PROFILE, ESObjectConstants.GUID),
+                        guids, new MockFieldTypeExtractor(), new AddListToNestedByGuidScriptBuilder());
+        QueryBuilder actual = painlessFacade.buildQueryBuilder();
+
+        BoolQueryBuilder expected = new BoolQueryBuilder();
+        TermsQueryBuilder cohortTagIdTerms = new TermsQueryBuilder(
+                String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.PROFILE, ESObjectConstants.GUID), guids);
+        expected.must(cohortTagIdTerms);
+
+        assertEquals(expected, actual);
+
     }
 }
