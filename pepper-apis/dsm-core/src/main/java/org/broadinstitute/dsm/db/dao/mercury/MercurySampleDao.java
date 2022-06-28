@@ -16,33 +16,37 @@ import org.broadinstitute.lddp.db.SimpleResult;
 
 public class MercurySampleDao implements Dao<MercurySampleDto> {
     public static String SQL_GET_ELIGIBLE_TISSUES =
-            "SELECT collaborator_sample_id, t.sent_gp, oD.date_px, oD.tissue_received, sequence.order_date, t.tissue_id    "
+            "SELECT * FROM ("
+                    + "SELECT collaborator_sample_id, t.sent_gp, oD.date_px, oD.tissue_received, t.tissue_id    "
                     + "FROM  ddp_participant as p    "
                     + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id)    "
                     + "LEFT JOIN ddp_institution inst on  (inst.participant_id = p.participant_id)    "
                     + "LEFT JOIN ddp_medical_record mr on (mr.institution_id = inst.institution_id AND NOT mr.deleted <=> 1)    "
                     + "LEFT JOIN ddp_onc_history_detail oD on (mr.medical_record_id = oD.medical_record_id AND NOT oD.deleted <=> 1)    "
                     + "LEFT JOIN ddp_tissue t on (oD.onc_history_detail_id = t.onc_history_detail_id AND NOT t.deleted <=> 1)    "
-                    + "LEFT JOIN mercury_sequencing sequence on (sequence.sample_id  = t.tissue_id )"
                     + "WHERE oD.tissue_received IS NOT NULL AND p.ddp_participant_id = ? AND ddp.instance_name = ? "
-                    + "AND  IFNULL(t.uss_count, 0) = (SELECT count(*) "
-                    + "from sm_id sm "
+                    + "AND  IFNULL(t.uss_count, 0) = (SELECT count(*) from sm_id sm "
                     + "left join sm_id_type smtype on (sm.sm_id_type_id = smtype.sm_id_type_id) "
                     + "where smtype.sm_id_type = \"uss\" and sm.tissue_id = t.tissue_id) "
                     + "AND "
-                    + "IFNULL(t.scrolls_count, 0) = (SELECT count(*) "
-                    + "from sm_id sm "
+                    + "IFNULL(t.scrolls_count, 0) = (SELECT count(*) from sm_id sm "
                     + "left join sm_id_type smtype on (sm.sm_id_type_id = smtype.sm_id_type_id) "
-                    + "where smtype.sm_id_type = \"scrolls\" and sm.tissue_id = t.tissue_id ) ";
+                    + "where smtype.sm_id_type = \"scrolls\" and sm.tissue_id = t.tissue_id ) ) as table1 "
+                    + "left join (select max(order_date) as order_date, tissue_id as seqt "
+                    + "From mercury_sequencing where ddp_participant_id = ? group by (tissue_id)   ) as table2 "
+                    + "on table2.seqt = table1.tissue_id ";
 
 
     public static String SQL_GET_ELIGIBLE_SAMPLES =
-            "SELECT req.ddp_kit_request_id, req.bsp_collaborator_sample_id,  sequence.order_date, collection_date, req.dsm_kit_request_id "
+            "SELECT * from ( "
+                    + " SELECT req.ddp_kit_request_id, req.bsp_collaborator_sample_id, collection_date, req.dsm_kit_request_id "
                     + "    FROM ddp_kit_request req  "
                     + "    LEFT JOIN ddp_kit kit on (req.dsm_kit_request_id = kit.dsm_kit_request_id) "
-                    + "    LEFT JOIN mercury_sequencing sequence on (sequence.sample_id  = req.dsm_kit_request_id ) "
                     + "    LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = req.ddp_instance_id) "
-                    + "   WHERE  req.ddp_participant_id = ? AND ddp.instance_name = ? AND kit.receive_date is not null ";
+                    + "    WHERE  req.ddp_participant_id = ? AND ddp.instance_name = ? AND kit.receive_date is not null  ) as table1  "
+                    + "    LEFT JOIN (select max(order_date) AS order_date, dsm_kit_request_id "
+                    + "    FROM mercury_sequencing WHERE ddp_participant_id = ? GROUP BY (dsm_kit_request_id)  ) AS table2 "
+                    + "    ON table2.dsm_kit_request_id = table1.dsm_kit_request_id";
 
     public static String TISSUE_SAMPLE_TYPE = "Tumor";
     public static String KIT_SAMPLE_TYPE = "Normal";
@@ -71,12 +75,13 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
             try (PreparedStatement statement = conn.prepareStatement(SQL_GET_ELIGIBLE_TISSUES)) {
                 statement.setString(1, ddpParticipantId);
                 statement.setString(2, realm);
+                statement.setString(3, ddpParticipantId);
                 try (ResultSet rs = statement.executeQuery()) {
                     while (rs.next()) {
                         MercurySampleDto mercurySampleDto = new MercurySampleDto(TISSUE_SAMPLE_TYPE,
                                 rs.getString(DBConstants.COLLABORATOR_SAMPLE_ID), getSampleStatus(rs),
                                 rs.getString(DBConstants.DATE_PX), rs.getLong(DBConstants.MERCURY_ORDER_DATE),
-                                rs.getLong(DBConstants.TISSUE_ID)
+                                rs.getLong(DBConstants.TISSUE_ID), null
                         );
                         samples.add(mercurySampleDto);
                     }
@@ -89,12 +94,13 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
             try (PreparedStatement statement = conn.prepareStatement(SQL_GET_ELIGIBLE_SAMPLES)) {
                 statement.setString(1, ddpParticipantId);
                 statement.setString(2, realm);
+                statement.setString(3, ddpParticipantId);
                 try (ResultSet rs = statement.executeQuery()) {
                     while (rs.next()) {
                         MercurySampleDto mercurySampleDto = new MercurySampleDto(KIT_SAMPLE_TYPE,
                                 rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID), RECEIVED_STATUS,
                                 rs.getString(DBConstants.COLLECTION_DATE), rs.getLong(DBConstants.MERCURY_ORDER_DATE),
-                                rs.getLong(DBConstants.DSM_KIT_REQUEST_ID)
+                                null, rs.getLong(DBConstants.DSM_KIT_REQUEST_ID)
                         );
                         samples.add(mercurySampleDto);
                     }

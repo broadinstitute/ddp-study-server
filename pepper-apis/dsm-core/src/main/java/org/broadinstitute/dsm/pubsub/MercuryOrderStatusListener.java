@@ -12,7 +12,6 @@ import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.gson.Gson;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
-import org.apache.commons.codec.binary.Base64;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.model.mercury.BaseMercuryStatusMessage;
@@ -26,7 +25,7 @@ public class MercuryOrderStatusListener {
         // Instantiate an asynchronous message receiver.
         MessageReceiver receiver = (PubsubMessage message, AckReplyConsumer consumer) -> {
             // Handle incoming message, then ack the received message.
-            logger.info("Got message with Id: " + message.getMessageId());
+            logger.info("Got STATUS message with Id: " + message.getMessageId());
 
             try {
                 TransactionWrapper.inTransaction(conn -> {
@@ -58,9 +57,8 @@ public class MercuryOrderStatusListener {
 
     private static void processOrderStauts(Connection conn, PubsubMessage message) {
         String data = message.getData().toStringUtf8();
-        byte[] decodedBytes = Base64.decodeBase64(data);
-        data = new String(decodedBytes);
         BaseMercuryStatusMessage baseMercuryStatusMessage = new Gson().fromJson(data, BaseMercuryStatusMessage.class);
         MercuryOrderDao.updateOrderStatus(baseMercuryStatusMessage, conn);
+
     }
 }

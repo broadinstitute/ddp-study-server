@@ -41,9 +41,9 @@ public class MercuryOrderUseCase {
         ArrayList<String> barcodes = new ArrayList<>();
         for (MercurySampleDto mercurySampleDto : mercurySampleDtos) {
             if (mercurySampleDto.sampleType.equals(MercurySampleDao.TISSUE_SAMPLE_TYPE)) {
-                barcodes.addAll(tissueSMIDDao.getSequencingSmIdsForTissue(mercurySampleDto.sampleId));
+                barcodes.addAll(tissueSMIDDao.getSequencingSmIdsForTissue(mercurySampleDto.tissueId));
             } else if (mercurySampleDto.sampleType.equals(MercurySampleDao.KIT_SAMPLE_TYPE)) {
-                barcodes.addAll(kitRequestDao.getKitLabelFromDsmKitRequestId(mercurySampleDto.sampleId));
+                barcodes.addAll(kitRequestDao.getKitLabelFromDsmKitRequestId(mercurySampleDto.dsmKitRequestId));
             }
         }
         return barcodes;

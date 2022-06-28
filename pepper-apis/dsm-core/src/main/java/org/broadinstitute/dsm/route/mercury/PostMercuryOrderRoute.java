@@ -14,6 +14,7 @@ import org.broadinstitute.dsm.pubsub.MercuryOrderPublisher;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
+import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.lddp.handlers.util.Result;
 import spark.QueryParamsMap;
 import spark.Request;
@@ -47,7 +48,11 @@ public class PostMercuryOrderRoute extends RequestHandler {
         } else {
             throw new RuntimeException("No realm query param was sent");
         }
-        //todo check user permissions
+        if (!UserUtil.checkUserAccess(realm, userId, "mercury_order_sequencing", null)) {
+            log.warn("User doesn't have access");
+            response.status(500);
+            return new Result(500, UserErrorMessages.NO_RIGHTS);
+        }
         MercurySampleDto[] mercurySampleDtos = new Gson().fromJson(requestBody, MercurySampleDto[].class);
         DDPInstanceDto ddpInstance = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
         if (ddpInstance == null) {

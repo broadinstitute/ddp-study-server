@@ -9,6 +9,7 @@ import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.mercury.MercuryOrderDummyRequest;
 import org.broadinstitute.dsm.pubsub.MercuryOrderPublisher;
+import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.lddp.handlers.util.Result;
@@ -44,6 +45,12 @@ public class PostMercuryOrderDummyRoute implements Route {
             userId = queryParams.get(UserUtil.USER_ID).value();
         } else if (request.url().contains("/ddp")) {
             userId = "GP_UNIT_TEST";
+        }
+        String realm = queryParams.get(RoutePath.REALM).value();
+        if (!UserUtil.checkUserAccess(realm, userId, "mercury_order_sequencing", null)) {
+            log.warn("User doesn't have access");
+            response.status(500);
+            return new Result(500, UserErrorMessages.NO_RIGHTS);
         }
         MercuryOrderDummyRequest mercuryOrderRequest = new Gson().fromJson(requestBody, MercuryOrderDummyRequest.class);
         if (!isValidRequest(mercuryOrderRequest)) {

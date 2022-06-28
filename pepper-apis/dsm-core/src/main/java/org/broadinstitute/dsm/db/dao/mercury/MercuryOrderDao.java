@@ -6,6 +6,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -21,7 +22,7 @@ import org.broadinstitute.lddp.db.SimpleResult;
 @Slf4j
 public class MercuryOrderDao implements Dao<MercuryOrderDto> {
     public static String SQL_INSERT_MERCURY_ORDER = "insert into mercury_sequencing (order_id, order_date, ddp_participant_id, "
-            + "kit_type_id, barcode, ddp_instance_id, created_by, sample_id) values (?, ?, ?, ?, ?, ?, ?, ?)";
+            + "kit_type_id, barcode, ddp_instance_id, created_by, tissue_id, dsm_kit_request_id) values (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     public static String SQL_GET_KIT_FROM_BARCODE_KIT_LABEL =
             "SELECT p.ddp_participant_id, kit_type_name, ktype.kit_type_id,  ddp.ddp_instance_id, kit.kit_label, "
@@ -49,8 +50,8 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                     + "AND NOT sm.sm_id_value IS NULL";
 
     public static String SQL_SELECT_ORDER_NUMBER = "Select * from mercury_sequencing where order_id = ?";
-    public static String SQL_UPDATE_ORDER_STATUS = "UPDATE mercury_sequencing SET order_status = ?, status_date = ?, mercury_pdo_id = ? "
-            + " where order_id = ?";
+    public static String SQL_UPDATE_ORDER_STATUS = "UPDATE mercury_sequencing SET order_status = ?, status_date = ?, mercury_pdo_id = ?,  "
+            + " status_detail = ? where order_id = ?";
 
     public static void updateOrderStatus(BaseMercuryStatusMessage baseMercuryStatusMessage, Connection conn) {
         MercuryStatusMessage mercuryStatusMessage = baseMercuryStatusMessage.getStatus();
@@ -58,14 +59,19 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
             stmt.setString(1, mercuryStatusMessage.getOrderStatus());
             stmt.setLong(2, System.currentTimeMillis());
             stmt.setString(3, mercuryStatusMessage.getPdoKey());
-            stmt.setString(4, mercuryStatusMessage.getOrderID());
+            stmt.setString(4, mercuryStatusMessage.getDetails());
+            stmt.setString(5, mercuryStatusMessage.getOrderID());
             int result = stmt.executeUpdate();
-            if (result == 1) {
+            if (result != 0) {
                 log.info("Updated Mercury status for order id " + mercuryStatusMessage.getOrderID());
+                if (baseMercuryStatusMessage.getStatus().getOrderStatus().equals("")) {//todo add failed/rejected here
+                    log.error(String.format("Mercury rejected the sequencing order %s with order number %s",
+                            baseMercuryStatusMessage.getStatus().getJson(), baseMercuryStatusMessage.getStatus().getOrderID()));
+                }
             } else {
                 throw new RuntimeException(
                         "Error updating Mercury status for order id " + mercuryStatusMessage.getOrderID()
-                                + " it was updating " + result + " rows");
+                                + " it was updating 0 rows");
             }
         } catch (SQLException ex) {
             throw new RuntimeException("Error updating Mercury status for order id " + mercuryStatusMessage.getOrderID(), ex);
@@ -83,7 +89,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                         MercuryOrderDto mercuryOrderDto = new MercuryOrderDto(rs.getString(DBConstants.DDP_PARTICIPANT_ID),
                                 rs.getString(DBConstants.MERCURY_ORDER_CREATOR), rs.getString(DBConstants.KIT_LABEL),
                                 rs.getInt("ktype." + DBConstants.KIT_TYPE_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
-                                rs.getLong("kit." + DBConstants.DSM_KIT_REQUEST_ID));
+                                null, rs.getLong("kit." + DBConstants.DSM_KIT_REQUEST_ID));
                         log.info("found related info about barcode " + mercuryOrderDto.getBarcode());
                         map.put(mercuryOrderDto.getBarcode(), mercuryOrderDto);
                     }
@@ -111,7 +117,7 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                         MercuryOrderDto mercuryOrderDto = new MercuryOrderDto(rs.getString(DBConstants.DDP_PARTICIPANT_ID),
                                 rs.getString(DBConstants.MERCURY_ORDER_CREATOR), rs.getString(DBConstants.SM_ID_VALUE),
                                 rs.getInt("ktype." + DBConstants.KIT_TYPE_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
-                                rs.getLong(DBConstants.TISSUE_ID));
+                                rs.getLong(DBConstants.TISSUE_ID), null);
                         log.info("found related info about barcode " + mercuryOrderDto.getBarcode());
                         map.put(mercuryOrderDto.getBarcode(), mercuryOrderDto);
                     }
@@ -126,11 +132,6 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
         });
         log.info(String.format("Found %d possible barcodes for participant %s", map.size(), ddpParticipantId));
         return map;
-    }
-
-    @Override
-    public int create(MercuryOrderDto mercuryOrderDto) {
-        return 0;
     }
 
     @Override
@@ -195,6 +196,11 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
         }
     }
 
+    @Override
+    public int create(MercuryOrderDto mercuryOrderDto) {
+        return 0;
+    }
+
     public SimpleResult create(MercuryOrderDto mercuryOrderDto, Connection conn) {
         SimpleResult execResult = new SimpleResult();
         try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_MERCURY_ORDER, PreparedStatement.RETURN_GENERATED_KEYS)) {
@@ -205,7 +211,17 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
             stmt.setString(5, mercuryOrderDto.getBarcode());
             stmt.setInt(6, mercuryOrderDto.getDdpInstanceId());
             stmt.setString(7, mercuryOrderDto.getCreatedBy().orElse(""));
-            stmt.setString(8, String.valueOf(mercuryOrderDto.getSampleId()));
+            if (mercuryOrderDto.getTissueId() != null) {
+                stmt.setString(8, String.valueOf(mercuryOrderDto.getTissueId()));
+            } else {
+                stmt.setNull(8, Types.INTEGER);
+            }
+            if (mercuryOrderDto.getDsmKitRequestId() != null) {
+                stmt.setString(9, String.valueOf(mercuryOrderDto.getDsmKitRequestId()));
+            } else {
+                stmt.setNull(9, Types.INTEGER);
+            }
+
             stmt.executeUpdate();
             try (ResultSet rs = stmt.getGeneratedKeys()) {
                 if (rs.next()) {
@@ -218,4 +234,5 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
         return execResult;
 
     }
+
 }

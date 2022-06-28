@@ -302,6 +302,7 @@ public class DBConstants {
     public static final String PARTICIPANT_STATUS_ENDPOINT = "participant_status_endpoint";
     public static final String UPS_TRACKING_ROLE = "ups_tracking";
     public static final String ADD_FAMILY_MEMBER = "add_family_member";
+    public static final String HAS_ORDER_SEQUENCING = "has_mercury_order_sequencing";
     public static final String SHOW_GROUP_FIELDS = "show_group_fields";
     public static final String GBF_SHIPPED_DSS_DELIVERED = "GBF_SHIPPED_DSS_DELIVERED";
 
@@ -521,7 +522,13 @@ public class DBConstants {
     public static final String COHORT_TAG = "cohort_tag";
     public static final String COHORT_TAG_NAME = "cohort_tag_name";
 
-    public static final String MERCURY_ORDER_DATE = "sequence.order_date";
+    public static final String MERCURY_ORDER_DATE = "order_date";
+    public static final String MERCURY_STATUS_DATE = "status_date";
+    public static final String MERCURY_BARCODE = "barcode";
+    public static final String MERCURY_ORDER_ID = "order_id";
+    public static final String MERCURY_ORDER_STATUS = "order_status";
+    public static final String MERCURY_STATUS_DETAIL = "status_detail";
+    public static final String MERCURY_SAMPLE_TYPE = "sample_type";
 
 
 }

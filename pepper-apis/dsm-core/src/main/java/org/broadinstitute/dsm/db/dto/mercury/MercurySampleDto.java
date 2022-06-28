@@ -9,5 +9,6 @@ public class MercurySampleDto {
     String sampleStatus;
     String collectionDate;
     long sequencingOrderDate;
-    long sampleId;
+    Long tissueId;
+    Long dsmKitRequestId;
 }

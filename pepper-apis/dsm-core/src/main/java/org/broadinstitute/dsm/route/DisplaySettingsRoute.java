@@ -136,6 +136,9 @@ public class DisplaySettingsRoute extends RequestHandler {
                 if (DDPInstanceDao.getRole(instance.getName(), DBConstants.SHOW_GROUP_FIELDS)) {
                     displaySettings.put("showGroupFields", true);
                 }
+                if (DDPInstanceDao.getRole(instance.getName(), DBConstants.HAS_ORDER_SEQUENCING)) {
+                    displaySettings.put("showGroupFields", true);
+                }
                 return displaySettings;
             }
         } else {
