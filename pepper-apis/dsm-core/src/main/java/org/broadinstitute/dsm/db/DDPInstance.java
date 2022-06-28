@@ -97,7 +97,7 @@ public class DDPInstance {
     public DDPInstance(String ddpInstanceId, String name, String baseUrl, String collaboratorIdPrefix, boolean hasRole,
                        int daysMrAttentionNeeded, int daysTissueAttentionNeeded, boolean hasAuth0Token, List<String> notificationRecipient,
                        boolean migratedDDP, String billingReference, String participantIndexES, String activityDefinitionIndexES,
-                       String studyGuid, String usersIndexES, String researchProject, String displayName,
+                       String usersIndexES, String studyGuid, String researchProject, String displayName,
                        String mercuryOrderCreator) {
         this.ddpInstanceId = ddpInstanceId;
         this.name = name;
@@ -405,7 +405,6 @@ public class DDPInstance {
                 rs.getString(DBConstants.ES_USERS_INDEX),
                 rs.getString(DBConstants.RESEARCH_PROJECT), rs.getString(DBConstants.DISPLAY_NAME),
                 rs.getString(DBConstants.MERCURY_ORDER_CREATOR));
-    );
     }
 
     private static DDPInstance getDDPInstanceFormResultSet(@NonNull ResultSet rs) throws SQLException {
@@ -420,10 +419,11 @@ public class DDPInstance {
                 rs.getInt(DBConstants.DAYS_MR_ATTENTION_NEEDED), rs.getInt(DBConstants.DAYS_TISSUE_ATTENTION_NEEDED),
                 rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN), recipients, rs.getBoolean(DBConstants.MIGRATED_DDP),
                 rs.getString(DBConstants.BILLING_REFERENCE), rs.getString(DBConstants.ES_PARTICIPANT_INDEX),
-                rs.getString(DBConstants.ES_ACTIVITY_DEFINITION_INDEX), rs.getString(DBConstants.STUDY_GUID),
-                rs.getString(DBConstants.ES_USERS_INDEX),
+                rs.getString(DBConstants.ES_ACTIVITY_DEFINITION_INDEX),
+                rs.getString(DBConstants.ES_USERS_INDEX), rs.getString(DBConstants.STUDY_GUID),
                 rs.getString(DBConstants.RESEARCH_PROJECT), rs.getString(DBConstants.DISPLAY_NAME),
                 rs.getString(DBConstants.MERCURY_ORDER_CREATOR));
+
     }
 
     //assumption: base url of pepper studies will always end like: dsm/studies/<STUDYNAME>
