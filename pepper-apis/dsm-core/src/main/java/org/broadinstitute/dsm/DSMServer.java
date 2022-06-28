@@ -58,7 +58,6 @@ import org.broadinstitute.dsm.jetty.JettyConfig;
 import org.broadinstitute.dsm.jobs.DDPEventJob;
 import org.broadinstitute.dsm.jobs.DDPRequestJob;
 import org.broadinstitute.dsm.jobs.EasypostShipmentStatusJob;
-import org.broadinstitute.dsm.jobs.ExternalShipperJob;
 import org.broadinstitute.dsm.jobs.GPNotificationJob;
 import org.broadinstitute.dsm.jobs.LabelCreationJob;
 import org.broadinstitute.dsm.jobs.NotificationJob;
@@ -138,11 +137,9 @@ import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.PatchUtil;
 import org.broadinstitute.dsm.util.SecurityUtil;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.dsm.util.externalshipper.GBFRequestUtil;
 import org.broadinstitute.dsm.util.triggerlistener.DDPEventTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.DDPRequestTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.EasypostShipmentStatusTriggerListener;
-import org.broadinstitute.dsm.util.triggerlistener.ExternalShipperTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.GPNotificationTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.LabelCreationTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.NotificationTriggerListener;
@@ -327,10 +324,10 @@ public class DSMServer {
             job.getJobDataMap().put(NOTIFICATION_UTIL, notificationUtil);
         }
         //         currently not needed anymore but might come back
-        if (jobClass == ExternalShipperJob.class) {
-            job.getJobDataMap().put(ADDITIONAL_CRON_EXPRESSION,
-                    config.getString(ApplicationConfigConstants.QUARTZ_CRON_EXPRESSION_FOR_EXTERNAL_SHIPPER_ADDITIONAL));
-        }
+        //        if (jobClass == ExternalShipperJob.class) {
+        //            job.getJobDataMap().put(ADDITIONAL_CRON_EXPRESSION,
+        //                    config.getString(ApplicationConfigConstants.QUARTZ_CRON_EXPRESSION_FOR_EXTERNAL_SHIPPER_ADDITIONAL));
+        //        }
 
         logger.info(cronExpression);
 
@@ -648,7 +645,7 @@ public class DSMServer {
         PatchUtil patchUtil = new PatchUtil();
 
         setupExternalShipperLookup(cfg.getString(ApplicationConfigConstants.EXTERNAL_SHIPPER));
-        GBFRequestUtil gbfRequestUtil = new GBFRequestUtil();
+        //        GBFRequestUtil gbfRequestUtil = new GBFRequestUtil();
 
         setupShippingRoutes(notificationUtil, auth0Util, userUtil, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN));
 
@@ -966,9 +963,9 @@ public class DSMServer {
                         new DDPEventTriggerListener(), null);
 
                 // currently not needed anymore but might come back
-                createScheduleJob(scheduler, eventUtil, notificationUtil, ExternalShipperJob.class, "CHECK_EXTERNAL_SHIPPER",
-                        cfg.getString(ApplicationConfigConstants.QUARTZ_CRON_EXPRESSION_FOR_EXTERNAL_SHIPPER),
-                        new ExternalShipperTriggerListener(), cfg);
+                // createScheduleJob(scheduler, eventUtil, notificationUtil, ExternalShipperJob.class, "CHECK_EXTERNAL_SHIPPER",
+                // cfg.getString(ApplicationConfigConstants.QUARTZ_CRON_EXPRESSION_FOR_EXTERNAL_SHIPPER),
+                // new ExternalShipperTriggerListener(), cfg);
 
                 createScheduleJob(scheduler, null, null, EasypostShipmentStatusJob.class, "CHECK_STATUS_SHIPMENT",
                         cfg.getString(ApplicationConfigConstants.QUARTZ_CRON_STATUS_SHIPMENT), new EasypostShipmentStatusTriggerListener(),

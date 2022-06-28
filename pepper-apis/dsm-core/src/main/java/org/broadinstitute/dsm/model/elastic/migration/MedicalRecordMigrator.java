@@ -22,15 +22,15 @@ public class MedicalRecordMigrator extends BaseCollectionMigrator {
     }
 
     private void updateMedicalRecordsIfRequired(Map<String, List<MedicalRecord>> medicalRecords) {
-        AdditionalMedicalRecordsRetriever.fromRealm(realm)
-                .ifPresent(retriever -> concatenateMedicalRecords(medicalRecords, retriever));
+        AdditionalMedicalRecordsRetriever.fromRealm(realm).ifPresent(retriever -> concatenateMedicalRecords(medicalRecords, retriever));
     }
 
     private void concatenateMedicalRecords(Map<String, List<MedicalRecord>> medicalRecords, AdditionalMedicalRecordsRetriever retriever) {
         Map<String, List<MedicalRecord>> additionalMedicalRecords = retriever.retrieve();
         additionalMedicalRecords.forEach((guid, records) -> {
             if (medicalRecords.containsKey(guid)) {
-                List<MedicalRecord> mergedMedicalRecords = Stream.concat(medicalRecords.get(guid).stream(), records.stream()).collect(Collectors.toList());
+                List<MedicalRecord> mergedMedicalRecords =
+                        Stream.concat(medicalRecords.get(guid).stream(), records.stream()).collect(Collectors.toList());
                 medicalRecords.put(guid, mergedMedicalRecords);
             } else {
                 medicalRecords.put(guid, records);
@@ -39,4 +39,3 @@ public class MedicalRecordMigrator extends BaseCollectionMigrator {
     }
 
 }
-

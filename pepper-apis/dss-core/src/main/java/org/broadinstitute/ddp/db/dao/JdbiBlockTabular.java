@@ -62,7 +62,7 @@ public interface JdbiBlockTabular extends SqlObject {
     List<BlockTabularHeaderDto> findHeadersByBlockIdAndTimestamp(@Bind("blockId") long blockId, @Bind("timestamp") long timestamp);
 
     @SqlQuery("SELECT btq.*, bt.block_id, bq.block_id as question_block_id, b.block_guid, "
-            + "     e2.expression_text as 'shown_expr', e1.expression_text as 'enabled_expr'"
+            + "     e2.expression_text as 'enabled_expr', e1.expression_text as 'shown_expr'"
             + "  FROM block_tabular_question as btq"
             + "  JOIN block_tabular as bt ON bt.block_tabular_id = btq.block_tabular_id"
             + "  JOIN question as q ON q.question_id = btq.question_id"

@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public interface ClientDao extends SqlObject {
-    static final Logger LOG = LoggerFactory.getLogger(ClientDao.class);
+    Logger log = LoggerFactory.getLogger(ClientDao.class);
 
     @CreateSqlObject
     JdbiClient getClientDao();
@@ -45,11 +45,11 @@ public interface ClientDao extends SqlObject {
 
         long clientId = getClientDao().insertClient(auth0ClientId, encryptedClientSecret, auth0TenantId,
                                                     null);
-        LOG.info("Inserted client {}", clientId);
+        log.info("Inserted client {}", clientId);
 
         for (String studyGuid : studyGuidsToAccess) {
             long aclId = getClientUmbrellaStudyDao().insert(clientId, getUmbrellaStudyDao().findByStudyGuid(studyGuid).getId());
-            LOG.info(
+            log.info(
                     "Inserted client__umbrella_study id {} for client {}, tenant {} and study {}",
                     aclId, auth0ClientId, auth0TenantId, studyGuid
             );
@@ -66,10 +66,7 @@ public interface ClientDao extends SqlObject {
      * @return the study client configuration
      */
     default StudyClientConfiguration getConfiguration(final String auth0ClientId, String auth0Domain) {
-        StudyClientConfiguration clientConfiguration = getClientDao().getStudyClientConfigurationByClientAndDomain(
-                auth0ClientId, auth0Domain).orElse(null);
-
-        return clientConfiguration;
+        return getClientDao().getStudyClientConfigurationByClientAndDomain(auth0ClientId, auth0Domain).orElse(null);
     }
 
     /**

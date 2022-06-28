@@ -85,34 +85,35 @@ public class PatchProfileRoute implements Route {
             }
 
             // Patch the existing profile with only things that were provided in payload.
-            var builder = new UserProfile.Builder(profile);
+            var builder = new UserProfile(profile).toBuilder();
             if (providedFirstName) {
-                builder.setFirstName(firstName);
+                builder.firstName(firstName);
             }
             if (providedLastName) {
-                builder.setLastName(lastName);
+                builder.lastName(lastName);
             }
             if (providedSexStr) {
-                builder.setSexType(sexType);
+                builder.sexType(sexType);
             }
 
             if (providedBirthDate) {
                 try {
-                    builder.setBirthDate(birthDate != null ? LocalDate.parse(birthDate) : null);
+                    builder.birthDate(birthDate != null ? LocalDate.parse(birthDate) : null);
                 } catch (DateTimeParseException e) {
                     String errorMsg = "Provided birth date is not a valid date";
                     throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_DATE, errorMsg));
                 }
             } else if (providedBirthDateElements) {
-                builder.setBirthDate(parsedBirthDate);
+                builder.birthDate(parsedBirthDate);
             }
 
             if (providedLanguage) {
-                builder.setPreferredLangId(languageDto == null ? null : languageDto.getId());
+                builder.preferredLangId(languageDto == null ? null : languageDto.getId());
+                builder.preferredLangCode(null);
             }
 
             if (providedSkipLanguagePopup) {
-                builder.setSkipLanguagePopup(skipLanguagePopup);
+                builder.skipLanguagePopup(skipLanguagePopup);
             }
 
             profile = profileDao.updateProfile(builder.build());
@@ -121,7 +122,7 @@ public class PatchProfileRoute implements Route {
             if (providedLanguage) {
                 String auth0UserId = handle.attach(UserDao.class)
                         .findUserByGuid(userGuid)
-                        .map(User::getAuth0UserId)
+                        .flatMap(User::getAuth0UserId)
                         .orElse(null);
                 if (StringUtils.isNotBlank(auth0UserId)) {
                     log.info("User {} has auth0 account, proceeding to sync user_metadata", userGuid);
