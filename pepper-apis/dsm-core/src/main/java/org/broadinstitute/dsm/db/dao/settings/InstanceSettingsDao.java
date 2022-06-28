@@ -17,7 +17,6 @@ import com.google.gson.Gson;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.settings.InstanceSettingsDto;
 import org.broadinstitute.dsm.model.Value;
-import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 
 public class InstanceSettingsDao implements Dao<InstanceSettingsDto> {
@@ -40,7 +39,7 @@ public class InstanceSettingsDao implements Dao<InstanceSettingsDto> {
     private static final String SQL_GET_BY_INSTANCE_NAME =
             "SELECT instance_settings_id, ddp_instance_id, mr_cover_pdf, kit_behavior_change, special_format, "
                     + "hide_ES_fields, hide_samples_tab, study_specific_statuses, default_columns, has_invitations, "
-                    + "has_address_tab, has_computed_object, GBF_SHIPPED_DSS_DELIVERED, mercury_order_creator " + "FROM instance_settings "
+                    + "has_address_tab, has_computed_object, GBF_SHIPPED_DSS_DELIVERED " + "FROM instance_settings "
                     + "WHERE ddp_instance_id = (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = ?)";
 
     @Override
@@ -116,7 +115,6 @@ public class InstanceSettingsDao implements Dao<InstanceSettingsDto> {
                             .withHasInvitations(rs.getBoolean(HAS_INVITATIONS))
                             .withGbfShippedTriggerDssDelivered(rs.getBoolean(GBF_SHIPPED_DSS_DELIVERED))
                             .withHasAddressTab(rs.getBoolean(HAS_ADDRESS_TAB)).withHasComputedObject(rs.getBoolean(HAS_COMPUTED_OBJECT))
-                            .withMercuryOrderCreator(rs.getString(DBConstants.MERCURY_ORDER_CREATOR))
                             .build();
                 }
             }

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="DDP-8239_cohort_tag_created_created_by" author="gmakhara">
+        <addColumn tableName="cohort_tag">
+            <column name="created" type="BIGINT" afterColumn="ddp_instance_id">
+                <constraints nullable="false"></constraints>
+            </column>
+            <column name="created_by" type="VARCHAR(255)" afterColumn="created">
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>
