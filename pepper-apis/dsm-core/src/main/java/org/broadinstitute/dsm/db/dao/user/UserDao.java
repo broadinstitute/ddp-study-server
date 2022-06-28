@@ -24,6 +24,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class UserDao implements Dao<UserDto> {
+
+    private static long EXPIRATION_DURATION_MILLIS = TimeUnit.HOURS.toMillis(24);
     Logger logger = LoggerFactory.getLogger(UserDao.class);
 
     public Optional<UserDto> getUserByEmail(@NonNull String email) {

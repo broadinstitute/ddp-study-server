@@ -53,8 +53,8 @@ public class AuthenticationMigration {
         List<UserDto> oldUsers = new ArrayList();
         SimpleResult result = TransactionWrapper.withTxn(TransactionWrapper.DB.DSM, handle -> {
             SimpleResult dbVals = new SimpleResult();
-            dbVals.resultValue = handle.createQuery("SELECT  user_id, name, email, phone_number from access_user where is_active = 1").
-                    registerRowMapper(ConstructorMapper.factory(UserDto.class))
+            dbVals.resultValue = handle.createQuery("SELECT  user_id, name, email, phone_number from access_user where is_active = 1")
+                    .registerRowMapper(ConstructorMapper.factory(UserDto.class))
                     .mapTo(UserDto.class)
                     .list();
             ;
