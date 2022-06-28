@@ -27,6 +27,7 @@ public class RoutePath {
     public static final String BSP_KIT_REGISTERED = "/KitsRegistered";
     public static final String DUMMY_ENDPOINT = "/createDummy/:label";
     public static final String CREATE_CLINICAL_KIT_ENDPOINT = "/createClinicalDummy/:label/:type";
+    public static final String CREATE_CLINICAL_KIT_ENDPOINT_WITH_PARTICIPANT = "/createClinicalDummy/:label/:type/:participantId";
     public static final String CLINICAL_KIT_ENDPOINT = "/ClinicalKits/:label";
     //Drug list endpoint route
     public static final String DRUG_LIST_REQUEST = "/drugs"; // display names only (for survey display)
@@ -99,6 +100,9 @@ public class RoutePath {
     public static final String GET_PARTICIPANTS_SIZE = "getParticipantsSize";
     public static final String GoogleAnalytics = "googleAnalytics";
     public static final String DOWNLOAD_PARTICIPANT_LIST_ROUTE = "participantList";
+    public static final String CREATE_COHORT_TAG = "createCohortTag";
+    public static final String DELETE_COHORT_TAG = "deleteCohortTag";
+    public static final String SUBMIT_MERCURY_ORDER = "submitMercuryOrder";
 
     public static String getRealm(Request request) {
         QueryParamsMap queryParams = request.queryMap();

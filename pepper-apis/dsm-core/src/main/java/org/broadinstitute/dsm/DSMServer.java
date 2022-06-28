@@ -4,6 +4,7 @@ import static org.quartz.CronScheduleBuilder.cronSchedule;
 import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
 import static spark.Spark.afterAfter;
 import static spark.Spark.before;
+import static spark.Spark.delete;
 import static spark.Spark.get;
 import static spark.Spark.halt;
 import static spark.Spark.patch;
@@ -49,13 +50,13 @@ import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetrics;
 import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.dsm.careevolve.Provider;
+import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
 import org.broadinstitute.dsm.db.dao.roles.UserRoleDao;
 import org.broadinstitute.dsm.db.dao.settings.UserSettingsDao;
 import org.broadinstitute.dsm.jetty.JettyConfig;
 import org.broadinstitute.dsm.jobs.DDPEventJob;
 import org.broadinstitute.dsm.jobs.DDPRequestJob;
 import org.broadinstitute.dsm.jobs.EasypostShipmentStatusJob;
-import org.broadinstitute.dsm.jobs.ExternalShipperJob;
 import org.broadinstitute.dsm.jobs.GPNotificationJob;
 import org.broadinstitute.dsm.jobs.LabelCreationJob;
 import org.broadinstitute.dsm.jobs.NotificationJob;
@@ -114,8 +115,11 @@ import org.broadinstitute.dsm.route.TriggerSurveyRoute;
 import org.broadinstitute.dsm.route.UserSettingRoute;
 import org.broadinstitute.dsm.route.ViewFilterRoute;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
+import org.broadinstitute.dsm.route.mercury.PostMercuryOrderDummyRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
+import org.broadinstitute.dsm.route.tag.cohort.CreateCohortTagRoute;
+import org.broadinstitute.dsm.route.tag.cohort.DeleteCohortTagRoute;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -129,11 +133,9 @@ import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.PatchUtil;
 import org.broadinstitute.dsm.util.SecurityUtil;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.dsm.util.externalshipper.GBFRequestUtil;
 import org.broadinstitute.dsm.util.triggerlistener.DDPEventTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.DDPRequestTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.EasypostShipmentStatusTriggerListener;
-import org.broadinstitute.dsm.util.triggerlistener.ExternalShipperTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.GPNotificationTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.LabelCreationTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.NotificationTriggerListener;
@@ -178,14 +180,16 @@ public class DSMServer {
     public static final String GCP_PATH_TO_DSS_TO_DSM_SUB = "pubsub.dss_to_dsm_subscription";
     public static final String GCP_PATH_TO_DSM_TO_DSS_TOPIC = "pubsub.dsm_to_dss_topic";
     public static final String GCP_PATH_TO_DSM_TASKS_SUB = "pubsub.dsm_tasks_subscription";
+    public static final String GCP_PATH_TO_DSM_TO_MERCURY_TOPIC = "pubsub.dsm_to_mercury_topic";
+    public static final String GCP_PATH_TO_DSM_TO_MERCURY_SUB = "pubsub.dsm_to_mercury_subscription";
     private static final Logger logger = LoggerFactory.getLogger(DSMServer.class);
     private static final String API_ROOT = "/ddp/";
     private static final String UI_ROOT = "/ui/";
     public static final String SIGNER = "org.broadinstitute.kdux";
     public static final String BSP_SIGNER = "https://dsm-dev.datadonationplatform.org/ddp/";
-    private static final String[] CORS_HTTP_METHODS = new String[] { "GET", "PUT", "POST", "OPTIONS", "PATCH" };
+    private static final String[] CORS_HTTP_METHODS = new String[] {"GET", "PUT", "POST", "OPTIONS", "PATCH"};
     private static final String[] CORS_HTTP_HEADERS =
-            new String[] { "Content-Type", "Authorization", "X-Requested-With", "Content-Length", "Accept", "Origin", "" };
+            new String[] {"Content-Type", "Authorization", "X-Requested-With", "Content-Length", "Accept", "Origin", ""};
     private static final String VAULT_DOT_CONF = "vault.conf";
     private static final String GAE_DEPLOY_DIR = "appengine/deploy";
     private static final String INFO_ROOT = "/info/";
@@ -316,10 +320,10 @@ public class DSMServer {
             job.getJobDataMap().put(NOTIFICATION_UTIL, notificationUtil);
         }
         //         currently not needed anymore but might come back
-        if (jobClass == ExternalShipperJob.class) {
-            job.getJobDataMap().put(ADDITIONAL_CRON_EXPRESSION,
-                    config.getString(ApplicationConfigConstants.QUARTZ_CRON_EXPRESSION_FOR_EXTERNAL_SHIPPER_ADDITIONAL));
-        }
+        //        if (jobClass == ExternalShipperJob.class) {
+        //            job.getJobDataMap().put(ADDITIONAL_CRON_EXPRESSION,
+        //                    config.getString(ApplicationConfigConstants.QUARTZ_CRON_EXPRESSION_FOR_EXTERNAL_SHIPPER_ADDITIONAL));
+        //        }
 
         logger.info(cronExpression);
 
@@ -574,7 +578,11 @@ public class DSMServer {
         get(API_ROOT + RoutePath.BSP_KIT_QUERY_PATH, new BSPKitRoute(notificationUtil), new JsonTransformer());
         get(API_ROOT + RoutePath.BSP_KIT_REGISTERED, new BSPKitRegisteredRoute(), new JsonTransformer());
         get(API_ROOT + RoutePath.CLINICAL_KIT_ENDPOINT, new ClinicalKitsRoute(notificationUtil), new JsonTransformer());
-        get(API_ROOT + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT, new CreateClinicalDummyKitRoute(), new JsonTransformer());
+        get(API_ROOT + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT, new CreateClinicalDummyKitRoute(new OncHistoryDetailDaoImpl()),
+                new JsonTransformer());
+        get(API_ROOT + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT_WITH_PARTICIPANT,
+                new CreateClinicalDummyKitRoute(new OncHistoryDetailDaoImpl()),
+                new JsonTransformer());
 
         if (!cfg.getBoolean("ui.production")) {
             get(API_ROOT + RoutePath.DUMMY_ENDPOINT, new CreateBSPDummyKitRoute(), new JsonTransformer());
@@ -654,7 +662,7 @@ public class DSMServer {
         PatchUtil patchUtil = new PatchUtil();
 
         setupExternalShipperLookup(cfg.getString(ApplicationConfigConstants.EXTERNAL_SHIPPER));
-        GBFRequestUtil gbfRequestUtil = new GBFRequestUtil();
+        //        GBFRequestUtil gbfRequestUtil = new GBFRequestUtil();
 
         setupShippingRoutes(notificationUtil, auth0Util, userUtil, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN));
 
@@ -665,6 +673,8 @@ public class DSMServer {
         setupMiscellaneousRoutes();
 
         setupSharedRoutes(kitUtil, notificationUtil, patchUtil);
+
+        setupCohortTagRoutes();
 
         setupPubSubPublisherRoutes(cfg);
 
@@ -686,6 +696,11 @@ public class DSMServer {
             }
         }, new JsonTransformer());
         logger.info("Finished setting up DSM custom routes and jobs...");
+    }
+
+    private void setupCohortTagRoutes() {
+        post(UI_ROOT + RoutePath.CREATE_COHORT_TAG, new CreateCohortTagRoute(), new JsonTransformer());
+        delete(UI_ROOT + RoutePath.DELETE_COHORT_TAG, new DeleteCohortTagRoute(), new JsonTransformer());
     }
 
     private void setupPubSub(@NonNull Config cfg, NotificationUtil notificationUtil) {
@@ -920,6 +935,12 @@ public class DSMServer {
 
         EditParticipantMessageReceiverRoute editParticipantMessageReceiverRoute = new EditParticipantMessageReceiverRoute();
         get(UI_ROOT + RoutePath.EDIT_PARTICIPANT_MESSAGE, editParticipantMessageReceiverRoute, new JsonTransformer());
+
+        String mercuryTopicId = config.getString(GCP_PATH_TO_DSM_TO_MERCURY_TOPIC);
+        PostMercuryOrderDummyRoute postMercuryOrderDummyRoute = new PostMercuryOrderDummyRoute(projectId, mercuryTopicId);
+        //        post(UI_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderDummyRoute, new JsonTransformer());
+        post(API_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderDummyRoute, new JsonTransformer());
+
     }
 
     private void setupJobs(@NonNull Config cfg, @NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil,
@@ -948,9 +969,9 @@ public class DSMServer {
                         new DDPEventTriggerListener(), null);
 
                 // currently not needed anymore but might come back
-                createScheduleJob(scheduler, eventUtil, notificationUtil, ExternalShipperJob.class, "CHECK_EXTERNAL_SHIPPER",
-                        cfg.getString(ApplicationConfigConstants.QUARTZ_CRON_EXPRESSION_FOR_EXTERNAL_SHIPPER),
-                        new ExternalShipperTriggerListener(), cfg);
+                // createScheduleJob(scheduler, eventUtil, notificationUtil, ExternalShipperJob.class, "CHECK_EXTERNAL_SHIPPER",
+                // cfg.getString(ApplicationConfigConstants.QUARTZ_CRON_EXPRESSION_FOR_EXTERNAL_SHIPPER),
+                // new ExternalShipperTriggerListener(), cfg);
 
                 createScheduleJob(scheduler, null, null, EasypostShipmentStatusJob.class, "CHECK_STATUS_SHIPMENT",
                         cfg.getString(ApplicationConfigConstants.QUARTZ_CRON_STATUS_SHIPMENT), new EasypostShipmentStatusTriggerListener(),

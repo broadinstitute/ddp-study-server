@@ -5,6 +5,7 @@ import org.broadinstitute.dsm.model.elastic.filter.splitter.GreaterThanEqualsSpl
 import org.broadinstitute.dsm.model.elastic.filter.splitter.IsNullSplitterStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.splitter.JsonExtractSplitterStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.splitter.LessThanEqualsSplitterStrategy;
+import org.broadinstitute.dsm.model.elastic.filter.splitter.LikeSplitterStrategy;
 import org.elasticsearch.index.query.QueryBuilder;
 
 public class JsonExtractQueryStrategy implements BuildQueryStrategy {
@@ -18,6 +19,8 @@ public class JsonExtractQueryStrategy implements BuildQueryStrategy {
                 qb = new RangeGTEQueryStrategy().build(baseQueryBuilder);
             } else if (jsonExtractSplitter.getDecoratedSplitter() instanceof LessThanEqualsSplitterStrategy) {
                 qb = new RangeLTEQueryStrategy().build(baseQueryBuilder);
+            } else if (jsonExtractSplitter.getDecoratedSplitter() instanceof LikeSplitterStrategy) {
+                qb = new NonExactMatchQueryStrategy().build(baseQueryBuilder);
             } else {
                 qb = new MatchQueryStrategy().build(baseQueryBuilder);
             }

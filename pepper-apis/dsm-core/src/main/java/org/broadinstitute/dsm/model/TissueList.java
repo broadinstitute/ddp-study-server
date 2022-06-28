@@ -85,7 +85,6 @@ public class TissueList {
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
-                    OncHistoryDetail oncHistory = null;
                     while (rs.next()) {
                         String participantId =
                                 rs.getString(DBConstants.DDP_PARTICIPANT_ALIAS + DBConstants.ALIAS_DELIMITER + DBConstants.PARTICIPANT_ID);
@@ -101,9 +100,9 @@ public class TissueList {
                         } else {
                             tissue = Tissue.getTissue(rs);
                         }
+                        OncHistoryDetail oncHistory = OncHistoryDetail.getOncHistoryDetail(rs);
                         if (tissue != null) {
                             if (!oncHistoryDetailHashMap.containsKey(tissue.getOncHistoryDetailId())) {
-                                oncHistory = OncHistoryDetail.getOncHistoryDetail(rs);
                                 oncHistoryDetailHashMap.put(oncHistory.getOncHistoryDetailId(), oncHistory);
                             }
                             if (tissueSmId != null) {
@@ -112,6 +111,9 @@ public class TissueList {
                             if (tissue.getTissueId() != null) {
                                 tissues.put(tissue.getTissueId(), tissue);
                             }
+                        } else if (!oncHistoryDetailHashMap.containsKey(oncHistory.getOncHistoryDetailId())) {
+                            //add oncHistoryDetail even if it doesn't have tissue
+                            oncHistoryDetailHashMap.put(oncHistory.getOncHistoryDetailId(), oncHistory);
                         }
                     }
                     for (Tissue tissue : tissues.values()) {

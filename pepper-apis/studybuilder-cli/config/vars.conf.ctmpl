@@ -1,0 +1,58 @@
+{{with $environment := env "ENVIRONMENT" -}}
+{{with $version := env "VERSION" -}}
+{{with $study := env "STUDY_KEY" -}}
+{{with $response := secret (printf "secret/pepper/%s/%s/%s/conf" $environment $version $study) -}}
+{{with $conf := $response.Data -}}
+{{with $auth := $conf.auth0 -}}
+
+{
+    "auth0": {
+        "connection": "{{$auth.connection}}",
+        "domain": "{{$auth.domain}}",
+        "mgmtClientId": "{{$auth.mgmtClientId}}",
+        "mgmtSecret": "{{$auth.mgmtSecret}}",
+        "clientId": "{{$auth.clientId}}",
+        "clientSecret": "{{$auth.clientSecret}}",
+        "adminClientId": "{{$auth.adminClientId}}",
+        "adminClientSecret": "{{$auth.adminClientSecret}}",
+{{ if $auth.iosClientId }}
+        "iosClientId": "{{$auth.iosClientId}}",
+        "iosClientSecret": "{{$auth.iosClientSecret}}",
+{{ end }}
+    },
+    "baseWebUrl": "{{$conf.baseWebUrl}}",
+    "passwordRedirectUrl": "{{$conf.passwordRedirectUrl}}",
+    "assetsBucketName": "{{$conf.assetsBucketName}}",
+    "sendgridApiKey": "{{$conf.sendgridApiKey}}",
+    "sendgridFromName": "{{$conf.sendgridFromName}}",
+    "sendgridFromEmail": "{{$conf.sendgridFromEmail}}",
+    "sendgridDefaultSalutation" : "{{$conf.sendgridDefaultSalutation}}",
+    "analyticsToken": "{{$conf.analyticsToken}}",
+
+{{if eq $study "pancan"}}
+    "angioRedirectUrl": "{{$conf.angioRedirectUrl}}",
+    "brainRedirectUrl": "{{$conf.brainRedirectUrl}}",
+    "osteoRedirectUrl": "{{$conf.osteoRedirectUrl}}",
+    "mbcRedirectUrl": "{{$conf.mbcRedirectUrl}}",
+    "mbcRedirectUrlES": "{{$conf.mbcRedirectUrlES}}",
+    "mpcRedirectUrl": "{{$conf.mpcRedirectUrl}}",
+    "escRedirectUrl": "{{$conf.escRedirectUrl}}",
+    "lmsRedirectUrl": "{{$conf.lmsRedirectUrl}}"
+{{end}}
+
+{{if not $conf.irbPassword}}
+    "irbPassword": null,
+{{else}}
+    "irbPassword": "{{$conf.irbPassword}}",
+{{end}}
+
+    "emails": {{$conf.emails | toJSONPretty}}
+
+}
+
+{{- end}}
+{{- end}}
+{{- end}}
+{{- end}}
+{{- end}}
+{{- end}}

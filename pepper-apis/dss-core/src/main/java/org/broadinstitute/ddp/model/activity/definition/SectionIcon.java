@@ -24,8 +24,7 @@ import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.activity.types.FormSectionState;
 import org.broadinstitute.ddp.util.MiscUtil;
 
-public class SectionIcon {
-
+public final class SectionIcon {
     public static final String REQUIRED_SCALE_FACTOR = "1x";
 
     private static final String PROP_STATE = "state";

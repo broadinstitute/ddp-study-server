@@ -61,25 +61,14 @@ public class UpdateWorkflowStatusTest {
 
     private static void createParticipantData() {
         participantData =
-                new ParticipantData.Builder()
-                        .withDdpParticipantId(participantId)
-                        .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId())
-                        .withFieldTypeId(UPDATE_WORKFLOW_TEST)
-                        .withData(gson.toJson(testParticipantData))
-                        .withLastChanged(System.currentTimeMillis())
-                        .withChangedBy(userDto.getEmail().orElse(""))
-                        .build();
+                new ParticipantData.Builder().withDdpParticipantId(participantId).withDdpInstanceId(ddpInstanceDto.getDdpInstanceId())
+                        .withFieldTypeId(UPDATE_WORKFLOW_TEST).withData(gson.toJson(testParticipantData))
+                        .withLastChanged(System.currentTimeMillis()).withChangedBy(userDto.getEmail().orElse("")).build();
         participantDataId = participantDataDao.create(participantData);
-        participantData =
-                new ParticipantData.Builder()
-                        .withParticipantDataId(participantDataId)
-                        .withDdpParticipantId(participantId)
-                        .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId())
-                        .withFieldTypeId(UPDATE_WORKFLOW_TEST)
-                        .withData(gson.toJson(testParticipantData))
-                        .withLastChanged(System.currentTimeMillis())
-                        .withChangedBy(userDto.getEmail().orElse(""))
-                        .build();
+        participantData = new ParticipantData.Builder().withParticipantDataId(participantDataId).withDdpParticipantId(participantId)
+                .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId()).withFieldTypeId(UPDATE_WORKFLOW_TEST)
+                .withData(gson.toJson(testParticipantData)).withLastChanged(System.currentTimeMillis())
+                .withChangedBy(userDto.getEmail().orElse("")).build();
     }
 
     @AfterClass
@@ -93,7 +82,9 @@ public class UpdateWorkflowStatusTest {
 
     @Test
     public void testUpdateCustomWorkflow() {
-        String messageData = "{\"participantGuid\":\"RBMJW6ZIXVXBMXUX6M3Q\",\"instanceName\":\"RGP\",\"data\":{\"workflow\":\"MEMBER_TYPE\",\"status\":\"COMPLETED\"}}";
+        String messageData =
+                "{\"participantGuid\":\"RBMJW6ZIXVXBMXUX6M3Q\",\"instanceName\":\"RGP\","
+                        + "\"data\":{\"workflow\":\"MEMBER_TYPE\",\"status\":\"COMPLETED\"}}";
         JsonObject messageJsonObject = new Gson().fromJson(messageData, JsonObject.class);
         String dataString = messageJsonObject.get("data").getAsJsonObject().toString();
         Map<String, String> attributeMap = EditParticipantPublisherRoute.getStringStringMap("TEST", messageJsonObject);
@@ -110,7 +101,12 @@ public class UpdateWorkflowStatusTest {
     public void testUpdateProbandStatusInDB() {
         String workflow = "REGISTRATION_STATUS";
         String status = "ENROLLED";
-        WorkflowStatusUpdate.updateProbandStatusInDB(workflow, status, participantData, RGP);
+        Optional<FieldSettingsDto> fieldSetting =
+                fieldSettingsDao.getFieldSettingByColumnNameAndInstanceId(ddpInstanceDto.getDdpInstanceId(), workflow);
+        if (fieldSetting.isEmpty()) {
+            Assert.fail();
+        }
+        WorkflowStatusUpdate.updateProbandStatusInDB(workflow, status, participantData, fieldSetting.get());
         String data = participantDataDao.get(participantDataId).orElseThrow().getData().orElse("");
         JsonObject dataJsonObject = gson.fromJson(data, JsonObject.class);
         Assert.assertEquals(status, dataJsonObject.get(workflow).getAsString());
@@ -121,8 +117,7 @@ public class UpdateWorkflowStatusTest {
         String workflow = "REGISTRATION_TYPE";
         String status = "SELF2";
         String ddpParticipantId = "RBMJW6ZIXVXBMXUX6M3W";
-        Optional<FieldSettingsDto> fieldSetting = fieldSettingsDao
-                .getFieldSettingByColumnNameAndInstanceId(16, workflow);
+        Optional<FieldSettingsDto> fieldSetting = fieldSettingsDao.getFieldSettingByColumnNameAndInstanceId(16, workflow);
         if (fieldSetting.isPresent()) {
             int participantDataId =
                     WorkflowStatusUpdate.addNewParticipantDataWithStatus(workflow, status, ddpParticipantId, fieldSetting.get());

@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.broadinstitute.dsm.model.Filter;
-import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
 import org.broadinstitute.dsm.model.elastic.filter.FilterStrategy;
@@ -21,6 +21,7 @@ public class DsmAbstractQueryBuilder {
     protected static final String DSM_WITH_DOT = ESObjectConstants.DSM + DBConstants.ALIAS_DELIMITER;
     protected String filter;
     protected Parser parser;
+    protected String esIndex;
     protected BoolQueryBuilder boolQueryBuilder;
     protected QueryBuilder queryBuilder;
     protected SplitterStrategy splitter;
@@ -29,6 +30,10 @@ public class DsmAbstractQueryBuilder {
 
     public DsmAbstractQueryBuilder() {
         boolQueryBuilder = new BoolQueryBuilder();
+    }
+
+    public void setEsIndex(String index) {
+        this.esIndex = index;
     }
 
     public void setFilter(String filter) {
@@ -59,13 +64,15 @@ public class DsmAbstractQueryBuilder {
             splitter = operator.getSplitterStrategy();
             splitter.setFilter(filterValue);
             baseQueryBuilder = BaseQueryBuilder.of(splitter.getAlias(), splitter.getFieldName());
-            QueryPayload queryPayload = new QueryPayload(buildPath(), splitter.getInnerProperty(), parser.parse(splitter.getValue()));
+            QueryPayload queryPayload = new QueryPayload(
+                    buildPath(), splitter.getInnerProperty(), parser.parse(splitter.getValue()), esIndex
+            );
             filterStrategy.build(boolQueryBuilder, baseQueryBuilder.buildEachQuery(operator, queryPayload));
         }
     }
 
     protected String buildPath() {
-        return DSM_WITH_DOT + Util.TABLE_ALIAS_MAPPINGS.get(splitter.getAlias()).getPropertyName();
+        return DSM_WITH_DOT + PropertyInfo.TABLE_ALIAS_MAPPINGS.get(splitter.getAlias()).getPropertyName();
     }
 
 

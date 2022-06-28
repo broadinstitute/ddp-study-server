@@ -7,10 +7,6 @@ import org.broadinstitute.dsm.db.structure.ColumnName;
 @Data
 public class FollowUp {
 
-    @ColumnName("fReceived")
-    @JsonProperty("fReceived")
-    public String fReceived;
-
     @ColumnName("fRequest1")
     @JsonProperty("fRequest1")
     public String fRequest1;
@@ -22,6 +18,10 @@ public class FollowUp {
     @ColumnName("fRequest3")
     @JsonProperty("fRequest3")
     public String fRequest3;
+
+    @ColumnName("fReceived")
+    @JsonProperty("fReceived")
+    public String fReceived;
 
     public FollowUp(String fRequest1, String fRequest2, String fRequest3, String fReceived) {
         this.fReceived = fReceived;

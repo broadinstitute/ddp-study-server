@@ -41,18 +41,22 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
     public static final String ES_USERS_INDEX = "es_users_index";
     public static final String STUDY_PRE_FILTER = "study_pre_filter";
     public static final String QUERY_ITEMS = "query_items";
+    public static final String RESEARCH_PROJECT = "research_project";
+    public static final String MERCURY_ORDER_CREATOR = "mercury_order_creator";
 
     private static final String SQL_INSERT_DDP_INSTANCE =
             "INSERT INTO ddp_instance SET  instance_name = ?,  study_guid = ?, display_name = ?, base_url = ?,"
                     + "is_active = ?, bsp_group = ?, bsp_collection = ?, bsp_organism = ?, collaborator_id_prefix = ?,"
                     + "reminder_notification_wks = ?, mr_attention_flag_d = ?, tissue_attention_flag_d = ?, auth0_token = ?,"
                     + "notification_recipients = ?, migrated_ddp = ?, billing_reference = ?, es_participant_index = ?,"
-                    + "es_activity_definition_index = ?, es_users_index = ?, study_pre_filter = ?";
+                    + "es_activity_definition_index = ?, es_users_index = ?, study_pre_filter = ?, research_project = ?, "
+                    + "mercury_order_creator= ? ";
 
     private static final String SQL_DELETE_DDP_INSTANCE = "DELETE FROM ddp_instance WHERE ddp_instance_id = ?";
     private static final String SQL_SELECT_INSTANCE_WITH_ROLE =
             "SELECT ddp_instance_id, instance_name, base_url, collaborator_id_prefix, migrated_ddp, billing_reference, "
-                    + "es_participant_index, es_activity_definition_index, es_users_index, study_pre_filter, (SELECT count(role.name) "
+                    + "es_participant_index, es_activity_definition_index, es_users_index, study_pre_filter, research_project, "
+                    + "mercury_order_creator, (SELECT count(role.name) "
                     + "FROM ddp_instance realm, ddp_instance_role inRol, instance_role role "
                     + "WHERE realm.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id "
                     + "AND role.name = ? "
@@ -61,6 +65,8 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                     + "WHERE is_active = 1";
     private static final String SQL_GET_INSTANCE_ID_BY_GUID =
             "SELECT ddp_instance_id FROM ddp_instance WHERE study_guid = ? ";
+    private static final String SQL_GET_INSTANCE_ID_BY_INSTANCE_NAME =
+            "SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = ? ";
     private static final String SQL_GET_PARTICIPANT_ES_INDEX_BY_ID =
             "SELECT es_participant_index FROM ddp_instance WHERE ddp_instance_id = ?";
     private static final String SQL_GET_PARTICIPANT_ES_INDEX_BY_STUDY_GUID =
@@ -71,12 +77,15 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
             "SELECT  realm.ddp_instance_id, instance_name, study_guid, realm.display_name, base_url, is_active, bsp_group,"
                     + "bsp_collection, bsp_organism, collaborator_id_prefix, reminder_notification_wks,"
                     + "mr_attention_flag_d, tissue_attention_flag_d, auth0_token, notification_recipients, migrated_ddp,"
-                    + "billing_reference, es_participant_index, es_activity_definition_index, es_users_index, study_pre_filter, "
-                    + "query_items "
+                    + "billing_reference, es_participant_index, es_activity_definition_index, es_users_index, study_pre_filter,"
+                    + "research_project, query_items, mercury_order_creator "
                     + "FROM ddp_instance realm LEFT JOIN view_filters filter ON (filter.filter_id = study_pre_filter) ";
-    private static final String SQL_SELECT_DDP_INSTANCE_BY_GUID = SQL_BASE_SELECT + "WHERE study_guid = ? ";
     private static final String SQL_SELECT_DDP_INSTANCE_BY_INSTANCE_NAME = SQL_BASE_SELECT + "WHERE instance_name = ? ";
     private static final String SQL_SELECT_DDP_INSTANCE_BY_INSTANCE_ID = SQL_BASE_SELECT + "WHERE ddp_instance_id = ? ";
+
+    public static DDPInstanceDao of() {
+        return new DDPInstanceDao();
+    }
 
     public static boolean getRole(@NonNull String realm, @NonNull String role) {
         SimpleResult results = inTransaction((conn) -> {
@@ -129,6 +138,8 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                 stmt.setString(18, ddpInstanceDto.getEsActivityDefinitionIndex());
                 stmt.setString(19, ddpInstanceDto.getEsUsersIndex());
                 stmt.setObject(20, ddpInstanceDto.getStudyPreFilter());
+                stmt.setObject(21, ddpInstanceDto.getResearchProject().orElse(null));
+                stmt.setObject(22, ddpInstanceDto.getMercuryOrderCreator().orElse(null));
                 stmt.executeUpdate();
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
@@ -198,31 +209,6 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
         return (int) results.resultValue;
     }
 
-    public Optional<DDPInstanceDto> getDDPInstanceByGuid(@NonNull String studyGuid) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_DDP_INSTANCE_BY_GUID)) {
-                stmt.setString(1, studyGuid);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        dbVals.resultValue = getDdpInstanceDtoFromResultSet(rs);
-                    }
-                } catch (SQLException e) {
-                    throw new RuntimeException("Error getting ddp instance for " + studyGuid, e);
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Couldn't get ddp instance for " + studyGuid, results.resultException);
-        }
-        return Optional.ofNullable((DDPInstanceDto) results.resultValue);
-    }
-
-
     public Optional<DDPInstanceDto> getDDPInstanceByInstanceName(@NonNull String instanceName) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -259,6 +245,7 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                 .withBillingReference(rs.getString(BILLING_REFERENCE)).withEsParticipantIndex(rs.getString(ES_PARTICIPANT_INDEX))
                 .withEsActivityDefinitionIndex(rs.getString(ES_ACTIVITY_DEFINITION_INDEX)).withEsUsersIndex(rs.getString(ES_USERS_INDEX))
                 .withStudyPreFilter(rs.getInt(STUDY_PRE_FILTER)).withQueryItems(rs.getString(QUERY_ITEMS))
+                .withResearchProject(rs.getString(RESEARCH_PROJECT)).withMercuryOrderCreator(rs.getString(MERCURY_ORDER_CREATOR))
                 .build();
     }
 
@@ -356,5 +343,29 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
             throw new RuntimeException("Couldn't get ddp instance for " + ddpInstanceId, results.resultException);
         }
         return Optional.ofNullable((DDPInstanceDto) results.resultValue);
+    }
+
+    public int getDDPInstanceIdByInstanceName(String instanceName) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_INSTANCE_ID_BY_INSTANCE_NAME)) {
+                stmt.setString(1, instanceName);
+                try (ResultSet instanceIdRs = stmt.executeQuery()) {
+                    if (instanceIdRs.next()) {
+                        dbVals.resultValue = instanceIdRs.getInt(DBConstants.DDP_INSTANCE_ID);
+                    }
+                } catch (SQLException e) {
+                    throw new RuntimeException("Error getting information for " + instanceName, e);
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Couldn't get realm information for " + instanceName, results.resultException);
+        }
+        return (int) results.resultValue;
     }
 }

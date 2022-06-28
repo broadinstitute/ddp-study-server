@@ -25,19 +25,14 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class GetInstitutionSuggestionsRouteTest extends IntegrationTestSuite.TestCase {
-
-    private static final Logger LOG = LoggerFactory.getLogger(GetInstitutionSuggestionsRouteTest.class);
-
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String token;
     private static String endpoint;
     private static long testCityId;
-    private static int limitPadding = 5;
-    private static Set<Long> institutionIdsToDelete = new HashSet<>();
+    private static final int limitPadding = 5;
+    private static final Set<Long> institutionIdsToDelete = new HashSet<>();
 
     private static void insertTestData() {
         TransactionWrapper.useTxn(
@@ -99,7 +94,7 @@ public class GetInstitutionSuggestionsRouteTest extends IntegrationTestSuite.Tes
         List<InstitutionSuggestion> testInstSuggestions = suggestions.stream()
                 .filter(s -> s.getName().equals(NewInstitutionTestData.NAME))
                 .collect(Collectors.toList());
-        Assert.assertTrue(testInstSuggestions.size() == 1);
+        Assert.assertEquals(1, testInstSuggestions.size());
         return testInstSuggestions.get(0);
     }
 
@@ -156,7 +151,5 @@ public class GetInstitutionSuggestionsRouteTest extends IntegrationTestSuite.Tes
         public static final String NAME = "Princeton-Plainsboro Teaching Hospital";
         public static final String CITY = "Princeton";
         public static final String STATE = "New Jersey";
-        public static final InstitutionType INSTITUTION_TYPE = InstitutionType.INSTITUTION;
     }
-
 }

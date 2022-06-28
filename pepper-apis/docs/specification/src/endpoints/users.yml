@@ -1,0 +1,22 @@
+post:
+  operationId: createUser
+  summary: creates a new user
+  description: |
+    Allows DSM to create a new user for a specified study and center. This endpoint requires a
+    valid DSM token for authorization.
+  tags:
+    - Operator & Participant
+  requestBody:
+    $ref: '../components/request-bodies.yml#/ParticipantCreateRequest'
+  responses:
+    '200':
+      $ref: '../components/responses.yml#/UserCreationResponse'
+    '422':
+      description: |
+        The request was formatted properly, but an error occurred when validating the payload.
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error' 
+    default:
+      $ref: '../components/responses.yml#/ErrorResponse'

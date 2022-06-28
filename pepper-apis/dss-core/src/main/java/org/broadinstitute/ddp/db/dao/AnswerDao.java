@@ -510,17 +510,16 @@ public interface AnswerDao extends SqlObject {
                             actInstanceGuid);
                     break;
                 case FILE:
-                    FileInfo info = null;
                     answer = container.computeIfAbsent(answerId, id ->
                             new FileAnswer(answerId, questionStableId, answerGuid, new ArrayList<>(), actInstanceGuid));
                     Long fileUploadId = view.getColumn("fa_upload_id", Long.class);
                     if (fileUploadId != null) {
-                        info = new FileInfo(fileUploadId,
+                        var info = new FileInfo(fileUploadId,
                                 view.getColumn("fa_upload_guid", String.class),
                                 view.getColumn("fa_file_name", String.class),
                                 view.getColumn("fa_file_size", Long.class));
+                        ((FileAnswer) answer).getValue().add(info);
                     }
-                    ((FileAnswer) answer).getValue().add(info);
                     break;
                 case NUMERIC:
                     answer = new NumericAnswer(answerId, questionStableId, answerGuid,
@@ -538,6 +537,7 @@ public interface AnswerDao extends SqlObject {
                     String picklistOptionSid = view.getColumn("pa_option_stable_id", String.class);
                     if (picklistOptionSid != null) {
                         var option = new SelectedPicklistOption(picklistOptionSid,
+                                view.getColumn("po_value", String.class),
                                 view.getColumn("pa_parent_option_stable_id", String.class),
                                 view.getColumn("pa_group_stable_id", String.class),
                                 view.getColumn("pa_detail_text", String.class));
@@ -658,17 +658,16 @@ public interface AnswerDao extends SqlObject {
                             actInstanceGuid);
                     break;
                 case FILE:
-                    FileInfo info = null;
                     answer = container.computeIfAbsent(answerId, id ->
                             new FileAnswer(answerId, questionStableId, answerGuid, new ArrayList<>(), actInstanceGuid));
                     Long fileUploadId = view.getColumn("fa_upload_id", Long.class);
                     if (fileUploadId != null) {
-                        info = new FileInfo(fileUploadId,
+                        var info = new FileInfo(fileUploadId,
                                 view.getColumn("fa_upload_guid", String.class),
                                 view.getColumn("fa_file_name", String.class),
                                 view.getColumn("fa_file_size", Long.class));
+                        ((FileAnswer) answer).getValue().add(info);
                     }
-                    ((FileAnswer) answer).getValue().add(info);
                     break;
                 case NUMERIC:
                     answer = new NumericAnswer(answerId, questionStableId, answerGuid,
@@ -686,6 +685,7 @@ public interface AnswerDao extends SqlObject {
                     String picklistOptionSid = view.getColumn("pa_option_stable_id", String.class);
                     if (picklistOptionSid != null) {
                         var option = new SelectedPicklistOption(picklistOptionSid,
+                                view.getColumn("po_value", String.class),
                                 view.getColumn("pa_parent_option_stable_id", String.class),
                                 view.getColumn("pa_group_stable_id", String.class),
                                 view.getColumn("pa_detail_text", String.class));

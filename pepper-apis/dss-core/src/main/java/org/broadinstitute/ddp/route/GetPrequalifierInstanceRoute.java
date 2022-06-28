@@ -2,6 +2,8 @@ package org.broadinstitute.ddp.route;
 
 import java.util.Optional;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.ActivityInstanceDao;
@@ -14,8 +16,6 @@ import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -23,23 +23,18 @@ import spark.Route;
 /**
  * Returns the latest instance of the Prequalifier (can be easily adjusted to return more), see comments
  */
+@Slf4j
+@AllArgsConstructor
 public class GetPrequalifierInstanceRoute implements Route {
-
-    private static final Logger LOG = LoggerFactory.getLogger(GetPrequalifierInstanceRoute.class);
-    private StudyActivityDao studyActivityDao;
-    private ActivityInstanceDao activityInstanceDao;
-
-    public GetPrequalifierInstanceRoute(StudyActivityDao studyActivityDao, ActivityInstanceDao activityInstanceDao) {
-        this.studyActivityDao = studyActivityDao;
-        this.activityInstanceDao = activityInstanceDao;
-    }
+    private final StudyActivityDao studyActivityDao;
+    private final ActivityInstanceDao activityInstanceDao;
 
     @Override
     public UserActivity handle(Request request, Response response) {
         String userGuid = request.params(PathParam.USER_GUID);
         String studyGuid = request.params(PathParam.STUDY_GUID);
 
-        LOG.info("Attempting to retrieve prequalifier instance summary for participant {} in study {}",
+        log.info("Attempting to retrieve prequalifier instance summary for participant {} in study {}",
                 userGuid, studyGuid);
 
         UserActivity activity = TransactionWrapper.withTxn(handle -> {
@@ -47,13 +42,13 @@ public class GetPrequalifierInstanceRoute implements Route {
                     .getIdByGuid(studyGuid)
                     .orElseGet(() -> {
                         String msg = String.format("The study guid '%s' does not refer to a valid study", studyGuid);
-                        LOG.warn(msg);
+                        log.warn(msg);
                         throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.STUDY_NOT_FOUND, msg));
                     });
 
             // We limit the number of Prequalifer codes to just 1 (can be changed later)
             Optional<String> prequalCode = studyActivityDao.getPrequalifierActivityCodeForStudy(handle, studyGuid);
-            if (!prequalCode.isPresent()) {
+            if (prequalCode.isEmpty()) {
                 String msg = "Study does not have a prequalifier activity";
                 ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
             }
@@ -61,7 +56,7 @@ public class GetPrequalifierInstanceRoute implements Route {
             // We fetch just the latest Prequalifier instance (can be changed later)
             Optional<String> latestPrequalInstanceGuid = activityInstanceDao
                     .getGuidOfLatestInstanceForUserAndActivity(handle, userGuid, prequalCode.get(), studyId);
-            if (!latestPrequalInstanceGuid.isPresent()) {
+            if (latestPrequalInstanceGuid.isEmpty()) {
                 String msg = "User does not have an activity instance for study prequalifier activity";
                 ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
             }
@@ -76,12 +71,12 @@ public class GetPrequalifierInstanceRoute implements Route {
                         ddpAuth.getPreferredLanguage()
                 );
             } catch (DaoException e) {
-                LOG.warn(e.getMessage());
+                log.warn(e.getMessage());
                 ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.TRANSLATION_NOT_FOUND, e.getMessage()));
             }
             return latestPrequalInstanceTranslated;
         });
-        LOG.info("Retrieved prequalifier summary {} for participant {} in study {}",
+        log.info("Retrieved prequalifier summary {} for participant {} in study {}",
                 activity.getActivityInstanceGuid(), userGuid, studyGuid);
         return activity;
     }

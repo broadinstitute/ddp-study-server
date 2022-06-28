@@ -74,6 +74,16 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
     }
 
     @Override
+    public Optional<QuestionDto> findLatestDtoByStudyGuidAndQuestionStableId(String studyGuid, String questionStableId) {
+        return delegate.findLatestDtoByStudyGuidAndQuestionStableId(studyGuid, questionStableId);
+    }
+
+    @Override
+    public List<QuestionDto> findByStudyGuid(String studyGuid) {
+        return delegate.findByStudyGuid(studyGuid);
+    }
+
+    @Override
     public Optional<QuestionDto> findDtoByActivityIdAndQuestionStableId(long activityId, String questionStableId) {
         return delegate.findDtoByActivityIdAndQuestionStableId(activityId, questionStableId);
     }
@@ -343,5 +353,10 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
 
             return builder.build();
         }
+    }
+
+    @Override
+    public Optional<QuestionDto> findBasicQuestionDtoById(long questionId) {
+        return delegate.findBasicQuestionDtoById(questionId);
     }
 }

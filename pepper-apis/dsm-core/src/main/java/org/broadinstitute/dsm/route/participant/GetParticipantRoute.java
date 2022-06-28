@@ -48,7 +48,6 @@ public class GetParticipantRoute extends RequestHandler {
         }
 
         Map<String, String> queryConditions = Map.of(
-                "p", " AND p.ddp_participant_id = '" + ddpParticipantId + "'",
                 "ES", ParticipantUtil.isGuid(ddpParticipantId)
                         ? ElasticSearchUtil.BY_GUID + ddpParticipantId
                         : ElasticSearchUtil.BY_LEGACY_ALTPID + ddpParticipantId

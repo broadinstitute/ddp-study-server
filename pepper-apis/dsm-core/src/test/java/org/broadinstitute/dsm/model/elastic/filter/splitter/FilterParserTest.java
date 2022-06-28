@@ -25,6 +25,7 @@ public class FilterParserTest {
         Assert.assertEquals(5L, filterParser.parse(number2));
         Assert.assertEquals("1999-05-22", filterParser.parse(date));
     }
+
     @Test
     public void parseValueArray() {
 
