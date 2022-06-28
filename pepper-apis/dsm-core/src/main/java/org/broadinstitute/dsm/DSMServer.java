@@ -113,7 +113,7 @@ import org.broadinstitute.dsm.route.TriggerSurveyRoute;
 import org.broadinstitute.dsm.route.UserSettingRoute;
 import org.broadinstitute.dsm.route.ViewFilterRoute;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
-import org.broadinstitute.dsm.route.mercury.PostMercuryOrderRoute;
+import org.broadinstitute.dsm.route.mercury.PostMercuryOrderDummyRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
 import org.broadinstitute.dsm.route.tag.cohort.CreateCohortTagRoute;
@@ -912,9 +912,9 @@ public class DSMServer {
         get(UI_ROOT + RoutePath.EDIT_PARTICIPANT_MESSAGE, editParticipantMessageReceiverRoute, new JsonTransformer());
 
         String mercuryTopicId = config.getString(GCP_PATH_TO_DSM_TO_MERCURY_TOPIC);
-        PostMercuryOrderRoute postMercuryOrderRoute = new PostMercuryOrderRoute(projectId, mercuryTopicId);
-        //        post(UI_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderRoute, new JsonTransformer());
-        post(API_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderRoute, new JsonTransformer());
+        PostMercuryOrderDummyRoute postMercuryOrderDummyRoute = new PostMercuryOrderDummyRoute(projectId, mercuryTopicId);
+        //        post(UI_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderDummyRoute, new JsonTransformer());
+        post(API_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderDummyRoute, new JsonTransformer());
 
     }
 
