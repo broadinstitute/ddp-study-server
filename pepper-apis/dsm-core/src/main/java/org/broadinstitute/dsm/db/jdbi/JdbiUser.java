@@ -14,12 +14,12 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public interface JdbiUser extends SqlObject {
 
-    @SqlQuery (
+    @SqlQuery(
             "SELECT u.guid, u.user_id, concat(p.first_name, \" \", p.last_name) as name, p.email, p.phone as phoneNumber, " +
                     "u.auth0_user_id, p.first_name, p.last_name, u.hruid as shortId, u.is_active " +
                     "FROM user u left join user_profile p on (u.user_id = p.user_id)  WHERE p.email = :userEmail and u.is_active = 1")
-    @RegisterConstructorMapper (UserDto.class)
-    UserDto getUserByEmail(@Bind ("userEmail") String userEmail);
+    @RegisterConstructorMapper(UserDto.class)
+    UserDto getUserByEmail(@Bind("userEmail") String userEmail);
 
     @SqlQuery("SELECT up.user_id, up.first_name, up.last_name, up.email, up.phone_number FROM user_profile up WHERE up.user_id = :userId")
     @RegisterConstructorMapper(UserDto.class)
@@ -68,7 +68,8 @@ public interface JdbiUser extends SqlObject {
             @Bind("isLocked") boolean isLocked,
             @Bind("createdAt") long createdAt,
             @Bind("updatedAt") long updatedAt,
-            @Bind("expiresAt") Long expiresAt);
+            @Bind("expiresAt") Long expiresAt,
+            @Bind("isActive") boolean isActive);
 
     @SqlUpdate("INSERT INTO user_profile (user_id, first_name, last_name, phone, email) "
             + "values (:userId, :firstName, :lastName, :phone, :email)")
@@ -78,20 +79,20 @@ public interface JdbiUser extends SqlObject {
     @SqlQuery("Select count(*) from user_profile where email = :email")
     int selectUserProfileByEMail(@Bind("email") String email);
 
-    @SqlQuery ("Select user_id from user_profile where email = :email")
-    Optional<Long> selectUserIdByEMail(@Bind ("email") String email);
+    @SqlQuery("Select user_id from user_profile where email = :email")
+    Optional<Long> selectUserIdByEMail(@Bind("email") String email);
 
     @SqlUpdate("INSERT INTO study_admin (user_id, umbrella_study_id) values (:userId, :studyId)")
     @GetGeneratedKeys
     long insertStudyAdmin();
 
     @SqlUpdate("UPDATE user SET auth0_user_id = :auth0UserId WHERE user_id = :userId")
-    void updateAuth0UserId(@Bind("userId") long userId, @Bind("auth0UserId") String auth0UserId);
+    int updateAuth0UserId(@Bind("userId") long userId, @Bind("auth0UserId") String auth0UserId);
 
-    @SqlUpdate ("UPDATE user_profile SET first_name = :firstName, last_name = :lastName WHERE user_id = :userId")
-    int modifyUser(@Bind ("userId") long userId, @Bind ("firstName") String firstName, @Bind ("lastName") String lastName);
+    @SqlUpdate("UPDATE user_profile SET first_name = :firstName, last_name = :lastName WHERE user_id = :userId")
+    int modifyUser(@Bind("userId") long userId, @Bind("firstName") String firstName, @Bind("lastName") String lastName);
 
-    @SqlUpdate ("UPDATE user SET is_active = 0 WHERE user_id = :userId")
-    int deactivateUser(@Bind ("userId") long userId);
+    @SqlUpdate("UPDATE user SET is_active = 0 WHERE user_id = :userId")
+    int deactivateUser(@Bind("userId") long userId);
 
 }
