@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 public class RoleDto {
-    @SerializedName ("name")
+    @SerializedName("name")
     String roleName;
     long roleId;
     long umbrellaId;

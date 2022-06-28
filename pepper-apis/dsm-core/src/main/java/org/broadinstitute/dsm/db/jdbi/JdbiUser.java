@@ -15,9 +15,9 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 public interface JdbiUser extends SqlObject {
 
     @SqlQuery(
-            "SELECT u.guid, u.user_id, concat(p.first_name, \" \", p.last_name) as name, p.email, p.phone as phoneNumber, " +
-                    "u.auth0_user_id, p.first_name, p.last_name, u.hruid as shortId, u.is_active " +
-                    "FROM user u left join user_profile p on (u.user_id = p.user_id)  WHERE p.email = :userEmail and u.is_active = 1")
+            "SELECT u.guid, u.user_id, concat(p.first_name, \" \", p.last_name) as name, p.email, p.phone as phoneNumber, "
+                    + "u.auth0_user_id, p.first_name, p.last_name, u.hruid as shortId, u.is_active "
+                    + "FROM user u left join user_profile p on (u.user_id = p.user_id)  WHERE p.email = :userEmail and u.is_active = 1")
     @RegisterConstructorMapper(UserDto.class)
     UserDto getUserByEmail(@Bind("userEmail") String userEmail);
 
