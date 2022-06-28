@@ -110,7 +110,6 @@ public class UserRoleDao {
     }
 
 
-
     public List<UserRoleDto> getAllUsersWithRoleForRealm(String studyGuid) {
         List<UserRoleDto> users = new ArrayList<>();
         SimpleResult result = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
