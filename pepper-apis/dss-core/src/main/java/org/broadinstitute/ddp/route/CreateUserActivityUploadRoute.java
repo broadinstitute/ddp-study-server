@@ -142,6 +142,7 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
         response.status(HttpStatus.SC_CREATED);
         return new CreateUserActivityUploadResponse(upload.getGuid(), result.getSignedUrl().toString());
     }
+
     private String getCurrentDate() {
         return new SimpleDateFormat("yyyy_MM_dd").format(new Date());
     }
