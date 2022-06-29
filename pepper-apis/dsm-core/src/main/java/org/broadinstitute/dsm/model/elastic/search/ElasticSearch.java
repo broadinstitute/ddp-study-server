@@ -143,7 +143,7 @@ public class ElasticSearch implements ElasticSearchable {
             SearchRequest searchRequest = new SearchRequest(esParticipantsIndex);
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
             searchSourceBuilder.query(QueryBuilders.matchAllQuery());
-            searchSourceBuilder.sort(sortBy);//TODO
+            searchSourceBuilder.sort(sortBy);
             searchSourceBuilder.size(scrollSize);
             searchSourceBuilder.from(from);
             searchRequest.source(searchSourceBuilder);
