@@ -1,11 +1,6 @@
 package org.broadinstitute.ddp.db.dto;
 
 import java.io.Serializable;
-import java.lang.reflect.Type;
-
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -31,17 +26,4 @@ public class ActivityFormGroupDto implements Serializable {
     @ColumnName("parent_form_code")
     private String parentFormCode;
 
-
-    public static class Deserializer implements JsonDeserializer<ActivityFormGroupDto> {
-        @Override
-        public ActivityFormGroupDto deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) {
-            String formCode = json.getAsString();
-            if (formCode == null) {
-                return null;
-            }
-            ActivityFormGroupDto formGroupDto = new ActivityFormGroupDto();
-            formGroupDto.setFormCode(formCode);
-            return formGroupDto;
-        }
-    }
 }

@@ -15,7 +15,7 @@ public class FormGroupDef {
     @SerializedName("formName")
     String name;
 
-    @SerializedName("subForms")
-    private List<FormGroupDef> subForms;
+    @SerializedName("activities")
+    private List<FormGroupDef> activities;
 
 }

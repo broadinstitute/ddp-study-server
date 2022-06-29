@@ -10,7 +10,6 @@ import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
-import org.broadinstitute.ddp.db.dto.ActivityFormGroupDto;
 import org.broadinstitute.ddp.export.json.structured.QuestionRecord;
 import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
@@ -35,7 +34,6 @@ public class GsonUtil {
                 .registerTypeAdapter(QuestionDef.class, new QuestionDef.Deserializer())
                 .registerTypeAdapter(RuleDef.class, new RuleDef.Deserializer())
                 .registerTypeAdapter(SectionIcon.class, new SectionIcon.Deserializer())
-                .registerTypeAdapter(ActivityFormGroupDto.class, new ActivityFormGroupDto.Deserializer())
                 .registerTypeAdapter(SectionIcon.class, new SectionIcon.Serializer())
                 .registerTypeAdapter(LocalDate.class, new LocalDateAdapter().nullSafe())
                 .registerTypeAdapter(TextQuestion.class, new TextQuestion.Serializer())

@@ -24,7 +24,7 @@ public interface ActivityCategoryDao extends SqlObject {
 
 
     @SqlQuery("select form_id from activity_category_group where form_code=:formCode")
-    long findFormIdByCode(String formCode);
+    long findFormIdByCode(@Bind("formCode") String formCode);
 
 
     @SqlQuery("select ac.category_code, ac.category_name, cg.form_code as form_code, cg.form_name as form_name,"

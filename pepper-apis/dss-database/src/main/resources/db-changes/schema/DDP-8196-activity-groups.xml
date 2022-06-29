@@ -57,9 +57,9 @@
         <addForeignKeyConstraint baseTableName="activity_category" baseColumnNames="study_id" constraintName="activity_category_study_id_fk"
                                  referencedTableName="umbrella_study" referencedColumnNames="umbrella_study_id" />
 
-        <addUniqueConstraint tableName="activity_category" columnNames="category_code"/>
+        <addUniqueConstraint tableName="activity_category" columnNames="category_code,study_id"/>
 
-        <addUniqueConstraint tableName="activity_category_group" columnNames="form_code"/>
+        <addUniqueConstraint tableName="activity_category_group" columnNames="form_code,category_id"/>
 
         <addUniqueConstraint tableName="activity_group" columnNames="activity_id"/>
 

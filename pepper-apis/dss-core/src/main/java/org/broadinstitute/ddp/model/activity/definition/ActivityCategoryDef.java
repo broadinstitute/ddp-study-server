@@ -16,7 +16,7 @@ public class ActivityCategoryDef {
     @SerializedName("categoryName")
     String name;
 
-    @SerializedName("subForms")
-    private List<FormGroupDef> subForms;
+    @SerializedName("activities")
+    private List<FormGroupDef> activities;
 
 }
