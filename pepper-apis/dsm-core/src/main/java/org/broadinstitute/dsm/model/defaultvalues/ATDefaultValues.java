@@ -39,11 +39,6 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
 
     @Override
     protected boolean setDefaultData() {
-        if (elasticSearchParticipantDto == null) {
-            logger.info("elasticSearchParticipantDto was null");
-            return false;
-        }
-
         if (isParticipantDataNotInES()) {
             logger.info("Participant does not have profile and activities in ES yet...");
             return false;

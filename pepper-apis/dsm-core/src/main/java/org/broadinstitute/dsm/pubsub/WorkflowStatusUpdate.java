@@ -19,12 +19,8 @@ import org.broadinstitute.dsm.export.ExportToES;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues;
-import org.broadinstitute.dsm.model.elastic.export.Exportable;
-import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
-import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.pubsub.study.osteo.OsteoWorkflowStatusUpdate;
-import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.slf4j.Logger;
@@ -155,7 +151,6 @@ public class WorkflowStatusUpdate {
                 .withLastChanged(System.currentTimeMillis()).withChangedBy(WorkflowStatusUpdate.DSS).build();
         int participantDataId = participantDataDao.create(participantData);
         participantData.setParticipantDataId(participantDataId);
-        writeParticipantDataInES(participantData);
         return participantDataId;
     }
 
@@ -175,26 +170,6 @@ public class WorkflowStatusUpdate {
                             .withDdpInstanceId(participantData.getDdpInstanceId())
                             .withFieldTypeId(participantData.getFieldTypeId().orElse("")).withData(dataJsonObject.toString())
                             .withLastChanged(System.currentTimeMillis()).withChangedBy(DSS).build());
-            writeParticipantDataInES(participantData);
-        }
-    }
-
-    /**
-     * writing ddp_participant_data into dsm.participantData object
-     */
-    private static void writeParticipantDataInES(ParticipantData participantData) {
-        DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceId(participantData.getDdpInstanceId())
-                .orElseThrow();
-        String participantGuid = Exportable.getParticipantGuid(participantData.getDdpParticipantId().orElse(""),
-                ddpInstanceDto.getEsParticipantIndex());
-        try {
-            UpsertPainlessFacade.of(DBConstants.DDP_PARTICIPANT_DATA_ALIAS, participantData, ddpInstanceDto,
-                            ESObjectConstants.PARTICIPANT_DATA_ID, ESObjectConstants.DOC_ID,
-                            participantGuid, new PutToNestedScriptBuilder())
-                    .export();
-        } catch (Exception e) {
-            logger.error(String.format("Error inserting participant data for guid: %s in ElasticSearch", participantGuid));
-            e.printStackTrace();
         }
     }
 
