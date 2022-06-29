@@ -1,77 +1,24 @@
 package org.broadinstitute.ddp.service.participants;
 
 import lombok.NonNull;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.validator.routines.EmailValidator;
-import org.broadinstitute.ddp.db.dao.CenterProfileDao;
-import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.service.EventService;
-import org.broadinstitute.ddp.service.participants.ParticipantsCreateService.ParticipantCreateError.Code;
 import org.broadinstitute.ddp.service.studies.StudiesService;
-import org.broadinstitute.ddp.service.studies.StudiesService.StudiesServiceError;
+import org.broadinstitute.ddp.service.studies.StudiesServiceError;
 import org.jdbi.v3.core.Handle;
 
 @Slf4j
 public class ParticipantsCreateService {
 
-    @Value
-    public static class ParticipantCreateError extends Exception {
-        public enum Code {
-            USER_EXISTS,
-            INSUFFICIENT_PERMISSION,
-            CENTER_DOES_NOT_EXIST,
-            STUDY_DOES_NOT_EXIST,
-            STUDY_REGISTRATION_FAILED,
-
-            /**
-             * The email address provided was not formatted correctly, and did not validate.
-            */
-            MALFORMED_EMAIL,
-
-            /**
-             * An unhandled error occurred in one of the service's dependencies. Details of the
-             * error are included, see {@link java.lang.Exception#getCause()}
-             */
-            INTERNAL_ERROR,
-
-            /**
-             * The functionality needed for this operation is not yet implemented
-             */
-            NOT_IMPLEMENTED
-        }
-
-        private Code code;
-
-        public ParticipantCreateError(Code code) {
-            super(code.toString());
-            this.code = code;
-        }
-
-        public ParticipantCreateError(Code code, String message) {
-            super(message);
-            this.code = code;
-        }
-
-        public ParticipantCreateError(Code code, Throwable cause) {
-            super(code.toString(), cause);
-            this.code = code;
-        }
-
-        public ParticipantCreateError(Code code, String message, Throwable cause) {
-            super(message, cause);
-            this.code = code;
-        }
-    }
-
     @NonNull
     private final Handle handle;
+
 
     public ParticipantsCreateService(@NonNull Handle handle) {
         this.handle = handle;
@@ -91,53 +38,30 @@ public class ParticipantsCreateService {
      * @param studyGuid the study to register the participant into. may be null.
      * @param centerGuid the center to register the participant with. may be null.
      * @return the created participant
-     * @throws ParticipantCreateError if the participant could not be created, or already exists
+     * @throws ParticipantsServiceError if an error occurs during user creation
+     * @throws StudiesServiceError if an error occurs during user registration
      */
-    public User createWithEmail(@NonNull String email, String studyGuid, String centerGuid) throws ParticipantCreateError {
-
-        var emailValidator = EmailValidator.getInstance();
-        if (emailValidator.isValid(email) == false) {
-            throw new ParticipantCreateError(Code.MALFORMED_EMAIL);
-        }
-
-        Long centerId = null;
-
-        if (StringUtils.isNotBlank(centerGuid)) {
-            /* The "centerGuid" is currently just the internal ID
-             * which is a `long` type so convert this to a long before
-             * checking the database. If/when Centers get an separate external
-             * identifier (such as a GUID), then this will need to be updated.
-             */
-            Long tempCenterGuid = Long.valueOf(centerGuid);
-            if (tempCenterGuid != null) {
-                var centerDto = handle.attach(CenterProfileDao.class)
-                        .findById(tempCenterGuid)
-                        .orElseThrow(() -> {
-                            return new ParticipantCreateError(Code.CENTER_DOES_NOT_EXIST,
-                                "The center does not exist.");
-                        });
-                centerId = centerDto.getId();
-            }
-        }
-
-        if (centerId != null) {
-            throw new ParticipantCreateError(Code.NOT_IMPLEMENTED, 
-                "Associating participants with a center is not implemented");
-        }
+    public User createWithEmail(@NonNull String email, @NonNull String studyGuid)
+        throws ParticipantsServiceError, StudiesServiceError {
 
         var studyService = new StudiesService(handle);
 
-        // Make sure the study exists before we create a new user
+        /* 
+         * This check could use another set of eyes.
+         * It may be better to optimistically create a new user, then roll
+         * things back if the study ends up not existing (optimize the happy
+         * path)
+        */
         if (studyService.studyExists(studyGuid) == false) {
             var message = String.format("study %s could not be found", studyGuid);
-            throw new ParticipantCreateError(Code.STUDY_DOES_NOT_EXIST, message);
+            throw new StudiesServiceError(StudiesServiceError.Code.STUDY_NOT_FOUND, message);
         }
 
-
-        // TODO: Check for the user's existence in the DB first, or catch
-        // the exception that's thrown when a user alreacy exists
-        var newUser = handle.attach(UserDao.class)
-                .createUserByEmail(email);
+        var newUser = handle.attach(UserDao.class).createUserByEmail(email);
+        if (newUser == null) {
+            throw new ParticipantsServiceError(ParticipantsServiceError.Code.USER_EXISTS,
+                    "failed to create a new user with the specified email");
+        }
 
         // Going to be using this in a couple of places, so set it aside
         final var newUserGuid = newUser.getGuid();
@@ -146,7 +70,7 @@ public class ParticipantsCreateService {
             studyService.registerParticipantInStudy(newUserGuid, studyGuid);
         } catch (StudiesServiceError sse) {
             var message = String.format("failed to register user %s for study %s", newUserGuid, studyGuid);
-            throw new ParticipantCreateError(Code.STUDY_REGISTRATION_FAILED, message, sse);
+            throw new ParticipantsServiceError(ParticipantsServiceError.Code.STUDY_REGISTRATION_FAILED, message, sse);
         }
 
         // Assumes the operator and the user are one in the same in this case.
@@ -155,14 +79,9 @@ public class ParticipantsCreateService {
 
         return newUser;
     }
- 
-    public User createWithAuth0(String userId, String tenantDomain) throws ParticipantCreateError {
-        throw new ParticipantCreateError(Code.NOT_IMPLEMENTED,
-                "Auth0 participant account creation not implemented");
-    }
 
     private void notifyParticipantWasRegistered(String studyGuid, String operatorGuid, String participantGuid) {
-        var studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+        var studyDto = new JdbiUmbrellaStudyCached(handle).findByStudyGuid(studyGuid);
         var userDao = handle.attach(JdbiUser.class);
         var operator = userDao.findByUserGuid(operatorGuid);
         var participant = userDao.findByUserGuid(participantGuid);
