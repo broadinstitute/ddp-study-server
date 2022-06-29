@@ -55,7 +55,8 @@ public class ElasticSearch implements ElasticSearchable {
 
 
     public ElasticSearch() {
-        this.sortBy = SortBuilders.fieldSort(ElasticSearchUtil.PROFILE_CREATED_AT).order(SortOrder.ASC);
+        this.sortBy = SortBuilders.fieldSort(ElasticSearchUtil.PROFILE_CREATED_AT).order(SortOrder.DESC)
+                .unmappedType(CustomSortBuilder.UNMAPPED_TYPE_LONG).missing(CustomSortBuilder.IF_MISSING_LAST);
         this.deserializer = new SourceMapDeserializer();
     }
 

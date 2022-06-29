@@ -14,6 +14,7 @@ import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.export.ExportToES;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Value;
+import org.broadinstitute.dsm.model.defaultvalues.ATDefaultValues;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -26,6 +27,8 @@ public class WorkflowStatusUpdate {
     public static final String MEMBER_TYPE = "MEMBER_TYPE";
     public static final String SELF = "SELF";
     public static final String DSS = "DSS";
+    public static final String ATCP_STUDY_GUID = "atcp";
+
     private static final Gson gson = new Gson();
 
     private static final Logger logger = LoggerFactory.getLogger(ExportToES.class);
@@ -53,18 +56,37 @@ public class WorkflowStatusUpdate {
                             || participantDataDto.getFieldTypeId().orElse("").contains(FamilyMemberConstants.PARTICIPANTS));
             if (isOldParticipant) {
                 participantDatas.forEach(participantDataDto -> {
-                    updateProbandStatusInDB(workflow, status, participantDataDto, studyGuid);
+                    updateProbandStatusInDB(workflow, status, participantDataDto, setting);
                 });
             } else {
                 addNewParticipantDataWithStatus(workflow, status, ddpParticipantId, setting);
             }
-            exportToESifNecessary(workflow, status, ddpParticipantId, instance, setting, participantDatas);
-        }
+            exportWorkflowToESifNecessary(workflow, status, ddpParticipantId, instance, setting, participantDatas);
 
+            try {
+                if (isATRelatedStatusUpdate(studyGuid)) {
+                    boolean hasGenomicStudyGroup = participantDatas.stream().anyMatch(
+                            participantDataDto -> ATDefaultValues.GENOME_STUDY_FIELD_TYPE.equals(
+                                    participantDataDto.getFieldTypeId().get()));
+                    logger.info("ddpParticipantId: " + ddpParticipantId + " hasGenomicStudyGroup " + hasGenomicStudyGroup);
+                    if (!hasGenomicStudyGroup) {
+                        ATDefaultValues basicDefaultDataMaker = new ATDefaultValues();
+                        basicDefaultDataMaker.generateDefaults(studyGuid, ddpParticipantId);
+                    }
+                }
+            } catch (Exception e) {
+                logger.error("Couldn't add AT default values");
+            }
+        }
     }
 
-    public static void exportToESifNecessary(String workflow, String status, String ddpParticipantId,
-                                             DDPInstance instance, FieldSettingsDto setting, List<ParticipantData> participantDatas) {
+    private static boolean isATRelatedStatusUpdate(String studyGuid) {
+        logger.info("studyGuid: " + studyGuid);
+        return ATCP_STUDY_GUID.equalsIgnoreCase(studyGuid);
+    }
+
+    public static void exportWorkflowToESifNecessary(String workflow, String status, String ddpParticipantId, DDPInstance instance,
+                                                     FieldSettingsDto setting, List<ParticipantData> participantDatas) {
         String actions = setting.getActions();
         if (actions == null) {
             return;
@@ -76,8 +98,9 @@ public class WorkflowStatusUpdate {
                     ElasticSearchUtil.writeWorkflow(WorkflowForES.createInstance(instance, ddpParticipantId, workflow, status), false);
                 } else {
                     Optional<WorkflowForES.StudySpecificData> studySpecificDataOptional = getProbandStudySpecificData(participantDatas);
-                    studySpecificDataOptional.ifPresent(studySpecificData -> ElasticSearchUtil.writeWorkflow(WorkflowForES
-                            .createInstanceWithStudySpecificData(instance, ddpParticipantId, workflow, status, studySpecificData), false));
+                    studySpecificDataOptional.ifPresent(studySpecificData -> ElasticSearchUtil.writeWorkflow(
+                            WorkflowForES.createInstanceWithStudySpecificData(instance, ddpParticipantId, workflow, status,
+                                    studySpecificData), false));
                 }
                 break;
             }
@@ -106,39 +129,30 @@ public class WorkflowStatusUpdate {
     public static int addNewParticipantDataWithStatus(String workflow, String status, String ddpParticipantId, FieldSettingsDto setting) {
         JsonObject dataJsonObject = new JsonObject();
         dataJsonObject.addProperty(workflow, status);
-        int participantDataId;
-        participantDataId = participantDataDao.create(
-                new ParticipantData.Builder()
-                        .withDdpParticipantId(ddpParticipantId)
-                        .withDdpInstanceId(setting.getDdpInstanceId())
-                        .withFieldTypeId(setting.getFieldType())
-                        .withData(dataJsonObject.toString())
-                        .withLastChanged(System.currentTimeMillis())
-                        .withChangedBy(WorkflowStatusUpdate.DSS)
-                        .build()
-        );
+        ParticipantData participantData = new ParticipantData.Builder().withDdpParticipantId(ddpParticipantId).withDdpInstanceId(setting.getDdpInstanceId())
+                .withFieldTypeId(setting.getFieldType()).withData(dataJsonObject.toString())
+                .withLastChanged(System.currentTimeMillis()).withChangedBy(WorkflowStatusUpdate.DSS).build();
+        int participantDataId = participantDataDao.create(participantData);
+        participantData.setParticipantDataId(participantDataId);
         return participantDataId;
     }
 
-    public static void updateProbandStatusInDB(String workflow, String status, ParticipantData participantData, String studyGuid) {
+    public static void updateProbandStatusInDB(String workflow, String status, ParticipantData participantData, FieldSettingsDto setting) {
         String oldData = participantData.getData().orElse(null);
         if (oldData == null) {
             return;
         }
         JsonObject dataJsonObject = gson.fromJson(oldData, JsonObject.class);
-        if ((participantData.getFieldTypeId().orElse("").contains("GROUP") || isProband(gson.fromJson(dataJsonObject, Map.class)))) {
+        if ((participantData.getFieldTypeId().orElse("").equals(setting.getFieldType())
+                || isProband(gson.fromJson(dataJsonObject, Map.class)))) {
+            logger.info("Updating setting.getFieldType() " + setting.getFieldType() + " with workflow " + workflow);
             dataJsonObject.addProperty(workflow, status);
             participantDataDao.updateParticipantDataColumn(
-                    new ParticipantData.Builder()
-                            .withParticipantDataId(participantData.getParticipantDataId())
+                    new ParticipantData.Builder().withParticipantDataId(participantData.getParticipantDataId())
                             .withDdpParticipantId(participantData.getDdpParticipantId().orElse(""))
                             .withDdpInstanceId(participantData.getDdpInstanceId())
-                            .withFieldTypeId(participantData.getFieldTypeId().orElse(""))
-                            .withData(dataJsonObject.toString())
-                            .withLastChanged(System.currentTimeMillis())
-                            .withChangedBy(DSS)
-                            .build()
-            );
+                            .withFieldTypeId(participantData.getFieldTypeId().orElse("")).withData(dataJsonObject.toString())
+                            .withLastChanged(System.currentTimeMillis()).withChangedBy(DSS).build());
         }
     }
 

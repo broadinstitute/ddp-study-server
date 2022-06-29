@@ -136,7 +136,7 @@ public class ParticipantData {
             throw new RuntimeException("Could not insert participant data for : " + this.ddpParticipantId);
         }
         participantData.setParticipantDataId(createdDataKey);
-        logger.info("Successfully inserted data for participant: " + this.ddpParticipantId);
+        logger.info(String.format("Successfully inserted data for participant: %s in db", this.ddpParticipantId));
 
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceId(ddpInstanceId).orElseThrow();
         String participantGuid = Exportable.getParticipantGuid(ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
