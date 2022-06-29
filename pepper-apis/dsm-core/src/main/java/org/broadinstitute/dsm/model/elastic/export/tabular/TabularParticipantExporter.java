@@ -35,8 +35,8 @@ public class TabularParticipantExporter {
     private List<String> getHeaderRow() {
         List<String> headers = new ArrayList<>();
         for (ModuleExportConfig moduleConfig : moduleConfigs) {
-            for (int formRepeatNum = 1; formRepeatNum <= moduleConfig.numMaxRepeats; formRepeatNum++) {
-                for (FilterExportConfig fConfig : moduleConfig.questions) {
+            for (int formRepeatNum = 1; formRepeatNum <= moduleConfig.getNumMaxRepeats(); formRepeatNum++) {
+                for (FilterExportConfig fConfig : moduleConfig.getQuestions()) {
                     headers.addAll(getAllColumnNames(fConfig, formRepeatNum, 1));
                 }
             }
@@ -47,8 +47,8 @@ public class TabularParticipantExporter {
     private List<String> getSubHeaderRow() {
         List<String> headers = new ArrayList<>();
         for (ModuleExportConfig moduleConfigs : moduleConfigs) {
-            for (int formRepeatNum = 1; formRepeatNum <= moduleConfigs.numMaxRepeats; formRepeatNum++) {
-                for (FilterExportConfig fConfig : moduleConfigs.questions) {
+            for (int formRepeatNum = 1; formRepeatNum <= moduleConfigs.getNumMaxRepeats(); formRepeatNum++) {
+                for (FilterExportConfig fConfig : moduleConfigs.getQuestions()) {
                     headers.addAll(getAllColumnTexts(fConfig));
                 }
             }
@@ -109,7 +109,7 @@ public class TabularParticipantExporter {
                                        int activityRepeatNum,
                                        int questionRepeatNum,
                                        Map<String, Object> option) {
-        String activityName = fConfig.getParent().name;
+        String activityName = fConfig.getParent().getName();
         String questionStableId = fConfig.getColumn().getName();
         String activityExportName = activityRepeatNum > 1 ? activityName + "_" + activityRepeatNum : activityName;
         String columnExportName = questionRepeatNum > 1 ? questionStableId + "_" + questionRepeatNum : questionStableId;

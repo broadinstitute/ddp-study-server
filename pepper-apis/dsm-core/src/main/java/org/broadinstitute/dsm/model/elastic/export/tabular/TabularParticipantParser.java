@@ -8,6 +8,7 @@ import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.ParticipantColumn;
 import org.broadinstitute.dsm.model.elastic.export.tabular.renderer.ValueProvider;
 import org.broadinstitute.dsm.model.elastic.export.tabular.renderer.ValueProviderFactory;
+import org.broadinstitute.dsm.model.elastic.sort.Alias;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
@@ -62,9 +63,10 @@ public class TabularParticipantParser {
                 }
             }
             FilterExportConfig colConfig = new FilterExportConfig(moduleExport, filter, splitChoicesIntoColumns, options);
-            moduleExport.questions.add(colConfig);
+            moduleExport.getQuestions().add(colConfig);
 
         }
+        configs.sort(Comparator.comparing(ModuleExportConfig::isCollection).thenComparing(ModuleExportConfig::getAliasValue));
         return configs;
     }
 
@@ -98,13 +100,13 @@ public class TabularParticipantParser {
             Map<String, Object> esDataAsMap = participant.getEsDataAsMap();
             for (ModuleExportConfig moduleConfig : moduleConfigs) {
                 List<Map<String, Object>> esModuleMaps = getModuleCompletions(esDataAsMap, moduleConfig);
-                if (esModuleMaps.size() > moduleConfig.numMaxRepeats) {
-                    moduleConfig.numMaxRepeats = esModuleMaps.size();
+                if (esModuleMaps.size() > moduleConfig.getNumMaxRepeats()) {
+                    moduleConfig.setNumMaxRepeats(esModuleMaps.size());
                 }
 
                 for (int moduleIndex = 0; moduleIndex < esModuleMaps.size(); moduleIndex++) {
                     Map<String, Object> esFormMap = esModuleMaps.get(moduleIndex);
-                    for (FilterExportConfig fConfig : moduleConfig.questions) {
+                    for (FilterExportConfig fConfig : moduleConfig.getQuestions()) {
 
                         ValueProvider valueProvider = valueProviderFactory.getFormValueProvider(fConfig.getColumn().getName(), fConfig.getType());
 
@@ -150,9 +152,9 @@ public class TabularParticipantParser {
      * @return the maps
      */
     private List<Map<String, Object>> getModuleCompletions(Map<String, Object> esDataAsMap, ModuleExportConfig formInfo) {
-        if (formInfo.isActivity) {
+        if (formInfo.isActivity()) {
             List<Map<String, Object>> activityList = (List<Map<String, Object>>) esDataAsMap.get("activities");
-            return activityList.stream().filter(activity -> formInfo.name.equals(activity.get("activityCode"))).collect(Collectors.toList());
+            return activityList.stream().filter(activity -> formInfo.getName().equals(activity.get("activityCode"))).collect(Collectors.toList());
         } else {
             return Collections.singletonList(esDataAsMap);
         }
