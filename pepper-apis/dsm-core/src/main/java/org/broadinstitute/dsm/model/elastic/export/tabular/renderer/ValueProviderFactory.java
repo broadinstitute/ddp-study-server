@@ -18,6 +18,8 @@ import org.broadinstitute.dsm.model.QuestionType;
 public class ValueProviderFactory {
     private static final String AMBULATION = "AMBULATION";
     private static final String ACTIVITY_STATUS = "activityStatus";
+
+    private static final String COHORT_TAG_NAME = "cohortTagName";
     private final ValueProvider defaultValueProvider = new TextValueProvider();
     private final ValueProvider booleanValueProvider = new BooleanValueProvider();
     private final ValueProvider pickListValueProvider = new PickListValueProvider();
@@ -35,7 +37,8 @@ public class ValueProviderFactory {
     );
     private final Map<String, ValueProvider> specialValueProviders = Map.of(
             AMBULATION, new AmbulationValueProvider(),
-            ACTIVITY_STATUS, new ActivityStatusValueProvider()
+            ACTIVITY_STATUS, new ActivityStatusValueProvider(),
+            COHORT_TAG_NAME, new CohortTagNameProvider()
     );
 
     public ValueProvider getValueProvider(String participantColumnName, String questionType) {

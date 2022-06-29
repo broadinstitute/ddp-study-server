@@ -32,8 +32,6 @@ public interface ValueProvider {
         String fieldName = qConfig.getColumn().getName();
         if (formMap == null) {
             value = StringUtils.EMPTY;
-        } else if (fieldName.equals(ESObjectConstants.COHORT_TAG_NAME)) {
-            value = formMap.getOrDefault(ESObjectConstants.COHORT_TAG, StringUtils.EMPTY);
         } else if (ElasticSearchUtil.QUESTIONS_ANSWER.equals(qConfig.getColumn().getObject())) {
             if (formMap != null) {
                 List<LinkedHashMap<String, Object>> allAnswers = (List<LinkedHashMap<String, Object>>) formMap.get(ElasticSearchUtil.QUESTIONS_ANSWER);
@@ -57,27 +55,6 @@ public interface ValueProvider {
         }
         return (Collection<?>) value;
     }
-
-//    private Collection<?> getJsonValue(Collection<?> nestedValue, ParticipantColumn column) {
-//        if (nestedValue.isEmpty()) {
-//            return Collections.singletonList(StringUtils.EMPTY);
-//        }
-//
-//        Collection<?> jsonValues = nestedValue.stream().map(value -> {
-//            JsonNode jsonNode;
-//            try {
-//                jsonNode = ObjectMapperSingleton.instance().readTree(value.toString());
-//                if (jsonNode.has(column.getName())) {
-//                    return jsonNode.get(column.getName()).asText(StringUtils.EMPTY);
-//                } else {
-//                    return StringUtils.EMPTY;
-//                }
-//            } catch (JsonProcessingException e) {
-//                return StringUtils.EMPTY;
-//            }
-//        }).collect(Collectors.toList());
-//        return jsonValues;
-//    }
 
     private Object getRawAnswerValue(LinkedHashMap<String, Object> fq, String columnName) {
         Object rawAnswer = fq.getOrDefault(ESObjectConstants.ANSWER, fq.get(columnName));

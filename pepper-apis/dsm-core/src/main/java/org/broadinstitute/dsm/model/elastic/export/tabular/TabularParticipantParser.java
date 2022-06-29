@@ -119,10 +119,12 @@ public class TabularParticipantParser {
             Map<String, String> participantMap = new HashMap();
             participantMaps.add(participantMap);
             for (ModuleExportConfig moduleConfig : moduleConfigs) {
+                // get the data corresponding to each time this module was completed
                 List<Map<String, Object>> esModuleMaps = getModuleCompletions(esDataAsMap, moduleConfig, subParticipant);
                 if (esModuleMaps.size() > moduleConfig.getNumMaxRepeats()) {
                     moduleConfig.setNumMaxRepeats(esModuleMaps.size());
                 }
+                // for each time the module was completed, loop over the data and add it to the map
                 for (int moduleIndex = 0; moduleIndex < esModuleMaps.size(); moduleIndex++) {
                     Map<String, Object> esModuleMap = esModuleMaps.get(moduleIndex);
                     addModuleDataToParticipantMap(moduleConfig, participantMap, esModuleMap, moduleIndex);
@@ -194,7 +196,7 @@ public class TabularParticipantParser {
 
     /**
      * pre-parses all the json fields into maps for easier access during the main parse
-     * For now, this assumes 'dsm.participantData' is the only source of json that needs to be parsed
+     * For now, this assumes 'dsm.participantData.data' is the only source of json that needs to be parsed
      * */
     private void mapParticipantDataJson(Map<String, Object> esDataAsMap) {
         try {
@@ -230,6 +232,8 @@ public class TabularParticipantParser {
             // get the module name from the first question -- this assumes all questions
             // in the module get stored in the same object.
             String objectName = moduleConfig.getQuestions().get(0).getColumn().getObject();
+
+            // figure out whether we're dealing with subparticipants (RGP) or just data
             if (objectName != null && objectName.startsWith("RGP") && objectName.endsWith("GROUP")) {
                 if (subParticipant != null && subParticipant.get("dataAsMap") != null) {
                     return Collections.singletonList((Map<String, Object>) subParticipant.get("dataAsMap"));
@@ -249,6 +253,17 @@ public class TabularParticipantParser {
             }
 
         } else {
+            // this module is based off the root of the map, like 'dsm' or 'invitations'
+            Object rootObject = esDataAsMap.get(moduleConfig.getFilterKey().getValue());
+            if (rootObject instanceof List) {
+                // it's a list, like 'invitations'
+                return (List<Map<String, Object>>) rootObject;
+            } else if (rootObject instanceof Map) {
+                // it's a Map, like 'dsm'
+                return Collections.singletonList((Map<String, Object>) rootObject);
+            }
+            // we don't know what the module/question will be getting at, so return the entire map
+            // in case the question config has the logic to handle it.
             return Collections.singletonList(esDataAsMap);
         }
     }
