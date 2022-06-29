@@ -50,4 +50,11 @@
                                  constraintName="mercury_sequencing_dsm_kit_request_id_fk" referencedTableName="ddp_kit"
                                  referencedColumnNames="dsm_kit_request_id"></addForeignKeyConstraint>
     </changeSet>
+    <changeSet id="DDP-7556_sample_sequencing_field" author="pegah">
+        <addColumn tableName="ddp_kit">
+            <column name="sequencing_restriction" type="VARCHAR(200)" defaultValue="NULL">
+                <constraints nullable="true"></constraints>
+            </column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

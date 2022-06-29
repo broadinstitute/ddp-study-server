@@ -11,4 +11,8 @@ import org.broadinstitute.dsm.statics.DBConstants;
 public class DDPKitDto {
     @ColumnName(DBConstants.COLLECTION_DATE)
     private String collectionDate;
+
+    @ColumnName(DBConstants.SEQUENCING_RESTRICTION)
+    private String sequencingRestriction;
+
 }

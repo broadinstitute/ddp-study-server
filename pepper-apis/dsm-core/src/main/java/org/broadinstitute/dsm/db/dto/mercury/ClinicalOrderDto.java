@@ -7,11 +7,12 @@ import lombok.Getter;
 @Getter
 public class ClinicalOrderDto {
 
-    public long orderDate;
+
     String shortId;
     String sample;
     String orderId;
     String orderStatus;
+    public long orderDate;
     long statusDate;
     String statusDetail;
     String sampleType;

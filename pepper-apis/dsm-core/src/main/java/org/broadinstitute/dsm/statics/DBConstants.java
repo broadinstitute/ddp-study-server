@@ -138,6 +138,7 @@ public class DBConstants {
     public static final String CARE_EVOLVE = "CE_order";
     public static final String DDP_KIT_TABLE_ABBR = "kit.";
     public static final String COLLECTION_DATE = "collection_date";
+    public static final String SEQUENCING_RESTRICTION = "sequencing_restriction";
 
     public static final String ONC_HISTORY_ID = "onc_history_id";
 

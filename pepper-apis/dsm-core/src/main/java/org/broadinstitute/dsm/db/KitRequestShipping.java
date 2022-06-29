@@ -84,8 +84,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     + "kit.receive_date, kit.deactivated_date, kit.easypost_address_id_to, kit.deactivation_reason, "
                     + "(select t.tracking_id from ddp_kit_tracking t where t.kit_label = kit.kit_label) as tracking_id, "
                     + "kit.kit_label, kit.express, kit.test_result, kit.needs_approval, kit.authorization, kit.denial_reason, "
-                    + "kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order, kit.collection_date " +
-                    "FROM ddp_kit_request request "
+                    + "kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order, kit.collection_date, "
+                    + "kit.sequencing_restriction FROM ddp_kit_request request "
                     + "LEFT JOIN ddp_kit kit on (kit.dsm_kit_request_id = request.dsm_kit_request_id) "
                     + "LEFT JOIN ddp_instance realm on (realm.ddp_instance_id = request.ddp_instance_id) "
                     + "LEFT JOIN kit_type kt on (request.kit_type_id = kt.kit_type_id) ";
@@ -104,8 +104,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     + "kit.easypost_shipment_status, kit.scan_date, kit.label_date, kit.error, kit.message, "
                     + "kit.receive_date, kit.deactivated_date, kit.easypost_address_id_to, kit.deactivation_reason, tracking.tracking_id,"
                     + " kit.kit_label, kit.express, kit.test_result, kit.needs_approval, kit.authorization, kit.denial_reason, "
-                    +
-                    "kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order, kit.collection_date FROM ddp_kit kit "
+                    + " kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order, kit.collection_date, "
+                    + "  kit.sequencing_restriction FROM ddp_kit kit "
                     + "INNER JOIN (SELECT dsm_kit_request_id, MAX(dsm_kit_id) AS kit_id FROM ddp_kit "
                     + "GROUP BY dsm_kit_request_id) groupedKit ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id "
                     + "AND kit.dsm_kit_id = groupedKit.kit_id LEFT JOIN ddp_kit_tracking tracking "
@@ -126,7 +126,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     + "(select t.tracking_id from ddp_kit_tracking t where t.kit_label = kit.kit_label) as tracking_id, "
                     + "kit.kit_label, kit.express, kit.test_result, kit.needs_approval, kit.authorization, kit.denial_reason, "
                     + "kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order, kit.collection_date, "
-                    + "activity.ups_status_description, pack.tracking_number " + "FROM ddp_kit_request request "
+                    + "activity.ups_status_description, pack.tracking_number, kit.sequencing_restriction "
+                    + "FROM ddp_kit_request request "
                     + "LEFT JOIN ddp_kit kit on (kit.dsm_kit_request_id = request.dsm_kit_request_id) "
                     + "LEFT JOIN ddp_instance realm on (realm.ddp_instance_id = request.ddp_instance_id) "
                     + "LEFT JOIN kit_type kt on (request.kit_type_id = kt.kit_type_id) "
