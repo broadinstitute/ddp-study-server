@@ -13,7 +13,6 @@ import static org.broadinstitute.dsm.model.QuestionType.RADIO;
 
 import java.util.Map;
 
-import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.QuestionType;
 
 public class ValueProviderFactory {
@@ -39,18 +38,7 @@ public class ValueProviderFactory {
             ACTIVITY_STATUS, new ActivityStatusValueProvider()
     );
 
-    public ValueProvider getValueProvider(Filter filter) {
-        String name = filter.getParticipantColumn().getName();
-        if (isSpecialColumn(name)) {
-            return specialValueProviders.get(name);
-        }
-        if (filter.getType() == null) {
-            return defaultValueProvider;
-        }
-        return valueProviders.getOrDefault(QuestionType.getByValue(filter.getType()), defaultValueProvider);
-    }
-
-    public ValueProvider getFormValueProvider(String participantColumnName, String questionType) {
+    public ValueProvider getValueProvider(String participantColumnName, String questionType) {
         if (isSpecialColumn(participantColumnName)) {
             return specialValueProviders.get(participantColumnName);
         }

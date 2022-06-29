@@ -1,16 +1,19 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.*;
 import java.util.stream.Collectors;
+
 
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.ParticipantColumn;
 import org.broadinstitute.dsm.model.elastic.export.tabular.renderer.ValueProvider;
 import org.broadinstitute.dsm.model.elastic.export.tabular.renderer.ValueProviderFactory;
-import org.broadinstitute.dsm.model.elastic.sort.Alias;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 /**
  * Parses a list of ParticipantDtos from elasticSearch into a map of column names to string values.
@@ -94,67 +97,130 @@ public class TabularParticipantParser {
     public List<Map<String, String>> parse(List<ModuleExportConfig> moduleConfigs, List<ParticipantWrapperDto> participantDtos) {
         List<Map<String, String>> participantMaps = new ArrayList<>(participantDtos.size());
         for (int participantIndex = 0; participantIndex < participantDtos.size(); participantIndex++) {
-            Map<String, String> participantMap = new HashMap();
-            participantMaps.add(participantMap);
             ParticipantWrapperDto participant = participantDtos.get(participantIndex);
             Map<String, Object> esDataAsMap = participant.getEsDataAsMap();
-            for (ModuleExportConfig moduleConfig : moduleConfigs) {
-                List<Map<String, Object>> esModuleMaps = getModuleCompletions(esDataAsMap, moduleConfig);
-                if (esModuleMaps.size() > moduleConfig.getNumMaxRepeats()) {
-                    moduleConfig.setNumMaxRepeats(esModuleMaps.size());
-                }
+            mapParticipantDataJson(esDataAsMap);
+            List<Map<String, Object>> participantDataList = getSubParticipants(esDataAsMap);
+            for (Map<String, Object> subParticipant : participantDataList) {
+                Map<String, String> participantMap = new HashMap();
+                participantMaps.add(participantMap);
+                for (ModuleExportConfig moduleConfig : moduleConfigs) {
+                    List<Map<String, Object>> esModuleMaps = getModuleCompletions(esDataAsMap, moduleConfig, subParticipant);
+                    if (esModuleMaps.size() > moduleConfig.getNumMaxRepeats()) {
+                        moduleConfig.setNumMaxRepeats(esModuleMaps.size());
+                    }
 
-                for (int moduleIndex = 0; moduleIndex < esModuleMaps.size(); moduleIndex++) {
-                    Map<String, Object> esFormMap = esModuleMaps.get(moduleIndex);
-                    for (FilterExportConfig fConfig : moduleConfig.getQuestions()) {
+                    for (int moduleIndex = 0; moduleIndex < esModuleMaps.size(); moduleIndex++) {
+                        Map<String, Object> esFormMap = esModuleMaps.get(moduleIndex);
+                        for (FilterExportConfig fConfig : moduleConfig.getQuestions()) {
 
-                        ValueProvider valueProvider = valueProviderFactory.getFormValueProvider(fConfig.getColumn().getName(), fConfig.getType());
+                            ValueProvider valueProvider = valueProviderFactory.getValueProvider(fConfig.getColumn().getName(), fConfig.getType());
 
-                        Collection<String> formattedValues = valueProvider.getFormattedValues(fConfig, esFormMap);
+                            Collection<String> formattedValues = valueProvider.getFormattedValues(fConfig, esFormMap);
 
-                        if (fConfig.isSplitOptionsIntoColumns()) {
-                            for (int optIndex = 0; optIndex < fConfig.getOptions().size(); optIndex++) {
-                                Map<String, Object> opt = fConfig.getOptions().get(optIndex);
+                            if (fConfig.isSplitOptionsIntoColumns()) {
+                                for (int optIndex = 0; optIndex < fConfig.getOptions().size(); optIndex++) {
+                                    Map<String, Object> opt = fConfig.getOptions().get(optIndex);
 
+                                    String colName = TabularParticipantExporter.getColumnName(
+                                            fConfig,
+                                            moduleIndex + 1,
+                                            1,
+                                            opt
+                                    );
+
+                                    String exportValue = formattedValues.contains(opt.get("optionStableId")) ? "1" : "0";
+                                    participantMap.put(colName, exportValue);
+                                }
+
+                            } else {
                                 String colName = TabularParticipantExporter.getColumnName(
                                         fConfig,
-                                         moduleIndex + 1,
+                                        moduleIndex + 1,
                                         1,
-                                        opt
-                                        );
-
-                                String exportValue = formattedValues.contains(opt.get("optionStableId")) ? "1" : "0";
+                                        null);
+                                String exportValue = formattedValues.stream().collect(Collectors.joining(", "));
                                 participantMap.put(colName, exportValue);
+
                             }
 
-                        } else {
-                            String colName = TabularParticipantExporter.getColumnName(
-                                    fConfig,
-                                     moduleIndex + 1,
-                                    1,
-                                    null);
-                            String exportValue = formattedValues.stream().collect(Collectors.joining(", "));
-                            participantMap.put(colName, exportValue);
-
                         }
-
                     }
                 }
             }
+
         }
         return participantMaps;
+    }
+
+    List<Map<String, Object>> getSubParticipants(Map<String, Object> esDataAsMap) {
+        List<Map<String, Object>> participantDataList = (List<Map<String, Object>>) ((Map<String, Object>) esDataAsMap
+               .get("dsm")).get("participantData");
+        List<Map<String, Object>> subParticipants = participantDataList.stream()
+               .filter(item -> "RGP_PARTICIPANTS".equals(item.get("fieldTypeId"))).collect(Collectors.toList());
+        if (subParticipants.size() > 0) {
+            return subParticipants;
+        } else {
+            return Collections.singletonList(Collections.emptyMap());
+        }
+    }
+
+    /**
+     * pre-parses all the json fields into maps for easier access during the main parse
+     * For now, this assumes 'dsm.participantData' is the only source of json that needs to be parsed
+     * */
+    private void mapParticipantDataJson(Map<String, Object> esDataAsMap) {
+        try {
+            List<Map<String, Object>> participantDataList = (List<Map<String, Object>>) ((Map<String, Object>) esDataAsMap
+                    .get("dsm")).get("participantData");
+            for (Map<String, Object> dataItem : participantDataList) {
+                try {
+                    JsonNode jsonNode = ObjectMapperSingleton.instance().readTree(dataItem.get("data").toString());
+                    Map<String, Object> mappedNode = ObjectMapperSingleton.instance()
+                            .convertValue(jsonNode, new TypeReference<Map<String, Object>>() {
+                            });
+                    dataItem.put("dataAsMap", mappedNode);
+                } catch (Exception e) {
+                    dataItem.put("dataAsMap", Collections.emptyMap());
+                }
+            }
+        } catch (Exception e) {
+            // do nothing, the parser will just leave empty fields where the json couldn't be parsed
+        }
     }
 
     /**
      * Returns the maps correspond to the participants completions of a given activity, e.g. their completions of the MEDICAL_HISTORY
      * @param esDataAsMap the participant's ES data
-     * @param formInfo the config for the given activity
+     * @param moduleConfig the config for the given activity
      * @return the maps
      */
-    private List<Map<String, Object>> getModuleCompletions(Map<String, Object> esDataAsMap, ModuleExportConfig formInfo) {
-        if (formInfo.isActivity()) {
+    private List<Map<String, Object>> getModuleCompletions(Map<String, Object> esDataAsMap, ModuleExportConfig moduleConfig, Map<String, Object> subParticipant) {
+        if (moduleConfig.isActivity()) {
             List<Map<String, Object>> activityList = (List<Map<String, Object>>) esDataAsMap.get("activities");
-            return activityList.stream().filter(activity -> formInfo.getName().equals(activity.get("activityCode"))).collect(Collectors.toList());
+            return activityList.stream().filter(activity -> moduleConfig.getName().equals(activity.get("activityCode"))).collect(Collectors.toList());
+        } else if (moduleConfig.getFilterKey().isJson() && moduleConfig.getName().equals("dsm.participantData.data")) {
+            // get the module name from the first question -- this assumes all questions
+            // in the module get stored in the same object.
+            String objectName = moduleConfig.getQuestions().get(0).getColumn().getObject();
+            if ("RGP_PARTICIPANT_INFO_GROUP".equals(objectName)) {
+                if (subParticipant != null && subParticipant.get("dataAsMap") != null) {
+                    return Collections.singletonList((Map<String, Object>) subParticipant.get("dataAsMap"));
+                } else {
+                    return Collections.singletonList(Collections.emptyMap());
+                }
+            } else {
+                List<Map<String, Object>> participantDataList = (List<Map<String, Object>>) ((Map<String, Object>) esDataAsMap
+                        .get("dsm")).get("participantData");
+                List<Map<String, Object>> matchingModules = participantDataList.stream()
+                        .filter(item -> objectName.equals(item.get("fieldTypeId"))).collect(Collectors.toList());
+
+                List<Map<String, Object>> moduleData = matchingModules.stream().map(module -> {
+                    return (Map<String, Object>) module.get("dataAsMap");
+                }).collect(Collectors.toList());
+                return moduleData;
+            }
+
         } else {
             return Collections.singletonList(esDataAsMap);
         }
