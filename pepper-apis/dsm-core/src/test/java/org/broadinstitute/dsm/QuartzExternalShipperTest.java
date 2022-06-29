@@ -26,6 +26,7 @@ import org.broadinstitute.lddp.util.BasicTriggerListener;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.quartz.CronTrigger;
 import org.quartz.JobBuilder;
@@ -36,6 +37,7 @@ import org.quartz.TriggerKey;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.impl.matchers.KeyMatcher;
 
+@Ignore
 public class QuartzExternalShipperTest extends TestHelper {
 
     public static final String CHECK_EXTERNAL_SHIPPER_REQUEST = "select * from ddp_kit_request where ddp_participant_id = ?";

@@ -56,6 +56,8 @@ public class ESObjectConstants {
     public static final String FIRSTNAME = "lastname";
 
     //profile
+    public static final String PROFILE = "profile";
+
     public static final String EMAIL = "email";
     public static final String FIRST_NAME = "firstName";
     public static final String LAST_NAME = "lastName";
@@ -97,4 +99,5 @@ public class ESObjectConstants {
     public static final String DSM_COHORT_TAG_ID = "cohortTagId";
     public static final String COHORT_TAG = "cohortTag";
     public static final String COHORT_TAG_NAME = "cohortTagName";
+    public static final String NEW_OSTEO_PARTICIPANT = "newOsteoParticipant";
 }

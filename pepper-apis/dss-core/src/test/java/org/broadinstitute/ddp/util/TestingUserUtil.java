@@ -155,7 +155,10 @@ public class TestingUserUtil {
             }
         }
 
-        var getResult = mgmtClient.getAuth0User(user.getAuth0UserId());
+        String auth0UserId = user.getAuth0UserId()
+                .orElseThrow(() -> new DDPException("user does not have an auth0 account"));
+
+        var getResult = mgmtClient.getAuth0User(auth0UserId);
         if (getResult.hasFailure()) {
             throw new DDPException(getResult.hasThrown() ? getResult.getThrown() : getResult.getError());
         }

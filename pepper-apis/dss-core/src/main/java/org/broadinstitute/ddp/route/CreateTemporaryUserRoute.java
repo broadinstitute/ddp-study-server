@@ -1,7 +1,5 @@
 package org.broadinstitute.ddp.route;
 
-import java.util.List;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.cache.LanguageStore;
@@ -22,6 +20,8 @@ import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import spark.Request;
 import spark.Response;
+
+import java.util.List;
 
 @Slf4j
 public class CreateTemporaryUserRoute extends ValidatedJsonInputRoute<CreateTemporaryUserPayload> {
@@ -77,9 +77,10 @@ public class CreateTemporaryUserRoute extends ValidatedJsonInputRoute<CreateTemp
             try {
                 User user = handle.attach(UserDao.class).createTempUser(clientDto.getId());
                 //create profile
-                UserProfileDao profileDao = handle.attach(UserProfileDao.class);
-                profileDao.createProfile(new UserProfile.Builder(user.getId())
-                        .setPreferredLangId(languageId)
+                handle.attach(UserProfileDao.class).createProfile(UserProfile.builder()
+                        .userId(user.getId())
+                        .preferredLangId(languageId)
+                        .preferredLangCode(null)
                         .build());
 
                 return new CreateTemporaryUserResponse(user.getGuid(), user.getExpiresAt());

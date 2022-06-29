@@ -23,7 +23,7 @@ public class CohortTagDaoImpl implements CohortTagDao {
     private static final Logger logger = LoggerFactory.getLogger(CohortTagDaoImpl.class);
 
     private static final String SQL_INSERT_COHORT_TAG =
-            "INSERT INTO cohort_tag SET cohort_tag_name = ?, ddp_participant_id = ?, ddp_instance_id = ?";
+            "INSERT INTO cohort_tag(cohort_tag_name, ddp_participant_id, ddp_instance_id, created, created_by) VALUES (?,?,?,?,?)";
     private static final String SQL_DELETE_COHORT_TAG_BY_ID = "DELETE FROM cohort_tag WHERE cohort_tag_id = ?";
 
     private static final String SQL_GET_TAGS_BY_INSTANCE_NAME = "SELECT * FROM cohort_tag WHERE ddp_instance_id = "
@@ -42,6 +42,8 @@ public class CohortTagDaoImpl implements CohortTagDao {
                 stmt.setString(1, cohortTagDto.getCohortTagName());
                 stmt.setString(2, cohortTagDto.getDdpParticipantId());
                 stmt.setInt(3, cohortTagDto.getDdpInstanceId());
+                stmt.setLong(4, System.currentTimeMillis());
+                stmt.setString(5, cohortTagDto.getCreatedBy());
                 stmt.executeUpdate();
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
@@ -117,6 +119,44 @@ public class CohortTagDaoImpl implements CohortTagDao {
             throw new RuntimeException("Could not fetch cohort tags for instance: " + instanceName, simpleResult.resultException);
         }
         return result;
+    }
+
+    @Override
+    public List<Integer> bulkCohortCreate(List<CohortTag> cohortTags) {
+        List<Integer> ids = new ArrayList<>();
+        SimpleResult simpleResult = inTransaction(conn -> {
+            SimpleResult dbVals = new SimpleResult(-1);
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_COHORT_TAG, Statement.RETURN_GENERATED_KEYS)) {
+                for (CohortTag tag: cohortTags) {
+                    stmt.setString(1, tag.getCohortTagName());
+                    stmt.setString(2, tag.getDdpParticipantId());
+                    stmt.setInt(3, tag.getDdpInstanceId());
+                    stmt.setLong(4, System.currentTimeMillis());
+                    stmt.setString(5, tag.getCreatedBy());
+                    stmt.addBatch();
+                }
+                stmt.executeBatch();
+                try (ResultSet rs = stmt.getGeneratedKeys()) {
+                    while (rs.next()) {
+                        ids.add(rs.getInt(1));
+                    }
+                }
+            } catch (SQLException sqle) {
+                dbVals.resultException = sqle;
+            }
+            return dbVals;
+        });
+        if (simpleResult.resultException != null) {
+            throw new RuntimeException(
+                    "Error inserting cohort tags of size: " + cohortTags.size(),
+                    simpleResult.resultException);
+        }
+        logger.info(
+                String.format(
+                        "Cohort tags of size: %s have been inserted successfully",
+                        cohortTags.size()
+                ));
+        return ids;
     }
 
     private CohortTag buildCohortTagFrom(ResultSet resultSet) throws SQLException {

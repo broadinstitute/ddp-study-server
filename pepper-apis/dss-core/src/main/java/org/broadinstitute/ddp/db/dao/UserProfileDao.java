@@ -9,6 +9,7 @@ import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 
@@ -17,8 +18,9 @@ public interface UserProfileDao extends SqlObject {
     @CreateSqlObject
     UserProfileSql getUserProfileSql();
 
-    default void createProfile(UserProfile profile) {
-        getUserProfileSql().insert(
+    @GetGeneratedKeys
+    default Long createProfile(UserProfile profile) {
+        return getUserProfileSql().insert(
                 profile.getUserId(),
                 profile.getFirstName(),
                 profile.getLastName(),

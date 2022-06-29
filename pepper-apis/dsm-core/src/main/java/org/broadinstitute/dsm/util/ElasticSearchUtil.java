@@ -231,7 +231,7 @@ public class ElasticSearchUtil {
                 SearchResponse response = null;
                 int i = 0;
                 searchSourceBuilder.query(QueryBuilders.matchQuery("profile.hruid", participantHruid))
-                        .sort(PROFILE_CREATED_AT, SortOrder.ASC);
+                        .sort(PROFILE_CREATED_AT, SortOrder.DESC);
                 while (response == null || response.getHits().getHits().length != 0) {
                     searchSourceBuilder.size(scrollSize);
                     searchSourceBuilder.from(i * scrollSize);
@@ -262,7 +262,7 @@ public class ElasticSearchUtil {
                 SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
                 SearchResponse response = null;
                 int i = 0;
-                searchSourceBuilder.query(QueryBuilders.matchAllQuery()).sort(PROFILE_CREATED_AT, SortOrder.ASC);
+                searchSourceBuilder.query(QueryBuilders.matchAllQuery()).sort(PROFILE_CREATED_AT, SortOrder.DESC);
                 while (response == null || response.getHits().getHits().length != 0) {
                     searchSourceBuilder.size(scrollSize);
                     searchSourceBuilder.from(i * scrollSize);
@@ -335,13 +335,13 @@ public class ElasticSearchUtil {
 
     public static Optional<ElasticSearchParticipantDto> fetchESDataByParticipantId(String index, String participantId,
                                                                                    RestHighLevelClient client) throws IOException {
-        String matchQueryName = ParticipantUtil.isGuid(participantId) ? "profile.guid" : "profile.legacyAltPid";
+        String matchQueryName = ParticipantUtil.isGuid(participantId) ? PROFILE_GUID : PROFILE_LEGACYALTPID;
         return Optional.of(getElasticSearchForGivenMatch(index, participantId, client, matchQueryName));
     }
 
     public static ElasticSearchParticipantDto fetchESDataByAltpid(String index, String altpid, RestHighLevelClient client)
             throws IOException {
-        String matchQueryName = "profile.legacyAltPid";
+        String matchQueryName = PROFILE_LEGACYALTPID;
         return getElasticSearchForGivenMatch(index, altpid, client, matchQueryName);
     }
 
@@ -350,7 +350,7 @@ public class ElasticSearchUtil {
         SearchRequest searchRequest = new SearchRequest(index);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         SearchResponse response = null;
-        searchSourceBuilder.query(QueryBuilders.matchQuery(matchQueryName, id)).sort(PROFILE_CREATED_AT, SortOrder.ASC);
+        searchSourceBuilder.query(QueryBuilders.matchQuery(matchQueryName, id)).sort(PROFILE_CREATED_AT, SortOrder.DESC);
         searchSourceBuilder.size(1);
         searchSourceBuilder.from(0);
         searchRequest.source(searchSourceBuilder);
@@ -377,7 +377,7 @@ public class ElasticSearchUtil {
                 if (query == null) {
                     throw new RuntimeException("Couldn't create query from filter " + filter);
                 }
-                searchSourceBuilder.query(query).sort(PROFILE_CREATED_AT, SortOrder.ASC);
+                searchSourceBuilder.query(query).sort(PROFILE_CREATED_AT, SortOrder.DESC);
                 while (response == null || response.getHits().getHits().length != 0) {
                     searchSourceBuilder.size(scrollSize);
                     searchSourceBuilder.from(i * scrollSize);
@@ -409,10 +409,10 @@ public class ElasticSearchUtil {
 
 
         BoolQueryBuilder qb = QueryBuilders.boolQuery();
-        qb.must(QueryBuilders.termsQuery("profile.guid", participantGuids));
+        qb.must(QueryBuilders.termsQuery(PROFILE_GUID, participantGuids));
 
         searchSourceBuilder.fetchSource(new String[] {PROFILE, ADDRESS}, null);
-        searchSourceBuilder.query(qb).sort(PROFILE_CREATED_AT, SortOrder.ASC).docValueField(ADDRESS).docValueField(PROFILE);
+        searchSourceBuilder.query(qb).sort(PROFILE_CREATED_AT, SortOrder.DESC).docValueField(ADDRESS).docValueField(PROFILE);
         while (pageNumber == 0 || hitNumber < totalHits) {
             searchSourceBuilder.size(scrollSize);
             searchSourceBuilder.from(pageNumber * scrollSize);

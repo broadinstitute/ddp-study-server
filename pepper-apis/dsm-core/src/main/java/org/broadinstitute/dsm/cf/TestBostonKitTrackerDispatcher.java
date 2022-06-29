@@ -166,7 +166,7 @@ public class TestBostonKitTrackerDispatcher implements BackgroundFunction<Pubsub
     public List<DDPInstance> getDDPInstanceListWithRole(Connection conn, @NonNull String role) {
         final String SQL_SELECT_INSTANCE_WITH_ROLE =
                 "SELECT ddp_instance_id, instance_name, base_url, collaborator_id_prefix, migrated_ddp, billing_reference, "
-                        + "es_participant_index, es_activity_definition_index,  es_users_index, research_project, "
+                        + "es_participant_index, es_activity_definition_index,  es_users_index, research_project, mercury_order_creator,"
                         + "(SELECT count(role.name) FROM "
                         + studyManagerSchema + "ddp_instance realm, " + studyManagerSchema + "ddp_instance_role inRol, "
                         + studyManagerSchema
