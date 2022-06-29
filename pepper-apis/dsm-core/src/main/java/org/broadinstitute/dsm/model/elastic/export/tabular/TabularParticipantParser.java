@@ -95,64 +95,91 @@ public class TabularParticipantParser {
     }
     /** map each participant's data into a map of columnName => string value, based on the passed-in configs */
     public List<Map<String, String>> parse(List<ModuleExportConfig> moduleConfigs, List<ParticipantWrapperDto> participantDtos) {
-        List<Map<String, String>> participantMaps = new ArrayList<>(participantDtos.size());
-        for (int participantIndex = 0; participantIndex < participantDtos.size(); participantIndex++) {
-            ParticipantWrapperDto participant = participantDtos.get(participantIndex);
-            Map<String, Object> esDataAsMap = participant.getEsDataAsMap();
-            mapParticipantDataJson(esDataAsMap);
-            List<Map<String, Object>> participantDataList = getSubParticipants(esDataAsMap);
-            for (Map<String, Object> subParticipant : participantDataList) {
-                Map<String, String> participantMap = new HashMap();
-                participantMaps.add(participantMap);
-                for (ModuleExportConfig moduleConfig : moduleConfigs) {
-                    List<Map<String, Object>> esModuleMaps = getModuleCompletions(esDataAsMap, moduleConfig, subParticipant);
-                    if (esModuleMaps.size() > moduleConfig.getNumMaxRepeats()) {
-                        moduleConfig.setNumMaxRepeats(esModuleMaps.size());
-                    }
+        List<Map<String, String>> allParticipantMaps = new ArrayList<>(participantDtos.size());
+        for (ParticipantWrapperDto participant : participantDtos) {
+            allParticipantMaps.addAll(generateParticipantTabularMaps(moduleConfigs, participant));
+        }
+        return allParticipantMaps;
+    }
 
-                    for (int moduleIndex = 0; moduleIndex < esModuleMaps.size(); moduleIndex++) {
-                        Map<String, Object> esFormMap = esModuleMaps.get(moduleIndex);
-                        for (FilterExportConfig fConfig : moduleConfig.getQuestions()) {
-
-                            ValueProvider valueProvider = valueProviderFactory.getValueProvider(fConfig.getColumn().getName(), fConfig.getType());
-
-                            Collection<String> formattedValues = valueProvider.getFormattedValues(fConfig, esFormMap);
-
-                            if (fConfig.isSplitOptionsIntoColumns()) {
-                                for (int optIndex = 0; optIndex < fConfig.getOptions().size(); optIndex++) {
-                                    Map<String, Object> opt = fConfig.getOptions().get(optIndex);
-
-                                    String colName = TabularParticipantExporter.getColumnName(
-                                            fConfig,
-                                            moduleIndex + 1,
-                                            1,
-                                            opt
-                                    );
-
-                                    String exportValue = formattedValues.contains(opt.get("optionStableId")) ? "1" : "0";
-                                    participantMap.put(colName, exportValue);
-                                }
-
-                            } else {
-                                String colName = TabularParticipantExporter.getColumnName(
-                                        fConfig,
-                                        moduleIndex + 1,
-                                        1,
-                                        null);
-                                String exportValue = formattedValues.stream().collect(Collectors.joining(", "));
-                                participantMap.put(colName, exportValue);
-
-                            }
-
-                        }
-                    }
+    /**
+     * @param moduleConfigs the moduleExportConfigs, such as returned from generateExportConfigs
+     * @param participant the participantDto, as fetched from elasticSearch
+     * @return a list of hashmaps suitable for turning into a table. The list will be of length 1, unless this is a study (RGP)
+     * with family members.  In that case, the list will have one map for each member.
+     */
+    private List<Map<String, String>> generateParticipantTabularMaps(List<ModuleExportConfig> moduleConfigs, ParticipantWrapperDto participant) {
+        List<Map<String, String>> participantMaps = new ArrayList<>();
+        Map<String, Object> esDataAsMap = participant.getEsDataAsMap();
+        mapParticipantDataJson(esDataAsMap);
+        // get the 'subParticipants' a.k.a RGP family members
+        // note that getSubParticipants will always return at least one entry, (for non-RGP studies, it will just return a single empty map)
+        List<Map<String, Object>> participantDataList = getSubParticipants(esDataAsMap);
+        for (Map<String, Object> subParticipant : participantDataList) {
+            Map<String, String> participantMap = new HashMap();
+            participantMaps.add(participantMap);
+            for (ModuleExportConfig moduleConfig : moduleConfigs) {
+                List<Map<String, Object>> esModuleMaps = getModuleCompletions(esDataAsMap, moduleConfig, subParticipant);
+                if (esModuleMaps.size() > moduleConfig.getNumMaxRepeats()) {
+                    moduleConfig.setNumMaxRepeats(esModuleMaps.size());
+                }
+                for (int moduleIndex = 0; moduleIndex < esModuleMaps.size(); moduleIndex++) {
+                    Map<String, Object> esModuleMap = esModuleMaps.get(moduleIndex);
+                    addModuleDataToParticipantMap(moduleConfig, participantMap, esModuleMap, moduleIndex);
                 }
             }
-
         }
         return participantMaps;
     }
 
+    /**
+     * Iterate through the questions in the module, adding answer values to the participant mop
+     * @param moduleConfig the module config
+     * @param esModuleMap A map corresponding to where the data for the module answers can be found
+     *                     such as one from the list returned by getModuleCompletions
+     * @param participantMap a map to store columnName -> answerString
+     */
+    private void addModuleDataToParticipantMap( ModuleExportConfig moduleConfig, Map<String, String> participantMap, Map<String, Object> esModuleMap, int moduleRepeatNum) {
+        for (FilterExportConfig fConfig : moduleConfig.getQuestions()) {
+
+            ValueProvider valueProvider = valueProviderFactory.getValueProvider(fConfig.getColumn().getName(), fConfig.getType());
+
+            Collection<String> formattedValues = valueProvider.getFormattedValues(fConfig, esModuleMap);
+
+            if (fConfig.isSplitOptionsIntoColumns()) {
+                for (int optIndex = 0; optIndex < fConfig.getOptions().size(); optIndex++) {
+                    Map<String, Object> opt = fConfig.getOptions().get(optIndex);
+
+                    String colName = TabularParticipantExporter.getColumnName(
+                            fConfig,
+                            moduleRepeatNum + 1,
+                            1,
+                            opt
+                    );
+
+                    String exportValue = formattedValues.contains(opt.get("optionStableId")) ? "1" : "0";
+                    participantMap.put(colName, exportValue);
+                }
+
+            } else {
+                String colName = TabularParticipantExporter.getColumnName(
+                        fConfig,
+                        moduleRepeatNum + 1,
+                        1,
+                        null);
+                String exportValue = formattedValues.stream().collect(Collectors.joining(", "));
+                participantMap.put(colName, exportValue);
+
+            }
+        }
+    }
+
+    /**
+     * Return
+     * @param esDataAsMap elastic search data for a ParticipantDto, in map form.
+     * @return a list of sub-participant data (a.k.a. RGP family members) associated with the given participant
+     *    If none exist, a list with a single empty map will be returned
+     */
     List<Map<String, Object>> getSubParticipants(Map<String, Object> esDataAsMap) {
         List<Map<String, Object>> participantDataList = (List<Map<String, Object>>) ((Map<String, Object>) esDataAsMap
                .get("dsm")).get("participantData");
@@ -203,7 +230,7 @@ public class TabularParticipantParser {
             // get the module name from the first question -- this assumes all questions
             // in the module get stored in the same object.
             String objectName = moduleConfig.getQuestions().get(0).getColumn().getObject();
-            if ("RGP_PARTICIPANT_INFO_GROUP".equals(objectName)) {
+            if (objectName != null && objectName.startsWith("RGP") && objectName.endsWith("GROUP")) {
                 if (subParticipant != null && subParticipant.get("dataAsMap") != null) {
                     return Collections.singletonList((Map<String, Object>) subParticipant.get("dataAsMap"));
                 } else {
