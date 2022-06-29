@@ -10,23 +10,25 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.Filter;
+import org.broadinstitute.dsm.model.elastic.export.tabular.FilterExportConfig;
 import org.broadinstitute.dsm.model.elastic.sort.Alias;
 
 public class DateValueProvider implements ValueProvider {
-    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
 
-    public Collection<String> getValue(String esPath, Map<String, Object> esDataAsMap, Alias key, Filter column) {
-        Collection<?> nestedValue = getNestedValue(esPath, esDataAsMap, key, column.getParticipantColumn());
-        return nestedValue.stream().map(value -> {
-            if (value == null || value.equals(StringUtils.EMPTY)) {
-                return StringUtils.EMPTY;
-            }
-            if (value instanceof String) {
-                return ((String) value);
-            }
-            long dateLong = Long.parseLong(value.toString());
-            return LocalDateTime.ofInstant(Instant.ofEpochMilli(dateLong), ZoneOffset.UTC).format(formatter);
-        }).collect(Collectors.toList());
+    public Collection<String> formatRawValues(Collection<?> rawValues, FilterExportConfig qConfig, Map<String, Object> formMap) {
+        return rawValues.stream().map(DateValueProvider::parseDate).collect(Collectors.toList());
+    }
+
+    private static String parseDate(Object dateValue) {
+        if (dateValue == null || dateValue.equals(StringUtils.EMPTY)) {
+            return StringUtils.EMPTY;
+        }
+        if (dateValue instanceof String) {
+            return ((String) dateValue);
+        }
+        long dateLong = Long.parseLong(dateValue.toString());
+        return LocalDateTime.ofInstant(Instant.ofEpochMilli(dateLong), ZoneOffset.UTC).format(formatter);
     }
 
 }

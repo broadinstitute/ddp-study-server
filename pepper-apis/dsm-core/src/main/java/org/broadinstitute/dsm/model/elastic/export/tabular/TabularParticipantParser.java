@@ -37,6 +37,7 @@ public class TabularParticipantParser {
      * @return the configs
      */
     public List<ModuleExportConfig> generateExportConfigs() {
+        List<ModuleExportConfig> configs = new ArrayList<>();
         // map of table name => module export config
         Map<String, ModuleExportConfig> exportInfoMap = new HashMap<>();
         Map<String, Map<String, Object>> activityDefs = ElasticSearchUtil.getActivityDefinitions(ddpInstance);
@@ -47,15 +48,16 @@ public class TabularParticipantParser {
             ModuleExportConfig moduleExport = exportInfoMap.get(participantColumn.getTableAlias());
             if (moduleExport == null) {
                 moduleExport = new ModuleExportConfig(participantColumn);
+                configs.add(moduleExport);
                 exportInfoMap.put(participantColumn.getTableAlias(), moduleExport);
             }
             boolean splitChoicesIntoColumns = false;
             List<Map<String, Object>> options = null;
-            if (filter.getType().equals("OPTIONS")) {
+            if ("OPTIONS".equals(filter.getType())) {
                 Map<String, Object> questionDef = getDefForQuestion(participantColumn, activityDefs);
-                if (questionDef != null && questionDef.get("selectMode").equals("MULTIPLE")) {
-                    splitChoicesIntoColumns = true;
-                    // create a column for each option
+                if (questionDef != null) {
+                    // create a column for each option if it's a multiselect
+                    splitChoicesIntoColumns = "MULTIPLE".equals(questionDef.get("selectMode"));
                     options = (List<Map<String, Object>>) questionDef.get("options");
                 }
             }
@@ -63,7 +65,7 @@ public class TabularParticipantParser {
             moduleExport.questions.add(colConfig);
 
         }
-        return exportInfoMap.values().stream().collect(Collectors.toList());
+        return configs;
     }
 
     /**
@@ -108,15 +110,13 @@ public class TabularParticipantParser {
 
                         Collection<String> formattedValues = valueProvider.getFormattedValues(fConfig, esFormMap);
 
-                        int finalModuleIndex = moduleIndex;
-
                         if (fConfig.isSplitOptionsIntoColumns()) {
                             for (int optIndex = 0; optIndex < fConfig.getOptions().size(); optIndex++) {
                                 Map<String, Object> opt = fConfig.getOptions().get(optIndex);
 
                                 String colName = TabularParticipantExporter.getColumnName(
                                         fConfig,
-                                         + 1,
+                                         moduleIndex + 1,
                                         1,
                                         opt
                                         );
@@ -128,7 +128,7 @@ public class TabularParticipantParser {
                         } else {
                             String colName = TabularParticipantExporter.getColumnName(
                                     fConfig,
-                                     + 1,
+                                     moduleIndex + 1,
                                     1,
                                     null);
                             String exportValue = formattedValues.stream().collect(Collectors.joining(", "));

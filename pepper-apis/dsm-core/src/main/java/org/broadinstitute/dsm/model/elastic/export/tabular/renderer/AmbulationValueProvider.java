@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.Filter;
+import org.broadinstitute.dsm.model.elastic.export.tabular.FilterExportConfig;
 import org.broadinstitute.dsm.model.elastic.sort.Alias;
 
 public class AmbulationValueProvider implements ValueProvider {
@@ -18,10 +19,13 @@ public class AmbulationValueProvider implements ValueProvider {
             "WHEELCHAIR_WITH_ASSISTANCE", "6");
 
     @Override
-    public Collection<String> getValue(String esPath, Map<String, Object> esDataAsMap, Alias key, Filter column) {
-        Collection<?> nestedValue = getNestedValue(esPath, esDataAsMap, key, column.getParticipantColumn());
-        return nestedValue.stream().map(Object::toString)
-                .map(value -> valueMappings.getOrDefault(value, StringUtils.EMPTY))
-                .collect(Collectors.toList());
+    /**
+     * Return the numeric code, rather than the stableId
+     */
+    public Collection<String> formatRawValues(Collection<?> rawValues, FilterExportConfig qConfig, Map<String, Object> formMap) {
+
+        return rawValues.stream().map(value -> {
+            return valueMappings.getOrDefault(value, StringUtils.EMPTY);
+        }).collect(Collectors.toList());
     }
 }
