@@ -35,6 +35,9 @@ import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import spark.Request;
 import spark.Response;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 @Slf4j
 @AllArgsConstructor
 public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<CreateUserActivityUploadPayload> {
@@ -107,7 +110,7 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
             User operatorUser = handle.attach(UserDao.class).findUserByGuid(operatorGuid)
                     .orElseThrow(() -> new DDPException("Could not find operator with guid " + operatorGuid));
 
-            String prefix = String.format("%s/%s/%s", studyGuid, userGuid, instanceDto.getActivityCode());
+            String prefix = String.format("%s/%s/%s/%s", studyGuid, getCurrentDate(), userGuid, instanceDto.getActivityCode());
             return service.authorizeUpload(
                     handle,
                     instanceDto.getStudyId(),
@@ -138,5 +141,8 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
 
         response.status(HttpStatus.SC_CREATED);
         return new CreateUserActivityUploadResponse(upload.getGuid(), result.getSignedUrl().toString());
+    }
+    private String getCurrentDate() {
+        return new SimpleDateFormat("yyyy_MM_dd").format(new Date());
     }
 }
