@@ -15,7 +15,7 @@ import java.util.List;
 public final class EquationQuestionRecord extends QuestionRecord {
 
     @SerializedName("answer")
-    final private List<BigDecimal> answer = new ArrayList<>();
+    private final List<BigDecimal> answer = new ArrayList<>();
 
     public EquationQuestionRecord(String stableId, EquationResponse response) {
         super(QuestionType.EQUATION, stableId);
