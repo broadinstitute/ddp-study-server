@@ -15,6 +15,8 @@ import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.event.publish.TaskPublisher;
 import org.broadinstitute.ddp.event.publish.pubsub.TaskPubSubPublisher;
 import org.broadinstitute.ddp.json.errors.ApiError;
+import org.broadinstitute.ddp.json.users.models.EmailAddress;
+import org.broadinstitute.ddp.json.users.models.Guid;
 import org.broadinstitute.ddp.json.users.requests.UserCreationPayload;
 import org.broadinstitute.ddp.json.users.responses.UserCreationResponse;
 import org.broadinstitute.ddp.model.user.User;
@@ -47,9 +49,8 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
         */ 
         final var requestorClientId = auth.getClient();
         final var domain = auth.getDomain();
-        final var studyGuid = payload.getStudyGuid();
-
-        final var email = payload.getEmail();
+        final var studyGuid = new Guid(payload.getStudyGuid());
+        final var email = new EmailAddress(payload.getEmail());
 
         log.info("attempting to create a user for study {}", payload.getStudyGuid());
 
@@ -136,7 +137,7 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
             taskPublisher.publishTask(
                     TaskPubSubPublisher.TASK_PARTICIPANT_REGISTERED,
                     StringUtils.EMPTY, // No payload necessary here
-                    studyGuid,
+                    studyGuid.getValue(),
                     newUser.getGuid());
 
             // Suggested by @ssettipalli

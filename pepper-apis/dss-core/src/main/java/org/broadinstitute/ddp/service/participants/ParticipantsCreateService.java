@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.json.users.models.EmailAddress;
+import org.broadinstitute.ddp.json.users.models.Guid;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.user.User;
@@ -24,8 +26,8 @@ public class ParticipantsCreateService {
         this.handle = handle;
     }
 
-    public User createWithEmail(String email, String studyGuid) throws ParticipantCreateError {
-        return this.createWithEmail(email, studyGuid, null);
+    public User createWithEmail(EmailAddress email, Guid studyGuid) throws ParticipantsServiceError, StudiesServiceError {
+        return createWithEmail(email.getValue(), studyGuid.getValue());
     }
 
     /**
