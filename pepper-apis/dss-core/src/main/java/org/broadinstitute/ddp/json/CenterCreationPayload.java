@@ -44,4 +44,8 @@ public class CenterCreationPayload {
     @NonNull
     @SerializedName("lastName")
     private String lastName;
+
+    @NonNull
+    @SerializedName("roleId")
+    private Long roleId;
 }

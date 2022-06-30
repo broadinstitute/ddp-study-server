@@ -10,9 +10,12 @@ import org.broadinstitute.ddp.db.dao.JdbiClient;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
+import org.broadinstitute.ddp.db.dao.UserRoleDao;
+import org.broadinstitute.ddp.db.dao.RoleDao;
 import org.broadinstitute.ddp.db.dao.CenterUserDao;
 import org.broadinstitute.ddp.db.dto.CenterProfileDto;
 import org.broadinstitute.ddp.db.dto.CenterUserDto;
+import org.broadinstitute.ddp.db.dto.UserRoleDto;
 import org.broadinstitute.ddp.json.CenterCreationPayload;
 import org.broadinstitute.ddp.json.CenterCreationResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
@@ -71,6 +74,11 @@ public class CenterCreationRoute extends ValidatedJsonInputRoute<CenterCreationP
                 throw ResponseUtil.haltError(HttpStatus.SC_UNAUTHORIZED, error);
             }
 
+            if (handle.attach(RoleDao.class).findById(payload.getRoleId()) == null) {
+                var error = new ApiError(ErrorCodes.INVALID_ROLE, "the role does not exist");
+                throw ResponseUtil.haltError(HttpStatus.SC_UNPROCESSABLE_ENTITY, error);
+            }
+
             final var primaryContact = handle.attach(UserDao.class).createUserByEmail(email);
             handle.attach(UserProfileDao.class).createProfile(UserProfile.builder()
                     .userId(primaryContact.getId())
@@ -87,6 +95,11 @@ public class CenterCreationRoute extends ValidatedJsonInputRoute<CenterCreationP
 
             handle.attach(CenterUserDao.class).insert(CenterUserDto.builder()
                     .centerId(centerId)
+                    .userId(primaryContact.getId())
+                    .build());
+
+            handle.attach(UserRoleDao.class).insert(UserRoleDto.builder()
+                    .roleId(payload.getRoleId())
                     .userId(primaryContact.getId())
                     .build());
 

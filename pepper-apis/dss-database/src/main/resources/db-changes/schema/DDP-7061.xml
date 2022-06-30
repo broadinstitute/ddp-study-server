@@ -24,4 +24,66 @@
             <column name="address2" type="TEXT" />
         </addColumn>
     </changeSet>
+
+    <changeSet author="Dmitrii Eliseev" id="2022-06-30-user-permissions">
+        <createTable tableName="role">
+            <column name="role_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="role_pk"/>
+            </column>
+
+            <column name="name" type="VARCHAR(100)" />
+        </createTable>
+
+        <createTable tableName="user_role">
+            <column name="user_role_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="user_role_pk"/>
+            </column>
+
+            <column name="user_id" type="bigint">
+                <constraints nullable="false" references="user(user_id)" foreignKeyName="user_role_user_fk"/>
+            </column>
+
+            <column name="role_id" type="bigint">
+                <constraints nullable="false" references="role(role_id)" foreignKeyName="user_role_role_fk"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="permission">
+            <column name="permission_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="permission_pk"/>
+            </column>
+
+            <column name="name" type="VARCHAR(100)" />
+        </createTable>
+
+        <createTable tableName="role_permission">
+            <column name="role_permission_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="role_permission_pk"/>
+            </column>
+
+            <column name="permission_id" type="bigint">
+                <constraints nullable="false" references="permission(permission_id)" foreignKeyName="role_permission_permission_fk"/>
+            </column>
+
+            <column name="role_id" type="bigint">
+                <constraints nullable="false" references="role(role_id)" foreignKeyName="role_permission_role_fk"/>
+            </column>
+        </createTable>
+
+        <insert tableName="role">
+            <column name="name">Administrator</column>
+        </insert>
+
+        <insert tableName="role">
+            <column name="name">ELT</column>
+        </insert>
+
+        <insert tableName="role">
+            <column name="name">Data Manager</column>
+        </insert>
+
+        <insert tableName="role">
+            <column name="name">Analyst/Researcher</column>
+        </insert>
+    </changeSet>
 </databaseChangeLog>
