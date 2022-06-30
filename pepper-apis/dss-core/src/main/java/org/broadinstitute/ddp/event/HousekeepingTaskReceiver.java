@@ -5,6 +5,8 @@ import java.io.IOException;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.stream.MalformedJsonException;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
 import lombok.AllArgsConstructor;
@@ -131,7 +133,13 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
     private void handleElasticExport(PubsubMessage message, AckReplyConsumer reply) {
         String data = message.getData() != null ? message.getData().toStringUtf8() : null;
         log.info("Housekeeping PubSub ELASTIC_EXPORT Task message received [subscription={}]: {}", subName, data);
-        var payload = gson.fromJson(data, ExportPayload.class);
+        ExportPayload payload = null;
+        try {
+            payload = gson.fromJson(data, ExportPayload.class);
+        } catch(JsonSyntaxException e) {
+            log.error("Could not convert payload to ExportPayload instance." + "Message id:" + message.getMessageId()
+                    + "\nThe JSON string:\n" + data, e);
+        }
         if (payload == null || payload.getStudy() == null) {
             log.error("Study needs to be provided for ELASTIC_EXPORT task message, ack-ing");
             reply.ack();
