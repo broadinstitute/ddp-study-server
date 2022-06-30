@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
 import org.broadinstitute.ddp.db.dto.CenterProfileDto;
-import org.broadinstitute.ddp.db.dto.CenterUserDto;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;

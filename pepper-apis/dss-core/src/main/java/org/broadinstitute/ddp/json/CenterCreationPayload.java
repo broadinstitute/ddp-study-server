@@ -5,8 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
 
-import java.time.LocalDate;
-
 /**
  * Payload sent during creation of a new user
  */
