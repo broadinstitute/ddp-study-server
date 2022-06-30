@@ -1,12 +1,9 @@
 package org.broadinstitute.ddp.event;
 
-import java.io.IOException;
-
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import com.google.gson.stream.MalformedJsonException;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
 import lombok.AllArgsConstructor;
@@ -26,6 +23,8 @@ import org.quartz.JobDataMap;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
+
+import java.io.IOException;
 
 @Slf4j
 @AllArgsConstructor
@@ -136,7 +135,7 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
         ExportPayload payload = null;
         try {
             payload = gson.fromJson(data, ExportPayload.class);
-        } catch(JsonSyntaxException e) {
+        } catch (JsonSyntaxException e) {
             log.error("Could not convert payload to ExportPayload instance." + "Message id:" + message.getMessageId()
                     + "\nThe JSON string:\n" + data, e);
         }
