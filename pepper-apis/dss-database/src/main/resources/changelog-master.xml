@@ -313,4 +313,5 @@
     <include file="db-changes/schema/DDP-7931-internal-user-accounts.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7931-user-email.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7931-user-created-by-not-required.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-7061.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

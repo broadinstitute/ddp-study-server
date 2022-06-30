@@ -66,6 +66,8 @@ public class RouteConstants {
 
         public static final String USER_PROFILE = fmt(BASE + "/user/%s/profile", PathParam.USER_GUID);
 
+        public static final String CENTERS = fmt(BASE + "/center");
+
         public static final String PARTICIPANT_ADDRESS = USER_PROFILE + "/address";
         public static final String PARTICIPANT_TEMP_ADDRESS = fmt(PARTICIPANT_ADDRESS + "/temp/%s",
                 PathParam.INSTANCE_GUID);

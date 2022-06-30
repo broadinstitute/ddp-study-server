@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="Dmitrii Eliseev" id="2022-06-30-center-registration-endpoint">
+        <addColumn tableName="center_profile">
+            <column name="primary_contact_id" type="bigint">
+                <constraints nullable="true" references="center_user(center_id)" foreignKeyName="center_profile_primary_contact_fk" />
+            </column>
+        </addColumn>
+
+        <addColumn tableName="center_profile">
+            <column name="city_id" type="bigint">
+                <constraints references="city(city_id)" foreignKeyName="center_profile_city_fk" />
+            </column>
+        </addColumn>
+
+        <dropColumn tableName="center_profile" columnName="address" />
+
+        <addColumn tableName="center_profile">
+            <column name="address1" type="TEXT" />
+            <column name="address2" type="TEXT" />
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>
