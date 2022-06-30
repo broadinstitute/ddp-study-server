@@ -39,7 +39,6 @@ public class CenterCreationPayload {
     @SerializedName("phone")
     private String phone;
 
-
     @NonNull
     @SerializedName("firstName")
     private String firstName;
