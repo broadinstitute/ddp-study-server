@@ -98,5 +98,6 @@ public class ESObjectConstants {
     //cohort tags
     public static final String DSM_COHORT_TAG_ID = "cohortTagId";
     public static final String COHORT_TAG = "cohortTag";
+    public static final String COHORT_TAG_NAME = "cohortTagName";
     public static final String NEW_OSTEO_PARTICIPANT = "newOsteoParticipant";
 }
