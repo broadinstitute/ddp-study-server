@@ -26,12 +26,14 @@ import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 public class TabularParticipantParser {
     private final List<Filter> filters;
     private final DDPInstance ddpInstance;
+    private final boolean splitOptions;
 
     private ValueProviderFactory valueProviderFactory = new ValueProviderFactory();
 
-    public TabularParticipantParser(List<Filter> filters, DDPInstance ddpInstance) {
+    public TabularParticipantParser(List<Filter> filters, DDPInstance ddpInstance, boolean splitOptions) {
         this.filters = filters;
         this.ddpInstance = ddpInstance;
+        this.splitOptions = splitOptions;
     }
 
     /**
@@ -61,7 +63,8 @@ public class TabularParticipantParser {
                 Map<String, Object> questionDef = getDefForQuestion(participantColumn, activityDefs);
                 if (questionDef != null) {
                     // create a column for each option if it's a multiselect
-                    splitChoicesIntoColumns = "MULTIPLE".equals(questionDef.get("selectMode"));
+                    splitChoicesIntoColumns = splitOptions && "MULTIPLE".equals(questionDef.get("selectMode"));
+                    // save the options so we can translate from stableIds if needed
                     options = (List<Map<String, Object>>) questionDef.get("options");
                 }
             }

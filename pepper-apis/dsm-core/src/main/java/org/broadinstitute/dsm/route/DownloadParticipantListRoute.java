@@ -6,6 +6,7 @@ import static org.broadinstitute.dsm.util.ElasticSearchUtil.MAX_RESULT_SIZE;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +50,8 @@ public class DownloadParticipantListRoute extends RequestHandler {
 
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
-        if (UserUtil.checkUserAccess(null, userId, "feature_flag_export_new", null)) {
+        // requests for the new export capability will always have 'splitOptions' as a request param.
+        if (request.queryMap().hasKey("splitOptions")) {
             return processRequestNew(request, response, userId);
         }
 
@@ -115,11 +117,12 @@ public class DownloadParticipantListRoute extends RequestHandler {
     public Object processRequestNew(Request request, Response response, String userId) throws Exception {
         DownloadParticipantListPayloadNew payload =
                 ObjectMapperSingleton.instance().readValue(request.body(), DownloadParticipantListPayloadNew.class);
+        DownloadParticipantListParams params = new DownloadParticipantListParams(request.queryMap());
 
         String realm = RoutePath.getRealm(request);
         DDPInstance instance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.MEDICAL_RECORD_ACTIVATED);
 
-        TabularParticipantParser parser = new TabularParticipantParser(payload.getColumnNames(), instance);
+        TabularParticipantParser parser = new TabularParticipantParser(payload.getColumnNames(), instance, params.splitOptions);
 
         Filterable filterable = FilterFactory.of(request);
         List<ParticipantWrapperDto> participants = fetchParticipantEsData(filterable, request.queryMap());
@@ -171,6 +174,27 @@ public class DownloadParticipantListRoute extends RequestHandler {
     /** on retirement of feature-flag-export-new, this class should be promoted to DownloadParticipantListPayload */
     private static class DownloadParticipantListPayloadNew {
         private List<Filter> columnNames;
+    }
+
+    @Getter
+    @Setter
+    private static class DownloadParticipantListParams {
+        private static final List<String> allowedFileFormats = Arrays.asList("tsv", "xlsx");
+        private boolean splitOptions = true;
+        private String fileFormat = "tsv";
+        private boolean inlcudeOnlyMostRecent = false;
+        public DownloadParticipantListParams(QueryParamsMap paramMap) {
+            if (paramMap.hasKey("fileFormat")) {
+                String fileFormatParam = paramMap.get("fileFormat").value();
+                if (allowedFileFormats.contains(fileFormatParam)) {
+                    fileFormat = fileFormatParam;
+                }
+            }
+            if (paramMap.hasKey("splitOptions")) {
+                splitOptions = Boolean.valueOf(paramMap.get("splitOptions").value());
+            }
+
+        }
     }
 
 

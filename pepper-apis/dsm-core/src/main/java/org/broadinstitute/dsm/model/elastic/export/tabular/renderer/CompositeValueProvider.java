@@ -8,5 +8,5 @@ import java.util.stream.Collectors;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.sort.Alias;
 
-public class CompositeValueProvider implements ValueProvider {
+public class CompositeValueProvider extends ValueProvider {
 }

@@ -8,7 +8,7 @@ import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.export.tabular.FilterExportConfig;
 import org.broadinstitute.dsm.model.elastic.sort.Alias;
 
-public class BooleanValueProvider implements ValueProvider {
+public class BooleanValueProvider extends ValueProvider {
     private static final String YES = "Yes";
     private static final String NO = "No";
 

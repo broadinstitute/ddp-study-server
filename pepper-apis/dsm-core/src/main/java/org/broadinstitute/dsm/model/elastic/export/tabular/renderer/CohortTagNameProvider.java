@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class CohortTagNameProvider implements ValueProvider {
+public class CohortTagNameProvider extends ValueProvider {
     @Override
     public Collection<?> getRawValues(FilterExportConfig qConfig, Map<String, Object> formMap) {
         // return either the collection of tags or a list containing one empty map

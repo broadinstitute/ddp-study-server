@@ -9,7 +9,7 @@ import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.export.tabular.FilterExportConfig;
 import org.broadinstitute.dsm.model.elastic.sort.Alias;
 
-public class AmbulationValueProvider implements ValueProvider {
+public class AmbulationValueProvider extends ValueProvider {
     private final Map<String, String> valueMappings = Map.of(
             "INDEPENDENTLY", "1",
             "MOST_OF_THE_TIME", "2",

@@ -12,12 +12,12 @@ import org.broadinstitute.dsm.model.elastic.export.tabular.FilterExportConfig;
 import org.broadinstitute.dsm.model.elastic.sort.Alias;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 
-public class PickListValueProvider implements ValueProvider {
+public class PickListValueProvider extends ValueProvider {
     @Override
     public Collection<String> formatRawValues(Collection<?> rawValues, FilterExportConfig qConfig, Map<String, Object> formMap) {
         if (qConfig.getOptions() == null || qConfig.isSplitOptionsIntoColumns()) {
             // return the defaults (stableId), so they can be matched for the multicolumn format
-            return ValueProvider.super.formatRawValues(rawValues, qConfig, formMap);
+            return super.formatRawValues(rawValues, qConfig, formMap);
         }
         // return the user-visible text, rather than the stableId
         return rawValues.stream().map(val -> {

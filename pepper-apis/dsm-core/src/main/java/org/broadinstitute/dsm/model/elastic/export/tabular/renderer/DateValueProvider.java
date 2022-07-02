@@ -13,7 +13,7 @@ import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.export.tabular.FilterExportConfig;
 import org.broadinstitute.dsm.model.elastic.sort.Alias;
 
-public class DateValueProvider implements ValueProvider {
+public class DateValueProvider extends ValueProvider {
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
 
     public Collection<String> formatRawValues(Collection<?> rawValues, FilterExportConfig qConfig, Map<String, Object> formMap) {

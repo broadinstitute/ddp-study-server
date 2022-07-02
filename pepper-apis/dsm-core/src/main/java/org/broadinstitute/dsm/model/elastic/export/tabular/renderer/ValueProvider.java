@@ -13,21 +13,21 @@ import org.broadinstitute.dsm.model.elastic.export.tabular.FilterExportConfig;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
-public interface ValueProvider {
-   default Collection<?> getRawValues(FilterExportConfig qConfig, Map<String, Object> formMap) {
+public class ValueProvider {
+    public Collection<?> getRawValues(FilterExportConfig qConfig, Map<String, Object> formMap) {
        Collection<?> nestedValueWrapper = getRawValueWrapper(qConfig, formMap);
        return nestedValueWrapper;
    };
 
-    default Collection<String> getFormattedValues(FilterExportConfig qConfig, Map<String, Object> formMap) {
+    public Collection<String> getFormattedValues(FilterExportConfig qConfig, Map<String, Object> formMap) {
        return formatRawValues(getRawValues(qConfig, formMap), qConfig, formMap);
     };
 
-    default Collection<String> formatRawValues(Collection<?> rawValues, FilterExportConfig qConfig, Map<String, Object> formMap) {
+    public Collection<String> formatRawValues(Collection<?> rawValues, FilterExportConfig qConfig, Map<String, Object> formMap) {
         return rawValues.stream().map(val -> val.toString()).collect(Collectors.toList());
     }
 
-    private Collection<?> getRawValueWrapper(FilterExportConfig qConfig, Map<String, Object> formMap) {
+    protected Collection<?> getRawValueWrapper(FilterExportConfig qConfig, Map<String, Object> formMap) {
         Object value = StringUtils.EMPTY;
         String fieldName = qConfig.getColumn().getName();
         if (formMap == null) {
@@ -56,7 +56,7 @@ public interface ValueProvider {
         return (Collection<?>) value;
     }
 
-    private Object getRawAnswerValue(LinkedHashMap<String, Object> fq, String columnName) {
+    protected Object getRawAnswerValue(LinkedHashMap<String, Object> fq, String columnName) {
         Object rawAnswer = fq.getOrDefault(ESObjectConstants.ANSWER, fq.get(columnName));
 
         Collection<?> answer = mapToCollection(rawAnswer);
@@ -70,12 +70,12 @@ public interface ValueProvider {
         return answer;
     }
 
-    private void removeOptionsFromAnswer(Collection<?> answer, List<Map<String, String>> optionDetails) {
+    protected void removeOptionsFromAnswer(Collection<?> answer, List<Map<String, String>> optionDetails) {
         List<String> details = optionDetails.stream().map(options -> options.get(ESObjectConstants.OPTION)).collect(Collectors.toList());
         answer.removeAll(details);
     }
 
-    private List<String> getOptionDetails(List<?> optionDetails) {
+    protected List<String> getOptionDetails(List<?> optionDetails) {
         return optionDetails.stream().map(optionDetail ->
                         new StringBuilder(((Map) optionDetail).get(ESObjectConstants.OPTION).toString())
                                 .append(':')
@@ -83,7 +83,7 @@ public interface ValueProvider {
                 .collect(Collectors.toList());
     }
 
-    private Collection<?> mapToCollection(Object o) {
+    protected Collection<?> mapToCollection(Object o) {
         if (o == null) {
             return Collections.singletonList(StringUtils.EMPTY);
         }

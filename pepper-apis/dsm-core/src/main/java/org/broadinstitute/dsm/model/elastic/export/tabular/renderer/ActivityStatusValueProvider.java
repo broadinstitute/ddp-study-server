@@ -11,7 +11,7 @@ import org.broadinstitute.dsm.model.elastic.export.tabular.FilterExportConfig;
 import org.broadinstitute.dsm.model.elastic.sort.Alias;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
-public class ActivityStatusValueProvider implements ValueProvider {
+public class ActivityStatusValueProvider extends ValueProvider {
 
     @Override
     public Collection<String> getFormattedValues(FilterExportConfig qConfig, Map<String, Object> formMap) {
