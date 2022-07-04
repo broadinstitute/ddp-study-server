@@ -8,4 +8,6 @@ import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 
 public interface CohortTagDao extends Dao<CohortTag> {
     Map<String, List<CohortTag>> getCohortTagsByInstanceName(String instanceName);
+
+    List<Integer> bulkCohortCreate(List<CohortTag> cohortTags);
 }

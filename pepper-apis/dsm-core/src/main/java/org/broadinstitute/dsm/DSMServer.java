@@ -55,7 +55,6 @@ import org.broadinstitute.dsm.jetty.JettyConfig;
 import org.broadinstitute.dsm.jobs.DDPEventJob;
 import org.broadinstitute.dsm.jobs.DDPRequestJob;
 import org.broadinstitute.dsm.jobs.EasypostShipmentStatusJob;
-import org.broadinstitute.dsm.jobs.ExternalShipperJob;
 import org.broadinstitute.dsm.jobs.GPNotificationJob;
 import org.broadinstitute.dsm.jobs.LabelCreationJob;
 import org.broadinstitute.dsm.jobs.NotificationJob;
@@ -114,9 +113,10 @@ import org.broadinstitute.dsm.route.TriggerSurveyRoute;
 import org.broadinstitute.dsm.route.UserSettingRoute;
 import org.broadinstitute.dsm.route.ViewFilterRoute;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
-import org.broadinstitute.dsm.route.mercury.PostMercuryOrderRoute;
+import org.broadinstitute.dsm.route.mercury.PostMercuryOrderDummyRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
+import org.broadinstitute.dsm.route.tag.cohort.BulkCreateCohortTagRoute;
 import org.broadinstitute.dsm.route.tag.cohort.CreateCohortTagRoute;
 import org.broadinstitute.dsm.route.tag.cohort.DeleteCohortTagRoute;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
@@ -132,11 +132,9 @@ import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.PatchUtil;
 import org.broadinstitute.dsm.util.SecurityUtil;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.dsm.util.externalshipper.GBFRequestUtil;
 import org.broadinstitute.dsm.util.triggerlistener.DDPEventTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.DDPRequestTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.EasypostShipmentStatusTriggerListener;
-import org.broadinstitute.dsm.util.triggerlistener.ExternalShipperTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.GPNotificationTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.LabelCreationTriggerListener;
 import org.broadinstitute.dsm.util.triggerlistener.NotificationTriggerListener;
@@ -321,10 +319,10 @@ public class DSMServer {
             job.getJobDataMap().put(NOTIFICATION_UTIL, notificationUtil);
         }
         //         currently not needed anymore but might come back
-        if (jobClass == ExternalShipperJob.class) {
-            job.getJobDataMap().put(ADDITIONAL_CRON_EXPRESSION,
-                    config.getString(ApplicationConfigConstants.QUARTZ_CRON_EXPRESSION_FOR_EXTERNAL_SHIPPER_ADDITIONAL));
-        }
+        //        if (jobClass == ExternalShipperJob.class) {
+        //            job.getJobDataMap().put(ADDITIONAL_CRON_EXPRESSION,
+        //                    config.getString(ApplicationConfigConstants.QUARTZ_CRON_EXPRESSION_FOR_EXTERNAL_SHIPPER_ADDITIONAL));
+        //        }
 
         logger.info(cronExpression);
 
@@ -642,7 +640,7 @@ public class DSMServer {
         PatchUtil patchUtil = new PatchUtil();
 
         setupExternalShipperLookup(cfg.getString(ApplicationConfigConstants.EXTERNAL_SHIPPER));
-        GBFRequestUtil gbfRequestUtil = new GBFRequestUtil();
+        //        GBFRequestUtil gbfRequestUtil = new GBFRequestUtil();
 
         setupShippingRoutes(notificationUtil, auth0Util, userUtil, cfg.getString(ApplicationConfigConstants.AUTH0_DOMAIN));
 
@@ -679,6 +677,7 @@ public class DSMServer {
 
     private void setupCohortTagRoutes() {
         post(UI_ROOT + RoutePath.CREATE_COHORT_TAG, new CreateCohortTagRoute(), new JsonTransformer());
+        post(UI_ROOT + RoutePath.BULK_CREATE_COHORT_TAGS, new BulkCreateCohortTagRoute(), new JsonTransformer());
         delete(UI_ROOT + RoutePath.DELETE_COHORT_TAG, new DeleteCohortTagRoute(), new JsonTransformer());
     }
 
@@ -915,9 +914,9 @@ public class DSMServer {
         get(UI_ROOT + RoutePath.EDIT_PARTICIPANT_MESSAGE, editParticipantMessageReceiverRoute, new JsonTransformer());
 
         String mercuryTopicId = config.getString(GCP_PATH_TO_DSM_TO_MERCURY_TOPIC);
-        PostMercuryOrderRoute postMercuryOrderRoute = new PostMercuryOrderRoute(projectId, mercuryTopicId);
-        //        post(UI_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderRoute, new JsonTransformer());
-        post(API_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderRoute, new JsonTransformer());
+        PostMercuryOrderDummyRoute postMercuryOrderDummyRoute = new PostMercuryOrderDummyRoute(projectId, mercuryTopicId);
+        //        post(UI_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderDummyRoute, new JsonTransformer());
+        post(API_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderDummyRoute, new JsonTransformer());
 
     }
 
@@ -947,9 +946,9 @@ public class DSMServer {
                         new DDPEventTriggerListener(), null);
 
                 // currently not needed anymore but might come back
-                createScheduleJob(scheduler, eventUtil, notificationUtil, ExternalShipperJob.class, "CHECK_EXTERNAL_SHIPPER",
-                        cfg.getString(ApplicationConfigConstants.QUARTZ_CRON_EXPRESSION_FOR_EXTERNAL_SHIPPER),
-                        new ExternalShipperTriggerListener(), cfg);
+                // createScheduleJob(scheduler, eventUtil, notificationUtil, ExternalShipperJob.class, "CHECK_EXTERNAL_SHIPPER",
+                // cfg.getString(ApplicationConfigConstants.QUARTZ_CRON_EXPRESSION_FOR_EXTERNAL_SHIPPER),
+                // new ExternalShipperTriggerListener(), cfg);
 
                 createScheduleJob(scheduler, null, null, EasypostShipmentStatusJob.class, "CHECK_STATUS_SHIPMENT",
                         cfg.getString(ApplicationConfigConstants.QUARTZ_CRON_STATUS_SHIPMENT), new EasypostShipmentStatusTriggerListener(),

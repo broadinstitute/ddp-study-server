@@ -61,10 +61,9 @@ public class DDPInstitutionDto implements Cloneable {
             return this;
         }
 
-        public DDPInstitutionDto build() { return new DDPInstitutionDto(this); }
-
-
+        public DDPInstitutionDto build() {
+            return new DDPInstitutionDto(this);
+        }
     }
-
 
 }
