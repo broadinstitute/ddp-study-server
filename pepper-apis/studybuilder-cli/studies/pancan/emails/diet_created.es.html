@@ -1,6 +1,7 @@
 #set( $text = {
 "subject": "Count Me In: Encuesta sobre dieta y estilo de vida",
-"salutation_self": "Estimado(a) {{\#if proxy_guid}}Padre/Madre{{else}}Participante{{/if}},",
+"salutation_self": "Estimado(a) {{participant_firstName}},",
+"salutation_parent": "Estimado(a) {{proxy_firstName}},",
 "invitation": "Gracias por {{\#if proxy_guid}}la participación de su hijo(a){{else}}su participación{{/if}} en Count Me In. Se le está invitando a tomar una encuesta sobre {{\#if proxy_guid}}la dieta y estilo de vida de su hijo(a){{else}}su dieta y estilo de vida{{/if}}.",
 "login": "Podrá usar el enlace a continuación para ir a su tablero y encontrar la encuesta.",
 "login_button": "Dieta y Estilo de Vida",
