@@ -16,6 +16,7 @@ public final class CompositeQuestionDto extends QuestionDto implements Serializa
     private final Long addButtonTemplateId;
     private final Long additionalItemTemplateId;
     private final OrientationType childOrientation;
+    private final String separator;
 
     @JdbiConstructor
     public CompositeQuestionDto(@Nested QuestionDto questionDto,
@@ -23,13 +24,15 @@ public final class CompositeQuestionDto extends QuestionDto implements Serializa
                                 @ColumnName("unwrap_on_export") boolean unwrapOnExport,
                                 @ColumnName("add_button_template_id") Long addButtonTemplateId,
                                 @ColumnName("additional_item_template_id") Long additionalItemTemplateId,
-                                @ColumnName("child_orientation") OrientationType childOrientation) {
+                                @ColumnName("child_orientation") OrientationType childOrientation,
+                                @ColumnName("separator") String separator) {
         super(questionDto);
         this.allowMultiple = allowMultiple;
         this.unwrapOnExport = unwrapOnExport;
         this.addButtonTemplateId = addButtonTemplateId;
         this.additionalItemTemplateId = additionalItemTemplateId;
         this.childOrientation = childOrientation;
+        this.separator = separator;
     }
 
     @Override

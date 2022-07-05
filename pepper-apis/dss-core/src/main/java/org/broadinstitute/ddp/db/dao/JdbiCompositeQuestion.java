@@ -15,11 +15,12 @@ public interface JdbiCompositeQuestion extends SqlObject {
 
     @SqlUpdate("INSERT INTO composite_question (question_id, allow_multiple, add_button_template_id, "
             + "additional_item_template_id, unwrap_on_export, child_orientation_type_id)"
-            + " VALUES(:questionId, :allowMultiple, :addButtonTemplateId, :additionaItemTemplateId, :unwrapOnExport,"
+            + " VALUES(:questionId, :allowMultiple, :addButtonTemplateId, :additionaItemTemplateId, :unwrapOnExport, :separator,"
             + "(select orientation_type_id from orientation_type where orientation_type_code = :childOrientation))")
     int insertParent(@Bind("questionId") long compositeQuestionId, @Bind("allowMultiple") boolean allowMultiple,
                      @Bind("addButtonTemplateId") Long addButtonTemplateId, @Bind("additionaItemTemplateId") Long itemTemplateId,
-                     @Bind("childOrientation") OrientationType childOrientation, @Bind("unwrapOnExport") boolean unwrapOnExport);
+                     @Bind("childOrientation") OrientationType childOrientation, @Bind("unwrapOnExport") boolean unwrapOnExport,
+                     @Bind("separator") String separator);
 
     default void insertChildren(long compositeQuestionId, List<Long> childQuestionIds) {
         insertChild(compositeQuestionId, childQuestionIds, IntStream.rangeClosed(0, childQuestionIds.size() - 1).boxed().collect(toList()));

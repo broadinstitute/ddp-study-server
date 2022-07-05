@@ -71,7 +71,6 @@ public class AesUtil {
             System.arraycopy(iv, 0, encryptedIVAndText, 0, IV_SIZE);
             System.arraycopy(encrypted, 0, encryptedIVAndText, IV_SIZE, encrypted.length);
 
-
             return Base64.getEncoder().encodeToString(encryptedIVAndText);
         } catch (Exception e) {
             throw new DDPException("Error while encrypting", e);
