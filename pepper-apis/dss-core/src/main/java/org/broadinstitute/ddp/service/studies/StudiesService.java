@@ -1,55 +1,21 @@
 package org.broadinstitute.ddp.service.studies;
 
 import lombok.NonNull;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
-import org.broadinstitute.ddp.service.studies.StudiesService.StudiesServiceError.Code;
 import org.jdbi.v3.core.Handle;
 
 @Slf4j
 public class StudiesService {
 
-    @Value
-    public static class StudiesServiceError extends Exception {
-        public enum Code {
-            STUDY_NOT_FOUND,
-            PARTICIPANT_ALREADY_REGISTERED,
-            DATABASE_ERROR,
-            NOT_IMPLEMENTED
-        }
-
-        private Code code;
-
-        public StudiesServiceError(Code code) {
-            // Works for now to expose the code in a usable way to
-            // the superclasses, but not too thrilled about it.
-            //
-            // Open to suggestions.
-            super(code.toString());
-            this.code = code;
-        }
-
-        public StudiesServiceError(Code code, String message) {
-            super(message);
-            this.code = code;
-        }
-
-        public StudiesServiceError(Code code, Throwable cause) {
-            super(code.toString(), cause);
-            this.code = code;
-        }
-
-        public StudiesServiceError(Code code, String message, Throwable cause) {
-            super(message, cause);
-            this.code = code;
-        }
-    }
-
     @NonNull
     private Handle handle;
+
+    private JdbiUserStudyEnrollment studyEnrollmentDao;
+    private JdbiUmbrellaStudy studyDao;
 
     /**
      * A request-lived object to manage performing actions on a study.
@@ -59,9 +25,6 @@ public class StudiesService {
     public StudiesService(@NonNull Handle handle) {
         this.handle = handle;
     }
-
-    // Needs a terminology check- is `register` the correct word for adding a participant to
-    // the study?
 
     /**
      * Registers a participant with a study.
@@ -73,20 +36,12 @@ public class StudiesService {
      */
     public void registerParticipantInStudy(@NonNull String participantGuid, @NonNull String studyGuid) throws StudiesServiceError {
         if (studyExists(studyGuid) == false) {
-            throw new StudiesServiceError(Code.STUDY_NOT_FOUND);
+            throw new StudiesServiceError(StudiesServiceError.Code.STUDY_NOT_FOUND);
         }
 
         if (isParticipantRegisteredInStudy(participantGuid, studyGuid)) {
-            throw new StudiesServiceError(Code.PARTICIPANT_ALREADY_REGISTERED);
+            throw new StudiesServiceError(StudiesServiceError.Code.PARTICIPANT_ALREADY_REGISTERED);
         }
-
-        // Skipping a null-check on the result intentionally.
-        // If the attach() is failing, things have already gone horribly wrong,
-        // and an NPE would be a saving grace.
-        //
-        // Side note: consider doing the `attach()` in the constructor. Preload/lazy-load the common 
-        //  jdbi objects in private ivars to prevent having to recreate this for each call?
-        var enrollmentJdbi = handle.attach(JdbiUserStudyEnrollment.class);
 
         // The starting status may be important information that shouldn't belong here.
         //  Consider moving this to a static public method in the EnrollmentStatusType?
@@ -94,27 +49,39 @@ public class StudiesService {
 
         // The expectation here is that this will either throw, or succeed.
         // We don't actually need the return value.
-        // 
-        // Any suggestions?
-        enrollmentJdbi.changeUserStudyEnrollmentStatus(participantGuid, studyGuid, startingStatus);
-
-        // Done!
+        getUserStudyEnrollmentDao().changeUserStudyEnrollmentStatus(participantGuid, studyGuid, startingStatus);
     }
 
     public boolean isParticipantRegisteredInStudy(@NonNull String participantGuid, @NonNull String studyGuid) {
-        var enrollmentJdbi = handle.attach(JdbiUserStudyEnrollment.class);
-        var result = enrollmentJdbi.findIdByUserAndStudyGuid(participantGuid, studyGuid);
-        if (result.isPresent()) {
-            // If any id has been returned, the participant is registered
-            // Let the caller know.
-            return true;
-        } else {
-            return false;
-        }
+        /*
+        *  `REGISTERED` is the required first state for any user registered into a study,
+        *   and all subsquent states imply that the user is registered. As a result,
+        *   just checking for `isPresent()` here is fine, since _any_ state implies the
+        *   participant is registered.
+        */
+        return getUserStudyEnrollmentDao()
+            .findIdByUserAndStudyGuid(participantGuid, studyGuid)
+            .isPresent();
     }
 
     public boolean studyExists(String studyGuid) {
-        var studyId = handle.attach(JdbiUmbrellaStudy.class).getIdByGuid(studyGuid);
+        var studyId = getUmbrellaStudyDao().getIdByGuid(studyGuid);
         return studyId.isPresent();
+    }
+
+    private JdbiUmbrellaStudy getUmbrellaStudyDao() {
+        if (studyDao == null) {
+            studyDao = new JdbiUmbrellaStudyCached(handle);
+        }
+
+        return studyDao;
+    }
+
+    private JdbiUserStudyEnrollment getUserStudyEnrollmentDao() {
+        if (studyEnrollmentDao == null) {
+            studyEnrollmentDao = handle.attach(JdbiUserStudyEnrollment.class);
+        }
+
+        return studyEnrollmentDao;
     }
 }

@@ -11,7 +11,6 @@ import java.util.stream.Stream;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
-import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.jdbi.v3.core.Handle;
@@ -50,25 +49,23 @@ public interface UserDao extends SqlObject {
     /**
      * Creates a new user given the OAuth Client ID of the requestor,
      * and the desired email for the new user.
-     * 
-     * <p>Since this method can return a user, if one already exists, the created by
-     * client id may not match the one provided.
+     *
      * @param createdByClientId the OAuth Client ID creating the user
      * @param email the desired email for the new user
-     * @return The new user, or null if the user already exists
+     * @return The new user, or null if a user with the specified email already exists
      */
     default User createUserByEmail(String email) {
         final var handle = getHandle();
         
-        var user = findUserByEmail(email);
-        if (user.isPresent()) {
-            // User already exists!
-            throw new DDPException("user creation failed: user with email already exists");
+        var existingUserId = getJdbiUser().getUserIdByEmail(email);
+        if (existingUserId != null) {
+            // User already exists, return early.
+            // Consider using a more targeted exception here (something like
+            // a UserExistsException)- the null doesn't relay much information about
+            // what happened.
+            return null;
         }
 
-        // The user doesn't seem to exist yet, so do the more expensive
-        // checks (since userGuid and userHruid may require multiple
-        // DB round trips)
         final var guid = DBUtils.uniqueUserGuid(handle);
         final var hruid = DBUtils.uniqueUserHruid(handle);
 
