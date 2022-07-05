@@ -1,38 +1,49 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular;
 
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.statics.DBConstants;
+import spark.Response;
 
-public class TabularParticipantExporter {
-    private static final String DELIMITER = "\t";
-    public TabularParticipantExporter(List<ModuleExportConfig> moduleConfigs, List<Map<String, String>> participantValueMaps) {
+public abstract class TabularParticipantExporter {
+    protected List<ModuleExportConfig> moduleConfigs;
+    protected String fileFormat;
+    protected List<Map<String, String>> participantValueMaps;
+
+    protected TabularParticipantExporter(List<ModuleExportConfig> moduleConfigs,
+                                         List<Map<String, String>> participantValueMaps, String fileFormat) {
         this.moduleConfigs = moduleConfigs;
         this.participantValueMaps = participantValueMaps;
+        this.fileFormat = fileFormat;
     }
-    private List<ModuleExportConfig> moduleConfigs;
-    private List<Map<String, String>> participantValueMaps;
 
-    public void writeTable(PrintWriter writer) {
-        List<String> headerRow = getHeaderRow();
-        List<String> subHeaderRow = getSubHeaderRow();
-
-        writer.println(String.join(DELIMITER, headerRow));
-        writer.println(String.join(DELIMITER, subHeaderRow));
-        for (Map<String, String> valueMap : participantValueMaps) {
-            String rowString = getRowString(valueMap, headerRow);
-            writer.println(rowString);
+    public static TabularParticipantExporter getExporter(List<ModuleExportConfig> moduleConfigs,
+                                                         List<Map<String, String>> participantValueMaps, String fileFormat) {
+        if ("tsv".equals(fileFormat)) {
+            return new TsvParticipantExporter(moduleConfigs, participantValueMaps, fileFormat);
+        } else if ("xlsx".equals(fileFormat)) {
+            return new ExcelParticipantExporter(moduleConfigs, participantValueMaps, fileFormat);
         }
-        writer.flush();
+        throw new RuntimeException("Unrecognized file format");
+
     }
 
-    private List<String> getHeaderRow() {
+
+    public abstract void export(Response response) throws IOException;
+
+    protected static final String FILE_DATE_FORMAT = "yyyy-MM-dd";
+    protected static String getExportFilename(String suffix) {
+        LocalDate date = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(FILE_DATE_FORMAT);
+        String exportFileName = String.format("Participant-%s.%s", date.format(formatter), suffix);
+        return exportFileName;
+    }
+
+    protected List<String> getHeaderRow() {
         List<String> headers = new ArrayList<>();
         for (ModuleExportConfig moduleConfig : moduleConfigs) {
             for (int formRepeatNum = 1; formRepeatNum <= moduleConfig.getNumMaxRepeats(); formRepeatNum++) {
@@ -44,7 +55,7 @@ public class TabularParticipantExporter {
         return headers;
     }
 
-    private List<String> getSubHeaderRow() {
+    protected List<String> getSubHeaderRow() {
         List<String> headers = new ArrayList<>();
         for (ModuleExportConfig moduleConfigs : moduleConfigs) {
             for (int formRepeatNum = 1; formRepeatNum <= moduleConfigs.getNumMaxRepeats(); formRepeatNum++) {
@@ -56,27 +67,16 @@ public class TabularParticipantExporter {
         return headers;
     }
 
-    private String getRowString(Map<String, String> valueMap, List<String> headers) {
-        String[] rowValues = new String[headers.size()];
-        for (int colNum = 0; colNum < headers.size(); colNum++) {
-            String value = valueMap.get(headers.get(colNum));
-            rowValues[colNum] = sanitizeValue(value);
+    protected List<String> getRowValues(Map<String, String> valueMap, List<String> headers) {
+        List<String> rowValues = new ArrayList(headers.size());
+        for (String header : headers) {
+            String value = valueMap.get(header);
+            rowValues.add(sanitizeValue(value));
         }
-        return String.join(DELIMITER, rowValues);
+        return rowValues;
     }
 
-    public String sanitizeValue(String value) {
-        if (value == null) {
-            value = StringUtils.EMPTY;
-        }
-        // first replace double quotes with single '
-        String sanitizedValue = value.replace("\"", "'");
-        // then quote the whole string if needed
-        if (sanitizedValue.indexOf("\n") >= 0 || sanitizedValue.indexOf(DELIMITER) >= 0) {
-            sanitizedValue = String.format("\"%s\"", sanitizedValue);
-        }
-        return sanitizedValue;
-    }
+    protected abstract String sanitizeValue(String value);
 
     public static List<String> getAllColumnNames(FilterExportConfig fConfig, int formRepeatNum, int questionRepeatNum) {
         if (fConfig.isSplitOptionsIntoColumns()) {

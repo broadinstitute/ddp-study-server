@@ -3,17 +3,13 @@ package org.broadinstitute.dsm.route;
 import static org.broadinstitute.dsm.util.ElasticSearchUtil.DEFAULT_FROM;
 import static org.broadinstitute.dsm.util.ElasticSearchUtil.MAX_RESULT_SIZE;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 
-import com.google.common.net.MediaType;
 import lombok.Getter;
 import lombok.Setter;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -33,7 +29,6 @@ import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
-import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,19 +117,15 @@ public class DownloadParticipantListRoute extends RequestHandler {
         String realm = RoutePath.getRealm(request);
         DDPInstance instance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.MEDICAL_RECORD_ACTIVATED);
 
-        TabularParticipantParser parser = new TabularParticipantParser(payload.getColumnNames(), instance, params.splitOptions);
+        TabularParticipantParser parser = new TabularParticipantParser(payload.getColumnNames(), instance, params.splitOptions, params.onlyMostRecent);
 
         Filterable filterable = FilterFactory.of(request);
         List<ParticipantWrapperDto> participants = fetchParticipantEsData(filterable, request.queryMap());
         List<ModuleExportConfig> exportConfigs = parser.generateExportConfigs();
         List<Map<String, String>> participantValueMaps = parser.parse(exportConfigs, participants);
 
-        response.type(MediaType.TSV_UTF_8.toString());
-        response.header("Access-Control-Expose-Headers", "Content-Disposition");
-        response.header("Content-Disposition", "attachment;filename=" + getExportFilename());
-
-        TabularParticipantExporter exporter = new TabularParticipantExporter(exportConfigs, participantValueMaps);
-        exporter.writeTable(response.raw().getWriter());
+        TabularParticipantExporter exporter = TabularParticipantExporter.getExporter(exportConfigs, participantValueMaps, params.fileFormat);
+        exporter.export(response);
         return response.raw();
     }
 
@@ -161,13 +152,7 @@ public class DownloadParticipantListRoute extends RequestHandler {
         return allResults;
     }
 
-    private static final String FILE_DATE_FORMAT = "yyyy-MM-dd";
-    private static String getExportFilename() {
-        LocalDate date = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(FILE_DATE_FORMAT);
-        String exportFileName = String.format("Participant-%s.tsv", date.format(formatter));
-        return exportFileName;
-    }
+
 
     @Getter
     @Setter
@@ -181,8 +166,8 @@ public class DownloadParticipantListRoute extends RequestHandler {
     private static class DownloadParticipantListParams {
         private static final List<String> allowedFileFormats = Arrays.asList("tsv", "xlsx");
         private boolean splitOptions = true;
+        private boolean onlyMostRecent = false;
         private String fileFormat = "tsv";
-        private boolean inlcudeOnlyMostRecent = false;
         public DownloadParticipantListParams(QueryParamsMap paramMap) {
             if (paramMap.hasKey("fileFormat")) {
                 String fileFormatParam = paramMap.get("fileFormat").value();
@@ -193,7 +178,9 @@ public class DownloadParticipantListRoute extends RequestHandler {
             if (paramMap.hasKey("splitOptions")) {
                 splitOptions = Boolean.valueOf(paramMap.get("splitOptions").value());
             }
-
+            if (paramMap.hasKey("splitOptions")) {
+                onlyMostRecent = Boolean.valueOf(paramMap.get("onlyMostRecent").value());
+            }
         }
     }
 

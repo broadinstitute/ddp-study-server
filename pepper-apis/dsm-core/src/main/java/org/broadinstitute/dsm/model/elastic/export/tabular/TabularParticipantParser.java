@@ -28,12 +28,15 @@ public class TabularParticipantParser {
     private final DDPInstance ddpInstance;
     private final boolean splitOptions;
 
+    private final boolean onlyMostRecent;
+
     private ValueProviderFactory valueProviderFactory = new ValueProviderFactory();
 
-    public TabularParticipantParser(List<Filter> filters, DDPInstance ddpInstance, boolean splitOptions) {
+    public TabularParticipantParser(List<Filter> filters, DDPInstance ddpInstance, boolean splitOptions, boolean onlyMostRecent) {
         this.filters = filters;
         this.ddpInstance = ddpInstance;
         this.splitOptions = splitOptions;
+        this.onlyMostRecent = onlyMostRecent;
     }
 
     /**
@@ -123,7 +126,7 @@ public class TabularParticipantParser {
             participantMaps.add(participantMap);
             for (ModuleExportConfig moduleConfig : moduleConfigs) {
                 // get the data corresponding to each time this module was completed
-                List<Map<String, Object>> esModuleMaps = getModuleCompletions(esDataAsMap, moduleConfig, subParticipant);
+                List<Map<String, Object>> esModuleMaps = getModuleCompletions(esDataAsMap, moduleConfig, subParticipant, this.onlyMostRecent);
                 if (esModuleMaps.size() > moduleConfig.getNumMaxRepeats()) {
                     moduleConfig.setNumMaxRepeats(esModuleMaps.size());
                 }
@@ -227,10 +230,20 @@ public class TabularParticipantParser {
      * @param moduleConfig the config for the given activity
      * @return the maps
      */
-    private List<Map<String, Object>> getModuleCompletions(Map<String, Object> esDataAsMap, ModuleExportConfig moduleConfig, Map<String, Object> subParticipant) {
+    private List<Map<String, Object>> getModuleCompletions(Map<String, Object> esDataAsMap,
+                                                           ModuleExportConfig moduleConfig,
+                                                           Map<String, Object> subParticipant,
+                                                           boolean onlyMostRecent) {
         if (moduleConfig.isActivity()) {
             List<Map<String, Object>> activityList = (List<Map<String, Object>>) esDataAsMap.get("activities");
-            return activityList.stream().filter(activity -> moduleConfig.getName().equals(activity.get("activityCode"))).collect(Collectors.toList());
+            List<Map<String, Object>> matchingActivities =  activityList.stream().filter(activity ->
+                    moduleConfig.getName().equals(activity.get("activityCode"))).collect(Collectors.toList()
+            );
+            matchingActivities.sort((a1, a2) -> Long.compare((long) a2.get("lastUpdatedAt"), (long) a1.get("lastUpdatedAt")));
+            if (onlyMostRecent && matchingActivities.size() > 1) {
+                return matchingActivities.subList(0, 1);
+            }
+            return matchingActivities;
         } else if (moduleConfig.getFilterKey().isJson() && moduleConfig.getName().equals("dsm.participantData.data")) {
             // get the module name from the first question -- this assumes all questions
             // in the module get stored in the same object.
