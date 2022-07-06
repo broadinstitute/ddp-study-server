@@ -45,7 +45,7 @@ public class DownloadParticipantListRoute extends RequestHandler {
 
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
-        // requests for the new export capability will always have 'splitOptions' as a request param.
+        // requests for the new export capability will always have 'splitOptions' as a request param
         if (request.queryMap().hasKey("splitOptions")) {
             return processRequestNew(request, response, userId);
         }
@@ -109,6 +109,10 @@ public class DownloadParticipantListRoute extends RequestHandler {
     }
 
 
+    /**
+     * Generates a file for download.  When removing the feature-flag-export-new role, processRequestNew should
+     * be renamed to processRequest, and the old 'processRequest' method should be deleted
+     */
     public Object processRequestNew(Request request, Response response, String userId) throws Exception {
         DownloadParticipantListPayloadNew payload =
                 ObjectMapperSingleton.instance().readValue(request.body(), DownloadParticipantListPayloadNew.class);

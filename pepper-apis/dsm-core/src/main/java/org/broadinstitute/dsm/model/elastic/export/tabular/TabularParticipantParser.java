@@ -230,7 +230,7 @@ public class TabularParticipantParser {
      * @param moduleConfig the config for the given activity
      * @return the maps
      */
-    private List<Map<String, Object>> getModuleCompletions(Map<String, Object> esDataAsMap,
+    public static List<Map<String, Object>> getModuleCompletions(Map<String, Object> esDataAsMap,
                                                            ModuleExportConfig moduleConfig,
                                                            Map<String, Object> subParticipant,
                                                            boolean onlyMostRecent) {

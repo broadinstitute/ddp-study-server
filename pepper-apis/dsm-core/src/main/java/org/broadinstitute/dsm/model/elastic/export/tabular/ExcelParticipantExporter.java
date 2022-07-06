@@ -29,7 +29,7 @@ public class ExcelParticipantExporter extends TabularParticipantExporter {
 
     public void export(Response response) throws IOException {
         setResponseHeaders(response);
-        
+
         List<String> headerValues = getHeaderRow();
         List<String> subHeaderValues = getSubHeaderRow();
 
