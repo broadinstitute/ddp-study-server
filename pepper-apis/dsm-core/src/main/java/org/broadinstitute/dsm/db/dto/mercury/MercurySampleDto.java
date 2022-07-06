@@ -11,4 +11,5 @@ public class MercurySampleDto {
     long sequencingOrderDate;
     Long tissueId;
     Long dsmKitRequestId;
+    String sequencingRestriction;
 }

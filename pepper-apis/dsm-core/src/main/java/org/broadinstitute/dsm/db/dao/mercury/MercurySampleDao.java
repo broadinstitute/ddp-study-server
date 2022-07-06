@@ -39,8 +39,8 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
 
     public static String SQL_GET_ELIGIBLE_SAMPLES =
             "SELECT * from ( "
-                    + " SELECT req.ddp_kit_request_id, req.bsp_collaborator_sample_id, collection_date, req.dsm_kit_request_id "
-                    + "    FROM ddp_kit_request req  "
+                    + " SELECT req.ddp_kit_request_id, req.bsp_collaborator_sample_id, collection_date, req.dsm_kit_request_id, "
+                    + "    kit.sequencing_restriction FROM ddp_kit_request req  "
                     + "    LEFT JOIN ddp_kit kit on (req.dsm_kit_request_id = kit.dsm_kit_request_id) "
                     + "    LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = req.ddp_instance_id) "
                     + "    WHERE  req.ddp_participant_id = ? AND ddp.instance_name = ? AND kit.receive_date is not null  ) as table1  "
@@ -81,7 +81,8 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
                         MercurySampleDto mercurySampleDto = new MercurySampleDto(TISSUE_SAMPLE_TYPE,
                                 rs.getString(DBConstants.COLLABORATOR_SAMPLE_ID), getSampleStatus(rs),
                                 rs.getString(DBConstants.DATE_PX), rs.getLong(DBConstants.MERCURY_ORDER_DATE),
-                                rs.getLong(DBConstants.TISSUE_ID), null
+                                rs.getLong(DBConstants.TISSUE_ID), null,
+                                null
                         );
                         samples.add(mercurySampleDto);
                     }
@@ -100,7 +101,8 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
                         MercurySampleDto mercurySampleDto = new MercurySampleDto(KIT_SAMPLE_TYPE,
                                 rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID), RECEIVED_STATUS,
                                 rs.getString(DBConstants.COLLECTION_DATE), rs.getLong(DBConstants.MERCURY_ORDER_DATE),
-                                null, rs.getLong(DBConstants.DSM_KIT_REQUEST_ID)
+                                null, rs.getLong(DBConstants.DSM_KIT_REQUEST_ID),
+                                rs.getString(DBConstants.SEQUENCING_RESTRICTION)
                         );
                         samples.add(mercurySampleDto);
                     }
