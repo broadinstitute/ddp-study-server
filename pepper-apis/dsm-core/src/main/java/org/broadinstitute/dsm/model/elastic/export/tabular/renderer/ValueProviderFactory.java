@@ -9,28 +9,28 @@ public class ValueProviderFactory {
     private static final String ACTIVITY_STATUS = "activityStatus";
 
     private static final String COHORT_TAG_NAME = "cohortTagName";
-    private final ValueProvider defaultValueProvider = new TextValueProvider();
-    private final ValueProvider booleanValueProvider = new BooleanValueProvider();
-    private final ValueProvider pickListValueProvider = new PickListValueProvider();
-    private final Map<QuestionType, ValueProvider> valueProviders = Map.of(
+    private final TextValueProvider defaultValueProvider = new TextValueProvider();
+    private final TextValueProvider booleanValueProvider = new BooleanValueProvider();
+    private final TextValueProvider pickListValueProvider = new PickListValueProvider();
+    private final Map<QuestionType, TextValueProvider> valueProviders = Map.of(
             QuestionType.CHECKBOX, booleanValueProvider,
-            QuestionType.NUMBER, new NumberValueProvider(),
+            QuestionType.NUMBER, defaultValueProvider,
             QuestionType.BOOLEAN, booleanValueProvider,
-            QuestionType.COMPOSITE, new CompositeValueProvider(),
+            QuestionType.COMPOSITE, defaultValueProvider,
             QuestionType.AGREEMENT, booleanValueProvider,
-            QuestionType.MATRIX, new MatrixValueProvider(),
+            QuestionType.MATRIX, defaultValueProvider,
             QuestionType.DATE, new DateValueProvider(),
             QuestionType.OPTIONS, pickListValueProvider,
-            QuestionType.JSON_ARRAY, new JsonArrayValueProvider(),
+            QuestionType.JSON_ARRAY, defaultValueProvider,
             QuestionType.RADIO, pickListValueProvider
     );
-    private final Map<String, ValueProvider> specialValueProviders = Map.of(
+    private final Map<String, TextValueProvider> specialValueProviders = Map.of(
             AMBULATION, new AmbulationValueProvider(),
             ACTIVITY_STATUS, new ActivityStatusValueProvider(),
             COHORT_TAG_NAME, new CohortTagNameProvider()
     );
 
-    public ValueProvider getValueProvider(String participantColumnName, String questionType) {
+    public TextValueProvider getValueProvider(String participantColumnName, String questionType) {
         if (isSpecialColumn(participantColumnName)) {
             return specialValueProviders.get(participantColumnName);
         }

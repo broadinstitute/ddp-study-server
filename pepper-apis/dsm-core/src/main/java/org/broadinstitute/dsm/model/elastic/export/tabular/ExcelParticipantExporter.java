@@ -1,18 +1,17 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular;
 
+import javax.servlet.ServletOutputStream;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.IntStream;
+
 import com.google.common.net.MediaType;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import spark.Response;
-
-import javax.servlet.ServletOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.IntStream;
 
 public class ExcelParticipantExporter extends TabularParticipantExporter {
     private final SXSSFWorkbook workbook = new SXSSFWorkbook(200);
@@ -21,7 +20,7 @@ public class ExcelParticipantExporter extends TabularParticipantExporter {
 
 
     public ExcelParticipantExporter(List<ModuleExportConfig> moduleConfigs,
-                                      List<Map<String, String>> participantValueMaps, String fileFormat) {
+                                    List<Map<String, String>> participantValueMaps, String fileFormat) {
         super(moduleConfigs, participantValueMaps, fileFormat);
         this.sheet = workbook.createSheet("Participant List");
         sheet.trackAllColumnsForAutoSizing();
@@ -63,7 +62,9 @@ public class ExcelParticipantExporter extends TabularParticipantExporter {
         });
     }
 
-    /** we don't need to worry about escaping any characters, we just need to replace null with empty string */
+    /**
+     * we don't need to worry about escaping any characters, we just need to replace null with empty string
+     */
     protected String sanitizeValue(String value) {
         if (value == null) {
             value = StringUtils.EMPTY;

@@ -121,14 +121,16 @@ public class DownloadParticipantListRoute extends RequestHandler {
         String realm = RoutePath.getRealm(request);
         DDPInstance instance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.MEDICAL_RECORD_ACTIVATED);
 
-        TabularParticipantParser parser = new TabularParticipantParser(payload.getColumnNames(), instance, params.splitOptions, params.onlyMostRecent);
+        TabularParticipantParser parser = new TabularParticipantParser(payload.getColumnNames(), instance,
+                params.splitOptions, params.onlyMostRecent);
 
         Filterable filterable = FilterFactory.of(request);
         List<ParticipantWrapperDto> participants = fetchParticipantEsData(filterable, request.queryMap());
         List<ModuleExportConfig> exportConfigs = parser.generateExportConfigs();
         List<Map<String, String>> participantValueMaps = parser.parse(exportConfigs, participants);
 
-        TabularParticipantExporter exporter = TabularParticipantExporter.getExporter(exportConfigs, participantValueMaps, params.fileFormat);
+        TabularParticipantExporter exporter = TabularParticipantExporter.getExporter(exportConfigs,
+                participantValueMaps, params.fileFormat);
         exporter.export(response);
         return response.raw();
     }
@@ -172,6 +174,7 @@ public class DownloadParticipantListRoute extends RequestHandler {
         private boolean splitOptions = true;
         private boolean onlyMostRecent = false;
         private String fileFormat = "tsv";
+
         public DownloadParticipantListParams(QueryParamsMap paramMap) {
             if (paramMap.hasKey("fileFormat")) {
                 String fileFormatParam = paramMap.get("fileFormat").value();

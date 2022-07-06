@@ -1,19 +1,19 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular;
 
-import com.google.common.net.MediaType;
-import org.apache.commons.lang3.StringUtils;
-import spark.Response;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.net.MediaType;
+import org.apache.commons.lang3.StringUtils;
+import spark.Response;
+
 public class TsvParticipantExporter extends TabularParticipantExporter {
     public static final String DELIMITER = "\t";
 
     public TsvParticipantExporter(List<ModuleExportConfig> moduleConfigs,
-                                          List<Map<String, String>> participantValueMaps, String fileFormat) {
+                                  List<Map<String, String>> participantValueMaps, String fileFormat) {
         super(moduleConfigs, participantValueMaps, fileFormat);
     }
 
