@@ -1,5 +1,6 @@
-package org.broadinstitute.ddp.json;
+package org.broadinstitute.ddp.json.users.responses;
 
+import org.broadinstitute.ddp.json.Profile;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 
@@ -34,7 +35,7 @@ public class UserCreationResponse {
     public UserCreationResponse(User user, UserProfile profile) {
         this.guid = user.getGuid();
         this.hruid = user.getHruid();
-        this.email = user.getEmail().orElseThrow(() -> new IllegalStateException("participant must have a valid email"));
+        this.email = user.getEmail().orElseThrow(() -> new IllegalStateException("user must have a non-null email address"));
         this.profile = new Profile(profile);
     }
 }
