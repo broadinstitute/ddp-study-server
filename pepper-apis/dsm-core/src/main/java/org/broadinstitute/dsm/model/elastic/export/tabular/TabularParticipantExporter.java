@@ -18,6 +18,10 @@ public abstract class TabularParticipantExporter {
     protected String fileFormat;
     protected List<Map<String, String>> participantValueMaps;
 
+    public abstract void export(Response response) throws IOException;
+
+    protected abstract String sanitizeValue(String value);
+
     protected TabularParticipantExporter(List<ModuleExportConfig> moduleConfigs,
                                          List<Map<String, String>> participantValueMaps, String fileFormat) {
         this.moduleConfigs = moduleConfigs;
@@ -75,8 +79,6 @@ public abstract class TabularParticipantExporter {
         return exportName;
     }
 
-    public abstract void export(Response response) throws IOException;
-
     protected List<String> getHeaderRow() {
         List<String> headers = new ArrayList<>();
         for (ModuleExportConfig moduleConfig : moduleConfigs) {
@@ -109,8 +111,6 @@ public abstract class TabularParticipantExporter {
         }
         return rowValues;
     }
-
-    protected abstract String sanitizeValue(String value);
 
     public List<String> getAllColumnTexts(FilterExportConfig filterConfig) {
         if (filterConfig.isSplitOptionsIntoColumns()) {

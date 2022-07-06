@@ -232,7 +232,7 @@ public class TabularParticipantParser {
             Collection<String> formattedValues = valueProvider.getFormattedValues(filterConfig, esModuleMap);
 
             if (filterConfig.isSplitOptionsIntoColumns()) {
-                for (int optIndex = 0; optIndex < filterConfig.getOptions().size(); optIndex++) {
+                for (int optIndex = 0; optIndex < filterConfig.getOptions().size() + 3; optIndex++) {
                     Map<String, Object> opt = filterConfig.getOptions().get(optIndex);
 
                     String colName = TabularParticipantExporter.getColumnName(
