@@ -79,7 +79,6 @@ import org.broadinstitute.dsm.route.CarrierServiceRoute;
 import org.broadinstitute.dsm.route.ClinicalKitsRoute;
 import org.broadinstitute.dsm.route.CreateBSPDummyKitRoute;
 import org.broadinstitute.dsm.route.CreateClinicalDummyKitRoute;
-import org.broadinstitute.dsm.route.DSSTestingRoute;
 import org.broadinstitute.dsm.route.DashboardRoute;
 import org.broadinstitute.dsm.route.DisplaySettingsRoute;
 import org.broadinstitute.dsm.route.DownloadPDFRoute;
@@ -575,9 +574,6 @@ public class DSMServer {
         String auth0Signer = cfg.getString(ApplicationConfigConstants.AUTH0_SIGNER);
 
         SecurityUtil.init(auth0Domain, auth0claimNameSpace, auth0Signer);
-
-        //TODO remove before final merge, for testing only
-        get(UI_ROOT + "dsstest/:participantId", new DSSTestingRoute(), new JsonTransformer());
 
         // path is: /app/drugs (this gets the list of display names)
         DrugRoute drugRoute = new DrugRoute();
