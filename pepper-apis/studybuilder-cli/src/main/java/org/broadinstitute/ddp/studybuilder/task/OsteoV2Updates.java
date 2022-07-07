@@ -1,5 +1,9 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoAboutChildV2;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoAboutYouV2;
@@ -13,11 +17,8 @@ import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoMRFv2;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoNewActivities;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoNewFamilyHistory;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoPDFv2;
+import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoPdfUpdates;
 import org.jdbi.v3.core.Handle;
-
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 
 public class OsteoV2Updates implements CustomTask {
 
@@ -40,8 +41,10 @@ public class OsteoV2Updates implements CustomTask {
         tasks.add(new OsteoNewFamilyHistory());
 
         // Last
+        tasks.add(new OsteoPdfUpdates());
         tasks.add(new OsteoInsertEvents());
         tasks.add(new UpdateStudyWorkflows());
+
         tasks.forEach(t -> t.init(cfgPath, studyCfg, varsCfg));
     }
 

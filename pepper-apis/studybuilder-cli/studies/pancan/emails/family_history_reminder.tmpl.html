@@ -84,7 +84,7 @@
 
   <tr style="width: 540px;">
     <td style="padding: 50px 0 0px 0;">
-      <p style="font-family: 'Roboto', sans-serif; text-align: left; font-weight: 400; font-size: 15px; line-height: 23px;">${text["salutation_self"]}</p>
+      <p style="font-family: 'Roboto', sans-serif; text-align: left; font-weight: 400; font-size: 15px; line-height: 23px;">{{\#if proxy_guid}}${text["salutation_parent"]}{{else}}${text["salutation_self"]}{{/if}}</p>
       <p style="font-family: 'Roboto', sans-serif; text-align: left; font-weight: 400; font-size: 15px; line-height: 23px;">${text["invitation"]}</p>
       <p style="font-family: 'Roboto', sans-serif; text-align: left; font-weight: 400; font-size: 15px; line-height: 23px;">${text["survey_timing"]}</p>
       <p style="font-family: 'Roboto', sans-serif; text-align: left; font-weight: 400; font-size: 15px; line-height: 23px;">${text["login"]}</p>

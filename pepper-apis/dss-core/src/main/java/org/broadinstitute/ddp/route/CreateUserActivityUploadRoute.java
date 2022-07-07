@@ -35,10 +35,14 @@ import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import spark.Request;
 import spark.Response;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 @Slf4j
 @AllArgsConstructor
 public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<CreateUserActivityUploadPayload> {
     private final FileUploadService service;
+    private static final int MB_IN_BYTES = 1048576;
 
     @Override
     protected int getValidationErrorStatus() {
@@ -107,7 +111,7 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
             User operatorUser = handle.attach(UserDao.class).findUserByGuid(operatorGuid)
                     .orElseThrow(() -> new DDPException("Could not find operator with guid " + operatorGuid));
 
-            String prefix = String.format("%s/%s/%s", studyGuid, userGuid, instanceDto.getActivityCode());
+            String prefix = String.format("%s/%s/%s/%s", studyGuid, getCurrentDate(), userGuid, instanceDto.getActivityCode());
             return service.authorizeUpload(
                     handle,
                     instanceDto.getStudyId(),
@@ -124,7 +128,7 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
         if (result.getAuthorizeResultType() != FileUploadService.AuthorizeResultType.OK) {
             String msg = null;
             if (result.getAuthorizeResultType() == FILE_SIZE_EXCEEDS_MAXIMUM) {
-                msg = "File size exceeded maximum of " + result.getFileUploadSettings().getMaxFileSize() + " bytes";
+                msg = "File size exceeded maximum of " + bytesToMbs(result.getFileUploadSettings().getMaxFileSize()) + " MB-s";
             } else if (result.getAuthorizeResultType() == MIME_TYPE_NOT_ALLOWED) {
                 msg = "Mime type not belongs to allowed list: " + result.getFileUploadSettings().getMimeTypes();
             }
@@ -138,5 +142,13 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
 
         response.status(HttpStatus.SC_CREATED);
         return new CreateUserActivityUploadResponse(upload.getGuid(), result.getSignedUrl().toString());
+    }
+
+    private long bytesToMbs(long maxFileSize) {
+        return maxFileSize / MB_IN_BYTES;
+    }
+
+    private String getCurrentDate() {
+        return new SimpleDateFormat("yyyy_MM_dd").format(new Date());
     }
 }

@@ -1,13 +1,12 @@
 package org.broadinstitute.dsm.model.elastic.migration;
 
+import static org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter.NEW_OSTEO_INSTANCE_NAME;
+
+import java.util.Map;
+
 import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.ParticipantExit;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter.NEW_OSTEO_INSTANCE_NAME;
 
 public class NewOsteoParticipantMigrator extends ParticipantMigrator {
 
