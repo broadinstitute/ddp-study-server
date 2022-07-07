@@ -3,12 +3,11 @@ package org.broadinstitute.dsm.model.elastic.export.tabular.renderer;
 import java.util.Map;
 
 import org.broadinstitute.dsm.model.QuestionType;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
 
 public class ValueProviderFactory {
     private static final String AMBULATION = "AMBULATION";
-    private static final String ACTIVITY_STATUS = "activityStatus";
 
-    private static final String COHORT_TAG_NAME = "cohortTagName";
     private final TextValueProvider defaultValueProvider = new TextValueProvider();
     private final TextValueProvider booleanValueProvider = new BooleanValueProvider();
     private final TextValueProvider pickListValueProvider = new PickListValueProvider();
@@ -26,8 +25,8 @@ public class ValueProviderFactory {
     );
     private final Map<String, TextValueProvider> specialValueProviders = Map.of(
             AMBULATION, new AmbulationValueProvider(),
-            ACTIVITY_STATUS, new ActivityStatusValueProvider(),
-            COHORT_TAG_NAME, new CohortTagNameProvider()
+            ESObjectConstants.ACTIVITY_STATUS, new ActivityStatusValueProvider(),
+            ESObjectConstants.COHORT_TAG_NAME, new CohortTagNameProvider()
     );
 
     public TextValueProvider getValueProvider(String participantColumnName, String questionType) {

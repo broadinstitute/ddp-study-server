@@ -37,7 +37,8 @@ public class TextValueProvider {
                 List<LinkedHashMap<String, Object>> allAnswers =
                         (List<LinkedHashMap<String, Object>>) formMap.get(ElasticSearchUtil.QUESTIONS_ANSWER);
                 List<LinkedHashMap<String, Object>> targetAnswers = allAnswers.stream()
-                        .filter(ans -> filterConfig.getColumn().getName().equals(ans.get("stableId"))).collect(Collectors.toList());
+                        .filter(ans -> filterConfig.getColumn().getName().equals(ans.get(ESObjectConstants.STABLE_ID)))
+                        .collect(Collectors.toList());
                 if (!targetAnswers.isEmpty()) {
                     value = getRawAnswerValue(targetAnswers.get(0), filterConfig.getColumn().getName());
                 }

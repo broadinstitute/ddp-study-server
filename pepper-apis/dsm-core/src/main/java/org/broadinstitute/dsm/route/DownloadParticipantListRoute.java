@@ -50,6 +50,7 @@ public class DownloadParticipantListRoute extends RequestHandler {
 
         Filterable filterable = FilterFactory.of(request);
         List<ParticipantWrapperDto> participants = fetchParticipantEsData(filterable, request.queryMap());
+        logger.info("Beginning parse of " + participants.size() + "participants");
         List<ModuleExportConfig> exportConfigs = parser.generateExportConfigs();
         List<Map<String, String>> participantValueMaps = parser.parse(exportConfigs, participants);
 
@@ -66,7 +67,6 @@ public class DownloadParticipantListRoute extends RequestHandler {
         List<ParticipantWrapperDto> allResults = new ArrayList<ParticipantWrapperDto>();
         int currentFrom = DEFAULT_FROM;
         int currentTo = MAX_RESULT_SIZE;
-
         while (true) {
             // For each batch of results, add the DTOs to the allResults list
             filter.setFrom(currentFrom);

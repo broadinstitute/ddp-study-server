@@ -17,12 +17,13 @@ public class ExcelParticipantExporter extends TabularParticipantExporter {
     private final SXSSFWorkbook workbook = new SXSSFWorkbook(200);
 
     private final SXSSFSheet sheet;
+    private static final String SHEET_NAME = "Participant List";
 
 
     public ExcelParticipantExporter(List<ModuleExportConfig> moduleConfigs,
                                     List<Map<String, String>> participantValueMaps, String fileFormat) {
         super(moduleConfigs, participantValueMaps, fileFormat);
-        this.sheet = workbook.createSheet("Participant List");
+        this.sheet = workbook.createSheet(SHEET_NAME);
         sheet.trackAllColumnsForAutoSizing();
     }
 

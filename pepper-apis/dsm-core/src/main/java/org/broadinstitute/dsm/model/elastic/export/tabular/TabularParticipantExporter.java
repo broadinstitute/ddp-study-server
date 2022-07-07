@@ -10,10 +10,14 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
 import spark.Response;
 
 public abstract class TabularParticipantExporter {
     protected static final String FILE_DATE_FORMAT = "yyyy-MM-dd";
+    public static final String TSV_FORMAT = "tsv";
+    public static final String XLSX_FORMAT = "xlsx";
+    public static final String COLUMN_REPEAT_DELIMITER = "_";
     protected List<ModuleExportConfig> moduleConfigs;
     protected String fileFormat;
     protected List<Map<String, String>> participantValueMaps;
@@ -31,9 +35,9 @@ public abstract class TabularParticipantExporter {
 
     public static TabularParticipantExporter getExporter(List<ModuleExportConfig> moduleConfigs,
                                                          List<Map<String, String>> participantValueMaps, String fileFormat) {
-        if ("tsv".equals(fileFormat)) {
+        if (TSV_FORMAT.equals(fileFormat)) {
             return new TsvParticipantExporter(moduleConfigs, participantValueMaps, fileFormat);
-        } else if ("xlsx".equals(fileFormat)) {
+        } else if (XLSX_FORMAT.equals(fileFormat)) {
             return new ExcelParticipantExporter(moduleConfigs, participantValueMaps, fileFormat);
         }
         throw new RuntimeException("Unrecognized file format");
@@ -70,10 +74,12 @@ public abstract class TabularParticipantExporter {
                                        Map<String, Object> option) {
         String activityName = filterConfig.getParent().getName();
         String questionStableId = filterConfig.getColumn().getName();
-        String activityExportName = activityRepeatNum > 1 ? activityName + "_" + activityRepeatNum : activityName;
-        String columnExportName = questionRepeatNum > 1 ? questionStableId + "_" + questionRepeatNum : questionStableId;
+        String activityExportName = activityRepeatNum > 1 ?
+                activityName + COLUMN_REPEAT_DELIMITER + activityRepeatNum : activityName;
+        String columnExportName = questionRepeatNum > 1 ?
+                questionStableId + COLUMN_REPEAT_DELIMITER + questionRepeatNum : questionStableId;
         if (option != null && filterConfig.isSplitOptionsIntoColumns()) {
-            columnExportName = columnExportName + "." + option.get("optionStableId");
+            columnExportName = columnExportName + DBConstants.ALIAS_DELIMITER + option.get(ESObjectConstants.OPTION_STABLE_ID);
         }
         String exportName = activityExportName + DBConstants.ALIAS_DELIMITER + columnExportName;
         return exportName;
@@ -114,7 +120,7 @@ public abstract class TabularParticipantExporter {
 
     public List<String> getAllColumnTexts(FilterExportConfig filterConfig) {
         if (filterConfig.isSplitOptionsIntoColumns()) {
-            return filterConfig.getOptions().stream().map(opt -> (String) opt.get("optionText"))
+            return filterConfig.getOptions().stream().map(opt -> (String) opt.get(ESObjectConstants.OPTION_TEXT))
                     .collect(Collectors.toList());
         }
         return Collections.singletonList(filterConfig.getColumn().getDisplay());

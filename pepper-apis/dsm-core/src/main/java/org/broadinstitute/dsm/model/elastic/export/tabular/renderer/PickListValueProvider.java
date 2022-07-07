@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.dsm.model.elastic.export.tabular.FilterExportConfig;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
 
 public class PickListValueProvider extends TextValueProvider {
     @Override
@@ -16,10 +17,10 @@ public class PickListValueProvider extends TextValueProvider {
         // return the user-visible text, rather than the stableId
         return rawValues.stream().map(val -> {
             Map<String, Object> matchingOption = filterConfig.getOptions().stream().filter(opt -> {
-                return val != null && val.equals(opt.get("optionStableId"));
+                return val != null && val.equals(opt.get(ESObjectConstants.OPTION_STABLE_ID));
             }).findFirst().orElse(null);
-            if (matchingOption != null && matchingOption.get("optionText") != null) {
-                return matchingOption.get("optionText").toString();
+            if (matchingOption != null && matchingOption.get(ESObjectConstants.OPTION_TEXT) != null) {
+                return matchingOption.get(ESObjectConstants.OPTION_TEXT).toString();
             }
             return val.toString();
         }).collect(Collectors.toList());
