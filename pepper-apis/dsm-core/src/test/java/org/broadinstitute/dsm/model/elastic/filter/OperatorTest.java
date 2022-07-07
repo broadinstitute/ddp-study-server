@@ -75,6 +75,9 @@ public class OperatorTest {
         String filter = "m.mr_received <= 15";
         Operator operator = Operator.extract(filter);
         assertEquals(Operator.LESS_THAN_EQUALS, operator);
+        String filter2 = "m.age <= 4";
+        operator = Operator.extract(filter2);
+        assertEquals(Operator.LESS_THAN_EQUALS, operator);
     }
 
     @Test

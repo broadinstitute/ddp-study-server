@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.statics.DBConstants;
 
 @Getter
