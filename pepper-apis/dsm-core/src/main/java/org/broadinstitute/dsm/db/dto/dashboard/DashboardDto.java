@@ -3,6 +3,8 @@ package org.broadinstitute.dsm.db.dto.dashboard;
 import java.util.List;
 
 import lombok.Data;
+import org.broadinstitute.dsm.model.dashboard.DisplayType;
+import org.broadinstitute.dsm.model.dashboard.Size;
 
 @Data
 public class DashboardDto {
@@ -10,8 +12,8 @@ public class DashboardDto {
     Integer dashboardId;
     Integer ddpInstanceId;
     String displayText;
-    String displayType;
-    String size;
+    DisplayType displayType;
+    Size size;
     Integer order;
     List<DashboardLabelDto> labels;
 
@@ -28,11 +30,11 @@ public class DashboardDto {
     public static class Builder {
 
         private Integer order;
-        private String size;
+        private Size size;
         private Integer dashboardId;
         private Integer ddpInstanceId;
         private String displayText;
-        private String displayType;
+        private DisplayType displayType;
         private List<DashboardLabelDto> labels;
 
         public Builder withDashboardId(int dashboardId) {
@@ -50,7 +52,7 @@ public class DashboardDto {
             return this;
         }
 
-        public Builder withDisplayType(String displayType) {
+        public Builder withDisplayType(DisplayType displayType) {
             this.displayType = displayType;
             return this;
         }
@@ -60,7 +62,7 @@ public class DashboardDto {
             return this;
         }
 
-        public Builder withSize(String size) {
+        public Builder withSize(Size size) {
             this.size = size;
             return this;
         }

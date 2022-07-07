@@ -14,6 +14,8 @@ import org.broadinstitute.dsm.TestHelper;
 import org.broadinstitute.dsm.db.dto.dashboard.DashboardDto;
 import org.broadinstitute.dsm.db.dto.dashboard.DashboardLabelDto;
 import org.broadinstitute.dsm.db.dto.dashboard.DashboardLabelFilterDto;
+import org.broadinstitute.dsm.model.dashboard.DisplayType;
+import org.broadinstitute.dsm.model.dashboard.Size;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
 import org.broadinstitute.dsm.model.elastic.filter.query.BuildQueryStrategy;
@@ -42,9 +44,9 @@ public class DashboardDaoImplTest {
     private static final String ADDITIONAL_FILTER = "AND m.age >= 0 AND m.age <= 4";
     private static final String ES_FILTER_PATH_VALUE = "TEST_VALUE";
     public static final String DISPLAY_TEXT = "TestDiagnosis";
-    public static final String DISPLAY_TYPE = "HORIZONTAL_BAR_CHAR";
+    public static final DisplayType DISPLAY_TYPE = DisplayType.HORIZONTAL_BAR_CHART;
     public static final Integer ORDER = 1;
-    public static final String SIZE = "MEDIUM";
+    public static final Size SIZE = Size.MEDIUM;
     public static final Integer DDP_INSTANCE_ID = 16;
 
     private static Integer createdDashboardId;

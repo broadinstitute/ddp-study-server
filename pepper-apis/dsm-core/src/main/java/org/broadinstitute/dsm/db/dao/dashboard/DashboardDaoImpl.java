@@ -15,6 +15,8 @@ import java.util.Optional;
 import org.broadinstitute.dsm.db.dto.dashboard.DashboardDto;
 import org.broadinstitute.dsm.db.dto.dashboard.DashboardLabelDto;
 import org.broadinstitute.dsm.db.dto.dashboard.DashboardLabelFilterDto;
+import org.broadinstitute.dsm.model.dashboard.DisplayType;
+import org.broadinstitute.dsm.model.dashboard.Size;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,9 +66,9 @@ public class DashboardDaoImpl implements DashboardDao {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_DASHBOARD, Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setInt(1, dashboardDto.getDdpInstanceId());
                 stmt.setString(2, dashboardDto.getDisplayText());
-                stmt.setString(3, dashboardDto.getSize());
+                stmt.setString(3, dashboardDto.getSize().toString());
                 stmt.setInt(4, dashboardDto.getOrder());
-                stmt.setString(5, dashboardDto.getDisplayType());
+                stmt.setString(5, dashboardDto.getDisplayType().toString());
                 stmt.executeUpdate();
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
@@ -133,9 +135,9 @@ public class DashboardDaoImpl implements DashboardDao {
                 .withDashboardId(rs.getInt("dashboard_id"))
                 .withDdpInstanceId(rs.getInt("ddp_instance_id"))
                 .withDisplayText(rs.getString("display_text"))
-                .withDisplayType(rs.getString("display_type"))
+                .withDisplayType(DisplayType.valueOf(rs.getString("display_type")))
                 .withOrder(rs.getInt("ordering"))
-                .withSize(rs.getString("size"))
+                .withSize(Size.valueOf(rs.getString("size")))
                 .withLabels(new ArrayList<>(dashboardLabelDtos))
                 .build();
     }
