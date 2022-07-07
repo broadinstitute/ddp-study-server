@@ -100,7 +100,15 @@ public class LiquibaseUtil implements AutoCloseable {
      */
     private void runPepperAPIsGlobalMigrations() throws LiquibaseException, SQLException {
         runMigrations(PEPPER_APIS_GLOBAL_MIGRATIONS);
+
+        /* 2022.07.07
+         * This call is required for proper operation of the DSS backend.
+         * Without the Auth0 management client inserted by this call,
+         * local user registration will fail to update the Auth0 user's
+         * metadata.
+         */
         insertLegacyTenant();
+
         // run script to update client -> tenant and study -> tenant and enable constraints
         runMigrations(AUTH0_TENANT_MIGRATION);
     }
@@ -203,6 +211,7 @@ public class LiquibaseUtil implements AutoCloseable {
             String mgmtSecret = auth0Cfg.getString(ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_SECRET);
 
             String encryptedSecret = AesUtil.encrypt(mgmtSecret, EncryptionKey.getEncryptionKey());
+            jdbiAuth0Tenant.insertIfNotExists(domain, mgmtApiClient, encryptedSecret);
             log.info("Inserted testing tenant {}", domain);
             insertedTenant = true;
         } else {
