@@ -106,6 +106,8 @@ public class RoutePath {
     public static final String DELETE_COHORT_TAG = "deleteCohortTag";
     public static final String SUBMIT_MERCURY_ORDER = "submitMercuryOrder";
 
+    public static final String DASHBOARD = "dashboard";
+
     public static String getRealm(Request request) {
         QueryParamsMap queryParams = request.queryMap();
         String realm = "";

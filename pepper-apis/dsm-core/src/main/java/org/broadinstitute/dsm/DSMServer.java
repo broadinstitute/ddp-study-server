@@ -112,6 +112,7 @@ import org.broadinstitute.dsm.route.PatchRoute;
 import org.broadinstitute.dsm.route.TriggerSurveyRoute;
 import org.broadinstitute.dsm.route.UserSettingRoute;
 import org.broadinstitute.dsm.route.ViewFilterRoute;
+import org.broadinstitute.dsm.route.dashboard.NewDashboardRoute;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
 import org.broadinstitute.dsm.route.mercury.PostMercuryOrderDummyRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
@@ -901,6 +902,8 @@ public class DSMServer {
                 new JsonTransformer());
 
         patch(UI_ROOT + RoutePath.PATCH, new PatchRoute(notificationUtil, patchUtil), new JsonTransformer());
+
+        get(UI_ROOT + RoutePath.DASHBOARD, new NewDashboardRoute(), new JsonTransformer());
     }
 
     private void setupPubSubPublisherRoutes(Config config) {

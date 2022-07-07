@@ -14,12 +14,12 @@ import org.broadinstitute.dsm.TestHelper;
 import org.broadinstitute.dsm.db.dto.dashboard.DashboardDto;
 import org.broadinstitute.dsm.db.dto.dashboard.DashboardLabelDto;
 import org.broadinstitute.dsm.db.dto.dashboard.DashboardLabelFilterDto;
+import org.broadinstitute.dsm.model.dashboard.BaseQueryBuilderFactory;
 import org.broadinstitute.dsm.model.dashboard.DisplayType;
 import org.broadinstitute.dsm.model.dashboard.Size;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
-import org.broadinstitute.dsm.model.elastic.filter.query.BuildQueryStrategy;
-import org.broadinstitute.dsm.model.elastic.filter.query.CollectionQueryBuilder;
+import org.broadinstitute.dsm.model.elastic.filter.query.BaseQueryBuilder;
 import org.broadinstitute.dsm.model.elastic.filter.query.QueryPayload;
 import org.broadinstitute.dsm.model.elastic.filter.splitter.SplitterStrategy;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -166,12 +166,18 @@ public class DashboardDaoImplTest {
             DashboardDto dashboardDto = maybeDashboardDto.get();
             MultiSearchRequest request = new MultiSearchRequest();
             AndOrFilterSeparator andOrFilterSeparator = new AndOrFilterSeparator("");
+            BaseQueryBuilder baseQueryBuilder = BaseQueryBuilderFactory.of(
+                    dashboardDto.getLabels().stream()
+                            .map(DashboardLabelDto::getDashboardFilterDto)
+                            .map(DashboardLabelFilterDto::getEsNestedPath)
+                            .findFirst()
+                            .orElse(StringUtils.EMPTY)
+            );
             for (DashboardLabelDto label: dashboardDto.getLabels()) {
                 SearchRequest searchRequest = new SearchRequest();
                 SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
                 QueryBuilder queryBuilder = null;
                 if (StringUtils.isNotBlank(label.getDashboardFilterDto().getEsNestedPath())) {
-                    QueryBuilder innerQueryBuilder = null;
                     if (StringUtils.isNotBlank(label.getDashboardFilterDto().getAdditionalFilter())) {
                         andOrFilterSeparator.setFilter(label.getDashboardFilterDto().getAdditionalFilter());
                         Map<String, List<String>> andOrSeparated = andOrFilterSeparator.parseFiltersByLogicalOperators();
@@ -182,20 +188,17 @@ public class DashboardDaoImplTest {
                             SplitterStrategy splitterStrategy = operator.getSplitterStrategy();
                             splitterStrategy.setFilter(filterValue);
                             String[] values = splitterStrategy.getValue();
-                            BuildQueryStrategy queryStrategy = operator.getQueryStrategy();
                             QueryPayload queryPayload = new QueryPayload(label.getDashboardFilterDto().getEsNestedPath(),
                                     label.getDashboardFilterDto().getEsFilterPath(),
                                     values, "participants_structured.atcp.atcp");
-                            boolQueryBuilder.must(new CollectionQueryBuilder().buildEachQuery(operator, queryPayload));
+
+                            boolQueryBuilder.must(baseQueryBuilder.buildEachQuery(operator, queryPayload));
                         }
                         queryBuilder = boolQueryBuilder;
                     } else {
                         queryBuilder = QueryBuilders.matchQuery(label.getDashboardFilterDto().getEsFilterPath(),
                                 label.getDashboardFilterDto().getEsFilterPathValue());
                     }
-//                    queryBuilder =
-//                            QueryBuilders.nestedQuery(label.getDashboardFilterDto().getEsNestedPath(), innerQueryBuilder, ScoreMode.Avg);
-
                 }
                 searchSourceBuilder.query(queryBuilder);
                 searchRequest.source(searchSourceBuilder);
