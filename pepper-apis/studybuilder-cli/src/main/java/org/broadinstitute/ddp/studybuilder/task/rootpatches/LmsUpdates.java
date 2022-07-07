@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.studybuilder.task.rootPatches;
+package org.broadinstitute.ddp.studybuilder.task.rootpatches;
 
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
@@ -8,7 +8,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public class lmsUpdates implements CustomTask {
+public class LmsUpdates implements CustomTask {
 
     private List<CustomTask> taskList = new ArrayList<>();
 
@@ -20,6 +20,6 @@ public class lmsUpdates implements CustomTask {
 
     @Override
     public void run(Handle handle) {
-         taskList.forEach(task -> task.run(handle));
+        taskList.forEach(task -> task.run(handle));
     }
 }

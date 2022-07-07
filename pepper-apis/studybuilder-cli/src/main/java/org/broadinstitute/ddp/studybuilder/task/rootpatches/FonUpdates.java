@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.studybuilder.task.rootPatches;
+package org.broadinstitute.ddp.studybuilder.task.rootpatches;
 
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
