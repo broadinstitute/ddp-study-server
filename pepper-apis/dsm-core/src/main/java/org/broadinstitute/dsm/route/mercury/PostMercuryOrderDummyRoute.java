@@ -37,9 +37,7 @@ public class PostMercuryOrderDummyRoute implements Route {
 
 
     public Object handle(Request request, Response response) {
-        log.info("Got a mercury order request: " + request.url());
         String requestBody = request.body();
-        log.info("Got request body " + requestBody);
         QueryParamsMap queryParams = request.queryMap();
         String userId = "";
         if (queryParams.value(UserUtil.USER_ID) != null) {
@@ -47,7 +45,6 @@ public class PostMercuryOrderDummyRoute implements Route {
         } else if (request.url().contains("/ddp")) {
             userId = "GP_UNIT_TEST";
         }
-        log.info("user Id is " + userId);
         MercuryOrderDummyRequest mercuryOrderRequest = new Gson().fromJson(requestBody, MercuryOrderDummyRequest.class);
         if (!isValidRequest(mercuryOrderRequest)) {
             log.error("Request not valid");
@@ -58,7 +55,6 @@ public class PostMercuryOrderDummyRoute implements Route {
             log.error("Realm was null for " + mercuryOrderRequest.getRealm());
             return new Result(500, UserErrorMessages.CONTACT_DEVELOPER);
         }
-        log.info("realm is " + mercuryOrderRequest.getRealm());
         publishMessage(mercuryOrderRequest, ddpInstance, userId);
         return new Result(200);
 
