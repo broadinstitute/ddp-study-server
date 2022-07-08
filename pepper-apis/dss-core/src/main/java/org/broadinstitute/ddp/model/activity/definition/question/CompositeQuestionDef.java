@@ -19,7 +19,7 @@ public final class CompositeQuestionDef extends QuestionDef {
     private final OrientationType childOrientation;
     private final boolean allowMultiple;
     private final boolean unwrapOnExport;
-    private final String separator;
+    private final String tabularSeparator;
 
     @Valid
     private final Template additionalItemTemplate;
@@ -34,7 +34,7 @@ public final class CompositeQuestionDef extends QuestionDef {
                                 Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
                                 List<RuleDef> validations, List<QuestionDef> children, OrientationType childOrientation,
                                 boolean allowMultiple, boolean unwrapOnExport, Template addButtonTemplate,
-                                Template additionalItemTemplate, boolean hideNumber, boolean writeOnce, String separator) {
+                                Template additionalItemTemplate, boolean hideNumber, boolean writeOnce, String tabularSeparator) {
         super(QuestionType.COMPOSITE,
                 stableId,
                 isRestricted,
@@ -50,7 +50,7 @@ public final class CompositeQuestionDef extends QuestionDef {
         this.unwrapOnExport = unwrapOnExport;
         this.addButtonTemplate = addButtonTemplate;
         this.additionalItemTemplate = additionalItemTemplate;
-        this.separator = separator;
+        this.tabularSeparator = tabularSeparator;
         if (allowMultiple && unwrapOnExport) {
             throw new IllegalArgumentException("Having both allowMultiple and unwrapOnExport is currently not supported");
         }
@@ -84,8 +84,8 @@ public final class CompositeQuestionDef extends QuestionDef {
         return unwrapOnExport && !allowMultiple;
     }
 
-    public String getSeparator() {
-        return separator;
+    public String getTabularSeparator() {
+        return tabularSeparator;
     }
 
     public boolean isAcceptable() {
@@ -102,7 +102,7 @@ public final class CompositeQuestionDef extends QuestionDef {
         private List<QuestionDef> children;
         private OrientationType childOrientation;
         private Template additionalItemTemplate;
-        private String separator;
+        private String tabularSeparator;
 
         @Override
         protected Builder self() {
@@ -143,12 +143,12 @@ public final class CompositeQuestionDef extends QuestionDef {
             return this;
         }
 
-        public String getSeparator() {
-            return separator;
+        public String getTabularSeparator() {
+            return tabularSeparator;
         }
 
-        public void setSeparator(String separator) {
-            this.separator = separator;
+        public void setTabularSeparator(String tabularSeparator) {
+            this.tabularSeparator = tabularSeparator;
         }
 
         public CompositeQuestionDef build() {
@@ -166,7 +166,7 @@ public final class CompositeQuestionDef extends QuestionDef {
                                                                         additionalItemTemplate,
                                                                         hideNumber,
                                                                         writeOnce,
-                                                                        separator);
+                                                                        tabularSeparator);
             configure(question);
             return question;
         }

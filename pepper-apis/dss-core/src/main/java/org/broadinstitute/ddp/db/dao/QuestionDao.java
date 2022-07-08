@@ -1007,7 +1007,7 @@ public interface QuestionDao extends SqlObject {
                 dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
                 rules, dto.isAllowMultiple(), dto.isUnwrapOnExport(),
                 dto.getAddButtonTemplateId(), dto.getAdditionalItemTemplateId(),
-                childQuestions, dto.getChildOrientation(), dto.getSeparator(), compositeAnswers);
+                childQuestions, dto.getChildOrientation(), dto.getTabularSeparator(), compositeAnswers);
     }
 
 
@@ -1561,7 +1561,7 @@ public interface QuestionDao extends SqlObject {
         }
         getJdbiCompositeQuestion().insertParent(compositeQuestion.getQuestionId(), compositeQuestion.isAllowMultiple(),
                 buttonTemplateId, addItemTemplateId, compositeQuestion.getChildOrientation(), compositeQuestion.isUnwrapOnExport(),
-                compositeQuestion.getSeparator());
+                compositeQuestion.getTabularSeparator());
         compositeQuestion.getChildren().forEach(childQuestion -> this.insertQuestionByType(activityId, childQuestion, revisionId));
         getJdbiCompositeQuestion().insertChildren(compositeQuestion.getQuestionId(), compositeQuestion.getChildren()
                 .stream()

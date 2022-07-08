@@ -160,7 +160,7 @@ select qt.question_type_code as question_type,
        (select orientation_type_code from orientation_type
          where orientation_type_id = cq.child_orientation_type_id
        ) as child_orientation,
-       cq.separator
+       cq.tabular_separator
 
   from question as q
   join question_type as qt on qt.question_type_id = q.question_type_id

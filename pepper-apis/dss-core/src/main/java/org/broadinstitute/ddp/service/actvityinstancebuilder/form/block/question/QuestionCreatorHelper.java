@@ -122,7 +122,7 @@ public class QuestionCreatorHelper {
                         ctx, questionDef.getAdditionalItemTemplate()),
                 CollectionMiscUtil.createListFromAnotherList(questionDef.getChildren(),
                         (childQuestionDef) -> questionCreator.createQuestion(ctx, childQuestionDef)),
-                questionDef.getChildOrientation(), questionDef.getSeparator(),
+                questionDef.getChildOrientation(), questionDef.getTabularSeparator(),
                 questionCreator.getAnswers(ctx, questionDef.getStableId())
         );
     }
