@@ -41,6 +41,8 @@ public abstract class QuestionRecord {
                 questionAnswer = ((CompositeQuestionRecord) record).getAnswer();
             } else if (record instanceof MatrixQuestionRecord) {
                 questionAnswer = ((MatrixQuestionRecord) record).getSelected();
+            } else if (record instanceof EquationQuestionRecord) {
+                questionAnswer = ((EquationQuestionRecord) record).getAnswer();
             }
 
             if (questionAnswer != null) {

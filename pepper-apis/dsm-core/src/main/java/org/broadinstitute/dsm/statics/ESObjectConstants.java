@@ -56,6 +56,8 @@ public class ESObjectConstants {
     public static final String FIRSTNAME = "lastname";
 
     //profile
+    public static final String PROFILE = "profile";
+
     public static final String EMAIL = "email";
     public static final String FIRST_NAME = "firstName";
     public static final String LAST_NAME = "lastName";
