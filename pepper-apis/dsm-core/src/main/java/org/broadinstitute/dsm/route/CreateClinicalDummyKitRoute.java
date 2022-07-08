@@ -95,6 +95,7 @@ public class CreateClinicalDummyKitRoute implements Route {
             ddpParticipantId = new BSPDummyKitDao().getRandomParticipantForStudy(ddpInstance);
             maybeParticipantByParticipantId =
                     ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
+            // check the test participant is still valid, enrolled and haas a valid onc history, if not choose a new one, for a max 10 tries.
             while (tries < 10 && (maybeParticipantByParticipantId.isEmpty()
                     || maybeParticipantByParticipantId.get().getProfile().map(ESProfile::getHruid).isEmpty()
                     || !participantIsEnrolled(maybeParticipantByParticipantId))) {
@@ -104,7 +105,7 @@ public class CreateClinicalDummyKitRoute implements Route {
                 tries++;
             }
             if (tries == 10) {
-                throw new RuntimeException("No particpant was found!");
+                throw new RuntimeException("No participant was found!");
             }
         } else {
             fixedParticipantId = true;
@@ -170,6 +171,7 @@ public class CreateClinicalDummyKitRoute implements Route {
                         ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
                 logger.info("found randomOncHistoryDetailId " + randomOncHistoryDetailId);
                 logger.info("found short id " + maybeParticipantByParticipantId.get().getProfile().map(ESProfile::getHruid));
+                // check the test participant is still valid, enrolled and haas a valid onc history, if not choose a new one, for a max 10 tries.
                 while (tries < 10 && (oncHistoryDetail == null || StringUtils.isBlank(oncHistoryDetail.getAccessionNumber())
                         || maybeParticipantByParticipantId.isEmpty()
                         || maybeParticipantByParticipantId.get().getProfile().map(ESProfile::getHruid).isEmpty()
