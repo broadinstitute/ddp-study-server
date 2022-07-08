@@ -80,8 +80,8 @@ public class CreateClinicalDummyKitRoute implements Route {
         new BookmarkDao().getBookmarkByInstance(CLINICAL_KIT_REALM).ifPresentOrElse(book -> {
             realm = (int) book.getValue();
         }, () -> {
-                throw new RuntimeException("Bookmark doesn't exist for " + CLINICAL_KIT_REALM);
-            });
+            throw new RuntimeException("Bookmark doesn't exist for " + CLINICAL_KIT_REALM);
+        });
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(realm);
         BSPDummyKitDao bspDummyKitDao = new BSPDummyKitDao();
         if (ddpInstance == null) {
@@ -95,8 +95,9 @@ public class CreateClinicalDummyKitRoute implements Route {
             ddpParticipantId = new BSPDummyKitDao().getRandomParticipantForStudy(ddpInstance);
             maybeParticipantByParticipantId =
                     ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
-            while (tries < 10 && (maybeParticipantByParticipantId.isEmpty() || !participantIsEnrolled(maybeParticipantByParticipantId)
-                    || maybeParticipantByParticipantId.get().getProfile().map(ESProfile::getHruid).isEmpty())) {
+            while (tries < 10 && (maybeParticipantByParticipantId.isEmpty()
+                    || maybeParticipantByParticipantId.get().getProfile().map(ESProfile::getHruid).isEmpty()
+                    || !participantIsEnrolled(maybeParticipantByParticipantId))) {
                 ddpParticipantId = new BSPDummyKitDao().getRandomParticipantForStudy(ddpInstance);
                 maybeParticipantByParticipantId =
                         ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
@@ -170,8 +171,9 @@ public class CreateClinicalDummyKitRoute implements Route {
                 logger.info("found randomOncHistoryDetailId " + randomOncHistoryDetailId);
                 logger.info("found short id " + maybeParticipantByParticipantId.get().getProfile().map(ESProfile::getHruid));
                 while (tries < 10 && (oncHistoryDetail == null || StringUtils.isBlank(oncHistoryDetail.getAccessionNumber())
-                        || maybeParticipantByParticipantId.isEmpty() || !participantIsEnrolled(maybeParticipantByParticipantId)
-                        || maybeParticipantByParticipantId.get().getProfile().map(ESProfile::getHruid).isEmpty())) {
+                        || maybeParticipantByParticipantId.isEmpty()
+                        || maybeParticipantByParticipantId.get().getProfile().map(ESProfile::getHruid).isEmpty()
+                        || !participantIsEnrolled(maybeParticipantByParticipantId))) {
                     randomOncHistoryDetailId = bspDummyKitDao.getRandomOncHistoryForStudy(ddpInstance.getName());
                     oncHistoryDetail = OncHistoryDetail.getOncHistoryDetail(randomOncHistoryDetailId, ddpInstance.getName());
                     ddpParticipantId = oncHistoryDetail.getDdpParticipantId();
@@ -211,6 +213,9 @@ public class CreateClinicalDummyKitRoute implements Route {
 
     private boolean participantIsEnrolled(
             Optional<ElasticSearchParticipantDto> maybeParticipantByParticipantId) {
+        if (maybeParticipantByParticipantId.orElseThrow().getStatus().isEmpty()) {
+            return false;
+        }
         return maybeParticipantByParticipantId.orElseThrow().getStatus().get().equals("ENROLLED");
     }
 
