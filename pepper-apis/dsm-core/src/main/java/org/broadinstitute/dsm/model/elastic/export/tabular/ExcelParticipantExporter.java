@@ -14,7 +14,8 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import spark.Response;
 
 public class ExcelParticipantExporter extends TabularParticipantExporter {
-    private final SXSSFWorkbook workbook = new SXSSFWorkbook(200);
+    private final static int ROW_ACCESS_WINDOW_SIZE = 200;
+    private final SXSSFWorkbook workbook = new SXSSFWorkbook(ROW_ACCESS_WINDOW_SIZE);
 
     private final SXSSFSheet sheet;
     private static final String SHEET_NAME = "Participant List";

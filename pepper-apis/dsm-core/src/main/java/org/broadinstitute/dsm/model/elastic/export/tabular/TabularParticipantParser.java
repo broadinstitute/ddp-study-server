@@ -273,57 +273,78 @@ public class TabularParticipantParser {
                                                                  Map<String, Object> subParticipant,
                                                                  boolean onlyMostRecent) {
         if (moduleConfig.isActivity()) {
-            List<Map<String, Object>> activityList = (List<Map<String, Object>>) esDataAsMap.get(ESObjectConstants.ACTIVITIES);
-            List<Map<String, Object>> matchingActivities = activityList.stream().filter(activity ->
-                            moduleConfig.getName().equals(activity.get(ESObjectConstants.ACTIVITY_CODE)))
-                    .collect(Collectors.toList()
-                    );
-            matchingActivities.sort((a1, a2) ->
-                    Long.compare((long) a2.get(ESObjectConstants.LAST_UPDATED_AT),
-                            (long) a1.get(ESObjectConstants.LAST_UPDATED_AT)));
-            if (onlyMostRecent && matchingActivities.size() > 1) {
-                return matchingActivities.subList(0, 1);
-            }
-            return matchingActivities;
+            return getActivityCompletions(esDataAsMap, moduleConfig, subParticipant, onlyMostRecent);
         } else if (moduleConfig.getFilterKey().isJson() && moduleConfig.getName()
                 .equals(ESObjectConstants.PARTICIPANT_DATA_DATA)) {
-            // get the module name from the first question -- this assumes all questions
-            // in the module get stored in the same object.
-            String objectName = moduleConfig.getQuestions().get(0).getColumn().getObject();
-
-            // figure out whether we're dealing with subparticipants (RGP) or just data
-            if (objectName != null && objectName.startsWith("RGP") && objectName.endsWith("GROUP")) {
-                if (subParticipant != null && subParticipant.get(DATA_AS_MAP) != null) {
-                    return Collections.singletonList((Map<String, Object>) subParticipant.get(DATA_AS_MAP));
-                } else {
-                    return Collections.singletonList(Collections.emptyMap());
-                }
-            } else {
-                List<Map<String, Object>> participantDataList = (List<Map<String, Object>>) ((Map<String, Object>) esDataAsMap
-                        .get(ESObjectConstants.DSM)).get(ESObjectConstants.PARTICIPANT_DATA);
-                List<Map<String, Object>> matchingModules = participantDataList.stream()
-                        .filter(item -> objectName.equals(item.get(ESObjectConstants.FIELD_TYPE_ID)))
-                        .collect(Collectors.toList());
-
-                List<Map<String, Object>> moduleData = matchingModules.stream().map(module -> {
-                    return (Map<String, Object>) module.get(DATA_AS_MAP);
-                }).collect(Collectors.toList());
-                return moduleData;
-            }
-
+            return getNestedJsonCompletions(esDataAsMap, moduleConfig, subParticipant, onlyMostRecent);
         } else {
-            // this module is based off the root of the map, like 'dsm' or 'invitations'
-            Object rootObject = esDataAsMap.get(moduleConfig.getFilterKey().getValue());
-            if (rootObject instanceof List) {
-                // it's a list, like 'invitations'
-                return (List<Map<String, Object>>) rootObject;
-            } else if (rootObject instanceof Map) {
-                // it's a Map, like 'dsm'
-                return Collections.singletonList((Map<String, Object>) rootObject);
-            }
-            // we don't know what the module/question will be getting at, so return the entire map
-            // in case the question config has the logic to handle it.
-            return Collections.singletonList(esDataAsMap);
+            return getOtherCompletions(esDataAsMap, moduleConfig, subParticipant, onlyMostRecent);
         }
+    }
+
+    private static List<Map<String, Object>> getActivityCompletions(Map<String, Object> esDataAsMap,
+                                          ModuleExportConfig moduleConfig,
+                                          Map<String, Object> subParticipant,
+                                          boolean onlyMostRecent) {
+        List<Map<String, Object>> activityList = (List<Map<String, Object>>) esDataAsMap.get(ESObjectConstants.ACTIVITIES);
+        List<Map<String, Object>> matchingActivities = activityList.stream().filter(activity ->
+                        moduleConfig.getName().equals(activity.get(ESObjectConstants.ACTIVITY_CODE)))
+                .collect(Collectors.toList()
+                );
+        matchingActivities.sort((a1, a2) ->
+                Long.compare((long) a2.get(ESObjectConstants.LAST_UPDATED_AT),
+                        (long) a1.get(ESObjectConstants.LAST_UPDATED_AT)));
+        if (onlyMostRecent && matchingActivities.size() > 1) {
+            return matchingActivities.subList(0, 1);
+        }
+        return matchingActivities;
+    }
+
+    private static List<Map<String, Object>> getNestedJsonCompletions(Map<String, Object> esDataAsMap,
+                                                                      ModuleExportConfig moduleConfig,
+                                                                      Map<String, Object> subParticipant,
+                                                                      boolean onlyMostRecent) {
+        // get the module name from the first question -- this assumes all questions
+        // in the module get stored in the same object.
+        String objectName = moduleConfig.getQuestions().get(0).getColumn().getObject();
+
+        // figure out whether we're dealing with subparticipants (RGP) or just data
+        if (objectName != null && objectName.startsWith("RGP") && objectName.endsWith("GROUP")) {
+            if (subParticipant != null && subParticipant.get(DATA_AS_MAP) != null) {
+                return Collections.singletonList((Map<String, Object>) subParticipant.get(DATA_AS_MAP));
+            } else {
+                return Collections.singletonList(Collections.emptyMap());
+            }
+        } else {
+            List<Map<String, Object>> participantDataList = (List<Map<String, Object>>) ((Map<String, Object>) esDataAsMap
+                    .get(ESObjectConstants.DSM)).get(ESObjectConstants.PARTICIPANT_DATA);
+            List<Map<String, Object>> matchingModules = participantDataList.stream()
+                    .filter(item -> objectName.equals(item.get(ESObjectConstants.FIELD_TYPE_ID)))
+                    .collect(Collectors.toList());
+
+            List<Map<String, Object>> moduleData = matchingModules.stream().map(module -> {
+                return (Map<String, Object>) module.get(DATA_AS_MAP);
+            }).collect(Collectors.toList());
+            return moduleData;
+        }
+
+    }
+
+    private static List<Map<String, Object>> getOtherCompletions(Map<String, Object> esDataAsMap,
+                                                                 ModuleExportConfig moduleConfig,
+                                                                 Map<String, Object> subParticipant,
+                                                                 boolean onlyMostRecen) {
+        // this module is based off the root of the map, like 'dsm' or 'invitations'
+        Object rootObject = esDataAsMap.get(moduleConfig.getFilterKey().getValue());
+        if (rootObject instanceof List) {
+            // it's a list, like 'invitations'
+            return (List<Map<String, Object>>) rootObject;
+        } else if (rootObject instanceof Map) {
+            // it's a Map, like 'dsm'
+            return Collections.singletonList((Map<String, Object>) rootObject);
+        }
+        // we don't know what the module/question will be getting at, so return the entire map
+        // in case the question config has the logic to handle it.
+        return Collections.singletonList(esDataAsMap);
     }
 }

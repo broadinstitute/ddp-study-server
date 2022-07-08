@@ -35,12 +35,11 @@ public abstract class TabularParticipantExporter {
 
     public static TabularParticipantExporter getExporter(List<ModuleExportConfig> moduleConfigs,
                                                          List<Map<String, String>> participantValueMaps, String fileFormat) {
-        if (TSV_FORMAT.equals(fileFormat)) {
-            return new TsvParticipantExporter(moduleConfigs, participantValueMaps, fileFormat);
-        } else if (XLSX_FORMAT.equals(fileFormat)) {
+        if (XLSX_FORMAT.equals(fileFormat)) {
             return new ExcelParticipantExporter(moduleConfigs, participantValueMaps, fileFormat);
         }
-        throw new RuntimeException("Unrecognized file format");
+        // default to tsv
+        return new TsvParticipantExporter(moduleConfigs, participantValueMaps, fileFormat);
     }
 
     protected static String getExportFilename(String suffix) {
@@ -78,11 +77,15 @@ public abstract class TabularParticipantExporter {
                 activityName + COLUMN_REPEAT_DELIMITER + activityRepeatNum : activityName;
         String columnExportName = questionRepeatNum > 1 ?
                 questionStableId + COLUMN_REPEAT_DELIMITER + questionRepeatNum : questionStableId;
-        if (option != null && filterConfig.isSplitOptionsIntoColumns()) {
+        if (hasSeparateColumnForOption(option, filterConfig)) {
             columnExportName = columnExportName + DBConstants.ALIAS_DELIMITER + option.get(ESObjectConstants.OPTION_STABLE_ID);
         }
         String exportName = activityExportName + DBConstants.ALIAS_DELIMITER + columnExportName;
         return exportName;
+    }
+
+    private static boolean hasSeparateColumnForOption(Map<String, Object> option, FilterExportConfig filterConfig) {
+        return option != null && filterConfig.isSplitOptionsIntoColumns();
     }
 
     protected List<String> getHeaderRow() {

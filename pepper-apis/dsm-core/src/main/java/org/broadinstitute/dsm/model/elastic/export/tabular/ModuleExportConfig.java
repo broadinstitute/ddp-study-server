@@ -20,7 +20,7 @@ public class ModuleExportConfig {
 
     public ModuleExportConfig(ParticipantColumn participantColumn) {
         filterKey = Alias.of(participantColumn);
-        if (filterKey.equals(Alias.ACTIVITIES)) {
+        if (Alias.ACTIVITIES.equals(filterKey)) {
             this.isActivity = true;
             this.name = participantColumn.getTableAlias();
         } else {

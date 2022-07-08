@@ -21,18 +21,19 @@ public class TsvParticipantExporter extends TabularParticipantExporter {
     public void export(Response response) throws IOException {
         setResponseHeaders(response);
 
-        PrintWriter writer = response.raw().getWriter();
-        List<String> headerRowValues = getHeaderRow();
-        List<String> subHeaderRowValues = getSubHeaderRow();
+        try (PrintWriter writer = response.raw().getWriter()) {
+            List<String> headerRowValues = getHeaderRow();
+            List<String> subHeaderRowValues = getSubHeaderRow();
 
-        writer.println(getRowString(headerRowValues));
-        writer.println(getRowString(subHeaderRowValues));
-        for (Map<String, String> valueMap : participantValueMaps) {
-            List<String> rowValues = getRowValues(valueMap, headerRowValues);
-            String rowString = getRowString(rowValues);
-            writer.println(rowString);
+            writer.println(getRowString(headerRowValues));
+            writer.println(getRowString(subHeaderRowValues));
+            for (Map<String, String> valueMap : participantValueMaps) {
+                List<String> rowValues = getRowValues(valueMap, headerRowValues);
+                String rowString = getRowString(rowValues);
+                writer.println(rowString);
+            }
+            writer.flush();
         }
-        writer.flush();
     }
 
     public void setResponseHeaders(Response response) {

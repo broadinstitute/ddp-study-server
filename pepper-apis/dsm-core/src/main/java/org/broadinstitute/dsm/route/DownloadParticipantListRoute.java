@@ -4,25 +4,26 @@ import static org.broadinstitute.dsm.util.ElasticSearchUtil.DEFAULT_FROM;
 import static org.broadinstitute.dsm.util.ElasticSearchUtil.MAX_RESULT_SIZE;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import lombok.Getter;
-import lombok.Setter;
 import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.export.tabular.ModuleExportConfig;
 import org.broadinstitute.dsm.model.elastic.export.tabular.TabularParticipantExporter;
 import org.broadinstitute.dsm.model.elastic.export.tabular.TabularParticipantParser;
 import org.broadinstitute.dsm.model.filter.FilterFactory;
 import org.broadinstitute.dsm.model.filter.Filterable;
+import org.broadinstitute.dsm.model.participant.DownloadParticipantListParams;
+import org.broadinstitute.dsm.model.participant.DownloadParticipantListPayload;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
+import org.broadinstitute.dsm.statics.UserErrorMessages;
+import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
+import org.broadinstitute.lddp.handlers.util.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.QueryParamsMap;
@@ -38,15 +39,19 @@ public class DownloadParticipantListRoute extends RequestHandler {
      * be renamed to processRequest, and the old 'processRequest' method should be deleted
      */
     public Object processRequest(Request request, Response response, String userId) throws Exception {
-        DownloadParticipantListPayloadNew payload =
-                ObjectMapperSingleton.instance().readValue(request.body(), DownloadParticipantListPayloadNew.class);
+        if (UserUtil.checkUserAccess(null, userId, "pt_list_export", null)) {
+            response.status(500);
+            return new Result(500, UserErrorMessages.NO_RIGHTS);
+        }
+        DownloadParticipantListPayload payload =
+                ObjectMapperSingleton.instance().readValue(request.body(), DownloadParticipantListPayload.class);
         DownloadParticipantListParams params = new DownloadParticipantListParams(request.queryMap());
 
         String realm = RoutePath.getRealm(request);
         DDPInstance instance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.MEDICAL_RECORD_ACTIVATED);
 
         TabularParticipantParser parser = new TabularParticipantParser(payload.getColumnNames(), instance,
-                params.splitOptions, params.onlyMostRecent);
+                params.isSplitOptions(), params.isOnlyMostRecent());
 
         Filterable filterable = FilterFactory.of(request);
         List<ParticipantWrapperDto> participants = fetchParticipantEsData(filterable, request.queryMap());
@@ -55,7 +60,7 @@ public class DownloadParticipantListRoute extends RequestHandler {
         List<Map<String, String>> participantValueMaps = parser.parse(exportConfigs, participants);
 
         TabularParticipantExporter exporter = TabularParticipantExporter.getExporter(exportConfigs,
-                participantValueMaps, params.fileFormat);
+                participantValueMaps, params.getFileFormat());
         exporter.export(response);
         return response.raw();
     }
@@ -82,37 +87,6 @@ public class DownloadParticipantListRoute extends RequestHandler {
         }
 
         return allResults;
-    }
-
-    @Getter
-    @Setter
-    /** on retirement of feature-flag-export-new, this class should be promoted to DownloadParticipantListPayload */
-    private static class DownloadParticipantListPayloadNew {
-        private List<Filter> columnNames;
-    }
-
-    @Getter
-    @Setter
-    private static class DownloadParticipantListParams {
-        private static final List<String> allowedFileFormats = Arrays.asList("tsv", "xlsx");
-        private boolean splitOptions = true;
-        private boolean onlyMostRecent = false;
-        private String fileFormat = "tsv";
-
-        public DownloadParticipantListParams(QueryParamsMap paramMap) {
-            if (paramMap.hasKey("fileFormat")) {
-                String fileFormatParam = paramMap.get("fileFormat").value();
-                if (allowedFileFormats.contains(fileFormatParam)) {
-                    fileFormat = fileFormatParam;
-                }
-            }
-            if (paramMap.hasKey("splitOptions")) {
-                splitOptions = Boolean.valueOf(paramMap.get("splitOptions").value());
-            }
-            if (paramMap.hasKey("onlyMostRecent")) {
-                onlyMostRecent = Boolean.valueOf(paramMap.get("onlyMostRecent").value());
-            }
-        }
     }
 
 
