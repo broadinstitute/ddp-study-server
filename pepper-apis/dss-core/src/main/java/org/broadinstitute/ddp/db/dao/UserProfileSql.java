@@ -72,9 +72,6 @@ public interface UserProfileSql extends SqlObject {
     @SqlUpdate("update user_profile set first_name = :firstName where user_id = :userId")
     int updateFirstName(@Bind("userId") long userId, @Bind("firstName") String firstName);
 
-    @SqlUpdate("update user_profile set last_name = :lastName where user_id = :userId")
-    int updateLastName(@Bind("userId") long userId, @Bind("lastName") String lastName);
-
     @SqlUpdate("update user_profile up join user u on u.user_id=up.user_id"
                + " set up.first_name=:firstName, up.last_name=:lastName"
                + " where u.guid=:userGuid")
@@ -84,9 +81,6 @@ public interface UserProfileSql extends SqlObject {
 
     @SqlUpdate("update user_profile set do_not_contact = :doNotContact where user_id = :userId")
     int updateDoNotContact(@Bind("userId") long userId, @Bind("doNotContact") Boolean doNotContact);
-
-    @SqlUpdate("update user_profile set preferred_language_id = :langId where user_id = :userId")
-    int updatePreferredLangId(@Bind("userId") long userId, @Bind("langId") long preferredLangId);
 
     //
     // deletes
@@ -101,5 +95,4 @@ public interface UserProfileSql extends SqlObject {
     @SqlUpdate("delete profile from user as u left join user_profile as profile on profile.user_id = u.user_id "
             + " where u.guid in (<guid>)")
     int deleteByUserGuids(@BindList(value = "guid", onEmpty = BindList.EmptyHandling.NULL) Set<String> userGuids);
-
 }

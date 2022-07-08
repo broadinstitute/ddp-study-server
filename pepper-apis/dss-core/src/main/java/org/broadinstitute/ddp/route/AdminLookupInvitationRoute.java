@@ -63,12 +63,16 @@ public class AdminLookupInvitationRoute extends ValidatedJsonInputRoute<LookupIn
                 }
 
                 String loginEmail = null;
-                if (user.getAuth0UserId() != null) {
+                
+                if (user.hasAuth0Account()) {
+                    var auth0UserId = user.getAuth0UserId().get();
+
                     Auth0ManagementClient mgmtClient = Auth0ManagementClient.forStudy(handle, studyGuid);
                     Map<String, String> emailResults = new Auth0Util(mgmtClient.getDomain())
-                            .getEmailsByAuth0UserIdsAndConnection(Set.of(user.getAuth0UserId()), mgmtClient.getToken(),
-                                    studyDto.getDefaultAuth0Connection());
-                    loginEmail = emailResults.get(user.getAuth0UserId());
+                            .getEmailsByAuth0UserIdsAndConnection(Set.of(auth0UserId),
+                                mgmtClient.getToken(),
+                                studyDto.getDefaultAuth0Connection());
+                    loginEmail = emailResults.get(auth0UserId);
                 }
 
                 return new LookupInvitationResponse(invitation, user.getGuid(), loginEmail);

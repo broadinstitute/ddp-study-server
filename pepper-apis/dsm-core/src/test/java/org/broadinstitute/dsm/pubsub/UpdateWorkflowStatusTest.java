@@ -101,7 +101,12 @@ public class UpdateWorkflowStatusTest {
     public void testUpdateProbandStatusInDB() {
         String workflow = "REGISTRATION_STATUS";
         String status = "ENROLLED";
-        WorkflowStatusUpdate.updateProbandStatusInDB(workflow, status, participantData, RGP);
+        Optional<FieldSettingsDto> fieldSetting =
+                fieldSettingsDao.getFieldSettingByColumnNameAndInstanceId(ddpInstanceDto.getDdpInstanceId(), workflow);
+        if (fieldSetting.isEmpty()) {
+            Assert.fail();
+        }
+        WorkflowStatusUpdate.updateProbandStatusInDB(workflow, status, participantData, fieldSetting.get());
         String data = participantDataDao.get(participantDataId).orElseThrow().getData().orElse("");
         JsonObject dataJsonObject = gson.fromJson(data, JsonObject.class);
         Assert.assertEquals(status, dataJsonObject.get(workflow).getAsString());

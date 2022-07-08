@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.model.activity.instance;
 
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
@@ -24,6 +25,10 @@ public abstract class FormBlock implements Renderable {
 
     @SerializedName("enabled")
     protected boolean enabled = true;
+
+    @Nullable
+    @SerializedName("columnSpan")
+    protected Integer columnSpan;
 
     protected transient Long blockId;
     protected transient String shownExpr;

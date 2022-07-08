@@ -22,6 +22,7 @@ import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
+import org.broadinstitute.dsm.model.filter.prefilter.HasDdpInstanceId;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
 import org.broadinstitute.dsm.util.DBUtil;
@@ -35,7 +36,7 @@ import org.slf4j.LoggerFactory;
         primaryKey = DBConstants.ONC_HISTORY_DETAIL_ID, columnPrefix = "")
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class OncHistoryDetail {
+public class OncHistoryDetail implements HasDdpInstanceId {
 
     public static final String SQL_SELECT_ONC_HISTORY_DETAIL =
             "SELECT p.ddp_participant_id, p.ddp_instance_id, p.participant_id, oD.onc_history_detail_id, oD.request, oD.deleted, "
@@ -193,6 +194,10 @@ public class OncHistoryDetail {
     private long ddpInstanceId;
 
     public OncHistoryDetail() {
+    }
+
+    public OncHistoryDetail(long ddpInstanceId) {
+        this.ddpInstanceId = ddpInstanceId;
     }
 
     public OncHistoryDetail(Long oncHistoryDetailId, Long medicalRecordId, String datePx, String typePx, String locationPx,
@@ -451,5 +456,10 @@ public class OncHistoryDetail {
             tissues = new ArrayList<>();
         }
         return tissues;
+    }
+
+    @Override
+    public long extractDdpInstanceId() {
+        return getDdpInstanceId();
     }
 }

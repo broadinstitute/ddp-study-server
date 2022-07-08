@@ -25,6 +25,7 @@ import org.broadinstitute.dsm.model.Study;
 import org.broadinstitute.dsm.model.defaultvalues.Defaultable;
 import org.broadinstitute.dsm.model.defaultvalues.DefaultableMaker;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
+import org.broadinstitute.dsm.model.elastic.migration.AdditionalParticipantMigratorFactory;
 import org.broadinstitute.dsm.model.elastic.migration.CohortTagMigrator;
 import org.broadinstitute.dsm.model.elastic.migration.DynamicFieldsMappingMigrator;
 import org.broadinstitute.dsm.model.elastic.migration.KitRequestShippingMigrator;
@@ -114,9 +115,10 @@ public class DSMtasksSubscription {
                     //DynamicFieldsMappingMigrator should be first in the list to make sure that mapping will be exported for first
                     new DynamicFieldsMappingMigrator(index, study), new MedicalRecordMigrator(index, study),
                     new OncHistoryDetailsMigrator(index, study), new OncHistoryMigrator(index, study),
-                    new ParticipantDataMigrator(index, study), new ParticipantMigrator(index, study),
-                    new KitRequestShippingMigrator(index, study), new TissueMigrator(index, study),
-                    new SMIDMigrator(index, study), new CohortTagMigrator(index, study, new CohortTagDaoImpl()));
+                    new ParticipantDataMigrator(index, study), AdditionalParticipantMigratorFactory.of(index, study),
+                    new ParticipantMigrator(index, study), new KitRequestShippingMigrator(index, study),
+                    new TissueMigrator(index, study), new SMIDMigrator(index, study),
+                    new CohortTagMigrator(index, study, new CohortTagDaoImpl()));
             exportables.forEach(Exportable::export);
         });
     }
@@ -128,7 +130,6 @@ public class DSMtasksSubscription {
             consumer.ack();
             return;
         }
-        ;
         Arrays.stream(Study.values()).filter(study -> study.toString().equals(studyGuid.toUpperCase())).findFirst()
                 .ifPresentOrElse(study -> {
                     Defaultable defaultable = DefaultableMaker.makeDefaultable(study);

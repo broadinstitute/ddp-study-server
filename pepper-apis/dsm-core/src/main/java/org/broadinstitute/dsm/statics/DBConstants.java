@@ -50,6 +50,7 @@ public class DBConstants {
     public static final String BSP_COLLECTION = "bsp_collection";
     public static final String BSP_ORGANISM = "bsp_organism";
     public static final String RESEARCH_PROJECT = "research_project";
+    public static final String MERCURY_ORDER_CREATOR = "mercury_order_creator";
 
     //kit request
     public static final String DSM_KIT_ID = "dsm_kit_id";
@@ -506,13 +507,17 @@ public class DBConstants {
 
     public static final String LABEL_URL_RETURN = "label_url_return";
 
+    public static final String LAST_VERSION_DATE = LAST_VERSION + "_date";
+
+    // ddp_participant
     public static final String PARTICIPANT_RECORD_ID = "participant_record_id";
+    public static final String RELEASE_COMPLETED = "release_completed";
+
+    // cohort
     public static final String COHORT_ALIAS = "c";
     public static final String COHORT_TAG_PK = "cohort_tag_id";
     public static final String COHORT_TAG = "cohort_tag";
     public static final String COHORT_TAG_NAME = "cohort_tag_name";
 
-    //instance_settings
-    public static final String MERCURY_ORDER_CREATOR = "mercury_order_creator";
 
 }

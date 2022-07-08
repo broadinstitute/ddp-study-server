@@ -55,7 +55,8 @@ public class ElasticSearch implements ElasticSearchable {
 
 
     public ElasticSearch() {
-        this.sortBy = SortBuilders.fieldSort(ElasticSearchUtil.PROFILE_CREATED_AT).order(SortOrder.ASC);
+        this.sortBy = SortBuilders.fieldSort(ElasticSearchUtil.PROFILE_CREATED_AT).order(SortOrder.DESC)
+                .unmappedType(CustomSortBuilder.UNMAPPED_TYPE_LONG).missing(CustomSortBuilder.IF_MISSING_LAST);
         this.deserializer = new SourceMapDeserializer();
     }
 
@@ -141,7 +142,8 @@ public class ElasticSearch implements ElasticSearchable {
             int scrollSize = to - from;
             SearchRequest searchRequest = new SearchRequest(esParticipantsIndex);
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-            searchSourceBuilder.query(QueryBuilders.matchAllQuery()).sort(sortBy);
+            searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+            searchSourceBuilder.sort(sortBy);
             searchSourceBuilder.size(scrollSize);
             searchSourceBuilder.from(from);
             searchRequest.source(searchSourceBuilder);

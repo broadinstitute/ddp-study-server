@@ -13,7 +13,10 @@ public class SingularUpdates implements CustomTask {
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
+        tasks.add(new SingularReadonlyActivities());
+        tasks.add(new SingularDeleteEmailEvents());
         tasks.add(new SingularPatientSurveyUpdate());
+        tasks.add(new SingularMRFUploadUpdates());
 
         // Last
         tasks.add(new SingularInsertEvents());
