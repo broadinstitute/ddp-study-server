@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.db.dto.dashboard;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import lombok.Data;
 import org.broadinstitute.dsm.model.dashboard.DisplayType;
@@ -25,6 +26,10 @@ public class DashboardDto {
         this.labels = builder.labels;
         this.size = builder.size;
         this.order = builder.order;
+    }
+
+    public List<String> getColors() {
+        return labels.stream().map(DashboardLabelDto::getColor).collect(Collectors.toList());
     }
 
     public static class Builder {

@@ -16,7 +16,7 @@ public class DashboardLabelFilterDto {
         this.labelFilterId = builder.labelFilterId;
         this.esFilterPath = builder.esFilterPath;
         this.esFilterPathValue = builder.esFilterPathValue;
-        this.esFilterPath = builder.esFilterPath;
+        this.esNestedPath = builder.esNestedPath;
         this.additionalFilter = builder.additionalFilter;
         this.labelId = builder.labelId;
     }

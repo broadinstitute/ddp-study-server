@@ -14,6 +14,7 @@ import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
+import org.broadinstitute.dsm.model.Util;
 import org.broadinstitute.dsm.model.elastic.export.painless.AddListToNestedByGuidScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.NestedUpsertPainlessFacade;
 import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
@@ -79,7 +80,7 @@ public class CohortTagUseCaseTest {
                 buildMapWithDsmAndProfileGuid(GUID)
         );
         try {
-            waitForCreationInElasticSearch();
+            Util.waitForCreationInElasticSearch();
             getCohortTagUseCase(new PutToNestedScriptBuilder()).insert();
             ElasticSearchParticipantDto elasticSearchParticipantDto = getElasticSearchParticipantDto(GUID);
             Assert.assertEquals(1, elasticSearchParticipantDto.getDsm().get().getCohortTag().size());
@@ -92,7 +93,7 @@ public class CohortTagUseCaseTest {
     public void insertIfCohortExists() {
         createCohortInESWithExistingTag();
         try {
-            waitForCreationInElasticSearch();
+            Util.waitForCreationInElasticSearch();
             getCohortTagUseCase(new PutToNestedScriptBuilder()).insert();
             ElasticSearchParticipantDto elasticSearchParticipantDto = getElasticSearchParticipantDto(GUID);
             Assert.assertEquals(2, elasticSearchParticipantDto.getDsm().get().getCohortTag().size());
@@ -106,7 +107,7 @@ public class CohortTagUseCaseTest {
         cohortTagPayload.setCohortTagId(cohortTagDao.create(cohortTagPayload));
         createCohortInESWithExistingTag();
         try {
-            waitForCreationInElasticSearch();
+            Util.waitForCreationInElasticSearch();
             getCohortTagUseCase(new RemoveFromNestedScriptBuilder()).delete();
             ElasticSearchParticipantDto participantDto = getElasticSearchParticipantDto(GUID);
             Assert.assertTrue(participantDto.getDsm().get().getCohortTag().isEmpty());
@@ -126,7 +127,7 @@ public class CohortTagUseCaseTest {
                 buildMapWithDsmAndProfileGuid(GUID2)
         );
         try {
-            waitForCreationInElasticSearch();
+            Util.waitForCreationInElasticSearch();
             CohortTagUseCase cohortTagUseCase = getCohortTagUseCase(new AddListToNestedByGuidScriptBuilder());
             cohortTagUseCase.setCohortTagPayload(null);
 
@@ -186,10 +187,6 @@ public class CohortTagUseCaseTest {
         ElasticSearchParticipantDto participantDto =
                 elasticSearchable.getParticipantById(ddpInstanceDto.getEsParticipantIndex(), guid);
         return participantDto;
-    }
-
-    static void waitForCreationInElasticSearch() throws InterruptedException {
-        Thread.sleep(1000);
     }
 
 }

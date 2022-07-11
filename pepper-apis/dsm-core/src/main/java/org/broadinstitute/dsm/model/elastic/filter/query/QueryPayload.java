@@ -24,6 +24,9 @@ public class QueryPayload {
     }
 
     public String getFieldName() {
+        if (StringUtils.isBlank(path)) {
+            return property;
+        }
         return path + DBConstants.ALIAS_DELIMITER + property;
     }
 

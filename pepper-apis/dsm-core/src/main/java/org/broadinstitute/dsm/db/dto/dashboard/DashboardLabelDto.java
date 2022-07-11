@@ -1,6 +1,9 @@
 package org.broadinstitute.dsm.db.dto.dashboard;
 
+import java.util.Optional;
+
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 
 @Data
 public class DashboardLabelDto {
@@ -17,6 +20,10 @@ public class DashboardLabelDto {
         this.labelName = builder.labelName;
         this.color = builder.color;
         this.dashboardFilterDto = builder.dashboardLabelFilterDto;
+    }
+
+    public String getEsNestedPath() {
+        return Optional.ofNullable(dashboardFilterDto).map(DashboardLabelFilterDto::getEsNestedPath).orElse(StringUtils.EMPTY);
     }
 
     public static class Builder {

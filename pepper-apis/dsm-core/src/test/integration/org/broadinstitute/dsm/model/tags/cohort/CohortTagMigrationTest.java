@@ -11,6 +11,7 @@ import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
+import org.broadinstitute.dsm.model.Util;
 import org.broadinstitute.dsm.model.elastic.migration.CohortTagMigrator;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
@@ -79,7 +80,7 @@ public class CohortTagMigrationTest {
         );
         cohortTagMigrator.export();
         try {
-            CohortTagUseCaseTest.waitForCreationInElasticSearch();
+            Util.waitForCreationInElasticSearch();
             ElasticSearchParticipantDto participantById =
                     elasticSearchable.getParticipantById(ddpInstanceDto.getEsParticipantIndex(), CohortTagUseCaseTest.GUID);
             List<CohortTag> cohortTags = participantById.getDsm().get().getCohortTag();
