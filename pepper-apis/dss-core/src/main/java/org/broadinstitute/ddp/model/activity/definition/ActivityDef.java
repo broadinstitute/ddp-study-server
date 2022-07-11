@@ -383,6 +383,10 @@ public abstract class ActivityDef {
         return formCode;
     }
 
+    public ActivityFormGroupDto getActivityForm() {
+        return activityForm;
+    }
+
     /**
      * Builder that helps construct common elements of an activity definition.
      *
