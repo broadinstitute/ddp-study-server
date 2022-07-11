@@ -130,6 +130,8 @@ public class StoolUploadRoute extends RequestHandler {
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         dbVals.resultValue = rs.getString(DBConstants.DSM_KIT_ID);
+                    } else {
+                        throw new RuntimeException("No kit found with the barcode " + mfBarcode);
                     }
                 }
             } catch (SQLException e) {
@@ -141,7 +143,7 @@ public class StoolUploadRoute extends RequestHandler {
             throw new RuntimeException("No kit found with the barcode " + mfBarcode,
                     simpleResult.resultException);
         }
-        return Optional.ofNullable((String) simpleResult.resultValue);
+        return Optional.ofNullable(String.valueOf(simpleResult.resultValue));
     }
 
     private List<StoolUploadObject> isFileValid(String fileContent) {
