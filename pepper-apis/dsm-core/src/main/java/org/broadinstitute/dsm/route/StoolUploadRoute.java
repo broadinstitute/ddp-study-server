@@ -1,17 +1,19 @@
 package org.broadinstitute.dsm.route;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import javax.servlet.http.HttpServletRequest;
 
-import com.google.gson.Gson;
 import lombok.extern.log4j.Log4j2;
-import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.exception.FileColumnMissing;
 import org.broadinstitute.dsm.exception.FileWrongSeparator;
 import org.broadinstitute.dsm.exception.UploadLineException;
@@ -22,7 +24,8 @@ import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.lddp.handlers.util.Result;
+import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
+import org.broadinstitute.lddp.db.SimpleResult;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
@@ -33,6 +36,13 @@ public class StoolUploadRoute extends RequestHandler {
     private static final String PARTICIPANT_ID = "participantId";
     private static final String MF_BARCODE = "mfBarcode";
     private static final String RECEIVE_DATE = "receiveDate";
+    private static final String SELECT_KIT_ID = "SELECT dsm_kit_id FROM ddp_kit INNER JOIN ddp_kit_request dkr"
+            + " on ddp_kit.dsm_kit_request_id = dkr.dsm_kit_request_id";
+    private static final String BY_BARCODE = " WHERE kit_label = ?";
+    private static final String BY_PT_ID = " dkr.ddp_participant_id = ?";
+    private static final String UPDATE_KIT = "UPDATE ddp_kit SET receive_date = ?, receive_by = 'HSPH'";
+    private static final String BY_KIT_ID = " WHERE dsm_kit_id = ?";
+
 
     @Override
     protected Object processRequest(Request request, Response response, String userId) throws Exception {
@@ -48,25 +58,7 @@ public class StoolUploadRoute extends RequestHandler {
         String userIdRequest = UserUtil.getUserId(request);
 
         if (UserUtil.checkUserAccess(realm, userId, "kit_upload", userIdRequest)) {
-            String kitTypeName;
-
-            AtomicReference<String> kitUploadReason = new AtomicReference<>();
-            AtomicReference<String> shippingCarrier = new AtomicReference<>();
-            if (queryParams.value(RoutePath.KIT_TYPE) != null) {
-                kitTypeName = queryParams.get(RoutePath.KIT_TYPE).value();
-            } else {
-                throw new RuntimeException("No kitType query param was sent");
-            }
-            if (queryParams.value("reason") != null) {
-                kitUploadReason.set(queryParams.get("reason").value());
-            }
-            if (queryParams.value("carrier") != null) {
-                shippingCarrier.set(queryParams.get("carrier").value());
-            }
-
-
-            HttpServletRequest rawRequest = request.raw();
-            String content = SystemUtil.getBody(rawRequest);
+            String content = request.body();
 
             AtomicBoolean uploadAnyway = new AtomicBoolean(false);
             if (queryParams.value("uploadAnyway") != null) {
@@ -74,38 +66,85 @@ public class StoolUploadRoute extends RequestHandler {
             }
 
             try {
-                List<StoolUploadObject> stoolUploadContent = null;
+                List<StoolUploadObject> stoolUploadContent;
                 if (uploadAnyway.get()) {
-                    stoolUploadContent = Arrays.asList(new Gson().fromJson(content, StoolUploadObject[].class));
+                    stoolUploadContent =
+                            Collections.singletonList(ObjectMapperSingleton.instance().readValue(content, StoolUploadObject.class));
                 } else {
                     try {
-                        stoolUploadContent = isFileValid(content, realm);
+                        stoolUploadContent = isFileValid(content);
                     } catch (Exception e) {
-                        return new Result(500, e.getMessage());
+                        response.status(500);
+                        return e.getMessage();
                     }
                 }
+
                 final List<StoolUploadObject> stoolUploadObjects = stoolUploadContent;
-                if (stoolUploadObjects == null || stoolUploadObjects.isEmpty()) {
+                if (stoolUploadObjects.isEmpty()) {
                     return "Text file was empty or couldn't be parsed to the agreed format";
                 }
 
                 stoolUploadObjects.forEach(stoolUploadObject -> {
-                    //TODO sql scripts to iterate over the objects and update the DB accordingly
-                });
+                    String participantId = stoolUploadObject.getParticipantId();
+                    String mfBarcode = stoolUploadObject.getMfBarcode();
+                    String receiveDate = stoolUploadObject.getReceiveDate();
 
-            } catch (Exception e) {
+                    Optional<String> kitIdToUpdate = getKitIdToUpdate(participantId, mfBarcode);
+
+                    kitIdToUpdate.ifPresent(kitId -> updateKitData(receiveDate, kitId));
+                });
+            } catch (UploadLineException e) {
                 return e.getMessage();
             }
-
         } else {
             response.status(500);
-            return new Result(500, UserErrorMessages.NO_RIGHTS);
+            return (UserErrorMessages.NO_RIGHTS);
         }
-
-        return null;
+        return  null;
     }
 
-    private List<StoolUploadObject> isFileValid(String fileContent, String realm) {
+    private void updateKitData(String receiveDate, String kitId) {
+        SimpleResult simpleResult = TransactionWrapper.inTransaction(conn -> {
+            SimpleResult dbVals = new SimpleResult(0);
+            try (PreparedStatement stmt = conn.prepareStatement(UPDATE_KIT + BY_KIT_ID)) {
+                stmt.setString(1, receiveDate);
+                stmt.setString(2, kitId);
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                dbVals.resultException = e;
+            }
+            return dbVals;
+        });
+        if (simpleResult.resultException != null) {
+            throw new RuntimeException("Error updating kit with id " + kitId,
+                    simpleResult.resultException);
+        }
+    }
+
+    private Optional<String> getKitIdToUpdate(String participantId, String mfBarcode) {
+        SimpleResult simpleResult = TransactionWrapper.inTransaction(conn -> {
+            SimpleResult dbVals = new SimpleResult(0);
+            try (PreparedStatement stmt = conn.prepareStatement(SELECT_KIT_ID + BY_BARCODE + " AND " + BY_PT_ID)) {
+                stmt.setString(1, mfBarcode);
+                stmt.setString(2, participantId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        dbVals.resultValue = rs.getString(DBConstants.DSM_KIT_ID);
+                    }
+                }
+            } catch (SQLException e) {
+                dbVals.resultException = e;
+            }
+            return dbVals;
+        });
+        if (simpleResult.resultException != null) {
+            throw new RuntimeException("No kit found with the barcode " + mfBarcode,
+                    simpleResult.resultException);
+        }
+        return Optional.ofNullable((String) simpleResult.resultValue);
+    }
+
+    private List<StoolUploadObject> isFileValid(String fileContent) {
         if (fileContent == null) {
             throw new RuntimeException("File is empty");
         }
@@ -127,13 +166,12 @@ public class StoolUploadRoute extends RequestHandler {
         }
 
         List<StoolUploadObject> stoolRequestObjectsToUpload = new ArrayList<>();
-        parseParticipantDataToUpload(realm, rows, fieldNamesFromFileHeader, stoolRequestObjectsToUpload);
+        parseParticipantDataToUpload(rows, fieldNamesFromFileHeader, stoolRequestObjectsToUpload);
         return stoolRequestObjectsToUpload;
     }
 
-    private void parseParticipantDataToUpload(String realm, String[] rows, List<String> fieldNamesFromFileHeader,
+    private void parseParticipantDataToUpload(String[] rows, List<String> fieldNamesFromFileHeader,
                                               List<StoolUploadObject> stoolRequestToUpload) {
-        DDPInstance ddpInstanceByRealm = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.HAS_KIT_REQUEST_ENDPOINTS);
         int lastNonEmptyRowIndex = getLastNonEmptyRowIndex(rows);
 
         for (int rowIndex = 1; rowIndex <= lastNonEmptyRowIndex; rowIndex++) {
