@@ -85,7 +85,7 @@ public class StoolUploadRoute extends RequestHandler {
 
                     stoolUploadDto.ifPresent(e -> stoolUploadDao.updateKitData(receiveDate, e.getKitId()));
                 });
-            } catch (UploadLineException e) {
+            } catch (Exception e) {
                 return e.getMessage();
             }
         } else {
