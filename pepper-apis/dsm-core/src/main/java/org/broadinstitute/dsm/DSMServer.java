@@ -121,6 +121,7 @@ import org.broadinstitute.dsm.route.mercury.PostMercuryOrderDummyRoute;
 import org.broadinstitute.dsm.route.mercury.PostMercuryOrderRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
+import org.broadinstitute.dsm.route.tag.cohort.BulkCreateCohortTagRoute;
 import org.broadinstitute.dsm.route.tag.cohort.CreateCohortTagRoute;
 import org.broadinstitute.dsm.route.tag.cohort.DeleteCohortTagRoute;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
@@ -546,6 +547,7 @@ public class DSMServer {
 
         before(API_ROOT + "*", (req, res) -> {
             if (!new JWTRouteFilter(auth0Domain, bspSecret).isAccessAllowed(req, false, bspSecret)) {
+                logger.info("Returning 404 because token was not verified");
                 halt(404);
             }
             res.header(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
@@ -678,6 +680,7 @@ public class DSMServer {
 
     private void setupCohortTagRoutes() {
         post(UI_ROOT + RoutePath.CREATE_COHORT_TAG, new CreateCohortTagRoute(), new JsonTransformer());
+        post(UI_ROOT + RoutePath.BULK_CREATE_COHORT_TAGS, new BulkCreateCohortTagRoute(), new JsonTransformer());
         delete(UI_ROOT + RoutePath.DELETE_COHORT_TAG, new DeleteCohortTagRoute(), new JsonTransformer());
     }
 
