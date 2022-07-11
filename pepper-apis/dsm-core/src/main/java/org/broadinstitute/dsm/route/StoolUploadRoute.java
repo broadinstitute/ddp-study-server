@@ -32,13 +32,6 @@ public class StoolUploadRoute extends RequestHandler {
     private static final String PARTICIPANT_ID = "participantId";
     private static final String MF_BARCODE = "mfBarcode";
     private static final String RECEIVE_DATE = "receiveDate";
-    private static final String SELECT_KIT_ID = "SELECT dsm_kit_id FROM ddp_kit INNER JOIN ddp_kit_request dkr"
-            + " on ddp_kit.dsm_kit_request_id = dkr.dsm_kit_request_id";
-    private static final String BY_BARCODE = " WHERE kit_label = ?";
-    private static final String BY_PT_ID = " dkr.ddp_participant_id = ?";
-    private static final String UPDATE_KIT = "UPDATE ddp_kit SET receive_date = ?, receive_by = 'HSPH'";
-    private static final String BY_KIT_ID = " WHERE dsm_kit_id = ?";
-
 
     @Override
     protected Object processRequest(Request request, Response response, String userId) throws Exception {
