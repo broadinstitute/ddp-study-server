@@ -1,8 +1,5 @@
 package org.broadinstitute.dsm.route;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,19 +10,18 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import lombok.extern.log4j.Log4j2;
-import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.dsm.db.dao.stoolupload.StoolUploadDao;
+import org.broadinstitute.dsm.db.dto.stoolupload.StoolUploadDto;
 import org.broadinstitute.dsm.exception.FileColumnMissing;
 import org.broadinstitute.dsm.exception.FileWrongSeparator;
 import org.broadinstitute.dsm.exception.UploadLineException;
 import org.broadinstitute.dsm.model.StoolUploadObject;
 import org.broadinstitute.dsm.security.RequestHandler;
-import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
-import org.broadinstitute.lddp.db.SimpleResult;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
@@ -85,13 +81,16 @@ public class StoolUploadRoute extends RequestHandler {
                 }
 
                 stoolUploadObjects.forEach(stoolUploadObject -> {
+                    StoolUploadDao stoolUploadDao = new StoolUploadDao();
+
                     String participantId = stoolUploadObject.getParticipantId();
                     String mfBarcode = stoolUploadObject.getMfBarcode();
                     String receiveDate = stoolUploadObject.getReceiveDate();
 
-                    Optional<String> kitIdToUpdate = getKitIdToUpdate(participantId, mfBarcode);
 
-                    kitIdToUpdate.ifPresent(kitId -> updateKitData(receiveDate, kitId));
+                    Optional<StoolUploadDto> stoolUploadDto = stoolUploadDao.getStoolUploadDto(participantId, mfBarcode);
+
+                    stoolUploadDto.ifPresent(e -> stoolUploadDao.updateKitData(receiveDate, e.getKitId()));
                 });
             } catch (UploadLineException e) {
                 return e.getMessage();
@@ -101,49 +100,6 @@ public class StoolUploadRoute extends RequestHandler {
             return (UserErrorMessages.NO_RIGHTS);
         }
         return  null;
-    }
-
-    private void updateKitData(String receiveDate, String kitId) {
-        SimpleResult simpleResult = TransactionWrapper.inTransaction(conn -> {
-            SimpleResult dbVals = new SimpleResult(0);
-            try (PreparedStatement stmt = conn.prepareStatement(UPDATE_KIT + BY_KIT_ID)) {
-                stmt.setString(1, receiveDate);
-                stmt.setString(2, kitId);
-                stmt.executeUpdate();
-            } catch (SQLException e) {
-                dbVals.resultException = e;
-            }
-            return dbVals;
-        });
-        if (simpleResult.resultException != null) {
-            throw new RuntimeException("Error updating kit with id " + kitId,
-                    simpleResult.resultException);
-        }
-    }
-
-    private Optional<String> getKitIdToUpdate(String participantId, String mfBarcode) {
-        SimpleResult simpleResult = TransactionWrapper.inTransaction(conn -> {
-            SimpleResult dbVals = new SimpleResult(0);
-            try (PreparedStatement stmt = conn.prepareStatement(SELECT_KIT_ID + BY_BARCODE + " AND " + BY_PT_ID)) {
-                stmt.setString(1, mfBarcode);
-                stmt.setString(2, participantId);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        dbVals.resultValue = rs.getString(DBConstants.DSM_KIT_ID);
-                    } else {
-                        throw new RuntimeException("No kit found with the barcode " + mfBarcode);
-                    }
-                }
-            } catch (SQLException e) {
-                dbVals.resultException = e;
-            }
-            return dbVals;
-        });
-        if (simpleResult.resultException != null) {
-            throw new RuntimeException("No kit found with the barcode " + mfBarcode,
-                    simpleResult.resultException);
-        }
-        return Optional.ofNullable(String.valueOf(simpleResult.resultValue));
     }
 
     private List<StoolUploadObject> isFileValid(String fileContent) {
