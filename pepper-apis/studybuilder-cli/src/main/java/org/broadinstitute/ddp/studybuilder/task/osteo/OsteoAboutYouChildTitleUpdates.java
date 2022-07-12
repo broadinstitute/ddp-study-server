@@ -1,4 +1,5 @@
 package org.broadinstitute.ddp.studybuilder.task.osteo;
+
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -16,9 +17,7 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
-/**
- * One-off task to add adhoc symptom message to TestBoston in deployed environments.
- */
+
 @Slf4j
 public class OsteoAboutYouChildTitleUpdates implements CustomTask {
     private static final String STUDY_GUID = "CMI-OSTEO";
@@ -37,6 +36,7 @@ public class OsteoAboutYouChildTitleUpdates implements CustomTask {
         }
         this.dataCfg = ConfigFactory.parseFile(file).resolveWith(varsCfg);
     }
+
     @Override
     public void run(Handle handle) {
         SqlHelper helper = handle.attach(SqlHelper.class);
@@ -53,6 +53,7 @@ public class OsteoAboutYouChildTitleUpdates implements CustomTask {
             log.info("Deleted content block: {} in activity: {}", contentBlock.getId(), activityCode);
         }
     }
+
     private interface SqlHelper extends SqlObject {
         @SqlQuery("select bt.* from block_content as bt"
                 + "  join template as tmpl on tmpl.template_id = bt.body_template_id"
@@ -69,12 +70,16 @@ public class OsteoAboutYouChildTitleUpdates implements CustomTask {
                 + "                        where fafs.form_activity_id = :activityId)")
         @RegisterConstructorMapper(BlockContentDto.class)
         BlockContentDto findContentBlockByBodyText(@Bind("activityId") long activityId, @Bind("text") String bodyTemplateText);
+
         @SqlUpdate("delete from form_section__block where block_id = :blockId")
         int deleteSectionBlockMembershipByBlockId(@Bind("blockId") long blockId);
+
         @SqlUpdate("delete from block_content where block_id = :blockId")
         int deleteBlockContentByBlockId(@Bind("blockId") long blockContentId);
+
         @SqlUpdate("delete from block where block_id = :id")
         int deleteBlockById(@Bind("id") long id);
+
         default void deleteContentBlock(long blockId) {
             int numDeleted = deleteSectionBlockMembershipByBlockId(blockId);
             if (numDeleted != 1) {
