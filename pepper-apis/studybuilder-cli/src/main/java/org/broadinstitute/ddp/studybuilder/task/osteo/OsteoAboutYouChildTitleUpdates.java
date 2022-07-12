@@ -24,6 +24,7 @@ public class OsteoAboutYouChildTitleUpdates implements CustomTask {
     private static final String DATA_FILE = "patches/osteo-content-title-updates.conf";
     private Config cfg;
     private Config dataCfg;
+
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
         if (!studyCfg.getString("study.guid").equals(STUDY_GUID)) {
