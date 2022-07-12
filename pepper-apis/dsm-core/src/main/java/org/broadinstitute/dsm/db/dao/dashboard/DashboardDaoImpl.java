@@ -58,6 +58,20 @@ public class DashboardDaoImpl implements DashboardDao {
     private static final String SQL_INSERT_LABEL_FILTER = "INSERT INTO dashboard_label_filter"
             + "(es_filter_path, es_filter_path_value, es_nested_path, additional_filter, label_id) "
             + "VALUES (?, ?, ?, ?, ?)";
+    public static final String DASHBOARD_ID = "dashboard_id";
+    public static final String DDP_INSTANCE_ID = "ddp_instance_id";
+    public static final String DISPLAY_TEXT = "display_text";
+    public static final String DISPLAY_TYPE = "display_type";
+    public static final String ORDERING = "ordering";
+    public static final String SIZE = "size";
+    public static final String LABEL_ID = "label_id";
+    public static final String LABEL_NAME = "label_name";
+    public static final String COLOR = "color";
+    public static final String LABEL_FILTER_ID = "label_filter_id";
+    public static final String ES_FILTER_PATH = "es_filter_path";
+    public static final String ES_FILTER_PATH_VALUE = "es_filter_path_value";
+    public static final String ES_NESTED_PATH = "es_nested_path";
+    public static final String ADDITIONAL_FILTER = "additional_filter";
 
     @Override
     public int create(DashboardDto dashboardDto) {
@@ -132,34 +146,34 @@ public class DashboardDaoImpl implements DashboardDao {
 
     private DashboardDto buildDashboardDtoFrom(ResultSet rs, List<DashboardLabelDto> dashboardLabelDtos) throws SQLException {
         return new DashboardDto.Builder()
-                .withDashboardId(rs.getInt("dashboard_id"))
-                .withDdpInstanceId(rs.getInt("ddp_instance_id"))
-                .withDisplayText(rs.getString("display_text"))
-                .withDisplayType(DisplayType.valueOf(rs.getString("display_type")))
-                .withOrder(rs.getInt("ordering"))
-                .withSize(Size.valueOf(rs.getString("size")))
+                .withDashboardId(rs.getInt(DASHBOARD_ID))
+                .withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID))
+                .withDisplayText(rs.getString(DISPLAY_TEXT))
+                .withDisplayType(DisplayType.valueOf(rs.getString(DISPLAY_TYPE)))
+                .withOrder(rs.getInt(ORDERING))
+                .withSize(Size.valueOf(rs.getString(SIZE)))
                 .withLabels(new ArrayList<>(dashboardLabelDtos))
                 .build();
     }
 
     private DashboardLabelDto buildLabelDtoFrom(ResultSet rs, DashboardLabelFilterDto dashboardFilterDto) throws SQLException {
         return new DashboardLabelDto.Builder()
-                .withLabelId(rs.getInt("label_id"))
-                .withLabelName(rs.getString("label_name"))
-                .withColor(rs.getString("color"))
-                .withDashboardId(rs.getInt("dashboard_id"))
+                .withLabelId(rs.getInt(LABEL_ID))
+                .withLabelName(rs.getString(LABEL_NAME))
+                .withColor(rs.getString(COLOR))
+                .withDashboardId(rs.getInt(DASHBOARD_ID))
                 .withDashboardLabelFilter(dashboardFilterDto)
                 .build();
     }
 
     private DashboardLabelFilterDto buildLabelFilterDtoFrom(ResultSet rs) throws SQLException {
         return new DashboardLabelFilterDto.Builder()
-                .withLabelFilterId(rs.getInt("label_filter_id"))
-                .withEsFilterPath(rs.getString("es_filter_path"))
-                .withEsFilterPathValue(rs.getString("es_filter_path_value"))
-                .withEsNestedPath(rs.getString("es_nested_path"))
-                .withAdditionalFilter(rs.getString("additional_filter"))
-                .withLabelId(rs.getInt("label_id"))
+                .withLabelFilterId(rs.getInt(LABEL_FILTER_ID))
+                .withEsFilterPath(rs.getString(ES_FILTER_PATH))
+                .withEsFilterPathValue(rs.getString(ES_FILTER_PATH_VALUE))
+                .withEsNestedPath(rs.getString(ES_NESTED_PATH))
+                .withAdditionalFilter(rs.getString(ADDITIONAL_FILTER))
+                .withLabelId(rs.getInt(LABEL_ID))
                 .build();
     }
 
@@ -173,7 +187,7 @@ public class DashboardDaoImpl implements DashboardDao {
                 try (ResultSet rs = stmt.executeQuery()) {
                     Map<Integer, DashboardDto> map = new HashMap<>();
                     while (rs.next()) {
-                        int dashboardId = rs.getInt("dashboard_id");
+                        int dashboardId = rs.getInt(DASHBOARD_ID);
                         DashboardLabelFilterDto dashboardFilterDto = buildLabelFilterDtoFrom(rs);
                         DashboardLabelDto dashboardLabelDto = buildLabelDtoFrom(rs, dashboardFilterDto);
                         DashboardDto dashboardDto = buildDashboardDtoFrom(rs, new ArrayList<>(List.of(dashboardLabelDto)));
@@ -192,6 +206,11 @@ public class DashboardDaoImpl implements DashboardDao {
         if (results.resultException != null) {
             throw new RuntimeException("Error getting dashboard datas with " + instanceId, results.resultException);
         }
+        logger.info(
+                String.format(
+                        "Got %s dashboard graph for instance with id: %s ",
+                        result.size(), instanceId
+                ));
         return result;
     }
 

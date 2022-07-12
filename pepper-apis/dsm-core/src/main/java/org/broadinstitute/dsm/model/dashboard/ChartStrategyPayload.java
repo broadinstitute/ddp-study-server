@@ -5,8 +5,7 @@ import org.broadinstitute.dsm.db.dto.dashboard.DashboardDto;
 import org.elasticsearch.action.search.MultiSearchResponse;
 
 @Getter
-public class ChartStrategyPayload {
-
+class ChartStrategyPayload {
     private DashboardDto dashboardDto;
     private MultiSearchResponse multiSearchResponse;
 

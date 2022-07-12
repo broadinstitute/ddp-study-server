@@ -1,7 +1,6 @@
 package org.broadinstitute.dsm.model.dashboard;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.model.elastic.filter.query.BuildQueryStrategy;
 
 class QueryBuilderStrategyFactory {
 

@@ -5,36 +5,17 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.TestHelper;
 import org.broadinstitute.dsm.db.dto.dashboard.DashboardDto;
 import org.broadinstitute.dsm.db.dto.dashboard.DashboardLabelDto;
 import org.broadinstitute.dsm.db.dto.dashboard.DashboardLabelFilterDto;
-import org.broadinstitute.dsm.model.dashboard.BaseQueryBuilderFactory;
 import org.broadinstitute.dsm.model.dashboard.DisplayType;
 import org.broadinstitute.dsm.model.dashboard.Size;
-import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
-import org.broadinstitute.dsm.model.elastic.filter.Operator;
-import org.broadinstitute.dsm.model.elastic.filter.query.BaseQueryBuilder;
-import org.broadinstitute.dsm.model.elastic.filter.query.QueryPayload;
-import org.broadinstitute.dsm.model.elastic.filter.splitter.SplitterStrategy;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
-import org.elasticsearch.action.search.MultiSearchRequest;
-import org.elasticsearch.action.search.MultiSearchResponse;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class DashboardDaoImplTest {
@@ -152,67 +133,6 @@ public class DashboardDaoImplTest {
         try {
             DashboardDto dashboardDto = byInstanceId.get(0);
             testDashboard(dashboardDto);
-        } catch (Exception e) {
-            Assert.fail();
-        }
-    }
-
-    @Test
-    @Ignore
-    public void getDiagnosis() {
-        DashboardDao dashboardDao = new DashboardDaoImpl();
-        Optional<DashboardDto> maybeDashboardDto = dashboardDao.get(5);
-        try {
-            DashboardDto dashboardDto = maybeDashboardDto.get();
-            MultiSearchRequest request = new MultiSearchRequest();
-            AndOrFilterSeparator andOrFilterSeparator = new AndOrFilterSeparator("");
-            BaseQueryBuilder baseQueryBuilder = BaseQueryBuilderFactory.of(
-                    dashboardDto.getLabels().stream()
-                            .map(DashboardLabelDto::getDashboardFilterDto)
-                            .map(DashboardLabelFilterDto::getEsNestedPath)
-                            .findFirst()
-                            .orElse(StringUtils.EMPTY)
-            );
-            for (DashboardLabelDto label: dashboardDto.getLabels()) {
-                SearchRequest searchRequest = new SearchRequest();
-                SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-                QueryBuilder queryBuilder = null;
-                if (StringUtils.isNotBlank(label.getDashboardFilterDto().getEsNestedPath())) {
-                    if (StringUtils.isNotBlank(label.getDashboardFilterDto().getAdditionalFilter())) {
-                        andOrFilterSeparator.setFilter(label.getDashboardFilterDto().getAdditionalFilter());
-                        Map<String, List<String>> andOrSeparated = andOrFilterSeparator.parseFiltersByLogicalOperators();
-                        List<String> andFilters = andOrSeparated.get("AND");
-                        BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
-                        for (String filterValue: andFilters) {
-                            Operator operator = Operator.extract(filterValue);
-                            SplitterStrategy splitterStrategy = operator.getSplitterStrategy();
-                            splitterStrategy.setFilter(filterValue);
-                            String[] values = splitterStrategy.getValue();
-                            QueryPayload queryPayload = new QueryPayload(label.getDashboardFilterDto().getEsNestedPath(),
-                                    label.getDashboardFilterDto().getEsFilterPath(),
-                                    values, "participants_structured.atcp.atcp");
-
-                            boolQueryBuilder.must(baseQueryBuilder.buildEachQuery(operator, queryPayload));
-                        }
-                        queryBuilder = boolQueryBuilder;
-                    } else {
-                        queryBuilder = QueryBuilders.matchQuery(label.getDashboardFilterDto().getEsFilterPath(),
-                                label.getDashboardFilterDto().getEsFilterPathValue());
-                    }
-                }
-                searchSourceBuilder.query(queryBuilder);
-                searchRequest.source(searchSourceBuilder);
-                request.add(searchRequest);
-            }
-            MultiSearchResponse msearch = ElasticSearchUtil.getClientInstance().msearch(request, RequestOptions.DEFAULT);
-            List<String> x = new ArrayList<>();
-            List<Long> y = new ArrayList<>();
-            for (int i = 0; i < dashboardDto.getLabels().size(); i++) {
-                x.add(dashboardDto.getLabels().get(i).getLabelName());
-                MultiSearchResponse.Item response = msearch.getResponses()[i];
-                y.add(response.getResponse().getHits().getTotalHits());
-            }
-            System.out.println();
         } catch (Exception e) {
             Assert.fail();
         }

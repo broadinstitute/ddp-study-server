@@ -5,12 +5,13 @@ import java.util.List;
 import lombok.Getter;
 
 @Getter
-public class DonutData extends DashboardData {
+class DonutData extends DashboardData {
 
-    private List<Long> values;
-    private List<String> labels;
+    private List<Object> values;
+    private List<Object> labels;
 
-    public DonutData(DisplayType type, List<String> color, Size size, List<Long> values, List<String> labels, String title, Integer ordering) {
+    public DonutData(DisplayType type, List<String> color, Size size, List<Object> values,
+                     List<Object> labels, String title, Integer ordering) {
         super(type, color, size, title, ordering);
         this.values = values;
         this.labels = labels;

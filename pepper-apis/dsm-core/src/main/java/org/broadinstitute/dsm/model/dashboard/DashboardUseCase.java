@@ -6,11 +6,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.dashboard.DashboardDao;
 import org.broadinstitute.dsm.db.dto.dashboard.DashboardDto;
 import org.broadinstitute.dsm.db.dto.dashboard.DashboardLabelDto;
-import org.broadinstitute.dsm.db.dto.dashboard.DashboardLabelFilterDto;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.elasticsearch.action.search.MultiSearchRequest;
@@ -20,8 +18,6 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 public class DashboardUseCase {
-
-
     private DashboardDao dashboardDao;
 
     public DashboardUseCase(DashboardDao dashboardDao) {
