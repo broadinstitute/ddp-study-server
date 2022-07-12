@@ -82,7 +82,7 @@ public class ESObjectConstants {
     public static final String ONC_HISTORY_DETAIL = "oncHistoryDetail";
     public static final String ONC_HISTORY = "oncHistory";
     public static final String PARTICIPANT_DATA = "participantData";
-    public static final String PARTICIPANT_DATA_DATA = "dsm.participantData.data";
+    public static final String DSM_PARTICIPANT_DATA = "dsm.participantData";
     public static final String PARTICIPANT_RECORD = "participantRecord";
     public static final String PARTICIPANT = "participant";
     public static final String DYNAMIC_FIELDS = "dynamicFields";
