@@ -39,7 +39,7 @@ public class DownloadParticipantListRoute extends RequestHandler {
      * be renamed to processRequest, and the old 'processRequest' method should be deleted
      */
     public Object processRequest(Request request, Response response, String userId) throws Exception {
-        if (UserUtil.checkUserAccess(null, userId, "pt_list_export", null)) {
+        if (!UserUtil.checkUserAccess(null, userId, "pt_list_export", null)) {
             response.status(500);
             return new Result(500, UserErrorMessages.NO_RIGHTS);
         }
