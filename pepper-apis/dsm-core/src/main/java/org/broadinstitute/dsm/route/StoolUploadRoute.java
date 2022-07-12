@@ -32,6 +32,8 @@ public class StoolUploadRoute extends RequestHandler {
     private static final String PARTICIPANT_ID = "participantId";
     private static final String MF_BARCODE = "mfBarcode";
     private static final String RECEIVE_DATE = "receiveDate";
+    public static final String UPLOAD_ANYWAY = "uploadAnyway";
+
 
     @Override
     protected Object processRequest(Request request, Response response, String userId) throws Exception {
@@ -43,15 +45,14 @@ public class StoolUploadRoute extends RequestHandler {
         } else {
             throw new RuntimeException("No realm query param was sent");
         }
-
         String userIdRequest = UserUtil.getUserId(request);
 
         if (UserUtil.checkUserAccess(realm, userId, "kit_upload", userIdRequest)) {
             String content = request.body();
 
             AtomicBoolean uploadAnyway = new AtomicBoolean(false);
-            if (queryParams.value("uploadAnyway") != null) {
-                uploadAnyway.set(queryParams.get("uploadAnyway").booleanValue());
+            if (queryParams.value(UPLOAD_ANYWAY) != null) {
+                uploadAnyway.set(queryParams.get(UPLOAD_ANYWAY).booleanValue());
             }
 
             try {
@@ -80,10 +81,9 @@ public class StoolUploadRoute extends RequestHandler {
                     String mfBarcode = stoolUploadObject.getMfBarcode();
                     String receiveDate = stoolUploadObject.getReceiveDate();
 
-
                     Optional<StoolUploadDto> stoolUploadDto = stoolUploadDao.getStoolUploadDto(participantId, mfBarcode);
 
-                    stoolUploadDto.ifPresent(e -> stoolUploadDao.updateKitData(receiveDate, e.getKitId()));
+                    stoolUploadDto.ifPresent(e -> stoolUploadDao.updateKitData(receiveDate, e.getKitId(), mfBarcode));
                 });
             } catch (Exception e) {
                 return e.getMessage();

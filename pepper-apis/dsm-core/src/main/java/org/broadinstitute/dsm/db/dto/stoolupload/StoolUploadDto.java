@@ -6,5 +6,5 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class StoolUploadDto {
-    private String kitId;
+    private int kitId;
 }
