@@ -60,8 +60,8 @@ public class OsteoAboutYouChildTitleUpdates implements CustomTask {
             String bodyText = activity.getString("bodyText");
             long activityId = ActivityBuilder.findActivityId(handle, studyId, activityCode);
             BlockContentDto contentBlock = helper.findContentBlockByBodyText(activityId, bodyText);
-            helper.setNullTitle(contentBlock.getId());
-            log.info("Activity block titleTemplate set to null {}", activityCode);
+            helper.deleteContentBlock(contentBlock.getBlockId());
+            log.info("Deleted content block: {} in activity: {}", contentBlock.getId(), activityCode);
         }
     }
 
@@ -83,7 +83,30 @@ public class OsteoAboutYouChildTitleUpdates implements CustomTask {
         @RegisterConstructorMapper(BlockContentDto.class)
         BlockContentDto findContentBlockByBodyText(@Bind("activityId") long activityId, @Bind("text") String bodyTemplateText);
 
-        @SqlUpdate("update block_content set title_template_id = null where block_content_id=:id")
-        int setNullTitle(@Bind("id") long blockId);
+        @SqlUpdate("delete from form_section__block where block_id = :blockId")
+        int deleteSectionBlockMembershipByBlockId(@Bind("blockId") long blockId);
+
+        @SqlUpdate("delete from block_content where block_id = :blockId")
+        int deleteBlockContentByBlockId(@Bind("blockId") long blockContentId);
+
+        @SqlUpdate("delete from block where block_id = :id")
+        int deleteBlockById(@Bind("id") long id);
+
+        default void deleteContentBlock(long blockId) {
+            int numDeleted = deleteSectionBlockMembershipByBlockId(blockId);
+            if (numDeleted != 1) {
+                throw new DDPException("Could not remove content block with blockId=" + blockId + " from section");
+            }
+
+            numDeleted = deleteBlockContentByBlockId(blockId);
+            if (numDeleted != 1) {
+                throw new DDPException("Could not delete content block with blockId=" + blockId);
+            }
+
+            numDeleted = deleteBlockById(blockId);
+            if (numDeleted != 1) {
+                throw new DDPException("Could not delete block with blockId=" + blockId);
+            }
+        }
     }
 }
