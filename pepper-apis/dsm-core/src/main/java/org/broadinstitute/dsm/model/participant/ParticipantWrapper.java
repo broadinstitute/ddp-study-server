@@ -133,8 +133,8 @@ public class ParticipantWrapper {
                     participant.setReviewed(oncHistory.getReviewed());
                 });
 
-                StudyPreFilter.fromPayload(StudyPreFilterPayload.of(elasticSearchParticipantDto, ddpInstanceDto))
-                        .ifPresent(StudyPreFilter::filter);
+//                StudyPreFilter.fromPayload(StudyPreFilterPayload.of(elasticSearchParticipantDto, ddpInstanceDto))
+//                        .ifPresent(StudyPreFilter::filter);
 
                 List<MedicalRecord> medicalRecord = esDsm.getMedicalRecord();
                 List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();
