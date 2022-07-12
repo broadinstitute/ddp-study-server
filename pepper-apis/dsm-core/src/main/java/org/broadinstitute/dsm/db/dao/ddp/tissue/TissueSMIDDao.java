@@ -26,7 +26,8 @@ public class TissueSMIDDao {
             " SELECT * from sm_id sm where sm.tissue_id= ?   and NOT sm.deleted <=> 1";
     public static final String SQL_GET_SEQUENCING_SM_ID_BASED_ON_TISSUE_ID = " SELECT * from sm_id sm "
             + "left join sm_id_type smtype on (sm.sm_id_type_id = smtype.sm_id_type_id) "
-            + "where sm.tissue_id = ? and (smtype.sm_id_type = \"uss\" or smtype.sm_id_type = \"scrolls\") ";
+            + "where sm.tissue_id = ? and (smtype.sm_id_type = \"uss\" or smtype.sm_id_type = \"scrolls\") "
+            + "and sm.accession_date is not null ";
     public static final String SQL_TYPE_ID_FOR_TYPE = "SELECT sm_id_type_id from sm_id_type where `sm_id_type` = ?";
     public static final String SQL_INSERT_SM_ID =
             "INSERT INTO sm_id SET tissue_id = ?, sm_id_type_id = ?, sm_id_value=?, last_changed = ?, changed_by = ?";

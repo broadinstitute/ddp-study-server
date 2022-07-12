@@ -29,6 +29,7 @@ public class ClinicalKitDao {
                     + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
                     + "LEFT JOIN sm_id_type sit on (sit.sm_id_type_id = sm.sm_id_type_id) "
                     + "LEFT JOIN kit_type ktype on ( sit.kit_type_id = ktype.kit_type_id) WHERE sm.sm_id_value = ? ";
+    private static final String SQL_SET_ACCESSION_TIME = "UPDATE sm_id SET accession_date = ? WHERE sm_id_value = ?";
 
     public Optional<ClinicalKitWrapper> getClinicalKitFromSMId(String smIdValue) {
         SimpleResult results = inTransaction((conn) -> {
@@ -75,8 +76,32 @@ public class ClinicalKitDao {
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(clinicalKitWrapper.getDdpInstanceId());
         clinicalKitDto.setNecessaryParticipantDataToClinicalKit(clinicalKitWrapper.getDdpParticipantId(), ddpInstance);
         if (StringUtils.isNotBlank(clinicalKitDto.getAccessionNumber())) {
+            setAccessionTimeForSMID(smIdValue);
             return clinicalKitDto;
         }
         throw new RuntimeException("The kit doesn't have an accession number! SM ID is: " + smIdValue);
+    }
+
+    private void setAccessionTimeForSMID(String smIdValue) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SET_ACCESSION_TIME)) {
+                stmt.setLong(1, System.currentTimeMillis());
+                stmt.setString(2, smIdValue);
+                int r = stmt.executeUpdate();
+                if (r != 1) { //number of sm ids with that value
+                    throw new RuntimeException(
+                            "Update query for smId accession time updated " + r + " rows! with smId value " + smIdValue);
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Error updating accession time for smId " + smIdValue, results.resultException);
+        }
     }
 }
