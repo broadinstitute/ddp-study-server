@@ -337,7 +337,7 @@ public class DashboardUseCaseTest {
         BarChartData verticalBarChartData = (BarChartData) verticalBarChart;
         List<String> expectedLabels2 = Arrays.asList("Label 0", "Label 1", "Label 2", "Label 3", "Label 4");
         List<Long> expectedValues2 = Arrays.asList(0L, 2L, 1L, 1L, 1L);
-        assertArrayEquals(expectedLabels2.toArray(), verticalBarChartData.getxValues().toArray());
+        assertArrayEquals(expectedLabels2.toArray(), verticalBarChartData.getValuesX().toArray());
         assertArrayEquals(expectedValues2.toArray(), verticalBarChartData.getValuesY().toArray());
     }
 
@@ -353,7 +353,7 @@ public class DashboardUseCaseTest {
         List<String> expectedLabels = Arrays.asList("Label 0", "Label 1", "Label 2", "Label 3", "Label 4");
         List<Long> expectedValues = Arrays.asList(1L, 1L, 1L, 1L, 1L);
         assertArrayEquals(expectedLabels.toArray(), barChartData.getValuesY().toArray());
-        assertArrayEquals(expectedValues.toArray(), barChartData.getxValues().toArray());
+        assertArrayEquals(expectedValues.toArray(), barChartData.getValuesX().toArray());
     }
 
     private void testHorizontalBarChartSingleWithAdditionalFilter(List<DashboardData> dashboards) {
@@ -369,7 +369,7 @@ public class DashboardUseCaseTest {
         List<String> expectedLabels = Arrays.asList("Label 0", "Label 1", "Label 2", "Label 3", "Label 4");
         List<Long> expectedValues = Arrays.asList(1L, 1L, 1L, 1L, 1L);
         assertArrayEquals(expectedLabels.toArray(), barChartData.getValuesY().toArray());
-        assertArrayEquals(expectedValues.toArray(), barChartData.getxValues().toArray());
+        assertArrayEquals(expectedValues.toArray(), barChartData.getValuesX().toArray());
     }
 
 }

@@ -47,13 +47,8 @@ public class DsmAbstractQueryBuilder {
 
     public AbstractQueryBuilder build() {
         Map<String, List<String>> parsedFilters = filterSeparator.parseFiltersByLogicalOperators();
-    for (Map.Entry<String, List<String>> parsedFilter : parsedFilters.entrySet()) {
+        for (Map.Entry<String, List<String>> parsedFilter : parsedFilters.entrySet()) {
             List<String> filterValues = parsedFilter.getValue();
-//            if (parsedFilter.getKey().equals(Filter.AND_TRIMMED)) {
-//                buildUpQuery(filterValues, BoolQueryBuilder::must);
-//            } else {
-//                buildUpQuery(filterValues, BoolQueryBuilder::should);
-//            }
             buildUpQuery(filterValues, FilterStrategy.of(parsedFilter.getKey()));
         }
         return boolQueryBuilder;
