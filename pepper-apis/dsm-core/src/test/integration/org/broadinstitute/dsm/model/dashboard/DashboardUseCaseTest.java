@@ -284,7 +284,7 @@ public class DashboardUseCaseTest {
 
     @Test
     public void getByDdpInstance() {
-        DashboardUseCase dashboardUseCase = new DashboardUseCase(new DashboardDaoImpl());
+        DashboardUseCase dashboardUseCase = new DashboardUseCase(new DashboardDaoImpl(), new ElasticSearch());
         List<DashboardData> dashboards = dashboardUseCase.getByDdpInstance(ddpInstanceDto);
         assertEquals(4, dashboards.size());
 

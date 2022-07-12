@@ -10,8 +10,12 @@ import org.broadinstitute.dsm.model.elastic.filter.query.QueryPayload;
 import org.broadinstitute.dsm.model.elastic.filter.splitter.SplitterStrategy;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 abstract class BaseQueryBuilderStrategy {
+
+    private static final Logger logger = LoggerFactory.getLogger(BaseQueryBuilderStrategy.class);
     protected QueryBuildPayload queryBuildPayload;
 
     public BaseQueryBuilderStrategy(QueryBuildPayload queryBuildPayload) {
@@ -33,6 +37,7 @@ abstract class BaseQueryBuilderStrategy {
     }
 
     private QueryBuilder buildQueryForAdditionalFilter() {
+        logger.info("Building search requests for additional filtering...");
         queryBuildPayload.getSeparator().setFilter(queryBuildPayload.getLabel().getDashboardFilterDto().getAdditionalFilter());
         Map<String, List<String>> andOrSeparated = queryBuildPayload.getSeparator().parseFiltersByLogicalOperators();
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();

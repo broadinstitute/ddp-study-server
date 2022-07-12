@@ -7,9 +7,12 @@ import java.util.function.Supplier;
 import org.broadinstitute.dsm.db.dto.dashboard.DashboardDto;
 import org.broadinstitute.dsm.db.dto.dashboard.DashboardLabelDto;
 import org.elasticsearch.action.search.MultiSearchResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 abstract class BasicChartStrategy implements Supplier<DashboardData> {
 
+    private static final Logger logger = LoggerFactory.getLogger(BasicChartStrategy.class);
     protected ChartStrategyPayload chartStrategyPayload;
     protected List<Object> values;
     protected List<Object> labels;
@@ -33,6 +36,7 @@ abstract class BasicChartStrategy implements Supplier<DashboardData> {
     }
 
     protected void fillLabelsValues() {
+        logger.info("Filling dashboard data with values and labels...");
         DashboardDto dashboardDto = chartStrategyPayload.getDashboardDto();
         MultiSearchResponse msearch = chartStrategyPayload.getMultiSearchResponse();
         for (int i = 0; i < dashboardDto.getLabels().size(); i++) {

@@ -1,50 +1,39 @@
 package org.broadinstitute.dsm.model.dashboard;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.broadinstitute.dsm.db.dao.dashboard.DashboardDao;
 import org.broadinstitute.dsm.db.dto.dashboard.DashboardDto;
-import org.broadinstitute.dsm.db.dto.dashboard.DashboardLabelDto;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
-import org.elasticsearch.action.search.MultiSearchRequest;
+import org.broadinstitute.dsm.model.elastic.search.ElasticSearchable;
 import org.elasticsearch.action.search.MultiSearchResponse;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DashboardUseCase {
-    private DashboardDao dashboardDao;
 
-    public DashboardUseCase(DashboardDao dashboardDao) {
+    private static final Logger logger = LoggerFactory.getLogger(DashboardUseCase.class);
+    private DashboardDao dashboardDao;
+    private ElasticSearchable elasticSearchable;
+
+    public DashboardUseCase(DashboardDao dashboardDao, ElasticSearchable elasticSearchable) {
         this.dashboardDao = dashboardDao;
+        this.elasticSearchable = elasticSearchable;
     }
 
     public List<DashboardData> getByDdpInstance(DDPInstanceDto ddpInstanceDto) {
         List<DashboardData> result = new ArrayList<>();
         List<DashboardDto> dashboardDtos = dashboardDao.getByInstanceId(ddpInstanceDto.getDdpInstanceId());
+        logger.info("Collecting dashboard graphs for instance: " + ddpInstanceDto.getInstanceName());
         for (DashboardDto dashboardDto: dashboardDtos) {
-            MultiSearchRequest request = new MultiSearchRequest();
-            for (DashboardLabelDto label: dashboardDto.getLabels()) {
-                SearchRequest searchRequest = new SearchRequest();
-                SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-                QueryBuildPayload queryBuildPayload = new QueryBuildPayload(ddpInstanceDto, label);
-                QueryBuilderStrategyFactory queryBuilderStrategyFactory = new QueryBuilderStrategyFactory(queryBuildPayload);
-                searchSourceBuilder.query(queryBuilderStrategyFactory.of().build());
-                searchRequest.source(searchSourceBuilder);
-                searchRequest.indices(ddpInstanceDto.getEsParticipantIndex());
-                request.add(searchRequest);
-            }
-            MultiSearchResponse msearch = null;
-            try {
-                msearch = ElasticSearchUtil.getClientInstance().msearch(request, RequestOptions.DEFAULT);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            List<QueryBuilder> queryBuilders = getQueryBuildersFromDashboardDto(ddpInstanceDto, dashboardDto);
+            MultiSearchResponse msearch = elasticSearchable
+                    .executeMultiSearch(ddpInstanceDto.getEsParticipantIndex(), queryBuilders);
             ChartStrategyPayload chartStrategyPayload = new ChartStrategyPayload(dashboardDto, msearch);
             ChartStrategyFactory chartStrategyFactory = new ChartStrategyFactory(chartStrategyPayload);
             Supplier<DashboardData> chartStrategy = chartStrategyFactory.of();
@@ -52,6 +41,14 @@ public class DashboardUseCase {
         }
         Collections.sort(result);
         return result;
+    }
+
+    private List<QueryBuilder> getQueryBuildersFromDashboardDto(DDPInstanceDto ddpInstanceDto, DashboardDto dashboardDto) {
+        return dashboardDto.getLabels().stream()
+                .map(labelDto -> new QueryBuildPayload(ddpInstanceDto, labelDto))
+                .map(QueryBuilderStrategyFactory::new)
+                .map(factory -> factory.of().build())
+                .collect(Collectors.toList());
     }
 }
 
