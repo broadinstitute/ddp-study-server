@@ -50,7 +50,15 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
         final var requestorClientId = auth.getClient();
         final var domain = auth.getDomain();
         final var studyGuid = new Guid(payload.getStudyGuid());
-        final var email = new EmailAddress(payload.getEmail());
+        final EmailAddress email;
+        
+        try {
+            email = new EmailAddress(payload.getEmail());
+        } catch (IllegalArgumentException exception) {
+            var invalidEmail = new ApiError(ErrorCodes.BAD_PAYLOAD,
+            "The email address is missing or malformed.");
+    throw ResponseUtil.haltError(HttpStatus.SC_UNPROCESSABLE_ENTITY, invalidEmail);
+        }
 
         log.info("attempting to create a user for study {}", payload.getStudyGuid());
 
