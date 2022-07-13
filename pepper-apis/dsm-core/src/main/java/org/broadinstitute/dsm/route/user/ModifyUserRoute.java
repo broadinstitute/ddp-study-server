@@ -1,6 +1,8 @@
 package org.broadinstitute.dsm.route.user;
 
 import com.google.gson.Gson;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.roles.UserRoleDao;
 import org.broadinstitute.dsm.db.dto.user.UserRoleDto;
@@ -10,20 +12,15 @@ import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.lddp.handlers.util.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
 
+@Slf4j
+@AllArgsConstructor
 public class ModifyUserRoute extends RequestHandler {
 
-    Logger logger = LoggerFactory.getLogger(ModifyUserRoute.class);
     UserRoleDao userRoleDao;
-
-    public ModifyUserRoute(UserRoleDao userRoleDao) {
-        this.userRoleDao = userRoleDao;
-    }
 
     @Override
     protected Object processRequest(Request request, Response response, String userId) throws Exception {
@@ -41,8 +38,8 @@ public class ModifyUserRoute extends RequestHandler {
                     String requestBody = request.body();
                     UserRoleDto modifiedUser = new Gson().fromJson(requestBody, UserRoleDto.class);
 
-                    logger.info("Going to update info for user id " + modifiedUser.getUser().getUserId() + " wit new role " +
-                            modifiedUser.getRole().getRoleId());
+                    log.info("Going to update info for user id " + modifiedUser.getUser().getUserId() + " wit new role "
+                            + modifiedUser.getRole().getRoleId());
                     userRoleDao.modifyUser(modifiedUser, realm);
 
                     return new Result(200);
@@ -52,7 +49,7 @@ public class ModifyUserRoute extends RequestHandler {
                 }
             }
         }
-        logger.error("realm is empty");
+        log.error("realm is empty");
         response.status(500);
         return new Result(500, UserErrorMessages.CONTACT_DEVELOPER);
     }

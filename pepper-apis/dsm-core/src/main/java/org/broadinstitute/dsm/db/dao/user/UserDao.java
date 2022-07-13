@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.util.DdpDBUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -20,12 +21,9 @@ import org.broadinstitute.dsm.db.jdbi.JdbiUserSettings;
 import org.broadinstitute.dsm.exception.DaoException;
 import org.broadinstitute.dsm.util.DBUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class UserDao implements Dao<UserDto> {
-
-    Logger logger = LoggerFactory.getLogger(UserDao.class);
 
     public Optional<UserDto> getUserByEmail(@NonNull String email) {
         SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
@@ -134,7 +132,7 @@ public class UserDao implements Dao<UserDto> {
             long userId;
             if (!maybeUserId.isEmpty()) {
                 userId = maybeUserId.get();
-                logger.info("user " + user.getEmail() + " already exists, user id: " + userId);
+                log.info("user " + user.getEmail() + " already exists, user id: " + userId);
             } else {
                 String userGuid = DdpDBUtils.uniqueUserGuid(handle);
                 String userHruid = DdpDBUtils.uniqueUserHruid(handle);
@@ -148,9 +146,9 @@ public class UserDao implements Dao<UserDto> {
                         .insertUserProfile(Long.valueOf(userId), user.getFirstName(), user.getLastName(), phone,
                                 user.getEmail().orElseThrow());
                 handle.attach(JdbiUserSettings.class).insertNewUserSettings(userId);
-                logger.info("Inserted " + user.getEmail().get() + " as userId " + userId + " into DSS database");
+                log.info("Inserted " + user.getEmail().get() + " as userId " + userId + " into DSS database");
                 if (ddpInstance.isHasRole()) {
-                    logger.info("Instance " + ddpInstance.getName()
+                    log.info("Instance " + ddpInstance.getName()
                             + " has DSS study admin role, going to insert user in the study_admin table");
                     handle.attach(JdbiStudyAdmin.class).insert(ddpInstance.getStudyGuid(), userId);
                 }
@@ -158,7 +156,7 @@ public class UserDao implements Dao<UserDto> {
             try {
                 DBUtil.checkUpdate(
                         handle.attach(JdbiUserRole.class)
-                                .insertNewUserRole(userId, userRoleDto.getRole().getRoleName(), ddpInstance.getStudyGuid()),
+                                .insertNewUserRole(userId, userRoleDto.getRole().getName(), ddpInstance.getStudyGuid()),
                         1);
             } catch (DaoException e) {
                 dbVals.resultException = e;

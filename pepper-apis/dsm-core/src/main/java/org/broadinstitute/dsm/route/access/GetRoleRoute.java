@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.route.access;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.roles.RoleDao;
@@ -9,19 +11,14 @@ import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.lddp.handlers.util.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
 
+@Slf4j
+@AllArgsConstructor
 public class GetRoleRoute extends RequestHandler {
-    private Logger logger = LoggerFactory.getLogger(GetRoleRoute.class);
     private RoleDao roleDao;
-
-    public GetRoleRoute(RoleDao roleDao) {
-        this.roleDao = roleDao;
-    }
 
     @Override
     protected Object processRequest(Request request, Response response, String userId) throws Exception {
@@ -44,7 +41,7 @@ public class GetRoleRoute extends RequestHandler {
                 }
             }
         }
-        logger.error("realm is empty");
+        log.error("realm is empty");
         response.status(500);
         return new Result(500, UserErrorMessages.CONTACT_DEVELOPER);
     }
