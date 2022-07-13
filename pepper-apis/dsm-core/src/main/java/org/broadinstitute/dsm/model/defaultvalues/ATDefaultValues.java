@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.model.defaultvalues;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -10,10 +12,14 @@ import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
+import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.model.elastic.ESActivities;
 import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.ObjectTransformer;
 import org.broadinstitute.dsm.model.settings.field.FieldSettings;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
+import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,18 +39,29 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
 
     @Override
     protected boolean setDefaultData() {
-        if (elasticSearchParticipantDto == null) {
-            logger.info("elasticSearchParticipantDto was null");
-            return false;
-        }
-
         if (isParticipantDataNotInES()) {
             logger.info("Participant does not have profile and activities in ES yet...");
             return false;
         }
 
         if (isParticipantRegistrationComplete()) {
-            return insertGenomicIdForParticipant() && insertExitStatusForParticipant();
+            boolean inserted = insertExitStatusForParticipant() && insertGenomicIdForParticipant();
+
+            try {
+                String ddpParticipantId = elasticSearchParticipantDto.getProfile().orElseThrow().getGuid();
+                ObjectTransformer objectTransformer = new ObjectTransformer(instance.getName());
+                this.setDataAccess(new ParticipantDataDao());
+                List<ParticipantData> participantDataList =
+                        ((ParticipantDataDao) dataAccess).getParticipantDataByParticipantId(ddpParticipantId);
+                List<Map<String, Object>> transformedList =
+                        objectTransformer.transformObjectCollectionToCollectionMap((List) participantDataList);
+                ElasticSearchUtil.updateRequest(ddpParticipantId, instance.getParticipantIndexES(), new HashMap<>(
+                        Map.of(ESObjectConstants.DSM, new HashMap<>(Map.of(ESObjectConstants.PARTICIPANT_DATA, transformedList)))));
+
+            } catch (Exception e) {
+                logger.info("UpdateRequest for participantData failed" + e.getMessage());
+            }
+            return inserted;
         } else {
             //in case if 3rd registration option is chosen in prequalifier of ATCP
             //which is just stay inform registration
