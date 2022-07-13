@@ -5,8 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.typesafe.config.Config;
+import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoAboutYouChildTitleUpdates;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoAboutChildV2;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoAboutYouV2;
+import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoActivityDashboardOrdering;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoActivityDetailsUpdate;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoAdultConsentFixes;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoConsentVersion2;
@@ -41,6 +43,8 @@ public class OsteoV2Updates implements CustomTask {
         tasks.add(new OsteoGovernanceFix());
         tasks.add(new OsteoNewFamilyHistory());
         tasks.add(new OsteoDdp8269());
+        tasks.add(new OsteoActivityDashboardOrdering());
+        tasks.add(new OsteoAboutYouChildTitleUpdates());
 
         // Last
         tasks.add(new OsteoPdfUpdates());
