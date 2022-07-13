@@ -23,6 +23,7 @@ public class PostMercuryOrderDummyRoute implements Route {
     private String projectId;
     private String topicId;
     private MercuryOrderPublisher mercuryOrderPublisher = new MercuryOrderPublisher(new MercuryOrderDao(), new ParticipantDao());
+    private static final String PEPPER_ORDER_ID = "PepperOrderId";
 
     public PostMercuryOrderDummyRoute(String projectId, String topicId) {
         this.projectId = projectId;
@@ -58,7 +59,7 @@ public class PostMercuryOrderDummyRoute implements Route {
         }
         String pepperOrderId = publishMessage(mercuryOrderRequest, ddpInstance, userId);
         JSONObject main = new JSONObject();
-        main.put("PepperOrderId", pepperOrderId);
+        main.put(PEPPER_ORDER_ID, pepperOrderId);
         return main;
     }
 
