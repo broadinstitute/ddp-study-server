@@ -182,37 +182,47 @@ public class TabularParticipantParser {
                                                Map<String, Object> esModuleMap, int moduleRepeatNum) {
         for (FilterExportConfig filterConfig : moduleConfig.getQuestions()) {
 
-            TextValueProvider valueProvider =
-                    valueProviderFactory.getValueProvider(filterConfig.getColumn().getName(), filterConfig.getType());
+            try {
+                TextValueProvider valueProvider =
+                        valueProviderFactory.getValueProvider(filterConfig.getColumn().getName(), filterConfig.getType());
 
-            Collection<String> formattedValues = valueProvider.getFormattedValues(filterConfig, esModuleMap);
+                Collection<String> formattedValues = valueProvider.getFormattedValues(filterConfig, esModuleMap);
 
-            if (filterConfig.isSplitOptionsIntoColumns()) {
-                for (int optIndex = 0; optIndex < filterConfig.getOptions().size(); optIndex++) {
-                    Map<String, Object> opt = filterConfig.getOptions().get(optIndex);
+                if (filterConfig.isSplitOptionsIntoColumns()) {
+                    for (int optIndex = 0; optIndex < filterConfig.getOptions().size(); optIndex++) {
+                        Map<String, Object> opt = filterConfig.getOptions().get(optIndex);
 
+                        String colName = TabularParticipantExporter.getColumnName(
+                                filterConfig,
+                                moduleRepeatNum + 1,
+                                1,
+                                opt
+                        );
+
+                        String exportValue = formattedValues.contains(opt.get(ESObjectConstants.OPTION_STABLE_ID)) ?
+                                COLUMN_SELECTED : COLUMN_UNSELECTED;
+                        participantMap.put(colName, exportValue);
+                    }
+
+                } else {
                     String colName = TabularParticipantExporter.getColumnName(
                             filterConfig,
                             moduleRepeatNum + 1,
                             1,
-                            opt
-                    );
-
-                    String exportValue = formattedValues.contains(opt.get(ESObjectConstants.OPTION_STABLE_ID)) ?
-                            COLUMN_SELECTED : COLUMN_UNSELECTED;
+                            null);
+                    String exportValue = formattedValues.stream().collect(Collectors.joining(", "));
                     participantMap.put(colName, exportValue);
-                }
 
-            } else {
+                }
+            } catch (Exception e) {
                 String colName = TabularParticipantExporter.getColumnName(
                         filterConfig,
                         moduleRepeatNum + 1,
                         1,
                         null);
-                String exportValue = formattedValues.stream().collect(Collectors.joining(", "));
-                participantMap.put(colName, exportValue);
-
+                logger.error("Failed to write column: " + colName, e);
             }
+
         }
     }
 
