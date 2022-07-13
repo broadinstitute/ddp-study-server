@@ -24,7 +24,7 @@ public class ClinicalKitsRoute implements Route {
 
     private static final Logger logger = LoggerFactory.getLogger(ClinicalKitsRoute.class);
 
-    private final String mercury = "MERCURY";
+    public static final String MERCURY = "MERCURY";
     private NotificationUtil notificationUtil;
 
     public ClinicalKitsRoute(@NonNull NotificationUtil notificationUtil) {
@@ -57,7 +57,7 @@ public class ClinicalKitsRoute implements Route {
             //kit not found in ddp_kit table -> check tissue smi-ids
             return new ClinicalKitDao().getClinicalKitBasedOnSmId(kitLabel);
         } else {
-            Optional<KitInfo> maybeKitInfo = GPReceivedKit.receiveKit(kitLabel, optionalBSPKitDto.get(), notificationUtil, mercury);
+            Optional<KitInfo> maybeKitInfo = GPReceivedKit.receiveKit(kitLabel, optionalBSPKitDto.get(), notificationUtil, MERCURY);
             KitInfo kitInfo = maybeKitInfo.get();
             ClinicalKitDto clinicalKit = new ClinicalKitDto();
             logger.info("Creating clinical kit to return to GP " + kitLabel);

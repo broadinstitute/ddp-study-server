@@ -105,7 +105,8 @@ public class ClinicalOrderDao implements Dao<ClinicalOrderDto> {
         int index1 = collabSampleId.indexOf('_');
         int index2 = collabSampleId.indexOf('_', index1 + 1);
         if (index1 == -1 || index2 == -1 || index1 == index2) {
-            throw new RuntimeException("Wrongly formatted collaborator sample id " + collabSampleId);
+            log.error("Wrongly formatted collaborator sample id " + collabSampleId);
+            return "";
         }
         return collabSampleId.substring(index1 + 1, index2);
     }

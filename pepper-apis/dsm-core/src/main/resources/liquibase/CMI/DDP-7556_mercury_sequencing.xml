@@ -42,9 +42,4 @@
             <column name="ddp_instance_id" type="VARCHAR(20)" afterColumn="barcode"></column>
         </addColumn>
     </changeSet>
-    <changeSet id="DDP-7556_sm_id_accessioning_time" author="pegah">
-        <addColumn tableName="sm_id">
-            <column name="accession_date" type="BIGINT"></column>
-        </addColumn>
-    </changeSet>
 </databaseChangeLog>
