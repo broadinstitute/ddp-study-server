@@ -10,16 +10,16 @@ import org.apache.commons.lang3.StringUtils;
 @AllArgsConstructor
 public class UserDto {
     private long userId;
-    private long dsmLegacyId;
-    private String guid;
-    private String shortId;
-    private String firstName;
-    private String lastName;
     private String name;
     private String email;
     private String phoneNumber;
     private String auth0UserId;
+    private String guid;
+    private String firstName;
+    private String lastName;
+    private String shortId;
     private boolean isActive;
+    private long dsmLegacyId;
 
     public long getUserId() {
         return this.userId;
