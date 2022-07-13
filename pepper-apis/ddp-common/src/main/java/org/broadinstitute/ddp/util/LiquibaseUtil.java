@@ -24,7 +24,6 @@ import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.TransactionWrapper.DB;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
-import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.security.AesUtil;
 import org.broadinstitute.ddp.security.EncryptionKey;
@@ -109,7 +108,15 @@ public class LiquibaseUtil implements AutoCloseable {
      */
     private void runPepperAPIsGlobalMigrations() throws LiquibaseException, SQLException {
         runMigrations(PEPPER_APIS_GLOBAL_MIGRATIONS);
+
+        /* 2022.07.07
+         * This call is required for proper operation of the DSS backend.
+         * Without the Auth0 management client inserted by this call,
+         * local user registration will fail to update the Auth0 user's
+         * metadata.
+         */
         insertLegacyTenant();
+
         // run script to update client -> tenant and study -> tenant and enable constraints
         runMigrations(AUTH0_TENANT_MIGRATION);
     }
@@ -130,59 +137,6 @@ public class LiquibaseUtil implements AutoCloseable {
 
     private void runSharedDBMigrations() throws LiquibaseException, SQLException {
         runMigrations(SHARED_DB_MIGRATIONS);
-    }
-
-    /**
-     * Inserts the environment-sensitive tenant used for testing
-     * via the given handle and config.  Returns true if tenant
-     * was inserted, false otherwise.
-     */
-    private static boolean insertLegacyTenant(Handle handle, Config auth0Cfg) {
-        JdbiAuth0Tenant jdbiAuth0Tenant = handle.attach(JdbiAuth0Tenant.class);
-        boolean insertedTenant = false;
-        if (auth0Cfg.hasPath(ConfigFile.DOMAIN) && auth0Cfg.hasPath(ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_ID)
-                && auth0Cfg.hasPath(ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_SECRET)) {
-            String domain = auth0Cfg.getString(ConfigFile.DOMAIN);
-            String mgmtApiClient = auth0Cfg.getString(ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_ID);
-            String mgmtSecret = auth0Cfg.getString(ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_SECRET);
-
-            String encryptedSecret = AesUtil.encrypt(mgmtSecret, EncryptionKey.getEncryptionKey());
-            Auth0TenantDto tenantDto = jdbiAuth0Tenant.insertIfNotExists(domain, mgmtApiClient, encryptedSecret);
-            log.info("Inserted testing tenant {}", domain);
-            insertedTenant = true;
-        } else {
-            log.info("No legacy domain/mgt secret in config, skipping insert of auth0_tenant data");
-        }
-        return insertedTenant;
-    }
-
-    // todo arz make this work with existing local test script and real deployment
-    // do migration in both test and non-test script, with conditional protection
-
-    /**
-     * Inserts the environment-sensitive tenant used for testing.
-     * Returns true if tenant was inserted.
-     */
-    private static boolean insertLegacyTenant() {
-        Config cfg = ConfigManager.getInstance().getConfig();
-        boolean insertedTenant = false;
-        boolean resetDb = false;
-
-        String pepperApisDbUrl = cfg.getString(DB.APIS.getDbUrlConfigKey());
-
-        if (!TransactionWrapper.isInitialized()) {
-            TransactionWrapper.init(new TransactionWrapper.DbConfiguration(DB.APIS, 1, pepperApisDbUrl));
-            resetDb = true;
-        }
-        // insert legacy auth0 tenant data
-        Config auth0Config = cfg.getConfig(ConfigFile.AUTH0);
-        insertedTenant = TransactionWrapper.withTxn(DB.APIS, handle -> {
-            return insertLegacyTenant(handle, auth0Config);
-        });
-        if (resetDb) {
-            TransactionWrapper.reset();
-        }
-        return insertedTenant;
     }
 
     /**
@@ -225,6 +179,60 @@ public class LiquibaseUtil implements AutoCloseable {
         }
     }
 
+    // todo arz make this work with existing local test script and real deployment
+    // do migration in both test and non-test script, with conditional protection
+
+    /**
+     * Inserts the environment-sensitive tenant used for testing.
+     * Returns true if tenant was inserted.
+     */
+    private static boolean insertLegacyTenant() {
+        Config cfg = ConfigManager.getInstance().getConfig();
+        boolean insertedTenant = false;
+        boolean resetDb = false;
+
+        String pepperApisDbUrl = cfg.getString(DB.APIS.getDbUrlConfigKey());
+
+        if (!TransactionWrapper.isInitialized()) {
+            TransactionWrapper.init(new TransactionWrapper.DbConfiguration(DB.APIS, 1, pepperApisDbUrl));
+            resetDb = true;
+        }
+        // insert legacy auth0 tenant data
+        Config auth0Config = cfg.getConfig(ConfigFile.AUTH0);
+        insertedTenant = TransactionWrapper.withTxn(DB.APIS, handle -> {
+            return insertLegacyTenant(handle, auth0Config);
+        });
+        if (resetDb) {
+            TransactionWrapper.reset();
+        }
+        return insertedTenant;
+    }
+
+    /**
+     * Inserts the environment-sensitive tenant used for testing
+     * via the given handle and config.  Returns true if tenant
+     * was inserted, false otherwise.
+     */
+    private static boolean insertLegacyTenant(Handle handle, Config auth0Cfg) {
+        JdbiAuth0Tenant jdbiAuth0Tenant = handle.attach(JdbiAuth0Tenant.class);
+        boolean insertedTenant = false;
+        if (auth0Cfg.hasPath(ConfigFile.DOMAIN) && auth0Cfg.hasPath(ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_ID)
+                && auth0Cfg.hasPath(ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_SECRET)) {
+            String domain = auth0Cfg.getString(ConfigFile.DOMAIN);
+            String mgmtApiClient = auth0Cfg.getString(ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_ID);
+            String mgmtSecret = auth0Cfg.getString(ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_SECRET);
+
+            String encryptedSecret = AesUtil.encrypt(mgmtSecret, EncryptionKey.getEncryptionKey());
+            jdbiAuth0Tenant.insertIfNotExists(domain, mgmtApiClient, encryptedSecret);
+            log.info("Inserted testing tenant {}", domain);
+            insertedTenant = true;
+        } else {
+            log.info("No legacy domain/mgt secret in config, skipping insert of auth0_tenant data");
+        }
+        return insertedTenant;
+    }
+
+
     /**
      * Writes logging information about the locks.
      */
@@ -234,8 +242,8 @@ public class LiquibaseUtil implements AutoCloseable {
             if (databaseChangeLogLocks.length > 0) {
                 hasLocks = true;
                 for (DatabaseChangeLogLock dbLock : databaseChangeLogLocks) {
-                    log.info("Liquibase locked by {} at {}.  Lock id is {} ", dbLock.getLockedBy(), dbLock.getLockGranted(),
-                            dbLock.getId());
+                    log.info("Liquibase locked by {} at {}.  Lock id is {} ", dbLock.getLockedBy(),
+                            dbLock.getLockGranted(), dbLock.getId());
                 }
             }
         }
@@ -258,6 +266,4 @@ public class LiquibaseUtil implements AutoCloseable {
         }
         return String.format("%d-%s", Instant.now().toEpochMilli(), hostname);
     }
-
-
 }

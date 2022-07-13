@@ -23,6 +23,8 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.HttpMethod;
 import com.typesafe.config.Config;
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
@@ -316,37 +318,12 @@ public class FileUploadService {
         OK
     }
 
+    @Value
+    @AllArgsConstructor
     public static class AuthorizeResult {
-        private final AuthorizeResultType authorizeResultType;
-        private final FileUpload fileUpload;
-        private final URL signedUrl;
-        private final FileUploadSettings fileUploadSettings;
-
-        public AuthorizeResult(
-                AuthorizeResultType authorizeResultType,
-                FileUpload fileUpload,
-                URL signedUrl,
-                FileUploadSettings fileUploadSettings) {
-            this.authorizeResultType = authorizeResultType;
-            this.fileUpload = fileUpload;
-            this.signedUrl = signedUrl;
-            this.fileUploadSettings = fileUploadSettings;
-        }
-
-        public AuthorizeResultType getAuthorizeResultType() {
-            return authorizeResultType;
-        }
-
-        public FileUpload getFileUpload() {
-            return fileUpload;
-        }
-
-        public URL getSignedUrl() {
-            return signedUrl;
-        }
-
-        public FileUploadSettings getFileUploadSettings() {
-            return fileUploadSettings;
-        }
+        AuthorizeResultType authorizeResultType;
+        FileUpload fileUpload;
+        URL signedUrl;
+        FileUploadSettings fileUploadSettings;
     }
 }

@@ -2,10 +2,12 @@ package org.broadinstitute.dsm.db.dto.user;
 
 import java.util.Optional;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 
 @Data
+@AllArgsConstructor
 public class UserDto {
     private long userId;
     private long dsmLegacyId;
@@ -18,21 +20,6 @@ public class UserDto {
     private String phoneNumber;
     private String auth0UserId;
     private boolean isActive;
-
-    public UserDto(long userId, String name, String email, String phoneNumber, String auth0UserId, String guid, String firstName,
-                   String lastName, String shortId, boolean isActive, long dsmLegacyId) {
-        this.userId = userId;
-        this.name = name;
-        this.email = email;
-        this.phoneNumber = phoneNumber;
-        this.auth0UserId = auth0UserId;
-        this.guid = guid;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.shortId = shortId;
-        this.isActive = isActive;
-        this.dsmLegacyId = dsmLegacyId;
-    }
 
     public long getUserId() {
         return this.userId;

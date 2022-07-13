@@ -3,16 +3,15 @@ package org.broadinstitute.dsm.db.dao.roles;
 import java.util.List;
 import java.util.Optional;
 
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.jdbi.JdbiRole;
 import org.broadinstitute.dsm.db.jdbi.RoleDto;
 import org.broadinstitute.lddp.db.SimpleResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class RoleDao implements Dao<RoleDto> {
-    Logger logger = LoggerFactory.getLogger(RoleDao.class);
 
     public List<RoleDto> getAllRolesForStudy(String studyGuid) {
         List<RoleDto> roles;
@@ -22,7 +21,7 @@ public class RoleDao implements Dao<RoleDto> {
             return dbVals;
         });
         roles = (List<RoleDto>) result.resultValue;
-        logger.info(String.format("Got list of roles for study %s with size %d",
+        log.info(String.format("Got list of roles for study %s with size %d",
                 studyGuid, roles.size()));
         return roles;
     }
