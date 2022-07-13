@@ -172,7 +172,7 @@ public abstract class ValidatedJsonInputRoute<T> implements Route {
                 builder.append("Found an error in payload");
             }
             if (errorIter.hasNext()) {
-                builder.append('\n');
+                builder.append(", ");
             }
         }
         return builder.toString();
