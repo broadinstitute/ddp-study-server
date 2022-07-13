@@ -25,7 +25,6 @@ public class OsteoPDFv2 implements CustomTask {
     public static final String RELEASE_SELF = "RELEASE_SELF";
     public static final String RELEASE_MINOR = "RELEASE_MINOR";
     public static final String OSPROJECT_CONSENT = "osproject-consent";
-    public static final String OSPROJECT_CONSENT_PARENTAL = "osproject-consent-parental";
     public static final String OSPROJECT_CONSENT_ASSENT = "osproject-consent-assent";
     public static final String OSPROJECT_RELEASE = "osproject-release";
     public static final String OSPROJECT_RELEASE_PARENTAL = "osproject-release-parental";
@@ -42,9 +41,6 @@ public class OsteoPDFv2 implements CustomTask {
     public void run(Handle handle) {
         log.info("Adding new data source versions for consents PDFs");
         long studyId = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid")).getId();
-        addNewConsentDataSourceToReleasePdf(handle, studyId, OSPROJECT_CONSENT, CONSENT);
-        addNewConsentDataSourceToReleasePdf(handle, studyId, OSPROJECT_CONSENT_PARENTAL, PARENTAL_CONSENT);
-        addNewConsentDataSourceToReleasePdf(handle, studyId, OSPROJECT_CONSENT_ASSENT, CONSENT_ASSENT);
         addNewConsentDataSourceToReleasePdf(handle, studyId, OSPROJECT_RELEASE, CONSENT);
         addNewConsentDataSourceToReleasePdf(handle, studyId, OSPROJECT_RELEASE, RELEASE_SELF);
         addNewConsentDataSourceToReleasePdf(handle, studyId, OSPROJECT_RELEASE_PARENTAL, PARENTAL_CONSENT);
