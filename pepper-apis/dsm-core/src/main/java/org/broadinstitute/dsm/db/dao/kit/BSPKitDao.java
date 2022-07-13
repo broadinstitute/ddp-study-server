@@ -23,7 +23,7 @@ public class BSPKitDao implements Dao<BSPKitDto> {
             + "AND kit.dsm_kit_id = groupedKit.kit_id SET receive_date = ?, receive_by = ? "
             + "WHERE kit.receive_date IS NULL AND kit.kit_label = ?";
     private final String getBspResponseInformationForKit =
-            "select realm.instance_name,  realm.base_url,  request.bsp_collaborator_sample_id, "
+            "select realm.instance_name,  realm.base_url,  request.bsp_collaborator_sample_id, collection_date, "
                     + "request.bsp_collaborator_participant_id,  realm.bsp_group,  realm.bsp_collection, "
                     + "realm.bsp_organism,  realm.notification_recipients,  request.ddp_participant_id, "
                     + "kt.kit_type_name,  kt.bsp_material_type,  kt.bsp_receptacle_type, "
