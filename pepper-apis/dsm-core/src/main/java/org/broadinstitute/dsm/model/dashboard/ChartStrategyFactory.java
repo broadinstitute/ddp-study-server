@@ -21,7 +21,7 @@ class ChartStrategyFactory {
             case VERTICAL_HIGHLIGHTED_BAR_CHART:
                 basicChartStrategy = new VerticalHighlightedBarChartStrategy(payload);
                 break;
-            case DONUT:
+            case DONUT_CHART:
                 basicChartStrategy = new DonutChartStrategy(payload);
                 break;
             default:

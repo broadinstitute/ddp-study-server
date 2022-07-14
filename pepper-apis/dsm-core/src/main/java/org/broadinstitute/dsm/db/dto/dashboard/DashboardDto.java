@@ -15,7 +15,7 @@ public class DashboardDto {
     String displayText;
     DisplayType displayType;
     Size size;
-    Integer order;
+    transient Integer order;
     List<DashboardLabelDto> labels;
 
     private DashboardDto(Builder builder) {

@@ -45,7 +45,7 @@ public class DashboardUseCaseTest {
     private static final List<String> RACES = Arrays.asList("INDIAN", "OTHER", "INDIAN", "ASIAN", "WHITE");
     private static final Map<DisplayType, List<String>> ES_FILTER_PATH_VALUES = Map.of(
             DisplayType.VERTICAL_BAR_CHART, Arrays.asList("NOT REPORTED", "OTHER", "MALE", "FEMALE", "NON_BINARY"),
-            DisplayType.DONUT, Arrays.asList("WHITE", "ASIAN", "OTHER", "INDIAN", "NOT REPORTED")
+            DisplayType.DONUT_CHART, Arrays.asList("WHITE", "ASIAN", "OTHER", "INDIAN", "NOT REPORTED")
     );
 
     static final Integer VERTICAL_BAR_CHART_ORDER = 2;
@@ -120,7 +120,7 @@ public class DashboardUseCaseTest {
         return new DashboardDto.Builder()
                 .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId())
                 .withOrder(DONUT_CHART_ORDER)
-                .withDisplayType(DisplayType.DONUT)
+                .withDisplayType(DisplayType.DONUT_CHART)
                 .withSize(SIZE)
                 .withDisplayText(RACE)
                 .build();
@@ -175,7 +175,7 @@ public class DashboardUseCaseTest {
                             createLabelFilterWithoutAdditionalFilter(dashboardLabelDto.getLabelId(),
                                     ES_FILTER_PATH_VALUES.get(dashboardDto.getDisplayType()).get(i)));
                     break;
-                case DONUT:
+                case DONUT_CHART:
                     dashboardLabelDto.setDashboardFilterDto(
                             createLabelFilterWithoutAdditionalFilterForNested(dashboardLabelDto.getLabelId(),
                                     ES_FILTER_PATH_VALUES.get(dashboardDto.getDisplayType()).get(i)));
@@ -307,11 +307,11 @@ public class DashboardUseCaseTest {
 
     private void testDonutChartNestedWithoutAdditionalFilter(List<DashboardData> dashboards) {
         DashboardData dashboardData = dashboards.stream()
-                .filter(data -> DisplayType.DONUT == data.getType())
+                .filter(data -> DisplayType.DONUT_CHART == data.getType())
                 .findFirst()
                 .orElseThrow();
 
-        assertEquals(DisplayType.DONUT, dashboardData.getType());
+        assertEquals(DisplayType.DONUT_CHART, dashboardData.getType());
         assertEquals(SIZE, dashboardData.getSize());
         assertEquals(RACE, dashboardData.getTitle());
         assertEquals(DONUT_CHART_ORDER, dashboardData.getOrdering());
