@@ -12,18 +12,7 @@ import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
-import org.broadinstitute.ddp.db.dao.ActivityDao;
-import org.broadinstitute.ddp.db.dao.JdbiActivity;
-import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
-import org.broadinstitute.ddp.db.dao.JdbiBlockContent;
-import org.broadinstitute.ddp.db.dao.JdbiBlockNesting;
-import org.broadinstitute.ddp.db.dao.JdbiQuestion;
-import org.broadinstitute.ddp.db.dao.JdbiRevision;
-import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
-import org.broadinstitute.ddp.db.dao.JdbiVariableSubstitution;
-import org.broadinstitute.ddp.db.dao.SectionBlockDao;
-import org.broadinstitute.ddp.db.dao.TemplateDao;
-import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dao.*;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.BlockContentDto;
@@ -60,6 +49,7 @@ public class OsteoConsentVersion2 implements CustomTask {
     private static final String DATA_FILE_OSTEO_SELF_CONSENT = "patches/self-consent.conf";
     private static final String DATA_FILE_OSTEO_CONSENT_ASSENT = "patches/consent-assent.conf";
     private static final String DATA_FILE_OSTEO_PARENTAL_CONSENT = "patches/parental-consent.conf";
+    private static final String CONSENT_VALIDATION_UPDATES = "patches/DOB-validations-for-consents.conf";
     private static final String BLOCK_KEY = "blockNew";
     private static final String OLD_TEMPLATE_KEY = "old_search";
     private static final String ORDER = "order";
@@ -78,6 +68,8 @@ public class OsteoConsentVersion2 implements CustomTask {
     private Config dataCfg;
     private Config selfConsentDataCfg;
     private Config parentalConsentDataCfg;
+
+    private Config validationUpdates;
     private Config consentAssentDataCfg;
     private Config varsCfg;
     private Path cfgPath;
@@ -125,6 +117,12 @@ public class OsteoConsentVersion2 implements CustomTask {
             throw new DDPException("Data file is missing: " + consentAssentFile);
         }
         consentAssentDataCfg = ConfigFactory.parseFile(consentAssentFile);
+
+        File validation = cfgPath.getParent().resolve(CONSENT_VALIDATION_UPDATES).toFile();
+        if (!validation.exists()) {
+            throw new DDPException("Data file is missing: " + validation);
+        }
+        validationUpdates = ConfigFactory.parseFile(validation);
 
         cfg = studyCfg;
         versionTag = dataCfg.getString("versionTag");
@@ -176,6 +174,10 @@ public class OsteoConsentVersion2 implements CustomTask {
         runConsentAssentUpdate(handle, metaConsentAssent, studyDto, activityCodeConsentAssent, version2ForConsentAssent);
 
         updateIntro(handle, studyDto, metaConsentAssent, version2ForConsentAssent);
+
+        updateValidations(handle, studyDto, version2ForConsent);
+        updateValidations(handle, studyDto, version2ForConsentAssent);
+        updateValidations(handle, studyDto, version2ForParentalConsent);
 
         long activityAssentConsentId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCodeConsentAssent);
         long activityPedConsentId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCodeParentalConsent);
@@ -494,6 +496,33 @@ public class OsteoConsentVersion2 implements CustomTask {
         }
         handle.attach(SqlHelper.class).detachQuestionFromBothSectionAndBlock(questionDto.get().getId());
         log.info("Question {} and its block were detached", questionStableId);
+    }
+
+    private void updateValidations(Handle handle, StudyDto studyDto, ActivityVersionDto activityVersionDto) {
+        JdbiActivityValidation jdbiActivityValidation = handle.attach(JdbiActivityValidation.class);
+        JdbiActivityValidationAffectedQuestionStableIds jdbiActivityValidationAffectedQuestionStableIds = handle.
+                attach(JdbiActivityValidationAffectedQuestionStableIds.class);
+        TemplateDao templateDao = handle.attach(TemplateDao.class);
+        List<? extends Config> rules = dataCfg.getConfigList("rules");
+        rules.forEach(rule -> {
+            String activity = rule.getString("Code");
+            long activityIdbyVersionDto = activityVersionDto.getActivityId();
+            long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activity);
+            if(activityId != activityIdbyVersionDto){
+                log.warn("Activity versions does not match!...  ");
+                return;
+            }
+            Config validation = rule.getConfig("validation");
+            String precondition = validation.getString("precondition");
+            String expression = validation.getString("expression");
+            List<String> stableIds = validation.getStringList("stableIds");
+            Config messageTemplate = validation.getConfig("messageTemplate");
+            Template template = gson.fromJson(ConfigUtil.toJson(messageTemplate), Template.class);
+            long id = templateDao.insertTemplate(template, activityVersionDto.getRevId());
+            int activityValidationid = jdbiActivityValidation._insertActivityValidation(activityId, precondition, expression, id);
+            jdbiActivityValidationAffectedQuestionStableIds.
+                    _insertAffectedQuestionStableIdsForValidation(activityValidationid, stableIds, studyDto.getUmbrellaId());
+        });
     }
 
     private interface SqlHelper extends SqlObject {
