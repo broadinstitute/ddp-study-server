@@ -39,7 +39,6 @@ import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.ParticipantDao;
 import org.broadinstitute.ddp.db.dao.PdfDao;
 import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
-import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
@@ -259,12 +258,10 @@ public class PdfGenerationService {
                         .orElseThrow(() -> new DDPException("Could not find participant data for pdf generation with guid=" + userGuid));
             }
         } else {
-            participant = new Participant(null, handle.attach(UserDao.class)
-                    .findUserByGuid(userGuid)
-                    .orElseThrow(() -> new DDPException("Could not find participant user data for pdf generation with guid=" + userGuid)));
-            UserProfileDao userProfileDao = handle.attach(UserProfileDao.class);
-            Optional<UserProfile>  profileOpt = userProfileDao.findProfileByUserGuid(userGuid);
-            profileOpt.ifPresent(userProfile -> participant.getUser().setProfile(userProfile));
+            participant = handle.attach(ParticipantDao.class)
+                    .findParticipantsWithUserDataByUserGuids(config.getStudyId(), Set.of(userGuid))
+                    .findAny()
+                    .orElseThrow(() -> new DDPException("Could not find participant user data for pdf generation with guid=" + userGuid));
         }
 
         if (hasEmailSource) {
