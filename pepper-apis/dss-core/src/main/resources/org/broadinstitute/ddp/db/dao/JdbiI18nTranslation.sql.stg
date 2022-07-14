@@ -18,12 +18,12 @@ where
 
 insertI18nTranslation() ::= <<
 insert into i18n_translation (
-    i18n_translation_doc,
     study_id,
     language_code_id,
     created_at,
-    updated_at)
-values (:translationDoc, :studyId, :languageCodeId, :createdAt, :updatedAt)
+    updated_at,
+    i18n_translation_doc)
+values (:studyId, :languageCodeId, :createdAt, :updatedAt, :translationDoc)
 >>
 
 updateI18nTranslation() ::= <<
