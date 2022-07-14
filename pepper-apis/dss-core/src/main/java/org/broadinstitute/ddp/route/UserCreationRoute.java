@@ -55,9 +55,8 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
         try {
             email = new EmailAddress(payload.getEmail());
         } catch (IllegalArgumentException exception) {
-            var invalidEmail = new ApiError(ErrorCodes.BAD_PAYLOAD,
-            "The email address is missing or malformed.");
-    throw ResponseUtil.haltError(HttpStatus.SC_UNPROCESSABLE_ENTITY, invalidEmail);
+            var invalidEmail = new ApiError(ErrorCodes.BAD_PAYLOAD, "The email address is missing or malformed.");
+            throw ResponseUtil.haltError(HttpStatus.SC_UNPROCESSABLE_ENTITY, invalidEmail);
         }
 
         log.info("attempting to create a user for study {}", payload.getStudyGuid());

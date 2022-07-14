@@ -1,13 +1,11 @@
 package org.broadinstitute.ddp.filter;
 
 import static org.broadinstitute.ddp.constants.RouteConstants.Header.AUTHORIZATION;
-import static spark.Spark.halt;
 
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.apache.http.Header;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.json.errors.ApiError;
@@ -45,7 +43,8 @@ public class TokenConverterFilter implements Filter {
         } catch (Exception e) {
             log.error("Error while converting token " + DDP_TOKEN + " for request", e);
 
-            response.header("WWW-Authenticate", "Bearer error=\"invalid_token\", error_description=\"The access token failed to validate or is malformed.\"");
+            response.header("WWW-Authenticate",
+                    "Bearer error=\"invalid_token\", error_description=\"The access token failed to validate or is malformed.\"");
             var error = new ApiError(ErrorCodes.INVALID_TOKEN, "The access token failed to validate or is malformed.");
             throw ResponseUtil.haltError(response, HttpStatus.SC_UNAUTHORIZED, error);
         }
