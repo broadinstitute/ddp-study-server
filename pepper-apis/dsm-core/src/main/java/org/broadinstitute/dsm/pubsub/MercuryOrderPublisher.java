@@ -101,8 +101,8 @@ public class MercuryOrderPublisher {
         }
     }
 
-    public void createAndPublishMessage(String[] barcodes, String projectId, String topicId, DDPInstanceDto ddpInstance,
-                                        String collaboratorParticipantId, String userId) {
+    public String createAndPublishMessage(String[] barcodes, String projectId, String topicId, DDPInstanceDto ddpInstance,
+                                          String collaboratorParticipantId, String userId) {
         Optional<String> maybeParticipantId =
                 participantDao.getParticipantFromCollaboratorParticipantId(collaboratorParticipantId,
                         String.valueOf(ddpInstance.getDdpInstanceId()));
@@ -119,12 +119,14 @@ public class MercuryOrderPublisher {
                 List<MercuryOrderDto> newOrders = MercuryOrderUseCase.createAllOrders(barcodes, ddpParticipantId, mercuryOrderId, userId);
                 this.publishWithErrorHandler(projectId, topicId, json);
                 this.mercuryOrderDao.insertMercuryOrders(newOrders);
+                return mercuryOrderId;
             } catch (Exception e) {
                 throw new RuntimeException("Unable to  publish to pubsub/ db " + json, e);
             }
 
         }
-
+        log.warn("json was empty for this order");
+        return null;
     }
 
 
