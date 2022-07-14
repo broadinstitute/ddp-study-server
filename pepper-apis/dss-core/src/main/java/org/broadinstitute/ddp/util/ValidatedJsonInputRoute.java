@@ -159,7 +159,7 @@ public abstract class ValidatedJsonInputRoute<T> implements Route {
             if (cause instanceof DateTimeParseException) {
                 // Likely caused by an adapter for a LocalDate or a LocalDateTime
                 // failing due to a poorly formatted date string
-                log.debug("failed to unmarshall json object: a date-typed property value does not match the required format", cause);
+                log.warn("failed to unmarshall json object: a date-typed property value does not match the required format", cause);
                 var responseError = new ApiError(ErrorCodes.BAD_PAYLOAD, exception.getMessage());
                 throw ResponseUtil.haltError(response, getValidationErrorStatus(), responseError);
             } else {
