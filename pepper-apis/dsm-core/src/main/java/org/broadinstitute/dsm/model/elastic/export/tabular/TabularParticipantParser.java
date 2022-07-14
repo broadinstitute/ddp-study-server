@@ -274,8 +274,7 @@ public class TabularParticipantParser {
                                                                  boolean onlyMostRecent) {
         if (moduleConfig.isActivity()) {
             return getActivityCompletions(esDataAsMap, moduleConfig, subParticipant, onlyMostRecent);
-        } else if (moduleConfig.getFilterKey().isJson() && moduleConfig.getName()
-                .equals(ESObjectConstants.PARTICIPANT_DATA_DATA)) {
+        } else if (moduleConfig.getFilterKey().isJson() && moduleConfig.getName().startsWith(ESObjectConstants.DSM_PARTICIPANT_DATA)) {
             return getNestedJsonCompletions(esDataAsMap, moduleConfig, subParticipant, onlyMostRecent);
         } else {
             return getOtherCompletions(esDataAsMap, moduleConfig, subParticipant, onlyMostRecent);
