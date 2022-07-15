@@ -503,26 +503,28 @@ public class OsteoConsentVersion2 implements CustomTask {
         JdbiActivityValidationAffectedQuestionStableIds jdbiActivityValidationAffectedQuestionStableIds = handle.
                 attach(JdbiActivityValidationAffectedQuestionStableIds.class);
         TemplateDao templateDao = handle.attach(TemplateDao.class);
-        List<? extends Config> rules = dataCfg.getConfigList("rules");
-        rules.forEach(rule -> {
+        List<? extends Config> rules = validationUpdates.getConfigList("rules");
+        for (Config rule : rules) {
             String activity = rule.getString("Code");
             long activityIdbyVersionDto = activityVersionDto.getActivityId();
             long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activity);
             if(activityId != activityIdbyVersionDto){
                 log.warn("Activity versions does not match!...  ");
-                return;
+                continue;
             }
-            Config validation = rule.getConfig("validation");
-            String precondition = validation.getString("precondition");
-            String expression = validation.getString("expression");
-            List<String> stableIds = validation.getStringList("stableIds");
-            Config messageTemplate = validation.getConfig("messageTemplate");
-            Template template = gson.fromJson(ConfigUtil.toJson(messageTemplate), Template.class);
-            long id = templateDao.insertTemplate(template, activityVersionDto.getRevId());
-            int activityValidationid = jdbiActivityValidation._insertActivityValidation(activityId, precondition, expression, id);
-            jdbiActivityValidationAffectedQuestionStableIds.
-                    _insertAffectedQuestionStableIdsForValidation(activityValidationid, stableIds, studyDto.getUmbrellaId());
-        });
+            List<? extends Config> validations = rule.getConfigList("validation");
+            for (Config validation : validations) {
+                 String precondition = validation.getString("precondition");
+                 String expression = validation.getString("expression");
+                 List<String> stableIds = validation.getStringList("stableIds");
+                 Config messageTemplate = validation.getConfig("messageTemplate");
+                 Template template = gson.fromJson(ConfigUtil.toJson(messageTemplate), Template.class);
+                 long id = templateDao.insertTemplate(template, activityVersionDto.getRevId());
+                 int activityValidationid = jdbiActivityValidation._insertActivityValidation(activityId, precondition, expression, id);
+                 jdbiActivityValidationAffectedQuestionStableIds.
+                         _insertAffectedQuestionStableIdsForValidation(activityValidationid, stableIds, studyDto.getUmbrellaId());
+            }
+        }
     }
 
     private interface SqlHelper extends SqlObject {
