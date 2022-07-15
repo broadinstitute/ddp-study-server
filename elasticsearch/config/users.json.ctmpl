@@ -1,6 +1,6 @@
 {{with $environment := env "ENVIRONMENT"}}
 {{with $version := env "VERSION"}}
-{{with $response := vault (printf "secret/pepper/%s/%s/elasticsearch" $environment $version)}}
+{{with $response := secret (printf "secret/pepper/%s/%s/elasticsearch" $environment $version)}}
 {{with $conf := $response.Data}}
 
 {
