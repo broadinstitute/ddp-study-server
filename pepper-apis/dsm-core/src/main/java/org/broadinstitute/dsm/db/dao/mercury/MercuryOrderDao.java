@@ -57,7 +57,6 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                         MercuryOrderDto mercuryOrderDto = new MercuryOrderDto(rs.getString(DBConstants.DDP_PARTICIPANT_ID),
                                 rs.getString(DBConstants.MERCURY_ORDER_CREATOR), rs.getString(DBConstants.KIT_LABEL),
                                 rs.getInt("ktype." + DBConstants.KIT_TYPE_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID));
-                        log.info("found related info about barcode " + mercuryOrderDto.getBarcode());
                         map.put(mercuryOrderDto.getBarcode(), mercuryOrderDto);
                     }
                 } catch (Exception e) {
@@ -84,7 +83,6 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                         MercuryOrderDto mercuryOrderDto = new MercuryOrderDto(rs.getString(DBConstants.DDP_PARTICIPANT_ID),
                                 rs.getString(DBConstants.MERCURY_ORDER_CREATOR), rs.getString(DBConstants.SM_ID_VALUE),
                                 rs.getInt("ktype." + DBConstants.KIT_TYPE_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID));
-                        log.info("found related info about barcode " + mercuryOrderDto.getBarcode());
                         map.put(mercuryOrderDto.getBarcode(), mercuryOrderDto);
                     }
                 } catch (Exception e) {
