@@ -30,6 +30,7 @@ public class OsteoV2Updates implements CustomTask {
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
         tasks.add(new OsteoNewActivities());
         tasks.add(new OsteoConsentVersion2());
+        tasks.add(new OsteoDobValidations());
         tasks.add(new OsteoDdp7601());
         tasks.add(new OsteoAboutYouV2());
         tasks.add(new OsteoPrequalUpdate());
@@ -43,7 +44,6 @@ public class OsteoV2Updates implements CustomTask {
         tasks.add(new OsteoDdp8269());
         tasks.add(new OsteoActivityDashboardOrdering());
         tasks.add(new OsteoAboutYouChildTitleUpdates());
-        tasks.add(new OsteoDobValidations());
 
         // Last
         tasks.add(new OsteoPdfUpdates());
