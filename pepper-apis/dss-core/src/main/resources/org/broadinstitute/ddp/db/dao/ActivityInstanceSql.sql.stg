@@ -66,7 +66,6 @@ select ai.activity_instance_id   as a_instance_id,
        mr.matrix_row_stable_id    as matrix_row_stable_id,
        cq.allow_multiple   as ca_allow_multiple,
        cq.unwrap_on_export as ca_unwrap_on_export,
-       cq.tabular_separator as ca_abular_separator,
        ca.child_answer_id  as ca_child_answer_id,
        ca.response_order   as ca_child_row,
        (select display_order from composite_question__question

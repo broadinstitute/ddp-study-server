@@ -25,7 +25,7 @@ public final class CompositeQuestionDto extends QuestionDto implements Serializa
                                 @ColumnName("add_button_template_id") Long addButtonTemplateId,
                                 @ColumnName("additional_item_template_id") Long additionalItemTemplateId,
                                 @ColumnName("child_orientation") OrientationType childOrientation,
-                                @ColumnName("tabularSeparator") String tabularSeparator) {
+                                @ColumnName("tabular_separator") String tabularSeparator) {
         super(questionDto);
         this.allowMultiple = allowMultiple;
         this.unwrapOnExport = unwrapOnExport;
