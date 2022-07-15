@@ -33,7 +33,6 @@ public final class CompositeQuestionDto extends QuestionDto implements Serializa
         this.additionalItemTemplateId = additionalItemTemplateId;
         this.childOrientation = childOrientation;
         this.tabularSeparator = tabularSeparator;
-        System.out.println("---TB: " + tabularSeparator);
     }
 
     @Override

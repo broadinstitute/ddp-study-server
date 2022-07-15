@@ -2382,6 +2382,7 @@ public interface QuestionDao extends SqlObject {
                 .setAddButtonTemplate(buttonTmpl)
                 .setAdditionalItemTemplate(addItemTmpl)
                 .setChildOrientation(dto.getChildOrientation())
+                .setTabularSeparator(dto.getTabularSeparator())
                 .addChildrenQuestions(childQuestionDefs);
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
 

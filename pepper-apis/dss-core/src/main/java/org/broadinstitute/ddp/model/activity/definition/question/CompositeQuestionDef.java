@@ -147,8 +147,9 @@ public final class CompositeQuestionDef extends QuestionDef {
             return tabularSeparator;
         }
 
-        public void setTabularSeparator(String tabularSeparator) {
+        public Builder setTabularSeparator(String tabularSeparator) {
             this.tabularSeparator = tabularSeparator;
+            return this;
         }
 
         public CompositeQuestionDef build() {
