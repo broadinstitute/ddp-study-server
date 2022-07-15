@@ -43,6 +43,7 @@ public class OsteoV2Updates implements CustomTask {
         tasks.add(new OsteoDdp8269());
         tasks.add(new OsteoActivityDashboardOrdering());
         tasks.add(new OsteoAboutYouChildTitleUpdates());
+        tasks.add(new OsteoDobValidations());
 
         // Last
         tasks.add(new OsteoPdfUpdates());
