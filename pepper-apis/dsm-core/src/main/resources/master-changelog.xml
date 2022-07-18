@@ -52,6 +52,7 @@
     <include file="liquibase/048-updateDB.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/049-updateDB.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/050-updateDB.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/051-updateDB.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/DDP-6141_rgp_family_id_counter.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/DDP-4702_AT-form.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/DDP-5782_RGP-form.xml" relativeToChangelogFile="true"/>

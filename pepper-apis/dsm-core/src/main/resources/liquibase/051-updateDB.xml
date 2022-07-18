@@ -1,0 +1,586 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="DDP-8388_druglist" author="LKapanad">
+        <insert tableName="drug_list">
+            <column name="generic_name" type="varchar(200)" value="AMIVANTAMAB"/>
+            <column name="brand_name" type="varchar(100)" value="RYBREVANT"/>
+            <column name="display_name" type="varchar(100)" value="AMIVANTAMAB (RYBREVANT)"/>
+            <column name="chemocat2" type="varchar(50)" value="AMIVANTAMAB"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="generic_name" type="varchar(200)" value="ASCIMINIB"/>
+            <column name="brand_name" type="varchar(100)" value="SCEMBLIX"/>
+            <column name="display_name" type="varchar(100)" value="ASCIMINIB (SCEMBLIX)"/>
+            <column name="chemocat2" type="varchar(50)" value="ASCIMINIB"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="generic_name" type="varchar(200)" value="ASPARAGINASE"/>
+            <column name="brand_name" type="varchar(100)" value="RECOMBINANT"/>
+            <column name="display_name" type="varchar(100)" value="ASPARAGINASE (RECOMBINANT) (RYLAZE)"/>
+            <column name="chemocat2" type="varchar(50)" value="ASPARAGINASE"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="generic_name" type="varchar(200)" value="AVAPRITINIB"/>
+            <column name="brand_name" type="varchar(100)" value="AYVAKIT"/>
+            <column name="display_name" type="varchar(100)" value="AVAPRITINIB (AYVAKIT)"/>
+            <column name="chemocat2" type="varchar(50)" value="AVAPRITINIB"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="AZACITIDINE (ONUREG)"/>
+            <column name="generic_name" type="varchar(100)" value="AZACITIDINE"/>
+            <column name="chemocat2" type="varchar(50)" value="AZACITIDINE"/>
+            <column name="brand_name" type="varchar(100)" value="ONUREG"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="BELANTAMAB MAFODOTIN (BLENREP)"/>
+            <column name="generic_name" type="varchar(100)" value="BELANTAMAB"/>
+            <column name="chemocat2" type="varchar(50)" value="MAFODOTIN"/>
+            <column name="brand_name" type="varchar(100)" value="BLENREP"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="BELZUTIFAN (WELIREG)"/>
+            <column name="generic_name" type="varchar(100)" value="BELZUTIFAN"/>
+            <column name="chemocat2" type="varchar(50)" value="BELZUTIFAN"/>
+            <column name="brand_name" type="varchar(100)" value="WELIREG"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="BREXUCABTAGENE AUTOLEUCEL (TECARTUS)"/>
+            <column name="generic_name" type="varchar(100)" value="BREXUCABTAGENE"/>
+            <column name="chemocat2" type="varchar(50)" value="AUTOLEUCEL"/>
+            <column name="brand_name" type="varchar(100)" value="TECARTUS"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="CAPMATINIB (TABRECTA)"/>
+            <column name="generic_name" type="varchar(100)" value="CAPMATINIB"/>
+            <column name="chemocat2" type="varchar(50)" value="CAPMATINIB"/>
+            <column name="brand_name" type="varchar(100)" value="TABRECTA"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="DARATUMUMAB AND HYALURONIDASE (DARZALEX FASPRO)"/>
+            <column name="generic_name" type="varchar(100)" value="DARATUMUMAB"/>
+            <column name="chemocat2" type="varchar(50)" value="HYALURONIDASE"/>
+            <column name="brand_name" type="varchar(100)" value="DARZALEX FASPRO"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="DARATUMUMAB AND HYALURONIDASE (DARZALEX SC)"/>
+            <column name="generic_name" type="varchar(100)" value="DARATUMUMAB"/>
+            <column name="chemocat2" type="varchar(50)" value="HYALURONIDASE"/>
+            <column name="brand_name" type="varchar(100)" value="DARZALEX SC"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="DECITABINE AND CEDAZURIDINE (INQOVI)"/>
+            <column name="generic_name" type="varchar(100)" value="DECITABINE"/>
+            <column name="chemocat2" type="varchar(50)" value="CEDAZURIDINE"/>
+            <column name="brand_name" type="varchar(100)" value="INQOVI"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="DOSTARLIMAB (JEMPERLI)"/>
+            <column name="generic_name" type="varchar(100)" value="DOSTARLIMAB"/>
+            <column name="chemocat2" type="varchar(50)" value="DOSTARLIMAB"/>
+            <column name="brand_name" type="varchar(100)" value="JEMPERLI"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="ENFORTUMAB VEDOTIN (PADCEV)"/>
+            <column name="generic_name" type="varchar(100)" value="ENFORTUMAB"/>
+            <column name="chemocat2" type="varchar(50)" value="VEDOTIN"/>
+            <column name="brand_name" type="varchar(100)" value="PADCEV"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="ENTRECTINIB (ROZLYTREK)"/>
+            <column name="generic_name" type="varchar(100)" value="ENTRECTINIB"/>
+            <column name="chemocat2" type="varchar(50)" value="ENTRECTINIB"/>
+            <column name="brand_name" type="varchar(100)" value="ROZLYTREK"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="FAM-TRASTUZUMAB DERUXTECAN (ENHERTU)"/>
+            <column name="generic_name" type="varchar(100)" value="TRASTUZUMAB"/>
+            <column name="chemocat2" type="varchar(50)" value="DERUXTECAN"/>
+            <column name="brand_name" type="varchar(100)" value="ENHERTU"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="FEDRATINIB (INREBIC)"/>
+            <column name="generic_name" type="varchar(100)" value="FEDRATINIB"/>
+            <column name="chemocat2" type="varchar(50)" value="FEDRATINIB"/>
+            <column name="brand_name" type="varchar(100)" value="INREBIC"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="IDECABTAGENE VICLEUCEL (ABECMA)"/>
+            <column name="generic_name" type="varchar(100)" value="IDECABTAGENE"/>
+            <column name="chemocat2" type="varchar(50)" value="VICLEUCEL"/>
+            <column name="brand_name" type="varchar(100)" value="ABECMA"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="INFIGRATINIB (TRUSELTIQ)"/>
+            <column name="generic_name" type="varchar(100)" value="INFIGRATINIB"/>
+            <column name="chemocat2" type="varchar(50)" value="INFIGRATINIB"/>
+            <column name="brand_name" type="varchar(100)" value="TRUSELTIQ"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="IRINOTECAN LIPOSOMAL (ONIVYDE)"/>
+            <column name="generic_name" type="varchar(100)" value="IRINOTECAN"/>
+            <column name="chemocat2" type="varchar(50)" value="LIPOSOMAL"/>
+            <column name="brand_name" type="varchar(100)" value="ONIVYDE"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="ISATUXIMAB (SARCLISA)"/>
+            <column name="generic_name" type="varchar(100)" value="ISATUXIMAB"/>
+            <column name="chemocat2" type="varchar(50)" value="ISATUXIMAB"/>
+            <column name="brand_name" type="varchar(100)" value="SARCLISA"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="LONCASTUXIMAB TESIRINE (ZYNLONTA)"/>
+            <column name="generic_name" type="varchar(100)" value="LONCASTUXIMAB"/>
+            <column name="chemocat2" type="varchar(50)" value="TESIRINE"/>
+            <column name="brand_name" type="varchar(100)" value="ZYNLONTA"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="LURBINECTEDIN (ZEPZELCA)"/>
+            <column name="generic_name" type="varchar(100)" value="LURBINECTEDIN"/>
+            <column name="chemocat2" type="varchar(50)" value="LURBINECTEDIN"/>
+            <column name="brand_name" type="varchar(100)" value="ZEPZELCA"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="LUTETIUM LU 177 VIPIVOTIDE TETRAXETAN (PLUVICTO)"/>
+            <column name="generic_name" type="varchar(100)" value="LUTETIUM"/>
+            <column name="chemocat2" type="varchar(50)" value="TETRAXETAN"/>
+            <column name="brand_name" type="varchar(100)" value="PLUVICTO"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="MARGETUXIMAB (MARGENZA)"/>
+            <column name="generic_name" type="varchar(100)" value="MARGETUXIMAB"/>
+            <column name="chemocat2" type="varchar(50)" value="MARGETUXIMAB"/>
+            <column name="brand_name" type="varchar(100)" value="MARGENZA"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="MELPHALAN FLUFENAMIDE (PEPAXTO)"/>
+            <column name="generic_name" type="varchar(100)" value="MELPHALAN"/>
+            <column name="chemocat2" type="varchar(50)" value="FLUFENAMIDE"/>
+            <column name="brand_name" type="varchar(100)" value="PEPAXTO"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="MITOMYCIN (JELMYTO)"/>
+            <column name="generic_name" type="varchar(100)" value="MITOMYCIN"/>
+            <column name="chemocat2" type="varchar(50)" value="MITOMYCIN"/>
+            <column name="brand_name" type="varchar(100)" value="JELMYTO"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="MOBOCERTINIB (EXKIVITY)"/>
+            <column name="generic_name" type="varchar(100)" value="MOBOCERTINIB"/>
+            <column name="chemocat2" type="varchar(50)" value="MOBOCERTINIB"/>
+            <column name="brand_name" type="varchar(100)" value="EXKIVITY"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="NAXITAMAB (DANYELZA)"/>
+            <column name="generic_name" type="varchar(100)" value="NAXITAMAB"/>
+            <column name="chemocat2" type="varchar(50)" value="NAXITAMAB"/>
+            <column name="brand_name" type="varchar(100)" value="DANYELZA"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="NIVOLUMAB AND RELATLIMAB (OPDUALAG)"/>
+            <column name="generic_name" type="varchar(100)" value="NIVOLUMAB"/>
+            <column name="chemocat2" type="varchar(50)" value="RELATLIMAB"/>
+            <column name="brand_name" type="varchar(100)" value="OPDUALAG"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="PEMIGATINIB (PEMAZYRE)"/>
+            <column name="generic_name" type="varchar(100)" value="PEMIGATINIB"/>
+            <column name="chemocat2" type="varchar(50)" value="PEMIGATINIB"/>
+            <column name="brand_name" type="varchar(100)" value="PEMAZYRE"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="PERTUZUMAB, TRASTUZUMAB, AND HYALURONIDASE (PHESGO)"/>
+            <column name="generic_name" type="varchar(100)" value="PERTUZUMAB"/>
+            <column name="chemocat2" type="varchar(50)" value="TRASTUZUMAB"/>
+            <column name="brand_name" type="varchar(100)" value="PHESGO"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="PRALSETINIB (GAVRETO)"/>
+            <column name="generic_name" type="varchar(100)" value="PRALSETINIB"/>
+            <column name="chemocat2" type="varchar(50)" value="PRALSETINIB"/>
+            <column name="brand_name" type="varchar(100)" value="GAVRETO"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="RELUGOLIX (ORGOVYX)"/>
+            <column name="generic_name" type="varchar(100)" value="RELUGOLIX"/>
+            <column name="chemocat2" type="varchar(50)" value="RELUGOLIX"/>
+            <column name="brand_name" type="varchar(100)" value="ORGOVYX"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="RIPRETINIB (QINLOCK)"/>
+            <column name="generic_name" type="varchar(100)" value="RIPRETINIB"/>
+            <column name="chemocat2" type="varchar(50)" value="RIPRETINIB"/>
+            <column name="brand_name" type="varchar(100)" value="QINLOCK"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="SACITUZUMAB GOVITECAN (TRODELVY)"/>
+            <column name="generic_name" type="varchar(100)" value="SACITUZUMAB"/>
+            <column name="chemocat2" type="varchar(50)" value="GOVITECAN"/>
+            <column name="brand_name" type="varchar(100)" value="TRODELVY"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="SELPERCATINIB (RETEVMO)"/>
+            <column name="generic_name" type="varchar(100)" value="SELPERCATINIB"/>
+            <column name="chemocat2" type="varchar(50)" value="SELPERCATINIB"/>
+            <column name="brand_name" type="varchar(100)" value="RETEVMO"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="SELUMETINIB (KOSELUGO)"/>
+            <column name="generic_name" type="varchar(100)" value="SELUMETINIB"/>
+            <column name="chemocat2" type="varchar(50)" value="SELUMETINIB"/>
+            <column name="brand_name" type="varchar(100)" value="KOSELUGO"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="SIROLIMUS (PROTEIN BOUND) (FYARRO)"/>
+            <column name="generic_name" type="varchar(100)" value="SIROLIMUS"/>
+            <column name="chemocat2" type="varchar(50)" value="PROTEIN BOUND"/>
+            <column name="brand_name" type="varchar(100)" value="FYARRO"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="SOTORASIB (LUMAKRAS)"/>
+            <column name="generic_name" type="varchar(100)" value="SOTORASIB"/>
+            <column name="chemocat2" type="varchar(50)" value="SOTORASIB"/>
+            <column name="brand_name" type="varchar(100)" value="LUMAKRAS"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="TAFASITAMAB (MONJUVI)"/>
+            <column name="generic_name" type="varchar(100)" value="TAFASITAMAB"/>
+            <column name="chemocat2" type="varchar(50)" value="TAFASITAMAB"/>
+            <column name="brand_name" type="varchar(100)" value="MONJUVI"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="TAZEMETOSTAT (TAZVERIK)"/>
+            <column name="generic_name" type="varchar(100)" value="TAZEMETOSTAT"/>
+            <column name="chemocat2" type="varchar(50)" value="TAZEMETOSTAT"/>
+            <column name="brand_name" type="varchar(100)" value="TAZVERIK"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="TEPOTINIB (TEPMETKO)"/>
+            <column name="generic_name" type="varchar(100)" value="TEPOTINIB"/>
+            <column name="chemocat2" type="varchar(50)" value="TEPOTINIB"/>
+            <column name="brand_name" type="varchar(100)" value="TEPMETKO"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="TISOTUMAB VEDOTIN (TIVDAK)"/>
+            <column name="generic_name" type="varchar(100)" value="TISOTUMAB"/>
+            <column name="chemocat2" type="varchar(50)" value="VEDOTIN"/>
+            <column name="brand_name" type="varchar(100)" value="TIVDAK"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="TIVOZANIB (FOTIVDA)"/>
+            <column name="generic_name" type="varchar(100)" value="TIVOZANIB"/>
+            <column name="chemocat2" type="varchar(50)" value="TIVOZANIB"/>
+            <column name="brand_name" type="varchar(100)" value="FOTIVDA"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="TUCATINIB (TUKYSA)"/>
+            <column name="generic_name" type="varchar(100)" value="TUCATINIB"/>
+            <column name="chemocat2" type="varchar(50)" value="TUCATINIB"/>
+            <column name="brand_name" type="varchar(100)" value="TUKYSA"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="UMBRALISIB (UKONIQ)"/>
+            <column name="generic_name" type="varchar(100)" value="UMBRALISIB"/>
+            <column name="chemocat2" type="varchar(50)" value="UMBRALISIB"/>
+            <column name="brand_name" type="varchar(100)" value="UKONIQ"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" type="varchar(200)" value="ZANUBRUTINIB (BRUKINSA)"/>
+            <column name="generic_name" type="varchar(100)" value="ZANUBRUTINIB"/>
+            <column name="chemocat2" type="varchar(50)" value="ZANUBRUTINIB"/>
+            <column name="brand_name" type="varchar(100)" value="BRUKINSA"/>
+            <column name="chemo_type" type="varchar(1)" value="O"/>
+            <column name="study_drug" type="tinyint(1)" value="0"/>
+            <column name="treatment_type" type="varchar(1)" value="C"/>
+            <column name="chemotherapy" type="varchar(1)" value="Y"/>
+            <column name="active" type="tinyint(1)" value="1"/>
+            <column name="date_created" type="BIGINT" value="1658138450"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>
