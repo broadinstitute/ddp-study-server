@@ -17,6 +17,7 @@ public class ESObjectConstants {
     public static final String STATUS = "status";
     public static final String DATE = "date";
     public static final String DATA = "data";
+    public static final String LAST_UPDATED_AT = "lastUpdatedAt";
 
     //medical records
     public static final String MEDICAL_RECORDS = "medicalRecords";
@@ -81,6 +82,7 @@ public class ESObjectConstants {
     public static final String ONC_HISTORY_DETAIL = "oncHistoryDetail";
     public static final String ONC_HISTORY = "oncHistory";
     public static final String PARTICIPANT_DATA = "participantData";
+    public static final String DSM_PARTICIPANT_DATA = "dsm.participantData";
     public static final String PARTICIPANT_RECORD = "participantRecord";
     public static final String PARTICIPANT = "participant";
     public static final String DYNAMIC_FIELDS = "dynamicFields";
@@ -88,15 +90,29 @@ public class ESObjectConstants {
     public static final String SMID = "smId";
 
     //question
+    public static final String QUESTIONS = "questions";
     public static final String STABLE_ID = "stableId";
     public static final String OPTIONDETAILS = "optionDetails";
+    public static final String OPTION_TEXT = "optionText";
+    public static final String OPTION_STABLE_ID = "optionStableId";
     public static final String OPTION = "option";
+    public static final String OPTIONS = "options";
     public static final String DETAIL = "detail";
     public static final String ANSWER = "answer";
     public static final String FIELD_TYPE_ID = "fieldTypeId";
+    public static final String ACTIVITIES = "activities";
+    public static final String ACTIVITY_STATUS = "activityStatus";
+    public static final String ACTIVITY_CODE = "activityCode";
+
 
     //cohort tags
     public static final String DSM_COHORT_TAG_ID = "cohortTagId";
     public static final String COHORT_TAG = "cohortTag";
+    public static final String COHORT_TAG_NAME = "cohortTagName";
     public static final String NEW_OSTEO_PARTICIPANT = "newOsteoParticipant";
+
+    // activity definitions
+    public static final String SELECT_MODE = "selectMode";
+    public static final String MULTIPLE = "MULTIPLE";
+    public static final String OPTIONS_TYPE = "OPTIONS";
 }
