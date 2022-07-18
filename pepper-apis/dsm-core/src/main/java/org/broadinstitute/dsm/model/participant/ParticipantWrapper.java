@@ -142,6 +142,7 @@ public class ParticipantWrapper {
                 List<Tissue> tissues = esDsm.getTissue();
                 List<SmId> smIds = esDsm.getSmId();
 
+
                 mapSmIdsToProperTissue(tissues, smIds);
 
                 mapTissueToProperOncHistoryDetail(oncHistoryDetails, tissues);
@@ -160,6 +161,7 @@ public class ParticipantWrapper {
                 participantWrapperDto.setParticipantData(participantData);
                 participantWrapperDto.setAbstractionActivities(Collections.emptyList());
                 participantWrapperDto.setAbstractionSummary(Collections.emptyList());
+                esDsm.getInvitaeReport().ifPresent(invitaeReport -> participantWrapperDto.setInvitaeReport(invitaeReport));
 
                 result.add(participantWrapperDto);
 

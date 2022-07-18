@@ -1954,6 +1954,29 @@
                 }
               }
             },
+            "InvitaeReport": {
+              "type": "nested",
+              "properties": {
+                "invitaeReportId": {
+                  "type": "keyword"
+                },
+                "invitaeReportDate": {
+                  "type": "date"
+                },
+                "invitaeBamFile": {
+                  "type": "text"
+                },
+                "invitaeBamFileDate": {
+                  "type": "date"
+                },
+                "invitaeGermlineNotes": {
+                  "type": "text"
+                },
+                "participantId": {
+                  "type": "keyword"
+                }
+              }
+            },
             "newOsteoParticipant": {
               "properties": {
                 "minimalMr": {

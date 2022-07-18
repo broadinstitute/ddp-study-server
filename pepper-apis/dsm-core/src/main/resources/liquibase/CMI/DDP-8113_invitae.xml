@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="DDP-8113_invitae" author="pegah">
+        <createTable tableName="invitae_report">
+            <column name="invitae_report_id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true"></constraints>
+            </column>
+            <column name="participant_id" type="INT(11)">
+                <constraints foreignKeyName="invitae_participant_id_fk" referencedTableName="ddp_participant"
+                             referencedColumnNames="participant_id"></constraints>
+            </column>
+            <column name="invitae_report_date" type="VARCHAR(100)"></column>
+            <column name="invitae_bam_file" type="VARCHAR(100)"></column>
+            <column name="invitae_bam_file_date" type="VARCHAR(100)" defaultValue="NULL"></column>
+            <column name="invitae_germline_notes" type="VARCHAR(1000)"></column>
+            <column name="last_changed" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="changed_by" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

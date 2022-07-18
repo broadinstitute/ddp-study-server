@@ -16,6 +16,7 @@ import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.SmId;
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
+import org.broadinstitute.dsm.db.dto.invitae.InvitaeReport;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 
@@ -77,6 +78,8 @@ public class ESDsm {
 
     List<CohortTag> cohortTag;
 
+    InvitaeReport invitaeReport;
+
     public List<Tissue> getTissue() {
         if (tissue == null) {
             tissue = Collections.emptyList();
@@ -132,6 +135,10 @@ public class ESDsm {
             cohortTag = Collections.emptyList();
         }
         return cohortTag;
+    }
+
+    public Optional<InvitaeReport> getInvitaeReport() {
+        return Optional.ofNullable(invitaeReport);
     }
 
     public Optional<Participant> getNewOsteoParticipant() {

@@ -16,6 +16,7 @@ public class DBConstants {
 
     public static final String DDP_PARTICIPANT_ID = "ddp_participant_id";
     public static final String DDP_KIT_REQUEST = "ddp_kit_request";
+    public static final String DDP_KIT = "ddp_kit";
 
     //table alias
     public static final String DDP_PARTICIPANT_ALIAS = "p";
@@ -519,5 +520,13 @@ public class DBConstants {
     public static final String COHORT_TAG = "cohort_tag";
     public static final String COHORT_TAG_NAME = "cohort_tag_name";
 
+    //invitae_table
+    public static final String INVITAE_ALIAS = "inv";
+    public static final String INVITAE_REPORT = "invitae_report";
+    public static final String INVITAE_REPORT_ID = "invitae_report_id";
+    public static final String INVITAE_REPORT_DATE = "invitae_report_date";
+    public static final String INVITAE_BAM_FILE = "invitae_bam_file";
+    public static final String INVITAE_BAM_FILE_DATE = "invitae_bam_file_date";
+    public static final String INVITAE_GERMLINE_NOTES = "invitae_germline_notes";
 
 }

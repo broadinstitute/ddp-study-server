@@ -5,6 +5,7 @@ import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
+import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.NotificationUtil;
 
 public class PatchFactory {
@@ -17,6 +18,8 @@ public class PatchFactory {
             if (isParentParticipantId(patch)) {
                 if (isMedicalRecordAbstractionFieldId(patch)) {
                     patcher = new AbstractionPatch(patch);
+                } else if (isInvitaePatch(patch)) {
+                    patcher = new InvitaePatch(patch);
                 } else {
                     patcher = new OncHistoryDetailPatch(patch);
                 }
@@ -35,6 +38,10 @@ public class PatchFactory {
         }
         patcher.setElasticSearchExportable(isElasticSearchExportable(patch));
         return patcher;
+    }
+
+    private static boolean isInvitaePatch(Patch patch) {
+        return patch.getTableAlias().equals(DBConstants.INVITAE_ALIAS);
     }
 
     private static boolean isSmIdCreation(Patch patch) {

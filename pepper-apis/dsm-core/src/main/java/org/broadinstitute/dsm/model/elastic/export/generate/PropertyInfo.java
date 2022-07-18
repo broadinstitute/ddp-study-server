@@ -13,6 +13,7 @@ import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.ParticipantData;
 import org.broadinstitute.dsm.db.SmId;
 import org.broadinstitute.dsm.db.Tissue;
+import org.broadinstitute.dsm.db.dto.invitae.InvitaeReport;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.model.elastic.Util;
@@ -21,16 +22,19 @@ import org.broadinstitute.dsm.statics.DBConstants;
 public class PropertyInfo {
 
     public static final Map<String, PropertyInfo> TABLE_ALIAS_MAPPINGS = new HashMap<>(
-            Map.of(DBConstants.DDP_MEDICAL_RECORD_ALIAS, new PropertyInfo(MedicalRecord.class, true),
-                    DBConstants.DDP_TISSUE_ALIAS, new PropertyInfo(Tissue.class, true),
-                    DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS, new PropertyInfo(OncHistoryDetail.class, true),
-                    DBConstants.DDP_PARTICIPANT_DATA_ALIAS, new PropertyInfo(ParticipantData.class, true),
-                    DBConstants.DDP_PARTICIPANT_RECORD_ALIAS, new PropertyInfo(Participant.class, false),
-                    DBConstants.DDP_PARTICIPANT_ALIAS, new PropertyInfo(Participant.class, false),
-                    DBConstants.DDP_ONC_HISTORY_ALIAS, new PropertyInfo(OncHistory.class, false),
-                    DBConstants.SM_ID_TABLE_ALIAS, new PropertyInfo(SmId.class, true),
-                    DBConstants.COHORT_ALIAS, new PropertyInfo(CohortTag.class, true),
-                    DBConstants.DDP_KIT_REQUEST_ALIAS, new PropertyInfo(KitRequestShipping.class, true)));
+            Map.ofEntries(
+                    Map.entry(DBConstants.DDP_MEDICAL_RECORD_ALIAS, new PropertyInfo(MedicalRecord.class, true)),
+                    Map.entry(DBConstants.DDP_TISSUE_ALIAS, new PropertyInfo(Tissue.class, true)),
+                    Map.entry(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS, new PropertyInfo(OncHistoryDetail.class, true)),
+                    Map.entry(DBConstants.DDP_PARTICIPANT_DATA_ALIAS, new PropertyInfo(ParticipantData.class, true)),
+                    Map.entry(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS, new PropertyInfo(Participant.class, false)),
+                    Map.entry(DBConstants.DDP_PARTICIPANT_ALIAS, new PropertyInfo(Participant.class, false)),
+                    Map.entry(DBConstants.DDP_ONC_HISTORY_ALIAS, new PropertyInfo(OncHistory.class, false)),
+                    Map.entry(DBConstants.SM_ID_TABLE_ALIAS, new PropertyInfo(SmId.class, true)),
+                    Map.entry(DBConstants.COHORT_ALIAS, new PropertyInfo(CohortTag.class, true)),
+                    Map.entry(DBConstants.DDP_KIT_REQUEST_ALIAS, new PropertyInfo(KitRequestShipping.class, true)),
+                    Map.entry(DBConstants.INVITAE_ALIAS, new PropertyInfo(InvitaeReport.class, false))));
+
     private Class<?> propertyClass;
     private boolean isCollection;
     private String fieldName;
