@@ -74,8 +74,10 @@ public class StoolUploadRoute extends RequestHandler {
                     return "Text file was empty or couldn't be parsed to the agreed format";
                 }
 
+                log.info("Text file was uploaded and parsed successfully");
+
+                StoolUploadDao stoolUploadDao = new StoolUploadDao();
                 stoolUploadObjects.forEach(stoolUploadObject -> {
-                    StoolUploadDao stoolUploadDao = new StoolUploadDao();
 
                     String participantId = stoolUploadObject.getParticipantId();
                     String mfBarcode = stoolUploadObject.getMfBarcode();
@@ -83,7 +85,12 @@ public class StoolUploadRoute extends RequestHandler {
 
                     Optional<StoolUploadDto> stoolUploadDto = stoolUploadDao.getStoolUploadDto(participantId, mfBarcode);
 
-                    stoolUploadDto.ifPresent(e -> stoolUploadDao.updateKitData(receiveDate, e.getKitId(), mfBarcode));
+                    if(stoolUploadDto.isPresent()){
+                        log.info("Successfully generated kits, trying to update the table with provided parameters...");
+                        stoolUploadDao.updateKitData(receiveDate,stoolUploadDto.get().getKitId(),mfBarcode);
+                    } else {
+                        log.warn("Unable to fetch kits with provided parameters");
+                    }
                 });
             } catch (Exception e) {
                 return e.getMessage();
