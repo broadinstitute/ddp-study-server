@@ -2,14 +2,11 @@ package org.broadinstitute.dsm.route;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-import lombok.extern.log4j.Log4j2;
 import org.broadinstitute.dsm.db.dao.stoolupload.StoolUploadDao;
 import org.broadinstitute.dsm.db.dto.stoolupload.StoolUploadDto;
 import org.broadinstitute.dsm.exception.FileColumnMissing;
@@ -21,19 +18,21 @@ import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
 
-@Log4j2
+
 public class StoolUploadRoute extends RequestHandler {
+    private static final Logger logger = LoggerFactory.getLogger(StoolUploadRoute.class);
+
 
     private static final String PARTICIPANT_ID = "participantId";
     private static final String MF_BARCODE = "mfBarcode";
     private static final String RECEIVE_DATE = "receiveDate";
-    public static final String UPLOAD_ANYWAY = "uploadAnyway";
-
 
     @Override
     protected Object processRequest(Request request, Response response, String userId) throws Exception {
@@ -50,23 +49,15 @@ public class StoolUploadRoute extends RequestHandler {
         if (UserUtil.checkUserAccess(realm, userId, "kit_upload", userIdRequest)) {
             String content = request.body();
 
-            AtomicBoolean uploadAnyway = new AtomicBoolean(false);
-            if (queryParams.value(UPLOAD_ANYWAY) != null) {
-                uploadAnyway.set(queryParams.get(UPLOAD_ANYWAY).booleanValue());
-            }
 
             try {
                 List<StoolUploadObject> stoolUploadContent;
-                if (uploadAnyway.get()) {
-                    stoolUploadContent =
-                            Collections.singletonList(ObjectMapperSingleton.instance().readValue(content, StoolUploadObject.class));
-                } else {
-                    try {
-                        stoolUploadContent = isFileValid(content);
-                    } catch (Exception e) {
-                        response.status(500);
-                        return e.getMessage();
-                    }
+
+                try {
+                    stoolUploadContent = isFileValid(content);
+                } catch (Exception e) {
+                    response.status(500);
+                    return e.getMessage();
                 }
 
                 final List<StoolUploadObject> stoolUploadObjects = stoolUploadContent;
@@ -74,7 +65,7 @@ public class StoolUploadRoute extends RequestHandler {
                     return "Text file was empty or couldn't be parsed to the agreed format";
                 }
 
-                log.info("Text file was uploaded and parsed successfully");
+                logger.info("Text file was uploaded and parsed successfully");
 
                 StoolUploadDao stoolUploadDao = new StoolUploadDao();
                 stoolUploadObjects.forEach(stoolUploadObject -> {
@@ -85,11 +76,11 @@ public class StoolUploadRoute extends RequestHandler {
 
                     Optional<StoolUploadDto> stoolUploadDto = stoolUploadDao.getStoolUploadDto(participantId, mfBarcode);
 
-                    if(stoolUploadDto.isPresent()){
-                        log.info("Successfully generated kits, trying to update the table with provided parameters...");
-                        stoolUploadDao.updateKitData(receiveDate,stoolUploadDto.get().getKitId(),mfBarcode);
+                    if (stoolUploadDto.isPresent()) {
+                        logger.info("Successfully generated kits, trying to update the table with provided parameters...");
+                        stoolUploadDao.updateKitData(receiveDate, stoolUploadDto.get().getKitId(), mfBarcode);
                     } else {
-                        log.warn("Unable to fetch kits with provided parameters");
+                        logger.warn("Unable to fetch kits with provided parameters");
                     }
                 });
             } catch (Exception e) {
@@ -99,7 +90,7 @@ public class StoolUploadRoute extends RequestHandler {
             response.status(500);
             return (UserErrorMessages.NO_RIGHTS);
         }
-        return  null;
+        return null;
     }
 
     private List<StoolUploadObject> isFileValid(String fileContent) {

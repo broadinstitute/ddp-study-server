@@ -5,7 +5,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Optional;
 
-import lombok.extern.log4j.Log4j2;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.stoolupload.StoolUploadDto;
@@ -15,16 +14,19 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.EventUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@Log4j2
 public class StoolUploadDao implements Dao<StoolUploadDto> {
+    private static final Logger logger = LoggerFactory.getLogger(StoolUploadDao.class);
+
     private static final String SELECT_KIT_ID = "SELECT dsm_kit_id FROM ddp_kit INNER JOIN ddp_kit_request dkr"
             + " on ddp_kit.dsm_kit_request_id = dkr.dsm_kit_request_id WHERE kit_label = ? dkr.ddp_participant_id = ?";
     private static final String UPDATE_KIT = "UPDATE ddp_kit SET receive_date = ?, receive_by = 'HSPH' WHERE dsm_kit_id = ? AND receive_date IS NULL";
 
 
     public Optional<StoolUploadDto> getStoolUploadDto(String participantId, String mfBarcode) {
-        log.info("Trying to fetch kits kith the data provided in the text file...");
+        logger.info("Trying to fetch kits kith the data provided in the text file...");
         SimpleResult simpleResult = TransactionWrapper.inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult(0);
             try (PreparedStatement stmt = conn.prepareStatement(SELECT_KIT_ID)) {
@@ -64,10 +66,10 @@ public class StoolUploadDao implements Dao<StoolUploadDto> {
 
                     if (kitDDPNotification != null) {
                         EventUtil.triggerDDP(conn, kitDDPNotification);
-                        log.info("Triggering DDP to send emails");
+                        logger.info("Triggering DDP to send emails");
                     }
                 } else {
-                    log.info("Receive date was already present");
+                    logger.info("Receive date was already present");
                 }
 
             } catch (SQLException e) {
