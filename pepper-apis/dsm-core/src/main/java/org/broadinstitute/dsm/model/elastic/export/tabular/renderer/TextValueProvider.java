@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.model.elastic.export.tabular.renderer;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -24,7 +23,7 @@ public class TextValueProvider {
     }
 
     public Collection<String> formatRawValues(Collection<?> rawValues, FilterExportConfig filterConfig, Map<String, Object> formMap) {
-        return rawValues.stream().map(val -> val.toString()).collect(Collectors.toList());
+        return rawValues.stream().map(val -> val != null ? val.toString() : StringUtils.EMPTY).collect(Collectors.toList());
     }
 
     protected Collection<?> getRawValueWrapper(FilterExportConfig filterConfig, Map<String, Object> formMap) {
@@ -34,9 +33,9 @@ public class TextValueProvider {
             value = StringUtils.EMPTY;
         } else if (ElasticSearchUtil.QUESTIONS_ANSWER.equals(filterConfig.getColumn().getObject())) {
             if (formMap != null) {
-                List<LinkedHashMap<String, Object>> allAnswers =
-                        (List<LinkedHashMap<String, Object>>) formMap.get(ElasticSearchUtil.QUESTIONS_ANSWER);
-                List<LinkedHashMap<String, Object>> targetAnswers = allAnswers.stream()
+                List<Map<String, Object>> allAnswers =
+                        (List<Map<String, Object>>) formMap.get(ElasticSearchUtil.QUESTIONS_ANSWER);
+                List<Map<String, Object>> targetAnswers = allAnswers.stream()
                         .filter(ans -> filterConfig.getColumn().getName().equals(ans.get(ESObjectConstants.STABLE_ID)))
                         .collect(Collectors.toList());
                 if (!targetAnswers.isEmpty()) {
@@ -58,7 +57,7 @@ public class TextValueProvider {
         return (Collection<?>) value;
     }
 
-    protected Object getRawAnswerValue(LinkedHashMap<String, Object> fq, String columnName) {
+    protected Object getRawAnswerValue(Map<String, Object> fq, String columnName) {
         Object rawAnswer = fq.getOrDefault(ESObjectConstants.ANSWER, fq.get(columnName));
 
         Collection<?> answer = mapToCollection(rawAnswer);

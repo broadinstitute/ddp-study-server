@@ -9,7 +9,7 @@ import org.elasticsearch.index.query.AbstractQueryBuilder;
 
 public interface ElasticSearchable {
 
-    ElasticSearch getParticipantsWithinRange(String esParticipantsIndex, int from, int to);
+    ElasticSearch getParticipantsWithinRange(String esParticipantsIndex, int from, int to, boolean parseParticipantDtos);
 
     ElasticSearch getParticipantsByIds(String esParticipantsIndex, List<String> participantIds);
 

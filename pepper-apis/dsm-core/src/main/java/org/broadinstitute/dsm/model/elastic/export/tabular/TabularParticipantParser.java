@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -144,7 +145,7 @@ public class TabularParticipantParser {
     private List<Map<String, String>> generateParticipantTabularMaps(List<ModuleExportConfig> moduleConfigs,
                                                                      ParticipantWrapperDto participant) {
         List<Map<String, String>> participantMaps = new ArrayList<>();
-        Map<String, Object> esDataAsMap = participant.getEsDataAsMap();
+        Map<String, Object> esDataAsMap = participant.getEsData().getSearchHit().getSourceAsMap();
         mapParticipantDataJson(esDataAsMap);
         // get the 'subParticipants' a.k.a RGP family members
         // note that getSubParticipants will always return at least one entry, (for non-RGP studies, it will just return a single empty map)
@@ -222,8 +223,11 @@ public class TabularParticipantParser {
      * If none exist, a list with a single empty map will be returned
      */
     List<Map<String, Object>> getSubParticipants(Map<String, Object> esDataAsMap) {
-        List<Map<String, Object>> participantDataList = (List<Map<String, Object>>) ((Map<String, Object>) esDataAsMap
-                .get(ESObjectConstants.DSM)).get(ESObjectConstants.PARTICIPANT_DATA);
+        List<String> pathNames = Arrays.asList(ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA);
+        List<Map<String, Object>> participantDataList = (List<Map<String, Object>>) nullSafeGet(pathNames, esDataAsMap);
+        if (participantDataList == null) {
+            return Collections.singletonList(Collections.emptyMap());
+        }
         List<Map<String, Object>> subParticipants = participantDataList.stream()
                 // do a case insensitive comparison as some data has "rgp_PARTICIPANTS" as fieldIds
                 .filter(item -> WorkflowAndFamilyIdExporter.RGP_PARTICIPANTS
@@ -236,6 +240,22 @@ public class TabularParticipantParser {
         }
     }
 
+    private static Object nullSafeGet(List<String> pathNames, Map<String, Object> map) {
+        Object finalObj = null;
+        if (map == null) {
+            return finalObj;
+        }
+        Map<String, Object> currentMap = map;
+        for (String pathName : pathNames) {
+            finalObj = currentMap.get(pathName);
+            if (finalObj instanceof Map) {
+                currentMap = (Map<String, Object>) finalObj;
+            } else {
+                return finalObj;
+            }
+        }
+        return finalObj;
+    }
     /**
      * pre-parses all the json fields into maps for easier access during the main parse
      * For now, this assumes 'dsm.participantData.data' is the only source of json that needs to be parsed
@@ -318,8 +338,11 @@ public class TabularParticipantParser {
                 return Collections.singletonList(Collections.emptyMap());
             }
         } else {
-            List<Map<String, Object>> participantDataList = (List<Map<String, Object>>) ((Map<String, Object>) esDataAsMap
-                    .get(ESObjectConstants.DSM)).get(ESObjectConstants.PARTICIPANT_DATA);
+            List<String> pathNames = Arrays.asList(ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA);
+            List<Map<String, Object>> participantDataList = (List<Map<String, Object>>) nullSafeGet(pathNames, esDataAsMap);
+            if (participantDataList == null) {
+                return Collections.singletonList(Collections.emptyMap());
+            }
             List<Map<String, Object>> matchingModules = participantDataList.stream()
                     .filter(item -> objectName.equals(item.get(ESObjectConstants.FIELD_TYPE_ID)))
                     .collect(Collectors.toList());

@@ -55,6 +55,7 @@ public class DownloadParticipantListRoute extends RequestHandler {
                 params.isSplitOptions(), params.isOnlyMostRecent());
 
         Filterable filterable = FilterFactory.of(request);
+        filterable.setParseDtos(false);
         List<ParticipantWrapperDto> participants = fetchParticipantEsData(filterable, request.queryMap());
         logger.info("Beginning parse of " + participants.size() + "participants");
         List<ModuleExportConfig> exportConfigs = parser.generateExportConfigs();
