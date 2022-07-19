@@ -17,6 +17,7 @@ import com.google.gson.Gson;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.dao.InvitaeReportDao;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -28,6 +29,7 @@ import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.model.elastic.migration.AdditionalParticipantMigratorFactory;
 import org.broadinstitute.dsm.model.elastic.migration.CohortTagMigrator;
 import org.broadinstitute.dsm.model.elastic.migration.DynamicFieldsMappingMigrator;
+import org.broadinstitute.dsm.model.elastic.migration.InvitaeReportMigrator;
 import org.broadinstitute.dsm.model.elastic.migration.KitRequestShippingMigrator;
 import org.broadinstitute.dsm.model.elastic.migration.MedicalRecordMigrator;
 import org.broadinstitute.dsm.model.elastic.migration.OncHistoryDetailsMigrator;
@@ -118,7 +120,8 @@ public class DSMtasksSubscription {
                     new ParticipantDataMigrator(index, study), AdditionalParticipantMigratorFactory.of(index, study),
                     new ParticipantMigrator(index, study), new KitRequestShippingMigrator(index, study),
                     new TissueMigrator(index, study), new SMIDMigrator(index, study),
-                    new CohortTagMigrator(index, study, new CohortTagDaoImpl()));
+                    new CohortTagMigrator(index, study, new CohortTagDaoImpl()),
+                    new InvitaeReportMigrator(index, study, new InvitaeReportDao()));
             exportables.forEach(Exportable::export);
         });
     }
