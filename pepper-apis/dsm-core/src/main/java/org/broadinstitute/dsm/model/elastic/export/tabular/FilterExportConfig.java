@@ -15,7 +15,6 @@ public class FilterExportConfig {
     private boolean splitOptionsIntoColumns = false;
     private List<Map<String, Object>> options = null;
     private String collationSuffix = null;
-    private final boolean isCollated = false;
 
     public FilterExportConfig(ModuleExportConfig parent, Filter filterColumn, boolean splitOptionsIntoColumns,
                               List<Map<String, Object>> options, String collationSuffix) {

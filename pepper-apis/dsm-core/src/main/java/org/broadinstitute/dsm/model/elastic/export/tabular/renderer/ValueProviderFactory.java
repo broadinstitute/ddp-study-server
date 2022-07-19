@@ -19,7 +19,7 @@ public class ValueProviderFactory {
             QuestionType.CHECKBOX, booleanValueProvider,
             QuestionType.NUMBER, defaultValueProvider,
             QuestionType.BOOLEAN, booleanValueProvider,
-            QuestionType.COMPOSITE, new CompositeValueProvider(),
+            QuestionType.COMPOSITE, defaultValueProvider,
             QuestionType.AGREEMENT, booleanValueProvider,
             QuestionType.MATRIX, defaultValueProvider,
             QuestionType.DATE, new DateValueProvider(),
