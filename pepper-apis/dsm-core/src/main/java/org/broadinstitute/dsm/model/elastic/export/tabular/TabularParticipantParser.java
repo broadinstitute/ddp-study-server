@@ -313,6 +313,9 @@ public class TabularParticipantParser {
                                           Map<String, Object> subParticipant,
                                           boolean onlyMostRecent) {
         List<Map<String, Object>> activityList = (List<Map<String, Object>>) esDataAsMap.get(ESObjectConstants.ACTIVITIES);
+        if (activityList == null) {
+            return Collections.singletonList(Collections.emptyMap());
+        }
         List<Map<String, Object>> matchingActivities = activityList.stream().filter(activity ->
                         moduleConfig.getName().equals(activity.get(ESObjectConstants.ACTIVITY_CODE)))
                 .collect(Collectors.toList()

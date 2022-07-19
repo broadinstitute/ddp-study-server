@@ -86,6 +86,9 @@ public class TextValueProvider {
         }
         List<Map<String, Object>> allAnswers =
                 (List<Map<String, Object>>) moduleMap.get(ElasticSearchUtil.QUESTIONS_ANSWER);
+        if (allAnswers == null) {
+            return StringUtils.EMPTY;
+        }
         List<Map<String, Object>> targetAnswers = allAnswers.stream()
                 .filter(ans -> filterConfig.getColumn().getName().equals(ans.get(ESObjectConstants.STABLE_ID)))
                 .collect(Collectors.toList());
