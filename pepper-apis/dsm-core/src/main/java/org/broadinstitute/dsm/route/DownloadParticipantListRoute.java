@@ -45,7 +45,7 @@ public class DownloadParticipantListRoute extends RequestHandler {
 
         String realm = RoutePath.getRealm(request);
         String userIdReq = UserUtil.getUserId(request);
-        if (!UserUtil.checkUserAccess(realm, userId, "pt_list_export", userIdReq)) {
+        if (!UserUtil.checkUserAccess(realm, userId, "pt_list_view", userIdReq)) {
             response.status(500);
             return new Result(500, UserErrorMessages.NO_RIGHTS);
         }
