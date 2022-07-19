@@ -207,8 +207,6 @@ ParticipantCreateRequest:
           - firstName
           - lastName
           - birthDate
-          - informedConsentDate
-          - assentDate
         properties:
           email:
             type: string
@@ -227,12 +225,3 @@ ParticipantCreateRequest:
           birthDate:
             type: string
             format: iso8601-date
-          informedConsentDate:
-            type: string
-            format: iso8601-date
-            nullable: true
-          assentDate:
-            type: string
-            format: iso8601-date
-            nullable: true
-
