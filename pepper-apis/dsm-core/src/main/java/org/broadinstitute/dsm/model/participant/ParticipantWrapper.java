@@ -68,7 +68,7 @@ public class ParticipantWrapper {
         }
 
         return participantWrapperPayload.getFilter().map(filters -> {
-            fetchAndPrepareDataByFilters(filters);
+            fetchAndPrepareDataByFilters(filters, parseParticipantDtos);
             return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto));
         }).orElseGet(() -> {
             fetchAndPrepareData(parseParticipantDtos);
@@ -76,7 +76,7 @@ public class ParticipantWrapper {
         });
     }
 
-    private void fetchAndPrepareDataByFilters(Map<String, String> filters) {
+    private void fetchAndPrepareDataByFilters(Map<String, String> filters, boolean parseParticipantDtos) {
         FilterParser parser = new FilterParser();
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
         for (String source : filters.keySet()) {
@@ -94,7 +94,7 @@ public class ParticipantWrapper {
             }
         }
         esData = elasticSearchable.getParticipantsByRangeAndFilter(getEsParticipantIndex(), participantWrapperPayload.getFrom(),
-                participantWrapperPayload.getTo(), boolQueryBuilder);
+                participantWrapperPayload.getTo(), boolQueryBuilder, parseParticipantDtos);
     }
 
     private String getEsParticipantIndex() {

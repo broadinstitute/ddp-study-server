@@ -33,6 +33,7 @@ public class ElasticSearchParticipantDto {
     private List<Map<String, Object>> workflows;
     private String status;
     private ESDsm dsm;
+    @Getter
     private String ddp;
 
     @Getter

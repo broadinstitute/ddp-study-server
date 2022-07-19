@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.export.WorkflowAndFamilyIdExporter;
 import org.broadinstitute.dsm.model.Filter;
@@ -21,7 +19,6 @@ import org.broadinstitute.dsm.model.elastic.export.tabular.renderer.ValueProvide
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
-import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,11 +35,11 @@ public class TabularParticipantParser {
     private static final Logger logger = LoggerFactory.getLogger(TabularParticipantParser.class);
     private static final String COLUMN_SELECTED = "1";
     private static final String COLUMN_UNSELECTED = "0";
-    private static final String DATA_AS_MAP = "dataAsMap";
     private final List<Filter> filters;
     private final DDPInstance ddpInstance;
     private final boolean splitOptions;
     private final boolean onlyMostRecent;
+    private final List<String> nestedArrayObjects = Arrays.asList(ESObjectConstants.KIT_TEST_RESULT);
     private final ValueProviderFactory valueProviderFactory = new ValueProviderFactory();
 
     public TabularParticipantParser(List<Filter> filters, DDPInstance ddpInstance, boolean splitOptions, boolean onlyMostRecent) {
@@ -72,6 +69,11 @@ public class TabularParticipantParser {
                 // 'Modules' are combinations of tableAlias + object -- it's a discrete set of data
                 // within the ES data for a participant
                 String moduleConfigKey = participantColumn.getTableAlias() + participantColumn.getObject();
+                if (nestedArrayObjects.contains(participantColumn.getObject())) {
+                    // for nested array objects, we want them to appear inside their associated module (e.g. test results
+                    // should appear inside the corresponding kiRequest object
+                    moduleConfigKey = participantColumn.getTableAlias() + "null";
+                }
                 ModuleExportConfig moduleExport = exportInfoMap.get(moduleConfigKey);
                 if (moduleExport == null) {
                     moduleExport = new ModuleExportConfig(participantColumn);
@@ -146,7 +148,8 @@ public class TabularParticipantParser {
                                                                      ParticipantWrapperDto participant) {
         List<Map<String, String>> participantMaps = new ArrayList<>();
         Map<String, Object> esDataAsMap = participant.getEsData().getSearchHit().getSourceAsMap();
-        mapParticipantDataJson(esDataAsMap);
+        esDataAsMap.put("ddp", participant.getEsData().getDdp());
+
         // get the 'subParticipants' a.k.a RGP family members
         // note that getSubParticipants will always return at least one entry, (for non-RGP studies, it will just return a single empty map)
         List<Map<String, Object>> participantDataList = getSubParticipants(esDataAsMap);
@@ -256,30 +259,7 @@ public class TabularParticipantParser {
         }
         return finalObj;
     }
-    /**
-     * pre-parses all the json fields into maps for easier access during the main parse
-     * For now, this assumes 'dsm.participantData.data' is the only source of json that needs to be parsed
-     */
-    private void mapParticipantDataJson(Map<String, Object> esDataAsMap) {
-        try {
-            List<Map<String, Object>> participantDataList = (List<Map<String, Object>>) ((Map<String, Object>) esDataAsMap
-                    .get(ESObjectConstants.DSM)).get(ESObjectConstants.PARTICIPANT_DATA);
-            for (Map<String, Object> dataItem : participantDataList) {
-                try {
-                    JsonNode jsonNode = ObjectMapperSingleton.instance()
-                            .readTree(dataItem.get(ESObjectConstants.DATA).toString());
-                    Map<String, Object> mappedNode = ObjectMapperSingleton.instance()
-                            .convertValue(jsonNode, new TypeReference<Map<String, Object>>() {
-                            });
-                    dataItem.put(DATA_AS_MAP, mappedNode);
-                } catch (Exception e) {
-                    dataItem.put(DATA_AS_MAP, Collections.emptyMap());
-                }
-            }
-        } catch (Exception e) {
-            // do nothing, the parser will just leave empty fields where the json couldn't be parsed
-        }
-    }
+
 
     /**
      * Returns the maps correspond to the participants completions of a given activity, e.g. their completions of the MEDICAL_HISTORY
@@ -295,7 +275,7 @@ public class TabularParticipantParser {
         if (moduleConfig.isActivity()) {
             return getActivityCompletions(esDataAsMap, moduleConfig, subParticipant, onlyMostRecent);
         } else if (moduleConfig.getFilterKey().isJson() && moduleConfig.getName().startsWith(ESObjectConstants.DSM_PARTICIPANT_DATA)) {
-            return getNestedJsonCompletions(esDataAsMap, moduleConfig, subParticipant, onlyMostRecent);
+            return getNestedCompletions(esDataAsMap, moduleConfig, subParticipant, onlyMostRecent);
         } else {
             return getOtherCompletions(esDataAsMap, moduleConfig, subParticipant, onlyMostRecent);
         }
@@ -319,7 +299,7 @@ public class TabularParticipantParser {
         return matchingActivities;
     }
 
-    private static List<Map<String, Object>> getNestedJsonCompletions(Map<String, Object> esDataAsMap,
+    private static List<Map<String, Object>> getNestedCompletions(Map<String, Object> esDataAsMap,
                                                                       ModuleExportConfig moduleConfig,
                                                                       Map<String, Object> subParticipant,
                                                                       boolean onlyMostRecent) {
@@ -331,9 +311,9 @@ public class TabularParticipantParser {
             return Collections.singletonList(Collections.emptyMap());
         }
         // figure out whether we're dealing with subparticipants (RGP) or just data
-        if (objectName != null && objectName.startsWith("RGP") && objectName.endsWith("GROUP")) {
-            if (subParticipant != null && subParticipant.get(DATA_AS_MAP) != null) {
-                return Collections.singletonList((Map<String, Object>) subParticipant.get(DATA_AS_MAP));
+        if (objectName.startsWith("RGP") && objectName.endsWith("GROUP")) {
+            if (subParticipant != null) {
+                return Collections.singletonList(subParticipant);
             } else {
                 return Collections.singletonList(Collections.emptyMap());
             }
@@ -346,11 +326,7 @@ public class TabularParticipantParser {
             List<Map<String, Object>> matchingModules = participantDataList.stream()
                     .filter(item -> objectName.equals(item.get(ESObjectConstants.FIELD_TYPE_ID)))
                     .collect(Collectors.toList());
-
-            List<Map<String, Object>> moduleData = matchingModules.stream().map(module -> {
-                return (Map<String, Object>) module.get(DATA_AS_MAP);
-            }).collect(Collectors.toList());
-            return moduleData;
+            return matchingModules;
         }
 
     }

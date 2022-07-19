@@ -15,7 +15,7 @@ public interface ElasticSearchable {
 
     long getParticipantsSize(String esParticipantsIndex);
 
-    ElasticSearch getParticipantsByRangeAndFilter(String esParticipantsIndex, int from, int to, AbstractQueryBuilder queryBuilder);
+    ElasticSearch getParticipantsByRangeAndFilter(String esParticipantsIndex, int from, int to, AbstractQueryBuilder queryBuilder, boolean parseParticipantDtos);
 
     ElasticSearch getParticipantsByRangeAndIds(String participantIndexES, int from, int to, List<String> participantIds);
 

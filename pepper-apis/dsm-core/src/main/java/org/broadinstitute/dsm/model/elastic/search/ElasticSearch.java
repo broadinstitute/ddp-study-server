@@ -201,7 +201,7 @@ public class ElasticSearch implements ElasticSearchable {
     }
 
     @Override
-    public ElasticSearch getParticipantsByRangeAndFilter(String esParticipantsIndex, int from, int to, AbstractQueryBuilder queryBuilder) {
+    public ElasticSearch getParticipantsByRangeAndFilter(String esParticipantsIndex, int from, int to, AbstractQueryBuilder queryBuilder, boolean parseParticipantDtos) {
         if (to <= 0) {
             throw new IllegalArgumentException("incorrect from/to range");
         }
@@ -219,7 +219,7 @@ public class ElasticSearch implements ElasticSearchable {
         } catch (Exception e) {
             throw new RuntimeException("Couldn't get participants from ES for instance " + esParticipantsIndex, e);
         }
-        List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits(), true);
+        List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits(), parseParticipantDtos);
         logger.info("Got " + esParticipants.size() + " participants from ES for instance " + esParticipantsIndex);
         return new ElasticSearch(esParticipants, response.getHits().getTotalHits());
     }

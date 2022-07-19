@@ -157,7 +157,7 @@ public class ParticipantWrapperTest {
 
         @Override
         public ElasticSearch getParticipantsByRangeAndFilter(String esParticipantsIndex, int from, int to,
-                                                             AbstractQueryBuilder queryBuilder) {
+                                                             AbstractQueryBuilder queryBuilder, boolean parseParticipantDtos) {
             return null;
         }
 

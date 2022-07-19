@@ -75,6 +75,9 @@ public abstract class TabularParticipantExporter {
         String questionStableId = filterConfig.getColumn().getName();
         String activityExportName = activityRepeatNum > 1 ?
                 activityName + COLUMN_REPEAT_DELIMITER + activityRepeatNum : activityName;
+        if (filterConfig.getColumn().getObject() != null) {
+            activityName = activityName + DBConstants.ALIAS_DELIMITER + filterConfig.getColumn().getObject();
+        }
         String columnExportName = questionRepeatNum > 1 ?
                 questionStableId + COLUMN_REPEAT_DELIMITER + questionRepeatNum : questionStableId;
         if (hasSeparateColumnForOption(option, filterConfig)) {
