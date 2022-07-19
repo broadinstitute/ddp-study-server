@@ -40,15 +40,6 @@ public class UserCreationPayload {
     @SerializedName("birthDate")
     private LocalDate birthDate;
 
-    @NotNull
-    @PastOrPresent
-    @SerializedName("consentDate")
-    private LocalDate consentDate;
-
-    @PastOrPresent
-    @SerializedName("assentDate")
-    private LocalDate assentDate;
-
     @SerializedName("centerId")
     private String centerId;
 }
