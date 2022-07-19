@@ -83,6 +83,9 @@ public abstract class TabularParticipantExporter {
         if (hasSeparateColumnForOption(option, filterConfig)) {
             columnExportName = columnExportName + DBConstants.ALIAS_DELIMITER + option.get(ESObjectConstants.OPTION_STABLE_ID);
         }
+        if (columnExportName.endsWith("REGISTRATION_STATE_PROVINCE")) {
+            columnExportName = "REGISTRATION_STATE_PROVINCE";
+        }
         String exportName = activityExportName + DBConstants.ALIAS_DELIMITER + columnExportName;
         return exportName;
     }

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.export.WorkflowAndFamilyIdExporter;
 import org.broadinstitute.dsm.model.Filter;
@@ -61,11 +62,12 @@ public class TabularParticipantParser {
         // map of table name => module export config
         Map<String, ModuleExportConfig> exportInfoMap = new HashMap<>();
         Map<String, Map<String, Object>> activityDefs = ElasticSearchUtil.getActivityDefinitions(ddpInstance);
-
-        // iterate over each filter, to generate a corresponding ItemExportConfig
+        Map<String, FilterExportConfig> collationColumnMap = new HashMap<>();
+        // iterate over each filter, to generate a corresponding FilterExportConfig
         for (Filter filter : filters) {
             try {
                 ParticipantColumn participantColumn = filter.getParticipantColumn();
+
                 // 'Modules' are combinations of tableAlias + object -- it's a discrete set of data
                 // within the ES data for a participant
                 String moduleConfigKey = participantColumn.getTableAlias() + participantColumn.getObject();
@@ -92,7 +94,23 @@ public class TabularParticipantParser {
                         options = (List<Map<String, Object>>) questionDef.get(ESObjectConstants.OPTIONS);
                     }
                 }
-                FilterExportConfig colConfig = new FilterExportConfig(moduleExport, filter, splitChoicesIntoColumns, options);
+
+                String collationSuffix = ValueProviderFactory.COLLATED_SUFFIXES.stream()
+                        .filter(suffix -> StringUtils.endsWith(participantColumn.getName(), suffix))
+                        .findFirst()
+                        .orElse(null);
+                FilterExportConfig colConfig = new FilterExportConfig(moduleExport, filter, splitChoicesIntoColumns, options, collationSuffix);
+                if (collationSuffix != null) {
+                    if (collationColumnMap.containsKey(collationSuffix)) {
+                        if (options != null) {
+                            collationColumnMap.get(collationSuffix).getOptions().addAll(options);
+                        }
+                        // we only want one column config for collated questions, so don't add this to the module
+                        continue;
+                    } else {
+                        collationColumnMap.put(collationSuffix, colConfig);
+                    }
+                }
                 moduleExport.getQuestions().add(colConfig);
             } catch (Exception e) {
                 logger.error("Export column could not be generated for filter", e);
@@ -154,23 +172,32 @@ public class TabularParticipantParser {
         // note that getSubParticipants will always return at least one entry, (for non-RGP studies, it will just return a single empty map)
         List<Map<String, Object>> participantDataList = getSubParticipants(esDataAsMap);
         for (Map<String, Object> subParticipant : participantDataList) {
-            Map<String, String> participantMap = new HashMap();
-            participantMaps.add(participantMap);
-            for (ModuleExportConfig moduleConfig : moduleConfigs) {
-                // get the data corresponding to each time this module was completed
-                List<Map<String, Object>> esModuleMaps =
-                        getModuleCompletions(esDataAsMap, moduleConfig, subParticipant, this.onlyMostRecent);
-                if (esModuleMaps.size() > moduleConfig.getNumMaxRepeats()) {
-                    moduleConfig.setNumMaxRepeats(esModuleMaps.size());
-                }
-                // for each time the module was completed, loop over the data and add it to the map
-                for (int moduleIndex = 0; moduleIndex < esModuleMaps.size(); moduleIndex++) {
-                    Map<String, Object> esModuleMap = esModuleMaps.get(moduleIndex);
-                    addModuleDataToParticipantMap(moduleConfig, participantMap, esModuleMap, moduleIndex);
-                }
-            }
+            participantMaps.add(parseSingleParticipant(esDataAsMap, moduleConfigs, subParticipant));
         }
         return participantMaps;
+    }
+
+    /** parses a single participant record into a string-string map.  This method is public because
+     * it is far easier to write tests with Map<String, Object> data than full-fledged ParticipantDTOWrappers
+     */
+    public Map<String, String> parseSingleParticipant(Map<String, Object> participantEsMap,
+                                                      List<ModuleExportConfig> moduleConfigs,
+                                                      Map<String, Object> subParticipant) {
+        Map<String, String> participantMap = new HashMap();
+        for (ModuleExportConfig moduleConfig : moduleConfigs) {
+            // get the data corresponding to each time this module was completed
+            List<Map<String, Object>> esModuleMaps =
+                    getModuleCompletions(participantEsMap, moduleConfig, subParticipant, this.onlyMostRecent);
+            if (esModuleMaps.size() > moduleConfig.getNumMaxRepeats()) {
+                moduleConfig.setNumMaxRepeats(esModuleMaps.size());
+            }
+            // for each time the module was completed, loop over the data and add it to the map
+            for (int moduleIndex = 0; moduleIndex < esModuleMaps.size(); moduleIndex++) {
+                Map<String, Object> esModuleMap = esModuleMaps.get(moduleIndex);
+                addModuleDataToParticipantMap(moduleConfig, participantMap, esModuleMap, moduleIndex);
+            }
+        }
+        return participantMap;
     }
 
     /**

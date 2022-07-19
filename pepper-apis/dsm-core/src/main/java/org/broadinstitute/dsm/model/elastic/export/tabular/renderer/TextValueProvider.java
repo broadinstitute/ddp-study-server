@@ -16,20 +16,7 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
 public class TextValueProvider {
-    public Collection<?> getRawValues(FilterExportConfig filterConfig, Map<String, Object> formMap) {
-        Collection<?> nestedValueWrapper = getRawValueWrapper(filterConfig, formMap);
-        return nestedValueWrapper;
-    }
-
-    public Collection<String> getFormattedValues(FilterExportConfig filterConfig, Map<String, Object> formMap) {
-        return formatRawValues(getRawValues(filterConfig, formMap), filterConfig, formMap);
-    }
-
-    public Collection<String> formatRawValues(Collection<?> rawValues, FilterExportConfig filterConfig, Map<String, Object> formMap) {
-        return rawValues.stream().map(val -> val != null ? val.toString() : StringUtils.EMPTY).collect(Collectors.toList());
-    }
-
-    protected Collection<?> getRawValueWrapper(FilterExportConfig filterConfig, Map<String, Object> moduleMap) {
+    public Collection<?> getRawValues(FilterExportConfig filterConfig, Map<String, Object> moduleMap) {
         Object value = StringUtils.EMPTY;
         if (moduleMap == null) {
             value = StringUtils.EMPTY;
@@ -43,6 +30,15 @@ public class TextValueProvider {
         }
         return (Collection<?>) value;
     }
+
+    public Collection<String> getFormattedValues(FilterExportConfig filterConfig, Map<String, Object> formMap) {
+        return formatRawValues(getRawValues(filterConfig, formMap), filterConfig, formMap);
+    }
+
+    public Collection<String> formatRawValues(Collection<?> rawValues, FilterExportConfig filterConfig, Map<String, Object> formMap) {
+        return rawValues.stream().map(val -> val != null ? val.toString() : StringUtils.EMPTY).collect(Collectors.toList());
+    }
+
 
     protected Object getValueFromMap(Map<String, Object> moduleMap, FilterExportConfig filterConfig) {
         Map<String, Object> targetMap = moduleMap;
@@ -138,7 +134,7 @@ public class TextValueProvider {
             // flatten any nested lists
             for (Object item : objList) {
                 if (item instanceof Collection) {
-                    allValues.addAll((Collection) item);
+                    allValues.addAll(flatten((Collection) item));
                 } else {
                     allValues.add(item);
                 }
@@ -148,5 +144,19 @@ public class TextValueProvider {
         } else {
             return Collections.singletonList(o);
         }
+    }
+
+    /** flatten an arbitrarily nested collection */
+    private Collection<?> flatten(Collection<?> collection) {
+        List<Object> allValues = new ArrayList<>();
+
+        for (Object item : collection) {
+            if (item instanceof Collection) {
+                allValues.addAll(flatten((Collection) item));
+            } else {
+                allValues.add(item);
+            }
+        }
+        return allValues;
     }
 }
