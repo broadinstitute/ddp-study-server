@@ -123,7 +123,7 @@ public class EmailBuilder {
         updateForConfigs(searchForConfigs(keys));
     }
 
-    private void updateForConfigs(List<Config> emailCfgs) {
+    public void updateForConfigs(List<Config> emailCfgs) {
         List<EmailInfo> emails = new ArrayList<>();
         for (var emailCfg : emailCfgs) {
             EmailInfo email = updateSendGridEmail(emailCfg);
