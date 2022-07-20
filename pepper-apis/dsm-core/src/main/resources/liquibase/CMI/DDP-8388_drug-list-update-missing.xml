@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="DDP-8388_druglist_missing" author="LKapanad">
+        <insert tableName="drug_list">
+            <column name="display_name" value="LISOCABTAGENE MARALEUCEL (BREYANZI)"/>
+            <column name="generic_name" value="LISOCABTAGENE"/>
+            <column name="chemocat2" value="MARALEUCEL"/>
+            <column name="brand_name" value="BREYANZI"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>
