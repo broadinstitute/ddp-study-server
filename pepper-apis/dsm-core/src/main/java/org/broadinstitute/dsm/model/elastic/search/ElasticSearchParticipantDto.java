@@ -37,13 +37,13 @@ public class ElasticSearchParticipantDto {
     private String ddp;
 
     @Getter
-    private SearchHit searchHit;
+    private Map<String, Object> dataAsMap;
 
     public ElasticSearchParticipantDto() {
     }
 
     public ElasticSearchParticipantDto(SearchHit searchHit) {
-        this.searchHit = searchHit;
+        this.dataAsMap = searchHit.getSourceAsMap();
     }
 
     private ElasticSearchParticipantDto(ElasticSearchParticipantDto.Builder builder) {

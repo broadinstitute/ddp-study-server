@@ -180,7 +180,7 @@ public class TabularParticipantParser {
     private List<Map<String, String>> generateParticipantTabularMaps(List<ModuleExportConfig> moduleConfigs,
                                                                      ParticipantWrapperDto participant) {
         List<Map<String, String>> participantMaps = new ArrayList<>();
-        Map<String, Object> esDataAsMap = participant.getEsData().getSearchHit().getSourceAsMap();
+        Map<String, Object> esDataAsMap = participant.getEsData().getDataAsMap();
         esDataAsMap.put("ddp", participant.getEsData().getDdp());
 
         // get the 'subParticipants' a.k.a RGP family members
@@ -315,17 +315,26 @@ public class TabularParticipantParser {
                                                                  Map<String, Object> subParticipant,
                                                                  boolean onlyMostRecent) {
         if (moduleConfig.isActivity()) {
-            return getActivityCompletions(esDataAsMap, moduleConfig, subParticipant, onlyMostRecent);
+            return getActivityCompletions(esDataAsMap, moduleConfig, onlyMostRecent);
         } else if (moduleConfig.getFilterKey().isJson() && moduleConfig.getName().startsWith(ESObjectConstants.DSM_PARTICIPANT_DATA)) {
             return getNestedCompletions(esDataAsMap, moduleConfig, subParticipant, onlyMostRecent);
+        } else if ("proxy".equals(moduleConfig.getTableAlias())) {
+             return getProxyCompletions(esDataAsMap, moduleConfig);
         } else {
             return getOtherCompletions(esDataAsMap, moduleConfig, subParticipant, onlyMostRecent);
         }
     }
 
+    private static List<Map<String, Object>> getProxyCompletions(Map<String, Object> esDataAsMap, ModuleExportConfig moduleConfig) {
+        List<Map<String, Object>> proxyData = (List<Map<String, Object>>) esDataAsMap.get("proxyData");
+        if (proxyData != null) {
+            return proxyData.stream().map(proxy -> (Map<String, Object>) proxy.get(moduleConfig.getName())).collect(Collectors.toList());
+        }
+        return Collections.singletonList(Collections.emptyMap());
+    }
+
     private static List<Map<String, Object>> getActivityCompletions(Map<String, Object> esDataAsMap,
                                           ModuleExportConfig moduleConfig,
-                                          Map<String, Object> subParticipant,
                                           boolean onlyMostRecent) {
         List<Map<String, Object>> activityList = (List<Map<String, Object>>) esDataAsMap.get(ESObjectConstants.ACTIVITIES);
         if (activityList == null) {

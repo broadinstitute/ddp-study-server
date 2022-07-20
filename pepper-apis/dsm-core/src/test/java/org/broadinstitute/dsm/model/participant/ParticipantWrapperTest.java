@@ -116,7 +116,7 @@ public class ParticipantWrapperTest {
         Assert.assertNull(participantWrapperDto2.getProxyData());
 
         participantWrapper.fillParticipantWrapperDtosWithProxies(participantWrapperDtos,
-                Stream.concat(proxies1.stream(), proxies2.stream()).collect(Collectors.toList()));
+                Stream.concat(proxies1.stream(), proxies2.stream()).collect(Collectors.toList()), true);
 
         Assert.assertEquals("B1", participantWrapperDto2.getProxyData().get(0).getParticipantId());
         Assert.assertEquals(proxies1, participantWrapperDto1.getProxyData().stream().map(ElasticSearchParticipantDto::getParticipantId)
@@ -139,7 +139,7 @@ public class ParticipantWrapperTest {
         }
 
         @Override
-        public ElasticSearch getParticipantsByIds(String esParticipantIndex, List<String> participantIds) {
+        public ElasticSearch getParticipantsByIds(String esParticipantIndex, List<String> participantIds, boolean parseParticipantDtos) {
             List<ElasticSearchParticipantDto> result = new ArrayList<>();
             participantIds.forEach(pId -> {
                 ESProfile esProfile = new ESProfile();
