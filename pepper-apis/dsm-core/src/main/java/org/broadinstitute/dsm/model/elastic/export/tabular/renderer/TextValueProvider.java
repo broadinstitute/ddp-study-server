@@ -95,12 +95,11 @@ public class TextValueProvider {
         if (targetAnswers.isEmpty()) {
             return StringUtils.EMPTY;
         }
-        Map<String, Object> firstAnswer = targetAnswers.get(0);
-        List<Object> rawAnswers = targetAnswers.stream().map(ans -> {
-                return ans.getOrDefault(ESObjectConstants.ANSWER, firstAnswer.get(filterConfig.getColumn().getName()));
-        }).collect(Collectors.toList());
 
+        List<Object> rawAnswers = extractAnswerValuesFromTargets(targetAnswers, filterConfig);
         Collection<?> answer = mapToCollection(rawAnswers);
+
+        Map<String, Object> firstAnswer = targetAnswers.get(0);
         Object optionDetails = firstAnswer.get(ESObjectConstants.OPTIONDETAILS);
         if (optionDetails != null && !((List<?>) optionDetails).isEmpty()) {
             removeOptionsFromAnswer(answer, ((List<Map<String, String>>) optionDetails));
@@ -109,6 +108,13 @@ public class TextValueProvider {
         }
 
         return answer;
+    }
+
+    protected List<Object> extractAnswerValuesFromTargets(List<Map<String, Object>> targetAnswers, FilterExportConfig filterConfig) {
+        List<Object> rawAnswers = targetAnswers.stream().map(ans -> {
+            return ans.getOrDefault(ESObjectConstants.ANSWER, ans.get(filterConfig.getColumn().getName()));
+        }).collect(Collectors.toList());
+        return rawAnswers;
     }
 
     protected void removeOptionsFromAnswer(Collection<?> answer, List<Map<String, String>> optionDetails) {

@@ -91,7 +91,7 @@ public class TabularParticipantParser {
                         splitChoicesIntoColumns = splitOptions &&
                                 ESObjectConstants.MULTIPLE.equals(questionDef.get(ESObjectConstants.SELECT_MODE));
                         // save the options so we can translate from stableIds if needed
-                        options = (List<Map<String, Object>>) questionDef.get(ESObjectConstants.OPTIONS);
+                        options = getOptionsForQuestion(questionDef);
                     }
                 }
 
@@ -118,6 +118,21 @@ public class TabularParticipantParser {
         }
         configs.sort(Comparator.comparing(ModuleExportConfig::isCollection).thenComparing(ModuleExportConfig::getAliasValue));
         return configs;
+    }
+
+    private List<Map<String, Object>> getOptionsForQuestion(Map<String, Object> questionDef) {
+        List<Map<String,Object>> options = (List<Map<String, Object>>) questionDef.get(ESObjectConstants.OPTIONS);
+        if (questionDef.containsKey(ESObjectConstants.OPTION_GROUPS)) {
+            Object groups = questionDef.get(ESObjectConstants.OPTION_GROUPS);
+            if (groups instanceof List) {
+                for (Map<String, Object> group : (List<Map<String, Object>>) groups) {
+                    if (group.containsKey(ESObjectConstants.OPTIONS) ) {
+                        options.addAll((List<Map<String, Object>>) group.get(ESObjectConstants.OPTIONS));
+                    }
+                }
+            }
+        }
+        return options;
     }
 
     /**

@@ -97,6 +97,8 @@ public class ESObjectConstants {
     public static final String OPTION_STABLE_ID = "optionStableId";
     public static final String OPTION = "option";
     public static final String OPTIONS = "options";
+    public static final String OPTION_GROUPS = "groups";
+    public static final String GROUPED_OPTIONS = "groupedOptions";
     public static final String DETAIL = "detail";
     public static final String ANSWER = "answer";
     public static final String FIELD_TYPE_ID = "fieldTypeId";
