@@ -9,4 +9,6 @@ public interface Filterable<T> {
     void setFrom(int from);
 
     void setTo(int to);
+
+    void setParseDtos(boolean parseDtos);
 }

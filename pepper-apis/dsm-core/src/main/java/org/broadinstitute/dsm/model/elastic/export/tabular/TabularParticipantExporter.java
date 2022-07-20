@@ -75,10 +75,16 @@ public abstract class TabularParticipantExporter {
         String questionStableId = filterConfig.getColumn().getName();
         String activityExportName = activityRepeatNum > 1 ?
                 activityName + COLUMN_REPEAT_DELIMITER + activityRepeatNum : activityName;
+        if (filterConfig.getColumn().getObject() != null) {
+            activityName = activityName + DBConstants.ALIAS_DELIMITER + filterConfig.getColumn().getObject();
+        }
         String columnExportName = questionRepeatNum > 1 ?
                 questionStableId + COLUMN_REPEAT_DELIMITER + questionRepeatNum : questionStableId;
         if (hasSeparateColumnForOption(option, filterConfig)) {
             columnExportName = columnExportName + DBConstants.ALIAS_DELIMITER + option.get(ESObjectConstants.OPTION_STABLE_ID);
+        }
+        if (columnExportName.endsWith("REGISTRATION_STATE_PROVINCE")) {
+            columnExportName = "REGISTRATION_STATE_PROVINCE";
         }
         String exportName = activityExportName + DBConstants.ALIAS_DELIMITER + columnExportName;
         return exportName;

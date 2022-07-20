@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.ESActivities;
@@ -13,6 +14,7 @@ import org.broadinstitute.dsm.model.elastic.ESAddress;
 import org.broadinstitute.dsm.model.elastic.ESComputed;
 import org.broadinstitute.dsm.model.elastic.ESDsm;
 import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.elasticsearch.search.SearchHit;
 
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -31,9 +33,17 @@ public class ElasticSearchParticipantDto {
     private List<Map<String, Object>> workflows;
     private String status;
     private ESDsm dsm;
+    @Getter
     private String ddp;
 
+    @Getter
+    private SearchHit searchHit;
+
     public ElasticSearchParticipantDto() {
+    }
+
+    public ElasticSearchParticipantDto(SearchHit searchHit) {
+        this.searchHit = searchHit;
     }
 
     private ElasticSearchParticipantDto(ElasticSearchParticipantDto.Builder builder) {

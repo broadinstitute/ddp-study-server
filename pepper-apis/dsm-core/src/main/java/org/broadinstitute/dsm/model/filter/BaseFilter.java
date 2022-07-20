@@ -5,6 +5,8 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.Gson;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.broadinstitute.dsm.db.ViewFilter;
@@ -32,6 +34,10 @@ public class BaseFilter {
     protected int from;
     protected int to;
     protected SortBy sortBy;
+    @Setter
+    @Getter
+    // whether the filter method should handle parsing returned objects into DTO
+    private boolean parseDtos = true;
 
     public BaseFilter(String jsonBody) {
         this.jsonBody = jsonBody;

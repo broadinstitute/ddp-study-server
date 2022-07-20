@@ -14,14 +14,16 @@ public class FilterExportConfig {
     private final String type;
     private boolean splitOptionsIntoColumns = false;
     private List<Map<String, Object>> options = null;
+    private String collationSuffix = null;
 
     public FilterExportConfig(ModuleExportConfig parent, Filter filterColumn, boolean splitOptionsIntoColumns,
-                              List<Map<String, Object>> options) {
+                              List<Map<String, Object>> options, String collationSuffix) {
         this.column = filterColumn.getParticipantColumn();
         this.type = filterColumn.getType();
         this.parent = parent;
         this.splitOptionsIntoColumns = splitOptionsIntoColumns;
         this.options = options;
+        this.collationSuffix = collationSuffix;
     }
 }
 
