@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -9,8 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.export.WorkflowAndFamilyIdExporter;
 import org.broadinstitute.dsm.model.Filter;
@@ -20,7 +20,6 @@ import org.broadinstitute.dsm.model.elastic.export.tabular.renderer.ValueProvide
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
-import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,11 +36,11 @@ public class TabularParticipantParser {
     private static final Logger logger = LoggerFactory.getLogger(TabularParticipantParser.class);
     private static final String COLUMN_SELECTED = "1";
     private static final String COLUMN_UNSELECTED = "0";
-    private static final String DATA_AS_MAP = "dataAsMap";
     private final List<Filter> filters;
     private final DDPInstance ddpInstance;
     private final boolean splitOptions;
     private final boolean onlyMostRecent;
+    private final List<String> nestedArrayObjects = Arrays.asList(ESObjectConstants.KIT_TEST_RESULT);
     private final ValueProviderFactory valueProviderFactory = new ValueProviderFactory();
 
     public TabularParticipantParser(List<Filter> filters, DDPInstance ddpInstance, boolean splitOptions, boolean onlyMostRecent) {
@@ -63,14 +62,20 @@ public class TabularParticipantParser {
         // map of table name => module export config
         Map<String, ModuleExportConfig> exportInfoMap = new HashMap<>();
         Map<String, Map<String, Object>> activityDefs = ElasticSearchUtil.getActivityDefinitions(ddpInstance);
-
-        // iterate over each filter, to generate a corresponding ItemExportConfig
+        Map<String, FilterExportConfig> collationColumnMap = new HashMap<>();
+        // iterate over each filter, to generate a corresponding FilterExportConfig
         for (Filter filter : filters) {
             try {
                 ParticipantColumn participantColumn = filter.getParticipantColumn();
+
                 // 'Modules' are combinations of tableAlias + object -- it's a discrete set of data
                 // within the ES data for a participant
                 String moduleConfigKey = participantColumn.getTableAlias() + participantColumn.getObject();
+                if (nestedArrayObjects.contains(participantColumn.getObject())) {
+                    // for nested array objects, we want them to appear inside their associated module (e.g. test results
+                    // should appear inside the corresponding kiRequest object
+                    moduleConfigKey = participantColumn.getTableAlias() + "null";
+                }
                 ModuleExportConfig moduleExport = exportInfoMap.get(moduleConfigKey);
                 if (moduleExport == null) {
                     moduleExport = new ModuleExportConfig(participantColumn);
@@ -89,7 +94,23 @@ public class TabularParticipantParser {
                         options = (List<Map<String, Object>>) questionDef.get(ESObjectConstants.OPTIONS);
                     }
                 }
-                FilterExportConfig colConfig = new FilterExportConfig(moduleExport, filter, splitChoicesIntoColumns, options);
+
+                String collationSuffix = ValueProviderFactory.COLLATED_SUFFIXES.stream()
+                        .filter(suffix -> StringUtils.endsWith(participantColumn.getName(), suffix))
+                        .findFirst()
+                        .orElse(null);
+                FilterExportConfig colConfig = new FilterExportConfig(moduleExport, filter, splitChoicesIntoColumns, options, collationSuffix);
+                if (collationSuffix != null) {
+                    if (collationColumnMap.containsKey(collationSuffix)) {
+                        if (options != null) {
+                            collationColumnMap.get(collationSuffix).getOptions().addAll(options);
+                        }
+                        // we only want one column config for collated questions, so don't add this to the module
+                        continue;
+                    } else {
+                        collationColumnMap.put(collationSuffix, colConfig);
+                    }
+                }
                 moduleExport.getQuestions().add(colConfig);
             } catch (Exception e) {
                 logger.error("Export column could not be generated for filter", e);
@@ -144,29 +165,39 @@ public class TabularParticipantParser {
     private List<Map<String, String>> generateParticipantTabularMaps(List<ModuleExportConfig> moduleConfigs,
                                                                      ParticipantWrapperDto participant) {
         List<Map<String, String>> participantMaps = new ArrayList<>();
-        Map<String, Object> esDataAsMap = participant.getEsDataAsMap();
-        mapParticipantDataJson(esDataAsMap);
+        Map<String, Object> esDataAsMap = participant.getEsData().getSearchHit().getSourceAsMap();
+        esDataAsMap.put("ddp", participant.getEsData().getDdp());
+
         // get the 'subParticipants' a.k.a RGP family members
         // note that getSubParticipants will always return at least one entry, (for non-RGP studies, it will just return a single empty map)
         List<Map<String, Object>> participantDataList = getSubParticipants(esDataAsMap);
         for (Map<String, Object> subParticipant : participantDataList) {
-            Map<String, String> participantMap = new HashMap();
-            participantMaps.add(participantMap);
-            for (ModuleExportConfig moduleConfig : moduleConfigs) {
-                // get the data corresponding to each time this module was completed
-                List<Map<String, Object>> esModuleMaps =
-                        getModuleCompletions(esDataAsMap, moduleConfig, subParticipant, this.onlyMostRecent);
-                if (esModuleMaps.size() > moduleConfig.getNumMaxRepeats()) {
-                    moduleConfig.setNumMaxRepeats(esModuleMaps.size());
-                }
-                // for each time the module was completed, loop over the data and add it to the map
-                for (int moduleIndex = 0; moduleIndex < esModuleMaps.size(); moduleIndex++) {
-                    Map<String, Object> esModuleMap = esModuleMaps.get(moduleIndex);
-                    addModuleDataToParticipantMap(moduleConfig, participantMap, esModuleMap, moduleIndex);
-                }
-            }
+            participantMaps.add(parseSingleParticipant(esDataAsMap, moduleConfigs, subParticipant));
         }
         return participantMaps;
+    }
+
+    /** parses a single participant record into a string-string map.  This method is public because
+     * it is far easier to write tests with Map<String, Object> data than full-fledged ParticipantDTOWrappers
+     */
+    public Map<String, String> parseSingleParticipant(Map<String, Object> participantEsMap,
+                                                      List<ModuleExportConfig> moduleConfigs,
+                                                      Map<String, Object> subParticipant) {
+        Map<String, String> participantMap = new HashMap();
+        for (ModuleExportConfig moduleConfig : moduleConfigs) {
+            // get the data corresponding to each time this module was completed
+            List<Map<String, Object>> esModuleMaps =
+                    getModuleCompletions(participantEsMap, moduleConfig, subParticipant, this.onlyMostRecent);
+            if (esModuleMaps.size() > moduleConfig.getNumMaxRepeats()) {
+                moduleConfig.setNumMaxRepeats(esModuleMaps.size());
+            }
+            // for each time the module was completed, loop over the data and add it to the map
+            for (int moduleIndex = 0; moduleIndex < esModuleMaps.size(); moduleIndex++) {
+                Map<String, Object> esModuleMap = esModuleMaps.get(moduleIndex);
+                addModuleDataToParticipantMap(moduleConfig, participantMap, esModuleMap, moduleIndex);
+            }
+        }
+        return participantMap;
     }
 
     /**
@@ -222,8 +253,11 @@ public class TabularParticipantParser {
      * If none exist, a list with a single empty map will be returned
      */
     List<Map<String, Object>> getSubParticipants(Map<String, Object> esDataAsMap) {
-        List<Map<String, Object>> participantDataList = (List<Map<String, Object>>) ((Map<String, Object>) esDataAsMap
-                .get(ESObjectConstants.DSM)).get(ESObjectConstants.PARTICIPANT_DATA);
+        List<String> pathNames = Arrays.asList(ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA);
+        List<Map<String, Object>> participantDataList = (List<Map<String, Object>>) nullSafeGet(pathNames, esDataAsMap);
+        if (participantDataList == null) {
+            return Collections.singletonList(Collections.emptyMap());
+        }
         List<Map<String, Object>> subParticipants = participantDataList.stream()
                 // do a case insensitive comparison as some data has "rgp_PARTICIPANTS" as fieldIds
                 .filter(item -> WorkflowAndFamilyIdExporter.RGP_PARTICIPANTS
@@ -236,30 +270,23 @@ public class TabularParticipantParser {
         }
     }
 
-    /**
-     * pre-parses all the json fields into maps for easier access during the main parse
-     * For now, this assumes 'dsm.participantData.data' is the only source of json that needs to be parsed
-     */
-    private void mapParticipantDataJson(Map<String, Object> esDataAsMap) {
-        try {
-            List<Map<String, Object>> participantDataList = (List<Map<String, Object>>) ((Map<String, Object>) esDataAsMap
-                    .get(ESObjectConstants.DSM)).get(ESObjectConstants.PARTICIPANT_DATA);
-            for (Map<String, Object> dataItem : participantDataList) {
-                try {
-                    JsonNode jsonNode = ObjectMapperSingleton.instance()
-                            .readTree(dataItem.get(ESObjectConstants.DATA).toString());
-                    Map<String, Object> mappedNode = ObjectMapperSingleton.instance()
-                            .convertValue(jsonNode, new TypeReference<Map<String, Object>>() {
-                            });
-                    dataItem.put(DATA_AS_MAP, mappedNode);
-                } catch (Exception e) {
-                    dataItem.put(DATA_AS_MAP, Collections.emptyMap());
-                }
-            }
-        } catch (Exception e) {
-            // do nothing, the parser will just leave empty fields where the json couldn't be parsed
+    private static Object nullSafeGet(List<String> pathNames, Map<String, Object> map) {
+        Object finalObj = null;
+        if (map == null) {
+            return finalObj;
         }
+        Map<String, Object> currentMap = map;
+        for (String pathName : pathNames) {
+            finalObj = currentMap.get(pathName);
+            if (finalObj instanceof Map) {
+                currentMap = (Map<String, Object>) finalObj;
+            } else {
+                return finalObj;
+            }
+        }
+        return finalObj;
     }
+
 
     /**
      * Returns the maps correspond to the participants completions of a given activity, e.g. their completions of the MEDICAL_HISTORY
@@ -275,7 +302,7 @@ public class TabularParticipantParser {
         if (moduleConfig.isActivity()) {
             return getActivityCompletions(esDataAsMap, moduleConfig, subParticipant, onlyMostRecent);
         } else if (moduleConfig.getFilterKey().isJson() && moduleConfig.getName().startsWith(ESObjectConstants.DSM_PARTICIPANT_DATA)) {
-            return getNestedJsonCompletions(esDataAsMap, moduleConfig, subParticipant, onlyMostRecent);
+            return getNestedCompletions(esDataAsMap, moduleConfig, subParticipant, onlyMostRecent);
         } else {
             return getOtherCompletions(esDataAsMap, moduleConfig, subParticipant, onlyMostRecent);
         }
@@ -286,6 +313,9 @@ public class TabularParticipantParser {
                                           Map<String, Object> subParticipant,
                                           boolean onlyMostRecent) {
         List<Map<String, Object>> activityList = (List<Map<String, Object>>) esDataAsMap.get(ESObjectConstants.ACTIVITIES);
+        if (activityList == null) {
+            return Collections.singletonList(Collections.emptyMap());
+        }
         List<Map<String, Object>> matchingActivities = activityList.stream().filter(activity ->
                         moduleConfig.getName().equals(activity.get(ESObjectConstants.ACTIVITY_CODE)))
                 .collect(Collectors.toList()
@@ -299,7 +329,7 @@ public class TabularParticipantParser {
         return matchingActivities;
     }
 
-    private static List<Map<String, Object>> getNestedJsonCompletions(Map<String, Object> esDataAsMap,
+    private static List<Map<String, Object>> getNestedCompletions(Map<String, Object> esDataAsMap,
                                                                       ModuleExportConfig moduleConfig,
                                                                       Map<String, Object> subParticipant,
                                                                       boolean onlyMostRecent) {
@@ -311,23 +341,22 @@ public class TabularParticipantParser {
             return Collections.singletonList(Collections.emptyMap());
         }
         // figure out whether we're dealing with subparticipants (RGP) or just data
-        if (objectName != null && objectName.startsWith("RGP") && objectName.endsWith("GROUP")) {
-            if (subParticipant != null && subParticipant.get(DATA_AS_MAP) != null) {
-                return Collections.singletonList((Map<String, Object>) subParticipant.get(DATA_AS_MAP));
+        if (objectName.startsWith("RGP") && objectName.endsWith("GROUP")) {
+            if (subParticipant != null) {
+                return Collections.singletonList(subParticipant);
             } else {
                 return Collections.singletonList(Collections.emptyMap());
             }
         } else {
-            List<Map<String, Object>> participantDataList = (List<Map<String, Object>>) ((Map<String, Object>) esDataAsMap
-                    .get(ESObjectConstants.DSM)).get(ESObjectConstants.PARTICIPANT_DATA);
+            List<String> pathNames = Arrays.asList(ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA);
+            List<Map<String, Object>> participantDataList = (List<Map<String, Object>>) nullSafeGet(pathNames, esDataAsMap);
+            if (participantDataList == null) {
+                return Collections.singletonList(Collections.emptyMap());
+            }
             List<Map<String, Object>> matchingModules = participantDataList.stream()
                     .filter(item -> objectName.equals(item.get(ESObjectConstants.FIELD_TYPE_ID)))
                     .collect(Collectors.toList());
-
-            List<Map<String, Object>> moduleData = matchingModules.stream().map(module -> {
-                return (Map<String, Object>) module.get(DATA_AS_MAP);
-            }).collect(Collectors.toList());
-            return moduleData;
+            return matchingModules;
         }
 
     }

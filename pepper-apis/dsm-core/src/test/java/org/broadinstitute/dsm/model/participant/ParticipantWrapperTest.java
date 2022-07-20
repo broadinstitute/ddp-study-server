@@ -61,7 +61,7 @@ public class ParticipantWrapperTest {
     public void getParticipantIdFromElasticList() {
         ParticipantWrapperPayload participantWrapperPayload = new ParticipantWrapperPayload.Builder().build();
         ParticipantWrapper participantWrapper = new ParticipantWrapper(participantWrapperPayload, elasticSearchable);
-        List<ElasticSearchParticipantDto> elasticSearchList = elasticSearchable.getParticipantsWithinRange("", 0, 50).getEsParticipants();
+        List<ElasticSearchParticipantDto> elasticSearchList = elasticSearchable.getParticipantsWithinRange("", 0, 50, true).getEsParticipants();
         List<String> participantIds = participantWrapper.getParticipantIdsFromElasticList(elasticSearchList);
         Assert.assertEquals(10, participantIds.size());
     }
@@ -70,7 +70,7 @@ public class ParticipantWrapperTest {
     public void getProxiesFromElasticList() {
         ParticipantWrapperPayload participantWrapperPayload = new ParticipantWrapperPayload.Builder().build();
         ParticipantWrapper participantWrapper = new ParticipantWrapper(participantWrapperPayload, elasticSearchable);
-        List<ElasticSearchParticipantDto> elasticSearchList = elasticSearchable.getParticipantsWithinRange("", 0, 50).getEsParticipants();
+        List<ElasticSearchParticipantDto> elasticSearchList = elasticSearchable.getParticipantsWithinRange("", 0, 50, true).getEsParticipants();
         Map<String, List<String>> proxyIds = participantWrapper.getProxiesIdsFromElasticList(elasticSearchList);
         Assert.assertTrue(proxyIds.size() > 0);
         Assert.assertEquals(PROXIES_QUANTITY, proxyIds.values().stream().findFirst().get().size());
@@ -128,7 +128,7 @@ public class ParticipantWrapperTest {
         ElasticSearch elasticSearch = new ElasticSearch();
 
         @Override
-        public ElasticSearch getParticipantsWithinRange(String esParticipantsIndex, int from, int to) {
+        public ElasticSearch getParticipantsWithinRange(String esParticipantsIndex, int from, int to, boolean parseDtos) {
             List<ElasticSearchParticipantDto> result = Stream.generate(() -> {
                 ESProfile esProfile = new ESProfile();
                 esProfile.setGuid(randomGuidGenerator());
@@ -157,7 +157,7 @@ public class ParticipantWrapperTest {
 
         @Override
         public ElasticSearch getParticipantsByRangeAndFilter(String esParticipantsIndex, int from, int to,
-                                                             AbstractQueryBuilder queryBuilder) {
+                                                             AbstractQueryBuilder queryBuilder, boolean parseParticipantDtos) {
             return null;
         }
 

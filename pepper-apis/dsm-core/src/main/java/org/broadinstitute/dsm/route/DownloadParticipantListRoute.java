@@ -39,21 +39,24 @@ public class DownloadParticipantListRoute extends RequestHandler {
      * be renamed to processRequest, and the old 'processRequest' method should be deleted
      */
     public Object processRequest(Request request, Response response, String userId) throws Exception {
-        if (UserUtil.checkUserAccess(null, userId, "pt_list_export", null)) {
-            response.status(500);
-            return new Result(500, UserErrorMessages.NO_RIGHTS);
-        }
         DownloadParticipantListPayload payload =
                 ObjectMapperSingleton.instance().readValue(request.body(), DownloadParticipantListPayload.class);
         DownloadParticipantListParams params = new DownloadParticipantListParams(request.queryMap());
 
         String realm = RoutePath.getRealm(request);
+
+        String userIdReq = UserUtil.getUserId(request);
+        if (!UserUtil.checkUserAccess(realm, userId, "pt_list_view", userIdReq)) {
+            response.status(500);
+            return new Result(500, UserErrorMessages.NO_RIGHTS);
+        }
         DDPInstance instance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.MEDICAL_RECORD_ACTIVATED);
 
         TabularParticipantParser parser = new TabularParticipantParser(payload.getColumnNames(), instance,
                 params.isSplitOptions(), params.isOnlyMostRecent());
 
         Filterable filterable = FilterFactory.of(request);
+        filterable.setParseDtos(false);
         List<ParticipantWrapperDto> participants = fetchParticipantEsData(filterable, request.queryMap());
         logger.info("Beginning parse of " + participants.size() + "participants");
         List<ModuleExportConfig> exportConfigs = parser.generateExportConfigs();

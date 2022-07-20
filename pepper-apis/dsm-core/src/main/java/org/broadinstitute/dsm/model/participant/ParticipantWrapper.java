@@ -29,8 +29,6 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchable;
 import org.broadinstitute.dsm.model.elastic.sort.Sort;
 import org.broadinstitute.dsm.model.elastic.sort.SortBy;
-import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter;
-import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilterPayload;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
@@ -59,7 +57,7 @@ public class ParticipantWrapper {
         });
     }
 
-    public ParticipantWrapperResult getFilteredList() {
+    public ParticipantWrapperResult getFilteredList(boolean parseParticipantDtos) {
         logger.info("Getting list of participant information");
 
         DDPInstanceDto ddpInstanceDto = participantWrapperPayload.getDdpInstanceDto().orElseThrow();
@@ -69,15 +67,15 @@ public class ParticipantWrapper {
         }
 
         return participantWrapperPayload.getFilter().map(filters -> {
-            fetchAndPrepareDataByFilters(filters);
+            fetchAndPrepareDataByFilters(filters, parseParticipantDtos);
             return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto));
         }).orElseGet(() -> {
-            fetchAndPrepareData();
+            fetchAndPrepareData(parseParticipantDtos);
             return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto));
         });
     }
 
-    private void fetchAndPrepareDataByFilters(Map<String, String> filters) {
+    private void fetchAndPrepareDataByFilters(Map<String, String> filters, boolean parseParticipantDtos) {
         FilterParser parser = new FilterParser();
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
         for (String source : filters.keySet()) {
@@ -95,16 +93,24 @@ public class ParticipantWrapper {
             }
         }
         esData = elasticSearchable.getParticipantsByRangeAndFilter(getEsParticipantIndex(), participantWrapperPayload.getFrom(),
-                participantWrapperPayload.getTo(), boolQueryBuilder);
+                participantWrapperPayload.getTo(), boolQueryBuilder, parseParticipantDtos);
     }
 
     private String getEsParticipantIndex() {
         return participantWrapperPayload.getDdpInstanceDto().orElseThrow().getEsParticipantIndex();
     }
 
-    private void fetchAndPrepareData() {
+    private boolean isUnderDsmKey(String source) {
+        return DBConstants.DDP_PARTICIPANT_ALIAS.equals(source) || DBConstants.DDP_MEDICAL_RECORD_ALIAS.equals(source)
+                || DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS.equals(source) || DBConstants.DDP_KIT_REQUEST_ALIAS.equals(source)
+                || DBConstants.DDP_TISSUE_ALIAS.equals(source) || DBConstants.DDP_ONC_HISTORY_ALIAS.equals(source)
+                || DBConstants.DDP_PARTICIPANT_DATA_ALIAS.equals(source) || DBConstants.DDP_PARTICIPANT_RECORD_ALIAS.equals(source)
+                || DBConstants.COHORT_ALIAS.equals(source);
+    }
+
+    private void fetchAndPrepareData(boolean parseParticipantDtos) {
         esData = elasticSearchable.getParticipantsWithinRange(getEsParticipantIndex(), participantWrapperPayload.getFrom(),
-                participantWrapperPayload.getTo());
+                participantWrapperPayload.getTo(), parseParticipantDtos);
     }
 
 
@@ -114,47 +120,54 @@ public class ParticipantWrapper {
         List<String> proxyGuids = new ArrayList<>();
 
         for (ElasticSearchParticipantDto elasticSearchParticipantDto : esData.getEsParticipants()) {
+            if (elasticSearchParticipantDto.getSearchHit() != null) {
+                // don't do any parsing -- just pass it as-is
+                ParticipantWrapperDto participantWrapperDto = new ParticipantWrapperDto();
+                participantWrapperDto.setEsData(elasticSearchParticipantDto);
+                result.add(participantWrapperDto);
+            } else {
+                elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
 
-            elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
+                    Participant participant = esDsm.getParticipant().orElse(new Participant());
 
-                Participant participant = esDsm.getParticipant().orElse(new Participant());
-
-                esDsm.getOncHistory().ifPresent(oncHistory -> {
-                    participant.setCreated(oncHistory.getCreated());
-                    participant.setReviewed(oncHistory.getReviewed());
-                });
+                    esDsm.getOncHistory().ifPresent(oncHistory -> {
+                        participant.setCreated(oncHistory.getCreated());
+                        participant.setReviewed(oncHistory.getReviewed());
+                    });
 
                 StudyPreFilter.fromPayload(StudyPreFilterPayload.of(elasticSearchParticipantDto, ddpInstanceDto))
                         .ifPresent(StudyPreFilter::filter);
 
-                List<MedicalRecord> medicalRecord = esDsm.getMedicalRecord();
-                List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();
-                List<KitRequestShipping> kitRequestShipping = esDsm.getKitRequestShipping();
-                List<Tissue> tissues = esDsm.getTissue();
-                List<SmId> smIds = esDsm.getSmId();
+                    List<MedicalRecord> medicalRecord = esDsm.getMedicalRecord();
+                    List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();
+                    List<KitRequestShipping> kitRequestShipping = esDsm.getKitRequestShipping();
+                    List<Tissue> tissues = esDsm.getTissue();
+                    List<SmId> smIds = esDsm.getSmId();
 
-                mapSmIdsToProperTissue(tissues, smIds);
+                    mapSmIdsToProperTissue(tissues, smIds);
 
-                mapTissueToProperOncHistoryDetail(oncHistoryDetails, tissues);
+                    mapTissueToProperOncHistoryDetail(oncHistoryDetails, tissues);
 
-                proxyGuids.addAll(elasticSearchParticipantDto.getProxies());
+                    proxyGuids.addAll(elasticSearchParticipantDto.getProxies());
 
-                List<ParticipantData> participantData = esDsm.getParticipantData();
-                sortBySelfElseById(participantData);
+                    List<ParticipantData> participantData = esDsm.getParticipantData();
+                    sortBySelfElseById(participantData);
 
-                ParticipantWrapperDto participantWrapperDto = new ParticipantWrapperDto();
-                participantWrapperDto.setEsData(elasticSearchParticipantDto);
-                participantWrapperDto.setParticipant(participant);
-                participantWrapperDto.setMedicalRecords(medicalRecord);
-                participantWrapperDto.setOncHistoryDetails(oncHistoryDetails);
-                participantWrapperDto.setKits(kitRequestShipping);
-                participantWrapperDto.setParticipantData(participantData);
-                participantWrapperDto.setAbstractionActivities(Collections.emptyList());
-                participantWrapperDto.setAbstractionSummary(Collections.emptyList());
+                    ParticipantWrapperDto participantWrapperDto = new ParticipantWrapperDto();
+                    participantWrapperDto.setEsData(elasticSearchParticipantDto);
+                    participantWrapperDto.setParticipant(participant);
+                    participantWrapperDto.setMedicalRecords(medicalRecord);
+                    participantWrapperDto.setOncHistoryDetails(oncHistoryDetails);
+                    participantWrapperDto.setKits(kitRequestShipping);
+                    participantWrapperDto.setParticipantData(participantData);
+                    participantWrapperDto.setAbstractionActivities(Collections.emptyList());
+                    participantWrapperDto.setAbstractionSummary(Collections.emptyList());
 
-                result.add(participantWrapperDto);
+                    result.add(participantWrapperDto);
 
-            });
+                });
+            }
+
         }
         fillParticipantWrapperDtosWithProxies(result, proxyGuids);
         return result;
