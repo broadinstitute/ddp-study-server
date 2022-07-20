@@ -39,6 +39,7 @@ public class ElasticSearchParticipantDto {
     @Getter
     private Map<String, Object> dataAsMap;
 
+
     public ElasticSearchParticipantDto() {
     }
 

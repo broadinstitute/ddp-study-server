@@ -181,6 +181,7 @@ public class ElasticSearch implements ElasticSearchable {
             throw new RuntimeException("Couldn't get participants from ES for instance " + esIndex, e);
         }
         List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits(), parseParticipantDtos);
+
         logger.info("Got " + esParticipants.size() + " participants from ES for instance " + esIndex);
         return new ElasticSearch(esParticipants, response.getHits().getTotalHits());
     }

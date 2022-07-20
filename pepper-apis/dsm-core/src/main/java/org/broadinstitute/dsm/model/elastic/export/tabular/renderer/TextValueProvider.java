@@ -100,6 +100,7 @@ public class TextValueProvider {
         Collection<?> answer = mapToCollection(rawAnswers);
 
         Map<String, Object> firstAnswer = targetAnswers.get(0);
+
         Object optionDetails = firstAnswer.get(ESObjectConstants.OPTIONDETAILS);
         if (optionDetails != null && !((List<?>) optionDetails).isEmpty()) {
             removeOptionsFromAnswer(answer, ((List<Map<String, String>>) optionDetails));

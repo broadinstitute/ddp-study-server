@@ -111,6 +111,7 @@ public class TabularParticipantParser {
                         collationColumnMap.put(collationSuffix, colConfig);
                     }
                 }
+
                 moduleExport.getQuestions().add(colConfig);
             } catch (Exception e) {
                 logger.error("Export column could not be generated for filter", e);

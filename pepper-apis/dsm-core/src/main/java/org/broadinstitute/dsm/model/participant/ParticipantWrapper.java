@@ -135,7 +135,6 @@ public class ParticipantWrapper {
                 result.add(participantWrapperDto);
             } else {
                 elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
-
                     Participant participant = esDsm.getParticipant().orElse(new Participant());
 
                     esDsm.getOncHistory().ifPresent(oncHistory -> {
