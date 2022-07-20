@@ -71,7 +71,7 @@ public abstract class TabularParticipantExporter {
      * this map lets us add distinguishing names to columns from those objects.  e.g. profile.email will not
      * collide with profile.PROXY.email
      */
-    private static final Map<String, String> tableAliasNameMap = Map.of(
+    private static final Map<String, String> TABLE_ALIAS_NAME_MAP = Map.of(
             "proxy", "PROXY",
             "r", "RECORD",
             "ex", "EXIT"
@@ -87,8 +87,8 @@ public abstract class TabularParticipantExporter {
                                        int questionRepeatNum,
                                        Map<String, Object> option) {
         String activityName = filterConfig.getParent().getName();
-        if (tableAliasNameMap.containsKey(filterConfig.getColumn().getTableAlias())) {
-            activityName = activityName + DBConstants.ALIAS_DELIMITER + tableAliasNameMap.get(filterConfig.getColumn().getTableAlias());
+        if (TABLE_ALIAS_NAME_MAP.containsKey(filterConfig.getColumn().getTableAlias())) {
+            activityName = activityName + DBConstants.ALIAS_DELIMITER + TABLE_ALIAS_NAME_MAP.get(filterConfig.getColumn().getTableAlias());
         }
         String questionStableId = filterConfig.getColumn().getName();
         String activityExportName = activityRepeatNum > 1 ?

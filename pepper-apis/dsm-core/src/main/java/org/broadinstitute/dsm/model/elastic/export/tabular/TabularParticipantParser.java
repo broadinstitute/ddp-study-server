@@ -327,7 +327,7 @@ public class TabularParticipantParser {
     }
 
     private static List<Map<String, Object>> getProxyCompletions(Map<String, Object> esDataAsMap, ModuleExportConfig moduleConfig) {
-        List<Map<String, Object>> proxyData = (List<Map<String, Object>>) esDataAsMap.get("proxyData");
+        List<Map<String, Object>> proxyData = (List<Map<String, Object>>) esDataAsMap.get(ESObjectConstants.PROXY_DATA);
         if (proxyData != null) {
             return proxyData.stream().map(proxy -> (Map<String, Object>) proxy.get(moduleConfig.getName())).collect(Collectors.toList());
         }

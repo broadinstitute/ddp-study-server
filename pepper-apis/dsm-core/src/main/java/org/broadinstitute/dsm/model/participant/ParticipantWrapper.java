@@ -227,7 +227,7 @@ public class ParticipantWrapper {
                         }).collect(Collectors.toList());
                 List<Map<String, Object>> proxyEsDataAsMaps = proxyEsData.stream()
                         .map(proxyData -> proxyData.getDataAsMap()).collect(Collectors.toList());
-                participantWrapperDto.getEsData().getDataAsMap().put("proxyData", proxyEsDataAsMaps);
+                participantWrapperDto.getEsData().getDataAsMap().put(ESObjectConstants.PROXY_DATA, proxyEsDataAsMaps);
             }
 
         });

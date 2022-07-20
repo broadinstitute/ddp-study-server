@@ -70,6 +70,8 @@ public class ESObjectConstants {
     public static final String DO_NOT_CONTACT = "doNotContact";
     public static final String CREATED_AT = "createdAt";
 
+    public static final String PROXY_DATA = "proxyData";
+
     //dsm
     public static final String DATE_OF_MAJORITY = "dateOfMajority";
     public static final String HAS_CONSENTED_TO_BLOODD_RAW = "hasConsentedToBloodDraw";
