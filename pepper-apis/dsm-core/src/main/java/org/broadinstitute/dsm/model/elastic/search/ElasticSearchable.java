@@ -11,7 +11,7 @@ public interface ElasticSearchable {
 
     ElasticSearch getParticipantsWithinRange(String esParticipantsIndex, int from, int to, boolean parseParticipantDtos);
 
-    ElasticSearch getParticipantsByIds(String esParticipantsIndex, List<String> participantIds);
+    ElasticSearch getParticipantsByIds(String esParticipantsIndex, List<String> participantIds, boolean parseParticipantDtos);
 
     long getParticipantsSize(String esParticipantsIndex);
 

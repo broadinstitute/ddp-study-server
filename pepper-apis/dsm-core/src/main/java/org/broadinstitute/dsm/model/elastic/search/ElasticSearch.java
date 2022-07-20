@@ -163,7 +163,7 @@ public class ElasticSearch implements ElasticSearchable {
     }
 
     @Override
-    public ElasticSearch getParticipantsByIds(String esIndex, List<String> participantIds) {
+    public ElasticSearch getParticipantsByIds(String esIndex, List<String> participantIds, boolean parseParticipantDtos) {
         if (Objects.isNull(esIndex)) {
             return new ElasticSearch();
         }
@@ -180,7 +180,8 @@ public class ElasticSearch implements ElasticSearchable {
         } catch (IOException e) {
             throw new RuntimeException("Couldn't get participants from ES for instance " + esIndex, e);
         }
-        List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits(), true);
+        List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits(), parseParticipantDtos);
+
         logger.info("Got " + esParticipants.size() + " participants from ES for instance " + esIndex);
         return new ElasticSearch(esParticipants, response.getHits().getTotalHits());
     }

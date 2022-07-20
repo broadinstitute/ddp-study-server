@@ -30,6 +30,8 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearchable;
 import org.broadinstitute.dsm.model.elastic.sort.Sort;
 import org.broadinstitute.dsm.model.elastic.sort.SortBy;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -68,10 +70,10 @@ public class ParticipantWrapper {
 
         return participantWrapperPayload.getFilter().map(filters -> {
             fetchAndPrepareDataByFilters(filters, parseParticipantDtos);
-            return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto));
+            return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto, parseParticipantDtos));
         }).orElseGet(() -> {
             fetchAndPrepareData(parseParticipantDtos);
-            return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto));
+            return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto, parseParticipantDtos));
         });
     }
 
@@ -114,20 +116,25 @@ public class ParticipantWrapper {
     }
 
 
-    private List<ParticipantWrapperDto> collectData(DDPInstanceDto ddpInstanceDto) {
+    private List<ParticipantWrapperDto> collectData(DDPInstanceDto ddpInstanceDto, boolean parseParticipantDtos) {
         logger.info("Collecting participant data...");
         List<ParticipantWrapperDto> result = new ArrayList<>();
         List<String> proxyGuids = new ArrayList<>();
 
         for (ElasticSearchParticipantDto elasticSearchParticipantDto : esData.getEsParticipants()) {
-            if (elasticSearchParticipantDto.getSearchHit() != null) {
+            if (!parseParticipantDtos) {
                 // don't do any parsing -- just pass it as-is
                 ParticipantWrapperDto participantWrapperDto = new ParticipantWrapperDto();
                 participantWrapperDto.setEsData(elasticSearchParticipantDto);
+                Object proxyIds = elasticSearchParticipantDto.getDataAsMap().get("proxies");
+                if (proxyIds instanceof List) {
+                    proxyGuids.addAll((List<String>) proxyIds);
+                    elasticSearchParticipantDto.setProxies((List<String>) proxyIds);
+                }
+
                 result.add(participantWrapperDto);
             } else {
                 elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
-
                     Participant participant = esDsm.getParticipant().orElse(new Participant());
 
                     esDsm.getOncHistory().ifPresent(oncHistory -> {
@@ -169,7 +176,7 @@ public class ParticipantWrapper {
             }
 
         }
-        fillParticipantWrapperDtosWithProxies(result, proxyGuids);
+        fillParticipantWrapperDtosWithProxies(result, proxyGuids, parseParticipantDtos);
         return result;
     }
 
@@ -193,7 +200,7 @@ public class ParticipantWrapper {
     }
 
     //method to avoid ES request for each participant's proxy
-    void fillParticipantWrapperDtosWithProxies(List<ParticipantWrapperDto> result, List<String> proxyGuids) {
+    void fillParticipantWrapperDtosWithProxies(List<ParticipantWrapperDto> result, List<String> proxyGuids, boolean parseParticipantDtos) {
         String esUsersIndex = participantWrapperPayload.getDdpInstanceDto().orElseThrow().getEsUsersIndex();
         SortBy profileCreatedAt =
                 new SortBy.Builder().withType(Filter.NUMBER).withOrder("asc").withInnerProperty(ElasticSearchUtil.CREATED_AT)
@@ -202,13 +209,27 @@ public class ParticipantWrapper {
         fieldTypeExtractor.setIndex(esUsersIndex);
         Sort sort = Sort.of(profileCreatedAt, fieldTypeExtractor);
         elasticSearchable.setSortBy(sort);
-        ElasticSearch proxiesByIds = elasticSearchable.getParticipantsByIds(esUsersIndex, proxyGuids);
+        ElasticSearch proxiesByIds = elasticSearchable.getParticipantsByIds(esUsersIndex, proxyGuids, parseParticipantDtos);
         result.forEach(participantWrapperDto -> {
             List<String> participantProxyGuids = participantWrapperDto.getEsData().getProxies();
-            List<ElasticSearchParticipantDto> proxyEsData = proxiesByIds.getEsParticipants().stream()
-                    .filter(elasticSearchParticipantDto -> participantProxyGuids.contains(elasticSearchParticipantDto.getParticipantId()))
-                    .collect(Collectors.toList());
-            participantWrapperDto.setProxyData(proxyEsData);
+            List<ElasticSearchParticipantDto> proxyEsData = null;
+
+            if (parseParticipantDtos) {
+                proxyEsData = proxiesByIds.getEsParticipants().stream()
+                        .filter(elasticSearchParticipantDto -> participantProxyGuids.contains(elasticSearchParticipantDto.getParticipantId()))
+                        .collect(Collectors.toList());
+                participantWrapperDto.setProxyData(proxyEsData);
+            } else {
+                proxyEsData = proxiesByIds.getEsParticipants().stream()
+                        .filter(elasticSearchParticipantDto -> {
+                            Map<String, Object> profile = (Map<String, Object>) elasticSearchParticipantDto.getDataAsMap().get(ESObjectConstants.PROFILE);
+                            return participantProxyGuids.contains((String) profile.get(ESObjectConstants.GUID));
+                        }).collect(Collectors.toList());
+                List<Map<String, Object>> proxyEsDataAsMaps = proxyEsData.stream()
+                        .map(proxyData -> proxyData.getDataAsMap()).collect(Collectors.toList());
+                participantWrapperDto.getEsData().getDataAsMap().put(ESObjectConstants.PROXY_DATA, proxyEsDataAsMaps);
+            }
+
         });
     }
 
