@@ -67,18 +67,42 @@ public abstract class TabularParticipantExporter {
         ));
     }
 
+    /** some tables are stored off the same data object as another (e.g. proxies are stored off of "profile")
+     * this map lets us add distinguishing names to columns from those objects.  e.g. profile.email will not
+     * collide with profile.PROXY.email
+     */
+    private static final Map<String, String> TABLE_ALIAS_NAME_MAP = Map.of(
+            "proxy", "PROXY",
+            "r", "RECORD",
+            "ex", "EXIT"
+    );
+
+    /**
+     * gets what should be a unique name for the column to use in the generated file.  It is very important that the generated
+     * name be unique across various filters/data entries, since the column names are also used to store a map of the participant data,
+     * so duplicated names will lead to export data being written to the wrong column.
+     */
     public static String getColumnName(FilterExportConfig filterConfig,
                                        int activityRepeatNum,
                                        int questionRepeatNum,
                                        Map<String, Object> option) {
         String activityName = filterConfig.getParent().getName();
+        if (TABLE_ALIAS_NAME_MAP.containsKey(filterConfig.getColumn().getTableAlias())) {
+            activityName = activityName + DBConstants.ALIAS_DELIMITER + TABLE_ALIAS_NAME_MAP.get(filterConfig.getColumn().getTableAlias());
+        }
         String questionStableId = filterConfig.getColumn().getName();
         String activityExportName = activityRepeatNum > 1 ?
                 activityName + COLUMN_REPEAT_DELIMITER + activityRepeatNum : activityName;
+        if (filterConfig.getColumn().getObject() != null) {
+            activityName = activityName + DBConstants.ALIAS_DELIMITER + filterConfig.getColumn().getObject();
+        }
         String columnExportName = questionRepeatNum > 1 ?
                 questionStableId + COLUMN_REPEAT_DELIMITER + questionRepeatNum : questionStableId;
         if (hasSeparateColumnForOption(option, filterConfig)) {
             columnExportName = columnExportName + DBConstants.ALIAS_DELIMITER + option.get(ESObjectConstants.OPTION_STABLE_ID);
+        }
+        if (columnExportName.endsWith("REGISTRATION_STATE_PROVINCE")) {
+            columnExportName = "REGISTRATION_STATE_PROVINCE";
         }
         String exportName = activityExportName + DBConstants.ALIAS_DELIMITER + columnExportName;
         return exportName;

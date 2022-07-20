@@ -9,13 +9,13 @@ import org.elasticsearch.index.query.AbstractQueryBuilder;
 
 public interface ElasticSearchable {
 
-    ElasticSearch getParticipantsWithinRange(String esParticipantsIndex, int from, int to);
+    ElasticSearch getParticipantsWithinRange(String esParticipantsIndex, int from, int to, boolean parseParticipantDtos);
 
-    ElasticSearch getParticipantsByIds(String esParticipantsIndex, List<String> participantIds);
+    ElasticSearch getParticipantsByIds(String esParticipantsIndex, List<String> participantIds, boolean parseParticipantDtos);
 
     long getParticipantsSize(String esParticipantsIndex);
 
-    ElasticSearch getParticipantsByRangeAndFilter(String esParticipantsIndex, int from, int to, AbstractQueryBuilder queryBuilder);
+    ElasticSearch getParticipantsByRangeAndFilter(String esParticipantsIndex, int from, int to, AbstractQueryBuilder queryBuilder, boolean parseParticipantDtos);
 
     ElasticSearch getParticipantsByRangeAndIds(String participantIndexES, int from, int to, List<String> participantIds);
 

@@ -86,8 +86,10 @@ public enum Alias {
 
     public static Alias of(ParticipantColumn column) {
         Alias esAlias;
-        if (Objects.nonNull(column.getObject())) {
+        if (Objects.nonNull(column.getObject()) && Alias.ofOrNull(column.getObject()) != null) {
             esAlias = Alias.of(column.getObject());
+        } else if (ElasticSearchUtil.QUESTIONS_ANSWER.equals(column.getObject())) {
+            esAlias = ACTIVITIES;
         } else {
             esAlias = Alias.of(column.getTableAlias());
         }
@@ -96,5 +98,9 @@ public enum Alias {
 
     private static Alias of(String alias) {
         return Enums.getIfPresent(Alias.class, alias.toUpperCase()).or(ACTIVITIES);
+    }
+
+    private static Alias ofOrNull(String alias) {
+        return Enums.getIfPresent(Alias.class, alias.toUpperCase()).orNull();
     }
 }

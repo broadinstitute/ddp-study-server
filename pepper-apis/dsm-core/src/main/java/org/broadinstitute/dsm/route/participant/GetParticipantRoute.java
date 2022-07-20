@@ -60,6 +60,6 @@ public class GetParticipantRoute extends RequestHandler {
                 .build();
         ElasticSearch elasticSearch = new ElasticSearch();
 
-        return new ParticipantWrapper(participantWrapperPayload, elasticSearch).getFilteredList().getParticipants();
+        return new ParticipantWrapper(participantWrapperPayload, elasticSearch).getFilteredList(true).getParticipants();
     }
 }

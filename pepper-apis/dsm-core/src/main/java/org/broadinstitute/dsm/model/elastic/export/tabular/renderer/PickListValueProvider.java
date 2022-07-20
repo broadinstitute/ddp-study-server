@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular.renderer;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -25,4 +26,20 @@ public class PickListValueProvider extends TextValueProvider {
             return val.toString();
         }).collect(Collectors.toList());
     }
+
+    // adds extra logic to handle grouped options
+    protected List<Object> extractAnswerValuesFromTargets(List<Map<String, Object>> targetAnswers, FilterExportConfig filterConfig) {
+        List<Object> rawAnswers = targetAnswers.stream().map(ans -> {
+            Object groupedOptions = ans.get(ESObjectConstants.GROUPED_OPTIONS);
+            if (groupedOptions instanceof Map && ((Map) groupedOptions).size() > 0) {
+                // groupedOptions is a map of groupName -> array of option choices
+                Map<String, List> optGroups = (Map<String, List>) groupedOptions;
+                List<String> allValues = (List<String>) optGroups.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+                return allValues;
+            }
+            return ans.getOrDefault(ESObjectConstants.ANSWER, ans.get(filterConfig.getColumn().getName()));
+        }).collect(Collectors.toList());
+        return rawAnswers;
+    }
+
 }

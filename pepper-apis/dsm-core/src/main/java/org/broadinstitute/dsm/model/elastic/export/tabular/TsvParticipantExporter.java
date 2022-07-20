@@ -11,6 +11,7 @@ import spark.Response;
 
 public class TsvParticipantExporter extends TabularParticipantExporter {
     public static final String DELIMITER = "\t";
+    public static final String MEDIA_TYPE = MediaType.TSV_UTF_8.toString();
 
     public TsvParticipantExporter(List<ModuleExportConfig> moduleConfigs,
                                   List<Map<String, String>> participantValueMaps, String fileFormat) {
@@ -37,7 +38,7 @@ public class TsvParticipantExporter extends TabularParticipantExporter {
     }
 
     public void setResponseHeaders(Response response) {
-        response.type(MediaType.TSV_UTF_8.toString());
+        response.type(MEDIA_TYPE);
         response.header("Access-Control-Expose-Headers", "Content-Disposition");
         response.header("Content-Disposition", "attachment;filename=" + getExportFilename(fileFormat));
     }

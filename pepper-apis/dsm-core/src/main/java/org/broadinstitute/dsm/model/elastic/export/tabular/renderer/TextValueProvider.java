@@ -1,8 +1,10 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular.renderer;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -14,9 +16,19 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
 public class TextValueProvider {
-    public Collection<?> getRawValues(FilterExportConfig filterConfig, Map<String, Object> formMap) {
-        Collection<?> nestedValueWrapper = getRawValueWrapper(filterConfig, formMap);
-        return nestedValueWrapper;
+    public Collection<?> getRawValues(FilterExportConfig filterConfig, Map<String, Object> moduleMap) {
+        Object value = StringUtils.EMPTY;
+        if (moduleMap == null) {
+            value = StringUtils.EMPTY;
+        } else if (ElasticSearchUtil.QUESTIONS_ANSWER.equals(filterConfig.getColumn().getObject()) ) {
+            value = getRawAnswerValues(moduleMap, filterConfig);
+        } else {
+            value = getValueFromMap(moduleMap, filterConfig);
+        }
+        if (!(value instanceof Collection)) {
+            return Collections.singletonList(value);
+        }
+        return (Collection<?>) value;
     }
 
     public Collection<String> getFormattedValues(FilterExportConfig filterConfig, Map<String, Object> formMap) {
@@ -24,45 +36,72 @@ public class TextValueProvider {
     }
 
     public Collection<String> formatRawValues(Collection<?> rawValues, FilterExportConfig filterConfig, Map<String, Object> formMap) {
-        return rawValues.stream().map(val -> val.toString()).collect(Collectors.toList());
+        return rawValues.stream().map(val -> val != null ? val.toString() : StringUtils.EMPTY).collect(Collectors.toList());
     }
 
-    protected Collection<?> getRawValueWrapper(FilterExportConfig filterConfig, Map<String, Object> formMap) {
-        Object value = StringUtils.EMPTY;
+
+    protected Object getValueFromMap(Map<String, Object> moduleMap, FilterExportConfig filterConfig) {
+        Map<String, Object> targetMap = moduleMap;
+        String objectName = filterConfig.getColumn().getObject();
         String fieldName = filterConfig.getColumn().getName();
-        if (formMap == null) {
-            value = StringUtils.EMPTY;
-        } else if (ElasticSearchUtil.QUESTIONS_ANSWER.equals(filterConfig.getColumn().getObject())) {
-            if (formMap != null) {
-                List<LinkedHashMap<String, Object>> allAnswers =
-                        (List<LinkedHashMap<String, Object>>) formMap.get(ElasticSearchUtil.QUESTIONS_ANSWER);
-                List<LinkedHashMap<String, Object>> targetAnswers = allAnswers.stream()
-                        .filter(ans -> filterConfig.getColumn().getName().equals(ans.get(ESObjectConstants.STABLE_ID)))
-                        .collect(Collectors.toList());
-                if (!targetAnswers.isEmpty()) {
-                    value = getRawAnswerValue(targetAnswers.get(0), filterConfig.getColumn().getName());
+        if (objectName != null) {
+            Object formObject = moduleMap.get(objectName);
+            if (formObject instanceof List) {
+                // this is a list, like "testResult" off of kitRequestShipping
+                // transform an array of maps into a map of arrays
+                Map<String, Object> answerMap = new HashMap();
+                final String finalFieldName = fieldName;
+                List<Object> answersArray = ((List<?>) formObject).stream().map(arrValue -> {
+                    if (arrValue instanceof Map) {
+                        return ((Map<String, Object>) arrValue).get(finalFieldName);
+                    }
+                    return StringUtils.EMPTY;
+                }).collect(Collectors.toList());
+                answerMap.put(fieldName, answersArray);
+                targetMap = answerMap;
+
+            } else if (formObject instanceof Map) {
+                targetMap = (Map<String, Object>) formObject;
+
+            } else {
+                // try dynamic fields
+                Map<String, Object> dynamicFieldMap = (Map<String, Object>) moduleMap.get(ESObjectConstants.DYNAMIC_FIELDS);
+                if (dynamicFieldMap != null) {
+                    String camelCasedFieldName = Arrays.stream(fieldName.split("_"))
+                            .map(word -> StringUtils.capitalize(StringUtils.toRootLowerCase(word))).collect(Collectors.joining());
+                    camelCasedFieldName = StringUtils.uncapitalize(camelCasedFieldName);
+                    if (dynamicFieldMap.get(camelCasedFieldName) != null) {
+                        targetMap = dynamicFieldMap;
+                        fieldName = camelCasedFieldName;
+                    }
                 }
             }
-        } else {
-            Map<String, Object> targetMap = formMap;
-            String objectName = filterConfig.getColumn().getObject();
-            if (objectName != null && formMap.get(objectName) != null) {
-                targetMap = (Map<String, Object>) formMap.get(objectName);
-            }
-            value = targetMap.getOrDefault(fieldName, StringUtils.EMPTY);
         }
-
-        if (!(value instanceof Collection)) {
-            return Collections.singletonList(value);
-        }
-        return (Collection<?>) value;
+        return targetMap.getOrDefault(fieldName, StringUtils.EMPTY);
     }
 
-    protected Object getRawAnswerValue(LinkedHashMap<String, Object> fq, String columnName) {
-        Object rawAnswer = fq.getOrDefault(ESObjectConstants.ANSWER, fq.get(columnName));
+    protected Object getRawAnswerValues(Map<String, Object> moduleMap, FilterExportConfig filterConfig) {
+        if (moduleMap == null) {
+            return StringUtils.EMPTY;
+        }
+        List<Map<String, Object>> allAnswers =
+                (List<Map<String, Object>>) moduleMap.get(ElasticSearchUtil.QUESTIONS_ANSWER);
+        if (allAnswers == null) {
+            return StringUtils.EMPTY;
+        }
+        List<Map<String, Object>> targetAnswers = allAnswers.stream()
+                .filter(ans -> filterConfig.getColumn().getName().equals(ans.get(ESObjectConstants.STABLE_ID)))
+                .collect(Collectors.toList());
+        if (targetAnswers.isEmpty()) {
+            return StringUtils.EMPTY;
+        }
 
-        Collection<?> answer = mapToCollection(rawAnswer);
-        Object optionDetails = fq.get(ESObjectConstants.OPTIONDETAILS);
+        List<Object> rawAnswers = extractAnswerValuesFromTargets(targetAnswers, filterConfig);
+        Collection<?> answer = mapToCollection(rawAnswers);
+
+        Map<String, Object> firstAnswer = targetAnswers.get(0);
+
+        Object optionDetails = firstAnswer.get(ESObjectConstants.OPTIONDETAILS);
         if (optionDetails != null && !((List<?>) optionDetails).isEmpty()) {
             removeOptionsFromAnswer(answer, ((List<Map<String, String>>) optionDetails));
             return Stream.of(answer, getOptionDetails((List<?>) optionDetails)).flatMap(Collection::stream)
@@ -70,6 +109,13 @@ public class TextValueProvider {
         }
 
         return answer;
+    }
+
+    protected List<Object> extractAnswerValuesFromTargets(List<Map<String, Object>> targetAnswers, FilterExportConfig filterConfig) {
+        List<Object> rawAnswers = targetAnswers.stream().map(ans -> {
+            return ans.getOrDefault(ESObjectConstants.ANSWER, ans.get(filterConfig.getColumn().getName()));
+        }).collect(Collectors.toList());
+        return rawAnswers;
     }
 
     protected void removeOptionsFromAnswer(Collection<?> answer, List<Map<String, String>> optionDetails) {
@@ -90,12 +136,37 @@ public class TextValueProvider {
             return Collections.singletonList(StringUtils.EMPTY);
         }
         if (o instanceof Collection) {
-            if (((Collection<?>) o).isEmpty()) {
+            Collection<?> objList = (Collection<?>) o;
+            if (objList.isEmpty()) {
                 return Collections.singletonList(StringUtils.EMPTY);
             }
-            return (Collection<?>) o;
+            List<Object> allValues = new ArrayList<>();
+            // flatten any nested lists
+            for (Object item : objList) {
+                if (item instanceof Collection) {
+                    allValues.addAll(flatten((Collection) item));
+                } else {
+                    allValues.add(item);
+                }
+            }
+            // replace any nulls with empty string
+            return allValues.stream().map(val -> val == null ? StringUtils.EMPTY : val).collect(Collectors.toList());
         } else {
             return Collections.singletonList(o);
         }
+    }
+
+    /** flatten an arbitrarily nested collection */
+    private Collection<?> flatten(Collection<?> collection) {
+        List<Object> allValues = new ArrayList<>();
+
+        for (Object item : collection) {
+            if (item instanceof Collection) {
+                allValues.addAll(flatten((Collection) item));
+            } else {
+                allValues.add(item);
+            }
+        }
+        return allValues;
     }
 }
