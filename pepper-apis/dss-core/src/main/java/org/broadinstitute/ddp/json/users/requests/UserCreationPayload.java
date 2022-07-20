@@ -6,7 +6,6 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Past;
-import javax.validation.constraints.PastOrPresent;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
@@ -39,15 +38,6 @@ public class UserCreationPayload {
     @Past
     @SerializedName("birthDate")
     private LocalDate birthDate;
-
-    @NotNull
-    @PastOrPresent
-    @SerializedName("consentDate")
-    private LocalDate consentDate;
-
-    @PastOrPresent
-    @SerializedName("assentDate")
-    private LocalDate assentDate;
 
     @SerializedName("centerId")
     private String centerId;
