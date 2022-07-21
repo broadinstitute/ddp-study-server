@@ -262,6 +262,9 @@ public class TabularParticipantParser {
                     String exportValue = formattedValues.contains(opt.get(ESObjectConstants.OPTION_STABLE_ID)) ?
                             COLUMN_SELECTED : COLUMN_UNSELECTED;
                     participantMap.put(colName, exportValue);
+//                    if (filterConfig.isHasDetails()) {
+//                        Map<String, String> detailMap = valueProvider.getDetailMap(filterConfig, esModuleMap, opt.get(ESObjectConstants.OPTION_STABLE_ID));
+//                    }
                 }
 
             } else {

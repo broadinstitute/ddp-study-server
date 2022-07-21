@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.ParticipantColumn;
 
@@ -13,6 +14,10 @@ public class FilterExportConfig {
     private final ModuleExportConfig parent;
     private final String type;
     private boolean splitOptionsIntoColumns = false;
+    // whether this question has details associated with it -- this property is allowed to be dynamic since we don't know if a
+    // question has details enabled until we start parsing participant responses
+    @Setter
+    private boolean hasDetails = false;
     private List<Map<String, Object>> options = null;
     private String collationSuffix = null;
     private int questionIndex = -1;
