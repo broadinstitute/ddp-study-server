@@ -317,15 +317,10 @@ public class ViewFilter {
                     if (columnMap.containsKey(dbElement.getTableAlias())) {
                         columnList = columnMap.get(dbElement.getTableAlias());
                     }
-                    columnList.add(column.substring(column.lastIndexOf(DBConstants.ALIAS_DELIMITER) + 1));
+                    columnList.add(getFieldName(column));
                     columnMap.put(dbElement.getTableAlias(), columnList);
                 } else if (Util.isUnderDsmKey(extractAliasFrom(column))) {
-                    List<Object> columnList = new ArrayList<>();
-                    if (columnMap.containsKey(extractAliasFrom(column))) {
-                        columnList = columnMap.get(extractAliasFrom(column));
-                    }
-                    columnList.add(column.substring(column.lastIndexOf(DBConstants.ALIAS_DELIMITER) + 1));
-                    columnMap.put(column.substring(0, column.indexOf(DBConstants.ALIAS_DELIMITER)), columnList);
+                    fillColumnMapByCustomFields(columnMap, column);
                 } else {
                     List<Object> columnList = new ArrayList<>();
                     if (columnMap.containsKey("ES")) {
@@ -351,6 +346,23 @@ public class ViewFilter {
             }
         }
         return filter;
+    }
+
+    private static void fillColumnMapByCustomFields(Map<String, List<Object>> columnMap, String column) {
+        List<Object> columnList = new ArrayList<>();
+        if (columnMap.containsKey(extractAliasFrom(column))) {
+            columnList = columnMap.get(extractAliasFrom(column));
+        }
+        columnList.add(getFieldName(column));
+        columnMap.put(getAlias(column), columnList);
+    }
+
+    private static String getAlias(String column) {
+        return column.substring(0, column.indexOf(DBConstants.ALIAS_DELIMITER));
+    }
+
+    private static String getFieldName(String column) {
+        return column.substring(column.lastIndexOf(DBConstants.ALIAS_DELIMITER) + 1);
     }
 
     private static String extractAliasFrom(String column) {

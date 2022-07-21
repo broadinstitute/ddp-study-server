@@ -1,13 +1,21 @@
 package org.broadinstitute.dsm.model.participant;
 
-import org.broadinstitute.dsm.statics.DBConstants;
+import java.util.Arrays;
+import java.util.List;
+
+import org.broadinstitute.dsm.model.elastic.sort.Alias;
 
 public class Util {
+
+    private static final List<Alias> aliases = Arrays.asList(
+            Alias.P, Alias.M, Alias.OD, Alias.K, Alias.T, Alias.O, Alias.D, Alias.R, Alias.C
+    );
+
     public static boolean isUnderDsmKey(String source) {
-        return DBConstants.DDP_PARTICIPANT_ALIAS.equals(source) || DBConstants.DDP_MEDICAL_RECORD_ALIAS.equals(source)
-                || DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS.equals(source) || DBConstants.DDP_KIT_REQUEST_ALIAS.equals(source)
-                || DBConstants.DDP_TISSUE_ALIAS.equals(source) || DBConstants.DDP_ONC_HISTORY_ALIAS.equals(source)
-                || DBConstants.DDP_PARTICIPANT_DATA_ALIAS.equals(source) || DBConstants.DDP_PARTICIPANT_RECORD_ALIAS.equals(source)
-                || DBConstants.COHORT_ALIAS.equals(source);
+        try {
+            return aliases.contains(Alias.valueOf(source.toUpperCase()));
+        } catch (IllegalArgumentException iae) {
+            return false;
+        }
     }
 }
