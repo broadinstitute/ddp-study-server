@@ -254,9 +254,6 @@ public class DataDonationPlatform {
     }
 
     public static void main(String[] args) {
-        log.info("Secret: {}", SecretManager.get("542678289221", "dss-configuration", "1"));
-        System.exit(0);
-
         try {
             synchronized (isReady) {
                 start();

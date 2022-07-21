@@ -14,6 +14,7 @@ import com.typesafe.config.ConfigValueFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.secrets.SecretManager;
 
 /**
  * Wrapper around {@link ConfigFactory#load() config load} that
@@ -51,7 +52,7 @@ public class ConfigManager {
     }
 
     public static synchronized ConfigManager getInstance() {
-        if (configManager == null && TYPESAFE_CONFIG_FILE != null) {
+        if (configManager == null) {
             try {
                 init(parseConfig());
             } catch (Exception e) {
@@ -68,7 +69,11 @@ public class ConfigManager {
      * please use {@link #getInstance()}
      */
     public static Config parseConfig() {
-        return ConfigFactory.parseFile(TYPESAFE_CONFIG_FILE);
+        if (TYPESAFE_CONFIG_FILE != null) {
+            return ConfigFactory.parseFile(TYPESAFE_CONFIG_FILE);
+        }
+
+        return ConfigFactory.parseString(SecretManager.get("542678289221", "dss-configuration", "1").orElseThrow());
     }
 
     /**
