@@ -1,9 +1,7 @@
 package org.broadinstitute.dsm.route.participantfiles;
 
-import static org.broadinstitute.dsm.statics.DBConstants.FILE_DOWNLOAD_ROLE;
-
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import javax.ws.rs.core.Response;
 import java.io.OutputStream;
 import java.util.Optional;
 
@@ -15,11 +13,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RoutePath;
-import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
 import spark.QueryParamsMap;
 import spark.Request;
-import spark.Response;
 
 @Slf4j
 public class DownloadParticipantFileRoute extends RequestHandler {
@@ -30,7 +26,7 @@ public class DownloadParticipantFileRoute extends RequestHandler {
     }
 
     @Override
-    protected Object processRequest(Request request, Response response, String userId) throws Exception {
+    protected Response processRequest(Request request, spark.Response response, String userId) throws Exception {
         log.info(request.url());
         QueryParamsMap queryParams = request.queryMap();
         String realm = null;
@@ -42,31 +38,25 @@ public class DownloadParticipantFileRoute extends RequestHandler {
             throw new RuntimeException("Realm was missing from the request");
         }
         String userIdR = UserUtil.getUserId(request);
-        if (UserUtil.checkUserAccess(realm, userId, FILE_DOWNLOAD_ROLE, userIdR)) {
-            String bucketName = queryParams.value("bucket");
-            String objectName = queryParams.value("fileName");
-            String blobName = queryParams.value("blob");
-            String destPath = "~/Downloads/" + objectName;
-            //todo check file is scanned and result is ok
-            Optional<byte[]> downloadObject =
-                    downloadObject(googleProjectName, bucketName, objectName, destPath, blobName, response.raw().getOutputStream());
-            downloadObject.ifPresent(downloadObjectArray -> {
-                try {
-                    HttpServletResponse rawResponse = response.raw();
-                    rawResponse.getOutputStream().write(downloadObjectArray);
-                    rawResponse.setStatus(200);
-                    rawResponse.getOutputStream().flush();
-                    rawResponse.getOutputStream().close();
-                } catch (IOException e) {
-                    throw new RuntimeException("Couldn't make file ", e);
-                }
-            });
-            downloadObject.orElseThrow();
-            return null;
-
-        }
-        response.status(500);
-        return UserErrorMessages.NO_RIGHTS;
+        String bucketName = queryParams.value("bucket");
+        String objectName = queryParams.value("fileName");
+        String blobName = queryParams.value("blob");
+        String destPath = "~/Downloads/" + objectName;
+        //todo check file is scanned and result is ok
+        Optional<byte[]> downloadObject =
+                downloadObject(googleProjectName, bucketName, objectName, destPath, blobName, response.raw().getOutputStream());
+        byte[] downloadObjectArray = downloadObject.orElseThrow();
+//        File fileDownload =  new File(objectName);
+//        FileUtils.writeByteArrayToFile(fileDownload, downloadObjectArray);
+//        ResponseBuilder response2 = Response.ok(fileDownload);
+//        response2.header("Content-Disposition", "attachment;filename=" + objectName);
+        HttpServletResponse rawResponse = response.raw();
+        rawResponse.getOutputStream().write(downloadObjectArray);
+        rawResponse.setStatus(200);
+        rawResponse.getOutputStream().flush();
+        rawResponse.getOutputStream().close();
+//        return response2.build();
+        return null;
     }
 
     public Optional<byte[]> downloadObject(String projectId, String bucketName, String objectName, String destFilePath,

@@ -116,6 +116,7 @@ import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
 import org.broadinstitute.dsm.route.mercury.PostMercuryOrderDummyRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
+import org.broadinstitute.dsm.route.participantfiles.DownloadParticipantFileRoute;
 import org.broadinstitute.dsm.route.tag.cohort.BulkCreateCohortTagRoute;
 import org.broadinstitute.dsm.route.tag.cohort.CreateCohortTagRoute;
 import org.broadinstitute.dsm.route.tag.cohort.DeleteCohortTagRoute;
@@ -832,6 +833,7 @@ public class DSMServer {
 
         post(UI_ROOT + RoutePath.DOWNLOAD_PARTICIPANT_LIST_ROUTE, new DownloadParticipantListRoute());
 
+
     }
 
     private void setupMRAbstractionRoutes() {
@@ -919,7 +921,8 @@ public class DSMServer {
             PostMercuryOrderDummyRoute postMercuryOrderDummyRoute = new PostMercuryOrderDummyRoute(projectId, mercuryTopicId);
             post(API_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderDummyRoute, new JsonTransformer());
         }
-
+        get(UI_ROOT + RoutePath.DOWNLOAD_PARTICIPANT_FILE, new DownloadParticipantFileRoute(projectId));
+        post(UI_ROOT + RoutePath.DOWNLOAD_PARTICIPANT_FILE, new DownloadParticipantFileRoute(projectId));
     }
 
     private void setupJobs(@NonNull Config cfg, @NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil,
