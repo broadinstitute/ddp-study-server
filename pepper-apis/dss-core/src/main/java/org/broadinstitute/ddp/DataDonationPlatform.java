@@ -159,6 +159,7 @@ import org.broadinstitute.ddp.route.VerifyMailAddressRoute;
 import org.broadinstitute.ddp.schedule.DsmCancerLoaderJob;
 import org.broadinstitute.ddp.schedule.DsmDrugLoaderJob;
 import org.broadinstitute.ddp.schedule.JobScheduler;
+import org.broadinstitute.ddp.secrets.SecretManager;
 import org.broadinstitute.ddp.security.JWTConverter;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
 import org.broadinstitute.ddp.service.ActivityValidationService;
@@ -253,6 +254,9 @@ public class DataDonationPlatform {
     }
 
     public static void main(String[] args) {
+        log.info("Secret: {}", SecretManager.get("542678289221", "dss-configuration", "1"));
+        System.exit(0);
+
         try {
             synchronized (isReady) {
                 start();
