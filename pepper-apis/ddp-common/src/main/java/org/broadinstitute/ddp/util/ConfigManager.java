@@ -73,7 +73,7 @@ public class ConfigManager {
             return ConfigFactory.parseFile(TYPESAFE_CONFIG_FILE);
         }
 
-        return ConfigFactory.parseString(SecretManager.get("542678289221", "dss-configuration", "1").orElseThrow());
+        return ConfigFactory.parseString(SecretManager.get("542678289221", "dss-configuration").orElseThrow());
     }
 
     /**
