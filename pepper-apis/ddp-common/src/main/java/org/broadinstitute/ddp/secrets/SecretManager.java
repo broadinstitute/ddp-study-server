@@ -36,6 +36,6 @@ public final class SecretManager {
     }
 
     private static int compare(final SecretVersion a, final SecretVersion b) {
-        return (int) (a.getCreateTime().getSeconds() - b.getCreateTime().getSeconds());
+        return Long.compare(a.getCreateTime().getSeconds(), b.getCreateTime().getSeconds());
     }
 }
