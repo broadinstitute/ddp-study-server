@@ -1,0 +1,586 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="DDP-8388_druglist" author="LKapanad">
+        <insert tableName="drug_list">
+            <column name="generic_name" value="AMIVANTAMAB"/>
+            <column name="brand_name" value="RYBREVANT"/>
+            <column name="display_name" value="AMIVANTAMAB (RYBREVANT)"/>
+            <column name="chemocat2" value="AMIVANTAMAB"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="generic_name" value="ASCIMINIB"/>
+            <column name="brand_name" value="SCEMBLIX"/>
+            <column name="display_name" value="ASCIMINIB (SCEMBLIX)"/>
+            <column name="chemocat2" value="ASCIMINIB"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="generic_name" value="ASPARAGINASE"/>
+            <column name="brand_name" value="RECOMBINANT"/>
+            <column name="display_name" value="ASPARAGINASE (RECOMBINANT) (RYLAZE)"/>
+            <column name="chemocat2" value="ASPARAGINASE"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="generic_name" value="AVAPRITINIB"/>
+            <column name="brand_name" value="AYVAKIT"/>
+            <column name="display_name" value="AVAPRITINIB (AYVAKIT)"/>
+            <column name="chemocat2" value="AVAPRITINIB"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="AZACITIDINE (ONUREG)"/>
+            <column name="generic_name" value="AZACITIDINE"/>
+            <column name="chemocat2" value="AZACITIDINE"/>
+            <column name="brand_name" value="ONUREG"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="BELANTAMAB MAFODOTIN (BLENREP)"/>
+            <column name="generic_name" value="BELANTAMAB"/>
+            <column name="chemocat2" value="MAFODOTIN"/>
+            <column name="brand_name" value="BLENREP"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="BELZUTIFAN (WELIREG)"/>
+            <column name="generic_name" value="BELZUTIFAN"/>
+            <column name="chemocat2" value="BELZUTIFAN"/>
+            <column name="brand_name" value="WELIREG"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="BREXUCABTAGENE AUTOLEUCEL (TECARTUS)"/>
+            <column name="generic_name" value="BREXUCABTAGENE"/>
+            <column name="chemocat2" value="AUTOLEUCEL"/>
+            <column name="brand_name" value="TECARTUS"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="CAPMATINIB (TABRECTA)"/>
+            <column name="generic_name" value="CAPMATINIB"/>
+            <column name="chemocat2" value="CAPMATINIB"/>
+            <column name="brand_name" value="TABRECTA"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="DARATUMUMAB AND HYALURONIDASE (DARZALEX FASPRO)"/>
+            <column name="generic_name" value="DARATUMUMAB"/>
+            <column name="chemocat2" value="HYALURONIDASE"/>
+            <column name="brand_name" value="DARZALEX FASPRO"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="DARATUMUMAB AND HYALURONIDASE (DARZALEX SC)"/>
+            <column name="generic_name" value="DARATUMUMAB"/>
+            <column name="chemocat2" value="HYALURONIDASE"/>
+            <column name="brand_name" value="DARZALEX SC"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="DECITABINE AND CEDAZURIDINE (INQOVI)"/>
+            <column name="generic_name" value="DECITABINE"/>
+            <column name="chemocat2" value="CEDAZURIDINE"/>
+            <column name="brand_name" value="INQOVI"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="DOSTARLIMAB (JEMPERLI)"/>
+            <column name="generic_name" value="DOSTARLIMAB"/>
+            <column name="chemocat2" value="DOSTARLIMAB"/>
+            <column name="brand_name" value="JEMPERLI"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="ENFORTUMAB VEDOTIN (PADCEV)"/>
+            <column name="generic_name" value="ENFORTUMAB"/>
+            <column name="chemocat2" value="VEDOTIN"/>
+            <column name="brand_name" value="PADCEV"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="ENTRECTINIB (ROZLYTREK)"/>
+            <column name="generic_name" value="ENTRECTINIB"/>
+            <column name="chemocat2" value="ENTRECTINIB"/>
+            <column name="brand_name" value="ROZLYTREK"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="FAM-TRASTUZUMAB DERUXTECAN (ENHERTU)"/>
+            <column name="generic_name" value="TRASTUZUMAB"/>
+            <column name="chemocat2" value="DERUXTECAN"/>
+            <column name="brand_name" value="ENHERTU"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="FEDRATINIB (INREBIC)"/>
+            <column name="generic_name" value="FEDRATINIB"/>
+            <column name="chemocat2" value="FEDRATINIB"/>
+            <column name="brand_name" value="INREBIC"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="IDECABTAGENE VICLEUCEL (ABECMA)"/>
+            <column name="generic_name" value="IDECABTAGENE"/>
+            <column name="chemocat2" value="VICLEUCEL"/>
+            <column name="brand_name" value="ABECMA"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="INFIGRATINIB (TRUSELTIQ)"/>
+            <column name="generic_name" value="INFIGRATINIB"/>
+            <column name="chemocat2" value="INFIGRATINIB"/>
+            <column name="brand_name" value="TRUSELTIQ"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="IRINOTECAN LIPOSOMAL (ONIVYDE)"/>
+            <column name="generic_name" value="IRINOTECAN"/>
+            <column name="chemocat2" value="LIPOSOMAL"/>
+            <column name="brand_name" value="ONIVYDE"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="ISATUXIMAB (SARCLISA)"/>
+            <column name="generic_name" value="ISATUXIMAB"/>
+            <column name="chemocat2" value="ISATUXIMAB"/>
+            <column name="brand_name" value="SARCLISA"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="LONCASTUXIMAB TESIRINE (ZYNLONTA)"/>
+            <column name="generic_name" value="LONCASTUXIMAB"/>
+            <column name="chemocat2" value="TESIRINE"/>
+            <column name="brand_name" value="ZYNLONTA"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="LURBINECTEDIN (ZEPZELCA)"/>
+            <column name="generic_name" value="LURBINECTEDIN"/>
+            <column name="chemocat2" value="LURBINECTEDIN"/>
+            <column name="brand_name" value="ZEPZELCA"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="LUTETIUM LU 177 VIPIVOTIDE TETRAXETAN (PLUVICTO)"/>
+            <column name="generic_name" value="LUTETIUM"/>
+            <column name="chemocat2" value="TETRAXETAN"/>
+            <column name="brand_name" value="PLUVICTO"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="MARGETUXIMAB (MARGENZA)"/>
+            <column name="generic_name" value="MARGETUXIMAB"/>
+            <column name="chemocat2" value="MARGETUXIMAB"/>
+            <column name="brand_name" value="MARGENZA"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="MELPHALAN FLUFENAMIDE (PEPAXTO)"/>
+            <column name="generic_name" value="MELPHALAN"/>
+            <column name="chemocat2" value="FLUFENAMIDE"/>
+            <column name="brand_name" value="PEPAXTO"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="MITOMYCIN (JELMYTO)"/>
+            <column name="generic_name" value="MITOMYCIN"/>
+            <column name="chemocat2" value="MITOMYCIN"/>
+            <column name="brand_name" value="JELMYTO"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="MOBOCERTINIB (EXKIVITY)"/>
+            <column name="generic_name" value="MOBOCERTINIB"/>
+            <column name="chemocat2" value="MOBOCERTINIB"/>
+            <column name="brand_name" value="EXKIVITY"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="NAXITAMAB (DANYELZA)"/>
+            <column name="generic_name" value="NAXITAMAB"/>
+            <column name="chemocat2" value="NAXITAMAB"/>
+            <column name="brand_name" value="DANYELZA"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="NIVOLUMAB AND RELATLIMAB (OPDUALAG)"/>
+            <column name="generic_name" value="NIVOLUMAB"/>
+            <column name="chemocat2" value="RELATLIMAB"/>
+            <column name="brand_name" value="OPDUALAG"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="PEMIGATINIB (PEMAZYRE)"/>
+            <column name="generic_name" value="PEMIGATINIB"/>
+            <column name="chemocat2" value="PEMIGATINIB"/>
+            <column name="brand_name" value="PEMAZYRE"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="PERTUZUMAB, TRASTUZUMAB, AND HYALURONIDASE (PHESGO)"/>
+            <column name="generic_name" value="PERTUZUMAB"/>
+            <column name="chemocat2" value="TRASTUZUMAB"/>
+            <column name="brand_name" value="PHESGO"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="PRALSETINIB (GAVRETO)"/>
+            <column name="generic_name" value="PRALSETINIB"/>
+            <column name="chemocat2" value="PRALSETINIB"/>
+            <column name="brand_name" value="GAVRETO"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="RELUGOLIX (ORGOVYX)"/>
+            <column name="generic_name" value="RELUGOLIX"/>
+            <column name="chemocat2" value="RELUGOLIX"/>
+            <column name="brand_name" value="ORGOVYX"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="RIPRETINIB (QINLOCK)"/>
+            <column name="generic_name" value="RIPRETINIB"/>
+            <column name="chemocat2" value="RIPRETINIB"/>
+            <column name="brand_name" value="QINLOCK"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="SACITUZUMAB GOVITECAN (TRODELVY)"/>
+            <column name="generic_name" value="SACITUZUMAB"/>
+            <column name="chemocat2" value="GOVITECAN"/>
+            <column name="brand_name" value="TRODELVY"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="SELPERCATINIB (RETEVMO)"/>
+            <column name="generic_name" value="SELPERCATINIB"/>
+            <column name="chemocat2" value="SELPERCATINIB"/>
+            <column name="brand_name" value="RETEVMO"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="SELUMETINIB (KOSELUGO)"/>
+            <column name="generic_name" value="SELUMETINIB"/>
+            <column name="chemocat2" value="SELUMETINIB"/>
+            <column name="brand_name" value="KOSELUGO"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="SIROLIMUS (PROTEIN BOUND) (FYARRO)"/>
+            <column name="generic_name" value="SIROLIMUS"/>
+            <column name="chemocat2" value="PROTEIN BOUND"/>
+            <column name="brand_name" value="FYARRO"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="SOTORASIB (LUMAKRAS)"/>
+            <column name="generic_name" value="SOTORASIB"/>
+            <column name="chemocat2" value="SOTORASIB"/>
+            <column name="brand_name" value="LUMAKRAS"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="TAFASITAMAB (MONJUVI)"/>
+            <column name="generic_name" value="TAFASITAMAB"/>
+            <column name="chemocat2" value="TAFASITAMAB"/>
+            <column name="brand_name" value="MONJUVI"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="TAZEMETOSTAT (TAZVERIK)"/>
+            <column name="generic_name" value="TAZEMETOSTAT"/>
+            <column name="chemocat2" value="TAZEMETOSTAT"/>
+            <column name="brand_name" value="TAZVERIK"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="TEPOTINIB (TEPMETKO)"/>
+            <column name="generic_name" value="TEPOTINIB"/>
+            <column name="chemocat2" value="TEPOTINIB"/>
+            <column name="brand_name" value="TEPMETKO"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="TISOTUMAB VEDOTIN (TIVDAK)"/>
+            <column name="generic_name" value="TISOTUMAB"/>
+            <column name="chemocat2" value="VEDOTIN"/>
+            <column name="brand_name" value="TIVDAK"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="TIVOZANIB (FOTIVDA)"/>
+            <column name="generic_name" value="TIVOZANIB"/>
+            <column name="chemocat2" value="TIVOZANIB"/>
+            <column name="brand_name" value="FOTIVDA"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="TUCATINIB (TUKYSA)"/>
+            <column name="generic_name" value="TUCATINIB"/>
+            <column name="chemocat2" value="TUCATINIB"/>
+            <column name="brand_name" value="TUKYSA"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="UMBRALISIB (UKONIQ)"/>
+            <column name="generic_name" value="UMBRALISIB"/>
+            <column name="chemocat2" value="UMBRALISIB"/>
+            <column name="brand_name" value="UKONIQ"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+        <insert tableName="drug_list">
+            <column name="display_name" value="ZANUBRUTINIB (BRUKINSA)"/>
+            <column name="generic_name" value="ZANUBRUTINIB"/>
+            <column name="chemocat2" value="ZANUBRUTINIB"/>
+            <column name="brand_name" value="BRUKINSA"/>
+            <column name="chemo_type" value="O"/>
+            <column name="study_drug" value="0"/>
+            <column name="treatment_type" value="C"/>
+            <column name="chemotherapy" value="Y"/>
+            <column name="active" value="1"/>
+            <column name="date_created" value="1658138450"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

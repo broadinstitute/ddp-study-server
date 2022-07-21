@@ -25,13 +25,15 @@ public final class CompositeQuestion extends Question<CompositeAnswer> {
     private transient Long additionalItemTextTemplateId;
     private List<Question> children = new ArrayList<>();
     private OrientationType childOrientation;
+    private String tabularSeparator;
 
     public CompositeQuestion(String stableId, long promptTemplateId,
                             boolean isRestricted, boolean isDeprecated, Boolean readonly, Long tooltipTemplateId,
                             Long additionalInfoHeaderTemplateId, Long additionalInfoFooterTemplateId,
                             List<Rule<CompositeAnswer>> validations, boolean allowMultiple, boolean unwrapOnExport,
                             Long addButtonTextTemplateId, Long additionalItemTextTemplateId,
-                            List<Question> childQuestions, OrientationType childOrientation, List<CompositeAnswer> answers) {
+                            List<Question> childQuestions, OrientationType childOrientation, String tabularSeparator,
+                             List<CompositeAnswer> answers) {
         super(QuestionType.COMPOSITE,
                 stableId,
                 promptTemplateId,
@@ -49,6 +51,7 @@ public final class CompositeQuestion extends Question<CompositeAnswer> {
         this.addButtonTextTemplateId = addButtonTextTemplateId;
         this.children.addAll(childQuestions);
         this.childOrientation = childOrientation;
+        this.tabularSeparator = tabularSeparator;
         this.answers = answers;
     }
 
@@ -70,7 +73,7 @@ public final class CompositeQuestion extends Question<CompositeAnswer> {
                 addButtonTextTemplateId,
                 additionalItemTextTemplateId,
                 childQuestions,
-                null,
+                null, null,
                 answers);
     }
 
@@ -88,6 +91,14 @@ public final class CompositeQuestion extends Question<CompositeAnswer> {
 
     public void setUnwrapOnExport(boolean unwrapOnExport) {
         this.unwrapOnExport = unwrapOnExport;
+    }
+
+    public String getTabularSeparator() {
+        return tabularSeparator;
+    }
+
+    public void setTabularSeparator(String tabularSeparator) {
+        this.tabularSeparator = tabularSeparator;
     }
 
     public String getAddButtonText() {

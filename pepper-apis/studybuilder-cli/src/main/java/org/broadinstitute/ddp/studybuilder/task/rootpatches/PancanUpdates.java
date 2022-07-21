@@ -5,6 +5,7 @@ import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.broadinstitute.ddp.studybuilder.task.PanCanNewActivities;
 import org.broadinstitute.ddp.studybuilder.task.PanCanValidationRules;
 import org.broadinstitute.ddp.studybuilder.task.PancanNewCancer;
+import org.broadinstitute.ddp.studybuilder.task.PancanNewMedications;
 import org.broadinstitute.ddp.studybuilder.task.PancanStoolkitEventAdd;
 import org.jdbi.v3.core.Handle;
 
@@ -23,7 +24,7 @@ public class PancanUpdates implements CustomTask {
         taskList.add(new PancanNewCancer());
         taskList.add(new PancanStoolkitEventAdd());
         taskList.add(new PanCanValidationRules());
-
+        taskList.add(new PancanNewMedications());
         taskList.forEach(task -> task.init(cfgPath, studyCfg, varsCfg));
     }
 
