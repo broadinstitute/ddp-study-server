@@ -33,7 +33,8 @@ public class DynamicFieldsParser extends BaseParser {
         this.possibleValuesJson = possibleValuesJson;
     }
 
-    public void setParser(BaseParser parser) {
+    @Override
+    public void setHelperParser(BaseParser parser) {
         this.parser = parser;
     }
 
@@ -57,15 +58,13 @@ public class DynamicFieldsParser extends BaseParser {
         } else if (isActivityRelatedType()) {
             Optional<String> maybeType = getTypeFromPossibleValuesJson();
             this.displayType = maybeType.orElse(StringUtils.EMPTY);
-            parsedValue = maybeType
-                    .map(displayType -> {
-                        if (parser instanceof TypeParser) {
-                            return parse(displayType);
-                        } else {
-                            return parse(element);
-                        }
-                    })
-                    .orElse(forString(element));
+            parsedValue = maybeType.map(displayType -> {
+                if (parser instanceof TypeParser) {
+                    return parse(displayType);
+                } else {
+                    return parse(element);
+                }
+            }).orElse(forString(element));
         } else if (NUMBER.equals(displayType)) {
             parsedValue = forNumeric(element);
         } else {
@@ -81,12 +80,9 @@ public class DynamicFieldsParser extends BaseParser {
         Optional<FieldSettingsDto> fieldSettingsByInstanceNameAndColumnName = getFieldSettingsByColumnName();
         if (fieldSettingsByInstanceNameAndColumnName.isPresent()) {
             FieldSettingsDto fieldSettings = fieldSettingsByInstanceNameAndColumnName.get();
-            displayType = StringUtils.isNotBlank(fieldSettings.getDisplayType())
-                    ? fieldSettings.getDisplayType()
-                    : StringUtils.EMPTY;
-            possibleValuesJson = StringUtils.isNotBlank(fieldSettings.getPossibleValues())
-                    ? fieldSettings.getPossibleValues()
-                    : StringUtils.EMPTY;
+            displayType = StringUtils.isNotBlank(fieldSettings.getDisplayType()) ? fieldSettings.getDisplayType() : StringUtils.EMPTY;
+            possibleValuesJson =
+                    StringUtils.isNotBlank(fieldSettings.getPossibleValues()) ? fieldSettings.getPossibleValues() : StringUtils.EMPTY;
         } else {
             displayType = StringUtils.EMPTY;
         }
@@ -96,8 +92,7 @@ public class DynamicFieldsParser extends BaseParser {
         Optional<FieldSettingsDto> fieldSettingsByInstanceNameAndColumnName;
         String fieldName = super.fieldName;
         if (isNotFieldSettingCached(fieldName)) {
-            fieldSettingsByInstanceNameAndColumnName =
-                    fieldSettingsDao.getFieldSettingsByInstanceNameAndColumnName(realm, fieldName);
+            fieldSettingsByInstanceNameAndColumnName = fieldSettingsDao.getFieldSettingsByInstanceNameAndColumnName(realm, fieldName);
             if (fieldSettingsByInstanceNameAndColumnName.isPresent()) {
                 fieldSettingsDtoByColumnName.put(fieldName, fieldSettingsByInstanceNameAndColumnName.get());
             }
@@ -138,10 +133,8 @@ public class DynamicFieldsParser extends BaseParser {
             List<Map<String, String>> possibleValues =
                     ObjectMapperSingleton.instance().readValue(possibleValuesJson, new TypeReference<List<Map<String, String>>>() {
                     });
-            Optional<String> maybeType = possibleValues.stream()
-                    .filter(possibleValue -> possibleValue.containsKey(TYPE))
-                    .map(possibleValue -> possibleValue.get(TYPE))
-                    .findFirst();
+            Optional<String> maybeType = possibleValues.stream().filter(possibleValue -> possibleValue.containsKey(TYPE))
+                    .map(possibleValue -> possibleValue.get(TYPE)).findFirst();
             return maybeType;
         } catch (Exception e) {
             return Optional.empty();

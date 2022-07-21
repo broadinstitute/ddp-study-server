@@ -712,8 +712,12 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
     public void testRegister_mailingList_emailNotRequiredWhenAlreadyRegisteredWithStudy() {
         // Note: user1 is registered with study1, but user1 does not exist as an auth0 user.
 
-        String auth0UserIdForUser1 = TransactionWrapper.withTxn(handle ->
-                handle.attach(JdbiUser.class).findByUserId(user1Id).getAuth0UserId());
+        String auth0UserIdForUser1 = TransactionWrapper.withTxn(handle -> {
+            return handle.attach(JdbiUser.class)
+                    .findByUserId(user1Id)
+                    .getAuth0UserId()
+                    .orElseThrow();
+        });
 
         UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserIdForUser1, auth0ClientId,
                 study1.getGuid(), auth0Domain);
@@ -796,7 +800,7 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
             // Permanent in this case means no expiration and has auth0_user_id.
             UserDto actualUser = handle.attach(JdbiUser.class).findByUserGuid(actualUserGuid);
             assertNull(actualUser.getExpiresAtMillis());
-            assertEquals(fakeAuth0Id, actualUser.getAuth0UserId());
+            assertEquals(fakeAuth0Id, actualUser.getAuth0UserId().get());
 
             UserProfile profile = handle.attach(UserProfileDao.class).findProfileByUserId(actualUser.getUserId()).get();
             Long enLanguageCodeId = LanguageStore.getDefault().getId();
@@ -959,7 +963,7 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
                 assertTrue(updatedInvitation.getAcceptedAt().isBefore(Instant.now()));
 
                 User requeriedUser = handle.attach(UserDao.class).findUserByGuid(user.get().getGuid()).get();
-                assertEquals(auth0UserId, requeriedUser.getAuth0UserId());
+                assertEquals(auth0UserId, requeriedUser.getAuth0UserId().get());
 
                 EnrollmentStatusType status = handle.attach(JdbiUserStudyEnrollment.class)
                         .getEnrollmentStatusByUserAndStudyIds(user.get().getId(), testStudy.get().getId())
@@ -1024,7 +1028,7 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
             TransactionWrapper.useTxn(handle -> {
                 var userDao = handle.attach(UserDao.class);
                 createdUser.set(userDao.findUserByGuid(createdUserGuid).get());
-                assertEquals(fakeAuth0UserId, createdUser.get().getAuth0UserId());
+                assertEquals(fakeAuth0UserId, createdUser.get().getAuth0UserId().get());
 
                 var updatedInvitation = handle.attach(InvitationDao.class)
                         .findByInvitationGuid(testStudy.get().getId(), invitationGuid).get();

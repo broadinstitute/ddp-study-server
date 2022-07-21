@@ -55,6 +55,13 @@ ActivityAnswersPatchResponse:
             description: list of updated block visibilities
             items:
               $ref: '../pepper.yml#/components/schemas/Block.Visibility'
+          compositeVisibility:
+            type: array
+            nullable: true
+            description: |
+              list of visibility updates for composite questions
+            items:
+              $ref: '../pepper.yml#/components/schemas/Composite.Visibility'
           validationFailures:
             type: array
             items:
@@ -332,6 +339,14 @@ StudyDetailResponse:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/Study.Detail'
+StudyAuditResponse:
+  description: audit information for a study
+  content:
+    application/json:
+      schema:
+        type: array
+        items:
+          $ref: '../pepper.yml#/components/schemas/Study.Audit'
 StudySummaryResponse:
   description: summary information for a list of studies
   content:
@@ -516,3 +531,31 @@ RemoteAutoCompleteOptionsResponse:
             type: array
             items:
               $ref: '../pepper.yml#/components/schemas/PicklistOption'
+UserCreationResponse:
+  description: details about the created user
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - guid
+          - hruid
+          - email
+          - center
+          - profile
+        properties:
+          guid:
+            type: string
+            format: guid
+          hruid:
+            type: string
+            format: guid
+          email:
+            type: string
+            format: email
+          center:
+            type: string
+            format: guid
+            nullable: true
+          profile:
+            $ref: 'schemas.yml#/ProfileModel'

@@ -188,17 +188,16 @@ public class JWTConverter {
 
                         if (userProfile == null) {
                             Optional<User> user = handle.attach(UserDao.class).findUserByGuid(ddpUserGuid);
-                            userId = user.isPresent() ? user.get().getId() : null;
+                            userId = user.map(User::getId).orElse(null);
                         } else {
                             userId = userProfile.getUserId();
                         }
                         String preferredLanguage = getPreferredLanguageCodeForUser(userProfile, ddpUserGuid);
-                        txnDdpAuth = new DDPAuth(auth0ClientId, ddpUserGuid, jwt, userPermissions, preferredLanguage);
+                        txnDdpAuth = new DDPAuth(auth0Domain, auth0ClientId, ddpUserGuid, jwt, userPermissions, preferredLanguage);
                     } catch (Exception e) {
-                        log.warn("Could not verify token. User "
-                                + decodedJwt.getClaim(Auth0Constants.DDP_USER_ID_CLAIM).asString()
-                                + " tried to authenticate against client auth0clientId "
-                                + auth0ClientId);
+                        log.warn("Could not verify token. User {} tried to authenticate against client {}",
+                                decodedJwt.getClaim(Auth0Constants.DDP_USER_ID_CLAIM).asString(),
+                                auth0ClientId);
                         throw e;
                     }
                     if (userId != null) {

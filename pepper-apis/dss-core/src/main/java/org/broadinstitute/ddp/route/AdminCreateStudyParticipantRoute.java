@@ -99,8 +99,10 @@ public class AdminCreateStudyParticipantRoute extends ValidatedJsonInputRoute<Cr
                     .orElseGet(LanguageStore::getDefault)
                     .getId();
 
-            UserProfile profile = new UserProfile.Builder(user.getId())
-                    .setPreferredLangId(defaultLangId)
+            UserProfile profile = UserProfile.builder()
+                    .userId(user.getId())
+                    .preferredLangId(defaultLangId)
+                    .preferredLangCode(null)
                     .build();
             handle.attach(UserProfileDao.class).createProfile(profile);
             log.info("Created profile for user {}", user.getGuid());

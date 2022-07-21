@@ -13,7 +13,7 @@ import org.broadinstitute.ddp.util.MiscUtil;
 /**
  * Base type for all embedded component blocks
  */
-public class ComponentBlock extends FormBlock implements Numberable  {
+public final class ComponentBlock extends FormBlock implements Numberable  {
 
     @NotNull
     @SerializedName("component")

@@ -27,6 +27,12 @@ public class ParticipantExcelGenerator {
         sheet.trackAllColumnsForAutoSizing();
     }
 
+    private static String getFormattedDate() {
+        LocalDate date = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(FILE_DATE_FORMAT);
+        return date.format(formatter);
+    }
+
     public void createHeader(List<String> headerColumns) {
         Row headerRow = sheet.createRow(0);
         IntStream.range(0, headerColumns.size()).forEach(i -> {
@@ -50,14 +56,8 @@ public class ParticipantExcelGenerator {
         }
     }
 
-    private static String getFormattedDate() {
-        LocalDate date = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(FILE_DATE_FORMAT);
-        return date.format(formatter);
-    }
-
     public void writeInResponse(Response response) throws IOException {
-        try (ServletOutputStream os = response.raw().getOutputStream()){
+        try (ServletOutputStream os = response.raw().getOutputStream()) {
             setResponseHeaders(response, String.format("Participant-%s.xlsx", getFormattedDate()));
             workbook.write(os);
         }

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="Dmitrii Eliseev" id="2022-06-08-tabular-block">
+        <insert tableName="block_type">
+            <column name="block_type_code" value="TABULAR"/>
+        </insert>
+
+        <createTable tableName="block_tabular">
+            <column name="block_tabular_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="block_tabular_pk"/>
+            </column>
+
+            <column name="block_id" type="bigint">
+                <constraints nullable="false" references="block(block_id)" foreignKeyName="block_tabular_block_fk"/>
+            </column>
+
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false" references="revision(revision_id)" foreignKeyName="block_tabular_revision_fk"/>
+            </column>
+
+            <column name="columns_count" type="bigint" defaultValue="1">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <createTable tableName="block_tabular_header">
+            <column name="block_tabular_header_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="block_tabular_header_pk"/>
+            </column>
+
+            <column name="block_tabular_id" type="bigint">
+                <constraints nullable="false" references="block_tabular(block_tabular_id)" foreignKeyName="block_tabular_header_block_fk"/>
+            </column>
+
+            <column name="column_span" type="bigint">
+                <constraints nullable="false" />
+            </column>
+
+            <column name="template_id" type="bigint">
+                <constraints nullable="false"
+                             references="template(template_id)"
+                             foreignKeyName="block_tabular_header_template_fk"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="block_tabular_question">
+            <column name="block_tabular_question_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="block_tabular_question_pk"/>
+            </column>
+
+            <column name="column_span" type="bigint">
+                <constraints nullable="false" />
+            </column>
+
+            <column name="block_tabular_id" type="bigint">
+                <constraints nullable="false" references="block_tabular(block_tabular_id)" foreignKeyName="block_tabular_question_block_fk"/>
+            </column>
+
+            <column name="question_id" type="bigint">
+                <constraints nullable="false"
+                             references="question(question_id)"
+                             foreignKeyName="block_tabular_question_question_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

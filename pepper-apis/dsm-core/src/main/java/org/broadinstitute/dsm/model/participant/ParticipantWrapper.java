@@ -29,6 +29,8 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchable;
 import org.broadinstitute.dsm.model.elastic.sort.Sort;
 import org.broadinstitute.dsm.model.elastic.sort.SortBy;
+import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter;
+import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilterPayload;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -69,10 +71,10 @@ public class ParticipantWrapper {
 
         return participantWrapperPayload.getFilter().map(filters -> {
             fetchAndPrepareDataByFilters(filters);
-            return new ParticipantWrapperResult(esData.getTotalCount(), collectData());
+            return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto));
         }).orElseGet(() -> {
             fetchAndPrepareData();
-            return new ParticipantWrapperResult(esData.getTotalCount(), collectData());
+            return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto));
         });
     }
 
@@ -115,10 +117,11 @@ public class ParticipantWrapper {
     }
 
 
-    private List<ParticipantWrapperDto> collectData() {
+    private List<ParticipantWrapperDto> collectData(DDPInstanceDto ddpInstanceDto) {
         logger.info("Collecting participant data...");
         List<ParticipantWrapperDto> result = new ArrayList<>();
         List<String> proxyGuids = new ArrayList<>();
+
         for (ElasticSearchParticipantDto elasticSearchParticipantDto : esData.getEsParticipants()) {
 
             elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
@@ -130,18 +133,18 @@ public class ParticipantWrapper {
                     participant.setReviewed(oncHistory.getReviewed());
                 });
 
+                StudyPreFilter.fromPayload(StudyPreFilterPayload.of(elasticSearchParticipantDto, ddpInstanceDto))
+                        .ifPresent(StudyPreFilter::filter);
+
                 List<MedicalRecord> medicalRecord = esDsm.getMedicalRecord();
-
                 List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();
+                List<KitRequestShipping> kitRequestShipping = esDsm.getKitRequestShipping();
                 List<Tissue> tissues = esDsm.getTissue();
-
                 List<SmId> smIds = esDsm.getSmId();
 
                 mapSmIdsToProperTissue(tissues, smIds);
 
                 mapTissueToProperOncHistoryDetail(oncHistoryDetails, tissues);
-
-                List<KitRequestShipping> kitRequestShipping = esDsm.getKitRequestShipping();
 
                 proxyGuids.addAll(elasticSearchParticipantDto.getProxies());
 
@@ -169,9 +172,8 @@ public class ParticipantWrapper {
     private void mapSmIdsToProperTissue(List<Tissue> tissues, List<SmId> smIds) {
         for (SmId smId : smIds) {
             Long tissueId = smId.getTissueId();
-            tissues.stream()
-                    .filter(tissue -> tissue.getTissueId().equals(tissueId))
-                    .findFirst().ifPresent(tissue -> fillSmIdsByType(smId, tissue));
+            tissues.stream().filter(tissue -> tissue.getTissueId().equals(tissueId)).findFirst()
+                    .ifPresent(tissue -> fillSmIdsByType(smId, tissue));
         }
     }
 

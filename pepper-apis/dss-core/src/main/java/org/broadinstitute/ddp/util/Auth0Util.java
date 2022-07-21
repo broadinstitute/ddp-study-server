@@ -43,6 +43,7 @@ import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.auth0.Auth0CallResponse;
 import org.broadinstitute.ddp.security.JWTConverter;
 import org.jdbi.v3.core.Handle;
@@ -141,12 +142,17 @@ public class Auth0Util {
      * @return The result of the Auth0 call
      */
     private static Auth0CallResponse updateUserData(ManagementAPI mgmtAPI, UserDto userDto, User newUserData) {
+        if (userDto.getAuth0UserId().isEmpty()) {
+            throw new DDPException("can not update user data for a non-Auth0 user");
+        }
+
         // Calling Auth0
-        String userGuid = userDto.getUserGuid();
+        var userGuid = userDto.getUserGuid();
+        var auth0UserId = userDto.getAuth0UserId().get();
         log.info("Trying to update the data for the user {}. Auth0 user id = {}", userGuid, userDto.getAuth0UserId());
 
         try {
-            mgmtAPI.users().update(userDto.getAuth0UserId(), newUserData).execute();
+            mgmtAPI.users().update(auth0UserId, newUserData).execute();
         } catch (APIException e) {
             // A specific Auth0 API issue occurred. Relay the status code
             String errMsg = "Auth0 API call failed with the code " + e.getStatusCode() + ". Reason: " + e.getMessage()

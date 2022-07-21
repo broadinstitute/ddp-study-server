@@ -77,7 +77,7 @@ public class ViewFilter {
     public String filterQuery;
     @ColumnName(DBConstants.DISPLAY_NAME_FILTER)
     private String filterName;
-    private Map<String, List<String>> columns;
+    private Map<String, List<Object>> columns;
     private String[] columnsToSave;
     @ColumnName(DBConstants.FILTER_ID)
     private String id;
@@ -99,7 +99,7 @@ public class ViewFilter {
         this(filterName, null, null, null, null, null, null, parent, null, null, null, null, null);
     }
 
-    public ViewFilter(String filterName, Map<String, List<String>> columns, String id, String fDeleted, Boolean shared, String userId,
+    public ViewFilter(String filterName, Map<String, List<Object>> columns, String id, String fDeleted, Boolean shared, String userId,
                       Filter[] filters, String parent, String icon, String quickFilterName, String queryItems, String filterQuery,
                       Integer[] realmId) {
         this.userId = userId;
@@ -306,19 +306,19 @@ public class ViewFilter {
 
     private static ViewFilter getFilterView(@NonNull ResultSet rs, @NonNull Map<String, DBElement> columnNameMap) throws SQLException {
         String[] viewColumns = rs.getString(DBConstants.VIEW_COLUMNS).split(",");
-        Map<String, List<String>> columnMap = new HashMap<>();
+        Map<String, List<Object>> columnMap = new HashMap<>();
         for (String column : viewColumns) {
             if (StringUtils.isNotBlank(column)) {
                 DBElement dbElement = columnNameMap.get(column);
                 if (dbElement != null) {
-                    List<String> columnList = new ArrayList<>();
+                    List<Object> columnList = new ArrayList<>();
                     if (columnMap.containsKey(dbElement.getTableAlias())) {
                         columnList = columnMap.get(dbElement.getTableAlias());
                     }
                     columnList.add(column.substring(column.lastIndexOf(DBConstants.ALIAS_DELIMITER) + 1));
                     columnMap.put(dbElement.getTableAlias(), columnList);
                 } else {
-                    List<String> columnList = new ArrayList<>();
+                    List<Object> columnList = new ArrayList<>();
                     if (columnMap.containsKey("ES")) {
                         columnList = columnMap.get("ES");
                     }
@@ -863,7 +863,7 @@ public class ViewFilter {
                         case 40:
                             break;
                         default:
-                            logger.error("Unknown state " +  state);
+                            logger.error("Unknown state " + state);
                     }
                 }
             }

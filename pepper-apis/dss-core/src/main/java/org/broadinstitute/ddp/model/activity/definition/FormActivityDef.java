@@ -216,6 +216,8 @@ public class FormActivityDef extends ActivityDef {
                     nested = ((ConditionalBlockDef) block).getNested();
                 } else if (block.getBlockType() == BlockType.GROUP) {
                     nested = ((GroupBlockDef) block).getNested();
+                } else if (block.getBlockType() == BlockType.TABULAR) {
+                    nested = ((TabularBlockDef) block).getBlocks();
                 }
                 if (nested != null) {
                     nested.stream().filter(check::apply).forEach(blocks::add);

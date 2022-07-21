@@ -8,7 +8,13 @@ import java.util.Optional;
 import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 import lombok.Setter;
-import org.broadinstitute.dsm.db.*;
+import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.MedicalRecord;
+import org.broadinstitute.dsm.db.OncHistory;
+import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.db.Participant;
+import org.broadinstitute.dsm.db.SmId;
+import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -56,6 +62,9 @@ public class ESDsm {
     @SerializedName(ESObjectConstants.PARTICIPANT)
     Participant participant;
 
+    @SerializedName(ESObjectConstants.NEW_OSTEO_PARTICIPANT)
+    Participant newOsteoParticipant;
+
     List<KitRequestShipping> kitRequestShipping;
 
     OncHistory oncHistory;
@@ -74,6 +83,7 @@ public class ESDsm {
         }
         return tissue;
     }
+
     public List<SmId> getSmId() {
         if (smId == null) {
             smId = Collections.emptyList();
@@ -122,5 +132,9 @@ public class ESDsm {
             cohortTag = Collections.emptyList();
         }
         return cohortTag;
+    }
+
+    public Optional<Participant> getNewOsteoParticipant() {
+        return Optional.ofNullable(newOsteoParticipant);
     }
 }

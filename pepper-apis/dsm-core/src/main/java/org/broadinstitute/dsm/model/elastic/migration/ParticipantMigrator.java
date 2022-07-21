@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.model.elastic.migration;
 
 import java.util.Map;
 
-import lombok.NonNull;
 import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.ParticipantExit;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
@@ -15,18 +14,14 @@ public class ParticipantMigrator extends BaseSingleMigrator implements Exportabl
         super(index, realm, ESObjectConstants.PARTICIPANT);
     }
 
-    @Override
-    protected Map<String, Object> getDataByRealm() {
-        return (Map) ParticipantExitDecorator.getParticipants(realm);
+    public ParticipantMigrator(String index, String realm, String object) {
+        super(index, realm, object);
     }
 
-}
-
-class ParticipantExitDecorator {
-
-    public static Map<String, Participant> getParticipants(@NonNull String realm) {
-        Map<String, Participant> participants = Participant.getParticipants(realm);
-        Map<String, ParticipantExit> exitedParticipants = ParticipantExit.getExitedParticipants(realm, false);
+    @Override
+    protected Map<String, Object> getDataByRealm() {
+        Map<String, Participant> participants = getParticipantsByRealm(realm);
+        Map<String, ParticipantExit> exitedParticipants = getExitedParticipantsByRealm(realm);
         for (Map.Entry<String, ParticipantExit> entry: exitedParticipants.entrySet()) {
             Participant participant = new Participant();
             String ddpParticipantId = entry.getKey();
@@ -34,8 +29,17 @@ class ParticipantExitDecorator {
             participant.setExitDate(entry.getValue().getExitDate());
             participants.putIfAbsent(ddpParticipantId, participant);
         }
-        return participants;
+        return (Map) participants;
     }
+
+    protected Map<String, ParticipantExit> getExitedParticipantsByRealm(String realm) {
+        return ParticipantExit.getExitedParticipants(realm, false);
+    }
+
+    protected Map<String, Participant> getParticipantsByRealm(String realm) {
+        return Participant.getParticipants(realm);
+    }
+
 }
 
 

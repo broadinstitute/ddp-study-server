@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.model.defaultvalues;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -11,39 +12,56 @@ import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
+import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
-import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
 import org.broadinstitute.dsm.model.elastic.ESActivities;
 import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.ObjectTransformer;
 import org.broadinstitute.dsm.model.settings.field.FieldSettings;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
+import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ATDefaultValues extends BasicDefaultDataMaker {
 
+    private static final Logger logger = LoggerFactory.getLogger(ATDefaultValues.class);
+
     public static final String EXIT_STATUS = "EXITSTATUS";
     public static final String AT_PARTICIPANT_EXIT = "AT_PARTICIPANT_EXIT";
     public static final String AT_GENOMIC_ID = "at_genomic_id";
-    public static final String ACTIVITY_CODE_PREQUAL = "PREQUAL";
-    public static final String PREQUAL_SELF_DESCRIBE = "PREQUAL_SELF_DESCRIBE";
-    public static final String QUESTION_ANSWER = "answer";
-    public static final String SELF_DESCRIBE_CHILD_DIAGNOSED = "CHILD_DIAGNOSED";
-    public static final String SELF_DESCRIBE_DIAGNOSED = "DIAGNOSED";
-    private static final Logger logger = LoggerFactory.getLogger(ATDefaultValues.class);
-    private static final String GENOME_STUDY_FIELD_TYPE = "AT_GROUP_GENOME_STUDY";
+    public static final String ACTIVITY_CODE_REGISTRATION = "REGISTRATION";
+    public static final String COMPLETE = "COMPLETE";
+    public static final String GENOME_STUDY_FIELD_TYPE = "AT_GROUP_GENOME_STUDY";
     private static final String GENOME_STUDY_CPT_ID = "GENOME_STUDY_CPT_ID";
     private static final String PREFIX = "DDP_ATCP_";
     private Dao dataAccess;
 
     @Override
     protected boolean setDefaultData() {
-
-        if (isParticipantDataInES()) {
+        if (isParticipantDataNotInES()) {
+            logger.info("Participant does not have profile and activities in ES yet...");
             return false;
         }
 
-        if (isSelfOrDependentParticipant()) {
-            return insertGenomicIdForParticipant() && insertExitStatusForParticipant();
+        if (isParticipantRegistrationComplete()) {
+            boolean inserted = insertExitStatusForParticipant() && insertGenomicIdForParticipant();
+
+            try {
+                String ddpParticipantId = elasticSearchParticipantDto.getProfile().orElseThrow().getGuid();
+                ObjectTransformer objectTransformer = new ObjectTransformer(instance.getName());
+                this.setDataAccess(new ParticipantDataDao());
+                List<ParticipantData> participantDataList =
+                        ((ParticipantDataDao) dataAccess).getParticipantDataByParticipantId(ddpParticipantId);
+                List<Map<String, Object>> transformedList =
+                        objectTransformer.transformObjectCollectionToCollectionMap((List) participantDataList);
+                ElasticSearchUtil.updateRequest(ddpParticipantId, instance.getParticipantIndexES(), new HashMap<>(
+                        Map.of(ESObjectConstants.DSM, new HashMap<>(Map.of(ESObjectConstants.PARTICIPANT_DATA, transformedList)))));
+
+            } catch (Exception e) {
+                logger.info("UpdateRequest for participantData failed" + e.getMessage());
+            }
+            return inserted;
         } else {
             //in case if 3rd registration option is chosen in prequalifier of ATCP
             //which is just stay inform registration
@@ -51,24 +69,17 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         }
     }
 
-    private boolean isParticipantDataInES() {
-        logger.info("Participant does not have profile and activities in ES yet...");
+    private boolean isParticipantDataNotInES() {
         return elasticSearchParticipantDto.getProfile().isEmpty() && elasticSearchParticipantDto.getActivities().isEmpty();
     }
 
 
-    boolean isSelfOrDependentParticipant() {
-        if (elasticSearchParticipantDto.getActivities().isEmpty()) {
-            return false;
-        }
-        return elasticSearchParticipantDto.getActivities().stream().anyMatch(this::isPrequalAndSelfOrDependent);
+    boolean isParticipantRegistrationComplete() {
+        return elasticSearchParticipantDto.getActivities().stream().anyMatch(this::isRegistrationComplete);
     }
 
-    private boolean isPrequalAndSelfOrDependent(ESActivities activity) {
-        return ACTIVITY_CODE_PREQUAL.equals(activity.getActivityCode()) && (activity.getQuestionsAnswers().stream()
-                .filter(anwers -> PREQUAL_SELF_DESCRIBE.equals(anwers.get(DDPActivityConstants.DDP_ACTIVITY_STABLE_ID))).anyMatch(
-                        answers -> ((List) answers.get(QUESTION_ANSWER)).stream().anyMatch(
-                                answer -> SELF_DESCRIBE_CHILD_DIAGNOSED.equals(answer) || SELF_DESCRIBE_DIAGNOSED.equals(answer))));
+    private boolean isRegistrationComplete(ESActivities activity) {
+        return ACTIVITY_CODE_REGISTRATION.equals(activity.getActivityCode()) && COMPLETE.equals(activity.getStatus());
     }
 
     private boolean insertGenomicIdForParticipant() {
@@ -81,10 +92,9 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
 
     private String getGenomicIdValue(String hruid) {
         this.setDataAccess(new BookmarkDao());
-        BookmarkDao dataAccess = (BookmarkDao) this.dataAccess;
-        Optional<BookmarkDto> maybeGenomicId = dataAccess.getBookmarkByInstance(AT_GENOMIC_ID);
+        Optional<BookmarkDto> maybeGenomicId = ((BookmarkDao) dataAccess).getBookmarkByInstance(AT_GENOMIC_ID);
         return maybeGenomicId.map(bookmarkDto -> {
-            dataAccess.updateBookmarkValueByBookmarkId(bookmarkDto.getBookmarkId(), bookmarkDto.getValue() + 1);
+            ((BookmarkDao) dataAccess).updateBookmarkValueByBookmarkId(bookmarkDto.getBookmarkId(), bookmarkDto.getValue() + 1);
             return String.valueOf(bookmarkDto.getValue());
         }).orElse(hruid);
     }
@@ -114,7 +124,8 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         try {
             participantData.insertParticipantData("SYSTEM");
             logger.info("values: " + data.keySet().stream().collect(Collectors.joining(", ", "[", "]"))
-                    + " were created for participant with id: " + ddpParticipantId + " at " + GENOME_STUDY_FIELD_TYPE);
+                    + " were created at PARTICIPANT_REGISTERED pubsub task for participant with id: " + ddpParticipantId + " at "
+                    + fieldTypeId);
             return true;
         } catch (RuntimeException re) {
             return false;
@@ -124,6 +135,5 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
     private void setDataAccess(Dao dao) {
         this.dataAccess = dao;
     }
-
 
 }

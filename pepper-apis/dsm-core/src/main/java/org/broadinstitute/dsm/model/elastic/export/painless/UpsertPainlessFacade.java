@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.export.painless;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -7,14 +9,15 @@ import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator;
 import org.broadinstitute.dsm.model.elastic.export.generate.Generator;
+import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.model.elastic.export.parse.TypeParser;
 import org.broadinstitute.dsm.model.elastic.mapping.FieldTypeExtractor;
 import org.broadinstitute.dsm.model.elastic.mapping.TypeExtractor;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
+import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.TermQueryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,7 +97,7 @@ public abstract class UpsertPainlessFacade {
 
     public void setGeneratorElseLogError(DDPInstanceDto ddpInstanceDto) {
         try {
-            generator = new ParamsGenerator(source, ddpInstanceDto.getInstanceName());
+            generator = new ParamsGeneratorFactory(source, ddpInstanceDto.getInstanceName()).instance();
         } catch (NullPointerException npe) {
             logger.error("ddp instance is null, probably instance with such realm does not exist");
         }
@@ -102,7 +105,7 @@ public abstract class UpsertPainlessFacade {
 
     public static UpsertPainlessFacade of(String alias, Object source, DDPInstanceDto ddpInstanceDto, String uniqueIdentifier,
                                           String fieldName, Object fieldValue, ScriptBuilder scriptBuilder) {
-        BaseGenerator.PropertyInfo propertyInfo = Util.TABLE_ALIAS_MAPPINGS.get(alias);
+        PropertyInfo propertyInfo = PropertyInfo.TABLE_ALIAS_MAPPINGS.get(alias);
         return propertyInfo.isCollection()
                 ? new NestedUpsertPainlessFacade(source, ddpInstanceDto, uniqueIdentifier, fieldName, fieldValue, scriptBuilder)
                 : new SingleUpsertPainlessFacade(source, ddpInstanceDto, uniqueIdentifier, fieldName, fieldValue, scriptBuilder);
@@ -110,14 +113,14 @@ public abstract class UpsertPainlessFacade {
 
     protected QueryBuilder buildQueryBuilder() {
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
-        TermQueryBuilder term = new TermQueryBuilder(getFieldName(), fieldValue);
+        QueryBuilder term = new TermQueryBuilderFactory(getFieldName(), fieldValue).instance();
         boolQueryBuilder.must(term);
         return buildFinalQuery(boolQueryBuilder);
     }
 
     protected String getFieldName() {
         String fieldName = this.fieldName;
-        if (ESObjectConstants.DOC_ID.equals(fieldName)) {
+        if (ESObjectConstants.DOC_ID.equals(fieldName) || containsGuid(fieldName)) {
             return fieldName;
         } else if (isTextType(fieldName)) {
             fieldName = String.join(DBConstants.ALIAS_DELIMITER, fieldName, TypeParser.KEYWORD);
@@ -136,11 +139,25 @@ public abstract class UpsertPainlessFacade {
     protected abstract QueryBuilder buildFinalQuery(BoolQueryBuilder boolQueryBuilder);
 
     private String buildFieldFullName() {
-        String objectName = Util.capitalCamelCaseToLowerCamelCase(source.getClass().getSimpleName());
+        String objectName = Util.capitalCamelCaseToLowerCamelCase(getObjectName());
         return String.join(DBConstants.ALIAS_DELIMITER, BaseGenerator.DSM_OBJECT, objectName, fieldName);
+    }
+
+    private String getObjectName() {
+        String classSimpleName;
+        if (source instanceof List) {
+            classSimpleName = ((List)source).get(0).getClass().getSimpleName();
+        } else {
+            classSimpleName = source.getClass().getSimpleName();
+        }
+        return classSimpleName;
     }
 
     public void export() {
         upsertPainless.export();
+    }
+
+    protected boolean containsGuid(String fieldName) {
+        return Arrays.asList(fieldName.split(ElasticSearchUtil.ESCAPE_CHARACTER_DOT_SEPARATOR)).contains(ESObjectConstants.GUID);
     }
 }
