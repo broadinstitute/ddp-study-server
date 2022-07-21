@@ -84,8 +84,11 @@ public class TabularParticipantParser {
                 }
                 boolean splitChoicesIntoColumns = false;
                 List<Map<String, Object>> options = null;
+                Map<String, Object> questionDef = null;
+                if (moduleExport.isActivity() && ElasticSearchUtil.QUESTIONS_ANSWER.equals(participantColumn.getObject())) {
+                    questionDef = getDefForQuestion(participantColumn, activityDefs);
+                }
                 if (ESObjectConstants.OPTIONS_TYPE.equals(filter.getType())) {
-                    Map<String, Object> questionDef = getDefForQuestion(participantColumn, activityDefs);
                     if (questionDef != null) {
                         // create a column for each option if it's a multiselect
                         splitChoicesIntoColumns = splitOptions &&
@@ -94,12 +97,16 @@ public class TabularParticipantParser {
                         options = getOptionsForQuestion(questionDef);
                     }
                 }
+                int questionIndex = -1;
+                if (questionDef != null) {
+                    questionIndex = (int) questionDef.get("index");
+                }
 
                 String collationSuffix = ValueProviderFactory.COLLATED_SUFFIXES.stream()
                         .filter(suffix -> StringUtils.endsWith(participantColumn.getName(), suffix))
                         .findFirst()
                         .orElse(null);
-                FilterExportConfig colConfig = new FilterExportConfig(moduleExport, filter, splitChoicesIntoColumns, options, collationSuffix);
+                FilterExportConfig colConfig = new FilterExportConfig(moduleExport, filter, splitChoicesIntoColumns, options, collationSuffix, questionIndex);
                 if (collationSuffix != null) {
                     if (collationColumnMap.containsKey(collationSuffix)) {
                         if (options != null) {
@@ -118,6 +125,10 @@ public class TabularParticipantParser {
             }
         }
         configs.sort(Comparator.comparing(ModuleExportConfig::isCollection).thenComparing(ModuleExportConfig::getAliasValue));
+        // sort the questions inside each config
+        configs.forEach(config -> {
+            config.getQuestions().sort(Comparator.comparing(FilterExportConfig::getQuestionIndex));
+        });
         return configs;
     }
 
@@ -137,7 +148,7 @@ public class TabularParticipantParser {
     }
 
     /**
-     * Gets the definition for a given question based on a filter column
+     * Gets the definition for a given question based on a filter column, and adds the index so the question sort order can be preserved
      *
      * @param column       the column from the Filter
      * @param activityDefs the schema loaded from ElasticSearch
@@ -152,11 +163,16 @@ public class TabularParticipantParser {
         if (activityDef == null) {
             return null;
         }
-        // find the question with the matching stableId
-        Map<String, Object> matchingDef = ((List<Map<String, Object>>) activityDef.get(ESObjectConstants.QUESTIONS))
-                .stream().filter(q -> q.get(ESObjectConstants.STABLE_ID).equals(column.getName()))
-                .findFirst().orElse(null);
-        return matchingDef;
+        // find the question with the matching stableId, and get the index
+        List<Map<String, Object>> questionList = ((List<Map<String, Object>>) activityDef.get(ESObjectConstants.QUESTIONS));
+        for (int i = 0; i < questionList.size(); i++) {
+            Map<String, Object> question = questionList.get(i);
+            if (question.get(ESObjectConstants.STABLE_ID).equals((column.getName()))) {
+                question.put("index", i);
+                return question;
+            }
+        }
+        return null;
     }
 
     /**
