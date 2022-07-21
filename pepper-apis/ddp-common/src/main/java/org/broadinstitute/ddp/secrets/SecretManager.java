@@ -33,7 +33,10 @@ public final class SecretManager {
 
     private static SecretVersion getLatestSecretVersion(final String projectName, final String secretName) throws Exception {
         try (final var client = SecretManagerServiceClient.create()) {
-            return StreamSupport.stream(Spliterators.spliteratorUnknownSize(client.listSecretVersions(SecretName.of(projectName, secretName)).iterateAll().iterator(), 0), false)
+            return StreamSupport.stream(
+                            Spliterators.spliteratorUnknownSize(
+                                    client.listSecretVersions(
+                                            SecretName.of(projectName, secretName)).iterateAll().iterator(), 0), false)
                     .max(SecretManager::compare)
                     .orElseThrow();
         }

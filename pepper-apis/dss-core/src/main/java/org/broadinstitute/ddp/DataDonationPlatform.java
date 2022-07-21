@@ -159,7 +159,6 @@ import org.broadinstitute.ddp.route.VerifyMailAddressRoute;
 import org.broadinstitute.ddp.schedule.DsmCancerLoaderJob;
 import org.broadinstitute.ddp.schedule.DsmDrugLoaderJob;
 import org.broadinstitute.ddp.schedule.JobScheduler;
-import org.broadinstitute.ddp.secrets.SecretManager;
 import org.broadinstitute.ddp.security.JWTConverter;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
 import org.broadinstitute.ddp.service.ActivityValidationService;
