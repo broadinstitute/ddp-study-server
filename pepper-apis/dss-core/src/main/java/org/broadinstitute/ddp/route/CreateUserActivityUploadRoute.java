@@ -111,16 +111,15 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
             User operatorUser = handle.attach(UserDao.class).findUserByGuid(operatorGuid)
                     .orElseThrow(() -> new DDPException("Could not find operator with guid " + operatorGuid));
 
-            String prefix = String.format("%s/%s/%s/%s", studyGuid, getCurrentDate(), userGuid, instanceDto.getActivityCode());
             return service.authorizeUpload(
                     handle,
                     instanceDto.getStudyId(),
                     operatorUser.getId(),
                     instanceDto.getParticipantId(),
                     fileQuestionDef,
-                    prefix,
+                    String.format("%s/%s", studyGuid, instanceDto.getActivityCode()),
                     payload.getMimeType(),
-                    payload.getFileName(),
+                    String.format("%s_%s_%s", userGuid, getCurrentTimestamp(), payload.getFileName()),
                     payload.getFileSize(),
                     payload.isResumable());
         });
@@ -148,7 +147,7 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
         return maxFileSize / MB_IN_BYTES;
     }
 
-    private String getCurrentDate() {
-        return new SimpleDateFormat("yyyy_MM_dd").format(new Date());
+    private static String getCurrentTimestamp() {
+        return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").format(new Date());
     }
 }
