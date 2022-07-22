@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
+import org.broadinstitute.ddp.db.dao.JdbiActivityValidation;
 import org.broadinstitute.ddp.db.dao.JdbiBlockContent;
 import org.broadinstitute.ddp.db.dao.JdbiBlockNesting;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
@@ -169,6 +170,11 @@ public class OsteoConsentVersion2 implements CustomTask {
         ActivityVersionDto version2ForConsent = getVersion2(handle, studyDto, metaConsent, activityCodeConsent);
         ActivityVersionDto version2ForParentalConsent = getVersion2(handle, studyDto, metaParentalConsent, activityCodeParentalConsent);
 
+        // Replace existing activity validations. Removing old DOB validations here, adding there by OsteoDobValidations()
+        var jdbiValidations = handle.attach(JdbiActivityValidation.class);
+        jdbiValidations._deleteValidationsByActivityId(version2ForConsentAssent.getActivityId());
+        jdbiValidations._deleteValidationsByActivityId(version2ForConsent.getActivityId());
+        jdbiValidations._deleteValidationsByActivityId(version2ForParentalConsent.getActivityId());
 
         updateVariables(handle, metaConsentAssent, version2ForConsentAssent);
         runAdultConsentUpdate(handle, metaConsent, studyDto, activityCodeConsent, version2ForConsent);
