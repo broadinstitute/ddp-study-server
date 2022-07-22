@@ -7,6 +7,7 @@ import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
@@ -126,7 +127,8 @@ public class CreateUserActivityUploadRouteTest extends IntegrationTestSuite.Test
         TransactionWrapper.useTxn(handle -> {
             var actual = handle.attach(FileUploadDao.class).findByGuid(uploadGuid).orElse(null);
             assertNotNull(actual);
-            assertEquals("file.pdf", actual.getFileName());
+            assertNotNull(actual.getFileName());
+            assertTrue(actual.getFileName().endsWith("file.pdf"));
             assertEquals(123, actual.getFileSize());
             assertEquals("application/pdf", actual.getMimeType());
             assertFalse(actual.isVerified());
