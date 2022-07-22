@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -24,6 +25,10 @@ import org.broadinstitute.ddp.secrets.SecretManager;
  */
 @Slf4j
 public class ConfigManager {
+    private static final String GOOGLE_SECRET_PROJECT = "google.secret.project";
+    private static final String GOOGLE_SECRET_NAME = "google.secret.name";
+    private static final String GOOGLE_SECRET_VERSION = "google.secret.version";
+
     private static final String TYPESAFE_CONFIG_SYSTEM_VAR = "config.file";
     public static final File TYPESAFE_CONFIG_FILE;
 
@@ -70,10 +75,24 @@ public class ConfigManager {
      */
     public static Config parseConfig() {
         if (TYPESAFE_CONFIG_FILE != null) {
+            log.info("The config file name was specified. Loading configuration from the local file");
             return ConfigFactory.parseFile(TYPESAFE_CONFIG_FILE);
         }
 
-        return ConfigFactory.parseString(SecretManager.get("542678289221", "dss-configuration").orElseThrow());
+        log.info("The config file name was not specified. Loading configuration from Secrets Storage");
+
+        final var projectName = getProperty(GOOGLE_SECRET_PROJECT);
+        if (projectName == null) {
+            throw new DDPException(GOOGLE_SECRET_PROJECT + " property is not set");
+        }
+
+        final var secretName = getProperty(GOOGLE_SECRET_NAME);
+        if (secretName == null) {
+            throw new DDPException(GOOGLE_SECRET_NAME + " property is not set");
+        }
+
+        final var secretVersion = getProperty(GOOGLE_SECRET_VERSION, "latest");
+        return ConfigFactory.parseString(SecretManager.get(projectName, secretName, secretVersion).orElseThrow());
     }
 
     /**
@@ -127,5 +146,11 @@ public class ConfigManager {
         return cfgWithOverride;
     }
 
+    private static String getProperty(final String propertyName) {
+        return getProperty(propertyName, null);
+    }
 
+    private static String getProperty(final String propertyName, final String defaultValue) {
+        return Optional.ofNullable(System.getProperty(propertyName)).orElse(defaultValue);
+    }
 }
