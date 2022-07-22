@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.broadinstitute.dsm.model.elastic.export.tabular.renderer.ValueProviderFactory;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import spark.Response;
@@ -101,11 +102,15 @@ public abstract class TabularParticipantExporter {
         if (hasSeparateColumnForOption(option, filterConfig)) {
             columnExportName = columnExportName + DBConstants.ALIAS_DELIMITER + option.get(ESObjectConstants.OPTION_STABLE_ID);
         }
-        if (columnExportName.endsWith("REGISTRATION_STATE_PROVINCE")) {
-            columnExportName = "REGISTRATION_STATE_PROVINCE";
+        // if this is a collated column, use the suffix (e.g. use "REGISTRATION_STATE_PROVINCE" instead of "CA_REGISTRATION_STATE_PROVINCE")
+        for (String suffix : ValueProviderFactory.COLLATED_SUFFIXES) {
+            if (columnExportName.endsWith(suffix)) {
+                columnExportName = suffix;
+            }
         }
+
         String exportName = activityExportName + DBConstants.ALIAS_DELIMITER + columnExportName;
-        return exportName;
+        return exportName.toUpperCase();
     }
 
     private static boolean hasSeparateColumnForOption(Map<String, Object> option, FilterExportConfig filterConfig) {
