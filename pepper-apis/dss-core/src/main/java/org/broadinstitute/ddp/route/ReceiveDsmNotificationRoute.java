@@ -1,8 +1,8 @@
 package org.broadinstitute.ddp.route;
 
+import javax.validation.ValidationException;
 import java.time.Instant;
 import java.util.List;
-import javax.validation.ValidationException;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
@@ -63,6 +63,7 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
             StudyDto studyDto = found.getStudyDto();
             User user = found.getUser();
             String userGuid = user.getGuid();
+            User proxy = found.getProxy();
 
             EnrollmentStatusType status = handle.attach(JdbiUserStudyEnrollment.class)
                     .getEnrollmentStatusByUserAndStudyIds(user.getId(), studyDto.getId())
@@ -105,10 +106,10 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
 
             log.info("Running events for userGuid={} and DSM notification eventType={}", userGuid, eventType);
             var signal = new DsmNotificationSignal(
-                    user.getId(),
+                    proxy != null ? proxy.getId() : user.getId(),
                     user.getId(),
                     userGuid,
-                    null,
+                    proxy != null ? proxy.getGuid() : userGuid,
                     studyDto.getId(),
                     studyDto.getGuid(),
                     eventType,
