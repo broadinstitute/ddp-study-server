@@ -17,7 +17,6 @@ import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.xerces.impl.dv.util.Base64;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -52,13 +51,12 @@ public class MercuryOrderPublisher {
             throws IOException, InterruptedException {
         TopicName topicName = TopicName.of(projectId, topicId);
         Publisher publisher = null;
-        String message = Base64.encode(messageData.getBytes());
 
         try {
             // Create a publisher instance with default settings bound to the topic
             publisher = Publisher.newBuilder(topicName).build();
 
-            ByteString data = ByteString.copyFromUtf8(message);
+            ByteString data = ByteString.copyFromUtf8(messageData);
             PubsubMessage pubsubMessage = PubsubMessage.newBuilder()
                     .setData(data).build();
 
