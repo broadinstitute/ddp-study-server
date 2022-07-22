@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import com.google.gson.Gson;
@@ -29,6 +30,7 @@ import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.ParticipantColumn;
 import org.broadinstitute.dsm.model.TissueList;
+import org.broadinstitute.dsm.model.participant.Util;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.PatchUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
@@ -315,8 +317,10 @@ public class ViewFilter {
                     if (columnMap.containsKey(dbElement.getTableAlias())) {
                         columnList = columnMap.get(dbElement.getTableAlias());
                     }
-                    columnList.add(column.substring(column.lastIndexOf(DBConstants.ALIAS_DELIMITER) + 1));
+                    columnList.add(getFieldName(column));
                     columnMap.put(dbElement.getTableAlias(), columnList);
+                } else if (Util.isUnderDsmKey(extractAliasFrom(column))) {
+                    fillColumnMapByCustomFields(columnMap, column);
                 } else {
                     List<Object> columnList = new ArrayList<>();
                     if (columnMap.containsKey("ES")) {
@@ -342,6 +346,31 @@ public class ViewFilter {
             }
         }
         return filter;
+    }
+
+    private static void fillColumnMapByCustomFields(Map<String, List<Object>> columnMap, String column) {
+        List<Object> columnList = new ArrayList<>();
+        if (columnMap.containsKey(extractAliasFrom(column))) {
+            columnList = columnMap.get(extractAliasFrom(column));
+        }
+        columnList.add(getFieldName(column));
+        columnMap.put(getAlias(column), columnList);
+    }
+
+    private static String getAlias(String column) {
+        return column.substring(0, column.indexOf(DBConstants.ALIAS_DELIMITER));
+    }
+
+    private static String getFieldName(String column) {
+        return column.substring(column.lastIndexOf(DBConstants.ALIAS_DELIMITER) + 1);
+    }
+
+    private static String extractAliasFrom(String column) {
+        String[] splittedColumn = Objects.requireNonNull(column).split("\\.");
+        if (splittedColumn.length < 2) {
+            return StringUtils.EMPTY;
+        }
+        return splittedColumn[0];
     }
 
     public static List<TissueList> getDestroyingSamples(String realm) {
@@ -582,6 +611,11 @@ public class ViewFilter {
                                             longWord = true;
                                             value += trimValue(tempValue) + " ";
                                         }
+                                    } else {
+                                        value = word;
+                                        state = 11;
+                                        exact = true;
+                                        break;
                                     }
                                 } else if (longWord && tempValue.contains(Filter.SINGLE_QUOTE)) {
                                     value += trimValue(tempValue) + Filter.SPACE;
@@ -685,7 +719,7 @@ public class ViewFilter {
                         case 14:// finding the next selected option
                             int first = word.indexOf(Filter.SINGLE_QUOTE);
                             int last = word.lastIndexOf(Filter.SINGLE_QUOTE);
-                            if (first != -1) {
+                            if (first != -1 && last > 0) {
                                 word = word.substring(first + 1, last);
                             }
                             selectedOptions.add(word);
@@ -739,6 +773,11 @@ public class ViewFilter {
                                 break;
                             } else if (word.equals(Filter.LIKE)) {
                                 state = 8;
+                                break;
+                            } else if (word.equals(Filter.IS)) {
+                                exact = false;
+                                range = false;
+                                state = 5;
                                 break;
                             }
                             break;
@@ -925,6 +964,8 @@ public class ViewFilter {
                     filter.setFilter2(new NameValue(path, null));
                 }
                 if (Filter.ADDITIONAL_VALUES.equals(filter.type)) {
+                    filter.setFilter1(new NameValue(columnName, value));
+                    filter.setFilter2(new NameValue(path, null));
                     filter.setParticipantColumn(new ParticipantColumn(path, tableName));
                 } else if (Filter.TEXT.equals(filter.type) || Filter.BOOLEAN.equals(filter.type) || Filter.NUMBER.equals(filter.type)) {
                     if (Filter.NUMBER.equals(filter.type) && condition.contains(Filter.SMALLER_EQUALS_TRIMMED) && !arrayContains(conditions,

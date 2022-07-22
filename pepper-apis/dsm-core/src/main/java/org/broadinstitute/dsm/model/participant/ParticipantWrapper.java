@@ -30,7 +30,6 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearchable;
 import org.broadinstitute.dsm.model.elastic.sort.Sort;
 import org.broadinstitute.dsm.model.elastic.sort.SortBy;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
-import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
@@ -82,7 +81,7 @@ public class ParticipantWrapper {
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
         for (String source : filters.keySet()) {
             if (StringUtils.isNotBlank(filters.get(source))) {
-                if (isUnderDsmKey(source)) {
+                if (Util.isUnderDsmKey(source)) {
                     DsmAbstractQueryBuilder queryBuilder = new DsmAbstractQueryBuilder();
                     queryBuilder.setFilter(filters.get(source));
                     queryBuilder.setParser(parser);
@@ -100,14 +99,6 @@ public class ParticipantWrapper {
 
     private String getEsParticipantIndex() {
         return participantWrapperPayload.getDdpInstanceDto().orElseThrow().getEsParticipantIndex();
-    }
-
-    private boolean isUnderDsmKey(String source) {
-        return DBConstants.DDP_PARTICIPANT_ALIAS.equals(source) || DBConstants.DDP_MEDICAL_RECORD_ALIAS.equals(source)
-                || DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS.equals(source) || DBConstants.DDP_KIT_REQUEST_ALIAS.equals(source)
-                || DBConstants.DDP_TISSUE_ALIAS.equals(source) || DBConstants.DDP_ONC_HISTORY_ALIAS.equals(source)
-                || DBConstants.DDP_PARTICIPANT_DATA_ALIAS.equals(source) || DBConstants.DDP_PARTICIPANT_RECORD_ALIAS.equals(source)
-                || DBConstants.COHORT_ALIAS.equals(source);
     }
 
     private void fetchAndPrepareData(boolean parseParticipantDtos) {
