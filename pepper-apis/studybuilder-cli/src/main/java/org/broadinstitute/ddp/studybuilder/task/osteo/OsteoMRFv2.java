@@ -7,11 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
-import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
-import org.broadinstitute.ddp.db.dao.JdbiExpression;
-import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.PdfDao;
@@ -34,16 +31,11 @@ import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.ComponentType;
-import org.broadinstitute.ddp.model.activity.types.EventActionType;
-import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
-import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
-import org.broadinstitute.ddp.model.event.ActivityStatusChangeTrigger;
 import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
 import org.broadinstitute.ddp.model.pdf.PdfConfiguration;
 import org.broadinstitute.ddp.model.pdf.PdfTemplate;
 import org.broadinstitute.ddp.model.pdf.PdfVersion;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
-import org.broadinstitute.ddp.studybuilder.BuilderUtils;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.broadinstitute.ddp.studybuilder.task.UpdateTemplatesInPlace;
 import org.broadinstitute.ddp.util.ConfigUtil;
@@ -273,35 +265,6 @@ public class OsteoMRFv2 implements CustomTask {
                     pdfV2.getId(), pdfV2.getConfigName(), pdfV2.getFilename(),
                     pdfV2.getDisplayName(), versionId, pdfV2.getVersion().getVersionTag());
         }
-
-        // Update announcements
-        var event = handle.attach(EventDao.class).getAllEventConfigurationsByStudyId(studyDto.getId())
-                .stream()
-                .filter(e -> e.getEventTriggerType().equals(EventTriggerType.ACTIVITY_STATUS)
-                        && ((ActivityStatusChangeTrigger) e.getEventTrigger()).getStudyActivityId() == activityId
-                        && ((ActivityStatusChangeTrigger) e.getEventTrigger()).getInstanceStatusType().equals(InstanceStatusType.COMPLETE))
-                .filter(e -> e.getEventActionType().equals(EventActionType.ANNOUNCEMENT))
-                .findFirst().orElseThrow();
-
-        log.info("Found announcement event configuration id {}", event.getEventConfigurationId());
-
-        Template tmpl = BuilderUtils.parseAndValidateTemplate(activityCfg, "msgTemplate");
-
-        String reason = String.format("Create announcement event message template for study=%s", studyDto.getGuid());
-        long revId = handle.attach(JdbiRevision.class).insertStart(Instant.now().toEpochMilli(), adminUser.getUserId(), reason);
-        handle.attach(TemplateDao.class).insertTemplate(tmpl, revId);
-        log.info(reason);
-
-        DBUtils.checkUpdate(1, helper.updateAnnouncementTemplateId(tmpl.getTemplateId(), event.getEventConfigurationId()));
-        log.info("Updated msgTemplateId for announcement event configuration id {}", event.getEventConfigurationId());
-
-        // Update activity instance creation event
-        List<Long> eventIds = helper.findEventConfigurationIdByActivityId(activityId);
-        String expression = activityCfg.getString("expression");
-        eventIds.forEach(eventId -> {
-            long exprId = handle.attach(JdbiExpression.class).insertExpression(expression).getId();
-            DBUtils.checkUpdate(1, helper.updateEventExpressionAndOrder(exprId, 2, eventId));
-        });
     }
 
     private void updateActivityDetails(long activityId, Config activityCfg) {
