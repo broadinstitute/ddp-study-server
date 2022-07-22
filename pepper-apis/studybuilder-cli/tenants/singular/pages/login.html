@@ -420,9 +420,6 @@
       .auth0-lock.auth0-lock {
         position: unset;
       }
-      #ddp-header {
-        display: none!important;
-      }
       .auth0-lock.auth0-lock .auth0-lock-submit {
         background-color: #521b93!important;
       }
@@ -707,7 +704,7 @@
       var mode = config.extraParams.mode;
       var study_guid = config.extraParams.study_guid;
       var headerLogo =
-        'https://storage.googleapis.com/##ASSETS_BUCKET_NAME_NAME##/images/logo-black.png';
+        'https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/images/logo-black.png';
       var headerText = '';
       var studyColor = '#458484';
       var studyHelpEmail = '##STUDY_EMAIL##';
@@ -1001,7 +998,7 @@
               lockFormEl.prepend(div);
               clearInterval(interval);
             }
-          }, 700);
+          }, 2100);
         }
       }
 
