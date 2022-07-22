@@ -79,6 +79,9 @@ public class OsteoPrequalUpdate implements CustomTask {
         RevisionMetadata meta = new RevisionMetadata(timestamp.toEpochMilli(), adminUser.getId(), reason);
         log.info("Making revision for new changes in blocks");
         revisionPrequal(activityId, dataCfg, handle, adminUser, studyDto, meta, versionTag);
+
+        log.info("Updating form type to " + dataCfg.getString("formType"));
+        handle.attach(SqlHelper.class).updateActivityFormType(dataCfg.getString("formType"), activityId);
     }
 
     private void revisionPrequal(long activityId, Config dataCfg, Handle handle, User adminUser,
@@ -157,6 +160,12 @@ public class OsteoPrequalUpdate implements CustomTask {
         @SqlQuery("select error_message_template_id from activity_validation "
                 + "where study_activity_id = :activityId and expression_text like :text")
         long getActivityValidationTemplateId(@Bind("activityId") long activityId, @Bind("text") String text);
+
+        @SqlUpdate("update form_activity set form_type_id = "
+                + "(select form_type_id from form_type where form_type_code = :formTypeCode) "
+                + "where study_activity_id = :activityId")
+        void updateActivityFormType(@Bind("formTypeCode") String formTypeCode,
+                                    @Bind("activityId") long activityId);
 
         @SqlQuery("select template_variable_id from template_variable where template_id = :templateId")
         long getTemplateVariableIdbyTemplateId(@Bind("templateId") long templateId);
