@@ -128,7 +128,7 @@ public class CreateUserActivityUploadRouteTest extends IntegrationTestSuite.Test
             var actual = handle.attach(FileUploadDao.class).findByGuid(uploadGuid).orElse(null);
             assertNotNull(actual);
             assertNotNull(actual.getFileName());
-            assertTrue(actual.getFileName().endsWith("file.pdf"));
+            assertTrue(actual.getFileName().contains("file.pdf"));
             assertEquals(123, actual.getFileSize());
             assertEquals("application/pdf", actual.getMimeType());
             assertFalse(actual.isVerified());
