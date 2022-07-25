@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -14,6 +15,7 @@ import com.typesafe.config.ConfigValueFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.secrets.SecretManager;
 
 /**
  * Wrapper around {@link ConfigFactory#load() config load} that
@@ -23,6 +25,10 @@ import org.broadinstitute.ddp.exception.DDPException;
  */
 @Slf4j
 public class ConfigManager {
+    private static final String GOOGLE_SECRET_PROJECT = "google.secret.project";
+    private static final String GOOGLE_SECRET_NAME = "google.secret.name";
+    private static final String GOOGLE_SECRET_VERSION = "google.secret.version";
+
     private static final String TYPESAFE_CONFIG_SYSTEM_VAR = "config.file";
     public static final File TYPESAFE_CONFIG_FILE;
 
@@ -51,7 +57,7 @@ public class ConfigManager {
     }
 
     public static synchronized ConfigManager getInstance() {
-        if (configManager == null && TYPESAFE_CONFIG_FILE != null) {
+        if (configManager == null) {
             try {
                 init(parseConfig());
             } catch (Exception e) {
@@ -68,7 +74,29 @@ public class ConfigManager {
      * please use {@link #getInstance()}
      */
     public static Config parseConfig() {
-        return ConfigFactory.parseFile(TYPESAFE_CONFIG_FILE);
+        if (TYPESAFE_CONFIG_FILE != null) {
+            log.info("The config file name was specified. Loading configuration from the local file");
+            return ConfigFactory.parseFile(TYPESAFE_CONFIG_FILE);
+        }
+
+        log.info("The config file name was not specified. Loading configuration from Secrets Storage");
+
+        final var projectName = getProperty(GOOGLE_SECRET_PROJECT);
+        if (projectName == null) {
+            log.error(GOOGLE_SECRET_PROJECT + " property is not set");
+        }
+
+        final var secretName = getProperty(GOOGLE_SECRET_NAME);
+        if (secretName == null) {
+            log.error(GOOGLE_SECRET_NAME + " property is not set");
+        }
+
+        if (projectName == null && secretName == null) {
+            return null;
+        }
+
+        final var secretVersion = getProperty(GOOGLE_SECRET_VERSION, "latest");
+        return ConfigFactory.parseString(SecretManager.get(projectName, secretName, secretVersion).orElseThrow());
     }
 
     /**
@@ -122,5 +150,11 @@ public class ConfigManager {
         return cfgWithOverride;
     }
 
+    private static String getProperty(final String propertyName) {
+        return getProperty(propertyName, null);
+    }
 
+    private static String getProperty(final String propertyName, final String defaultValue) {
+        return Optional.ofNullable(System.getProperty(propertyName)).orElse(defaultValue);
+    }
 }
