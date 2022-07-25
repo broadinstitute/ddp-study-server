@@ -193,7 +193,7 @@ public class GBFTest extends TestHelper {
     public void confirmationGBFKit() throws Exception {
         String apiKey = "";
         if (apiKey != null) {
-            long testDate = System.currentTimeMillis(); //change that to the date of testing!
+            long testDate = 1609172139000L; //change that to the date of testing!
             long start = 0;
             long end = testDate;
 
