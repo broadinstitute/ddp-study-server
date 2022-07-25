@@ -141,7 +141,7 @@ public class SystemUtil {
             LocalDateTime parsedDateTime = LocalDateTime.parse(dateString, dateTimeFormatter);
             return parsedDateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
         } catch (DateTimeParseException e) {
-            throw new RuntimeException("Couldn't parse date string to date ", e);
+            throw new DateTimeParseException("Couldn't parse date string to date ", e.getParsedString(), e.getErrorIndex(), e);
         }
     }
 

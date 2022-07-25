@@ -10,7 +10,7 @@ import org.broadinstitute.dsm.model.Filter;
 
 public class AndOrFilterSeparator {
 
-    public static final String DSM_ALIAS_REGEX = "(NO|c|m|p|r|t|d|o|k|JS|ST|DA|\\()(\\.|\\s)*([a-z]|O|R|T|D|)(\\.)*";
+    protected static final String DSM_ALIAS_REGEX = "(NO|c|m|p|r|t|d|o|k|JS|ST|DA|\\()(\\.|\\s)*([a-z]|O|R|T|D|)(\\.)*";
     public static final String OR_DSM_ALIAS_REGEX = "(OR) " + DSM_ALIAS_REGEX;
     public static final String AND_DSM_ALIAS_REGEX = "(AND) " + DSM_ALIAS_REGEX;
     public static final int AND_PATTERN_MATCHER_NUMBER = 7;
