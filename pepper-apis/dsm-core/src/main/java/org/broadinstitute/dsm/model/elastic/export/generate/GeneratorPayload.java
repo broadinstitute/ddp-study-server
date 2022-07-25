@@ -56,4 +56,6 @@ public class GeneratorPayload {
     public String getInstanceName() {
         return patch.getRealm();
     }
+
+    public String getAlias() { return patch.getTableAlias(); }
 }

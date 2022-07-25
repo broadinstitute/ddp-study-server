@@ -92,8 +92,6 @@ public abstract class BaseProcessor implements Processor {
         }
     }
 
-    ;
-
     protected Object getValueByField(Field field) {
         try {
             Object value = field.get(esDsm);
