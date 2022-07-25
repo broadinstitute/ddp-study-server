@@ -138,6 +138,10 @@ public class AuthenticationRoute implements Route {
     private Map<String, String> getDSSClaimsFromOriginalToken(String auth0Token, String auth0Domain, Map<String, String> claims) {
         Map<String, Claim> auth0Claims = Auth0Util.verifyAndParseAuth0TokenClaims(auth0Token, auth0Domain);
 
+        if (!auth0Claims.containsKey(tenantDomain) || !auth0Claims.containsKey(clientId) || !auth0Claims.containsKey(userId)) {
+            logger.warn("Missing dss claims in auth0 claims, can not authenticate for DSS!");
+        }
+
         if (auth0Claims.containsKey(tenantDomain)) {
             claims.put(tenantDomain, auth0Claims.get(tenantDomain).asString());
         }
