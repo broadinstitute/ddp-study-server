@@ -29,6 +29,11 @@ public abstract class BaseGenerator implements Generator, Collector, GeneratorHe
     }
 
     @Override
+    public GeneratorPayload getGeneratorPayload() {
+        return generatorPayload;
+    }
+
+    @Override
     public void setParser(Parser parser) {
         this.parser = Objects.requireNonNull(parser);
     }
