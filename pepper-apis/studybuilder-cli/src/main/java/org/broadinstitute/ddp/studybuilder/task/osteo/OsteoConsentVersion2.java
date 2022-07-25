@@ -12,6 +12,8 @@ import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.ddp.db.DBUtils;
+import org.broadinstitute.ddp.db.dao.JdbiExpression;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
@@ -41,6 +43,7 @@ import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
+import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
@@ -170,12 +173,6 @@ public class OsteoConsentVersion2 implements CustomTask {
         ActivityVersionDto version2ForConsent = getVersion2(handle, studyDto, metaConsent, activityCodeConsent);
         ActivityVersionDto version2ForParentalConsent = getVersion2(handle, studyDto, metaParentalConsent, activityCodeParentalConsent);
 
-        // Replace existing activity validations. Removing old DOB validations here, adding there by OsteoDobValidations()
-        var jdbiValidations = handle.attach(JdbiActivityValidation.class);
-        jdbiValidations._deleteValidationsByActivityId(version2ForConsentAssent.getActivityId());
-        jdbiValidations._deleteValidationsByActivityId(version2ForConsent.getActivityId());
-        jdbiValidations._deleteValidationsByActivityId(version2ForParentalConsent.getActivityId());
-
         updateVariables(handle, metaConsentAssent, version2ForConsentAssent);
         runAdultConsentUpdate(handle, metaConsent, studyDto, activityCodeConsent, version2ForConsent);
         runParentalConsentUpdate(handle, metaParentalConsent, studyDto, activityCodeParentalConsent, version2ForParentalConsent);
@@ -278,6 +275,9 @@ public class OsteoConsentVersion2 implements CustomTask {
                                         String activityCode, ActivityVersionDto version2) {
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
 
+        // Replace existing activity validations. Removing old DOB validations here, adding there by OsteoDobValidations()
+        handle.attach(JdbiActivityValidation.class)._deleteValidationsByActivityId(activityId);
+        updateEventExpressions(handle, activityId, consentAssentDataCfg.getString("newExpressionForWelcomeEvent"));
         updateAdultVariables(handle, meta, version2, consentAssentDataCfg);
         updateAdultTemplates(handle, meta, version2, consentAssentDataCfg);
         addAdultNestedBlocks(activityId, handle, meta, "CONSENT_ASSENT", version2, consentAssentDataCfg);
@@ -290,6 +290,9 @@ public class OsteoConsentVersion2 implements CustomTask {
                                           String activityCode, ActivityVersionDto version2) {
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
 
+        // Replace existing activity validations. Removing old DOB validations here, adding there by OsteoDobValidations()
+        handle.attach(JdbiActivityValidation.class)._deleteValidationsByActivityId(activityId);
+        updateEventExpressions(handle, activityId, parentalConsentDataCfg.getString("newExpressionForWelcomeEvent"));
         updateAdultVariables(handle, meta, version2, parentalConsentDataCfg);
         updateAdultTemplates(handle, meta, version2, parentalConsentDataCfg);
         addAdultNestedBlocks(activityId, handle, meta, "PARENTAL_CONSENT", version2, parentalConsentDataCfg);
@@ -302,12 +305,32 @@ public class OsteoConsentVersion2 implements CustomTask {
                                        String activityCode, ActivityVersionDto version2) {
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
 
+        // Replace existing activity validations. Removing old DOB validations here, adding there by OsteoDobValidations()
+        handle.attach(JdbiActivityValidation.class)._deleteValidationsByActivityId(activityId);
+        updateEventExpressions(handle, activityId, selfConsentDataCfg.getString("newExpressionForWelcomeEvent"));
         updateAdultVariables(handle, meta, version2, selfConsentDataCfg);
         updateAdultTemplates(handle, meta, version2, selfConsentDataCfg);
         addAdultNestedBlocks(activityId, handle, meta, "CONSENT", version2, selfConsentDataCfg);
         addAdultBlocks(activityId, handle, "CONSENT", meta, version2, selfConsentDataCfg);
         reorderNestedBlock(handle, activityCode, version2, selfConsentDataCfg);
         detachQuestionFromBothSectionAndBlock(handle, "CONSENT_SIGNATURE");
+    }
+
+    private void updateEventExpressions(Handle handle, long activityId, String expression) {
+        var helper = handle.attach(SqlHelper.class);
+        var jdbiExpression = handle.attach(JdbiExpression.class);
+        var eventId = helper.findEventAndItsCancelExprDto(EventTriggerType.USER_REGISTERED.toString(), activityId);
+        log.info("Founded event configuration id {}", eventId);
+
+        long exprId = jdbiExpression.insertExpression(expression).getId();
+        log.info("Added expression to database with id {} and text {}", exprId, expression);
+
+        DBUtils.checkUpdate(1, helper.removeEventCancelExpr(eventId));
+        DBUtils.checkDelete(1, jdbiExpression.deleteById(helper.findCancelExprId(eventId)));
+        log.info("Successfully removed cancelExprId for eventId {}", eventId);
+
+        DBUtils.checkUpdate(1, helper.updateEventPreExpr(eventId, exprId));
+        log.info("Successfully added preconditionExprId {} for eventId {}: {}", exprId, eventId, expression);
     }
 
     private void updateAdultVariables(Handle handle, RevisionMetadata meta,
@@ -556,6 +579,27 @@ public class OsteoConsentVersion2 implements CustomTask {
         int _updateActivityNameAndTitle(@Bind("studyActivityId") long studyActivityId,
                                         @Bind("name") String name,
                                         @Bind("title") String title);
+
+        @SqlQuery("select en.event_configuration_id"
+                + "from event_configuration en "
+                + "    join event_action ea on en.event_action_id = ea.event_action_id "
+                + "    join user_notification_event_action unea on ea.event_action_id = unea.user_notification_event_action_id "
+                + "    join event_trigger et on en.event_trigger_id = et.event_trigger_id "
+                + "    join event_trigger_type ett on et.event_trigger_type_id = ett.event_trigger_type_id "
+                + "where "
+                + "    ett.event_trigger_type_code = :triggerTypeCode "
+                + "  and linked_activity_id = :activityId")
+        long findEventAndItsCancelExprDto(@Bind("triggerTypeCode") String triggerTypeCode,
+                                          @Bind("activityId") long activityId);
+
+        @SqlQuery("select cancel_expression_id from event_configuration where event_configuration_id = :eventId")
+        long findCancelExprId(@Bind("eventId") long eventId);
+
+        @SqlUpdate("update event_configuration set precondition_expression_id = :exprId where event_configuration_id = :eventId")
+        int updateEventPreExpr(@Bind("eventId") long eventId, @Bind("exprId") long exprId);
+
+        @SqlUpdate("update event_configuration set cancel_expression_id = null where event_configuration_id = :eventId")
+        int removeEventCancelExpr(@Bind("eventId") long eventId);
 
         default void updateActivityNameAndTitle(long studyActivityId, String name) {
             int numUpdated = _updateActivityNameAndTitle(studyActivityId, name, name);
