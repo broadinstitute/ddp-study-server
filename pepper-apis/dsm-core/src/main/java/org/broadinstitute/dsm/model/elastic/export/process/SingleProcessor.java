@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class SingleProcessor extends BaseProcessor {
@@ -39,6 +40,24 @@ public class SingleProcessor extends BaseProcessor {
 
     @Override
     protected Optional<Map<String, Object>> collectEndResult() {
-        return Optional.ofNullable((Map<String, Object>) collector.collect());
+        Map<String, Object> endResult = (Map<String, Object>) collector.collect();
+        Map<String, Object> endResultWithPrimaryKey = putPrimaryKeyIfAbsent(endResult);
+        return Optional.ofNullable(endResultWithPrimaryKey);
+    }
+
+    Map<String, Object> putPrimaryKeyIfAbsent(Map<String, Object> endResult) {
+        Map<String, Object> toBeReturned = new HashMap<>(endResult);
+        Optional<String> maybePrimaryKey = getPrimaryKey();
+        maybePrimaryKey.ifPresent(pk -> toBeReturned.putIfAbsent(pk, recordId));
+        return toBeReturned;
+    }
+
+    Optional<String> getPrimaryKey() {
+        PropertyInfo propertyInfo = PropertyInfo.TABLE_ALIAS_MAPPINGS
+                .get(collector.getGeneratorPayload().getAlias());
+        return propertyInfo != null
+                ? Optional.of(propertyInfo.getPrimaryKeyAsCamelCase())
+                : Optional.empty();
+
     }
 }
