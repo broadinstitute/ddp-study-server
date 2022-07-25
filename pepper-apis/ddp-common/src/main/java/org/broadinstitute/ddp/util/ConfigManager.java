@@ -92,7 +92,7 @@ public class ConfigManager {
         }
 
         if (projectName == null && secretName == null) {
-            return ConfigFactory.parseFile(TYPESAFE_CONFIG_FILE);
+            return null;
         }
 
         final var secretVersion = getProperty(GOOGLE_SECRET_VERSION, "latest");
