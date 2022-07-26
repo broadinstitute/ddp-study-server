@@ -83,12 +83,16 @@ public class ConfigManager {
 
         final var projectName = getProperty(GOOGLE_SECRET_PROJECT);
         if (projectName == null) {
-            throw new DDPException(GOOGLE_SECRET_PROJECT + " property is not set");
+            log.error(GOOGLE_SECRET_PROJECT + " property is not set");
         }
 
         final var secretName = getProperty(GOOGLE_SECRET_NAME);
         if (secretName == null) {
-            throw new DDPException(GOOGLE_SECRET_NAME + " property is not set");
+            log.error(GOOGLE_SECRET_NAME + " property is not set");
+        }
+
+        if (projectName == null && secretName == null) {
+            return null;
         }
 
         final var secretVersion = getProperty(GOOGLE_SECRET_VERSION, "latest");
