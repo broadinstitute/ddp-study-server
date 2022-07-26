@@ -117,7 +117,7 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
                     operatorUser.getId(),
                     instanceDto.getParticipantId(),
                     fileQuestionDef,
-                    String.format("%s/%s/%s_%s_%s_%d", studyGuid, instanceDto.getActivityCode(), userGuid,
+                    String.format("%s/%s_%s_%s_%s_%d", studyGuid, instanceDto.getActivityCode(), userGuid,
                             getCurrentTimestamp(), payload.getFileName(), System.nanoTime()),
                     payload.getMimeType(),
                     payload.getFileName(),
