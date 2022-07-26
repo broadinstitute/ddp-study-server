@@ -154,11 +154,10 @@ public class FileUploadService {
         mimeType = mimeType != null ? mimeType : DEFAULT_MIME_TYPE;
 
         HttpMethod method = resumable ? HttpMethod.POST : HttpMethod.PUT;
-        String uploadGuid = GuidUtils.randomFileUploadGuid();
-        String blobName = blobPrefix + uploadGuid;
+        final var blobName = blobPrefix + fileName;
 
         FileUpload upload = handle.attach(FileUploadDao.class).createAuthorized(
-                uploadGuid, studyId, operatorUserId, participantUserId,
+                GuidUtils.randomFileUploadGuid(), studyId, operatorUserId, participantUserId,
                 blobName, mimeType, fileName, fileSize);
         Map<String, String> headers = Map.of("Content-Type", mimeType);
         URL signedURL = storageClient.generateSignedUrl(
