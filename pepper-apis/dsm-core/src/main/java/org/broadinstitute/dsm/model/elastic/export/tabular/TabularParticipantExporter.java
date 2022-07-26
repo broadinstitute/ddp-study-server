@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -52,29 +53,54 @@ public abstract class TabularParticipantExporter {
     }
 
     public static List<String> getAllColumnNames(FilterExportConfig filterConfig, int formRepeatNum, int questionRepeatNum) {
-        List<String> optColNames = new ArrayList<>();
+        List<String> allColNames = new ArrayList<>();
         List<Map<String, Object>> splitOptions = Collections.singletonList(null);
         if (filterConfig.isSplitOptionsIntoColumns()) {
             splitOptions = filterConfig.getOptions();
         }
-        optColNames = splitOptions.stream().map(opt -> {
-                    return getColumnName(
+        allColNames = splitOptions.stream().map(opt -> {
+                    List<String> colNames = new ArrayList<>();
+                    colNames.add(getColumnName(
                             filterConfig,
                             formRepeatNum,
                             questionRepeatNum,
                             opt,
-                            null);
-                }).collect(Collectors.toList());
+                            null));
+                    if (filterConfig.isHasDetails()) {
+                        colNames.add(getColumnName(
+                                filterConfig,
+                                formRepeatNum,
+                                questionRepeatNum,
+                                opt,
+                                "DETAIL"));
+                    }
+                    return colNames;
+                }).flatMap(Collection::stream).collect(Collectors.toList());
 
-        if (filterConfig.isHasDetails()) {
-            optColNames.addAll(splitOptions.stream().map(opt -> getColumnName(
-                    filterConfig,
-                    formRepeatNum,
-                    questionRepeatNum,
-                    opt,
-                    "DETAIL")).collect(Collectors.toList()));
+
+        return allColNames;
+    }
+
+
+    public List<String> getAllColumnTexts(FilterExportConfig filterConfig) {
+        List<String> allColTexts = new ArrayList<>();
+        List<Map<String, Object>> splitOptions = Collections.singletonList(null);
+        if (filterConfig.isSplitOptionsIntoColumns()) {
+            splitOptions = filterConfig.getOptions();
         }
-        return optColNames;
+        allColTexts = splitOptions.stream().map(opt -> {
+            List<String> colTexts = new ArrayList<>();
+            if (opt == null) {
+                colTexts.add(filterConfig.getColumn().getDisplay());
+            } else {
+                colTexts.add((String) opt.get(ESObjectConstants.OPTION_TEXT));
+            }
+            if (filterConfig.isHasDetails()) {
+                colTexts.add("additional detail");
+            }
+            return colTexts;
+        }).flatMap(Collection::stream).collect(Collectors.toList());
+        return allColTexts;
     }
 
     /** some tables are stored off the same data object as another (e.g. proxies are stored off of "profile")
@@ -164,11 +190,4 @@ public abstract class TabularParticipantExporter {
         return rowValues;
     }
 
-    public List<String> getAllColumnTexts(FilterExportConfig filterConfig) {
-        if (filterConfig.isSplitOptionsIntoColumns()) {
-            return filterConfig.getOptions().stream().map(opt -> (String) opt.get(ESObjectConstants.OPTION_TEXT))
-                    .collect(Collectors.toList());
-        }
-        return Collections.singletonList(filterConfig.getColumn().getDisplay());
-    }
 }
