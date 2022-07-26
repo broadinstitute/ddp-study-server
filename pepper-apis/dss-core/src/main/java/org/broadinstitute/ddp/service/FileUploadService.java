@@ -140,7 +140,7 @@ public class FileUploadService {
      */
     public AuthorizeResult authorizeUpload(Handle handle, long studyId, long operatorUserId, long participantUserId,
                                            FileUploadSettings fileUploadSettings,
-                                           String blobPrefix, String mimeType,
+                                           String blobPrefix, String blobName, String mimeType,
                                            String fileName, long fileSize, boolean resumable) {
         if (fileSize > fileUploadSettings.getMaxFileSize()) {
             return new AuthorizeResult(FILE_SIZE_EXCEEDS_MAXIMUM, null, null, fileUploadSettings);
@@ -154,14 +154,13 @@ public class FileUploadService {
         mimeType = mimeType != null ? mimeType : DEFAULT_MIME_TYPE;
 
         HttpMethod method = resumable ? HttpMethod.POST : HttpMethod.PUT;
-        final var blobName = blobPrefix + fileName;
 
         FileUpload upload = handle.attach(FileUploadDao.class).createAuthorized(
                 GuidUtils.randomFileUploadGuid(), studyId, operatorUserId, participantUserId,
-                blobName, mimeType, fileName, fileSize);
+                blobPrefix + blobName, mimeType, fileName, fileSize);
         Map<String, String> headers = Map.of("Content-Type", mimeType);
         URL signedURL = storageClient.generateSignedUrl(
-                signer, uploadsBucket, blobName,
+                signer, uploadsBucket, blobPrefix + blobName,
                 maxSignedUrlMins, TimeUnit.MINUTES,
                 method, headers);
 
