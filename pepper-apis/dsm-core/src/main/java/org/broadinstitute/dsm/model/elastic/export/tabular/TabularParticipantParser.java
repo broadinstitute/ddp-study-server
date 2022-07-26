@@ -256,15 +256,24 @@ public class TabularParticipantParser {
                             filterConfig,
                             moduleRepeatNum + 1,
                             1,
-                            opt
+                            opt,
+                            null
                     );
-
-                    String exportValue = formattedValues.contains(opt.get(ESObjectConstants.OPTION_STABLE_ID)) ?
+                    String optionStableId = (String) opt.get(ESObjectConstants.OPTION_STABLE_ID);
+                    String exportValue = formattedValues.contains(optionStableId) ?
                             COLUMN_SELECTED : COLUMN_UNSELECTED;
                     participantMap.put(colName, exportValue);
-//                    if (filterConfig.isHasDetails()) {
-//                        Map<String, String> detailMap = valueProvider.getDetailMap(filterConfig, esModuleMap, opt.get(ESObjectConstants.OPTION_STABLE_ID));
-//                    }
+                    if (filterConfig.isHasDetails()) {
+                        String detailValue = valueProvider.getOptionDetails(filterConfig, esModuleMap, optionStableId);
+                        String detailColName = TabularParticipantExporter.getColumnName(
+                                filterConfig,
+                                moduleRepeatNum + 1,
+                                1,
+                                opt,
+                                "DETAIL"
+                        );
+                        participantMap.put(detailColName, detailValue);
+                    }
                 }
 
             } else {
@@ -272,9 +281,13 @@ public class TabularParticipantParser {
                         filterConfig,
                         moduleRepeatNum + 1,
                         1,
+                        null,
                         null);
                 String exportValue = formattedValues.stream().collect(Collectors.joining(", "));
                 participantMap.put(colName, exportValue);
+                if (filterConfig.isHasDetails()) {
+                    String detail = valueProvider.getOptionDetails(filterConfig, esModuleMap, "foo");
+                }
 
             }
         }
