@@ -117,8 +117,7 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
                     operatorUser.getId(),
                     instanceDto.getParticipantId(),
                     fileQuestionDef,
-                    String.format("%s/%s_%s_%s_%s_%d", studyGuid, instanceDto.getActivityCode(), userGuid,
-                            getCurrentTimestamp(), payload.getFileName(), System.nanoTime()),
+                    getBlobPath(payload, userGuid, studyGuid, instanceDto.getActivityCode()),
                     payload.getMimeType(),
                     payload.getFileName(),
                     payload.getFileSize(),
@@ -142,6 +141,11 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
 
         response.status(HttpStatus.SC_CREATED);
         return new CreateUserActivityUploadResponse(upload.getGuid(), result.getSignedUrl().toString());
+    }
+
+    private String getBlobPath(CreateUserActivityUploadPayload payload, String userGuid, String studyGuid, String activityCode) {
+        return String.format("%s/%s_%s_%s_%s_%d",
+                studyGuid, activityCode, userGuid, getCurrentTimestamp(), payload.getFileName(), System.nanoTime());
     }
 
     private long bytesToMbs(long maxFileSize) {
