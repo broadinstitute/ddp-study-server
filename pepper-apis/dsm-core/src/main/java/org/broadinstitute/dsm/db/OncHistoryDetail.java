@@ -191,7 +191,7 @@ public class OncHistoryDetail implements HasDdpInstanceId {
     private String ddpParticipantId;
     private List<Tissue> tissues;
     @ColumnName(DBConstants.DDP_INSTANCE_ID)
-    private long ddpInstanceId;
+    private Long ddpInstanceId;
 
     public OncHistoryDetail() {
     }
