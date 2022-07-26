@@ -149,6 +149,8 @@ paths:
     $ref: 'endpoints/user.studies.workflow.yml'
   /user/{user}/studies/{study}/exit:
     $ref: 'endpoints/user.studies.exit.yml'
+  /user/{user}/studies/{study}/ageup:
+    $ref: 'endpoints/user.studies.age-up.yml'
   /cancers:
     $ref: 'endpoints/cancers.yml'
   /autocomplete/institution:

@@ -1,0 +1,25 @@
+get:
+  operationId: getUserAgeUp
+  tags:
+    - Participant
+  summary: summary for user ageUp check
+  description: |
+    Endpoint to check whether the child participant has agedUp or not
+  parameters:
+    - in: path
+      name: user
+      required: true
+      description: the participant's guid
+      schema:
+        type: string
+    - in: path
+      name: study
+      required: true
+      description: the study's unique identifier
+      schema:
+        type: string
+  responses:
+    200:
+      description: boolean value of ageUp expression value
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
