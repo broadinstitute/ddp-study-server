@@ -253,7 +253,10 @@ public class Filter {
         String query;
         String finalQuery;
         String jsonExtract = "JSON_EXTRACT ( ";
-        query = AND + jsonExtract + filter.getParentName() + DBConstants.ALIAS_DELIMITER + dbElement.getColumnName() + " , '$."
+        String parentName = StringUtils.isNotBlank(filter.getParentName())
+                ? filter.getParentName()
+                : filter.getParticipantColumn().getTableAlias();
+        query = AND + jsonExtract + parentName + DBConstants.ALIAS_DELIMITER + dbElement.getColumnName() + " , '$."
                 + filter.getFilter2().getName() + "' ) ";
         if (filter.isEmpty()) {
             finalQuery = query + IS_NULL + " ";
@@ -263,7 +266,7 @@ public class Filter {
             String notNullQuery = AND + filter.getParentName() + DBConstants.ALIAS_DELIMITER + dbElement.getColumnName() + IS_NOT_NULL;
             if (filter.getFilter1() != null && filter.getFilter1().getValue() != null && StringUtils.isNotBlank(
                     String.valueOf(filter.getFilter1().getValue()))) {
-                query = AND + jsonExtract + filter.getParentName() + DBConstants.ALIAS_DELIMITER + dbElement.getColumnName() + " , '$."
+                query = AND + jsonExtract + parentName + DBConstants.ALIAS_DELIMITER + dbElement.getColumnName() + " , '$."
                         + filter.getFilter2().getName() + "' ) ";
                 if (BaseFilterParticipantList.isDateRange(filter)) {
                     String moreThan = generateDateComparisonSql(filter, dbElement, LARGER_EQUALS, filter.getFilter1().getValue(), false);
