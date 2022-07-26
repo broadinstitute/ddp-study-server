@@ -1,8 +1,7 @@
-package org.broadinstitute.dsm.route.participantFiles;
+package org.broadinstitute.dsm.route.participantfiles;
 
 import static org.broadinstitute.dsm.statics.DBConstants.FILE_DOWNLOAD_ROLE;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.Optional;
 
 import com.google.cloud.storage.Blob;
@@ -15,13 +14,16 @@ import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.SecurityUtil;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.lddp.handlers.util.Result;
 import spark.QueryParamsMap;
 import spark.Request;
 
 @Slf4j
 public class DownloadParticipantFileRoute extends RequestHandler {
     private static String googleProjectName;
+    private static String BUCKET = "bucket";
+    private static String FILE_NAME = "fileName";
+    private static String BLOB = "blob";
+
 
     public DownloadParticipantFileRoute(String googleProjectName) {
         this.googleProjectName = googleProjectName;
@@ -40,33 +42,27 @@ public class DownloadParticipantFileRoute extends RequestHandler {
         }
         String userIdR = UserUtil.getUserId(request);
         if (UserUtil.checkUserAccess(realm, userId, FILE_DOWNLOAD_ROLE, userIdR)) {
-            String bucketName = queryParams.value("bucket");
-            String objectName = queryParams.value("fileName");
-            String blobName = queryParams.value("blob");
+            String bucketName = queryParams.value(BUCKET);
+            String objectName = queryParams.value(FILE_NAME);
+            String blobName = queryParams.value(BLOB);
             Optional<byte[]> downloadObject =
                     downloadObject(googleProjectName, bucketName, objectName, blobName);
             byte[] downloadObjectArray = downloadObject.orElseThrow();
-            HttpServletResponse rawResponse = response.raw();
-            rawResponse.getOutputStream().write(downloadObjectArray);
-            rawResponse.setStatus(200);
-            rawResponse.getOutputStream().flush();
-            rawResponse.getOutputStream().close();
-            return new Result(200);
+            response.status(200);
+            return downloadObjectArray;
         } else {
-            return new Result(401, SecurityUtil.ResultType.AUTHENTICATION_ERROR.toString());
+            response.status(401);
+            return SecurityUtil.ResultType.AUTHENTICATION_ERROR.toString();
         }
     }
 
-    public Optional<byte[]> downloadObject(String projectId, String bucketName, String objectName,
-                                           String blobName) {
-
+    public Optional<byte[]> downloadObject(String projectId, String bucketName, String objectName, String blobName) {
         Storage storage = StorageOptions.newBuilder().setProjectId(projectId).build().getService();
-
         Blob blob = storage.get(BlobId.of(bucketName, blobName));
         byte[] content = null;
         if (blob.exists()) {
             content = blob.getContent();
-            log.info("Downloaded object " + objectName + " from bucket name " + bucketName + " to " + content);
+            log.info("Downloaded object " + objectName + " from bucket name " + bucketName);
         }
         return Optional.ofNullable(content);
     }
