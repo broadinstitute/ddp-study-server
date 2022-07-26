@@ -58,7 +58,7 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
         var service = FileUploadService.fromConfig(ConfigManager.getInstance().getConfig());
         var result = TransactionWrapper.withTxn(handle -> service
                 .authorizeUpload(handle, studyId, userId, userId, createFileUploadSettings(fileSize),
-                        "prefix", "application/pdf", "filename.pdf", 50000, false));
+                        "prefix/filename.pdf", "application/pdf", "filename.pdf", 50000, false));
 
         var guid = result.getFileUpload().getGuid();
         System.out.println("File upload guid: " + guid);
@@ -86,7 +86,7 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
         doReturn(dummyUrl).when(mockClient).generateSignedUrl(any(), eq("uploads"), startsWith("prefix/"),
                 anyLong(), any(), eq(expectedMethod), argThat(map -> expectedMime.equals(map.get("Content-Type"))));
 
-        var result = service.authorizeUpload(mockHandle, 1L, 1L, 1L, createFileUploadSettings(123), "prefix", null, "file", 123, true);
+        var result = service.authorizeUpload(mockHandle, 1L, 1L, 1L, createFileUploadSettings(123), "prefix/file", null, "file", 123, true);
 
         assertNotNull(result);
         assertNotSame(result.getAuthorizeResultType(), FILE_SIZE_EXCEEDS_MAXIMUM);
@@ -103,7 +103,7 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
     @Test
     public void testAuthorizeUpload_exceededSize() {
         var service = new FileUploadService(null, null, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
-        var result = service.authorizeUpload(null, 1L, 1L, 1L, createFileUploadSettings(123), "prefix", "mime", "file", 1024, false);
+        var result = service.authorizeUpload(null, 1L, 1L, 1L, createFileUploadSettings(123), "prefix/file", "mime", "file", 1024, false);
         assertNotNull(result);
         assertSame("should hit size limit", result.getAuthorizeResultType(), FILE_SIZE_EXCEEDS_MAXIMUM);
         assertNull(result.getFileUpload());
