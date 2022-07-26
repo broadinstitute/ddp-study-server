@@ -103,7 +103,7 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
     @Test
     public void testAuthorizeUpload_exceededSize() {
         var service = new FileUploadService(null, null, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
-        var result = service.authorizeUpload(null, 1L, 1L, 1L, createFileUploadSettings(123), "prefix/file","mime", "file", 1024, false);
+        var result = service.authorizeUpload(null, 1L, 1L, 1L, createFileUploadSettings(123), "prefix/file", "mime", "file", 1024, false);
         assertNotNull(result);
         assertSame("should hit size limit", result.getAuthorizeResultType(), FILE_SIZE_EXCEEDS_MAXIMUM);
         assertNull(result.getFileUpload());
