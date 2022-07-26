@@ -4,7 +4,9 @@ import static org.broadinstitute.ddp.service.FileUploadService.AuthorizeResultTy
 import static org.broadinstitute.ddp.service.FileUploadServiceTest.FileUploadSettingsForTest.createFileUploadSettings;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -39,14 +41,12 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 public class FileUploadServiceTest extends TxnAwareBaseTest {
-
-    private static TestDataSetupUtil.GeneratedTestData testData;
     private static long studyId;
     private static long userId;
 
     @BeforeClass
     public static void setup() {
-        testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
+        final var testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
         studyId = testData.getStudyId();
         userId = testData.getUserId();
     }
@@ -89,7 +89,7 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
         var result = service.authorizeUpload(mockHandle, 1L, 1L, 1L, createFileUploadSettings(123), "prefix", null, "file", 123, true);
 
         assertNotNull(result);
-        assertFalse(result.getAuthorizeResultType() == FILE_SIZE_EXCEEDS_MAXIMUM);
+        assertNotSame(result.getAuthorizeResultType(), FILE_SIZE_EXCEEDS_MAXIMUM);
         assertNotNull(result.getFileUpload());
         assertNotNull(result.getSignedUrl());
 
@@ -105,7 +105,7 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
         var service = new FileUploadService(null, null, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
         var result = service.authorizeUpload(null, 1L, 1L, 1L, createFileUploadSettings(123), "prefix", "mime", "file", 1024, false);
         assertNotNull(result);
-        assertTrue("should hit size limit", result.getAuthorizeResultType() == FILE_SIZE_EXCEEDS_MAXIMUM);
+        assertSame("should hit size limit", result.getAuthorizeResultType(), FILE_SIZE_EXCEEDS_MAXIMUM);
         assertNull(result.getFileUpload());
         assertNull(result.getSignedUrl());
     }
@@ -133,6 +133,7 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
             assertEquals(FileUploadService.VerifyResult.OK, result);
 
             var actual = fileDao.findById(upload.getId()).orElse(null);
+            assertNotNull(actual);
             assertTrue(actual.isVerified());
 
             handle.rollback();
@@ -146,7 +147,7 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
             var upload = fileDao.createAuthorized("guid", studyId, userId, userId, "blob", "mime", "file", 100);
 
             fileDao.markVerified(upload.getId());
-            upload = fileDao.findById(upload.getId()).get();
+            upload = fileDao.findById(upload.getId()).orElseThrow();
 
             var service = new FileUploadService(null, null, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
             var result = service.verifyUpload(handle, studyId, userId, upload);
