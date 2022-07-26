@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.export.tabular.FilterExportConfig;
@@ -39,6 +38,18 @@ public class TextValueProvider {
         return rawValues.stream().map(val -> val != null ? val.toString() : StringUtils.EMPTY).collect(Collectors.toList());
     }
 
+    public String getOptionDetails(FilterExportConfig filterConfig, Map<String, Object> moduleMap, String optionStableId) {
+        List<Map<String, Object>> answerObjects = getRelevantAnswers(moduleMap, filterConfig);
+        List<?> optionDetails = answerObjects.stream().map(ans -> ans.get(ESObjectConstants.OPTIONDETAILS))
+                .filter(detailList -> detailList instanceof List)
+                .map(detailList -> {
+                    return ((List<?>) detailList).stream().filter(detail ->
+                            StringUtils.equals((String) ((Map) detail).get(ESObjectConstants.OPTION), optionStableId))
+                            .map(detail -> ((Map<String, Object>) detail).get(ESObjectConstants.DETAILS))
+                            .collect(Collectors.toList());
+                }).flatMap(Collection::stream).collect(Collectors.toList());
+        return optionDetails.stream().map(obj -> obj.toString()).collect(Collectors.joining(", "));
+    }
 
     protected Object getValueFromMap(Map<String, Object> moduleMap, FilterExportConfig filterConfig) {
         Map<String, Object> targetMap = moduleMap;
@@ -81,34 +92,30 @@ public class TextValueProvider {
     }
 
     protected Object getRawAnswerValues(Map<String, Object> moduleMap, FilterExportConfig filterConfig) {
-        if (moduleMap == null) {
-            return StringUtils.EMPTY;
-        }
-        List<Map<String, Object>> allAnswers =
-                (List<Map<String, Object>>) moduleMap.get(ElasticSearchUtil.QUESTIONS_ANSWER);
-        if (allAnswers == null) {
-            return StringUtils.EMPTY;
-        }
-        List<Map<String, Object>> targetAnswers = allAnswers.stream()
-                .filter(ans -> filterConfig.getColumn().getName().equals(ans.get(ESObjectConstants.STABLE_ID)))
-                .collect(Collectors.toList());
-        if (targetAnswers.isEmpty()) {
-            return StringUtils.EMPTY;
-        }
+        List<Map<String, Object>> answerObjects = getRelevantAnswers(moduleMap, filterConfig);
+        List<Object> rawValues = extractAnswerValuesFromTargets(answerObjects, filterConfig);
+        Collection<?> answer = mapToCollection(rawValues);
 
-        List<Object> rawAnswers = extractAnswerValuesFromTargets(targetAnswers, filterConfig);
-        Collection<?> answer = mapToCollection(rawAnswers);
-
-        Map<String, Object> firstAnswer = targetAnswers.get(0);
+        Map<String, Object> firstAnswer = answerObjects.get(0);
 
         Object optionDetails = firstAnswer.get(ESObjectConstants.OPTIONDETAILS);
         if (optionDetails != null && !((List<?>) optionDetails).isEmpty()) {
-            removeOptionsFromAnswer(answer, ((List<Map<String, String>>) optionDetails));
-            return Stream.of(answer, getOptionDetails((List<?>) optionDetails)).flatMap(Collection::stream)
-                    .collect(Collectors.toList());
+            filterConfig.setHasDetails(true);
         }
-
         return answer;
+    }
+
+    protected List<Map<String, Object>> getRelevantAnswers(Map<String, Object> moduleMap, FilterExportConfig filterConfig) {
+        if (moduleMap != null) {
+            List<Map<String, Object>> allAnswers =
+                    (List<Map<String, Object>>) moduleMap.get(ElasticSearchUtil.QUESTIONS_ANSWER);
+            if (allAnswers != null) {
+                return allAnswers.stream()
+                        .filter(ans -> filterConfig.getColumn().getName().equals(ans.get(ESObjectConstants.STABLE_ID)))
+                        .collect(Collectors.toList());
+            }
+        }
+        return Collections.emptyList();
     }
 
     protected List<Object> extractAnswerValuesFromTargets(List<Map<String, Object>> targetAnswers, FilterExportConfig filterConfig) {

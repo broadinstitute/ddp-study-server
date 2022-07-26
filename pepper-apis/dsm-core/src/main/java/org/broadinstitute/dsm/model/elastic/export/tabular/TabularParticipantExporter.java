@@ -19,6 +19,7 @@ public abstract class TabularParticipantExporter {
     public static final String TSV_FORMAT = "tsv";
     public static final String XLSX_FORMAT = "xlsx";
     public static final String COLUMN_REPEAT_DELIMITER = "_";
+    public static final String OPTION_DETAIL_DELIMITER = "_";
     protected List<ModuleExportConfig> moduleConfigs;
     protected String fileFormat;
     protected List<Map<String, String>> participantValueMaps;
@@ -51,21 +52,29 @@ public abstract class TabularParticipantExporter {
     }
 
     public static List<String> getAllColumnNames(FilterExportConfig filterConfig, int formRepeatNum, int questionRepeatNum) {
+        List<String> optColNames = new ArrayList<>();
+        List<Map<String, Object>> splitOptions = Collections.singletonList(null);
         if (filterConfig.isSplitOptionsIntoColumns()) {
-            return filterConfig.getOptions().stream().map(opt -> {
-                return getColumnName(
-                        filterConfig,
-                        formRepeatNum,
-                        questionRepeatNum,
-                        opt);
-            }).collect(Collectors.toList());
+            splitOptions = filterConfig.getOptions();
         }
-        return Collections.singletonList(getColumnName(
-                filterConfig,
-                formRepeatNum,
-                questionRepeatNum,
-                null
-        ));
+        optColNames = splitOptions.stream().map(opt -> {
+                    return getColumnName(
+                            filterConfig,
+                            formRepeatNum,
+                            questionRepeatNum,
+                            opt,
+                            null);
+                }).collect(Collectors.toList());
+
+        if (filterConfig.isHasDetails()) {
+            optColNames.addAll(splitOptions.stream().map(opt -> getColumnName(
+                    filterConfig,
+                    formRepeatNum,
+                    questionRepeatNum,
+                    opt,
+                    "DETAIL")).collect(Collectors.toList()));
+        }
+        return optColNames;
     }
 
     /** some tables are stored off the same data object as another (e.g. proxies are stored off of "profile")
@@ -86,7 +95,8 @@ public abstract class TabularParticipantExporter {
     public static String getColumnName(FilterExportConfig filterConfig,
                                        int activityRepeatNum,
                                        int questionRepeatNum,
-                                       Map<String, Object> option) {
+                                       Map<String, Object> option,
+                                       String detailName) {
         String activityName = filterConfig.getParent().getName();
         if (TABLE_ALIAS_NAME_MAP.containsKey(filterConfig.getColumn().getTableAlias())) {
             activityName = activityName + DBConstants.ALIAS_DELIMITER + TABLE_ALIAS_NAME_MAP.get(filterConfig.getColumn().getTableAlias());
@@ -102,6 +112,10 @@ public abstract class TabularParticipantExporter {
         if (hasSeparateColumnForOption(option, filterConfig)) {
             columnExportName = columnExportName + DBConstants.ALIAS_DELIMITER + option.get(ESObjectConstants.OPTION_STABLE_ID);
         }
+        if (detailName != null) {
+            columnExportName = columnExportName + OPTION_DETAIL_DELIMITER + detailName;
+        }
+
         // if this is a collated column, use the suffix (e.g. use "REGISTRATION_STATE_PROVINCE" instead of "CA_REGISTRATION_STATE_PROVINCE")
         for (String suffix : ValueProviderFactory.COLLATED_SUFFIXES) {
             if (columnExportName.endsWith(suffix)) {
