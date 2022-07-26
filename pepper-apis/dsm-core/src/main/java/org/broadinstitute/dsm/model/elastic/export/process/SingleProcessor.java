@@ -1,14 +1,11 @@
-
 package org.broadinstitute.dsm.model.elastic.export.process;
 
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
 public class SingleProcessor extends BaseProcessor {
@@ -29,8 +26,8 @@ public class SingleProcessor extends BaseProcessor {
     }
 
     @Override
-    protected TableName getTableNameByField(Field field) {
-        return field.getType().getAnnotation(TableName.class);
+    protected String findPrimaryKeyOfObject(Object object) {
+        return getPrimaryKey(object);
     }
 
     @Override

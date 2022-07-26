@@ -30,8 +30,6 @@ import org.slf4j.LoggerFactory;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@TableName(name = DBConstants.DDP_PARTICIPANT, alias = DBConstants.DDP_PARTICIPANT_ALIAS,
-        primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
 public class Participant implements Cloneable {
 
     private static final Logger logger = LoggerFactory.getLogger(Participant.class);

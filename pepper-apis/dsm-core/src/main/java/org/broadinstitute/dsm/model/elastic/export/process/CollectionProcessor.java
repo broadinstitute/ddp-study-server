@@ -1,18 +1,13 @@
-
 package org.broadinstitute.dsm.model.elastic.export.process;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.broadinstitute.dsm.db.structure.TableName;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.ESDsm;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.export.generate.Collector;
@@ -43,12 +38,15 @@ public class CollectionProcessor extends BaseProcessor {
     }
 
     @Override
-    protected TableName getTableNameByField(Field field) {
-        return Arrays.stream(((ParameterizedType) field.getGenericType())
-                        .getActualTypeArguments())
-                .findFirst()
-                .map(obj -> ((Class<?>) obj).getAnnotation(TableName.class))
-                .orElse(null);
+    protected String findPrimaryKeyOfObject(Object object) {
+        List<Object> objectCollection = (List<Object>) object;
+        if (Objects.isNull(objectCollection)) {
+            return StringUtils.EMPTY;
+        }
+        Optional<Object> maybeObject = objectCollection.stream().findFirst();
+        return maybeObject
+                .map(this::getPrimaryKey)
+                .orElse(StringUtils.EMPTY);
     }
 
     @Override
