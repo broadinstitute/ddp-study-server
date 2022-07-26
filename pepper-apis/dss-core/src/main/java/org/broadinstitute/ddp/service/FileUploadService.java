@@ -131,7 +131,7 @@ public class FileUploadService {
      * @param operatorUserId    the operator who instantiated this request
      * @param participantUserId the participant who will own the file
      * @param fileUploadSettings file upload parameters
-     * @param blobPrefix        a prefix to prepend to blob name, e.g. for organizational purposes
+     * @param blobPath          a cloud path of the blob
      * @param mimeType          the user-reported mime type
      * @param fileName          the user-reported name for the file
      * @param fileSize          the user-reported file size
@@ -140,7 +140,7 @@ public class FileUploadService {
      */
     public AuthorizeResult authorizeUpload(Handle handle, long studyId, long operatorUserId, long participantUserId,
                                            FileUploadSettings fileUploadSettings,
-                                           String blobPrefix, String mimeType,
+                                           String blobPath, String mimeType,
                                            String fileName, long fileSize, boolean resumable) {
         if (fileSize > fileUploadSettings.getMaxFileSize()) {
             return new AuthorizeResult(FILE_SIZE_EXCEEDS_MAXIMUM, null, null, fileUploadSettings);
@@ -150,19 +150,16 @@ public class FileUploadService {
             return new AuthorizeResult(MIME_TYPE_NOT_ALLOWED, null, null, fileUploadSettings);
         }
 
-        blobPrefix = blobPrefix != null ? blobPrefix + "/" : "";
         mimeType = mimeType != null ? mimeType : DEFAULT_MIME_TYPE;
 
         HttpMethod method = resumable ? HttpMethod.POST : HttpMethod.PUT;
-        String uploadGuid = GuidUtils.randomFileUploadGuid();
-        String blobName = blobPrefix + uploadGuid;
 
         FileUpload upload = handle.attach(FileUploadDao.class).createAuthorized(
-                uploadGuid, studyId, operatorUserId, participantUserId,
-                blobName, mimeType, fileName, fileSize);
+                GuidUtils.randomFileUploadGuid(), studyId, operatorUserId, participantUserId,
+                blobPath, mimeType, fileName, fileSize);
         Map<String, String> headers = Map.of("Content-Type", mimeType);
         URL signedURL = storageClient.generateSignedUrl(
-                signer, uploadsBucket, blobName,
+                signer, uploadsBucket, blobPath,
                 maxSignedUrlMins, TimeUnit.MINUTES,
                 method, headers);
 
