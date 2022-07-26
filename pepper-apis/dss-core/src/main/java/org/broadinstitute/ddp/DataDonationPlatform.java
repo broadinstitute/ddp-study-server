@@ -129,6 +129,7 @@ import org.broadinstitute.ddp.route.GetTempMailingAddressRoute;
 import org.broadinstitute.ddp.route.GetUserAnnouncementsRoute;
 import org.broadinstitute.ddp.route.GetWorkflowRoute;
 import org.broadinstitute.ddp.route.GovernedParticipantRegistrationRoute;
+import org.broadinstitute.ddp.route.HasUserAgedUpRoute;
 import org.broadinstitute.ddp.route.HealthCheckRoute;
 import org.broadinstitute.ddp.route.InvitationCheckStatusRoute;
 import org.broadinstitute.ddp.route.InvitationVerifyRoute;
@@ -506,6 +507,8 @@ public class DataDonationPlatform {
 
         // User study invitations
         get(API.USER_STUDY_INVITES, new ListUserStudyInvitationsRoute(), jsonSerializer);
+
+        get(API.USER_HAS_AGEDUP, new HasUserAgedUpRoute(), jsonSerializer);
 
         // Study exit request
         post(API.USER_STUDY_EXIT, new SendExitNotificationRoute());

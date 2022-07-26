@@ -182,6 +182,8 @@ public class RouteConstants {
         public static final String STUDY_PASSWORD_POLICY = STUDY_DETAIL + "/password-policy";
 
         public static final String STUDY_STATISTICS = STUDY_DETAIL + "/statistics";
+        public static final String USER_HAS_AGEDUP = fmt(BASE + "/user/%s/studies/%s/ageup",
+                PathParam.USER_GUID, PathParam.STUDY_GUID);
     }
 
     public static final class PathParam {
