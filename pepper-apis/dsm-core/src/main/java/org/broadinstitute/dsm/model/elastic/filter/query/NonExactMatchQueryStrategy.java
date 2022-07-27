@@ -8,16 +8,16 @@ public class NonExactMatchQueryStrategy extends MatchQueryStrategy {
     public static final String WILDCARD_ASTERISK = "*";
 
     @Override
-    public QueryBuilder build(BaseQueryBuilder baseQueryBuilder) {
+    public QueryBuilder getMainQueryBuilder(BaseQueryBuilder baseQueryBuilder) {
         QueryBuilder queryBuilder;
         if (isTextType(baseQueryBuilder)) {
-            queryBuilder = baseQueryBuilder.build(QueryBuilders.wildcardQuery(
+            queryBuilder = QueryBuilders.wildcardQuery(
                     baseQueryBuilder.payload.getFieldName(),
                     String.format("%s%s%s",
-                            WILDCARD_ASTERISK, String.valueOf(baseQueryBuilder.payload.getValues()[0]).toLowerCase(), WILDCARD_ASTERISK)));
+                            WILDCARD_ASTERISK, String.valueOf(baseQueryBuilder.payload.getValues()[0]).toLowerCase(), WILDCARD_ASTERISK));
 
         } else {
-            queryBuilder = super.build(baseQueryBuilder);
+            queryBuilder = super.getMainQueryBuilder(baseQueryBuilder);
         }
         return queryBuilder;
     }

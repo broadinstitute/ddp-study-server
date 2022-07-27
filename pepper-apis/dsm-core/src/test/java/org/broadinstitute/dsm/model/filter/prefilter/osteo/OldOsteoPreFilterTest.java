@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.model.elastic.ESActivities;
+import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter;
 import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilterPayload;
@@ -21,11 +21,11 @@ public class OldOsteoPreFilterTest {
     public void filter() {
         int ddpInstanceId = 1;
         String newOsteoInstanceName = "Osteo";
-        List<ESActivities> activities = new ArrayList<>(List.of(
-                new ESActivities("CONSENT", "v2"),
-                new ESActivities("PREQUAL", "v2"),
-                new ESActivities("FAMILY_HISTORY", "v1"),
-                new ESActivities("ABOUT_YOU", "v1")
+        List<Activities> activities = new ArrayList<>(List.of(
+                new Activities("CONSENT", "v2"),
+                new Activities("PREQUAL", "v2"),
+                new Activities("FAMILY_HISTORY", "v1"),
+                new Activities("ABOUT_YOU", "v1")
         ));
         ElasticSearchParticipantDto esDto = new ElasticSearchParticipantDto.Builder()
                 .withActivities(activities)
@@ -38,7 +38,7 @@ public class OldOsteoPreFilterTest {
         preFilter.ifPresent(StudyPreFilter::filter);
         assertEquals(2, esDto.getActivities().size());
         assertEquals(List.of("FAMILY_HISTORY", "ABOUT_YOU"), esDto.getActivities().stream()
-                .map(ESActivities::getActivityCode)
+                .map(Activities::getActivityCode)
                 .collect(Collectors.toList()));
     }
 }

@@ -2,7 +2,12 @@ package org.broadinstitute.dsm.model.elastic.filter;
 
 public class NonDsmAndOrFilterSeparator extends AndOrFilterSeparator {
 
-    protected static final String DSM_ALIAS_REGEX = "[A-z]+(\\.|\\s)*(\\.)*";
+    private static final String REGEX = "[A-z]+(\\.|\\s)*(\\.)*";
+
+    @Override
+    protected String getRegex() {
+        return REGEX;
+    }
 
     public NonDsmAndOrFilterSeparator(String filter) {
         super(filter);

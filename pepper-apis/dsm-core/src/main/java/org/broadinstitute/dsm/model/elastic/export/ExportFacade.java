@@ -101,7 +101,7 @@ public class ExportFacade {
 
     private PropertyInfo getPropertyInfo() {
         DBElement dbElement = PatchUtil.getColumnNameMap().get(exportFacadePayload.getFieldNameWithAlias());
-        return PropertyInfo.TABLE_ALIAS_MAPPINGS.get(dbElement.getTableAlias());
+        return PropertyInfo.of(dbElement.getTableAlias());
     }
 
     private void upsertData(Map<String, Object> elasticDataToExport) {

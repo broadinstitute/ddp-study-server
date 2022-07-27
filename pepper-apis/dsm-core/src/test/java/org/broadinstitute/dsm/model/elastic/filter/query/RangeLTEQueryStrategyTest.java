@@ -15,7 +15,8 @@ public class RangeLTEQueryStrategyTest {
         QueryPayload mrDocument = new QueryPayload("dsm.medicalRecord", "mrReceived", values);
 
         BaseQueryBuilder baseQueryBuilder = BaseQueryBuilder.of("m", "mrReceived");
-        NestedQueryBuilder nestedGreaterQuery = (NestedQueryBuilder) baseQueryBuilder.buildEachQuery(dateLessThanEquals, mrDocument);
+        NestedQueryBuilder nestedGreaterQuery = (NestedQueryBuilder) baseQueryBuilder.buildEachQuery(dateLessThanEquals, mrDocument
+        );
 
         RangeQueryBuilder expected = new RangeQueryBuilder("dsm.medicalRecord.mrReceived");
         expected.lte(values[0]);

@@ -22,7 +22,7 @@ public class SingleProcessorTest {
 
     @Test
     public void processExisting() {
-        PropertyInfo propertyInfo = PropertyInfo.TABLE_ALIAS_MAPPINGS.get(DBConstants.DDP_PARTICIPANT_ALIAS);
+        PropertyInfo propertyInfo = PropertyInfo.of(DBConstants.DDP_PARTICIPANT_ALIAS);
         ValueParser valueParser = new ValueParser();
         valueParser.setPropertyInfo(propertyInfo);
 
@@ -51,7 +51,7 @@ public class SingleProcessorTest {
 
     @Test
     public void processNew() {
-        PropertyInfo propertyInfo = PropertyInfo.TABLE_ALIAS_MAPPINGS.get(DBConstants.DDP_PARTICIPANT_ALIAS);
+        PropertyInfo propertyInfo = PropertyInfo.of(DBConstants.DDP_PARTICIPANT_ALIAS);
         ValueParser valueParser = new ValueParser();
 
         DynamicFieldsParser dynamicFieldsParser = new DynamicFieldsParser();

@@ -46,7 +46,7 @@ public class DynamicFieldsMappingMigrator implements Exportable {
             parser.setDisplayType(fieldSettingsDto.getDisplayType());
             parser.setPossibleValuesJson(fieldSettingsDto.getPossibleValues());
             String fieldType = fieldSettingsDto.getFieldType();
-            PropertyInfo propertyInfo = PropertyInfo.TABLE_ALIAS_MAPPINGS.get(fieldType);
+            PropertyInfo propertyInfo = PropertyInfo.of(fieldType);
             if (propertyInfo != null) {
                 buildMapping(fieldSettingsDto, propertyInfo);
             } else {

@@ -72,6 +72,11 @@ public enum Operator {
         return this.queryStrategy;
     }
 
+    public BuildQueryStrategy getQueryStrategy(BuildQueryStrategy queryStrategy) {
+        this.queryStrategy.setAdditionalQueryStrategy(queryStrategy);
+        return this.queryStrategy;
+    }
+
     public static Operator getOperator(String value) {
         for (Operator op : Operator.values()) {
             if (op.value.trim().equals(value)) {

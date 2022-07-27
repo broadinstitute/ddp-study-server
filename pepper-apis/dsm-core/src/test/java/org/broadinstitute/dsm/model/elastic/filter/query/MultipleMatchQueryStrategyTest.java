@@ -16,7 +16,8 @@ public class MultipleMatchQueryStrategyTest {
         QueryPayload mrDocument = new QueryPayload("dsm.medicalRecord", "mrDocument", values);
 
         BaseQueryBuilder baseQueryBuilder = BaseQueryBuilder.of("m", "mrDocument");
-        NestedQueryBuilder nestedQueryBuilder = (NestedQueryBuilder) baseQueryBuilder.buildEachQuery(multipleOptions, mrDocument);
+        NestedQueryBuilder nestedQueryBuilder = (NestedQueryBuilder) baseQueryBuilder.buildEachQuery(multipleOptions, mrDocument
+        );
 
         BoolQueryBuilder expectedBoolQuery = new BoolQueryBuilder();
 

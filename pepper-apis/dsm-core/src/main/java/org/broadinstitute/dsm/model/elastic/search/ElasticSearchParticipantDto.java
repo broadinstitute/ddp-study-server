@@ -8,7 +8,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.model.elastic.ESActivities;
+import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.ESAddress;
 import org.broadinstitute.dsm.model.elastic.ESComputed;
 import org.broadinstitute.dsm.model.elastic.ESDsm;
@@ -21,7 +21,7 @@ public class ElasticSearchParticipantDto {
     private ESAddress address;
     private List<Object> medicalProviders;
     private List<Object> invitations;
-    private List<ESActivities> activities;
+    private List<Activities> activities;
     private List<String> governedUsers;
     private ESComputed computed;
     private Long statusTimestamp;
@@ -64,7 +64,7 @@ public class ElasticSearchParticipantDto {
         return invitations == null ? Collections.emptyList() : invitations;
     }
 
-    public List<ESActivities> getActivities() {
+    public List<Activities> getActivities() {
         return activities == null ? Collections.emptyList() : activities;
     }
 
@@ -116,7 +116,7 @@ public class ElasticSearchParticipantDto {
         private List<Object> medicalProviders;
         private List<Object> invitations;
         private ESComputed computed;
-        private List<ESActivities> activities;
+        private List<Activities> activities;
         private List<String> governedUsers;
         private Long statusTimeStamp;
         private ESProfile profile;
@@ -144,7 +144,7 @@ public class ElasticSearchParticipantDto {
             return this;
         }
 
-        public Builder withActivities(List<ESActivities> activities) {
+        public Builder withActivities(List<Activities> activities) {
             this.activities = activities;
             return this;
         }

@@ -15,12 +15,13 @@ import org.broadinstitute.dsm.db.SmId;
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.db.structure.TableName;
+import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.statics.DBConstants;
 
 public class PropertyInfo {
 
-    public static final Map<String, PropertyInfo> TABLE_ALIAS_MAPPINGS = new HashMap<>(
+    private static final Map<String, PropertyInfo> TABLE_ALIAS_MAPPINGS = new HashMap<>(
             Map.of(DBConstants.DDP_MEDICAL_RECORD_ALIAS, new PropertyInfo(MedicalRecord.class, true),
                     DBConstants.DDP_TISSUE_ALIAS, new PropertyInfo(Tissue.class, true),
                     DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS, new PropertyInfo(OncHistoryDetail.class, true),
@@ -71,5 +72,13 @@ public class PropertyInfo {
 
     public Class<?> getPropertyClass() {
         return propertyClass;
+    }
+
+    public static PropertyInfo of(String alias) {
+        return TABLE_ALIAS_MAPPINGS.getOrDefault(alias, new PropertyInfo(Activities.class, true));
+    }
+
+    public static boolean hasProperty(String alias) {
+        return TABLE_ALIAS_MAPPINGS.containsKey(alias);
     }
 }

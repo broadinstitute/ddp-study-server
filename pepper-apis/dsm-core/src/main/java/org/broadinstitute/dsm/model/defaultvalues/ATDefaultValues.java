@@ -14,7 +14,7 @@ import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
-import org.broadinstitute.dsm.model.elastic.ESActivities;
+import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.ESProfile;
 import org.broadinstitute.dsm.model.elastic.ObjectTransformer;
 import org.broadinstitute.dsm.model.settings.field.FieldSettings;
@@ -78,7 +78,7 @@ public class ATDefaultValues extends BasicDefaultDataMaker {
         return elasticSearchParticipantDto.getActivities().stream().anyMatch(this::isRegistrationComplete);
     }
 
-    private boolean isRegistrationComplete(ESActivities activity) {
+    private boolean isRegistrationComplete(Activities activity) {
         return ACTIVITY_CODE_REGISTRATION.equals(activity.getActivityCode()) && COMPLETE.equals(activity.getStatus());
     }
 

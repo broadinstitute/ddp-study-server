@@ -3,6 +3,9 @@ package org.broadinstitute.dsm.model.elastic.filter;
 import static org.junit.Assert.assertEquals;
 
 import org.broadinstitute.dsm.model.Filter;
+import org.broadinstitute.dsm.model.elastic.filter.query.BuildQueryStrategy;
+import org.broadinstitute.dsm.model.elastic.filter.query.CollectionQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -134,5 +137,14 @@ public class OperatorTest {
         String filter = "DATE(FROM_UNIXTIME(k.scan_date/1000))  = DATE(FROM_UNIXTIME(1640563200))";
         Operator operator = Operator.extract(filter);
         assertEquals(Operator.DATE, operator);
+    }
+
+    @Test
+    public void getQueryStrategy() {
+        Operator equals = Operator.EQUALS;
+        BuildQueryStrategy queryStrategy = equals.getQueryStrategy();
+        CollectionQueryBuilder collectionQueryBuilder = new CollectionQueryBuilder();
+        QueryBuilder queryBuilder = queryStrategy.build(collectionQueryBuilder);
+        
     }
 }
