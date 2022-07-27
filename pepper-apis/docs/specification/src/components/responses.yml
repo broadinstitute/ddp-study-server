@@ -146,6 +146,25 @@ ActivityInstanceNotFoundResponse:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/Error.ActivityDetailNotFound'
+AgeUpResponse:
+  description: the requested ageUp status for user
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - userGuid
+          - hasAgedUp
+        properties:
+          userGuid:
+            type: string
+            description: participant Guid
+            nullable: false
+            example: 21RSCVGN2I4NQJAQLU77
+          hasAgedUp:
+            type: boolean
+            description: boolean value whether the user has aged up or not.
+            nullable: false
 AnnouncementsResponse:
   description: the list of announcement message objects
   content:

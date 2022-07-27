@@ -20,6 +20,8 @@ get:
         type: string
   responses:
     200:
-      description: boolean value of ageUp expression value
+      $ref: '../pepper.yml#/components/responses/AgeUpResponse'
+    404:
+      $ref: '../pepper.yml#/components/responses/StudyNotFoundErrorResponse'
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'
