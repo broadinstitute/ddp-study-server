@@ -158,6 +158,7 @@ AgeUpResponse:
         properties:
           userGuid:
             type: string
+            format: guid
             description: participant Guid
             nullable: false
             example: 21RSCVGN2I4NQJAQLU77

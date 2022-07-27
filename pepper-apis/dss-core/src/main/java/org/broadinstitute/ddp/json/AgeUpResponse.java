@@ -1,7 +1,9 @@
 package org.broadinstitute.ddp.json;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Value;
 
+@Value
 public class AgeUpResponse {
     @SerializedName("userGuid")
     private String userGuid;

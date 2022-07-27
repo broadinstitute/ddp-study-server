@@ -47,10 +47,10 @@ public class HasUserAgedUpRoute implements Route {
             String operatorGuid = governance.get().getProxyUserGuid();
             Long studyId = handle.attach(JdbiUmbrellaStudy.class)
                     .getIdByGuid(studyGuid)
-                    .orElseGet(() -> {
+                    .orElseThrow(() -> {
                         String msg = String.format("The study guid '%s' does not refer to a valid study", studyGuid);
                         log.warn(msg);
-                        throw ResponseUtil.haltError(response, SC_NOT_FOUND, new ApiError(ErrorCodes.STUDY_NOT_FOUND, msg));
+                        return ResponseUtil.haltError(response, SC_NOT_FOUND, new ApiError(ErrorCodes.STUDY_NOT_FOUND, msg));
                     });
 
             GovernancePolicy policy = handle.attach(StudyGovernanceDao.class)
