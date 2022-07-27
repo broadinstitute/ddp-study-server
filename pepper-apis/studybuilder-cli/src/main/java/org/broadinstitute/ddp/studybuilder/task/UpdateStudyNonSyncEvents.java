@@ -39,7 +39,7 @@ public class UpdateStudyNonSyncEvents implements CustomTask {
         long amountOfOldEvents = collectEvents(handle, studyDto)
                 .stream()
                 .filter(e -> !e.dispatchToHousekeeping())
-                .map(e -> handle.attach(JdbiEventConfiguration.class).deleteById(e.getEventConfigurationId()))
+                .map(e -> handle.attach(JdbiEventConfiguration.class).updateIsActiveById(e.getEventConfigurationId(), false))
                 .count();
 
         log.info("Number of EXISTING non sync events to DEACTIVATE: {}", amountOfOldEvents);
