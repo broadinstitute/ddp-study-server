@@ -20,7 +20,7 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 /**
- * Task to update ALL existing singular completed activity instances as read-only.
+ * Task to update existing singular completed activity instances as read-only.
  *
  */
 @Slf4j
