@@ -38,8 +38,8 @@ public class UpdateStudyNonSyncEvents implements CustomTask {
 
         long amountOfOldEvents = collectEvents(handle, studyDto)
                 .stream()
-                .filter(e -> !e.dispatchToHousekeeping())
-                .map(e -> handle.attach(JdbiEventConfiguration.class).deleteById(e.getEventConfigurationId()))
+                .filter(e -> !e.dispatchToHousekeeping() && e.getLabel() == null)
+                .map(e -> handle.attach(JdbiEventConfiguration.class).updateIsActiveById(e.getEventConfigurationId(), false))
                 .count();
 
         log.info("Number of EXISTING non sync events to DEACTIVATE: {}", amountOfOldEvents);
@@ -65,7 +65,7 @@ public class UpdateStudyNonSyncEvents implements CustomTask {
         log.info("Inserting events configuration...");
         List<? extends Config> events = cfg.getConfigList("events")
                 .stream()
-                .filter(eventCfg -> !eventCfg.getBoolean("dispatchToHousekeeping"))
+                .filter(eventCfg -> !eventCfg.getBoolean("dispatchToHousekeeping") && !eventCfg.hasPath("label"))
                 .collect(Collectors.toList());
         log.info("Number of NEW non sync events to INSERT: {}", events.size());
 

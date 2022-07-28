@@ -87,7 +87,7 @@ public class CollectionProcessorTest {
         double recordId = 5;
         String json = String.format("{\"%s\":[{\"medicalRecordId\":%s,\"type\":\"%s\", \"mrProblemText\":\"TEST_VAL2\"}]}", propertyName,
                 recordId, "value");
-        ;
+
 
         ObjectMapper objectMapper = new ObjectMapper();
 
