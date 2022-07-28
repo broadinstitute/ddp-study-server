@@ -98,9 +98,10 @@ public class FileScanResultReceiver implements MessageReceiver {
         }
     }
 
-    private String parseFileUploadGuid(String fileName) {
+    private String parseFileUploadGuid(String blobName) {
         // For authorized uploads, the base file name should start with the upload guid.
-        return Path.of(fileName).getFileName().toString().substring(0, fileName.indexOf("_"));
+        final var fileName = Path.of(blobName).getFileName().toString();
+        return fileName.substring(0, fileName.indexOf("_"));
     }
 
     private boolean handleFileScanResult(Handle handle, Blob blob, FileScanResult scanResult, Instant scannedAt) {
