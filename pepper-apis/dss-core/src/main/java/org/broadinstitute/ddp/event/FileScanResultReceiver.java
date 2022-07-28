@@ -14,6 +14,7 @@ import org.broadinstitute.ddp.client.GoogleBucketClient;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.files.FileScanResult;
 import org.broadinstitute.ddp.model.files.FileUpload;
 import org.jdbi.v3.core.Handle;
@@ -103,7 +104,7 @@ public class FileScanResultReceiver implements MessageReceiver {
         final var fileName = Path.of(blobName).getFileName().toString();
         if (!fileName.contains("_")) {
             log.error("The blob name {} doesn't have any underscores in it. It must have at least one", blobName);
-            return null;
+            throw new DDPException(String.format("The blob name %s doesn't have any underscores in it. It must have at least one", blobName));
         }
 
         return fileName.substring(0, fileName.indexOf("_"));
