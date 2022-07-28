@@ -83,6 +83,7 @@ public class ElasticSearchUtil {
     public static final String ACTIVITY_VERSION = "activityVersion";
     public static final String ADDRESS = "address";
     public static final String INVITATIONS = "invitations";
+    public static final String FILES = "files";
     public static final String PDFS = "pdfs";
     public static final String GUID = "guid";
     public static final String LEGACY_ALT_PID = "legacyAltPid";
@@ -962,6 +963,21 @@ public class ElasticSearchUtil {
                             } catch (ParseException e) {
                                 logger.error("range was not date. user entered: " + userEntered);
                             }
+                        } else if (nameValue[0].startsWith(FILES)) {
+                            String[] fileParam = nameValue[0].split("\\.");
+                            QueryBuilder tmpBuilder = findQueryBuilderForFieldName(finalQuery, fileParam[1].trim());
+                            try {
+                                long date = SystemUtil.getLongFromString(userEntered);
+                                if (tmpBuilder != null) {
+                                    ((RangeQueryBuilder) tmpBuilder).gte(date);
+                                } else {
+                                    finalQuery.must(
+                                            QueryBuilders.rangeQuery(FILES + DBConstants.ALIAS_DELIMITER + fileParam[1].trim())
+                                                    .gte(date));
+                                }
+                            } catch (ParseException e) {
+                                logger.error("range was not date. user entered: " + userEntered);
+                            }
                         } else {
                             String[] surveyParam = nameValue[0].split("\\.");
                             if (CREATED_AT.equals(surveyParam[1].trim()) || COMPLETED_AT.equals(surveyParam[1].trim())
@@ -1056,6 +1072,21 @@ public class ElasticSearchUtil {
                             } catch (ParseException e) {
                                 logger.error("range was not date. user entered: " + userEntered);
                             }
+                        } else if (nameValue[0].startsWith(FILES)) {
+                            String[] fileParam = nameValue[0].split("\\.");
+                            QueryBuilder tmpBuilder = findQueryBuilderForFieldName(finalQuery, fileParam[1].trim());
+                            try {
+                                long date = SystemUtil.getLongFromString(userEntered);
+                                if (tmpBuilder != null) {
+                                    ((RangeQueryBuilder) tmpBuilder).lte(date);
+                                } else {
+                                    finalQuery.must(
+                                            QueryBuilders.rangeQuery(FILES + DBConstants.ALIAS_DELIMITER + fileParam[1].trim())
+                                                    .lte(date));
+                                }
+                            } catch (ParseException e) {
+                                logger.error("range was not date. user entered: " + userEntered);
+                            }
                         } else {
                             String[] surveyParam = nameValue[0].split("\\.");
                             if (CREATED_AT.equals(surveyParam[1].trim()) || COMPLETED_AT.equals(surveyParam[1].trim())
@@ -1115,6 +1146,11 @@ public class ElasticSearchUtil {
                             String[] invitationParam = nameValue[0].split("\\.");
                             ExistsQueryBuilder existsQuery =
                                     new ExistsQueryBuilder(INVITATIONS + DBConstants.ALIAS_DELIMITER + invitationParam[1].trim());
+                            finalQuery.must(existsQuery);
+                        } else if (nameValue[0].startsWith(FILES)) {
+                            String[] fileParam = nameValue[0].split("\\.");
+                            ExistsQueryBuilder existsQuery =
+                                    new ExistsQueryBuilder(FILES + DBConstants.ALIAS_DELIMITER + fileParam[1].trim());
                             finalQuery.must(existsQuery);
                         } else {
                             String[] surveyParam = nameValue[0].split("\\.");
@@ -1302,8 +1338,8 @@ public class ElasticSearchUtil {
      *                                            a same fieldName (for example related tp `SELF_CURRENT_AGE`)
      * @param parentNestedOfRangeBuilderOfNumbers reference to NestedQueryBuilder containing a Range of numbers
      * @return BoolQueryBuilder  finalQuery: it can be the same finalQuery or it can be reorganized finalQuery
-     *      where RangeQueryBuilder removed from the initial place inside finalQuery and added into a must()-block
-     *      together with `IS NOT NULL` query (for a field `fieldName`)
+     * where RangeQueryBuilder removed from the initial place inside finalQuery and added into a must()-block
+     * together with `IS NOT NULL` query (for a field `fieldName`).
      */
     private static BoolQueryBuilder processIsNotNullForRangeOfNumbers(
             String fieldName,
@@ -1467,6 +1503,45 @@ public class ElasticSearchUtil {
                                     INVITATIONS + DBConstants.ALIAS_DELIMITER + invitationParam[1].trim());
                             alreadyAdded = mustOrSearchActivity(queryBuilder, tmpBuilder,
                                     INVITATIONS + DBConstants.ALIAS_DELIMITER + invitationParam[1].trim(), userEntered);
+                        }
+                    }
+                }
+                if (!alreadyAdded) {
+                    finalQuery.must(queryBuilder);
+                }
+            } else if (nameValue[0].startsWith(FILES)) {
+                String[] fileParams = nameValue[0].split("\\.");
+                BoolQueryBuilder queryBuilder = new BoolQueryBuilder();
+
+                boolean alreadyAdded = false;
+                try {
+                    long start = SystemUtil.getLongFromString(userEntered);
+                    //set endDate to midnight of that date
+                    String endDate = userEntered + END_OF_DAY;
+                    long end = SystemUtil.getLongFromDetailDateString(endDate);
+                    rangeQueryBuilder(queryBuilder, FILES + DBConstants.ALIAS_DELIMITER + fileParams[1].trim(), start, end,
+                            must);
+                } catch (Exception e) {
+                    if (wildCard) {
+                        if (must) {
+                            queryBuilder.must(
+                                    QueryBuilders.wildcardQuery(FILES + DBConstants.ALIAS_DELIMITER + fileParams[1].trim(),
+                                            userEntered + "*"));
+                        } else {
+                            queryBuilder.should(
+                                    QueryBuilders.wildcardQuery(FILES + DBConstants.ALIAS_DELIMITER + fileParams[1].trim(),
+                                            userEntered + "*"));
+                        }
+                    } else {
+                        if (must) {
+                            queryBuilder.must(
+                                    QueryBuilders.matchQuery(FILES + DBConstants.ALIAS_DELIMITER + fileParams[1].trim(),
+                                            userEntered));
+                        } else {
+                            QueryBuilder tmpBuilder = findQueryBuilderForFieldName(finalQuery,
+                                    FILES + DBConstants.ALIAS_DELIMITER + fileParams[1].trim());
+                            alreadyAdded = mustOrSearchActivity(queryBuilder, tmpBuilder,
+                                    FILES + DBConstants.ALIAS_DELIMITER + fileParams[1].trim(), userEntered);
                         }
                     }
                 }

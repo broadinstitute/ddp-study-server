@@ -117,9 +117,9 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
                     operatorUser.getId(),
                     instanceDto.getParticipantId(),
                     fileQuestionDef,
-                    String.format("%s/%s", studyGuid, instanceDto.getActivityCode()),
+                    getBlobPath(payload, userGuid, studyGuid, instanceDto.getActivityCode()),
                     payload.getMimeType(),
-                    String.format("%s_%s_%s_%d", userGuid, getCurrentTimestamp(), payload.getFileName(), System.nanoTime()),
+                    payload.getFileName(),
                     payload.getFileSize(),
                     payload.isResumable());
         });
@@ -141,6 +141,11 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
 
         response.status(HttpStatus.SC_CREATED);
         return new CreateUserActivityUploadResponse(upload.getGuid(), result.getSignedUrl().toString());
+    }
+
+    private String getBlobPath(CreateUserActivityUploadPayload payload, String userGuid, String studyGuid, String activityCode) {
+        return String.format("%s/%s_%s_%s_%d_%s",
+                studyGuid, activityCode, userGuid, getCurrentTimestamp(), System.nanoTime(), payload.getFileName());
     }
 
     private long bytesToMbs(long maxFileSize) {
