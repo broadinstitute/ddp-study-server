@@ -104,7 +104,8 @@ public class FileScanResultReceiver implements MessageReceiver {
         final var fileName = Path.of(blobName).getFileName().toString();
         if (!fileName.contains("_")) {
             log.error("The blob name {} doesn't have any underscores in it. It must have at least one", blobName);
-            throw new DDPException(String.format("The blob name %s doesn't have any underscores in it. It must have at least one", blobName));
+            throw new DDPException(String.format("The blob name %s doesn't have any underscores in it. It must have at least one",
+                    blobName));
         }
 
         return fileName.substring(0, fileName.indexOf("_"));
