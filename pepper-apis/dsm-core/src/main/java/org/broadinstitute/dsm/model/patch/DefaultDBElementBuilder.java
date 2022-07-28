@@ -13,6 +13,6 @@ public class DefaultDBElementBuilder implements DBElementBuilder {
         if (Objects.isNull(dbElement)) {
             throw new RuntimeException(String.format("could not build DBElement from %s", name));
         }
-        return PatchUtil.getColumnNameMap().get(name);
+        return dbElement;
     }
 }
