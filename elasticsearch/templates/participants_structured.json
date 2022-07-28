@@ -298,18 +298,15 @@
             },
             "createdAt": {
               "type": "date",
-              "ignore_malformed": false,
-              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+              "ignore_malformed": false
             },
             "completedAt": {
               "type": "date",
-              "ignore_malformed": false,
-              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+              "ignore_malformed": false
             },
             "lastUpdatedAt": {
               "type": "date",
-              "ignore_malformed": false,
-              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+              "ignore_malformed": false
             },
             "attributes": {
               "type": "object"
