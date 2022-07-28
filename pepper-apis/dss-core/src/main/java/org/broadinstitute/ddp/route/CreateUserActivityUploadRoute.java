@@ -149,8 +149,8 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
 
     private String getBlobPath(CreateUserActivityUploadPayload payload, String userGuid, String studyGuid,
                                String fileGuid, String activityCode) {
-        return String.format("%s/%s_%s_%s_%s_%d_%s",
-                studyGuid, fileGuid, activityCode, userGuid, getCurrentTimestamp(), System.nanoTime(), payload.getFileName());
+        return String.format("%s/%s_%s_%s_%s_%s",
+                studyGuid, fileGuid, activityCode, userGuid, getCurrentTimestamp(), payload.getFileName());
     }
 
     private long bytesToMbs(long maxFileSize) {
