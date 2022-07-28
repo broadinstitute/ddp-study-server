@@ -1007,7 +1007,7 @@ public interface QuestionDao extends SqlObject {
                 dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
                 rules, dto.isAllowMultiple(), dto.isUnwrapOnExport(),
                 dto.getAddButtonTemplateId(), dto.getAdditionalItemTemplateId(),
-                childQuestions, dto.getChildOrientation(), compositeAnswers);
+                childQuestions, dto.getChildOrientation(), dto.getTabularSeparator(), compositeAnswers);
     }
 
 
@@ -1560,7 +1560,8 @@ public interface QuestionDao extends SqlObject {
             addItemTemplateId = templateDao.insertTemplate(compositeQuestion.getAdditionalItemTemplate(), revisionId);
         }
         getJdbiCompositeQuestion().insertParent(compositeQuestion.getQuestionId(), compositeQuestion.isAllowMultiple(),
-                buttonTemplateId, addItemTemplateId, compositeQuestion.getChildOrientation(), compositeQuestion.isUnwrapOnExport());
+                buttonTemplateId, addItemTemplateId, compositeQuestion.getChildOrientation(), compositeQuestion.isUnwrapOnExport(),
+                compositeQuestion.getTabularSeparator());
         compositeQuestion.getChildren().forEach(childQuestion -> this.insertQuestionByType(activityId, childQuestion, revisionId));
         getJdbiCompositeQuestion().insertChildren(compositeQuestion.getQuestionId(), compositeQuestion.getChildren()
                 .stream()
@@ -2381,6 +2382,7 @@ public interface QuestionDao extends SqlObject {
                 .setAddButtonTemplate(buttonTmpl)
                 .setAdditionalItemTemplate(addItemTmpl)
                 .setChildOrientation(dto.getChildOrientation())
+                .setTabularSeparator(dto.getTabularSeparator())
                 .addChildrenQuestions(childQuestionDefs);
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
 

@@ -51,14 +51,6 @@ public abstract class BaseProcessor implements Processor {
         this.collector = collector;
     }
 
-    protected String getPrimaryKey(Object obj) {
-        if (Objects.isNull(obj)) {
-            return StringUtils.EMPTY;
-        }
-        TableName tableName = obj.getClass().getAnnotation(TableName.class);
-        return tableName != null ? tableName.primaryKey() : StringUtils.EMPTY;
-    }
-
     protected void updateExistingRecord(Map<String, Object> eachRecord) {
         if (Objects.isNull(eachRecord)) {
             return;
@@ -97,7 +89,7 @@ public abstract class BaseProcessor implements Processor {
     protected Object getValueByField(Field field) {
         try {
             Object value = field.get(esDsm);
-            primaryKey = findPrimaryKeyOfObject(value);
+            primaryKey = findPrimaryKeyOfObject(field);
             return convertObjectToCollection(value);
         } catch (IllegalAccessException iae) {
             throw new RuntimeException("error occurred while attempting to get data from ESDsm", iae);
@@ -106,7 +98,15 @@ public abstract class BaseProcessor implements Processor {
 
     protected abstract Object convertObjectToCollection(Object object);
 
-    protected abstract String findPrimaryKeyOfObject(Object object);
+    protected String findPrimaryKeyOfObject(Field field) {
+        if (Objects.isNull(field)) {
+            return StringUtils.EMPTY;
+        }
+        TableName tableName = getTableNameByField(field);
+        return tableName != null ? tableName.primaryKey() : StringUtils.EMPTY;
+    }
+
+    protected abstract TableName getTableNameByField(Field field);
 
     protected abstract Object updateIfExistsOrPut(Object value);
 

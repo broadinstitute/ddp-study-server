@@ -420,9 +420,6 @@
       .auth0-lock.auth0-lock {
         position: unset;
       }
-      #ddp-header {
-        display: none!important;
-      }
       .auth0-lock.auth0-lock .auth0-lock-submit {
         background-color: #521b93!important;
       }
@@ -527,7 +524,7 @@
       <div class="container">
         <div class="footer-meta">
           <div class="footer-logo">
-            <img src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/logo-horizontal-white.png"" alt="Header.LogoAlt">
+            <img src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/logo-horizontal-white.png" alt="Header.LogoAlt">
           </div>
           <div class="footer-contacts">
             Contact Us: (650) 561-6750<br>
@@ -551,7 +548,7 @@
               </a>
             </div>
           </div>
-          <div class="footer-copyright">Copyright 2021 Additional Ventures</div>
+          <div class="footer-copyright">Copyright © <span id="current-year"></span> Additional<br>Ventures. All rights reserved.</div>
         </div>
         <div class="footer-menu">
           <nav>
@@ -704,10 +701,13 @@
         }
       }
 
+      // set current year
+      document.getElementById('current-year').textContent = new Date().getFullYear();
+
       var mode = config.extraParams.mode;
       var study_guid = config.extraParams.study_guid;
       var headerLogo =
-        'https://storage.googleapis.com/##ASSETS_BUCKET_NAME_NAME##/images/logo-black.png';
+        'https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/images/logo-black.png';
       var headerText = '';
       var studyColor = '#458484';
       var studyHelpEmail = '##STUDY_EMAIL##';
@@ -1001,7 +1001,7 @@
               lockFormEl.prepend(div);
               clearInterval(interval);
             }
-          }, 700);
+          }, 2100);
         }
       }
 

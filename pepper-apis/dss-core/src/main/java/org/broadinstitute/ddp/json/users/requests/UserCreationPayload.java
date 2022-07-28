@@ -3,11 +3,13 @@ package org.broadinstitute.ddp.json.users.requests;
 import java.time.LocalDate;
 
 import javax.validation.constraints.Email;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Past;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NonNull;
 
 /**
  * Payload sent during creation of a new user
@@ -15,32 +17,27 @@ import lombok.NonNull;
 @Data
 @AllArgsConstructor
 public class UserCreationPayload {
+    @NotEmpty
     @Email
-    @NonNull
     @SerializedName("email")
     private String email;
 
-    @NonNull
+    @NotEmpty
     @SerializedName("studyGuid")
     private String studyGuid;
 
-    @NonNull
+    @NotEmpty
     @SerializedName("firstName")
     private String firstName;
 
-    @NonNull
+    @NotEmpty
     @SerializedName("lastName")
     private String lastName;
 
-    @NonNull
+    @NotNull
+    @Past
     @SerializedName("birthDate")
     private LocalDate birthDate;
-
-    @SerializedName("informedConsentDate")
-    private LocalDate informedConsentDate;
-
-    @SerializedName("assentDate")
-    private LocalDate assentDate;
 
     @SerializedName("centerId")
     private String centerId;
