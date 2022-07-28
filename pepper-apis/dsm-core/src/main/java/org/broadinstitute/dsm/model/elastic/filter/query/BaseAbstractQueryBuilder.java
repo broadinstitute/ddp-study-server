@@ -3,11 +3,13 @@ package org.broadinstitute.dsm.model.elastic.filter.query;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
 import org.broadinstitute.dsm.model.elastic.filter.FilterStrategy;
+import org.broadinstitute.dsm.model.elastic.filter.NonDsmAndOrFilterSeparator;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
 import org.broadinstitute.dsm.model.elastic.filter.splitter.SplitterStrategy;
 import org.broadinstitute.dsm.model.participant.Util;
@@ -63,6 +65,7 @@ public class BaseAbstractQueryBuilder {
         for (String filterValue : filterValues) {
             Operator operator = Operator.extract(filterValue);
             splitter = operator.getSplitterStrategy();
+            splitter.setFilterSeparator(filterSeparator);
             splitter.setFilter(filterValue);
             baseQueryBuilder = BaseQueryBuilder.of(splitter.getAlias(), splitter.getFieldName());
             if (!Util.isUnderDsmKey(splitter.getAlias())) {

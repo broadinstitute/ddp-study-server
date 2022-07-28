@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
@@ -13,8 +14,13 @@ public abstract class SplitterStrategy {
     public static final int NESTED_FIELD_LEVEL = 2;
     protected String filter;
     protected String[] splittedFilter;
+    protected AndOrFilterSeparator filterSeparator;
 
     public abstract String[] split();
+
+    public SplitterStrategy() {
+        filterSeparator = new AndOrFilterSeparator(StringUtils.EMPTY);
+    }
 
     public String[] getValue() {
         if (splittedFilter.length > 1) {
@@ -48,5 +54,9 @@ public abstract class SplitterStrategy {
     public void setFilter(String filter) {
         this.filter = filter;
         splittedFilter = split();
+    }
+
+    public void setFilterSeparator(AndOrFilterSeparator filterSeparator) {
+        this.filterSeparator = filterSeparator;
     }
 }
