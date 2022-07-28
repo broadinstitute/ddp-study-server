@@ -138,13 +138,4 @@ public class OperatorTest {
         Operator operator = Operator.extract(filter);
         assertEquals(Operator.DATE, operator);
     }
-
-    @Test
-    public void getQueryStrategy() {
-        Operator equals = Operator.EQUALS;
-        BuildQueryStrategy queryStrategy = equals.getQueryStrategy();
-        CollectionQueryBuilder collectionQueryBuilder = new CollectionQueryBuilder();
-        QueryBuilder queryBuilder = queryStrategy.build(collectionQueryBuilder);
-        
-    }
 }

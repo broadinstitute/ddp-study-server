@@ -5,6 +5,7 @@ import java.util.List;
 import lombok.Setter;
 import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 
 @Setter
@@ -29,7 +30,19 @@ public abstract class BaseQueryBuilder {
         return queryBuilder;
     }
 
-    protected abstract QueryBuilder build(List<QueryBuilder> queryBuilder);
+    protected QueryBuilder build(List<QueryBuilder> queryBuilders) {
+        QueryBuilder result;
+        if (queryBuilders.size() == 1) {
+            result = queryBuilders.get(0);
+        } else {
+            BoolQueryBuilder builder = new BoolQueryBuilder();
+            queryBuilders.forEach(builder::must);
+            result = builder;
+        }
+        return getFinalQuery(result);
+    }
+
+    protected abstract QueryBuilder getFinalQuery(QueryBuilder query);
 
     public QueryBuilder buildEachQuery(Operator operator,
                                        QueryPayload queryPayload) {

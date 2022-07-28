@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -47,6 +46,7 @@ public class BaseAbstractQueryBuilder {
     }
 
     public AbstractQueryBuilder build() {
+        filterSeparator.setFilter(filter);
         Map<String, List<String>> parsedFilters = filterSeparator.parseFiltersByLogicalOperators();
         for (Map.Entry<String, List<String>> parsedFilter : parsedFilters.entrySet()) {
             List<String> filterValues = parsedFilter.getValue();

@@ -155,13 +155,13 @@ public class CollectionQueryBuilderTest {
         dsmAbstractQueryBuilder.setFilter(filter);
         AbstractQueryBuilder actual = dsmAbstractQueryBuilder.build();
 
-        BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
-        boolQueryBuilder.must(
-                new NestedQueryBuilder("dsm.medicalRecord", new ExistsQueryBuilder("dsm.medicalRecord.dynamicFields.tryAgain"),
-                        ScoreMode.Avg));
+
+        NestedQueryBuilder nestedQueryBuilder = new NestedQueryBuilder("dsm.medicalRecord",
+                new BoolQueryBuilder().must(new ExistsQueryBuilder("dsm.medicalRecord.dynamicFields.tryAgain")),
+                ScoreMode.Avg);
 
         AbstractQueryBuilder<BoolQueryBuilder> expected = new BoolQueryBuilder().must(new NestedQueryBuilder("dsm.medicalRecord",
-                new MatchQueryBuilder("dsm.medicalRecord.dynamicFields.seeingIfBugExists", true), ScoreMode.Avg)).must(boolQueryBuilder);
+                new MatchQueryBuilder("dsm.medicalRecord.dynamicFields.seeingIfBugExists", true), ScoreMode.Avg)).must(nestedQueryBuilder);
 
         Assert.assertEquals(expected, actual);
     }

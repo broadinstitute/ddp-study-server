@@ -18,11 +18,12 @@ public class JsonExtractQueryStrategyTest {
 
         BaseQueryBuilder baseQueryBuilder = BaseQueryBuilder.of("m", "dynamicFields.hi");
 
-        BoolQueryBuilder boolQueryBuilder = (BoolQueryBuilder) baseQueryBuilder.buildEachQuery(jsonExtract, payload);
+        BoolQueryBuilder boolQueryBuilder = (BoolQueryBuilder)
+                ((NestedQueryBuilder)baseQueryBuilder.buildEachQuery(jsonExtract, payload)).query();
 
         ExistsQueryBuilder expected = new ExistsQueryBuilder("dsm.medicalRecord.dynamicFields.hi");
 
-        Assert.assertEquals(expected, ((NestedQueryBuilder) boolQueryBuilder.must().get(0)).query());
+        Assert.assertEquals(expected, boolQueryBuilder.must().get(0));
     }
 
     @Test
@@ -33,11 +34,12 @@ public class JsonExtractQueryStrategyTest {
 
         BaseQueryBuilder baseQueryBuilder = BaseQueryBuilder.of("m", "dynamicFields.hi");
 
-        BoolQueryBuilder boolQueryBuilder = (BoolQueryBuilder) baseQueryBuilder.buildEachQuery(jsonExtract, payload);
+        BoolQueryBuilder boolQueryBuilder = (BoolQueryBuilder)
+                ((NestedQueryBuilder)baseQueryBuilder.buildEachQuery(jsonExtract, payload)).query();
 
         ExistsQueryBuilder expected = new ExistsQueryBuilder("dsm.medicalRecord.dynamicFields.hi");
 
-        Assert.assertEquals(expected, ((NestedQueryBuilder) boolQueryBuilder.mustNot().get(0)).query());
+        Assert.assertEquals(expected, boolQueryBuilder.mustNot().get(0));
     }
 
     @Test

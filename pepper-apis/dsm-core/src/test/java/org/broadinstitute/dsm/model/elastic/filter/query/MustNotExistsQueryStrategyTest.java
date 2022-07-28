@@ -14,9 +14,10 @@ public class MustNotExistsQueryStrategyTest {
         Operator isNull = Operator.IS_NULL;
         QueryPayload followupRequiredText = new QueryPayload("dsm.medicalRecord", "followupRequiredText", new Boolean[] {true});
         BaseQueryBuilder baseQueryBuilder = BaseQueryBuilder.of("m", "followupRequiredText");
-        BoolQueryBuilder queryBuilder = (BoolQueryBuilder) baseQueryBuilder.buildEachQuery(isNull, followupRequiredText);
+        BoolQueryBuilder queryBuilder = (BoolQueryBuilder)
+                ((NestedQueryBuilder)baseQueryBuilder.buildEachQuery(isNull, followupRequiredText)).query();
         BoolQueryBuilder expectedBoolQuery = new BoolQueryBuilder();
         expectedBoolQuery.mustNot(new ExistsQueryBuilder("dsm.medicalRecord.followupRequiredText"));
-        Assert.assertEquals(expectedBoolQuery.mustNot().get(0), ((NestedQueryBuilder)queryBuilder.mustNot().get(0)).query());
+        Assert.assertEquals(expectedBoolQuery.mustNot().get(0), queryBuilder.mustNot().get(0));
     }
 }
