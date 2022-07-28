@@ -99,6 +99,11 @@ public class FileScanResultReceiver implements MessageReceiver {
     }
 
     private String parseFileUploadGuid(String blobName) {
+        if (!blobName.contains("_")) {
+            log.error("The blob name {} doesn't have any underscores in it. It must have at least one", blobName);
+            return null;
+        }
+
         // For authorized uploads, the base file name should start with the upload guid.
         final var fileName = Path.of(blobName).getFileName().toString();
         return fileName.substring(0, fileName.indexOf("_"));
