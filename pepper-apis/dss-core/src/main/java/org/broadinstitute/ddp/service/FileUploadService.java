@@ -35,7 +35,6 @@ import org.broadinstitute.ddp.model.files.FileScanResult;
 import org.broadinstitute.ddp.model.files.FileUpload;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GoogleCredentialUtil;
-import org.broadinstitute.ddp.util.GuidUtils;
 import org.jdbi.v3.core.Handle;
 
 @Slf4j
@@ -139,7 +138,7 @@ public class FileUploadService {
      * @return authorization result
      */
     public AuthorizeResult authorizeUpload(Handle handle, long studyId, long operatorUserId, long participantUserId,
-                                           FileUploadSettings fileUploadSettings,
+                                           FileUploadSettings fileUploadSettings, String fileGuid,
                                            String blobPath, String mimeType,
                                            String fileName, long fileSize, boolean resumable) {
         if (fileSize > fileUploadSettings.getMaxFileSize()) {
@@ -155,7 +154,7 @@ public class FileUploadService {
         HttpMethod method = resumable ? HttpMethod.POST : HttpMethod.PUT;
 
         FileUpload upload = handle.attach(FileUploadDao.class).createAuthorized(
-                GuidUtils.randomFileUploadGuid(), studyId, operatorUserId, participantUserId,
+                fileGuid, studyId, operatorUserId, participantUserId,
                 blobPath, mimeType, fileName, fileSize);
         Map<String, String> headers = Map.of("Content-Type", mimeType);
         URL signedURL = storageClient.generateSignedUrl(
