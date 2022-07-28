@@ -99,16 +99,17 @@ public class FileScanResultReceiver implements MessageReceiver {
     }
 
     private String parseFileUploadGuid(String fileName) {
-        // For authorized uploads, the base file name should be the upload guid.
-        return Path.of(fileName).getFileName().toString();
+        // For authorized uploads, the base file name should start with the upload guid.
+        return Path.of(fileName).getFileName().toString().substring(0, fileName.indexOf("_"));
     }
 
     private boolean handleFileScanResult(Handle handle, Blob blob, FileScanResult scanResult, Instant scannedAt) {
         // Find and lock file upload so we can safely update and move file.
         var uploadDao = handle.attach(FileUploadDao.class);
         String uploadGuid = parseFileUploadGuid(blob.getName());
-        FileUpload upload = uploadDao.findAndLockByGuid(uploadGuid).orElse(null);
+        log.info("Guid extracted from the file name: {}", uploadGuid);
 
+        FileUpload upload = uploadDao.findAndLockByGuid(uploadGuid).orElse(null);
         if (upload == null) {
             // If we didn't find it, then likely not a file we authorized. Let's report it.
             log.error("Could not find file upload with guid '{}', ack-ing", uploadGuid);
