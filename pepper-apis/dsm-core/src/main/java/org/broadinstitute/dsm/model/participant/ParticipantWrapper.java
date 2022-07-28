@@ -39,6 +39,7 @@ import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,7 +84,7 @@ public class ParticipantWrapper {
 
     private void fetchAndPrepareDataByFilters(Map<String, String> filters) {
         FilterParser parser = new FilterParser();
-        AbstractQueryBuilder mainQuery = new BoolQueryBuilder();
+        AbstractQueryBuilder<?> mainQuery = new BoolQueryBuilder();
         FilterSeparatorFactory filterSeparatorFactory = new FilterSeparatorFactory();
         AbstractQueryBuilderFactory abstractQueryBuilderFactory = new AbstractQueryBuilderFactory();
         for (String alias : filters.keySet()) {
