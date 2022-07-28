@@ -322,12 +322,12 @@ public class OsteoConsentVersion2 implements CustomTask {
         var eventId = helper.findEventAndItsCancelExprDto(EventTriggerType.USER_REGISTERED.toString(), activityId);
         log.info("Founded event configuration id {}", eventId);
 
+        DBUtils.checkUpdate(1, helper.removeEventCancelExpr(eventId));
+        jdbiExpression.deleteById(helper.findCancelExprId(eventId));
+        log.info("Successfully removed cancelExprId for eventId {}", eventId);
+
         long exprId = jdbiExpression.insertExpression(expression).getId();
         log.info("Added expression to database with id {} and text {}", exprId, expression);
-
-        DBUtils.checkUpdate(1, helper.removeEventCancelExpr(eventId));
-        DBUtils.checkDelete(1, jdbiExpression.deleteById(helper.findCancelExprId(eventId)));
-        log.info("Successfully removed cancelExprId for eventId {}", eventId);
 
         DBUtils.checkUpdate(1, helper.updateEventPreExpr(eventId, exprId));
         log.info("Successfully added preconditionExprId {} for eventId {}: {}", exprId, eventId, expression);
@@ -580,7 +580,7 @@ public class OsteoConsentVersion2 implements CustomTask {
                                         @Bind("name") String name,
                                         @Bind("title") String title);
 
-        @SqlQuery("select en.event_configuration_id"
+        @SqlQuery("select en.event_configuration_id "
                 + "from event_configuration en "
                 + "    join event_action ea on en.event_action_id = ea.event_action_id "
                 + "    join user_notification_event_action unea on ea.event_action_id = unea.user_notification_event_action_id "
