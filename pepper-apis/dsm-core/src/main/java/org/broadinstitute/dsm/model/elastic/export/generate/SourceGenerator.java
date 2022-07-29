@@ -3,7 +3,7 @@ package org.broadinstitute.dsm.model.elastic.export.generate;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +48,7 @@ public abstract class SourceGenerator extends BaseGenerator {
         for (Map.Entry<String, Object> entry : dynamicFieldValues.entrySet()) {
             Object value = entry.getValue();
             parser.setFieldName(entry.getKey());
-            transformedMap.put(Util.underscoresToCamelCase(entry.getKey()), parser.parse(String.valueOf(value)));
+            transformedMap.put(CamelCaseConverter.of(entry.getKey()).convert(), parser.parse(String.valueOf(value)));
         }
         return transformedMap;
     }

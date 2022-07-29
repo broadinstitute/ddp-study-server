@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.Filter;
-import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 
 public class MultipleOptionsSplitterStrategy extends SplitterStrategy {
 
@@ -22,7 +22,8 @@ public class MultipleOptionsSplitterStrategy extends SplitterStrategy {
     public String getInnerProperty() {
         String propertyWithValue = super.getInnerProperty();
         String innerProperty = propertyWithValue.split(Filter.EQUALS_TRIMMED)[0].trim();
-        return Util.underscoresToCamelCase(innerProperty);
+        camelCaseConverter.setStringToConvert(innerProperty);
+        return camelCaseConverter.convert();
     }
 
     @Override

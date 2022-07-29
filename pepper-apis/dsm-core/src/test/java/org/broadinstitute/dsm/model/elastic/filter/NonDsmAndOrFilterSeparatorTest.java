@@ -12,7 +12,7 @@ public class NonDsmAndOrFilterSeparatorTest {
 
     @Test
     public void checkRegex() {
-        String regex = "[A-z]+(\\.|\\s)*(\\.)*";
+        String regex = "([A-z]|\\(|\\s)+(\\.|\\s)*(\\.)*";
         String orRegex = "(OR) " + regex;
         String andRegex = "(AND) " + regex;
         AndOrFilterSeparator nonDsmAndOrFilterSeparatorTest = new NonDsmAndOrFilterSeparator("");

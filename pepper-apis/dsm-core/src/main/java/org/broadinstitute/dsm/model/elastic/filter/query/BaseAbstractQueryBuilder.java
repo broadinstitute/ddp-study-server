@@ -3,13 +3,13 @@ package org.broadinstitute.dsm.model.elastic.filter.query;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.Filter;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.NullObjectCamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
 import org.broadinstitute.dsm.model.elastic.filter.FilterStrategy;
-import org.broadinstitute.dsm.model.elastic.filter.NonDsmAndOrFilterSeparator;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
 import org.broadinstitute.dsm.model.elastic.filter.splitter.SplitterStrategy;
 import org.broadinstitute.dsm.model.participant.Util;
@@ -69,12 +69,8 @@ public class BaseAbstractQueryBuilder {
             splitter.setFilter(filterValue);
             baseQueryBuilder = BaseQueryBuilder.of(splitter.getAlias(), splitter.getFieldName());
             if (!Util.isUnderDsmKey(splitter.getAlias())) {
-                SingleQueryBuilder singleQueryBuilder = new SingleQueryBuilder();
-                singleQueryBuilder.setOperator(operator);
-                QueryPayload queryPayload = new QueryPayload("activities", "activityCode", new String[]{splitter.getAlias()});
-                singleQueryBuilder.setPayload(queryPayload);
-                MatchQueryStrategy additionalQueryStrategy = new MatchQueryStrategy(singleQueryBuilder);
-                operator.getQueryStrategy(additionalQueryStrategy);
+                BaseActivityStrategy activityStrategy = BaseActivityStrategy.of(splitter, operator);
+                activityStrategy.apply();
             }
             QueryPayload queryPayload = new QueryPayload(
                     buildPath(), splitter.getInnerProperty(), parser.parse(splitter.getValue()), esIndex

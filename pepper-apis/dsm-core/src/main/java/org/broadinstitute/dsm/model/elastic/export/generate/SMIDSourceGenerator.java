@@ -3,7 +3,7 @@ package org.broadinstitute.dsm.model.elastic.export.generate;
 import java.util.Map;
 import java.util.Optional;
 
-import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.patch.SMIDNameValue;
 import org.broadinstitute.dsm.statics.DBConstants;
 
@@ -19,7 +19,7 @@ public class SMIDSourceGenerator extends ParentChildRelationGenerator {
     private void addSMIDType(Map<String, Object> stringObjectMap) {
         if (isNewSMIDCreation()) {
             SMIDNameValue nameValue = (SMIDNameValue) generatorPayload.getNameValue();
-            stringObjectMap.put(Util.underscoresToCamelCase(DBConstants.SM_ID_TYPE), nameValue.getType());
+            stringObjectMap.put(CamelCaseConverter.of(DBConstants.SM_ID_TYPE).convert(), nameValue.getType());
         }
     }
 

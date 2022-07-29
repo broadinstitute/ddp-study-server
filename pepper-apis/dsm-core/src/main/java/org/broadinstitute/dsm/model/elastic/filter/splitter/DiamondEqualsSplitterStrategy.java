@@ -1,7 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.filter.splitter;
 
 import org.broadinstitute.dsm.model.Filter;
-import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 
 public class DiamondEqualsSplitterStrategy extends SplitterStrategy {
 
@@ -9,7 +9,8 @@ public class DiamondEqualsSplitterStrategy extends SplitterStrategy {
     protected String[] getFieldWithAlias() {
         String[] fieldWithAlias = super.getFieldWithAlias();
         String alias = splitFieldWithAliasBySpace(fieldWithAlias)[1];
-        String innerProperty = Util.underscoresToCamelCase(fieldWithAlias[1]);
+        camelCaseConverter.setStringToConvert(fieldWithAlias[1]);
+        String innerProperty = camelCaseConverter.convert();
         return new String[] {alias, innerProperty};
     }
 

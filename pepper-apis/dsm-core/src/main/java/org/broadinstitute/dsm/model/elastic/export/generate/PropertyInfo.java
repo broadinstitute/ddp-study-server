@@ -16,6 +16,7 @@ import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.model.elastic.Activities;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.statics.DBConstants;
 
@@ -52,7 +53,7 @@ public class PropertyInfo {
 
     public String getPrimaryKeyAsCamelCase() {
         TableName tableName = Objects.requireNonNull(propertyClass.getAnnotation(TableName.class));
-        return Util.underscoresToCamelCase(tableName.primaryKey());
+        return CamelCaseConverter.of(tableName.primaryKey()).convert();
     }
 
     public boolean isCollection() {

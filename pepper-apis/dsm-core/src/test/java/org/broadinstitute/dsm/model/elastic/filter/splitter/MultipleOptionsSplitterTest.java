@@ -3,6 +3,8 @@ package org.broadinstitute.dsm.model.elastic.filter.splitter;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
 import org.junit.Test;
 
@@ -24,6 +26,7 @@ public class MultipleOptionsSplitterTest {
         String[] filters = new String[] {"d.status = 'EXITED_BEFORE_ENROLLMENT'", "d.status = 'EXITED_AFTER_ENROLLMENT'"};
         SplitterStrategy multipleSplitter = Operator.MULTIPLE_OPTIONS.getSplitterStrategy();
         multipleSplitter.setFilter(filter);
+        multipleSplitter.setFilterSeparator(new AndOrFilterSeparator(StringUtils.EMPTY));
         String[] actualFilters = multipleSplitter.split();
         assertArrayEquals(filters, actualFilters);
     }

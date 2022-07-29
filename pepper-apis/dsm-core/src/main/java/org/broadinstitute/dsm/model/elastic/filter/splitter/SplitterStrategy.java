@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -15,11 +15,13 @@ public abstract class SplitterStrategy {
     protected String filter;
     protected String[] splittedFilter;
     protected AndOrFilterSeparator filterSeparator;
+    protected CamelCaseConverter camelCaseConverter;
 
     public abstract String[] split();
 
     public SplitterStrategy() {
         filterSeparator = new AndOrFilterSeparator(StringUtils.EMPTY);
+        camelCaseConverter = CamelCaseConverter.of();
     }
 
     public String[] getValue() {
@@ -37,14 +39,19 @@ public abstract class SplitterStrategy {
         if (getFieldWithAlias().length > NESTED_FIELD_LEVEL) {
             return Arrays.stream(getFieldWithAlias())
                     .skip(1)
-                    .map(Util::underscoresToCamelCase)
+                    .map(key -> {
+                        camelCaseConverter.setStringToConvert(key);
+                        return camelCaseConverter.convert();
+                    })
                     .collect(Collectors.joining(DBConstants.ALIAS_DELIMITER));
         }
-        return Util.underscoresToCamelCase(getFieldWithAlias()[1]);
+        camelCaseConverter.setStringToConvert(getFieldWithAlias()[1]);
+        return camelCaseConverter.convert();
     }
 
     public String getFieldName() {
-        return Util.underscoresToCamelCase(getFieldWithAlias()[1]);
+        camelCaseConverter.setStringToConvert(getFieldWithAlias()[1]);
+        return camelCaseConverter.convert();
     }
 
     protected String[] getFieldWithAlias() {
@@ -58,5 +65,9 @@ public abstract class SplitterStrategy {
 
     public void setFilterSeparator(AndOrFilterSeparator filterSeparator) {
         this.filterSeparator = filterSeparator;
+    }
+
+    public void setCamelCaseConverter(CamelCaseConverter camelCaseConverter) {
+        this.camelCaseConverter = camelCaseConverter;
     }
 }
