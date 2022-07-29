@@ -51,7 +51,7 @@ public class DownloadParticipantFileRoute extends RequestHandler {
             DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
             ParticipantFilesUseCase participantFilesUseCase = new ParticipantFilesUseCase(googleProjectName, bucketName, fileName);
             if (!participantFilesUseCase.isFileClean(ddpParticipantId, fileGuid, ddpInstanceDto.getEsParticipantIndex())) {
-                log.error(String.format("File %s has not scanned %s and should not be downloaded!", fileName, bucketName));
+                log.error(String.format("File %s has not passed scanning %s and should not be downloaded!", fileName, bucketName));
                 response.status(500);
                 return BAD_FILE_RESPONSE;
             }
