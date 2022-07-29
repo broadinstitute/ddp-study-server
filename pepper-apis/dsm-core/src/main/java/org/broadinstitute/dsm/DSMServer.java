@@ -14,6 +14,7 @@ import static spark.Spark.put;
 import static spark.Spark.threadPool;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
@@ -30,22 +31,35 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
+import com.google.api.gax.core.NoCredentialsProvider;
+import com.google.api.gax.grpc.GrpcTransportChannel;
+import com.google.api.gax.rpc.AlreadyExistsException;
+import com.google.api.gax.rpc.FixedTransportChannelProvider;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Subscriber;
+import com.google.cloud.pubsub.v1.SubscriptionAdminClient;
+import com.google.cloud.pubsub.v1.SubscriptionAdminSettings;
+import com.google.cloud.pubsub.v1.TopicAdminClient;
+import com.google.cloud.pubsub.v1.TopicAdminSettings;
 import com.google.common.net.MediaType;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.pubsub.v1.ProjectSubscriptionName;
+import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
+import com.google.pubsub.v1.PushConfig;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+
+import io.grpc.ManagedChannelBuilder;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetrics;
 import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetricsTracker;
@@ -176,8 +190,12 @@ public class DSMServer {
     public static final String UPS_PATH_TO_ENDPOINT = "ups.url";
     public static final String GCP_PATH_TO_PUBSUB_PROJECT_ID = "pubsub.projectId";
     public static final String GCP_PATH_TO_PUBSUB_SUB = "pubsub.subscription";
+    public static final String GCP_PATH_TO_USE_PUBSUB_EMULATOR = "pubsub.emulator";
+    public static final String GCP_PATH_TO_PUBSUB_EMULATOR_HOST = "pubsub.emulatorHost";
+    public static final String GCP_PATH_TO_TESTS_PUBSUB_TOPIC = "pubsub.topic";
     public static final String GCP_PATH_TO_DSS_TO_DSM_SUB = "pubsub.dss_to_dsm_subscription";
     public static final String GCP_PATH_TO_DSM_TO_DSS_TOPIC = "pubsub.dsm_to_dss_topic";
+    public static final String GCP_PATH_TO_DSM_TASKS_TOPIC = "pubsub.dsm_tasks_topic";
     public static final String GCP_PATH_TO_DSM_TASKS_SUB = "pubsub.dsm_tasks_subscription";
     public static final String GCP_PATH_TO_DSM_TO_MERCURY_TOPIC = "pubsub.dsm_to_mercury_topic";
     public static final String GCP_PATH_TO_DSM_TO_MERCURY_SUB = "pubsub.dsm_to_mercury_subscription";
@@ -189,10 +207,12 @@ public class DSMServer {
     private static final String[] CORS_HTTP_METHODS = new String[] {"GET", "PUT", "POST", "OPTIONS", "PATCH"};
     private static final String[] CORS_HTTP_HEADERS =
             new String[] {"Content-Type", "Authorization", "X-Requested-With", "Content-Length", "Accept", "Origin", ""};
+
     private static final String VAULT_DOT_CONF = "vault.conf";
     private static final String GAE_DEPLOY_DIR = "appengine/deploy";
     private static final String INFO_ROOT = "/info/";
     private static final Duration DEFAULT_BOOT_WAIT = Duration.ofMinutes(10);
+    private static final Duration DEFAULT_PUBSUB_ACK_TIMEOUT = Duration.ofSeconds(60);
     public static Provider provider;
     private static Map<String, JsonElement> ddpConfigurationLookup = new HashMap<>();
     private static AtomicBoolean isReady = new AtomicBoolean(false);
@@ -681,11 +701,41 @@ public class DSMServer {
 
     private void setupPubSub(@NonNull Config cfg, NotificationUtil notificationUtil) {
         String projectId = cfg.getString(GCP_PATH_TO_PUBSUB_PROJECT_ID);
-        String subscriptionId = cfg.getString(GCP_PATH_TO_PUBSUB_SUB);
-        String dsmToDssSubscriptionId = cfg.getString(GCP_PATH_TO_DSS_TO_DSM_SUB);
-        String dsmTasksSubscriptionId = cfg.getString(GCP_PATH_TO_DSM_TASKS_SUB);
+
+        var testsTopicName = cfg.getString(GCP_PATH_TO_TESTS_PUBSUB_TOPIC);
+        var subscriptionId = cfg.getString(GCP_PATH_TO_PUBSUB_SUB);
+
+        var dsmToDssTopicName = cfg.getString(GCP_PATH_TO_DSM_TO_DSS_TOPIC);
+        var dsmToDssSubscriptionId = cfg.getString(GCP_PATH_TO_DSS_TO_DSM_SUB);
+
+        var dsmTasksTopicName = cfg.getString(GCP_PATH_TO_DSM_TASKS_TOPIC);
+        var dsmTasksSubscriptionId = cfg.getString(GCP_PATH_TO_DSM_TASKS_SUB);
 
         logger.info("Setting up pubsub for {}/{}", projectId, subscriptionId);
+
+        final var useEmulator = (cfg.hasPath(GCP_PATH_TO_USE_PUBSUB_EMULATOR) ? cfg.getBoolean(GCP_PATH_TO_USE_PUBSUB_EMULATOR) : false);
+
+        if (useEmulator) {
+            // If the PubSub emulator is in use, the clients are responsible for creating
+            // any necessary topics or subscriptions. Take care of this before moving on.
+
+            try (var topicAdminClient = pubSubTopicAdminClient(useEmulator);
+                    var subscriptionAdminClient = pubSubSubscriptionAdminClient(useEmulator)) {
+                
+                this.createTopic(topicAdminClient, projectId, testsTopicName);
+                this.createSubscription(subscriptionAdminClient, projectId, subscriptionId, testsTopicName);
+
+                this.createTopic(topicAdminClient, projectId, dsmToDssTopicName);
+                this.createSubscription(subscriptionAdminClient, projectId, dsmToDssSubscriptionId, dsmToDssTopicName);
+
+                this.createTopic(topicAdminClient, projectId, dsmTasksTopicName);
+                this.createSubscription(subscriptionAdminClient, projectId, dsmTasksSubscriptionId, dsmTasksTopicName);
+            } catch (IOException ioe) {
+                var message = String.format("failed to instantiate topic and/or subscription admin clients");
+                logger.error("{} (useEmulator:{})", message, useEmulator, ioe);
+                throw new DDPException(message, ioe);
+            }
+        }
 
         try {
             // Instantiate an asynchronous message receiver.
@@ -1021,6 +1071,112 @@ public class DSMServer {
             logger.info("Responding to startup route after {}ms delay with {}", Instant.now().toEpochMilli() - bootTime, status.get());
             res.status(status.get());
             return "";
+        }
+    }
+
+    /**
+     * Resolves & returns the authority for the local pubsub emulator.
+     * @param cfg a configuration object
+     * @return the authority for the pubsub emulator
+     */
+    private String pubSubEmulatorHost(@NonNull Config cfg) {
+        /* First check the local environment. If the desired
+         * address & port (aka: authority) is specified there,
+         * it takes priority over everything else.
+         */
+        var envHost = System.getenv("PUBSUB_EMULATOR_HOST");
+        if (StringUtils.isBlank(envHost) == false) {
+            return envHost;
+        }
+
+        /*
+         * Fallback to using TypeSafe's resolution behavior.
+         * No key presence checks should be needed here- if this method
+         * is called without specifying an authority for a PubSub Emulator
+         * somewhere, we should fail quickly.
+        */
+        return cfg.getString(GCP_PATH_TO_PUBSUB_EMULATOR_HOST);
+    }
+
+    private TopicAdminClient pubSubTopicAdminClient(boolean useEmulator) throws IOException {
+        if (useEmulator) {
+            var emulatorHost = System.getenv("PUBSUB_EMULATOR_HOST");
+            
+            var channel = ManagedChannelBuilder
+                .forTarget(emulatorHost)
+                .usePlaintext()
+                .build();
+            var channelProvider = FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel));
+            var credentialsProvider = NoCredentialsProvider.create();
+            
+            var settings = TopicAdminSettings.newBuilder()
+                .setTransportChannelProvider(channelProvider)
+                .setCredentialsProvider(credentialsProvider)
+                .build();
+
+            return TopicAdminClient.create(settings);
+        } else {
+            return TopicAdminClient.create();
+        }
+    }
+
+    private SubscriptionAdminClient pubSubSubscriptionAdminClient(boolean useEmulator) throws IOException {
+        if (useEmulator) {
+            var emulatorHost = System.getenv("PUBSUB_EMULATOR_HOST");
+            
+            var channel = ManagedChannelBuilder
+                .forTarget(emulatorHost)
+                .usePlaintext()
+                .build();
+            var channelProvider = FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel));
+            var credentialsProvider = NoCredentialsProvider.create();
+            var settings = SubscriptionAdminSettings.newBuilder()
+                .setTransportChannelProvider(channelProvider)
+                .setCredentialsProvider(credentialsProvider)
+                .build();
+            return SubscriptionAdminClient.create(settings);
+        } else {
+            return SubscriptionAdminClient.create();
+        }
+    }
+
+
+    /**
+     * Creates a new topic, if needed.
+     * 
+     * <p>If the specified topic cannot be created, an exception
+     * will be thrown detailing the error.
+     * 
+     * @throws IOException if a communication error has occurred
+     */
+    private void createTopic(TopicAdminClient client, String projectId, String topicName) throws IOException {
+        var topic = ProjectTopicName.of(projectId, topicName);
+
+        try {
+            client.createTopic(topic);
+            logger.info("Created topic {} for project {}", topicName, projectId);
+        } catch (AlreadyExistsException topicExists) {
+            // Not an error in this case, just keep swimming
+        }
+    }
+
+    /**
+     * Creates a new subscription, if needed.
+     * 
+     * <p>If the specified subscription cannot be created, an exception
+     * will be thrown detailing the error.
+     *
+     * @throws IOException if a communication error has occurred
+     */
+    private void createSubscription(SubscriptionAdminClient client, String projectId, String subscriptionName, String topicName) throws IOException {
+        var subscription = ProjectSubscriptionName.of(projectId, subscriptionName);
+        var topic = ProjectTopicName.of(projectId, subscriptionName);
+
+        try {
+            client.createSubscription(subscription, topic, PushConfig.getDefaultInstance(), (int)DEFAULT_PUBSUB_ACK_TIMEOUT.toSeconds());
+            logger.info("Created subscription {} to topic {} in project {}", subscriptionName, topicName, projectId);
+        } catch (AlreadyExistsException topicExists) {
+            // Not an error in this case, just keep swimming
         }
     }
 
