@@ -1,17 +1,10 @@
 package org.broadinstitute.dsm.model.patch;
 
-import org.broadinstitute.dsm.TestHelper;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class DefaultDBElementBuilderTest {
-
-    @BeforeClass
-    public static void initializeDB() {
-        TestHelper.setupDB();
-    }
 
     @Test
     public void fromParticipant() {
