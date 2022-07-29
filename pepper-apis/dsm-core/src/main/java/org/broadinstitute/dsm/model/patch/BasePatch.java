@@ -52,6 +52,7 @@ public abstract class BasePatch {
     protected ESProfile profile;
     protected DDPInstance ddpInstance;
     protected DBElement dbElement;
+    protected DBElementBuilder dbElementBuilder;
     Map<String, Object> resultMap;
     List<NameValue> nameValues;
     private boolean isElasticSearchExportable;
@@ -59,6 +60,7 @@ public abstract class BasePatch {
     {
         resultMap = new HashMap<>();
         nameValues = new ArrayList<>();
+        dbElementBuilder = new DefaultDBElementBuilder();
     }
 
     protected BasePatch() {
@@ -104,7 +106,7 @@ public abstract class BasePatch {
 
     Optional<Object> processSingleNameValue() {
         Optional<Object> result;
-        dbElement = PatchUtil.getColumnNameMap().get(patch.getNameValue().getName());
+        dbElement = dbElementBuilder.fromName(patch.getNameValue().getName());
         if (dbElement != null) {
             result = Optional.of(handleSingleNameValue());
         } else {
@@ -116,7 +118,7 @@ public abstract class BasePatch {
     List<Object> processMultipleNameValues() {
         List<Object> updatedNameValues = new ArrayList<>();
         for (NameValue nameValue : patch.getNameValues()) {
-            dbElement = PatchUtil.getColumnNameMap().get(nameValue.getName());
+            dbElement = dbElementBuilder.fromName(nameValue.getName());
             if (dbElement != null) {
                 processEachNameValue(nameValue).ifPresent(updatedNameValues::add);
             } else {
@@ -277,7 +279,7 @@ public abstract class BasePatch {
     }
 
     private NameValue setAdditionalValue(String additionalValue, @NonNull Patch patch, @NonNull Object value) {
-        DBElement dbElement = PatchUtil.getColumnNameMap().get(additionalValue);
+        DBElement dbElement = dbElementBuilder.fromName(additionalValue);
         if (dbElement != null) {
             NameValue nameValue = new NameValue(additionalValue, value);
             Patch.patch(patch.getId(), patch.getUser(), nameValue, dbElement);
