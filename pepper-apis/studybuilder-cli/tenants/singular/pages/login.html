@@ -524,7 +524,7 @@
       <div class="container">
         <div class="footer-meta">
           <div class="footer-logo">
-            <img src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/logo-horizontal-white.png"" alt="Header.LogoAlt">
+            <img src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/logo-horizontal-white.png" alt="Header.LogoAlt">
           </div>
           <div class="footer-contacts">
             Contact Us: (650) 561-6750<br>
@@ -548,7 +548,7 @@
               </a>
             </div>
           </div>
-          <div class="footer-copyright">Copyright 2021 Additional Ventures</div>
+          <div class="footer-copyright">Copyright © <span id="current-year"></span> Additional<br>Ventures. All rights reserved.</div>
         </div>
         <div class="footer-menu">
           <nav>
@@ -700,6 +700,9 @@
           );
         }
       }
+
+      // set current year
+      document.getElementById('current-year').textContent = new Date().getFullYear();
 
       var mode = config.extraParams.mode;
       var study_guid = config.extraParams.study_guid;
