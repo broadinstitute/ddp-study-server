@@ -31,6 +31,7 @@ import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.broadinstitute.ddp.util.QuestionUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
+import org.broadinstitute.ddp.util.GuidUtils;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import spark.Request;
 import spark.Response;
@@ -111,13 +112,16 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
             User operatorUser = handle.attach(UserDao.class).findUserByGuid(operatorGuid)
                     .orElseThrow(() -> new DDPException("Could not find operator with guid " + operatorGuid));
 
+            final var fileGuid = GuidUtils.randomFileUploadGuid();
+
             return service.authorizeUpload(
                     handle,
                     instanceDto.getStudyId(),
                     operatorUser.getId(),
                     instanceDto.getParticipantId(),
                     fileQuestionDef,
-                    getBlobPath(payload, userGuid, studyGuid, instanceDto.getActivityCode()),
+                    fileGuid,
+                    getBlobPath(payload, userGuid, studyGuid, fileGuid, instanceDto.getActivityCode()),
                     payload.getMimeType(),
                     payload.getFileName(),
                     payload.getFileSize(),
@@ -143,9 +147,10 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
         return new CreateUserActivityUploadResponse(upload.getGuid(), result.getSignedUrl().toString());
     }
 
-    private String getBlobPath(CreateUserActivityUploadPayload payload, String userGuid, String studyGuid, String activityCode) {
-        return String.format("%s/%s_%s_%s_%d_%s",
-                studyGuid, activityCode, userGuid, getCurrentTimestamp(), System.nanoTime(), payload.getFileName());
+    private String getBlobPath(CreateUserActivityUploadPayload payload, String userGuid, String studyGuid,
+                               String fileGuid, String activityCode) {
+        return String.format("%s/%s_%s_%s_%s_%s",
+                studyGuid, fileGuid, activityCode, userGuid, getCurrentTimestamp(), payload.getFileName());
     }
 
     private long bytesToMbs(long maxFileSize) {
