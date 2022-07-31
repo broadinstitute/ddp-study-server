@@ -93,14 +93,18 @@ public class ESObjectConstants {
 
     //question
     public static final String QUESTIONS = "questions";
+    public static final String QUESTION_TYPE = "questionType";
     public static final String STABLE_ID = "stableId";
+    public static final String QUESTION_TEXT = "questionText";
     public static final String OPTIONDETAILS = "optionDetails";
     public static final String OPTION_TEXT = "optionText";
     public static final String OPTION_STABLE_ID = "optionStableId";
     public static final String OPTION = "option";
     public static final String OPTIONS = "options";
+    public static final String ALLOW_MULTIPLE = "allowMultiple";
     public static final String OPTION_GROUPS = "groups";
     public static final String GROUPED_OPTIONS = "groupedOptions";
+    public static final String CHILD_QUESTIONS = "childQuestions";
     public static final String DETAIL = "detail";
     public static final String DETAILS = "details";
     public static final String ANSWER = "answer";

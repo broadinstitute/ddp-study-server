@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.model.elastic.export.tabular;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -41,7 +40,6 @@ public class TabularParticipantParser {
     private final boolean splitOptions;
     private final boolean onlyMostRecent;
     private final List<String> nestedArrayObjects = Arrays.asList(ESObjectConstants.KIT_TEST_RESULT);
-    private final ValueProviderFactory valueProviderFactory = new ValueProviderFactory();
 
     public TabularParticipantParser(List<Filter> filters, DDPInstance ddpInstance, boolean splitOptions, boolean onlyMostRecent) {
         this.filters = filters;
@@ -82,35 +80,33 @@ public class TabularParticipantParser {
                     configs.add(moduleExport);
                     exportInfoMap.put(moduleConfigKey, moduleExport);
                 }
-                boolean splitChoicesIntoColumns = false;
-                List<Map<String, Object>> options = null;
+
                 Map<String, Object> questionDef = null;
                 if (moduleExport.isActivity() && ElasticSearchUtil.QUESTIONS_ANSWER.equals(participantColumn.getObject())) {
                     questionDef = getDefForQuestion(participantColumn, activityDefs);
                 }
+                boolean splitChoicesIntoColumns = false;
                 if (ESObjectConstants.OPTIONS_TYPE.equals(filter.getType())) {
                     if (questionDef != null) {
                         // create a column for each option if it's a multiselect
                         splitChoicesIntoColumns = splitOptions &&
                                 ESObjectConstants.MULTIPLE.equals(questionDef.get(ESObjectConstants.SELECT_MODE));
-                        // save the options so we can translate from stableIds if needed
-                        options = getOptionsForQuestion(questionDef);
                     }
                 }
-                int questionIndex = -1;
-                if (questionDef != null) {
-                    questionIndex = (int) questionDef.get("index");
-                }
+                // columns for 'meta' properties (completion date, etc.) and other non-questions will come first
+                int questionIndex = questionDef != null ? (int) questionDef.get("index") : -1;
 
                 String collationSuffix = ValueProviderFactory.COLLATED_SUFFIXES.stream()
                         .filter(suffix -> StringUtils.endsWith(participantColumn.getName(), suffix))
                         .findFirst()
                         .orElse(null);
-                FilterExportConfig colConfig = new FilterExportConfig(moduleExport, filter, splitChoicesIntoColumns, options, collationSuffix, questionIndex);
+
+                FilterExportConfig colConfig = new FilterExportConfig(moduleExport, filter, splitChoicesIntoColumns,
+                        collationSuffix, questionDef, questionIndex);
                 if (collationSuffix != null) {
                     if (collationColumnMap.containsKey(collationSuffix)) {
-                        if (options != null) {
-                            collationColumnMap.get(collationSuffix).getOptions().addAll(options);
+                        if (colConfig.getOptions() != null) {
+                            collationColumnMap.get(collationSuffix).getOptions().addAll(colConfig.getOptions());
                         }
                         // we only want one column config for collated questions, so don't add this to the module
                         continue;
@@ -130,21 +126,6 @@ public class TabularParticipantParser {
             config.getQuestions().sort(Comparator.comparing(FilterExportConfig::getQuestionIndex));
         });
         return configs;
-    }
-
-    private List<Map<String, Object>> getOptionsForQuestion(Map<String, Object> questionDef) {
-        List<Map<String,Object>> options = (List<Map<String, Object>>) questionDef.get(ESObjectConstants.OPTIONS);
-        if (questionDef.containsKey(ESObjectConstants.OPTION_GROUPS)) {
-            Object groups = questionDef.get(ESObjectConstants.OPTION_GROUPS);
-            if (groups instanceof List) {
-                for (Map<String, Object> group : (List<Map<String, Object>>) groups) {
-                    if (group.containsKey(ESObjectConstants.OPTIONS) ) {
-                        options.addAll((List<Map<String, Object>>) group.get(ESObjectConstants.OPTIONS));
-                    }
-                }
-            }
-        }
-        return options;
     }
 
     /**
@@ -243,53 +224,72 @@ public class TabularParticipantParser {
     private void addModuleDataToParticipantMap(ModuleExportConfig moduleConfig, Map<String, String> participantMap,
                                                Map<String, Object> esModuleMap, int moduleRepeatNum) {
         for (FilterExportConfig filterConfig : moduleConfig.getQuestions()) {
+            List<String> optionStableIds = Collections.singletonList(null);
+            if (filterConfig.getOptions() != null && filterConfig.isSplitOptionsIntoColumns()) {
+                optionStableIds = filterConfig.getOptions().stream().map(opt -> (String) opt.get(ESObjectConstants.OPTION_STABLE_ID)).collect(
+                        Collectors.toList());
+            }
             TextValueProvider valueProvider =
-                    valueProviderFactory.getValueProvider(filterConfig.getColumn().getName(), filterConfig.getType());
+                    ValueProviderFactory.getValueProvider(filterConfig.getColumn().getName(), filterConfig.getQuestionType());
 
-            Collection<String> formattedValues = valueProvider.getFormattedValues(filterConfig, esModuleMap);
+            List<List<String>> formattedValues = valueProvider.getFormattedValues(filterConfig, esModuleMap);
+            if (filterConfig.isAllowMultiple() && formattedValues.size() > filterConfig.getMaxRepeats()) {
+                filterConfig.setMaxRepeats(formattedValues.size());
+            }
+            // iterate through each response to the question, adding the values to the map
+            for (int responseNum = 0; responseNum < formattedValues.size(); responseNum++) {
+                List<String> responseValues = formattedValues.get(responseNum);
 
-            if (filterConfig.isSplitOptionsIntoColumns()) {
-                for (int optIndex = 0; optIndex < filterConfig.getOptions().size(); optIndex++) {
-                    Map<String, Object> opt = filterConfig.getOptions().get(optIndex);
-
-                    String colName = TabularParticipantExporter.getColumnName(
-                            filterConfig,
-                            moduleRepeatNum + 1,
-                            1,
-                            opt,
-                            null
-                    );
-                    String optionStableId = (String) opt.get(ESObjectConstants.OPTION_STABLE_ID);
-                    String exportValue = formattedValues.contains(optionStableId) ?
-                            COLUMN_SELECTED : COLUMN_UNSELECTED;
-                    participantMap.put(colName, exportValue);
-                    if (filterConfig.isHasDetails()) {
-                        String detailValue = valueProvider.getOptionDetails(filterConfig, esModuleMap, optionStableId);
-                        String detailColName = TabularParticipantExporter.getColumnName(
-                                filterConfig,
-                                moduleRepeatNum + 1,
-                                1,
-                                opt,
-                                "DETAIL"
-                        );
-                        participantMap.put(detailColName, detailValue);
+                if (filterConfig.getChildConfigs() != null) {
+                    // if this is a composite question, we need a separate column for each child question
+                    for(int childIndex = 0; childIndex < filterConfig.getChildConfigs().size(); childIndex++) {
+                        addSingleResponseToMap(Collections.singletonList(responseValues.get(childIndex)),
+                                filterConfig, optionStableIds, moduleRepeatNum,
+                                responseNum, esModuleMap,
+                                valueProvider, participantMap, filterConfig.getChildConfigs().get(childIndex));
                     }
-                }
-
-            } else {
-                String colName = TabularParticipantExporter.getColumnName(
-                        filterConfig,
-                        moduleRepeatNum + 1,
-                        1,
-                        null,
-                        null);
-                String exportValue = formattedValues.stream().collect(Collectors.joining(", "));
-                participantMap.put(colName, exportValue);
-                if (filterConfig.isHasDetails()) {
-                    String detail = valueProvider.getOptionDetails(filterConfig, esModuleMap, "foo");
+                } else {
+                    addSingleResponseToMap(responseValues, filterConfig, optionStableIds, moduleRepeatNum, responseNum, esModuleMap,
+                            valueProvider, participantMap, null);
                 }
 
             }
+        }
+    }
+
+    // adds a single question response to the map.  Also handles adding any additional details associated with the answer
+    private void addSingleResponseToMap(List<String> responseValues, FilterExportConfig filterConfig, List<String> optionStableIds, int moduleRepeatNum, int responseNum,
+                                   Map<String, Object> esModuleMap, TextValueProvider valueProvider, Map<String, String> participantMap, FilterExportConfig childConfig) {
+        for (String optionStableId : optionStableIds) {
+            String colName = TabularParticipantExporter.getColumnName(
+                    filterConfig,
+                    moduleRepeatNum + 1,
+                    responseNum + 1,
+                    optionStableId,
+                    null,
+                    childConfig
+            );
+            String exportValue = StringUtils.EMPTY;
+            if (optionStableId != null) {
+                exportValue = responseValues.contains(optionStableId) ?
+                        COLUMN_SELECTED : COLUMN_UNSELECTED;
+            } else {
+                exportValue = responseValues.stream().collect(Collectors.joining(", "));
+            }
+            participantMap.put(colName, exportValue);
+            if (filterConfig.isHasDetails()) {
+                String detailValue = valueProvider.getOptionDetails(filterConfig, esModuleMap, optionStableId, responseNum);
+                String detailColName = TabularParticipantExporter.getColumnName(
+                        filterConfig,
+                        moduleRepeatNum + 1,
+                        responseNum + 1,
+                        optionStableId,
+                        "DETAIL",
+                        childConfig
+                );
+                participantMap.put(detailColName, detailValue);
+            }
+
         }
     }
 
@@ -386,6 +386,7 @@ public class TabularParticipantParser {
         return matchingActivities;
     }
 
+    // handles getting response objects from the dsm.participantData object
     private static List<Map<String, Object>> getNestedCompletions(Map<String, Object> esDataAsMap,
                                                                       ModuleExportConfig moduleConfig,
                                                                       Map<String, Object> subParticipant,

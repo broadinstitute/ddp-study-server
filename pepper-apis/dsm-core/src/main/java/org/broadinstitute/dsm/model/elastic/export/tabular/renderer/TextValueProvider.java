@@ -9,48 +9,88 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.export.tabular.FilterExportConfig;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
+/** Base class for rendering participant data as text */
 public class TextValueProvider {
-    public Collection<?> getRawValues(FilterExportConfig filterConfig, Map<String, Object> moduleMap) {
-        Object value = StringUtils.EMPTY;
+
+    /**
+     *
+     * @param filterConfig the config for the question/item
+     * @param formMap a map of the data for this module response.  That should be a value returned from getModuleCompletions
+     *                in TabularParticipantParser
+     * @return a list of lists of response values.  The outer list has one entry for each response given (e.g. for a medication list
+     * question, one entry will correspond to each medication). The outer list will always have only one entry unless
+     * the question is an allowMultiple.  The inner lists corresponds to the values for each response. It will have one entry
+     * for most questions, but it will have multiple entries for either selectMode=Multiple questions or composite questions
+     */
+    public List<List<String>> getFormattedValues(FilterExportConfig filterConfig, Map<String, Object> formMap) {
+        return collectFormattedResponses(getRawValues(filterConfig, formMap), filterConfig, formMap);
+    }
+
+
+    /** looks for additional details associated with an option response.  For example, if the participant was asked to
+     * select a symptom, and then for each symptom selected, enter the age at which the symptom began.
+     */
+    public String getOptionDetails(FilterExportConfig filterConfig, Map<String, Object> moduleMap, String optionStableId, int responseNum) {
+        Map<String, Object> answerObject = getRelevantAnswer(moduleMap, filterConfig);
+        if (answerObject != null) {
+            Object optionDetails = answerObject.get(ESObjectConstants.OPTIONDETAILS);
+            // Option details are stored in ES as an array of maps
+            // e.g. [{option: "TELANGIECTASIA_EYES", details: "12"}, {option: "TELANGIECTASIA_SKIN", details: "34"}]
+            if (optionDetails instanceof List) {
+                return ((List<?>) optionDetails).stream().filter(detail ->
+                                StringUtils.equals((String) ((Map) detail).get(ESObjectConstants.OPTION), optionStableId))
+                        .map(detail -> (String) ((Map<String, Object>) detail).get(ESObjectConstants.DETAILS))
+                        .findAny().orElse(StringUtils.EMPTY);
+            }
+        }
+        return StringUtils.EMPTY;
+    }
+
+    protected List<?> getRawValues(FilterExportConfig filterConfig, Map<String, Object> moduleMap) {
+        List<Object> value = null;
         if (moduleMap == null) {
-            value = StringUtils.EMPTY;
-        } else if (ElasticSearchUtil.QUESTIONS_ANSWER.equals(filterConfig.getColumn().getObject()) ) {
+            value = Collections.singletonList(StringUtils.EMPTY);
+        } else if (filterConfig.isQuestionAnswer()) {
             value = getRawAnswerValues(moduleMap, filterConfig);
         } else {
-            value = getValueFromMap(moduleMap, filterConfig);
+            value = Collections.singletonList(getValueFromMap(moduleMap, filterConfig));
         }
-        if (!(value instanceof Collection)) {
-            return Collections.singletonList(value);
+
+        return value;
+    }
+
+    protected List<List<String>> collectFormattedResponses(List<?> rawValues, FilterExportConfig filterConfig, Map<String, Object> formMap) {
+        if (filterConfig.isAllowMultiple() && CollectionUtils.isNotEmpty(rawValues) && rawValues.get(0) instanceof List) {
+            return rawValues.stream().map(valueSet -> formatRawValues((List) valueSet, filterConfig, formMap))
+                    .collect(Collectors.toList());
         }
-        return (Collection<?>) value;
+        return Collections.singletonList(formatRawValues(rawValues, filterConfig, formMap));
     }
 
-    public Collection<String> getFormattedValues(FilterExportConfig filterConfig, Map<String, Object> formMap) {
-        return formatRawValues(getRawValues(filterConfig, formMap), filterConfig, formMap);
+
+
+    protected List<String> formatRawValues(List<?> rawValues, FilterExportConfig filterConfig, Map<String, Object> formMap) {
+        return rawValues.stream().map(val -> {
+            if (val == null) {
+                return StringUtils.EMPTY;
+            } else if (val instanceof List) {
+                return (String) ((List) val).stream().map(item -> item != null ? item.toString() : StringUtils.EMPTY)
+                        .collect(Collectors.joining(", "));
+            }
+            return val.toString();
+        }).collect(Collectors.toList());
     }
 
-    public Collection<String> formatRawValues(Collection<?> rawValues, FilterExportConfig filterConfig, Map<String, Object> formMap) {
-        return rawValues.stream().map(val -> val != null ? val.toString() : StringUtils.EMPTY).collect(Collectors.toList());
-    }
-
-    public String getOptionDetails(FilterExportConfig filterConfig, Map<String, Object> moduleMap, String optionStableId) {
-        List<Map<String, Object>> answerObjects = getRelevantAnswers(moduleMap, filterConfig);
-        List<?> optionDetails = answerObjects.stream().map(ans -> ans.get(ESObjectConstants.OPTIONDETAILS))
-                .filter(detailList -> detailList instanceof List)
-                .map(detailList -> {
-                    return ((List<?>) detailList).stream().filter(detail ->
-                            StringUtils.equals((String) ((Map) detail).get(ESObjectConstants.OPTION), optionStableId))
-                            .map(detail -> ((Map<String, Object>) detail).get(ESObjectConstants.DETAILS))
-                            .collect(Collectors.toList());
-                }).flatMap(Collection::stream).collect(Collectors.toList());
-        return optionDetails.stream().map(obj -> obj.toString()).collect(Collectors.joining(", "));
-    }
-
+    /** handles reading values from things other than questions. including basic properties and array properties
+     * it falls back to reading the dynamic fields if an object is specified that doesn't exist on the
+     * is found
+     */
     protected Object getValueFromMap(Map<String, Object> moduleMap, FilterExportConfig filterConfig) {
         Map<String, Object> targetMap = moduleMap;
         String objectName = filterConfig.getColumn().getObject();
@@ -91,51 +131,40 @@ public class TextValueProvider {
         return targetMap.getOrDefault(fieldName, StringUtils.EMPTY);
     }
 
-    protected Object getRawAnswerValues(Map<String, Object> moduleMap, FilterExportConfig filterConfig) {
-        List<Map<String, Object>> answerObjects = getRelevantAnswers(moduleMap, filterConfig);
-        List<Object> rawValues = extractAnswerValuesFromTargets(answerObjects, filterConfig);
-        Collection<?> answer = mapToCollection(rawValues);
-
-        Map<String, Object> firstAnswer = answerObjects.get(0);
-
-        Object optionDetails = firstAnswer.get(ESObjectConstants.OPTIONDETAILS);
-        if (optionDetails != null && !((List<?>) optionDetails).isEmpty()) {
-            filterConfig.setHasDetails(true);
+    protected List<Object> getRawAnswerValues(Map<String, Object> moduleMap, FilterExportConfig filterConfig) {
+        Map<String, Object> answerObject = getRelevantAnswer(moduleMap, filterConfig);
+        Object rawValue = extractValuesFromAnswer(answerObject, filterConfig);
+        if (answerObject != null) {
+            Object optionDetails = answerObject.get(ESObjectConstants.OPTIONDETAILS);
+            if (optionDetails != null && !((List<?>) optionDetails).isEmpty()) {
+                filterConfig.setHasDetails(true);
+            }
         }
-        return answer;
+
+        if (!(rawValue instanceof List)) {
+            return Collections.singletonList(rawValue);
+        }
+        return (List) rawValue;
     }
 
-    protected List<Map<String, Object>> getRelevantAnswers(Map<String, Object> moduleMap, FilterExportConfig filterConfig) {
+    protected Map<String, Object> getRelevantAnswer(Map<String, Object> moduleMap, FilterExportConfig filterConfig) {
         if (moduleMap != null) {
             List<Map<String, Object>> allAnswers =
                     (List<Map<String, Object>>) moduleMap.get(ElasticSearchUtil.QUESTIONS_ANSWER);
             if (allAnswers != null) {
                 return allAnswers.stream()
                         .filter(ans -> filterConfig.getColumn().getName().equals(ans.get(ESObjectConstants.STABLE_ID)))
-                        .collect(Collectors.toList());
+                        .findAny().orElse(null);
             }
         }
-        return Collections.emptyList();
+        return null;
     }
 
-    protected List<Object> extractAnswerValuesFromTargets(List<Map<String, Object>> targetAnswers, FilterExportConfig filterConfig) {
-        List<Object> rawAnswers = targetAnswers.stream().map(ans -> {
-            return ans.getOrDefault(ESObjectConstants.ANSWER, ans.get(filterConfig.getColumn().getName()));
-        }).collect(Collectors.toList());
-        return rawAnswers;
-    }
-
-    protected void removeOptionsFromAnswer(Collection<?> answer, List<Map<String, String>> optionDetails) {
-        List<String> details = optionDetails.stream().map(options -> options.get(ESObjectConstants.OPTION)).collect(Collectors.toList());
-        answer.removeAll(details);
-    }
-
-    protected List<String> getOptionDetails(List<?> optionDetails) {
-        return optionDetails.stream().map(optionDetail ->
-                        new StringBuilder(((Map) optionDetail).get(ESObjectConstants.OPTION).toString())
-                                .append(':')
-                                .append(((Map) optionDetail).get(ESObjectConstants.DETAIL)).toString())
-                .collect(Collectors.toList());
+    protected Object extractValuesFromAnswer(Map<String, Object> targetAnswer, FilterExportConfig filterConfig) {
+        if (targetAnswer == null) {
+            return null;
+        }
+        return targetAnswer.getOrDefault(ESObjectConstants.ANSWER, targetAnswer.get(filterConfig.getColumn().getName()));
     }
 
     protected Collection<?> mapToCollection(Object o) {

@@ -11,31 +11,30 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 public class ValueProviderFactory {
     private static final String AMBULATION = "AMBULATION";
 
-    private final TextValueProvider defaultValueProvider = new TextValueProvider();
-    private final TextValueProvider booleanValueProvider = new BooleanValueProvider();
-    private final TextValueProvider pickListValueProvider = new PickListValueProvider();
-    private final TextValueProvider collatedValueProvider = new CollatedQuestionValueProvider();
-    private final Map<QuestionType, TextValueProvider> valueProviders = Map.of(
-            QuestionType.CHECKBOX, booleanValueProvider,
-            QuestionType.NUMBER, defaultValueProvider,
-            QuestionType.BOOLEAN, booleanValueProvider,
-            QuestionType.COMPOSITE, defaultValueProvider,
-            QuestionType.AGREEMENT, booleanValueProvider,
-            QuestionType.MATRIX, defaultValueProvider,
-            QuestionType.DATE, new DateValueProvider(),
-            QuestionType.OPTIONS, pickListValueProvider,
-            QuestionType.JSON_ARRAY, defaultValueProvider,
-            QuestionType.RADIO, pickListValueProvider
+    private static final TextValueProvider defaultValueProvider = new TextValueProvider();
+    private static final TextValueProvider booleanValueProvider = new BooleanValueProvider();
+    private static final TextValueProvider pickListValueProvider = new PickListValueProvider();
+    private static final TextValueProvider collatedValueProvider = new CollatedQuestionValueProvider();
+    private static final Map<QuestionType, TextValueProvider> valueProviders = Map.ofEntries(
+            Map.entry(QuestionType.CHECKBOX, booleanValueProvider),
+            Map.entry(QuestionType.NUMBER, defaultValueProvider),
+            Map.entry(QuestionType.BOOLEAN, booleanValueProvider),
+            Map.entry(QuestionType.COMPOSITE, new CompositeValueProvider()),
+            Map.entry(QuestionType.AGREEMENT, booleanValueProvider),
+            Map.entry(QuestionType.MATRIX, defaultValueProvider),
+            Map.entry(QuestionType.DATE, new DateValueProvider()),
+            Map.entry(QuestionType.OPTIONS, pickListValueProvider),
+            Map.entry(QuestionType.JSON_ARRAY, defaultValueProvider),
+            Map.entry(QuestionType.RADIO, pickListValueProvider)
     );
-    private final Map<String, TextValueProvider> specialValueProviders = Map.of(
-            AMBULATION, new AmbulationValueProvider(),
+    private static final Map<String, TextValueProvider> specialValueProviders = Map.of(
             ESObjectConstants.ACTIVITY_STATUS, new ActivityStatusValueProvider(),
             ESObjectConstants.COHORT_TAG_NAME, new CohortTagNameProvider()
     );
 
     public static final List<String> COLLATED_SUFFIXES = Arrays.asList("REGISTRATION_STATE_PROVINCE");
 
-    public TextValueProvider getValueProvider(String participantColumnName, String questionType) {
+    public static TextValueProvider getValueProvider(String participantColumnName, String questionType) {
         if (isSpecialColumn(participantColumnName)) {
             return specialValueProviders.get(participantColumnName);
         }
@@ -48,7 +47,7 @@ public class ValueProviderFactory {
         return valueProviders.getOrDefault(QuestionType.getByValue(questionType), defaultValueProvider);
     }
 
-    private boolean isSpecialColumn(String participantColumn) {
+    private static boolean isSpecialColumn(String participantColumn) {
         return specialValueProviders.containsKey(participantColumn);
     }
 }

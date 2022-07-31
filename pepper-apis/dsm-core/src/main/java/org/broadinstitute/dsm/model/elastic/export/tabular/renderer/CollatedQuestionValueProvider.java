@@ -15,7 +15,7 @@ import org.broadinstitute.dsm.util.ElasticSearchUtil;
 /** rolls up all the state/province questions into a single answer */
 public class CollatedQuestionValueProvider extends PickListValueProvider {
     @Override
-    public Collection<?> getRawValues(FilterExportConfig filterConfig, Map<String, Object> formMap) {
+    public List<?> getRawValues(FilterExportConfig filterConfig, Map<String, Object> formMap) {
         Object value = StringUtils.EMPTY;
         String fieldName = filterConfig.getColumn().getName();
         if (formMap == null) {

@@ -9,6 +9,7 @@ import com.google.common.net.MediaType;
 import org.apache.commons.lang3.StringUtils;
 import spark.Response;
 
+/** writes out participant data as a tab-delimited file.  See TabularParticipantExporter for more detail */
 public class TsvParticipantExporter extends TabularParticipantExporter {
     public static final String DELIMITER = "\t";
     public static final String MEDIA_TYPE = MediaType.TSV_UTF_8.toString();
@@ -47,6 +48,12 @@ public class TsvParticipantExporter extends TabularParticipantExporter {
         return String.join(DELIMITER, rowValues);
     }
 
+    /**
+     * replaces double quotes with single, and then encapsulates any strings which contain newlines or tabs
+     * with double quotes
+     * @param value the value to sanitize
+     * @return the sanitized value, suitable for including in a tsv
+     */
     protected String sanitizeValue(String value) {
         if (value == null) {
             value = StringUtils.EMPTY;
