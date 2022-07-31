@@ -13,6 +13,7 @@ import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import spark.Response;
 
+/** generates an excel file with a single sheet containing the participant data */
 public class ExcelParticipantExporter extends TabularParticipantExporter {
     private final static int ROW_ACCESS_WINDOW_SIZE = 200;
     private final SXSSFWorkbook workbook = new SXSSFWorkbook(ROW_ACCESS_WINDOW_SIZE);
