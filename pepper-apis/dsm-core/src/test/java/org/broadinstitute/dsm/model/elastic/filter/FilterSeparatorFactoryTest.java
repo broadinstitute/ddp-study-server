@@ -9,10 +9,8 @@ public class FilterSeparatorFactoryTest {
 
     @Test
     public void create() {
-        FilterSeparatorFactory separatorFactory = new FilterSeparatorFactory("oD", StringUtils.EMPTY);
-        assertEquals(AndOrFilterSeparator.class, separatorFactory.create().getClass());
+        assertEquals(AndOrFilterSeparator.class, FilterSeparatorFactory.create("oD", StringUtils.EMPTY).getClass());
 
-        separatorFactory = new FilterSeparatorFactory("ES", StringUtils.EMPTY);
-        assertEquals(NonDsmAndOrFilterSeparator.class, separatorFactory.create().getClass());
+        assertEquals(NonDsmAndOrFilterSeparator.class, FilterSeparatorFactory.create("ES", StringUtils.EMPTY).getClass());
     }
 }

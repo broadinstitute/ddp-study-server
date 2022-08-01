@@ -20,7 +20,7 @@ public class MustNotExistsQueryStrategyTest {
         BuildQueryStrategy queryStrategy = isNull.getQueryStrategy();
         queryStrategy.setBaseQueryBuilder(baseQueryBuilder);
         BoolQueryBuilder queryBuilder = (BoolQueryBuilder)
-                ((NestedQueryBuilder)baseQueryBuilder.buildEachQuery(queryStrategy.build(), followupRequiredText)).query();
+                ((NestedQueryBuilder)baseQueryBuilder.build(queryStrategy.build())).query();
         BoolQueryBuilder expectedBoolQuery = new BoolQueryBuilder();
         expectedBoolQuery.mustNot(new ExistsQueryBuilder("dsm.medicalRecord.followupRequiredText"));
         Assert.assertEquals(expectedBoolQuery.mustNot().get(0), queryBuilder.mustNot().get(0));

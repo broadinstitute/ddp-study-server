@@ -2,16 +2,15 @@ package org.broadinstitute.dsm.model.elastic.filter.query;
 
 import static org.junit.Assert.*;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
 public class AbstractQueryBuilderFactoryTest {
 
     @Test
     public void create() {
-        AbstractQueryBuilderFactory queryBuilderFactory = new AbstractQueryBuilderFactory("oD");
-        assertEquals(DsmAbstractQueryBuilder.class,  queryBuilderFactory.create().getClass());
+        assertEquals(DsmAbstractQueryBuilder.class,  AbstractQueryBuilderFactory.create("oD", StringUtils.EMPTY).getClass());
 
-        queryBuilderFactory = new AbstractQueryBuilderFactory("ES");
-        assertEquals(BaseAbstractQueryBuilder.class,  queryBuilderFactory.create().getClass());
+        assertEquals(BaseAbstractQueryBuilder.class,  AbstractQueryBuilderFactory.create("ES", StringUtils.EMPTY).getClass());
     }
 }

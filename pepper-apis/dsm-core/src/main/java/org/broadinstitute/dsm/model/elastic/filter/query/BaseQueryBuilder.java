@@ -35,7 +35,7 @@ public abstract class BaseQueryBuilder {
         return queryBuilder;
     }
 
-    protected QueryBuilder build(List<QueryBuilder> queryBuilders) {
+    public QueryBuilder build(List<QueryBuilder> queryBuilders) {
         QueryBuilder result;
         if (queryBuilders.size() == 1) {
             result = queryBuilders.get(0);
@@ -51,12 +51,5 @@ public abstract class BaseQueryBuilder {
     }
 
     protected abstract QueryBuilder getFinalQuery(QueryBuilder query);
-
-    public QueryBuilder buildEachQuery(List<QueryBuilder> queryBuilders,
-                                       QueryPayload queryPayload) {
-        this.payload = queryPayload;
-        return this.build(queryBuilders);
-        //return this.build(operator.getQueryStrategy().build(this));
-    }
 
 }

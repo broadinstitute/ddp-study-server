@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.model.elastic.filter.query;
 
 import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.model.elastic.filter.FilterParser;
-import org.broadinstitute.dsm.model.elastic.filter.FilterSeparatorFactory;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.ExistsQueryBuilder;
@@ -10,31 +9,18 @@ import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.NestedQueryBuilder;
 import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 public class ActivitiesCollectionQueryBuilderTest {
 
     public static final String ES = "ES";
-    private AbstractQueryBuilderFactory builderFactory;
     private BaseAbstractQueryBuilder abstractQueryBuilder;
-    private FilterSeparatorFactory factory;
-
-    @Before
-    public void setUp() {
-        builderFactory = new AbstractQueryBuilderFactory(ES);
-        abstractQueryBuilder = new BaseAbstractQueryBuilder();
-        factory = new FilterSeparatorFactory();
-        factory.setAlias(ES);
-    }
 
 
     @Test
     public void activitiesCompletedAtNotEmpty() {
         String filter = " AND ANGIORELEASE.completedAt IS NOT NULL ";
-        factory.setFilter(filter);
-        abstractQueryBuilder.setFilterSeparator(factory.create());
-        abstractQueryBuilder.setFilter(filter);
+        abstractQueryBuilder = AbstractQueryBuilderFactory.create(ES, filter);
         abstractQueryBuilder.setParser(new FilterParser());
         AbstractQueryBuilder<?> actual = abstractQueryBuilder.build();
         BoolQueryBuilder expected = new BoolQueryBuilder();
@@ -49,9 +35,7 @@ public class ActivitiesCollectionQueryBuilderTest {
     @Test
     public void activitiesCreatedAtExactDate() {
         String filter = " AND ANGIORELEASE.completedAt = '2022-07-28'";
-        factory.setFilter(filter);
-        abstractQueryBuilder.setFilterSeparator(factory.create());
-        abstractQueryBuilder.setFilter(filter);
+        abstractQueryBuilder = AbstractQueryBuilderFactory.create(ES, filter);
         abstractQueryBuilder.setParser(new FilterParser());
         AbstractQueryBuilder<?> actual = abstractQueryBuilder.build();
         BoolQueryBuilder expected = new BoolQueryBuilder();
@@ -66,9 +50,7 @@ public class ActivitiesCollectionQueryBuilderTest {
     @Test
     public void activitiesStatusOptions() {
         String filter = "  AND ( ANGIORELEASE.status = 'COMPLETE' OR ANGIORELEASE.status = 'IN_PROGRESS' ) ";
-        factory.setFilter(filter);
-        abstractQueryBuilder.setFilterSeparator(factory.create());
-        abstractQueryBuilder.setFilter(filter);
+        abstractQueryBuilder = AbstractQueryBuilderFactory.create(ES, filter);
         abstractQueryBuilder.setParser(new FilterParser());
         AbstractQueryBuilder<?> actual = abstractQueryBuilder.build();
         BoolQueryBuilder expected = new BoolQueryBuilder();
@@ -86,9 +68,7 @@ public class ActivitiesCollectionQueryBuilderTest {
     @Test
     public void activitiesLastUpdatedAtRange() {
         String filter = " AND ANGIORELEASE.lastUpdatedAt  >= '2022-04-21' AND ANGIORELEASE.lastUpdatedAt  <= '2022-07-28'";
-        factory.setFilter(filter);
-        abstractQueryBuilder.setFilterSeparator(factory.create());
-        abstractQueryBuilder.setFilter(filter);
+        abstractQueryBuilder = AbstractQueryBuilderFactory.create(ES, filter);
         abstractQueryBuilder.setParser(new FilterParser());
         AbstractQueryBuilder<?> actual = abstractQueryBuilder.build();
         BoolQueryBuilder expected = new BoolQueryBuilder();
@@ -109,9 +89,7 @@ public class ActivitiesCollectionQueryBuilderTest {
     @Test
     public void activitiesQuestionsAnswers() {
         String filter = " AND ANGIORELEASE.INSTITUTION = 'bla'";
-        factory.setFilter(filter);
-        abstractQueryBuilder.setFilterSeparator(factory.create());
-        abstractQueryBuilder.setFilter(filter);
+        abstractQueryBuilder = AbstractQueryBuilderFactory.create(ES, filter);
         abstractQueryBuilder.setParser(new FilterParser());
         AbstractQueryBuilder<?> actual = abstractQueryBuilder.build();
         BoolQueryBuilder expected = new BoolQueryBuilder();

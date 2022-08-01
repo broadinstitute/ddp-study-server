@@ -34,7 +34,7 @@ public class MatchQueryStrategyTest {
         BaseQueryBuilder baseQueryBuilder = BaseQueryBuilder.of(payload);
         NestedQueryBuilder queryBuilder =
                 (NestedQueryBuilder)
-                        baseQueryBuilder.buildEachQuery(getQueryBuilders(payload, baseQueryBuilder), payload);
+                        baseQueryBuilder.build(getQueryBuilders(payload, baseQueryBuilder));
         MatchQueryBuilder expectedMatchQueryBuilder = new MatchQueryBuilder("dsm.medicalRecord.duplicate", true);
         Assert.assertEquals(expectedMatchQueryBuilder, queryBuilder.query());
     }
@@ -51,7 +51,7 @@ public class MatchQueryStrategyTest {
         BaseQueryBuilder baseQueryBuilder = BaseQueryBuilder.of(payload);
         NestedQueryBuilder queryBuilder =
                 (NestedQueryBuilder)
-                        baseQueryBuilder.buildEachQuery(getQueryBuilders(payload, baseQueryBuilder), payload);
+                        baseQueryBuilder.build(getQueryBuilders(payload, baseQueryBuilder));
         MatchQueryBuilder expectedMatchQueryBuilder = new MatchQueryBuilder("dsm.medicalRecord.notes.keyword", "test note");
         Assert.assertEquals(expectedMatchQueryBuilder, queryBuilder.query());
     }
@@ -68,7 +68,7 @@ public class MatchQueryStrategyTest {
         BaseQueryBuilder baseQueryBuilder = BaseQueryBuilder.of(payload);
         NestedQueryBuilder queryBuilder =
                 (NestedQueryBuilder)
-                        baseQueryBuilder.buildEachQuery(getQueryBuilders(payload, baseQueryBuilder), payload);
+                        baseQueryBuilder.build(getQueryBuilders(payload, baseQueryBuilder));
         MatchQueryBuilder expectedMatchQueryBuilder = new MatchQueryBuilder("dsm.medicalRecord.faxSent", "09/22/2020");
         Assert.assertEquals(expectedMatchQueryBuilder, queryBuilder.query());
     }
@@ -85,7 +85,7 @@ public class MatchQueryStrategyTest {
         BaseQueryBuilder baseQueryBuilder = BaseQueryBuilder.of(payload);
         NestedQueryBuilder queryBuilder =
                 (NestedQueryBuilder)
-                        baseQueryBuilder.buildEachQuery(getQueryBuilders(payload, baseQueryBuilder), payload);
+                        baseQueryBuilder.build(getQueryBuilders(payload, baseQueryBuilder));
         MatchQueryBuilder expectedMatchQueryBuilder = new MatchQueryBuilder("dsm.tissue.ussCount", "5");
         Assert.assertEquals(expectedMatchQueryBuilder, queryBuilder.query());
     }

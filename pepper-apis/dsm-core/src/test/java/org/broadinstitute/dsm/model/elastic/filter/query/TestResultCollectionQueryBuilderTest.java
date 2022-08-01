@@ -26,7 +26,7 @@ public class TestResultCollectionQueryBuilderTest {
         BuildQueryStrategy queryStrategy = Operator.JSON_CONTAINS.getQueryStrategy();
         queryStrategy.setBaseQueryBuilder(queryBuilder);
         queryBuilder.setOperator(Operator.JSON_CONTAINS);
-        QueryBuilder query = queryBuilder.buildEachQuery(queryStrategy.build(), queryPayload);
+        QueryBuilder query = queryBuilder.build(queryStrategy.build());
         MatchQueryBuilder matchQueryBuilder = new MatchQueryBuilder("dsm.kitRequestShipping.testResult.isCorrected", true);
         NestedQueryBuilder expected = new NestedQueryBuilder("dsm.kitRequestShipping.testResult", matchQueryBuilder, ScoreMode.Avg);
 

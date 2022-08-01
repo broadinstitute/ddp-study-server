@@ -46,7 +46,6 @@ public class BaseAbstractQueryBuilder {
     }
 
     public AbstractQueryBuilder build() {
-        filterSeparator.setFilter(filter);
         Map<String, List<String>> parsedFilters = filterSeparator.parseFiltersByLogicalOperators();
         for (Map.Entry<String, List<String>> parsedFilter : parsedFilters.entrySet()) {
             List<String> filterValues = parsedFilter.getValue();
@@ -76,11 +75,10 @@ public class BaseAbstractQueryBuilder {
             } else {
                 BuildQueryStrategy queryStrategy = operator.getQueryStrategy();
                 queryStrategy.setBaseQueryBuilder(baseQueryBuilder);
-                baseQueryBuilder.payload = queryPayload;
-                baseQueryBuilder.operator = operator;
+                baseQueryBuilder.setOperator(operator);
                 queryBuilders = queryStrategy.build();
             }
-            filterStrategy.build(boolQueryBuilder, baseQueryBuilder.buildEachQuery(queryBuilders, queryPayload));
+            filterStrategy.build(boolQueryBuilder, baseQueryBuilder.build(queryBuilders));
         }
     }
 

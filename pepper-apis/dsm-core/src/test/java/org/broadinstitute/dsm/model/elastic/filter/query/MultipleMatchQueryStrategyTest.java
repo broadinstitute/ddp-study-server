@@ -25,8 +25,8 @@ public class MultipleMatchQueryStrategyTest {
         BuildQueryStrategy queryStrategy = multipleOptions.getQueryStrategy();
         queryStrategy.setBaseQueryBuilder(baseQueryBuilder);
         NestedQueryBuilder nestedQueryBuilder =
-                (NestedQueryBuilder) baseQueryBuilder.buildEachQuery(queryStrategy.build(), mrDocument
-        );
+                (NestedQueryBuilder) baseQueryBuilder.build(queryStrategy.build()
+                );
 
         BoolQueryBuilder expectedBoolQuery = new BoolQueryBuilder();
 

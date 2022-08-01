@@ -24,8 +24,8 @@ public class RangeGTEQueryStrategyTest {
         BuildQueryStrategy queryStrategy = dateGreaterThanEquals.getQueryStrategy();
         queryStrategy.setBaseQueryBuilder(baseQueryBuilder);
         NestedQueryBuilder nestedGreaterQuery =
-                (NestedQueryBuilder) baseQueryBuilder.buildEachQuery(queryStrategy.build(), mrDocument
-        );
+                (NestedQueryBuilder) baseQueryBuilder.build(queryStrategy.build()
+                );
 
         RangeQueryBuilder expected = new RangeQueryBuilder("dsm.medicalRecord.mrReceived");
         expected.gte(values[0]);

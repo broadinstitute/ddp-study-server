@@ -33,7 +33,7 @@ public class NonExactMatchQueryStrategyTest {
         queryStrategy.setBaseQueryBuilder(baseQueryBuilder);
 
         NestedQueryBuilder queryBuilder =
-                (NestedQueryBuilder) baseQueryBuilder.buildEachQuery(queryStrategy.build(), duplicatePayload);
+                (NestedQueryBuilder) baseQueryBuilder.build(queryStrategy.build());
         WildcardQueryBuilder expectedMatchQueryBuilder = new WildcardQueryBuilder("dsm.medicalRecord.notes", "*test note*");
         Assert.assertEquals(expectedMatchQueryBuilder, queryBuilder.query());
     }
@@ -51,7 +51,7 @@ public class NonExactMatchQueryStrategyTest {
         BuildQueryStrategy queryStrategy = like.getQueryStrategy();
         queryStrategy.setBaseQueryBuilder(baseQueryBuilder);
         NestedQueryBuilder queryBuilder =
-                (NestedQueryBuilder) baseQueryBuilder.buildEachQuery(queryStrategy.build(), duplicatePayload);
+                (NestedQueryBuilder) baseQueryBuilder.build(queryStrategy.build());
         MatchQueryBuilder expectedMatchQueryBuilder = new MatchQueryBuilder("dsm.medicalRecord.followupRequired", "1");
         Assert.assertEquals(expectedMatchQueryBuilder, queryBuilder.query());
     }

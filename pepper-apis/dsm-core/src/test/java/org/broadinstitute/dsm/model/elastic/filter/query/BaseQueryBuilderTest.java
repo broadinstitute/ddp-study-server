@@ -24,7 +24,7 @@ public class BaseQueryBuilderTest {
         queryStrategy.setBaseQueryBuilder(collectionQueryBuilder);
 
         NestedQueryBuilder queryBuilder =
-                (NestedQueryBuilder) collectionQueryBuilder.buildEachQuery(queryStrategy.build(), payload);
+                (NestedQueryBuilder) collectionQueryBuilder.build(queryStrategy.build());
         assertTrue(queryBuilder.query() instanceof MatchQueryBuilder);
 
         operator = Operator.LIKE;
@@ -33,7 +33,7 @@ public class BaseQueryBuilderTest {
         queryStrategy = operator.getQueryStrategy();
         queryStrategy.setBaseQueryBuilder(collectionQueryBuilder);
 
-        queryBuilder = (NestedQueryBuilder) collectionQueryBuilder.buildEachQuery(queryStrategy.build(), payload);
+        queryBuilder = (NestedQueryBuilder) collectionQueryBuilder.build(queryStrategy.build());
         assertTrue(queryBuilder.query() instanceof MatchQueryBuilder);
 
 
@@ -43,7 +43,7 @@ public class BaseQueryBuilderTest {
         queryStrategy = operator.getQueryStrategy();
         queryStrategy.setBaseQueryBuilder(collectionQueryBuilder);
 
-        queryBuilder = (NestedQueryBuilder) collectionQueryBuilder.buildEachQuery(queryStrategy.build(), payload);
+        queryBuilder = (NestedQueryBuilder) collectionQueryBuilder.build(queryStrategy.build());
 
         assertTrue(queryBuilder.query() instanceof RangeQueryBuilder);
     }

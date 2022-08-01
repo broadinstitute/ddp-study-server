@@ -1,22 +1,18 @@
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
+import org.broadinstitute.dsm.model.elastic.filter.FilterSeparatorFactory;
 import org.broadinstitute.dsm.model.participant.Util;
 
-@NoArgsConstructor
-@AllArgsConstructor
-@Setter
 public class AbstractQueryBuilderFactory {
-
-    private String alias;
-
-    public BaseAbstractQueryBuilder create() {
+    public static BaseAbstractQueryBuilder create(String alias, String filter) {
+        AndOrFilterSeparator filterSeparator = FilterSeparatorFactory.create(alias, filter);
         BaseAbstractQueryBuilder abstractQueryBuilder = new BaseAbstractQueryBuilder();
         if (Util.isUnderDsmKey(alias)) {
             abstractQueryBuilder = new DsmAbstractQueryBuilder();
         }
+        abstractQueryBuilder.setFilterSeparator(filterSeparator);
+        abstractQueryBuilder.setFilter(filter);
         return abstractQueryBuilder;
     }
 

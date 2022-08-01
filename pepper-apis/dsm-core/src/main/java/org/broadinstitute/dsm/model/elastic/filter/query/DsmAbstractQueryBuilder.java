@@ -9,6 +9,7 @@ public class DsmAbstractQueryBuilder extends BaseAbstractQueryBuilder {
     protected static final String DSM_WITH_DOT = ESObjectConstants.DSM + DBConstants.ALIAS_DELIMITER;
 
     protected DsmAbstractQueryBuilder() {
+        super();
         filterSeparator = new AndOrFilterSeparator(filter);
     }
 
