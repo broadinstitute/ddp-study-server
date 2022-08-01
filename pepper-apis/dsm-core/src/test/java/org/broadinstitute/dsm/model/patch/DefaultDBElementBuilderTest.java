@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.model.patch;
 
 import org.broadinstitute.dsm.db.structure.DBElement;
@@ -43,5 +44,4 @@ public class DefaultDBElementBuilderTest {
 
         Assert.assertThrows(RuntimeException.class, () -> builder.fromName(name));
     }
-
 }
