@@ -47,6 +47,7 @@ abstract class InsertStudyEvents implements CustomTask {
 
     @Override
     public void run(Handle handle) {
+        log.info("TASK:: InsertStudyEvents ");
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid"));
         UserDto user = handle.attach(JdbiUser.class).findByUserGuid(cfg.getString("adminUser.guid"));
         insertEvents(handle, studyDto, user.getUserId());
