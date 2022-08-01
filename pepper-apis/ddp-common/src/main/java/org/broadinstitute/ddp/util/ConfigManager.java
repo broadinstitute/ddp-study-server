@@ -12,8 +12,11 @@ import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigRenderOptions;
 import com.typesafe.config.ConfigValue;
 import com.typesafe.config.ConfigValueFactory;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.secrets.SecretManager;
 
@@ -24,21 +27,25 @@ import org.broadinstitute.ddp.secrets.SecretManager;
  * are in a test!
  */
 @Slf4j
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ConfigManager {
     private static final String GOOGLE_SECRET_PROJECT = "google.secret.project";
-    private static final String GOOGLE_SECRET_NAME = "google.secret.name";
     private static final String GOOGLE_SECRET_VERSION = "google.secret.version";
+    private static final String GOOGLE_SECRET_NAME = "google.secret.name";
 
     private static final String TYPESAFE_CONFIG_SYSTEM_VAR = "config.file";
     public static final File TYPESAFE_CONFIG_FILE;
 
     static {
         // For benefit of GAE. Does not like command line options with "=" characters and env variables with "."
-        String configFileName = System.getenv(TYPESAFE_CONFIG_SYSTEM_VAR.replace('.', '_'));
-        if (configFileName == null) {
-            configFileName = System.getProperty(TYPESAFE_CONFIG_SYSTEM_VAR);
+        final var configFileName = Optional.ofNullable(System.getenv(TYPESAFE_CONFIG_SYSTEM_VAR))
+                .map(value -> value.replace('.', '_'))
+                .orElse(System.getProperty(TYPESAFE_CONFIG_SYSTEM_VAR));
+
+        TYPESAFE_CONFIG_FILE = Optional.ofNullable(configFileName).map(File::new).orElse(null);
+        if (TYPESAFE_CONFIG_FILE != null && !TYPESAFE_CONFIG_FILE.exists()) {
+            throw new DDPException("The config file " + TYPESAFE_CONFIG_FILE.getAbsolutePath() + " doesn't exist");
         }
-        TYPESAFE_CONFIG_FILE = configFileName != null ? new File(configFileName) : null;
     }
 
     private final Config cfg;
@@ -47,11 +54,7 @@ public class ConfigManager {
 
     private final Map<String, String> overrides = new HashMap<>();
 
-    private ConfigManager(Config cfg) {
-        this.cfg = cfg;
-    }
-
-    public static ConfigManager init(Config config) {
+    public static ConfigManager init(final Config config) {
         configManager = new ConfigManager(config);
         return configManager;
     }
@@ -60,7 +63,7 @@ public class ConfigManager {
         if (configManager == null) {
             try {
                 init(parseConfig());
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new DDPException("Could not initialize config", e);
             }
         }
@@ -74,29 +77,49 @@ public class ConfigManager {
      * please use {@link #getInstance()}
      */
     public static Config parseConfig() {
-        if (TYPESAFE_CONFIG_FILE != null) {
-            log.info("The config file name was specified. Loading configuration from the local file");
-            return ConfigFactory.parseFile(TYPESAFE_CONFIG_FILE);
+        Optional<Config> configCloud = Optional.empty();
+        if (isSecretManagerConfigurationSpecified()) {
+            log.info("Secret manager configuration found. Trying to load the configuration from the Secret Manager");
+            configCloud = Optional.of(loadFromSecretManager());
         }
 
-        log.info("The config file name was not specified. Loading configuration from Secrets Storage");
+        Optional<Config> configLocal = Optional.empty();
+        if (isLocalConfigurationFileSpecified()) {
+            log.info("The config file name was specified. Trying to load the configuration from the local file");
+            configLocal = Optional.of(ConfigFactory.parseFile(TYPESAFE_CONFIG_FILE));
+        }
 
+        if (configCloud.isEmpty() && configLocal.isEmpty()) {
+            log.error("Can't load configuration. Neither local config not cloud one was specified");
+            throw new DDPException("Can't load configuration. Neither local config not cloud one was specified");
+        }
+
+        return configLocal.orElse(ConfigFactory.empty()).withFallback(configCloud.orElse(ConfigFactory.empty())).resolve();
+    }
+
+    private static boolean isLocalConfigurationFileSpecified() {
+        return TYPESAFE_CONFIG_FILE != null;
+    }
+
+    private static boolean isSecretManagerConfigurationSpecified() {
+        return StringUtils.isNotBlank(getProperty(GOOGLE_SECRET_PROJECT)) && StringUtils.isNotBlank(getProperty(GOOGLE_SECRET_NAME));
+    }
+
+    private static Config loadFromSecretManager() {
         final var projectName = getProperty(GOOGLE_SECRET_PROJECT);
         if (projectName == null) {
             log.error(GOOGLE_SECRET_PROJECT + " property is not set");
+            return ConfigFactory.empty();
         }
 
         final var secretName = getProperty(GOOGLE_SECRET_NAME);
         if (secretName == null) {
             log.error(GOOGLE_SECRET_NAME + " property is not set");
+            return ConfigFactory.empty();
         }
 
-        if (projectName == null && secretName == null) {
-            return null;
-        }
-
-        final var secretVersion = getProperty(GOOGLE_SECRET_VERSION, "latest");
-        return ConfigFactory.parseString(SecretManager.get(projectName, secretName, secretVersion).orElseThrow());
+        return ConfigFactory.parseString(SecretManager.get(projectName, secretName, getProperty(GOOGLE_SECRET_VERSION, "latest"))
+                .orElseThrow(() -> new DDPException("The secret " + secretName + " doesn't exist")));
     }
 
     /**
