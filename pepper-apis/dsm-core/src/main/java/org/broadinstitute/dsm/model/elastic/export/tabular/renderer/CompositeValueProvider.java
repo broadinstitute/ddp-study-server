@@ -18,8 +18,7 @@ public class CompositeValueProvider extends TextValueProvider {
     public List<String> formatRawValues(List<?> rawValues, FilterExportConfig filterConfig, Map<String, Object> formMap) {
         if (CollectionUtils.isNotEmpty(filterConfig.getChildConfigs())) {
             List<String> answerVals = new ArrayList<>();
-            if (rawValues != null && rawValues.size() == 1 && rawValues.get(0) instanceof List) {
-                // sometimes, e.g. Singular's ABOUT_YOU_HEALTHY.MAILING_ADDRESS, the composite values are nested inside another array
+            if (isSingleListResponse(rawValues)) {
                 rawValues = (List) rawValues.get(0);
             }
             for (int questionIndex = 0; questionIndex < filterConfig.getChildConfigs().size(); questionIndex++) {
@@ -38,5 +37,10 @@ public class CompositeValueProvider extends TextValueProvider {
 
         }
         return super.formatRawValues(rawValues, filterConfig, formMap);
+    }
+    /** sometimes, e.g. Singular's ABOUT_YOU_HEALTHY.MAILING_ADDRESS, the composite values are nested inside another array.
+     *  this checks for that circumstance */
+    private boolean isSingleListResponse(List<?> rawValues) {
+        return rawValues != null && rawValues.size() == 1 && rawValues.get(0) instanceof List;
     }
 }

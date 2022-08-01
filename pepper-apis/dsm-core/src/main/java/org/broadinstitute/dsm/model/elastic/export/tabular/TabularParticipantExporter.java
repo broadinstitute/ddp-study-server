@@ -5,7 +5,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -64,29 +63,33 @@ public abstract class TabularParticipantExporter {
      *  and needs to be globally unique
      */
 
-    public static List<String> getAllColumnNames(FilterExportConfig filterConfig, int formRepeatNum, int questionRepeatNum) {
+    protected static List<String> getConfigColumnNames(FilterExportConfig filterConfig, int formRepeatNum, int questionRepeatNum) {
         List<String> allColNames = new ArrayList<>();
-        List<String> optionStableIds = Collections.singletonList(null);
         if (filterConfig.isSplitOptionsIntoColumns()) {
-            optionStableIds = filterConfig.getOptions().stream().map(opt -> (String) opt.get(ESObjectConstants.OPTION_STABLE_ID))
+            List<String> optionStableIds = filterConfig.getOptions().stream().map(opt -> (String) opt.get(ESObjectConstants.OPTION_STABLE_ID))
                     .collect(Collectors.toList());
+            allColNames = optionStableIds.stream().map(optionStableId ->
+                    getColumnNamesForItem(filterConfig, formRepeatNum, questionRepeatNum, optionStableId)
+            ).flatMap(Collection::stream).collect(Collectors.toList());
+        } else {
+            allColNames = getColumnNamesForItem(filterConfig, formRepeatNum, questionRepeatNum, null);
         }
-        allColNames = optionStableIds.stream().map(opt -> {
-                    List<String> colNames = new ArrayList<>();
-                    if (filterConfig.getChildConfigs() != null) {
-                        colNames.addAll(filterConfig.getChildConfigs().stream().map(childConfig -> getColumnName(filterConfig, formRepeatNum,
-                                questionRepeatNum, opt,null, childConfig)).collect(Collectors.toList()));
-                    } else {
-                        colNames.add(getColumnName(filterConfig, formRepeatNum, questionRepeatNum, opt,null, null));
-                        if (filterConfig.isHasDetails()) {
-                            colNames.add(getColumnName(filterConfig, formRepeatNum, questionRepeatNum, opt,"DETAIL", null));
-                        }
-                    }
-                    return colNames;
-                }).flatMap(Collection::stream).collect(Collectors.toList());
-
-
         return allColNames;
+    }
+
+    /** handles iterating over child questions and question details */
+    protected static List<String> getColumnNamesForItem(FilterExportConfig filterConfig, int formRepeatNum, int questionRepeatNum, String optionStableId) {
+        List<String> colNames = new ArrayList<>();
+        if (filterConfig.getChildConfigs() != null) {
+            colNames.addAll(filterConfig.getChildConfigs().stream().map(childConfig -> getColumnName(filterConfig, formRepeatNum,
+                    questionRepeatNum, optionStableId,null, childConfig)).collect(Collectors.toList()));
+        } else {
+            colNames.add(getColumnName(filterConfig, formRepeatNum, questionRepeatNum, optionStableId,null, null));
+            if (filterConfig.isHasDetails()) {
+                colNames.add(getColumnName(filterConfig, formRepeatNum, questionRepeatNum, optionStableId,"DETAIL", null));
+            }
+        }
+        return colNames;
     }
 
 
@@ -94,31 +97,40 @@ public abstract class TabularParticipantExporter {
      * Gets all the column texts to be rendered.  This is a human-readable counterpart to the column name.  e.g.
      *  while the column name might be "MEDICIAL_HISTORY_2.ANALYSIS_TYPE" the text might be "Type of sample analysis"
      */
-    public List<String> getAllColumnTexts(FilterExportConfig filterConfig) {
+    protected List<String> getConfigColumnTexts(FilterExportConfig filterConfig) {
         List<String> allColTexts = new ArrayList<>();
-        List<Map<String, Object>> splitOptions = Collections.singletonList(null);
         if (filterConfig.isSplitOptionsIntoColumns()) {
-            splitOptions = filterConfig.getOptions();
+            List<Map<String, Object>> splitOptions = filterConfig.getOptions();
+            allColTexts = splitOptions.stream().map(opt ->
+                    getColumnTextForItem(filterConfig, opt)
+            ).flatMap(Collection::stream).collect(Collectors.toList());
+        } else {
+            allColTexts = getColumnTextForItem(filterConfig, null);
         }
-        allColTexts = splitOptions.stream().map(opt -> {
-            List<String> colTexts = new ArrayList<>();
-            if (filterConfig.getChildConfigs() != null) {
-                colTexts.addAll(filterConfig.getChildConfigs().stream().map(childConfig -> childConfig.getColumn().getDisplay())
-                        .collect(Collectors.toList()));
-            } else {
-                if (opt == null) {
-                    colTexts.add(filterConfig.getColumn().getDisplay());
-                } else {
-                    colTexts.add((String) opt.get(ESObjectConstants.OPTION_TEXT));
-                }
-                if (filterConfig.isHasDetails()) {
-                    colTexts.add("additional detail");
-                }
-            }
-            return colTexts;
-        }).flatMap(Collection::stream).collect(Collectors.toList());
+
         return allColTexts;
     }
+
+    /** handles iterating over child questions and question details */
+    protected static List<String> getColumnTextForItem(FilterExportConfig filterConfig, Map<String, Object> opt) {
+        List<String> colTexts = new ArrayList<>();
+        if (filterConfig.getChildConfigs() != null) {
+            colTexts.addAll(filterConfig.getChildConfigs().stream().map(childConfig -> childConfig.getColumn().getDisplay())
+                    .collect(Collectors.toList()));
+        } else {
+            if (opt == null) {
+                colTexts.add(filterConfig.getColumn().getDisplay());
+            } else {
+                colTexts.add((String) opt.get(ESObjectConstants.OPTION_TEXT));
+            }
+            if (filterConfig.isHasDetails()) {
+                colTexts.add("additional detail");
+            }
+        }
+        return colTexts;
+    }
+
+
 
     /** some tables are stored off the same data object as another (e.g. proxies are stored off of "profile")
      * this map lets us add distinguishing names to columns from those objects.  e.g. profile.email will not
@@ -191,7 +203,7 @@ public abstract class TabularParticipantExporter {
             for (int formRepeatNum = 1; formRepeatNum <= moduleConfig.getNumMaxRepeats(); formRepeatNum++) {
                 for (FilterExportConfig filterConfig : moduleConfig.getQuestions()) {
                     for (int questionRepeatNum = 1; questionRepeatNum <= filterConfig.getMaxRepeats(); questionRepeatNum++) {
-                        headers.addAll(getAllColumnNames(filterConfig, formRepeatNum, questionRepeatNum));
+                        headers.addAll(getConfigColumnNames(filterConfig, formRepeatNum, questionRepeatNum));
                     }
                 }
             }
@@ -206,7 +218,7 @@ public abstract class TabularParticipantExporter {
             for (int formRepeatNum = 1; formRepeatNum <= moduleConfigs.getNumMaxRepeats(); formRepeatNum++) {
                 for (FilterExportConfig filterConfig : moduleConfigs.getQuestions()) {
                     for (int questionRepeatNum = 1; questionRepeatNum <= filterConfig.getMaxRepeats(); questionRepeatNum++) {
-                        headers.addAll(getAllColumnTexts(filterConfig));
+                        headers.addAll(getConfigColumnTexts(filterConfig));
                     }
                 }
             }

@@ -40,16 +40,23 @@ public class TextValueProvider {
         Map<String, Object> answerObject = getRelevantAnswer(moduleMap, filterConfig);
         if (answerObject != null) {
             Object optionDetails = answerObject.get(ESObjectConstants.OPTIONDETAILS);
-            // Option details are stored in ES as an array of maps
-            // e.g. [{option: "TELANGIECTASIA_EYES", details: "12"}, {option: "TELANGIECTASIA_SKIN", details: "34"}]
+
             if (optionDetails instanceof List) {
-                return ((List<?>) optionDetails).stream().filter(detail ->
-                                StringUtils.equals((String) ((Map) detail).get(ESObjectConstants.OPTION), optionStableId))
-                        .map(detail -> (String) ((Map<String, Object>) detail).get(ESObjectConstants.DETAILS))
-                        .findAny().orElse(StringUtils.EMPTY);
+                return extractOptionDetails(optionStableId, (List<?>) optionDetails);
             }
         }
         return StringUtils.EMPTY;
+    }
+
+    /**
+     * Option details are stored in ES as an array of maps
+     *  e.g. [{option: "TELANGIECTASIA_EYES", details: "12"}, {option: "TELANGIECTASIA_SKIN", details: "34"}]
+     */
+    protected String extractOptionDetails(String optionStableId, List<?> optionDetailsObject) {
+        return optionDetailsObject.stream().filter(detail ->
+                        StringUtils.equals((String) ((Map) detail).get(ESObjectConstants.OPTION), optionStableId))
+                .map(detail -> (String) ((Map<String, Object>) detail).get(ESObjectConstants.DETAILS))
+                .findAny().orElse(StringUtils.EMPTY);
     }
 
     protected List<?> getRawValues(FilterExportConfig filterConfig, Map<String, Object> moduleMap) {
