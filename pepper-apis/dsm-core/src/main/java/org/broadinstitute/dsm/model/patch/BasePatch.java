@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.model.patch;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
@@ -34,7 +35,6 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.EventUtil;
 import org.broadinstitute.dsm.util.ParticipantUtil;
-import org.broadinstitute.dsm.util.PatchUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

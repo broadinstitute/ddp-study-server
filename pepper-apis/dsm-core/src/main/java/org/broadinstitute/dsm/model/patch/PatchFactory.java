@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.model.patch;
 
 import java.util.Objects;
