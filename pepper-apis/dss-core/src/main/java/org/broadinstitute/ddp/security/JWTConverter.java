@@ -195,10 +195,9 @@ public class JWTConverter {
                         String preferredLanguage = getPreferredLanguageCodeForUser(userProfile, ddpUserGuid);
                         txnDdpAuth = new DDPAuth(auth0Domain, auth0ClientId, ddpUserGuid, jwt, userPermissions, preferredLanguage);
                     } catch (Exception e) {
-                        log.warn("Could not verify token. User "
-                                + decodedJwt.getClaim(Auth0Constants.DDP_USER_ID_CLAIM).asString()
-                                + " tried to authenticate against client auth0clientId "
-                                + auth0ClientId);
+                        log.warn("Could not verify token. User {} tried to authenticate against client {}",
+                                decodedJwt.getClaim(Auth0Constants.DDP_USER_ID_CLAIM).asString(),
+                                auth0ClientId);
                         throw e;
                     }
                     if (userId != null) {

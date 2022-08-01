@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.route;
 
-import com.google.gson.JsonPrimitive;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.EditParticipantMessage;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -28,9 +28,9 @@ public class EditParticipantMessageReceiverRoute extends RequestHandler {
 
             if (DBConstants.MESSAGE_RECEIVED_STATUS.equals(status)) {
                 EditParticipantMessage.updateMessageStatusById(messageId, DBConstants.MESSAGE_SENT_BACK_STATUS);
-                return new Result(200, new JsonPrimitive(message).toString());
+                return new Result(200, message);
             }
-            return new Result(200, new JsonPrimitive("").toString());
+            return new Result(200, StringUtils.EMPTY);
         }
         logger.error("Request method not known");
         response.status(500);

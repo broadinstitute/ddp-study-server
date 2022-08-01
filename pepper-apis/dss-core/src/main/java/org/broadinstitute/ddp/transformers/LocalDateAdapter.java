@@ -23,7 +23,8 @@ public class LocalDateAdapter extends TypeAdapter<LocalDate> {
         try {
             return LocalDate.parse(reader.nextString());
         } catch (DateTimeParseException e) {
-            throw new JsonParseException(e);
+            var message = String.format("date does not match the format 'yyyy-MM-dd'");
+            throw new JsonParseException(message, e);
         }
     }
 }

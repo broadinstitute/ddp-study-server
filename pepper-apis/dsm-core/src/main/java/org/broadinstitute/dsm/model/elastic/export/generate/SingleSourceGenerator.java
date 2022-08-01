@@ -17,13 +17,16 @@ public class SingleSourceGenerator extends SourceGenerator {
 
     @Override
     public Object construct() {
-        return new HashMap<>(Map.of(ESObjectConstants.DYNAMIC_FIELDS, parseJsonValuesToObject()));
+        return new HashMap<>(Map.of(
+                ESObjectConstants.DYNAMIC_FIELDS, parseJsonValuesToObject(),
+                getPrimaryKey(), generatorPayload.getRecordId()));
     }
 
     @Override
     protected Map<String, Object> getElement(Object element) {
         logger.info("Constructing single field with value");
         Map<String, Object> elementMap = new HashMap<>();
+        elementMap.put(getPrimaryKey(), generatorPayload.getRecordId());
         elementMap.put(Util.underscoresToCamelCase(getDBElement().getColumnName()), element);
         return elementMap;
     }

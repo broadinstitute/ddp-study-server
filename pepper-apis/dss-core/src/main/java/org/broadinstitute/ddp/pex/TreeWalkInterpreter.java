@@ -533,7 +533,8 @@ public class TreeWalkInterpreter implements PexInterpreter {
                 });
 
         QuestionType questionType;
-        if (ictx.getActivityInstanceSummary() != null) {
+        if (ictx.getActivityInstanceSummary() != null
+                && userGuid.equals(ictx.getActivityInstanceSummary().getParticipantUser().getGuid())) {
             questionType = ictx.getActivityInstanceSummary()
                     .getLatestActivityInstance(activityCode)
                     .map(instanceDto -> ActivityInstanceUtil.getActivityDef(
