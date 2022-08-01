@@ -35,4 +35,9 @@ public class MultipleOptionsSplitterStrategy extends SplitterStrategy {
         List<String> splittedFilter = filterSeparator.parseFiltersByLogicalOperators().get(Filter.OR_TRIMMED);
         return splittedFilter.toArray(new String[] {});
     }
+
+    @Override
+    public String getFieldName() {
+        return super.getFieldName().split(Filter.EQUALS)[0];
+    }
 }

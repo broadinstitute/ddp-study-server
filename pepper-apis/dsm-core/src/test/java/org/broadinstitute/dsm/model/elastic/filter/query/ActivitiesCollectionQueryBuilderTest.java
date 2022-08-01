@@ -16,9 +16,9 @@ import org.junit.Test;
 public class ActivitiesCollectionQueryBuilderTest {
 
     public static final String ES = "ES";
-    private static AbstractQueryBuilderFactory builderFactory;
-    private static BaseAbstractQueryBuilder abstractQueryBuilder;
-    private static FilterSeparatorFactory factory;
+    private AbstractQueryBuilderFactory builderFactory;
+    private BaseAbstractQueryBuilder abstractQueryBuilder;
+    private FilterSeparatorFactory factory;
 
     @Before
     public void setUp() {
@@ -103,6 +103,28 @@ public class ActivitiesCollectionQueryBuilderTest {
         nestedBoolQuery2.must(new RangeQueryBuilder("activities.lastUpdatedAt").lte("2022-07-28"));
         NestedQueryBuilder expectedNestedQuery2 = new NestedQueryBuilder("activities", nestedBoolQuery2, ScoreMode.Avg);
         expected.must(expectedNestedQuery2);
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void activitiesQuestionsAnswers() {
+        String filter = " AND ANGIORELEASE.INSTITUTION = 'bla'";
+        factory.setFilter(filter);
+        abstractQueryBuilder.setFilterSeparator(factory.create());
+        abstractQueryBuilder.setFilter(filter);
+        abstractQueryBuilder.setParser(new FilterParser());
+        AbstractQueryBuilder<?> actual = abstractQueryBuilder.build();
+        BoolQueryBuilder expected = new BoolQueryBuilder();
+        BoolQueryBuilder nestedBoolQuery = new BoolQueryBuilder();
+        nestedBoolQuery.must(new MatchQueryBuilder("activities.activityCode", "ANGIORELEASE"));
+        BoolQueryBuilder innerNestedBoolQueryBuilder = new BoolQueryBuilder();
+        innerNestedBoolQueryBuilder.must(new MatchQueryBuilder("activities.questionsAnswers.stableId", "INSTITUTION"));
+        innerNestedBoolQueryBuilder.must(new MatchQueryBuilder("activities.questionsAnswers.answer", "bla"));
+        NestedQueryBuilder innerNestedQueryBuilder =
+                new NestedQueryBuilder("activities.questionsAnswers", innerNestedBoolQueryBuilder, ScoreMode.Avg);
+        nestedBoolQuery.must(innerNestedQueryBuilder);
+        NestedQueryBuilder expectedNestedQuery = new NestedQueryBuilder("activities", nestedBoolQuery, ScoreMode.Avg);
+        expected.must(expectedNestedQuery);
         Assert.assertEquals(expected, actual);
     }
 }

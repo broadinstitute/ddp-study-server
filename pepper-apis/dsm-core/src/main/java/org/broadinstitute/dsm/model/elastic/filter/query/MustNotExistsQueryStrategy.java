@@ -7,7 +7,7 @@ import org.elasticsearch.index.query.QueryBuilder;
 public class MustNotExistsQueryStrategy extends BaseQueryStrategy {
 
     @Override
-    public QueryBuilder getMainQueryBuilder(BaseQueryBuilder baseQueryBuilder) {
+    protected QueryBuilder getMainQueryBuilderFromChild(BaseQueryBuilder baseQueryBuilder) {
         BoolQueryBuilder existsWithEmpty = new BoolQueryBuilder();
         existsWithEmpty.mustNot(new ExistsQueryBuilder(baseQueryBuilder.payload.getFieldName()));
         return existsWithEmpty;

@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.ExistsQueryBuilder;
@@ -12,9 +13,14 @@ public class MustExistsQueryStrategyTest {
     @Test
     public void mustExistsQueryBuild() {
         Operator isNotNull = Operator.IS_NOT_NULL;
-        QueryPayload followupRequiredText = new QueryPayload("dsm.medicalRecord", "followupRequiredText", new Boolean[] {true});
-        BaseQueryBuilder baseQueryBuilder = BaseQueryBuilder.of("m", "followupRequiredText");
-        BoolQueryBuilder queryBuilder = (BoolQueryBuilder) ((NestedQueryBuilder)baseQueryBuilder.buildEachQuery(isNotNull,
+        QueryPayload followupRequiredText =
+                new QueryPayload("dsm.medicalRecord", "followupRequiredText",
+                        "m", new Boolean[] {true}, StringUtils.EMPTY);
+        BaseQueryBuilder baseQueryBuilder = BaseQueryBuilder.of(followupRequiredText);
+        BuildQueryStrategy queryStrategy = isNotNull.getQueryStrategy();
+        queryStrategy.setBaseQueryBuilder(baseQueryBuilder);
+        BoolQueryBuilder queryBuilder =
+                (BoolQueryBuilder) ((NestedQueryBuilder)baseQueryBuilder.buildEachQuery(queryStrategy.build(),
                 followupRequiredText)).query();
         BoolQueryBuilder expectedBoolQuery = new BoolQueryBuilder();
         expectedBoolQuery.must(new ExistsQueryBuilder("dsm.medicalRecord.followupRequiredText"));

@@ -11,7 +11,7 @@ import org.elasticsearch.index.query.QueryBuilder;
 public class JsonExtractQueryStrategy extends BaseQueryStrategy {
 
     @Override
-    public QueryBuilder getMainQueryBuilder(BaseQueryBuilder baseQueryBuilder) {
+    protected QueryBuilder getMainQueryBuilderFromChild(BaseQueryBuilder baseQueryBuilder) {
         QueryBuilder qb;
         Object[] dynamicFieldValues = baseQueryBuilder.payload.getValues();
         JsonExtractSplitterStrategy jsonExtractSplitter = (JsonExtractSplitterStrategy) baseQueryBuilder.operator.getSplitterStrategy();

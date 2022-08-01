@@ -5,8 +5,9 @@ import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 
 public class MultipleMatchQueryStrategy extends BaseQueryStrategy {
+
     @Override
-    public QueryBuilder getMainQueryBuilder(BaseQueryBuilder baseQueryBuilder) {
+    protected QueryBuilder getMainQueryBuilderFromChild(BaseQueryBuilder baseQueryBuilder) {
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
         Object[] values = baseQueryBuilder.payload.getValues();
         for (Object value : values) {

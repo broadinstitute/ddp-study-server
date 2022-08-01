@@ -31,7 +31,7 @@ public class MatchQueryStrategy extends BaseQueryStrategy {
     }
 
     @Override
-    public QueryBuilder getMainQueryBuilder(BaseQueryBuilder baseQueryBuilder) {
+    protected QueryBuilder getMainQueryBuilderFromChild(BaseQueryBuilder baseQueryBuilder) {
         String fieldName = getFieldName(baseQueryBuilder);
         return new MatchQueryBuilder(fieldName, baseQueryBuilder.payload.getValues()[0]);
     }

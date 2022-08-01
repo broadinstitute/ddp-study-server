@@ -6,7 +6,7 @@ import org.elasticsearch.index.query.RangeQueryBuilder;
 public class RangeGTEQueryStrategy extends BaseQueryStrategy {
 
     @Override
-    public QueryBuilder getMainQueryBuilder(BaseQueryBuilder baseQueryBuilder) {
+    protected QueryBuilder getMainQueryBuilderFromChild(BaseQueryBuilder baseQueryBuilder) {
         RangeQueryBuilder greaterRangeQuery = new RangeQueryBuilder(baseQueryBuilder.payload.getFieldName());
         greaterRangeQuery.gte(baseQueryBuilder.payload.getValues()[0]);
         return greaterRangeQuery;

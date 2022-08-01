@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -8,7 +9,7 @@ import org.elasticsearch.index.query.QueryBuilder;
 
 public abstract class BaseQueryStrategy implements BuildQueryStrategy {
 
-    protected BuildQueryStrategy additionalQueryStrategy;
+    protected List<BuildQueryStrategy> additionalQueryStrategies;
     protected BaseQueryBuilder baseQueryBuilder;
 
     public BaseQueryStrategy(BaseQueryBuilder baseQueryBuilder) {
@@ -17,20 +18,31 @@ public abstract class BaseQueryStrategy implements BuildQueryStrategy {
     }
 
     public BaseQueryStrategy() {
+        additionalQueryStrategies = new ArrayList<>();
     }
 
     @Override
-    public void setAdditionalQueryStrategy(BuildQueryStrategy queryStrategy) {
-        this.additionalQueryStrategy = queryStrategy;
+    public void setBaseQueryBuilder(BaseQueryBuilder baseQueryBuilder) {
+        this.baseQueryBuilder = baseQueryBuilder;
+    }
+
+    @Override
+    public void addAdditionalQueryStrategy(BuildQueryStrategy... queryStrategy) {
+        this.additionalQueryStrategies.addAll(Arrays.asList(queryStrategy));
     }
 
     @Override
     public List<QueryBuilder> build(BaseQueryBuilder baseQueryBuilder) {
         List<QueryBuilder> queryBuilders = new ArrayList<>();
-        if (Objects.nonNull(additionalQueryStrategy)) {
-            queryBuilders.add(additionalQueryStrategy.getMainQueryBuilder(additionalQueryStrategy.getBaseQueryBuilder()));
+        if (additionalQueryStrategies.size() > 0) {
+            additionalQueryStrategies.stream()
+                    .map(additionalQueryStrategy ->
+                            additionalQueryStrategy.getMainQueryBuilder(additionalQueryStrategy.getBaseQueryBuilder()))
+                    .forEach(queryBuilders::add);
         }
-        queryBuilders.add(getMainQueryBuilder(baseQueryBuilder));
+        if (Objects.nonNull(getMainQueryBuilder(baseQueryBuilder))) {
+            queryBuilders.add(getMainQueryBuilder(baseQueryBuilder));
+        }
         return queryBuilders;
     }
 
@@ -44,9 +56,12 @@ public abstract class BaseQueryStrategy implements BuildQueryStrategy {
         return this.baseQueryBuilder;
     }
 
-    protected QueryBuilder getMainQueryBuilder() {
-        return this.getMainQueryBuilder(baseQueryBuilder);
+    public QueryBuilder getMainQueryBuilder(BaseQueryBuilder baseQueryBuilder) {
+        if (Objects.isNull(baseQueryBuilder) || Objects.isNull(baseQueryBuilder.payload)) {
+            return null;
+        }
+        return getMainQueryBuilderFromChild(baseQueryBuilder);
     }
 
-
+    protected abstract QueryBuilder getMainQueryBuilderFromChild(BaseQueryBuilder baseQueryBuilder);
 }

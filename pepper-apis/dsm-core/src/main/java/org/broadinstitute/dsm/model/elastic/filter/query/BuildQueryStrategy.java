@@ -14,11 +14,13 @@ public interface BuildQueryStrategy {
 
     default void setExtractor(TypeExtractor<Map<String, String>> typeExtractor) {}
 
-    default void setAdditionalQueryStrategy(BuildQueryStrategy queryStrategy) {
+    default void addAdditionalQueryStrategy(BuildQueryStrategy... queryStrategy) {
 
     }
 
     BaseQueryBuilder getBaseQueryBuilder();
 
     QueryBuilder getMainQueryBuilder(BaseQueryBuilder baseQueryBuilder);
+
+    void setBaseQueryBuilder(BaseQueryBuilder baseQueryBuilder);
 }

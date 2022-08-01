@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
 import java.util.List;
+import java.util.Objects;
 
 import lombok.Setter;
 import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
@@ -14,18 +15,22 @@ public abstract class BaseQueryBuilder {
     protected Operator operator;
     protected QueryPayload payload;
 
-    public static BaseQueryBuilder of(String alias, String fieldName) {
+    public BaseQueryBuilder(QueryPayload queryPayload) {
+        this.payload = queryPayload;
+    }
+
+    public static BaseQueryBuilder of(QueryPayload queryPayload) {
         BaseQueryBuilder queryBuilder;
-        boolean isCollection = PropertyInfo.of(alias).isCollection();
+        boolean isCollection = PropertyInfo.of(queryPayload.getAlias()).isCollection();
         if (isCollection) {
-            if (TestResultCollectionQueryBuilder.TEST_RESULT.equals(fieldName)) {
+            if (TestResultCollectionQueryBuilder.TEST_RESULT.equals(queryPayload.getProperty())) {
                 queryBuilder =
-                        new TestResultCollectionQueryBuilder();
+                        new TestResultCollectionQueryBuilder(queryPayload);
             } else {
-                queryBuilder = new CollectionQueryBuilder();
+                queryBuilder = new CollectionQueryBuilder(queryPayload);
             }
         } else {
-            queryBuilder = new SingleQueryBuilder();
+            queryBuilder = new SingleQueryBuilder(queryPayload);
         }
         return queryBuilder;
     }
@@ -36,7 +41,10 @@ public abstract class BaseQueryBuilder {
             result = queryBuilders.get(0);
         } else {
             BoolQueryBuilder builder = new BoolQueryBuilder();
-            queryBuilders.forEach(builder::must);
+            queryBuilders
+                    .stream()
+                    .filter(Objects::nonNull)
+                    .forEach(builder::must);
             result = builder;
         }
         return getFinalQuery(result);
@@ -44,11 +52,11 @@ public abstract class BaseQueryBuilder {
 
     protected abstract QueryBuilder getFinalQuery(QueryBuilder query);
 
-    public QueryBuilder buildEachQuery(Operator operator,
+    public QueryBuilder buildEachQuery(List<QueryBuilder> queryBuilders,
                                        QueryPayload queryPayload) {
-        this.operator = operator;
         this.payload = queryPayload;
-        return this.build(operator.getQueryStrategy().build(this));
+        return this.build(queryBuilders);
+        //return this.build(operator.getQueryStrategy().build(this));
     }
 
 }

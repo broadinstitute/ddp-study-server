@@ -16,32 +16,44 @@ public class BaseQueryBuilderTest {
         QueryPayload payload = new QueryPayload("dsm.medicalRecord", "medicalRecordId", new Integer[] {10});
         Operator operator = Operator.EQUALS;
 
-        CollectionQueryBuilder collectionQueryBuilder = new CollectionQueryBuilder();
+        CollectionQueryBuilder collectionQueryBuilder = new CollectionQueryBuilder(payload);
         collectionQueryBuilder.operator = operator;
         collectionQueryBuilder.payload = payload;
 
-        NestedQueryBuilder queryBuilder = (NestedQueryBuilder) collectionQueryBuilder.buildEachQuery(operator, payload);
+        BuildQueryStrategy queryStrategy = operator.getQueryStrategy();
+        queryStrategy.setBaseQueryBuilder(collectionQueryBuilder);
+
+        NestedQueryBuilder queryBuilder =
+                (NestedQueryBuilder) collectionQueryBuilder.buildEachQuery(queryStrategy.build(), payload);
         assertTrue(queryBuilder.query() instanceof MatchQueryBuilder);
 
         operator = Operator.LIKE;
         collectionQueryBuilder.operator = operator;
 
-        queryBuilder = (NestedQueryBuilder) collectionQueryBuilder.buildEachQuery(operator, payload);
+        queryStrategy = operator.getQueryStrategy();
+        queryStrategy.setBaseQueryBuilder(collectionQueryBuilder);
+
+        queryBuilder = (NestedQueryBuilder) collectionQueryBuilder.buildEachQuery(queryStrategy.build(), payload);
         assertTrue(queryBuilder.query() instanceof MatchQueryBuilder);
 
 
         operator = Operator.GREATER_THAN_EQUALS;
         collectionQueryBuilder.operator = operator;
-        queryBuilder = (NestedQueryBuilder) collectionQueryBuilder.buildEachQuery(operator, payload);
+
+        queryStrategy = operator.getQueryStrategy();
+        queryStrategy.setBaseQueryBuilder(collectionQueryBuilder);
+
+        queryBuilder = (NestedQueryBuilder) collectionQueryBuilder.buildEachQuery(queryStrategy.build(), payload);
 
         assertTrue(queryBuilder.query() instanceof RangeQueryBuilder);
     }
 
     @Test
     public void of() {
-        BaseQueryBuilder testResultCollectionQueryBuilder = BaseQueryBuilder.of("k", "testResult");
-        BaseQueryBuilder collectionQueryBuilder = BaseQueryBuilder.of("m", "");
-        BaseQueryBuilder singleQueryBuilder = BaseQueryBuilder.of("o", "");
+        BaseQueryBuilder testResultCollectionQueryBuilder = BaseQueryBuilder.of(new QueryPayload.Builder()
+                .withAlias("k").withProperty("testResult").build());
+        BaseQueryBuilder collectionQueryBuilder = BaseQueryBuilder.of(new QueryPayload.Builder().withAlias("m").build());
+        BaseQueryBuilder singleQueryBuilder = BaseQueryBuilder.of(new QueryPayload.Builder().withAlias("o").build());
         assertTrue(testResultCollectionQueryBuilder instanceof TestResultCollectionQueryBuilder);
         assertTrue(collectionQueryBuilder instanceof CollectionQueryBuilder);
         assertTrue(singleQueryBuilder instanceof SingleQueryBuilder);

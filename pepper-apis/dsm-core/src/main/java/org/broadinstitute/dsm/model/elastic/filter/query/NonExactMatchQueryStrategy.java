@@ -1,14 +1,17 @@
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
+import java.util.List;
+
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.javalite.common.Collections;
 
 public class NonExactMatchQueryStrategy extends MatchQueryStrategy {
 
     public static final String WILDCARD_ASTERISK = "*";
 
     @Override
-    public QueryBuilder getMainQueryBuilder(BaseQueryBuilder baseQueryBuilder) {
+    public List<QueryBuilder> build(BaseQueryBuilder baseQueryBuilder) {
         QueryBuilder queryBuilder;
         if (isTextType(baseQueryBuilder)) {
             queryBuilder = QueryBuilders.wildcardQuery(
@@ -19,6 +22,6 @@ public class NonExactMatchQueryStrategy extends MatchQueryStrategy {
         } else {
             queryBuilder = super.getMainQueryBuilder(baseQueryBuilder);
         }
-        return queryBuilder;
+        return Collections.li(queryBuilder);
     }
 }

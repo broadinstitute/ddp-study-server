@@ -72,8 +72,8 @@ public enum Operator {
         return this.queryStrategy;
     }
 
-    public BuildQueryStrategy getQueryStrategy(BuildQueryStrategy queryStrategy) {
-        this.queryStrategy.setAdditionalQueryStrategy(queryStrategy);
+    public BuildQueryStrategy getQueryStrategy(BuildQueryStrategy... queryStrategy) {
+        this.queryStrategy.addAdditionalQueryStrategy(queryStrategy);
         return this.queryStrategy;
     }
 

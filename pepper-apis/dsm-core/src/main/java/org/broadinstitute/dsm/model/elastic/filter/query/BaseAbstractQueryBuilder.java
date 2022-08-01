@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.broadinstitute.dsm.model.Filter;
-import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
-import org.broadinstitute.dsm.model.elastic.converters.camelcase.NullObjectCamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
@@ -67,15 +65,22 @@ public class BaseAbstractQueryBuilder {
             splitter = operator.getSplitterStrategy();
             splitter.setFilterSeparator(filterSeparator);
             splitter.setFilter(filterValue);
-            baseQueryBuilder = BaseQueryBuilder.of(splitter.getAlias(), splitter.getFieldName());
+            QueryPayload queryPayload =
+                    new QueryPayload(buildPath(), splitter.getInnerProperty(), splitter.getAlias(),
+                            parser.parse(splitter.getValue()), esIndex);
+            baseQueryBuilder = BaseQueryBuilder.of(queryPayload);
+            List<QueryBuilder> queryBuilders;
             if (!Util.isUnderDsmKey(splitter.getAlias())) {
-                BaseActivityStrategy activityStrategy = BaseActivityStrategy.of(splitter, operator);
-                activityStrategy.apply();
+                BaseActivitiesStrategy activityStrategy = ActivityStrategy.of(parser, splitter, operator, baseQueryBuilder);
+                queryBuilders = activityStrategy.apply();
+            } else {
+                BuildQueryStrategy queryStrategy = operator.getQueryStrategy();
+                queryStrategy.setBaseQueryBuilder(baseQueryBuilder);
+                baseQueryBuilder.payload = queryPayload;
+                baseQueryBuilder.operator = operator;
+                queryBuilders = queryStrategy.build();
             }
-            QueryPayload queryPayload = new QueryPayload(
-                    buildPath(), splitter.getInnerProperty(), parser.parse(splitter.getValue()), esIndex
-            );
-            filterStrategy.build(boolQueryBuilder, baseQueryBuilder.buildEachQuery(operator, queryPayload));
+            filterStrategy.build(boolQueryBuilder, baseQueryBuilder.buildEachQuery(queryBuilders, queryPayload));
         }
     }
 
