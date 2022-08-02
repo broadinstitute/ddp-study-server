@@ -511,7 +511,7 @@
             },
             "date": {
               "type": "date",
-              "ignore_malformed": false,
+              "ignore_malformed": false
             }
           }
         },
