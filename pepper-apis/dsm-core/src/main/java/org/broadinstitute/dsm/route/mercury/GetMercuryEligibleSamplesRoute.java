@@ -1,20 +1,17 @@
 package org.broadinstitute.dsm.route.mercury;
 
 import java.util.ArrayList;
-import java.util.Collection;
 
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.dao.mercury.ClinicalOrderDao;
 import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.db.dao.mercury.MercurySampleDao;
-import org.broadinstitute.dsm.db.dto.mercury.ClinicalOrderDto;
 import org.broadinstitute.dsm.db.dto.mercury.ClinicalOrderUseCase;
 import org.broadinstitute.dsm.db.dto.mercury.MercurySampleDto;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.lddp.handlers.util.Result;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
@@ -46,7 +43,7 @@ public class GetMercuryEligibleSamplesRoute extends RequestHandler {
         String realm = queryParams.get(RoutePath.REALM).value();
         String userIdRequest = UserUtil.getUserId(request);
         if (!UserUtil.checkUserAccess(realm, userId, "kit_sequencing_order", userIdRequest)) {
-            log.warn("User doesn't have access");
+            log.warn("User doesn't have access " + userId);
             response.status(500);
             return UserErrorMessages.NO_RIGHTS;
         }

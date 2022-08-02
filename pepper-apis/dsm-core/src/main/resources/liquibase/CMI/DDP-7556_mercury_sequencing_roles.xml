@@ -5,14 +5,6 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
-    <changeSet id="DDP-7556_mercury_roles" author="pegah">
-        <insert tableName="instance_role">
-            <column name="name" value="has_mercury_order_sequencing"></column>
-        </insert>
-        <insert tableName="access_role">
-            <column name="name" value="mercury_order_sequencing"></column>
-        </insert>
-    </changeSet>
     <changeSet id="DDP-7556_mercury_sequencing_order_table_id_changes" author="pegah">
         <addColumn tableName="mercury_sequencing">
             <column name="tissue_id" type="INT"></column>
@@ -31,6 +23,9 @@
         <addColumn tableName="ddp_kit">
             <column name="changed_by" type="VARCHAR(45)"></column>
         </addColumn>
+    </changeSet>
+    <changeSet id="ddp_kit_changes" author="pegah">
+        <modifyDataType tableName="ddp_kit" columnName="last_changed" newDataType="BIGINT(20)"></modifyDataType>
     </changeSet>
     <changeSet id="mercury_sequencing_further_changes" author="pegah">
         <addColumn tableName="mercury_sequencing">
@@ -56,5 +51,18 @@
                 <constraints nullable="true"></constraints>
             </column>
         </addColumn>
+    </changeSet>
+    <changeSet id="DDP-7556_clinical_kit_instance_roles" author="pegah">
+        <insert tableName="instance_role">
+            <column name="name" value="has_clinical_kit"></column>
+        </insert>
+    </changeSet>
+    <changeSet id="DDP-7556_mercury_access_roles" author="pegah">
+        <insert tableName="access_role">
+            <column name="name" value="kit_sequencing_order"></column>
+        </insert>
+    </changeSet>
+    <changeSet id="DDP-7556_table_name_change" author="pegah">
+        <renameTable oldTableName="mercury_sequencing" newTableName="ddp_mercury_sequencing"></renameTable>
     </changeSet>
 </databaseChangeLog>
