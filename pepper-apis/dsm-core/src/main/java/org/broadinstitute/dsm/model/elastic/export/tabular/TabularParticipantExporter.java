@@ -50,7 +50,7 @@ public abstract class TabularParticipantExporter {
     }
 
     /** returns a filename such that alphabetical sorting will also put them in chronological order */
-    protected static String getExportFilename(String suffix) {
+    protected String getExportFilename(String suffix) {
         LocalDate date = LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(FILE_DATE_FORMAT);
         String exportFileName = String.format("Participant-%s.%s", date.format(formatter), suffix);
@@ -155,16 +155,9 @@ public abstract class TabularParticipantExporter {
                                        String optionStableId,
                                        String detailName,
                                        FilterExportConfig childConfig) {
-        String activityName = filterConfig.getParent().getName();
-        if (TABLE_ALIAS_NAME_MAP.containsKey(filterConfig.getColumn().getTableAlias())) {
-            activityName = activityName + DBConstants.ALIAS_DELIMITER + TABLE_ALIAS_NAME_MAP.get(filterConfig.getColumn().getTableAlias());
-        }
 
-        String activityExportName = activityRepeatNum > 1 ?
-                activityName + COLUMN_REPEAT_DELIMITER + activityRepeatNum : activityName;
-        if (filterConfig.getColumn().getObject() != null) {
-            activityName = activityName + DBConstants.ALIAS_DELIMITER + filterConfig.getColumn().getObject();
-        }
+        String moduleExportPrefix = getModuleColumnPrefix(filterConfig, activityRepeatNum);
+
         String questionStableId = filterConfig.getColumn().getName();
         String columnExportName = questionRepeatNum > 1 ?
                 questionStableId + COLUMN_REPEAT_DELIMITER + questionRepeatNum : questionStableId;
@@ -187,8 +180,22 @@ public abstract class TabularParticipantExporter {
             }
         }
 
-        String exportName = activityExportName + DBConstants.ALIAS_DELIMITER + columnExportName;
+        String exportName = moduleExportPrefix + DBConstants.ALIAS_DELIMITER + columnExportName;
         return exportName.toUpperCase();
+    }
+
+    protected static String getModuleColumnPrefix(FilterExportConfig filterConfig, int activityRepeatNum) {
+        String activityName = filterConfig.getParent().getName();
+        if (TABLE_ALIAS_NAME_MAP.containsKey(filterConfig.getColumn().getTableAlias())) {
+            activityName = activityName + DBConstants.ALIAS_DELIMITER + TABLE_ALIAS_NAME_MAP.get(filterConfig.getColumn().getTableAlias());
+        }
+
+        String activityExportName = activityRepeatNum > 1 ?
+                activityName + COLUMN_REPEAT_DELIMITER + activityRepeatNum : activityName;
+        if (filterConfig.getColumn().getObject() != null) {
+            activityName = activityName + DBConstants.ALIAS_DELIMITER + filterConfig.getColumn().getObject();
+        }
+        return activityExportName;
     }
 
     /** whether a separate column will be rendered for the option */
