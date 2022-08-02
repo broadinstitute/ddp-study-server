@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.model.patch;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
@@ -103,6 +104,11 @@ public class Patch {
         this.nameValue = nameValue;
         this.nameValues = nameValues;
         this.ddpParticipantId = ddpParticipantId;
+    }
+
+    // for testing purposes
+    public static Patch fromNameValue(NameValue nameValue) {
+        return new Patch(null, null, null, null, null, null, nameValue, null, null);
     }
 
     /**

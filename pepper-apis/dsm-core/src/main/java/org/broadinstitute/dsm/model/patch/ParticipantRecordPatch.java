@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.model.patch;
 
 import java.util.Optional;
@@ -15,6 +16,7 @@ public class ParticipantRecordPatch extends BasePatch {
 
     public ParticipantRecordPatch(Patch patch) {
         super(patch);
+        this.dbElementBuilder = new ParticipantRecordDBElementBuilder();
     }
 
     @Override
@@ -73,4 +75,5 @@ public class ParticipantRecordPatch extends BasePatch {
     Optional<Object> processEachNameValue(NameValue nameValue) {
         return Optional.empty();
     }
+
 }
