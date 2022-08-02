@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.route;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -100,8 +101,8 @@ public class DisplaySettingsRoute extends RequestHandler {
                         displaySettings.put("preferredLanguages", preferredLanguages);
                     }
                 }
-                if (DDPInstanceDao.getRole(instance.getName(),
-                        DBConstants.KIT_REQUEST_ACTIVATED)) { //only needed if study is shipping samples per DSM
+                HashSet<String> roles = DDPInstanceDao.getInstanceRoles(instance.getName());
+                if (roles.contains(DBConstants.KIT_REQUEST_ACTIVATED)) { //only needed if study is shipping samples per DSM
                     Map<Integer, KitRequestSettings> kitRequestSettingsMap =
                             KitRequestSettings.getKitRequestSettings(instance.getDdpInstanceId());
                     if (kitRequestSettingsMap != null) {
@@ -130,13 +131,13 @@ public class DisplaySettingsRoute extends RequestHandler {
                         }
                     }
                 }
-                if (DDPInstanceDao.getRole(instance.getName(), DBConstants.ADD_FAMILY_MEMBER)) {
+                if (roles.contains(DBConstants.ADD_FAMILY_MEMBER)) {
                     displaySettings.put("addFamilyMember", true);
                 }
-                if (DDPInstanceDao.getRole(instance.getName(), DBConstants.SHOW_GROUP_FIELDS)) {
+                if (roles.contains(DBConstants.SHOW_GROUP_FIELDS)) {
                     displaySettings.put("showGroupFields", true);
                 }
-                if (DDPInstanceDao.getRole(instance.getName(), DBConstants.HAS_ORDER_SEQUENCING)) {
+                if (roles.contains(DBConstants.HAS_CLINICAL_KIT)) {
                     displaySettings.put("hasSequencingOrders", true);
                 }
 

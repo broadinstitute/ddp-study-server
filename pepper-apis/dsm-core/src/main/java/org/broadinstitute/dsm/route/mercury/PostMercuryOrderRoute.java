@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.route.mercury;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -36,36 +37,31 @@ public class PostMercuryOrderRoute extends RequestHandler {
     protected Object processRequest(Request request, Response response, String userId) throws Exception {
         String requestBody = request.body();
         QueryParamsMap queryParams = request.queryMap();
-        String realm;
-        if (queryParams.value(RoutePath.REALM) != null) {
-            realm = queryParams.get(RoutePath.REALM).value();
-        } else {
-            throw new RuntimeException("No realm query param was sent");
-        }
-        String ddpParticipantId;
-        if (queryParams.value(RoutePath.DDP_PARTICIPANT_ID) != null) {
-            ddpParticipantId = queryParams.get(RoutePath.DDP_PARTICIPANT_ID).value();
-        } else {
-            throw new RuntimeException("No realm query param was sent");
-        }
-        if (!UserUtil.checkUserAccess(realm, userId, "mercury_order_sequencing", null)) {
-            log.warn("User doesn't have access");
+        String realm = Optional.ofNullable(queryParams.get(RoutePath.REALM).value())
+                .orElseThrow(() -> new RuntimeException("No realm query param was sent"));
+        String ddpParticipantId = Optional.ofNullable(queryParams.get(RoutePath.DDP_PARTICIPANT_ID).value())
+                .orElseThrow(() -> new RuntimeException("No DDP_PARTICIPANT_ID query param was sent"));
+        String userIdRequest = UserUtil.getUserId(request);
+        if (!UserUtil.checkUserAccess(realm, userId, "kit_sequencing_order", userIdRequest)) {
+            log.warn("User doesn't have access " + userId);
             response.status(500);
-            return new Result(500, UserErrorMessages.NO_RIGHTS);
+            return UserErrorMessages.NO_RIGHTS;
         }
         MercurySampleDto[] mercurySampleDtos = new Gson().fromJson(requestBody, MercurySampleDto[].class);
         DDPInstanceDto ddpInstance = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
         if (ddpInstance == null) {
             log.error("Realm was null for " + realm);
-            return new Result(500, UserErrorMessages.CONTACT_DEVELOPER);
+            response.status(500);
+            return UserErrorMessages.CONTACT_DEVELOPER;
         }
         publishMessage(mercurySampleDtos, ddpInstance, userId, ddpParticipantId);
-        return new Result(200);
+        response.status(200);
+        return "";
     }
 
     public void publishMessage(MercurySampleDto[] mercurySampleDtos, DDPInstanceDto ddpInstance, String userId, String ddpParticipantId) {
         log.info("Preparing message to publish to Mercury");
-        ArrayList<String> barcodes = MercuryOrderUseCase.createBarcodes(mercurySampleDtos, ddpInstance);
+        ArrayList<String> barcodes = new MercuryOrderUseCase().collectBarcodes(mercurySampleDtos);
         String[] barcodesArray = barcodes.toArray(new String[barcodes.size()]);
         mercuryOrderPublisher
                 .createAndPublishMessage(barcodesArray, projectId, topicId, ddpInstance,

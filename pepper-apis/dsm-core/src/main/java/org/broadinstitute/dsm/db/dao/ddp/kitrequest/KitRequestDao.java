@@ -151,15 +151,14 @@ public class KitRequestDao implements Dao<KitRequestDto> {
         return (String) results.resultValue;
     }
 
-    public ArrayList<String> getKitLabelFromDsmKitRequestId(long dsmKitRequestId) {
-        ArrayList<String> kitLabels = new ArrayList<>();
+    public String getKitLabelFromDsmKitRequestId(long dsmKitRequestId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_LABEL)) {
                 stmt.setLong(1, dsmKitRequestId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        kitLabels.add(rs.getString(DBConstants.KIT_LABEL));
+                        dbVals.resultValue = rs.getString(DBConstants.KIT_LABEL);
                     }
                 }
             } catch (SQLException ex) {
@@ -171,11 +170,8 @@ public class KitRequestDao implements Dao<KitRequestDto> {
         if (results.resultException != null) {
             throw new RuntimeException("Couldn't get kit label for kit " + dsmKitRequestId, results.resultException);
         }
-        if (kitLabels.size() != 1) {
-            throw new RuntimeException(
-                    "Found an invalid number of kit labes for kit " + dsmKitRequestId + " current size is " + kitLabels.size());
-        }
-        log.info("Got " + kitLabels.get(0) + " sequencing kit labels in DSM DB for " + dsmKitRequestId);
-        return kitLabels;
+        String kitLabel = String.valueOf(results.resultValue);
+        log.info("Got " + kitLabel + " sequencing kit label in DSM DB for " + dsmKitRequestId);
+        return kitLabel;
     }
 }

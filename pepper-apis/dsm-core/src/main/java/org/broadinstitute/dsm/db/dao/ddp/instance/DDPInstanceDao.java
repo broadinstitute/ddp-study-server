@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashSet;
 import java.util.Optional;
 
 import lombok.NonNull;
@@ -63,6 +64,10 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                     + "AND realm.ddp_instance_id = main.ddp_instance_id) AS 'has_role', mr_attention_flag_d, tissue_attention_flag_d, "
                     + "auth0_token, notification_recipients FROM ddp_instance main "
                     + "WHERE is_active = 1";
+    private static final String SQL_SELECT_ROLES_FOR_INSTANCE =
+            "SELECT role.name FROM ddp_instance ddp left join ddp_instance_role inRol on (inRol.ddp_instance_id = ddp.ddp_instance_id) "
+                    + " left join instance_role role on (role.role_id = inRol.role_id) "
+                    + "WHERE is_active = 1";
     private static final String SQL_GET_INSTANCE_ID_BY_GUID =
             "SELECT ddp_instance_id FROM ddp_instance WHERE study_guid = ? ";
     private static final String SQL_GET_INSTANCE_ID_BY_INSTANCE_NAME =
@@ -111,6 +116,32 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
             throw new RuntimeException("Couldn't get role of realm " + realm, results.resultException);
         }
         return (boolean) results.resultValue;
+    }
+
+    public static HashSet<String> getInstanceRoles(@NonNull String realm) {
+        HashSet<String> roles = new HashSet<>();
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            dbVals.resultValue = Boolean.FALSE;
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ROLES_FOR_INSTANCE + QueryExtension.BY_INSTANCE_NAME)) {
+                stmt.setString(1, realm);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        roles.add(rs.getString(DBConstants.NAME));
+                    }
+                } catch (SQLException e) {
+                    throw new RuntimeException("Error getting role of realm " + realm, e);
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Couldn't get role of realm " + realm, results.resultException);
+        }
+        return roles;
     }
 
     @Override

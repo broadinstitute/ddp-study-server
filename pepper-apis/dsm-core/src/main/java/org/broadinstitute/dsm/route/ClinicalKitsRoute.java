@@ -57,8 +57,8 @@ public class ClinicalKitsRoute implements Route {
             //kit not found in ddp_kit table -> check tissue smi-ids
             return new ClinicalKitDao().getClinicalKitBasedOnSmId(kitLabel);
         } else {
-            Optional<KitInfo> maybeKitInfo = GPReceivedKit.receiveKit(kitLabel, optionalBSPKitDto.get(), notificationUtil, MERCURY);
-            KitInfo kitInfo = maybeKitInfo.get();
+            Optional<KitInfo> maybeKitInfo = GPReceivedKit.receiveKit(kitLabel, optionalBSPKitDto.orElseThrow(), notificationUtil, MERCURY);
+            KitInfo kitInfo = maybeKitInfo.orElseThrow();
             ClinicalKitDto clinicalKit = new ClinicalKitDto();
             logger.info("Creating clinical kit to return to GP " + kitLabel);
             clinicalKit.setCollaboratorParticipantId(kitInfo.getCollaboratorParticipantId());

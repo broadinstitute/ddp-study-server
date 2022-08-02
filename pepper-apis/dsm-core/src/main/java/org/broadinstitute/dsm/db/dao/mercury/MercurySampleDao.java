@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.db.dao.mercury;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -33,7 +34,7 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
                     + "left join sm_id_type smtype on (sm.sm_id_type_id = smtype.sm_id_type_id) "
                     + "where smtype.sm_id_type = \"scrolls\" and sm.tissue_id = t.tissue_id ) ) as table1 "
                     + "left join (select max(order_date) as order_date, tissue_id as seqt "
-                    + "From mercury_sequencing where ddp_participant_id = ? group by (tissue_id)   ) as table2 "
+                    + "From ddp_mercury_sequencing where ddp_participant_id = ? group by (tissue_id)   ) as table2 "
                     + "on table2.seqt = table1.tissue_id ";
 
 
@@ -45,7 +46,7 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
                     + "    LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = req.ddp_instance_id) "
                     + "    WHERE  req.ddp_participant_id = ? AND ddp.instance_name = ? AND kit.receive_date is not null  ) as table1  "
                     + "    LEFT JOIN (select max(order_date) AS order_date, dsm_kit_request_id "
-                    + "    FROM mercury_sequencing WHERE ddp_participant_id = ? GROUP BY (dsm_kit_request_id)  ) AS table2 "
+                    + "    FROM ddp_mercury_sequencing WHERE ddp_participant_id = ? GROUP BY (dsm_kit_request_id)  ) AS table2 "
                     + "    ON table2.dsm_kit_request_id = table1.dsm_kit_request_id";
 
     public static String TISSUE_SAMPLE_TYPE = "Tumor";
@@ -72,44 +73,10 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
         ArrayList<MercurySampleDto> samples = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement statement = conn.prepareStatement(SQL_GET_ELIGIBLE_TISSUES)) {
-                statement.setString(1, ddpParticipantId);
-                statement.setString(2, realm);
-                statement.setString(3, ddpParticipantId);
-                try (ResultSet rs = statement.executeQuery()) {
-                    while (rs.next()) {
-                        MercurySampleDto mercurySampleDto = new MercurySampleDto(TISSUE_SAMPLE_TYPE,
-                                rs.getString(DBConstants.COLLABORATOR_SAMPLE_ID), getSampleStatus(rs),
-                                rs.getString(DBConstants.DATE_PX), rs.getLong(DBConstants.MERCURY_ORDER_DATE),
-                                rs.getLong(DBConstants.TISSUE_ID), null,
-                                null
-                        );
-                        samples.add(mercurySampleDto);
-                    }
-                } catch (SQLException e) {
-                    dbVals.resultException = e;
-                }
-            } catch (SQLException e) {
-                dbVals.resultException = e;
-            }
-            try (PreparedStatement statement = conn.prepareStatement(SQL_GET_ELIGIBLE_SAMPLES)) {
-                statement.setString(1, ddpParticipantId);
-                statement.setString(2, realm);
-                statement.setString(3, ddpParticipantId);
-                try (ResultSet rs = statement.executeQuery()) {
-                    while (rs.next()) {
-                        MercurySampleDto mercurySampleDto = new MercurySampleDto(KIT_SAMPLE_TYPE,
-                                rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID), RECEIVED_STATUS,
-                                rs.getString(DBConstants.COLLECTION_DATE), rs.getLong(DBConstants.MERCURY_ORDER_DATE),
-                                null, rs.getLong(DBConstants.DSM_KIT_REQUEST_ID),
-                                rs.getString(DBConstants.SEQUENCING_RESTRICTION)
-                        );
-                        samples.add(mercurySampleDto);
-                    }
-                } catch (SQLException e) {
-                    dbVals.resultException = e;
-                }
-            } catch (SQLException e) {
+            try {
+                samples.addAll(getEligibleTissues(conn, ddpParticipantId, realm));
+                samples.addAll(getEligibleKits(conn, ddpParticipantId, realm));
+            } catch (Exception e) {
                 dbVals.resultException = e;
             }
             return dbVals;
@@ -117,6 +84,64 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
         if (results.resultException != null) {
             throw new RuntimeException("Error getting list of eligible samples for participant " + ddpParticipantId,
                     results.resultException);
+        }
+        return samples;
+    }
+
+    private ArrayList<MercurySampleDto> getEligibleKits(Connection conn, String ddpParticipantId, String realm) throws Exception {
+        ArrayList<MercurySampleDto> samples = new ArrayList<>();
+        SimpleResult dbVals = new SimpleResult();
+        try (PreparedStatement statement = conn.prepareStatement(SQL_GET_ELIGIBLE_SAMPLES)) {
+            statement.setString(1, ddpParticipantId);
+            statement.setString(2, realm);
+            statement.setString(3, ddpParticipantId);
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    MercurySampleDto mercurySampleDto = new MercurySampleDto(KIT_SAMPLE_TYPE,
+                            rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID), RECEIVED_STATUS,
+                            rs.getString(DBConstants.COLLECTION_DATE), rs.getLong(DBConstants.MERCURY_ORDER_DATE),
+                            null, rs.getLong(DBConstants.DSM_KIT_REQUEST_ID),
+                            rs.getString(DBConstants.SEQUENCING_RESTRICTION)
+                    );
+                    samples.add(mercurySampleDto);
+                }
+            } catch (SQLException e) {
+                dbVals.resultException = e;
+            }
+        } catch (SQLException e) {
+            dbVals.resultException = e;
+        }
+        if (dbVals.resultException != null) {
+            throw dbVals.resultException;
+        }
+        return samples;
+    }
+
+    private ArrayList<MercurySampleDto> getEligibleTissues(Connection conn, String ddpParticipantId, String realm) throws Exception {
+        ArrayList<MercurySampleDto> samples = new ArrayList<>();
+        SimpleResult dbVals = new SimpleResult();
+        try (PreparedStatement statement = conn.prepareStatement(SQL_GET_ELIGIBLE_TISSUES)) {
+            statement.setString(1, ddpParticipantId);
+            statement.setString(2, realm);
+            statement.setString(3, ddpParticipantId);
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    MercurySampleDto mercurySampleDto = new MercurySampleDto(TISSUE_SAMPLE_TYPE,
+                            rs.getString(DBConstants.COLLABORATOR_SAMPLE_ID), getSampleStatus(rs),
+                            rs.getString(DBConstants.DATE_PX), rs.getLong(DBConstants.MERCURY_ORDER_DATE),
+                            rs.getLong(DBConstants.TISSUE_ID), null,
+                            null
+                    );
+                    samples.add(mercurySampleDto);
+                }
+            } catch (SQLException e) {
+                dbVals.resultException = e;
+            }
+        } catch (SQLException e) {
+            dbVals.resultException = e;
+        }
+        if (dbVals.resultException != null) {
+            throw dbVals.resultException;
         }
         return samples;
     }

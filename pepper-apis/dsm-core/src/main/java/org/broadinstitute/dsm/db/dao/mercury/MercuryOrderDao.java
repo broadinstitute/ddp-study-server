@@ -21,7 +21,7 @@ import org.broadinstitute.lddp.db.SimpleResult;
 
 @Slf4j
 public class MercuryOrderDao implements Dao<MercuryOrderDto> {
-    public static String SQL_INSERT_MERCURY_ORDER = "insert into mercury_sequencing (order_id, order_date, ddp_participant_id, "
+    public static String SQL_INSERT_MERCURY_ORDER = "insert into ddp_mercury_sequencing (order_id, order_date, ddp_participant_id, "
             + "kit_type_id, barcode, ddp_instance_id, created_by, tissue_id, dsm_kit_request_id) values (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     public static String SQL_GET_KIT_FROM_BARCODE_KIT_LABEL =
@@ -49,8 +49,8 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                     + "WHERE p.ddp_participant_id = ? "
                     + "AND NOT sm.sm_id_value IS NULL";
 
-    public static String SQL_SELECT_ORDER_NUMBER = "Select * from mercury_sequencing where order_id = ?";
-    public static String SQL_UPDATE_ORDER_STATUS = "UPDATE mercury_sequencing SET order_status = ?, status_date = ?, mercury_pdo_id = ?,  "
+    public static String SQL_SELECT_ORDER_NUMBER = "Select * from ddp_mercury_sequencing where order_id = ?";
+    public static String SQL_UPDATE_ORDER_STATUS = "UPDATE ddp_mercury_sequencing SET order_status = ?, status_date = ?, mercury_pdo_id = ?,  "
             + " status_detail = ? where order_id = ?";
 
     public static void updateOrderStatus(BaseMercuryStatusMessage baseMercuryStatusMessage, Connection conn) {

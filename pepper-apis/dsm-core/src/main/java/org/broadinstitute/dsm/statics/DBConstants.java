@@ -303,7 +303,7 @@ public class DBConstants {
     public static final String PARTICIPANT_STATUS_ENDPOINT = "participant_status_endpoint";
     public static final String UPS_TRACKING_ROLE = "ups_tracking";
     public static final String ADD_FAMILY_MEMBER = "add_family_member";
-    public static final String HAS_ORDER_SEQUENCING = "has_mercury_order_sequencing";
+    public static final String HAS_CLINICAL_KIT = "has_clinical_kit";
     public static final String SHOW_GROUP_FIELDS = "show_group_fields";
     public static final String GBF_SHIPPED_DSS_DELIVERED = "GBF_SHIPPED_DSS_DELIVERED";
 

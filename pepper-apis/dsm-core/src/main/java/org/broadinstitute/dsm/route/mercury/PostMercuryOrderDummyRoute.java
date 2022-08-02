@@ -49,20 +49,22 @@ public class PostMercuryOrderDummyRoute implements Route {
             userId = "GP_UNIT_TEST";
         }
         String realm = queryParams.get(RoutePath.REALM).value();
-        if (!UserUtil.checkUserAccess(realm, userId, "mercury_order_sequencing", null)) {
+        if (!UserUtil.checkUserAccess(realm, userId, "kit_sequencing_order", null)) {
             log.warn("User doesn't have access");
             response.status(500);
-            return new Result(500, UserErrorMessages.NO_RIGHTS);
+            return UserErrorMessages.NO_RIGHTS;
         }
         MercuryOrderDummyRequest mercuryOrderRequest = new Gson().fromJson(requestBody, MercuryOrderDummyRequest.class);
         if (!isValidRequest(mercuryOrderRequest)) {
             log.error("Request not valid");
-            return new Result(500, "Request body is not valid");
+            response.status(500);
+            return "Request body is not valid";
         }
         DDPInstanceDto ddpInstance = new DDPInstanceDao().getDDPInstanceByInstanceName(mercuryOrderRequest.getRealm()).orElseThrow();
         if (ddpInstance == null) {
             log.error("Realm was null for " + mercuryOrderRequest.getRealm());
-            return new Result(500, UserErrorMessages.CONTACT_DEVELOPER);
+            response.status(500);
+            return UserErrorMessages.CONTACT_DEVELOPER;
         }
         String pepperOrderId = publishMessage(mercuryOrderRequest, ddpInstance, userId);
         JSONObject main = new JSONObject();

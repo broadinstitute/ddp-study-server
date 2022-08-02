@@ -117,6 +117,7 @@ import org.broadinstitute.dsm.route.UserSettingRoute;
 import org.broadinstitute.dsm.route.ViewFilterRoute;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
 import org.broadinstitute.dsm.route.mercury.GetMercuryEligibleSamplesRoute;
+import org.broadinstitute.dsm.route.mercury.GetMercuryOrdersRoute;
 import org.broadinstitute.dsm.route.mercury.PostMercuryOrderDummyRoute;
 import org.broadinstitute.dsm.route.mercury.PostMercuryOrderRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
@@ -937,7 +938,9 @@ public class DSMServer {
                 new MercurySampleDao(), new MercuryOrderDao(), new ClinicalOrderDao(), projectId, mercuryTopicId);
         get(UI_ROOT + RoutePath.MERCURY_SAMPLES_ROUTE, getMercuryEligibleSamplesRoute, new JsonTransformer());
 
-        get(UI_ROOT + RoutePath.GET_MERCURY_ORDERS_ROUTE, getMercuryEligibleSamplesRoute, new JsonTransformer());
+        GetMercuryOrdersRoute getMercuryOrdersRoute = new GetMercuryOrdersRoute(
+                new MercurySampleDao(), new ClinicalOrderDao(), projectId, mercuryTopicId);
+        get(UI_ROOT + RoutePath.GET_MERCURY_ORDERS_ROUTE, getMercuryOrdersRoute, new JsonTransformer());
 
         get(UI_ROOT + RoutePath.DOWNLOAD_PARTICIPANT_FILE, new DownloadParticipantFileRoute(projectId));
     }

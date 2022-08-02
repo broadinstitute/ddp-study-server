@@ -27,7 +27,7 @@ public class ClinicalOrderDao implements Dao<ClinicalOrderDto> {
     public static String SQL_GET_ALL_ORDERS_FOR_REALM = "select ms.order_id, ms.ddp_participant_id, "
             + "IFNULL(t.collaborator_sample_id, kit.bsp_collaborator_sample_id) as collaborator_sample_id, order_date, order_status, "
             + "status_date, status_detail,  IF(ms.tissue_id is null, \"Normal\", \"Tumor\") as sample_type "
-            + "FROM mercury_sequencing ms "
+            + "FROM ddp_mercury_sequencing ms "
             + "LEFT join ddp_tissue t on (ms.tissue_id = t.tissue_id  and ms.tissue_id ) "
             + "LEFT join ddp_kit_request kit on (ms.dsm_kit_request_id = kit.dsm_kit_request_id)"
             + "WHERE ms.ddp_instance_id = ? order by order_date desc";
