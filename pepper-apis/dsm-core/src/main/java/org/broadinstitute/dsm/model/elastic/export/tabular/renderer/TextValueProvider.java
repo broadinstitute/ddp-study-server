@@ -41,7 +41,7 @@ public class TextValueProvider {
 
 
     protected Object getValueFromMap(Map<String, Object> moduleMap, FilterExportConfig filterConfig) {
-        Map<String, Object> targetMap = moduleMap;
+        Map<String, Object> targetMap = null;
         String objectName = filterConfig.getColumn().getObject();
         String fieldName = filterConfig.getColumn().getName();
         if (objectName != null) {
@@ -62,20 +62,29 @@ public class TextValueProvider {
 
             } else if (formObject instanceof Map) {
                 targetMap = (Map<String, Object>) formObject;
-
-            } else {
-                // try dynamic fields
-                Map<String, Object> dynamicFieldMap = (Map<String, Object>) moduleMap.get(ESObjectConstants.DYNAMIC_FIELDS);
-                if (dynamicFieldMap != null) {
-                    String camelCasedFieldName = Arrays.stream(fieldName.split("_"))
+            }
+        }
+        if ((targetMap == null && objectName != null) || ESObjectConstants.ADDITIONAL_VALUE.equals(filterConfig.getType())) {
+            // try dynamic fields
+            Map<String, Object> dynamicFieldMap = (Map<String, Object>) moduleMap.get(ESObjectConstants.DYNAMIC_FIELDS);
+            if (dynamicFieldMap != null) {
+                // the field name may be given in either snake case or camelcase, but in the dynamic field map, it is camel case
+                String camelCasedFieldName = fieldName;
+                if (Character.isUpperCase(camelCasedFieldName.charAt(0))) {
+                    camelCasedFieldName = Arrays.stream(fieldName.split("_"))
                             .map(word -> StringUtils.capitalize(StringUtils.toRootLowerCase(word))).collect(Collectors.joining());
                     camelCasedFieldName = StringUtils.uncapitalize(camelCasedFieldName);
-                    if (dynamicFieldMap.get(camelCasedFieldName) != null) {
-                        targetMap = dynamicFieldMap;
-                        fieldName = camelCasedFieldName;
-                    }
+                }
+
+                if (dynamicFieldMap.get(camelCasedFieldName) != null) {
+                    targetMap = dynamicFieldMap;
+                    fieldName = camelCasedFieldName;
                 }
             }
+        }
+        // if this isn't any of the special cases above, just use the passed-in map
+        if (targetMap == null) {
+            targetMap = moduleMap;
         }
         return targetMap.getOrDefault(fieldName, StringUtils.EMPTY);
     }
