@@ -12,7 +12,9 @@ public enum EventActionType {
     REVOKE_PROXIES(true),
     UPDATE_CUSTOM_WORKFLOW(false),
     UPDATE_USER_STATUS(false),
-    USER_ENROLLED(true);
+    USER_ENROLLED(true),
+    MARK_ACTIVITIES_READ_ONLY_FOR_PARENT(false),
+    HIDE_ACTIVITIES_FOR_PARENT(false);
 
     private boolean isStatic;
 

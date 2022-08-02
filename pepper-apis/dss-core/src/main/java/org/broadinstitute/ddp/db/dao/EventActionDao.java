@@ -112,8 +112,21 @@ public interface EventActionDao extends SqlObject {
         return actionId;
     }
 
+    default long insertHideActivitiesForParentAction(Set<Long> activityIds) {
+        long actionId = getJdbiEventAction().insert(null, EventActionType.HIDE_ACTIVITIES);
+        long[] ids = getEventActionSql().insertTargetActivities(actionId, activityIds);
+        DBUtils.checkInsert(activityIds.size(), ids.length);
+        return actionId;
+    }
     default long insertMarkActivitiesReadOnlyAction(Set<Long> activityIds) {
         long actionId = getJdbiEventAction().insert(null, EventActionType.MARK_ACTIVITIES_READ_ONLY);
+        long[] ids = getEventActionSql().insertTargetActivities(actionId, activityIds);
+        DBUtils.checkInsert(activityIds.size(), ids.length);
+        return actionId;
+    }
+
+    default long insertMarkActivitiesReadOnlyForParentAction(Set<Long> activityIds) {
+        long actionId = getJdbiEventAction().insert(null, EventActionType.MARK_ACTIVITIES_READ_ONLY_FOR_PARENT);
         long[] ids = getEventActionSql().insertTargetActivities(actionId, activityIds);
         DBUtils.checkInsert(activityIds.size(), ids.length);
         return actionId;

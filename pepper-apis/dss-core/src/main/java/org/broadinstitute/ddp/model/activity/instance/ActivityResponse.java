@@ -30,9 +30,9 @@ public abstract class ActivityResponse {
     protected ActivityInstanceStatusDto latestStatus;
 
     ActivityResponse(ActivityType type,
-                     long id, String guid, long participantId, Boolean isReadonly, long createdAt, Long firstCompletedAt,
+                     long id, String guid, long participantId, Boolean isReadonly, Boolean isReadonlyForParent, long createdAt, Long firstCompletedAt,
                      Long parentInstanceId, String parentInstanceGuid,
-                     long activityId, String activityCode, String activityVersionTag, Boolean isHidden, Integer sectionIndex,
+                     long activityId, String activityCode, String activityVersionTag, Boolean isHidden, Boolean isHiddenForParent, Integer sectionIndex,
                      ActivityInstanceStatusDto latestStatus) {
         this.type = type;
         this.id = id;

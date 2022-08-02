@@ -117,6 +117,12 @@ public class EventConfiguration {
             case UPDATE_CUSTOM_WORKFLOW:
                 eventAction = new UpdateCustomWorkflowEventAction(this, dto, new TaskPubSubPublisher());
                 break;
+            case MARK_ACTIVITIES_READ_ONLY_FOR_PARENT:
+                eventAction = new MarkActivitiesReadOnlyForParentEventAction(this, dto);
+                break;
+            case HIDE_ACTIVITIES_FOR_PARENT:
+                eventAction = new HideActivitiesForParentEventAction(this, dto);
+                break;
             default:
                 throw new DDPException("Event action type: " + eventActionType.name() + " is not properly configured in "
                         + "the EventConfiguration ctor");

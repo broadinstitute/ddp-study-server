@@ -291,6 +291,13 @@ public interface ActivityInstanceDao extends SqlObject {
             @Bind("isReadOnly") boolean isReadOnly,
             @BindList(value = "activityIds", onEmpty = EmptyHandling.NULL) Set<Long> activityIds);
 
+    @SqlUpdate("update activity_instance set is_readonly_for_parent = :isReadOnly"
+            + "  where participant_id = :participantId and study_activity_id in (<activityIds>)")
+    int bulkUpdateParentReadOnlyByActivityIds(
+            @Bind("participantId") long participantId,
+            @Bind("isReadOnly") boolean isReadOnly,
+            @BindList(value = "activityIds", onEmpty = EmptyHandling.NULL) Set<Long> activityIds);
+
     @SqlUpdate("update activity_instance set is_hidden = :isHidden"
             + "  where participant_id = :participantId and study_activity_id in (<activityIds>) order by activity_instance_id")
     int bulkUpdateIsHiddenByActivityIds(
@@ -298,6 +305,12 @@ public interface ActivityInstanceDao extends SqlObject {
             @Bind("isHidden") boolean isHidden,
             @BindList(value = "activityIds", onEmpty = EmptyHandling.NULL) Set<Long> activityIds);
 
+    @SqlUpdate("update activity_instance set is_readonly_for_parent = :isReadOnly"
+            + "  where participant_id = :participantId and study_activity_id in (<activityIds>)")
+    int bulkUpdateIsParentHiddenByActivityIds(
+            @Bind("participantId") long participantId,
+            @Bind("isReadOnly") boolean isReadOnly,
+            @BindList(value = "activityIds", onEmpty = EmptyHandling.NULL) Set<Long> activityIds);
     @SqlUpdate("update activity_instance as ai"
             + "   join study_activity as act on act.study_activity_id = ai.study_activity_id"
             + "    set ai.participant_id = :newParticipantId"

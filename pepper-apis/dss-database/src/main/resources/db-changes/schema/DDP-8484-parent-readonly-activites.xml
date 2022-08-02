@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="parent-readonly-activities-event-action-type">
+        <insert tableName="event_action_type">
+            <column name="event_action_type_code" value="MARK_ACTIVITIES_READ_ONLY_FOR_PARENT"/>
+        </insert>
+        <insert tableName="event_action_type">
+            <column name="event_action_type_code" value="MARK_ACTIVITIES_HIDDEN_FOR_PARENT"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20181005-add-trigger-id-column-to-activity-instance">
+        <addColumn tableName="activity_instance">
+            <column name="is_readonly_for_parent" type="boolean" defaultValueBoolean="false"/>
+        </addColumn>
+        <addColumn tableName="activity_instance">
+            <column name="is_hidden_for_parent" type="boolean" defaultValueBoolean="false"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

@@ -29,6 +29,7 @@ public final class FormResponse extends ActivityResponse {
                         @ColumnName("instance_guid") String guid,
                         @ColumnName("participant_id") long participantId,
                         @ColumnName("is_readonly") Boolean isReadonly,
+                        @ColumnName("is_readonly_for_parent") Boolean isReadonlyForParent,
                         @ColumnName("created_at") long createdAt,
                         @ColumnName("first_completed_at") Long firstCompletedAt,
                         @ColumnName("parent_instance_id") Long parentInstanceId,
@@ -37,11 +38,12 @@ public final class FormResponse extends ActivityResponse {
                         @ColumnName("activity_code") String activityCode,
                         @ColumnName("activity_version_tag") String activityVersionTag,
                         @ColumnName("is_hidden") Boolean isHidden,
+                        @ColumnName("is_hidden_for_parent") Boolean isHiddenForParent,
                         @ColumnName("section_index") Integer sectionIndex,
                         @Nested ActivityInstanceStatusDto latestStatus) {
-        super(ActivityType.FORMS, id, guid, participantId, isReadonly, createdAt, firstCompletedAt,
-                parentInstanceId, parentInstanceGuid, activityId, activityCode, activityVersionTag, isHidden, sectionIndex,
-                latestStatus);
+        super(ActivityType.FORMS, id, guid, participantId, isReadonly, isReadonlyForParent, createdAt, firstCompletedAt,
+                parentInstanceId, parentInstanceGuid, activityId, activityCode, activityVersionTag, isHidden,isHiddenForParent,
+                sectionIndex, latestStatus);
     }
 
     public List<Answer> getAnswers() {

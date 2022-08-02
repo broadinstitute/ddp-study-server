@@ -173,7 +173,7 @@ public class EventBuilder {
             } else if (triggerCfg.hasPath(WORKFLOW_STATE_FIELD)) {
                 String workflowState = triggerCfg.getString(WORKFLOW_STATE_FIELD);
                 Optional<Long> workflowStateId = handle.attach(JdbiWorkflowState.class).findIdByType(StateType.valueOf(workflowState));
-                if (!workflowStateId.isPresent()) {
+                if (workflowStateId.isEmpty()) {
                     log.warn("State {} is not in the database; will insert it.", workflowState);
                     StaticState staticState = StaticState.of(StateType.valueOf(workflowState));
                     workflowStateId = Optional.of(handle.attach(WorkflowDao.class).findWorkflowStateIdOrInsert(staticState));
@@ -287,10 +287,10 @@ public class EventBuilder {
             handle.attach(TemplateDao.class).insertTemplate(tmpl, revId);
 
             Boolean isPermanent = ConfigUtil.getBoolIfPresent(actionCfg, "permanent");
-            isPermanent = isPermanent == null ? false : isPermanent;
+            isPermanent = isPermanent != null && isPermanent;
 
             Boolean createForProxies = ConfigUtil.getBoolIfPresent(actionCfg, "createForProxies");
-            createForProxies = createForProxies == null ? false : createForProxies;
+            createForProxies = createForProxies != null && createForProxies;
 
             return actionDao.insertAnnouncementAction(tmpl.getTemplateId(), isPermanent, createForProxies);
         } else if (EventActionType.COPY_ANSWER.name().equals(type)) {
@@ -318,15 +318,27 @@ public class EventBuilder {
         } else if (EventActionType.HIDE_ACTIVITIES.name().equals(type)) {
             Set<Long> activityIds = actionCfg.getStringList("activityCodes")
                     .stream()
-                    .map(activtyCode -> ActivityBuilder.findActivityId(handle, studyDto.getId(), activtyCode))
+                    .map(activityCode -> ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode))
                     .collect(toSet());
             return actionDao.insertHideActivitiesAction(activityIds);
+        }else if (EventActionType.HIDE_ACTIVITIES_FOR_PARENT.name().equals(type)) {
+            Set<Long> activityIds = actionCfg.getStringList("activityCodes")
+                    .stream()
+                    .map(activityCode -> ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode))
+                    .collect(toSet());
+            return actionDao.insertHideActivitiesForParentAction(activityIds);
         } else if (EventActionType.MARK_ACTIVITIES_READ_ONLY.name().equals(type)) {
             Set<Long> activityIds = actionCfg.getStringList("activityCodes")
                     .stream()
-                    .map(activtyCode -> ActivityBuilder.findActivityId(handle, studyDto.getId(), activtyCode))
+                    .map(activityCode -> ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode))
                     .collect(toSet());
             return actionDao.insertMarkActivitiesReadOnlyAction(activityIds);
+        }else if (EventActionType.MARK_ACTIVITIES_READ_ONLY_FOR_PARENT.name().equals(type)) {
+            Set<Long> activityIds = actionCfg.getStringList("activityCodes")
+                    .stream()
+                    .map(activityCode -> ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode))
+                    .collect(toSet());
+            return actionDao.insertMarkActivitiesReadOnlyForParentAction(activityIds);
         } else if (EventActionType.UPDATE_USER_STATUS.name().equals(type)) {
             String targetStatus = actionCfg.getString("status");
             var targetStatusType = EnrollmentStatusType.valueOf(targetStatus);
@@ -456,7 +468,13 @@ public class EventBuilder {
         } else if (EventActionType.HIDE_ACTIVITIES.name().equals(type)) {
             List<String> activityCodes = actionCfg.getStringList("activityCodes");
             return String.format("%s/%s", type, String.join(",", activityCodes));
+        } else if (EventActionType.HIDE_ACTIVITIES_FOR_PARENT.name().equals(type)) {
+            List<String> activityCodes = actionCfg.getStringList("activityCodes");
+            return String.format("%s/%s", type, String.join(",", activityCodes));
         } else if (EventActionType.MARK_ACTIVITIES_READ_ONLY.name().equals(type)) {
+            List<String> activityCodes = actionCfg.getStringList("activityCodes");
+            return String.format("%s/%s", type, String.join(",", activityCodes));
+        } else if (EventActionType.MARK_ACTIVITIES_READ_ONLY_FOR_PARENT.name().equals(type)) {
             List<String> activityCodes = actionCfg.getStringList("activityCodes");
             return String.format("%s/%s", type, String.join(",", activityCodes));
         } else if (EventActionType.UPDATE_USER_STATUS.name().equals(type)) {

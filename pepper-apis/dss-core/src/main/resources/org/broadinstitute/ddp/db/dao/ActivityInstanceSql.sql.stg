@@ -6,10 +6,12 @@ select ai.activity_instance_id   as a_instance_id,
        ai.activity_instance_guid as activity_instance_guid,
        ai.participant_id         as a_participant_id,
        ai.is_readonly            as a_is_readonly,
+       ai.is_readonly_for_parent as a_is_readonly_for_parent,
        ai.created_at             as a_created_at,
        ai.first_completed_at     as a_first_completed_at,
        ai.parent_instance_id     as a_parent_instance_id,
        ai.is_hidden              as a_is_hidden,
+       ai.is_hidden_for_parent   as a_is_hidden_for_parent,
        ai.section_index          as a_section_index,
        (select activity_instance_guid
           from activity_instance
