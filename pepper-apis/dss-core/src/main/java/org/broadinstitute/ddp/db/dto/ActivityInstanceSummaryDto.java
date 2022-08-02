@@ -51,7 +51,7 @@ public final class ActivityInstanceSummaryDto {
     @ColumnName("is_hidden")
     private final boolean hidden;
 
-    @ColumnName("is_hidden")
+    @ColumnName("is_hidden_for_parent")
     private final boolean hiddenForParent;
 
     @ColumnName("activity_instance_status_type")
