@@ -5,4 +5,9 @@ public class ESFile {
     public String scannedAt;
     public String scanResult;
     public String fileName;
+    public String bucket;
+    public String fileSize;
+    public String mimeType;
+    public String blobName;
+
 }

@@ -2,19 +2,16 @@ package org.broadinstitute.dsm.model.participantfiles;
 
 import java.net.URL;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.BlobInfo;
-import com.google.cloud.storage.Storage;
-import com.google.cloud.storage.StorageOptions;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.util.GoogleCredentialUtil;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.exception.DownloadException;
 import org.broadinstitute.dsm.model.elastic.ESFile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
+import org.broadinstitute.dsm.route.participantfiles.SignedUrlResponse;
+import org.broadinstitute.dsm.service.FileDownloadService;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
 @Slf4j
@@ -22,31 +19,17 @@ import org.broadinstitute.dsm.util.ElasticSearchUtil;
 public class ParticipantFilesUseCase {
 
     private static String CLEAN = "CLEAN";
-    private String projectId;
     private String bucketName;
-    private String objectName;
+    private String blobName;
+    private String ddpParticipantId;
+    private String fileGuid;
+    FileDownloadService fileDownloadService;
+    Optional<DDPInstanceDto> ddpInstanceDto;
 
-    public URL generateV4GetObjectSignedUrl() {
-        GoogleCredentials bucketCredentials;
-        boolean ensureDefault = true;
-        bucketCredentials = GoogleCredentialUtil.initCredentials(ensureDefault);
 
-        Storage storage = StorageOptions.newBuilder().setProjectId(projectId).setCredentials(bucketCredentials).build().getService();
-
-        // Define resource
-        BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, objectName)).build();
-
-        URL url =
-                storage.signUrl(blobInfo, 15, TimeUnit.MINUTES, Storage.SignUrlOption.withV4Signature());
-
-        System.out.println("Generated GET signed URL:");
-        System.out.println(url);
-        System.out.println("You can use this URL with any user agent, for example:");
-        System.out.println("curl '" + url + "'");
-        return url;
-    }
-
-    public boolean isFileClean(String ddpParticipantId, String fileGuid, String participantIndex) {
+    public boolean isFileClean() {
+        ddpInstanceDto.orElseThrow();
+        String participantIndex = ddpInstanceDto.get().getEsParticipantIndex();
         Optional<ElasticSearchParticipantDto> maybeParticipantESDataByParticipantId =
                 ElasticSearchUtil.getParticipantESDataByParticipantId(participantIndex, ddpParticipantId);
         if (maybeParticipantESDataByParticipantId.isEmpty()) {
@@ -60,5 +43,14 @@ public class ParticipantFilesUseCase {
 
     private boolean isFileClean(ESFile file) {
         return StringUtils.isNotBlank(file.scannedAt) && CLEAN.equals(file.scanResult);
+    }
+
+    public SignedUrlResponse createSignedURLForDownload() throws DownloadException {
+        if (!isFileClean()) {
+            throw new DownloadException(
+                    String.format("File %s has not passed scanning %s and should not be downloaded!", blobName, bucketName));
+        }
+        URL url = fileDownloadService.getSignedURL(blobName, bucketName);
+        return new SignedUrlResponse(url, blobName);
     }
 }
