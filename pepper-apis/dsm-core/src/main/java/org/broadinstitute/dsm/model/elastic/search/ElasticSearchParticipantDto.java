@@ -12,7 +12,7 @@ import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.ESAddress;
 import org.broadinstitute.dsm.model.elastic.ESComputed;
 import org.broadinstitute.dsm.model.elastic.ESDsm;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Profile;
 
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -25,7 +25,7 @@ public class ElasticSearchParticipantDto {
     private List<String> governedUsers;
     private ESComputed computed;
     private Long statusTimestamp;
-    private ESProfile profile;
+    private Profile profile;
     private List<Object> files;
     private List<String> proxies;
     private List<Map<String, Object>> workflows;
@@ -72,7 +72,7 @@ public class ElasticSearchParticipantDto {
         return Optional.ofNullable(statusTimestamp);
     }
 
-    public Optional<ESProfile> getProfile() {
+    public Optional<Profile> getProfile() {
         return Optional.ofNullable(profile);
     }
 
@@ -119,7 +119,7 @@ public class ElasticSearchParticipantDto {
         private List<Activities> activities;
         private List<String> governedUsers;
         private Long statusTimeStamp;
-        private ESProfile profile;
+        private Profile profile;
         private List<Object> files;
         private List<String> proxies;
         private List<Map<String, Object>> workflows;
@@ -154,7 +154,7 @@ public class ElasticSearchParticipantDto {
             return this;
         }
 
-        public Builder withProfile(ESProfile profile) {
+        public Builder withProfile(Profile profile) {
             this.profile = profile;
             return this;
         }

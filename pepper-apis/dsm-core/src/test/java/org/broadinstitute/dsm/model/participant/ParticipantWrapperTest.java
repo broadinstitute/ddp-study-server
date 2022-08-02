@@ -11,7 +11,7 @@ import java.util.stream.Stream;
 
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchable;
@@ -130,7 +130,7 @@ public class ParticipantWrapperTest {
         @Override
         public ElasticSearch getParticipantsWithinRange(String esParticipantsIndex, int from, int to) {
             List<ElasticSearchParticipantDto> result = Stream.generate(() -> {
-                ESProfile esProfile = new ESProfile();
+                Profile esProfile = new Profile();
                 esProfile.setGuid(randomGuidGenerator());
                 return new ElasticSearchParticipantDto.Builder().withProfile(esProfile).withProxies(generateProxies()).build();
             }).limit(10).collect(Collectors.toList());
@@ -142,7 +142,7 @@ public class ParticipantWrapperTest {
         public ElasticSearch getParticipantsByIds(String esParticipantIndex, List<String> participantIds) {
             List<ElasticSearchParticipantDto> result = new ArrayList<>();
             participantIds.forEach(pId -> {
-                ESProfile esProfile = new ESProfile();
+                Profile esProfile = new Profile();
                 esProfile.setGuid(pId);
                 result.add(new ElasticSearchParticipantDto.Builder().withProfile(esProfile).build());
             });

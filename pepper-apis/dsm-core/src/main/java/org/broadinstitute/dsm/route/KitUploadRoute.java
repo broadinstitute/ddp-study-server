@@ -37,7 +37,7 @@ import org.broadinstitute.dsm.model.KitType;
 import org.broadinstitute.dsm.model.KitUploadObject;
 import org.broadinstitute.dsm.model.KitUploadResponse;
 import org.broadinstitute.dsm.model.Value;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.security.RequestHandler;
@@ -235,8 +235,8 @@ public class KitUploadRoute extends RequestHandler {
                 if (StringUtils.isBlank(kit.getParticipantId())) {
                     ElasticSearchParticipantDto participantByShortId =
                             elasticSearch.getParticipantById(ddpInstance.getParticipantIndexES(), kit.getShortId());
-                    participantGuid = participantByShortId.getProfile().map(ESProfile::getGuid).orElse("");
-                    participantLegacyAltPid = participantByShortId.getProfile().map(ESProfile::getLegacyAltPid).orElse("");
+                    participantGuid = participantByShortId.getProfile().map(Profile::getGuid).orElse("");
+                    participantLegacyAltPid = participantByShortId.getProfile().map(Profile::getLegacyAltPid).orElse("");
                     kit.setParticipantId(!participantGuid.isEmpty() ? participantGuid : participantLegacyAltPid);
                     collaboratorParticipantId = KitRequestShipping
                             .getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
@@ -520,8 +520,8 @@ public class KitUploadRoute extends RequestHandler {
                                              ElasticSearchParticipantDto maybeParticipant) {
 
         Map<String, String> participantProfile = new HashMap<>();
-        String firstName = maybeParticipant.getProfile().map(ESProfile::getFirstName).orElse("");
-        String lastName = maybeParticipant.getProfile().map(ESProfile::getLastName).orElse("");
+        String firstName = maybeParticipant.getProfile().map(Profile::getFirstName).orElse("");
+        String lastName = maybeParticipant.getProfile().map(Profile::getLastName).orElse("");
         participantProfile.put("firstName", firstName);
         participantProfile.put("lastName", lastName);
         String message = "";

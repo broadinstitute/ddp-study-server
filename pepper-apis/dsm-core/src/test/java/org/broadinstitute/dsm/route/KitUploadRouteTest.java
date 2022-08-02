@@ -8,7 +8,7 @@ import com.typesafe.config.Config;
 import org.broadinstitute.dsm.TestHelper;
 import org.broadinstitute.dsm.exception.FileColumnMissing;
 import org.broadinstitute.dsm.exception.UploadLineException;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
 import org.broadinstitute.dsm.util.NotificationUtil;
@@ -80,7 +80,7 @@ public class KitUploadRouteTest {
         String participantFirstNameFromDoc = participantDataAsMap.get("firstName");
         String participantLastNameFromDoc = participantDataAsMap.get("lastName");
 
-        ESProfile esProfile = new ESProfile();
+        Profile esProfile = new Profile();
         esProfile.setFirstName("Mickey");
         esProfile.setLastName("Mouse");
         esProfile.setHruid("");
@@ -109,7 +109,7 @@ public class KitUploadRouteTest {
 
     private ParticipantWrapperDto participantFactory(String firstName, String lastName, String shortId) {
         ParticipantWrapperDto participant = new ParticipantWrapperDto();
-        ESProfile esProfile = new ESProfile();
+        Profile esProfile = new Profile();
         esProfile.setFirstName(firstName);
         esProfile.setLastName(lastName);
         if (ParticipantUtil.isHruid(shortId)) {

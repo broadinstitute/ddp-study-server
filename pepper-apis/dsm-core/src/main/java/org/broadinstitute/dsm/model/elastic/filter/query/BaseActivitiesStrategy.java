@@ -7,38 +7,43 @@ import java.util.List;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.NullObjectCamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
-import org.broadinstitute.dsm.model.elastic.filter.splitter.SplitterStrategy;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.elasticsearch.index.query.QueryBuilder;
 
-public abstract class BaseActivitiesStrategy {
+public abstract class BaseActivitiesStrategy extends BaseQueryStrategy {
     private static final List<String> BASE_ACTIVITY_PROPERTIES = Arrays.asList(
             ElasticSearchUtil.CREATED_AT, ElasticSearchUtil.COMPLETED_AT, ElasticSearchUtil.LAST_UPDATED, ElasticSearchUtil.STATUS
     );
-    protected SplitterStrategy splitter;
     protected Operator operator;
     protected BaseQueryBuilder baseQueryBuilder;
     protected Parser parser;
 
-    public BaseActivitiesStrategy(SplitterStrategy splitter, Operator operator, BaseQueryBuilder baseQueryBuilder, Parser parser) {
-        this.splitter = splitter;
+    public BaseActivitiesStrategy(Operator operator, BaseQueryBuilder baseQueryBuilder, Parser parser) {
         this.operator = operator;
         this.baseQueryBuilder = baseQueryBuilder;
         this.parser = parser;
     }
 
-    public static BaseActivitiesStrategy of(Parser parser, SplitterStrategy splitter,
+    public static BaseActivitiesStrategy of(Parser parser,
                                             Operator operator, BaseQueryBuilder baseQueryBuilder) {
-        splitter.setCamelCaseConverter(NullObjectCamelCaseConverter.of());
-        BaseActivitiesStrategy strategy = new ActivityStrategy(parser, splitter, operator, baseQueryBuilder);
-        if (!BASE_ACTIVITY_PROPERTIES.contains(splitter.getFieldName())) {
-            strategy = new QuestionsAnswersActivityStrategy(parser, splitter, operator, baseQueryBuilder);
+        operator.getSplitterStrategy().setCamelCaseConverter(NullObjectCamelCaseConverter.of());
+        BaseActivitiesStrategy strategy = new ActivityStrategy(parser, operator, baseQueryBuilder);
+        if (!BASE_ACTIVITY_PROPERTIES.contains(operator.getSplitterStrategy().getFieldName())) {
+            strategy = new QuestionsAnswersActivityStrategy(parser, operator, baseQueryBuilder);
         }
         return strategy;
     }
 
-    public List<QueryBuilder> apply() {
-        QueryPayload queryPayload = new QueryPayload("activities", "activityCode", new String[]{splitter.getAlias()});
+    @Override
+    protected QueryBuilder getMainQueryBuilderFromChild(BaseQueryBuilder baseQueryBuilder) {
+        throw new UnsupportedOperationException();
+    }
+
+
+    @Override
+    public List<QueryBuilder> build() {
+        QueryPayload queryPayload = new QueryPayload(
+                "activities", "activityCode", new String[]{operator.getSplitterStrategy().getAlias()});
         SingleQueryBuilder singleQueryBuilder = new SingleQueryBuilder(queryPayload);
         singleQueryBuilder.setPayload(queryPayload);
         MatchQueryStrategy additionalQueryStrategy = new MatchQueryStrategy(singleQueryBuilder);

@@ -16,23 +16,36 @@ import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.model.elastic.Activities;
+import org.broadinstitute.dsm.model.elastic.Invitations;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
+import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
 public class PropertyInfo {
 
-    private static final Map<String, PropertyInfo> TABLE_ALIAS_MAPPINGS = new HashMap<>(
-            Map.of(DBConstants.DDP_MEDICAL_RECORD_ALIAS, new PropertyInfo(MedicalRecord.class, true),
-                    DBConstants.DDP_TISSUE_ALIAS, new PropertyInfo(Tissue.class, true),
-                    DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS, new PropertyInfo(OncHistoryDetail.class, true),
-                    DBConstants.DDP_PARTICIPANT_DATA_ALIAS, new PropertyInfo(ParticipantData.class, true),
-                    DBConstants.DDP_PARTICIPANT_RECORD_ALIAS, new PropertyInfo(Participant.class, false),
-                    DBConstants.DDP_PARTICIPANT_ALIAS, new PropertyInfo(Participant.class, false),
-                    DBConstants.DDP_ONC_HISTORY_ALIAS, new PropertyInfo(OncHistory.class, false),
-                    DBConstants.SM_ID_TABLE_ALIAS, new PropertyInfo(SmId.class, true),
-                    DBConstants.COHORT_ALIAS, new PropertyInfo(CohortTag.class, true),
-                    DBConstants.DDP_KIT_REQUEST_ALIAS, new PropertyInfo(KitRequestShipping.class, true)));
+    private static final Map<String, PropertyInfo> TABLE_ALIAS_MAPPINGS;
+
+    static {
+        TABLE_ALIAS_MAPPINGS = new HashMap<>(
+                Map.of(DBConstants.DDP_MEDICAL_RECORD_ALIAS, new PropertyInfo(MedicalRecord.class, true),
+                        DBConstants.DDP_TISSUE_ALIAS, new PropertyInfo(Tissue.class, true),
+                        DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS, new PropertyInfo(OncHistoryDetail.class, true),
+                        DBConstants.DDP_PARTICIPANT_DATA_ALIAS, new PropertyInfo(ParticipantData.class, true),
+                        DBConstants.DDP_PARTICIPANT_RECORD_ALIAS, new PropertyInfo(Participant.class, false),
+                        DBConstants.DDP_PARTICIPANT_ALIAS, new PropertyInfo(Participant.class, false),
+                        DBConstants.DDP_ONC_HISTORY_ALIAS, new PropertyInfo(OncHistory.class, false),
+                        DBConstants.SM_ID_TABLE_ALIAS, new PropertyInfo(SmId.class, true),
+                        DBConstants.COHORT_ALIAS, new PropertyInfo(CohortTag.class, true),
+                        DBConstants.DDP_KIT_REQUEST_ALIAS, new PropertyInfo(KitRequestShipping.class, true)
+                ));
+        TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.ACTIVITIES, new PropertyInfo(Activities.class, true));
+        TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.PROFILE, new PropertyInfo(Profile.class, false));
+        TABLE_ALIAS_MAPPINGS.put(ElasticSearchUtil.INVITATIONS, new PropertyInfo(Invitations.class, false));
+    }
+
     private Class<?> propertyClass;
     private boolean isCollection;
     private String fieldName;
@@ -76,7 +89,7 @@ public class PropertyInfo {
     }
 
     public static PropertyInfo of(String alias) {
-        return TABLE_ALIAS_MAPPINGS.getOrDefault(alias, new PropertyInfo(Activities.class, true));
+        return TABLE_ALIAS_MAPPINGS.get(alias);
     }
 
     public static boolean hasProperty(String alias) {

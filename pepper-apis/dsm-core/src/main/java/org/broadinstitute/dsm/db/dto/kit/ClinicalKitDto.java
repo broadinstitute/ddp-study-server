@@ -14,7 +14,7 @@ import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.ESDsm;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.slf4j.Logger;
@@ -109,10 +109,10 @@ public class ClinicalKitDto {
 
         try {
             this.setDateOfBirth(maybeParticipantESDataByParticipantId.get().getDsm().map(ESDsm::getDateOfBirth).orElse(""));
-            this.setFirstName(maybeParticipantESDataByParticipantId.get().getProfile().map(ESProfile::getFirstName).orElse(""));
-            this.setLastName(maybeParticipantESDataByParticipantId.get().getProfile().map(ESProfile::getLastName).orElse(""));
+            this.setFirstName(maybeParticipantESDataByParticipantId.get().getProfile().map(Profile::getFirstName).orElse(""));
+            this.setLastName(maybeParticipantESDataByParticipantId.get().getProfile().map(Profile::getLastName).orElse(""));
             this.setGender(getParticipantGender(maybeParticipantESDataByParticipantId.get(), ddpInstance.getName()));
-            String shortId = maybeParticipantESDataByParticipantId.get().getProfile().map(ESProfile::getHruid).orElse("");
+            String shortId = maybeParticipantESDataByParticipantId.get().getProfile().map(Profile::getHruid).orElse("");
             String collaboratorParticipantId =
                     KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
                             ddpInstance.isMigratedDDP(),

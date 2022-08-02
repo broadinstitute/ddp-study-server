@@ -34,7 +34,7 @@ import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.model.elastic.ESAddress;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.gbf.Address;
@@ -433,7 +433,7 @@ public class ElasticSearchUtil {
                 JsonObject participantJson = new JsonParser().parse(new Gson().toJson(participantRecord)).getAsJsonObject();
                 if (participantJson.has(ADDRESS) && participantJson.has(PROFILE)) {
                     ESAddress address = gson.fromJson(participantJson.get(ADDRESS), ESAddress.class);
-                    ESProfile profile = gson.fromJson(participantJson.get(PROFILE), ESProfile.class);
+                    Profile profile = gson.fromJson(participantJson.get(PROFILE), Profile.class);
                     Address gbfAddress = new Address(address.getRecipient(), address.getStreet1(), address.getStreet1(),
                             address.getCity(), address.getState(), address.getZip(), address.getCountry(), address.getPhone());
                     addressByParticipant.put(profile.getGuid(), gbfAddress);
@@ -493,7 +493,7 @@ public class ElasticSearchUtil {
             String participantId = ParticipantUtil.isGuid(ddpParticipantId) ? ddpParticipantId :
                     getParticipantESDataByAltpid(client, index, ddpParticipantId)
                             .getProfile()
-                            .map(ESProfile::getGuid)
+                            .map(Profile::getGuid)
                             .orElse(ddpParticipantId);
 
             Map<String, Object> workflowMapES = getObjectsMap(client, index, participantId, ESObjectConstants.WORKFLOWS);
@@ -732,7 +732,7 @@ public class ElasticSearchUtil {
         String participantId =
                 ParticipantUtil.isGuid(ddpParticipantId) ? ddpParticipantId : getParticipantESDataByAltpid(client, index, ddpParticipantId)
                         .getProfile()
-                        .map(ESProfile::getGuid)
+                        .map(Profile::getGuid)
                         .orElse(ddpParticipantId);
         UpdateRequest updateRequest = new UpdateRequest()
                 .index(index)
@@ -767,7 +767,7 @@ public class ElasticSearchUtil {
         objectList.add(newObjectMap);
     }
 
-    public static Optional<ESProfile> getParticipantProfileByGuidOrAltPid(String index, String guidOrAltPid) {
+    public static Optional<Profile> getParticipantProfileByGuidOrAltPid(String index, String guidOrAltPid) {
         try {
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
             searchSourceBuilder.query(QueryBuilders.boolQuery()
@@ -783,7 +783,7 @@ public class ElasticSearchUtil {
             logger.info("Getting ES profile for participant with guid/altpid: {}", guidOrAltPid);
             SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
 
-            ESProfile profile = null;
+            Profile profile = null;
             if (response.getHits().getTotalHits() > 0) {
                 Map<String, Object> source = response.getHits().getAt(0).getSourceAsMap();
                 profile = new ElasticSearch().parseSourceMap(source).flatMap(ElasticSearchParticipantDto::getProfile).orElse(null);

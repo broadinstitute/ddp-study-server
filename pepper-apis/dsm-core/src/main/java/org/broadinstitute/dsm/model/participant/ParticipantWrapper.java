@@ -20,9 +20,7 @@ import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.model.Filter;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
-import org.broadinstitute.dsm.model.elastic.filter.FilterParser;
-import org.broadinstitute.dsm.model.elastic.filter.FilterSeparatorFactory;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.filter.query.AbstractQueryBuilderFactory;
 import org.broadinstitute.dsm.model.elastic.filter.query.BaseAbstractQueryBuilder;
 import org.broadinstitute.dsm.model.elastic.mapping.FieldTypeExtractor;
@@ -81,12 +79,10 @@ public class ParticipantWrapper {
     }
 
     private void fetchAndPrepareDataByFilters(Map<String, String> filters) {
-        FilterParser parser = new FilterParser();
         AbstractQueryBuilder<?> mainQuery = new BoolQueryBuilder();
         for (String alias : filters.keySet()) {
             if (StringUtils.isNotBlank(filters.get(alias))) {
                 BaseAbstractQueryBuilder queryBuilder = AbstractQueryBuilderFactory.create(alias, filters.get(alias));
-                queryBuilder.setParser(parser);
                 queryBuilder.setEsIndex(getEsParticipantIndex());
                 mainQuery = queryBuilder.build();
             }
@@ -223,7 +219,7 @@ public class ParticipantWrapper {
     }
 
     List<String> getParticipantIdsFromElasticList(List<ElasticSearchParticipantDto> elasticSearchParticipantDtos) {
-        return elasticSearchParticipantDtos.stream().flatMap(elasticSearch -> elasticSearch.getProfile().stream()).map(ESProfile::getGuid)
+        return elasticSearchParticipantDtos.stream().flatMap(elasticSearch -> elasticSearch.getProfile().stream()).map(Profile::getGuid)
                 .collect(Collectors.toList());
     }
 

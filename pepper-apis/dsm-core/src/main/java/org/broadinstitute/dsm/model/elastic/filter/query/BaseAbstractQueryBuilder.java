@@ -7,10 +7,10 @@ import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
+import org.broadinstitute.dsm.model.elastic.filter.FilterParser;
 import org.broadinstitute.dsm.model.elastic.filter.FilterStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
 import org.broadinstitute.dsm.model.elastic.filter.splitter.SplitterStrategy;
-import org.broadinstitute.dsm.model.participant.Util;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -27,6 +27,7 @@ public class BaseAbstractQueryBuilder {
 
     protected BaseAbstractQueryBuilder() {
         boolQueryBuilder = new BoolQueryBuilder();
+        parser = new FilterParser();
     }
 
     public void setEsIndex(String index) {
@@ -68,16 +69,8 @@ public class BaseAbstractQueryBuilder {
                     new QueryPayload(buildPath(), splitter.getInnerProperty(), splitter.getAlias(),
                             parser.parse(splitter.getValue()), esIndex);
             baseQueryBuilder = BaseQueryBuilder.of(queryPayload);
-            List<QueryBuilder> queryBuilders;
-            if (!Util.isUnderDsmKey(splitter.getAlias())) {
-                BaseActivitiesStrategy activityStrategy = ActivityStrategy.of(parser, splitter, operator, baseQueryBuilder);
-                queryBuilders = activityStrategy.apply();
-            } else {
-                BuildQueryStrategy queryStrategy = operator.getQueryStrategy();
-                queryStrategy.setBaseQueryBuilder(baseQueryBuilder);
-                baseQueryBuilder.setOperator(operator);
-                queryBuilders = queryStrategy.build();
-            }
+            List<QueryBuilder> queryBuilders =
+                    QueryStrategyFactory.create(new QueryStrategyFactoryPayload(baseQueryBuilder, operator, parser)).build();
             filterStrategy.build(boolQueryBuilder, baseQueryBuilder.build(queryBuilders));
         }
     }
