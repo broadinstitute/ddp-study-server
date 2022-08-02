@@ -19,10 +19,7 @@ import java.io.File;
 import java.nio.file.Path;
 
 /**
- * Task to make additional edits as part of the "Brain Tumor Project" rename.
- *
- * <p>This should be ran right after the BrainRename task. This assumes that activities will have a new version from
- * the BrainRename task, so it will make edits using that as the latest version.
+ * Task to add new picklist option to a singular question.
  */
 @Slf4j
 public class SingularPatientSurveyUpdate implements CustomTask {
@@ -51,9 +48,8 @@ public class SingularPatientSurveyUpdate implements CustomTask {
 
     @Override
     public void run(Handle handle) {
+        log.info("TASK:: SingularPatientSurveyUpdate ");
         this.studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyCfg.getString("study.guid"));
-
-        log.info("Editing Singular study, Patient survey activity... ");
         insertNewOption(handle);
     }
 

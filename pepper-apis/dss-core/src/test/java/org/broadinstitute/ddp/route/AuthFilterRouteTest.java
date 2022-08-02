@@ -15,12 +15,10 @@ import com.auth0.exception.Auth0Exception;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import io.restassured.RestAssured;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.message.BasicHeader;
-import org.apache.http.util.EntityUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.TestConstants;
@@ -147,24 +145,6 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
         });
     }
 
-    private void assert401NoBodyForStandardVerbs(String endpoint, Header authHeader) {
-        List<Function<String, Request>> methods = List.of(Request::Get, Request::Post, Request::Patch, Request::Put);
-        methods.forEach(method -> {
-            try {
-                method.apply(endpoint)
-                        .addHeader(authHeader)
-                        .execute()
-                        .handleResponse(res -> {
-                            Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, res.getStatusLine().getStatusCode());
-                            Assert.assertTrue(StringUtils.isEmpty(EntityUtils.toString(res.getEntity())));
-                            return null;
-                        });
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-    }
-
     private void assert401(String endpoint, Header authHeader) {
         List<Function<String, Request>> methods = List.of(Request::Get, Request::Post, Request::Patch, Request::Put);
         methods.forEach(method -> {
@@ -234,12 +214,12 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void testProfileRequestsFailsWithGarbageToken() {
-        assert401NoBodyForStandardVerbs(buildProfileUrl(), GARBAGE_AUTH_HEADER);
+        assert401(buildProfileUrl(), GARBAGE_AUTH_HEADER);
     }
 
     @Test
     public void testProfileRequestsFailsWithExpiredToken() {
-        assert401NoBodyForStandardVerbs(buildProfileUrl(), EXPIRED_AUTH_HEADER);
+        assert401(buildProfileUrl(), EXPIRED_AUTH_HEADER);
     }
 
     @Test
@@ -284,12 +264,12 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void testGovernedStudyParticipants_requestFailsWithGarbageToken() {
-        assert401NoBodyForStandardVerbs(buildGovernedStudyParticipantsUrl(), GARBAGE_AUTH_HEADER);
+        assert401(buildGovernedStudyParticipantsUrl(), GARBAGE_AUTH_HEADER);
     }
 
     @Test
     public void testGovernedStudyParticipants_requestFailsWithExpiredToken() {
-        assert401NoBodyForStandardVerbs(buildGovernedStudyParticipantsUrl(), EXPIRED_AUTH_HEADER);
+        assert401(buildGovernedStudyParticipantsUrl(), EXPIRED_AUTH_HEADER);
     }
 
     @Test
@@ -329,7 +309,7 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void testStudyRequestsFailsWithGarbageToken() {
-        assert401NoBodyForStandardVerbs(buildStudyUrl(), GARBAGE_AUTH_HEADER);
+        assert401(buildStudyUrl(), GARBAGE_AUTH_HEADER);
     }
 
     @Test

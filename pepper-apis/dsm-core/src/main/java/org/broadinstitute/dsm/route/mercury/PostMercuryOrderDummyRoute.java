@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.route.mercury;
 
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
@@ -23,15 +24,16 @@ public class PostMercuryOrderDummyRoute implements Route {
     private String projectId;
     private String topicId;
     private MercuryOrderPublisher mercuryOrderPublisher = new MercuryOrderPublisher(new MercuryOrderDao(), new ParticipantDao());
+    private static final String PEPPER_ORDER_ID = "PepperOrderId";
 
     public PostMercuryOrderDummyRoute(String projectId, String topicId) {
         this.projectId = projectId;
         this.topicId = topicId;
     }
 
-    public void publishMessage(MercuryOrderDummyRequest mercuryOrderRequest, DDPInstanceDto ddpInstance, String userId) {
+    public String publishMessage(MercuryOrderDummyRequest mercuryOrderRequest, DDPInstanceDto ddpInstance, String userId) {
         log.info("Publishing message to Mercury");
-        mercuryOrderPublisher
+        return mercuryOrderPublisher
                 .createAndPublishMessage(mercuryOrderRequest.getKitLabels(), projectId, topicId, ddpInstance,
                         mercuryOrderRequest.getCollaboratorParticipantId(), userId, null);
     }
@@ -62,9 +64,10 @@ public class PostMercuryOrderDummyRoute implements Route {
             log.error("Realm was null for " + mercuryOrderRequest.getRealm());
             return new Result(500, UserErrorMessages.CONTACT_DEVELOPER);
         }
-        publishMessage(mercuryOrderRequest, ddpInstance, userId);
-        return new Result(200);
-
+        String pepperOrderId = publishMessage(mercuryOrderRequest, ddpInstance, userId);
+        JSONObject main = new JSONObject();
+        main.put(PEPPER_ORDER_ID, pepperOrderId);
+        return main;
     }
 
     private boolean isValidRequest(MercuryOrderDummyRequest mercuryOrderRequest) {
