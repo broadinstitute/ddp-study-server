@@ -49,11 +49,6 @@ public class PostMercuryOrderRoute extends RequestHandler {
         }
         MercurySampleDto[] mercurySampleDtos = new Gson().fromJson(requestBody, MercurySampleDto[].class);
         DDPInstanceDto ddpInstance = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
-        if (ddpInstance == null) {
-            log.error("Realm was null for " + realm);
-            response.status(500);
-            return UserErrorMessages.CONTACT_DEVELOPER;
-        }
         publishMessage(mercurySampleDtos, ddpInstance, userId, ddpParticipantId);
         response.status(200);
         return "";
