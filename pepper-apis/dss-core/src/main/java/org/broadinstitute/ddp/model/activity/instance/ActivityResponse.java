@@ -16,6 +16,7 @@ public abstract class ActivityResponse {
     protected String guid;
     protected long participantId;
     protected Boolean isReadonly;
+    private Boolean isReadonlyForParent;
     protected long createdAt;
     protected Long firstCompletedAt;
     protected Long parentInstanceId;
@@ -26,19 +27,21 @@ public abstract class ActivityResponse {
     protected Boolean isHidden;
     protected Integer sectionIndex;
 
+    private Boolean isHiddenForParent;
     // Most of the time we just need data about the latest status.
     protected ActivityInstanceStatusDto latestStatus;
 
     ActivityResponse(ActivityType type,
-                     long id, String guid, long participantId, Boolean isReadonly, Boolean isReadonlyForParent, long createdAt, Long firstCompletedAt,
-                     Long parentInstanceId, String parentInstanceGuid,
-                     long activityId, String activityCode, String activityVersionTag, Boolean isHidden, Boolean isHiddenForParent, Integer sectionIndex,
-                     ActivityInstanceStatusDto latestStatus) {
+                     long id, String guid, long participantId, Boolean isReadonly, Boolean isReadonlyForParent, long createdAt,
+                     Long firstCompletedAt, Long parentInstanceId, String parentInstanceGuid, long activityId, String activityCode,
+                     String activityVersionTag, Boolean isHidden, Boolean isHiddenForParent,
+                     Integer sectionIndex, ActivityInstanceStatusDto latestStatus) {
         this.type = type;
         this.id = id;
         this.guid = guid;
         this.participantId = participantId;
         this.isReadonly = isReadonly;
+        this.isReadonlyForParent = isReadonlyForParent;
         this.createdAt = createdAt;
         this.firstCompletedAt = firstCompletedAt;
         this.parentInstanceId = parentInstanceId;
@@ -46,6 +49,7 @@ public abstract class ActivityResponse {
         this.activityId = activityId;
         this.activityCode = activityCode;
         this.activityVersionTag = activityVersionTag;
+        this.isHiddenForParent = isHiddenForParent;
         this.latestStatus = latestStatus;
         this.isHidden = isHidden;
         this.sectionIndex = sectionIndex;

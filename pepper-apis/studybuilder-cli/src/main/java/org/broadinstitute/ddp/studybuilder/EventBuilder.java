@@ -321,7 +321,7 @@ public class EventBuilder {
                     .map(activityCode -> ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode))
                     .collect(toSet());
             return actionDao.insertHideActivitiesAction(activityIds);
-        }else if (EventActionType.HIDE_ACTIVITIES_FOR_PARENT.name().equals(type)) {
+        } else if (EventActionType.HIDE_ACTIVITIES_FOR_PARENT.name().equals(type)) {
             Set<Long> activityIds = actionCfg.getStringList("activityCodes")
                     .stream()
                     .map(activityCode -> ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode))
@@ -333,7 +333,7 @@ public class EventBuilder {
                     .map(activityCode -> ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode))
                     .collect(toSet());
             return actionDao.insertMarkActivitiesReadOnlyAction(activityIds);
-        }else if (EventActionType.MARK_ACTIVITIES_READ_ONLY_FOR_PARENT.name().equals(type)) {
+        } else if (EventActionType.MARK_ACTIVITIES_READ_ONLY_FOR_PARENT.name().equals(type)) {
             Set<Long> activityIds = actionCfg.getStringList("activityCodes")
                     .stream()
                     .map(activityCode -> ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode))

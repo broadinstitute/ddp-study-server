@@ -46,6 +46,9 @@ public class ActivityInstanceSummary implements TranslatedSummary {
     @SerializedName("readonly")
     private Boolean readonly;
 
+    @SerializedName("isReadonlyForParent")
+    private boolean isReadonlyForParent;
+
     @SerializedName("createdAt")
     private long createdAt;
 
@@ -66,6 +69,9 @@ public class ActivityInstanceSummary implements TranslatedSummary {
 
     @SerializedName("isHidden")
     private boolean isHidden;
+
+    @SerializedName("isHiddenForParent")
+    private boolean isHiddenForParent;
 
     private transient long activityInstanceId;
     private transient String isoLanguageCode;
@@ -95,9 +101,11 @@ public class ActivityInstanceSummary implements TranslatedSummary {
             String statusTypeCode,
             String iconBase64,
             Boolean readonly,
+            Boolean isReadonlyForParent,
             String isoLanguageCode,
             boolean excludeFromDisplay,
             boolean isInstanceHidden,
+            boolean hiddenForParent,
             long createdAt,
             boolean canDelete,
             boolean isFollowup,
@@ -121,10 +129,12 @@ public class ActivityInstanceSummary implements TranslatedSummary {
         this.statusTypeCode = statusTypeCode;
         this.iconBase64 = iconBase64;
         this.readonly = readonly;
+        this.isReadonlyForParent = isReadonlyForParent;
         this.isoLanguageCode = isoLanguageCode;
         this.excludeFromDisplay = excludeFromDisplay;
         this.isInstanceHidden = isInstanceHidden;
         this.isHidden = isInstanceHidden || excludeFromDisplay;
+        this.isHiddenForParent = hiddenForParent;
         this.createdAt = createdAt;
         this.canDelete = canDelete;
         this.isFollowup = isFollowup;

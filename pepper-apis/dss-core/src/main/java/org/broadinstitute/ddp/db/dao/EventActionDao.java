@@ -118,6 +118,7 @@ public interface EventActionDao extends SqlObject {
         DBUtils.checkInsert(activityIds.size(), ids.length);
         return actionId;
     }
+
     default long insertMarkActivitiesReadOnlyAction(Set<Long> activityIds) {
         long actionId = getJdbiEventAction().insert(null, EventActionType.MARK_ACTIVITIES_READ_ONLY);
         long[] ids = getEventActionSql().insertTargetActivities(actionId, activityIds);

@@ -42,8 +42,8 @@ public final class FormResponse extends ActivityResponse {
                         @ColumnName("section_index") Integer sectionIndex,
                         @Nested ActivityInstanceStatusDto latestStatus) {
         super(ActivityType.FORMS, id, guid, participantId, isReadonly, isReadonlyForParent, createdAt, firstCompletedAt,
-                parentInstanceId, parentInstanceGuid, activityId, activityCode, activityVersionTag, isHidden,isHiddenForParent,
-                sectionIndex, latestStatus);
+                parentInstanceId, parentInstanceGuid, activityId, activityCode, activityVersionTag, isHidden,
+                isHiddenForParent, sectionIndex, latestStatus);
     }
 
     public List<Answer> getAnswers() {

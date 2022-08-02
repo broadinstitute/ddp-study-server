@@ -311,6 +311,7 @@ public interface ActivityInstanceDao extends SqlObject {
             @Bind("participantId") long participantId,
             @Bind("isReadOnly") boolean isReadOnly,
             @BindList(value = "activityIds", onEmpty = EmptyHandling.NULL) Set<Long> activityIds);
+
     @SqlUpdate("update activity_instance as ai"
             + "   join study_activity as act on act.study_activity_id = ai.study_activity_id"
             + "    set ai.participant_id = :newParticipantId"

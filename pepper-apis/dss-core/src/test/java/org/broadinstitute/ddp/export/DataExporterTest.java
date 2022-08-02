@@ -801,8 +801,8 @@ public class DataExporterTest extends TxnAwareBaseTest {
                     testData.getUserId(), testData.getStudyId(),
                     InstitutionType.PHYSICIAN, "inst a", "dr. a", "boston", "ma", null, null, null, null));
             if (!emptyActivity) {
-                FormResponse instance = new FormResponse(1L, "instance-guid-xyz", 1L, false, timestamp, firstCompletedAt,
-                        null, null, 1L, "ACT", "v1", false, 0,
+                FormResponse instance = new FormResponse(1L, "instance-guid-xyz", 1L, false, false, timestamp, firstCompletedAt,
+                        null, null, 1L, "ACT", "v1", false, false, 0,
                         new ActivityInstanceStatusDto(2L, 1L, 1L, lastUpdatedAt, InstanceStatusType.COMPLETE));
                 instance.putAnswer(new BoolAnswer(1L, "Q_BOOL", "guid", true));
                 instance.putAnswer(new TextAnswer(2L, "Q_TEXT", "guid", "john smith"));
@@ -827,9 +827,9 @@ public class DataExporterTest extends TxnAwareBaseTest {
                 participant.putActivityInstanceSubstitutions(instance.getId(), substitutions);
 
                 FormResponse nestedResponse = new FormResponse(
-                        2L, "nested-instance-1", 1L, false, timestamp, firstCompletedAt,
+                        2L, "nested-instance-1", 1L, false, false, timestamp, firstCompletedAt,
                         instance.getId(), instance.getGuid(),
-                        2L, nestedDef.getActivityCode(), nestedVersionDto.getVersionTag(), false, 0,
+                        2L, nestedDef.getActivityCode(), nestedVersionDto.getVersionTag(), false, false, 0,
                         new ActivityInstanceStatusDto(3L, 2L, 1L, lastUpdatedAt, InstanceStatusType.COMPLETE));
                 participant.addResponse(nestedResponse);
             }

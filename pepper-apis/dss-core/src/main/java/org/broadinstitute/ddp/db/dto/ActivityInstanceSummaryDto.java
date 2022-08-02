@@ -45,8 +45,14 @@ public final class ActivityInstanceSummaryDto {
     @ColumnName("is_readonly")
     private final Boolean isReadonly;
 
+    @ColumnName("is_readonly_for_parent")
+    private final Boolean isReadonlyForParent;
+
     @ColumnName("is_hidden")
     private final boolean hidden;
+
+    @ColumnName("is_hidden")
+    private final boolean hiddenForParent;
 
     @ColumnName("activity_instance_status_type")
     private final InstanceStatusType statusType;

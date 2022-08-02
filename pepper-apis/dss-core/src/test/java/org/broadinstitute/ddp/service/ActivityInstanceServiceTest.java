@@ -235,7 +235,7 @@ public class ActivityInstanceServiceTest extends ActivityInstanceServiceTestAbst
     public void testRenderInstanceSummaries_rendersNameEvenWhenThereIsNoSummaryText() {
         var summaries = List.of(new ActivityInstanceSummary(
                 "activity", 1L, "guid", "name", null, null, null, null, null, "type", "form", "status",
-                null, false, "en", false, false, 1L, false, false, "version", 1L, 1L));
+                null, false, false, "en", false, false, false, 1L, false, false, "version", 1L, 1L));
         summaries.get(0).setInstanceNumber(2);
 
         TransactionWrapper.useTxn(handle ->
@@ -254,10 +254,10 @@ public class ActivityInstanceServiceTest extends ActivityInstanceServiceTestAbst
         String activityCode = "ACT" + Instant.now().toEpochMilli();
         var summaries = List.of(new ActivityInstanceSummary(
                 activityCode, 1L, "guid", name, null, title, subtitle, description, summary, "type", "form", "status",
-                null, false, "en", false, false, 1L, false, false, "v1", 1L, 1L));
+                null, false, false, "en", false, false, false, 1L, false, false, "v1", 1L, 1L));
         summaries.get(0).setInstanceNumber(2);
 
-        var response = new FormResponse(1L, "guid", 1L, null, 1L, 1L, null, null, 1L, activityCode, "v1", false, 0,
+        var response = new FormResponse(1L, "guid", 1L, null, false, 1L, 1L, null, null, 1L, activityCode, "v1", false, false, 0,
                 new ActivityInstanceStatusDto(1L, 1L, 1L, 1L, InstanceStatusType.CREATED));
         response.putAnswer(new TextAnswer(1L, "Q1", "guid1", "some-text"));
         response.putAnswer(new PicklistAnswer(2L, "Q2", "guid2", List.of(new SelectedPicklistOption("AUNT", "aunt detail text"))));

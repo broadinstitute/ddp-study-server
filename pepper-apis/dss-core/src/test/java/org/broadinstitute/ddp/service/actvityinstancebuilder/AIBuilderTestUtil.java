@@ -173,7 +173,7 @@ public class AIBuilderTestUtil {
     }
 
     public static FormResponse createFormResponse(String instanceGuid, long createdAt, long updatedAt) {
-        FormResponse formResponse = new FormResponse(1L, instanceGuid, 1L, false,
+        FormResponse formResponse = new FormResponse(1L, instanceGuid, 1L, false, false,
                 createdAt,
                 updatedAt,
                 null,
@@ -181,6 +181,7 @@ public class AIBuilderTestUtil {
                 1L,
                 "activity_code",
                 "v1",
+                false,
                 false,
                 0,
                 new ActivityInstanceStatusDto(1L, 1L, 1L, updatedAt, COMPLETE));
