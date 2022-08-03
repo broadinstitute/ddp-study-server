@@ -34,7 +34,7 @@ public abstract class BaseQueryStrategy implements BuildQueryStrategy {
     @Override
     public List<QueryBuilder> build(BaseQueryBuilder baseQueryBuilder) {
         List<QueryBuilder> queryBuilders = new ArrayList<>();
-        if (additionalQueryStrategies.size() > 0) {
+        if (hasAdditionalStrategies()) {
             additionalQueryStrategies.stream()
                     .map(additionalQueryStrategy ->
                             additionalQueryStrategy.getMainQueryBuilder(additionalQueryStrategy.getBaseQueryBuilder()))
@@ -56,10 +56,12 @@ public abstract class BaseQueryStrategy implements BuildQueryStrategy {
         return this.baseQueryBuilder;
     }
 
+
+    private boolean hasAdditionalStrategies() {
+        return additionalQueryStrategies.size() > 0;
+    }
+
     public QueryBuilder getMainQueryBuilder(BaseQueryBuilder baseQueryBuilder) {
-        if (Objects.isNull(baseQueryBuilder) || Objects.isNull(baseQueryBuilder.payload)) {
-            return null;
-        }
         return getMainQueryBuilderFromChild(baseQueryBuilder);
     }
 

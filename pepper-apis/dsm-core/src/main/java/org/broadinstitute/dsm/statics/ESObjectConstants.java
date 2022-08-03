@@ -103,6 +103,8 @@ public class ESObjectConstants {
     public static final String ACTIVITIES = "activities";
     public static final String ACTIVITY_STATUS = "activityStatus";
     public static final String ACTIVITY_CODE = "activityCode";
+    public static final String QUESTIONS_ANSWERS = "questionsAnswers";
+
 
 
     //cohort tags

@@ -9,12 +9,12 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.NestedQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 
-public class NestedQueryStrategy extends BaseQueryStrategy {
+public class CompositeNestedQueryStrategy extends BaseQueryStrategy {
 
     private final List<BuildQueryStrategy> queryStrategies;
     private String path;
 
-    public NestedQueryStrategy(String path) {
+    public CompositeNestedQueryStrategy(String path) {
         this.path = path;
         queryStrategies = new ArrayList<>();
     }

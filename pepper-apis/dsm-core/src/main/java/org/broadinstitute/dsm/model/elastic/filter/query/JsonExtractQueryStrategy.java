@@ -25,7 +25,6 @@ public class JsonExtractQueryStrategy extends BaseQueryStrategy {
             } else {
                 qb = new MatchQueryStrategy().getMainQueryBuilder(baseQueryBuilder);
             }
-            //baseQueryBuilder.build(qb);
         } else {
             if (jsonExtractSplitter.getDecoratedSplitter() instanceof IsNullSplitterStrategy) {
                 qb = new MustNotExistsQueryStrategy().getMainQueryBuilder(baseQueryBuilder);
