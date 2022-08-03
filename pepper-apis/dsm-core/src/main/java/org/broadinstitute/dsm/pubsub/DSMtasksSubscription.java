@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -18,9 +19,11 @@ import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
 import lombok.extern.slf4j.Slf4j;
+import one.util.streamex.StreamEx;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.enums.DSMTaskType;
 import org.broadinstitute.ddp.enums.PubSubAttributes;
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -159,14 +162,19 @@ public class DSMtasksSubscription {
             return;
         }
 
-        String recipient = ""; // TODO: Get recipients here
         String participantName = ""; // TODO: Get by userGuid
         String fileName = ""; // TODO: Get by fileGuid
 
-        notificationUtil.sentNotification(
-                recipient,
-                String.format("The participant %s uploaded a new file %s", participantName, fileName),
-                NotificationUtil.UNIVERSAL_NOTIFICATION_TEMPLATE,
-                "A new file uploaded");
+        final var subject = "A new file uploaded";
+        final var message = String.format("The participant %s uploaded a new file %s", participantName, fileName);
+
+        StreamEx.of(DDPInstance.getDDPInstanceListWithRole("pubsub_lookup"))
+                .map(DDPInstance::getNotificationRecipient)
+                .flatMap(Collection::stream)
+                .forEach(recipient -> notificationUtil.sentNotification(
+                        recipient,
+                        message,
+                        NotificationUtil.UNIVERSAL_NOTIFICATION_TEMPLATE,
+                        subject));
     }
 }

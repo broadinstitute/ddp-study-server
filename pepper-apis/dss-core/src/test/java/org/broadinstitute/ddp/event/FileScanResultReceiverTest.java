@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.event;
 import static org.broadinstitute.ddp.event.FileScanResultReceiver.ATTR_BUCKET_ID;
 import static org.broadinstitute.ddp.event.FileScanResultReceiver.ATTR_OBJECT_ID;
 import static org.broadinstitute.ddp.event.FileScanResultReceiver.ATTR_SCAN_RESULT;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -25,6 +26,9 @@ import com.google.pubsub.v1.PubsubMessage;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
+import org.broadinstitute.ddp.db.dao.JdbiUser;
+import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.model.files.FileScanResult;
 import org.broadinstitute.ddp.model.files.FileUpload;
 import org.jdbi.v3.core.Handle;
@@ -41,8 +45,11 @@ public class FileScanResultReceiverTest {
         var mockPublisher = mock(Publisher.class);
         var mockHandle = mock(Handle.class);
         var mockFileDao = mock(FileUploadDao.class);
+        var mockUserDao = mock(UserDao.class);
         var mockExportDao = mock(DataExportDao.class);
         var mockBlob = mock(Blob.class);
+        var mockJdbiUser = mock(JdbiUser.class);
+
         var now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
         var upload = new FileUpload(1L, "guid", 1L, 1L, 1L, "guid_filename", "mime", "name",
                 123L, true, now, null, null, null);
@@ -61,6 +68,9 @@ public class FileScanResultReceiverTest {
         doReturn(mockFileDao).when(mockHandle).attach(FileUploadDao.class);
         doReturn(Optional.of(upload)).when(mockFileDao).findAndLockByGuid(any());
         doReturn(mockExportDao).when(mockHandle).attach(DataExportDao.class);
+        doReturn(mockUserDao).when(mockHandle).attach(UserDao.class);
+        doReturn(mockJdbiUser).when(mockUserDao).getJdbiUser();
+        doReturn(new UserDto(0, "", "", "", "", "", "", 0, 0, 0L)).when(mockJdbiUser).findByUserId(anyLong());
 
         var receiverSpy = spy(new FileScanResultReceiver(mockStorage, mockPublisher, "uploads", "scanned", "quarantine"));
         doAnswer(invocation -> ((HandleCallback) invocation.getArgument(0)).withHandle(mockHandle))
