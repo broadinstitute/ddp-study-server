@@ -4,9 +4,11 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.ZoneId;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.experimental.SuperBuilder;
+import one.util.streamex.StreamEx;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
@@ -54,5 +56,10 @@ public class UserProfile implements Serializable {
     public UserProfile(final UserProfile o) {
         this(o.userId, o.firstName, o.lastName, o.sexType, o.birthDate, o.preferredLangId, o.preferredLangCode,
                 o.timeZone, o.doNotContact, o.isDeceased, o.skipLanguagePopup);
+    }
+
+    @JsonIgnore
+    public String getFullName() {
+        return StreamEx.of(firstName, lastName).nonNull().joining(" ");
     }
 }

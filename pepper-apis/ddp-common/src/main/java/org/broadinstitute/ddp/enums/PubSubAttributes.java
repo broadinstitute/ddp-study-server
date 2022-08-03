@@ -9,7 +9,9 @@ import lombok.Getter;
 public enum PubSubAttributes {
     USER_GUID("userGuid"),
     FILE_GUID("fileGuid"),
-    TASK_TYPE("taskType");
+    TASK_TYPE("taskType"),
+    USER_NAME("userName"),
+    FILE_NAME("fileName");
 
     private final String value;
 }

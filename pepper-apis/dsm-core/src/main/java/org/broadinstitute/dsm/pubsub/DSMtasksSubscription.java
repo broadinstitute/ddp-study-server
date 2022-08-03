@@ -88,8 +88,8 @@ public class DSMtasksSubscription {
                         break;
                     case FILE_UPLOADED:
                         sendFileUploadedNotification(notificationUtil,
-                                message.getAttributesOrDefault(PubSubAttributes.FILE_GUID.getValue(), null),
-                                message.getAttributesOrDefault(PubSubAttributes.USER_GUID.getValue(), null));
+                                message.getAttributesOrDefault(PubSubAttributes.FILE_NAME.getValue(), null),
+                                message.getAttributesOrDefault(PubSubAttributes.USER_NAME.getValue(), null));
                         consumer.ack();
                         break;
                     default:
@@ -156,17 +156,14 @@ public class DSMtasksSubscription {
                 }, consumer::ack);
     }
 
-    private static void sendFileUploadedNotification(final NotificationUtil notificationUtil, final String fileGuid, final String userGuid) {
-        if (StringUtils.isBlank(fileGuid) || StringUtils.isBlank(userGuid)) {
+    private static void sendFileUploadedNotification(final NotificationUtil notificationUtil, final String fileName, final String userName) {
+        if (StringUtils.isBlank(fileName) || StringUtils.isBlank(userName)) {
             log.error("Can't send file uploaded notification");
             return;
         }
 
-        String participantName = ""; // TODO: Get by userGuid
-        String fileName = ""; // TODO: Get by fileGuid
-
         final var subject = "A new file uploaded";
-        final var message = String.format("The participant %s uploaded a new file %s", participantName, fileName);
+        final var message = String.format("%s uploaded a new file %s", userName, fileName);
 
         StreamEx.of(DDPInstance.getDDPInstanceListWithRole("pubsub_lookup"))
                 .map(DDPInstance::getNotificationRecipient)

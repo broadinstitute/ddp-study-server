@@ -13,6 +13,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.enums.PubSubAttributes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
@@ -22,6 +23,7 @@ import org.broadinstitute.ddp.enums.DSMTaskType;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.files.FileScanResult;
 import org.broadinstitute.ddp.model.files.FileUpload;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.HandleCallback;
 
@@ -154,10 +156,14 @@ public class FileScanResultReceiver implements MessageReceiver {
                 .queueDataSync(upload.getParticipantUserId(), upload.getStudyId());
 
         final var user = handle.attach(UserDao.class).getJdbiUser().findByUserId(upload.getParticipantUserId());
+        final var userProfile = handle.attach(UserProfileDao.class).findProfileByUserGuid(user.getUserGuid());
+
         publisher.publish(PubsubMessage.newBuilder()
                 .putAttributes(PubSubAttributes.TASK_TYPE.getValue(), DSMTaskType.FILE_UPLOADED.getValue())
                 .putAttributes(PubSubAttributes.FILE_GUID.getValue(), upload.getGuid())
+                .putAttributes(PubSubAttributes.FILE_NAME.getValue(), upload.getFileName())
                 .putAttributes(PubSubAttributes.USER_GUID.getValue(), user.getUserGuid())
+                .putAttributes(PubSubAttributes.USER_NAME.getValue(), userProfile.map(UserProfile::getFullName).orElse("Somebody"))
                 .build());
         log.info("Sent the notification to DSM");
 
