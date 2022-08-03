@@ -1191,7 +1191,7 @@ public class DSMServer {
      */
     private void createSubscription(SubscriptionAdminClient client, String projectId, String subscriptionName, String topicName) throws IOException {
         var subscription = ProjectSubscriptionName.of(projectId, subscriptionName);
-        var topic = ProjectTopicName.of(projectId, subscriptionName);
+        var topic = ProjectTopicName.of(projectId, topicName);
 
         try {
             client.createSubscription(subscription, topic, PushConfig.getDefaultInstance(), (int)DEFAULT_PUBSUB_ACK_TIMEOUT.toSeconds());
