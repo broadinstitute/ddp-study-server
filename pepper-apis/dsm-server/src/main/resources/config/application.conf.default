@@ -11,7 +11,8 @@ corsOrigins = [
 ]
 
 //
-//
+// Token for the Google Analytics tracking.
+//  A non-null value is required.
 //
 GoogleAnalytics.trackingId = "google-analytics-token"
 
