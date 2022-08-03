@@ -79,16 +79,26 @@ public class ParticipantWrapper {
     }
 
     private void fetchAndPrepareDataByFilters(Map<String, String> filters) {
+        AbstractQueryBuilder<?> mainQuery = prepareQuery(filters);
+        esData = elasticSearchable.getParticipantsByRangeAndFilter(getEsParticipantIndex(), participantWrapperPayload.getFrom(),
+                participantWrapperPayload.getTo(), mainQuery);
+    }
+
+    AbstractQueryBuilder<?> prepareQuery(Map<String, String> filters) {
         AbstractQueryBuilder<?> mainQuery = new BoolQueryBuilder();
+        boolean hasSeveralFilters = filters.size() > 1;
         for (String alias : filters.keySet()) {
             if (StringUtils.isNotBlank(filters.get(alias))) {
                 BaseAbstractQueryBuilder queryBuilder = AbstractQueryBuilderFactory.create(alias, filters.get(alias));
                 queryBuilder.setEsIndex(getEsParticipantIndex());
-                mainQuery = queryBuilder.build();
+                if (hasSeveralFilters) {
+                    ((BoolQueryBuilder) mainQuery).must(queryBuilder.build());
+                } else {
+                    mainQuery = queryBuilder.build();
+                }
             }
         }
-        esData = elasticSearchable.getParticipantsByRangeAndFilter(getEsParticipantIndex(), participantWrapperPayload.getFrom(),
-                participantWrapperPayload.getTo(), mainQuery);
+        return mainQuery;
     }
 
     private String getEsParticipantIndex() {

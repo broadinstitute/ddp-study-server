@@ -36,6 +36,7 @@ public class BaseAbstractQueryBuilder {
 
     public void setFilter(String filter) {
         this.filter = filter;
+        boolQueryBuilder = new BoolQueryBuilder();
     }
 
     public void setFilterSeparator(AndOrFilterSeparator filterSeparator) {

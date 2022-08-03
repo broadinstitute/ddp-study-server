@@ -44,7 +44,6 @@ public class PropertyInfo {
                         DBConstants.COHORT_ALIAS, new PropertyInfo(CohortTag.class, true),
                         DBConstants.DDP_KIT_REQUEST_ALIAS, new PropertyInfo(KitRequestShipping.class, true)
                 ));
-        TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.ACTIVITIES, new PropertyInfo(Activities.class, true));
         TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.PROFILE, new PropertyInfo(Profile.class, false));
         TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.INVITATIONS, new PropertyInfo(Invitations.class, false));
         TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.ADDRESS, new PropertyInfo(Address.class, false));
@@ -95,7 +94,7 @@ public class PropertyInfo {
     }
 
     public static PropertyInfo of(String alias) {
-        return TABLE_ALIAS_MAPPINGS.get(alias);
+        return TABLE_ALIAS_MAPPINGS.getOrDefault(alias, new PropertyInfo(Activities.class, true));
     }
 
     public static boolean hasProperty(String alias) {

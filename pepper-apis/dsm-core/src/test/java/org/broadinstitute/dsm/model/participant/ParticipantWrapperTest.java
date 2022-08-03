@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.model.participant;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -9,6 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.model.elastic.Profile;
@@ -17,6 +19,9 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchable;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.NestedQueryBuilder;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -121,6 +126,36 @@ public class ParticipantWrapperTest {
         Assert.assertEquals("B1", participantWrapperDto2.getProxyData().get(0).getParticipantId());
         Assert.assertEquals(proxies1, participantWrapperDto1.getProxyData().stream().map(ElasticSearchParticipantDto::getParticipantId)
                 .collect(Collectors.toList()));
+    }
+
+    @Test
+    public void prepareQuery() {
+        ParticipantWrapperPayload participantWrapperPayload = new ParticipantWrapperPayload.Builder()
+                .withDdpInstanceDto(new DDPInstanceDto.Builder().build())
+                .build();
+
+        ParticipantWrapper participantWrapper = new ParticipantWrapper(participantWrapperPayload, new ElasticSearchTest());
+        Map<String, String> filters = new LinkedHashMap<>();
+        filters.put("t", " AND ( t.tissue_type = 'block' OR t.tissue_type = 'slide' OR t.tissue_type = 'scrolls' ) ");
+        filters.put("ES", " AND dsm.diagnosisYear = 2014");
+        AbstractQueryBuilder<?> actualQuery = participantWrapper.prepareQuery(filters);
+
+        BoolQueryBuilder expectedQuery = new BoolQueryBuilder();
+
+        BoolQueryBuilder tissueQuery = new BoolQueryBuilder();
+        BoolQueryBuilder orQuery = new BoolQueryBuilder();
+        orQuery.should(new MatchQueryBuilder("dsm.tissue.tissueType", "block"));
+        orQuery.should(new MatchQueryBuilder("dsm.tissue.tissueType", "slide"));
+        orQuery.should(new MatchQueryBuilder("dsm.tissue.tissueType", "scrolls"));
+        tissueQuery.must(new NestedQueryBuilder("dsm.tissue", orQuery, ScoreMode.Avg));
+
+        BoolQueryBuilder esQuery = new BoolQueryBuilder();
+        esQuery.must(new MatchQueryBuilder("dsm.diagnosisYear", 2014L));
+
+        expectedQuery.must(tissueQuery);
+        expectedQuery.must(esQuery);
+
+        Assert.assertEquals(expectedQuery, actualQuery);
     }
 
     private static class ElasticSearchTest implements ElasticSearchable {
