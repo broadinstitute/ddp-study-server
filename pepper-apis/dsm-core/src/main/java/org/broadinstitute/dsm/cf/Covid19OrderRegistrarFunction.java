@@ -20,6 +20,7 @@ import com.google.gson.annotations.SerializedName;
 import com.typesafe.config.Config;
 import org.apache.commons.dbcp2.PoolableConnection;
 import org.apache.commons.dbcp2.PoolingDataSource;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.careevolve.Authentication;
 import org.broadinstitute.dsm.careevolve.Covid19OrderRegistrar;
 import org.broadinstitute.dsm.careevolve.OrderResponse;
@@ -66,9 +67,9 @@ public class Covid19OrderRegistrarFunction implements BackgroundFunction<Covid19
         }
 
         String esUrl = cfg.getString(ApplicationConfigConstants.ES_URL);
-        String esUsername = cfg.getString(ApplicationConfigConstants.ES_USERNAME);
-        String esPassword = cfg.getString(ApplicationConfigConstants.ES_PASSWORD);
-        String esProxy = cfg.getString(ApplicationConfigConstants.ES_PROXY);
+        String esUsername = ConfigUtil.getStrIfPresent(cfg, ApplicationConfigConstants.ES_USERNAME);
+        String esPassword = ConfigUtil.getStrIfPresent(cfg, ApplicationConfigConstants.ES_PASSWORD);
+        String esProxy = ConfigUtil.getStrIfPresent(cfg, ApplicationConfigConstants.ES_PROXY);
         RestHighLevelClient esClient = ElasticSearchUtil.getClientForElasticsearchCloud(esUrl, esUsername, esPassword, esProxy);
 
         Covid19OrderRegistrar orderRegistrar = new Covid19OrderRegistrar(careEvolveOrderEndpoint, careEvolveAccount, provider, 0, 0);

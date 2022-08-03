@@ -25,6 +25,7 @@ import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.entity.ContentType;
 import org.apache.http.util.EntityUtils;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.exception.CareEvolveException;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
@@ -255,9 +256,12 @@ public class Covid19OrderRegistrar {
             throw new CareEvolveException("Cannot place order for " + kitLabel + " without a pickup time");
         }
         try {
-            esClient = ElasticSearchUtil.getClientForElasticsearchCloudCF(cfg.getString(ApplicationConfigConstants.ES_URL),
-                    cfg.getString(ApplicationConfigConstants.ES_USERNAME), cfg.getString(ApplicationConfigConstants.ES_PASSWORD),
-                    cfg.getString(ApplicationConfigConstants.ES_PROXY));
+            String esUrl = cfg.getString(ApplicationConfigConstants.ES_URL);
+            String esUsername = ConfigUtil.getStrIfPresent(cfg, ApplicationConfigConstants.ES_USERNAME);
+            String esPassword = ConfigUtil.getStrIfPresent(cfg, ApplicationConfigConstants.ES_PASSWORD);
+            String esProxy = ConfigUtil.getStrIfPresent(cfg, ApplicationConfigConstants.ES_PROXY);
+            
+            esClient = ElasticSearchUtil.getClientForElasticsearchCloudCF(esUrl, esUsername, esPassword, esProxy);
         } catch (MalformedURLException e) {
             throw new RuntimeException("Could not initialize es client", e);
         }

@@ -23,6 +23,14 @@ public class DSMConfig {
         return config.getString(queryName);
     }
 
+    public static String getStringIfPresent(@NonNull String queryName) {
+        if (!config.hasPath(queryName)) {
+            return null;
+        }
+
+        return config.getString(queryName);
+    }
+
     public static boolean hasConfigPath(@NonNull String configPath) {
         if (configPath == null) {
             throw new NullPointerException("configPath");

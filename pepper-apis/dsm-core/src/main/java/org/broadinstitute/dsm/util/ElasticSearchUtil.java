@@ -19,6 +19,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.NonNull;
+import lombok.var;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
@@ -28,6 +30,7 @@ import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.lucene.search.join.ScoreMode;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Filter;
@@ -141,8 +144,9 @@ public class ElasticSearchUtil {
             try {
                 client = getClientForElasticsearchCloud(
                         DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_URL),
-                        DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_USERNAME),
-                        DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_PASSWORD));
+                        DSMConfig.getStringIfPresent(ApplicationConfigConstants.ES_USERNAME),
+                        DSMConfig.getStringIfPresent(ApplicationConfigConstants.ES_PASSWORD),
+                        DSMConfig.getStringIfPresent(ApplicationConfigConstants.ES_PROXY));
             } catch (MalformedURLException e) {
                 throw new RuntimeException("Error while initializing ES client", e);
             }
@@ -168,26 +172,30 @@ public class ElasticSearchUtil {
     }
 
     public static RestHighLevelClient getClientForElasticsearchCloud(@NonNull String baseUrl,
-                                                                     @NonNull String userName,
-                                                                     @NonNull String password) throws MalformedURLException {
-        final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-        credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(userName, password));
-
-        URL url = new URL(baseUrl);
+                                                                     String userName,
+                                                                     String password) throws MalformedURLException {
         String proxy = DSMConfig.hasConfigPath(ApplicationConfigConstants.ES_PROXY)
                 ? DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_PROXY) : null;
+
         return getClientForElasticsearchCloud(baseUrl, userName, password, proxy);
     }
 
     public static RestHighLevelClient getClientForElasticsearchCloud(@NonNull String baseUrl,
-                                                                     @NonNull String userName,
-                                                                     @NonNull String password,
+                                                                     String userName,
+                                                                     String password,
                                                                      String proxy) throws MalformedURLException {
-        final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-        credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(userName, password));
+        final CredentialsProvider credentialsProvider;
+
+        if (userName != null) {
+            credentialsProvider = new BasicCredentialsProvider();
+            credentialsProvider.setCredentials(AuthScope.ANY,
+                    new UsernamePasswordCredentials(userName, password));
+        } else {
+            credentialsProvider = null;
+        }
 
         URL url = new URL(baseUrl);
-        URL proxyUrl = (proxy != null && !proxy.isBlank()) ? new URL(proxy) : null;
+        URL proxyUrl = (StringUtils.isBlank(proxy)) ? new URL(proxy) : null;
         if (proxyUrl != null) {
             logger.info("Using Elasticsearch client proxy: {}", proxyUrl);
         }
@@ -195,6 +203,7 @@ public class ElasticSearchUtil {
         RestClientBuilder builder = RestClient.builder(new HttpHost(url.getHost(), url.getPort(), url.getProtocol()))
                 .setHttpClientConfigCallback(httpClientBuilder -> {
                     httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+
                     if (proxyUrl != null) {
                         httpClientBuilder.setProxy(new HttpHost(proxyUrl.getHost(), proxyUrl.getPort(), proxyUrl.getProtocol()));
                         httpClientBuilder.setConnectionReuseStrategy(NoConnectionReuseStrategy.INSTANCE);
@@ -208,13 +217,9 @@ public class ElasticSearchUtil {
     }
 
     public static RestHighLevelClient getClientForElasticsearchCloudCF(@NonNull String baseUrl,
-                                                                       @NonNull String userName,
-                                                                       @NonNull String password,
+                                                                       String userName,
+                                                                       String password,
                                                                        String proxy) throws MalformedURLException {
-        final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-        credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(userName, password));
-
-        URL url = new URL(baseUrl);
         return getClientForElasticsearchCloud(baseUrl, userName, password, proxy);
     }
 
