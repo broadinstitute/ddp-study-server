@@ -84,7 +84,6 @@ public class PubSubResultMessageSubscription {
                 .setExecutorProvider(resultsSubExecProvider)
                 .setMaxAckExtensionPeriod(org.threeten.bp.Duration.ofSeconds(120))
                 .setFlowControlSettings(flowControlSettings);
-
         
         if (!StringUtils.isBlank(pubSubHost)) {
             var channel = ManagedChannelBuilder

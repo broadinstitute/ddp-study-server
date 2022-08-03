@@ -777,7 +777,6 @@ public class DSMServer {
                 .setExecutorProvider(resultsSubExecProvider)
                 .setMaxAckExtensionPeriod(org.threeten.bp.Duration.ofSeconds(120));
 
-
             if (!StringUtils.isBlank(emulatorHost)) {
                 var channel = ManagedChannelBuilder
                     .forTarget(emulatorHost)
