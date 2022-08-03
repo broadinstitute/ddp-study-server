@@ -188,17 +188,19 @@ public class DSMServer {
     public static final String UPS_PATH_TO_PASSWORD = "ups.password";
     public static final String UPS_PATH_TO_ACCESSKEY = "ups.accesskey";
     public static final String UPS_PATH_TO_ENDPOINT = "ups.url";
+
     public static final String GCP_PATH_TO_PUBSUB_PROJECT_ID = "pubsub.projectId";
-    public static final String GCP_PATH_TO_PUBSUB_SUB = "pubsub.subscription";
     public static final String GCP_PATH_TO_USE_PUBSUB_EMULATOR = "pubsub.emulator";
-    public static final String GCP_PATH_TO_PUBSUB_EMULATOR_HOST = "pubsub.emulatorHost";
+    public static final String GCP_PATH_TO_PUBSUB_HOST = "pubsub.host";
     public static final String GCP_PATH_TO_TESTS_PUBSUB_TOPIC = "pubsub.topic";
+    public static final String GCP_PATH_TO_PUBSUB_SUB = "pubsub.subscription";
+    public static final String GCP_PATH_TO_DSS_TO_DSM_TOPIC = "pubsub.dss_to_dsm_topic";
     public static final String GCP_PATH_TO_DSS_TO_DSM_SUB = "pubsub.dss_to_dsm_subscription";
-    public static final String GCP_PATH_TO_DSM_TO_DSS_TOPIC = "pubsub.dsm_to_dss_topic";
     public static final String GCP_PATH_TO_DSM_TASKS_TOPIC = "pubsub.dsm_tasks_topic";
     public static final String GCP_PATH_TO_DSM_TASKS_SUB = "pubsub.dsm_tasks_subscription";
     public static final String GCP_PATH_TO_DSM_TO_MERCURY_TOPIC = "pubsub.dsm_to_mercury_topic";
-    public static final String GCP_PATH_TO_DSM_TO_MERCURY_SUB = "pubsub.dsm_to_mercury_subscription";
+    public static final String GCP_PATH_TO_DSM_TO_DSS_TOPIC = "pubsub.dsm_to_dss_topic";
+
     private static final Logger logger = LoggerFactory.getLogger(DSMServer.class);
     private static final String API_ROOT = "/ddp/";
     private static final String UI_ROOT = "/ui/";
@@ -705,33 +707,42 @@ public class DSMServer {
         var testsTopicName = cfg.getString(GCP_PATH_TO_TESTS_PUBSUB_TOPIC);
         var subscriptionId = cfg.getString(GCP_PATH_TO_PUBSUB_SUB);
 
-        var dsmToDssTopicName = cfg.getString(GCP_PATH_TO_DSM_TO_DSS_TOPIC);
-        var dsmToDssSubscriptionId = cfg.getString(GCP_PATH_TO_DSS_TO_DSM_SUB);
+        var dssToDsmTopic = cfg.getString(GCP_PATH_TO_DSS_TO_DSM_TOPIC);
+        var dssToDsmSubscriptionId = cfg.getString(GCP_PATH_TO_DSS_TO_DSM_SUB);
 
         var dsmTasksTopicName = cfg.getString(GCP_PATH_TO_DSM_TASKS_TOPIC);
         var dsmTasksSubscriptionId = cfg.getString(GCP_PATH_TO_DSM_TASKS_SUB);
+
+        // Publishers only
+        var dsmToDssTopicName = cfg.getString(GCP_PATH_TO_DSM_TO_DSS_TOPIC);
+        var mercuryTopicName = cfg.getString(GCP_PATH_TO_DSM_TO_MERCURY_TOPIC);
 
         logger.info("Setting up pubsub for {}/{}", projectId, subscriptionId);
 
         final var useEmulator = (cfg.hasPath(GCP_PATH_TO_USE_PUBSUB_EMULATOR) ? cfg.getBoolean(GCP_PATH_TO_USE_PUBSUB_EMULATOR) : false);
 
         if (useEmulator) {
+            var emulatorHost = pubSubEmulatorHost(cfg);
+
             // If the PubSub emulator is in use, the clients are responsible for creating
             // any necessary topics or subscriptions. Take care of this before moving on.
 
-            try (var topicAdminClient = pubSubTopicAdminClient(useEmulator);
-                    var subscriptionAdminClient = pubSubSubscriptionAdminClient(useEmulator)) {
+            try (var topicAdminClient = pubSubTopicAdminClient(emulatorHost);
+                    var subscriptionAdminClient = pubSubSubscriptionAdminClient(emulatorHost)) {
                 
                 this.createTopic(topicAdminClient, projectId, testsTopicName);
                 this.createSubscription(subscriptionAdminClient, projectId, subscriptionId, testsTopicName);
 
-                this.createTopic(topicAdminClient, projectId, dsmToDssTopicName);
-                this.createSubscription(subscriptionAdminClient, projectId, dsmToDssSubscriptionId, dsmToDssTopicName);
+                this.createTopic(topicAdminClient, projectId, dssToDsmTopic);
+                this.createSubscription(subscriptionAdminClient, projectId, dssToDsmSubscriptionId, dssToDsmTopic);
 
                 this.createTopic(topicAdminClient, projectId, dsmTasksTopicName);
                 this.createSubscription(subscriptionAdminClient, projectId, dsmTasksSubscriptionId, dsmTasksTopicName);
+
+                this.createTopic(topicAdminClient, projectId, dsmToDssTopicName);
+                this.createTopic(topicAdminClient, projectId, mercuryTopicName);
             } catch (IOException ioe) {
-                var message = String.format("failed to instantiate topic and/or subscription admin clients");
+                var message = String.format("failed to setup Pub/Sub topics and subscriptions.");
                 logger.error("{} (useEmulator:{})", message, useEmulator, ioe);
                 throw new DDPException(message, ioe);
             }
@@ -771,10 +782,10 @@ public class DSMServer {
             throw new RuntimeException("Failed to get results from pubsub ", e);
         }
 
-        logger.info("Setting up pubsub for {}/{}", projectId, dsmToDssSubscriptionId);
+        logger.info("Setting up pubsub for {}/{}", projectId, dssToDsmSubscriptionId);
 
         try {
-            PubSubResultMessageSubscription.dssToDsmSubscriber(projectId, dsmToDssSubscriptionId);
+            PubSubResultMessageSubscription.dssToDsmSubscriber(projectId, dssToDsmSubscriptionId);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1080,10 +1091,9 @@ public class DSMServer {
      * @return the authority for the pubsub emulator
      */
     private String pubSubEmulatorHost(@NonNull Config cfg) {
-        /* First check the local environment. If the desired
-         * address & port (aka: authority) is specified there,
-         * it takes priority over everything else.
-         */
+        /* 
+        *   The host specified in the environment takes priority
+        */
         var envHost = System.getenv("PUBSUB_EMULATOR_HOST");
         if (StringUtils.isBlank(envHost) == false) {
             return envHost;
@@ -1092,52 +1102,63 @@ public class DSMServer {
         /*
          * Fallback to using TypeSafe's resolution behavior.
          * No key presence checks should be needed here- if this method
-         * is called without specifying an authority for a PubSub Emulator
-         * somewhere, we should fail quickly.
+         * is called without specifying an authority we should fail quickly.
         */
-        return cfg.getString(GCP_PATH_TO_PUBSUB_EMULATOR_HOST);
+        return cfg.getString(GCP_PATH_TO_PUBSUB_HOST);
     }
 
-    private TopicAdminClient pubSubTopicAdminClient(boolean useEmulator) throws IOException {
-        if (useEmulator) {
-            var emulatorHost = System.getenv("PUBSUB_EMULATOR_HOST");
-            
-            var channel = ManagedChannelBuilder
-                .forTarget(emulatorHost)
-                .usePlaintext()
-                .build();
-            var channelProvider = FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel));
-            var credentialsProvider = NoCredentialsProvider.create();
-            
-            var settings = TopicAdminSettings.newBuilder()
-                .setTransportChannelProvider(channelProvider)
-                .setCredentialsProvider(credentialsProvider)
-                .build();
-
-            return TopicAdminClient.create(settings);
-        } else {
+    private TopicAdminClient pubSubTopicAdminClient(String pubSubHost) throws IOException {
+        if (StringUtils.isBlank(pubSubHost)) {
+            // Respect whatever our host environment wants
             return TopicAdminClient.create();
         }
+
+        var channel = ManagedChannelBuilder
+            .forTarget(pubSubHost)
+            .usePlaintext()
+            .build();
+        var channelProvider = FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel));
+
+        /* 
+        * The target environment when a host is passed is intended to be
+        *  the Pub/Sub emulator. Credentials are disabled to ease early
+        *  development, and because the Pub/Sub Emulator doesn't validate them.
+        */
+        var credentialsProvider = NoCredentialsProvider.create();
+        
+        var settings = TopicAdminSettings.newBuilder()
+            .setTransportChannelProvider(channelProvider)
+            .setCredentialsProvider(credentialsProvider)
+            .build();
+
+        return TopicAdminClient.create(settings);
     }
 
-    private SubscriptionAdminClient pubSubSubscriptionAdminClient(boolean useEmulator) throws IOException {
-        if (useEmulator) {
-            var emulatorHost = System.getenv("PUBSUB_EMULATOR_HOST");
-            
-            var channel = ManagedChannelBuilder
-                .forTarget(emulatorHost)
-                .usePlaintext()
-                .build();
-            var channelProvider = FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel));
-            var credentialsProvider = NoCredentialsProvider.create();
-            var settings = SubscriptionAdminSettings.newBuilder()
-                .setTransportChannelProvider(channelProvider)
-                .setCredentialsProvider(credentialsProvider)
-                .build();
-            return SubscriptionAdminClient.create(settings);
-        } else {
+    private SubscriptionAdminClient pubSubSubscriptionAdminClient(String pubSubHost) throws IOException {
+        if (StringUtils.isBlank(pubSubHost)) {
+            // Respect whatever our host environment wants
             return SubscriptionAdminClient.create();
         }
+
+        var channel = ManagedChannelBuilder
+            .forTarget(pubSubHost)
+            .usePlaintext()
+            .build();
+        var channelProvider = FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel));
+
+        /* 
+        * The target environment when a host is passed is intended to be
+        *  the Pub/Sub emulator. Credentials are disabled to ease early
+        *  development, and because the Pub/Sub Emulator doesn't validate them.
+        */
+        var credentialsProvider = NoCredentialsProvider.create();
+
+        var settings = SubscriptionAdminSettings.newBuilder()
+            .setTransportChannelProvider(channelProvider)
+            .setCredentialsProvider(credentialsProvider)
+            .build();
+
+        return SubscriptionAdminClient.create(settings);
     }
 
 
