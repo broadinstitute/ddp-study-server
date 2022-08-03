@@ -13,7 +13,7 @@ option labeled `DSM` will appear in the Run tool window.
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <option name="MAIN_CLASS_NAME" value="org.broadinstitute.dsm.DSMServer" />
     <module name="dsm-server" />
-    <option name="PROGRAM_PARAMETERS" value="-ea -Dconfig.file=$ProjectFileDir$/dsm-server/src/test/resources/config/default.conf" />
+    <option name="PROGRAM_PARAMETERS" value="-ea -Dconfig.file=$ProjectFileDir$/dsm-server/src/resources/config/application.conf.default" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>
@@ -35,7 +35,7 @@ Add to the `.vscode/launch.json#/configurations` array
     "projectName": "dsm-server",
     "env": {},
     "vmArgs": [
-        "-Dconfig.file=${workspaceFolder}/dsm-server/src/test/resources/config/default.conf",
+        "-Dconfig.file=${workspaceFolder}/dsm-server/src/resources/config/application.conf.default",
         "-ea"
     ],
     "args": ""
