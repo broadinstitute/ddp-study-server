@@ -137,7 +137,7 @@ function (user, context, callback) {
         }
 
         if (pepper_params.mode && pepper_params.mode === "login" &&
-            !user.app_metadata.user_guid &&
+            !user.app_metadata.user_guid && !user.app_metadata.pepper_user_guids &&
             !pepper_params.tempUserGuid
         ) {
             console.log('User not registered');
