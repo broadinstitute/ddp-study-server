@@ -93,13 +93,6 @@ portal {
   configBucket = "pdf-template-bucket"
 }
 
-//
-// JDBC connection URL for connecting to the `dss` database
-//
-dss {
-    dbUrl = "jdbc:mysql://pepper:pepper-dev@127.0.0.1:3306/dss-local?characterEncoding=UTF-8&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true"
-}
-
 // Only accessed when running tests.
 browser_security {
   jwt_secret = "JWT_test_secret_key"
