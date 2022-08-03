@@ -367,3 +367,7 @@ instance of pepper.
 
 # Housekeeping
 TBD...
+
+# Additional Resources
+* [IDE Example Run Configurations](docs/ide-run-configurations.md)
+* [Liquibase Migrations](docs/liquibase-and-migrations.md)
