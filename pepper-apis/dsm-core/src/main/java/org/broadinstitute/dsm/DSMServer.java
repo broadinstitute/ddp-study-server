@@ -1195,14 +1195,14 @@ public class DSMServer {
     private void createTopic(TopicAdminClient client, String projectId, String topicName) throws IOException {
         var topic = ProjectTopicName.of(projectId, topicName);
 
-        logger.info("Creating topic {} for project {}", topicName, projectId);
+        logger.debug("Creating topic {} for project {}", topicName, projectId);
 
         try {
             client.createTopic(topic);
             logger.info("Created topic {} for project {}", topicName, projectId);
         } catch (AlreadyExistsException topicExists) {
             // Not an error in this case, just keep swimming
-            logger.info("Topic {} for project {} already exists", topicName, projectId);
+            logger.debug("Topic {} for project {} already exists", topicName, projectId);
         }
     }
 
@@ -1218,14 +1218,14 @@ public class DSMServer {
         var subscription = ProjectSubscriptionName.of(projectId, subscriptionName);
         var topic = ProjectTopicName.of(projectId, topicName);
         
-        logger.info("Creating subscription {} to topic {} in project {}", subscriptionName, topicName, projectId);
+        logger.debug("Creating subscription {} to topic {} in project {}", subscriptionName, topicName, projectId);
 
         try {
             client.createSubscription(subscription, topic, PushConfig.getDefaultInstance(), (int)DEFAULT_PUBSUB_ACK_TIMEOUT.toSeconds());
             logger.info("Created subscription {} to topic {} in project {}", subscriptionName, topicName, projectId);
         } catch (AlreadyExistsException alreadyExists) {
             // Not an error in this case, just keep swimming
-            logger.info("Subscription {} to topic {} for project {} already exists", subscriptionName, topicName, projectId);
+            logger.debug("Subscription {} to topic {} for project {} already exists", subscriptionName, topicName, projectId);
         }
     }
 
