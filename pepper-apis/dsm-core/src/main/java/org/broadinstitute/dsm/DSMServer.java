@@ -35,6 +35,7 @@ import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.grpc.GrpcTransportChannel;
 import com.google.api.gax.rpc.AlreadyExistsException;
 import com.google.api.gax.rpc.FixedTransportChannelProvider;
+import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Subscriber;
@@ -721,9 +722,8 @@ public class DSMServer {
 
         final var useEmulator = (cfg.hasPath(GCP_PATH_TO_USE_PUBSUB_EMULATOR) ? cfg.getBoolean(GCP_PATH_TO_USE_PUBSUB_EMULATOR) : false);
 
+        var emulatorHost = pubSubEmulatorHost(cfg);
         if (useEmulator) {
-            var emulatorHost = pubSubEmulatorHost(cfg);
-
             // If the PubSub emulator is in use, the clients are responsible for creating
             // any necessary topics or subscriptions. Take care of this before moving on.
 
@@ -767,11 +767,31 @@ public class DSMServer {
                 }
             };
 
-            Subscriber subscriber = null;
             ProjectSubscriptionName resultSubName = ProjectSubscriptionName.of(projectId, subscriptionId);
-            ExecutorProvider resultsSubExecProvider = InstantiatingExecutorProvider.newBuilder().setExecutorThreadCount(1).build();
-            subscriber = Subscriber.newBuilder(resultSubName, receiver).setParallelPullCount(1).setExecutorProvider(resultsSubExecProvider)
-                    .setMaxAckExtensionPeriod(org.threeten.bp.Duration.ofSeconds(120)).build();
+            ExecutorProvider resultsSubExecProvider = InstantiatingExecutorProvider.newBuilder()
+                .setExecutorThreadCount(1)
+                .build();
+            
+            var subscriberBuilder  = Subscriber.newBuilder(resultSubName, receiver)
+                .setParallelPullCount(1)
+                .setExecutorProvider(resultsSubExecProvider)
+                .setMaxAckExtensionPeriod(org.threeten.bp.Duration.ofSeconds(120));
+
+
+            if (!StringUtils.isBlank(emulatorHost)) {
+                var channel = ManagedChannelBuilder
+                    .forTarget(emulatorHost)
+                    .usePlaintext()
+                    .build();
+                
+                subscriberBuilder.setChannelProvider(FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel)));
+            }
+
+            if (useEmulator) {
+                subscriberBuilder.setCredentialsProvider(NoCredentialsProvider.create());
+            }
+
+            var subscriber = subscriberBuilder.build();
             try {
                 subscriber.startAsync().awaitRunning(1L, TimeUnit.MINUTES);
                 logger.info("Started pubsub subscription receiver for {}", subscriptionId);
@@ -785,13 +805,13 @@ public class DSMServer {
         logger.info("Setting up pubsub for {}/{}", projectId, dssToDsmSubscriptionId);
 
         try {
-            PubSubResultMessageSubscription.dssToDsmSubscriber(projectId, dssToDsmSubscriptionId);
+            PubSubResultMessageSubscription.dssToDsmSubscriber(projectId, dssToDsmSubscriptionId, useEmulator, emulatorHost);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         try {
-            DSMtasksSubscription.subscribeDSMtasks(projectId, dsmTasksSubscriptionId);
+            DSMtasksSubscription.subscribeDSMtasks(projectId, dsmTasksSubscriptionId, useEmulator, emulatorHost);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1088,21 +1108,23 @@ public class DSMServer {
     /**
      * Resolves & returns the authority for the local pubsub emulator.
      * @param cfg a configuration object
-     * @return the authority for the pubsub emulator
+     * @return the authority for the pubsub emulator, or null if one is not set
      */
     private String pubSubEmulatorHost(@NonNull Config cfg) {
         /* 
         *   The host specified in the environment takes priority
         */
         var envHost = System.getenv("PUBSUB_EMULATOR_HOST");
-        if (StringUtils.isBlank(envHost) == false) {
+        if (!StringUtils.isBlank(envHost)) {
             return envHost;
+        }
+
+        if (!cfg.hasPath(GCP_PATH_TO_PUBSUB_HOST)) {
+            return null;
         }
 
         /*
          * Fallback to using TypeSafe's resolution behavior.
-         * No key presence checks should be needed here- if this method
-         * is called without specifying an authority we should fail quickly.
         */
         return cfg.getString(GCP_PATH_TO_PUBSUB_HOST);
     }
@@ -1173,11 +1195,14 @@ public class DSMServer {
     private void createTopic(TopicAdminClient client, String projectId, String topicName) throws IOException {
         var topic = ProjectTopicName.of(projectId, topicName);
 
+        logger.info("Creating topic {} for project {}", topicName, projectId);
+
         try {
             client.createTopic(topic);
             logger.info("Created topic {} for project {}", topicName, projectId);
         } catch (AlreadyExistsException topicExists) {
             // Not an error in this case, just keep swimming
+            logger.info("Topic {} for project {} already exists", topicName, projectId);
         }
     }
 
@@ -1192,12 +1217,15 @@ public class DSMServer {
     private void createSubscription(SubscriptionAdminClient client, String projectId, String subscriptionName, String topicName) throws IOException {
         var subscription = ProjectSubscriptionName.of(projectId, subscriptionName);
         var topic = ProjectTopicName.of(projectId, topicName);
+        
+        logger.info("Creating subscription {} to topic {} in project {}", subscriptionName, topicName, projectId);
 
         try {
             client.createSubscription(subscription, topic, PushConfig.getDefaultInstance(), (int)DEFAULT_PUBSUB_ACK_TIMEOUT.toSeconds());
             logger.info("Created subscription {} to topic {} in project {}", subscriptionName, topicName, projectId);
-        } catch (AlreadyExistsException topicExists) {
+        } catch (AlreadyExistsException alreadyExists) {
             // Not an error in this case, just keep swimming
+            logger.info("Subscription {} to topic {} for project {} already exists", subscriptionName, topicName, projectId);
         }
     }
 

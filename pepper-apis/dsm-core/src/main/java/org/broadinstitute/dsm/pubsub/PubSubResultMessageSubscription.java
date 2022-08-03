@@ -7,6 +7,9 @@ import java.util.concurrent.TimeoutException;
 import com.google.api.gax.batching.FlowControlSettings;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
+import com.google.api.gax.core.NoCredentialsProvider;
+import com.google.api.gax.grpc.GrpcTransportChannel;
+import com.google.api.gax.rpc.FixedTransportChannelProvider;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Subscriber;
@@ -14,6 +17,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
+
+import io.grpc.ManagedChannelBuilder;
+
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.EditParticipantMessage;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.slf4j.Logger;
@@ -24,11 +31,15 @@ public class PubSubResultMessageSubscription {
     private static final Logger logger = LoggerFactory.getLogger(PubSubResultMessageSubscription.class);
 
     public static void dssToDsmSubscriber(String projectId, String subscriptionId) throws Exception {
-        subscribeWithFlowControlSettings(projectId, subscriptionId);
+        dssToDsmSubscriber(projectId, subscriptionId, false, null);
+    }
+
+    public static void dssToDsmSubscriber(String projectId, String subscriptionId, boolean emulator, String pubSubHost) throws Exception {
+        subscribeWithFlowControlSettings(projectId, subscriptionId, emulator, pubSubHost);
     }
 
     public static void subscribeWithFlowControlSettings(
-            String projectId, String subscriptionId) {
+            String projectId, String subscriptionId, boolean emulator, String pubSubHost) {
 
         // Instantiate an asynchronous message receiver.
         MessageReceiver receiver =
@@ -63,15 +74,33 @@ public class PubSubResultMessageSubscription {
                         .setMaxOutstandingRequestBytes(100L * 1024L * 1024L)
                         .build();
 
-        Subscriber subscriber = null;
         ProjectSubscriptionName resultSubName = ProjectSubscriptionName.of(projectId, subscriptionId);
-        ExecutorProvider resultsSubExecProvider = InstantiatingExecutorProvider.newBuilder().setExecutorThreadCount(1).build();
-        subscriber = Subscriber.newBuilder(resultSubName, receiver)
+        ExecutorProvider resultsSubExecProvider = InstantiatingExecutorProvider.newBuilder()
+            .setExecutorThreadCount(1)
+            .build();
+
+        var subscriberBuilder  = Subscriber.newBuilder(resultSubName, receiver)
                 .setParallelPullCount(1)
                 .setExecutorProvider(resultsSubExecProvider)
                 .setMaxAckExtensionPeriod(org.threeten.bp.Duration.ofSeconds(120))
-                .setFlowControlSettings(flowControlSettings)
+                .setFlowControlSettings(flowControlSettings);
+
+        
+        if (!StringUtils.isBlank(pubSubHost)) {
+            var channel = ManagedChannelBuilder
+                .forTarget(pubSubHost)
+                .usePlaintext()
                 .build();
+            
+            subscriberBuilder.setChannelProvider(FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel)));
+        }
+
+        if (emulator) {
+            subscriberBuilder.setCredentialsProvider(NoCredentialsProvider.create());
+        }
+
+        var subscriber = subscriberBuilder.build();
+
         try {
             subscriber.startAsync().awaitRunning(1L, TimeUnit.MINUTES);
             logger.info("Started pubsub subscription receiver for edit participant");

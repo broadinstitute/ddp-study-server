@@ -10,12 +10,18 @@ import java.util.concurrent.TimeoutException;
 
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
+import com.google.api.gax.core.NoCredentialsProvider;
+import com.google.api.gax.grpc.GrpcTransportChannel;
+import com.google.api.gax.rpc.FixedTransportChannelProvider;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.gson.Gson;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
+
+import io.grpc.ManagedChannelBuilder;
+
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
@@ -51,7 +57,12 @@ public class DSMtasksSubscription {
     public static final int MAX_RETRY = 50;
     private static Map<String, Integer> retryPerParticipant = new ConcurrentHashMap<>();
 
+
     public static void subscribeDSMtasks(String projectId, String subscriptionId) {
+        subscribeDSMtasks(projectId, subscriptionId, false, null);
+    }
+
+    public static void subscribeDSMtasks(String projectId, String subscriptionId, boolean emulator, String pubSubHost) {
         // Instantiate an asynchronous message receiver.
         MessageReceiver receiver = (PubsubMessage message, AckReplyConsumer consumer) -> {
             // Handle incoming message, then ack the received message.
@@ -92,11 +103,30 @@ public class DSMtasksSubscription {
                 }
             }
         };
-        Subscriber subscriber = null;
+
         ProjectSubscriptionName resultSubName = ProjectSubscriptionName.of(projectId, subscriptionId);
         ExecutorProvider resultsSubExecProvider = InstantiatingExecutorProvider.newBuilder().setExecutorThreadCount(1).build();
-        subscriber = Subscriber.newBuilder(resultSubName, receiver).setParallelPullCount(1).setExecutorProvider(resultsSubExecProvider)
-                .setMaxAckExtensionPeriod(org.threeten.bp.Duration.ofSeconds(120)).build();
+
+        var subscriberBuilder  = Subscriber.newBuilder(resultSubName, receiver)
+                .setParallelPullCount(1)
+                .setExecutorProvider(resultsSubExecProvider)
+                .setMaxAckExtensionPeriod(org.threeten.bp.Duration.ofSeconds(120));
+        
+        if (!StringUtils.isBlank(pubSubHost)) {
+            var channel = ManagedChannelBuilder
+                .forTarget(pubSubHost)
+                .usePlaintext()
+                .build();
+            
+            subscriberBuilder.setChannelProvider(FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel)));
+        }
+
+        if (emulator) {
+            subscriberBuilder.setCredentialsProvider(NoCredentialsProvider.create());
+        }
+
+        var subscriber = subscriberBuilder.build();
+
         try {
             subscriber.startAsync().awaitRunning(1L, TimeUnit.MINUTES);
             logger.info("Started pubsub subscription receiver DSM tasks subscription");
