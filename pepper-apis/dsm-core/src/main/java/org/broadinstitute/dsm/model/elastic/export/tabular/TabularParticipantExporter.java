@@ -1,18 +1,16 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.broadinstitute.dsm.model.elastic.export.tabular.renderer.ValueProviderFactory;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
-import spark.Response;
 
 /** base class for taking a String=>String map of participant data and writing out a tabular file
  * It is designed to work with the outputs from TabularParticipantParser
@@ -27,9 +25,19 @@ public abstract class TabularParticipantExporter {
     protected String fileFormat;
     protected List<Map<String, String>> participantValueMaps;
 
-    public abstract void export(Response response) throws IOException;
+    public abstract void export(OutputStream os) throws IOException;
 
     protected abstract String sanitizeValue(String value);
+
+    public abstract String getExportFilename();
+
+    /** returns a filename such that alphabetical sorting will also put them in chronological order */
+    protected String getExportFilename(String suffix) {
+        LocalDate date = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(FILE_DATE_FORMAT);
+        String exportFileName = String.format("Participant-%s.%s", date.format(formatter), suffix);
+        return exportFileName;
+    }
 
     /** protected constructor -- outside callers should use `getExporter` */
     protected TabularParticipantExporter(List<ModuleExportConfig> moduleConfigs,
@@ -49,85 +57,14 @@ public abstract class TabularParticipantExporter {
         return new TsvParticipantExporter(moduleConfigs, participantValueMaps, fileFormat);
     }
 
-    /** returns a filename such that alphabetical sorting will also put them in chronological order */
-    protected String getExportFilename(String suffix) {
-        LocalDate date = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(FILE_DATE_FORMAT);
-        String exportFileName = String.format("Participant-%s.%s", date.format(formatter), suffix);
-        return exportFileName;
-    }
 
-    /**
-     * Gets all the column names that need to be rendered for a given config, including repeats, details, and/or
-     *  splitting options across multiple column.  The column name is based off the stable name of the associated item
-     *  and needs to be globally unique
-     */
-
-    protected static List<String> getConfigColumnNames(FilterExportConfig filterConfig, int formRepeatNum, int questionRepeatNum) {
-        List<String> allColNames = new ArrayList<>();
-        if (filterConfig.isSplitOptionsIntoColumns()) {
-            List<String> optionStableIds = filterConfig.getOptions().stream().map(opt -> (String) opt.get(ESObjectConstants.OPTION_STABLE_ID))
-                    .collect(Collectors.toList());
-            allColNames = optionStableIds.stream().map(optionStableId ->
-                    getColumnNamesForItem(filterConfig, formRepeatNum, questionRepeatNum, optionStableId)
-            ).flatMap(Collection::stream).collect(Collectors.toList());
-        } else {
-            allColNames = getColumnNamesForItem(filterConfig, formRepeatNum, questionRepeatNum, null);
+    protected static String getColumnDisplayText(FilterExportConfig filterConfig, Map<String, Object> opt, String detailName) {
+        if (detailName != null) {
+            return "additional detail";
+        } else if (opt != null) {
+            return (String) opt.get(ESObjectConstants.OPTION_TEXT);
         }
-        return allColNames;
-    }
-
-    /** handles iterating over child questions and question details */
-    protected static List<String> getColumnNamesForItem(FilterExportConfig filterConfig, int formRepeatNum, int questionRepeatNum, String optionStableId) {
-        List<String> colNames = new ArrayList<>();
-        if (filterConfig.getChildConfigs() != null) {
-            colNames.addAll(filterConfig.getChildConfigs().stream().map(childConfig -> getColumnName(filterConfig, formRepeatNum,
-                    questionRepeatNum, optionStableId,null, childConfig)).collect(Collectors.toList()));
-        } else {
-            colNames.add(getColumnName(filterConfig, formRepeatNum, questionRepeatNum, optionStableId,null, null));
-            if (filterConfig.isHasDetails()) {
-                colNames.add(getColumnName(filterConfig, formRepeatNum, questionRepeatNum, optionStableId,"DETAIL", null));
-            }
-        }
-        return colNames;
-    }
-
-
-    /**
-     * Gets all the column texts to be rendered.  This is a human-readable counterpart to the column name.  e.g.
-     *  while the column name might be "MEDICIAL_HISTORY_2.ANALYSIS_TYPE" the text might be "Type of sample analysis"
-     */
-    protected List<String> getConfigColumnTexts(FilterExportConfig filterConfig) {
-        List<String> allColTexts = new ArrayList<>();
-        if (filterConfig.isSplitOptionsIntoColumns()) {
-            List<Map<String, Object>> splitOptions = filterConfig.getOptions();
-            allColTexts = splitOptions.stream().map(opt ->
-                    getColumnTextForItem(filterConfig, opt)
-            ).flatMap(Collection::stream).collect(Collectors.toList());
-        } else {
-            allColTexts = getColumnTextForItem(filterConfig, null);
-        }
-
-        return allColTexts;
-    }
-
-    /** handles iterating over child questions and question details */
-    protected static List<String> getColumnTextForItem(FilterExportConfig filterConfig, Map<String, Object> opt) {
-        List<String> colTexts = new ArrayList<>();
-        if (filterConfig.getChildConfigs() != null) {
-            colTexts.addAll(filterConfig.getChildConfigs().stream().map(childConfig -> childConfig.getColumn().getDisplay())
-                    .collect(Collectors.toList()));
-        } else {
-            if (opt == null) {
-                colTexts.add(filterConfig.getColumn().getDisplay());
-            } else {
-                colTexts.add((String) opt.get(ESObjectConstants.OPTION_TEXT));
-            }
-            if (filterConfig.isHasDetails()) {
-                colTexts.add("additional detail");
-            }
-        }
-        return colTexts;
+        return filterConfig.getColumn().getDisplay();
     }
 
 
@@ -146,26 +83,25 @@ public abstract class TabularParticipantExporter {
      * gets what should be a unique name for the column to use in the generated file.  It is very important that the generated
      * name be unique across various filters/data entries, since the column names are also used to store a map of the participant data,
      * so duplicated names will lead to export data being written to the wrong column.
-     *
      * The general format is [OBJECT]_[REPEATNUM].[QUESTION/PROPERTY]_[REPEAT_NUM].[OPTION/DETAIL]
      */
     public static String getColumnName(FilterExportConfig filterConfig,
                                        int activityRepeatNum,
                                        int questionRepeatNum,
-                                       String optionStableId,
+                                       Map<String, Object> option,
                                        String detailName,
-                                       FilterExportConfig childConfig) {
+                                       FilterExportConfig parentConfig) {
 
         String moduleExportPrefix = getModuleColumnPrefix(filterConfig, activityRepeatNum);
 
         String questionStableId = filterConfig.getColumn().getName();
-        String columnExportName = questionRepeatNum > 1 ?
-                questionStableId + COLUMN_REPEAT_DELIMITER + questionRepeatNum : questionStableId;
+        String columnExportName = questionRepeatNum > 1 ? questionStableId + COLUMN_REPEAT_DELIMITER + questionRepeatNum : questionStableId;
 
-        if (childConfig != null) {
-            columnExportName = columnExportName + DBConstants.ALIAS_DELIMITER + childConfig.getColumn().getName();
+        if (parentConfig != null) {
+            columnExportName = parentConfig.getColumn().getName() + DBConstants.ALIAS_DELIMITER + columnExportName;
         }
-        if (hasSeparateColumnForOption(optionStableId, filterConfig)) {
+        if (hasSeparateColumnForOption(option, filterConfig)) {
+            String optionStableId = (String) option.get(ESObjectConstants.OPTION_STABLE_ID);
             columnExportName = columnExportName + DBConstants.ALIAS_DELIMITER + optionStableId;
         }
 
@@ -190,8 +126,7 @@ public abstract class TabularParticipantExporter {
             activityName = activityName + DBConstants.ALIAS_DELIMITER + TABLE_ALIAS_NAME_MAP.get(filterConfig.getColumn().getTableAlias());
         }
 
-        String activityExportName = activityRepeatNum > 1 ?
-                activityName + COLUMN_REPEAT_DELIMITER + activityRepeatNum : activityName;
+        String activityExportName = activityRepeatNum > 1 ? activityName + COLUMN_REPEAT_DELIMITER + activityRepeatNum : activityName;
         if (filterConfig.getColumn().getObject() != null) {
             activityName = activityName + DBConstants.ALIAS_DELIMITER + filterConfig.getColumn().getObject();
         }
@@ -199,39 +134,81 @@ public abstract class TabularParticipantExporter {
     }
 
     /** whether a separate column will be rendered for the option */
-    private static boolean hasSeparateColumnForOption(String optionStableId, FilterExportConfig filterConfig) {
-        return optionStableId != null && filterConfig.isSplitOptionsIntoColumns();
+    private static boolean hasSeparateColumnForOption(Map<String, Object> option, FilterExportConfig filterConfig) {
+        return option != null && filterConfig.isSplitOptionsIntoColumns();
     }
 
     /** gets the header row -- this iterates through all the configs and calls "getAllColumnNames" for each */
     protected List<String> getHeaderRow() {
         List<String> headers = new ArrayList<>();
-        for (ModuleExportConfig moduleConfig : moduleConfigs) {
-            for (int formRepeatNum = 1; formRepeatNum <= moduleConfig.getNumMaxRepeats(); formRepeatNum++) {
-                for (FilterExportConfig filterConfig : moduleConfig.getQuestions()) {
-                    for (int questionRepeatNum = 1; questionRepeatNum <= filterConfig.getMaxRepeats(); questionRepeatNum++) {
-                        headers.addAll(getConfigColumnNames(filterConfig, formRepeatNum, questionRepeatNum));
-                    }
-                }
-            }
-        }
+        applyToEveryColumn((filterConfig, activityRepeatNum, questionRepeatNum, option, detailName, parentConfig) -> {
+            headers.add(getColumnName(filterConfig, activityRepeatNum, questionRepeatNum, option, detailName, parentConfig));
+        });
         return headers;
     }
 
     /** gets the subheader row -- this iterates through all the configs and calls "getAllColumnNames" for each */
     protected List<String> getSubHeaderRow() {
         List<String> headers = new ArrayList<>();
+        applyToEveryColumn((filterConfig, activityRepeatNum, questionRepeatNum, option, detailName, parentConfig) -> {
+            headers.add(getColumnDisplayText(filterConfig, option, detailName));
+        });
+        return headers;
+    }
+
+    /** class for operating iteratively over columns (variables) of an export */
+    public interface ColumnProcessor {
+        public void apply(FilterExportConfig filterConfig,
+                          int activityRepeatNum,
+                          int questionRepeatNum,
+                          Map<String, Object> option,
+                          String detailName,
+                          FilterExportConfig parentConfig);
+    }
+
+    /**
+     * useful for iterating over every column that should be generated.  this will create an iteration for every module, every repeat,
+     * every question, every question option (if the question is a multiselect that should be split), and every question response instance
+     * This also will give a separate iteration for questions that have associated details.
+     */
+    public void applyToEveryColumn(ColumnProcessor colFunc) {
         for (ModuleExportConfig moduleConfigs : moduleConfigs) {
-            for (int formRepeatNum = 1; formRepeatNum <= moduleConfigs.getNumMaxRepeats(); formRepeatNum++) {
+            for (int activityRepeatNum = 1; activityRepeatNum <= moduleConfigs.getNumMaxRepeats(); activityRepeatNum++) {
                 for (FilterExportConfig filterConfig : moduleConfigs.getQuestions()) {
                     for (int questionRepeatNum = 1; questionRepeatNum <= filterConfig.getMaxRepeats(); questionRepeatNum++) {
-                        headers.addAll(getConfigColumnTexts(filterConfig));
+                        if (filterConfig.getChildConfigs() != null) {
+                            for (FilterExportConfig childConfig : filterConfig.getChildConfigs()) {
+                                applyToQuestionColumns(colFunc, childConfig, activityRepeatNum, questionRepeatNum, filterConfig);
+                            }
+                        } else {
+                            applyToQuestionColumns(colFunc, filterConfig, activityRepeatNum, questionRepeatNum, null);
+                        }
                     }
                 }
             }
         }
-        return headers;
     }
+
+    /** helper method for iterating over every column to be generated from a single question instance */
+    private void applyToQuestionColumns(ColumnProcessor colFunc, FilterExportConfig filterConfig,
+                                        int activityRepeatNum,
+                                        int questionRepeatNum,
+                                        FilterExportConfig parentConfig) {
+        if (filterConfig.isSplitOptionsIntoColumns()) {
+            for (Map<String, Object> option : filterConfig.getOptions()) {
+                colFunc.apply(filterConfig, activityRepeatNum, questionRepeatNum, option, null, parentConfig);
+                if (filterConfig.isHasDetails()) {
+                    colFunc.apply(filterConfig, activityRepeatNum, questionRepeatNum, option, "DETAIL", parentConfig);
+                }
+            }
+        } else {
+            colFunc.apply(filterConfig, activityRepeatNum, questionRepeatNum, null, null, parentConfig);
+            if (filterConfig.isHasDetails()) {
+                colFunc.apply(filterConfig, activityRepeatNum, questionRepeatNum, null, "DETAIL", parentConfig);
+            }
+        }
+    }
+
 
     /**
      * Gets the values to render for a row (usually a participant).  This handles any sanitization of string values

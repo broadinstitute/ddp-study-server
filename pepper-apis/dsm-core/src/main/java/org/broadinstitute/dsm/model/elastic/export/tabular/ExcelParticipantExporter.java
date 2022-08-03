@@ -1,17 +1,16 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular;
 
-import javax.servlet.ServletOutputStream;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.IntStream;
-
-import com.google.common.net.MediaType;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import spark.Response;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.IntStream;
+
 
 /** generates an excel file with a single sheet containing the participant data */
 public class ExcelParticipantExporter extends TabularParticipantExporter {
@@ -20,6 +19,10 @@ public class ExcelParticipantExporter extends TabularParticipantExporter {
 
     protected final SXSSFSheet sheet;
     private static final String SHEET_NAME = "Participant List";
+
+    public String getExportFilename() {
+        return getExportFilename("xlsx");
+    }
 
 
     public ExcelParticipantExporter(List<ModuleExportConfig> moduleConfigs,
@@ -30,9 +33,7 @@ public class ExcelParticipantExporter extends TabularParticipantExporter {
         sheet.trackAllColumnsForAutoSizing();
     }
 
-    public void export(Response response) throws IOException {
-        setResponseHeaders(response);
-
+    public void export(OutputStream os) throws IOException {
         List<String> headerValues = getHeaderRow();
         List<String> subHeaderValues = getSubHeaderRow();
 
@@ -45,21 +46,13 @@ public class ExcelParticipantExporter extends TabularParticipantExporter {
             writeRowToSheet(rowValues, i + 2);
         });
 
-        writeAndCloseSheet(response);
+        writeAndCloseSheet(os);
     }
 
-    protected void writeAndCloseSheet(Response response) throws IOException {
-        try (ServletOutputStream servOut = response.raw().getOutputStream()) {
-            workbook.write(servOut);
-        }
+    protected void writeAndCloseSheet(OutputStream os) throws IOException {
+        workbook.write(os);
         workbook.dispose();
         workbook.close();
-    }
-
-    protected void setResponseHeaders(Response response) {
-        response.type(MediaType.OCTET_STREAM.toString());
-        response.header("Access-Control-Expose-Headers", "Content-Disposition");
-        response.header("Content-Disposition", "attachment;filename=" + getExportFilename(fileFormat));
     }
 
     protected void writeRowToSheet(List<String> rowValues, int rowNum) {

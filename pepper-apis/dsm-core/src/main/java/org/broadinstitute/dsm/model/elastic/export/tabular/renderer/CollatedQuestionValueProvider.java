@@ -28,9 +28,9 @@ public class CollatedQuestionValueProvider extends PickListValueProvider {
                         return StringUtils.endsWith((String) answerObj.get(ESObjectConstants.STABLE_ID), filterConfig.getCollationSuffix());
                     });
             Stream<Collection<?>> answerLists = targetAnswers.map(answerObj -> {
-                        return mapToCollection(answerObj.getOrDefault(ESObjectConstants.ANSWER,
-                                answerObj.get(filterConfig.getColumn().getName())));
-                    });
+                return mapToCollection(answerObj.getOrDefault(ESObjectConstants.ANSWER,
+                        answerObj.get(filterConfig.getColumn().getName())));
+            });
             List<String> answerStrings = answerLists.flatMap(Collection::stream)
                     .filter(ansValue -> StringUtils.isNotBlank((String) ansValue))
                     .map(val -> val == null ? StringUtils.EMPTY : (String) val).collect(Collectors.toList());
