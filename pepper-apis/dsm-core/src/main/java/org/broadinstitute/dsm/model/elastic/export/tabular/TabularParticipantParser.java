@@ -89,8 +89,8 @@ public class TabularParticipantParser {
                 if (ESObjectConstants.OPTIONS_TYPE.equals(filter.getType())) {
                     if (questionDef != null) {
                         // create a column for each option if it's a multiselect
-                        splitChoicesIntoColumns = splitOptions &&
-                                ESObjectConstants.MULTIPLE.equals(questionDef.get(ESObjectConstants.SELECT_MODE));
+                        splitChoicesIntoColumns = splitOptions
+                                && ESObjectConstants.MULTIPLE.equals(questionDef.get(ESObjectConstants.SELECT_MODE));
                     }
                 }
                 // columns for 'meta' properties (completion date, etc.) and other non-questions will come first
@@ -134,7 +134,7 @@ public class TabularParticipantParser {
      * @param column       the column from the Filter
      * @param activityDefs the schema loaded from ElasticSearch
      * @return the question schema corresponding to the given column, or null if it does not correspond to a question (e.g.
-     * it is a 'data' attribute)
+     *     it is a 'data' attribute)
      */
     private Map<String, Object> getDefForQuestion(ParticipantColumn column, Map<String, Map<String, Object>> activityDefs) {
         String activityName = column.getTableAlias();
@@ -173,7 +173,7 @@ public class TabularParticipantParser {
      * @param moduleConfigs the moduleExportConfigs, such as returned from generateExportConfigs
      * @param participant   the participantDto, as fetched from elasticSearch
      * @return a list of hashmaps suitable for turning into a table. The list will be of length 1, unless this is a study (RGP)
-     * with family members.  In that case, the list will have one map for each member.
+     *     with family members.  In that case, the list will have one map for each member.
      */
     private List<Map<String, String>> generateParticipantTabularMaps(List<ModuleExportConfig> moduleConfigs,
                                                                      ParticipantWrapperDto participant) {
@@ -190,8 +190,9 @@ public class TabularParticipantParser {
         return participantMaps;
     }
 
-    /** parses a single participant record into a string-string map.  This method is public because
-     * it is far easier to write tests with Map<String, Object> data than full-fledged ParticipantDTOWrappers
+    /**
+     * parses a single participant record into a string-string map.  This method is public because
+     * it is far easier to write tests with Map data than full-fledged ParticipantDTOWrappers
      */
     public Map<String, String> parseSingleParticipant(Map<String, Object> participantEsMap,
                                                       List<ModuleExportConfig> moduleConfigs,
@@ -224,10 +225,9 @@ public class TabularParticipantParser {
     private void addModuleDataToParticipantMap(ModuleExportConfig moduleConfig, Map<String, String> participantMap,
                                                Map<String, Object> esModuleMap, int moduleRepeatNum) {
         for (FilterExportConfig filterConfig : moduleConfig.getQuestions()) {
-            List<String> optionStableIds = Collections.singletonList(null);
+            List<Map<String, Object>> options = Collections.singletonList(null);
             if (filterConfig.getOptions() != null && filterConfig.isSplitOptionsIntoColumns()) {
-                optionStableIds = filterConfig.getOptions().stream().map(opt -> (String) opt.get(ESObjectConstants.OPTION_STABLE_ID)).collect(
-                        Collectors.toList());
+                options = filterConfig.getOptions();
             }
             TextValueProvider valueProvider =
                     ValueProviderFactory.getValueProvider(filterConfig.getColumn().getName(), filterConfig.getQuestionType());
@@ -242,14 +242,14 @@ public class TabularParticipantParser {
 
                 if (filterConfig.getChildConfigs() != null) {
                     // if this is a composite question, we need a separate column for each child question
-                    for(int childIndex = 0; childIndex < filterConfig.getChildConfigs().size(); childIndex++) {
+                    for (int childIndex = 0; childIndex < filterConfig.getChildConfigs().size(); childIndex++) {
                         addSingleResponseToMap(Collections.singletonList(responseValues.get(childIndex)),
-                                filterConfig, optionStableIds, moduleRepeatNum,
+                                filterConfig.getChildConfigs().get(childIndex), options, moduleRepeatNum,
                                 responseNum, esModuleMap,
-                                valueProvider, participantMap, filterConfig.getChildConfigs().get(childIndex));
+                                valueProvider, participantMap, filterConfig);
                     }
                 } else {
-                    addSingleResponseToMap(responseValues, filterConfig, optionStableIds, moduleRepeatNum, responseNum, esModuleMap,
+                    addSingleResponseToMap(responseValues, filterConfig, options, moduleRepeatNum, responseNum, esModuleMap,
                             valueProvider, participantMap, null);
                 }
 
@@ -258,21 +258,24 @@ public class TabularParticipantParser {
     }
 
     // adds a single question response to the map.  Also handles adding any additional details associated with the answer
-    private void addSingleResponseToMap(List<String> responseValues, FilterExportConfig filterConfig, List<String> optionStableIds, int moduleRepeatNum, int responseNum,
-                                   Map<String, Object> esModuleMap, TextValueProvider valueProvider, Map<String, String> participantMap, FilterExportConfig childConfig) {
-        for (String optionStableId : optionStableIds) {
+    private void addSingleResponseToMap(List<String> responseValues, FilterExportConfig filterConfig, List<Map<String, Object>> options,
+                                        int moduleRepeatNum, int responseNum, Map<String, Object> esModuleMap,
+                                        TextValueProvider valueProvider, Map<String, String> participantMap,
+                                        FilterExportConfig parentConfig) {
+        for (Map<String, Object> option : options) {
             String colName = TabularParticipantExporter.getColumnName(
                     filterConfig,
                     moduleRepeatNum + 1,
                     responseNum + 1,
-                    optionStableId,
+                    option,
                     null,
-                    childConfig
+                    parentConfig
             );
             String exportValue = StringUtils.EMPTY;
-            if (optionStableId != null) {
-                exportValue = responseValues.contains(optionStableId) ?
-                        COLUMN_SELECTED : COLUMN_UNSELECTED;
+            String optionStableId = null;
+            if (option != null) {
+                optionStableId = (String) option.get(ESObjectConstants.OPTION_STABLE_ID);
+                exportValue = responseValues.contains(optionStableId) ? COLUMN_SELECTED : COLUMN_UNSELECTED;
             } else {
                 exportValue = responseValues.stream().collect(Collectors.joining(", "));
             }
@@ -283,9 +286,9 @@ public class TabularParticipantParser {
                         filterConfig,
                         moduleRepeatNum + 1,
                         responseNum + 1,
-                        optionStableId,
+                        option,
                         "DETAIL",
-                        childConfig
+                        parentConfig
                 );
                 participantMap.put(detailColName, detailValue);
             }

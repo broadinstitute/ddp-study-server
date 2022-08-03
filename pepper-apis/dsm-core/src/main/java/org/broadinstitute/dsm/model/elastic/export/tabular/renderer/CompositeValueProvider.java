@@ -26,11 +26,13 @@ public class CompositeValueProvider extends TextValueProvider {
                 FilterExportConfig childQuestionConfig = filterConfig.getChildConfigs().get(questionIndex);
 
                 TextValueProvider valueProvider =
-                        ValueProviderFactory.getValueProvider(childQuestionConfig.getColumn().getName(), childQuestionConfig.getQuestionType());
+                        ValueProviderFactory.getValueProvider(childQuestionConfig.getColumn().getName(),
+                                childQuestionConfig.getQuestionType());
                 Object rawValue = rawValues.size() > questionIndex ? rawValues.get(questionIndex) : StringUtils.EMPTY;
 
 
-                List<String> formattedValues = valueProvider.formatRawValues(Collections.singletonList(rawValue), childQuestionConfig, formMap);
+                List<String> formattedValues = valueProvider.formatRawValues(Collections.singletonList(rawValue),
+                        childQuestionConfig, formMap);
                 answerVals.add(formattedValues.stream().collect(Collectors.joining(", ")));
             }
             return answerVals;
@@ -38,6 +40,7 @@ public class CompositeValueProvider extends TextValueProvider {
         }
         return super.formatRawValues(rawValues, filterConfig, formMap);
     }
+
     /** sometimes, e.g. Singular's ABOUT_YOU_HEALTHY.MAILING_ADDRESS, the composite values are nested inside another array.
      *  this checks for that circumstance */
     private boolean isSingleListResponse(List<?> rawValues) {

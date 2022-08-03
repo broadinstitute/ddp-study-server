@@ -83,6 +83,7 @@ public class ElasticSearchUtil {
     public static final String ACTIVITY_VERSION = "activityVersion";
     public static final String ADDRESS = "address";
     public static final String INVITATIONS = "invitations";
+    public static final String FILES = "files";
     public static final String PDFS = "pdfs";
     public static final String GUID = "guid";
     public static final String LEGACY_ALT_PID = "legacyAltPid";
