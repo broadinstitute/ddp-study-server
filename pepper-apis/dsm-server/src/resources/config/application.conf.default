@@ -231,8 +231,7 @@ pubsub {
   projectId = "google-project-id"
 
   // The Pub/Sub host to connect to.
-  // This value has no effect unless `pubsub.local` is
-  //  set to `true`.
+  // A value is only required if `pubsub.emulator` is `true`
   host = "127.0.0.1:8085"
 
   topic = "dsx-local-dsm-test-results"
