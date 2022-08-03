@@ -11,7 +11,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
-import org.broadinstitute.dsm.model.elastic.ESDsm;
+import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.export.generate.Collector;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
@@ -19,7 +19,7 @@ import java.lang.reflect.ParameterizedType;
 
 public class CollectionProcessor extends BaseProcessor {
 
-    public CollectionProcessor(ESDsm esDsm, String propertyName, int recordId, Collector collector) {
+    public CollectionProcessor(Dsm esDsm, String propertyName, int recordId, Collector collector) {
         super(esDsm, propertyName, recordId, collector);
     }
 

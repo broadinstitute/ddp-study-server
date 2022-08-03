@@ -9,16 +9,16 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.Activities;
-import org.broadinstitute.dsm.model.elastic.ESAddress;
+import org.broadinstitute.dsm.model.elastic.Address;
 import org.broadinstitute.dsm.model.elastic.ESComputed;
-import org.broadinstitute.dsm.model.elastic.ESDsm;
+import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.Profile;
 
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ElasticSearchParticipantDto {
 
-    private ESAddress address;
+    private Address address;
     private List<Object> medicalProviders;
     private List<Object> invitations;
     private List<Activities> activities;
@@ -30,7 +30,7 @@ public class ElasticSearchParticipantDto {
     private List<String> proxies;
     private List<Map<String, Object>> workflows;
     private String status;
-    private ESDsm dsm;
+    private Dsm dsm;
     private String ddp;
 
     public ElasticSearchParticipantDto() {
@@ -52,7 +52,7 @@ public class ElasticSearchParticipantDto {
         this.governedUsers = builder.governedUsers;
     }
 
-    public Optional<ESAddress> getAddress() {
+    public Optional<Address> getAddress() {
         return Optional.ofNullable(address);
     }
 
@@ -92,7 +92,7 @@ public class ElasticSearchParticipantDto {
         return Optional.ofNullable(status);
     }
 
-    public Optional<ESDsm> getDsm() {
+    public Optional<Dsm> getDsm() {
         return Optional.ofNullable(dsm);
     }
 
@@ -112,7 +112,7 @@ public class ElasticSearchParticipantDto {
     }
 
     public static class Builder {
-        private ESAddress address;
+        private Address address;
         private List<Object> medicalProviders;
         private List<Object> invitations;
         private ESComputed computed;
@@ -124,13 +124,13 @@ public class ElasticSearchParticipantDto {
         private List<String> proxies;
         private List<Map<String, Object>> workflows;
         private String status;
-        private ESDsm dsm;
+        private Dsm dsm;
 
         public Builder() {
         }
 
-        public Builder withAddress(ESAddress esAddress) {
-            this.address = esAddress;
+        public Builder withAddress(Address address) {
+            this.address = address;
             return this;
         }
 
@@ -179,7 +179,7 @@ public class ElasticSearchParticipantDto {
             return this;
         }
 
-        public Builder withDsm(ESDsm dsm) {
+        public Builder withDsm(Dsm dsm) {
             this.dsm = dsm;
             return this;
         }

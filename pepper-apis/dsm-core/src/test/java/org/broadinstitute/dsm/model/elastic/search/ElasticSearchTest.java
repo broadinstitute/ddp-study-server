@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.google.gson.Gson;
-import org.broadinstitute.dsm.model.elastic.ESAddress;
+import org.broadinstitute.dsm.model.elastic.Address;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperTest;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -77,7 +77,7 @@ public class ElasticSearchTest {
     public void parseSourceMap() {
         Profile esProfile = new Profile();
         esProfile.setFirstName("Tommy");
-        ESAddress esAddress = new ESAddress();
+        Address esAddress = new Address();
         esAddress.setCountry("Barsum");
         ElasticSearchParticipantDto elasticSearchParticipantDto =
                 new ElasticSearchParticipantDto.Builder().withStatusTimeStamp(1_000_000L).withProfile(esProfile).withStatus("TESTING")
@@ -87,7 +87,7 @@ public class ElasticSearchTest {
         try {
             ElasticSearchParticipantDto esParticipantDto = maybeElasticSearchParticipantDto.get();
             Assert.assertEquals("Tommy", esParticipantDto.getProfile().map(Profile::getFirstName).orElse(""));
-            Assert.assertEquals("Barsum", esParticipantDto.getAddress().map(ESAddress::getCountry).orElse(""));
+            Assert.assertEquals("Barsum", esParticipantDto.getAddress().map(Address::getCountry).orElse(""));
             Assert.assertEquals("TESTING", esParticipantDto.getStatus().orElse(""));
         } catch (Exception e) {
             Assert.fail();

@@ -46,7 +46,7 @@ public class BaseAbstractQueryBuilder {
         this.parser = parser;
     }
 
-    public AbstractQueryBuilder build() {
+    public AbstractQueryBuilder<?> build() {
         Map<String, List<String>> parsedFilters = filterSeparator.parseFiltersByLogicalOperators();
         for (Map.Entry<String, List<String>> parsedFilter : parsedFilters.entrySet()) {
             List<String> filterValues = parsedFilter.getValue();

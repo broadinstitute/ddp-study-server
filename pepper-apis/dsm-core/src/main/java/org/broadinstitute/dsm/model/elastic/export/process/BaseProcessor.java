@@ -9,7 +9,7 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.structure.TableName;
-import org.broadinstitute.dsm.model.elastic.ESDsm;
+import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.export.generate.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,13 +18,13 @@ public abstract class BaseProcessor implements Processor {
 
 
     protected static final Logger logger = LoggerFactory.getLogger(CollectionProcessor.class);
-    protected ESDsm esDsm;
+    protected Dsm esDsm;
     protected String propertyName;
     protected int recordId;
     protected Collector collector;
     protected String primaryKey;
 
-    public BaseProcessor(ESDsm esDsm, String propertyName, int recordId, Collector collector) {
+    public BaseProcessor(Dsm esDsm, String propertyName, int recordId, Collector collector) {
         this.esDsm = Objects.requireNonNull(esDsm);
         this.propertyName = Objects.requireNonNull(propertyName);
         this.recordId = recordId;
@@ -35,7 +35,7 @@ public abstract class BaseProcessor implements Processor {
 
     }
 
-    public void setEsDsm(ESDsm esDsm) {
+    public void setEsDsm(Dsm esDsm) {
         this.esDsm = esDsm;
     }
 

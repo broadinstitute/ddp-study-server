@@ -120,6 +120,7 @@ public class DSMtasksSubscription {
                     new TissueMigrator(index, study), new SMIDMigrator(index, study),
                     new CohortTagMigrator(index, study, new CohortTagDaoImpl()));
             exportables.forEach(Exportable::export);
+            logger.info("Successfully finished migration of all DSM data to ES for study: " + study + " with index: " + index);
         });
     }
 

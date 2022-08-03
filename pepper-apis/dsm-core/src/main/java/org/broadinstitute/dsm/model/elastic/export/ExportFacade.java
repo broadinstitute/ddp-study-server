@@ -6,7 +6,7 @@ import java.util.Objects;
 
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
-import org.broadinstitute.dsm.model.elastic.ESDsm;
+import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator;
 import org.broadinstitute.dsm.model.elastic.export.generate.GeneratorFactory;
 import org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator;
@@ -67,7 +67,7 @@ public class ExportFacade {
         exportable.export();
     }
 
-    private ESDsm fetchData() {
+    private Dsm fetchData() {
         searchable.setDeserializer(new DefaultDeserializer());
         ElasticSearchParticipantDto participantById =
                 searchable.getParticipantById(exportFacadePayload.getIndex(), exportFacadePayload.getDocId());
@@ -76,7 +76,7 @@ public class ExportFacade {
         return participantById.getDsm().orElseThrow();
     }
 
-    private Map<String, Object> processData(ESDsm esDsm) {
+    private Map<String, Object> processData(Dsm esDsm) {
         PropertyInfo propertyInfo = getPropertyInfo();
         BaseParser valueParser = new ValueParserFactory().of(exportFacadePayload);
         valueParser.setPropertyInfo(propertyInfo);

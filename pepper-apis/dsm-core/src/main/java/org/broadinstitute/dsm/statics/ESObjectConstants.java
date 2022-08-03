@@ -123,4 +123,20 @@ public class ESObjectConstants {
     public static final String ACCEPTED_AT = "acceptedAt";
     public static final String CONTACT_EMAIL = "contactEmail";
     public static final String NOTES = "notes";
+    public static final String INVITATIONS = "invitations";
+
+    // address
+    public static final String ADDRESS = "address";
+
+    // files
+    public static final String FILES = "files";
+    public static final String BUCKET = "bucket";
+    public static final String BLOB_NAME = "blobName";
+    public static final String FILE_NAME = "fileName";
+    public static final String FILE_SIZE = "fileSize";
+    public static final String MIME_TYPE = "mimeType";
+    public static final String AUTHORIZED_AT = "authorizedAt";
+    public static final String UPLOADED_AT = "uploadedAt";
+    public static final String SCANNED_AT = "scannedAt";
+    public static final String SCAN_RESULT = "scanResult";
 }

@@ -16,6 +16,9 @@ import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.model.elastic.Activities;
+import org.broadinstitute.dsm.model.elastic.Address;
+import org.broadinstitute.dsm.model.elastic.Dsm;
+import org.broadinstitute.dsm.model.elastic.Files;
 import org.broadinstitute.dsm.model.elastic.Invitations;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
@@ -43,7 +46,10 @@ public class PropertyInfo {
                 ));
         TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.ACTIVITIES, new PropertyInfo(Activities.class, true));
         TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.PROFILE, new PropertyInfo(Profile.class, false));
-        TABLE_ALIAS_MAPPINGS.put(ElasticSearchUtil.INVITATIONS, new PropertyInfo(Invitations.class, false));
+        TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.INVITATIONS, new PropertyInfo(Invitations.class, false));
+        TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.ADDRESS, new PropertyInfo(Address.class, false));
+        TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.FILES, new PropertyInfo(Files.class, false));
+        TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.DSM, new PropertyInfo(Dsm.class, false));
     }
 
     private Class<?> propertyClass;

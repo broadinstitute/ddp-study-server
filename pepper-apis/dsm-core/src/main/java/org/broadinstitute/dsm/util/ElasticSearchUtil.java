@@ -33,11 +33,10 @@ import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
-import org.broadinstitute.dsm.model.elastic.ESAddress;
+import org.broadinstitute.dsm.model.elastic.Address;
 import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
-import org.broadinstitute.dsm.model.gbf.Address;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -398,9 +397,9 @@ public class ElasticSearchUtil {
         return null;
     }
 
-    public static Map<String, Address> getParticipantAddresses(RestHighLevelClient client, String indexName, Set<String> participantGuids) {
+    public static Map<String, org.broadinstitute.dsm.model.gbf.Address> getParticipantAddresses(RestHighLevelClient client, String indexName, Set<String> participantGuids) {
         Gson gson = new Gson();
-        Map<String, Address> addressByParticipant = new HashMap<>();
+        Map<String, org.broadinstitute.dsm.model.gbf.Address> addressByParticipant = new HashMap<>();
         int scrollSize = 100;
         SearchRequest searchRequest = new SearchRequest(indexName);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
@@ -432,9 +431,10 @@ public class ElasticSearchUtil {
                 Map<String, Object> participantRecord = hit.getSourceAsMap();
                 JsonObject participantJson = new JsonParser().parse(new Gson().toJson(participantRecord)).getAsJsonObject();
                 if (participantJson.has(ADDRESS) && participantJson.has(PROFILE)) {
-                    ESAddress address = gson.fromJson(participantJson.get(ADDRESS), ESAddress.class);
+                    Address address = gson.fromJson(participantJson.get(ADDRESS), Address.class);
                     Profile profile = gson.fromJson(participantJson.get(PROFILE), Profile.class);
-                    Address gbfAddress = new Address(address.getRecipient(), address.getStreet1(), address.getStreet1(),
+                    org.broadinstitute.dsm.model.gbf.Address
+                            gbfAddress = new org.broadinstitute.dsm.model.gbf.Address(address.getRecipient(), address.getStreet1(), address.getStreet1(),
                             address.getCity(), address.getState(), address.getZip(), address.getCountry(), address.getPhone());
                     addressByParticipant.put(profile.getGuid(), gbfAddress);
                 }
