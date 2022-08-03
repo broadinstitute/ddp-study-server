@@ -1,0 +1,249 @@
+// 
+// The server's TimeZone
+//
+defaultTimezone = "UTC"
+
+//
+// Allowed cross-origin resource sharing hosts
+//
+corsOrigins = [
+  "http://localhost:4200"
+]
+
+//
+//
+//
+GoogleAnalytics.trackingId = "google-analytics-token"
+
+projectId =  "google-project-id"
+google.secret.project = "google-project-id"
+google.secret.name = "study-manager-secret-name"
+google.secret.version = "latest"
+
+// Set to false if DSM is running locally
+// 
+// 
+// (bskinner - 20220802
+//  Unclear if `production` means "not local", or in the 
+//    live production environment (as opposed to dev/staging/test))
+ui.production = false
+
+portal {
+  // 
+  //  An opaque string describing the application's runtime environment
+  // 
+  //  (bskinner - 20220802
+  //    If an environment is prefixed with the literal string `Local`,
+  //    there will be changes to the behaviors of several tests, and
+  //    potentially some runtime behaviors. Search for the string
+  //    `portal.environment` for usages)
+  //
+  environment = "Local"
+
+  // 
+  // The root path for the DSM APIs
+  //
+  appRoute = "/app"
+
+  //
+  // The http server port to listen on
+  //
+  port = 5555
+
+  //
+  // The Project ID for the host Google Project
+  //
+  // This setting should be the same as `google.secret.project` and `projectId`
+  //
+  googleProjectName = "google-project-id"
+
+  //
+  // The set of Application Credentials for the service
+  //
+  googleProjectCredentials = "/path/to/my-google-credentials.json"
+
+  //
+  // JDBC connection URL 
+  //
+  dbUrl = "jdbc:mysql://pepper:pepper-dev@127.0.0.1:3306/dsm-local?characterEncoding=UTF-8&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true"
+
+  //
+  // JDBC connection URL for connecting to the `dss` database
+  //
+  dss {
+      dbUrl = "jdbc:mysql://pepper:pepper-dev@127.0.0.1:3306/dss-local?characterEncoding=UTF-8&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true"
+  }
+
+  //
+  // Maximum number of open connections to the `dbUrl`
+  //
+  maxConnections = 10
+
+  //
+  //  The signing secret used for the HMAC256 tokens accepted by the monitoring endpoint.
+  //
+  jwtMonitoringSecret = "Shared secret for monitoring tokens"
+
+  //
+  //  The signing secret used for HMAC256 tokens generated for the ddp endpoint
+  //
+  jwtDdpSecret = "Shared secret for DDP tokens"
+
+  discardSampleBucket = "dsx-local-discard-samples-bucket"
+  
+  //
+  // Google Bucket containing PDF generation templates
+  //
+  configBucket = "pdf-template-bucket"
+}
+
+// Only accessed when running tests.
+browser_security {
+  jwt_secret = "JWT_test_secret_key"
+  cookie_name = "DSM_CSRF"
+  cookie_salt = "Test cookie salt"
+}
+
+bsp {
+  secret = "shared secret for BSP JWTs"
+  
+  //
+  // If `true`, `bsp.secret` will be assumed to be Base64 encoded
+  //
+  secretEncoded = false
+}
+
+//
+// Auth0 Tenant configuration
+//
+auth0 {
+  // The expected issuer for JWTs from Auth0
+  account = "https://tenant.us.auth0.example/"
+
+  // Opaque prefix used to namespace DDP JWT claims.
+  claimNamespace = "https://datadonationplatform.org/"
+
+  // The domain
+  domain = "tenant.us.auth0.example"
+
+  // The expected audience for JWTs from Auth0
+  audience = "https://auth0.audience.example/" 
+
+  //
+  //  If true, both `auth0.secret` and `portal.jwtDdpSecret` will be assumed
+  //    to be Base64 encoded.
+  //
+  isSecretBase64Encoded = false
+
+  // Client ID for the Auth0 Application
+  clientKey = "AUTH0-CLIENT-ID"
+
+  // Client Secret for the Auth0 Application
+  secret = "AUTH0-CLIENT-SECRET"
+
+  // Supported Auth0 connections
+  connections = [
+    "AUTH0-CONNECTION-NAME"
+  ]
+
+  // Endpoint for the Auth0 Management API for the auth0.account
+  mgtApiUrl = "URL-TO-AUTH0-MANAGEMENT-ENDPOINT"
+  // Client ID for the client used to access the Auth0 management API
+  mgtKey = "AUTH0-CLIENT-ID"
+  // Client Secret for the client used to access the Auth0 management API
+  mgtSecret = "AUTH0-CLIENT-SERCRET"
+}
+
+// ####
+// Email config
+// ####
+email {
+  key = "SG.SENDGRID-API-KEY"
+  notifications = "[]"
+  frontendUrl = "http://localhost:4200"
+  // Crontab-formatted specification for when to send GP emails 
+  cron_expression_GP_notification = "0 30 11 ? * MON-FRI" 
+  gp_recipient = "local-dev@domain.example"
+  clientSettings = """{
+    "sendGridFrom": "local-dev@domain.example",
+    "sendGridFromName": "DSM Local"
+  }"""
+  
+  reminderNotifications = """[
+    {
+      "reason": "PARTICIPANT_REMINDER",
+      "reminders": [
+        {
+          "adminRecipient": "",
+          "hours": "1",
+          "sendGridTemplate": "SENDGRID-TEMPLATE-UUID"
+        }
+      ]
+    }
+  ]"""
+}
+
+// ----
+// Quartz Jobs
+// ----
+quarts = {
+  enableJobs = false
+  ddpRequestJob_jobIntervalInSeconds = 120
+  notificationJob_jobIntervalInSeconds = 60
+  labelCreationJob_jobIntervalInSeconds = 60
+  ddp_event_trigger_cron_expression = "0 0/2 8-18 * * ?"
+  externalShipper_cron_expression = "0 0/5 0 ? * MON-FRI"
+  externalShipper_cron_expression_additional = "0 0 2 ? * MON-FRI"
+  shipmentStatusJob_cron_expression = "0 0/5 * ? * MON-FRI"
+}
+
+elasticSearch {
+  url = "http://localhost:9200"
+}
+
+// The 'tokenSecret' key appears to be only used in tests?
+ddp = """[
+    {
+        "easyPostApiKey": "EASYPOST-API-KEY",
+        "instanceName": "an-instance",
+        "tokenSecret": "shhhhh"
+    }
+]"""
+
+gbf = """[ ]"""
+
+externalShipper = """[ ]"""
+
+pubsub {
+  //
+  // Set to `true` if DSM should use a local Pub/Sub host.
+  //
+  // This flag is used to trigger a change in behaviors in order to ease local 
+  // development work using Google's Pub/Sub Emulator.
+  //   * DSM will attempt to connect to the Pub/Sub host at `pubsub.host`
+  //   * Use of credentials will be disabled when communication with Pub/Sub
+  //   * Pub/Sub Topics will now attempt to be created on launch
+  //   * Pub/Sub Subscriptions will now attempt to be created on launch
+  //
+  emulator = true
+  projectId = "google-project-id"
+
+  // The Pub/Sub host to connect to.
+  // This value has no effect unless `pubsub.local` is
+  //  set to `true`.
+  host = "127.0.0.1:8085"
+
+  topic = "dsx-local-dsm-test-results"
+  subscription = "dsx-local-dsm-test-results-sub"
+
+  dsm_to_dss_topic = "dsx-local-dss-tasks"
+  dss_tasks_topic = "dsx-local-dss-tasks"
+
+  dss_to_dsm_topic = "dsx-local-dss-task-results"
+  dss_to_dsm_subscription = "dsx-local-dss-task-results-sub"
+
+  dsm_tasks_topic = "dsx-local-dsm_tasks_topic"
+  dsm_tasks_subscription = "dsx-local-dsm-tasks-sub"
+
+  dsm_to_mercury_topic = "dsx-local-mercury-pepper"
+}
