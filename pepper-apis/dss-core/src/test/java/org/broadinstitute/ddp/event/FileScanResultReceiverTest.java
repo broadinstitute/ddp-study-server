@@ -19,6 +19,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
+import com.google.cloud.pubsub.v1.Publisher;
 import com.google.cloud.storage.Blob;
 import com.google.pubsub.v1.PubsubMessage;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
@@ -37,6 +38,7 @@ public class FileScanResultReceiverTest {
         // Create mocks.
         var mockReply = mock(AckReplyConsumer.class);
         var mockStorage = mock(GoogleBucketClient.class);
+        var mockPublisher = mock(Publisher.class);
         var mockHandle = mock(Handle.class);
         var mockFileDao = mock(FileUploadDao.class);
         var mockExportDao = mock(DataExportDao.class);
@@ -60,7 +62,7 @@ public class FileScanResultReceiverTest {
         doReturn(Optional.of(upload)).when(mockFileDao).findAndLockByGuid(any());
         doReturn(mockExportDao).when(mockHandle).attach(DataExportDao.class);
 
-        var receiverSpy = spy(new FileScanResultReceiver(mockStorage, "uploads", "scanned", "quarantine"));
+        var receiverSpy = spy(new FileScanResultReceiver(mockStorage, mockPublisher, "uploads", "scanned", "quarantine"));
         doAnswer(invocation -> ((HandleCallback) invocation.getArgument(0)).withHandle(mockHandle))
                 .when(receiverSpy).withAPIsTxn(any());
 
@@ -80,7 +82,7 @@ public class FileScanResultReceiverTest {
     public void testReceiveMessage_checksPayload_andGracefullyAcks() {
         var builder = PubsubMessage.newBuilder().setMessageId("foo");
         var replyMock = mock(AckReplyConsumer.class);
-        var receiver = new FileScanResultReceiver(null, "uploads", "scanned", "quarantine");
+        var receiver = new FileScanResultReceiver(null, null, "uploads", "scanned", "quarantine");
 
         builder.clearAttributes();
         receiver.receiveMessage(builder.build(), replyMock);
