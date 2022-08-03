@@ -60,8 +60,6 @@ public class PubSubResultMessageSubscription {
                     }
                 };
 
-        //Subscriber subscriber = null;
-
         // The subscriber will pause the message stream and stop receiving more messsages from the
         // server if any one of the conditions is met.
         FlowControlSettings flowControlSettings =
@@ -76,8 +74,8 @@ public class PubSubResultMessageSubscription {
 
         ProjectSubscriptionName resultSubName = ProjectSubscriptionName.of(projectId, subscriptionId);
         ExecutorProvider resultsSubExecProvider = InstantiatingExecutorProvider.newBuilder()
-            .setExecutorThreadCount(1)
-            .build();
+                .setExecutorThreadCount(1)
+                .build();
 
         var subscriberBuilder  = Subscriber.newBuilder(resultSubName, receiver)
                 .setParallelPullCount(1)
@@ -87,9 +85,9 @@ public class PubSubResultMessageSubscription {
         
         if (!StringUtils.isBlank(pubSubHost)) {
             var channel = ManagedChannelBuilder
-                .forTarget(pubSubHost)
-                .usePlaintext()
-                .build();
+                    .forTarget(pubSubHost)
+                    .usePlaintext()
+                    .build();
             
             subscriberBuilder.setChannelProvider(FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel)));
         }

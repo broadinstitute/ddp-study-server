@@ -35,7 +35,6 @@ import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.grpc.GrpcTransportChannel;
 import com.google.api.gax.rpc.AlreadyExistsException;
 import com.google.api.gax.rpc.FixedTransportChannelProvider;
-import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Subscriber;
@@ -769,19 +768,19 @@ public class DSMServer {
 
             ProjectSubscriptionName resultSubName = ProjectSubscriptionName.of(projectId, subscriptionId);
             ExecutorProvider resultsSubExecProvider = InstantiatingExecutorProvider.newBuilder()
-                .setExecutorThreadCount(1)
-                .build();
+                    .setExecutorThreadCount(1)
+                    .build();
             
             var subscriberBuilder  = Subscriber.newBuilder(resultSubName, receiver)
-                .setParallelPullCount(1)
-                .setExecutorProvider(resultsSubExecProvider)
-                .setMaxAckExtensionPeriod(org.threeten.bp.Duration.ofSeconds(120));
+                    .setParallelPullCount(1)
+                    .setExecutorProvider(resultsSubExecProvider)
+                    .setMaxAckExtensionPeriod(org.threeten.bp.Duration.ofSeconds(120));
 
             if (!StringUtils.isBlank(emulatorHost)) {
                 var channel = ManagedChannelBuilder
-                    .forTarget(emulatorHost)
-                    .usePlaintext()
-                    .build();
+                        .forTarget(emulatorHost)
+                        .usePlaintext()
+                        .build();
                 
                 subscriberBuilder.setChannelProvider(FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel)));
             }
@@ -1135,9 +1134,9 @@ public class DSMServer {
         }
 
         var channel = ManagedChannelBuilder
-            .forTarget(pubSubHost)
-            .usePlaintext()
-            .build();
+                .forTarget(pubSubHost)
+                .usePlaintext()
+                .build();
         var channelProvider = FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel));
 
         /* 
@@ -1148,9 +1147,9 @@ public class DSMServer {
         var credentialsProvider = NoCredentialsProvider.create();
         
         var settings = TopicAdminSettings.newBuilder()
-            .setTransportChannelProvider(channelProvider)
-            .setCredentialsProvider(credentialsProvider)
-            .build();
+                .setTransportChannelProvider(channelProvider)
+                .setCredentialsProvider(credentialsProvider)
+                .build();
 
         return TopicAdminClient.create(settings);
     }
@@ -1162,9 +1161,9 @@ public class DSMServer {
         }
 
         var channel = ManagedChannelBuilder
-            .forTarget(pubSubHost)
-            .usePlaintext()
-            .build();
+                .forTarget(pubSubHost)
+                .usePlaintext()
+                .build();
         var channelProvider = FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel));
 
         /* 
@@ -1175,9 +1174,9 @@ public class DSMServer {
         var credentialsProvider = NoCredentialsProvider.create();
 
         var settings = SubscriptionAdminSettings.newBuilder()
-            .setTransportChannelProvider(channelProvider)
-            .setCredentialsProvider(credentialsProvider)
-            .build();
+                .setTransportChannelProvider(channelProvider)
+                .setCredentialsProvider(credentialsProvider)
+                .build();
 
         return SubscriptionAdminClient.create(settings);
     }
@@ -1213,7 +1212,10 @@ public class DSMServer {
      *
      * @throws IOException if a communication error has occurred
      */
-    private void createSubscription(SubscriptionAdminClient client, String projectId, String subscriptionName, String topicName) throws IOException {
+    private void createSubscription(SubscriptionAdminClient client,
+                                String projectId,
+                                String subscriptionName,
+                                String topicName) throws IOException {
         var subscription = ProjectSubscriptionName.of(projectId, subscriptionName);
         var topic = ProjectTopicName.of(projectId, topicName);
         

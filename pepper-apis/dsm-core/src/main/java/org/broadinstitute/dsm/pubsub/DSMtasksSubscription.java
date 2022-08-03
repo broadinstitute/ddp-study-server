@@ -114,9 +114,9 @@ public class DSMtasksSubscription {
         
         if (!StringUtils.isBlank(pubSubHost)) {
             var channel = ManagedChannelBuilder
-                .forTarget(pubSubHost)
-                .usePlaintext()
-                .build();
+                    .forTarget(pubSubHost)
+                    .usePlaintext()
+                    .build();
             
             subscriberBuilder.setChannelProvider(FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel)));
         }
