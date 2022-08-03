@@ -57,9 +57,10 @@ public class FilterExportConfig {
     }
 
     /** short constructor for getting a config for a subquestion of a composite question */
-    private FilterExportConfig(FilterExportConfig parent, Map<String,Object> childQuestion, int childIndex) {
+    private FilterExportConfig(FilterExportConfig parent, Map<String, Object> childQuestion, int childIndex) {
         this.parent = parent.getParent();
         this.type = (String) childQuestion.get(ESObjectConstants.QUESTION_TYPE);
+        this.questionType = this.type;
         String childStableId = (String) childQuestion.get(ESObjectConstants.STABLE_ID);
         if (StringUtils.isBlank(childStableId)) {
             // some subquestions don't have stableIds (e.g. RELEASE_MINOR_PHYSICIAN from PanCan), we need to ensure the stableId
@@ -80,6 +81,7 @@ public class FilterExportConfig {
 
         this.questionDef = childQuestion;
         this.options = getOptionsForQuestion(childQuestion);
+
     }
 
     public boolean isAllowMultiple(Map<String, Object> questionDef) {
@@ -90,12 +92,12 @@ public class FilterExportConfig {
     }
 
     private List<Map<String, Object>> getOptionsForQuestion(Map<String, Object> questionDef) {
-        List<Map<String,Object>> options = (List<Map<String, Object>>) questionDef.get(ESObjectConstants.OPTIONS);
+        List<Map<String, Object>> options = (List<Map<String, Object>>) questionDef.get(ESObjectConstants.OPTIONS);
         if (questionDef.containsKey(ESObjectConstants.OPTION_GROUPS)) {
             Object groups = questionDef.get(ESObjectConstants.OPTION_GROUPS);
             if (groups instanceof List) {
                 for (Map<String, Object> group : (List<Map<String, Object>>) groups) {
-                    if (group.containsKey(ESObjectConstants.OPTIONS) ) {
+                    if (group.containsKey(ESObjectConstants.OPTIONS)) {
                         options.addAll((List<Map<String, Object>>) group.get(ESObjectConstants.OPTIONS));
                     }
                 }
