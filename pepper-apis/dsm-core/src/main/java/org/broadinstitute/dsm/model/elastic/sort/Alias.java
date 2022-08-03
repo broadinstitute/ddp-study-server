@@ -25,8 +25,11 @@ public enum Alias {
     R(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT), false, false),
     EX(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT), false, false),
     DSM(ElasticSearchUtil.DSM, false, false), STATUS(ElasticSearchUtil.STATUS, false, false),
-    PROFILE(ElasticSearchUtil.PROFILE, false, false), ADDRESS(ElasticSearchUtil.ADDRESS, false, false),
-    INVITATIONS(ElasticSearchUtil.INVITATIONS, false, false), PROXY(ElasticSearchUtil.PROFILE, false, false),
+    PROFILE(ElasticSearchUtil.PROFILE, false, false),
+    ADDRESS(ElasticSearchUtil.ADDRESS, false, false),
+    INVITATIONS(ElasticSearchUtil.INVITATIONS, true, false),
+    PROXY(ElasticSearchUtil.PROFILE, false, false),
+    FILES(ElasticSearchUtil.FILES, true, false),
     ACTIVITIES(ElasticSearchUtil.ACTIVITIES, true, false), REGISTRATION(ElasticSearchUtil.ACTIVITIES, true, false),
     RGP_PARTICIPANT_INFO_GROUP(
             String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA),
