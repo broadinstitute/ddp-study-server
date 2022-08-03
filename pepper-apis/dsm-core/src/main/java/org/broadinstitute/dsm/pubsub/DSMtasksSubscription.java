@@ -14,9 +14,13 @@ import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.gson.Gson;
+import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.enums.DSMTaskType;
+import org.broadinstitute.ddp.enums.PubSubAttributes;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -36,34 +40,28 @@ import org.broadinstitute.dsm.model.elastic.migration.ParticipantDataMigrator;
 import org.broadinstitute.dsm.model.elastic.migration.ParticipantMigrator;
 import org.broadinstitute.dsm.model.elastic.migration.SMIDMigrator;
 import org.broadinstitute.dsm.model.elastic.migration.TissueMigrator;
+import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.ParticipantUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class DSMtasksSubscription {
-
-    private static final Logger logger = LoggerFactory.getLogger(DSMtasksSubscription.class);
-    public static final String TASK_TYPE = "taskType";
+    private static final Map<String, Integer> retryPerParticipant = new ConcurrentHashMap<>();
     public static final String CLEAR_BEFORE_UPDATE = "clearBeforeUpdate";
-    public static final String UPDATE_CUSTOM_WORKFLOW = "UPDATE_CUSTOM_WORKFLOW";
-    public static final String ELASTIC_EXPORT = "ELASTIC_EXPORT";
-    public static final String PARTICIPANT_REGISTERED = "PARTICIPANT_REGISTERED";
     public static final int MAX_RETRY = 50;
-    private static Map<String, Integer> retryPerParticipant = new ConcurrentHashMap<>();
 
-    public static void subscribeDSMtasks(String projectId, String subscriptionId) {
+    public static void subscribeDSMtasks(String projectId, String subscriptionId, NotificationUtil notificationUtil) {
         // Instantiate an asynchronous message receiver.
         MessageReceiver receiver = (PubsubMessage message, AckReplyConsumer consumer) -> {
             // Handle incoming message, then ack the received message.
-            logger.info("Got message with Id: " + message.getMessageId());
+            log.info("Got message with Id: " + message.getMessageId());
             Map<String, String> attributesMap = message.getAttributesMap();
-            String taskType = attributesMap.get(TASK_TYPE);
-            String data = message.getData() != null ? message.getData().toStringUtf8() : null;
+            String data = Optional.of(message).map(PubsubMessage::getData).map(ByteString::toStringUtf8).orElse(null);
+            DSMTaskType taskType = DSMTaskType.of(attributesMap.get(PubSubAttributes.TASK_TYPE.getValue()));
 
-            logger.info("Task type is: " + taskType);
+            log.info("Task type is: " + taskType);
 
-            if (StringUtils.isBlank(taskType)) {
-                logger.warn("task type from pubsub was missing");
+            if (taskType == null) {
+                log.warn("task type from pubsub was missing");
                 consumer.ack();
             } else {
                 switch (taskType) {
@@ -85,21 +83,27 @@ public class DSMtasksSubscription {
                     case PARTICIPANT_REGISTERED:
                         generateStudyDefaultValues(consumer, attributesMap);
                         break;
+                    case FILE_UPLOADED:
+                        sendFileUploadedNotification(notificationUtil,
+                                message.getAttributesOrDefault(PubSubAttributes.FILE_GUID.getValue(), null),
+                                message.getAttributesOrDefault(PubSubAttributes.USER_GUID.getValue(), null));
+                        consumer.ack();
+                        break;
                     default:
-                        logger.warn("Wrong task type for a message from pubsub");
+                        log.warn("Wrong task type for a message from pubsub");
                         consumer.ack();
                         break;
                 }
             }
         };
-        Subscriber subscriber = null;
+        Subscriber subscriber;
         ProjectSubscriptionName resultSubName = ProjectSubscriptionName.of(projectId, subscriptionId);
         ExecutorProvider resultsSubExecProvider = InstantiatingExecutorProvider.newBuilder().setExecutorThreadCount(1).build();
         subscriber = Subscriber.newBuilder(resultSubName, receiver).setParallelPullCount(1).setExecutorProvider(resultsSubExecProvider)
                 .setMaxAckExtensionPeriod(org.threeten.bp.Duration.ofSeconds(120)).build();
         try {
             subscriber.startAsync().awaitRunning(1L, TimeUnit.MINUTES);
-            logger.info("Started pubsub subscription receiver DSM tasks subscription");
+            log.info("Started pubsub subscription receiver DSM tasks subscription");
         } catch (TimeoutException e) {
             throw new RuntimeException("Timed out while starting pubsub subscription for DSM tasks", e);
         }
@@ -110,7 +114,7 @@ public class DSMtasksSubscription {
         Optional<DDPInstanceDto> maybeDdpInstanceByInstanceName = new DDPInstanceDao().getDDPInstanceByInstanceName(study);
         maybeDdpInstanceByInstanceName.ifPresent(ddpInstanceDto -> {
             String index = ddpInstanceDto.getEsParticipantIndex();
-            logger.info("Starting migrating DSM data to ES for study: " + study + " with index: " + index);
+            log.info("Starting migrating DSM data to ES for study: " + study + " with index: " + index);
             List<? extends Exportable> exportables = Arrays.asList(
                     //DynamicFieldsMappingMigrator should be first in the list to make sure that mapping will be exported for first
                     new DynamicFieldsMappingMigrator(index, study), new MedicalRecordMigrator(index, study),
@@ -147,5 +151,22 @@ public class DSMtasksSubscription {
                         consumer.ack();
                     }
                 }, consumer::ack);
+    }
+
+    private static void sendFileUploadedNotification(final NotificationUtil notificationUtil, final String fileGuid, final String userGuid) {
+        if (StringUtils.isBlank(fileGuid) || StringUtils.isBlank(userGuid)) {
+            log.error("Can't send file uploaded notification");
+            return;
+        }
+
+        String recipient = ""; // TODO: Get recipients here
+        String participantName = ""; // TODO: Get by userGuid
+        String fileName = ""; // TODO: Get by fileGuid
+
+        notificationUtil.sentNotification(
+                recipient,
+                String.format("The participant %s uploaded a new file %s", participantName, fileName),
+                NotificationUtil.UNIVERSAL_NOTIFICATION_TEMPLATE,
+                "A new file uploaded");
     }
 }

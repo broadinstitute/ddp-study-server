@@ -208,6 +208,7 @@ public class Housekeeping {
         boolean doLiquibase = cfg.getBoolean(ConfigFile.DO_LIQUIBASE);
         int maxConnections = cfg.getInt(ConfigFile.HOUSEKEEPING_NUM_POOLED_CONNECTIONS);
         String pubSubProject = cfg.getString(ConfigFile.GOOGLE_PROJECT_ID);
+        String dsmTasksTopic = cfg.getString(ConfigFile.PUBSUB_DSM_TASKS_TOPIC);
 
         boolean usePubSubEmulator = cfg.getBoolean(ConfigFile.USE_PUBSUB_EMULATOR);
         String housekeepingDbUrl = cfg.getString(TransactionWrapper.DB.HOUSEKEEPING.getDbUrlConfigKey());
@@ -234,7 +235,7 @@ public class Housekeeping {
 
         setupScheduler(cfg);
         setupTaskReceiver(cfg, pubSubProject);
-        setupFileScanResultReceiver(cfg, pubSubProject);
+        setupFileScanResultReceiver(cfg, pubSubProject, dsmTasksTopic);
 
         final PubSubConnectionManager pubsubConnectionManager = new PubSubConnectionManager(usePubSubEmulator);
 
@@ -540,7 +541,7 @@ public class Housekeeping {
         }
     }
 
-    private static void setupFileScanResultReceiver(Config cfg, String projectId) {
+    private static void setupFileScanResultReceiver(Config cfg, String projectId, String dsmTasksTopic) {
         boolean enabled = cfg.getBoolean(ConfigFile.FileUploads.ENABLE_SCAN_RESULT_HANDLER);
         if (!enabled) {
             log.warn("File scan result handler is not enabled");
@@ -556,8 +557,17 @@ public class Housekeeping {
             throw new DDPException("Could not get bucket credentials");
         }
 
+        Publisher publisher;
+        try {
+            publisher = Publisher.newBuilder(ProjectTopicName.of(projectId, dsmTasksTopic)).build();
+        } catch (final IOException e) {
+            throw new DDPException("Can't create publisher for " + dsmTasksTopic + "@" + projectId);
+        }
+
         var storageClient = new GoogleBucketClient(projectId, credentials);
+
         var receiver = new FileScanResultReceiver(storageClient,
+                publisher,
                 cfg.getString(ConfigFile.FileUploads.UPLOADS_BUCKET),
                 cfg.getString(ConfigFile.FileUploads.SCANNED_BUCKET),
                 cfg.getString(ConfigFile.FileUploads.QUARANTINE_BUCKET));

@@ -5,15 +5,20 @@ import java.time.Instant;
 
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
+import com.google.cloud.pubsub.v1.Publisher;
 import com.google.cloud.storage.Blob;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.pubsub.v1.PubsubMessage;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
+import org.broadinstitute.ddp.enums.PubSubAttributes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
+import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.enums.DSMTaskType;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.files.FileScanResult;
 import org.broadinstitute.ddp.model.files.FileUpload;
@@ -28,6 +33,7 @@ public class FileScanResultReceiver implements MessageReceiver {
     public static final String ATTR_SCAN_RESULT = "scanResult";
 
     private final GoogleBucketClient storageClient;
+    private final Publisher publisher;
     private final String uploadsBucket;
     private final String scannedBucket;
     private final String quarantineBucket;
@@ -45,7 +51,7 @@ public class FileScanResultReceiver implements MessageReceiver {
         String result = message.getAttributesOrDefault(ATTR_SCAN_RESULT, null);
         log.info("File scan result: bucket={} file={} result={}", bucketName, fileName, result);
 
-        if (bucketName == null || bucketName.isBlank()) {
+        if (StringUtils.isBlank(bucketName)) {
             log.warn("File scan result message is missing bucket name, ack-ing");
             reply.ack();
             return;
@@ -55,13 +61,13 @@ public class FileScanResultReceiver implements MessageReceiver {
             return;
         }
 
-        if (fileName == null || fileName.isBlank()) {
+        if (StringUtils.isBlank(fileName)) {
             log.warn("File scan result message is missing file name, ack-ing");
             reply.ack();
             return;
         }
 
-        if (result == null || result.isBlank()) {
+        if (StringUtils.isBlank(result)) {
             log.warn("File scan result message is missing scan result, ack-ing");
             reply.ack();
             return;
@@ -146,8 +152,16 @@ public class FileScanResultReceiver implements MessageReceiver {
         uploadDao.updateStatus(upload.getId(), uploadedAt, scannedAt, scanResult);
         handle.attach(DataExportDao.class)
                 .queueDataSync(upload.getParticipantUserId(), upload.getStudyId());
-        log.info("Finished processing file scan result for file upload {}", uploadGuid);
 
+        final var user = handle.attach(UserDao.class).getJdbiUser().findByUserId(upload.getParticipantUserId());
+        publisher.publish(PubsubMessage.newBuilder()
+                .putAttributes(PubSubAttributes.TASK_TYPE.getValue(), DSMTaskType.FILE_UPLOADED.getValue())
+                .putAttributes(PubSubAttributes.FILE_GUID.getValue(), upload.getGuid())
+                .putAttributes(PubSubAttributes.USER_GUID.getValue(), user.getUserGuid())
+                .build());
+        log.info("Sent the notification to DSM");
+
+        log.info("Finished processing file scan result for file upload {}", uploadGuid);
         return true;
     }
 

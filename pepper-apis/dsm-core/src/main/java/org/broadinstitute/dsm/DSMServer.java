@@ -730,7 +730,7 @@ public class DSMServer {
         }
 
         try {
-            DSMtasksSubscription.subscribeDSMtasks(projectId, dsmTasksSubscriptionId);
+            DSMtasksSubscription.subscribeDSMtasks(projectId, dsmTasksSubscriptionId, notificationUtil);
         } catch (Exception e) {
             e.printStackTrace();
         }
