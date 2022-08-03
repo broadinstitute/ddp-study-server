@@ -6,7 +6,11 @@ services:
       MYSQL_USER: pepper
       MYSQL_PASSWORD: pepper-dev
       MYSQL_ROOT_PASSWORD: pepper-dev
-      TZ: "America/New_York"
+      TZ: "Etc/UTC"
+--
+
+
+[Etc/UTC](https://en.wikipedia.org/wiki/Coordinated_Universal_Time)"
     volumes:
       - "$PWD/data/mysql:/var/lib/mysql"
       - "$PWD/conf/mysql/my.cnf:/opt/mysql/my.cnf"
