@@ -61,17 +61,12 @@ public final class ElasticsearchServiceUtil {
     }
 
     public static synchronized RestHighLevelClient getElasticsearchClient(Config cfg) throws MalformedURLException {
-        String userName = ConfigUtil.getStrIfPresent(cfg, ConfigFile.ELASTICSEARCH_USERNAME);
-        String password = ConfigUtil.getStrIfPresent(cfg, ConfigFile.ELASTICSEARCH_PASSWORD);
+        String userName = cfg.getString(ConfigFile.ELASTICSEARCH_USERNAME);
+        String password = cfg.getString(ConfigFile.ELASTICSEARCH_PASSWORD);
 
-        final CredentialsProvider credentialsProvider;
-        if (userName != null) {
-            credentialsProvider = new BasicCredentialsProvider();
-            credentialsProvider.setCredentials(AuthScope.ANY,
-                    new UsernamePasswordCredentials(userName, password));
-        } else {
-            credentialsProvider = null;
-        }
+        final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+        credentialsProvider.setCredentials(AuthScope.ANY,
+                new UsernamePasswordCredentials(userName, password));
 
         URL url = new URL(cfg.getString(ConfigFile.ELASTICSEARCH_URL));
         log.info("Using Elasticsearch client URL: {}", url);
@@ -97,7 +92,8 @@ public final class ElasticsearchServiceUtil {
                         httpClientBuilder.setConnectionReuseStrategy(NoConnectionReuseStrategy.INSTANCE);
                     }
                     return httpClientBuilder;
-                });
+                })
+                .setMaxRetryTimeoutMillis(100000);
 
         esClient = new RestHighLevelClient(builder);
         ES_CLIENTS.put(key, esClient);
