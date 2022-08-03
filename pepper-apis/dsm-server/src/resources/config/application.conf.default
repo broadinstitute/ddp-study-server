@@ -50,6 +50,8 @@ portal {
   //
   port = 5555
 
+  getDDPParticipantId = "not-a-real-participant"
+
   //
   // The Project ID for the host Google Project
   //
@@ -66,13 +68,6 @@ portal {
   // JDBC connection URL 
   //
   dbUrl = "jdbc:mysql://pepper:pepper-dev@127.0.0.1:3306/dsm-local?characterEncoding=UTF-8&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true"
-
-  //
-  // JDBC connection URL for connecting to the `dss` database
-  //
-  dss {
-      dbUrl = "jdbc:mysql://pepper:pepper-dev@127.0.0.1:3306/dss-local?characterEncoding=UTF-8&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true"
-  }
 
   //
   // Maximum number of open connections to the `dbUrl`
@@ -95,6 +90,13 @@ portal {
   // Google Bucket containing PDF generation templates
   //
   configBucket = "pdf-template-bucket"
+}
+
+//
+// JDBC connection URL for connecting to the `dss` database
+//
+dss {
+    dbUrl = "jdbc:mysql://pepper:pepper-dev@127.0.0.1:3306/dss-local?characterEncoding=UTF-8&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true"
 }
 
 // Only accessed when running tests.
@@ -186,7 +188,7 @@ email {
 // ----
 // Quartz Jobs
 // ----
-quarts = {
+quartz {
   enableJobs = false
   ddpRequestJob_jobIntervalInSeconds = 120
   notificationJob_jobIntervalInSeconds = 60
