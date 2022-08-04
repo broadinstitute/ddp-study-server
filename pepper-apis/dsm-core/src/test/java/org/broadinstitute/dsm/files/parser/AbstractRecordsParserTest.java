@@ -22,8 +22,13 @@ public class AbstractRecordsParserTest {
         List<TestData> actual = new AbstractRecordsParser<TestData>(content, regexSeparator) {
 
             @Override
-            public Optional<String> findMissingHeaderIfAny(List<String> fieldNames) {
+            public Optional<String> findMissingHeaderIfAny(List<String> headers) {
                 return Optional.empty();
+            }
+
+            @Override
+            public List<String> getExpectedHeaders() {
+                return List.of("field1", "field2", "field3");
             }
 
             @Override
@@ -46,8 +51,13 @@ public class AbstractRecordsParserTest {
         List<TestData> actual = new AbstractRecordsParser<TestData>(content, regexSeparator) {
 
             @Override
-            public Optional<String> findMissingHeaderIfAny(List<String> fieldNames) {
+            public Optional<String> findMissingHeaderIfAny(List<String> headers) {
                 return Optional.empty();
+            }
+
+            @Override
+            public List<String> getExpectedHeaders() {
+                return List.of("field1", "field2", "field3");
             }
 
             @Override
@@ -75,8 +85,13 @@ public class AbstractRecordsParserTest {
         AbstractRecordsParser<TestData> recordsParser = new AbstractRecordsParser<>(content, regexSeparator) {
 
             @Override
-            public Optional<String> findMissingHeaderIfAny(List<String> fieldNames) {
+            public Optional<String> findMissingHeaderIfAny(List<String> headers) {
                 return Optional.of("field3");
+            }
+
+            @Override
+            public List<String> getExpectedHeaders() {
+                return List.of("field1", "field2", "field3");
             }
 
             @Override

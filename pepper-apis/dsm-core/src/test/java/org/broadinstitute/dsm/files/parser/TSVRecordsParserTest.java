@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.files.parser;
 
 import java.util.List;
@@ -11,9 +12,14 @@ public class TSVRecordsParserTest {
 
     @Test
     public void getRegexSeparator() {
-        var parser = new TSVRecordsParser<Object>(null) {
+        var parser = new TSVRecordsParser<>(null) {
             @Override
-            public Optional<String> findMissingHeaderIfAny(List<String> fieldNames) {
+            public List<String> getExpectedHeaders() {
+                return null;
+            }
+
+            @Override
+            public Optional<String> findMissingHeaderIfAny(List<String> headers) {
                 return Optional.empty();
             }
 

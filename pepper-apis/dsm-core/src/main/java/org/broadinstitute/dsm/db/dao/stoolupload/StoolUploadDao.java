@@ -23,11 +23,9 @@ public class StoolUploadDao implements Dao<StoolUploadDto> {
 
 
     public boolean updateKit(StoolUploadObject stoolUploadObject) {
-
         String receiveDate = stoolUploadObject.getReceiveDate();
         String kitLabel = stoolUploadObject.getMfBarcode();
         String ddpParticipantId = stoolUploadObject.getParticipantId();
-
         SimpleResult simpleResult = TransactionWrapper.inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult(0);
             try (PreparedStatement stmt = conn.prepareStatement(UPDATE_KIT_QUERY)) {
@@ -35,7 +33,6 @@ public class StoolUploadDao implements Dao<StoolUploadDto> {
                 stmt.setString(2, ddpParticipantId);
                 stmt.setString(3, receiveDate);
                 int updateAmount = stmt.executeUpdate();
-
                 if (updateAmount != 1) {
                     throw new RuntimeException(String.format(
                             "Updating kit data failed for the participant with guid %s and kit label %s", ddpParticipantId, kitLabel));
@@ -43,7 +40,6 @@ public class StoolUploadDao implements Dao<StoolUploadDto> {
                     logger.info(String.format(
                             "Updated kit data successfully for the participant with guid %s and kit label %s", ddpParticipantId, kitLabel));
                 }
-
             } catch (SQLException e) {
                 dbVals.resultException = e;
             }
