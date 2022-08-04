@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.ZoneId;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.experimental.SuperBuilder;
@@ -58,7 +57,6 @@ public class UserProfile implements Serializable {
                 o.timeZone, o.doNotContact, o.isDeceased, o.skipLanguagePopup);
     }
 
-    @JsonIgnore
     public String getFullName() {
         return StreamEx.of(firstName, lastName).nonNull().joining(" ");
     }

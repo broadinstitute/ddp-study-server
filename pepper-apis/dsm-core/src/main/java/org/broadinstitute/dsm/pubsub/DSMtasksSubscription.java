@@ -88,12 +88,12 @@ public class DSMtasksSubscription {
                         break;
                     case FILE_UPLOADED:
                         sendFileUploadedNotification(notificationUtil,
-                                message.getAttributesOrDefault(PubSubAttributes.FILE_NAME.getValue(), null),
-                                message.getAttributesOrDefault(PubSubAttributes.USER_NAME.getValue(), null));
+                                message.getAttributesOrDefault(PubSubAttributes.STUDY_GUID.getValue(), null),
+                                message.getAttributesOrDefault(PubSubAttributes.FILE_NAME.getValue(), null));
                         consumer.ack();
                         break;
                     default:
-                        log.warn("Wrong task type for a message from pubsub");
+                        log.warn("The message {} contains incorrect task type {} so it can't be processed", message, taskType);
                         consumer.ack();
                         break;
                 }
@@ -156,22 +156,18 @@ public class DSMtasksSubscription {
                 }, consumer::ack);
     }
 
-    private static void sendFileUploadedNotification(final NotificationUtil notificationUtil, final String fileName, final String userName) {
-        if (StringUtils.isBlank(fileName) || StringUtils.isBlank(userName)) {
+    private static void sendFileUploadedNotification(final NotificationUtil notificationUtil, final String studyGuid, final String fileName) {
+        if (StringUtils.isBlank(fileName)) {
             log.error("Can't send file uploaded notification");
             return;
         }
 
-        final var subject = "A new file uploaded";
-        final var message = String.format("%s uploaded a new file %s", userName, fileName);
-
-        StreamEx.of(DDPInstance.getDDPInstanceListWithRole("pubsub_lookup"))
-                .map(DDPInstance::getNotificationRecipient)
-                .flatMap(Collection::stream)
-                .forEach(recipient -> notificationUtil.sentNotification(
-                        recipient,
-                        message,
-                        NotificationUtil.UNIVERSAL_NOTIFICATION_TEMPLATE,
-                        subject));
+        notificationUtil.sentNotification(StreamEx.of(DDPInstance.getDDPInstanceListWithRole("pubsub_lookup"))
+                        .map(DDPInstance::getNotificationRecipient)
+                        .flatMap(Collection::stream)
+                        .toList(),
+                String.format("Somebody uploaded a new file: %s in terms of %s study", fileName, studyGuid),
+                NotificationUtil.UNIVERSAL_NOTIFICATION_TEMPLATE,
+                "A new file uploaded");
     }
 }
