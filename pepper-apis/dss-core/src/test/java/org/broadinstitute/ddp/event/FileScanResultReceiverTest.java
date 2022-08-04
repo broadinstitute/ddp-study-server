@@ -75,7 +75,7 @@ public class FileScanResultReceiverTest {
         doReturn(mockUmbrellaStudyDao).when(mockHandle).attach(JdbiUmbrellaStudy.class);
         doReturn(mockJdbiUser).when(mockUserDao).getJdbiUser();
         doReturn(new UserDto(0, "", "", "", "", "", "", 0, 0, 0L)).when(mockJdbiUser).findByUserId(anyLong());
-        doReturn(StudyDto.builder().build()).when(mockUmbrellaStudyDao).findById(anyLong());
+        doReturn(StudyDto.builder().guid("xxx").build()).when(mockUmbrellaStudyDao).findById(anyLong());
 
         var receiverSpy = spy(new FileScanResultReceiver(mockStorage, mockPublisher, "uploads", "scanned", "quarantine"));
         doAnswer(invocation -> ((HandleCallback) invocation.getArgument(0)).withHandle(mockHandle))
