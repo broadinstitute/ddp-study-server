@@ -231,14 +231,12 @@ pubsub {
   topic = "dsx-local-dsm-test-results"
   subscription = "dsx-local-dsm-test-results-sub"
 
-  dsm_to_dss_topic = "dsx-local-dss-tasks"
-  dss_tasks_topic = "dsx-local-dss-tasks"
-
   dss_to_dsm_topic = "dsx-local-dss-task-results"
   dss_to_dsm_subscription = "dsx-local-dss-task-results-sub"
 
   dsm_tasks_topic = "dsx-local-dsm_tasks_topic"
   dsm_tasks_subscription = "dsx-local-dsm-tasks-sub"
 
+  dsm_to_dss_topic = "dsx-local-dss-tasks"
   dsm_to_mercury_topic = "dsx-local-mercury-pepper"
 }
