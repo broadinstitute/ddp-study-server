@@ -167,7 +167,8 @@ public class DataDictionaryExporter extends ExcelParticipantExporter {
                 null) + "]]";
         String descriptionText = (String) parentConfig.getQuestionDef().get(ESObjectConstants.QUESTION_TEXT);
         if (parentConfig.getMaxRepeats() > 1) {
-            descriptionText += "\n May have up to " + filterConfig.getMaxRepeats() + "responses, denoted with _2, _3, etc. for each response after the first.";
+            descriptionText += "\n May have up to " + parentConfig.getMaxRepeats() +
+                    " response variables for each question, denoted with _2, _3, etc. for each response after the first.";
         }
         addRowToSheet(questionRootName, null, "COMPOSITE", descriptionText, null);
 
@@ -219,7 +220,7 @@ public class DataDictionaryExporter extends ExcelParticipantExporter {
         }
         if (filterConfig.getMaxRepeats() > 1) {
             descriptionText += "\n May have up to " + filterConfig.getMaxRepeats() +
-                    "response variables, denoted with _2, _3, etc. for each response after the first.";
+                    " response variables, denoted with _2, _3, etc. for each response after the first.";
         }
 
         String optionText = null;
