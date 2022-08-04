@@ -64,7 +64,7 @@ public class DSMtasksSubscription {
             log.info("Task type is: " + taskType);
 
             if (taskType == null) {
-                log.warn("task type from pubsub was missing");
+                log.warn("The message {} doesn't have task type specified so it can't be processed", message);
                 consumer.ack();
             } else {
                 switch (taskType) {
