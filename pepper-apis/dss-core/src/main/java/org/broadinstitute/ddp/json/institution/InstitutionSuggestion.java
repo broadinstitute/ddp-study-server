@@ -10,8 +10,9 @@ public class InstitutionSuggestion {
     String name;
     String city;
     String state;
+    String country;
 
     public InstitutionSuggestion(final InstitutionSuggestionDto dto) {
-        this(dto.getName(), dto.getCity(), dto.getState());
+        this(dto.getName(), dto.getCity(), dto.getState(), dto.getCountry());
     }
 }
