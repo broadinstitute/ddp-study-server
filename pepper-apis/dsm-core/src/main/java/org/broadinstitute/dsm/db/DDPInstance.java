@@ -74,6 +74,7 @@ public class DDPInstance {
             "SELECT  study_guid  FROM  ddp_instance  WHERE  instance_name = ?";
 
     private final String ddpInstanceId;
+    private final String studyGuid;
     private final String name;
     private final String baseUrl;
     private final boolean hasRole;
@@ -93,11 +94,12 @@ public class DDPInstance {
 
     private InstanceSettings instanceSettings;
 
-    public DDPInstance(String ddpInstanceId, String name, String baseUrl, String collaboratorIdPrefix, boolean hasRole,
+    public DDPInstance(String ddpInstanceId, String studyGuid, String name, String baseUrl, String collaboratorIdPrefix, boolean hasRole,
                        int daysMrAttentionNeeded, int daysTissueAttentionNeeded, boolean hasAuth0Token, List<String> notificationRecipient,
                        boolean migratedDDP, String billingReference, String participantIndexES, String activityDefinitionIndexES,
                        String usersIndexES, String researchProject, String displayName, String mercuryOrderCreator) {
         this.ddpInstanceId = ddpInstanceId;
+        this.studyGuid = studyGuid;
         this.name = name;
         this.baseUrl = baseUrl;
         this.collaboratorIdPrefix = collaboratorIdPrefix;
@@ -392,13 +394,23 @@ public class DDPInstance {
             notificationRecipient = notificationRecipient.replaceAll("\\s", "");
             recipients = Arrays.asList(notificationRecipient.split(","));
         }
-        return new DDPInstance(rs.getString(DBConstants.DDP_INSTANCE_ID), rs.getString(DBConstants.INSTANCE_NAME),
-                rs.getString(DBConstants.BASE_URL), rs.getString(DBConstants.COLLABORATOR_ID_PREFIX), rs.getBoolean(DBConstants.HAS_ROLE),
-                rs.getInt(DBConstants.DAYS_MR_ATTENTION_NEEDED), rs.getInt(DBConstants.DAYS_TISSUE_ATTENTION_NEEDED),
-                rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN), recipients, rs.getBoolean(DBConstants.MIGRATED_DDP),
-                rs.getString(DBConstants.BILLING_REFERENCE), rs.getString(DBConstants.ES_PARTICIPANT_INDEX),
-                rs.getString(DBConstants.ES_ACTIVITY_DEFINITION_INDEX), rs.getString(DBConstants.ES_USERS_INDEX),
-                rs.getString(DBConstants.RESEARCH_PROJECT), rs.getString(DBConstants.DISPLAY_NAME),
+        return new DDPInstance(rs.getString(DBConstants.DDP_INSTANCE_ID),
+                rs.getString(DBConstants.STUDY_GUID),
+                rs.getString(DBConstants.INSTANCE_NAME),
+                rs.getString(DBConstants.BASE_URL),
+                rs.getString(DBConstants.COLLABORATOR_ID_PREFIX),
+                rs.getBoolean(DBConstants.HAS_ROLE),
+                rs.getInt(DBConstants.DAYS_MR_ATTENTION_NEEDED),
+                rs.getInt(DBConstants.DAYS_TISSUE_ATTENTION_NEEDED),
+                rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN),
+                recipients,
+                rs.getBoolean(DBConstants.MIGRATED_DDP),
+                rs.getString(DBConstants.BILLING_REFERENCE),
+                rs.getString(DBConstants.ES_PARTICIPANT_INDEX),
+                rs.getString(DBConstants.ES_ACTIVITY_DEFINITION_INDEX),
+                rs.getString(DBConstants.ES_USERS_INDEX),
+                rs.getString(DBConstants.RESEARCH_PROJECT),
+                rs.getString(DBConstants.DISPLAY_NAME),
                 rs.getString(DBConstants.MERCURY_ORDER_CREATOR));
     }
 
@@ -409,13 +421,22 @@ public class DDPInstance {
             notificationRecipient = notificationRecipient.replaceAll("\\s", "");
             recipients = Arrays.asList(notificationRecipient.split(","));
         }
-        return new DDPInstance(rs.getString(DBConstants.DDP_INSTANCE_ID), rs.getString(DBConstants.INSTANCE_NAME),
-                rs.getString(DBConstants.BASE_URL), rs.getString(DBConstants.COLLABORATOR_ID_PREFIX), false,
-                rs.getInt(DBConstants.DAYS_MR_ATTENTION_NEEDED), rs.getInt(DBConstants.DAYS_TISSUE_ATTENTION_NEEDED),
-                rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN), recipients, rs.getBoolean(DBConstants.MIGRATED_DDP),
-                rs.getString(DBConstants.BILLING_REFERENCE), rs.getString(DBConstants.ES_PARTICIPANT_INDEX),
-                rs.getString(DBConstants.ES_ACTIVITY_DEFINITION_INDEX), rs.getString(DBConstants.ES_USERS_INDEX),
-                rs.getString(DBConstants.RESEARCH_PROJECT), rs.getString(DBConstants.DISPLAY_NAME),
+        return new DDPInstance(rs.getString(DBConstants.DDP_INSTANCE_ID),
+                rs.getString(DBConstants.STUDY_GUID),
+                rs.getString(DBConstants.INSTANCE_NAME),
+                rs.getString(DBConstants.BASE_URL),
+                rs.getString(DBConstants.COLLABORATOR_ID_PREFIX),
+                false,
+                rs.getInt(DBConstants.DAYS_MR_ATTENTION_NEEDED),
+                rs.getInt(DBConstants.DAYS_TISSUE_ATTENTION_NEEDED),
+                rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN),
+                recipients, rs.getBoolean(DBConstants.MIGRATED_DDP),
+                rs.getString(DBConstants.BILLING_REFERENCE),
+                rs.getString(DBConstants.ES_PARTICIPANT_INDEX),
+                rs.getString(DBConstants.ES_ACTIVITY_DEFINITION_INDEX),
+                rs.getString(DBConstants.ES_USERS_INDEX),
+                rs.getString(DBConstants.RESEARCH_PROJECT),
+                rs.getString(DBConstants.DISPLAY_NAME),
                 rs.getString(DBConstants.MERCURY_ORDER_CREATOR));
     }
 

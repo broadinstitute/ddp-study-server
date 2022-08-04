@@ -162,10 +162,7 @@ public class DSMtasksSubscription {
             return;
         }
 
-        notificationUtil.sentNotification(StreamEx.of(DDPInstance.getDDPInstanceListWithRole("pubsub_lookup"))
-                        .map(DDPInstance::getNotificationRecipient)
-                        .flatMap(Collection::stream)
-                        .toList(),
+        notificationUtil.sentNotification(DDPInstance.getDDPInstanceByGuid(studyGuid).getNotificationRecipient(),
                 String.format("Somebody uploaded a new file: %s in terms of %s study", fileName, studyGuid),
                 NotificationUtil.UNIVERSAL_NOTIFICATION_TEMPLATE,
                 "A new file uploaded");
