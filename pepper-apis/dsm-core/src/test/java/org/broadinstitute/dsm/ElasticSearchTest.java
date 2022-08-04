@@ -846,7 +846,7 @@ public class ElasticSearchTest extends TestHelper {
             String ddpParticipantId = "TZYO5WQ7N58HX4WSJJG0";
             String collaboratorParticipantId = "RGP_2046_3";
             DDPInstance ddpInstance =
-                    new DDPInstance(null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.rgp.rgp", null,
+                    new DDPInstance(null, null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.rgp.rgp", null,
                             null, "", "", "");
             Map<String, Object> workflowsBefore =
                     ElasticSearchUtil.getObjectsMap(client, ddpInstance.getParticipantIndexES(), ddpParticipantId, "workflows");
@@ -875,7 +875,7 @@ public class ElasticSearchTest extends TestHelper {
         String workflow = "ALIVE_DECEASED";
         String status = "TEST";
         DDPInstance ddpInstance =
-                new DDPInstance(null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.atcp.atcp", null,
+                new DDPInstance(null, null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.atcp.atcp", null,
                         null, "", "", "");
 
         Map<String, Object> workflowsBefore =
@@ -924,7 +924,7 @@ public class ElasticSearchTest extends TestHelper {
         String firstname = "testfirstname";
         String lastname = "testlastname";
         DDPInstance ddpInstance =
-                new DDPInstance(null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.rgp.rgp", null,
+                new DDPInstance(null, null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.rgp.rgp", null,
                         null, "", "", "");
         Map<String, Object> workflowsBefore =
                 ElasticSearchUtil.getObjectsMap(ddpInstance.getParticipantIndexES(), ddpParticipantId, "workflows");
@@ -980,7 +980,7 @@ public class ElasticSearchTest extends TestHelper {
         String objectType = ESObjectConstants.MEDICAL_RECORDS;
         String idName = ESObjectConstants.MEDICAL_RECORDS_ID;
         DDPInstance ddpInstance =
-                new DDPInstance(null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.rgp.rgp", null,
+                new DDPInstance(null, null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.rgp.rgp", null,
                         null, "", "", "");
         String familyId = "1234";
 
@@ -1029,7 +1029,7 @@ public class ElasticSearchTest extends TestHelper {
         String objectType = ESObjectConstants.TISSUE_RECORDS;
         String idName = ESObjectConstants.TISSUE_RECORDS_ID;
         DDPInstance ddpInstance =
-                new DDPInstance(null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.rgp.rgp", null,
+                new DDPInstance(null, null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.rgp.rgp", null,
                         null, "", "", "");
 
         Map<String, Object> objectsMapESBefore =
@@ -1081,7 +1081,7 @@ public class ElasticSearchTest extends TestHelper {
         String objectType = ESObjectConstants.SAMPLES;
         String idName = ESObjectConstants.KIT_REQUEST_ID;
         DDPInstance ddpInstance =
-                new DDPInstance(null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.rgp.rgp", null,
+                new DDPInstance(null, null, null, null, null, false, 0, 0, false, null, false, null, "participants_structured.rgp.rgp", null,
                         null, "", "", "");
 
         Map<String, Object> objectsMapESBefore =
