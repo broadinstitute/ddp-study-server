@@ -58,7 +58,7 @@ public class DownloadParticipantListRoute extends RequestHandler {
         DDPInstance instance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.MEDICAL_RECORD_ACTIVATED);
 
         TabularParticipantParser parser = new TabularParticipantParser(payload.getColumnNames(), instance,
-                params.isSplitOptions(), params.isOnlyMostRecent());
+                params.isSplitOptions(), params.isOnlyMostRecent(), null);
         setResponseHeaders(response, realm + "_export.zip");
 
         Filterable filterable = FilterFactory.of(request);
