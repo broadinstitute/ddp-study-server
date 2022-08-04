@@ -163,6 +163,7 @@ public class FileScanResultReceiver implements MessageReceiver {
                 .putAttributes(PubSubAttributes.FILE_GUID.getValue(), upload.getGuid())
                 .putAttributes(PubSubAttributes.FILE_NAME.getValue(), upload.getFileName())
                 .putAttributes(PubSubAttributes.USER_GUID.getValue(), user.getUserGuid())
+                .setMessageId(uploadGuid)
                 .build());
         log.info("Sent the notification to DSM");
 
