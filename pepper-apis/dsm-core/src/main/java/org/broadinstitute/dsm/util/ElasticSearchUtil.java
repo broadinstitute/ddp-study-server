@@ -193,7 +193,7 @@ public class ElasticSearchUtil {
         }
 
         URL url = new URL(baseUrl);
-        URL proxyUrl = (StringUtils.isBlank(proxy)) ? new URL(proxy) : null;
+        URL proxyUrl = (!StringUtils.isBlank(proxy)) ? new URL(proxy) : null;
         if (proxyUrl != null) {
             logger.info("Using Elasticsearch client proxy: {}", proxyUrl);
         }
