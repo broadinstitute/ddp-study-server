@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.model;
+package org.broadinstitute.dsm.db.dao.stoolupload;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
