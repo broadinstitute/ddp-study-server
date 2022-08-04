@@ -40,12 +40,18 @@ public class TabularParticipantParser {
     private final boolean splitOptions;
     private final boolean onlyMostRecent;
     private final List<String> nestedArrayObjects = Arrays.asList(ESObjectConstants.KIT_TEST_RESULT);
+    private  Map<String, Map<String, Object>> activityDefs;
 
-    public TabularParticipantParser(List<Filter> filters, DDPInstance ddpInstance, boolean splitOptions, boolean onlyMostRecent) {
+    public TabularParticipantParser(List<Filter> filters, DDPInstance ddpInstance, boolean splitOptions, boolean onlyMostRecent,
+                                    Map<String, Map<String, Object>> activityDefs) {
         this.filters = filters;
         this.ddpInstance = ddpInstance;
         this.splitOptions = splitOptions;
         this.onlyMostRecent = onlyMostRecent;
+        if (activityDefs == null) {
+            activityDefs = ElasticSearchUtil.getActivityDefinitions(ddpInstance);
+        }
+        this.activityDefs = activityDefs;
     }
 
     /**
@@ -59,7 +65,6 @@ public class TabularParticipantParser {
         List<ModuleExportConfig> configs = new ArrayList<>();
         // map of table name => module export config
         Map<String, ModuleExportConfig> exportInfoMap = new HashMap<>();
-        Map<String, Map<String, Object>> activityDefs = ElasticSearchUtil.getActivityDefinitions(ddpInstance);
         Map<String, FilterExportConfig> collationColumnMap = new HashMap<>();
         // iterate over each filter, to generate a corresponding FilterExportConfig
         for (Filter filter : filters) {
