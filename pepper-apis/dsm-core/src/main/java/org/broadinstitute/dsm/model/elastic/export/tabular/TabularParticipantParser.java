@@ -285,7 +285,7 @@ public class TabularParticipantParser {
                 exportValue = responseValues.stream().collect(Collectors.joining(", "));
             }
             participantMap.put(colName, exportValue);
-            if (filterConfig.isHasDetails()) {
+            if (filterConfig.hasDetailsForOption(optionStableId)) {
                 String detailValue = valueProvider.getOptionDetails(filterConfig, esModuleMap, optionStableId, responseNum);
                 String detailColName = TabularParticipantExporter.getColumnName(
                         filterConfig,

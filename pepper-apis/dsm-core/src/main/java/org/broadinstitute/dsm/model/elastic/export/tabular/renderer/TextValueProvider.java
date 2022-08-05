@@ -52,12 +52,13 @@ public class TextValueProvider {
     /**
      * Option details are stored in ES as an array of maps
      *  e.g. [{option: "TELANGIECTASIA_EYES", details: "12"}, {option: "TELANGIECTASIA_SKIN", details: "34"}]
+     *  if 'null' is passed as the optionStableId, this will return all option details
      */
     protected String extractOptionDetails(String optionStableId, List<?> optionDetailsObject) {
         return optionDetailsObject.stream().filter(detail ->
-                        StringUtils.equals((String) ((Map) detail).get(ESObjectConstants.OPTION), optionStableId))
+                        optionStableId == null || StringUtils.equals((String) ((Map) detail).get(ESObjectConstants.OPTION), optionStableId))
                 .map(detail -> (String) ((Map<String, Object>) detail).get(ESObjectConstants.DETAILS))
-                .findAny().orElse(StringUtils.EMPTY);
+                .collect(Collectors.joining("; "));
     }
 
     protected List<?> getRawValues(FilterExportConfig filterConfig, Map<String, Object> moduleMap) {
@@ -156,7 +157,9 @@ public class TextValueProvider {
         if (answerObject != null) {
             Object optionDetails = answerObject.get(ESObjectConstants.OPTIONDETAILS);
             if (optionDetails != null && !((List<?>) optionDetails).isEmpty()) {
-                filterConfig.setHasDetails(true);
+                List<String> optionDetailIds = ((List<Map<String, Object>>) optionDetails).stream()
+                        .map(detail -> (String) detail.get(ESObjectConstants.OPTION)).collect(Collectors.toList());
+                filterConfig.getOptionIdsWithDetails().addAll(optionDetailIds);
             }
         }
 

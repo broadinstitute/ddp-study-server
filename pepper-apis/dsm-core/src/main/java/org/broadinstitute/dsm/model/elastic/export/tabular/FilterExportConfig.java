@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -19,10 +20,7 @@ public class FilterExportConfig {
     private final ModuleExportConfig parent;
     private final String type;
     private boolean splitOptionsIntoColumns = false;
-    // whether this question has details associated with it -- this property is allowed to be dynamic since we don't know if a
-    // question has details enabled until we start parsing participant responses
-    @Setter
-    private boolean hasDetails = false;
+    private HashSet<String> optionIdsWithDetails = new HashSet<String>();
     private String collationSuffix = null;
     private Map<String, Object> questionDef = null;
     @Setter
@@ -89,6 +87,17 @@ public class FilterExportConfig {
             return (boolean) questionDef.get(ESObjectConstants.ALLOW_MULTIPLE);
         }
         return false;
+    }
+
+    public boolean hasDetailsForOption(String optionId) {
+        if (optionId == null) {
+            return hasAnyOptionDetails();
+        }
+        return optionIdsWithDetails.contains(optionId);
+    }
+
+    public boolean hasAnyOptionDetails() {
+        return optionIdsWithDetails.size() > 0;
     }
 
     private List<Map<String, Object>> getOptionsForQuestion(Map<String, Object> questionDef) {
