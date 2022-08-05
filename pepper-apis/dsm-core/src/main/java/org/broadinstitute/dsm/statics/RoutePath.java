@@ -102,6 +102,7 @@ public class RoutePath {
     public static final String GoogleAnalytics = "googleAnalytics";
     public static final String DOWNLOAD_PARTICIPANT_LIST_ROUTE = "participantList";
     public static final String CREATE_COHORT_TAG = "createCohortTag";
+    public static final String DOWNLOAD_PARTICIPANT_FILE = "downloadFile";
 
     public static final String BULK_CREATE_COHORT_TAGS = "bulkCreateCohortTags";
     public static final String DELETE_COHORT_TAG = "deleteCohortTag";

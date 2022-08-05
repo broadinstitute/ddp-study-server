@@ -2,12 +2,17 @@ package org.broadinstitute.ddp.util;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.time.format.DateTimeParseException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
+
 import javax.validation.ValidationException;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.http.HttpStatus;
@@ -91,7 +96,7 @@ public abstract class ValidatedJsonInputRoute<T> implements Route {
      *
      * @return the target class for the request body to POJO object
      */
-    protected T unmarshallJson(Request request) throws JsonSyntaxException {
+    protected T unmarshallJson(Request request) throws JsonSyntaxException, JsonParseException {
         return getGson().fromJson(request.body(), getTargetClass(request));
     }
 
@@ -140,9 +145,31 @@ public abstract class ValidatedJsonInputRoute<T> implements Route {
         } catch (JsonSyntaxException e) {
             log.warn("JSON payload could not be converted to object of class: " + getTargetClass(request).getName(), e);
             ApiError err = new ApiError(ErrorCodes.BAD_PAYLOAD, "Request payload could not be parsed and converted to expected type");
-            ResponseUtil.haltError(response, getUnmarshallErrorStatus(), err);
-            return null;
+            throw ResponseUtil.haltError(response, getUnmarshallErrorStatus(), err);
+        } catch (JsonParseException exception) {
+            var cause = Optional.ofNullable(exception.getCause()).orElse(exception);
+
+            /*
+             * See if there's a better way of handling these errors. The JsonParseException _works_
+             * but Google's documentation seems to indicate these are intended more for errors in the
+             * structure of the JSON, and not errors in the content.
+             * 
+             * 2022.07.13 - bskinner
+             */
+            if (cause instanceof DateTimeParseException) {
+                // Likely caused by an adapter for a LocalDate or a LocalDateTime
+                // failing due to a poorly formatted date string
+                log.warn("failed to unmarshall json object: a date-typed property value does not match the required format", cause);
+                var responseError = new ApiError(ErrorCodes.BAD_PAYLOAD, exception.getMessage());
+                throw ResponseUtil.haltError(response, getValidationErrorStatus(), responseError);
+            } else {
+                var message = String.format("failed to parse json: %s", cause.getMessage());
+                log.warn("{}", message, cause);
+                var responseError = new ApiError(ErrorCodes.BAD_PAYLOAD, message);
+                throw ResponseUtil.haltError(response, getUnmarshallErrorStatus(), responseError);
+            }
         }
+
         if (deserializedBodyObject == null) {
             ApiError err = new ApiError(ErrorCodes.BAD_PAYLOAD, "Expected request payload but none was found");
             ResponseUtil.haltError(response, getUnmarshallErrorStatus(), err);
@@ -172,7 +199,7 @@ public abstract class ValidatedJsonInputRoute<T> implements Route {
                 builder.append("Found an error in payload");
             }
             if (errorIter.hasNext()) {
-                builder.append('\n');
+                builder.append(", ");
             }
         }
         return builder.toString();

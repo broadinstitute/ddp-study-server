@@ -75,7 +75,6 @@ import org.broadinstitute.dsm.route.CarrierServiceRoute;
 import org.broadinstitute.dsm.route.ClinicalKitsRoute;
 import org.broadinstitute.dsm.route.CreateBSPDummyKitRoute;
 import org.broadinstitute.dsm.route.CreateClinicalDummyKitRoute;
-import org.broadinstitute.dsm.route.DSSTestingRoute;
 import org.broadinstitute.dsm.route.DashboardRoute;
 import org.broadinstitute.dsm.route.DisplaySettingsRoute;
 import org.broadinstitute.dsm.route.DownloadPDFRoute;
@@ -117,6 +116,7 @@ import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
 import org.broadinstitute.dsm.route.mercury.PostMercuryOrderDummyRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
+import org.broadinstitute.dsm.route.participantfiles.DownloadParticipantFileRoute;
 import org.broadinstitute.dsm.route.tag.cohort.BulkCreateCohortTagRoute;
 import org.broadinstitute.dsm.route.tag.cohort.CreateCohortTagRoute;
 import org.broadinstitute.dsm.route.tag.cohort.DeleteCohortTagRoute;
@@ -543,6 +543,7 @@ public class DSMServer {
 
         before(API_ROOT + "*", (req, res) -> {
             if (!new JWTRouteFilter(auth0Domain, bspSecret).isAccessAllowed(req, false, bspSecret)) {
+                logger.info("Returning 404 because token was not verified");
                 halt(404);
             }
             res.header(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
@@ -571,9 +572,6 @@ public class DSMServer {
         String auth0Signer = cfg.getString(ApplicationConfigConstants.AUTH0_SIGNER);
 
         SecurityUtil.init(auth0Domain, auth0claimNameSpace, auth0Signer);
-
-        //TODO remove before final merge, for testing only
-        get(UI_ROOT + "dsstest/:participantId", new DSSTestingRoute(), new JsonTransformer());
 
         // path is: /app/drugs (this gets the list of display names)
         DrugRoute drugRoute = new DrugRoute();
@@ -833,6 +831,7 @@ public class DSMServer {
 
         post(UI_ROOT + RoutePath.DOWNLOAD_PARTICIPANT_LIST_ROUTE, new DownloadParticipantListRoute());
 
+
     }
 
     private void setupMRAbstractionRoutes() {
@@ -916,10 +915,11 @@ public class DSMServer {
         get(UI_ROOT + RoutePath.EDIT_PARTICIPANT_MESSAGE, editParticipantMessageReceiverRoute, new JsonTransformer());
 
         String mercuryTopicId = config.getString(GCP_PATH_TO_DSM_TO_MERCURY_TOPIC);
-        PostMercuryOrderDummyRoute postMercuryOrderDummyRoute = new PostMercuryOrderDummyRoute(projectId, mercuryTopicId);
-        //        post(UI_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderDummyRoute, new JsonTransformer());
-        post(API_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderDummyRoute, new JsonTransformer());
-
+        if (!config.getBoolean("ui.production")) {
+            PostMercuryOrderDummyRoute postMercuryOrderDummyRoute = new PostMercuryOrderDummyRoute(projectId, mercuryTopicId);
+            post(API_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderDummyRoute, new JsonTransformer());
+        }
+        get(UI_ROOT + RoutePath.DOWNLOAD_PARTICIPANT_FILE, new DownloadParticipantFileRoute(projectId));
     }
 
     private void setupJobs(@NonNull Config cfg, @NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil,

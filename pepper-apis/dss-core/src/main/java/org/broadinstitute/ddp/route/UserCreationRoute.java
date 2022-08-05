@@ -5,7 +5,6 @@ import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.validator.routines.EmailValidator;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -15,13 +14,16 @@ import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.event.publish.TaskPublisher;
 import org.broadinstitute.ddp.event.publish.pubsub.TaskPubSubPublisher;
-import org.broadinstitute.ddp.json.UserCreationPayload;
-import org.broadinstitute.ddp.json.UserCreationResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
+import org.broadinstitute.ddp.json.users.models.EmailAddress;
+import org.broadinstitute.ddp.json.users.models.Guid;
+import org.broadinstitute.ddp.json.users.requests.UserCreationPayload;
+import org.broadinstitute.ddp.json.users.responses.UserCreationResponse;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.service.participants.ParticipantsCreateService;
-import org.broadinstitute.ddp.service.participants.ParticipantsCreateService.ParticipantCreateError;
+import org.broadinstitute.ddp.service.participants.ParticipantsServiceError;
+import org.broadinstitute.ddp.service.studies.StudiesServiceError;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
@@ -47,28 +49,14 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
         */ 
         final var requestorClientId = auth.getClient();
         final var domain = auth.getDomain();
-        final var studyGuid = payload.getStudyGuid();
-
-        final var email = payload.getEmail();
-        final var emailValidator = EmailValidator.getInstance();
-
-        /* 
-        * It's not absolutely necessary to check here- the ParticipantsCreateService will also
-        *  check that the email is correctly formatted (you'd need to update its associated
-        *  switch statement below in the transaction)
-        *
-        * Checking here is in order to save a few cycles & connections to the DB if it's
-        *  immediately clear the client gave us bad data.
-        */
-        if (emailValidator.isValid(email) == false) {
-            var error = new ApiError(ErrorCodes.MALFORMED_EMAIL, "the email address is not in a valid format.");
-            throw ResponseUtil.haltError(HttpStatus.SC_UNPROCESSABLE_ENTITY, error);
-        }
-
-        if (StringUtils.isNotBlank(payload.getCenterId())) {
-            var error = new ApiError(ErrorCodes.NOT_SUPPORTED,
-                    "passing a non-null center id when creating a participant is not supported yet.");
-            throw ResponseUtil.haltError(HttpStatus.SC_UNPROCESSABLE_ENTITY, error);
+        final var studyGuid = new Guid(payload.getStudyGuid());
+        final EmailAddress email;
+        
+        try {
+            email = new EmailAddress(payload.getEmail());
+        } catch (IllegalArgumentException exception) {
+            var invalidEmail = new ApiError(ErrorCodes.BAD_PAYLOAD, "The email address is missing or malformed.");
+            throw ResponseUtil.haltError(HttpStatus.SC_UNPROCESSABLE_ENTITY, invalidEmail);
         }
 
         log.info("attempting to create a user for study {}", payload.getStudyGuid());
@@ -91,19 +79,31 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
             User newUser = null;
             try {
                 newUser = participantService.createWithEmail(email, studyGuid);
-            } catch (ParticipantCreateError cause) {
-                switch (cause.getCode()) {
+            } catch (ParticipantsServiceError error) {
+                switch (error.getCode()) {
                     case USER_EXISTS:
                         var userExists = new ApiError(ErrorCodes.EMAIL_ALREADY_EXISTS,
                                 "A participant with the specified email address already exists.");
                         throw ResponseUtil.haltError(HttpStatus.SC_UNPROCESSABLE_ENTITY, userExists);
-                    case STUDY_DOES_NOT_EXIST:
+                    default:
+                        var message = "an error occurred while creating a participant";
+                        log.error(message, error);
+                        var serverError = new ApiError(ErrorCodes.SERVER_ERROR, message);
+                        throw ResponseUtil.haltError(HttpStatus.SC_INTERNAL_SERVER_ERROR, serverError);
+                }
+            } catch (StudiesServiceError error) {
+                switch (error.getCode()) {
+                    case PARTICIPANT_ALREADY_REGISTERED:
+                        var alreadyRegistered = new ApiError(ErrorCodes.EMAIL_ALREADY_EXISTS,
+                                    String.format("The email address has already been registered to a user"));
+                        throw ResponseUtil.haltError(HttpStatus.SC_UNPROCESSABLE_ENTITY, alreadyRegistered);
+                    case STUDY_NOT_FOUND:
                         var studyNotFound = new ApiError(ErrorCodes.STUDY_NOT_FOUND,
                                     String.format("The study '%s' could not be found.", studyGuid));
                         throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, studyNotFound);
                     default:
                         var message = "an error occurred while creating a participant";
-                        log.error(message, cause);
+                        log.error(message, error);
                         var serverError = new ApiError(ErrorCodes.SERVER_ERROR, message);
                         throw ResponseUtil.haltError(HttpStatus.SC_INTERNAL_SERVER_ERROR, serverError);
                 }
@@ -121,14 +121,11 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
                         Instant.now().toEpochMilli(),
                         newUser.getExpiresAt());
             if (result != 1) {
-                var error = new ApiError(ErrorCodes.EMAIL_ALREADY_EXISTS, "failed to update the participant's 'created-by' client.");
-                throw ResponseUtil.haltError(HttpStatus.SC_INTERNAL_SERVER_ERROR, error);
+                var createdByError = new ApiError(ErrorCodes.SERVER_ERROR,
+                        "failed to update the participant's 'created-by' client.");
+                throw ResponseUtil.haltError(HttpStatus.SC_INTERNAL_SERVER_ERROR, createdByError);
             }
 
-            // Creating a profile requires a non-null user id, so a profile can't be created
-            // before a user has already been created.
-            // Easing this restriction may give us some additional flexibility when performing
-            // validations.
             var profile = UserProfile.builder()
                     .userId(newUser.getId())
                     .lastName(payload.getLastName())
@@ -147,10 +144,12 @@ public class UserCreationRoute extends ValidatedJsonInputRoute<UserCreationPaylo
             taskPublisher.publishTask(
                     TaskPubSubPublisher.TASK_PARTICIPANT_REGISTERED,
                     StringUtils.EMPTY, // No payload necessary here
-                    studyGuid,
+                    studyGuid.getValue(),
                     newUser.getGuid());
 
             // Suggested by @ssettipalli
+            // The new user doesn't seems to appear in ElasticSearch without this
+            // line- look into what's going on with the export.
             handle.attach(DataExportDao.class).queueDataSync(newUser.getGuid());
 
             return new UserCreationResponse(newUser, profile);

@@ -23,6 +23,8 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.HttpMethod;
 import com.typesafe.config.Config;
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
@@ -33,7 +35,6 @@ import org.broadinstitute.ddp.model.files.FileScanResult;
 import org.broadinstitute.ddp.model.files.FileUpload;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GoogleCredentialUtil;
-import org.broadinstitute.ddp.util.GuidUtils;
 import org.jdbi.v3.core.Handle;
 
 @Slf4j
@@ -129,7 +130,7 @@ public class FileUploadService {
      * @param operatorUserId    the operator who instantiated this request
      * @param participantUserId the participant who will own the file
      * @param fileUploadSettings file upload parameters
-     * @param blobPrefix        a prefix to prepend to blob name, e.g. for organizational purposes
+     * @param blobPath          a cloud path of the blob
      * @param mimeType          the user-reported mime type
      * @param fileName          the user-reported name for the file
      * @param fileSize          the user-reported file size
@@ -137,8 +138,8 @@ public class FileUploadService {
      * @return authorization result
      */
     public AuthorizeResult authorizeUpload(Handle handle, long studyId, long operatorUserId, long participantUserId,
-                                           FileUploadSettings fileUploadSettings,
-                                           String blobPrefix, String mimeType,
+                                           FileUploadSettings fileUploadSettings, String fileGuid,
+                                           String blobPath, String mimeType,
                                            String fileName, long fileSize, boolean resumable) {
         if (fileSize > fileUploadSettings.getMaxFileSize()) {
             return new AuthorizeResult(FILE_SIZE_EXCEEDS_MAXIMUM, null, null, fileUploadSettings);
@@ -148,19 +149,16 @@ public class FileUploadService {
             return new AuthorizeResult(MIME_TYPE_NOT_ALLOWED, null, null, fileUploadSettings);
         }
 
-        blobPrefix = blobPrefix != null ? blobPrefix + "/" : "";
         mimeType = mimeType != null ? mimeType : DEFAULT_MIME_TYPE;
 
         HttpMethod method = resumable ? HttpMethod.POST : HttpMethod.PUT;
-        String uploadGuid = GuidUtils.randomFileUploadGuid();
-        String blobName = blobPrefix + uploadGuid;
 
         FileUpload upload = handle.attach(FileUploadDao.class).createAuthorized(
-                uploadGuid, studyId, operatorUserId, participantUserId,
-                blobName, mimeType, fileName, fileSize);
+                fileGuid, studyId, operatorUserId, participantUserId,
+                blobPath, mimeType, fileName, fileSize);
         Map<String, String> headers = Map.of("Content-Type", mimeType);
         URL signedURL = storageClient.generateSignedUrl(
-                signer, uploadsBucket, blobName,
+                signer, uploadsBucket, blobPath,
                 maxSignedUrlMins, TimeUnit.MINUTES,
                 method, headers);
 
@@ -316,37 +314,12 @@ public class FileUploadService {
         OK
     }
 
+    @Value
+    @AllArgsConstructor
     public static class AuthorizeResult {
-        private final AuthorizeResultType authorizeResultType;
-        private final FileUpload fileUpload;
-        private final URL signedUrl;
-        private final FileUploadSettings fileUploadSettings;
-
-        public AuthorizeResult(
-                AuthorizeResultType authorizeResultType,
-                FileUpload fileUpload,
-                URL signedUrl,
-                FileUploadSettings fileUploadSettings) {
-            this.authorizeResultType = authorizeResultType;
-            this.fileUpload = fileUpload;
-            this.signedUrl = signedUrl;
-            this.fileUploadSettings = fileUploadSettings;
-        }
-
-        public AuthorizeResultType getAuthorizeResultType() {
-            return authorizeResultType;
-        }
-
-        public FileUpload getFileUpload() {
-            return fileUpload;
-        }
-
-        public URL getSignedUrl() {
-            return signedUrl;
-        }
-
-        public FileUploadSettings getFileUploadSettings() {
-            return fileUploadSettings;
-        }
+        AuthorizeResultType authorizeResultType;
+        FileUpload fileUpload;
+        URL signedUrl;
+        FileUploadSettings fileUploadSettings;
     }
 }

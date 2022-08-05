@@ -97,4 +97,8 @@
     <include file="liquibase/CMI/DDP-7641_apply_OS_tag_to_old_osteo_pts.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/DDP-7641_kit_participant_notifications_activated_osteo2.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/DDP-8239_created_created_by_cohort_tags.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/singular/DDP-8249_singularParticipantFields.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/CMI/DDP-8388_drug-list-update.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/CMI/DDP-8388_drug-list-update-missing.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/singular/DDP-6584_download_participant_file.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
