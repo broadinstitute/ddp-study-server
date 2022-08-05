@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.dao.Dao;
-import org.broadinstitute.dsm.db.dto.stoolupload.StoolUploadDto;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,10 +21,10 @@ public class StoolUploadDao implements Dao<StoolUploadDto> {
             + "WHERE dk.dsm_kit_id = dki.dsm_kit_id AND receive_date IS NULL";
 
 
-    public boolean updateKit(StoolUploadObject stoolUploadObject) {
-        String receiveDate = stoolUploadObject.getReceiveDate();
-        String kitLabel = stoolUploadObject.getMfBarcode();
-        String ddpParticipantId = stoolUploadObject.getParticipantId();
+    public boolean updateKit(StoolUploadDto stoolUploadDto) {
+        String receiveDate = stoolUploadDto.getReceiveDate();
+        String kitLabel = stoolUploadDto.getMfBarcode();
+        String ddpParticipantId = stoolUploadDto.getParticipantId();
         SimpleResult simpleResult = TransactionWrapper.inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult(0);
             try (PreparedStatement stmt = conn.prepareStatement(UPDATE_KIT_QUERY)) {
@@ -51,6 +50,7 @@ public class StoolUploadDao implements Dao<StoolUploadDto> {
         }
         return true;
     }
+
 
     @Override
     public int create(StoolUploadDto stoolUploadDto) {

@@ -3,7 +3,7 @@ package org.broadinstitute.dsm.files.parser.stool;
 import java.util.List;
 import java.util.Map;
 
-import org.broadinstitute.dsm.db.dao.stoolupload.StoolUploadObject;
+import org.broadinstitute.dsm.db.dao.stoolupload.StoolUploadDto;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -31,7 +31,7 @@ public class TSVStoolUploadRecordsParserTest {
         var recordsParser = new TSVStoolUploadRecordsParser(content);
         var actual =
                 recordsParser.transformMapToObject(Map.of("participantId", "value1", "mfBarcode", "value2", "receiveDate", "value3"));
-        Assert.assertEquals(new StoolUploadObject("value1", "value2", "value3"), actual);
+        Assert.assertEquals(new StoolUploadDto("value1", "value2", "value3"), actual);
     }
 
 }

@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class StoolUploadObject {
+public class StoolUploadDto {
     private String participantId;
     private String mfBarcode;
     private String receiveDate;

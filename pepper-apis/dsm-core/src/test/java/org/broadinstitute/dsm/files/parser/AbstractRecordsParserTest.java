@@ -18,17 +18,12 @@ public class AbstractRecordsParserTest {
     public void parseSingleLine() {
         var content = "field1\tfield2\tfield3\nvalue1\tvalue2\tvalue3\n";
         var regexSeparator = SystemUtil.TAB_SEPARATOR;
-
-        List<TestData> actual = new AbstractRecordsParser<TestData>(content, regexSeparator) {
+        HeadersProvider headersProvider = () -> List.of("field1", "field2", "field3");
+        var actual = new AbstractRecordsParser<TestData>(content, regexSeparator, headersProvider) {
 
             @Override
             public Optional<String> findMissingHeaderIfAny(List<String> headers) {
                 return Optional.empty();
-            }
-
-            @Override
-            public List<String> getExpectedHeaders() {
-                return List.of("field1", "field2", "field3");
             }
 
             @Override
@@ -47,17 +42,12 @@ public class AbstractRecordsParserTest {
     public void parseMultiLines() {
         var content = "field1\tfield2\tfield3\nvalue1\tvalue2\tvalue3\nvalue4\tvalue5\tvalue6\nvalue7\tvalue8\tvalue9\n";
         var regexSeparator = SystemUtil.TAB_SEPARATOR;
-
-        List<TestData> actual = new AbstractRecordsParser<TestData>(content, regexSeparator) {
+        HeadersProvider headersProvider = () -> List.of("field1", "field2", "field3");
+        var actual = new AbstractRecordsParser<TestData>(content, regexSeparator, headersProvider) {
 
             @Override
             public Optional<String> findMissingHeaderIfAny(List<String> headers) {
                 return Optional.empty();
-            }
-
-            @Override
-            public List<String> getExpectedHeaders() {
-                return List.of("field1", "field2", "field3");
             }
 
             @Override
@@ -81,18 +71,14 @@ public class AbstractRecordsParserTest {
 
         var content = "field1\tfield2\tfield3\nvalue1\tvalue2\tvalue3\nvalue4\tvalue5\tvalue6\n";
         var regexSeparator = SystemUtil.TAB_SEPARATOR;
-
-        AbstractRecordsParser<TestData> recordsParser = new AbstractRecordsParser<>(content, regexSeparator) {
+        HeadersProvider headersProvider = () -> List.of("field1", "field2", "field3");
+        var recordsParser = new AbstractRecordsParser<>(content, regexSeparator, headersProvider) {
 
             @Override
             public Optional<String> findMissingHeaderIfAny(List<String> headers) {
                 return Optional.of("field3");
             }
 
-            @Override
-            public List<String> getExpectedHeaders() {
-                return List.of("field1", "field2", "field3");
-            }
 
             @Override
             public TestData transformMapToObject(Map<String, String> map) {

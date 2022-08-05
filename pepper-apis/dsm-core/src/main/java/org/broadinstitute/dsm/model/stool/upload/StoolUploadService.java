@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.dao.stoolupload.StoolUploadDao;
-import org.broadinstitute.dsm.db.dao.stoolupload.StoolUploadObject;
+import org.broadinstitute.dsm.db.dao.stoolupload.StoolUploadDto;
 import org.broadinstitute.dsm.files.parser.TSVRecordsParser;
 import org.broadinstitute.dsm.files.parser.stool.TSVStoolUploadRecordsParser;
 import org.broadinstitute.dsm.model.KitDDPNotification;
@@ -26,18 +26,18 @@ public class StoolUploadService {
     }
 
     public void serve() {
-        TSVRecordsParser<StoolUploadObject> tsvRecordsParser =
+        TSVRecordsParser<StoolUploadDto> tsvRecordsParser =
                 new TSVStoolUploadRecordsParser(stoolUploadServicePayload.getRequestBody());
-        List<StoolUploadObject> stoolUploadObjects = tsvRecordsParser.parseToObjects();
-        stoolUploadObjects.forEach(this::updateKitAndThenSendNotification);
+        List<StoolUploadDto> stoolUploadDtos = tsvRecordsParser.parseToObjects();
+        stoolUploadDtos.forEach(this::updateKitAndThenSendNotification);
     }
 
-    private void updateKitAndThenSendNotification(StoolUploadObject stoolUploadObject) {
-        boolean updated = stoolUploadDao.updateKit(stoolUploadObject);
+    private void updateKitAndThenSendNotification(StoolUploadDto stoolUploadDto) {
+        boolean updated = stoolUploadDao.updateKit(stoolUploadDto);
         if (updated) {
             KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(
                     DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_RECEIVED_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL),
-                    stoolUploadObject.getMfBarcode(), 1);
+                    stoolUploadDto.getMfBarcode(), 1);
             if (kitDDPNotification != null) {
                 logger.info("Triggering DDP to send emails");
                 TransactionWrapper.inTransaction(conn -> {
@@ -46,7 +46,7 @@ public class StoolUploadService {
                 });
                 stoolUploadServicePayload.getResponse().status(200);
             } else {
-                logger.warn(String.format("No notification was found for barcode %s", stoolUploadObject.getMfBarcode()));
+                logger.warn(String.format("No notification was found for barcode %s", stoolUploadDto.getMfBarcode()));
             }
         } else {
             stoolUploadServicePayload.getResponse().status(500);

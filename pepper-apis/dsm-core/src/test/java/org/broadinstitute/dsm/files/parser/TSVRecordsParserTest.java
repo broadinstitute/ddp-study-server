@@ -12,11 +12,7 @@ public class TSVRecordsParserTest {
 
     @Test
     public void getRegexSeparator() {
-        var parser = new TSVRecordsParser<>(null) {
-            @Override
-            public List<String> getExpectedHeaders() {
-                return null;
-            }
+        var parser = new TSVRecordsParser<Object>(null, null) {
 
             @Override
             public Optional<String> findMissingHeaderIfAny(List<String> headers) {
