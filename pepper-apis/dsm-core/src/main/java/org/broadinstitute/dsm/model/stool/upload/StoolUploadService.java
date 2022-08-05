@@ -18,16 +18,16 @@ public class StoolUploadService {
 
     private static final Logger logger = LoggerFactory.getLogger(StoolUploadService.class);
 
-    private final StoolUploadServicePayload stoolUploadCoordinatorPayload;
+    private final StoolUploadServicePayload stoolUploadServicePayload;
     private final StoolUploadDao stoolUploadDao = new StoolUploadDao();
 
     public StoolUploadService(StoolUploadServicePayload stoolUploadCoordinatorPayload) {
-        this.stoolUploadCoordinatorPayload = stoolUploadCoordinatorPayload;
+        this.stoolUploadServicePayload = stoolUploadCoordinatorPayload;
     }
 
     public void serve() {
         TSVRecordsParser<StoolUploadObject> tsvRecordsParser =
-                new TSVStoolUploadRecordsParser(stoolUploadCoordinatorPayload.getRequestBody());
+                new TSVStoolUploadRecordsParser(stoolUploadServicePayload.getRequestBody());
         List<StoolUploadObject> stoolUploadObjects = tsvRecordsParser.parseToObjects();
         stoolUploadObjects.forEach(this::updateKitAndThenSendNotification);
     }
@@ -44,12 +44,12 @@ public class StoolUploadService {
                     EventUtil.triggerDDP(conn, kitDDPNotification);
                     return null;
                 });
-                stoolUploadCoordinatorPayload.getResponse().status(200);
+                stoolUploadServicePayload.getResponse().status(200);
             } else {
                 logger.warn(String.format("No notification was found for barcode %s", stoolUploadObject.getMfBarcode()));
             }
         } else {
-            stoolUploadCoordinatorPayload.getResponse().status(500);
+            stoolUploadServicePayload.getResponse().status(500);
         }
     }
 }
