@@ -38,7 +38,7 @@ public class ParticipantSurveyStatusResponse {
             if (rows.length > 1) {
                 String firstRow = rows[0];
                 List<String> fieldNames = new ArrayList<>(Arrays.asList(firstRow.trim().split(SystemUtil.TAB_SEPARATOR)));
-                String missingFieldName = fieldNameMissing(instance, fieldNames);
+                String missingFieldName = fieldNameMissing(fieldNames);
                 if (missingFieldName == null) {
                     List<ParticipantSurveyUploadObject> uploadObjects = new ArrayList<>();
                     for (int rowIndex = 1; rowIndex < rows.length; rowIndex++) {

@@ -32,14 +32,12 @@ public class StoolUploadRoute extends RequestHandler {
             throw new RuntimeException("The realm was absent");
         }
         if (userCanUploadKits(userId, realm)) {
-            StoolUploadService stoolUploadService =
-                    StoolUploadService.spawn(new StoolUploadServicePayload(request.body(), response));
-            stoolUploadService.serve();
+                return StoolUploadService.spawn(new StoolUploadServicePayload(request.body(), response))
+                        .serve();
         } else {
             response.status(500);
             return (UserErrorMessages.NO_RIGHTS);
         }
-        return null;
     }
 
     private static boolean userCanUploadKits(String userId, String realm) {

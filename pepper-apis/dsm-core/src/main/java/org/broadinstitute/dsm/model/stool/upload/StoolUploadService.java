@@ -29,11 +29,13 @@ public class StoolUploadService {
         return new StoolUploadService(stoolUploadServicePayload);
     }
 
-    public void serve() {
+    public String serve() {
         AbstractRecordsParser<StoolUploadDto> tsvRecordsParser =
                 new TSVStoolUploadRecordsParser(stoolUploadServicePayload.getRequestBody());
         List<StoolUploadDto> stoolUploadObjects = tsvRecordsParser.parseToObjects();
         stoolUploadObjects.forEach(this::updateKitAndThenSendNotification);
+        stoolUploadServicePayload.getResponse().status(200);
+        return "Stool Upload was successful";
     }
 
     private void updateKitAndThenSendNotification(StoolUploadDto stoolUploadDto) {
@@ -48,12 +50,9 @@ public class StoolUploadService {
                     EventUtil.triggerDDP(conn, kitDDPNotification);
                     return null;
                 });
-                stoolUploadServicePayload.getResponse().status(200);
             } else {
                 logger.warn(String.format("No notification was found for barcode %s", stoolUploadDto.getMfBarcode()));
             }
-        } else {
-            stoolUploadServicePayload.getResponse().status(500);
         }
     }
 }
