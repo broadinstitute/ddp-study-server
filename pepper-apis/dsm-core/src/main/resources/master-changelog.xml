@@ -101,4 +101,5 @@
     <include file="liquibase/CMI/DDP-8388_drug-list-update.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/DDP-8388_drug-list-update-missing.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/singular/DDP-6584_download_participant_file.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/singular/DDP-8248.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
