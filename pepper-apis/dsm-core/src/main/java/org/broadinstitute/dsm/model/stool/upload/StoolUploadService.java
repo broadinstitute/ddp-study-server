@@ -5,7 +5,7 @@ import java.util.List;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.dao.stoolupload.StoolUploadDao;
 import org.broadinstitute.dsm.db.dao.stoolupload.StoolUploadDto;
-import org.broadinstitute.dsm.files.parser.TSVRecordsParser;
+import org.broadinstitute.dsm.files.parser.AbstractRecordsParser;
 import org.broadinstitute.dsm.files.parser.stool.TSVStoolUploadRecordsParser;
 import org.broadinstitute.dsm.model.KitDDPNotification;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
@@ -21,15 +21,19 @@ public class StoolUploadService {
     private final StoolUploadServicePayload stoolUploadServicePayload;
     private final StoolUploadDao stoolUploadDao = new StoolUploadDao();
 
-    public StoolUploadService(StoolUploadServicePayload stoolUploadCoordinatorPayload) {
-        this.stoolUploadServicePayload = stoolUploadCoordinatorPayload;
+    private StoolUploadService(StoolUploadServicePayload stoolUploadServicePayload) {
+        this.stoolUploadServicePayload = stoolUploadServicePayload;
+    }
+
+    public static StoolUploadService spawn(StoolUploadServicePayload stoolUploadServicePayload) {
+        return new StoolUploadService(stoolUploadServicePayload);
     }
 
     public void serve() {
-        TSVRecordsParser<StoolUploadDto> tsvRecordsParser =
+        AbstractRecordsParser<StoolUploadDto> tsvRecordsParser =
                 new TSVStoolUploadRecordsParser(stoolUploadServicePayload.getRequestBody());
-        List<StoolUploadDto> stoolUploadDtos = tsvRecordsParser.parseToObjects();
-        stoolUploadDtos.forEach(this::updateKitAndThenSendNotification);
+        List<StoolUploadDto> stoolUploadObjects = tsvRecordsParser.parseToObjects();
+        stoolUploadObjects.forEach(this::updateKitAndThenSendNotification);
     }
 
     private void updateKitAndThenSendNotification(StoolUploadDto stoolUploadDto) {

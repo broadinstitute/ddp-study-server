@@ -15,7 +15,7 @@ public abstract class AbstractRecordsParser<T> {
     protected final String fileContent;
     protected final String regexSeparator;
 
-    protected List<String> parsedHeaders;
+    protected List<String> extractedHeaders;
     protected HeadersProvider headersProvider;
 
     protected AbstractRecordsParser(String fileContent, String regexSeparator, HeadersProvider headersProvider) {
@@ -40,8 +40,8 @@ public abstract class AbstractRecordsParser<T> {
         if (!headerRow.contains(regexSeparator)) {
             throw new FileWrongSeparator(String.format("Headers are not separated by %s", regexSeparator));
         }
-        parsedHeaders = Arrays.asList(headerRow.trim().split(regexSeparator));
-        Optional<String> maybeMissingHeader = findMissingHeaderIfAny(parsedHeaders);
+        extractedHeaders = Arrays.asList(headerRow.trim().split(regexSeparator));
+        Optional<String> maybeMissingHeader = findMissingHeaderIfAny(extractedHeaders);
         if (maybeMissingHeader.isPresent()) {
             throw new FileColumnMissing("File is missing the column: " + maybeMissingHeader.get());
         } else {
@@ -50,26 +50,28 @@ public abstract class AbstractRecordsParser<T> {
         }
     }
 
-    public Optional<String> findMissingHeaderIfAny(List<String> headers) {
+    public Optional<String> findMissingHeaderIfAny(List<String> extractedHeaders) {
         List<String> expectedHeaders = headersProvider.provideHeaders();
-        return expectedHeaders.equals(headers)
+        return expectedHeaders.equals(extractedHeaders)
                 ? Optional.empty()
                 : expectedHeaders.stream()
-                .filter(header -> !headers.contains(header))
+                .filter(header -> !extractedHeaders.contains(header))
                 .findFirst();
     }
 
     List<T> transformRecordsToList(String[] records) {
         return Arrays.stream(records)
-                .map(record -> transformMapToObject(transformRecordToMap(record)))
+                .map(this::transformRecordToMap)
+                .map(this::transformMapToObject)
                 .collect(Collectors.toList());
     }
 
     Map<String, String> transformRecordToMap(String record) {
         List<String> records = Arrays.asList(record.trim().split(regexSeparator));
-        return IntStream.range(0, parsedHeaders.size()).boxed()
-                .collect(Collectors.toMap(parsedHeaders::get, records::get));
+        return IntStream.range(0, extractedHeaders.size())
+                .boxed()
+                .collect(Collectors.toMap(extractedHeaders::get, records::get));
     }
 
-    public abstract T transformMapToObject(Map<String, String> map);
+    public abstract T transformMapToObject(Map<String, String> recordAsMap);
 }

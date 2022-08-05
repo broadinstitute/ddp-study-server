@@ -15,12 +15,12 @@ public class TSVRecordsParserTest {
         var parser = new TSVRecordsParser<Object>(null, null) {
 
             @Override
-            public Optional<String> findMissingHeaderIfAny(List<String> headers) {
+            public Optional<String> findMissingHeaderIfAny(List<String> extractedHeaders) {
                 return Optional.empty();
             }
 
             @Override
-            public Object transformMapToObject(Map<String, String> map) {
+            public Object transformMapToObject(Map<String, String> recordAsMap) {
                 return null;
             }
         };

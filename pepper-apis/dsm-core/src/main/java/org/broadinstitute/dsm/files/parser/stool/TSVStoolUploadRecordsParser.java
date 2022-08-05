@@ -16,11 +16,11 @@ public class TSVStoolUploadRecordsParser extends TSVRecordsParser<StoolUploadDto
     }
 
     @Override
-    public StoolUploadDto transformMapToObject(Map<String, String> map) {
+    public StoolUploadDto transformMapToObject(Map<String, String> recordAsMap) {
         return new StoolUploadDto(
-                map.get(PARTICIPANT_ID),
-                map.get(MF_BARCODE),
-                map.get(RECEIVE_DATE)
+                recordAsMap.get(PARTICIPANT_ID),
+                recordAsMap.get(MF_BARCODE),
+                recordAsMap.get(RECEIVE_DATE)
         );
     }
 

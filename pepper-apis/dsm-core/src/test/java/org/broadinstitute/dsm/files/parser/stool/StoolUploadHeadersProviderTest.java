@@ -1,6 +1,5 @@
-package org.broadinstitute.dsm.files.parser.stool;
 
-import static org.junit.Assert.*;
+package org.broadinstitute.dsm.files.parser.stool;
 
 import java.util.List;
 

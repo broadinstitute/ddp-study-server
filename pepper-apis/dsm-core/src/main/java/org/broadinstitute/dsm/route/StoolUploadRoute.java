@@ -33,7 +33,7 @@ public class StoolUploadRoute extends RequestHandler {
         }
         if (userCanUploadKits(userId, realm)) {
             StoolUploadService stoolUploadService =
-                    new StoolUploadService(new StoolUploadServicePayload(request.body(), response));
+                    StoolUploadService.spawn(new StoolUploadServicePayload(request.body(), response));
             stoolUploadService.serve();
         } else {
             response.status(500);

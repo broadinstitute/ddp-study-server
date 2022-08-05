@@ -22,16 +22,16 @@ public class AbstractRecordsParserTest {
         var actual = new AbstractRecordsParser<TestData>(content, regexSeparator, headersProvider) {
 
             @Override
-            public Optional<String> findMissingHeaderIfAny(List<String> headers) {
+            public Optional<String> findMissingHeaderIfAny(List<String> extractedHeaders) {
                 return Optional.empty();
             }
 
             @Override
-            public TestData transformMapToObject(Map<String, String> map) {
+            public TestData transformMapToObject(Map<String, String> recordAsMap) {
                 return new TestData(
-                        map.get("field1"),
-                        map.get("field2"),
-                        map.get("field3"));
+                        recordAsMap.get("field1"),
+                        recordAsMap.get("field2"),
+                        recordAsMap.get("field3"));
             }
         }.parseToObjects();
 
@@ -46,16 +46,16 @@ public class AbstractRecordsParserTest {
         var actual = new AbstractRecordsParser<TestData>(content, regexSeparator, headersProvider) {
 
             @Override
-            public Optional<String> findMissingHeaderIfAny(List<String> headers) {
+            public Optional<String> findMissingHeaderIfAny(List<String> extractedHeaders) {
                 return Optional.empty();
             }
 
             @Override
-            public TestData transformMapToObject(Map<String, String> map) {
+            public TestData transformMapToObject(Map<String, String> recordAsMap) {
                 return new TestData(
-                        map.get("field1"),
-                        map.get("field2"),
-                        map.get("field3"));
+                        recordAsMap.get("field1"),
+                        recordAsMap.get("field2"),
+                        recordAsMap.get("field3"));
             }
         }.parseToObjects();
 
@@ -75,13 +75,13 @@ public class AbstractRecordsParserTest {
         var recordsParser = new AbstractRecordsParser<>(content, regexSeparator, headersProvider) {
 
             @Override
-            public Optional<String> findMissingHeaderIfAny(List<String> headers) {
+            public Optional<String> findMissingHeaderIfAny(List<String> extractedHeaders) {
                 return Optional.of("field3");
             }
 
 
             @Override
-            public TestData transformMapToObject(Map<String, String> map) {
+            public TestData transformMapToObject(Map<String, String> recordAsMap) {
                 return null;
             }
         };

@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.files.parser.stool;
 
 import java.util.List;
