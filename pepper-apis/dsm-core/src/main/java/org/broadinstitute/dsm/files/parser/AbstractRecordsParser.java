@@ -13,11 +13,14 @@ import org.broadinstitute.dsm.model.Filter;
 
 public abstract class AbstractRecordsParser<T> {
 
+    private static final int HEADER_INDEX = 0;
+    private static final int RECORDS_START_INDEX = 1;
+
     protected final String fileContent;
     protected final String regexSeparator;
+    protected final List<String> expectedHeaders;
 
     protected List<String> actualHeaders;
-    protected List<String> expectedHeaders;
 
     protected AbstractRecordsParser(String fileContent, String regexSeparator, HeadersProvider headersProvider) {
         this.fileContent = fileContent;
@@ -34,17 +37,17 @@ public abstract class AbstractRecordsParser<T> {
         if (rows.length < 2) {
             throw new RuntimeException("File does not contain any records");
         }
-        String headerRow = rows[0];
+        String headerRow = rows[HEADER_INDEX];
         actualHeaders = Arrays.asList(headerRow.trim().split(regexSeparator));
         if (isFileSeparatedByWrongSeparator()) {
             throw new FileWrongSeparator(String.format("File headers are not separated by %s",
-                    RegexSeparatorDictionary.getWordDescription(regexSeparator)));
+                    RegexSeparatorDictionary.describe(regexSeparator)));
         }
         Optional<String> maybeMissingHeader = findMissingHeaderIfAny(actualHeaders);
         if (maybeMissingHeader.isPresent()) {
             throw new FileColumnMissing("File is missing the column: " + maybeMissingHeader.get());
         } else {
-            String[] records = Arrays.copyOfRange(rows, 1, rows.length);
+            String[] records = Arrays.copyOfRange(rows, RECORDS_START_INDEX, rows.length);
             return transformRecordsToList(records);
         }
     }
@@ -76,4 +79,5 @@ public abstract class AbstractRecordsParser<T> {
     }
 
     public abstract T transformMapToObject(Map<String, String> recordAsMap);
+
 }
