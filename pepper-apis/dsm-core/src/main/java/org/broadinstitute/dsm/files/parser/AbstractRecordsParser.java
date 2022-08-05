@@ -9,19 +9,20 @@ import java.util.stream.IntStream;
 
 import org.broadinstitute.dsm.exception.FileColumnMissing;
 import org.broadinstitute.dsm.exception.FileWrongSeparator;
+import org.broadinstitute.dsm.model.Filter;
 
 public abstract class AbstractRecordsParser<T> {
 
     protected final String fileContent;
     protected final String regexSeparator;
 
-    protected List<String> extractedHeaders;
-    protected HeadersProvider headersProvider;
+    protected List<String> actualHeaders;
+    protected List<String> expectedHeaders;
 
     protected AbstractRecordsParser(String fileContent, String regexSeparator, HeadersProvider headersProvider) {
         this.fileContent = fileContent;
         this.regexSeparator = regexSeparator;
-        this.headersProvider = headersProvider;
+        this.expectedHeaders = headersProvider.provideHeaders();
     }
 
     public String getRegexSeparator() {
@@ -29,19 +30,17 @@ public abstract class AbstractRecordsParser<T> {
     }
 
     public List<T> parseToObjects() {
-        if (fileContent == null) {
-            throw new RuntimeException("File is empty");
-        }
         String[] rows = fileContent.split(System.lineSeparator());
         if (rows.length < 2) {
-            throw new RuntimeException("Text file does not contain any values");
+            throw new RuntimeException("File does not contain any records");
         }
         String headerRow = rows[0];
-        if (!headerRow.contains(regexSeparator)) {
-            throw new FileWrongSeparator(String.format("Headers are not separated by %s", regexSeparator));
+        actualHeaders = Arrays.asList(headerRow.trim().split(regexSeparator));
+        if (isFileSeparatedByWrongSeparator()) {
+            throw new FileWrongSeparator(String.format("File headers are not separated by %s",
+                    RegexSeparatorDictionary.getWordDescription(regexSeparator)));
         }
-        extractedHeaders = Arrays.asList(headerRow.trim().split(regexSeparator));
-        Optional<String> maybeMissingHeader = findMissingHeaderIfAny(extractedHeaders);
+        Optional<String> maybeMissingHeader = findMissingHeaderIfAny(actualHeaders);
         if (maybeMissingHeader.isPresent()) {
             throw new FileColumnMissing("File is missing the column: " + maybeMissingHeader.get());
         } else {
@@ -50,8 +49,11 @@ public abstract class AbstractRecordsParser<T> {
         }
     }
 
+    private boolean isFileSeparatedByWrongSeparator() {
+        return actualHeaders.stream().anyMatch(header -> header.contains(Filter.SPACE));
+    }
+
     public Optional<String> findMissingHeaderIfAny(List<String> extractedHeaders) {
-        List<String> expectedHeaders = headersProvider.provideHeaders();
         return expectedHeaders.equals(extractedHeaders)
                 ? Optional.empty()
                 : expectedHeaders.stream()
@@ -68,9 +70,9 @@ public abstract class AbstractRecordsParser<T> {
 
     Map<String, String> transformRecordToMap(String record) {
         List<String> records = Arrays.asList(record.trim().split(regexSeparator));
-        return IntStream.range(0, extractedHeaders.size())
+        return IntStream.range(0, actualHeaders.size())
                 .boxed()
-                .collect(Collectors.toMap(extractedHeaders::get, records::get));
+                .collect(Collectors.toMap(actualHeaders::get, records::get));
     }
 
     public abstract T transformMapToObject(Map<String, String> recordAsMap);

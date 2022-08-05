@@ -13,6 +13,7 @@ import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.EventUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spark.Response;
 
 public class StoolUploadService {
 
@@ -29,13 +30,20 @@ public class StoolUploadService {
         return new StoolUploadService(stoolUploadServicePayload);
     }
 
-    public String serve() {
+    public Object serve() {
         AbstractRecordsParser<StoolUploadDto> tsvRecordsParser =
                 new TSVStoolUploadRecordsParser(stoolUploadServicePayload.getRequestBody());
-        List<StoolUploadDto> stoolUploadObjects = tsvRecordsParser.parseToObjects();
-        stoolUploadObjects.forEach(this::updateKitAndThenSendNotification);
-        stoolUploadServicePayload.getResponse().status(200);
-        return "Stool Upload was successful";
+        Response response = stoolUploadServicePayload.getResponse();
+        try {
+            List<StoolUploadDto> stoolUploadObjects = tsvRecordsParser.parseToObjects();
+            stoolUploadObjects.forEach(this::updateKitAndThenSendNotification);
+            response.status(200);
+            response.body("Stool Upload was successful");
+        } catch (Exception e) {
+            response.status(500);
+            response.body(e.getMessage());
+        }
+        return response;
     }
 
     private void updateKitAndThenSendNotification(StoolUploadDto stoolUploadDto) {
