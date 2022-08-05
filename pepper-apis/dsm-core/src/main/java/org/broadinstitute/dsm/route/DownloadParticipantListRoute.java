@@ -16,6 +16,7 @@ import org.broadinstitute.dsm.model.elastic.export.tabular.DataDictionaryExporte
 import org.broadinstitute.dsm.model.elastic.export.tabular.ModuleExportConfig;
 import org.broadinstitute.dsm.model.elastic.export.tabular.TabularParticipantExporter;
 import org.broadinstitute.dsm.model.elastic.export.tabular.TabularParticipantParser;
+import org.broadinstitute.dsm.model.elastic.search.UnparsedDeserializer;
 import org.broadinstitute.dsm.model.filter.FilterFactory;
 import org.broadinstitute.dsm.model.filter.Filterable;
 import org.broadinstitute.dsm.model.participant.DownloadParticipantListParams;
@@ -62,7 +63,6 @@ public class DownloadParticipantListRoute extends RequestHandler {
         setResponseHeaders(response, realm + "_export.zip");
 
         Filterable filterable = FilterFactory.of(request);
-        filterable.setParseDtos(false);
         List<ParticipantWrapperDto> participants = fetchParticipantEsData(filterable, request.queryMap());
         logger.info("Beginning parse of " + participants.size() + " participants");
         List<ModuleExportConfig> exportConfigs = parser.generateExportConfigs();
@@ -102,7 +102,7 @@ public class DownloadParticipantListRoute extends RequestHandler {
             // For each batch of results, add the DTOs to the allResults list
             filter.setFrom(currentFrom);
             filter.setTo(currentTo);
-            ParticipantWrapperResult filteredSubset = (ParticipantWrapperResult) filter.filter(queryParamsMap);
+            ParticipantWrapperResult filteredSubset = (ParticipantWrapperResult) filter.filter(queryParamsMap, new UnparsedDeserializer());
             allResults.addAll(filteredSubset.getParticipants());
             // if the total count is less than the range we are currently on, stop fetching
             if (filteredSubset.getTotalCount() < currentTo) {

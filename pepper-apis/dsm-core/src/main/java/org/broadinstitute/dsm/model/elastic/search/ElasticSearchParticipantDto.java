@@ -36,16 +36,7 @@ public class ElasticSearchParticipantDto {
     @Getter
     private String ddp;
 
-    @Getter
-    private Map<String, Object> dataAsMap;
 
-
-    public ElasticSearchParticipantDto() {
-    }
-
-    public ElasticSearchParticipantDto(SearchHit searchHit) {
-        this.dataAsMap = searchHit.getSourceAsMap();
-    }
 
     private ElasticSearchParticipantDto(ElasticSearchParticipantDto.Builder builder) {
         this.address = builder.address;
@@ -62,6 +53,8 @@ public class ElasticSearchParticipantDto {
         this.computed = builder.computed;
         this.governedUsers = builder.governedUsers;
     }
+
+    protected ElasticSearchParticipantDto() {  }
 
     public Optional<ESAddress> getAddress() {
         return Optional.ofNullable(address);
