@@ -197,13 +197,13 @@ public abstract class TabularParticipantExporter {
         if (filterConfig.isSplitOptionsIntoColumns()) {
             for (Map<String, Object> option : filterConfig.getOptions()) {
                 colFunc.apply(filterConfig, activityRepeatNum, questionRepeatNum, option, null, parentConfig);
-                if (filterConfig.isHasDetails()) {
+                if (filterConfig.hasDetailsForOption((String) option.get(ESObjectConstants.OPTION_STABLE_ID))) {
                     colFunc.apply(filterConfig, activityRepeatNum, questionRepeatNum, option, "DETAIL", parentConfig);
                 }
             }
         } else {
             colFunc.apply(filterConfig, activityRepeatNum, questionRepeatNum, null, null, parentConfig);
-            if (filterConfig.isHasDetails()) {
+            if (filterConfig.hasAnyOptionDetails()) {
                 colFunc.apply(filterConfig, activityRepeatNum, questionRepeatNum, null, "DETAIL", parentConfig);
             }
         }

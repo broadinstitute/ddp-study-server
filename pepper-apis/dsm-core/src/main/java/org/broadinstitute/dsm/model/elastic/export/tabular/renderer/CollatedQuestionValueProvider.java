@@ -19,10 +19,13 @@ public class CollatedQuestionValueProvider extends PickListValueProvider {
         Object value = StringUtils.EMPTY;
         String fieldName = filterConfig.getColumn().getName();
         if (formMap == null) {
-            return Collections.singletonList(StringUtils.EMPTY);
+
         } else {
             List<Map<String, Object>> allAnswers =
                     (List<Map<String, Object>>) formMap.get(ElasticSearchUtil.QUESTIONS_ANSWER);
+            if (allAnswers == null) {
+                return Collections.singletonList(StringUtils.EMPTY);
+            }
             Stream<Map<String, Object>> targetAnswers = allAnswers.stream()
                     .filter(answerObj -> {
                         return StringUtils.endsWith((String) answerObj.get(ESObjectConstants.STABLE_ID), filterConfig.getCollationSuffix());
