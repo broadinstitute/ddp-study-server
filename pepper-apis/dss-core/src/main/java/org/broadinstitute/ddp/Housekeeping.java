@@ -252,21 +252,34 @@ public class Housekeeping {
             log.error("Failed to init PubSubTask API", e);
         }
 
-        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
-            JdbiMessageDestination messageDestinationDao = handle.attach(JdbiMessageDestination.class);
-            for (String topicName : messageDestinationDao.getAllTopics()) {
-                log.info("Initializing subscription for topic {}", topicName);
-                ProjectTopicName projectTopicName = ProjectTopicName.of(pubSubProject, topicName);
-                pubsubConnectionManager.createTopicIfNotExists(projectTopicName);
-                // todo arz investigate topic naming vs. subscription naming
-                ProjectSubscriptionName projectSubscriptionName = ProjectSubscriptionName.of(
-                        projectTopicName.getProject(), topicName);
-                Subscription subscription = pubsubConnectionManager
-                        .createSubscriptionIfNotExists(projectSubscriptionName, projectTopicName);
-                // in the real world, listen differently
-                setupMessageReceiver(pubsubConnectionManager, projectSubscriptionName, cfg, sendGridSupplier);
-            }
+        final List<String> messageDestinationTopics = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, handle -> {
+            final var messageDestinationDao = handle.attach(JdbiMessageDestination.class);
+            return messageDestinationDao.getAllTopics();
         });
+
+        for (final var topicName : messageDestinationTopics) {
+            log.info("Initializing subscription for topic {}", topicName);
+
+            //  The duplication of `topicName` below is intentional- this has been the
+            //    historic use and is intended to maintain compatibility with other services.
+            // 
+            //  (bskinner - 20220806): Investigate if this code is still in use.
+            final var projectTopicName = ProjectTopicName.of(pubSubProject, topicName);
+            final var projectSubscriptionName = ProjectSubscriptionName.of(pubSubProject, topicName);
+
+            if (pubsubConnectionManager.isEmulated()) {
+                try {
+                    pubsubConnectionManager.createTopicIfNotExists(projectTopicName);
+                    pubsubConnectionManager.createSubscriptionIfNotExists(projectSubscriptionName, projectTopicName);
+                } catch (IOException error) {
+                    final var message = String.format("Pub/Sub topic or subscription could not be created for [topic=%s]", projectTopicName);
+                    log.error(message, error);
+                    throw new DDPException(message, error);
+                }
+            }
+
+            setupMessageReceiver(pubsubConnectionManager, projectSubscriptionName, cfg, sendGridSupplier);
+        }
 
         synchronized (startupMonitor) {
             startupMonitor.notify();
