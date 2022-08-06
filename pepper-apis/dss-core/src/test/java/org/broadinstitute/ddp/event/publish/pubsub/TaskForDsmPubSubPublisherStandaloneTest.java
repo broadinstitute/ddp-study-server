@@ -6,6 +6,8 @@ import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__
 import static org.broadinstitute.ddp.model.activity.types.EventActionType.UPDATE_CUSTOM_WORKFLOW;
 import static org.broadinstitute.ddp.model.event.UpdateCustomWorkflowEventAction.generatePayload;
 import static org.junit.Assert.assertEquals;
+
+import java.io.IOException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -15,15 +17,18 @@ import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.pubsub.v1.ProjectSubscriptionName;
+import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
 import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.ConfigAwareBaseTest;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.housekeeping.PubSubConnectionManager;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.util.ConfigManager;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -44,6 +49,28 @@ public class TaskForDsmPubSubPublisherStandaloneTest extends ConfigAwareBaseTest
     private static String expectedStudyGuid;
     private static String expectedParticipantGuid;
     private static String expectedPayloadJson;
+
+    private ProjectTopicName topicName;
+    private ProjectSubscriptionName subscriptionName;
+    private PubSubConnectionManager connectionManager;
+
+    @Before
+    public void pubSubSetUp() {
+        var projectId = conf.getString(ConfigFile.GOOGLE_PROJECT_ID);
+        var targetTopicName = conf.getString(ConfigFile.PUBSUB_DSM_TASKS_TOPIC);
+        var targetSubscriptionName = conf.getString(ConfigFile.PUBSUB_TASKS_SUB);
+        
+        this.topicName = ProjectTopicName.of(projectId, targetTopicName);
+        this.subscriptionName = ProjectSubscriptionName.of(projectId, targetSubscriptionName);
+        this.connectionManager = PubSubPublisherInitializer.getPubsubConnectionManager();
+
+        try {
+            connectionManager.createTopicIfNotExists(topicName);
+            connectionManager.createSubscriptionIfNotExists(subscriptionName, topicName);
+        } catch (IOException error) {
+            throw new DDPException("failed to configure the necessary Pub/Sub topics & subscriptions.", error);
+        }
+    }
 
     @Test
     @Ignore
@@ -80,30 +107,29 @@ public class TaskForDsmPubSubPublisherStandaloneTest extends ConfigAwareBaseTest
     private void createTestSubscriber() {
         var executorProvider = InstantiatingExecutorProvider.newBuilder().setExecutorThreadCount(10).build();
         var callbackExecutor = Executors.newSingleThreadExecutor();
-
         var pubSubTaskReceiver = new PubSubTaskReceiver();
 
         Subscriber pubSubTaskSubscriber = null;
-        var projectSubscriptionName = ProjectSubscriptionName.of(
-                conf.getString(ConfigFile.GOOGLE_PROJECT_ID), getDsmTasksTopicSubscription());
-
         try {
-            pubSubTaskSubscriber = PubSubPublisherInitializer.getPubsubConnectionManager().subscribeBuilder(
-                    projectSubscriptionName, pubSubTaskReceiver)
+            pubSubTaskSubscriber = connectionManager.subscribeBuilder(
+                    subscriptionName, pubSubTaskReceiver)
                     .setExecutorProvider(executorProvider)
                     .setSystemExecutorProvider(executorProvider)
                     .build();
             pubSubTaskSubscriber.addListener(
                     new Subscriber.Listener() {
                         public void failed(Subscriber.State from, Throwable failure) {
-                            log.error("Error consume a message", failure);
+                            log.error("Error consuming a message", failure);
                         }
                     },
                     callbackExecutor);
             pubSubTaskSubscriber.startAsync().awaitRunning(5, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
-            pubSubTaskSubscriber.stopAsync();
-            throw new DDPException("Could not start subscriber for subscription" + projectSubscriptionName.getSubscription(), e);
+            if (pubSubTaskSubscriber != null) {
+                pubSubTaskSubscriber.stopAsync();
+            };
+
+            throw new DDPException("Could not start subscriber for subscription" + subscriptionName, e);
         }
     }
 
@@ -120,8 +146,5 @@ public class TaskForDsmPubSubPublisherStandaloneTest extends ConfigAwareBaseTest
         expectedParticipantGuid = message.getAttributesOrDefault(ATTR_NAME__PARTICIPANT_GUID, null);
         expectedPayloadJson = message.getData() != null ? message.getData().toStringUtf8() : null;
     }
-
-    private String getDsmTasksTopicSubscription() {
-        return conf.getString(ConfigFile.PUBSUB_DSM_TASKS_TOPIC) + "-sub";
-    }
 }
+
