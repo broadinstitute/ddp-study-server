@@ -3,21 +3,16 @@ package org.broadinstitute.ddp.housekeeping;
 import java.io.IOException;
 import java.lang.ref.Cleaner;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
-import org.elasticsearch.transport.Transport;
 
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.grpc.GrpcTransportChannel;
 import com.google.api.gax.rpc.AlreadyExistsException;
-import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.FixedTransportChannelProvider;
 import com.google.api.gax.rpc.NotFoundException;
-import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Publisher;
@@ -32,8 +27,8 @@ import com.google.pubsub.v1.PushConfig;
 import com.google.pubsub.v1.Subscription;
 import com.google.pubsub.v1.Topic;
 
-import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import lombok.Getter;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
@@ -87,10 +82,13 @@ public class PubSubConnectionManager {
         }
     }
 
-    private final boolean useEmulator;
+    @Getter
+    private final boolean emulated;
+
     private final String pubSubHost;
-    private TransportChannelProvider channelProvider;
-    private CredentialsProvider credentialsProvider;
+    private final TransportChannelProvider channelProvider;
+    private final CredentialsProvider credentialsProvider;
+
     private final State state;
     private final Cleaner.Cleanable cleanable;
 
@@ -102,7 +100,7 @@ public class PubSubConnectionManager {
      *                    where GCP pubsub resources are available
      */
     public PubSubConnectionManager(boolean useEmulator, String pubSubHost) throws IOException {
-        this.useEmulator = useEmulator;
+        this.emulated = useEmulator;
         this.pubSubHost = pubSubHost;
 
         this.channelProvider = emulatorPubSubChannelProvider();
@@ -120,7 +118,7 @@ public class PubSubConnectionManager {
      * Creates a new client
      */
     private SubscriptionAdminClient createSubscriptionAdminClient() throws IOException {
-        if (useEmulator) {
+        if (emulated) {
             var channelProvider = emulatorPubSubChannelProvider();
             var credentialsProvider = emulatorPubSubCredentialsProvider();
 
@@ -254,7 +252,7 @@ public class PubSubConnectionManager {
      * with the client to avoid resource leakage
      */
     private TopicAdminClient createTopicAdminClient() throws IOException {
-        if (useEmulator) {
+        if (emulated) {
             return TopicAdminClient.create(TopicAdminSettings.newBuilder()
                     .setTransportChannelProvider(channelProvider)
                     .setCredentialsProvider(credentialsProvider)
@@ -276,7 +274,7 @@ public class PubSubConnectionManager {
             return publisher;
         }
 
-        if (useEmulator) {
+        if (emulated) {
             publisher = Publisher.newBuilder(topicName)
                     .setChannelProvider(channelProvider)
                     .setCredentialsProvider(credentialsProvider)
@@ -323,7 +321,7 @@ public class PubSubConnectionManager {
      * Creates a new subscriber builder
      */
     public Subscriber.Builder subscribeBuilder(ProjectSubscriptionName projectSubscriptionName, MessageReceiver receiver) {
-        if (useEmulator) {
+        if (emulated) {
             return Subscriber.newBuilder(projectSubscriptionName, receiver)
                     .setCredentialsProvider(credentialsProvider)
                     .setChannelProvider(channelProvider);
