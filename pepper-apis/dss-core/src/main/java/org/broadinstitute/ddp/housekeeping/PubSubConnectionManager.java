@@ -1,14 +1,22 @@
 package org.broadinstitute.ddp.housekeeping;
 
 import java.io.IOException;
+import java.lang.ref.Cleaner;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+
+import org.apache.commons.lang3.StringUtils;
+import org.elasticsearch.transport.Transport;
 
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
 import com.google.api.gax.grpc.GrpcTransportChannel;
+import com.google.api.gax.rpc.AlreadyExistsException;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.FixedTransportChannelProvider;
+import com.google.api.gax.rpc.NotFoundException;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.api.gax.rpc.TransportChannelProvider;
 import com.google.cloud.pubsub.v1.MessageReceiver;
@@ -23,38 +31,68 @@ import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PushConfig;
 import com.google.pubsub.v1.Subscription;
 import com.google.pubsub.v1.Topic;
+
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.broadinstitute.ddp.util.PubSubEmulator;
 
 /**
  * Generally useful utilities for connecting to pubsub
  */
 @Slf4j
 public class PubSubConnectionManager {
+    private static final Cleaner cleaner = Cleaner.create();
     public static final int ACK_DEADLINE_SECONDS = 60;
-    private final boolean useEmulator;
-    private ManagedChannel pubsubChannel;
-    private CredentialsProvider pubsubCredsProvider;
-    private TransportChannelProvider channelProvider;
-    private final TopicAdminClient adminClient;
-    private final SubscriptionAdminClient subscriptionAdminClient;
-    private static final Map<String, Publisher> PUBLISHERS_TO_SHUTDOWN = new HashMap<>();
 
-    static {
-        // last gasp attempt to shutdown any created publishers
-        // that have not been cleaned up properly
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            for (Publisher publisher : PUBLISHERS_TO_SHUTDOWN.values()) {
+    @Value
+    static class State implements Runnable {
+        private TopicAdminClient topicAdminClient;
+        private SubscriptionAdminClient subscriptionAdminClient;
+        private Map<String, Publisher> publishers = new HashMap<>();
+
+        State(TopicAdminClient topicAdminClient, SubscriptionAdminClient subscriptionAdminClient) {
+            this.topicAdminClient = topicAdminClient;
+            this.subscriptionAdminClient = subscriptionAdminClient;
+        }
+
+        public void run() {
+            topicAdminClient.close();
+            subscriptionAdminClient.close();
+
+            for (var entrySet : publishers.entrySet()) {
+                var publisher = entrySet.getValue();
+
                 try {
                     publisher.shutdown();
-                } catch (Exception e) {
-                    log.error("Could not shutdown publisher for topic {}", publisher.getTopicName(), e);
+                } catch (IllegalStateException cause) {
+                    // Publisher's already shutdown, nothing to do
+                } catch (Exception cause) {
+                    // Some other error occurred during shutdown.
+                    // Too late to do anything about it, so just continue on
+                    // (bskinner, 20220805)
+                    //   Consider logging, but check Lombok's implementation of
+                    //   the @Slf4j annotation first to make sure we aren't keeping a
+                    //   strong reference to something that should be released.
                 }
             }
-        }));
+        }
+
+        void register(String key, Publisher publisher) {
+            publishers.put(key, publisher);
+        }
+
+        Publisher get(String key) {
+            return publishers.get(key);
+        }
     }
+
+    private final boolean useEmulator;
+    private final String pubSubHost;
+    private TransportChannelProvider channelProvider;
+    private CredentialsProvider credentialsProvider;
+    private final State state;
+    private final Cleaner.Cleanable cleanable;
 
     /**
      * Creates a new one
@@ -63,38 +101,121 @@ public class PubSubConnectionManager {
      *                    Otherwise, assumes this is running in an environment
      *                    where GCP pubsub resources are available
      */
-    public PubSubConnectionManager(boolean useEmulator) {
+    public PubSubConnectionManager(boolean useEmulator, String pubSubHost) throws IOException {
         this.useEmulator = useEmulator;
-        if (useEmulator) {
-            if (!PubSubEmulator.hasStarted()) {
-                log.info("Starting simulator");
-                PubSubEmulator.startEmulator();
-            }
-            pubsubChannel = emulatedPubSubChannel();
-            pubsubCredsProvider = emulatedPubSubCredentialsProvider();
-            channelProvider = FixedTransportChannelProvider.create(GrpcTransportChannel.create(pubsubChannel));
-        }
-        try {
-            adminClient = createClient();
-            subscriptionAdminClient = createSubscriptionClient();
-        } catch (IOException e) {
-            throw new RuntimeException("Could not create admin client", e);
-        }
+        this.pubSubHost = pubSubHost;
+
+        this.channelProvider = emulatorPubSubChannelProvider();
+        this.credentialsProvider = emulatorPubSubCredentialsProvider();
+
+        var topicAdminClient = createTopicAdminClient();
+        var subscriptionAdminClient = createSubscriptionAdminClient();
+
+        var state = new State(topicAdminClient, subscriptionAdminClient);
+        this.state = state;
+        this.cleanable = cleaner.register(this, state);
     }
 
     /**
      * Creates a new client
      */
-    private SubscriptionAdminClient createSubscriptionClient() throws IOException {
+    private SubscriptionAdminClient createSubscriptionAdminClient() throws IOException {
         if (useEmulator) {
-            SubscriptionAdminSettings adminSettings = SubscriptionAdminSettings.newBuilder()
-                    .setCredentialsProvider(pubsubCredsProvider)
+            var channelProvider = emulatorPubSubChannelProvider();
+            var credentialsProvider = emulatorPubSubCredentialsProvider();
+
+            var adminSettings = SubscriptionAdminSettings.newBuilder()
+                    .setCredentialsProvider(credentialsProvider)
                     .setTransportChannelProvider(channelProvider)
                     .build();
             return SubscriptionAdminClient.create(adminSettings);
         } else {
-            return SubscriptionAdminClient.create(); // todo arz shutdown listener
+            return SubscriptionAdminClient.create();
         }
+    }
+
+    /**
+     * Fetches a Pub/Sub subscription, if it exists.
+     * @param topicName the name of the subscription to fetch
+     * @return the named Pub/Sub subscription, or null if it does not exist
+     * @throws IOException
+     */
+    private Subscription getSubscription(ProjectSubscriptionName subscriptionName) throws IOException {
+        var subscriptionAdminClient = this.state.getSubscriptionAdminClient();
+
+        Subscription subscription;
+        try {
+            subscription = subscriptionAdminClient.getSubscription(subscriptionName);
+        } catch (NotFoundException notFound) {
+            subscription = null;
+        }
+
+        return subscription;
+    }
+
+    /**
+     * Create a Pub/Sub subscription, if it does not already exist.
+     * @param topicName the name of the subscription to create
+     * @return the created Pub/Sub subscription, or null if it already exists
+     * @throws IOException
+     */
+    private Subscription createSubscription(ProjectSubscriptionName subscriptionName, ProjectTopicName topicName) throws IOException {
+        var subscriptionAdminClient = this.state.getSubscriptionAdminClient();
+
+        Subscription subscription;
+
+        try {
+            subscription = subscriptionAdminClient.createSubscription(subscriptionName,
+                    topicName,
+                    PushConfig.getDefaultInstance(),
+                    (int)ACK_DEADLINE_SECONDS);
+        } catch (AlreadyExistsException alreadyExists) {
+            // The subscription already exists
+            //   Fail with a null to indicate nothing was created
+            subscription = null;
+        }
+
+        return subscription;
+    }
+
+    /**
+     * Fetches a Pub/Sub topic if it exists.
+     * @param topicName the name of the topic to fetch
+     * @return the named Pub/Sub topic, or null if it does not exist
+     * @throws IOException
+     */
+    private Topic getTopic(ProjectTopicName topicName) throws IOException {
+        var topicAdminClient = this.state.getTopicAdminClient();
+
+        Topic topic;
+        try {
+            topic = topicAdminClient.getTopic(topicName);
+        } catch (NotFoundException notFound) {
+            topic = null;
+        }
+
+        return topic;
+    }
+
+    /**
+     * Creates the Pub/Sub topic if it does not exist.
+     * @param topicName the name of the topic to create
+     * @return the created Pub/Sub Topic, or null if it already exists
+     * @throws IOException
+     */
+    private Topic createTopic(ProjectTopicName topicName) throws IOException {
+        var topicAdminClient = this.state.getTopicAdminClient();
+
+        Topic topic = null;
+        try {
+            topic = topicAdminClient.createTopic(topicName);
+        } catch (AlreadyExistsException alreadyExists) {
+            // The subscription already exists
+            //   Fail with a null to indicate nothing was created
+            topic = null;
+        }
+
+        return topic;
     }
 
     /**
@@ -102,54 +223,28 @@ public class PubSubConnectionManager {
      * it is re-used.  Otherwise, a new one is created.
      */
     public Subscription createSubscriptionIfNotExists(ProjectSubscriptionName projectSubscriptionName,
-                                                      ProjectTopicName projectTopicName) {
-        return createSubscriptionIfNotExists(Subscription.newBuilder()
-                .setName(projectSubscriptionName.toString())
-                .setTopic(projectTopicName.toString())
-                .setPushConfig(PushConfig.getDefaultInstance())
-                .setAckDeadlineSeconds(ACK_DEADLINE_SECONDS)
-                .build());
-    }
+                                                      ProjectTopicName topicName) throws IOException {
+        var subscription = getSubscription(projectSubscriptionName);
 
-    public Subscription createSubscriptionIfNotExists(Subscription subscription) {
-        try {
-            subscriptionAdminClient.createSubscription(subscription);
-        } catch (ApiException e) {
-            if (e.getStatusCode().getCode() != StatusCode.Code.ALREADY_EXISTS) {
-                throw new RuntimeException(String.format("Error creating subscription %s to topic %s",
-                        subscription.getName(),
-                        subscription.getTopic()), e);
-            } else {
-                log.info("Subscription {} for topic {} already exists", subscription.getName(), subscription.getTopic());
-            }
+        if (subscription == null) {
+            // The named subscription was not found, try and create it
+            subscription = createSubscription(projectSubscriptionName, topicName);
         }
+
         return subscription;
     }
 
     /**
      * Creates the topic if it doesn't already exist.
      */
-    public Topic createTopicIfNotExists(ProjectTopicName topicName) {
-        Topic topic = null;
-        try {
-            topic = adminClient.createTopic(topicName);
-            log.info("Created topic {} for project {}", topicName.getTopic(), topicName.getProject());
-        } catch (ApiException e) {
-            if (e.getStatusCode().getCode() != StatusCode.Code.ALREADY_EXISTS) {
-                throw new RuntimeException(String.format("Error creating topic %s in project %s.  Status code: %s.  "
-                                                                 + "IsRetryable: %s",
-                                                         topicName.getTopic(),
-                                                         topicName.getProject(),
-                                                         e.getStatusCode().getCode(),
-                                                         e.isRetryable()));
-            } else {
-                log.info("Topic {} already exists in project {}", topicName.getTopic(), topicName.getProject());
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(String.format("Error creating topic %s in project %s",
-                                                     topicName.getTopic(),
-                                                     topicName.getProject()), e);
+    public Topic createTopicIfNotExists(ProjectTopicName topicName) throws IOException {
+        var topic = getTopic(topicName);
+
+        if (topic == null) {
+            // The named topic was not found, try and create it
+            topic = createTopic(topicName);
         }
+
         return topic;
     }
 
@@ -158,14 +253,14 @@ public class PubSubConnectionManager {
      * to call {@link TopicAdminClient#close} when done
      * with the client to avoid resource leakage
      */
-    private TopicAdminClient createClient() throws IOException {
+    private TopicAdminClient createTopicAdminClient() throws IOException {
         if (useEmulator) {
             return TopicAdminClient.create(TopicAdminSettings.newBuilder()
-                            .setTransportChannelProvider(channelProvider)
-                            .setCredentialsProvider(pubsubCredsProvider)
-                            .build());
+                    .setTransportChannelProvider(channelProvider)
+                    .setCredentialsProvider(credentialsProvider)
+                    .build());
         } else {
-            return TopicAdminClient.create();  // todo arz shutdown listener
+            return TopicAdminClient.create();
         }
     }
 
@@ -175,7 +270,8 @@ public class PubSubConnectionManager {
      * to avoid resource leaks
      */
     public Publisher getOrCreatePublisher(ProjectTopicName topicName) throws IOException {
-        Publisher publisher = PUBLISHERS_TO_SHUTDOWN.getOrDefault(topicName.toString(), null);
+        var publisher = this.state.get(topicName.toString());
+
         if (publisher != null) {
             return publisher;
         }
@@ -183,14 +279,14 @@ public class PubSubConnectionManager {
         if (useEmulator) {
             publisher = Publisher.newBuilder(topicName)
                     .setChannelProvider(channelProvider)
-                    .setCredentialsProvider(pubsubCredsProvider)
+                    .setCredentialsProvider(credentialsProvider)
                     .build();
         } else {
             publisher = Publisher.newBuilder(topicName).build();
         }
 
         // add the publisher to the list of things to shutdown for better cleanup
-        PUBLISHERS_TO_SHUTDOWN.put(topicName.toString(), publisher);
+        this.state.register(topicName.toString(), publisher);
         return publisher;
     }
 
@@ -198,11 +294,7 @@ public class PubSubConnectionManager {
      * Creates the creds provider needed for the emulator.
      * @return
      */
-    private CredentialsProvider emulatedPubSubCredentialsProvider() {
-        if (!useEmulator) {
-            throw new RuntimeException("You shouldn't be calling this when using the real "
-                                               + "(non-emulator) implementation");
-        }
+    private CredentialsProvider emulatorPubSubCredentialsProvider() {
         return NoCredentialsProvider.create();
     }
 
@@ -210,13 +302,13 @@ public class PubSubConnectionManager {
      * Creates the channel need for the emulator
      * @return
      */
-    private ManagedChannel emulatedPubSubChannel() {
-        if (!useEmulator) {
-            throw new RuntimeException("You shouldn't be calling this when using the real "
-                                               + "(non-emulator) implementation");
-        }
-        String hostport = System.getenv("PUBSUB_EMULATOR_HOST");
-        return ManagedChannelBuilder.forTarget(hostport).usePlaintext().build();
+    private TransportChannelProvider emulatorPubSubChannelProvider() {
+        assert StringUtils.isNotBlank(pubSubHost);
+
+        var channel = ManagedChannelBuilder.forTarget(pubSubHost)
+                .usePlaintext()
+                .build();
+        return FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel));
     }
 
     /**
@@ -224,23 +316,7 @@ public class PubSubConnectionManager {
      * cleans up things that might leak resources.
      */
     public void close() {
-        if (subscriptionAdminClient != null) {
-            try {
-                subscriptionAdminClient.close();
-            } catch (Exception e) {
-                log.error("Could not clean up subscription admin client", e);
-            }
-        }
-        if (adminClient != null) {
-            try {
-                adminClient.close();
-            } catch (Exception e) {
-                log.error("Could not clean up admin client", e);
-            }
-        }
-        if (pubsubChannel != null) {
-            pubsubChannel.shutdown();
-        }
+        cleanable.clean();
     }
 
     /**
@@ -249,7 +325,7 @@ public class PubSubConnectionManager {
     public Subscriber.Builder subscribeBuilder(ProjectSubscriptionName projectSubscriptionName, MessageReceiver receiver) {
         if (useEmulator) {
             return Subscriber.newBuilder(projectSubscriptionName, receiver)
-                    .setCredentialsProvider(pubsubCredsProvider)
+                    .setCredentialsProvider(credentialsProvider)
                     .setChannelProvider(channelProvider);
         } else {
             return Subscriber.newBuilder(projectSubscriptionName, receiver);
