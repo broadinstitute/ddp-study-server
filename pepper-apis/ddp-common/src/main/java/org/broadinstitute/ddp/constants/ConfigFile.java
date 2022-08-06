@@ -92,6 +92,14 @@ public class ConfigFile {
     public static final String EASY_POST_API_KEY = "easyPostApiKey";
     public static final String USE_PUBSUB_EMULATOR = "usePubSubEmulator";
 
+    /**
+     * The host and optional port (in the form `host:port`) of the Pub/Sub
+     *  emulator instance to connect to.
+     * 
+     * <p>This value is only used if {@link ConfigFile.USE_PUBSUB_EMULATOR} is set to `true`.
+     */
+    public static final String PUBSUB_HOST = "pubsub.host";
+
     public static final String SENDGRID_API_KEY = "sendgridToken";
     public static final String HOUSEKEEPING_DB_URL = "housekeepingDbUrl";
     public static final String HOUSEKEEPING_NUM_POOLED_CONNECTIONS = "housekeepingMaxConnections";
@@ -102,10 +110,34 @@ public class ConfigFile {
     public static final String BACKEND_AUTH0_TEST_SECRET2 = "backendTestSecret2";
     public static final String BACKEND_AUTH0_TEST_CLIENT_NAME2 = "backendTestClientName2";
     public static final String PUBSUB_ENABLE_HKEEP_TASKS = "pubsub.enableHousekeepingTasks";
+
+    /**
+     * The name of the Pub/Sub Topic to use for publishing task requests to Housekeeping.
+     */
+    public static final String PUBSUB_HKEEP_TASKS_TOPIC = "pubsub.housekeepingTasksTopic";
+
+    /**
+     * The name of the Pub/Sub Subscription for Housekeeping to listen on for incoming task
+     *  requests.
+     */
     public static final String PUBSUB_HKEEP_TASKS_SUB = "pubsub.housekeepingTasksSubscription";
+    
+    /**
+     * The name of the Pub/Sub Topic to use for publishing task requests to DSS.
+     */
+    public static final String PUBSUB_TASKS_TOPIC = "pubsub.pubSubTasksTopic";
+
+    /**
+     * The name of the Pub/Sub Subscription for DSS to listen on for incoming task
+     *  requests.
+     */
     public static final String PUBSUB_TASKS_SUB = "pubsub.pubSubTasksSubscription";
     public static final String PUBSUB_TASKS_RESULT_TOPIC = "pubsub.pubSubTasksResultTopic";
     public static final String PUBSUB_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT = "pubsub.pubSubTaskSubscriberAwaitRunningTimeout";
+    
+    /**
+     * The name of the Pub/Sub Topic to use for publishing task requests to DSM.
+     */
     public static final String PUBSUB_DSM_TASKS_TOPIC = "pubsub.pubSubDsmTasksTopic";
     public static final String SLACK_HOOK = "slack.hook";
     public static final String SLACK_CHANNEL = "slack.channel";
@@ -211,6 +243,17 @@ public class ConfigFile {
         public static final String REMOVAL_EXPIRE_UNIT = prefix + "removalExpireUnit";
         public static final String REMOVAL_BATCH_SIZE = prefix + "removalBatchSize";
         public static final String ENABLE_SCAN_RESULT_HANDLER = prefix + "enableScanResultHandler";
+
+        /**
+         * The name of the Pub/Sub Topic for DSS to receive scan results from
+         *  the malware scanning service.
+         */
+        public static final String SCAN_RESULT_TOPIC = prefix + "scanResultTopic";
+
+        /**
+         * The name of the Pub/Sub Subscription DSS uses to receive scan results
+         *  from the malware scanning service.
+         */
         public static final String SCAN_RESULT_SUBSCRIPTION = prefix + "scanResultSubscription";
         public static final String SIGNER_SERVICE_ACCOUNT = prefix + "signerServiceAccount";
     }
