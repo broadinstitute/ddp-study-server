@@ -8,7 +8,6 @@ import java.util.Optional;
  * undesirable
  */
 public class UnparsedDeserializer implements Deserializer {
-    @Override
     public Optional<ElasticSearchParticipantDto> deserialize(Map<String, Object> sourceMap) {
         return Optional.of(new UnparsedESParticipantDto(sourceMap));
     }

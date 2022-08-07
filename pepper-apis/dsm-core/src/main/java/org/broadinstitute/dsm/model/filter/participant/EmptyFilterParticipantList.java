@@ -29,6 +29,6 @@ public class EmptyFilterParticipantList extends BaseFilterParticipantList {
                 .withSortBy(sortBy)
                 .build();
         ElasticSearch elasticSearch = new ElasticSearch();
-        return new ParticipantWrapper(participantWrapperPayload, elasticSearch).getFilteredList(isParseDtos());
+        return new ParticipantWrapper(participantWrapperPayload, elasticSearch).getFilteredList();
     }
 }

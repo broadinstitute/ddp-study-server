@@ -7,6 +7,7 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -17,6 +18,7 @@ import org.broadinstitute.dsm.model.elastic.export.tabular.ModuleExportConfig;
 import org.broadinstitute.dsm.model.elastic.export.tabular.TabularParticipantExporter;
 import org.broadinstitute.dsm.model.elastic.export.tabular.TabularParticipantParser;
 import org.broadinstitute.dsm.model.elastic.search.UnparsedDeserializer;
+import org.broadinstitute.dsm.model.elastic.search.UnparsedESParticipantDto;
 import org.broadinstitute.dsm.model.filter.FilterFactory;
 import org.broadinstitute.dsm.model.filter.Filterable;
 import org.broadinstitute.dsm.model.participant.DownloadParticipantListParams;
@@ -66,7 +68,9 @@ public class DownloadParticipantListRoute extends RequestHandler {
         List<ParticipantWrapperDto> participants = fetchParticipantEsData(filterable, request.queryMap());
         logger.info("Beginning parse of " + participants.size() + " participants");
         List<ModuleExportConfig> exportConfigs = parser.generateExportConfigs();
-        List<Map<String, String>> participantValueMaps = parser.parse(exportConfigs, participants);
+        List<Map<String, Object>> participantEsDataMaps = participants.stream().map(dto ->
+                        ((UnparsedESParticipantDto) dto.getEsData()).getDataAsMap()).collect(Collectors.toList());
+        List<Map<String, String>> participantValueMaps = parser.parse(exportConfigs, participantEsDataMaps);
 
         ZipOutputStream zos = new ZipOutputStream(response.raw().getOutputStream());
         TabularParticipantExporter participantExporter = TabularParticipantExporter.getExporter(exportConfigs,

@@ -164,9 +164,9 @@ public class TabularParticipantParser {
     /**
      * map each participant's data into a map of columnName => string value, based on the passed-in configs
      */
-    public List<Map<String, String>> parse(List<ModuleExportConfig> moduleConfigs, List<ParticipantWrapperDto> participantDtos) {
-        List<Map<String, String>> allParticipantMaps = new ArrayList<>(participantDtos.size());
-        for (ParticipantWrapperDto participant : participantDtos) {
+    public List<Map<String, String>> parse(List<ModuleExportConfig> moduleConfigs, List<Map<String, Object>> participantEsDataMaps) {
+        List<Map<String, String>> allParticipantMaps = new ArrayList<>(participantEsDataMaps.size());
+        for (Map<String, Object> participant : participantEsDataMaps) {
             allParticipantMaps.addAll(generateParticipantTabularMaps(moduleConfigs, participant));
         }
         return allParticipantMaps;
@@ -176,21 +176,19 @@ public class TabularParticipantParser {
      * Convert the participant dtos into hashmaps with a value for each column
      *
      * @param moduleConfigs the moduleExportConfigs, such as returned from generateExportConfigs
-     * @param participant   the participantDto, as fetched from elasticSearch
+     * @param participantEsDataMap   the participantDto dataAsMap, as fetched from elasticSearch
      * @return a list of hashmaps suitable for turning into a table. The list will be of length 1, unless this is a study (RGP)
      *     with family members.  In that case, the list will have one map for each member.
      */
     private List<Map<String, String>> generateParticipantTabularMaps(List<ModuleExportConfig> moduleConfigs,
-                                                                     ParticipantWrapperDto participant) {
+                                                                     Map<String, Object> participantEsDataMap) {
         List<Map<String, String>> participantMaps = new ArrayList<>();
-        Map<String, Object> esDataAsMap = participant.getEsData().getDataAsMap();
-        esDataAsMap.put("ddp", participant.getEsData().getDdp());
 
         // get the 'subParticipants' a.k.a RGP family members
         // note that getSubParticipants will always return at least one entry, (for non-RGP studies, it will just return a single empty map)
-        List<Map<String, Object>> participantDataList = getSubParticipants(esDataAsMap);
+        List<Map<String, Object>> participantDataList = getSubParticipants(participantEsDataMap);
         for (Map<String, Object> subParticipant : participantDataList) {
-            participantMaps.add(parseSingleParticipant(esDataAsMap, moduleConfigs, subParticipant));
+            participantMaps.add(parseSingleParticipant(participantEsDataMap, moduleConfigs, subParticipant));
         }
         return participantMaps;
     }

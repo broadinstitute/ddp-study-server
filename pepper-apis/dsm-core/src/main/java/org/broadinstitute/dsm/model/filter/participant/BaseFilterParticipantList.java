@@ -110,9 +110,9 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
                 }
             }
             logger.info("Found query conditions for " + mergeConditions.size() + " tables");
-            return new ParticipantWrapper(participantWrapperPayload.withFilter(mergeConditions).build(), elasticSearch).getFilteredList(isParseDtos());
+            return new ParticipantWrapper(participantWrapperPayload.withFilter(mergeConditions).build(), elasticSearch).getFilteredList();
         } else {
-            return new ParticipantWrapper(participantWrapperPayload.build(), elasticSearch).getFilteredList(isParseDtos());
+            return new ParticipantWrapper(participantWrapperPayload.build(), elasticSearch).getFilteredList();
         }
     }
 
