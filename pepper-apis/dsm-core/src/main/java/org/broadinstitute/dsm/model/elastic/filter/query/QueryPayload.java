@@ -1,7 +1,10 @@
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
+import java.util.Objects;
+
 import lombok.Builder;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.statics.DBConstants;
 
 @Getter
@@ -34,11 +37,20 @@ public class QueryPayload {
     }
 
     public String getFieldName() {
-        return path + DBConstants.ALIAS_DELIMITER + property;
+        if (StringUtils.isNotBlank(path)) {
+            return path + DBConstants.ALIAS_DELIMITER + property;
+        }
+        return property;
     }
 
     public void setPath(String path) {
         this.path = path;
+    }
+
+    public String getPath() {
+        return StringUtils.isBlank(path)
+                ? property
+                : path;
     }
 
     public static class Builder {

@@ -21,11 +21,12 @@ import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.Files;
 import org.broadinstitute.dsm.model.elastic.Invitations;
 import org.broadinstitute.dsm.model.elastic.Profile;
-import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
+import org.broadinstitute.dsm.model.elastic.Status;
 import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
+import org.broadinstitute.dsm.model.elastic.filter.query.ElasticSearchPropertyName;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
 public class PropertyInfo {
 
@@ -49,6 +50,7 @@ public class PropertyInfo {
         TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.ADDRESS, new PropertyInfo(Address.class, false));
         TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.FILES, new PropertyInfo(Files.class, false));
         TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.DSM, new PropertyInfo(Dsm.class, false));
+        TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.DATA, new PropertyInfo(Status.class, false));
     }
 
     private Class<?> propertyClass;
@@ -66,7 +68,10 @@ public class PropertyInfo {
     }
 
     public String getPropertyName() {
-        return Util.capitalCamelCaseToLowerCamelCase(propertyClass.getSimpleName());
+        ElasticSearchPropertyName elasticSearchPropertyName = propertyClass.getAnnotation(ElasticSearchPropertyName.class);
+        return Objects.isNull(elasticSearchPropertyName)
+                ? Util.capitalCamelCaseToLowerCamelCase(propertyClass.getSimpleName())
+                : elasticSearchPropertyName.value();
     }
 
     public String getPrimaryKeyAsCamelCase() {
