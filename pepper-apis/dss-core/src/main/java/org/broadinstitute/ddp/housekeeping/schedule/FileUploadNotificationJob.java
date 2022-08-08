@@ -41,7 +41,7 @@ public class FileUploadNotificationJob implements Job {
 
         log.info("Added job {} to scheduler", getKey());
 
-        String schedule = ConfigUtil.getStrIfPresent(cfg, ConfigFile.FILE_UPLOAD_NOTIFICATION_SCHEDULE);
+        String schedule = ConfigUtil.getStringOrElse(cfg, ConfigFile.FILE_UPLOAD_NOTIFICATION_SCHEDULE, "*/10 * * * * *");
         if (schedule == null || schedule.equalsIgnoreCase("off")) {
             log.warn("Job {} is set to be turned off, no trigger added", getKey());
             return;
