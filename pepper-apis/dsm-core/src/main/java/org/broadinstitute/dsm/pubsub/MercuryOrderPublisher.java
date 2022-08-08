@@ -8,15 +8,21 @@ import java.util.concurrent.TimeUnit;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
+import com.google.api.gax.core.NoCredentialsProvider;
+import com.google.api.gax.grpc.GrpcTransportChannel;
 import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.FixedTransportChannelProvider;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
+
+import io.grpc.ManagedChannelBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -25,6 +31,7 @@ import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderUseCase;
 import org.broadinstitute.dsm.exception.DSMPubSubException;
 import org.broadinstitute.dsm.model.mercury.MercuryPdoOrder;
 import org.broadinstitute.dsm.model.mercury.MercuryPdoOrderBase;
+import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.NanoIdUtil;
 
 @Slf4j
@@ -47,6 +54,27 @@ public class MercuryOrderPublisher {
 
     }
 
+    public static Publisher createPublisher(TopicName topicName) throws IOException {
+        var emulatorEnabled = Boolean.parseBoolean(DSMConfig.getStringIfPresent(DSMServer.GCP_PATH_TO_USE_PUBSUB_EMULATOR));
+        
+        if (emulatorEnabled) {
+            var host = DSMConfig.getSqlFromConfig(DSMServer.GCP_PATH_TO_PUBSUB_HOST);
+            var credentialsProvider = NoCredentialsProvider.create();
+            var channel = ManagedChannelBuilder
+                .forTarget(host)
+                .usePlaintext()
+                .build();
+            var channelProvider = FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel));
+
+            return Publisher.newBuilder(topicName)
+                    .setCredentialsProvider(credentialsProvider)
+                    .setChannelProvider(channelProvider)
+                    .build();
+        } else {
+            return Publisher.newBuilder(topicName).build();
+        }
+    }
+
     public static void publishWithErrorHandler(String projectId, String topicId, String messageData)
             throws IOException, InterruptedException {
         TopicName topicName = TopicName.of(projectId, topicId);
@@ -54,7 +82,7 @@ public class MercuryOrderPublisher {
 
         try {
             // Create a publisher instance with default settings bound to the topic
-            publisher = Publisher.newBuilder(topicName).build();
+            publisher = createPublisher(topicName);
 
             ByteString data = ByteString.copyFromUtf8(messageData);
             PubsubMessage pubsubMessage = PubsubMessage.newBuilder()
