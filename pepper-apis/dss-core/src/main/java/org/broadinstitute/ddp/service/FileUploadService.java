@@ -333,7 +333,7 @@ public class FileUploadService {
                                 .map(FileUpload::getFileName)
                                 .joining(System.lineSeparator()))));
 
-        log.info("EMAIL: A user #{} uploaded {} files in terms of {} study", participantId, fileUploads.size(), study.getGuid());
+        log.info("A user #{} uploaded {} files in terms of {} study", participantId, fileUploads.size(), study.getGuid());
     }
 
     public enum VerifyResult {
