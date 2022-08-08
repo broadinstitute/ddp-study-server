@@ -37,11 +37,7 @@ public class ParticipantFilesUseCase {
         Optional<ESFile> maybeFile =
                 maybeParticipantESDataByParticipantId.get().getFiles().stream().filter(file -> file.guid.equals(fileGuid)).findAny();
         ESFile file = maybeFile.orElseThrow();
-        return isFileClean(file);
-    }
-
-    private boolean isFileClean(ESFile file) {
-        return StringUtils.isNotBlank(file.scannedAt) && CLEAN.equals(file.scanResult);
+        return file.isFileClean();
     }
 
     public SignedUrlResponse createSignedURLForDownload() throws DownloadException {
