@@ -35,10 +35,27 @@
       .header {
         font-family: Spartan-Bold,sans-serif;
         color: #521b93;
-        padding-top: 30px;
-        padding-bottom: 20px!important;
         background: #fff;
+        padding-top: 20px;
+        height: 133px;
+        box-sizing: border-box;
       }
+      @media (max-width: 1200px) {
+        .header {
+          height: 113px;
+        }
+      }
+      @media (max-width: 680px) {
+        .header {
+          height: 89px;
+        }
+      }
+      @media (max-width: 450px) {
+        .header {
+          height: 72px;
+        }
+      }
+
       .container {
         width: auto!important;
         max-width: 1300px;
