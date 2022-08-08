@@ -109,24 +109,12 @@ public class TextValueProvider {
         if (objectName != null) {
             Object formObject = moduleMap.get(objectName);
             if (formObject instanceof List) {
-                // this is a list, like "testResult" off of kitRequestShipping
-                // transform an array of maps into a map of arrays
-                Map<String, Object> answerMap = new HashMap();
-                final String finalFieldName = fieldName;
-                List<Object> answersArray = ((List<?>) formObject).stream().map(arrValue -> {
-                    if (arrValue instanceof Map) {
-                        return ((Map<String, Object>) arrValue).get(finalFieldName);
-                    }
-                    return StringUtils.EMPTY;
-                }).collect(Collectors.toList());
-                answerMap.put(fieldName, answersArray);
-                targetMap = answerMap;
-
+                return extractListValues((List) formObject, fieldName);
             } else if (formObject instanceof Map) {
                 targetMap = (Map<String, Object>) formObject;
             }
         }
-        if ((targetMap == null && objectName != null) || ESObjectConstants.ADDITIONAL_VALUE.equals(filterConfig.getType())) {
+        if (mightBeDynamicField(targetMap, filterConfig)) {
             // try dynamic fields
             Map<String, Object> dynamicFieldMap = (Map<String, Object>) moduleMap.get(ESObjectConstants.DYNAMIC_FIELDS);
             if (dynamicFieldMap != null) {
@@ -149,6 +137,25 @@ public class TextValueProvider {
             targetMap = moduleMap;
         }
         return targetMap.getOrDefault(fieldName, StringUtils.EMPTY);
+    }
+
+    private Object extractListValues(List formObject, String fieldName) {
+        // this is a list, like "testResult" off of kitRequestShipping
+        // transform an array of maps into a map of arrays
+        Map<String, Object> answerMap = new HashMap();
+        List<Object> answersArray = ((List<?>) formObject).stream().map(arrValue -> {
+            if (arrValue instanceof Map) {
+                return ((Map<String, Object>) arrValue).get(fieldName);
+            }
+            return StringUtils.EMPTY;
+        }).collect(Collectors.toList());
+        answerMap.put(fieldName, answersArray);
+        return answerMap.getOrDefault(fieldName, StringUtils.EMPTY);
+    }
+
+    private boolean mightBeDynamicField(Map<String, Object> targetMap, FilterExportConfig filterConfig) {
+        String objectName = filterConfig.getColumn().getObject();
+        return (targetMap == null && objectName != null) || ESObjectConstants.ADDITIONAL_VALUE.equals(filterConfig.getType());
     }
 
     protected List<Object> getRawAnswerValues(Map<String, Object> moduleMap, FilterExportConfig filterConfig) {
@@ -208,10 +215,14 @@ public class TextValueProvider {
                 }
             }
             // replace any nulls with empty string
-            return allValues.stream().map(val -> val == null ? StringUtils.EMPTY : val).collect(Collectors.toList());
+            return replaceNullsWithEmptyString(allValues);
         } else {
             return Collections.singletonList(o);
         }
+    }
+
+    private List<Object> replaceNullsWithEmptyString(Collection<Object> values) {
+        return values.stream().map(val -> val == null ? StringUtils.EMPTY : val).collect(Collectors.toList());
     }
 
     /** flatten an arbitrarily nested collection */

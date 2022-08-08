@@ -25,6 +25,16 @@ public abstract class TabularParticipantExporter {
     protected String fileFormat;
     protected List<Map<String, String>> participantValueMaps;
 
+    /** some tables are stored off the same data object as another (e.g. proxies are stored off of "profile")
+     * this map lets us add distinguishing names to columns from those objects.  e.g. profile.email will not
+     * collide with profile.PROXY.email
+     */
+    private static final Map<String, String> TABLE_ALIAS_NAME_MAP = Map.of(
+            "proxy", "PROXY",
+            "r", "RECORD",
+            "ex", "EXIT"
+    );
+
     /**
      * writes the data to the given stream. This does not close the stream, so that multi-part streams (e.g. zip files)
      * can be supported
@@ -72,17 +82,6 @@ public abstract class TabularParticipantExporter {
     }
 
 
-
-    /** some tables are stored off the same data object as another (e.g. proxies are stored off of "profile")
-     * this map lets us add distinguishing names to columns from those objects.  e.g. profile.email will not
-     * collide with profile.PROXY.email
-     */
-    private static final Map<String, String> TABLE_ALIAS_NAME_MAP = Map.of(
-            "proxy", "PROXY",
-            "r", "RECORD",
-            "ex", "EXIT"
-    );
-
     /**
      * gets what should be a unique name for the column to use in the generated file.  It is very important that the generated
      * name be unique across various filters/data entries, since the column names are also used to store a map of the participant data,
@@ -123,6 +122,7 @@ public abstract class TabularParticipantExporter {
         String exportName = moduleExportPrefix + DBConstants.ALIAS_DELIMITER + columnExportName;
         return exportName.toUpperCase();
     }
+
 
     protected static String getModuleColumnPrefix(FilterExportConfig filterConfig, int activityRepeatNum) {
         String activityName = filterConfig.getParent().getName();

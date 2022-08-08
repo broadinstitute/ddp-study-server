@@ -54,8 +54,8 @@ public class DownloadParticipantListRoute extends RequestHandler {
         String realm = RoutePath.getRealm(request);
         String userIdReq = UserUtil.getUserId(request);
         if (!UserUtil.checkUserAccess(realm, userId, "pt_list_view", userIdReq)) {
-            response.status(500);
-            return new Result(500, UserErrorMessages.NO_RIGHTS);
+            response.status(403);
+            return UserErrorMessages.NO_RIGHTS;
         }
 
         DDPInstance instance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.MEDICAL_RECORD_ACTIVATED);
