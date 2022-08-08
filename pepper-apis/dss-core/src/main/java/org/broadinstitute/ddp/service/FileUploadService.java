@@ -86,7 +86,7 @@ public class FileUploadService {
         TimeUnit removalExpireUnit = TimeUnit.valueOf(cfg.getString(ConfigFile.FileUploads.REMOVAL_EXPIRE_UNIT));
 
         return new FileUploadService(
-                new SendGridClient(cfg.getString("sendgrid.apiKey")),
+                new SendGridClient(cfg.getString(ConfigFile.SENDGRID_API_KEY)),
                 signerCredentials,
                 new GoogleBucketClient(projectId, bucketCredentials),
                 cfg.getString(ConfigFile.FileUploads.UPLOADS_BUCKET),
