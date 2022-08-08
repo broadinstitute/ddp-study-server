@@ -49,16 +49,19 @@ public class FileUpload {
     @ColumnName("created_at")
     Instant createdAt;
 
+    @Nullable
     @ColumnName("uploaded_at")
     Instant uploadedAt;
 
+    @Nullable
     @ColumnName("scanned_at")
     Instant scannedAt;
 
     @Nullable
-    @ColumnName("notification_sent_at")
-    Instant notificationSentAt;
-
     @ColumnName("scan_result")
     FileScanResult scanResult;
+
+    @Nullable
+    @ColumnName("notification_sent_at")
+    Instant notificationSentAt;
 }

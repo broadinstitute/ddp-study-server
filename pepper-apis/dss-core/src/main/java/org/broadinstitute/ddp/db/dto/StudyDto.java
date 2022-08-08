@@ -1,8 +1,8 @@
 package org.broadinstitute.ddp.db.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Value;
+import lombok.experimental.SuperBuilder;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
@@ -11,7 +11,7 @@ import javax.annotation.Nullable;
 import java.io.Serializable;
 
 @Value
-@Builder(toBuilder = true)
+@SuperBuilder(toBuilder = true)
 @AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class StudyDto implements Serializable {
     @ColumnName("umbrella_study_id")

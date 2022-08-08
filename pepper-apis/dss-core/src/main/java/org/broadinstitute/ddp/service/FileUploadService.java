@@ -306,6 +306,7 @@ public class FileUploadService {
     private void sendNotifications(final Handle handle, final Long studyId, final List<FileUpload> fileUploads) {
         final var study = handle.attach(JdbiUmbrellaStudy.class).findById(studyId);
         if (StringUtils.isBlank(study.getNotificationEmail())) {
+            handle.attach(FileUploadDao.class).setNotificationSentByStudyId(studyId);
             log.info("Study {} doesn't have an e-mail for notifications", study.getGuid());
             return;
         }
