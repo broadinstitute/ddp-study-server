@@ -40,7 +40,6 @@ import org.broadinstitute.ddp.model.files.FileScanResult;
 import org.broadinstitute.ddp.model.files.FileUpload;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GoogleCredentialUtil;
-import org.broadinstitute.ddp.util.SendGridMailUtil;
 import org.jdbi.v3.core.Handle;
 
 @Slf4j
