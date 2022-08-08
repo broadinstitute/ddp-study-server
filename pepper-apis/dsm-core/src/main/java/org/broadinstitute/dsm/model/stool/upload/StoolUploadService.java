@@ -30,7 +30,7 @@ public class StoolUploadService {
         return new StoolUploadService(stoolUploadServicePayload);
     }
 
-    public Object serve() {
+    public String serve() {
         AbstractRecordsParser<StoolUploadDto> tsvRecordsParser =
                 new TSVStoolUploadRecordsParser(stoolUploadServicePayload.getRequestBody());
         Response response = stoolUploadServicePayload.getResponse();
@@ -38,12 +38,11 @@ public class StoolUploadService {
             List<StoolUploadDto> stoolUploadObjects = tsvRecordsParser.parseToObjects();
             stoolUploadObjects.forEach(this::updateKitAndThenSendNotification);
             response.status(200);
-            response.body("Stool Upload was successful");
+            return "Stool Upload was successful";
         } catch (Exception e) {
             response.status(500);
-            response.body(e.getMessage());
+            return e.getMessage();
         }
-        return response;
     }
 
     private void updateKitAndThenSendNotification(StoolUploadDto stoolUploadDto) {

@@ -16,7 +16,7 @@ public class RegexSeparatorDictionary {
     );
 
     public static String describe(String regexSeparator) {
-        return String.join(DICTIONARY.get(regexSeparator), " separator");
+        return DICTIONARY.get(regexSeparator).concat(" separator");
     }
 
 }
