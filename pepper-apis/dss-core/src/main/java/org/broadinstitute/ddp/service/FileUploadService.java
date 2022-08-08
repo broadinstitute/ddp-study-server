@@ -331,7 +331,7 @@ public class FileUploadService {
                         "text/html",
                         "User " + participantId + " uploaded following files: " + StreamEx.of(fileUploads)
                                 .map(FileUpload::getFileName)
-                                .joining("\n"))));
+                                .joining(System.lineSeparator()))));
 
         log.info("EMAIL: A user #{} uploaded {} files in terms of {} study", participantId, fileUploads.size(), study.getGuid());
     }
