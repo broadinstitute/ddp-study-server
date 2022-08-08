@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -19,6 +20,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+
+import javax.validation.constraints.NotNull;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
@@ -36,9 +39,12 @@ import com.google.gson.Gson;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
-import com.google.pubsub.v1.Subscription;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+
+import lombok.AllArgsConstructor;
+import lombok.NonNull;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
@@ -208,8 +214,7 @@ public class Housekeeping {
         boolean doLiquibase = cfg.getBoolean(ConfigFile.DO_LIQUIBASE);
         int maxConnections = cfg.getInt(ConfigFile.HOUSEKEEPING_NUM_POOLED_CONNECTIONS);
         String pubSubProject = cfg.getString(ConfigFile.GOOGLE_PROJECT_ID);
-
-        boolean usePubSubEmulator = cfg.getBoolean(ConfigFile.USE_PUBSUB_EMULATOR);
+        
         String housekeepingDbUrl = cfg.getString(TransactionWrapper.DB.HOUSEKEEPING.getDbUrlConfigKey());
         String apisDbUrl = cfg.getString(TransactionWrapper.DB.APIS.getDbUrlConfigKey());
 
@@ -232,11 +237,30 @@ public class Housekeeping {
         }
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
 
-        setupScheduler(cfg);
-        setupTaskReceiver(cfg, pubSubProject);
-        setupFileScanResultReceiver(cfg, pubSubProject);
+        final PubSubConnectionManager pubsubConnectionManager;
+        try {
+            final var pubSubHost = cfg.getString(ConfigFile.PUBSUB_HOST);
+            final var usePubSubEmulator = cfg.getBoolean(ConfigFile.USE_PUBSUB_EMULATOR);
 
-        final PubSubConnectionManager pubsubConnectionManager = new PubSubConnectionManager(usePubSubEmulator);
+            pubsubConnectionManager = new PubSubConnectionManager(usePubSubEmulator, pubSubHost);
+        } catch (IOException error) {
+            final var message = String.format("Failed to initialize the Pub/Sub connection manager [useEmulator=%s, pubSubHost=%s]",
+                    cfg.getBoolean(ConfigFile.USE_PUBSUB_EMULATOR),
+                            cfg.getString(ConfigFile.PUBSUB_HOST));
+            throw new DDPException(message, error);
+        }
+
+        if (pubsubConnectionManager.isEmulated()) {
+            // Configures the necessary topics & subscriptions for housekeeping to use.
+            // At the moment, this behavior is only used when the emulator is in use,
+            // but this may be desirable for normal use in the future to ease setup of
+            // new instances if the service account has sufficient privileges.
+            createPubSubResources(pubsubConnectionManager, cfg);
+        }
+
+        setupScheduler(cfg);
+        setupTaskReceiver(cfg, pubsubConnectionManager, pubSubProject);
+        setupFileScanResultReceiver(cfg, pubsubConnectionManager, pubSubProject);
 
         PubSubTaskConnectionService pubSubTaskConnectionService = new PubSubTaskConnectionService(
                 pubsubConnectionManager,
@@ -263,7 +287,7 @@ public class Housekeeping {
             //  The duplication of `topicName` below is intentional- this has been the
             //    historic use and is intended to maintain compatibility with other services.
             // 
-            //  (bskinner - 20220806): Investigate if this code is still in use.
+            //  (bskinner - 20220806): Investigate if this code is still in use. Look for DDP-5235.
             final var projectTopicName = ProjectTopicName.of(pubSubProject, topicName);
             final var projectSubscriptionName = ProjectSubscriptionName.of(pubSubProject, topicName);
 
@@ -531,38 +555,71 @@ public class Housekeeping {
         }
     }
 
-    private static void setupTaskReceiver(Config cfg, String projectId) {
-        boolean enableHKeepTasks = cfg.getBoolean(ConfigFile.PUBSUB_ENABLE_HKEEP_TASKS);
-        if (enableHKeepTasks) {
-            var subName = ProjectSubscriptionName.of(projectId, cfg.getString(ConfigFile.PUBSUB_HKEEP_TASKS_SUB));
-            var receiver = new HousekeepingTaskReceiver(subName, scheduler);
-            taskSubscriber = Subscriber.newBuilder(subName, receiver)
-                    .setParallelPullCount(1)
-                    .setExecutorProvider(InstantiatingExecutorProvider.newBuilder()
-                            .setExecutorThreadCount(1)
-                            .build())
-                    .build();
-            try {
-                taskSubscriber.startAsync().awaitRunning(30L, TimeUnit.SECONDS);
-            } catch (TimeoutException e) {
-                throw new DDPException("Could not start housekeeping tasks subscriber", e);
-            }
-            log.info("Started housekeeping tasks subscriber to subscription {}", subName);
+    private static void setupTaskReceiver(Config cfg, PubSubConnectionManager connectionManager, String projectId) {
+        boolean enableHKeepTasks = ConfigUtil.getBoolOrElse(cfg, ConfigFile.PUBSUB_ENABLE_HKEEP_TASKS, false);
+        if (!enableHKeepTasks) {
+            log.warn("Housekeeping tasks DISABLED [enableHKeepTasks={}]", enableHKeepTasks);
+            return;
         } else {
-            log.warn("Housekeeping tasks is not enabled");
+            log.info("Housekeeping tasks ENABLED [enableHKeepTasks={}]", enableHKeepTasks);
         }
+
+        var topicName = ProjectTopicName.of(projectId, cfg.getString(ConfigFile.PUBSUB_HKEEP_TASKS_TOPIC));
+        var subName = ProjectSubscriptionName.of(projectId, cfg.getString(ConfigFile.PUBSUB_HKEEP_TASKS_SUB));
+
+        if (connectionManager.isEmulated()) {
+            try {
+                connectionManager.createTopicIfNotExists(topicName);
+                connectionManager.createSubscriptionIfNotExists(subName, topicName);
+                log.info("created Pub/Sub resources [topic={}, subscription={}]", topicName, subName);
+            } catch (IOException error) {
+                var message = "Failed to create Pub/Sub resources";
+                log.error("{}: [topic={}, subscription={}]", message, topicName, subName, error);
+                throw new DDPException(message, error);
+            }
+        }
+
+        var receiver = new HousekeepingTaskReceiver(subName, scheduler);
+        var subscriber = connectionManager.subscribeBuilder(subName, receiver)
+                .setParallelPullCount(1)
+                .setExecutorProvider(InstantiatingExecutorProvider.newBuilder()
+                        .setExecutorThreadCount(1)
+                        .build())
+                .build();
+        try {
+            subscriber.startAsync().awaitRunning(30L, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            throw new DDPException("Could not start housekeeping tasks subscriber", e);
+        }
+
+        Housekeeping.taskSubscriber = subscriber;
+        log.info("Started housekeeping tasks subscriber to subscription {}", subName);
     }
 
-    private static void setupFileScanResultReceiver(Config cfg, String projectId) {
-        boolean enabled = cfg.getBoolean(ConfigFile.FileUploads.ENABLE_SCAN_RESULT_HANDLER);
+    private static void setupFileScanResultReceiver(Config cfg, PubSubConnectionManager connectionManager, String projectId) {
+        boolean enabled = ConfigUtil.getBoolOrElse(cfg, ConfigFile.FileUploads.ENABLE_SCAN_RESULT_HANDLER, false);
         if (!enabled) {
             log.warn("File scan result handler is not enabled");
             return;
         }
 
+        var topicName = ProjectTopicName.of(projectId,
+                cfg.getString(ConfigFile.FileUploads.SCAN_RESULT_TOPIC));
         var subName = ProjectSubscriptionName.of(projectId,
                 cfg.getString(ConfigFile.FileUploads.SCAN_RESULT_SUBSCRIPTION));
 
+        if (connectionManager.isEmulated()) {
+            try {
+                connectionManager.createTopicIfNotExists(topicName);
+                connectionManager.createSubscriptionIfNotExists(subName, topicName);
+                log.info("created Pub/Sub resources [topic={}, subscription={}]", topicName, subName);
+            } catch (IOException error) {
+                var message = "Failed to create Pub/Sub resources";
+                log.error("{}: [topic={}, subscription={}]", message, topicName, subName, error);
+                throw new DDPException(message, error);
+            }
+        }
+        
         boolean ensureDefault = cfg.getBoolean(ConfigFile.REQUIRE_DEFAULT_GCP_CREDENTIALS);
         GoogleCredentials credentials = GoogleCredentialUtil.initCredentials(ensureDefault);
         if (credentials == null) {
@@ -721,8 +778,10 @@ public class Housekeeping {
         });
     }
 
-    private static void setupMessageReceiver(PubSubConnectionManager pubsubConnectionManager, ProjectSubscriptionName
-            projectSubscriptionName, Config cfg, SendGridSupplier sendGridSupplier) {
+    private static void setupMessageReceiver(PubSubConnectionManager pubsubConnectionManager,
+                            ProjectSubscriptionName projectSubscriptionName,
+                            Config cfg,
+                            SendGridSupplier sendGridSupplier) {
         PdfService pdfService = new PdfService();
         PdfBucketService pdfBucketService = new PdfBucketService(cfg);
         PdfGenerationService pdfGenerationService = new PdfGenerationService();
@@ -851,7 +910,7 @@ public class Housekeeping {
                         }
                     };
 
-            Subscriber subscriber = pubsubConnectionManager.subscribeBuilder(projectSubscriptionName, receiver)
+            var subscriber = pubsubConnectionManager.subscribeBuilder(projectSubscriptionName, receiver)
                     .setParallelPullCount(1)
                     .setExecutorProvider(InstantiatingExecutorProvider.newBuilder()
                             .setExecutorThreadCount(1)
@@ -915,6 +974,50 @@ public class Housekeeping {
                 apihandle.attach(UserDao.class).findUserByGuid(participantGuid).isPresent());
     }
 
+    private static void createPubSubResources(PubSubConnectionManager connectionManager, Config config) {
+        assert TransactionWrapper.isInitialized() : "Pub/Sub configuration requires the database be initialized";
+
+        final var projectId = config.getString(ConfigFile.GOOGLE_PROJECT_ID);
+
+        var resourcesToCreate = new HashSet<PubSubResource>();
+
+        var dsmToDssTasks = new PubSubResource(projectId,
+                config.getString(ConfigFile.PUBSUB_TASKS_TOPIC),
+                config.getString(ConfigFile.PUBSUB_TASKS_SUB));
+        resourcesToCreate.add(dsmToDssTasks);
+
+        // Location to publish results of tasks received on the dsmToDssTasks topic
+        var dsmToDssTaskResults = new PubSubResource(projectId,
+                config.getString(ConfigFile.PUBSUB_TASKS_RESULT_TOPIC));
+        resourcesToCreate.add(dsmToDssTaskResults);
+
+        for (final var resource : resourcesToCreate) {
+            final var topicName = resource.topicName;
+            final var subscriptionName = resource.subscriptionName;
+
+            try {
+                if ((subscriptionName != null) && (topicName != null)) {
+                    connectionManager.createTopicIfNotExists(topicName);
+                    connectionManager.createSubscriptionIfNotExists(subscriptionName, topicName);
+                    log.debug("created Pub/Sub resources [topic={}, subscription={}]", subscriptionName, topicName);
+                } else if (topicName != null) {
+                    connectionManager.createTopicIfNotExists(topicName);
+                    log.debug("created Pub/Sub resource [topic={}]", topicName);
+                } else if (subscriptionName != null) {
+                    log.warn("unable to create subscription for {}, no topic was specified.", subscriptionName);
+                } else {
+                    // Not really an error since it's effectively a NOP, but make sure to signal the
+                    // situation during development.
+                    assert false : "both topicName and subscriptionName may not be null";
+                }
+            } catch (IOException error) {
+                var message = "Failed to initialize Pub/Sub resource during setup";
+                log.error("{}: [topic={}, subscription={}]", message, topicName, subscriptionName, error);
+                throw new DDPException(message, error);
+            }
+        }
+    }
+
     /**
      * Callback fired after a message is handled.  Primarily used for testing.
      */
@@ -941,5 +1044,22 @@ public class Housekeeping {
      */
     @FunctionalInterface interface SendGridSupplier {
         SendGridClient get(String apiKey);
+    }
+
+    @Value
+    @AllArgsConstructor
+    private static class PubSubResource {
+        private final ProjectTopicName topicName;
+        private final ProjectSubscriptionName subscriptionName;
+
+        PubSubResource(@NonNull String projectId, @NonNull String topicName) {
+            this.subscriptionName = null;
+            this.topicName = ProjectTopicName.of(projectId, topicName);
+        }
+
+        PubSubResource(@NonNull String projectId,@NonNull String topicName,@NonNull String subscriptionName) {
+            this.topicName = ProjectTopicName.of(projectId, topicName);
+            this.subscriptionName = ProjectSubscriptionName.of(projectId, subscriptionName);
+        }
     }
 }
