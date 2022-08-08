@@ -58,6 +58,7 @@ public class SingularDeleteEmailEvents implements CustomTask {
 
     @Override
     public void run(Handle handle) {
+        log.info("TASK:: SingularDeleteEmailEvents ");
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid"));
         UserDto user = handle.attach(JdbiUser.class).findByUserGuid(cfg.getString("adminUser.guid"));
         deleteEvents(handle, studyDto, user.getUserId());

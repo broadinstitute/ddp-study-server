@@ -19,6 +19,10 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
+/**
+ * Task to update existing singular completed activity instances as read-only.
+ *
+ */
 @Slf4j
 public class SingularReadonlyActivities implements CustomTask {
     private static final String DATA_FILE  = "patches/singular-readonly-activities.conf";
@@ -50,6 +54,7 @@ public class SingularReadonlyActivities implements CustomTask {
 
     @Override
     public void run(Handle handle) {
+        log.info("TASK:: SingularReadonlyActivities ");
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid"));
         UserDto user = handle.attach(JdbiUser.class).findByUserGuid(cfg.getString("adminUser.guid"));
         updateActivities(handle, studyDto, user.getUserId());
