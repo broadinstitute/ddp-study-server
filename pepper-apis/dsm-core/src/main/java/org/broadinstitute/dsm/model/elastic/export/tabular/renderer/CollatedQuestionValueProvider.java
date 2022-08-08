@@ -19,7 +19,7 @@ public class CollatedQuestionValueProvider extends PickListValueProvider {
         Object value = StringUtils.EMPTY;
         String fieldName = filterConfig.getColumn().getName();
         if (formMap == null) {
-
+            return Collections.singletonList(StringUtils.EMPTY);
         } else {
             List<Map<String, Object>> allAnswers =
                     (List<Map<String, Object>>) formMap.get(ElasticSearchUtil.QUESTIONS_ANSWER);

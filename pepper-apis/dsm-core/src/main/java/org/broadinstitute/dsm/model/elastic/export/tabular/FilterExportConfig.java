@@ -1,11 +1,5 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
@@ -14,13 +8,20 @@ import org.broadinstitute.dsm.model.ParticipantColumn;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 @Getter
 public class FilterExportConfig {
     private final ParticipantColumn column;
     private final ModuleExportConfig parent;
     private final String type;
     private boolean splitOptionsIntoColumns = false;
-    private HashSet<String> optionIdsWithDetails = new HashSet<String>();
+    private Set<String> optionIdsWithDetails = new HashSet<String>();
     private String collationSuffix = null;
     private Map<String, Object> questionDef = null;
     @Setter

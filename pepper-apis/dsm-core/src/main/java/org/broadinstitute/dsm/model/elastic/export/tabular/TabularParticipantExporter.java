@@ -25,6 +25,10 @@ public abstract class TabularParticipantExporter {
     protected String fileFormat;
     protected List<Map<String, String>> participantValueMaps;
 
+    /**
+     * writes the data to the given stream. This does not close the stream, so that multi-part streams (e.g. zip files)
+     * can be supported
+     */
     public abstract void export(OutputStream os) throws IOException;
 
     protected abstract String sanitizeValue(String value);

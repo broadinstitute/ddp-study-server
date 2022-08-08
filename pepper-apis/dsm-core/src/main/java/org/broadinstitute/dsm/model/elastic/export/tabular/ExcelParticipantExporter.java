@@ -50,9 +50,10 @@ public class ExcelParticipantExporter extends TabularParticipantExporter {
     }
 
     protected void writeAndCloseSheet(OutputStream os) throws IOException {
-        workbook.write(os);
-        workbook.dispose();
-        workbook.close();
+        try (workbook) {
+            workbook.write(os);
+            workbook.dispose();
+        }
     }
 
     protected void writeRowToSheet(List<String> rowValues, int rowNum) {
