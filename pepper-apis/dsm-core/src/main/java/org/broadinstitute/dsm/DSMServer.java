@@ -935,7 +935,7 @@ public class DSMServer {
         post(UI_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, new PostMercuryOrderRoute(projectId, mercuryTopicId), new JsonTransformer());
 
         GetMercuryEligibleSamplesRoute getMercuryEligibleSamplesRoute = new GetMercuryEligibleSamplesRoute(
-                new MercurySampleDao(), new MercuryOrderDao(), new ClinicalOrderDao(), projectId, mercuryTopicId);
+                new MercurySampleDao(), projectId, mercuryTopicId);
         get(UI_ROOT + RoutePath.MERCURY_SAMPLES_ROUTE, getMercuryEligibleSamplesRoute, new JsonTransformer());
 
         GetMercuryOrdersRoute getMercuryOrdersRoute = new GetMercuryOrdersRoute(

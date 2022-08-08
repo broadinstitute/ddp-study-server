@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.route.mercury;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import com.google.gson.Gson;
@@ -16,7 +16,6 @@ import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.lddp.handlers.util.Result;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
@@ -56,7 +55,7 @@ public class PostMercuryOrderRoute extends RequestHandler {
 
     public void publishMessage(MercurySampleDto[] mercurySampleDtos, DDPInstanceDto ddpInstance, String userId, String ddpParticipantId) {
         log.info("Preparing message to publish to Mercury");
-        ArrayList<String> barcodes = new MercuryOrderUseCase().collectBarcodes(mercurySampleDtos);
+        List<String> barcodes = new MercuryOrderUseCase().collectBarcodes(mercurySampleDtos);
         String[] barcodesArray = barcodes.toArray(new String[barcodes.size()]);
         mercuryOrderPublisher
                 .createAndPublishMessage(barcodesArray, projectId, topicId, ddpInstance,

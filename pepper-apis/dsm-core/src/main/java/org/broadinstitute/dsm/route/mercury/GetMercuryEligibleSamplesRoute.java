@@ -1,12 +1,9 @@
 package org.broadinstitute.dsm.route.mercury;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import lombok.extern.slf4j.Slf4j;
-import org.broadinstitute.dsm.db.dao.mercury.ClinicalOrderDao;
-import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.db.dao.mercury.MercurySampleDao;
-import org.broadinstitute.dsm.db.dto.mercury.ClinicalOrderUseCase;
 import org.broadinstitute.dsm.db.dto.mercury.MercurySampleDto;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -21,15 +18,10 @@ public class GetMercuryEligibleSamplesRoute extends RequestHandler {
     private MercurySampleDao mercurySampleDao;
     public static String projectId;
     public static String topicId;
-    private ClinicalOrderUseCase clinicalOrderUseCase = new ClinicalOrderUseCase();
-    private ClinicalOrderDao clinicalOrderDao;
-    private MercuryOrderDao mercuryOrderDao;
 
-    public GetMercuryEligibleSamplesRoute(MercurySampleDao mercurySampleDao, MercuryOrderDao mercuryOrderDao,
-                                          ClinicalOrderDao clinicalOrderDao, String projectId, String topicId) {
+
+    public GetMercuryEligibleSamplesRoute(MercurySampleDao mercurySampleDao, String projectId, String topicId) {
         this.mercurySampleDao = mercurySampleDao;
-        this.mercuryOrderDao = mercuryOrderDao;
-        this.clinicalOrderDao = clinicalOrderDao;
         this.projectId = projectId;
         this.topicId = topicId;
     }
@@ -52,7 +44,7 @@ public class GetMercuryEligibleSamplesRoute extends RequestHandler {
                 throw new RuntimeException("No ddpParticipantId query param was sent");
             }
             String ddpParticipantId = queryParams.get(RoutePath.DDP_PARTICIPANT_ID).value();
-            ArrayList<MercurySampleDto> eligibleSamples = mercurySampleDao.findEligibleSamples(ddpParticipantId, realm);
+            List<MercurySampleDto> eligibleSamples = mercurySampleDao.findEligibleSamples(ddpParticipantId, realm);
             log.info(String.format("Returning a list of %d samples", eligibleSamples.size()));
             return eligibleSamples;
         }

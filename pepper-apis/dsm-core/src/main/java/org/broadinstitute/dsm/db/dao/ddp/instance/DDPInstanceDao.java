@@ -66,7 +66,7 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
                     + "WHERE is_active = 1";
     private static final String SQL_SELECT_ROLES_FOR_INSTANCE =
             "SELECT role.name FROM ddp_instance ddp left join ddp_instance_role inRol on (inRol.ddp_instance_id = ddp.ddp_instance_id) "
-                    + " left join instance_role role on (role.role_id = inRol.role_id) "
+                    + " left join instance_role role on (role.instance_role_id = inRol.instance_role_id) "
                     + "WHERE is_active = 1";
     private static final String SQL_GET_INSTANCE_ID_BY_GUID =
             "SELECT ddp_instance_id FROM ddp_instance WHERE study_guid = ? ";
