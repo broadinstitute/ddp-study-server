@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -37,6 +38,7 @@ import org.broadinstitute.dsm.util.EventUtil;
 import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.UserUtil;
+import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.lddp.handlers.util.Result;
 import org.slf4j.Logger;
@@ -45,11 +47,18 @@ import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
 
-public class KitStatusChangeRoute extends RequestHandler {
+public abstract class KitStatusChangeRoute extends RequestHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(KitStatusChangeRoute.class);
 
-    private NotificationUtil notificationUtil;
+    protected NotificationUtil notificationUtil;
+    protected KitScanPayload kitScanPayload;
+    protected DDPInstanceDto ddpInstanceDto;
+    protected String userIdRequest;
+    protected List<ScanError> scanErrorList;
+    protected List<ScanPayload> scanPayloads;
+    protected JsonArray scans;
+    protected long currentTime;
 
     public KitStatusChangeRoute(@NonNull NotificationUtil notificationUtil) {
         this.notificationUtil = notificationUtil;
@@ -69,18 +78,20 @@ public class KitStatusChangeRoute extends RequestHandler {
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         String requestBody = request.body();
-        String userIdRequest = UserUtil.getUserId(request);
+        userIdRequest = UserUtil.getUserId(request);
         QueryParamsMap queryParams = request.queryMap();
         String realm = queryParams.get(RoutePath.REALM).value();
-        DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
+        ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
         if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest) || UserUtil.checkUserAccess(null, userId, "kit_receiving",
                 userIdRequest)) {
-            List<ScanError> scanErrorList = new ArrayList<>();
+            scanErrorList = new ArrayList<>();
 
-            long currentTime = System.currentTimeMillis();
-            JsonArray scans = (JsonArray) (new JsonParser().parse(requestBody));
+            currentTime = System.currentTimeMillis();
+            scans = (JsonArray) (new JsonParser().parse(requestBody));
+            scanPayloads = ObjectMapperSingleton.readValue(requestBody, new TypeReference<List<ScanPayload>>() {});
             int labelCount = scans.size();
             if (labelCount > 0) {
+                processRequest();
                 if (request.url().endsWith(RoutePath.FINAL_SCAN_REQUEST)) {
                     updateKits(RoutePath.FINAL_SCAN_REQUEST, scans, currentTime, scanErrorList, userIdRequest, ddpInstanceDto);
                 } else if (request.url().endsWith(RoutePath.TRACKING_SCAN_REQUEST)) {
@@ -100,6 +111,8 @@ public class KitStatusChangeRoute extends RequestHandler {
             return new Result(500, UserErrorMessages.NO_RIGHTS);
         }
     }
+
+    protected abstract void processRequest();
 
     public void updateKits(@NonNull String changeType, @NonNull JsonArray scans, long currentTime, @NonNull List<ScanError> scanErrorList,
                            @NonNull String userId, DDPInstanceDto ddpInstanceDto) {
@@ -244,28 +257,6 @@ public class KitStatusChangeRoute extends RequestHandler {
                 logger.error("Error something went wrong at the scan pages");
             }
         }
-    }
-
-    private String getKitRequestId(@NonNull String query, @NonNull String kitLabel) {
-        List<String> ddpKitRequestIds = new ArrayList<>();
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult(0);
-            try (PreparedStatement stmt = conn.prepareStatement(query)) {
-                stmt.setString(1, kitLabel);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        ddpKitRequestIds.add(rs.getString(0));
-                    }
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
-            if (dbVals.resultException != null) {
-                throw new RuntimeException("Error getting kit request id ", dbVals.resultException);
-            }
-            return dbVals;
-        });
-        return ddpKitRequestIds.get(0);
     }
 
     private boolean checkKitLabel(@NonNull String query, @NonNull String kitLabel) {
