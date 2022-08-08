@@ -138,4 +138,10 @@ public class OperatorTest {
         Operator operator = Operator.extract(filter);
         assertEquals(Operator.DATE, operator);
     }
+
+    @Test
+    public void extractIsNull() {
+        String filter = "o.created IS NULL";
+        assertEquals(Operator.IS_NULL, Operator.extract(filter));
+    }
 }

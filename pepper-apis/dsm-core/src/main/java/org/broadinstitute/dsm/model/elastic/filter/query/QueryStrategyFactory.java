@@ -9,7 +9,7 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 public class QueryStrategyFactory {
 
     private static final List<String> NON_ACTIVITY_OBJECTS = Arrays.asList(ESObjectConstants.FILES, ESObjectConstants.ADDRESS,
-            ESObjectConstants.DSM, ESObjectConstants.PROFILE, ESObjectConstants.INVITATIONS);
+            ESObjectConstants.DSM, ESObjectConstants.PROFILE, ESObjectConstants.INVITATIONS, ESObjectConstants.DATA);
 
     public static BuildQueryStrategy create(QueryStrategyFactoryPayload queryStrategyFactoryPayload) {
         BuildQueryStrategy result;
