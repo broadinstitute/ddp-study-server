@@ -109,6 +109,18 @@ public interface FileUploadDao extends SqlObject {
             @Bind("studyId") long studyId,
             @BindList(value = "userIds", onEmpty = EmptyHandling.NULL) Iterable<Long> participantUserIds);
 
+    @SqlQuery("select f.*, "
+            + "  from file_upload as f"
+            + " where f.notification_sent_at IS NULL")
+    @RegisterConstructorMapper(FileUpload.class)
+    Stream<FileUpload> findWithoutSentNotification();
+
+    @SqlQuery("update file_upload f"
+            + "   set f.notification_sent_at = NOW() "
+            + " where f.notification_sent_at IS NULL AND f.study_id = :studyId")
+    @RegisterConstructorMapper(FileUpload.class)
+    void setNotificationSentByStudyId(@Bind("studyId") long studyId);
+
     @SqlQuery("select file_upload_id, file_upload_guid, file_name, file_size"
             + "  from file_upload where file_upload_guid = :guid")
     @RegisterConstructorMapper(FileInfo.class)

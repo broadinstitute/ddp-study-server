@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -26,15 +27,20 @@ import com.typesafe.config.Config;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import one.util.streamex.StreamEx;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.interfaces.FileUploadSettings;
 import org.broadinstitute.ddp.model.files.FileScanResult;
 import org.broadinstitute.ddp.model.files.FileUpload;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GoogleCredentialUtil;
+import org.broadinstitute.ddp.util.SendGridMailUtil;
 import org.jdbi.v3.core.Handle;
 
 @Slf4j
@@ -283,6 +289,32 @@ public class FileUploadService {
         uploadDao.deleteByIds(uploadIdsToDelete);
         log.info("Removed {} unused file uploads", uploadIdsToDelete.size());
         return uploadIdsToDelete.size();
+    }
+
+    public void sendNotifications(final Handle handle) {
+        StreamEx.of(handle.attach(FileUploadDao.class).findWithoutSentNotification())
+                .groupingBy(FileUpload::getStudyId)
+                .forEach((studyId, fileUploads) -> sendNotifications(handle, studyId, fileUploads));
+    }
+
+    private void sendNotifications(final Handle handle, final Long studyId, final List<FileUpload> fileUploads) {
+        final var study = handle.attach(JdbiUmbrellaStudy.class).findById(studyId);
+        if (StringUtils.isBlank(study.getNotificationEmail())) {
+            log.info("Study {} doesn't have an e-mail for notifications", study.getGuid());
+            return;
+        }
+
+        StreamEx.of(fileUploads)
+                .groupingBy(FileUpload::getParticipantUserId)
+                .forEach((participantId, uploads) -> sendNotification(study, participantId, uploads));
+
+        handle.attach(FileUploadDao.class).setNotificationSentByStudyId(studyId);
+        log.info("Notifications sent for {} study", study.getGuid());
+    }
+
+    private void sendNotification(final StudyDto study, final Long participantId, final List<FileUpload> fileUploads) {
+        //TODO: Send an e-mail somehow
+        log.info("EMAIL: A user #{} uploaded {} files in terms of {} study", participantId, fileUploads.size(), study.getGuid());
     }
 
     public enum VerifyResult {

@@ -55,4 +55,6 @@ public class StudyDto implements Serializable {
     @ColumnName("error_present_status_enabled")
     boolean errorPresentStatusEnabled;
 
+    @ColumnName("notification_email")
+    String notificationEmail;
 }
