@@ -72,7 +72,19 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
     @Test
     public void testAuthorizeUpload() throws MalformedURLException {
         var now = Instant.now();
-        var dummyUpload = new FileUpload(1L, "guid", 1L, 1L, 1L, "blob", "mime", "file", 123, false, now, null, null, null);
+        var dummyUpload = FileUpload.builder()
+                .id(1L)
+                .guid("guid")
+                .studyId(1L)
+                .operatorUserId(1L)
+                .participantUserId(1L)
+                .blobName("blob")
+                .mimeType("mime")
+                .fileName("file")
+                .fileSize(123L)
+                .isVerified(false)
+                .createdAt(now)
+                .build();
         var dummyUrl = new URL("https://datadonationplatform.org");
         var expectedMime = FileUploadService.DEFAULT_MIME_TYPE;
         var expectedMethod = HttpMethod.POST;
@@ -202,13 +214,12 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
             result = service.verifyUpload(handle, studyId, userId, upload);
             assertEquals(FileUploadService.VerifyResult.SIZE_MISMATCH, result);
 
-            var quarantinedUpload = new FileUpload(
-                    upload.getId(), upload.getGuid(),
-                    upload.getStudyId(), upload.getOperatorUserId(), upload.getParticipantUserId(),
-                    upload.getBlobName(), upload.getMimeType(),
-                    upload.getFileName(), upload.getFileSize(),
-                    false, upload.getCreatedAt(), null,
-                    Instant.now(), FileScanResult.INFECTED);
+            var quarantinedUpload = upload.toBuilder()
+                    .isVerified(false)
+                    .uploadedAt(null)
+                    .scanResult(FileScanResult.INFECTED)
+                    .scannedAt(Instant.now())
+                    .build();
             result = service.verifyUpload(handle, studyId, userId, quarantinedUpload);
             assertEquals(FileUploadService.VerifyResult.QUARANTINED, result);
 

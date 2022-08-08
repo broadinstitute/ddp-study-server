@@ -30,9 +30,20 @@ public interface FileUploadDao extends SqlObject {
         long id = getFileUploadSql().insert(
                 guid, studyId, operatorUserId, participantUserId,
                 blobName, mimeType, fileName, fileSize, now);
-        return new FileUpload(
-                id, guid, studyId, operatorUserId, participantUserId,
-                blobName, mimeType, fileName, fileSize, false, now, null, null, null);
+
+        return FileUpload.builder()
+                .id(id)
+                .guid(guid)
+                .studyId(studyId)
+                .operatorUserId(operatorUserId)
+                .participantUserId(participantUserId)
+                .blobName(blobName)
+                .mimeType(mimeType)
+                .fileName(fileName)
+                .fileSize(fileSize)
+                .isVerified(false)
+                .createdAt(now)
+                .build();
     }
 
     default void markVerified(long fileUploadId) {

@@ -5,10 +5,14 @@ import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.experimental.Accessors;
+import lombok.experimental.SuperBuilder;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
+import javax.annotation.Nullable;
+
 @Value
+@SuperBuilder(toBuilder = true)
 @AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class FileUpload {
     @ColumnName("file_upload_id")
@@ -50,6 +54,10 @@ public class FileUpload {
 
     @ColumnName("scanned_at")
     Instant scannedAt;
+
+    @Nullable
+    @ColumnName("notification_sent_at")
+    Instant notificationSentAt;
 
     @ColumnName("scan_result")
     FileScanResult scanResult;
