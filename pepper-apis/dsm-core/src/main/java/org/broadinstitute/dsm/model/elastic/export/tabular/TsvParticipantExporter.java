@@ -19,7 +19,6 @@ public class TsvParticipantExporter extends TabularParticipantExporter {
         super(moduleConfigs, participantValueMaps, fileFormat);
     }
 
-
     public void export(OutputStream os) throws IOException {
         PrintWriter printWriter = new PrintWriter(os);
         List<String> headerRowValues = getHeaderRow();
@@ -33,6 +32,7 @@ public class TsvParticipantExporter extends TabularParticipantExporter {
             printWriter.println(rowString);
         }
         printWriter.flush();
+        // do not close os -- that's the caller's responsibility
     }
 
     protected String getRowString(List<String> rowValues) {

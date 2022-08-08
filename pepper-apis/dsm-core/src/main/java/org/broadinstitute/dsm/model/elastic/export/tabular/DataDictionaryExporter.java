@@ -88,7 +88,7 @@ public class DataDictionaryExporter extends ExcelParticipantExporter {
                           String detailName,
                           FilterExportConfig parentConfig) {
             // we don't make separate entries for each iteration of a variable
-            if (activityRepeatNum > 1 || questionRepeatNum > 1) {
+            if (!isFirstQuestionIteration(activityRepeatNum, questionRepeatNum)) {
                 return;
             }
 
@@ -105,10 +105,10 @@ public class DataDictionaryExporter extends ExcelParticipantExporter {
                 questionId = (String) filterConfig.getQuestionDef().get(ESObjectConstants.STABLE_ID);
             }
 
-            if (!StringUtils.equals(previousParentQuestionId, parentQuestionId) && parentQuestionId != null) {
+            if (isFirstQuestionOfComposite(parentQuestionId, previousParentQuestionId)) {
                 addCompositeQuestionHeaderRow(filterConfig, activityRepeatNum, questionRepeatNum, option, detailName, parentConfig);
             }
-            if (!StringUtils.equals(questionId, previousQuestionId) && filterConfig.isSplitOptionsIntoColumns()) {
+            if (isFirstOptionOfSplitOptions(questionId, previousQuestionId, filterConfig)) {
                 addSplitOptionsHeaderRow(filterConfig, activityRepeatNum, questionRepeatNum, option, detailName, parentConfig);
             }
 
@@ -125,6 +125,18 @@ public class DataDictionaryExporter extends ExcelParticipantExporter {
         }
     }
 
+    private boolean isFirstQuestionIteration(int moduleRepeatNum, int questionRepeatNum) {
+        return moduleRepeatNum == 1 && questionRepeatNum == 1;
+    }
+
+    private boolean isFirstQuestionOfComposite(String parentQuestionId, String previousParentQuestionId) {
+        return !StringUtils.equals(previousParentQuestionId, parentQuestionId) && parentQuestionId != null;
+    }
+
+    private boolean isFirstOptionOfSplitOptions(String questionId, String previousQuestionId, FilterExportConfig filterConfig) {
+        return !StringUtils.equals(questionId, previousQuestionId) && filterConfig.isSplitOptionsIntoColumns();
+    }
+
     protected void addModuleHeaderRows(String moduleName, ModuleExportConfig moduleExportConfig) {
         // two blank rows
         addRowToSheet();
@@ -135,21 +147,24 @@ public class DataDictionaryExporter extends ExcelParticipantExporter {
         moduleNameRow.createCell(0).setCellValue(moduleName.toUpperCase());
 
         if (moduleExportConfig.getNumMaxRepeats() > 1) {
-            SXSSFRow moduleRepeatRow = addRowToSheet();
-            String repeatString = "Up to " + moduleExportConfig.getNumMaxRepeats() +
-                    " entries for this module exist for each participant.\n";
-            repeatString += "Entries are indicated in reverse chronological order.\n";
-            repeatString += "The most recent entry has no suffix, the next-most-recent is suffixed with _2," +
-                    " the next-most-recent is suffixed with _3, etc...\n ";
-            repeatString += "e.g. " + moduleName + ".[QUESTION] is the most recent completion, and " + moduleName +
-                    "_2.QUESTION is the next-most recent completion.";
-            moduleNameRow.createCell(1).setCellValue(repeatString);
+            addModuleRepeatDescription(moduleName, moduleNameRow, moduleExportConfig);
         }
         sheet.addMergedRegion(new CellRangeAddress(currentRowNum, currentRowNum, 1, 4));
 
         SXSSFRow columnHeaders = addRowToSheet("Variable Name", "Data type",
                 "Question type", "Description", "Options");
         columnHeaders.setRowStyle(boldUnderlineStyle);
+    }
+
+    private void addModuleRepeatDescription(String moduleName, SXSSFRow moduleNameRow, ModuleExportConfig moduleExportConfig) {
+        String repeatString = "Up to " + moduleExportConfig.getNumMaxRepeats() +
+                " entries for this module exist for each participant.\n";
+        repeatString += "Entries are indicated in reverse chronological order.\n";
+        repeatString += "The most recent entry has no suffix, the next-most-recent is suffixed with _2," +
+                " the next-most-recent is suffixed with _3, etc...\n ";
+        repeatString += "e.g. " + moduleName + ".[QUESTION] is the most recent completion, and " + moduleName +
+                "_2.QUESTION is the next-most recent completion.";
+        moduleNameRow.createCell(1).setCellValue(repeatString);
     }
 
     protected void addCompositeQuestionHeaderRow(FilterExportConfig filterConfig,
