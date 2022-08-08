@@ -118,7 +118,7 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
         return (boolean) results.resultValue;
     }
 
-    public static HashSet<String> getInstanceRoles(@NonNull String realm) {
+    public HashSet<String> getInstanceRoles(@NonNull String realm) {
         HashSet<String> roles = new HashSet<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();

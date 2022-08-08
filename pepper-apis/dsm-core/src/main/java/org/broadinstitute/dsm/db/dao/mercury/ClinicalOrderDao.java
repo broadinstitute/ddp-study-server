@@ -6,7 +6,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -14,10 +13,7 @@ import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.dao.Dao;
-import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
-import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.mercury.ClinicalOrderDto;
-import org.broadinstitute.dsm.db.dto.mercury.ClinicalOrderUseCase;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 
@@ -30,7 +26,7 @@ public class ClinicalOrderDao implements Dao<ClinicalOrderDto> {
             + "FROM ddp_mercury_sequencing ms "
             + "LEFT join ddp_tissue t on (ms.tissue_id = t.tissue_id  and ms.tissue_id ) "
             + "LEFT join ddp_kit_request kit on (ms.dsm_kit_request_id = kit.dsm_kit_request_id)"
-            + "WHERE ms.ddp_instance_id = ? order by order_date desc";
+            + "WHERE ms.ddp_instance_id = (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = ? ) order by order_date desc";
 
     public static String COMPLETED_ORDER_STATUS = "Completed";
 
@@ -49,15 +45,13 @@ public class ClinicalOrderDao implements Dao<ClinicalOrderDto> {
         return Optional.empty();
     }
 
-    public Collection<ClinicalOrderDto> getOrdersForRealm(String realm, String projectId, String topicId,
-                                                          ClinicalOrderUseCase clinicalOrderUseCase) {
-        DDPInstanceDto ddpInstance = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
+    public ArrayList<ClinicalOrderDto> getOrdersForRealm(String realm) {
         HashMap<String, ClinicalOrderDto> map = new HashMap<>();
         ArrayList<ClinicalOrderDto> noStatusOrders = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_ALL_ORDERS_FOR_REALM)) {
-                stmt.setInt(1, ddpInstance.getDdpInstanceId());
+                stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         String key = rs.getString(DBConstants.COLLABORATOR_SAMPLE_ID) + "_" + rs.getString(DBConstants.MERCURY_ORDER_ID);
@@ -97,7 +91,6 @@ public class ClinicalOrderDao implements Dao<ClinicalOrderDto> {
                 return (int) (c2.orderDate - c1.orderDate);
             }
         });
-        clinicalOrderUseCase.publishStatusActionMessage(array, projectId, topicId);
         return array;
     }
 

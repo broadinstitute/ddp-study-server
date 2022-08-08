@@ -37,7 +37,7 @@ public class MercuryOrderUseCase {
         return orders;
     }
 
-    public ArrayList<String> collectBarcodes(MercurySampleDto[] mercurySampleDtos) {
+    public List<String> collectBarcodes(MercurySampleDto[] mercurySampleDtos) {
         ArrayList<String> barcodes = new ArrayList<>();
         for (MercurySampleDto mercurySampleDto : mercurySampleDtos) {
             if (mercurySampleDto.sampleType.equals(MercurySampleDao.TISSUE_SAMPLE_TYPE)) {

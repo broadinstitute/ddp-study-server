@@ -231,7 +231,7 @@ public class TissueSMIDDao {
         return smIds;
     }
 
-    public ArrayList<String> getSequencingSmIdsForTissue(long tissueId) {
+    public List<String> getSequencingSmIdsForTissue(long tissueId) {
         ArrayList<String> smIds = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();

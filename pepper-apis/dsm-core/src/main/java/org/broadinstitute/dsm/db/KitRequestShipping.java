@@ -286,7 +286,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     private String uploadReason;
     @ColumnName(DBConstants.DDP_INSTANCE_ID)
     private long ddpInstanceId;
-
+    @ColumnName(DBConstants.COLLECTION_DATE)
     private String collectionDate;
 
     public KitRequestShipping() {

@@ -7,6 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
@@ -69,7 +70,7 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
         return Optional.empty();
     }
 
-    public ArrayList<MercurySampleDto> findEligibleSamples(String ddpParticipantId, String realm) {
+    public List<MercurySampleDto> findEligibleSamples(String ddpParticipantId, String realm) {
         ArrayList<MercurySampleDto> samples = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -88,7 +89,7 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
         return samples;
     }
 
-    private ArrayList<MercurySampleDto> getEligibleKits(Connection conn, String ddpParticipantId, String realm) throws Exception {
+    private List<MercurySampleDto> getEligibleKits(Connection conn, String ddpParticipantId, String realm) throws Exception {
         ArrayList<MercurySampleDto> samples = new ArrayList<>();
         SimpleResult dbVals = new SimpleResult();
         try (PreparedStatement statement = conn.prepareStatement(SQL_GET_ELIGIBLE_SAMPLES)) {
@@ -117,7 +118,7 @@ public class MercurySampleDao implements Dao<MercurySampleDto> {
         return samples;
     }
 
-    private ArrayList<MercurySampleDto> getEligibleTissues(Connection conn, String ddpParticipantId, String realm) throws Exception {
+    private List<MercurySampleDto> getEligibleTissues(Connection conn, String ddpParticipantId, String realm) throws Exception {
         ArrayList<MercurySampleDto> samples = new ArrayList<>();
         SimpleResult dbVals = new SimpleResult();
         try (PreparedStatement statement = conn.prepareStatement(SQL_GET_ELIGIBLE_TISSUES)) {

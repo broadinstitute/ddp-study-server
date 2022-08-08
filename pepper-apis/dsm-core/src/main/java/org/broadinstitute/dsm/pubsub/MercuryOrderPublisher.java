@@ -29,8 +29,8 @@ import org.broadinstitute.dsm.util.NanoIdUtil;
 
 @Slf4j
 public class MercuryOrderPublisher {
-    private static MercuryOrderDao mercuryOrderDao;
-    private static ParticipantDao participantDao;
+    private MercuryOrderDao mercuryOrderDao;
+    private ParticipantDao participantDao;
 
     public MercuryOrderPublisher(MercuryOrderDao mercuryOrderDao,
                                  ParticipantDao participantDao) {
@@ -38,9 +38,9 @@ public class MercuryOrderPublisher {
         this.participantDao = participantDao;
     }
 
-    private static String createMercuryUniqueOrderId() {
+    private String createMercuryUniqueOrderId() {
         String orderNumber = NanoIdUtil.getNanoId("1234567890QWERTYUIOPASDFGHJKLZXCVBNM", 20);
-        while (mercuryOrderDao.orderNumberExists(orderNumber)) {
+        while (this.mercuryOrderDao.orderNumberExists(orderNumber)) {
             orderNumber = NanoIdUtil.getNanoId("1234567890QWERTYUIOPASDFGHJKLZXCVBNM", 20);
         }
         return orderNumber;

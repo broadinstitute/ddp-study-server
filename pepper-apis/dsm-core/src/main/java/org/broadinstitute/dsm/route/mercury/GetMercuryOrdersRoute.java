@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.route.mercury;
 
-import java.util.Collection;
+import java.util.ArrayList;
 
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.dao.mercury.ClinicalOrderDao;
@@ -44,7 +44,8 @@ public class GetMercuryOrdersRoute extends RequestHandler {
             return UserErrorMessages.NO_RIGHTS;
         }
         if (request.url().contains(RoutePath.GET_MERCURY_ORDERS_ROUTE)) {
-            Collection<ClinicalOrderDto> orders = clinicalOrderDao.getOrdersForRealm(realm, projectId, topicId, clinicalOrderUseCase);
+            ArrayList<ClinicalOrderDto> orders = clinicalOrderDao.getOrdersForRealm(realm);
+            clinicalOrderUseCase.publishStatusActionMessage(orders, projectId, topicId);
             log.info(String.format("Returning a list of %d orders", orders.size()));
             return orders;
         }

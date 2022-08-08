@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.pubsub;
 
-import java.sql.Connection;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -12,7 +11,6 @@ import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.gson.Gson;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
-import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.model.mercury.BaseMercuryStatusMessage;
 import org.slf4j.Logger;
@@ -28,13 +26,9 @@ public class MercuryOrderStatusListener {
             logger.info("Got STATUS message with Id: " + message.getMessageId());
 
             try {
-                TransactionWrapper.inTransaction(conn -> {
-                    processOrderStauts(conn, message);
-                    logger.info("Processing the message finished");
-                    consumer.ack();
-                    return null;
-                });
-
+                processOrderStatus(message);
+                logger.info("Processing the message finished");
+                consumer.ack();
             } catch (Exception ex) {
                 logger.info("about to nack the message", ex);
                 consumer.nack();
@@ -55,10 +49,10 @@ public class MercuryOrderStatusListener {
         }
     }
 
-    private static void processOrderStauts(Connection conn, PubsubMessage message) {
+    private static void processOrderStatus(PubsubMessage message) throws Exception {
         String data = message.getData().toStringUtf8();
         BaseMercuryStatusMessage baseMercuryStatusMessage = new Gson().fromJson(data, BaseMercuryStatusMessage.class);
-        MercuryOrderDao.updateOrderStatus(baseMercuryStatusMessage, conn);
+        MercuryOrderDao.updateOrderStatus(baseMercuryStatusMessage);
 
     }
 }

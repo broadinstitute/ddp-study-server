@@ -101,7 +101,7 @@ public class DisplaySettingsRoute extends RequestHandler {
                         displaySettings.put("preferredLanguages", preferredLanguages);
                     }
                 }
-                HashSet<String> roles = DDPInstanceDao.getInstanceRoles(instance.getName());
+                HashSet<String> roles = new DDPInstanceDao().getInstanceRoles(instance.getName());
                 if (roles.contains(DBConstants.KIT_REQUEST_ACTIVATED)) { //only needed if study is shipping samples per DSM
                     Map<Integer, KitRequestSettings> kitRequestSettingsMap =
                             KitRequestSettings.getKitRequestSettings(instance.getDdpInstanceId());
