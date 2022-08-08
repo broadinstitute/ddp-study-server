@@ -1008,7 +1008,7 @@
       }
 
       function addSignUpInstruction() {
-        if (mode == 'signup' && languageDictionary.additionalDescription) {
+        if (mode === 'signup' && languageDictionary.additionalDescription) {
           const interval = setInterval(function () {
             const lockFormEl = document.querySelector('.auth0-lock-form');
             if (lockFormEl) {
