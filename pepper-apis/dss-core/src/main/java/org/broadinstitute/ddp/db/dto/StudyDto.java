@@ -7,6 +7,7 @@ import org.broadinstitute.ddp.model.address.OLCPrecision;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
+import javax.annotation.Nullable;
 import java.io.Serializable;
 
 @Value
@@ -55,6 +56,7 @@ public class StudyDto implements Serializable {
     @ColumnName("error_present_status_enabled")
     boolean errorPresentStatusEnabled;
 
+    @Nullable
     @ColumnName("notification_email")
     String notificationEmail;
 }
