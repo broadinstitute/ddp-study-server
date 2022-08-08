@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.lang.ref.Cleaner;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -39,6 +40,8 @@ import lombok.extern.slf4j.Slf4j;
 public class PubSubConnectionManager {
     private static final Cleaner cleaner = Cleaner.create();
     public static final int ACK_DEADLINE_SECONDS = 60;
+    public static final int SHUTDOWN_TIMEOUT_SECONDS = 60;
+
 
     @Value
     static class State implements Runnable {
@@ -60,9 +63,10 @@ public class PubSubConnectionManager {
 
                 try {
                     publisher.shutdown();
-                } catch (IllegalStateException cause) {
+                    publisher.awaitTermination(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                } catch (IllegalStateException illegalState) {
                     // Publisher's already shutdown, nothing to do
-                } catch (Exception cause) {
+                } catch (Exception error) {
                     // Some other error occurred during shutdown.
                     // Too late to do anything about it, so just continue on
                     // (bskinner, 20220805)
@@ -274,14 +278,7 @@ public class PubSubConnectionManager {
             return publisher;
         }
 
-        if (emulated) {
-            publisher = Publisher.newBuilder(topicName)
-                    .setChannelProvider(channelProvider)
-                    .setCredentialsProvider(credentialsProvider)
-                    .build();
-        } else {
-            publisher = Publisher.newBuilder(topicName).build();
-        }
+        publisher = this.publisherBuilder(topicName).build();
 
         // add the publisher to the list of things to shutdown for better cleanup
         this.state.register(topicName.toString(), publisher);
@@ -328,6 +325,17 @@ public class PubSubConnectionManager {
         } else {
             return Subscriber.newBuilder(projectSubscriptionName, receiver);
         }
+    }
+
+    public Publisher.Builder publisherBuilder(ProjectTopicName topicName) {
+        var builder = Publisher.newBuilder(topicName);
+
+        if (emulated) {
+            builder.setCredentialsProvider(credentialsProvider)
+                    .setChannelProvider(channelProvider);
+        }
+
+        return builder;
     }
 
 }
