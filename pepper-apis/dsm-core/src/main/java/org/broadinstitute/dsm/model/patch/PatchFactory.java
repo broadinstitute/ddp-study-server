@@ -12,7 +12,7 @@ public class PatchFactory {
     public static BasePatch makePatch(Patch patch, NotificationUtil notificationUtil) {
         BasePatch patcher = new NullPatch();
         if (isExistingRecord(patch)) {
-            patcher = new ExistingRecordPatch(patch, notificationUtil);
+            patcher = ExistingRecordPatchFactory.produce(patch, notificationUtil);
         } else if (isParentWithExistingKey(patch)) {
             if (isParentParticipantId(patch)) {
                 if (isMedicalRecordAbstractionFieldId(patch)) {
