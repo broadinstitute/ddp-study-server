@@ -27,6 +27,7 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.HttpMethod;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
+import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
 import org.broadinstitute.ddp.interfaces.FileUploadSettings;
@@ -79,7 +80,8 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
         var mockHandle = mock(Handle.class);
         var mockDao = mock(FileUploadDao.class);
         var mockClient = mock(GoogleBucketClient.class);
-        var service = new FileUploadService(null, mockClient, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
+        var mockSendGrid = mock(SendGridClient.class);
+        var service = new FileUploadService(mockSendGrid, null, mockClient, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
 
         doReturn(mockDao).when(mockHandle).attach(FileUploadDao.class);
         doReturn(dummyUpload).when(mockDao)
@@ -104,7 +106,8 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
 
     @Test
     public void testAuthorizeUpload_exceededSize() {
-        var service = new FileUploadService(null, null, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
+        var mockSendGrid = mock(SendGridClient.class);
+        var service = new FileUploadService(mockSendGrid, null, null, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
         var result = service.authorizeUpload(null, 1L, 1L, 1L, createFileUploadSettings(123),
                 GuidUtils.randomFileUploadGuid(), "prefix/file", "mime", "file", 1024, false);
         assertNotNull(result);
@@ -118,7 +121,8 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
         var now = Instant.now();
         var mockBlob = mock(Blob.class);
         var mockClient = mock(GoogleBucketClient.class);
-        var service = new FileUploadService(null, mockClient, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
+        var mockSendGrid = mock(SendGridClient.class);
+        var service = new FileUploadService(mockSendGrid, null, mockClient, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
 
         long size = 100;
         doReturn(true).when(mockBlob).exists();
@@ -152,7 +156,8 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
             fileDao.markVerified(upload.getId());
             upload = fileDao.findById(upload.getId()).orElseThrow();
 
-            var service = new FileUploadService(null, null, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
+            var mockSendGrid = mock(SendGridClient.class);
+            var service = new FileUploadService(mockSendGrid, null, null, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
             var result = service.verifyUpload(handle, studyId, userId, upload);
             assertEquals(FileUploadService.VerifyResult.OK, result);
 
@@ -165,7 +170,8 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
         var now = Instant.now();
         var mockBlob = mock(Blob.class);
         var mockClient = mock(GoogleBucketClient.class);
-        var service = new FileUploadService(null, mockClient, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
+        var mockSendGrid = mock(SendGridClient.class);
+        var service = new FileUploadService(mockSendGrid, null, mockClient, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
         doReturn(mockBlob).when(mockClient).getBlob("uploads", "blob");
 
         TransactionWrapper.useTxn(handle -> {
@@ -214,7 +220,8 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
     public void testRemoveUnusedUploads() {
         var mockBlob = mock(Blob.class);
         var mockClient = mock(GoogleBucketClient.class);
-        var service = new FileUploadService(null, mockClient, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
+        var mockSendGrid = mock(SendGridClient.class);
+        var service = new FileUploadService(mockSendGrid, null, mockClient, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
 
         doReturn(true).when(mockBlob).exists();
         doReturn(mockBlob).when(mockClient).getBlob("uploads", "blob");

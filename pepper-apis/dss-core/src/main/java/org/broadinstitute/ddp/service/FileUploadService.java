@@ -23,6 +23,9 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.HttpMethod;
+import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Content;
+import com.sendgrid.helpers.mail.objects.Email;
 import com.typesafe.config.Config;
 import lombok.AllArgsConstructor;
 import lombok.Value;
@@ -30,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 import one.util.streamex.StreamEx;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
+import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
@@ -47,6 +51,7 @@ public class FileUploadService {
     public static final String DEFAULT_MIME_TYPE = "application/octet-stream";
     public static final int DEFAULT_BATCH_SIZE = 100;
 
+    private final SendGridClient sendGridClient;
     private final ServiceAccountSigner signer;
     private final GoogleBucketClient storageClient;
     private final String uploadsBucket;
@@ -81,6 +86,7 @@ public class FileUploadService {
         TimeUnit removalExpireUnit = TimeUnit.valueOf(cfg.getString(ConfigFile.FileUploads.REMOVAL_EXPIRE_UNIT));
 
         return new FileUploadService(
+                new SendGridClient(cfg.getString("sendgrid.apiKey")),
                 signerCredentials,
                 new GoogleBucketClient(projectId, bucketCredentials),
                 cfg.getString(ConfigFile.FileUploads.UPLOADS_BUCKET),
@@ -90,10 +96,11 @@ public class FileUploadService {
                 removalExpireTime, removalExpireUnit, removalBatchSize);
     }
 
-    public FileUploadService(ServiceAccountSigner signer, GoogleBucketClient storageClient,
+    public FileUploadService(SendGridClient sendGridClient, ServiceAccountSigner signer, GoogleBucketClient storageClient,
                              String uploadsBucket, String scannedBucket, String quarantineBucket,
                              int maxSignedUrlMins, long removalExpireTime, TimeUnit removalExpireUnit, int removalBatchSize) {
         this.signer = signer;
+        this.sendGridClient = sendGridClient;
         this.storageClient = storageClient;
         this.uploadsBucket = uploadsBucket;
         this.scannedBucket = scannedBucket;
@@ -311,8 +318,18 @@ public class FileUploadService {
         log.info("Notifications sent for {} study", study.getGuid());
     }
 
-    private void sendNotification(final StudyDto study, final Long participantId, final List<FileUpload> fileUploads) {
-        //TODO: Send an e-mail somehow
+    private void sendNotification(final StudyDto study,
+                                  final Long participantId,
+                                  final List<FileUpload> fileUploads) {
+
+        sendGridClient.sendMail(new Mail(
+                new Email("what@email.org"),
+                "New files were uploaded in " + study.getGuid() + " study",
+                new Email(study.getNotificationEmail()),
+                new Content(
+                        "text/html",
+                        "User " + participantId + " uploaded following files: " + StreamEx.of(fileUploads).joining("\n"))));
+
         log.info("EMAIL: A user #{} uploaded {} files in terms of {} study", participantId, fileUploads.size(), study.getGuid());
     }
 
