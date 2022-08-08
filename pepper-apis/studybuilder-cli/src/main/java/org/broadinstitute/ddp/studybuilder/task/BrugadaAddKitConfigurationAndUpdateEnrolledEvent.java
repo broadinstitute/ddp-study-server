@@ -34,6 +34,8 @@ public class BrugadaAddKitConfigurationAndUpdateEnrolledEvent implements CustomT
     private Config eventDataCfg;
     private Config kitDataCfg;
 
+    private UpdateTemplatesInPlace updateTemplatesInPlace;
+
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
         if (!studyCfg.getString("study.guid").equals(STUDY_GUID)) {
@@ -47,6 +49,7 @@ public class BrugadaAddKitConfigurationAndUpdateEnrolledEvent implements CustomT
         }
         this.eventDataCfg = ConfigFactory.parseFile(file).resolveWith(varsCfg).getConfigList("events").get(0);
         this.kitDataCfg = ConfigFactory.parseFile(file).resolveWith(varsCfg).getConfigList("kits").get(0);
+        updateTemplatesInPlace.init(cfgPath, studyCfg, varsCfg);
     }
 
     @Override
@@ -113,6 +116,7 @@ public class BrugadaAddKitConfigurationAndUpdateEnrolledEvent implements CustomT
             }
         }
         log.info("Kit configuration has added in study {}", STUDY_GUID);
+        updateTemplatesInPlace.run(handle);
     }
 
 }
