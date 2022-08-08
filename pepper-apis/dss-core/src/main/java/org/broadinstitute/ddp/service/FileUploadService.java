@@ -323,12 +323,14 @@ public class FileUploadService {
                                   final List<FileUpload> fileUploads) {
 
         sendGridClient.sendMail(new Mail(
-                new Email("what@email.org"),
-                "New files were uploaded in " + study.getGuid() + " study",
+                new Email(study.getStudyEmail()),
+                "New files were uploaded in " + study.getName() + " study",
                 new Email(study.getNotificationEmail()),
                 new Content(
                         "text/html",
-                        "User " + participantId + " uploaded following files: " + StreamEx.of(fileUploads).joining("\n"))));
+                        "User " + participantId + " uploaded following files: " + StreamEx.of(fileUploads)
+                                .map(FileUpload::getFileName)
+                                .joining("\n"))));
 
         log.info("EMAIL: A user #{} uploaded {} files in terms of {} study", participantId, fileUploads.size(), study.getGuid());
     }
