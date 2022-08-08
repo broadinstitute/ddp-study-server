@@ -28,8 +28,7 @@ public class ParticipantFilesUseCase {
 
 
     public boolean isFileClean() {
-        ddpInstanceDto.orElseThrow();
-        String participantIndex = ddpInstanceDto.get().getEsParticipantIndex();
+        String participantIndex = ddpInstanceDto.orElseThrow().getEsParticipantIndex();
         Optional<ElasticSearchParticipantDto> maybeParticipantESDataByParticipantId =
                 ElasticSearchUtil.getParticipantESDataByParticipantId(participantIndex, ddpParticipantId);
         if (maybeParticipantESDataByParticipantId.isEmpty()) {
