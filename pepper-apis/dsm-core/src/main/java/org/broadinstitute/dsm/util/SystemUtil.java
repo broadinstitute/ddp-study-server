@@ -37,7 +37,7 @@ public class SystemUtil {
     public static final long MILLIS_PER_DAY = 1000 * 60 * 60 * 24;
     public static final long MILLIS_PER_HOUR = 1000 * 60 * 60;
     public static final String SYSTEM = "SYSTEM";
-    public static final String SEPARATOR = "\t";
+    public static final String TAB_SEPARATOR = "\t";
     public static final DateTimeFormatter USUAL_DATE = new DateTimeFormatterBuilder()
             .appendPattern(DATE_FORMAT)
             .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)

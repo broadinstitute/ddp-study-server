@@ -59,7 +59,7 @@ public enum Alias {
     AT_GROUP_CONSENT(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA), true, true),
     AT_PARTICIPANT_INFO(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA), true, true),
     AT_PARTICIPANT_EXIT(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA), true, true),
-    DATA(StringUtils.EMPTY, false, false);
+    DATA(StringUtils.EMPTY, false, false), FILES(ElasticSearchUtil.FILES, false, false);
 
     Alias(String value, boolean isCollection, boolean isJson) {
         this.value = value;

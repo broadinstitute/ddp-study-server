@@ -18,10 +18,8 @@ import java.io.File;
 import java.nio.file.Path;
 
 /**
- * Task to make additional edits as part of the "Brain Tumor Project" rename.
+ * Task to update file_size for MRF_UPLOAD File Question.
  *
- * <p>This should be ran right after the BrainRename task. This assumes that activities will have a new version from
- * the BrainRename task, so it will make edits using that as the latest version.
  */
 @Slf4j
 public class SingularMRFUploadUpdates implements CustomTask {
@@ -45,6 +43,7 @@ public class SingularMRFUploadUpdates implements CustomTask {
 
     @Override
     public void run(Handle handle) {
+        log.info("TASK:: SingularMRFUploadUpdates ");
         this.studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyCfg.getString("study.guid"));
 
         log.info("Editing Singular study, Medical File Release Upload activity... ");

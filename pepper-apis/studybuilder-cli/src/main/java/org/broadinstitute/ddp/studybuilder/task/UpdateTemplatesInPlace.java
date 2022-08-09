@@ -89,6 +89,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
 
     @Override
     public void run(Handle handle) {
+        log.info("TASK:: UpdateTemplatesInPlace ");
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyCfg.getString("study.guid"));
         User admin = handle.attach(UserDao.class).findUserByGuid(studyCfg.getString("adminUser.guid")).get();
         var activityBuilder = new ActivityBuilder(cfgPath.getParent(), studyCfg, varsCfg, studyDto, admin.getId());
@@ -189,6 +190,8 @@ public class UpdateTemplatesInPlace implements CustomTask {
     }
 
     // Best-effort attempt at making a unique identifier for event configuration.
+    // watch out for scenarios where diff events might end up with same unique identifier
+    // ex:- trigger and order are same but diff pre/cancel expressions !
     private String hashEvent(Config eventCfg) {
         return String.format("%s-%d",
                 EventBuilder.triggerAsStr(eventCfg.getConfig("trigger")),
