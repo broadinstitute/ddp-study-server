@@ -1,7 +1,6 @@
 package org.broadinstitute.dsm.route;
 
 import org.broadinstitute.dsm.model.stool.upload.StoolUploadService;
-import org.broadinstitute.dsm.model.stool.upload.StoolUploadServicePayload;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
@@ -32,8 +31,14 @@ public class StoolUploadRoute extends RequestHandler {
             throw new RuntimeException("The realm was absent");
         }
         if (userCanUploadKits(userId, realm)) {
-                return StoolUploadService.spawn(new StoolUploadServicePayload(request.body(), response))
-                        .serve();
+            try {
+                StoolUploadService.spawn().serve(request.body());
+                response.status(200);
+                return "Stool Upload was successful";
+            } catch (Exception e) {
+                response.status(500);
+                return e.getMessage();
+            }
         } else {
             response.status(500);
             return (UserErrorMessages.NO_RIGHTS);

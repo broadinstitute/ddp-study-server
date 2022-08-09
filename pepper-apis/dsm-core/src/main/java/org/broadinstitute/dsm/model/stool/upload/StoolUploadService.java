@@ -13,36 +13,21 @@ import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.EventUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import spark.Response;
 
 public class StoolUploadService {
 
     private static final Logger logger = LoggerFactory.getLogger(StoolUploadService.class);
 
-    private final StoolUploadServicePayload stoolUploadServicePayload;
     private final StoolUploadDao stoolUploadDao = new StoolUploadDao();
 
-    private StoolUploadService(StoolUploadServicePayload stoolUploadServicePayload) {
-        this.stoolUploadServicePayload = stoolUploadServicePayload;
+    public static StoolUploadService spawn() {
+        return new StoolUploadService();
     }
 
-    public static StoolUploadService spawn(StoolUploadServicePayload stoolUploadServicePayload) {
-        return new StoolUploadService(stoolUploadServicePayload);
-    }
-
-    public String serve() {
-        AbstractRecordsParser<StoolUploadDto> tsvRecordsParser =
-                new TSVStoolUploadRecordsParser(stoolUploadServicePayload.getRequestBody());
-        Response response = stoolUploadServicePayload.getResponse();
-        try {
-            List<StoolUploadDto> stoolUploadObjects = tsvRecordsParser.parseToObjects();
-            stoolUploadObjects.forEach(this::updateKitAndThenSendNotification);
-            response.status(200);
-            return "Stool Upload was successful";
-        } catch (Exception e) {
-            response.status(500);
-            return e.getMessage();
-        }
+    public void serve(String requestBody) {
+        AbstractRecordsParser<StoolUploadDto> tsvRecordsParser = new TSVStoolUploadRecordsParser(requestBody);
+        List<StoolUploadDto> stoolUploadObjects = tsvRecordsParser.parseToObjects();
+        stoolUploadObjects.forEach(this::updateKitAndThenSendNotification);
     }
 
     private void updateKitAndThenSendNotification(StoolUploadDto stoolUploadDto) {
