@@ -2,13 +2,11 @@ package org.broadinstitute.dsm.db.dao.roles;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 
 import lombok.NonNull;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.dto.user.AssigneeDto;
 import org.broadinstitute.dsm.db.dto.user.RoleDto;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.db.dto.user.UserRoleDto;
@@ -111,30 +109,12 @@ public class UserRoleDao {
         return (List<String>) results.resultValue;
     }
 
-    public static HashMap<Long, AssigneeDto> getAssigneeMap(String realm) {
-        HashMap<Long, AssigneeDto> assignees = new HashMap<>();
-        TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
-            List<AssigneeDto> assigneeLists = handle.attach(JdbiUserRole.class).getAssigneesForStudy(realm);
-            for (AssigneeDto assigneeDto : assigneeLists) {
-                assignees.put(assigneeDto.getAssigneeId(), new AssigneeDto(assigneeDto.getAssigneeId(), assigneeDto.getName().orElse(""),
-                        assigneeDto.getEmail().orElseThrow()));
-            }
-            return null;
-        });
-
-        logger.info("Found " + assignees.size() + " assignees ");
-        return assignees;
-    }
-
-    public static Collection<AssigneeDto> getAssignees(String realm) {
-        return UserRoleDao.getAssigneeMap(realm).values();
-    }
 
     public List<UserRoleDto> getAllUsersWithRoleForRealm(String studyGuid) {
         List<UserRoleDto> users = new ArrayList<>();
         SimpleResult result = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
             SimpleResult dbVals = new SimpleResult();
-            dbVals.resultValue = handle.attach(JdbiUserRole.class).getAllUsersWithRoleInRealm(studyGuid);
+            dbVals.resultValue = handle.attach(JdbiUserRole.class).getAllActiveUsersWithRoleInRealm(studyGuid);
             logger.info(
                     String.format("Returning a list of %d users for realm %s", ((List<UserRoleDto>) dbVals.resultValue).size(), studyGuid));
             return dbVals;

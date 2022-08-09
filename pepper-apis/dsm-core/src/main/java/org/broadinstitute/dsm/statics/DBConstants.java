@@ -362,6 +362,7 @@ public class DBConstants {
     public static final String EVENT_TYPE = "event_type";
     public static final String EVENT_DESCRIPTION = "event_description";
     public static final String EVENT = "event";
+    public static final String DONE_BY = "done_by";
 
     // drug list: list uses display_name, test uses generic_name
     public static final String DISPLAY_NAME = "display_name";
@@ -493,9 +494,6 @@ public class DBConstants {
     public static final String UPS_STATUS_CODE = "ups_status_code";
     public static final String UPS_LOCATION = "ups_location";
     public static final String UPS_ACTIVITY_ID = "ups_activity_id";
-
-    //access_user
-    public static final String PHONE_NUMBER = "phone_number";
 
     //sm_id table
     public static final String SM_ID_TABLE = "sm_id";

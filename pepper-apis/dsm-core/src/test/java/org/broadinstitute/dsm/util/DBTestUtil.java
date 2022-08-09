@@ -1088,7 +1088,7 @@ public class DBTestUtil {
     }
 
     public static UserDto createTestDsmUser(String name, String email, UserDao userDao, UserDto userDto) {
-        userDto = new UserDto(0, name, email, "", "", "", "", "", "", true);
+        userDto = new UserDto(0, name, email, "", "", "", "", "", "", true, 1);
         userDto.setUserId(userDao.create(userDto));
         return userDto;
     }
