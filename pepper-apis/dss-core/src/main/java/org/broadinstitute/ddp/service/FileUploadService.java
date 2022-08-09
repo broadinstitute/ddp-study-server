@@ -307,23 +307,22 @@ public class FileUploadService {
         final var study = handle.attach(JdbiUmbrellaStudy.class).findById(studyId);
         if (StringUtils.isBlank(study.getNotificationEmail())) {
             handle.attach(FileUploadDao.class).setNotificationSentByStudyId(studyId);
-            log.info("Study {} doesn't have an e-mail for notifications", study.getGuid());
+            log.warn("Study {} doesn't have an e-mail for notifications", study.getGuid());
             return;
         }
 
         StreamEx.of(fileUploads)
                 .groupingBy(FileUpload::getParticipantUserId)
-                .forEach((participantId, uploads) -> sendNotification(study, participantId, uploads));
+                .forEach((participantId, uploads) -> sendNotification(handle, study, participantId, uploads));
 
-        handle.attach(FileUploadDao.class).setNotificationSentByStudyId(studyId);
         log.info("Notifications sent for {} study", study.getGuid());
     }
 
-    private void sendNotification(final StudyDto study,
+    private void sendNotification(final Handle handle,
+                                  final StudyDto study,
                                   final Long participantId,
                                   final List<FileUpload> fileUploads) {
-
-        sendGridClient.sendMail(new Mail(
+        final var result = sendGridClient.sendMail(new Mail(
                 new Email(study.getStudyEmail()),
                 "New files were uploaded in " + study.getName() + " study",
                 new Email(study.getNotificationEmail()),
@@ -333,6 +332,12 @@ public class FileUploadService {
                                 .map(FileUpload::getFileName)
                                 .joining(System.lineSeparator()))));
 
+        if (result.hasError()) {
+            log.error("Can't send an e-mail", result.getThrown());
+            return;
+        }
+
+        handle.attach(FileUploadDao.class).setNotificationSentByFileUploadIds(StreamEx.of(fileUploads).map(FileUpload::getId).toList());
         log.info("A user #{} uploaded {} files in terms of {} study", participantId, fileUploads.size(), study.getGuid());
     }
 
