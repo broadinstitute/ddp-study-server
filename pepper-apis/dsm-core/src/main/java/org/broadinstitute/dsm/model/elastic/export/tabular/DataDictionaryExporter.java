@@ -1,21 +1,19 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.streaming.SXSSFCell;
 import org.apache.poi.xssf.streaming.SXSSFRow;
-import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
-import spark.Response;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /** Writes a data dictionary file based on the given configs.
  * columns include variable name, type, description, and options
@@ -38,6 +36,12 @@ public class DataDictionaryExporter extends ExcelParticipantExporter {
             "CHECKBOX", "boolean",
             "NUMBER", "number"
     );
+
+    private static final int VARIABLE_NAME_COL_NUMBER = 0;
+    private static final int DATATYPE_COL_NUMBER = 1;
+    private static final int QUESTION_TYPE_COL_NUMBER = 2;
+    private static final int DESCRIPTION_COL_NUMBER = 3;
+    private static final int OPTIONS_COL_NUMBER = 4;
 
 
     public String getExportFilename() {
@@ -65,7 +69,7 @@ public class DataDictionaryExporter extends ExcelParticipantExporter {
 
     /** writes the dictionary */
     public void export(OutputStream os) throws IOException {
-        sheet.setColumnWidth(0, 40 * 256);
+        sheet.setColumnWidth(VARIABLE_NAME_COL_NUMBER, 40 * 256);
         sheet.setColumnWidth(1, 10 * 256);
         sheet.setColumnWidth(2, 12 * 256);
         sheet.setColumnWidth(3, 60 * 256);
@@ -144,12 +148,12 @@ public class DataDictionaryExporter extends ExcelParticipantExporter {
 
         SXSSFRow moduleNameRow = addRowToSheet();
         moduleNameRow.setRowStyle(boldStyle);
-        moduleNameRow.createCell(0).setCellValue(moduleName.toUpperCase());
+        moduleNameRow.createCell(VARIABLE_NAME_COL_NUMBER).setCellValue(moduleName.toUpperCase());
 
         if (moduleExportConfig.getNumMaxRepeats() > 1) {
             addModuleRepeatDescription(moduleName, moduleNameRow, moduleExportConfig);
         }
-        sheet.addMergedRegion(new CellRangeAddress(currentRowNum, currentRowNum, 1, 4));
+        sheet.addMergedRegion(new CellRangeAddress(currentRowNum, currentRowNum, DATATYPE_COL_NUMBER, OPTIONS_COL_NUMBER));
 
         SXSSFRow columnHeaders = addRowToSheet("Variable Name", "Data type",
                 "Question type", "Description", "Options");
@@ -164,7 +168,7 @@ public class DataDictionaryExporter extends ExcelParticipantExporter {
                 " the next-most-recent is suffixed with _3, etc...\n ";
         repeatString += "e.g. " + moduleName + ".[QUESTION] is the most recent completion, and " + moduleName +
                 "_2.QUESTION is the next-most recent completion.";
-        moduleNameRow.createCell(1).setCellValue(repeatString);
+        moduleNameRow.createCell(DATATYPE_COL_NUMBER).setCellValue(repeatString);
     }
 
     protected void addCompositeQuestionHeaderRow(FilterExportConfig filterConfig,
@@ -282,11 +286,11 @@ public class DataDictionaryExporter extends ExcelParticipantExporter {
 
     protected SXSSFRow addRowToSheet(String variableName, String dataType, String questionType, String description, String options) {
         SXSSFRow newRow = addRowToSheet();
-        addCellToRow(newRow, 0, variableName != null ? variableName : StringUtils.EMPTY);
-        addCellToRow(newRow, 1, dataType != null ? dataType : StringUtils.EMPTY);
-        addCellToRow(newRow, 2, questionType != null ? questionType : StringUtils.EMPTY);
-        addCellToRow(newRow, 3, description != null ? description : StringUtils.EMPTY);
-        addCellToRow(newRow, 4, options != null ? options : StringUtils.EMPTY);
+        addCellToRow(newRow, VARIABLE_NAME_COL_NUMBER, variableName != null ? variableName : StringUtils.EMPTY);
+        addCellToRow(newRow, DATATYPE_COL_NUMBER, dataType != null ? dataType : StringUtils.EMPTY);
+        addCellToRow(newRow, QUESTION_TYPE_COL_NUMBER, questionType != null ? questionType : StringUtils.EMPTY);
+        addCellToRow(newRow, DESCRIPTION_COL_NUMBER, description != null ? description : StringUtils.EMPTY);
+        addCellToRow(newRow, OPTIONS_COL_NUMBER, options != null ? options : StringUtils.EMPTY);
         return newRow;
     }
 
