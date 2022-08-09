@@ -62,6 +62,7 @@ public class RoutePath {
     public static final String STUDIES = "studies";
     public static final String KIT_TYPES_REQUEST = "kitTypes";
     public static final String KIT_UPLOAD_REQUEST = "kitUpload";
+    public static final String STOOL_UPLOAD_REQUEST = "stoolUpload";
     public static final String KIT_LABEL_REQUEST = "kitLabel";
     public static final String PARTICIPANT_EXIT_REQUEST = "exitParticipant";
     public static final String DEACTIVATE_KIT_REQUEST = "deactivateKit/" + RequestParameter.KITREQUESTID;
