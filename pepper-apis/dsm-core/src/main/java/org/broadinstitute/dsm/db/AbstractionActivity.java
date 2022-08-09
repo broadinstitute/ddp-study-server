@@ -10,11 +10,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
+import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.TableName;
@@ -26,7 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Data
-@TableName(name = DBConstants.MEDICAL_RECORD_ABSTRACTION_ACTIVITY, alias = DBConstants.DDP_ABSTRACTION_ALIAS,
+@TableName (name = DBConstants.MEDICAL_RECORD_ABSTRACTION_ACTIVITY, alias = DBConstants.DDP_ABSTRACTION_ALIAS,
         primaryKey = DBConstants.MEDICAL_RECORD_ABSTRACTION_ACTIVITY_ID, columnPrefix = "")
 public class AbstractionActivity {
 
@@ -41,16 +44,16 @@ public class AbstractionActivity {
             "UPDATE ddp_medical_record_abstraction_activities SET user_id = ?, activity = ?, status = ?, files_used = ?, last_changed = ? "
                     + "WHERE medical_record_abstraction_activities_id = ?";
     private static final String SQL_SELECT_ALL_MEDICAL_RECORD_ABSTRACTION_ACTIVITY =
-            "SELECT medical_record_abstraction_activities_id, p.ddp_participant_id, a.participant_id, user.name, a.activity, a.status, "
+            "SELECT medical_record_abstraction_activities_id, p.ddp_participant_id, a.participant_id, a.user_id, a.activity, a.status, "
                     + "a.start_date, files_used, a.last_changed "
-                    + "FROM ddp_medical_record_abstraction_activities a LEFT JOIN access_user user ON (user.user_id = a.user_id) "
+                    + "FROM ddp_medical_record_abstraction_activities a  "
                     + "LEFT JOIN ddp_participant pt ON (a.participant_id = pt.participant_id) "
                     + "LEFT JOIN ddp_participant p ON (p.participant_id = a.participant_id) "
                     + "LEFT JOIN ddp_instance realm ON (realm.ddp_instance_id = pt.ddp_instance_id) WHERE realm.instance_name = ?";
     private static final String SQL_SELECT_MEDICAL_RECORD_ABSTRACTION_ACTIVITY =
-            "SELECT medical_record_abstraction_activities_id, abst.participant_id, user.name, activity, status, start_date, files_used, "
+            "SELECT medical_record_abstraction_activities_id, abst.participant_id, abst.user_id, activity, status, start_date, files_used, "
                     + "abst.last_changed "
-                    + "FROM ddp_medical_record_abstraction_activities abst LEFT JOIN access_user user ON (user.user_id = abst.user_id) "
+                    + "FROM ddp_medical_record_abstraction_activities abst "
                     + "LEFT JOIN ddp_participant pt ON (abst.participant_id = pt.participant_id) "
                     + "LEFT JOIN ddp_instance realm ON (realm.ddp_instance_id = pt.ddp_instance_id) "
                     + "WHERE realm.instance_name = ? AND pt.ddp_participant_id = ?";
@@ -59,23 +62,24 @@ public class AbstractionActivity {
     private Integer medicalRecordAbstractionActivityId;
     private String participantId;
 
-    @ColumnName(DBConstants.ACTIVITY)
+    @ColumnName (DBConstants.ACTIVITY)
     private String activity;
 
-    @ColumnName(DBConstants.STATUS)
+    @ColumnName (DBConstants.STATUS)
     private String aStatus;
 
-    @ColumnName(DBConstants.PROCESS)
+    @ColumnName (DBConstants.PROCESS)
     private String process;
 
-    @ColumnName(DBConstants.USER_ID)
+    @ColumnName (DBConstants.USER_ID)
     private String user;
+    private Long userId;
     private Long startDate;
     private String filesUsed;
     private Long lastChanged;
 
     public AbstractionActivity(Integer medicalRecordAbstractionActivityId, String participantId, String activity, String aStatus,
-                               String user, Long startDate, String filesUsed, Long lastChanged) {
+                               String user, Long startDate, String filesUsed, Long lastChanged, long userId) {
         this.medicalRecordAbstractionActivityId = medicalRecordAbstractionActivityId;
         this.participantId = participantId;
         this.activity = activity;
@@ -84,6 +88,7 @@ public class AbstractionActivity {
         this.startDate = startDate;
         this.filesUsed = filesUsed;
         this.lastChanged = lastChanged;
+        this.userId = userId;
     }
 
     public static AbstractionActivity startAbstractionActivity(@NonNull String participantId, @NonNull String realm,
@@ -92,7 +97,8 @@ public class AbstractionActivity {
         Long startDate = System.currentTimeMillis();
         UserDto userDto = new UserDao().get(changedBy).orElseThrow();
         AbstractionActivity abstractionActivity =
-                new AbstractionActivity(null, participantId, activity, status, userDto.getName().orElse(""), startDate, null, null);
+                new AbstractionActivity(null, participantId, activity, status, userDto.getName().orElse(""), startDate, null, null,
+                        userDto.getUserId());
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_MEDICAL_RECORD_ABSTRACTION_ACTIVITY,
@@ -181,9 +187,9 @@ public class AbstractionActivity {
                         AbstractionActivity abstractionActivity =
                                 new AbstractionActivity(rs.getInt(DBConstants.MEDICAL_RECORD_ABSTRACTION_ACTIVITY_ID),
                                         rs.getString(DBConstants.PARTICIPANT_ID), rs.getString(DBConstants.ACTIVITY),
-                                        rs.getString(DBConstants.STATUS), rs.getString(DBConstants.NAME),
+                                        rs.getString(DBConstants.STATUS), null,
                                         rs.getLong(DBConstants.START_DATE), rs.getString(DBConstants.FILES_USED),
-                                        rs.getLong(DBConstants.LAST_CHANGED));
+                                        rs.getLong(DBConstants.LAST_CHANGED), rs.getLong("a." + DBConstants.USER_ID));
                         if (abstractionActivitiesMap.containsKey(ddpParticipantId)) {
                             List<AbstractionActivity> abstractionActivities = abstractionActivitiesMap.get(ddpParticipantId);
                             abstractionActivities.add(abstractionActivity);
@@ -203,8 +209,37 @@ public class AbstractionActivity {
         if (results.resultException != null) {
             throw new RuntimeException("Error getting list of abstraction activities for " + realm, results.resultException);
         }
+        getUserNames(abstractionActivitiesMap);
         logger.info("Got " + abstractionActivitiesMap.size() + " participants abstraction activity in DSM DB for " + realm);
         return abstractionActivitiesMap;
+    }
+
+    private static void getUserNames(Map<String, List<AbstractionActivity>> abstractionActivitiesMap) {
+        UserDao userDao = new UserDao();
+        List<UserDto> userList = userDao.getAllDSMUsers();
+        Optional<BookmarkDto> maybeUserIdBookmark = new BookmarkDao().getBookmarkByInstance("FIRST_DSM_USER_ID");
+        maybeUserIdBookmark.orElseThrow();
+        Long firstNewUserId = maybeUserIdBookmark.get().getValue();
+        for (String key : abstractionActivitiesMap.keySet()) {
+            List<AbstractionActivity> abstractionActivitiesList = abstractionActivitiesMap.get(key);
+            setUserNames(abstractionActivitiesList, userList, firstNewUserId);
+
+        }
+    }
+
+    private static void setUserNames(List<AbstractionActivity> abstractionActivitiesList,
+                                     List<UserDto> userList, Long firstNewUserId) {
+        abstractionActivitiesList.stream().forEach(abstractionActivity -> {
+            long userId = abstractionActivity.userId;
+            boolean isLegacy = userId < firstNewUserId;
+            if (isLegacy) {
+                userList.stream().filter(user -> user.getDsmLegacyId() == userId).findAny()
+                        .ifPresent(u -> abstractionActivity.user = u.getName().get());
+            } else {
+                userList.stream().filter(user -> user.getUserId() == userId).findAny()
+                        .ifPresent(u -> abstractionActivity.user = u.getName().get());
+            }
+        });
     }
 
     public static Map<String, List<AbstractionActivity>> getAllAbstractionActivityByParticipantIds(@NonNull String realm,
@@ -224,9 +259,9 @@ public class AbstractionActivity {
                     while (rs.next()) {
                         String participantId = rs.getString(DBConstants.PARTICIPANT_ID);
                         activities.add(new AbstractionActivity(rs.getInt(DBConstants.MEDICAL_RECORD_ABSTRACTION_ACTIVITY_ID), participantId,
-                                rs.getString(DBConstants.ACTIVITY), rs.getString(DBConstants.STATUS), rs.getString(DBConstants.NAME),
+                                rs.getString(DBConstants.ACTIVITY), rs.getString(DBConstants.STATUS), null,
                                 rs.getLong(DBConstants.START_DATE), rs.getString(DBConstants.FILES_USED),
-                                rs.getLong(DBConstants.LAST_CHANGED)));
+                                rs.getLong(DBConstants.LAST_CHANGED), rs.getLong("abst." + DBConstants.USER_ID)));
                     }
                 }
             } catch (SQLException ex) {
@@ -238,6 +273,12 @@ public class AbstractionActivity {
         if (results.resultException != null) {
             throw new RuntimeException("Error getting list of abstraction activities for " + realm, results.resultException);
         }
+        UserDao userDao = new UserDao();
+        List<UserDto> userList = userDao.getAllDSMUsers();
+        Optional<BookmarkDto> maybeUserIdBookmark = new BookmarkDao().getBookmarkByInstance("FIRST_DSM_USER_ID");
+        maybeUserIdBookmark.orElseThrow();
+        Long firstNewUserId = maybeUserIdBookmark.get().getValue();
+        setUserNames(activities, userList, firstNewUserId);
         return activities;
     }
 
@@ -256,8 +297,9 @@ public class AbstractionActivity {
                         dbVals.resultValue =
                                 new AbstractionActivity(rs.getInt(DBConstants.MEDICAL_RECORD_ABSTRACTION_ACTIVITY_ID), participantId,
                                         rs.getString(DBConstants.ACTIVITY), rs.getString(DBConstants.STATUS),
-                                        rs.getString(DBConstants.NAME), rs.getLong(DBConstants.START_DATE),
-                                        rs.getString(DBConstants.FILES_USED), rs.getLong(DBConstants.LAST_CHANGED));
+                                        null, rs.getLong(DBConstants.START_DATE),
+                                        rs.getString(DBConstants.FILES_USED), rs.getLong(DBConstants.LAST_CHANGED),
+                                        rs.getLong("abst." + DBConstants.USER_ID));
                     }
                 }
             } catch (SQLException ex) {
@@ -268,6 +310,21 @@ public class AbstractionActivity {
 
         if (results.resultException != null) {
             throw new RuntimeException("Error getting list of abstraction activities for " + realm, results.resultException);
+        }
+        UserDao userDao = new UserDao();
+        List<UserDto> userList = userDao.getAllDSMUsers();
+        Optional<BookmarkDto> maybeUserIdBookmark = new BookmarkDao().getBookmarkByInstance("FIRST_DSM_USER_ID");
+        maybeUserIdBookmark.orElseThrow();
+        Long firstNewUserId = maybeUserIdBookmark.get().getValue();
+        AbstractionActivity abstractionActivity = (AbstractionActivity) results.resultValue;
+        long userId = abstractionActivity.userId;
+        boolean isLegacy = userId < firstNewUserId;
+        if (isLegacy) {
+            userList.stream().filter(user -> user.getDsmLegacyId() == userId).findAny()
+                    .ifPresent(u -> abstractionActivity.user = u.getName().get());
+        } else {
+            userList.stream().filter(user -> user.getUserId() == userId).findAny()
+                    .ifPresent(u -> abstractionActivity.user = u.getName().get());
         }
         return (AbstractionActivity) results.resultValue;
     }

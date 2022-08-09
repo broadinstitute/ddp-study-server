@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import com.google.gson.Gson;
 import lombok.Data;
@@ -27,7 +28,8 @@ public class DDPInstance {
     public static final String SQL_SELECT_ALL_ACTIVE_REALMS =
             "SELECT ddp_instance_id, instance_name, base_url, collaborator_id_prefix, es_participant_index, es_activity_definition_index, "
                     + "es_users_index, mr_attention_flag_d, tissue_attention_flag_d, auth0_token, notification_recipients, migrated_ddp, "
-                    + "billing_reference, research_project, display_name, mercury_order_creator  FROM ddp_instance WHERE is_active = 1";
+                    + "billing_reference, study_guid, research_project, display_name, mercury_order_creator  "
+                    + "FROM ddp_instance WHERE is_active = 1";
     public static final String SQL_SELECT_GROUP =
             "SELECT ddp_group_id from ddp_instance_group g LEFT JOIN ddp_instance realm ON (g.ddp_instance_id = realm.ddp_instance_id) "
                     + "WHERE instance_name =?";
@@ -36,7 +38,7 @@ public class DDPInstance {
     private static final String SQL_SELECT_INSTANCE_WITH_ROLE =
             "SELECT ddp_instance_id, instance_name, base_url, collaborator_id_prefix, migrated_ddp, billing_reference, "
                     + "es_participant_index, es_activity_definition_index,  es_users_index, research_project, display_name,  "
-                    + "mercury_order_creator, (SELECT count(role.name) "
+                    + "study_guid, mercury_order_creator, (SELECT count(role.name) "
                     + "FROM ddp_instance realm, ddp_instance_role inRol, instance_role role "
                     + "WHERE realm.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id "
                     + "AND role.name = ? AND realm.ddp_instance_id = main.ddp_instance_id) AS 'has_role', mr_attention_flag_d, "
@@ -45,15 +47,15 @@ public class DDPInstance {
     private static final String SQL_SELECT_INSTANCE_WITH_KIT_BEHAVIOR =
             "SELECT main.ddp_instance_id, instance_name, base_url, collaborator_id_prefix, migrated_ddp, billing_reference, "
                     + "es_participant_index, es_activity_definition_index, es_users_index, mr_attention_flag_d, tissue_attention_flag_d, "
-                    +
-                    "auth0_token, notification_recipients, kit_behavior_change, research_project, display_name, main.mercury_order_creator  "
+                    + "study_guid, auth0_token, "
+                    + "notification_recipients, kit_behavior_change, research_project, display_name, main.mercury_order_creator  "
                     + "FROM ddp_instance main, instance_settings setting WHERE main.ddp_instance_id = setting.ddp_instance_id "
                     + "AND main.is_active = 1 AND setting.kit_behavior_change IS NOT NULL";
     private static final String SQL_SELECT_ACTIVE_REALMS_WITH_ROLE_INFORMATION_BY_PARTICIPANT_ID =
             "SELECT main.ddp_instance_id, main.instance_name, main.base_url, "
                     + "main.collaborator_id_prefix, main.migrated_ddp, main.billing_reference, main.es_participant_index, "
                     + "main.es_activity_definition_index, es_users_index, research_project, display_name, mercury_order_creator"
-                    + ", (SELECT count(role.name) "
+                    + ", study_guid, (SELECT count(role.name) "
                     + "FROM ddp_instance realm, ddp_instance_role inRol, instance_role role "
                     + "WHERE realm.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id "
                     + "AND role.name = ? AND realm.ddp_instance_id = main.ddp_instance_id) as 'has_role', mr_attention_flag_d, "
@@ -62,7 +64,7 @@ public class DDPInstance {
                     + "AND main.is_active = 1 and part.participant_id = ?";
     private static final String SQL_SELECT_ACTIVE_REALMS_WITH_ROLE_INFORMATION_BY_DDP_PARTICIPANT_ID_REALM =
             "SELECT main.ddp_instance_id, main.instance_name, main.base_url, "
-                    + "main.collaborator_id_prefix, main.migrated_ddp, main.billing_reference, main.es_participant_index, "
+                    + "main.collaborator_id_prefix, main.migrated_ddp, main.billing_reference, main.es_participant_index, study_guid "
                     + "main.es_activity_definition_index, es_users_index, research_project, display_name, mercury_order_creator, "
                     + "(SELECT count(role.name) FROM ddp_instance realm, ddp_instance_role inRol, instance_role role "
                     + "WHERE realm.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id "
@@ -87,6 +89,7 @@ public class DDPInstance {
     private final String participantIndexES;
     private final String activityDefinitionIndexES;
     private final String usersIndexES;
+    private final String studyGuid;
     private final String researchProject;
     private final String mercuryOrderCreator;
     private final String displayName;
@@ -96,7 +99,8 @@ public class DDPInstance {
     public DDPInstance(String ddpInstanceId, String name, String baseUrl, String collaboratorIdPrefix, boolean hasRole,
                        int daysMrAttentionNeeded, int daysTissueAttentionNeeded, boolean hasAuth0Token, List<String> notificationRecipient,
                        boolean migratedDDP, String billingReference, String participantIndexES, String activityDefinitionIndexES,
-                       String usersIndexES, String researchProject, String displayName, String mercuryOrderCreator) {
+                       String usersIndexES, String studyGuid, String researchProject, String displayName,
+                       String mercuryOrderCreator) {
         this.ddpInstanceId = ddpInstanceId;
         this.name = name;
         this.baseUrl = baseUrl;
@@ -114,6 +118,18 @@ public class DDPInstance {
         this.researchProject = researchProject;
         this.mercuryOrderCreator = mercuryOrderCreator;
         this.displayName = displayName;
+        this.studyGuid = studyGuid;
+    }
+
+    public static DDPInstance getDDPInstanceByRealmOrGuid(@NonNull String realm) {
+        Optional<DDPInstance> maybeDdpInstance = Optional.ofNullable(getDDPInstance(realm));
+        if (maybeDdpInstance.isEmpty()) {
+            maybeDdpInstance = Optional.ofNullable(getDDPInstanceByGuid(realm));
+        }
+        if (maybeDdpInstance.isEmpty()) {
+            throw new RuntimeException("Instance with either realm or study-guid by " + realm + " was not found!");
+        }
+        return maybeDdpInstance.get();
     }
 
     public static DDPInstance getDDPInstance(@NonNull String realm) {
@@ -397,7 +413,9 @@ public class DDPInstance {
                 rs.getInt(DBConstants.DAYS_MR_ATTENTION_NEEDED), rs.getInt(DBConstants.DAYS_TISSUE_ATTENTION_NEEDED),
                 rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN), recipients, rs.getBoolean(DBConstants.MIGRATED_DDP),
                 rs.getString(DBConstants.BILLING_REFERENCE), rs.getString(DBConstants.ES_PARTICIPANT_INDEX),
-                rs.getString(DBConstants.ES_ACTIVITY_DEFINITION_INDEX), rs.getString(DBConstants.ES_USERS_INDEX),
+                rs.getString(DBConstants.ES_ACTIVITY_DEFINITION_INDEX),
+                rs.getString(DBConstants.STUDY_GUID),
+                rs.getString(DBConstants.ES_USERS_INDEX),
                 rs.getString(DBConstants.RESEARCH_PROJECT), rs.getString(DBConstants.DISPLAY_NAME),
                 rs.getString(DBConstants.MERCURY_ORDER_CREATOR));
     }
@@ -414,9 +432,11 @@ public class DDPInstance {
                 rs.getInt(DBConstants.DAYS_MR_ATTENTION_NEEDED), rs.getInt(DBConstants.DAYS_TISSUE_ATTENTION_NEEDED),
                 rs.getBoolean(DBConstants.NEEDS_AUTH0_TOKEN), recipients, rs.getBoolean(DBConstants.MIGRATED_DDP),
                 rs.getString(DBConstants.BILLING_REFERENCE), rs.getString(DBConstants.ES_PARTICIPANT_INDEX),
-                rs.getString(DBConstants.ES_ACTIVITY_DEFINITION_INDEX), rs.getString(DBConstants.ES_USERS_INDEX),
+                rs.getString(DBConstants.ES_ACTIVITY_DEFINITION_INDEX),
+                rs.getString(DBConstants.ES_USERS_INDEX), rs.getString(DBConstants.STUDY_GUID),
                 rs.getString(DBConstants.RESEARCH_PROJECT), rs.getString(DBConstants.DISPLAY_NAME),
                 rs.getString(DBConstants.MERCURY_ORDER_CREATOR));
+
     }
 
     //assumption: base url of pepper studies will always end like: dsm/studies/<STUDYNAME>

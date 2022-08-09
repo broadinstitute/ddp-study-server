@@ -90,7 +90,7 @@ public class AddFamilyMemberRouteTest {
         ddpInstanceDao.delete(ddpInstanceDto.getDdpInstanceId());
     }
 
-    public static String payloadFactory(String participantGuid, String realm, Map<String, String> data, Integer userId) {
+    public static String payloadFactory(String participantGuid, String realm, Map<String, String> data, Long userId) {
         FamilyMemberDetails familyMemberDetails = null;
         if (data != null) {
             try {

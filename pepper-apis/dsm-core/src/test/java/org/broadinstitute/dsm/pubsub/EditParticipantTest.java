@@ -33,7 +33,7 @@ public class EditParticipantTest extends TestHelper {
     String dsmToDssSubscriptionId;
     String topicId;
     String messageData;
-    int userId;
+    Long userId;
 
     @Before
     public void first() {
@@ -43,14 +43,16 @@ public class EditParticipantTest extends TestHelper {
         dsmToDssSubscriptionId = cfg.getString(GCP_PATH_TO_DSS_TO_DSM_SUB);
         topicId = cfg.getString(GCP_PATH_TO_DSM_TO_DSS_TOPIC);
         messageData = TEST_PAYLOAD;
-        userId = new UserDao().getUserByEmail(cfg.getString(UNIT_TESTER_EMAIL)).orElse(new UserDto(1, "", "", "")).getUserId();
+        userId = new UserDao().getUserByEmail(cfg.getString(UNIT_TESTER_EMAIL))
+                .orElse(new UserDto(1, "", "", "", "", "", "", "", "", true, 1))
+                .getUserId();
     }
 
     @Test
     public void testEditParticipantFeature() {
 
         String realm = null;
-        if (UserUtil.checkUserAccess(realm, Integer.toString(userId), "participant_edit", null)) {
+        if (UserUtil.checkUserAccess(realm, Long.toString(userId), "participant_edit", null)) {
             try {
                 PubSubResultMessageSubscription.dssToDsmSubscriber(projectId, dsmToDssSubscriptionId);
             } catch (Exception e) {
@@ -62,7 +64,7 @@ public class EditParticipantTest extends TestHelper {
             String data = messageJsonObject.get("data").getAsJsonObject().toString();
 
             Map<String, String> attributeMap =
-                    EditParticipantPublisherRoute.getStringStringMap(Integer.toString(userId), messageJsonObject);
+                    EditParticipantPublisherRoute.getStringStringMap(Long.toString(userId), messageJsonObject);
 
             try {
                 EditParticipantMessagePublisher.publishMessage(data, attributeMap, projectId, topicId);
@@ -94,7 +96,7 @@ public class EditParticipantTest extends TestHelper {
             Assert.assertEquals(studyGuid, receivedMessageJsonObject.get("studyGuid").getAsString());
             Assert.assertEquals(messageJsonObject.get("data").getAsJsonObject().get("firstName"),
                     receivedMessageJsonObject.get("firstName"));
-            Assert.assertEquals(userId, receivedMessageJsonObject.get("userId").getAsInt());
+            Assert.assertEquals(java.util.Optional.ofNullable(userId), receivedMessageJsonObject.get("userId").getAsLong());
 
             EditParticipantMessage.updateMessageStatusById(messageId, DBConstants.MESSAGE_SENT_BACK_STATUS);
 
@@ -109,6 +111,6 @@ public class EditParticipantTest extends TestHelper {
 
     @After
     public void last() {
-        DBTestUtil.deleteMessage(userId);
-    }
+        DBTestUtil.deleteMessage(Math.toIntExact(userId));
+    }//todo fix
 }

@@ -5,8 +5,10 @@ import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -16,6 +18,10 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
+import org.broadinstitute.dsm.db.dao.user.AssigneeDao;
+import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
+import org.broadinstitute.dsm.db.dto.user.AssigneeDto;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
@@ -58,54 +64,72 @@ public class Participant implements Cloneable {
 
     private Integer ddpInstanceId;
 
-    @TableName(name = DBConstants.DDP_PARTICIPANT, alias = DBConstants.DDP_PARTICIPANT_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID,
+    @TableName (
+            name = DBConstants.DDP_PARTICIPANT,
+            alias = DBConstants.DDP_PARTICIPANT_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
-    @ColumnName(DBConstants.ASSIGNEE_ID_TISSUE)
+    @ColumnName (DBConstants.ASSIGNEE_ID_TISSUE)
     private String assigneeIdTissue;
     private String realm;
 
-    @TableName(name = DBConstants.DDP_ONC_HISTORY, alias = DBConstants.DDP_ONC_HISTORY_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID,
+    @TableName (
+            name = DBConstants.DDP_ONC_HISTORY,
+            alias = DBConstants.DDP_ONC_HISTORY_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
-    @ColumnName(DBConstants.ONC_HISTORY_CREATED)
+    @ColumnName (DBConstants.ONC_HISTORY_CREATED)
     private String created;
 
-    @TableName(name = DBConstants.DDP_ONC_HISTORY, alias = DBConstants.DDP_ONC_HISTORY_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID,
+    @TableName (
+            name = DBConstants.DDP_ONC_HISTORY,
+            alias = DBConstants.DDP_ONC_HISTORY_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID,
             columnPrefix = "")
-    @ColumnName(DBConstants.ONC_HISTORY_REVIEWED)
+    @ColumnName (DBConstants.ONC_HISTORY_REVIEWED)
     private String reviewed;
 
     @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
             primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.CR_SENT)
-    @DbDateConversion(SqlDateConverter.STRING_DAY)
+    @DbDateConversion (SqlDateConverter.STRING_DAY)
     private String crSent;
 
     @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
             primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.CR_RECEIVED)
-    @DbDateConversion(SqlDateConverter.STRING_DAY)
+    @DbDateConversion (SqlDateConverter.STRING_DAY)
     private String crReceived;
 
-    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
-    @ColumnName(DBConstants.NOTES)
+    @TableName (
+            name = DBConstants.DDP_PARTICIPANT_RECORD,
+            alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID,
+            columnPrefix = "")
+    @ColumnName (DBConstants.NOTES)
     private String notes;
 
-    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
-    @ColumnName(DBConstants.MINIMAL_MR)
+    @TableName (
+            name = DBConstants.DDP_PARTICIPANT_RECORD,
+            alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID,
+            columnPrefix = "")
+    @ColumnName (DBConstants.MINIMAL_MR)
     private Boolean minimalMr;
 
-    @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
-    @ColumnName(DBConstants.ABSTRACTION_READY)
+    @TableName (
+            name = DBConstants.DDP_PARTICIPANT_RECORD,
+            alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID,
+            columnPrefix = "")
+    @ColumnName (DBConstants.ABSTRACTION_READY)
     private Boolean abstractionReady;
 
     @TableName(name = DBConstants.DDP_PARTICIPANT_RECORD, alias = DBConstants.DDP_PARTICIPANT_RECORD_ALIAS,
             primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
     @ColumnName(DBConstants.ADDITIONAL_VALUES_JSON)
-    @JsonProperty("dynamicFields")
-    @SerializedName("dynamicFields")
+    @JsonProperty ("dynamicFields")
+    @SerializedName ("dynamicFields")
     private String additionalValuesJson;
 
     @JsonProperty("dynamicFields")
@@ -114,12 +138,21 @@ public class Participant implements Cloneable {
         });
     }
 
-    @TableName(name = DBConstants.DDP_PARTICIPANT_EXIT, alias = DBConstants.DDP_PARTICIPANT_EXIT_ALIAS,
-            primaryKey = DBConstants.PARTICIPANT_ID, columnPrefix = "")
-    @ColumnName(DBConstants.EXIT_DATE)
+    @TableName (
+            name = DBConstants.DDP_PARTICIPANT_EXIT,
+            alias = DBConstants.DDP_PARTICIPANT_EXIT_ALIAS,
+            primaryKey = DBConstants.PARTICIPANT_ID,
+            columnPrefix = "")
+    @ColumnName (DBConstants.EXIT_DATE)
     private Long exitDate;
 
     public Participant() {
+    }
+    //For TissueList
+    public Participant(String participantId, String ddpParticipantId, String assigneeIdTissue) {
+        this(Long.parseLong(participantId), ddpParticipantId, null, assigneeIdTissue, null,
+                null, null, null, null, null,
+                false, false, null, null);
     }
 
     public Participant(Long participantId, String ddpParticipantId, String assigneeIdMr, String assigneeIdTissue, String instanceName,
@@ -161,24 +194,44 @@ public class Participant implements Cloneable {
         this.exitDate = exitDate;
     }
 
-    //For TissueList
-    public Participant(String participantId, String ddpParticipantId, String assigneeIdTissue) {
-        this(Long.parseLong(participantId), ddpParticipantId, null, assigneeIdTissue, null, null, null, null, null, null, false, false,
-                null, null);
-    }
-
-    public static Participant getParticipant(@NonNull Map<String, Assignee> assignees, @NonNull String realm, @NonNull ResultSet rs)
+    public static Participant getParticipant(@NonNull ArrayList<AssigneeDto> assignees, @NonNull String realm, @NonNull ResultSet rs)
             throws SQLException {
         String assigneeMR = null;
         String assigneeTissue = null;
+        Optional<BookmarkDto> maybeUserIdBookmark = new BookmarkDao().getBookmarkByInstance("FIRST_DSM_USER_ID");
+        maybeUserIdBookmark.orElseThrow();
+        Long firstNewUserId = maybeUserIdBookmark.get().getValue();
         if (assignees != null && !assignees.isEmpty()) {
             String assigneeIdMR = rs.getString(DBConstants.ASSIGNEE_ID_MR);
+            boolean isLegacy = Long.parseLong(assigneeIdMR) < firstNewUserId;
             if (StringUtils.isNotBlank(assigneeIdMR)) {
-                assigneeMR = assignees.get(assigneeIdMR).getName();
+                AssigneeDto assigneeDto = null;
+                if (!isLegacy) {
+                    assignees.stream().filter(assignee -> assignee.getAssigneeId() == Long.parseLong(assigneeIdMR));
+
+                } else {
+                    assignees.stream().filter(assignee -> assignee.getDSMLegacyId() == Long.parseLong(assigneeIdMR));
+                }
+                if (assigneeDto != null) {
+                    assigneeMR = assigneeDto.getName().orElse(assigneeDto.getEmail().orElseThrow());
+                } else {
+                    throw new RuntimeException("Couldn't find mr assignee by id " + assigneeMR);
+                }
             }
             String assigneeIdTissue = rs.getString(DBConstants.ASSIGNEE_ID_TISSUE);
+            isLegacy = Long.parseLong(assigneeIdTissue) < firstNewUserId;
             if (StringUtils.isNotBlank(assigneeIdTissue)) {
-                assigneeTissue = assignees.get(assigneeIdTissue).getName();
+                AssigneeDto assigneeDto = null;
+                if (!isLegacy) {
+                    assignees.stream().filter(assignee -> assignee.getAssigneeId() == Long.parseLong(assigneeIdTissue));
+                } else {
+                    assignees.stream().filter(assignee -> assignee.getDSMLegacyId() == Long.parseLong(assigneeIdTissue));
+                }
+                if (assigneeDto != null) {
+                    assigneeTissue = assigneeDto.getName().orElse(assigneeDto.getEmail().orElseThrow());
+                } else {
+                    throw new RuntimeException("Couldn't find tissue assignee by id " + assigneeIdTissue);
+                }
             }
         }
         Participant participant =
@@ -202,7 +255,7 @@ public class Participant implements Cloneable {
     public static Map<String, Participant> getParticipants(@NonNull String realm, String queryAddition) {
         logger.info("Collection participant information");
         Map<String, Participant> participants = new HashMap<>();
-        HashMap<String, Assignee> assignees = Assignee.getAssigneeMap(realm);
+        ArrayList<AssigneeDto> assignees = new ArrayList(AssigneeDao.getAssigneeMap(realm).values());
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(DBUtil.getFinalQuery(SQL_SELECT_PARTICIPANT, queryAddition))) {

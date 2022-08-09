@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.exception.DaoException;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 
@@ -147,5 +148,27 @@ public class DBUtil {
     public static String participantIdsInClause(List<String> participantIds) {
         return participantIds.stream()
                 .collect(Collectors.joining("','", "'", "'"));
+    }
+
+    public static int checkUpdate(int expected, int actual) throws DaoException {
+        return checkResult("Expected to update %1$d rows but did %2$d", expected, actual);
+    }
+
+    /**
+     * Check expected result against the actual result. Useful for checking the right amount of rows were affected.
+     *
+     * @param messageFormat string to format for use when throwing an exception, will be given "expected" and "actual" values as arguments
+     * @param expected      the expected value
+     * @param actual        the actual value
+     * @param <T>           the type of value to check
+     * @return the actual value if matches
+     * @throws DaoException if values don't match
+     */
+    public static <T> T checkResult(String messageFormat, T expected, T actual) throws DaoException {
+        if (expected.equals(actual)) {
+            return actual;
+        } else {
+            throw new DaoException(String.format(messageFormat, expected, actual));
+        }
     }
 }

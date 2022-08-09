@@ -19,7 +19,7 @@ public class AddFamilyMemberPayload {
     private String participantId;
     private String realm;
     private FamilyMemberDetails data;
-    private Integer userId;
+    private Long userId;
     private Boolean copyProbandInfo;
     private int probandDataId;
 
@@ -44,7 +44,7 @@ public class AddFamilyMemberPayload {
         return Optional.ofNullable(data);
     }
 
-    public Optional<Integer> getUserId() {
+    public Optional<Long> getUserId() {
         return Optional.ofNullable(userId);
     }
 
@@ -97,7 +97,7 @@ public class AddFamilyMemberPayload {
         private String participantId;
         private String realm;
         private FamilyMemberDetails data;
-        private Integer userId;
+        private Long userId;
         private Boolean copyProbandInfo;
         private int probandDataId;
 
@@ -111,7 +111,7 @@ public class AddFamilyMemberPayload {
             return this;
         }
 
-        public Builder withUserId(Integer userId) {
+        public Builder withUserId(Long userId) {
             this.userId = userId;
             return this;
         }

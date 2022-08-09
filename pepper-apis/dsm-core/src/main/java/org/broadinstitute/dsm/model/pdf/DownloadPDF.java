@@ -190,7 +190,7 @@ public class DownloadPDF {
     }
 
     private void savePDFinBucket(@NonNull String realm, @NonNull String ddpParticipantId, @NonNull InputStream stream,
-                                 @NonNull String fileType, @NonNull Integer userId) {
+                                 @NonNull String fileType, @NonNull Long userId) {
         String gcpName = DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
         if (StringUtils.isNotBlank(gcpName)) {
             String bucketName = gcpName + "_dsm_" + realm.toLowerCase();

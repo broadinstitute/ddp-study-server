@@ -2,7 +2,8 @@ package org.broadinstitute.dsm.route;
 
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.UserSettings;
+import org.broadinstitute.dsm.db.dao.settings.UserSettingsDao;
+import org.broadinstitute.dsm.db.dto.settings.UserSettingsDto;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
@@ -16,6 +17,12 @@ import spark.Response;
 public class UserSettingRoute extends RequestHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(UserSettingRoute.class);
+    private UserSettingsDao userSettingsDao;
+
+    public UserSettingRoute(UserSettingsDao userSettingsDao) {
+        super();
+        this.userSettingsDao = userSettingsDao;
+    }
 
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
@@ -27,8 +34,8 @@ public class UserSettingRoute extends RequestHandler {
                     || UserUtil.checkUserAccess(null, userId, "pt_list_view", userIdRequest)) {
                 if (StringUtils.isNotBlank(userIdRequest)) {
                     String requestBody = request.body();
-                    UserSettings userSettings = new Gson().fromJson(requestBody, UserSettings.class);
-                    UserSettings.editUserSettings(userIdRequest, userSettings);
+                    UserSettingsDto userSettingsDto = new Gson().fromJson(requestBody, UserSettingsDto.class);
+                    userSettingsDao.updateUserSettings(UserUtil.getUserIdInLongForm(userIdRequest), userSettingsDto);
                     return new Result(200);
                 } else {
                     logger.error("User id was blank");

@@ -9,6 +9,7 @@ import com.google.gson.Gson;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.KitDiscard;
+import org.broadinstitute.dsm.db.dao.roles.UserRoleDao;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.security.RequestHandler;
@@ -37,11 +38,14 @@ public class KitDiscardRoute extends RequestHandler {
     private final Auth0Util auth0Util;
     private final UserUtil userUtil;
     private final String auth0Domain;
+    private UserRoleDao userRoleDao;
 
-    public KitDiscardRoute(@NonNull Auth0Util auth0Util, @NonNull UserUtil userUtil, @NonNull String auth0Domain) {
+    public KitDiscardRoute(@NonNull Auth0Util auth0Util, @NonNull UserUtil userUtil, @NonNull String auth0Domain,
+                           UserRoleDao userRoleDao) {
         this.auth0Util = auth0Util;
         this.userUtil = userUtil;
         this.auth0Domain = auth0Domain;
+        this.userRoleDao = userRoleDao;
     }
 
     @Override
@@ -129,8 +133,9 @@ public class KitDiscardRoute extends RequestHandler {
                         String email = auth0UserInfo.getEmail();
                         UserDto userDto = new UserDao().getUserByEmail(email).orElseThrow();
                         if (userDto != null && userDto.getUserId() > 0) {
-                            ArrayList<String> userSetting = userUtil.getUserAccessRoles(email);
-                            if (userSetting.contains(DBConstants.KIT_SHIPPING) || userSetting.contains(DBConstants.DISCARD_SAMPLE)) {
+                            ArrayList<String> userPermissions = userRoleDao.getUserPermissionsForUserEmail(email);
+                            if (userPermissions.contains(DBConstants.KIT_SHIPPING) ||
+                                    userPermissions.contains(DBConstants.DISCARD_SAMPLE)) {
                                 KitDiscard kit = KitDiscard.getKitDiscard(kitAction.getKitDiscardId());
                                 if (kit.getChangedById() != userDto.getUserId()) {
                                     if (KitDiscard.setConfirmed(kitAction.getKitDiscardId(), userDto.getUserId())) {

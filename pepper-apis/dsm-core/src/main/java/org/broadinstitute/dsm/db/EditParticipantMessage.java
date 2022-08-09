@@ -50,13 +50,13 @@ public class EditParticipantMessage {
         this.received_message = received_message;
     }
 
-    public static EditParticipantMessage getMessageWithStatus(int userId) {
+    public static EditParticipantMessage getMessageWithStatus(Long userId) {
         List<EditParticipantMessage> messagesWithStatus = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
 
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_MESSAGE_AND_STATUS)) {
-                stmt.setInt(1, userId);
+                stmt.setLong(1, userId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         messagesWithStatus.add(
