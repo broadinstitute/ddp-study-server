@@ -1,9 +1,9 @@
 package org.broadinstitute.dsm.model.participant;
 
-import org.broadinstitute.dsm.model.elastic.sort.Alias;
-
 import java.util.Arrays;
 import java.util.List;
+
+import org.broadinstitute.dsm.model.elastic.sort.Alias;
 
 public class Util {
 

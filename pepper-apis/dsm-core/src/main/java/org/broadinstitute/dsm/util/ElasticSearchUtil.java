@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1464,7 +1463,7 @@ public class ElasticSearchUtil {
                     String endDate = userEntered + END_OF_DAY;
                     long end = SystemUtil.getLongFromDetailDateString(endDate);
                     rangeQueryBuilder(finalQuery, dataParam[1].trim(), start, end, must);
-                } catch (ParseException | DateTimeParseException e) {
+                } catch (ParseException e) {
                     //was no date string so go for normal text
                     mustOrSearch(finalQuery, dataParam[1].trim(), userEntered, wildCard, must);
                 }

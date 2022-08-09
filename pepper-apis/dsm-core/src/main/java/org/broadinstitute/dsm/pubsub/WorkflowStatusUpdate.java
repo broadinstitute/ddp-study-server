@@ -50,11 +50,11 @@ public class WorkflowStatusUpdate {
         String studyGuid = attributesMap.get(STUDY_GUID);
         String ddpParticipantId = attributesMap.get(PARTICIPANT_GUID);
 
-//        if (isOsteoRelatedStatusUpdateelatedStatusUpdate(workflow, status)) {
-//            Optional<DDPInstanceDto> maybeDDPInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(OLD_OSTEO_INSTANCE_NAME);
-//            maybeDDPInstanceDto.ifPresentOrElse(ddpInstanceDto -> OsteoWorkflowStatusUpdate.of(ddpInstanceDto, ddpParticipantId).update(),
-//                    () -> logger.info(String.format("Could not find ddp_instance with instance_name %s", OLD_OSTEO_INSTANCE_NAME)));
-//        } else {
+        if (isOsteoRelatedStatusUpdate(workflow, status)) {
+            Optional<DDPInstanceDto> maybeDDPInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(OLD_OSTEO_INSTANCE_NAME);
+            maybeDDPInstanceDto.ifPresentOrElse(ddpInstanceDto -> OsteoWorkflowStatusUpdate.of(ddpInstanceDto, ddpParticipantId).update(),
+                    () -> logger.info(String.format("Could not find ddp_instance with instance_name %s", OLD_OSTEO_INSTANCE_NAME)));
+        } else {
             DDPInstance instance = DDPInstance.getDDPInstanceByGuid(studyGuid);
             List<ParticipantData> participantDatas = participantDataDao.getParticipantDataByParticipantId(ddpParticipantId);
             Optional<FieldSettingsDto> fieldSetting =
@@ -90,7 +90,7 @@ public class WorkflowStatusUpdate {
                     logger.error("Couldn't add AT default values");
                 }
             }
-//        }
+        }
     }
 
     private static boolean isATRelatedStatusUpdate(String studyGuid) {

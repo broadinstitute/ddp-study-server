@@ -59,6 +59,9 @@ public class JWTRouteFilter {
                 if (parsedAuthHeader != null) {
                     if (parsedAuthHeader.length == 2) {
                         String jwtToken = parsedAuthHeader[1].trim();
+                        if (!isRSA) {
+                            logger.info(jwtToken);
+                        }
                         if (StringUtils.isNotBlank(jwtToken)) {
                             try {
                                 Map<String, Claim> verifiedClaims;
