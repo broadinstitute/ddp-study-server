@@ -41,14 +41,14 @@ public class NDIRoute extends RequestHandler {
             String[] rows = fileContent.split(linebreak);
             if (rows.length > 1) {
                 String firstRow = rows[0];
-                if (firstRow.contains(SystemUtil.SEPARATOR)) {
-                    List<String> fieldNames = new ArrayList<>(Arrays.asList(firstRow.trim().split(SystemUtil.SEPARATOR)));
+                if (firstRow.contains(SystemUtil.TAB_SEPARATOR)) {
+                    List<String> fieldNames = new ArrayList<>(Arrays.asList(firstRow.trim().split(SystemUtil.TAB_SEPARATOR)));
                     String missingFieldName = fieldNameMissing(fieldNames);
                     if (missingFieldName == null) {
                         List<NDIUploadObject> uploadObjects = new ArrayList<>();
                         for (int rowIndex = 1; rowIndex < rows.length; rowIndex++) {
                             Map<String, String> obj = new LinkedHashMap<>();
-                            String[] row = rows[rowIndex].trim().split(SystemUtil.SEPARATOR);
+                            String[] row = rows[rowIndex].trim().split(SystemUtil.TAB_SEPARATOR);
                             if (row.length == fieldNames.size()) {
                                 for (int columnIndex = 0; columnIndex < fieldNames.size(); columnIndex++) {
                                     obj.put(fieldNames.get(columnIndex), row[columnIndex]);
