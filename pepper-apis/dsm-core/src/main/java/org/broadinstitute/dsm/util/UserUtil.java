@@ -266,6 +266,10 @@ public class UserUtil {
         return false;
     }
 
+    public static boolean checkUserAccess(String realm, String userId, String role) {
+        return checkUserAccess(realm, userId, role, null);
+    }
+
     public static List<String> getUserRolesPerRealm(@NonNull String query, @NonNull String userId, String realm) {
         List<String> roles = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
