@@ -90,8 +90,11 @@ public class ConfigManager {
         }
 
         if (configCloud.isEmpty() && configLocal.isEmpty()) {
-            log.error("Can't load configuration. Neither local config not cloud one was specified");
-            throw new DDPException("Can't load configuration. Neither local config not cloud one was specified");
+            log.error("no configuration was specified. Use properties '{}' to use a local file or '{}' and '{}' to use a cloud secret",
+                    TYPESAFE_CONFIG_SYSTEM_VAR,
+                    GOOGLE_SECRET_PROJECT,
+                    GOOGLE_SECRET_NAME);
+            throw new DDPException("no configuration was specified.");
         }
 
         return configLocal.orElse(ConfigFactory.empty()).withFallback(configCloud.orElse(ConfigFactory.empty())).resolve();
