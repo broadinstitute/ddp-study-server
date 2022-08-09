@@ -15,7 +15,7 @@ import org.broadinstitute.dsm.db.InstanceSettings;
 import org.broadinstitute.dsm.db.KitType;
 import org.broadinstitute.dsm.db.ViewFilter;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
-import org.broadinstitute.dsm.db.dao.roles.UserRoleDao;
+import org.broadinstitute.dsm.db.dao.user.AssigneeDao;
 import org.broadinstitute.dsm.db.dto.settings.InstanceSettingsDto;
 import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.KitSubKits;
@@ -79,7 +79,7 @@ public class DisplaySettingsRoute extends RequestHandler {
                     && StringUtils.isNotBlank(parent) && StringUtils.isNotBlank(ddpGroupId)) {
                 Map<String, Object> displaySettings = new HashMap<>();
                 InstanceSettings instanceSettings = new InstanceSettings();
-                displaySettings.put("assignees", UserRoleDao.getAssignees(realm));
+                displaySettings.put("assignees", AssigneeDao.getAssignees(realm));
                 displaySettings.put("fieldSettings", FieldSettings.getFieldSettings(realm));
                 displaySettings.put("drugs", Drug.getDrugList());
                 displaySettings.put("cancers", Cancer.getCancers());

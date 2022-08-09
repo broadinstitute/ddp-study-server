@@ -79,7 +79,6 @@ public class ApplicationConfigConstants {
     //db queries
     public static final String GET_RECEIVED_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL = "portal.selectReceivedKitForNotification";
     public static final String GET_SENT_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL = "portal.selectSentKitForNotification";
-    public static final String GET_ALLOWED_REALMS_FOR_USER_ROLE_STARTS_LIKE = "portal.selectAllowedRealmsStartsLike";
     public static final String GET_ROLES_LIKE = "portal.getRoles";
     public static final String UPDATE_KIT_REQUEST = "portal.updateKitRequest";
     public static final String INSERT_KIT_TRACKING = "portal.insertKitTrackingRequest";
@@ -101,11 +100,8 @@ public class ApplicationConfigConstants {
     public static final String UPDATE_LABEL_SETTINGS = "portal.updateLabelSettings";
     public static final String INSERT_LABEL_SETTINGS = "portal.insertLabelSettings";
 
-    public static final String GET_PARTICIPANT_EVENTS = "portal.selectParticipantEvents";
-    public static final String GET_PARTICIPANT_EVENT = "portal.selectParticipantEvent";
     public static final String INSERT_PARTICIPANT_EVENT = "portal.insertParticipantEvent";
     public static final String INSERT_SURVEY_TRIGGER = "portal.insertSurveyTrigger";
-    public static final String GET_KIT_OF_EXITED_PARTICIPANTS = "portal.exitedKits";
     public static final String UPDATE_KIT_DISCARD_ACTION = "portal.exitedKitAction";
     public static final String UPDATE_KIT_DISCARDED = "portal.exitedKitDiscarded";
     public static final String INSERT_KIT_DISCARD = "portal.insertKitDiscard";

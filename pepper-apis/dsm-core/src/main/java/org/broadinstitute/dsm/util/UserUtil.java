@@ -36,10 +36,7 @@ public class UserUtil {
         if (StringUtils.isBlank(realm)) {
             roles = new UserRoleDao().checkUserAccess(Long.parseLong(userId));
         } else {
-            DDPInstance ddpInstance = DDPInstance.getDDPInstance(realm);
-            if (ddpInstance == null) {
-                ddpInstance = DDPInstance.getDDPInstanceByGuid(realm);
-            }
+            DDPInstance ddpInstance = DDPInstance.getDDPInstanceByRealmOrGuid(realm);
             roles = new UserRoleDao().getUserRolesPeRealm(Long.parseLong(userId), ddpInstance.getStudyGuid());
         }
         if (roles != null && !roles.isEmpty()) {

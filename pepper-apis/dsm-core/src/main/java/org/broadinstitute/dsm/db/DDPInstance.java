@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import com.google.gson.Gson;
 import lombok.Data;
@@ -118,6 +119,17 @@ public class DDPInstance {
         this.mercuryOrderCreator = mercuryOrderCreator;
         this.displayName = displayName;
         this.studyGuid = studyGuid;
+    }
+
+    public static DDPInstance getDDPInstanceByRealmOrGuid(@NonNull String realm) {
+        Optional<DDPInstance> maybeDdpInstance = Optional.ofNullable(getDDPInstance(realm));
+        if (maybeDdpInstance.isEmpty()) {
+            maybeDdpInstance = Optional.ofNullable(getDDPInstanceByGuid(realm));
+        }
+        if (maybeDdpInstance.isEmpty()) {
+            throw new RuntimeException("Instance with either realm or study-guid by " + realm + " was not found!");
+        }
+        return maybeDdpInstance.get();
     }
 
     public static DDPInstance getDDPInstance(@NonNull String realm) {

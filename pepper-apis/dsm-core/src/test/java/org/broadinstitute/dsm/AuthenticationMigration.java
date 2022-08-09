@@ -76,7 +76,7 @@ public class AuthenticationMigration {
                     Long expiresAt = null;
 
                     long userId = handle.attach(JdbiUser.class).insertUser(auth0Domain, clientKey, null,
-                            userGuid, userHruid, null, null, false, now, now, expiresAt);
+                            userGuid, userHruid, null, null, false, now, now, expiresAt, user.isActive());
                     if (user.getName().isEmpty() || user.getName().get().equals(user.getEmail())) {
                         user.setFirstName("");
                         user.setLastName("");

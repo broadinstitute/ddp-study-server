@@ -106,6 +106,13 @@ public class RoutePath {
     public static final String DELETE_COHORT_TAG = "deleteCohortTag";
     public static final String SUBMIT_MERCURY_ORDER = "submitMercuryOrder";
 
+    //user
+    public static final String ADD_NEW_USER = "addUser";
+    public static final String MODIFY_USER = "modifyUser";
+    public static final String DEACTIVATE_USER = "deactivateUser";
+    public static final String GET_USERS = "getUsers";
+    public static final String GET_ROLES = "getRoles";
+
     public static String getRealm(Request request) {
         QueryParamsMap queryParams = request.queryMap();
         String realm = "";

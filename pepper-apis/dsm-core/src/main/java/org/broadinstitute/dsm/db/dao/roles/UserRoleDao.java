@@ -2,14 +2,20 @@ package org.broadinstitute.dsm.db.dao.roles;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 
 import lombok.NonNull;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.dsm.db.dto.user.AssigneeDto;
+import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.dto.user.RoleDto;
+import org.broadinstitute.dsm.db.dto.user.UserDto;
+import org.broadinstitute.dsm.db.dto.user.UserRoleDto;
+import org.broadinstitute.dsm.db.jdbi.JdbiRole;
+import org.broadinstitute.dsm.db.jdbi.JdbiUser;
 import org.broadinstitute.dsm.db.jdbi.JdbiUserRole;
+import org.broadinstitute.dsm.exception.DaoException;
 import org.broadinstitute.dsm.model.NameValue;
+import org.broadinstitute.dsm.util.DBUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,22 +109,39 @@ public class UserRoleDao {
         return (List<String>) results.resultValue;
     }
 
-    public static HashMap<Long, AssigneeDto> getAssigneeMap(String realm) {
-        HashMap<Long, AssigneeDto> assignees = new HashMap<>();
-        TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
-            List<AssigneeDto> assigneeLists = handle.attach(JdbiUserRole.class).getAssigneesForStudy(realm);
-            for (AssigneeDto assigneeDto : assigneeLists) {
-                assignees.put(assigneeDto.getAssigneeId(), new AssigneeDto(assigneeDto.getAssigneeId(), assigneeDto.getName().orElse(""),
-                        assigneeDto.getEmail().orElseThrow()));
+
+    public List<UserRoleDto> getAllUsersWithRoleForRealm(String studyGuid) {
+        List<UserRoleDto> users = new ArrayList<>();
+        SimpleResult result = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
+            SimpleResult dbVals = new SimpleResult();
+            dbVals.resultValue = handle.attach(JdbiUserRole.class).getAllActiveUsersWithRoleInRealm(studyGuid);
+            logger.info(
+                    String.format("Returning a list of %d users for realm %s", ((List<UserRoleDto>) dbVals.resultValue).size(), studyGuid));
+            return dbVals;
+        });
+        return (List<UserRoleDto>) result.resultValue;
+    }
+
+    public void modifyUser(UserRoleDto userRoleDto, String realm) {
+        SimpleResult result = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
+            if (userRoleDto.getUser().getUserId() > 0) {
+                UserDto user = userRoleDto.getUser();
+                RoleDto role = userRoleDto.getRole();
+                DDPInstance ddpInstance = DDPInstance.getDDPInstanceByRealmOrGuid(realm);
+                try {
+                    DBUtil.checkUpdate(1,
+                            handle.attach(JdbiUser.class).modifyUser(user.getUserId(), user.getFirstName(), user.getLastName()));
+                    DBUtil.checkUpdate(1, handle.attach(JdbiRole.class)
+                            .updateRoleForUser(user.getUserId(), role.getRoleId(), ddpInstance.getStudyGuid()));
+                } catch (DaoException e) {
+                    throw new RuntimeException("Error occurred while updating user.", e);
+                }
+
+                logger.info("successfully updated role for user id " + user.getUserId() + " to " + role.getRoleId());
+            } else {
+                throw new RuntimeException("");
             }
             return null;
         });
-
-        logger.info("Found " + assignees.size() + " assignees ");
-        return assignees;
-    }
-
-    public static Collection<AssigneeDto> getAssignees(String realm) {
-        return UserRoleDao.getAssigneeMap(realm).values();
     }
 }

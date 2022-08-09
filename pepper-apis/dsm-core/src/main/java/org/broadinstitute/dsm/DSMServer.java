@@ -51,8 +51,10 @@ import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetrics;
 import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.dsm.careevolve.Provider;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
+import org.broadinstitute.dsm.db.dao.roles.RoleDao;
 import org.broadinstitute.dsm.db.dao.roles.UserRoleDao;
 import org.broadinstitute.dsm.db.dao.settings.UserSettingsDao;
+import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.jetty.JettyConfig;
 import org.broadinstitute.dsm.jobs.DDPEventJob;
 import org.broadinstitute.dsm.jobs.DDPRequestJob;
@@ -114,6 +116,7 @@ import org.broadinstitute.dsm.route.PatchRoute;
 import org.broadinstitute.dsm.route.TriggerSurveyRoute;
 import org.broadinstitute.dsm.route.UserSettingRoute;
 import org.broadinstitute.dsm.route.ViewFilterRoute;
+import org.broadinstitute.dsm.route.access.GetRoleRoute;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
 import org.broadinstitute.dsm.route.mercury.PostMercuryOrderDummyRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
@@ -121,6 +124,10 @@ import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
 import org.broadinstitute.dsm.route.tag.cohort.BulkCreateCohortTagRoute;
 import org.broadinstitute.dsm.route.tag.cohort.CreateCohortTagRoute;
 import org.broadinstitute.dsm.route.tag.cohort.DeleteCohortTagRoute;
+import org.broadinstitute.dsm.route.user.GetUserRoute;
+import org.broadinstitute.dsm.route.user.ModifyUserRoute;
+import org.broadinstitute.dsm.route.user.PostUserRoute;
+import org.broadinstitute.dsm.route.user.patch.DeactivateUserRoute;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -680,6 +687,8 @@ public class DSMServer {
 
         setupPubSubPublisherRoutes(cfg);
 
+        setupUserAndRoleRoutes(cfg);
+
         //no GET for USER_SETTINGS_REQUEST because UI gets them per AuthenticationRoute
 
         patch(UI_ROOT + RoutePath.USER_SETTINGS_REQUEST, new UserSettingRoute(userSettingsDao), new JsonTransformer());
@@ -704,6 +713,25 @@ public class DSMServer {
         post(UI_ROOT + RoutePath.CREATE_COHORT_TAG, new CreateCohortTagRoute(), new JsonTransformer());
         post(UI_ROOT + RoutePath.BULK_CREATE_COHORT_TAGS, new BulkCreateCohortTagRoute(), new JsonTransformer());
         delete(UI_ROOT + RoutePath.DELETE_COHORT_TAG, new DeleteCohortTagRoute(), new JsonTransformer());
+    }
+
+    private void setupUserAndRoleRoutes(Config cfg) {
+        PostUserRoute postUserRoute = new PostUserRoute(new UserDao(), cfg.getString(ApplicationConfigConstants.AUTH0_ACCOUNT),
+                cfg.getString(ApplicationConfigConstants.AUTH0_CLIENT_KEY));
+        post(UI_ROOT + RoutePath.ADD_NEW_USER, postUserRoute, new JsonTransformer());
+
+        GetUserRoute getUserRoute = new GetUserRoute(new UserRoleDao());
+        get(UI_ROOT + RoutePath.GET_USERS, getUserRoute, new JsonTransformer());
+
+        GetRoleRoute getRoleRoute = new GetRoleRoute(new RoleDao());
+        get(UI_ROOT + RoutePath.GET_ROLES, getRoleRoute, new JsonTransformer());
+
+        ModifyUserRoute modifyUserRoute = new ModifyUserRoute(new UserRoleDao());
+        post(UI_ROOT + RoutePath.MODIFY_USER, modifyUserRoute, new JsonTransformer());
+
+        DeactivateUserRoute deactivateUserRoute = new DeactivateUserRoute(new UserDao());
+        patch(UI_ROOT + RoutePath.DEACTIVATE_USER, deactivateUserRoute, new JsonTransformer());
+
     }
 
     private void setupPubSub(@NonNull Config cfg, NotificationUtil notificationUtil) {

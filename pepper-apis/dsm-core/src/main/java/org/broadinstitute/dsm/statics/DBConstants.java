@@ -302,6 +302,7 @@ public class DBConstants {
     public static final String ADD_FAMILY_MEMBER = "add_family_member";
     public static final String SHOW_GROUP_FIELDS = "show_group_fields";
     public static final String GBF_SHIPPED_DSS_DELIVERED = "GBF_SHIPPED_DSS_DELIVERED";
+    public static final String DSS_STUDY_ADMIN = "dss_study_admin";
 
     //user role
     public static final String MAILINGLIST_VIEW = "mailingList_view";
@@ -317,6 +318,10 @@ public class DBConstants {
     public static final String MR_ABSTRACTER = "mr_abstracter";
     public static final String MR_QC = "mr_qc";
     public static final String PT_LIST_VIEW = "pt_list_view";
+    public static final String USER_ADD = "user_add";
+    public static final String USER_ACCESS = "user_access";
+    public static final String NEW_USER_ROLE = "New User";
+
 
     //miscellaneous
     public static final String EXIT_DATE = "exit_date";
@@ -357,6 +362,7 @@ public class DBConstants {
     public static final String EVENT_TYPE = "event_type";
     public static final String EVENT_DESCRIPTION = "event_description";
     public static final String EVENT = "event";
+    public static final String DONE_BY = "done_by";
 
     // drug list: list uses display_name, test uses generic_name
     public static final String DISPLAY_NAME = "display_name";
@@ -489,9 +495,6 @@ public class DBConstants {
     public static final String UPS_LOCATION = "ups_location";
     public static final String UPS_ACTIVITY_ID = "ups_activity_id";
 
-    //access_user
-    public static final String PHONE_NUMBER = "phone_number";
-
     //sm_id table
     public static final String SM_ID_TABLE = "sm_id";
     public static final String SM_ID_TABLE_ALIAS = "sm";
@@ -520,4 +523,5 @@ public class DBConstants {
     public static final String COHORT_TAG_NAME = "cohort_tag_name";
 
 
+    public static final String USER_DELETE = "user_delete";
 }

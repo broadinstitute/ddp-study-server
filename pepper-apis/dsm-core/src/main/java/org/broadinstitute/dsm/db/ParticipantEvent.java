@@ -7,9 +7,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 import lombok.Data;
 import lombok.NonNull;
+import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
+import org.broadinstitute.dsm.db.dao.user.UserDao;
+import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
+import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -27,17 +33,26 @@ public class ParticipantEvent {
     private static String GET_PARTICIPANT_EVENT =
             "select event  from ddp_participant_event ev where ev.ddp_instance_id = ? "
                     + "and ev.ddp_participant_id = ?";
+    private static String GET_PARTICIPANT_EVENTS = "select ev.event, ev.ddp_participant_id, ev.date, ev.done_by "
+            + "        from ddp_participant_event ev "
+            + "        left join ddp_instance realm on (ev.ddp_instance_id = realm.ddp_instance_id) "
+            + "        left join ddp_participant_exit ex on (ex.ddp_instance_id = ev.ddp_instance_id "
+            + "            and ex.ddp_participant_id = ev.ddp_participant_id) "
+            + "        where ex.ddp_participant_exit_id is null "
+            + "        and instance_name = ?";
     private final String participantId;
     private final String eventType;
-    private final String user;
+    private final long userId;
+    private String user;
     private final long date;
     private String shortId;
 
-    public ParticipantEvent(String participantId, String eventType, String user, long date) {
+    public ParticipantEvent(String participantId, String eventType, String user, long date, long userId) {
         this.participantId = participantId;
         this.eventType = eventType;
         this.user = user;
         this.date = date;
+        this.userId = userId;
     }
 
     public static Collection<ParticipantEvent> getSkippedParticipantEvents(@NonNull String realm) {
@@ -45,13 +60,13 @@ public class ParticipantEvent {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(
-                    DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_PARTICIPANT_EVENTS))) {
+                    DSMConfig.getSqlFromConfig(GET_PARTICIPANT_EVENTS))) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         skippedParticipantEvents.add(
                                 new ParticipantEvent(rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.EVENT),
-                                        rs.getString(DBConstants.NAME), rs.getLong(DBConstants.DATE)));
+                                        null, rs.getLong(DBConstants.DATE), rs.getLong(DBConstants.DONE_BY)));
                     }
                 }
             } catch (Exception ex) {
@@ -77,7 +92,27 @@ public class ParticipantEvent {
                 }
             }
         }
+        getUserNames(skippedParticipantEvents);
         return skippedParticipantEvents;
+    }
+
+    private static void getUserNames(Collection<ParticipantEvent> skippedParticipantEvents) {
+        UserDao userDao = new UserDao();
+        List<UserDto> userList = userDao.getAllDSMUsers();
+        Optional<BookmarkDto> maybeUserIdBookmark = new BookmarkDao().getBookmarkByInstance("FIRST_DSM_USER_ID");
+        maybeUserIdBookmark.orElseThrow();
+        Long firstNewUserId = maybeUserIdBookmark.get().getValue();
+        skippedParticipantEvents.stream().forEach(participantEvent -> {
+            long userId = participantEvent.userId;
+            boolean isLegacy = userId < firstNewUserId;
+            if (isLegacy) {
+                userList.stream().filter(user -> user.getDsmLegacyId() == userId).findAny()
+                        .ifPresent(u -> participantEvent.user = u.getName().get());
+            } else {
+                userList.stream().filter(user -> user.getUserId() == userId).findAny()
+                        .ifPresent(u -> participantEvent.user = u.getName().get());
+            }
+        });
     }
 
     public static void skipParticipantEvent(@NonNull String ddpParticipantId, @NonNull long currentTime, @NonNull String userId,

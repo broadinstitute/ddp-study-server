@@ -5,19 +5,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.util.DdpDBUtils;
+import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
+import org.broadinstitute.dsm.db.dto.user.UserRoleDto;
+import org.broadinstitute.dsm.db.jdbi.JdbiStudyAdmin;
 import org.broadinstitute.dsm.db.jdbi.JdbiUser;
+import org.broadinstitute.dsm.db.jdbi.JdbiUserRole;
+import org.broadinstitute.dsm.db.jdbi.JdbiUserSettings;
+import org.broadinstitute.dsm.exception.DaoException;
+import org.broadinstitute.dsm.util.DBUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 
+@Slf4j
 public class UserDao implements Dao<UserDto> {
-
-    private static long EXPIRATION_DURATION_MILLIS = TimeUnit.HOURS.toMillis(24);
 
     public Optional<UserDto> getUserByEmail(@NonNull String email) {
         SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
@@ -105,6 +111,19 @@ public class UserDao implements Dao<UserDto> {
         return (List<String>) results.resultValue;
     }
 
+    public List<UserDto> getAllDSMUsers() {
+        SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
+            SimpleResult dbVals = new SimpleResult();
+            dbVals.resultValue = handle.attach(JdbiUser.class).getAllDSMUsers();
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Error getting user by id ", results.resultException);
+        }
+        return (List<UserDto>) results.resultValue;
+    }
+
     public String getUserGuid(String email) {
         SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
             SimpleResult dbVals = new SimpleResult();
@@ -118,34 +137,70 @@ public class UserDao implements Dao<UserDto> {
         return (String) results.resultValue;
     }
 
-    public long insertNewUser(Long clientId,
-                              String auth0Domain, String auth0ClientId,
-                              String auth0UserId, boolean isTemporary) {
+    public long insertNewUser(String auth0Domain, String clientKey, UserRoleDto userRoleDto, DDPInstance ddpInstance) {
+        UserDto user = userRoleDto.getUser();
         SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
             SimpleResult dbVals = new SimpleResult();
-            String userGuid = DdpDBUtils.uniqueUserGuid(handle);
-            String userHruid = DdpDBUtils.uniqueUserHruid(handle);
+            Optional<Long> maybeUserId = handle.attach(JdbiUser.class).selectUserIdByEMail(user.getEmail().orElseThrow());
+            long userId;
+            if (!maybeUserId.isEmpty()) {
+                userId = maybeUserId.get();
+                log.info("user " + user.getEmail() + " already exists, user id: " + userId);
+            } else {
+                String userGuid = DdpDBUtils.uniqueUserGuid(handle);
+                String userHruid = DdpDBUtils.uniqueUserHruid(handle);
+                long now = Instant.now().toEpochMilli();
+                Long expiresAt = null;
 
-            long now = Instant.now().toEpochMilli();
-            Long expiresAt = isTemporary ? now + EXPIRATION_DURATION_MILLIS : null;
+                userId = handle.attach(JdbiUser.class).insertUser(auth0Domain, clientKey, null,
+                        userGuid, userHruid, null, null, false, now, now, expiresAt, true);
+                String phone = user.getPhoneNumber().orElse("");
+                handle.attach(JdbiUser.class)
+                        .insertUserProfile(Long.valueOf(userId), user.getFirstName(), user.getLastName(), phone,
+                                user.getEmail().orElseThrow());
+                handle.attach(JdbiUserSettings.class).insertNewUserSettings(userId);
+                log.info("Inserted " + user.getEmail().get() + " as userId " + userId + " into DSS database");
+                if (ddpInstance.isHasRole()) {
+                    log.info("Instance " + ddpInstance.getName()
+                            + " has DSS study admin role, going to insert user in the study_admin table");
+                    handle.attach(JdbiStudyAdmin.class).insert(ddpInstance.getStudyGuid(), userId);
+                }
+            }
+            try {
+                DBUtil.checkUpdate(
+                        handle.attach(JdbiUserRole.class)
+                                .insertNewUserRole(userId, userRoleDto.getRole().getName(), ddpInstance.getStudyGuid()),
+                        1);
+            } catch (DaoException e) {
+                dbVals.resultException = e;
+            }
 
-            long userId = handle.attach(JdbiUser.class).insertUser(
-                    auth0Domain, auth0ClientId, auth0UserId,
-                    userGuid, userHruid, null, null,
-                    false, now, now, expiresAt);
             dbVals.resultValue = userId;
-
             return dbVals;
         });
+        if (results.resultException != null) {
+            throw new RuntimeException("Problem inserting new user " + user.getEmail().get(), results.resultException);
+        }
 
         return (long) results.resultValue;
     }
 
-    public void updateAuth0UserId(long userId, String auth0UserId) {
+    public void updateAuth0UserId(long userId, String auth0UserId) throws DaoException {
         SimpleResult results = TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
             SimpleResult dbVals = new SimpleResult();
-            handle.attach(JdbiUser.class).updateAuth0UserId(userId, auth0UserId);
+            DBUtil.checkUpdate(1, handle.attach(JdbiUser.class).updateAuth0UserId(userId, auth0UserId));
             return dbVals;
+        });
+    }
+
+    public void deactivateUser(long userId) {
+        TransactionWrapper.withTxn(TransactionWrapper.DB.SHARED_DB, handle -> {
+            try {
+                DBUtil.checkUpdate(1, handle.attach(JdbiUser.class).deactivateUser(userId));
+            } catch (DaoException e) {
+                throw new RuntimeException("Problem deactivating user with id " + userId, e);
+            }
+            return null;
         });
     }
 }
