@@ -18,13 +18,13 @@ import lombok.NonNull;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
-import org.broadinstitute.dsm.db.dao.ddp.kitrequest.KitRequestDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.kitrequest.KitRequestDto;
 import org.broadinstitute.dsm.model.KitDDPNotification;
 import org.broadinstitute.dsm.model.at.ReceiveKitRequest;
 import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
+import org.broadinstitute.dsm.model.kit.KitFinalScanUseCase;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -52,7 +52,7 @@ public abstract class KitStatusChangeRoute extends RequestHandler {
     private static final Logger logger = LoggerFactory.getLogger(KitStatusChangeRoute.class);
 
     protected NotificationUtil notificationUtil;
-    protected KitScanPayload kitScanPayload;
+    protected KitPayload kitPayload;
     protected DDPInstanceDto ddpInstanceDto;
     protected String userIdRequest;
     protected List<ScanError> scanErrorList;
@@ -92,18 +92,18 @@ public abstract class KitStatusChangeRoute extends RequestHandler {
             int labelCount = scans.size();
             if (labelCount > 0) {
                 processRequest();
-                if (request.url().endsWith(RoutePath.FINAL_SCAN_REQUEST)) {
-                    updateKits(RoutePath.FINAL_SCAN_REQUEST, scans, currentTime, scanErrorList, userIdRequest, ddpInstanceDto);
-                } else if (request.url().endsWith(RoutePath.TRACKING_SCAN_REQUEST)) {
-                    updateKits(RoutePath.TRACKING_SCAN_REQUEST, scans, currentTime, scanErrorList, userIdRequest, ddpInstanceDto);
-                } else if (request.url().endsWith(RoutePath.SENT_KIT_REQUEST)) {
-                    updateKits(RoutePath.SENT_KIT_REQUEST, scans, currentTime, scanErrorList, userIdRequest, ddpInstanceDto);
-                } else if (request.url().endsWith(RoutePath.RECEIVED_KIT_REQUEST)) {
-                    updateKits(RoutePath.RECEIVED_KIT_REQUEST, scans, currentTime, scanErrorList, userIdRequest, ddpInstanceDto);
-                } else {
-                    logger.error("Endpoint was not known " + request.url());
-                    return new Result(500, UserErrorMessages.CONTACT_DEVELOPER);
-                }
+//                if (request.url().endsWith(RoutePath.FINAL_SCAN_REQUEST)) {
+//                    updateKits(RoutePath.FINAL_SCAN_REQUEST, scans, currentTime, scanErrorList, userIdRequest, ddpInstanceDto);
+//                } else if (request.url().endsWith(RoutePath.TRACKING_SCAN_REQUEST)) {
+//                    updateKits(RoutePath.TRACKING_SCAN_REQUEST, scans, currentTime, scanErrorList, userIdRequest, ddpInstanceDto);
+//                } else if (request.url().endsWith(RoutePath.SENT_KIT_REQUEST)) {
+//                    updateKits(RoutePath.SENT_KIT_REQUEST, scans, currentTime, scanErrorList, userIdRequest, ddpInstanceDto);
+//                } else if (request.url().endsWith(RoutePath.RECEIVED_KIT_REQUEST)) {
+//                    updateKits(RoutePath.RECEIVED_KIT_REQUEST, scans, currentTime, scanErrorList, userIdRequest, ddpInstanceDto);
+//                } else {
+//                    logger.error("Endpoint was not known " + request.url());
+//                    return new Result(500, UserErrorMessages.CONTACT_DEVELOPER);
+//                }
             }
             return scanErrorList;
         } else {
@@ -120,37 +120,31 @@ public abstract class KitStatusChangeRoute extends RequestHandler {
             String addValue = null;
             String kit = null;
             if (RoutePath.FINAL_SCAN_REQUEST.equals(changeType)) {
-                addValue = scan.getAsJsonObject().get("leftValue").getAsString();
-                kit = scan.getAsJsonObject().get("rightValue").getAsString();
-                //check if ddp_label is blood kit
-                if (checkKitLabel(DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_TYPE_NEED_TRACKING_BY_DDP_LABEL), kit)) {
-                    //check if kit_label is in tracking table
-                    if (checkKitLabel(
-                            DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_FOUND_IF_KIT_LABEL_ALREADY_EXISTS_IN_TRACKING_TABLE),
-                            addValue)) {
-                        updateKit(changeType, kit, addValue, currentTime, scanErrorList, userId, ddpInstanceDto);
-                        KitRequestDao kitRequestDao = new KitRequestDao();
-                        KitRequestDto kitRequestByLabel = kitRequestDao.getKitRequestByLabel(kit);
-                        if (kitRequestByLabel != null) {
-                            writeSampleSentToES(kitRequestByLabel);
-                        }
-                    } else {
-                        scanErrorList.add(new ScanError(kit, "Kit with DSM Label \"" + kit + "\" does not have a Tracking Label"));
-                    }
-                } else {
-                    updateKit(changeType, kit, addValue, currentTime, scanErrorList, userId, ddpInstanceDto);
-                }
+                KitFinalScanUseCase.finalScanCommand(userId, ddpInstanceDto);
             } else if (RoutePath.TRACKING_SCAN_REQUEST.equals(changeType)) {
-                addValue = scan.getAsJsonObject().get("leftValue").getAsString();
-                kit = scan.getAsJsonObject().get("rightValue").getAsString();
-                updateKit(changeType, kit, addValue, currentTime, scanErrorList, userId, ddpInstanceDto);
+                trackingScanCommand(changeType, currentTime, scanErrorList, userId, ddpInstanceDto, scan);
             } else if (RoutePath.SENT_KIT_REQUEST.equals(changeType) || RoutePath.RECEIVED_KIT_REQUEST.equals(changeType)) {
-                kit = scan.getAsJsonObject().get("kit").getAsString();
-                updateKit(changeType, kit, addValue, currentTime, scanErrorList, userId, ddpInstanceDto);
+                sentReceivedCommand(changeType, currentTime, scanErrorList, userId, ddpInstanceDto, scan, addValue);
             } else {
                 throw new RuntimeException("Endpoint was not known");
             }
         }
+    }
+
+    private void sentReceivedCommand(String changeType, long currentTime, List<ScanError> scanErrorList, String userId, DDPInstanceDto ddpInstanceDto,
+                           JsonElement scan, String addValue) {
+        String kit;
+        kit = scan.getAsJsonObject().get("kit").getAsString();
+        updateKit(changeType, kit, addValue, currentTime, scanErrorList, userId, ddpInstanceDto);
+    }
+
+    private void trackingScanCommand(String changeType, long currentTime, List<ScanError> scanErrorList, String userId, DDPInstanceDto ddpInstanceDto,
+                           JsonElement scan) {
+        String kit;
+        String addValue;
+        addValue = scan.getAsJsonObject().get("leftValue").getAsString();
+        kit = scan.getAsJsonObject().get("rightValue").getAsString();
+        updateKit(changeType, kit, addValue, currentTime, scanErrorList, userId, ddpInstanceDto);
     }
 
     private void updateKit(@NonNull String changeType, @NonNull String kit, String addValue, long currentTime,

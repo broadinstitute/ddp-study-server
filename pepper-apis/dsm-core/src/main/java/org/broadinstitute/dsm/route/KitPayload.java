@@ -6,7 +6,7 @@ import lombok.AllArgsConstructor;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 
 @AllArgsConstructor
-public class KitScanPayload {
+public class KitPayload {
 
     List<ScanPayload> scanPayloads;
     Integer userId;
