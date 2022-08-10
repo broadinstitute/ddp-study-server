@@ -95,6 +95,7 @@ public class ConfigManager {
                     TYPESAFE_CONFIG_SYSTEM_VAR,
                     GOOGLE_SECRET_PROJECT,
                     GOOGLE_SECRET_NAME);
+            return null;
         }
 
         return configLocal.withFallback(configCloud).resolve();
