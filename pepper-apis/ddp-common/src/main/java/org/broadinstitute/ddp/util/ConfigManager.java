@@ -38,8 +38,8 @@ public class ConfigManager {
 
     static {
         // For benefit of GAE. Does not like command line options with "=" characters and env variables with "."
-        final var configFileName = Optional.ofNullable(System.getenv(TYPESAFE_CONFIG_SYSTEM_VAR))
-                .map(value -> value.replace('.', '_'))
+        final var gaeConfigPropertyName = TYPESAFE_CONFIG_SYSTEM_VAR.replace('.', '_');
+        final var configFileName = Optional.ofNullable(System.getenv(gaeConfigPropertyName))
                 .orElse(System.getProperty(TYPESAFE_CONFIG_SYSTEM_VAR));
 
         TYPESAFE_CONFIG_FILE = Optional.ofNullable(configFileName).map(File::new).orElse(null);
