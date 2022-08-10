@@ -948,7 +948,6 @@ public class DSMServer {
                 new MercurySampleDao(), new ClinicalOrderDao(), projectId, mercuryTopicId);
         get(UI_ROOT + RoutePath.GET_MERCURY_ORDERS_ROUTE, getMercuryOrdersRoute, new JsonTransformer());
 
-        get(UI_ROOT + RoutePath.DOWNLOAD_PARTICIPANT_FILE, new DownloadParticipantFileRoute(projectId));
     }
 
     private void setupJobs(@NonNull Config cfg, @NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil,
