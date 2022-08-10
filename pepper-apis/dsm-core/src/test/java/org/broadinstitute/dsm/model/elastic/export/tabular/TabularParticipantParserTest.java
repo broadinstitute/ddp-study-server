@@ -4,6 +4,7 @@ import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.ParticipantColumn;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -50,13 +51,98 @@ public class TabularParticipantParserTest {
     }
 
     @Test
-    public void testSingleSelectParsing() throws IOException {
+    public void testSingleSelectParsing() {
         TabularParticipantParser parser = new TabularParticipantParser(Arrays.asList(INCONTINENCE_FILTER), null,
                 true, true, ATCP_ACTIVITY_DEFS);
         List<ModuleExportConfig> moduleConfigs = parser.generateExportConfigs();
         List<Map<String, String>> participantValueMaps = parser.parse(moduleConfigs, Collections.singletonList(TEST_ATCP_PARTICIPANT));
-        // should be sorted into two modules -- data and profile
-        assertEquals("DDP instance name not parsed", "INCONTINENCE_OCCASIONAL", participantValueMaps.get(0).get("MEDICAL_HISTORY.INCONTINENCE"));
+        assertEquals("single select value not correct", "Occasional (up to two times per week)", participantValueMaps.get(0).get("MEDICAL_HISTORY.INCONTINENCE"));
+    }
+
+    @Test
+    public void testMultiselectParsing() {
+        TabularParticipantParser parser = new TabularParticipantParser(Arrays.asList(TELANGIECTASIA_FILTER), null,
+                true, true, ATCP_ACTIVITY_DEFS);
+        List<ModuleExportConfig> moduleConfigs = parser.generateExportConfigs();
+        List<Map<String, String>> participantValueMaps = parser.parse(moduleConfigs, Collections.singletonList(TEST_ATCP_PARTICIPANT));
+        Map<String, String> pMap = participantValueMaps.get(0);
+        assertEquals("Mutliselect value not rendered", "1", pMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_EYES"));
+        assertEquals("Mutliselect value not rendered", "0", pMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_SKIN"));
+
+        assertEquals("option details not rendered", "71", pMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_EYES_DETAIL"));
+        assertEquals("option details not rendered", null, pMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_SKIN_DETAIL"));
+    }
+
+    @Test
+    public void testCompositeParsing() {
+        TabularParticipantParser parser = new TabularParticipantParser(Arrays.asList(MEDICATION_CATEGORY_FILTER), null,
+                true, true, ATCP_ACTIVITY_DEFS);
+        List<ModuleExportConfig> moduleConfigs = parser.generateExportConfigs();
+        List<Map<String, String>> participantValueMaps = parser.parse(moduleConfigs, Collections.singletonList(TEST_ATCP_PARTICIPANT));
+        Map<String, String> pMap = participantValueMaps.get(0);
+        assertEquals("Composite value not rendered", "med1", pMap.get("MEDICAL_HISTORY.MEDICATION_CATEGORY.MEDICATION_NAME"));
+        assertEquals("Composite value not rendered", "39", pMap.get("MEDICAL_HISTORY.MEDICATION_CATEGORY.BEGAN_TAKING_AT_AGE"));
+
+        assertEquals("Composite value not rendered", "med2", pMap.get("MEDICAL_HISTORY.MEDICATION_CATEGORY.MEDICATION_NAME_2"));
+        assertEquals("Composite value not rendered", "18", pMap.get("MEDICAL_HISTORY.MEDICATION_CATEGORY.BEGAN_TAKING_AT_AGE_2"));
+    }
+
+    @Test
+    public void testExport() throws IOException {
+        TabularParticipantParser parser = new TabularParticipantParser(Arrays.asList(DDP_FILTER, HRUID_FILTER, FIRST_NAME_FILTER,
+                MEDICATION_CATEGORY_FILTER, INCONTINENCE_FILTER, TELANGIECTASIA_FILTER), null,
+                true, true, ATCP_ACTIVITY_DEFS);
+
+        List<ModuleExportConfig> exportConfigs = parser.generateExportConfigs();
+        List<Map<String, String>> participantValueMaps = parser.parse(exportConfigs, Collections.singletonList(TEST_ATCP_PARTICIPANT));
+
+        TabularParticipantExporter participantExporter = TabularParticipantExporter.getExporter(exportConfigs,
+                participantValueMaps, ".tsv");
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        participantExporter.export(os);
+        String exportText = os.toString("UTF-8");
+
+        String[] rows = exportText.split("\n");
+        assertEquals(3, rows.length);
+        String[] firstRowVals = rows[2].split("\t");
+        List<String> expectedHeaders = Arrays.asList("DATA.DDP",
+                "PROFILE.HRUID",
+                "PROFILE.FIRSTNAME",
+                "MEDICAL_HISTORY.INCONTINENCE",
+                "MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_EYES",
+                "MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_EYES_DETAIL",
+                "MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_SKIN",
+                "MEDICAL_HISTORY.MEDICATION_CATEGORY.MEDICATION_NAME",
+                "MEDICAL_HISTORY.MEDICATION_CATEGORY.BEGAN_TAKING_AT_AGE",
+                "MEDICAL_HISTORY.MEDICATION_CATEGORY.MEDICATION_NAME_2",
+                "MEDICAL_HISTORY.MEDICATION_CATEGORY.BEGAN_TAKING_AT_AGE_2");
+        assertEquals(expectedHeaders, Arrays.asList(rows[0].split(TsvParticipantExporter.DELIMITER)));
+
+        List<String> expectedSubeaders = Arrays.asList("DDP",
+                "Short ID",
+                "First Name",
+                "describe incontinence",
+                "eye",
+                "additional detail",
+                "skin",
+                "MEDICATION_NAME",
+                "BEGAN_TAKING_AT_AGE",
+                "MEDICATION_NAME",
+                "BEGAN_TAKING_AT_AGE");
+        assertEquals(expectedSubeaders, Arrays.asList(rows[1].split(TsvParticipantExporter.DELIMITER)));
+
+        List<String> expectedValues = Arrays.asList("atcp",
+                "PKG8PA",
+                "Tester",
+                "Occasional (up to two times per week)",
+                "1",
+                "71",
+                "0",
+                "med1",
+                "39",
+                "med2",
+                "18");
+        assertEquals(expectedValues, Arrays.asList(rows[2].split(TsvParticipantExporter.DELIMITER)));
     }
 
     private static Filter buildFilter(String colName, String tableAlias, String objectName, String type, String display) {
@@ -143,6 +229,13 @@ public class TabularParticipantParserTest {
                                                             "details", "71",
                                                             "option", "TELANGIECTASIA_EYES"
                                                     )
+                                            )
+                                    ),
+                                    Map.of(
+                                            "stableId", "MEDICATION_CATEGORY",
+                                            "answer", Arrays.asList(
+                                                    Arrays.asList("med1", "39"),
+                                                    Arrays.asList("med2", "18")
                                             )
                                     )
                             )
