@@ -59,6 +59,7 @@
       .container {
         width: auto!important;
         max-width: 1300px;
+        box-sizing: border-box;
         margin: 0 auto!important;
         padding: 0 24px!important;
       }
@@ -86,6 +87,7 @@
       }
       .header__logo {
         height: 100px;
+        align-self: flex-start;
       }
       a {
         font-weight: bold;
@@ -95,8 +97,6 @@
       }
       .header__logo-img {
         height: 100%;
-        position: relative;
-        top: -4px;
       }
       img {
         vertical-align: middle;
@@ -190,6 +190,10 @@
       .header, .header button {
         font-family: Spartan,sans-serif;
         color: #521b93;
+      }
+      .header .button--wide {
+        width: 160px;
+        box-sizing: border-box;
       }
       .button--wide {
         width: 120px;
