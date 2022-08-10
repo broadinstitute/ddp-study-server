@@ -77,16 +77,16 @@ public class ConfigManager {
      * please use {@link #getInstance()}
      */
     public static Config parseConfig() {
-        Optional<Config> configCloud = Optional.empty();
+        Config configCloud = ConfigFactory.empty();
         if (isSecretManagerConfigurationSpecified()) {
             log.info("Secret manager configuration found. Trying to load the configuration from the Secret Manager");
-            configCloud = Optional.of(loadFromSecretManager());
+            configCloud = loadFromSecretManager();
         }
 
-        Optional<Config> configLocal = Optional.empty();
+        Config configLocal = ConfigFactory.empty();
         if (isLocalConfigurationFileSpecified()) {
             log.info("The config file name was specified. Trying to load the configuration from the local file");
-            configLocal = Optional.of(ConfigFactory.parseFile(TYPESAFE_CONFIG_FILE));
+            configLocal = ConfigFactory.parseFile(TYPESAFE_CONFIG_FILE);
         }
 
         if (configCloud.isEmpty() && configLocal.isEmpty()) {
@@ -97,7 +97,7 @@ public class ConfigManager {
             throw new DDPException("no configuration was specified.");
         }
 
-        return configLocal.orElse(ConfigFactory.empty()).withFallback(configCloud.orElse(ConfigFactory.empty())).resolve();
+        return configLocal.withFallback(configCloud).resolve();
     }
 
     private static boolean isLocalConfigurationFileSpecified() {
