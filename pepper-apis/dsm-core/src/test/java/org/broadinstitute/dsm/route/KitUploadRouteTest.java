@@ -73,7 +73,7 @@ public class KitUploadRouteTest {
                 + "56\tNebula\tGalaxy\t415 Main St\t\tCambridge\tMA\t2142\tUS";
 
         String[] rows = fileContent.split(System.lineSeparator());
-        List<String> fieldNamesFromFileHeader = Arrays.asList(rows[0].trim().split(SystemUtil.SEPARATOR));
+        List<String> fieldNamesFromFileHeader = Arrays.asList(rows[0].trim().split(SystemUtil.TAB_SEPARATOR));
 
         Map<String, String> participantDataAsMap = route.getParticipantDataAsMap(rows[1], fieldNamesFromFileHeader, 1);
 
@@ -95,7 +95,7 @@ public class KitUploadRouteTest {
                 + "56\tNebula\tGalaxy\t415 Main St\t\tCambridge\tMA\t2142\tUS";
 
         String[] rows = fileContent.split(System.lineSeparator());
-        List<String> fieldNamesFromFileHeader = Arrays.asList(rows[0].trim().split(SystemUtil.SEPARATOR));
+        List<String> fieldNamesFromFileHeader = Arrays.asList(rows[0].trim().split(SystemUtil.TAB_SEPARATOR));
 
         Map<String, String> participantDataAsMap = route.getParticipantDataAsMap(rows[1], fieldNamesFromFileHeader, 1);
 

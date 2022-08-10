@@ -35,10 +35,27 @@
       .header {
         font-family: Spartan-Bold,sans-serif;
         color: #521b93;
-        padding-top: 30px;
-        padding-bottom: 20px!important;
         background: #fff;
+        padding-top: 20px;
+        height: 133px;
+        box-sizing: border-box;
       }
+      @media (max-width: 1200px) {
+        .header {
+          height: 113px;
+        }
+      }
+      @media (max-width: 680px) {
+        .header {
+          height: 89px;
+        }
+      }
+      @media (max-width: 450px) {
+        .header {
+          height: 72px;
+        }
+      }
+
       .container {
         width: auto!important;
         max-width: 1300px;
@@ -259,9 +276,6 @@
         }
       }
       @media (max-width: 64em) {
-        .header {
-          margin-bottom: 20px;
-        }
         .header__logo {
           margin-right: auto;
         }
@@ -464,7 +478,7 @@
     <header class="header">
       <div class="container">
         <a class="header__logo" href="##BASE_URL##">
-          <img src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/logo-horizontal-black.png" class="header__logo-img" alt="Header.LogoAlt">
+          <img src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/logo-horizontal-black.png" class="header__logo-img" alt="logo">
         </a>
     
         <button class="toggle" id="header-toggle">
@@ -524,7 +538,7 @@
       <div class="container">
         <div class="footer-meta">
           <div class="footer-logo">
-            <img src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/logo-horizontal-white.png" alt="Header.LogoAlt">
+            <img src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/logo-horizontal-white.png" alt="logo">
           </div>
           <div class="footer-contacts">
             Contact Us: (650) 561-6750<br>
@@ -875,7 +889,7 @@
             // tweak the header
             var header = document.createElement('div');
             header.innerHTML =
-              '<div id="ddp-header" style="display:flex;flex-direction:row;justify-content: center;align-items:center;"><img class="auth0-lock-header-logo" src="' +
+              '<div id="ddp-header" style="display:flex;flex-direction:row;justify-content: center;align-items:center;"><img class="auth0-lock-header-logo" alt="logo" src="' +
               headerLogo +
               '"></div>';
             var auth0LockHeader = document.getElementsByClassName(
@@ -991,7 +1005,7 @@
       }
 
       function addSignUpInstruction() {
-        if (mode == 'signup' && languageDictionary.additionalDescription) {
+        if (mode === 'signup' && languageDictionary.additionalDescription) {
           const interval = setInterval(function () {
             const lockFormEl = document.querySelector('.auth0-lock-form');
             if (lockFormEl) {
