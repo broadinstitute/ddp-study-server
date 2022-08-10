@@ -1,13 +1,13 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular;
 
+import com.google.common.net.MediaType;
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
-
-import com.google.common.net.MediaType;
-import org.apache.commons.lang3.StringUtils;
-import spark.Response;
 
 /** writes out participant data as a tab-delimited file.  See TabularParticipantExporter for more detail */
 public class TsvParticipantExporter extends TabularParticipantExporter {
@@ -19,29 +19,20 @@ public class TsvParticipantExporter extends TabularParticipantExporter {
         super(moduleConfigs, participantValueMaps, fileFormat);
     }
 
+    public void export(OutputStream os) throws IOException {
+        PrintWriter printWriter = new PrintWriter(os);
+        List<String> headerRowValues = getHeaderRow();
+        List<String> subHeaderRowValues = getSubHeaderRow();
 
-    public void export(Response response) throws IOException {
-        setResponseHeaders(response);
-
-        try (PrintWriter writer = response.raw().getWriter()) {
-            List<String> headerRowValues = getHeaderRow();
-            List<String> subHeaderRowValues = getSubHeaderRow();
-
-            writer.println(getRowString(headerRowValues));
-            writer.println(getRowString(subHeaderRowValues));
-            for (Map<String, String> valueMap : participantValueMaps) {
-                List<String> rowValues = getRowValues(valueMap, headerRowValues);
-                String rowString = getRowString(rowValues);
-                writer.println(rowString);
-            }
-            writer.flush();
+        printWriter.println(getRowString(headerRowValues));
+        printWriter.println(getRowString(subHeaderRowValues));
+        for (Map<String, String> valueMap : participantValueMaps) {
+            List<String> rowValues = getRowValues(valueMap, headerRowValues);
+            String rowString = getRowString(rowValues);
+            printWriter.println(rowString);
         }
-    }
-
-    public void setResponseHeaders(Response response) {
-        response.type(MEDIA_TYPE);
-        response.header("Access-Control-Expose-Headers", "Content-Disposition");
-        response.header("Content-Disposition", "attachment;filename=" + getExportFilename(fileFormat));
+        printWriter.flush();
+        // do not close os -- that's the caller's responsibility
     }
 
     protected String getRowString(List<String> rowValues) {
@@ -65,6 +56,11 @@ public class TsvParticipantExporter extends TabularParticipantExporter {
             sanitizedValue = String.format("\"%s\"", sanitizedValue);
         }
         return sanitizedValue;
+    }
+
+    @Override
+    public String getExportFilename() {
+        return getExportFilename("tsv");
     }
 
 

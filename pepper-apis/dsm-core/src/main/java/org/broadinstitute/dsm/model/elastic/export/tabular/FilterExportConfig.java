@@ -1,10 +1,5 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
@@ -13,16 +8,20 @@ import org.broadinstitute.dsm.model.ParticipantColumn;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 @Getter
 public class FilterExportConfig {
     private final ParticipantColumn column;
     private final ModuleExportConfig parent;
     private final String type;
     private boolean splitOptionsIntoColumns = false;
-    // whether this question has details associated with it -- this property is allowed to be dynamic since we don't know if a
-    // question has details enabled until we start parsing participant responses
-    @Setter
-    private boolean hasDetails = false;
+    private Set<String> optionIdsWithDetails = new HashSet<String>();
     private String collationSuffix = null;
     private Map<String, Object> questionDef = null;
     @Setter
@@ -57,9 +56,10 @@ public class FilterExportConfig {
     }
 
     /** short constructor for getting a config for a subquestion of a composite question */
-    private FilterExportConfig(FilterExportConfig parent, Map<String,Object> childQuestion, int childIndex) {
+    private FilterExportConfig(FilterExportConfig parent, Map<String, Object> childQuestion, int childIndex) {
         this.parent = parent.getParent();
         this.type = (String) childQuestion.get(ESObjectConstants.QUESTION_TYPE);
+        this.questionType = this.type;
         String childStableId = (String) childQuestion.get(ESObjectConstants.STABLE_ID);
         if (StringUtils.isBlank(childStableId)) {
             // some subquestions don't have stableIds (e.g. RELEASE_MINOR_PHYSICIAN from PanCan), we need to ensure the stableId
@@ -80,6 +80,7 @@ public class FilterExportConfig {
 
         this.questionDef = childQuestion;
         this.options = getOptionsForQuestion(childQuestion);
+
     }
 
     public boolean isAllowMultiple(Map<String, Object> questionDef) {
@@ -89,13 +90,24 @@ public class FilterExportConfig {
         return false;
     }
 
+    public boolean hasDetailsForOption(String optionId) {
+        if (optionId == null) {
+            return hasAnyOptionDetails();
+        }
+        return optionIdsWithDetails.contains(optionId);
+    }
+
+    public boolean hasAnyOptionDetails() {
+        return optionIdsWithDetails.size() > 0;
+    }
+
     private List<Map<String, Object>> getOptionsForQuestion(Map<String, Object> questionDef) {
-        List<Map<String,Object>> options = (List<Map<String, Object>>) questionDef.get(ESObjectConstants.OPTIONS);
+        List<Map<String, Object>> options = (List<Map<String, Object>>) questionDef.get(ESObjectConstants.OPTIONS);
         if (questionDef.containsKey(ESObjectConstants.OPTION_GROUPS)) {
             Object groups = questionDef.get(ESObjectConstants.OPTION_GROUPS);
             if (groups instanceof List) {
                 for (Map<String, Object> group : (List<Map<String, Object>>) groups) {
-                    if (group.containsKey(ESObjectConstants.OPTIONS) ) {
+                    if (group.containsKey(ESObjectConstants.OPTIONS)) {
                         options.addAll((List<Map<String, Object>>) group.get(ESObjectConstants.OPTIONS));
                     }
                 }

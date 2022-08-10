@@ -19,14 +19,14 @@ import org.broadinstitute.dsm.util.ElasticSearchUtil;
 public class TextValueProvider {
 
     /**
-     *
+     * gets the values suitable for export in string form
      * @param filterConfig the config for the question/item
      * @param formMap a map of the data for this module response.  That should be a value returned from getModuleCompletions
      *                in TabularParticipantParser
      * @return a list of lists of response values.  The outer list has one entry for each response given (e.g. for a medication list
-     * question, one entry will correspond to each medication). The outer list will always have only one entry unless
-     * the question is an allowMultiple.  The inner lists corresponds to the values for each response. It will have one entry
-     * for most questions, but it will have multiple entries for either selectMode=Multiple questions or composite questions
+     *     question, one entry will correspond to each medication). The outer list will always have only one entry unless
+     *     the question is an allowMultiple.  The inner lists corresponds to the values for each response. It will have one entry
+     *     for most questions, but it will have multiple entries for either selectMode=Multiple questions or composite questions
      */
     public List<List<String>> getFormattedValues(FilterExportConfig filterConfig, Map<String, Object> formMap) {
         return collectFormattedResponses(getRawValues(filterConfig, formMap), filterConfig, formMap);
@@ -42,6 +42,7 @@ public class TextValueProvider {
             Object optionDetails = answerObject.get(ESObjectConstants.OPTIONDETAILS);
 
             if (optionDetails instanceof List) {
+
                 return extractOptionDetails(optionStableId, (List<?>) optionDetails);
             }
         }
@@ -51,12 +52,13 @@ public class TextValueProvider {
     /**
      * Option details are stored in ES as an array of maps
      *  e.g. [{option: "TELANGIECTASIA_EYES", details: "12"}, {option: "TELANGIECTASIA_SKIN", details: "34"}]
+     *  if 'null' is passed as the optionStableId, this will return all option details
      */
     protected String extractOptionDetails(String optionStableId, List<?> optionDetailsObject) {
         return optionDetailsObject.stream().filter(detail ->
-                        StringUtils.equals((String) ((Map) detail).get(ESObjectConstants.OPTION), optionStableId))
+                        optionStableId == null || StringUtils.equals((String) ((Map) detail).get(ESObjectConstants.OPTION), optionStableId))
                 .map(detail -> (String) ((Map<String, Object>) detail).get(ESObjectConstants.DETAILS))
-                .findAny().orElse(StringUtils.EMPTY);
+                .collect(Collectors.joining("; "));
     }
 
     protected List<?> getRawValues(FilterExportConfig filterConfig, Map<String, Object> moduleMap) {
@@ -72,7 +74,9 @@ public class TextValueProvider {
         return value;
     }
 
-    protected List<List<String>> collectFormattedResponses(List<?> rawValues, FilterExportConfig filterConfig, Map<String, Object> formMap) {
+    protected List<List<String>> collectFormattedResponses(List<?> rawValues,
+                                                           FilterExportConfig filterConfig,
+                                                           Map<String, Object> formMap) {
         if (filterConfig.isAllowMultiple() && CollectionUtils.isNotEmpty(rawValues) && rawValues.get(0) instanceof List) {
             return rawValues.stream().map(valueSet -> formatRawValues((List) valueSet, filterConfig, formMap))
                     .collect(Collectors.toList());
@@ -153,7 +157,9 @@ public class TextValueProvider {
         if (answerObject != null) {
             Object optionDetails = answerObject.get(ESObjectConstants.OPTIONDETAILS);
             if (optionDetails != null && !((List<?>) optionDetails).isEmpty()) {
-                filterConfig.setHasDetails(true);
+                List<String> optionDetailIds = ((List<Map<String, Object>>) optionDetails).stream()
+                        .map(detail -> (String) detail.get(ESObjectConstants.OPTION)).collect(Collectors.toList());
+                filterConfig.getOptionIdsWithDetails().addAll(optionDetailIds);
             }
         }
 

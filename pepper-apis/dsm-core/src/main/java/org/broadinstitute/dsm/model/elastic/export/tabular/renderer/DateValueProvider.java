@@ -15,14 +15,18 @@ public class DateValueProvider extends TextValueProvider {
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
 
     private static String parseDate(Object dateValue) {
-        if (dateValue == null || dateValue.equals(StringUtils.EMPTY)) {
+        if (dateValue == null) {
             return StringUtils.EMPTY;
         }
         if (dateValue instanceof String) {
             return ((String) dateValue);
         }
-        long dateLong = Long.parseLong(dateValue.toString());
-        return LocalDateTime.ofInstant(Instant.ofEpochMilli(dateLong), ZoneOffset.UTC).format(formatter);
+        try {
+            long dateLong = Long.parseLong(dateValue.toString());
+            return LocalDateTime.ofInstant(Instant.ofEpochMilli(dateLong), ZoneOffset.UTC).format(formatter);
+        } catch (Exception e) {
+            return dateValue.toString();
+        }
     }
 
     @Override

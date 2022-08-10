@@ -3,11 +3,16 @@ package org.broadinstitute.dsm.route;
 import static org.broadinstitute.dsm.util.ElasticSearchUtil.DEFAULT_FROM;
 import static org.broadinstitute.dsm.util.ElasticSearchUtil.MAX_RESULT_SIZE;
 
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
+import com.google.common.net.MediaType;
 import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.model.elastic.export.tabular.DataDictionaryExporter;
 import org.broadinstitute.dsm.model.elastic.export.tabular.ModuleExportConfig;
 import org.broadinstitute.dsm.model.elastic.export.tabular.TabularParticipantExporter;
 import org.broadinstitute.dsm.model.elastic.export.tabular.TabularParticipantParser;
@@ -49,22 +54,41 @@ public class DownloadParticipantListRoute extends RequestHandler {
             response.status(500);
             return new Result(500, UserErrorMessages.NO_RIGHTS);
         }
+
         DDPInstance instance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.MEDICAL_RECORD_ACTIVATED);
 
         TabularParticipantParser parser = new TabularParticipantParser(payload.getColumnNames(), instance,
-                params.isSplitOptions(), params.isOnlyMostRecent());
+                params.isSplitOptions(), params.isOnlyMostRecent(), null);
+        setResponseHeaders(response, realm + "_export.zip");
 
         Filterable filterable = FilterFactory.of(request);
         filterable.setParseDtos(false);
         List<ParticipantWrapperDto> participants = fetchParticipantEsData(filterable, request.queryMap());
-        logger.info("Beginning parse of " + participants.size() + "participants");
+        logger.info("Beginning parse of " + participants.size() + " participants");
         List<ModuleExportConfig> exportConfigs = parser.generateExportConfigs();
         List<Map<String, String>> participantValueMaps = parser.parse(exportConfigs, participants);
 
-        TabularParticipantExporter exporter = TabularParticipantExporter.getExporter(exportConfigs,
+        ZipOutputStream zos = new ZipOutputStream(response.raw().getOutputStream());
+        TabularParticipantExporter participantExporter = TabularParticipantExporter.getExporter(exportConfigs,
                 participantValueMaps, params.getFileFormat());
-        exporter.export(response);
+        ZipEntry participantFile = new ZipEntry(participantExporter.getExportFilename());
+        zos.putNextEntry(participantFile);
+        participantExporter.export(zos);
+
+        DataDictionaryExporter dictionaryExporter = new DataDictionaryExporter(exportConfigs);
+        ZipEntry dictionaryFile = new ZipEntry(dictionaryExporter.getExportFilename());
+        zos.putNextEntry(dictionaryFile);
+
+        dictionaryExporter.export(zos);
+        zos.closeEntry();
+        zos.finish();
         return response.raw();
+    }
+
+    protected void setResponseHeaders(Response response, String filename) {
+        response.type(MediaType.OCTET_STREAM.toString());
+        response.header("Access-Control-Expose-Headers", "Content-Disposition");
+        response.header("Content-Disposition", "attachment;filename=" + filename);
     }
 
     /**
