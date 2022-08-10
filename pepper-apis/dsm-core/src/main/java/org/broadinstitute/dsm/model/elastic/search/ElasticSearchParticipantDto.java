@@ -12,7 +12,7 @@ import org.broadinstitute.dsm.model.elastic.ESActivities;
 import org.broadinstitute.dsm.model.elastic.ESAddress;
 import org.broadinstitute.dsm.model.elastic.ESComputed;
 import org.broadinstitute.dsm.model.elastic.ESDsm;
-import org.broadinstitute.dsm.model.elastic.ESFile;
+import org.broadinstitute.dsm.model.elastic.Files;
 import org.broadinstitute.dsm.model.elastic.ESProfile;
 
 @Setter
@@ -27,7 +27,7 @@ public class ElasticSearchParticipantDto {
     private ESComputed computed;
     private Long statusTimestamp;
     private ESProfile profile;
-    private List<ESFile> files;
+    private List<Files> files;
     private List<String> proxies;
     private List<Map<String, Object>> workflows;
     private String status;
@@ -77,7 +77,7 @@ public class ElasticSearchParticipantDto {
         return Optional.ofNullable(profile);
     }
 
-    public List<ESFile> getFiles() {
+    public List<Files> getFiles() {
         return files == null ? Collections.emptyList() : files;
     }
 
@@ -121,7 +121,7 @@ public class ElasticSearchParticipantDto {
         private List<String> governedUsers;
         private Long statusTimeStamp;
         private ESProfile profile;
-        private List<ESFile> files;
+        private List<Files> files;
         private List<String> proxies;
         private List<Map<String, Object>> workflows;
         private String status;
@@ -160,7 +160,7 @@ public class ElasticSearchParticipantDto {
             return this;
         }
 
-        public Builder withFiles(List<ESFile> files) {
+        public Builder withFiles(List<Files> files) {
             this.files = files;
             return this;
         }

@@ -2,9 +2,6 @@ package org.broadinstitute.dsm.route.participantfiles;
 
 import static org.broadinstitute.dsm.statics.DBConstants.FILE_DOWNLOAD_ROLE;
 
-import java.util.Optional;
-
-import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
@@ -21,7 +18,6 @@ import spark.Request;
 
 @Slf4j
 public class DownloadParticipantFileRoute extends RequestHandler {
-    private static String googleProjectName;
     private static FileDownloadService fileDownloadService;
     private static String BUCKET = "bucket";
     private static String BLOB_NAME = "blobName";
@@ -30,8 +26,7 @@ public class DownloadParticipantFileRoute extends RequestHandler {
     private static String DDP_PARTICIPANT_ID = "ddpParticipantId";
     private static String BAD_FILE_RESPONSE = "File has not passed scanning and should not be downloaded!";
 
-    public DownloadParticipantFileRoute(String googleProjectName, FileDownloadService fileDownloadService) {
-        this.googleProjectName = googleProjectName;
+    public DownloadParticipantFileRoute(FileDownloadService fileDownloadService) {
         this.fileDownloadService = fileDownloadService;
     }
 
@@ -53,7 +48,7 @@ public class DownloadParticipantFileRoute extends RequestHandler {
             String fileName = queryParams.value(FILE_NAME);
             String fileGuid = queryParams.value(FILE_GUID);
             String ddpParticipantId = queryParams.value(DDP_PARTICIPANT_ID);
-            Optional<DDPInstanceDto> ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm);
+            DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
             ParticipantFilesUseCase participantFilesUseCase =
                     new ParticipantFilesUseCase(bucketName, blobName, ddpParticipantId, fileGuid, fileDownloadService, ddpInstanceDto);
 
@@ -61,7 +56,7 @@ public class DownloadParticipantFileRoute extends RequestHandler {
                 SignedUrlResponse url = participantFilesUseCase.createSignedURLForDownload();
                 log.info("Signed URL generated for file download for participant " + ddpParticipantId + " file");
                 response.status(200);
-                return new Gson().toJson(url);
+                return url;
             } catch (DownloadException e) {
                 log.error(String.format("File %s has not passed scanning %s and should not be downloaded!", blobName, bucketName));
                 response.status(500);
