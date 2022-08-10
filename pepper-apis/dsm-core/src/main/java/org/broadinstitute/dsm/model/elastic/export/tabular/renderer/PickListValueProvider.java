@@ -1,13 +1,13 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular.renderer;
 
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.model.elastic.export.tabular.FilterExportConfig;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.model.elastic.export.tabular.FilterExportConfig;
-import org.broadinstitute.dsm.statics.ESObjectConstants;
 
 public class PickListValueProvider extends TextValueProvider {
     @Override

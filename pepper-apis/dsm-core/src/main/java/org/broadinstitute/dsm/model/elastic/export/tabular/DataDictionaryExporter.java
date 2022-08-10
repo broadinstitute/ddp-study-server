@@ -70,10 +70,10 @@ public class DataDictionaryExporter extends ExcelParticipantExporter {
     /** writes the dictionary */
     public void export(OutputStream os) throws IOException {
         sheet.setColumnWidth(VARIABLE_NAME_COL_NUMBER, 40 * 256);
-        sheet.setColumnWidth(1, 10 * 256);
-        sheet.setColumnWidth(2, 12 * 256);
-        sheet.setColumnWidth(3, 60 * 256);
-        sheet.setColumnWidth(4, 40 * 256);
+        sheet.setColumnWidth(DATATYPE_COL_NUMBER, 10 * 256);
+        sheet.setColumnWidth(QUESTION_TYPE_COL_NUMBER, 12 * 256);
+        sheet.setColumnWidth(DESCRIPTION_COL_NUMBER, 60 * 256);
+        sheet.setColumnWidth(OPTIONS_COL_NUMBER, 40 * 256);
 
         applyToEveryColumn(new DictionaryRowWriter());
 

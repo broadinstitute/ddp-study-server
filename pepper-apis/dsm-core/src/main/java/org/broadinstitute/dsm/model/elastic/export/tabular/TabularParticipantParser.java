@@ -226,7 +226,7 @@ public class TabularParticipantParser {
                 options = filterConfig.getOptions();
             }
             TextValueProvider valueProvider =
-                    ValueProviderFactory.getValueProvider(filterConfig.getColumn().getName(), filterConfig.getQuestionType());
+                    ValueProviderFactory.getValueProvider(filterConfig.getColumn().getName(), filterConfig.getType());
 
             List<List<String>> formattedValues = valueProvider.getFormattedValues(filterConfig, esModuleMap);
             if (filterConfig.isAllowMultiple() && formattedValues.size() > filterConfig.getMaxRepeats()) {
