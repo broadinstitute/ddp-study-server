@@ -133,4 +133,9 @@ public class ApplicationConfigConstants {
     //pubsub for cf
     public static final String PUBSUB_PROJECT_ID = "pubsub.projectId";
     public static final String PUBSUB_TOPIC_ID = "pubsub.topicId";
+
+    //GCP Service Account for file download
+    public static final String FILE_DOWNLOAD_CREDENTIALS = "fileDownload.credentials";
+    public static final String FILE_DOWNLOAD_PROJECT_ID = "fileDownload.credentials.project_id";
+    public static final String MAX_SIGN_URL_MIN = "fileDownload.maxSignedUrlMins";
 }
