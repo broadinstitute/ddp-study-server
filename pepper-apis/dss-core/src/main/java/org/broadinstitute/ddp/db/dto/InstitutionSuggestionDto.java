@@ -15,4 +15,7 @@ public class InstitutionSuggestionDto {
     
     @ColumnName("state")
     String state;
+
+    @ColumnName("country")
+    String country;
 }
