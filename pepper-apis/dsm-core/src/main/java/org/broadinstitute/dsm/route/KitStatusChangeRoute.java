@@ -64,7 +64,7 @@ public abstract class KitStatusChangeRoute extends RequestHandler {
         this.notificationUtil = notificationUtil;
     }
 
-    private static void writeSampleSentToES(KitRequestDto kitRequest) {
+    public static void writeSampleSentToES(KitRequestDto kitRequest) {
         int ddpInstanceId = kitRequest.getDdpInstanceId();
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(ddpInstanceId);
         Map<String, Object> nameValuesMap = new HashMap<>();
