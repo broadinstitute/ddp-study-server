@@ -17,6 +17,8 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearchable;
 import org.broadinstitute.dsm.model.elastic.search.UnparsedESParticipantDto;
 import org.broadinstitute.dsm.model.elastic.sort.Sort;
 import org.broadinstitute.dsm.model.elastic.sort.SortBy;
+import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter;
+import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilterPayload;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -109,7 +111,7 @@ public class ParticipantWrapper {
             if (elasticSearchParticipantDto instanceof UnparsedESParticipantDto) {
                 addWrapperToList((UnparsedESParticipantDto) elasticSearchParticipantDto, result);
             } else {
-                addWrapperToList(elasticSearchParticipantDto, result);
+                addWrapperToList(elasticSearchParticipantDto, result, ddpInstanceDto);
             }
             proxyGuids.addAll(elasticSearchParticipantDto.getProxies());
         }
@@ -124,7 +126,7 @@ public class ParticipantWrapper {
         result.add(participantWrapperDto);
     }
 
-    private void addWrapperToList(ElasticSearchParticipantDto elasticSearchParticipantDto, List<ParticipantWrapperDto> result) {
+    private void addWrapperToList(ElasticSearchParticipantDto elasticSearchParticipantDto, List<ParticipantWrapperDto> result, DDPInstanceDto ddpInstanceDto) {
 
         elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
             Participant participant = esDsm.getParticipant().orElse(new Participant());
@@ -134,8 +136,8 @@ public class ParticipantWrapper {
                 participant.setReviewed(oncHistory.getReviewed());
             });
 
-    //                StudyPreFilter.fromPayload(StudyPreFilterPayload.of(elasticSearchParticipantDto, ddpInstanceDto))
-    //                        .ifPresent(StudyPreFilter::filter);
+            StudyPreFilter.fromPayload(StudyPreFilterPayload.of(elasticSearchParticipantDto, ddpInstanceDto))
+                    .ifPresent(StudyPreFilter::filter);
 
             List<MedicalRecord> medicalRecord = esDsm.getMedicalRecord();
             List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();
