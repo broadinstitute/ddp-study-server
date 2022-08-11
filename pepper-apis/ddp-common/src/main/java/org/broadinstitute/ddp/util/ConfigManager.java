@@ -38,8 +38,8 @@ public class ConfigManager {
 
     static {
         // For benefit of GAE. Does not like command line options with "=" characters and env variables with "."
-        final var configFileName = Optional.ofNullable(System.getenv(TYPESAFE_CONFIG_SYSTEM_VAR))
-                .map(value -> value.replace('.', '_'))
+        final var gaeConfigPropertyName = TYPESAFE_CONFIG_SYSTEM_VAR.replace('.', '_');
+        final var configFileName = Optional.ofNullable(System.getenv(gaeConfigPropertyName))
                 .orElse(System.getProperty(TYPESAFE_CONFIG_SYSTEM_VAR));
 
         TYPESAFE_CONFIG_FILE = Optional.ofNullable(configFileName).map(File::new).orElse(null);
@@ -90,11 +90,12 @@ public class ConfigManager {
         }
 
         if (configCloud.isEmpty() && configLocal.isEmpty()) {
-            log.error("no configuration was specified. Use properties '{}' to use a local file or '{}' and '{}' to use a cloud secret",
+            log.info("no configuration was specified, an empty configuration will be used. "
+                    + "Use properties '{}' to use a local file or '{}' and '{}' to use a cloud secret",
                     TYPESAFE_CONFIG_SYSTEM_VAR,
                     GOOGLE_SECRET_PROJECT,
                     GOOGLE_SECRET_NAME);
-            throw new DDPException("no configuration was specified.");
+            return null;
         }
 
         return configLocal.withFallback(configCloud).resolve();
