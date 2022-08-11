@@ -1,9 +1,10 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular.renderer;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.export.tabular.FilterExportConfig;
 
 public class BooleanValueProvider extends TextValueProvider {
@@ -14,9 +15,12 @@ public class BooleanValueProvider extends TextValueProvider {
     /**
      * Return Yes/No, rather than true/false
      */
-    public Collection<String> formatRawValues(Collection<?> rawValues, FilterExportConfig filterConfig, Map<String, Object> formMap) {
-
-        return rawValues.stream().map(value -> Boolean.parseBoolean(value.toString()) ? YES : NO)
-                .collect(Collectors.toList());
+    public List<String> formatRawValues(List<?> rawValues, FilterExportConfig filterConfig, Map<String, Object> formMap) {
+        return rawValues.stream().map(value -> {
+            if (value == null) {
+                return StringUtils.EMPTY;
+            }
+            return Boolean.parseBoolean(value.toString()) ? YES : NO;
+        }).collect(Collectors.toList());
     }
 }
