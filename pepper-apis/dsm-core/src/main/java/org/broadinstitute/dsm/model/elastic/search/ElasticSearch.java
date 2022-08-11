@@ -70,6 +70,10 @@ public class ElasticSearch implements ElasticSearchable {
     public void setDeserializer(Deserializer deserializer) {
         this.deserializer = deserializer;
     }
+    @Override
+    public Deserializer getDeserializer() {
+        return this.deserializer;
+    }
 
     @Override
     public void setSortBy(Sort sort) {
@@ -104,7 +108,10 @@ public class ElasticSearch implements ElasticSearchable {
         List<ElasticSearchParticipantDto> result = new ArrayList<>();
         String ddp = getDdpFromSearchHit(Arrays.stream(searchHits).findFirst().orElse(null));
         for (SearchHit searchHit : searchHits) {
-            Optional<ElasticSearchParticipantDto> maybeElasticSearchResult = parseSourceMap(searchHit.getSourceAsMap());
+            Optional<ElasticSearchParticipantDto> maybeElasticSearchResult = null;
+
+            maybeElasticSearchResult = parseSourceMap(searchHit.getSourceAsMap());
+
             maybeElasticSearchResult.ifPresent(elasticSearchParticipantDto -> {
                 elasticSearchParticipantDto.setDdp(ddp);
                 result.add(elasticSearchParticipantDto);
@@ -175,6 +182,7 @@ public class ElasticSearch implements ElasticSearchable {
             throw new RuntimeException("Couldn't get participants from ES for instance " + esIndex, e);
         }
         List<ElasticSearchParticipantDto> esParticipants = parseSourceMaps(response.getHits().getHits());
+
         logger.info("Got " + esParticipants.size() + " participants from ES for instance " + esIndex);
         return new ElasticSearch(esParticipants, response.getHits().getTotalHits());
     }
