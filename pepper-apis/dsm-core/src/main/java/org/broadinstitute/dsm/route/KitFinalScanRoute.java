@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.route;
 
+import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
 import org.broadinstitute.dsm.model.kit.KitFinalScanUseCase;
 import org.broadinstitute.dsm.statics.RoutePath;
 
@@ -10,7 +11,7 @@ public class KitFinalScanRoute extends KitStatusChangeRoute {
 
     @Override
     protected void processRequest() {
-        KitFinalScanUseCase kitFinalScanUseCase = new KitFinalScanUseCase();
-        updateKits(RoutePath.FINAL_SCAN_REQUEST, scans, currentTime, scanErrorList, userIdRequest, ddpInstanceDto);
+        KitFinalScanUseCase kitFinalScanUseCase = new KitFinalScanUseCase(kitPayload, new KitDaoImpl());
+        scanErrorList.addAll(kitFinalScanUseCase.get());
     }
 }

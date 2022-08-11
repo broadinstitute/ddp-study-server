@@ -12,6 +12,7 @@ import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.model.KitDDPNotification;
 import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
+import org.broadinstitute.dsm.route.KitStatusChangeRoute;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DSMConfig;
@@ -68,7 +69,8 @@ public class KitDaoImpl implements KitDao {
     }
 
     @Override
-    public Integer updateKitRequest(KitRequestShipping kitRequestShipping, String userId) throws KitException {
+    public Optional<KitStatusChangeRoute.ScanError> updateKitRequest(KitRequestShipping kitRequestShipping, String userId) {
+        Optional<KitStatusChangeRoute.ScanError> result = Optional.empty();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(UPDATE_KIT_REQUEST)) {
@@ -76,25 +78,24 @@ public class KitDaoImpl implements KitDao {
                 stmt.setString(2, userId);
                 stmt.setString(3, kitRequestShipping.getKitLabel());
                 stmt.setString(4, kitRequestShipping.getDdpLabel());
-                int result = stmt.executeUpdate();
-                if (result == 1) {
-                    logger.info("Updated kitRequests w/ ddp_label " + kitRequestShipping.getDdpLabel());
-                    KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(
-                            DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_SENT_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL), kit,
-                            1);
-                    if (kitDDPNotification != null) {
-                        EventUtil.triggerDDP(conn, kitDDPNotification);
-                    }
-                    try {
-                        UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, "ddpLabel",
-                                "ddpLabel", kit, new PutToNestedScriptBuilder()).export();
-                    } catch (Exception e) {
-                        logger.error(String.format("Error updating ddp label for kit with label: %s", kit));
-                        e.printStackTrace();
-                    }
-                    dbVals.resultValue = result;
-                } else {
-                    dbVals.resultException = new KitException("ddp_label "
+                int rowsAffected = stmt.executeUpdate();
+                if (rowsAffected != 1) {
+//                    logger.info("Updated kitRequests w/ ddp_label " + kitRequestShipping.getDdpLabel());
+//                    KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(
+//                            DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_SENT_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL), kit,
+//                            1);
+//                    if (kitDDPNotification != null) {
+//                        EventUtil.triggerDDP(conn, kitDDPNotification);
+//                    }
+//                    try {
+//                        UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, "ddpLabel",
+//                                "ddpLabel", kit, new PutToNestedScriptBuilder()).export();
+//                    } catch (Exception e) {
+//                        logger.error(String.format("Error updating ddp label for kit with label: %s", kit));
+//                        e.printStackTrace();
+//                    }
+
+                    dbVals.resultValue = new KitStatusChangeRoute.ScanError(kitRequestShipping.getDdpLabel(), "ddp_label "
                             + kitRequestShipping.getDdpLabel() + " does not exist or already has a Kit Label");
                 }
             } catch (Exception ex) {
@@ -102,10 +103,10 @@ public class KitDaoImpl implements KitDao {
             }
             return dbVals;
         });
-        if (Objects.nonNull(results.resultException)) {
-            throw (KitException) results.resultException;
+        if (Objects.nonNull(results.resultValue)) {
+            result = (Optional<KitStatusChangeRoute.ScanError>) results.resultValue;
         }
-        return (Integer) results.resultValue;
+        return result;
     }
 
     private boolean booleanCheckFoundAsName(String kitLabel, String query) {

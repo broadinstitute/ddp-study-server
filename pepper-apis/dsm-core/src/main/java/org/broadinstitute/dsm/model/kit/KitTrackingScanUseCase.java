@@ -4,7 +4,7 @@ import org.broadinstitute.dsm.route.ScanPayload;
 
 public class KitTrackingScanUseCase extends BaseKitUseCase {
     @Override
-    protected void process(ScanPayload scanPayload) {
+    protected Optional<KitStatusChangeRoute.ScanError> process(ScanPayload scanPayload) {
 
     }
 }
