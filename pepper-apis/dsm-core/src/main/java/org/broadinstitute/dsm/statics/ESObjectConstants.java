@@ -115,4 +115,16 @@ public class ESObjectConstants {
     public static final String SELECT_MODE = "selectMode";
     public static final String MULTIPLE = "MULTIPLE";
     public static final String OPTIONS_TYPE = "OPTIONS";
+
+    // files
+    public static final String FILES = "files";
+    public static final String BUCKET = "bucket";
+    public static final String BLOB_NAME = "blobName";
+    public static final String FILE_NAME = "fileName";
+    public static final String FILE_SIZE = "fileSize";
+    public static final String MIME_TYPE = "mimeType";
+    public static final String AUTHORIZED_AT = "authorizedAt";
+    public static final String UPLOADED_AT = "uploadedAt";
+    public static final String SCANNED_AT = "scannedAt";
+    public static final String SCAN_RESULT = "scanResult";
 }
