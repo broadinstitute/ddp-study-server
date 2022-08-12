@@ -74,7 +74,7 @@ public class OLCServiceTest extends TxnAwareBaseTest {
     @Test
     public void testGetAllOLCsForEnrolledParticipantsInStudy() {
         var enabledStudy = new StudyDto(1L, "study", "name", "irb", "url", 1L, 1L,
-                OLCPrecision.MEDIUM, true, "email", null, true, null, false);
+                OLCPrecision.MEDIUM, true, "email", null, true, null, false, null);
 
         when(mockJdbiStudy.findByStudyGuid(any())).thenReturn(enabledStudy);
         when(mockEnrollment.findAllOLCsForEnrolledParticipantsInStudy(any())).thenReturn(List.of(PLUSCODE_FULL));
@@ -89,7 +89,7 @@ public class OLCServiceTest extends TxnAwareBaseTest {
     @Test
     public void testGetAllOLCsForEnrolledParticipantsInStudy_noParticipantsWithDefaultAddress() {
         var enabledStudy = new StudyDto(1L, "study", "name", "irb", "url", 1L, 1L,
-                OLCPrecision.MEDIUM, true, "email", null, true, null, false);
+                OLCPrecision.MEDIUM, true, "email", null, true, null, false, null);
 
         when(mockJdbiStudy.findByStudyGuid(any())).thenReturn(enabledStudy);
         when(mockEnrollment.findAllOLCsForEnrolledParticipantsInStudy(any())).thenReturn(Collections.emptyList());
@@ -101,7 +101,7 @@ public class OLCServiceTest extends TxnAwareBaseTest {
     @Test
     public void testGetAllOLCsForEnrolledParticipantsInStudy_publicDataSharingDisabled() {
         var disabledStudy = new StudyDto(1L, "study", "name", "irb", "url", 1L, 1L,
-                OLCPrecision.MEDIUM, false, "email", null, true, null, false);
+                OLCPrecision.MEDIUM, false, "email", null, true, null, false, null);
 
         when(mockJdbiStudy.findByStudyGuid(any())).thenReturn(disabledStudy);
 
@@ -111,7 +111,7 @@ public class OLCServiceTest extends TxnAwareBaseTest {
 
     @Test
     public void testGetAllOLCsForEnrolledParticipantsInStudy_noOlcPrecisionSet() {
-        var noPrecisionStudy = new StudyDto(1L, "study", "name", "irb", "url", 1L, 1L, null, false, "email", null, true, null, false);
+        var noPrecisionStudy = new StudyDto(1L, "study", "name", "irb", "url", 1L, 1L, null, false, "email", null, true, null, false, null);
 
         when(mockJdbiStudy.findByStudyGuid(any())).thenReturn(noPrecisionStudy);
 
