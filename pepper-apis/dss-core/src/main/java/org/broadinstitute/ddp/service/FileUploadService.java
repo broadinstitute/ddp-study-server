@@ -37,11 +37,13 @@ import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.interfaces.FileUploadSettings;
 import org.broadinstitute.ddp.model.files.FileScanResult;
 import org.broadinstitute.ddp.model.files.FileUpload;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GoogleCredentialUtil;
 import org.jdbi.v3.core.Handle;
@@ -322,13 +324,15 @@ public class FileUploadService {
                                   final StudyDto study,
                                   final Long participantId,
                                   final List<FileUpload> fileUploads) {
+        final var user = handle.attach(UserDao.class).findUserById(participantId);
+
         final var result = sendGridClient.sendMail(new Mail(
                 new Email(study.getStudyEmail()),
                 "New files were uploaded in " + study.getName() + " study",
                 new Email(study.getNotificationEmail()),
                 new Content(
                         "text/html",
-                        "User " + participantId + " uploaded following files: " + StreamEx.of(fileUploads)
+                        "User " + user.map(User::getHruid).orElse("") + " uploaded following files: " + StreamEx.of(fileUploads)
                                 .map(FileUpload::getFileName)
                                 .joining(System.lineSeparator()))));
 
