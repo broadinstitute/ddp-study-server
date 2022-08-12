@@ -61,7 +61,7 @@ public class CopyExecutor {
                 QuestionDto sourceQuestion;
                 FormResponse sourceInstance;
                 String sourceStableId = ((CopyAnswerLocation) source).getQuestionStableId();
-                UserType user = ((CopyAnswerLocation) source).getUser();
+                UserType user = ((CopyAnswerLocation) source).getUserType();
                 if (user == UserType.OPERATOR) {
                     var governance = governanceDao
                             .findActiveGovernancesByParticipantAndStudyIds(participantId, config.getStudyId())

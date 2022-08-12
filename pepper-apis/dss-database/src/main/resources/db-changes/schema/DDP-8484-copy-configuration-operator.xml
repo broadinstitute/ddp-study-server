@@ -6,7 +6,7 @@
 
     <changeSet author="lkapanad" id="copy-configuration-operator">
         <addColumn tableName="copy_answer_location">
-            <column name="user" type="varchar(30)" defaultValue="USER">
+            <column name="user_type" type="varchar(30)" defaultValue="USER">
             </column>
         </addColumn>
     </changeSet>

@@ -103,7 +103,7 @@ public interface CopyConfigurationDao extends SqlObject {
         if (loc.getType() == CopyLocationType.ANSWER) {
             var ansLoc = (CopyAnswerLocation) loc;
             DBUtils.checkInsert(1, copyConfigSql.insertCopyAnswerLocationByQuestionStableId(
-                    locId, studyId, ansLoc.getQuestionStableId(), ansLoc.getUser().name()));
+                    locId, studyId, ansLoc.getQuestionStableId(), ansLoc.getUserType().name()));
         }
         return locId;
     }
@@ -179,7 +179,7 @@ public interface CopyConfigurationDao extends SqlObject {
                 return new CopyAnswerLocation(locId,
                         view.getColumn(columnName(prefix, "question_stable_code_id"), Long.class),
                         view.getColumn(columnName(prefix, "question_stable_id"), String.class),
-                        view.getColumn(columnName(prefix, "user"), String.class));
+                        view.getColumn(columnName(prefix, "user_type"), String.class));
             } else {
                 return new CopyLocation(locId, type);
             }
