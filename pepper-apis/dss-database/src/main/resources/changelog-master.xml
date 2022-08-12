@@ -315,5 +315,6 @@
     <include file="db-changes/schema/DDP-7931-user-created-by-not-required.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-8309-fon-zip-code-validation.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-8270-composite-add-tabular-separator.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-8248.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-8484-copy-configuration-operator.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

@@ -42,8 +42,19 @@ public class FileScanResultReceiverTest {
         var mockExportDao = mock(DataExportDao.class);
         var mockBlob = mock(Blob.class);
         var now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
-        var upload = new FileUpload(1L, "guid", 1L, 1L, 1L, "guid_filename", "mime", "name",
-                123L, true, now, null, null, null);
+        var upload = FileUpload.builder()
+                .id(1L)
+                .guid("guid")
+                .studyId(1L)
+                .operatorUserId(1L)
+                .participantUserId(1L)
+                .blobName("guid_filename")
+                .mimeType("mime")
+                .fileName("name")
+                .fileSize(123L)
+                .isVerified(true)
+                .createdAt(now)
+                .build();
         var msg = PubsubMessage.newBuilder()
                 .setMessageId("foo")
                 .putAttributes(ATTR_BUCKET_ID, "uploads")

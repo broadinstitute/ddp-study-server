@@ -542,7 +542,7 @@ public class TestDataSetupUtil {
                 auth0TenantDto.getId(), studyPrecision, shareParticipantLocation, null, null, null, false);
         return new StudyDto(studyId, studyGuid, studyName, null, webBaseUrl, umbrellaId, auth0TenantDto.getId(),
                 studyPrecision,
-                shareParticipantLocation, null, null, false, null, false);
+                shareParticipantLocation, null, null, false, null, false, null);
     }
 
     public static FormActivityDef generateTestFormActivityForUser(Handle handle, String userGuid, String studyGuid) {
