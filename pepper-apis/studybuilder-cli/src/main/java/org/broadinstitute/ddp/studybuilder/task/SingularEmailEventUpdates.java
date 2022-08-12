@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.studybuilder.task;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.EventActionSql;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -31,7 +32,7 @@ public class SingularEmailEventUpdates implements CustomTask {
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
-        if (!studyCfg.getString("study.guid").equals(STUDY_GUID)) {
+        if (!STUDY_GUID.equals(studyCfg.getString("study.guid"))) {
             throw new DDPException("This task is only for the " + STUDY_GUID + " study!");
         }
         File file = cfgPath.getParent().resolve(DATA_FILE).toFile();
@@ -63,9 +64,7 @@ public class SingularEmailEventUpdates implements CustomTask {
         long newPostDelaySeconds = Long.valueOf(newDelaySeconds);
         long eventConfigId = helper.findNotificationEventConfigId(studyDto.getId(), notificationTemplateId, currPostDelaySeconds);
         int rowCount = helper.updateDelayToEvent(eventConfigId, newPostDelaySeconds);
-        if (rowCount != 1) {
-            throw new DDPException("Updated : " + rowCount + " event configurations !!" );
-        }
+        DBUtils.checkUpdate(1, rowCount);
         log.info("Updated postDelaySeconds for event config ID : {} ", eventConfigId);
     }
 
