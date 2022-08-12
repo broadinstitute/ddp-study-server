@@ -10,13 +10,17 @@ import java.util.Optional;
 
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.model.KitDDPNotification;
+import org.broadinstitute.dsm.model.at.ReceiveKitRequest;
 import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.route.KitStatusChangeRoute;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.DSMConfig;
 import org.broadinstitute.dsm.util.EventUtil;
+import org.broadinstitute.dsm.util.KitUtil;
+import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +45,13 @@ public class KitDaoImpl implements KitDao {
             + "dsm_kit_request_id = (SELECT dsm_kit_request_id FROM ddp_kit_request WHERE ddp_label = ?) "
             + "AND not kit_complete <=> 1 "
             + "AND deactivated_date is null";
+
+    private static final String INSERT_KIT_TRACKING = "INSERT INTO "
+            + "ddp_kit_tracking "
+            + "SET "
+            + "scan_date = ?, scan_by = ?, tracking_id = ?, kit_label = ?";
+
+    private static final String UPDATE_KIT_RECEIVED = KitUtil.SQL_UPDATE_KIT_RECEIVED;
 
     @Override
     public int create(KitRequestShipping kitRequestDto) {
@@ -80,23 +91,67 @@ public class KitDaoImpl implements KitDao {
                 stmt.setString(4, kitRequestShipping.getDdpLabel());
                 int rowsAffected = stmt.executeUpdate();
                 if (rowsAffected != 1) {
-//                    logger.info("Updated kitRequests w/ ddp_label " + kitRequestShipping.getDdpLabel());
-//                    KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(
-//                            DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_SENT_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL), kit,
-//                            1);
-//                    if (kitDDPNotification != null) {
-//                        EventUtil.triggerDDP(conn, kitDDPNotification);
-//                    }
-//                    try {
-//                        UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, "ddpLabel",
-//                                "ddpLabel", kit, new PutToNestedScriptBuilder()).export();
-//                    } catch (Exception e) {
-//                        logger.error(String.format("Error updating ddp label for kit with label: %s", kit));
-//                        e.printStackTrace();
-//                    }
-
                     dbVals.resultValue = new KitStatusChangeRoute.ScanError(kitRequestShipping.getDdpLabel(), "ddp_label "
                             + kitRequestShipping.getDdpLabel() + " does not exist or already has a Kit Label");
+                } else {
+                    logger.info("Updated kitRequests w/ ddp_label " + kitRequestShipping.getDdpLabel());
+                }
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+            return dbVals;
+        });
+        if (Objects.nonNull(results.resultValue)) {
+            result = (Optional<KitStatusChangeRoute.ScanError>) results.resultValue;
+        }
+        return result;
+    }
+
+    @Override
+    public Optional<KitStatusChangeRoute.ScanError> updateKitReceived(KitRequestShipping kitRequestShipping,
+                                                                      String userId) {
+        Optional<KitStatusChangeRoute.ScanError> result = Optional.empty();
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(UPDATE_KIT_RECEIVED)) {
+                stmt.setLong(1, System.currentTimeMillis());
+                stmt.setString(2, userId);
+                stmt.setString(3, kitRequestShipping.getKitLabel());
+                int rowsAffected = stmt.executeUpdate();
+                if (rowsAffected != 1) {
+                    //try to receive it as AT kit
+                    dbVals.resultValue = Optional.of(new KitStatusChangeRoute.ScanError(kitRequestShipping.getKitLabel(),
+                            "SM-ID \"" + kitRequestShipping.getKitLabel() + "\" does not exist or was already scanned as received.\n"
+                                    + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
+                }
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+            return dbVals;
+        });
+        if (Objects.nonNull(results.resultValue)) {
+            result = (Optional<KitStatusChangeRoute.ScanError>) results.resultValue;
+        }
+        return result;
+    }
+
+    @Override
+    public Optional<KitStatusChangeRoute.ScanError> insertKitTracking(KitRequestShipping kitRequestShipping, String userId) {
+        Optional<KitStatusChangeRoute.ScanError> result = Optional.empty();
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_TRACKING)) {
+                stmt.setLong(1, System.currentTimeMillis());
+                stmt.setString(2, userId);
+                stmt.setString(3, kitRequestShipping.getTrackingId());
+                stmt.setString(4, kitRequestShipping.getKitLabel());
+                int rowsAffected = stmt.executeUpdate();
+                if (rowsAffected != 1) {
+                    dbVals.resultValue = new KitStatusChangeRoute.ScanError(kitRequestShipping.getKitLabel(),
+                            "Kit Label \"" + kitRequestShipping.getKitLabel() + "\" does not exist.\n"
+                                    + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER);
+                } else {
+                    logger.info("Added tracking for kit w/ kit_label " + kitRequestShipping.getKitLabel());
                 }
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -137,5 +192,7 @@ public class KitDaoImpl implements KitDao {
         }
         return (int) results.resultValue > 0;
     }
+
+
 
 }
