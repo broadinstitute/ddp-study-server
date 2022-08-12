@@ -125,6 +125,7 @@
         "cancerLoader": "0 0 8,20 ? * * *",
         "studyExport": "0 0 9 ? * * *",
         "fileUploadCleanup": "0 0 5 ? * * *",
+        "fileUploadNotification": "*/10 * * * * *",
         "tempUserCleanup": "0 30 5 ? * * *",
         "customExport": "0 10 5 ? * * *"
     },
