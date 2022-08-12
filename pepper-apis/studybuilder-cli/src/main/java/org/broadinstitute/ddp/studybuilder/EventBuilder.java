@@ -51,6 +51,7 @@ import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.StateType;
 import org.broadinstitute.ddp.model.workflow.StaticState;
+import org.broadinstitute.ddp.pex.UserType;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.jdbi.v3.core.Handle;
 
@@ -360,7 +361,8 @@ public class EventBuilder {
     private CopyLocation buildCopyLocation(Config locationCfg) {
         var type = CopyLocationType.valueOf(locationCfg.getString("type"));
         if (type == CopyLocationType.ANSWER) {
-            return new CopyAnswerLocation(locationCfg.getString("questionStableId"));
+            String user = locationCfg.hasPath("user") ? locationCfg.getString("user") : UserType.USER.toUpperCase();
+            return new CopyAnswerLocation(locationCfg.getString("questionStableId"), user);
         } else {
             return new CopyLocation(type);
         }

@@ -27,13 +27,14 @@ public interface CopyConfigurationSql extends SqlObject {
             @Bind("locId") long locationId,
             @Bind("questionStableCodeId") long questionStableCodeId);
 
-    @SqlUpdate("insert into copy_answer_location (copy_location_id, question_stable_code_id)"
-            + " select :locId, question_stable_code_id from question_stable_code"
+    @SqlUpdate("insert into copy_answer_location (copy_location_id, question_stable_code_id, user)"
+            + " select :locId, question_stable_code_id, :user from question_stable_code"
             + "  where umbrella_study_id = :studyId and stable_id = :questionStableId")
     int insertCopyAnswerLocationByQuestionStableId(
             @Bind("locId") long locationId,
             @Bind("studyId") long studyId,
-            @Bind("questionStableId") String questionStableId);
+            @Bind("questionStableId") String questionStableId,
+            @Bind("user") String user);
 
     @GetGeneratedKeys
     @SqlUpdate("insert into copy_previous_instance_filter (copy_configuration_id, answer_location_id, execution_order)"
