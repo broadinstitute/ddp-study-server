@@ -57,7 +57,6 @@ public abstract class KitStatusChangeRoute extends RequestHandler {
     protected String userIdRequest;
     protected List<ScanError> scanErrorList;
     protected List<ScanPayload> scanPayloads;
-    protected JsonArray scans;
     protected long currentTime;
 
     public KitStatusChangeRoute(@NonNull NotificationUtil notificationUtil) {
@@ -87,23 +86,10 @@ public abstract class KitStatusChangeRoute extends RequestHandler {
             scanErrorList = new ArrayList<>();
 
             currentTime = System.currentTimeMillis();
-            scans = (JsonArray) (new JsonParser().parse(requestBody));
             scanPayloads = ObjectMapperSingleton.readValue(requestBody, new TypeReference<List<ScanPayload>>() {});
-            int labelCount = scans.size();
+            int labelCount = scanPayloads.size();
             if (labelCount > 0) {
                 processRequest();
-//                if (request.url().endsWith(RoutePath.FINAL_SCAN_REQUEST)) {
-//                    updateKits(RoutePath.FINAL_SCAN_REQUEST, scans, currentTime, scanErrorList, userIdRequest, ddpInstanceDto);
-//                } else if (request.url().endsWith(RoutePath.TRACKING_SCAN_REQUEST)) {
-//                    updateKits(RoutePath.TRACKING_SCAN_REQUEST, scans, currentTime, scanErrorList, userIdRequest, ddpInstanceDto);
-//                } else if (request.url().endsWith(RoutePath.SENT_KIT_REQUEST)) {
-//                    updateKits(RoutePath.SENT_KIT_REQUEST, scans, currentTime, scanErrorList, userIdRequest, ddpInstanceDto);
-//                } else if (request.url().endsWith(RoutePath.RECEIVED_KIT_REQUEST)) {
-//                    updateKits(RoutePath.RECEIVED_KIT_REQUEST, scans, currentTime, scanErrorList, userIdRequest, ddpInstanceDto);
-//                } else {
-//                    logger.error("Endpoint was not known " + request.url());
-//                    return new Result(500, UserErrorMessages.CONTACT_DEVELOPER);
-//                }
             }
             return scanErrorList;
         } else {
@@ -114,6 +100,7 @@ public abstract class KitStatusChangeRoute extends RequestHandler {
 
     protected abstract void processRequest();
 
+    // used only in tests
     public void updateKits(@NonNull String changeType, @NonNull JsonArray scans, long currentTime, @NonNull List<ScanError> scanErrorList,
                            @NonNull String userId, DDPInstanceDto ddpInstanceDto) {
         for (JsonElement scan : scans) {

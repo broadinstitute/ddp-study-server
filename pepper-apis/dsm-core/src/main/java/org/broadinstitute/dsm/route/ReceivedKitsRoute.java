@@ -1,7 +1,8 @@
 package org.broadinstitute.dsm.route;
 
 import lombok.NonNull;
-import org.broadinstitute.dsm.model.kit.KitSentReceivedUseCase;
+import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
+import org.broadinstitute.dsm.model.kit.KitSentUseCase;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.NotificationUtil;
 
@@ -12,7 +13,7 @@ public class ReceivedKitsRoute extends KitStatusChangeRoute {
 
     @Override
     protected void processRequest() {
-        KitSentReceivedUseCase kitSentReceivedUseCase = new KitSentReceivedUseCase();
-        updateKits(RoutePath.RECEIVED_KIT_REQUEST, scans, currentTime, scanErrorList, userIdRequest, ddpInstanceDto);
+        KitSentUseCase kitSentUseCase = new KitSentUseCase(kitPayload, new KitDaoImpl());
+        scanErrorList.addAll(kitSentUseCase.get());
     }
 }

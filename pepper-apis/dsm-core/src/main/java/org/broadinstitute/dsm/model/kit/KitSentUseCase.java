@@ -13,13 +13,13 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class KitTrackingScanUseCase extends BaseKitUseCase {
+public class KitSentUseCase extends BaseKitUseCase {
 
-    private static final Logger logger = LoggerFactory.getLogger(KitTrackingScanUseCase.class);
+    private static final Logger logger = LoggerFactory.getLogger(KitSentUseCase.class);
 
     private final KitDao kitDao;
 
-    public KitTrackingScanUseCase(KitPayload kitPayload, KitDao kitDao) {
+    public KitSentUseCase(KitPayload kitPayload, KitDao kitDao) {
         super(kitPayload);
         this.kitDao = kitDao;
     }
@@ -27,18 +27,16 @@ public class KitTrackingScanUseCase extends BaseKitUseCase {
     @Override
     protected Optional<KitStatusChangeRoute.ScanError> process(ScanPayload scanPayload) {
         String kit = scanPayload.getKit();
-        String addValue = scanPayload.getAddValue();
         KitRequestShipping kitRequestShipping = new KitRequestShipping();
-        kitRequestShipping.setTrackingId(addValue);
         kitRequestShipping.setKitLabel(kit);
         Optional<KitStatusChangeRoute.ScanError> maybeScanError =
                 kitDao.insertKitTracking(kitRequestShipping, String.valueOf(kitPayload.getUserId()));
         if (maybeScanError.isEmpty()) {
             try {
                 UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, kitPayload.getDdpInstanceDto(),
-                        "kitLabel", "kitLabel", addValue, new PutToNestedScriptBuilder()).export();
+                        "kitLabel", "kitLabel", kit, new PutToNestedScriptBuilder()).export();
             } catch (Exception e) {
-                logger.error(String.format("Error updating kit label for kit with label: %s", addValue));
+                logger.error(String.format("Error updating kit label for kit with label: %s", kit));
                 e.printStackTrace();
             }
         }

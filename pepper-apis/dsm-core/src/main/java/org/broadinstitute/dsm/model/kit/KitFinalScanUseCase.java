@@ -5,8 +5,6 @@ import java.util.Optional;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.ddp.kitrequest.KitRequestDao;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
-import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.db.dto.ddp.kitrequest.KitRequestDto;
 import org.broadinstitute.dsm.model.KitDDPNotification;
 import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
@@ -31,37 +29,12 @@ public class KitFinalScanUseCase extends BaseKitUseCase {
         this.kitDao = kitDao;
     }
 
-    public void finalScanCommand(String userId, DDPInstanceDto ddpInstanceDto) {
-        String addValue = scan.getAsJsonObject().get("leftValue").getAsString();
-        String kit = scan.getAsJsonObject().get("rightValue").getAsString();
-        //check if ddp_label is blood kit
-        if (checkKitLabel(DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_TYPE_NEED_TRACKING_BY_DDP_LABEL), kit)) {
-            //check if kit_label is in tracking table
-            if (checkKitLabel(
-                    DSMConfig.getSqlFromConfig(ApplicationConfigConstants.GET_FOUND_IF_KIT_LABEL_ALREADY_EXISTS_IN_TRACKING_TABLE),
-                    addValue)) {
-                updateKit(changeType, kit, addValue, currentTime, scanErrorList, userId, ddpInstanceDto);
-                KitRequestDao kitRequestDao = new KitRequestDao();
-                KitRequestDto kitRequestByLabel = kitRequestDao.getKitRequestByLabel(kit);
-                if (kitRequestByLabel != null) {
-                    KitStatusChangeRoute.writeSampleSentToES(kitRequestByLabel);
-                }
-            } else {
-                scanErrorList.add(new KitStatusChangeRoute.ScanError(kit, "Kit with DSM Label \"" + kit + "\" does not have a Tracking Label"));
-            }
-        } else {
-            updateKit(changeType, kit, addValue, currentTime, scanErrorList, userId, ddpInstanceDto);
-        }
-    }
-
     @Override
     protected Optional<KitStatusChangeRoute.ScanError> process(ScanPayload scanPayload) {
         Optional<KitStatusChangeRoute.ScanError> result = Optional.empty();
         String addValue = scanPayload.getAddValue();
         String kit = scanPayload.getKit();
-        //check if ddp_label is blood kit
         if (kitDao.isBloodKit(kit)) {
-            //check if kit_label is in tracking table
             if (kitDao.hasTrackingScan(addValue)) {
                 Optional<KitStatusChangeRoute.ScanError> maybeScanError = updateKitRequest(addValue, kit);
                 if (isKitUpdateSuccessful(maybeScanError)) {
