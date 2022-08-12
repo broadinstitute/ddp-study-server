@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -26,8 +25,7 @@ import org.broadinstitute.ddp.model.copy.CopyAnswerLocation;
 import org.broadinstitute.ddp.model.copy.CopyConfiguration;
 import org.broadinstitute.ddp.model.copy.CopyLocation;
 import org.broadinstitute.ddp.model.copy.CopyLocationType;
-import org.broadinstitute.ddp.model.governance.Governance;
-import org.broadinstitute.ddp.pex.UserType;
+import org.broadinstitute.ddp.model.copy.UserType;
 import org.jdbi.v3.core.Handle;
 
 @Slf4j
@@ -54,6 +52,12 @@ public class CopyExecutor {
         Map<String, QuestionDto> questionDtosByStableId = retrieveQuestionDtos(handle, config);
         Map<Long, FormResponse> responsesById = retrieveActivityData(handle, participantId,
                 List.copyOf(questionDtosByStableId.values()));
+        var governance = handle.attach(UserGovernanceDao.class)
+                .findActiveGovernancesByParticipantAndStudyIds(participantId, config.getStudyId())
+                .findFirst()
+                .orElseThrow(() -> new DDPException(String.format("Governance not found for participant %s", participantId)));
+        Map<Long, FormResponse> proxyActivities = retrieveActivityData(handle, governance.getProxyUserId(),
+                List.copyOf(questionDtosByStableId.values()));
 
         for (var pair : config.getPairs()) {
             CopyLocation source = pair.getSource();
@@ -63,17 +67,8 @@ public class CopyExecutor {
                 QuestionDto sourceQuestion;
                 FormResponse sourceInstance;
                 String sourceStableId = ((CopyAnswerLocation) source).getQuestionStableId();
-                String user = ((CopyAnswerLocation) source).getUser();
-                if (UserType.OPERATOR.equalsIgnoreCase(user)) {
-                    Stream<Governance> governances = handle.attach(UserGovernanceDao.class)
-                            .findActiveGovernancesByParticipantAndStudyIds(participantId, config.getStudyId());
-                    Optional<Governance> optionalGovernance = governances.findFirst();
-                    if (optionalGovernance.isEmpty()) {
-                        throw new DDPException(String.format("Governance not found for participant %s", participantId));
-                    }
-                    Governance governance = optionalGovernance.get();
-                    Map<Long, FormResponse> proxyActivities = retrieveActivityData(handle, governance.getProxyUserId(),
-                            List.copyOf(questionDtosByStableId.values()));
+                UserType user = ((CopyAnswerLocation) source).getUser();
+                if (user == UserType.OPERATOR) {
                     sourceQuestion = questionDtosByStableId.get(sourceStableId);
                     if (sourceQuestion == null) {
                         continue; // Question might have been removed from activity, so we skip it.

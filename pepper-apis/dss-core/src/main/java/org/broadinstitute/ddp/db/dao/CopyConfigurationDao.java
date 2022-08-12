@@ -103,7 +103,7 @@ public interface CopyConfigurationDao extends SqlObject {
         if (loc.getType() == CopyLocationType.ANSWER) {
             var ansLoc = (CopyAnswerLocation) loc;
             DBUtils.checkInsert(1, copyConfigSql.insertCopyAnswerLocationByQuestionStableId(
-                    locId, studyId, ansLoc.getQuestionStableId(), ansLoc.getUser()));
+                    locId, studyId, ansLoc.getQuestionStableId(), ansLoc.getUser().name()));
         }
         return locId;
     }

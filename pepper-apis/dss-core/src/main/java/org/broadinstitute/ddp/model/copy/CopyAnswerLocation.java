@@ -1,19 +1,18 @@
 package org.broadinstitute.ddp.model.copy;
 
-import org.broadinstitute.ddp.pex.UserType;
 
 public class CopyAnswerLocation extends CopyLocation {
 
     private long questionStableCodeId;
     private String questionStableId;
 
-    private String user;
+    private UserType user;
 
     public CopyAnswerLocation(long id, long questionStableCodeId, String questionStableId, String user) {
         super(id, CopyLocationType.ANSWER);
         this.questionStableCodeId = questionStableCodeId;
         this.questionStableId = questionStableId;
-        this.user = user;
+        this.user = UserType.valueOf(user.toUpperCase());
     }
 
     public CopyAnswerLocation(long id, long questionStableCodeId, String questionStableId) {
@@ -23,7 +22,7 @@ public class CopyAnswerLocation extends CopyLocation {
         this.user = UserType.USER;
     }
 
-    public CopyAnswerLocation(String questionStableId, String user) {
+    public CopyAnswerLocation(String questionStableId, UserType user) {
         super(CopyLocationType.ANSWER);
         this.questionStableId = questionStableId;
         this.user = user;
@@ -43,7 +42,7 @@ public class CopyAnswerLocation extends CopyLocation {
         return questionStableId;
     }
 
-    public String getUser() {
+    public UserType getUser() {
         return user;
     }
 }
