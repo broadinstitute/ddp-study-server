@@ -9,6 +9,7 @@ public enum QuestionType {
     MATRIX("MATRIX"),
     DATE("DATE"),
     OPTIONS("OPTIONS"),
+    PICKLIST("PICKLIST"),
     TEXT("TEXT"),
     JSON_ARRAY("JSON_ARRAY"),
     RADIO("RADIO");

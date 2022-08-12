@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -15,17 +15,22 @@ public class DateValueProvider extends TextValueProvider {
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
 
     private static String parseDate(Object dateValue) {
-        if (dateValue == null || dateValue.equals(StringUtils.EMPTY)) {
+        if (dateValue == null) {
             return StringUtils.EMPTY;
         }
         if (dateValue instanceof String) {
             return ((String) dateValue);
         }
-        long dateLong = Long.parseLong(dateValue.toString());
-        return LocalDateTime.ofInstant(Instant.ofEpochMilli(dateLong), ZoneOffset.UTC).format(formatter);
+        try {
+            long dateLong = Long.parseLong(dateValue.toString());
+            return LocalDateTime.ofInstant(Instant.ofEpochMilli(dateLong), ZoneOffset.UTC).format(formatter);
+        } catch (Exception e) {
+            return dateValue.toString();
+        }
     }
 
-    public Collection<String> formatRawValues(Collection<?> rawValues, FilterExportConfig filterConfig, Map<String, Object> formMap) {
+    @Override
+    public List<String> formatRawValues(List<?> rawValues, FilterExportConfig filterConfig, Map<String, Object> formMap) {
         return rawValues.stream().map(DateValueProvider::parseDate).collect(Collectors.toList());
     }
 
