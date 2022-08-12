@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.studybuilder.task.osteo;
+package org.broadinstitute.ddp.studybuilder.task;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -21,7 +21,6 @@ import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
-import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -29,7 +28,7 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
 @Slf4j
 public class BrugadaPIUpdates implements CustomTask {
-    private static final String DATA_FILE = "/patches/text-revisions.conf";
+    private static final String DATA_FILE = "patches/text-revisions.conf";
     private static final String BRUGADA_STUDY = "brugada";
 
     private Config dataCfg;
@@ -68,7 +67,7 @@ public class BrugadaPIUpdates implements CustomTask {
 
         List<? extends Config> configList = dataCfg.getConfigList("translation-updates");
         for (Config config : configList) {
-            String activityCode = dataCfg.getString("activityCode");
+            String activityCode = config.getString("activityCode");
             String reason = String.format(
                     "Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
                     studyDto.getGuid(), activityCode, versionTag);
