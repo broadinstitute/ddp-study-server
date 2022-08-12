@@ -68,7 +68,7 @@ public class BrugadaPIUpdates implements CustomTask {
 
         List<? extends Config> configList = dataCfg.getConfigList("translation-updates");
         for (Config config : configList) {
-            String activityCode = dataCfg.getString("activityCode");
+            String activityCode = config.getString("activityCode");
             String reason = String.format(
                     "Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
                     studyDto.getGuid(), activityCode, versionTag);
