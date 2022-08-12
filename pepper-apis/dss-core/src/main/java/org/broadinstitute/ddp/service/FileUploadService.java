@@ -332,7 +332,7 @@ public class FileUploadService {
                                 .map(FileUpload::getFileName)
                                 .joining(System.lineSeparator()))));
 
-        if (result.hasError()) {
+        if (result.hasFailure()) {
             log.error("Can't send an e-mail", result.getThrown());
             return;
         }
