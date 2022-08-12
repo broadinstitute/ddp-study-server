@@ -47,6 +47,4 @@ public class SavedFiltersTissueList extends BaseFilterTissueList {
                 filterQuery);
 
     }
-
-
 }
