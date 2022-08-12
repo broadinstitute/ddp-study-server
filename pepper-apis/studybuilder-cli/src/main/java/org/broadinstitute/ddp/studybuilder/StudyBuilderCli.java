@@ -120,6 +120,9 @@ public class StudyBuilderCli {
             log("using substitutions file: %s", subsFile);
         }
 
+        log("resolving substitutions configuration...");
+        subsCfg = subsCfg.withFallback(varsCfg).resolve();
+
         // read translations from i18n-files (from subs.conf section "i18n" or from a folder specified by opt "i18n-path"
         INSTANCE.setTranslations(readI18nTranslations(subsCfg, cmd.hasOption(OPT_I18N_PATH) ? cmd.getOptionValue(OPT_I18N_PATH) : null));
 
