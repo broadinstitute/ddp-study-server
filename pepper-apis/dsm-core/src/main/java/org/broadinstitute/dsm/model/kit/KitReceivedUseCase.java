@@ -16,12 +16,10 @@ public class KitReceivedUseCase extends BaseKitUseCase {
 
     private static final Logger logger = LoggerFactory.getLogger(KitReceivedUseCase.class);
 
-    private final KitDao kitDao;
     private final NotificationUtil notificationUtil;
 
     public KitReceivedUseCase(KitPayload kitPayload, KitDao kitDao, NotificationUtil notificationUtil) {
-        super(kitPayload);
-        this.kitDao = kitDao;
+        super(kitPayload, kitDao);
         this.notificationUtil = notificationUtil;
     }
 
@@ -47,4 +45,5 @@ public class KitReceivedUseCase extends BaseKitUseCase {
     private boolean isReceiveATKitRequest(String kit) {
         return ReceiveKitRequest.receiveATKitRequest(notificationUtil, kit);
     }
+
 }

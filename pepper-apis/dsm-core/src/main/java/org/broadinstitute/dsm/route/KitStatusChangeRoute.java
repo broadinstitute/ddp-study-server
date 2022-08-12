@@ -6,19 +6,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import lombok.NonNull;
-import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.db.dto.ddp.kitrequest.KitRequestDto;
 import org.broadinstitute.dsm.model.KitDDPNotification;
 import org.broadinstitute.dsm.model.at.ReceiveKitRequest;
 import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
@@ -27,12 +23,9 @@ import org.broadinstitute.dsm.model.kit.KitFinalScanUseCase;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.DSMConfig;
-import org.broadinstitute.dsm.util.ElasticSearchDataUtil;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.EventUtil;
 import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
@@ -62,17 +55,6 @@ public abstract class KitStatusChangeRoute extends RequestHandler {
         this.notificationUtil = notificationUtil;
     }
 
-    public static void writeSampleSentToES(KitRequestDto kitRequest) {
-        int ddpInstanceId = kitRequest.getDdpInstanceId();
-        DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(ddpInstanceId);
-        Map<String, Object> nameValuesMap = new HashMap<>();
-        ElasticSearchDataUtil.setCurrentStrictYearMonthDay(nameValuesMap, ESObjectConstants.SENT);
-        if (ddpInstance != null && kitRequest.getDdpKitRequestId() != null && kitRequest.getDdpParticipantId() != null) {
-            ElasticSearchUtil.writeSample(ddpInstance, kitRequest.getDdpKitRequestId(), kitRequest.getDdpParticipantId(),
-                    ESObjectConstants.SAMPLES, ESObjectConstants.KIT_REQUEST_ID, nameValuesMap);
-        }
-    }
-
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         String requestBody = request.body();
@@ -83,7 +65,6 @@ public abstract class KitStatusChangeRoute extends RequestHandler {
         if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest) || UserUtil.checkUserAccess(null, userId, "kit_receiving",
                 userIdRequest)) {
             scanErrorList = new ArrayList<>();
-
             currentTime = System.currentTimeMillis();
             scanPayloads = ObjectMapperSingleton.readValue(requestBody, new TypeReference<List<ScanPayload>>() {});
             int labelCount = scanPayloads.size();

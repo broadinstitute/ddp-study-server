@@ -17,11 +17,8 @@ public class KitTrackingScanUseCase extends BaseKitUseCase {
 
     private static final Logger logger = LoggerFactory.getLogger(KitTrackingScanUseCase.class);
 
-    private final KitDao kitDao;
-
     public KitTrackingScanUseCase(KitPayload kitPayload, KitDao kitDao) {
-        super(kitPayload);
-        this.kitDao = kitDao;
+        super(kitPayload, kitDao);
     }
 
     @Override
@@ -44,4 +41,5 @@ public class KitTrackingScanUseCase extends BaseKitUseCase {
         }
         return maybeScanError;
     }
+
 }
