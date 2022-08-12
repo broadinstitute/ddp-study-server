@@ -57,7 +57,7 @@ public class FileUploadNotificationJob implements Job {
                 .startNow()
                 .build();
         scheduler.scheduleJob(trigger);
-        log.info("Added trigger {} for job {}x with schedule '{}'", trigger.getKey(), getKey(), schedule);
+        log.info("Added trigger {} for job {} with schedule '{}'", trigger.getKey(), getKey(), schedule);
     }
 
     @Override
