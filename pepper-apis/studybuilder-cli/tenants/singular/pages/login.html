@@ -336,6 +336,7 @@
         padding: 48px 0 60px;
         background: #521b93;
         color: #fff;
+        line-height: 1.5rem;
       }
       @media (max-width: 450px) {
         .footer {
@@ -345,6 +346,7 @@
       .footer .container {
         display: flex;
         justify-content: space-between;
+        box-sizing: border-box;
       }
       @media (max-width: 450px) {
         .footer .container {
@@ -411,6 +413,11 @@
       .footer-meta {
         max-width: 30%;
       }
+      @media (max-width: 1024px) {
+        .footer-meta {
+          max-width: unset;
+        }
+      }
       @media (max-width: 700px) {
         .footer-meta {
           max-width: 80%;
@@ -447,6 +454,13 @@
       }
       .footer .SimpleButton, .footer .button {
         width: 112px;
+      }
+      @media (max-width: 1200px) {
+        .footer .SimpleButton, .footer .button {
+          padding: 7px 12px 4px;
+          font-size: 16px;
+          line-height: 21px;
+        }
       }
       .footer .SimpleButton {
         color: #fff;
