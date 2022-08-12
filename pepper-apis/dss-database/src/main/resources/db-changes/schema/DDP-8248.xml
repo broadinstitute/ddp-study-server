@@ -12,7 +12,7 @@
         </addColumn>
 
         <addColumn tableName="umbrella_study">
-            <column name="notification_email" type="text">
+            <column name="notification_email" type="text" defaultValue="null">
                 <constraints nullable="true"/>
             </column>
         </addColumn>
