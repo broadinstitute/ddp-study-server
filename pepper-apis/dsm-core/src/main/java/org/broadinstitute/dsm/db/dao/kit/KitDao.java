@@ -19,4 +19,6 @@ public interface KitDao extends Dao<KitRequestShipping> {
 
     Optional<KitStatusChangeRoute.ScanError> updateKitReceived(KitRequestShipping kitRequestShipping, String userId);
 
+    Integer insertKit(KitRequestShipping kitRequestShipping);
+
 }

@@ -51,6 +51,22 @@ public class KitDaoImpl implements KitDao {
             + "SET "
             + "scan_date = ?, scan_by = ?, tracking_id = ?, kit_label = ?";
 
+    private static final String INSERT_KIT = "INSERT INTO "
+            + "ddp_kit "
+            + "(dsm_kit_request_id, "
+            + "label_url_to, "
+            + "label_url_return, "
+            + "easypost_to_id, "
+            + "easypost_return_id, "
+            + "tracking_to_id, "
+            + "tracking_return_id, "
+            + "easypost_tracking_to_url, "
+            + "easypost_tracking_return_url, "
+            + "error, "
+            + "message, "
+            + "easypost_address_id_to) "
+            + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+
     private static final String UPDATE_KIT_RECEIVED = KitUtil.SQL_UPDATE_KIT_RECEIVED;
 
     @Override
@@ -133,6 +149,41 @@ public class KitDaoImpl implements KitDao {
             result = (Optional<KitStatusChangeRoute.ScanError>) results.resultValue;
         }
         return result;
+    }
+
+    @Override
+    public Integer insertKit(KitRequestShipping kitRequestShipping) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(INSERT_KIT)) {
+                stmt.setLong(1, kitRequestShipping.getDsmKitRequestId());
+                stmt.setString(2, kitRequestShipping.getLabelUrlTo());
+                stmt.setString(3, kitRequestShipping.getLabelUrlReturn());
+                stmt.setString(4, kitRequestShipping.getEasypostToId());
+                stmt.setString(5, kitRequestShipping.getEasypostShipmentStatus());
+                stmt.setString(6, kitRequestShipping.getTrackingToId());
+                stmt.setString(7, kitRequestShipping.getTrackingReturnId());
+                stmt.setString(8, kitRequestShipping.getEasypostTrackingToUrl());
+                stmt.setString(9, kitRequestShipping.getEasypostTrackingReturnUrl());
+                stmt.setBoolean(10, kitRequestShipping.getError());
+                stmt.setString(11, kitRequestShipping.getMessage());
+                stmt.setString(12, kitRequestShipping.getEasypostAddressId());
+                stmt.executeUpdate();
+                try (ResultSet rs = stmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        dbVals.resultValue = rs.getInt(1);
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+        if (Objects.nonNull(results.resultException)) {
+            throw new RuntimeException("Error inserting kit with dsm_kit_request_id: "
+                    + kitRequestShipping.getDsmKitRequestId(), results.resultException);
+        }
+        return (int) results.resultValue;
     }
 
     @Override
