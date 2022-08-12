@@ -33,7 +33,7 @@ public class KitTrackingScanUseCase extends BaseKitUseCase {
         kitRequestShipping.setKitLabel(kit);
         Optional<KitStatusChangeRoute.ScanError> maybeScanError =
                 kitDao.insertKitTracking(kitRequestShipping, String.valueOf(kitPayload.getUserId()));
-        if (maybeScanError.isEmpty()) {
+        if (isKitUpdateSuccessful(maybeScanError)) {
             try {
                 UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, kitPayload.getDdpInstanceDto(),
                         "kitLabel", "kitLabel", addValue, new PutToNestedScriptBuilder()).export();

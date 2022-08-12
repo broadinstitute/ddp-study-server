@@ -30,15 +30,11 @@ public class KitSentUseCase extends BaseKitUseCase {
         KitRequestShipping kitRequestShipping = new KitRequestShipping();
         kitRequestShipping.setKitLabel(kit);
         Optional<KitStatusChangeRoute.ScanError> maybeScanError =
-                kitDao.insertKitTracking(kitRequestShipping, String.valueOf(kitPayload.getUserId()));
-        if (maybeScanError.isEmpty()) {
-            try {
-                UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, kitPayload.getDdpInstanceDto(),
-                        "kitLabel", "kitLabel", kit, new PutToNestedScriptBuilder()).export();
-            } catch (Exception e) {
-                logger.error(String.format("Error updating kit label for kit with label: %s", kit));
-                e.printStackTrace();
-            }
+                kitDao.updateKitRequest(kitRequestShipping, String.valueOf(kitPayload.getUserId()));
+        if (isKitUpdateSuccessful(maybeScanError)) {
+            triggerEvents(kit, kitRequestShipping);
+        } else {
+            result = maybeScanError;
         }
         return maybeScanError;
     }
