@@ -3,14 +3,22 @@ package org.broadinstitute.dsm.route;
 import static org.broadinstitute.dsm.util.ElasticSearchUtil.DEFAULT_FROM;
 import static org.broadinstitute.dsm.util.ElasticSearchUtil.MAX_RESULT_SIZE;
 
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
+import com.google.common.net.MediaType;
 import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.model.elastic.export.tabular.DataDictionaryExporter;
 import org.broadinstitute.dsm.model.elastic.export.tabular.ModuleExportConfig;
 import org.broadinstitute.dsm.model.elastic.export.tabular.TabularParticipantExporter;
 import org.broadinstitute.dsm.model.elastic.export.tabular.TabularParticipantParser;
+import org.broadinstitute.dsm.model.elastic.search.UnparsedDeserializer;
+import org.broadinstitute.dsm.model.elastic.search.UnparsedESParticipantDto;
 import org.broadinstitute.dsm.model.filter.FilterFactory;
 import org.broadinstitute.dsm.model.filter.Filterable;
 import org.broadinstitute.dsm.model.participant.DownloadParticipantListParams;
@@ -39,30 +47,52 @@ public class DownloadParticipantListRoute extends RequestHandler {
      * be renamed to processRequest, and the old 'processRequest' method should be deleted
      */
     public Object processRequest(Request request, Response response, String userId) throws Exception {
-        if (UserUtil.checkUserAccess(null, userId, "pt_list_export", null)) {
-            response.status(500);
-            return new Result(500, UserErrorMessages.NO_RIGHTS);
-        }
         DownloadParticipantListPayload payload =
                 ObjectMapperSingleton.instance().readValue(request.body(), DownloadParticipantListPayload.class);
         DownloadParticipantListParams params = new DownloadParticipantListParams(request.queryMap());
 
         String realm = RoutePath.getRealm(request);
+        String userIdReq = UserUtil.getUserId(request);
+        if (!UserUtil.checkUserAccess(realm, userId, "pt_list_view", userIdReq)) {
+            response.status(403);
+            return UserErrorMessages.NO_RIGHTS;
+        }
+
         DDPInstance instance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.MEDICAL_RECORD_ACTIVATED);
 
         TabularParticipantParser parser = new TabularParticipantParser(payload.getColumnNames(), instance,
-                params.isSplitOptions(), params.isOnlyMostRecent());
+                params.isSplitOptions(), params.isOnlyMostRecent(), null);
+        setResponseHeaders(response, realm + "_export.zip");
 
         Filterable filterable = FilterFactory.of(request);
         List<ParticipantWrapperDto> participants = fetchParticipantEsData(filterable, request.queryMap());
-        logger.info("Beginning parse of " + participants.size() + "participants");
+        logger.info("Beginning parse of " + participants.size() + " participants");
         List<ModuleExportConfig> exportConfigs = parser.generateExportConfigs();
-        List<Map<String, String>> participantValueMaps = parser.parse(exportConfigs, participants);
+        List<Map<String, Object>> participantEsDataMaps = participants.stream().map(dto ->
+                        ((UnparsedESParticipantDto) dto.getEsData()).getDataAsMap()).collect(Collectors.toList());
+        List<Map<String, String>> participantValueMaps = parser.parse(exportConfigs, participantEsDataMaps);
 
-        TabularParticipantExporter exporter = TabularParticipantExporter.getExporter(exportConfigs,
+        ZipOutputStream zos = new ZipOutputStream(response.raw().getOutputStream());
+        TabularParticipantExporter participantExporter = TabularParticipantExporter.getExporter(exportConfigs,
                 participantValueMaps, params.getFileFormat());
-        exporter.export(response);
+        ZipEntry participantFile = new ZipEntry(participantExporter.getExportFilename());
+        zos.putNextEntry(participantFile);
+        participantExporter.export(zos);
+
+        DataDictionaryExporter dictionaryExporter = new DataDictionaryExporter(exportConfigs);
+        ZipEntry dictionaryFile = new ZipEntry(dictionaryExporter.getExportFilename());
+        zos.putNextEntry(dictionaryFile);
+
+        dictionaryExporter.export(zos);
+        zos.closeEntry();
+        zos.finish();
         return response.raw();
+    }
+
+    protected void setResponseHeaders(Response response, String filename) {
+        response.type(MediaType.OCTET_STREAM.toString());
+        response.header("Access-Control-Expose-Headers", "Content-Disposition");
+        response.header("Content-Disposition", "attachment;filename=" + filename);
     }
 
     /**
@@ -76,7 +106,7 @@ public class DownloadParticipantListRoute extends RequestHandler {
             // For each batch of results, add the DTOs to the allResults list
             filter.setFrom(currentFrom);
             filter.setTo(currentTo);
-            ParticipantWrapperResult filteredSubset = (ParticipantWrapperResult) filter.filter(queryParamsMap);
+            ParticipantWrapperResult filteredSubset = (ParticipantWrapperResult) filter.filter(queryParamsMap, new UnparsedDeserializer());
             allResults.addAll(filteredSubset.getParticipants());
             // if the total count is less than the range we are currently on, stop fetching
             if (filteredSubset.getTotalCount() < currentTo) {
