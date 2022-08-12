@@ -27,6 +27,10 @@ public interface ElasticSearchable {
 
     }
 
+    default Deserializer getDeserializer() {
+        return null;
+    }
+
     default void setSortBy(Sort sort) {
 
     }
