@@ -52,13 +52,7 @@ public class CopyExecutor {
         Map<String, QuestionDto> questionDtosByStableId = retrieveQuestionDtos(handle, config);
         Map<Long, FormResponse> responsesById = retrieveActivityData(handle, participantId,
                 List.copyOf(questionDtosByStableId.values()));
-        var governance = handle.attach(UserGovernanceDao.class)
-                .findActiveGovernancesByParticipantAndStudyIds(participantId, config.getStudyId())
-                .findFirst()
-                .orElseThrow(() -> new DDPException(String.format("Governance not found for participant %s", participantId)));
-        Map<Long, FormResponse> proxyActivities = retrieveActivityData(handle, governance.getProxyUserId(),
-                List.copyOf(questionDtosByStableId.values()));
-
+        UserGovernanceDao governanceDao = handle.attach(UserGovernanceDao.class);
         for (var pair : config.getPairs()) {
             CopyLocation source = pair.getSource();
             CopyLocation target = pair.getTarget();
@@ -69,6 +63,12 @@ public class CopyExecutor {
                 String sourceStableId = ((CopyAnswerLocation) source).getQuestionStableId();
                 UserType user = ((CopyAnswerLocation) source).getUser();
                 if (user == UserType.OPERATOR) {
+                    var governance = governanceDao
+                            .findActiveGovernancesByParticipantAndStudyIds(participantId, config.getStudyId())
+                            .findFirst()
+                            .orElseThrow(() -> new DDPException(String.format("Governance not found for participant %s", participantId)));
+                    Map<Long, FormResponse> proxyActivities = retrieveActivityData(handle, governance.getProxyUserId(),
+                            List.copyOf(questionDtosByStableId.values()));
                     sourceQuestion = questionDtosByStableId.get(sourceStableId);
                     if (sourceQuestion == null) {
                         continue; // Question might have been removed from activity, so we skip it.
