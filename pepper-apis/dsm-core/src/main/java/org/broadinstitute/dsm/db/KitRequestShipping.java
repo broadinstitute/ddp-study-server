@@ -30,6 +30,7 @@ import com.easypost.model.Tracker;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
@@ -71,6 +72,7 @@ import org.slf4j.LoggerFactory;
         primaryKey = DBConstants.DSM_KIT_REQUEST_ID, columnPrefix = "")
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Builder(setterPrefix = "with")
 public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
     public static final String SQL_SELECT_KIT_REQUEST_NEW =
@@ -204,6 +206,11 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     @ColumnName(DBConstants.DSM_KIT_ID)
     private Long dsmKitId;
 
+    @ColumnName(DBConstants.DDP_KIT_REQUEST_ID)
+    private Long ddpKitRequestId;
+
+    private String ddpParticipantId;
+
     @ColumnName(DBConstants.LABEL_URL_TO)
     private String labelUrlTo;
 
@@ -229,11 +236,15 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
     @ColumnName (DBConstants.BSP_COLLABORATOR_SAMPLE_ID)
     private String bspCollaboratorSampleId;
+
+    private String bspCollaboratorParticipantId;
     private String easypostAddressId;
     private String realm;
 
     @ColumnName(DBConstants.KIT_TYPE_NAME)
     private String kitTypeName;
+
+    private String kitTypeId;
 
     @ColumnName(DBConstants.DEACTIVATION_REASON)
     private String deactivationReason;
@@ -269,6 +280,9 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     private String nameLabel;
     @ColumnName(DBConstants.CREATED_BY)
     private String createdBy;
+
+    private Long createdDate;
+
     private String preferredLanguage;
     private String hruid;
     private String gender;

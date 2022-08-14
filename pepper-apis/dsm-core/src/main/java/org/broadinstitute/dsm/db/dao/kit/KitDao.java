@@ -5,7 +5,6 @@ import java.util.Optional;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.route.KitStatusChangeRoute;
-import org.broadinstitute.dsm.util.NotificationUtil;
 
 public interface KitDao extends Dao<KitRequestShipping> {
 
@@ -20,5 +19,7 @@ public interface KitDao extends Dao<KitRequestShipping> {
     Optional<KitStatusChangeRoute.ScanError> updateKitReceived(KitRequestShipping kitRequestShipping, String userId);
 
     Integer insertKit(KitRequestShipping kitRequestShipping);
+
+    Integer insertKitRequest(KitRequestShipping kitRequestShipping);
 
 }

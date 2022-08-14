@@ -9,18 +9,10 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.broadinstitute.dsm.db.KitRequestShipping;
-import org.broadinstitute.dsm.model.KitDDPNotification;
-import org.broadinstitute.dsm.model.at.ReceiveKitRequest;
-import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
-import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.route.KitStatusChangeRoute;
-import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
-import org.broadinstitute.dsm.util.DSMConfig;
-import org.broadinstitute.dsm.util.EventUtil;
 import org.broadinstitute.dsm.util.KitUtil;
-import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,6 +58,21 @@ public class KitDaoImpl implements KitDao {
             + "message, "
             + "easypost_address_id_to) "
             + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+
+    private static final String INSERT_KIT_REQUEST = "INSERT INTO "
+            + "ddp_kit_request "
+            + "(ddp_instance_id, "
+            + "ddp_kit_request_id, "
+            + "kit_type_id, "
+            + "ddp_participant_id, "
+            + "bsp_collaborator_participant_id, "
+            + "bsp_collaborator_sample_id, "
+            + "ddp_label, "
+            + "created_by, "
+            + "created_date, "
+            + "external_order_number, "
+            + "upload_reason) "
+            + "VALUES (?,?,?,?,?,?,?,?,?,?,?)";
 
     private static final String UPDATE_KIT_RECEIVED = KitUtil.SQL_UPDATE_KIT_RECEIVED;
 
@@ -168,6 +175,40 @@ public class KitDaoImpl implements KitDao {
                 stmt.setBoolean(10, kitRequestShipping.getError());
                 stmt.setString(11, kitRequestShipping.getMessage());
                 stmt.setString(12, kitRequestShipping.getEasypostAddressId());
+                stmt.executeUpdate();
+                try (ResultSet rs = stmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        dbVals.resultValue = rs.getInt(1);
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+        if (Objects.nonNull(results.resultException)) {
+            throw new RuntimeException("Error inserting kit with dsm_kit_request_id: "
+                    + kitRequestShipping.getDsmKitRequestId(), results.resultException);
+        }
+        return (int) results.resultValue;
+    }
+
+    @Override
+    public Integer insertKitRequest(KitRequestShipping kitRequestShipping) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_REQUEST)) {
+                stmt.setLong(1, kitRequestShipping.getDdpInstanceId());
+                stmt.setLong(2, kitRequestShipping.getDdpKitRequestId());
+                stmt.setString(3, kitRequestShipping.getKitTypeId());
+                stmt.setString(4, kitRequestShipping.getDdpParticipantId());
+                stmt.setString(5, kitRequestShipping.getBspCollaboratorParticipantId());
+                stmt.setString(6, kitRequestShipping.getBspCollaboratorSampleId());
+                stmt.setString(7, kitRequestShipping.getDdpLabel());
+                stmt.setString(8, kitRequestShipping.getCreatedBy());
+                stmt.setLong(9, kitRequestShipping.getCreatedDate());
+                stmt.setString(10, kitRequestShipping.getExternalOrderNumber());
+                stmt.setString(11, kitRequestShipping.getUploadReason());
                 stmt.executeUpdate();
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
