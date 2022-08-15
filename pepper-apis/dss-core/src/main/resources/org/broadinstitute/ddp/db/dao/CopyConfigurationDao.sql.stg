@@ -21,7 +21,9 @@ select cfg.copy_configuration_id,
        tgt_ans.question_stable_code_id as target_question_stable_code_id,
        (select stable_id from question_stable_code
          where question_stable_code_id = tgt_ans.question_stable_code_id
-       ) as target_question_stable_id
+       ) as target_question_stable_id,
+       src_ans.user_type as source_user_type,
+       tgt_ans.user_type as target_user_type
   from copy_configuration as cfg
   left join copy_configuration_pair as pair on pair.copy_configuration_id = cfg.copy_configuration_id
   left join copy_location as src on src.copy_location_id = pair.source_location_id
