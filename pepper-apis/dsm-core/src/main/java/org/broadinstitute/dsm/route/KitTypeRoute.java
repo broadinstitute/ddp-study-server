@@ -31,8 +31,8 @@ public class KitTypeRoute extends RequestHandler {
                         || UserUtil.checkUserAccess(realm, userId, "kit_shipping_view", userIdRequest)) {
                     return KitType.getKitTypes(realm, userIdRequest);
                 } else {
-                    response.status(500);
-                    return new Result(500, UserErrorMessages.NO_RIGHTS);
+                    response.status(403);
+                    return UserErrorMessages.NO_RIGHTS;
                 }
             } else {
                 if (request.url().contains(RoutePath.UPLOAD_REASONS)) {
@@ -40,8 +40,8 @@ public class KitTypeRoute extends RequestHandler {
                             || UserUtil.checkUserAccess(realm, userId, "kit_shipping_view", userIdRequest)) {
                         return KitType.getUploadReasons(realm);
                     } else {
-                        response.status(500);
-                        return new Result(500, UserErrorMessages.NO_RIGHTS);
+                        response.status(403);
+                        return UserErrorMessages.NO_RIGHTS;
                     }
                 }
             }
