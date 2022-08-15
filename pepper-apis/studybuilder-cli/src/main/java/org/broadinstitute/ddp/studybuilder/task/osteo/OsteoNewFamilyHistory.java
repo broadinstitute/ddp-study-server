@@ -45,7 +45,7 @@ public class OsteoNewFamilyHistory implements CustomTask {
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid"));
 
         var helper = handle.attach(SqlHelper.class);
-        long activityOldId = ActivityBuilder.findActivityId(handle, studyDto.getId(), "FAMILY_HISTORY");
+        long activityOldId = ActivityBuilder.findActivityId(handle, studyDto.getId(), "FAMILY_HISTORY_SELF");
 
         for (var conf : dataCfg.getConfigList("eventChanges")) {
 
