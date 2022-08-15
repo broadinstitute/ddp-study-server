@@ -46,6 +46,14 @@ public class ConfigUtil {
     }
 
     /**
+     * Get value as string if the key is present and value is not null.
+     * If key not present then return a default value.
+     */
+    public static String getStringOrElse(Config cfg, String key, String defaultValue) {
+        return cfg.hasPath(key) ? cfg.getString(key) : defaultValue;
+    }
+
+    /**
      * Get value as integer if the key is present and value is not null.
      * If key not present then return a default value.
      */

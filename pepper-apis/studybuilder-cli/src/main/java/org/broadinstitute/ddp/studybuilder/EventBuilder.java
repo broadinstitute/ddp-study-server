@@ -40,6 +40,7 @@ import org.broadinstitute.ddp.model.copy.CopyConfigurationPair;
 import org.broadinstitute.ddp.model.copy.CopyLocation;
 import org.broadinstitute.ddp.model.copy.CopyLocationType;
 import org.broadinstitute.ddp.model.copy.CopyPreviousInstanceFilter;
+import org.broadinstitute.ddp.model.copy.UserType;
 import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.event.ActivityStatusChangeTrigger;
 import org.broadinstitute.ddp.model.event.DsmNotificationTrigger;
@@ -360,7 +361,9 @@ public class EventBuilder {
     private CopyLocation buildCopyLocation(Config locationCfg) {
         var type = CopyLocationType.valueOf(locationCfg.getString("type"));
         if (type == CopyLocationType.ANSWER) {
-            return new CopyAnswerLocation(locationCfg.getString("questionStableId"));
+            UserType user = locationCfg.hasPath("user") ? UserType.valueOf(locationCfg.getString("user"))
+                    : UserType.USER;
+            return new CopyAnswerLocation(locationCfg.getString("questionStableId"), user);
         } else {
             return new CopyLocation(type);
         }

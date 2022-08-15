@@ -812,12 +812,22 @@ public class DataExporterTest extends TxnAwareBaseTest {
                         Collections.singletonList(new FileInfo(1L, "file1", "file.pdf", 123L))));
                 participant.addResponse(instance);
 
-                participant.addAllFiles(List.of(new FileRecord("uploads", new FileUpload(
-                        1L, "file1", 1L, 1L, 1L, "blob1", "application/pdf", "file.pdf", 123L, true,
-                        Instant.ofEpochMilli(timestamp + 1),
-                        Instant.ofEpochMilli(timestamp + 2),
-                        Instant.ofEpochMilli(timestamp + 3),
-                        FileScanResult.INFECTED))));
+                participant.addAllFiles(List.of(new FileRecord("uploads", FileUpload.builder()
+                        .id(1L)
+                        .guid("file1")
+                        .studyId(1L)
+                        .operatorUserId(1L)
+                        .participantUserId(1L)
+                        .blobName("blob1")
+                        .mimeType("application/pdf")
+                        .fileName("file.pdf")
+                        .fileSize(123L)
+                        .isVerified(true)
+                        .createdAt(Instant.ofEpochMilli(timestamp + 1))
+                        .uploadedAt(Instant.ofEpochMilli(timestamp + 2))
+                        .scannedAt(Instant.ofEpochMilli(timestamp + 3))
+                        .scanResult(FileScanResult.INFECTED)
+                        .build())));
 
                 Map<String, String> substitutions = Map.of(
                         I18nTemplateConstants.Snapshot.KIT_REQUEST_ID, "kit-1",
