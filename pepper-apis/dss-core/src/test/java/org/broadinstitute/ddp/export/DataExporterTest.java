@@ -219,7 +219,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
             // Create a medical provider for them
             MedicalProviderDto provider = new MedicalProviderDto(null, UUID.randomUUID().toString(),
                     testData.getUserId(), testData.getStudyId(),
-                    InstitutionType.PHYSICIAN, "inst a", "dr. a", "boston", "ma", null, null, null, "street1");
+                    InstitutionType.PHYSICIAN, "inst a", "dr. a", "boston", "ma", null, null, null, null, "street1");
             handle.attach(JdbiMedicalProvider.class).insert(provider);
 
             // Create an instance for them
@@ -799,7 +799,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
             Participant participant = new Participant(status, user);
             participant.addProvider(new MedicalProviderDto(null, UUID.randomUUID().toString(),
                     testData.getUserId(), testData.getStudyId(),
-                    InstitutionType.PHYSICIAN, "inst a", "dr. a", "boston", "ma", null, null, null, null));
+                    InstitutionType.PHYSICIAN, "inst a", "dr. a", "boston", "ma", null, null, null, null, null));
             if (!emptyActivity) {
                 FormResponse instance = new FormResponse(1L, "instance-guid-xyz", 1L, false, timestamp, firstCompletedAt,
                         null, null, 1L, "ACT", "v1", false, 0,

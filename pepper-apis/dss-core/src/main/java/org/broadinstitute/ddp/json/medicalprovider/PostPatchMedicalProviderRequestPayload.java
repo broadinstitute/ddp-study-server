@@ -19,8 +19,11 @@ public class PostPatchMedicalProviderRequestPayload {
     @SerializedName(Fields.STATE)
     String state;
 
+    @SerializedName(Fields.COUNTRY)
+    String country;
+
     public PostPatchMedicalProviderRequestPayload() {
-        this(null, null, null, null);
+        this(null, null, null, null, null);
     }
 
     public static class Fields {
@@ -28,5 +31,6 @@ public class PostPatchMedicalProviderRequestPayload {
         public static final String PHYSICIAN_NAME = "physicianName";
         public static final String CITY = "city";
         public static final String STATE = "state";
+        public static final String COUNTRY = "country";
     }
 }

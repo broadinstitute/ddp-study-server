@@ -317,4 +317,5 @@
     <include file="db-changes/schema/DDP-8270-composite-add-tabular-separator.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-8248.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-8484-copy-configuration-operator.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-8511-physician-country-add.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

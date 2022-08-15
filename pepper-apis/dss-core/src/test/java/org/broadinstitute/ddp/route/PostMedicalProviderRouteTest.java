@@ -94,7 +94,8 @@ public class PostMedicalProviderRouteTest extends IntegrationTestSuite.TestCase 
                 TestMedicalProviderData.INSTITUTION_NAME,
                 TestMedicalProviderData.PHYSICIAN_NAME,
                 TestMedicalProviderData.CITY,
-                TestMedicalProviderData.STATE
+                TestMedicalProviderData.STATE,
+                TestMedicalProviderData.COUNTRY
         );
         Request request = RouteTestUtil.buildAuthorizedPostRequest(
                 token,
@@ -141,7 +142,8 @@ public class PostMedicalProviderRouteTest extends IntegrationTestSuite.TestCase 
                 TestMedicalProviderData.INSTITUTION_NAME,
                 TestMedicalProviderData.PHYSICIAN_NAME,
                 TestMedicalProviderData.CITY,
-                TestMedicalProviderData.STATE
+                TestMedicalProviderData.STATE,
+                TestMedicalProviderData.COUNTRY
         );
         Request request = RouteTestUtil.buildAuthorizedPostRequest(
                 token,
@@ -194,6 +196,7 @@ public class PostMedicalProviderRouteTest extends IntegrationTestSuite.TestCase 
                 null,
                 null,
                 null,
+                null,
                 null
         );
         Request request = RouteTestUtil.buildAuthorizedPostRequest(
@@ -230,7 +233,8 @@ public class PostMedicalProviderRouteTest extends IntegrationTestSuite.TestCase 
                 TestMedicalProviderData.INSTITUTION_NAME,
                 TestMedicalProviderData.PHYSICIAN_NAME,
                 TestMedicalProviderData.CITY,
-                TestMedicalProviderData.STATE
+                TestMedicalProviderData.STATE,
+                TestMedicalProviderData.COUNTRY
         );
         Request request = RouteTestUtil.buildAuthorizedPostRequest(
                 token,
@@ -267,7 +271,7 @@ public class PostMedicalProviderRouteTest extends IntegrationTestSuite.TestCase 
         public static final String PHYSICIAN_NAME = "House MD";
         public static final String CITY = "West Windsor Township";
         public static final String STATE = "New Jersey";
-
+        public static final String COUNTRY = "United States";
         public static final String INSTITUTION_URL_COMPONENT = "institution";
     }
 }

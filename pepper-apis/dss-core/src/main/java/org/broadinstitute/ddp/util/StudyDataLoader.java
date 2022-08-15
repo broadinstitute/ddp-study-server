@@ -1963,6 +1963,7 @@ public class StudyDataLoader {
             String institution = getStringValueFromElement(physicianEl, "institution");
             String city = getStringValueFromElement(physicianEl, "city");
             String state = getStringValueFromElement(physicianEl, "state");
+            String country = getStringValueFromElement(physicianEl, "country");
             String postalCode = getStringValueFromElement(physicianEl, "zipcode");
             String phoneNumber = getStringValueFromElement(physicianEl, "phonenumber");
             String streetAddress = getStringValueFromElement(physicianEl, "streetaddress");
@@ -1989,6 +1990,7 @@ public class StudyDataLoader {
                         name,
                         city,
                         state,
+                        country,
                         postalCode,
                         phoneNumber,
                         physicianId,
@@ -2016,7 +2018,7 @@ public class StudyDataLoader {
                     null,
                     guid, userDto.getUserId(), studyDto.getId(),
                     InstitutionType.INITIAL_BIOPSY, instName, null, instCity, instState,
-                    null, null, null, null));
+                    null, null, null, null, null));
         }
     }
 
@@ -2038,6 +2040,7 @@ public class StudyDataLoader {
             String institution = getStringValueFromElement(physicianEl, "institution");
             String city = getStringValueFromElement(physicianEl, "city");
             String state = getStringValueFromElement(physicianEl, "state");
+            String country = getStringValueFromElement(physicianEl, "country");
             String postalCode = getStringValueFromElement(physicianEl, "zipcode");
             String phoneNumber = getStringValueFromElement(physicianEl, "phonenumber");
             String streetAddress = getStringValueFromElement(physicianEl, "streetaddress");
@@ -2060,6 +2063,7 @@ public class StudyDataLoader {
                     name,
                     city,
                     state,
+                    country,
                     postalCode,
                     phoneNumber,
                     legacyGuid,

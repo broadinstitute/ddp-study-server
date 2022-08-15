@@ -84,7 +84,7 @@ public class MedicalProviderFormatterTest {
     public void testCollect_singleProviderFieldsSemicolonSeparated() {
         Map<String, String> actual = fmt.collect(InstitutionType.PHYSICIAN, Arrays.asList(
                 new MedicalProviderDto(1L, "a", 1L, 1L, InstitutionType.PHYSICIAN,
-                        "inst a", "dr. smith, jr.", "boston", "ma", null, null, null, null)));
+                        "inst a", "dr. smith, jr.", "boston", "ma", null, null, null, null, null)));
 
         assertNotNull(actual);
         assertEquals(1, actual.size());
@@ -95,9 +95,9 @@ public class MedicalProviderFormatterTest {
     public void testCollect_filtersOnTheType() {
         List<MedicalProviderDto> providers = Arrays.asList(
                 new MedicalProviderDto(1L, "a", 1L, 1L, InstitutionType.PHYSICIAN,
-                        "inst a", "dr. a", "boston", "ma", null, null, null, null),
+                        "inst a", "dr. a", "boston", "ma", null,  null, null, null, null),
                 new MedicalProviderDto(2L, "b", 1L, 1L, InstitutionType.INITIAL_BIOPSY,
-                        "inst b", "", "cambridge", "ma", null, null, null, null));
+                        "inst b", "", "cambridge", "ma", null, null, null, null, null));
 
         Map<String, String> actual = fmt.collect(InstitutionType.INSTITUTION, providers);
         assertNotNull(actual);
@@ -112,14 +112,14 @@ public class MedicalProviderFormatterTest {
     public void testCollect_physicianNameNotConsideredForOtherTypes() {
         Map<String, String> actual = fmt.collect(InstitutionType.INITIAL_BIOPSY, Arrays.asList(
                 new MedicalProviderDto(1L, "a", 1L, 1L, InstitutionType.INITIAL_BIOPSY,
-                        "inst a", "dr. a", "boston", "ma", null, null, null, null)));
+                        "inst a", "dr. a", "boston", "ma", null,  null, null, null, null)));
         assertNotNull(actual);
         assertEquals(1, actual.size());
         assertEquals("inst a;boston;ma", actual.get("INITIAL_BIOPSY"));
 
         actual = fmt.collect(InstitutionType.INSTITUTION, Arrays.asList(
                 new MedicalProviderDto(1L, "a", 1L, 1L, InstitutionType.INSTITUTION,
-                        "inst a", "dr. a", "boston", "ma", null, null, null, null)));
+                        "inst a", "dr. a", "boston", "ma", null, null, null, null, null)));
         assertNotNull(actual);
         assertEquals(1, actual.size());
         assertEquals("inst a;boston;ma", actual.get("INSTITUTION"));
@@ -129,7 +129,7 @@ public class MedicalProviderFormatterTest {
     public void testCollect_onlyConsidersRelevantFields() {
         Map<String, String> actual = fmt.collect(InstitutionType.PHYSICIAN, Arrays.asList(
                 new MedicalProviderDto(1L, "a", 1L, 1L, InstitutionType.PHYSICIAN,
-                        "inst a", "dr. a", "boston", "ma", "02115 - not used", "6171112233 - not used", "GUID - not used", null)));
+                        "inst a", "dr. a", "boston", "ma", null, "02115 - not used", "6171112233 - not used", "GUID - not used", null)));
 
         assertNotNull(actual);
         assertEquals(1, actual.size());
@@ -140,7 +140,7 @@ public class MedicalProviderFormatterTest {
     public void testCollect_blankProviderIsSkipped() {
         Map<String, String> actual = fmt.collect(InstitutionType.PHYSICIAN, Arrays.asList(
                 new MedicalProviderDto(1L, "a", 1L, 1L, InstitutionType.PHYSICIAN,
-                        null, "", null, "", "02115", "6171112233", "GUID", "street1")));
+                        null, "", null, "", null, "02115", "6171112233", "GUID", "street1")));
 
         assertNotNull(actual);
         assertTrue(actual.isEmpty());
@@ -150,7 +150,7 @@ public class MedicalProviderFormatterTest {
     public void testCollect_partialProvider() {
         Map<String, String> actual = fmt.collect(InstitutionType.PHYSICIAN, Arrays.asList(
                 new MedicalProviderDto(1L, "a", 1L, 1L, InstitutionType.PHYSICIAN,
-                        null, "dr. a", "boston", "", null, null, null, null)));
+                        null, "dr. a", "boston", "", null, null, null, null, null)));
 
         assertNotNull(actual);
         assertEquals(1, actual.size());
@@ -161,9 +161,9 @@ public class MedicalProviderFormatterTest {
     public void testCollect_multipleProvidersPipeSeparated() {
         List<MedicalProviderDto> providers = Arrays.asList(
                 new MedicalProviderDto(1L, "a", 1L, 1L, InstitutionType.PHYSICIAN,
-                        "inst a", "dr. a", "boston", "ma", null, null, null, null),
+                        "inst a", "dr. a", "boston", "ma", null,  null, null, null, null),
                 new MedicalProviderDto(2L, "b", 1L, 1L, InstitutionType.PHYSICIAN,
-                        "inst b", "dr. b", "cambridge", "ma", null, null, null, null));
+                        "inst b", "dr. b", "cambridge", "ma", null, null, null, null, null));
 
         Map<String, String> actual = fmt.collect(InstitutionType.PHYSICIAN, providers);
 
@@ -176,9 +176,9 @@ public class MedicalProviderFormatterTest {
     public void testCollect_multipleProvidersMissingValues() {
         List<MedicalProviderDto> providers = Arrays.asList(
                 new MedicalProviderDto(1L, "a", 1L, 1L, InstitutionType.PHYSICIAN,
-                        "", "dr. a", "boston", null, null, null, null, null),
+                        "", "dr. a", "boston", null, null, null, null, null, null),
                 new MedicalProviderDto(2L, "b", 1L, 1L, InstitutionType.PHYSICIAN,
-                        "inst b", "", null, "ma", null, null, null, null));
+                        "inst b", "", null, "ma", null, null, null, null, null));
 
         Map<String, String> actual = fmt.collect(InstitutionType.PHYSICIAN, providers);
 
@@ -191,9 +191,9 @@ public class MedicalProviderFormatterTest {
     public void testCollect_multipleProvidersInGivenOrder() {
         List<MedicalProviderDto> providers = Arrays.asList(
                 new MedicalProviderDto(2L, "b", 1L, 1L, InstitutionType.INSTITUTION,
-                        "inst b", "", "cambridge", "ma", null, null, null, null),
+                        "inst b", "", "cambridge", "ma", null, null, null, null, null),
                 new MedicalProviderDto(1L, "a", 1L, 1L, InstitutionType.INSTITUTION,
-                        "inst a", "", "boston", "ma", null, null, null, null));
+                        "inst a", "", "boston", "ma", null, null, null, null, null));
 
         Map<String, String> actual = fmt.collect(InstitutionType.INSTITUTION, providers);
 

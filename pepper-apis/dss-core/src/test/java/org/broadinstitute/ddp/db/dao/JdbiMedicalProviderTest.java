@@ -90,6 +90,7 @@ public class JdbiMedicalProviderTest extends TxnAwareBaseTest {
                             TestConstants.TEST_INSTITUTION_PHYSICIAN_NAME,
                             TestConstants.TEST_INSTITUTION_CITY,
                             TestConstants.TEST_INSTITUTION_STATE.toUpperCase(),
+                            TestConstants.TEST_INSTITUTION_COUNTRY,
                             null,
                             null,
                             null,

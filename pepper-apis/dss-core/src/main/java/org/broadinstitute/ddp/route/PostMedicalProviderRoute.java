@@ -86,6 +86,7 @@ public class PostMedicalProviderRoute implements Route {
                             newMedicalProviderJson.getPhysicianName(),
                             newMedicalProviderJson.getCity(),
                             newMedicalProviderJson.getState(),
+                            newMedicalProviderJson.getCountry(),
                             null,
                             null,
                             null,
