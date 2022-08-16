@@ -32,17 +32,11 @@ public class BlockTabularQuestionDto {
     @ColumnName("block_guid")
     String blockGuid;
 
-    @ColumnName("shown_expr")
-    String shownExpr;
-
     @Nested("sh_expr")
     Expression shownExpression;
 
     @Nested("en_expr")
     Expression enabledExpression;
-
-    @ColumnName("enabled_expr")
-    String enabledExpr;
 
     public String getShownExpr() {
         return shownExpression.getText();
