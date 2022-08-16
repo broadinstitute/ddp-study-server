@@ -61,8 +61,13 @@ public interface JdbiBlockTabular extends SqlObject {
     @RegisterConstructorMapper(BlockTabularHeaderDto.class)
     List<BlockTabularHeaderDto> findHeadersByBlockIdAndTimestamp(@Bind("blockId") long blockId, @Bind("timestamp") long timestamp);
 
-    @SqlQuery("SELECT btq.*, bt.block_id, bq.block_id as question_block_id, b.block_guid, "
-            + "     e2.expression_text as 'enabled_expr', e1.expression_text as 'shown_expr'"
+    @SqlQuery("SELECT btq.*, bt.block_id, bq.block_id as question_block_id, b.block_guid,"
+            + "     e2.expression_id AS en_expr_expression_id,"
+            + "     e2.expression_text AS en_expr_expression_text,"
+            + "     e2.expression_guid AS en_expr_expression_guid,"
+            + "     e1.expression_id AS sh_expr_expression_id,"
+            + "     e1.expression_text AS sh_expr_expression_text,"
+            + "     e1.expression_guid AS sh_expr_expression_guid,"
             + "  FROM block_tabular_question as btq"
             + "  JOIN block_tabular as bt ON bt.block_tabular_id = btq.block_tabular_id"
             + "  JOIN question as q ON q.question_id = btq.question_id"
@@ -79,6 +84,6 @@ public interface JdbiBlockTabular extends SqlObject {
             + " order by bq.block_id")
     @RegisterConstructorMapper(BlockTabularQuestionDto.class)
     List<BlockTabularQuestionDto> findQuestionsByBlockIdsAndTimestamp(
-            @BindList(value = "blockIds", onEmpty = BindList.EmptyHandling.NULL) Iterable<Long> blockIds,
+            @BindList(value = "blockIds", onEmpty = BindList.EmptyHandling.NULL_VALUE) Iterable<Long> blockIds,
             @Bind("timestamp") long timestamp);
 }
