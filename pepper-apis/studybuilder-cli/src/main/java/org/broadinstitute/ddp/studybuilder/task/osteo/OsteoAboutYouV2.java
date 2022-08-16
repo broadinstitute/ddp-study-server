@@ -137,10 +137,13 @@ public class OsteoAboutYouV2 implements CustomTask {
         long newFormSectionId = createSectionBefore(activityId, section);
 
         //add new WHO_IS_FILLING_ABOUTYOU question
-        FormBlockDef blockDef = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("who_filling_q")), FormBlockDef.class);
+        FormBlockDef blockDefAdult = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("who_filling_q")), FormBlockDef.class);
+        FormBlockDef blockDefChild = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("who_filling_child")), FormBlockDef.class);
 
         sectionBlockDao.insertBlockForSection(
-                activityId, newFormSectionId, QuestionDao.DISPLAY_ORDER_GAP, blockDef, versionDto.getRevId());
+                activityId, newFormSectionId, QuestionDao.DISPLAY_ORDER_GAP, blockDefAdult, versionDto.getRevId());
+        sectionBlockDao.insertBlockForSection(
+                activityId, newFormSectionId, QuestionDao.DISPLAY_ORDER_GAP, blockDefChild, versionDto.getRevId());
 
         log.info("Question ('WHO_IS_FILLING_ABOUTYOU') successfully added");
 
