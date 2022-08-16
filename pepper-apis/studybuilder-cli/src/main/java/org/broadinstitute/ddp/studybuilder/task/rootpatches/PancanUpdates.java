@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.studybuilder.task.rootpatches;
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.broadinstitute.ddp.studybuilder.task.PanCanNewActivities;
-import org.broadinstitute.ddp.studybuilder.task.PanCanValidationRules;
 import org.broadinstitute.ddp.studybuilder.task.PancanNewCancer;
 import org.broadinstitute.ddp.studybuilder.task.PancanNewMedications;
 import org.broadinstitute.ddp.studybuilder.task.PancanStoolkitEventAdd;
@@ -23,7 +22,7 @@ public class PancanUpdates implements CustomTask {
         taskList.add(new PanCanNewActivities());
         taskList.add(new PancanNewCancer());
         taskList.add(new PancanStoolkitEventAdd());
-//        taskList.add(new PanCanValidationRules()); commenting out since already applied on prod
+        //taskList.add(new PanCanValidationRules()); commenting out since already applied on prod
         taskList.add(new PancanNewMedications());
         taskList.forEach(task -> task.init(cfgPath, studyCfg, varsCfg));
     }
