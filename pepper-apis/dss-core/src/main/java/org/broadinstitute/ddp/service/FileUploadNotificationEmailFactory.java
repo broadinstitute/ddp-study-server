@@ -36,8 +36,10 @@ public class FileUploadNotificationEmailFactory {
     }
 
     private static String getUploadsTable(final String userGuid, final List<FileUpload> fileUploads) {
-        final StringBuilder table = new StringBuilder("<table>");
-        table.append(getHeader());
+        final StringBuilder table = new StringBuilder(getHead());
+
+        table.append("<table>");
+        table.append(getTableHeader());
 
         StreamEx.of(fileUploads)
                 .forEach(fileUpload -> table.append(getTableRow(userGuid, fileUpload)));
@@ -45,8 +47,30 @@ public class FileUploadNotificationEmailFactory {
         return table.append("</table>").toString();
     }
 
-    private static String getHeader() {
-        return "<tr>"
+    private static String getHead() {
+        return "<head>"
+                + "  <style>"
+                + "    table {"
+                + "      max-width: 900px;"
+                + "      border-top: 1px solid #c3c3c3;"
+                + "      border-left: 1px solid #c3c3c3;"
+                + "      font-size: 17px;"
+                + "      margin: 0 auto;"
+                + "    }"
+                + "    td, th {"
+                + "      border-bottom: 1px solid #c3c3c3;"
+                + "      border-right: 1px solid #c3c3c3;"
+                + "      padding: 10px;"
+                + "    }"
+                + "    th {"
+                + "      background-color: #f7f7f7;"
+                + "    }"
+                + "  </style>"
+                + "</head>";
+    }
+
+    private static String getTableHeader() {
+        return "<tr style=\"font-weight: 600; background-color: #f7f7f7;\">"
                 + "<th>Participant ID</th>"
                 + "<th>File Name</th>"
                 + "<th>File Size</th>"
