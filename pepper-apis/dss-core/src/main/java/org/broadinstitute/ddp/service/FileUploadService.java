@@ -326,15 +326,8 @@ public class FileUploadService {
                                   final List<FileUpload> fileUploads) {
         final var user = handle.attach(UserDao.class).findUserById(participantId);
 
-        final var result = sendGridClient.sendMail(new Mail(
-                new Email(study.getStudyEmail()),
-                "New files were uploaded in " + study.getName() + " study",
-                new Email(study.getNotificationEmail()),
-                new Content(
-                        "text/html",
-                        "User " + user.map(User::getHruid).orElse("") + " uploaded following files: " + StreamEx.of(fileUploads)
-                                .map(FileUpload::getFileName)
-                                .joining(System.lineSeparator()))));
+        final var result = sendGridClient.sendMail(
+                FileUploadNotificationEmailFactory.create(study, user.map(User::getHruid).orElse(""), fileUploads));
 
         if (result.hasFailure()) {
             log.error("Can't send an e-mail", result.getThrown());
