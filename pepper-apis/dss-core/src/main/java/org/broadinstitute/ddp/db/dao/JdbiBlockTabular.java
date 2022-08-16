@@ -67,7 +67,7 @@ public interface JdbiBlockTabular extends SqlObject {
             + "     e2.expression_guid AS en_expr_expression_guid,"
             + "     e1.expression_id AS sh_expr_expression_id,"
             + "     e1.expression_text AS sh_expr_expression_text,"
-            + "     e1.expression_guid AS sh_expr_expression_guid,"
+            + "     e1.expression_guid AS sh_expr_expression_guid"
             + "  FROM block_tabular_question as btq"
             + "  JOIN block_tabular as bt ON bt.block_tabular_id = btq.block_tabular_id"
             + "  JOIN question as q ON q.question_id = btq.question_id"
