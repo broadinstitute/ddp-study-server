@@ -15,7 +15,7 @@ import java.util.List;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FileUploadNotificationEmailFactory {
-    private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("dd MM yyyy");
+    private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("dd.MM.yyyy");
     private static final SimpleDateFormat timeFormatter = new SimpleDateFormat("HH:mm:ss");
 
     public static Mail create(final StudyDto study, final String userGuid, final List<FileUpload> fileUploads) {
