@@ -9,6 +9,7 @@ import org.broadinstitute.ddp.model.pex.Expression;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -36,6 +37,9 @@ public interface JdbiExpression extends SqlObject {
 
     @SqlUpdate("update expression set expression_text = :text where expression_id = :expressionId")
     int updateById(@Bind("expressionId") long expressionId, @Bind("text") String text);
+
+    @SqlUpdate("UPDATE expression SET expression_guid = :guid, expression_text = :text WHERE expression_id = :id")
+    int update(@BindBean Expression expression);
 
     @SqlUpdate("delete from expression where expression_id = :expressionId")
     int deleteById(long expressionId);
