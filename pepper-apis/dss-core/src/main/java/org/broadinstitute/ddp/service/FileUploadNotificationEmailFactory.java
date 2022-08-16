@@ -63,13 +63,14 @@ public class FileUploadNotificationEmailFactory {
                 + "    }"
                 + "    th {"
                 + "      background-color: #f7f7f7;"
+                + "      font-weight: 600;"
                 + "    }"
                 + "  </style>"
                 + "</head>";
     }
 
     private static String getTableHeader() {
-        return "<tr style=\"font-weight: 600; background-color: #f7f7f7;\">"
+        return "<tr>"
                 + "<th>Participant ID</th>"
                 + "<th>File Name</th>"
                 + "<th>File Size</th>"
