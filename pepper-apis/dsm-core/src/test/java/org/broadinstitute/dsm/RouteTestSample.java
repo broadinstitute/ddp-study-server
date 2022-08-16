@@ -40,7 +40,7 @@ import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.model.gp.KitInfo;
 import org.broadinstitute.dsm.model.gp.bsp.BSPKitRegistration;
 import org.broadinstitute.dsm.model.gp.bsp.BSPKitStatus;
-import org.broadinstitute.dsm.route.KitStatusChangeRoute;
+import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.DDPRequestUtil;

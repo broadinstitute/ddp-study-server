@@ -5,9 +5,9 @@ import java.util.Optional;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.model.at.ReceiveKitRequest;
-import org.broadinstitute.dsm.route.KitPayload;
-import org.broadinstitute.dsm.route.KitStatusChangeRoute;
-import org.broadinstitute.dsm.route.ScanPayload;
+import org.broadinstitute.dsm.route.kit.KitPayload;
+import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
+import org.broadinstitute.dsm.route.kit.ScanPayload;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,16 +25,16 @@ public class KitReceivedUseCase extends BaseKitUseCase {
 
     @Override
     protected Optional<KitStatusChangeRoute.ScanError> process(ScanPayload scanPayload) {
-        String kit = scanPayload.getKit();
+        String kitLabel = scanPayload.getKitLabel();
         KitRequestShipping kitRequestShipping = new KitRequestShipping();
-        kitRequestShipping.setKitLabel(kit);
+        kitRequestShipping.setKitLabel(kitLabel);
         Optional<KitStatusChangeRoute.ScanError> maybeScanError =
                 kitDao.updateKitReceived(kitRequestShipping, String.valueOf(kitPayload.getUserId()));
         if (!isKitUpdateSuccessful(maybeScanError)) {
-            if (isReceiveATKitRequest(kit)) {
+            if (isReceiveATKitRequest(kitLabel)) {
                 maybeScanError = Optional.empty();
             } else {
-                logger.warn("SM-ID kit_label " + kit + " does not exist or was already scanned as received");
+                logger.warn("SM-ID kit_label " + kitLabel + " does not exist or was already scanned as received");
             }
         } else {
             logger.info("Updated kitRequest w/ SM-ID kit_label " + kitRequestShipping.getKitLabel());

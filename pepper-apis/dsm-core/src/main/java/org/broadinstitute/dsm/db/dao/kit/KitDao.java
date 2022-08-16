@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.Dao;
-import org.broadinstitute.dsm.route.KitStatusChangeRoute;
+import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
 
 public interface KitDao extends Dao<KitRequestShipping> {
 

@@ -6,9 +6,9 @@ import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
-import org.broadinstitute.dsm.route.KitPayload;
-import org.broadinstitute.dsm.route.KitStatusChangeRoute;
-import org.broadinstitute.dsm.route.ScanPayload;
+import org.broadinstitute.dsm.route.kit.KitPayload;
+import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
+import org.broadinstitute.dsm.route.kit.ScanPayload;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,19 +23,19 @@ public class KitTrackingScanUseCase extends BaseKitUseCase {
 
     @Override
     protected Optional<KitStatusChangeRoute.ScanError> process(ScanPayload scanPayload) {
-        String kit = scanPayload.getKit();
-        String addValue = scanPayload.getAddValue();
+        String kitLabel = scanPayload.getKitLabel();
+        String trackingReturnId = scanPayload.getTrackingReturnId();
         KitRequestShipping kitRequestShipping = new KitRequestShipping();
-        kitRequestShipping.setTrackingId(addValue);
-        kitRequestShipping.setKitLabel(kit);
+        kitRequestShipping.setTrackingId(trackingReturnId);
+        kitRequestShipping.setKitLabel(kitLabel);
         Optional<KitStatusChangeRoute.ScanError> maybeScanError =
                 kitDao.insertKitTracking(kitRequestShipping, String.valueOf(kitPayload.getUserId()));
         if (isKitUpdateSuccessful(maybeScanError)) {
             try {
                 UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, kitPayload.getDdpInstanceDto(),
-                        "kitLabel", "kitLabel", addValue, new PutToNestedScriptBuilder()).export();
+                        "kitLabel", "kitLabel", trackingReturnId, new PutToNestedScriptBuilder()).export();
             } catch (Exception e) {
-                logger.error(String.format("Error updating kit label for kit with label: %s", addValue));
+                logger.error(String.format("Error updating kit label for kit with label: %s", trackingReturnId));
                 e.printStackTrace();
             }
         }

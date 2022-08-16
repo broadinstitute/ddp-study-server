@@ -8,7 +8,7 @@ import java.util.List;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.dsm.route.KitStatusChangeRoute;
+import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.TestUtil;

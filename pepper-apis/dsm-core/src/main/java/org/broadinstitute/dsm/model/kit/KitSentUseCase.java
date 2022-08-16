@@ -4,9 +4,9 @@ import java.util.Optional;
 
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
-import org.broadinstitute.dsm.route.KitPayload;
-import org.broadinstitute.dsm.route.KitStatusChangeRoute;
-import org.broadinstitute.dsm.route.ScanPayload;
+import org.broadinstitute.dsm.route.kit.KitPayload;
+import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
+import org.broadinstitute.dsm.route.kit.ScanPayload;
 
 public class KitSentUseCase extends KitFinalSentBaseUseCase {
 
@@ -16,12 +16,12 @@ public class KitSentUseCase extends KitFinalSentBaseUseCase {
 
     @Override
     protected Optional<KitStatusChangeRoute.ScanError> process(ScanPayload scanPayload) {
-        String kit = scanPayload.getKit();
+        String kitLabel = scanPayload.getKitLabel();
         KitRequestShipping kitRequestShipping = new KitRequestShipping();
-        kitRequestShipping.setKitLabel(kit);
+        kitRequestShipping.setKitLabel(kitLabel);
         Optional<KitStatusChangeRoute.ScanError> result =
                 kitDao.updateKitRequest(kitRequestShipping, String.valueOf(kitPayload.getUserId()));
-        trigerEventsIfSuccessfulKitUpdate(result, kit, kitRequestShipping);
+        trigerEventsIfSuccessfulKitUpdate(result, kitLabel, kitRequestShipping);
         return result;
     }
 }

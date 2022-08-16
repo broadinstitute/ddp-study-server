@@ -1,9 +1,8 @@
-package org.broadinstitute.dsm.route;
+package org.broadinstitute.dsm.route.kit;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.NonNull;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -12,7 +11,6 @@ import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.QueryParamsMap;
@@ -41,7 +39,7 @@ public abstract class KitStatusChangeRoute extends RequestHandler {
         if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest) || UserUtil.checkUserAccess(null, userId, "kit_receiving",
                 userIdRequest)) {
             scanErrorList = new ArrayList<>();
-            List<ScanPayload> scanPayloads = ObjectMapperSingleton.readValue(requestBody, new TypeReference<List<ScanPayload>>() {});
+            List<? extends ScanPayload> scanPayloads = getScanPayloads(requestBody);
             int labelCount = scanPayloads.size();
             if (labelCount > 0) {
                 kitPayload = new KitPayload(scanPayloads, Integer.valueOf(userIdRequest), ddpInstanceDto);
@@ -55,6 +53,8 @@ public abstract class KitStatusChangeRoute extends RequestHandler {
     }
 
     protected abstract void processRequest();
+
+    protected abstract List<? extends ScanPayload> getScanPayloads(String requestBody);
 
 
     public static class ScanError {

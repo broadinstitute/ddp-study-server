@@ -9,7 +9,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.broadinstitute.dsm.db.KitRequestShipping;
-import org.broadinstitute.dsm.route.KitStatusChangeRoute;
+import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.KitUtil;
@@ -92,8 +92,8 @@ public class KitDaoImpl implements KitDao {
     }
 
     @Override
-    public Boolean isBloodKit(String kitLabel) {
-        return booleanCheckFoundAsName(kitLabel, SQL_IS_BLOOD_KIT_QUERY);
+    public Boolean isBloodKit(String ddpLabel) {
+        return booleanCheckFoundAsName(ddpLabel, SQL_IS_BLOOD_KIT_QUERY);
     }
 
 

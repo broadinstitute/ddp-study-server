@@ -9,9 +9,9 @@ import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.ddp.kitrequest.KitRequestDao;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.db.dto.ddp.kitrequest.KitRequestDto;
-import org.broadinstitute.dsm.route.KitPayload;
-import org.broadinstitute.dsm.route.KitStatusChangeRoute;
-import org.broadinstitute.dsm.route.ScanPayload;
+import org.broadinstitute.dsm.route.kit.KitPayload;
+import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
+import org.broadinstitute.dsm.route.kit.ScanPayload;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchDataUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -25,20 +25,20 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
     @Override
     protected Optional<KitStatusChangeRoute.ScanError> process(ScanPayload scanPayload) {
         Optional<KitStatusChangeRoute.ScanError> result;
-        String addValue = scanPayload.getAddValue();
-        String kit = scanPayload.getKit();
-        if (kitDao.isBloodKit(kit)) {
-            if (kitDao.hasTrackingScan(addValue)) {
-                result = updateKitRequest(addValue, kit);
-                trigerEventsIfSuccessfulKitUpdate(result, kit, getKitRequestShipping(addValue, kit));
+        String kitLabel = scanPayload.getKitLabel();
+        String ddpLabel = scanPayload.getDdpLabel();
+        if (kitDao.isBloodKit(ddpLabel)) {
+            if (kitDao.hasTrackingScan(kitLabel)) {
+                result = updateKitRequest(kitLabel, ddpLabel);
+                trigerEventsIfSuccessfulKitUpdate(result, ddpLabel, getKitRequestShipping(kitLabel, ddpLabel));
                 KitRequestDao kitRequestDao = new KitRequestDao();
-                kitRequestDao.getKitRequestByLabel(kit).ifPresent(this::writeSampleSentToES);
+                kitRequestDao.getKitRequestByLabel(ddpLabel).ifPresent(this::writeSampleSentToES);
             } else {
                 result = Optional.of(
-                        new KitStatusChangeRoute.ScanError(kit, "Kit with DSM Label \"" + kit + "\" does not have a Tracking Label"));
+                        new KitStatusChangeRoute.ScanError(ddpLabel, "Kit with DSM Label \"" + ddpLabel + "\" does not have a Tracking Label"));
             }
         } else {
-            result = updateKitRequest(addValue, kit);
+            result = updateKitRequest(kitLabel, ddpLabel);
         }
         return result;
     }
