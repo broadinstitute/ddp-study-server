@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -26,13 +27,20 @@ import com.typesafe.config.Config;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import one.util.streamex.StreamEx;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
+import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.interfaces.FileUploadSettings;
 import org.broadinstitute.ddp.model.files.FileScanResult;
 import org.broadinstitute.ddp.model.files.FileUpload;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GoogleCredentialUtil;
 import org.jdbi.v3.core.Handle;
@@ -42,6 +50,7 @@ public class FileUploadService {
     public static final String DEFAULT_MIME_TYPE = "application/octet-stream";
     public static final int DEFAULT_BATCH_SIZE = 100;
 
+    private final SendGridClient sendGridClient;
     private final ServiceAccountSigner signer;
     private final GoogleBucketClient storageClient;
     private final String uploadsBucket;
@@ -76,6 +85,7 @@ public class FileUploadService {
         TimeUnit removalExpireUnit = TimeUnit.valueOf(cfg.getString(ConfigFile.FileUploads.REMOVAL_EXPIRE_UNIT));
 
         return new FileUploadService(
+                new SendGridClient(cfg.getString(ConfigFile.SENDGRID_API_KEY)),
                 signerCredentials,
                 new GoogleBucketClient(projectId, bucketCredentials),
                 cfg.getString(ConfigFile.FileUploads.UPLOADS_BUCKET),
@@ -85,10 +95,11 @@ public class FileUploadService {
                 removalExpireTime, removalExpireUnit, removalBatchSize);
     }
 
-    public FileUploadService(ServiceAccountSigner signer, GoogleBucketClient storageClient,
+    public FileUploadService(SendGridClient sendGridClient, ServiceAccountSigner signer, GoogleBucketClient storageClient,
                              String uploadsBucket, String scannedBucket, String quarantineBucket,
                              int maxSignedUrlMins, long removalExpireTime, TimeUnit removalExpireUnit, int removalBatchSize) {
         this.signer = signer;
+        this.sendGridClient = sendGridClient;
         this.storageClient = storageClient;
         this.uploadsBucket = uploadsBucket;
         this.scannedBucket = scannedBucket;
@@ -283,6 +294,45 @@ public class FileUploadService {
         uploadDao.deleteByIds(uploadIdsToDelete);
         log.info("Removed {} unused file uploads", uploadIdsToDelete.size());
         return uploadIdsToDelete.size();
+    }
+
+    public void sendNotifications(final Handle handle) {
+        StreamEx.of(handle.attach(FileUploadDao.class).findWithoutSentNotification())
+                .groupingBy(FileUpload::getStudyId)
+                .forEach((studyId, fileUploads) -> sendNotifications(handle, studyId, fileUploads));
+    }
+
+    private void sendNotifications(final Handle handle, final Long studyId, final List<FileUpload> fileUploads) {
+        final var study = handle.attach(JdbiUmbrellaStudy.class).findById(studyId);
+        if (StringUtils.isBlank(study.getNotificationEmail())) {
+            handle.attach(FileUploadDao.class).setNotificationSentByStudyId(studyId);
+            log.warn("Study {} doesn't have an e-mail for notifications", study.getGuid());
+            return;
+        }
+
+        StreamEx.of(fileUploads)
+                .groupingBy(FileUpload::getParticipantUserId)
+                .forEach((participantId, uploads) -> sendNotification(handle, study, participantId, uploads));
+
+        log.info("Notifications sent for {} study", study.getGuid());
+    }
+
+    private void sendNotification(final Handle handle,
+                                  final StudyDto study,
+                                  final Long participantId,
+                                  final List<FileUpload> fileUploads) {
+        final var user = handle.attach(UserDao.class).findUserById(participantId);
+
+        final var result = sendGridClient.sendMail(
+                FileUploadNotificationEmailFactory.create(study, user.map(User::getHruid).orElse(""), fileUploads));
+
+        if (result.hasFailure()) {
+            log.error("Can't send an e-mail", result.getThrown());
+            return;
+        }
+
+        handle.attach(FileUploadDao.class).setNotificationSentByFileUploadIds(StreamEx.of(fileUploads).map(FileUpload::getId).toList());
+        log.info("A user #{} uploaded {} files in terms of {} study", participantId, fileUploads.size(), study.getGuid());
     }
 
     public enum VerifyResult {

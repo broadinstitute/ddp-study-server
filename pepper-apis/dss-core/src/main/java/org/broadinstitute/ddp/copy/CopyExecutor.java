@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
+import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
@@ -24,6 +25,7 @@ import org.broadinstitute.ddp.model.copy.CopyAnswerLocation;
 import org.broadinstitute.ddp.model.copy.CopyConfiguration;
 import org.broadinstitute.ddp.model.copy.CopyLocation;
 import org.broadinstitute.ddp.model.copy.CopyLocationType;
+import org.broadinstitute.ddp.model.copy.UserType;
 import org.jdbi.v3.core.Handle;
 
 @Slf4j
@@ -50,19 +52,35 @@ public class CopyExecutor {
         Map<String, QuestionDto> questionDtosByStableId = retrieveQuestionDtos(handle, config);
         Map<Long, FormResponse> responsesById = retrieveActivityData(handle, participantId,
                 List.copyOf(questionDtosByStableId.values()));
-
+        UserGovernanceDao governanceDao = handle.attach(UserGovernanceDao.class);
         for (var pair : config.getPairs()) {
             CopyLocation source = pair.getSource();
             CopyLocation target = pair.getTarget();
 
             if (source.getType() == CopyLocationType.ANSWER && target.getType() == CopyLocationType.ANSWER) {
+                QuestionDto sourceQuestion;
+                FormResponse sourceInstance;
                 String sourceStableId = ((CopyAnswerLocation) source).getQuestionStableId();
-                QuestionDto sourceQuestion = questionDtosByStableId.get(sourceStableId);
-                if (sourceQuestion == null) {
-                    continue; // Question might have been removed from activity, so we skip it.
+                UserType user = ((CopyAnswerLocation) source).getUserType();
+                if (user == UserType.OPERATOR) {
+                    var governance = governanceDao
+                            .findActiveGovernancesByParticipantAndStudyIds(participantId, config.getStudyId())
+                            .findFirst()
+                            .orElseThrow(() -> new DDPException(String.format("Governance not found for participant %s", participantId)));
+                    Map<Long, FormResponse> proxyActivities = retrieveActivityData(handle, governance.getProxyUserId(),
+                            List.copyOf(questionDtosByStableId.values()));
+                    sourceQuestion = questionDtosByStableId.get(sourceStableId);
+                    if (sourceQuestion == null) {
+                        continue; // Question might have been removed from activity, so we skip it.
+                    }
+                    sourceInstance = proxyActivities.get(sourceQuestion.getActivityId());
+                } else {
+                    sourceQuestion = questionDtosByStableId.get(sourceStableId);
+                    if (sourceQuestion == null) {
+                        continue; // Question might have been removed from activity, so we skip it.
+                    }
+                    sourceInstance = responsesById.get(sourceQuestion.getActivityId());
                 }
-                FormResponse sourceInstance = responsesById.get(sourceQuestion.getActivityId());
-
                 String targetStableId = ((CopyAnswerLocation) target).getQuestionStableId();
                 QuestionDto targetQuestion = questionDtosByStableId.get(targetStableId);
                 FormResponse targetInstance = responsesById.get(targetQuestion.getActivityId());

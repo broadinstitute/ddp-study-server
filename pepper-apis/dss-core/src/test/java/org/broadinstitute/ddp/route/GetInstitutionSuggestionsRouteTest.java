@@ -120,6 +120,7 @@ public class GetInstitutionSuggestionsRouteTest extends IntegrationTestSuite.Tes
         Assert.assertEquals(NewInstitutionTestData.NAME, testInstSuggestion.getName());
         Assert.assertEquals(NewInstitutionTestData.CITY, testInstSuggestion.getCity());
         Assert.assertEquals(NewInstitutionTestData.STATE, testInstSuggestion.getState());
+        Assert.assertEquals(NewInstitutionTestData.COUNTRY, testInstSuggestion.getCountry());
     }
 
     @Test
@@ -151,5 +152,6 @@ public class GetInstitutionSuggestionsRouteTest extends IntegrationTestSuite.Tes
         public static final String NAME = "Princeton-Plainsboro Teaching Hospital";
         public static final String CITY = "Princeton";
         public static final String STATE = "New Jersey";
+        public static final String COUNTRY = "United States";
     }
 }
