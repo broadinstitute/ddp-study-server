@@ -10,6 +10,7 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.model.files.FileUpload;
 
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -29,7 +30,8 @@ public class FileUploadNotificationEmailFactory {
 
     private static String getBody(final String userGuid, final List<FileUpload> fileUploads) {
         return "Dear Project Singular Study Staff,<br /><br /"
-                + "A Project Singular study participant recently uploaded a file or files. Please log in to DSM and access the participant's profile page to review and download the file(s) indicated below.<br />"
+                + "A Project Singular study participant recently uploaded a file or files. Please log in to DSM and access "
+                + "the participant's profile page to review and download the file(s) indicated below.<br />"
                 + getUploadsTable(userGuid, fileUploads);
     }
 
@@ -58,8 +60,8 @@ public class FileUploadNotificationEmailFactory {
                 + "<td>" + userGuid + "</td>"
                 + "<td>" + fileUpload.getFileName() + "</td>"
                 + "<td>" + fileUpload.getFileSize() + "</td>"
-                + "<td>" + dateFormatter.format(fileUpload.getUploadedAt()) + "</td>"
-                + "<td>" + timeFormatter.format(fileUpload.getUploadedAt()) + "</td>"
+                + "<td>" + dateFormatter.format(Date.from(fileUpload.getCreatedAt())) + "</td>"
+                + "<td>" + timeFormatter.format(Date.from(fileUpload.getCreatedAt())) + "</td>"
                 + "</tr>";
     }
 }
