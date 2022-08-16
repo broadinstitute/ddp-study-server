@@ -23,7 +23,7 @@ public class PancanUpdates implements CustomTask {
         taskList.add(new PanCanNewActivities());
         taskList.add(new PancanNewCancer());
         taskList.add(new PancanStoolkitEventAdd());
-        taskList.add(new PanCanValidationRules());
+//        taskList.add(new PanCanValidationRules()); commenting out since already applied on prod
         taskList.add(new PancanNewMedications());
         taskList.forEach(task -> task.init(cfgPath, studyCfg, varsCfg));
     }
