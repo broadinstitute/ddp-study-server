@@ -29,7 +29,7 @@ public class FileUploadNotificationEmailFactory {
     }
 
     private static String getBody(final String userGuid, final List<FileUpload> fileUploads) {
-        return "Dear Project Singular Study Staff,<br /><br /"
+        return "Dear Project Singular Study Staff,<br /><br />"
                 + "A Project Singular study participant recently uploaded a file or files. Please log in to DSM and access "
                 + "the participant's profile page to review and download the file(s) indicated below.<br />"
                 + getUploadsTable(userGuid, fileUploads);
