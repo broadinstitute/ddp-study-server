@@ -2,6 +2,9 @@ package org.broadinstitute.ddp.db.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Value;
+
+import org.broadinstitute.ddp.model.pex.Expression;
+import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
@@ -32,7 +35,21 @@ public class BlockTabularQuestionDto {
     @ColumnName("shown_expr")
     String shownExpr;
 
+    @Nested("sh_expr")
+    Expression shownExpression;
+
+    @Nested("en_expr")
+    Expression enabledExpression;
+
     @ColumnName("enabled_expr")
     String enabledExpr;
+
+    public String getShownExpr() {
+        return shownExpression.getText();
+    }
+
+    public String getEnabledExpr() {
+        return enabledExpression.getText();
+    }
 
 }
