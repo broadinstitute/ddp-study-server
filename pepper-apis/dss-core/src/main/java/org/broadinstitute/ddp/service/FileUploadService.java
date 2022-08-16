@@ -23,9 +23,6 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.HttpMethod;
-import com.sendgrid.helpers.mail.Mail;
-import com.sendgrid.helpers.mail.objects.Content;
-import com.sendgrid.helpers.mail.objects.Email;
 import com.typesafe.config.Config;
 import lombok.AllArgsConstructor;
 import lombok.Value;
@@ -326,15 +323,8 @@ public class FileUploadService {
                                   final List<FileUpload> fileUploads) {
         final var user = handle.attach(UserDao.class).findUserById(participantId);
 
-        final var result = sendGridClient.sendMail(new Mail(
-                new Email(study.getStudyEmail()),
-                "New files were uploaded in " + study.getName() + " study",
-                new Email(study.getNotificationEmail()),
-                new Content(
-                        "text/html",
-                        "User " + user.map(User::getHruid).orElse("") + " uploaded following files: " + StreamEx.of(fileUploads)
-                                .map(FileUpload::getFileName)
-                                .joining(System.lineSeparator()))));
+        final var result = sendGridClient.sendMail(
+                FileUploadNotificationEmailFactory.create(study, user.map(User::getHruid).orElse(""), fileUploads));
 
         if (result.hasFailure()) {
             log.error("Can't send an e-mail", result.getThrown());
