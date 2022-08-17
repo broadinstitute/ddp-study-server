@@ -17,21 +17,8 @@ import java.util.HashMap;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MailTemplateService {
-    public static MailTemplate getTemplate(final String name) {
-        return TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, handle -> getTemplate(handle, name));
-    }
-
     public static MailTemplate getTemplate(final Long id) {
         return TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, handle -> getTemplate(handle, id));
-    }
-
-    private static MailTemplate getTemplate(final Handle handle, final String name) {
-        final var mailTemplate = handle.attach(MailTemplateDao.class).findByName(name);
-        if (mailTemplate.isEmpty()) {
-            throw new DDPException("Mail template " + name + " does not exist");
-        }
-
-        return getTemplate(handle, mailTemplate.get());
     }
 
     private static MailTemplate getTemplate(final Handle handle, final Long id) {

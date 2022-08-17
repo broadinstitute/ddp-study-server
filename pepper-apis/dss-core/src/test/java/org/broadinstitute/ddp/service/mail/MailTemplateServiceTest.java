@@ -18,7 +18,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class MailTemplateServiceTest extends TxnAwareBaseTest {
-    private static final String MAIL_TEMPLATE_NAME = GuidUtils.randomUUID();
+    private static Long TEMPLATE_ID;
 
     @BeforeClass
     public static void beforeClass() {
@@ -26,15 +26,15 @@ public class MailTemplateServiceTest extends TxnAwareBaseTest {
     }
 
     private static void init(final Handle handle) {
-        final var templateId = handle.attach(MailTemplateDao.class).insert(MailTemplateDto.builder()
-                        .name(MAIL_TEMPLATE_NAME)
-                        .subject("This is the subject")
-                        .body("Dear, ${USER} This is the body!")
-                        .contentType("text/html")
+        TEMPLATE_ID = handle.attach(MailTemplateDao.class).insert(MailTemplateDto.builder()
+                .name(GuidUtils.randomUUID())
+                .subject("This is the subject")
+                .body("Dear, ${USER} This is the body!")
+                .contentType("text/html")
                 .build());
 
         handle.attach(MailTemplateRepeatableElementDao.class).insert(MailTemplateRepeatableElementDto.builder()
-                .mailTemplateId(templateId)
+                .mailTemplateId(TEMPLATE_ID)
                 .name("USER")
                 .content("<b>${TITLE} ${NAME}</b>")
                 .build());
@@ -42,12 +42,12 @@ public class MailTemplateServiceTest extends TxnAwareBaseTest {
 
     @Test(expected = DDPException.class)
     public void testGetNotExistingTemplate() {
-        MailTemplateService.getTemplate("some not existing template");
+        MailTemplateService.getTemplate(-10L);
     }
 
     @Test
     public void testGetRawTemplate() {
-        final var template = MailTemplateService.getTemplate(MAIL_TEMPLATE_NAME);
+        final var template = MailTemplateService.getTemplate(TEMPLATE_ID);
 
         assertNotNull("The template must exist", template);
         assertNotNull("Content type must be set", template.getContentType());
@@ -62,7 +62,7 @@ public class MailTemplateServiceTest extends TxnAwareBaseTest {
 
     @Test
     public void testTemplateWithSubstitution() {
-        final var template = MailTemplateService.getTemplate(MAIL_TEMPLATE_NAME);
+        final var template = MailTemplateService.getTemplate(TEMPLATE_ID);
 
         assertNotNull("The template must exist", template);
         assertNotNull("Body rendering must work", template.renderBody());
