@@ -27,6 +27,9 @@ public class TabularParticipantParserTest {
             "r", null, "ADDITIONALVALUE", "Patient notes");
     private static final Filter PROXY_EMAIL_FILTER = buildFilter("email", "proxy", null, "TEXT", "Email");
 
+    private static final Filter ALLERGIES_FILTER = buildFilter("ALLERGY_DESCRIPTION",
+            "MEDICAL_HISTORY", "questionsAnswers", "TEXT", "describe any allergies");
+
     @Test
     public void testBasicConfigGeneration() {
         TabularParticipantParser parser = new TabularParticipantParser(Arrays.asList(DDP_FILTER, HRUID_FILTER, FIRST_NAME_FILTER,
@@ -56,6 +59,15 @@ public class TabularParticipantParserTest {
     }
 
     @Test
+    public void testTextQuestionParsing() throws IOException {
+        TabularParticipantParser parser = new TabularParticipantParser(Arrays.asList(ALLERGIES_FILTER), null,
+                true, true, SIMPLE_HISTORY_DEF);
+        List<ModuleExportConfig> moduleConfigs = parser.generateExportConfigs();
+        List<Map<String, String>> participantValueMaps = parser.parse(moduleConfigs, Collections.singletonList(SIMPLE_PARTICIPANT));
+        assertEquals("text values not rendered correctly", "minor pollen allergy", participantValueMaps.get(0).get("MEDICAL_HISTORY.ALLERGY_DESCRIPTION"));
+    }
+
+    @Test
     public void testSingleSelectParsing() throws IOException {
         TabularParticipantParser parser = new TabularParticipantParser(Arrays.asList(INCONTINENCE_FILTER), null,
                 true, true, ATCP_ACTIVITY_DEFS);
@@ -75,7 +87,7 @@ public class TabularParticipantParserTest {
         assertEquals("Mutliselect value not rendered", "0", pMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_SKIN"));
 
         assertEquals("option details not rendered", "71", pMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_EYES_DETAIL"));
-        assertEquals("option details not rendered", null, pMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_SKIN_DETAIL"));
+        assertEquals("option details not rendered", "", pMap.get("MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_SKIN_DETAIL"));
     }
 
     @Test
@@ -138,6 +150,7 @@ public class TabularParticipantParserTest {
                 "MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_EYES",
                 "MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_EYES_DETAIL",
                 "MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_SKIN",
+                "MEDICAL_HISTORY.TELANGIECTASIA.TELANGIECTASIA_SKIN_DETAIL",
                 "MEDICAL_HISTORY.MEDICATION_CATEGORY.MEDICATION_NAME",
                 "MEDICAL_HISTORY.MEDICATION_CATEGORY.BEGAN_TAKING_AT_AGE",
                 "MEDICAL_HISTORY.MEDICATION_CATEGORY.MEDICATION_NAME_2",
@@ -149,8 +162,9 @@ public class TabularParticipantParserTest {
                 "First Name",
                 "describe incontinence",
                 "eye",
-                "additional detail",
+                "age of onset",
                 "skin",
+                "age of onset",
                 "MEDICATION_NAME",
                 "BEGAN_TAKING_AT_AGE",
                 "MEDICATION_NAME",
@@ -164,6 +178,7 @@ public class TabularParticipantParserTest {
                 "1",
                 "71",
                 "0",
+                "",
                 "med1",
                 "39",
                 "med2",
@@ -179,7 +194,38 @@ public class TabularParticipantParserTest {
         return filter;
     }
 
+    private static final Map<String, Map<String, Object>> SIMPLE_HISTORY_DEF = Map.of(
+            "MEDICAL_HISTORY_V1", Map.of(
+                    "activityCode", "MEDICAL_HISTORY",
+                    "questions", Arrays.asList(
+                            new HashMap(Map.of(
+                                    "stableId", "ALLERGY_DESCRIPTION",
+                                    "questionType", "TEXT",
+                                    "questionText", "Describe any allergies"
+                            ))
+                    )
+            )
+    );
 
+    private static final Map<String, Object> SIMPLE_PARTICIPANT = Map.of(
+            "ddp", "basic",
+            "profile", Map.of(
+                    "firstName", "Simple",
+                    "lastName", "Person",
+                    "hruid", "PKSSSS"
+            ),
+            "activities", Arrays.asList(
+                    Map.of(
+                            "activityCode", "MEDICAL_HISTORY",
+                            "questionsAnswers", Arrays.asList(
+                                    Map.of(
+                                            "stableId", "ALLERGY_DESCRIPTION",
+                                            "answer", "minor pollen allergy"
+                                    )
+                            )
+                    )
+            )
+    );
 
     private static final Map<String, Object> ATCP_MEDICAL_HISTORY_DEF = Map.of(
             "activityCode", "MEDICAL_HISTORY",
@@ -204,9 +250,13 @@ public class TabularParticipantParserTest {
                             "questionText", "Telangiectasia (choose all that apply)",
                             "options", Arrays.asList(
                                     Map.of("optionStableId", "TELANGIECTASIA_EYES",
-                                            "optionText", "eye"),
+                                            "optionText", "eye",
+                                            "isDetailsAllowed", true,
+                                            "detailsText", "age of onset"),
                                     Map.of("optionStableId", "TELANGIECTASIA_SKIN",
-                                            "optionText", "skin")
+                                            "optionText", "skin",
+                                            "isDetailsAllowed", true,
+                                            "detailsText", "age of onset")
                             )
 
                     )),
@@ -263,11 +313,16 @@ public class TabularParticipantParserTest {
                                                     Arrays.asList("med1", "39"),
                                                     Arrays.asList("med2", "18")
                                             )
+                                    ),
+                                    Map.of(
+                                            "stableId", "ALLERGY_DESCRIPTION",
+                                            "answer", "minor pollen allergy"
                                     )
                             )
                     )
             )
     );
+
 
     private static final Map<String, Object> TEST_SINGULAR_PARTICIPANT = Map.of(
             "ddp", "atcp",
