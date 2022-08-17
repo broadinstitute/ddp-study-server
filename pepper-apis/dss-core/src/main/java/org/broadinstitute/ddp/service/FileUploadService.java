@@ -310,6 +310,12 @@ public class FileUploadService {
             return;
         }
 
+        if (study.getNotificationMailTemplateId() == null) {
+            handle.attach(FileUploadDao.class).setNotificationSentByStudyId(studyId);
+            log.warn("Study {} doesn't have an e-mail template for notifications", study.getGuid());
+            return;
+        }
+
         StreamEx.of(fileUploads)
                 .groupingBy(FileUpload::getParticipantUserId)
                 .forEach((participantId, uploads) -> sendNotification(handle, study, participantId, uploads));
