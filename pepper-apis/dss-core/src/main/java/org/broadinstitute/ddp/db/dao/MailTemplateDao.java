@@ -16,10 +16,6 @@ public interface MailTemplateDao extends SqlObject {
     @RegisterConstructorMapper(MailTemplateDto.class)
     Optional<MailTemplateDto> findById(@Bind("id") final Long id);
 
-    @SqlQuery("SELECT * FROM `mail_template` WHERE name = :name")
-    @RegisterConstructorMapper(MailTemplateDto.class)
-    Optional<MailTemplateDto> findByName(@Bind("name") final String name);
-
     @SqlUpdate("INSERT INTO `mail_template`"
             + "         SET content_type = :contentType,"
             + "             subject = :subject,"
