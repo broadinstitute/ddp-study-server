@@ -52,7 +52,7 @@ public class FormBlockDto {
     }
 
     public String getEnabledExpr() {
-        if (shownExpression == null) {
+        if (enabledExpression == null) {
             return null;
         }
         
