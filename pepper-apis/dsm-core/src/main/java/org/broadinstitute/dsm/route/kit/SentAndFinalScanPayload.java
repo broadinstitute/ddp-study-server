@@ -1,13 +1,16 @@
 package org.broadinstitute.dsm.route.kit;
 
-import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
-@AllArgsConstructor
 @NoArgsConstructor
 public class SentAndFinalScanPayload extends BaseScanPayload {
 
     String ddpLabel;
+
+    public SentAndFinalScanPayload(String ddpLabel, String kitLabel) {
+        this.ddpLabel = ddpLabel;
+        this.kitLabel = kitLabel;
+    }
 
     @Override
     public String getTrackingReturnId() {
