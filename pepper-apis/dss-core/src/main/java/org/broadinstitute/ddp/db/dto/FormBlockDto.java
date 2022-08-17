@@ -2,26 +2,34 @@ package org.broadinstitute.ddp.db.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Value;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import org.broadinstitute.ddp.constants.SqlConstants;
 
 import org.broadinstitute.ddp.model.activity.types.BlockType;
-import org.jdbi.v3.core.mapper.RowMapper;
-import org.jdbi.v3.core.statement.StatementContext;
+import org.broadinstitute.ddp.model.pex.Expression;
+import org.jdbi.v3.core.mapper.Nested;
+import org.jdbi.v3.core.mapper.reflect.ColumnName;
+import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 /**
  * A wrapper data object around a block and its optional conditional expression.
  */
 @Value
-@AllArgsConstructor
+@AllArgsConstructor(onConstructor = @__({@JdbiConstructor}))
 public class FormBlockDto {
+
+    @ColumnName("section_id")
     Long sectionId;
+
+    @ColumnName("parent_block_id")
     Long parentBlockId;
+
+    @Nested("block_meta")
     BlockDto blockDto;
-    String shownExpr;
-    String enabledExpr;
+
+    @Nested("sh_expr")
+    Expression shownExpression;
+
+    @Nested("en_expr")
+    Expression enabledExpression;
 
     public BlockType getType() {
         return blockDto.getType();
@@ -35,18 +43,12 @@ public class FormBlockDto {
         return blockDto.getGuid();
     }
 
-    public static class FormBlockDtoMapper implements RowMapper<FormBlockDto> {
-        @Override
-        public FormBlockDto map(ResultSet rs, StatementContext ctx) throws SQLException {
-            return new FormBlockDto(
-                    rs.getLong("form_section_id"),
-                    rs.getLong("parent_block_id"),
-                    new BlockDto(
-                            BlockType.valueOf(rs.getString(SqlConstants.BlockTypeTable.CODE)),
-                            rs.getLong(SqlConstants.BlockTable.ID),
-                            rs.getString(SqlConstants.BlockTable.GUID)),
-                    rs.getString("shown_expression_text"),
-                    rs.getString("enabled_expression_text"));
-        }
+    public String getShownExpr() {
+        return shownExpression.getText();
     }
+
+    public String getEnabledExpr() {
+        return enabledExpression.getText();
+    }
+
 }
