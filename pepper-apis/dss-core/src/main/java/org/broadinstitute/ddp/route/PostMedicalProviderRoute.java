@@ -14,6 +14,7 @@ import org.broadinstitute.ddp.constants.SqlConstants.MedicalProviderTable;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
+import org.broadinstitute.ddp.db.dao.JdbiMedicalProvider;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.MedicalProviderDao;
@@ -74,6 +75,9 @@ public class PostMedicalProviderRoute implements Route {
                             handle, MedicalProviderTable.TABLE_NAME, MedicalProviderTable.MEDICAL_PROVIDER_GUID
                     );
 
+                    long countryId = handle.attach(JdbiMedicalProvider.class)
+                            .getCountryAddressInfoId(newMedicalProviderJson.getCountry());
+
                     InstitutionType institutionTypeCode = InstitutionType.fromUrlComponent(institutionType);
 
                     MedicalProviderDto newMedicalProviderDto = new MedicalProviderDto(
@@ -86,7 +90,7 @@ public class PostMedicalProviderRoute implements Route {
                             newMedicalProviderJson.getPhysicianName(),
                             newMedicalProviderJson.getCity(),
                             newMedicalProviderJson.getState(),
-                            newMedicalProviderJson.getCountry(),
+                            countryId,
                             null,
                             null,
                             null,

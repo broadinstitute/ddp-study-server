@@ -966,7 +966,8 @@ public class TestDataSetupUtil {
                                 TestConstants.TEST_INSTITUTION_CITY,
                         random ? "State" + GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 10) :
                                 TestConstants.TEST_INSTITUTION_STATE,
-                        random ? "country" + GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 10) :
+                        random ? MedicalProviderUtil.getCountryId(handle,
+                                GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 10)) :
                                 TestConstants.TEST_INSTITUTION_COUNTRY,
                         random ? GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 5) :
                                 TestConstants.TEST_INSTITUTION_ZIP,

@@ -66,7 +66,6 @@ public class PatchMedicalProviderRoute implements Route {
                     String physicianName;
                     String city;
                     String state;
-                    String country;
                     try {
                         JsonElement data = new JsonParser().parse(request.body());
                         if (!data.isJsonObject() || data.getAsJsonObject().entrySet().size() == 0) {
@@ -93,11 +92,6 @@ public class PatchMedicalProviderRoute implements Route {
                                 PostPatchMedicalProviderRequestPayload.Fields.STATE,
                                 existingMedicalProviderDto.getState()
                         );
-                        country = getStringJsonFieldOrDefaultValue(
-                                payload,
-                                PostPatchMedicalProviderRequestPayload.Fields.COUNTRY,
-                                existingMedicalProviderDto.getCountry()
-                        );
                     } catch (JsonSyntaxException e) {
                         String errMsg = "The payload does not represent a valid medical provider entity";
                         throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, errMsg));
@@ -113,7 +107,7 @@ public class PatchMedicalProviderRoute implements Route {
                             physicianName,
                             city,
                             state,
-                            country,
+                            existingMedicalProviderDto.getCountryId(),
                             null,
                             null,
                             null,

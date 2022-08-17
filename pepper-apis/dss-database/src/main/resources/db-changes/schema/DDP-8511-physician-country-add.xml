@@ -6,9 +6,13 @@
 
     <changeSet author="gskhirel" id="physician_country_add">
         <addColumn tableName="user_medical_provider">
-            <column name="country" type="varchar(100)">
+            <column name="country_address_info_id" type="bigint" >
             </column>
         </addColumn>
+        <addForeignKeyConstraint baseTableName="user_medical_provider" baseColumnNames="country_address_info_id"
+                                 constraintName="user_medical_provider_country_id_fk"
+                                 referencedTableName="country_address_info" referencedColumnNames="country_address_info_id"/>
+
     </changeSet>
 
 </databaseChangeLog>

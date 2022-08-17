@@ -51,6 +51,7 @@ import org.broadinstitute.ddp.db.dao.JdbiCountrySubnationalDivision;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
+import org.broadinstitute.ddp.db.dao.JdbiMedicalProvider;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserLegacyInfo;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
@@ -640,7 +641,7 @@ public class DataLoader {
             for (Physician physician : physicianList) {
 
                 String guid = getMedicalProviderGuid(handle);
-
+                long countryAdressId = getCountryAdressId(handle, physician.getCountry());
                 medicalProviderDao.insert(new MedicalProviderDto(
                         null,
                         guid,
@@ -651,7 +652,7 @@ public class DataLoader {
                         physician.getName(),
                         physician.getCity(),
                         physician.getState(),
-                        physician.getCountry(),
+                        countryAdressId,
                         physician.getZipcode(),
                         physician.getPhonenumber(),
                         physician.getPhysicianid(),
@@ -667,6 +668,7 @@ public class DataLoader {
             for (Institution institution : institutionList) {
 
                 String guid = getMedicalProviderGuid(handle);
+                long countryAdressId = getCountryAdressId(handle, institution.getCountry());
                 medicalProviderDao.insert(new MedicalProviderDto(
                         null,
                         guid,
@@ -677,7 +679,7 @@ public class DataLoader {
                         null, //name
                         institution.getCity(),
                         institution.getState(),
-                        institution.getCountry(),
+                        countryAdressId,
                         null,
                         null,
                         institution.getInstitutionId(),
@@ -690,6 +692,7 @@ public class DataLoader {
                 || releaseSurvey.getInitialBiopsyCity() != null
                 || releaseSurvey.getInitialBiopsyState() != null) {
             String guid = getMedicalProviderGuid(handle);
+            long countryAdressId = getCountryAdressId(handle, releaseSurvey.getCountry());
             medicalProviderDao.insert(new MedicalProviderDto(
                     null,
                     guid,
@@ -700,7 +703,7 @@ public class DataLoader {
                     null, //name
                     releaseSurvey.getInitialBiopsyCity(),
                     releaseSurvey.getInitialBiopsyState(),
-                    releaseSurvey.getCountry(),
+                    countryAdressId,
                     null,
                     null,
                     DEFAULT_DSM_BIOPSY_GUID, null
@@ -733,6 +736,10 @@ public class DataLoader {
     String getMedicalProviderGuid(Handle handle) {
         return DBUtils.uniqueStandardGuid(handle,
                 MedicalProviderTable.TABLE_NAME, MedicalProviderTable.MEDICAL_PROVIDER_GUID);
+    }
+
+    long getCountryAdressId(Handle handle, String countryName) {
+        return handle.attach(JdbiMedicalProvider.class).getCountryAddressInfoId(countryName);
     }
 
     public void loadConsentSurveyData(Handle handle,

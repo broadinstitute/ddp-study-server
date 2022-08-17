@@ -2713,6 +2713,8 @@ MedicalProvider:
       type: string
     state:
       type: string
+    country:
+      type: string
 ParticipantStatusTrackingInfo:
   type: object
   required:

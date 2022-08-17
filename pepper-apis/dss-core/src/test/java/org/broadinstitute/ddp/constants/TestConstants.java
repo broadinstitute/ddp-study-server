@@ -44,7 +44,7 @@ public class TestConstants {
     public static final String TEST_INSTITUTION_PHYSICIAN_NAME = "House MD";
     public static final String TEST_INSTITUTION_CITY = "West Windsor Township";
     public static final String TEST_INSTITUTION_STATE = "New Jersey";
-    public static final String TEST_INSTITUTION_COUNTRY = "United States";
+    public static final long TEST_INSTITUTION_COUNTRY = 2;
     public static final String TEST_INSTITUTION_ZIP = "02144";
     public static final String TEST_INSTITUTION_PHONE = "617-867-5309";
     public static final String TEST_INSTITUTION_LEGACY_GUID = "GUID.GUID.GUID.123456";

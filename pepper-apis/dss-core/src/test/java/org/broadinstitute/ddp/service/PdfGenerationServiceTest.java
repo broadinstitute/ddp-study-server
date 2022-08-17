@@ -713,7 +713,7 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
                 "physician A",
                 null, // missing city
                 null,
-                null, // missing state
+                0L, // missing state
                 null,
                 null,
                 null,

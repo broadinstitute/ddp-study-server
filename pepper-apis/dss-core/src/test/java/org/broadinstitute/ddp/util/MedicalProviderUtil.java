@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.util;
 
 import org.broadinstitute.ddp.db.dao.JdbiInstitutionType;
+import org.broadinstitute.ddp.db.dao.JdbiMedicalProvider;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
@@ -17,5 +18,9 @@ public class MedicalProviderUtil {
 
     public static long getInstitutionTypeByCode(Handle handle, InstitutionType type) {
         return handle.attach(JdbiInstitutionType.class).getIdByType(type).get();
+    }
+
+    public static long getCountryId(Handle handle, String countryName) {
+        return handle.attach(JdbiMedicalProvider.class).getCountryAddressInfoId(countryName);
     }
 }
