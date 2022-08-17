@@ -611,16 +611,22 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         List<ElasticSearchParticipantDto> esParticipants = participantsByIds.getEsParticipants();
         for (KitRequestShipping kit: wholeList) {
             esParticipants.stream().filter(elasticSearchParticipantDto ->
-                            Objects.nonNull(elasticSearchParticipantDto.getParticipantId())
-                                    && elasticSearchParticipantDto.getParticipantId().equals(kit.getDdpParticipantId()))
+                            existsParticipant(kit, elasticSearchParticipantDto))
                     .findFirst()
-                    .ifPresent(elasticSearchParticipantDto -> {
-                        kit.setFirstName(elasticSearchParticipantDto.getProfile().map(ESProfile::getFirstName).orElse(StringUtils.EMPTY));
-                        kit.setLastName(elasticSearchParticipantDto.getProfile().map(ESProfile::getLastName).orElse(StringUtils.EMPTY));
-                        kit.setDateOfBirth(elasticSearchParticipantDto.getDsm().map(ESDsm::getDateOfBirth).orElse(StringUtils.EMPTY));
-                    });
+                    .ifPresent(elasticSearchParticipantDto -> setFirstLastDOB(kit, elasticSearchParticipantDto));
         }
         return wholeList;
+    }
+
+    private static void setFirstLastDOB(KitRequestShipping kit, ElasticSearchParticipantDto elasticSearchParticipantDto) {
+        kit.setFirstName(elasticSearchParticipantDto.getProfile().map(ESProfile::getFirstName).orElse(StringUtils.EMPTY));
+        kit.setLastName(elasticSearchParticipantDto.getProfile().map(ESProfile::getLastName).orElse(StringUtils.EMPTY));
+        kit.setDateOfBirth(elasticSearchParticipantDto.getDsm().map(ESDsm::getDateOfBirth).orElse(StringUtils.EMPTY));
+    }
+
+    private static boolean existsParticipant(KitRequestShipping kit, ElasticSearchParticipantDto elasticSearchParticipantDto) {
+        return Objects.nonNull(elasticSearchParticipantDto.getParticipantId())
+                && elasticSearchParticipantDto.getParticipantId().equals(kit.getDdpParticipantId());
     }
 
     public static Map<String, List<KitRequestShipping>> getAllKitRequestsByRealm(@NonNull String realm, String target, String kitType,
