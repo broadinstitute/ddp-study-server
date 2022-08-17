@@ -37,7 +37,7 @@ import org.jdbi.v3.core.Handle;
  * Updates the PEX shownExpr for 2 questions in the ABOUT_HEALTHY
  * activity for Singular.
  * 
- * <p> See the file ddp-8539-about-healthy-pex.conf and Jira ticket DDP-8539
+ * <p>See the file ddp-8539-about-healthy-pex.conf and Jira ticket DDP-8539
  * for more details about the specifics of the change.
  */
 @Slf4j
@@ -120,56 +120,57 @@ public class SingularAboutHealthyPexTask implements CustomTask  {
                     studyGuid));
         });
 
-        var activityVersion = activityVersionSql.findByActivityCodeAndVersionTag(studyDto.getId(), targetActivity, targetVersion).orElseThrow(() -> {
-            return new DDPException(String.format("failed to locate the version tag '%s' for the activity '%s' in study '%s'",
-                    targetVersion,
-                    targetActivity,
-                    studyGuid));
-        });
+        var activityVersion = activityVersionSql.findByActivityCodeAndVersionTag(studyDto.getId(), targetActivity, targetVersion)
+                .orElseThrow(() -> {
+                    return new DDPException(String.format("failed to locate the version tag '%s' for the activity '%s' in study '%s'",
+                            targetVersion,
+                            targetActivity,
+                            studyGuid));
+                });
 
         var currentActivityDef = activityDao.findDefByDtoAndVersion(activity, activityVersion);
 
         final Map<String, Config> questionsToUpdate = changes.getConfigList(Keys.ChangeSet.CONTENT).stream()
-            .collect(Collectors.toMap((change) -> change.getString(Keys.ChangeContent.STABLE_ID),
-                    (change) -> change));
+                .collect(Collectors.toMap((change) -> change.getString(Keys.ChangeContent.STABLE_ID),
+                        (change) -> change));
 
         var blocks = findBlocksForQuestions(currentActivityDef, questionsToUpdate.keySet());
         
         blocks.stream()
-            .forEach((block) -> {
-                var stableId = block.getQuestion().getStableId();
-                var readableName = String.format("block:%s, question:%s", block.getBlockGuid(), stableId);
+                .forEach((block) -> {
+                    var stableId = block.getQuestion().getStableId();
+                    var readableName = String.format("block:%s, question:%s", block.getBlockGuid(), stableId);
 
-                var change = questionsToUpdate.get(stableId);
-                assert change != null;
+                    var change = questionsToUpdate.get(stableId);
+                    assert change != null;
 
-                var expectedExpressionText = StringUtils.normalizeSpace(change.getString(Keys.ChangeContent.EXPECTED));
-                var updatedExpressionText = StringUtils.normalizeSpace(change.getString(Keys.ChangeContent.UPDATED));
+                    var expectedExpressionText = StringUtils.normalizeSpace(change.getString(Keys.ChangeContent.EXPECTED));
+                    var updatedExpressionText = StringUtils.normalizeSpace(change.getString(Keys.ChangeContent.UPDATED));
 
-                // If there isn't a pre-existing expression, just bail. This patch
-                // doesn't have any cases where a new Expression is being created
-                var expression = expressionSql.getById(block.getShownExprId()).orElseThrow();
-                var expressionText = StringUtils.normalizeSpace(expression.getText());
+                    // If there isn't a pre-existing expression, just bail. This patch
+                    // doesn't have any cases where a new Expression is being created
+                    var expression = expressionSql.getById(block.getShownExprId()).orElseThrow();
+                    var expressionText = StringUtils.normalizeSpace(expression.getText());
 
-                if (Objects.equals(expressionText, updatedExpressionText)) {
-                    log.info("The shown expression for [{}] was already updated, skipping...", readableName);
-                    return;
-                }
+                    if (Objects.equals(expressionText, updatedExpressionText)) {
+                        log.info("The shown expression for [{}] was already updated, skipping...", readableName);
+                        return;
+                    }
 
-                if (!Objects.equals(expressionText, expectedExpressionText)) {
-                    var message = String.format("The shown expression for [%s] does not match the expected value.", readableName);
-                    log.error("{}\n\texpected: '{}'\n\tactual:   '{}'", message, expectedExpressionText, expressionText);
-                    throw new DDPException(message);
-                }
+                    if (!Objects.equals(expressionText, expectedExpressionText)) {
+                        var message = String.format("The shown expression for [%s] does not match the expected value.", readableName);
+                        log.error("{}\n\texpected: '{}'\n\tactual:   '{}'", message, expectedExpressionText, expressionText);
+                        throw new DDPException(message);
+                    }
 
-                log.info("Found expression {} for [{}].", expression.getGuid(), readableName);
+                    log.info("Found expression {} for [{}].", expression.getGuid(), readableName);
 
-                var updateExpression = new Expression(expression.getId(), expression.getGuid(), updatedExpressionText);
-                var result = expressionSql.update(updateExpression);
-                DBUtils.checkInsert(1, result);
+                    var updateExpression = new Expression(expression.getId(), expression.getGuid(), updatedExpressionText);
+                    var result = expressionSql.update(updateExpression);
+                    DBUtils.checkInsert(1, result);
 
-                log.info("Successfully updated expression {} for [{}].", expression.getGuid(), readableName);
-            });
+                    log.info("Successfully updated expression {} for [{}].", expression.getGuid(), readableName);
+                });
 
         daoCleanup();
 
