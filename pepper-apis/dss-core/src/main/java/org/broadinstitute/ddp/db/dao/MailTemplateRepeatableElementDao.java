@@ -1,6 +1,5 @@
 package org.broadinstitute.ddp.db.dao;
 
-import org.broadinstitute.ddp.db.dto.MailTemplateDto;
 import org.broadinstitute.ddp.db.dto.MailTemplateRepeatableElementDto;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
