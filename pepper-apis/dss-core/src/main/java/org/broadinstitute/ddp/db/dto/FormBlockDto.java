@@ -13,7 +13,7 @@ import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
  * A wrapper data object around a block and its optional conditional expression.
  */
 @Value
-@AllArgsConstructor(onConstructor = @__({@JdbiConstructor}))
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class FormBlockDto {
 
     @ColumnName("section_id")
