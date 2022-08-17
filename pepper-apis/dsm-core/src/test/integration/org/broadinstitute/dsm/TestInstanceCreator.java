@@ -8,6 +8,8 @@ import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 public class TestInstanceCreator {
 
     public static final String TEST_INSTANCE = "TestInstance";
+
+    private static final String ES_PARTICIPANT_INDEX = "participants_structured.cmi.angio";
     private DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
     private Integer newlyCreatedInstanceId;
 
@@ -21,6 +23,7 @@ public class TestInstanceCreator {
                 .withAuth0Token(false)
                 .withMigratedDdp(false)
                 .withInstanceName(TestInstanceCreator.TEST_INSTANCE)
+                .withEsParticipantIndex(ES_PARTICIPANT_INDEX)
                 .build();
         newlyCreatedInstanceId = ddpInstanceDao.create(instanceDto);
         return newlyCreatedInstanceId;
@@ -30,6 +33,10 @@ public class TestInstanceCreator {
         if (Objects.nonNull(newlyCreatedInstanceId)) {
             ddpInstanceDao.delete(newlyCreatedInstanceId);
         }
+    }
+
+    public Integer getDdpInstanceId() {
+        return Objects.requireNonNull(newlyCreatedInstanceId);
     }
 
 

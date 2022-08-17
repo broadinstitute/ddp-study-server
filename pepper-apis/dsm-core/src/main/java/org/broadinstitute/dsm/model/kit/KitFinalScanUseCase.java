@@ -35,7 +35,8 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
                 kitRequestDao.getKitRequestByLabel(ddpLabel).ifPresent(this::writeSampleSentToES);
             } else {
                 result = Optional.of(
-                        new KitStatusChangeRoute.ScanError(ddpLabel, "Kit with DSM Label \"" + ddpLabel + "\" does not have a Tracking Label"));
+                        new KitStatusChangeRoute.ScanError(
+                                ddpLabel, "Kit with DSM Label " + ddpLabel + " does not have a Tracking Label"));
             }
         } else {
             result = updateKitRequest(kitLabel, ddpLabel);

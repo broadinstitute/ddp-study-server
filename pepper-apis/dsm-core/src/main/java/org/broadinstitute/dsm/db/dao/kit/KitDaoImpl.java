@@ -5,13 +5,17 @@ import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Objects;
 import java.util.Optional;
 
+import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
+import org.broadinstitute.dsm.util.DBUtil;
 import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
@@ -20,6 +24,33 @@ import org.slf4j.LoggerFactory;
 public class KitDaoImpl implements KitDao {
 
     private static final Logger logger = LoggerFactory.getLogger(KitDaoImpl.class);
+
+    public static final String SQL_SELECT_KIT_REQUEST =
+            "SELECT * FROM ( SELECT req.upload_reason, kt.kit_type_name, ddp_site.instance_name, ddp_site.ddp_instance_id, "
+                    + "ddp_site.base_url, ddp_site.auth0_token, ddp_site.billing_reference, "
+                    + "ddp_site.migrated_ddp, ddp_site.collaborator_id_prefix, ddp_site.es_participant_index, "
+                    + "req.bsp_collaborator_participant_id, req.bsp_collaborator_sample_id, req.ddp_participant_id, req.ddp_label, "
+                    + "req.dsm_kit_request_id, "
+                    + "req.kit_type_id, req.external_order_status, req.external_order_number, req.external_order_date, "
+                    + "req.external_response, kt.no_return, req.created_by FROM kit_type kt, ddp_kit_request req, ddp_instance ddp_site "
+                    + "WHERE req.ddp_instance_id = ddp_site.ddp_instance_id AND req.kit_type_id = kt.kit_type_id) AS request "
+                    + "LEFT JOIN (SELECT * FROM (SELECT kit.dsm_kit_request_id, kit.dsm_kit_id, kit.kit_complete, kit.label_url_to, "
+                    + "kit.label_url_return, kit.tracking_to_id, "
+                    + "kit.tracking_return_id, kit.easypost_tracking_to_url, kit.easypost_tracking_return_url, kit.easypost_to_id, "
+                    + "kit.easypost_shipment_status, kit.scan_date, kit.label_date, kit.error, kit.message, "
+                    + "kit.receive_date, kit.deactivated_date, kit.easypost_address_id_to, kit.deactivation_reason, tracking.tracking_id,"
+                    + " kit.kit_label, kit.express, kit.test_result, kit.needs_approval, kit.authorization, kit.denial_reason, "
+                    + "kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order FROM ddp_kit kit "
+                    + "INNER JOIN (SELECT dsm_kit_request_id, MAX(dsm_kit_id) AS kit_id FROM ddp_kit "
+                    + "GROUP BY dsm_kit_request_id) groupedKit ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id "
+                    + "AND kit.dsm_kit_id = groupedKit.kit_id LEFT JOIN ddp_kit_tracking tracking "
+                    + "ON (kit.kit_label = tracking.kit_label))as wtf) AS kit ON kit.dsm_kit_request_id = request.dsm_kit_request_id "
+                    + "LEFT JOIN ddp_participant_exit ex ON (ex.ddp_instance_id = request.ddp_instance_id "
+                    + "AND ex.ddp_participant_id = request.ddp_participant_id) "
+                    + "LEFT JOIN ddp_kit_request_settings dkc ON (request.ddp_instance_id = dkc.ddp_instance_id "
+                    + "AND request.kit_type_id = dkc.kit_type_id) WHERE ex.ddp_participant_exit_id is null";
+    public static final String KIT_BY_KIT_REQUEST_ID = " and kit.dsm_kit_request_id = ?";
+    public static final String KIT_BY_KIT_ID = " and kit.dsm_kit_id = ?";
 
     private static final String SQL_IS_BLOOD_KIT_QUERY = "SELECT kt.requires_insert_in_kit_tracking AS found "
             + "FROM ddp_kit_request request "
@@ -74,6 +105,10 @@ public class KitDaoImpl implements KitDao {
             + "upload_reason) "
             + "VALUES (?,?,?,?,?,?,?,?,?,?,?)";
 
+    private static final String SQL_DELETE_KIT_REQUEST = "DELETE FROM ddp_kit_request WHERE dsm_kit_request_id = ?";
+
+    private static final String SQL_DELETE_KIT = "DELETE FROM ddp_kit WHERE dsm_kit_id = ?";
+
     private static final String UPDATE_KIT_RECEIVED = KitUtil.SQL_UPDATE_KIT_RECEIVED;
 
     @Override
@@ -125,7 +160,7 @@ public class KitDaoImpl implements KitDao {
             return dbVals;
         });
         if (Objects.nonNull(results.resultValue)) {
-            result = (Optional<KitStatusChangeRoute.ScanError>) results.resultValue;
+            result = Optional.ofNullable((KitStatusChangeRoute.ScanError) results.resultValue);
         }
         return result;
     }
@@ -162,7 +197,7 @@ public class KitDaoImpl implements KitDao {
     public Integer insertKit(KitRequestShipping kitRequestShipping) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(INSERT_KIT)) {
+            try (PreparedStatement stmt = conn.prepareStatement(INSERT_KIT, Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setLong(1, kitRequestShipping.getDsmKitRequestId());
                 stmt.setString(2, kitRequestShipping.getLabelUrlTo());
                 stmt.setString(3, kitRequestShipping.getLabelUrlReturn());
@@ -197,9 +232,9 @@ public class KitDaoImpl implements KitDao {
     public Integer insertKitRequest(KitRequestShipping kitRequestShipping) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_REQUEST)) {
+            try (PreparedStatement stmt = conn.prepareStatement(INSERT_KIT_REQUEST, Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setLong(1, kitRequestShipping.getDdpInstanceId());
-                stmt.setLong(2, kitRequestShipping.getDdpKitRequestId());
+                stmt.setString(2, kitRequestShipping.getDdpKitRequestId());
                 stmt.setString(3, kitRequestShipping.getKitTypeId());
                 stmt.setString(4, kitRequestShipping.getDdpParticipantId());
                 stmt.setString(5, kitRequestShipping.getBspCollaboratorParticipantId());
@@ -225,6 +260,141 @@ public class KitDaoImpl implements KitDao {
                     + kitRequestShipping.getDsmKitRequestId(), results.resultException);
         }
         return (int) results.resultValue;
+    }
+
+    @Override
+    public Optional<KitRequestShipping> getKitRequest(Long kitRequestId) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KIT_REQUEST + KIT_BY_KIT_REQUEST_ID)) {
+                stmt.setLong(1, kitRequestId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    int numRows = 0;
+                    while (rs.next()) {
+                        numRows++;
+                        dbVals.resultValue = getKitRequestShipping(rs);
+                    }
+                    if (numRows > 1) {
+                        throw new RuntimeException("Found " + numRows + " kits for dsm_kit_request_id " + kitRequestId);
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Error setting kitRequest to deactivated w/ dsm_kit_request_id " + kitRequestId,
+                    results.resultException);
+        }
+        return Optional.ofNullable((KitRequestShipping) results.resultValue);
+    }
+
+    @Override
+    public Optional<KitRequestShipping> getKit(Long kitId) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KIT_REQUEST + KIT_BY_KIT_ID)) {
+                stmt.setLong(1, kitId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    int numRows = 0;
+                    while (rs.next()) {
+                        numRows++;
+                        dbVals.resultValue = getKitRequestShipping(rs);
+                    }
+                    if (numRows > 1) {
+                        throw new RuntimeException("Found " + numRows + " kits for dsm_kit_request_id " + kitId);
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Error setting kitRequest to deactivated w/ dsm_kit_request_id " + kitId,
+                    results.resultException);
+        }
+        return Optional.ofNullable((KitRequestShipping) results.resultValue);
+    }
+
+    @Override
+    public Integer deleteKitRequest(Long kitRequestId) {
+        SimpleResult simpleResult = inTransaction(conn -> {
+            SimpleResult execResult = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_KIT_REQUEST)) {
+                stmt.setLong(1, kitRequestId);
+                execResult.resultValue = stmt.executeUpdate();
+            } catch (SQLException sqle) {
+                execResult.resultException = sqle;
+            }
+            return execResult;
+        });
+
+        if (simpleResult.resultException != null) {
+            throw new RuntimeException("Error deleting kit request with id: " + kitRequestId, simpleResult.resultException);
+        }
+        return (int) simpleResult.resultValue;
+    }
+
+    @Override
+    public Integer deleteKit(Long kitId) {
+        SimpleResult simpleResult = inTransaction(conn -> {
+            SimpleResult execResult = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_KIT)) {
+                stmt.setLong(1, kitId);
+                execResult.resultValue = stmt.executeUpdate();
+            } catch (SQLException sqle) {
+                execResult.resultException = sqle;
+            }
+            return execResult;
+        });
+
+        if (simpleResult.resultException != null) {
+            throw new RuntimeException("Error deleting kit with id: " + kitId, simpleResult.resultException);
+        }
+        return (int) simpleResult.resultValue;
+    }
+
+    public KitRequestShipping getKitRequestShipping(@NonNull ResultSet rs) throws SQLException {
+        String returnTrackingId = rs.getString(DBConstants.TRACKING_ID);
+        if (StringUtils.isBlank(returnTrackingId)) {
+            returnTrackingId = rs.getString(DBConstants.DSM_TRACKING_RETURN);
+        }
+        KitRequestShipping kitRequestShipping =
+                new KitRequestShipping(rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
+                        rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID), rs.getString(DBConstants.DSM_LABEL),
+                        rs.getString(DBConstants.INSTANCE_NAME), rs.getString(DBConstants.KIT_TYPE_NAME),
+                        rs.getLong(DBConstants.DSM_KIT_REQUEST_ID), rs.getLong(DBConstants.DSM_KIT_ID),
+                        rs.getString(DBConstants.DSM_LABEL_TO), rs.getString(DBConstants.DSM_LABEL_RETURN),
+                        rs.getString(DBConstants.DSM_TRACKING_TO), returnTrackingId, rs.getString(DBConstants.DSM_TRACKING_URL_TO),
+                        rs.getString(DBConstants.DSM_TRACKING_URL_RETURN), (Long) rs.getObject(DBConstants.DSM_SCAN_DATE),
+                        rs.getBoolean(DBConstants.ERROR), rs.getString(DBConstants.MESSAGE),
+                        (Long) rs.getObject(DBConstants.DSM_RECEIVE_DATE),
+                        rs.getString(DBConstants.EASYPOST_ADDRESS_ID_TO), (Long)rs.getObject(DBConstants.DSM_DEACTIVATED_DATE),
+                        rs.getString(DBConstants.DEACTIVATION_REASON), rs.getString(DBConstants.KIT_LABEL),
+                        rs.getBoolean(DBConstants.EXPRESS), rs.getString(DBConstants.EASYPOST_TO_ID),
+                        (Long)rs.getObject(DBConstants.LABEL_TRIGGERED_DATE), rs.getString(DBConstants.EASYPOST_SHIPMENT_STATUS),
+                        rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), rs.getBoolean(DBConstants.NO_RETURN),
+                        rs.getString(DBConstants.EXTERNAL_ORDER_STATUS), rs.getString(DBConstants.CREATED_BY),
+                        rs.getString(DBConstants.KIT_TEST_RESULT), rs.getString(DBConstants.UPS_TRACKING_STATUS),
+                        rs.getString(DBConstants.UPS_RETURN_STATUS), (Long)rs.getObject(DBConstants.EXTERNAL_ORDER_DATE),
+                        rs.getBoolean(DBConstants.CARE_EVOLVE), rs.getString(DBConstants.UPLOAD_REASON), null, null, null);
+        if (DBUtil.columnExists(rs, DBConstants.UPS_STATUS_DESCRIPTION) && StringUtils.isNotBlank(
+                rs.getString(DBConstants.UPS_STATUS_DESCRIPTION))) {
+            String upsPackageTrackingNumber = rs.getString(DBConstants.UPS_PACKAGE_TABLE_ABBR + DBConstants.UPS_TRACKING_NUMBER);
+            if (StringUtils.isNotBlank(upsPackageTrackingNumber) && upsPackageTrackingNumber.equals(kitRequestShipping.getTrackingToId())) {
+                kitRequestShipping.setUpsTrackingStatus(rs.getString(DBConstants.UPS_STATUS_DESCRIPTION));
+
+            } else if (StringUtils.isNotBlank(upsPackageTrackingNumber) && upsPackageTrackingNumber.equals(
+                    kitRequestShipping.getTrackingReturnId())) {
+                kitRequestShipping.setUpsReturnStatus(rs.getString(DBConstants.UPS_STATUS_DESCRIPTION));
+            }
+
+        }
+        return kitRequestShipping;
     }
 
     @Override

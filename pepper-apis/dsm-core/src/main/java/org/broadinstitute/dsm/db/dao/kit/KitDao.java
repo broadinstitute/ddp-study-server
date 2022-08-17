@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.Dao;
+import org.broadinstitute.dsm.db.dto.ddp.kitrequest.KitRequestDto;
 import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
 
 public interface KitDao extends Dao<KitRequestShipping> {
@@ -21,5 +22,13 @@ public interface KitDao extends Dao<KitRequestShipping> {
     Integer insertKit(KitRequestShipping kitRequestShipping);
 
     Integer insertKitRequest(KitRequestShipping kitRequestShipping);
+
+    Optional<KitRequestShipping> getKitRequest(Long kitRequestId);
+
+    Optional<KitRequestShipping> getKit(Long kitId);
+
+    Integer deleteKitRequest(Long kitRequestId);
+
+    Integer deleteKit(Long kitId);
 
 }

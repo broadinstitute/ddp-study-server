@@ -3,7 +3,7 @@ package org.broadinstitute.dsm.route.kit;
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.NonNull;
+import lombok.Data;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.security.RequestHandler;
@@ -25,7 +25,7 @@ public abstract class KitStatusChangeRoute extends RequestHandler {
     protected KitPayload kitPayload;
     protected List<ScanError> scanErrorList;
 
-    public KitStatusChangeRoute(@NonNull NotificationUtil notificationUtil) {
+    public KitStatusChangeRoute(NotificationUtil notificationUtil) {
         this.notificationUtil = notificationUtil;
     }
 
@@ -57,6 +57,7 @@ public abstract class KitStatusChangeRoute extends RequestHandler {
     protected abstract List<? extends ScanPayload> getScanPayloads(String requestBody);
 
 
+    @Data
     public static class ScanError {
         private String kit;
         private String error;
