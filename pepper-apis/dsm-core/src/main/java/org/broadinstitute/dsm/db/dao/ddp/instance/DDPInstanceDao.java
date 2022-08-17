@@ -67,7 +67,7 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
     private static final String SQL_SELECT_ROLES_FOR_INSTANCE =
             "SELECT role.name FROM ddp_instance ddp left join ddp_instance_role inRol on (inRol.ddp_instance_id = ddp.ddp_instance_id) "
                     + " left join instance_role role on (role.instance_role_id = inRol.instance_role_id) "
-                    + "WHERE is_active = 1";
+                    + "WHERE is_active = 1  and instance_name = ? ";
     private static final String SQL_GET_INSTANCE_ID_BY_GUID =
             "SELECT ddp_instance_id FROM ddp_instance WHERE study_guid = ? ";
     private static final String SQL_GET_INSTANCE_ID_BY_INSTANCE_NAME =
@@ -123,7 +123,7 @@ public class DDPInstanceDao implements Dao<DDPInstanceDto> {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             dbVals.resultValue = Boolean.FALSE;
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ROLES_FOR_INSTANCE + QueryExtension.BY_INSTANCE_NAME)) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ROLES_FOR_INSTANCE)) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {

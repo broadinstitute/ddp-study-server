@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.db.dao.mercury;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -184,67 +183,55 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
     }
 
     public void insertMercuryOrders(List<MercuryOrderDto> newOrders) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult result = new SimpleResult();
+        for (MercuryOrderDto order : newOrders) {
             try {
-                for (MercuryOrderDto order : newOrders) {
-                    result = create(order, conn);
-                    if (result.resultException != null) {
-                        return result;
-                    }
-                }
-
+                create(order);
             } catch (Exception e) {
-                try {
-                    conn.rollback();
-                } catch (SQLException throwables) {
-                    throwables.printStackTrace();
-                }
+                log.error("Unable to insert mercury order for participant " + order.getDdpParticipantId() + " with barcode "
+                        + order.getBarcode(), e);
             }
-            return result;
-        });
-        if (results.resultException != null) {
-            throw new RuntimeException("Error inserting new order ", results.resultException);
         }
     }
 
     @Override
     public int create(MercuryOrderDto mercuryOrderDto) {
-        return 0;
-    }
-
-    public SimpleResult create(MercuryOrderDto mercuryOrderDto, Connection conn) {
-        SimpleResult execResult = new SimpleResult();
-        try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_MERCURY_ORDER, PreparedStatement.RETURN_GENERATED_KEYS)) {
-            stmt.setString(1, mercuryOrderDto.getOrderId());
-            stmt.setLong(2, mercuryOrderDto.getOrderDate());
-            stmt.setString(3, mercuryOrderDto.getDdpParticipantId());
-            stmt.setInt(4, mercuryOrderDto.getKitTypeId());
-            stmt.setString(5, mercuryOrderDto.getBarcode());
-            stmt.setInt(6, mercuryOrderDto.getDdpInstanceId());
-            stmt.setString(7, mercuryOrderDto.getCreatedBy().orElse(""));
-            if (mercuryOrderDto.getTissueId() != null) {
-                stmt.setString(8, String.valueOf(mercuryOrderDto.getTissueId()));
-            } else {
-                stmt.setNull(8, Types.INTEGER);
-            }
-            if (mercuryOrderDto.getDsmKitRequestId() != null) {
-                stmt.setString(9, String.valueOf(mercuryOrderDto.getDsmKitRequestId()));
-            } else {
-                stmt.setNull(9, Types.INTEGER);
-            }
-
-            stmt.executeUpdate();
-            try (ResultSet rs = stmt.getGeneratedKeys()) {
-                if (rs.next()) {
-                    execResult.resultValue = rs.getInt(1);
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult execResult = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_MERCURY_ORDER, PreparedStatement.RETURN_GENERATED_KEYS)) {
+                stmt.setString(1, mercuryOrderDto.getOrderId());
+                stmt.setLong(2, mercuryOrderDto.getOrderDate());
+                stmt.setString(3, mercuryOrderDto.getDdpParticipantId());
+                stmt.setInt(4, mercuryOrderDto.getKitTypeId());
+                stmt.setString(5, mercuryOrderDto.getBarcode());
+                stmt.setInt(6, mercuryOrderDto.getDdpInstanceId());
+                stmt.setString(7, mercuryOrderDto.getCreatedBy().orElse(""));
+                if (mercuryOrderDto.getTissueId() != null) {
+                    stmt.setString(8, String.valueOf(mercuryOrderDto.getTissueId()));
+                } else {
+                    stmt.setNull(8, Types.INTEGER);
                 }
-            }
-        } catch (SQLException ex) {
-            execResult.resultException = ex;
-        }
-        return execResult;
+                if (mercuryOrderDto.getDsmKitRequestId() != null) {
+                    stmt.setString(9, String.valueOf(mercuryOrderDto.getDsmKitRequestId()));
+                } else {
+                    stmt.setNull(9, Types.INTEGER);
+                }
 
+                stmt.executeUpdate();
+                try (ResultSet rs = stmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        execResult.resultValue = rs.getInt(1);
+                    }
+                }
+            } catch (SQLException ex) {
+                execResult.resultException = ex;
+            }
+            return execResult;
+
+        });
+        if (results.resultException != null) {
+            throw new RuntimeException("Error inserting mercury order ", results.resultException);
+        }
+        return (int) results.resultValue;
     }
 
 }

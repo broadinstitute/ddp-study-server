@@ -10,7 +10,6 @@ import org.broadinstitute.dsm.db.dao.ddp.kitrequest.KitRequestDao;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
 import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.db.dao.mercury.MercurySampleDao;
-import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 
 public class MercuryOrderUseCase {
     private static TissueSMIDDao tissueSMIDDao = new TissueSMIDDao();

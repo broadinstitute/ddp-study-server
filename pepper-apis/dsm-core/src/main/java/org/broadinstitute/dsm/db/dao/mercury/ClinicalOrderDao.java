@@ -84,7 +84,7 @@ public class ClinicalOrderDao implements Dao<ClinicalOrderDto> {
                     results.resultException);
         }
         ArrayList<ClinicalOrderDto> array = new ArrayList(map.values());
-        log.info(String.format("Found %d orders for realm %s", array.size(), realm));
+        log.info(String.format("Found %d clinical orders for realm %s", array.size(), realm));
         Collections.sort(array, new Comparator<ClinicalOrderDto>() {
             @Override
             public int compare(ClinicalOrderDto c1, ClinicalOrderDto c2) {
