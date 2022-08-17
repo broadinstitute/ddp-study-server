@@ -44,10 +44,18 @@ public class FormBlockDto {
     }
 
     public String getShownExpr() {
+        if (shownExpression == null) {
+            return null;
+        }
+
         return shownExpression.getText();
     }
 
     public String getEnabledExpr() {
+        if (shownExpression == null) {
+            return null;
+        }
+        
         return enabledExpression.getText();
     }
 
