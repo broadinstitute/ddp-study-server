@@ -122,7 +122,7 @@
             select JSON_MERGE_PRESERVE(@pv, @newChange);
             UPDATE field_settings
             SET possible_values =  JSON_MERGE_PRESERVE(@pv, @newChange)
-            WHERE field_settings_id &#60;&#62; 0 and field_settings_id in
+            WHERE field_settings_id &lt;&gt; 0 and field_settings_id in
             (select field_settings_id from (select * from field_settings) as temp where column_name = "KARYOTYPE_ABNORMAL" and field_type = 'GROUP_GENETIC_TESTING');
         </sql>
         <sql>
@@ -131,7 +131,7 @@
             select JSON_MERGE_PRESERVE(@pv, @newChange);
             UPDATE field_settings
             SET possible_values =  JSON_MERGE_PRESERVE(@pv, @newChange)
-            WHERE field_settings_id &#60;&#62; 0 and field_settings_id in
+            WHERE field_settings_id &lt;&gt; 0 and field_settings_id in
             (select field_settings_id from (select * from field_settings) as temp where column_name = "MICROARRAY_ABNORMAL" and field_type = 'GROUP_GENETIC_TESTING');
         </sql>
         <sql>
@@ -140,7 +140,7 @@
             select JSON_MERGE_PRESERVE(@pv, @newChange);
             UPDATE field_settings
             SET possible_values =  JSON_MERGE_PRESERVE(@pv, @newChange)
-            WHERE field_settings_id &#60;&#62; 0 and field_settings_id in
+            WHERE field_settings_id &lt;&gt; 0 and field_settings_id in
             (select field_settings_id from (select * from field_settings) as temp where column_name = "GENE_SYNDROMES" and field_type = 'GROUP_GENETIC_TESTING');
         </sql>
         <sql>
@@ -149,7 +149,7 @@
             select JSON_MERGE_PRESERVE(@pv, @newChange);
             UPDATE field_settings
             SET possible_values =  JSON_MERGE_PRESERVE(@pv, @newChange)
-            WHERE field_settings_id &#60;&#62; 0 and field_settings_id in
+            WHERE field_settings_id &lt;&gt; 0 and field_settings_id in
             (select field_settings_id from (select * from field_settings) as temp where column_name = "MOLECULAR_CONFIRMATION" and field_type = 'GROUP_GENETIC_TESTING');
         </sql>
         <sql>
@@ -158,7 +158,7 @@
             select JSON_MERGE_PRESERVE(@pv, @newChange);
             UPDATE field_settings
             SET possible_values =  JSON_MERGE_PRESERVE(@pv, @newChange)
-            WHERE field_settings_id &#60;&#62; 0 and field_settings_id in
+            WHERE field_settings_id &lt;&gt; 0 and field_settings_id in
             (select field_settings_id from (select * from field_settings) as temp where column_name = "CLINICAL_SYNDROMES" and field_type = 'GROUP_GENETIC_TESTING');
         </sql>
     </changeSet>
