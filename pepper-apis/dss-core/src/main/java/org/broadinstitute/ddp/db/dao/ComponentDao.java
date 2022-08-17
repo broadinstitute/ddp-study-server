@@ -204,8 +204,10 @@ public interface ComponentDao extends SqlObject {
             blockDef.setComponentRevisionId(componentDto.getRevisionId());
             blockDef.setBlockId(blockDto.getId());
             blockDef.setBlockGuid(blockDto.getGuid());
-            blockDef.setShownExpr(blockDto.getShownExpr());
-            blockDef.setEnabledExpr(blockDto.getEnabledExpr());
+            blockDef.setShownExprId(blockDto.getShownExpression().getId());
+            blockDef.setShownExpr(blockDto.getShownExpression().getText());
+            blockDef.setEnabledExprId(blockDto.getEnabledExpression().getId());
+            blockDef.setEnabledExpr(blockDto.getEnabledExpression().getText());
 
             blockDefs.put(blockDto.getId(), blockDef);
         }
