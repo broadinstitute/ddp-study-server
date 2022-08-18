@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
-import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDaoImpl;
 import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.mercury.MercuryOrderDummyRequest;
@@ -22,7 +22,7 @@ import spark.Route;
 public class PostMercuryOrderDummyRoute implements Route {
     private String projectId;
     private String topicId;
-    private MercuryOrderPublisher mercuryOrderPublisher = new MercuryOrderPublisher(new MercuryOrderDao(), new ParticipantDao());
+    private MercuryOrderPublisher mercuryOrderPublisher = new MercuryOrderPublisher(new MercuryOrderDao(), new ParticipantDaoImpl());
     private static final String PEPPER_ORDER_ID = "PepperOrderId";
 
     public PostMercuryOrderDummyRoute(String projectId, String topicId) {

@@ -16,7 +16,7 @@ import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.institution.DDPInstitutionDao;
 import org.broadinstitute.dsm.db.dao.ddp.medical.records.MedicalRecordDao;
-import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDaoImpl;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantRecordDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
@@ -49,7 +49,7 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
     private final int newOsteoInstanceId;
     private final CohortTag newCohortTag;
 
-    private final ParticipantDao participantDao;
+    private final ParticipantDaoImpl participantDaoImpl;
     private final ParticipantRecordDao participantRecordDao;
     private final DDPInstitutionDao ddpInstitutionDao;
     private final MedicalRecordDao medicalRecordDao;
@@ -62,7 +62,7 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
     private OsteoWorkflowStatusUpdate(DDPInstanceDto instance, String ddpParticipantId) {
         this.instance = instance;
         this.ddpParticipantId = ddpParticipantId;
-        this.participantDao = ParticipantDao.of();
+        this.participantDaoImpl = ParticipantDaoImpl.of();
         this.participantRecordDao = ParticipantRecordDao.of();
         this.ddpInstitutionDao = DDPInstitutionDao.of();
         this.medicalRecordDao = MedicalRecordDao.of();
@@ -86,12 +86,12 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
         boolean isParticipantInDb = MedicalRecordUtil.isParticipantInDB(ddpParticipantId, String.valueOf(ddpInstanceId));
         if (isParticipantInDb) {
             logger.info(String.format("Updating values in db for %s", NEW_OSTEO_INSTANCE_NAME));
-            Optional<ParticipantDto> maybeOldOsteoParticipant = participantDao
+            Optional<ParticipantDto> maybeOldOsteoParticipant = participantDaoImpl
                     .getParticipantByDdpParticipantIdAndDdpInstanceId(ddpParticipantId, ddpInstanceId);
             Optional<Integer> maybeOldOsteoParticipantId = maybeOldOsteoParticipant.flatMap(ParticipantDto::getParticipantId);
             Optional<Integer> maybeNewOsteoParticipantId = maybeOldOsteoParticipant
                     .map(this::updateParticipantDto)
-                    .map(participantDao::create);
+                    .map(participantDaoImpl::create);
             cohortTagDao.create(newCohortTag);
             Optional<ParticipantRecordDto> maybeOldOsteoParticipantRecord = maybeOldOsteoParticipantId
                     .flatMap(participantRecordDao::getParticipantRecordByParticipantId);

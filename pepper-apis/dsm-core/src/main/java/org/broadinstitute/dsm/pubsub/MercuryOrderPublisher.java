@@ -17,7 +17,7 @@ import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDaoImpl;
 import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderDto;
@@ -30,12 +30,12 @@ import org.broadinstitute.dsm.util.NanoIdUtil;
 @Slf4j
 public class MercuryOrderPublisher {
     private static MercuryOrderDao mercuryOrderDao;
-    private static ParticipantDao participantDao;
+    private static ParticipantDaoImpl participantDaoImpl;
 
     public MercuryOrderPublisher(MercuryOrderDao mercuryOrderDao,
-                                 ParticipantDao participantDao) {
+                                 ParticipantDaoImpl participantDaoImpl) {
         this.mercuryOrderDao = mercuryOrderDao;
-        this.participantDao = participantDao;
+        this.participantDaoImpl = participantDaoImpl;
     }
 
     private static String createMercuryUniqueOrderId() {
@@ -102,7 +102,7 @@ public class MercuryOrderPublisher {
     public String createAndPublishMessage(String[] barcodes, String projectId, String topicId, DDPInstanceDto ddpInstance,
                                           String collaboratorParticipantId, String userId) {
         Optional<String> maybeParticipantId =
-                participantDao.getParticipantFromCollaboratorParticipantId(collaboratorParticipantId,
+                participantDaoImpl.getParticipantFromCollaboratorParticipantId(collaboratorParticipantId,
                         String.valueOf(ddpInstance.getDdpInstanceId()));
         String ddpParticipantId = maybeParticipantId.orElseThrow();
         log.info("Publishing message to mercury");

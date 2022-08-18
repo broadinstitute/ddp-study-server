@@ -14,7 +14,7 @@ import com.typesafe.config.ConfigFactory;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
@@ -122,7 +122,7 @@ public class MedicalRecordMigrationTool {
                             ParticipantDto participantDto = new ParticipantDto.Builder(Integer.parseInt(instanceId),
                                     System.currentTimeMillis()).withDdpParticipantId(ddpParticipantId).withLastVersion(0)
                                     .withLastVersionDate("MIGRATION_TOOL").withChangedBy(SystemUtil.SYSTEM).build();
-                            new ParticipantDao().create(participantDto);
+                            new ParticipantDaoImpl().create(participantDto);
                             MedicalRecordUtil.writeNewRecordIntoDb(conn, DDPMedicalRecordDataRequest.SQL_INSERT_ONC_HISTORY,
                                     ddpParticipantId, instanceId);
                             MedicalRecordUtil.writeNewRecordIntoDb(conn, DDPMedicalRecordDataRequest.SQL_INSERT_PARTICIPANT_RECORD,

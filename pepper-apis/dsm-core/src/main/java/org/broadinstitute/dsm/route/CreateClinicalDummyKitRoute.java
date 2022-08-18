@@ -12,7 +12,7 @@ import org.broadinstitute.dsm.db.SmId;
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
-import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDaoImpl;
 import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
 import org.broadinstitute.dsm.db.dao.kit.BSPDummyKitDao;
 import org.broadinstitute.dsm.db.structure.DBElement;
@@ -40,11 +40,11 @@ public class CreateClinicalDummyKitRoute implements Route {
     private final String ffpeSection = "ffpe-section";
     private int realm;
     private OncHistoryDetailDaoImpl oncHistoryDetailDaoImpl;
-    private ParticipantDao participantDao;
+    private ParticipantDaoImpl participantDaoImpl;
 
     public CreateClinicalDummyKitRoute(OncHistoryDetailDaoImpl oncHistoryDetailDao) {
         this.oncHistoryDetailDaoImpl = oncHistoryDetailDao;
-        participantDao = new ParticipantDao();
+        participantDaoImpl = new ParticipantDaoImpl();
     }
 
 
@@ -110,7 +110,7 @@ public class CreateClinicalDummyKitRoute implements Route {
         } else {
             fixedParticipantId = true;
             Optional<String> maybeParticipantId =
-                    participantDao.getParticipantFromCollaboratorParticipantId(participantId, ddpInstance.getDdpInstanceId());
+                    participantDaoImpl.getParticipantFromCollaboratorParticipantId(participantId, ddpInstance.getDdpInstanceId());
             ddpParticipantId = maybeParticipantId.orElseThrow();
             maybeParticipantByParticipantId =
                     ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(),

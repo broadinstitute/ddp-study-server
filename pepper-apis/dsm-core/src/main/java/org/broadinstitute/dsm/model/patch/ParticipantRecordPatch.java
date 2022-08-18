@@ -3,7 +3,7 @@ package org.broadinstitute.dsm.model.patch;
 import java.util.Optional;
 
 import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDaoImpl;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantRecordDao;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
@@ -51,7 +51,7 @@ public class ParticipantRecordPatch extends BasePatch {
                         .withLastVersionDate("")
                         .withChangedBy(patch.getUser())
                         .build();
-        return new ParticipantDao().create(participantDto);
+        return new ParticipantDaoImpl().create(participantDto);
     }
 
     private void insertDdpParticipantRecord(int participantId) {

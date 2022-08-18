@@ -14,7 +14,7 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.MedicalRecordLog;
-import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -122,7 +122,7 @@ public class DDPMedicalRecordDataRequest {
                     new ParticipantDto.Builder(Integer.parseInt(instanceId), System.currentTimeMillis()).withDdpParticipantId(
                                     institutionRequest.getParticipantId()).withLastVersion(institutionRequest.getId())
                             .withLastVersionDate(institutionRequest.getLastUpdated()).withChangedBy(SystemUtil.SYSTEM).build();
-            new ParticipantDao().create(participantDto);
+            new ParticipantDaoImpl().create(participantDto);
             writeInstitutionInfo(conn, institutionRequest, instanceId, instanceName);
         }
     }
