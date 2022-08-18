@@ -105,6 +105,28 @@ public class PicklistQuestionFormatStrategyTest {
         assertEquals("This is op1 details, with lots of stuff.", actual.get("sid_op1_DETAILS"));
     }
 
+    @Test
+    public void questionDefExport() {
+        PicklistQuestionDef def = PicklistQuestionDef.buildMultiSelect(PicklistRenderMode.LIST, "sid", Template.text(""))
+                .addOption(new PicklistOptionDef("op1", Template.text("has"), Template.text("details 1")))
+                .addOption(new PicklistOptionDef("op2", Template.text("no details")))
+                .addOption(new PicklistOptionDef("op3", Template.text("has"), Template.text("details 2")))
+                .build();
+
+        Map<String, Object> defExport = fmt.questionDef(def);
+        assertEquals(Map.of(
+                "isDetailsAllowed", true,
+                "detailsText", "details 1",
+                "optionText", "has",
+                "optionStableId", "op1"),
+                ((List) defExport.get("options")).get(0));
+
+        assertEquals(Map.of(
+                        "optionText", "no details",
+                        "optionStableId", "op2"),
+                ((List) defExport.get("options")).get(1));
+    }
+
     private PicklistQuestionDef buildQuestion() {
         return PicklistQuestionDef.buildMultiSelect(PicklistRenderMode.LIST, "sid", Template.text(""))
                 .addOption(new PicklistOptionDef("op1", Template.text("has"), Template.text("details")))

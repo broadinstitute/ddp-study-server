@@ -32,6 +32,7 @@ queryGovernancesWithStudiesByOperatorAndStudyGuids() ::= <<
 <select_all_governances_with_granted_studies()>
 where operator.guid = :operatorUserGuid
   and s.guid = :studyGuid
+order by ug.user_governance_id desc
 >>
 
 queryGovernancesByParticipantAndStudyGuids() ::= <<
