@@ -136,6 +136,7 @@ public class DataLoader {
     private static final String DOB_DATE_FORMAT = "d/M/yyyy";
     private static final String DEFAULT_DSM_BIOPSY_GUID = "1";
     private static final int DSM_DEFAULT_ON_DEMAND_TRIGGER_ID = -2;
+    
     void loadMailingListData(Handle handle, MailingListData data, String studyCode) {
         log.info("load mailinglist");
         JdbiMailingList dao = handle.attach(JdbiMailingList.class);
