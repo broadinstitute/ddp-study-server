@@ -60,9 +60,7 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
             String groupTxt = HtmlConverter.getPlainText(group.getNameTemplate().renderWithDefaultValues("en"));
             List<Object> options = new ArrayList<>();
             for (PicklistOptionDef optionDef : group.getOptions()) {
-                Map<String, String> stableIdTxt = new HashMap<>();
-                stableIdTxt.put("optionStableId", optionDef.getStableId());
-                stableIdTxt.put("optionText", HtmlConverter.getPlainText(optionDef.getOptionLabelTemplate().renderWithDefaultValues("en")));
+                Map<String, Object> stableIdTxt = makeOptionDefMap(optionDef);
                 options.add(stableIdTxt);
             }
             groupDef.put("groupStableId", groupStableId);
@@ -74,9 +72,7 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
 
         List<Object> options = new ArrayList<>();
         for (PicklistOptionDef optionDef : definition.getPicklistOptions()) {
-            Map<String, Object> stableIdTxt = new HashMap<>();
-            stableIdTxt.put("optionStableId", optionDef.getStableId());
-            stableIdTxt.put("optionText", HtmlConverter.getPlainText(optionDef.getOptionLabelTemplate().renderWithDefaultValues("en")));
+            Map<String, Object> stableIdTxt = makeOptionDefMap(optionDef);
 
             //add nested options
             if (CollectionUtils.isNotEmpty(optionDef.getNestedOptions())) {
@@ -86,10 +82,7 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
                 }
                 List<Object> nestedOptions = new ArrayList<>();
                 for (PicklistOptionDef suboptionDef : optionDef.getNestedOptions()) {
-                    Map<String, String> suboptStableIdTxt = new HashMap<>();
-                    suboptStableIdTxt.put("optionStableId", suboptionDef.getStableId());
-                    suboptStableIdTxt.put("optionText",
-                            HtmlConverter.getPlainText(suboptionDef.getOptionLabelTemplate().renderWithDefaultValues("en")));
+                    Map<String, Object> suboptStableIdTxt = makeOptionDefMap(suboptionDef);
                     nestedOptions.add(suboptStableIdTxt);
                 }
                 stableIdTxt.put("nestedOptions", nestedOptions);
@@ -98,6 +91,17 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
         }
         props.put("options", options);
         return props;
+    }
+
+    private Map<String, Object> makeOptionDefMap(PicklistOptionDef optionDef) {
+        Map<String, Object> stableIdTxt = new HashMap<>();
+        stableIdTxt.put("optionStableId", optionDef.getStableId());
+        stableIdTxt.put("optionText", HtmlConverter.getPlainText(optionDef.getOptionLabelTemplate().renderWithDefaultValues("en")));
+        if (optionDef.isDetailsAllowed()) {
+            stableIdTxt.put("isDetailsAllowed", optionDef.isDetailsAllowed());
+            stableIdTxt.put("detailsText", HtmlConverter.getPlainText(optionDef.getDetailLabelTemplate().renderWithDefaultValues("en")));
+        }
+        return stableIdTxt;
     }
 
     @Override

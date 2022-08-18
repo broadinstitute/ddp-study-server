@@ -74,7 +74,7 @@ public abstract class TabularParticipantExporter {
 
     protected static String getColumnDisplayText(FilterExportConfig filterConfig, Map<String, Object> opt, String detailName) {
         if (detailName != null) {
-            return "additional detail";
+            return (String) opt.getOrDefault(ESObjectConstants.OPTION_DETAILS_TEXT, "additional details");
         } else if (opt != null) {
             return (String) opt.get(ESObjectConstants.OPTION_TEXT);
         }
