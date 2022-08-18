@@ -156,7 +156,9 @@ public class KitDaoImpl implements KitDao {
                     logger.info("Updated kitRequests w/ ddp_label " + kitRequestShipping.getDdpLabel());
                 }
             } catch (Exception ex) {
-                throw new RuntimeException(ex);
+                dbVals.resultValue = new KitStatusChangeRoute.ScanError(kitRequestShipping.getDdpLabel(),
+                        "Kit Label \"" + kitRequestShipping.getDdpLabel() + "\" was already scanned.\n"
+                                + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER);
             }
             return dbVals;
         });
@@ -184,7 +186,9 @@ public class KitDaoImpl implements KitDao {
                                     + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
                 }
             } catch (Exception ex) {
-                throw new RuntimeException(ex);
+                dbVals.resultValue = Optional.of(new KitStatusChangeRoute.ScanError(kitRequestShipping.getKitLabel(),
+                        "SM-ID \"" + kitRequestShipping.getKitLabel() + "\" does not exist or was already scanned as received.\n"
+                                + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
             }
             return dbVals;
         });
@@ -418,7 +422,9 @@ public class KitDaoImpl implements KitDao {
                     logger.info("Added tracking for kit w/ kit_label " + kitRequestShipping.getKitLabel());
                 }
             } catch (Exception ex) {
-                throw new RuntimeException(ex);
+                dbVals.resultValue = new KitStatusChangeRoute.ScanError(kitRequestShipping.getKitLabel(),
+                        "Kit Label \"" + kitRequestShipping.getKitLabel() + "\" does not exist.\n"
+                                + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
             }
             return dbVals;
         });

@@ -16,7 +16,7 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchDataUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
-//connects kti request with an actual mf barcode on the tub
+//connects kit request with an actual mf barcode on the tub
 public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
 
     public KitFinalScanUseCase(KitPayload kitPayload, KitDao kitDao) {
