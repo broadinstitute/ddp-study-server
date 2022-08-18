@@ -77,6 +77,7 @@ public class KitDaoImpl implements KitDao {
     private static final String INSERT_KIT = "INSERT INTO "
             + "ddp_kit "
             + "(dsm_kit_request_id, "
+            + "kit_label, "
             + "label_url_to, "
             + "label_url_return, "
             + "easypost_to_id, "
@@ -88,7 +89,7 @@ public class KitDaoImpl implements KitDao {
             + "error, "
             + "message, "
             + "easypost_address_id_to) "
-            + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+            + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
     private static final String INSERT_KIT_REQUEST = "INSERT INTO "
             + "ddp_kit_request "
@@ -199,17 +200,18 @@ public class KitDaoImpl implements KitDao {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(INSERT_KIT, Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setLong(1, kitRequestShipping.getDsmKitRequestId());
-                stmt.setString(2, kitRequestShipping.getLabelUrlTo());
-                stmt.setString(3, kitRequestShipping.getLabelUrlReturn());
-                stmt.setString(4, kitRequestShipping.getEasypostToId());
-                stmt.setString(5, kitRequestShipping.getEasypostShipmentStatus());
-                stmt.setString(6, kitRequestShipping.getTrackingToId());
-                stmt.setString(7, kitRequestShipping.getTrackingReturnId());
-                stmt.setString(8, kitRequestShipping.getEasypostTrackingToUrl());
-                stmt.setString(9, kitRequestShipping.getEasypostTrackingReturnUrl());
-                stmt.setBoolean(10, kitRequestShipping.getError());
-                stmt.setString(11, kitRequestShipping.getMessage());
-                stmt.setString(12, kitRequestShipping.getEasypostAddressId());
+                stmt.setString(2, kitRequestShipping.getKitLabel());
+                stmt.setString(3, kitRequestShipping.getLabelUrlTo());
+                stmt.setString(4, kitRequestShipping.getLabelUrlReturn());
+                stmt.setString(5, kitRequestShipping.getEasypostToId());
+                stmt.setString(6, kitRequestShipping.getEasypostShipmentStatus());
+                stmt.setString(7, kitRequestShipping.getTrackingToId());
+                stmt.setString(8, kitRequestShipping.getTrackingReturnId());
+                stmt.setString(9, kitRequestShipping.getEasypostTrackingToUrl());
+                stmt.setString(10, kitRequestShipping.getEasypostTrackingReturnUrl());
+                stmt.setBoolean(11, kitRequestShipping.getError());
+                stmt.setString(12, kitRequestShipping.getMessage());
+                stmt.setString(13, kitRequestShipping.getEasypostAddressId());
                 stmt.executeUpdate();
                 try (ResultSet rs = stmt.getGeneratedKeys()) {
                     if (rs.next()) {
