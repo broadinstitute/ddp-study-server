@@ -1948,6 +1948,7 @@ public class StudyDataLoader {
 
         MedicalProviderDao medicalProviderDao = handle.attach(MedicalProviderDao.class);
         sourceDataSurveyQs.get(surveyName).add(elementName);
+        JdbiMedicalProvider jdbiMedicalProvider = handle.attach(JdbiMedicalProvider.class);
         JsonElement medicalProviderDataEl = sourceDataElement.getAsJsonObject().get(elementName);
         if (medicalProviderDataEl == null || medicalProviderDataEl.isJsonNull()) {
             return;
@@ -1963,7 +1964,7 @@ public class StudyDataLoader {
             String institution = getStringValueFromElement(physicianEl, "institution");
             String city = getStringValueFromElement(physicianEl, "city");
             String state = getStringValueFromElement(physicianEl, "state");
-            String country = getStringValueFromElement(physicianEl, "country_id");
+            String country = getStringValueFromElement(physicianEl, "country");
             String postalCode = getStringValueFromElement(physicianEl, "zipcode");
             String phoneNumber = getStringValueFromElement(physicianEl, "phonenumber");
             String streetAddress = getStringValueFromElement(physicianEl, "streetaddress");
@@ -1980,6 +1981,8 @@ public class StudyDataLoader {
 
             if (matchedPhysicianList.isEmpty()) {
                 String guid = getMedicalProviderGuid(handle);
+                long countryAddressInfoId = jdbiMedicalProvider.getCountryAddressInfoId(country);
+
                 medicalProviderDao.insert(new MedicalProviderDto(
                         null,
                         guid,
@@ -1990,7 +1993,7 @@ public class StudyDataLoader {
                         name,
                         city,
                         state,
-                        Long.parseLong(country),
+                        countryAddressInfoId,
                         postalCode,
                         phoneNumber,
                         physicianId,
@@ -2031,6 +2034,7 @@ public class StudyDataLoader {
         if (medicalProviderDataEl == null || medicalProviderDataEl.isJsonNull()) {
             return;
         }
+        JdbiMedicalProvider jdbiMedicalProvider = handle.attach(JdbiMedicalProvider.class);
 
         JsonArray medicalProviderDataArray = medicalProviderDataEl.getAsJsonArray();
         for (JsonElement physicianEl : medicalProviderDataArray) {
@@ -2040,12 +2044,13 @@ public class StudyDataLoader {
             String institution = getStringValueFromElement(physicianEl, "institution");
             String city = getStringValueFromElement(physicianEl, "city");
             String state = getStringValueFromElement(physicianEl, "state");
-            String country = getStringValueFromElement(physicianEl, "country_id");
+            String country = getStringValueFromElement(physicianEl, "country");
             String postalCode = getStringValueFromElement(physicianEl, "zipcode");
             String phoneNumber = getStringValueFromElement(physicianEl, "phonenumber");
             String streetAddress = getStringValueFromElement(physicianEl, "streetaddress");
 
             String guid = getMedicalProviderGuid(handle);
+            long countryAddressInfoId = jdbiMedicalProvider.getCountryAddressInfoId(country);
             String legacyGuid;
             if (InstitutionType.PHYSICIAN.equals(type)) {
                 legacyGuid = physicianId;
@@ -2063,7 +2068,7 @@ public class StudyDataLoader {
                     name,
                     city,
                     state,
-                    Long.parseLong(country),
+                    countryAddressInfoId,
                     postalCode,
                     phoneNumber,
                     legacyGuid,

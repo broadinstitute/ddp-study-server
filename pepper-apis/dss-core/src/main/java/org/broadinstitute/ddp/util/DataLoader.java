@@ -740,8 +740,8 @@ public class DataLoader {
                 MedicalProviderTable.TABLE_NAME, MedicalProviderTable.MEDICAL_PROVIDER_GUID);
     }
 
-    long getCountryAddressId(JdbiMedicalProvider JdbiMedicalProvider, String countryName) {
-        return JdbiMedicalProvider.getCountryAddressInfoId(countryName);
+    long getCountryAddressId(JdbiMedicalProvider jdbiMedicalProvider, String countryName) {
+        return jdbiMedicalProvider.getCountryAddressInfoId(countryName);
     }
 
     public void loadConsentSurveyData(Handle handle,
