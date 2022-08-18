@@ -101,6 +101,8 @@ public class ESObjectConstants {
     public static final String OPTIONDETAILS = "optionDetails";
     public static final String OPTION_TEXT = "optionText";
     public static final String OPTION_STABLE_ID = "optionStableId";
+    public static final String OPTION_DETAILS_ALLOWED = "isDetailsAllowed";
+    public static final String OPTION_DETAILS_TEXT = "detailsText";
     public static final String OPTION = "option";
     public static final String OPTIONS = "options";
     public static final String ALLOW_MULTIPLE = "allowMultiple";
