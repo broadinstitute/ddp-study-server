@@ -91,7 +91,7 @@ public class ESObjectConstants {
     public static final String ADDITIONAL_VALUE = "ADDITIONALVALUE";
     public static final String DOC_ID = "_id";
     public static final String SMID = "smId";
-    public static final String CLINICAL_ORDERS = "clinicalOrders";
+    public static final String CLINICAL_ORDER = "clinicalOrder";
 
     //question
     public static final String QUESTIONS = "questions";

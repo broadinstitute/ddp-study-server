@@ -78,7 +78,7 @@ public class ESDsm {
 
     List<CohortTag> cohortTag;
 
-    List<ClinicalOrder> clinicalOrders;
+    List<ClinicalOrder> clinicalOrder;
 
     public List<Tissue> getTissue() {
         if (tissue == null) {
@@ -141,10 +141,10 @@ public class ESDsm {
         return Optional.ofNullable(newOsteoParticipant);
     }
 
-    public List<ClinicalOrder> getClinicalOrders() {
-        if (clinicalOrders == null) {
-            clinicalOrders = Collections.emptyList();
+    public List<ClinicalOrder> getClinicalOrder() {
+        if (clinicalOrder == null) {
+            clinicalOrder = Collections.emptyList();
         }
-        return clinicalOrders;
+        return clinicalOrder;
     }
 }

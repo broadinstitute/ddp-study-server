@@ -145,7 +145,7 @@ public class ParticipantWrapper {
             List<KitRequestShipping> kitRequestShipping = esDsm.getKitRequestShipping();
             List<Tissue> tissues = esDsm.getTissue();
             List<SmId> smIds = esDsm.getSmId();
-            List<ClinicalOrder> clinicalOrders = esDsm.getClinicalOrders();
+            List<ClinicalOrder> clinicalOrder = esDsm.getClinicalOrder();
 
             mapSmIdsToProperTissue(tissues, smIds);
 
@@ -164,7 +164,7 @@ public class ParticipantWrapper {
             participantWrapperDto.setParticipantData(participantData);
             participantWrapperDto.setAbstractionActivities(Collections.emptyList());
             participantWrapperDto.setAbstractionSummary(Collections.emptyList());
-            participantWrapperDto.setClinicalOrders(clinicalOrders);
+            participantWrapperDto.setClinicalOrder(clinicalOrder);
             result.add(participantWrapperDto);
         });
     }
