@@ -113,8 +113,11 @@ public class FilterExportConfig {
                 }
             }
         }
-        options.stream().filter(opt -> (boolean) opt.getOrDefault(ESObjectConstants.OPTION_DETAILS_ALLOWED, false))
-                .forEach(opt -> optionIdsWithDetails.add((String) opt.get(ESObjectConstants.OPTION_STABLE_ID)));
+        if (options instanceof List) {
+            options.stream().filter(opt -> (boolean) opt.getOrDefault(ESObjectConstants.OPTION_DETAILS_ALLOWED, false))
+                    .forEach(opt -> optionIdsWithDetails.add((String) opt.get(ESObjectConstants.OPTION_STABLE_ID)));
+        }
+
         return options;
     }
 
