@@ -424,7 +424,7 @@ public class KitDaoImpl implements KitDao {
             } catch (Exception ex) {
                 dbVals.resultValue = new KitStatusChangeRoute.ScanError(kitRequestShipping.getKitLabel(),
                         "Kit Label \"" + kitRequestShipping.getKitLabel() + "\" does not exist.\n"
-                                + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER));
+                                + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER);
             }
             return dbVals;
         });
