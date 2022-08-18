@@ -59,7 +59,7 @@ public interface JdbiFormSectionBlock extends SqlObject {
     
     @UseStringTemplateSqlLocator
     @SqlQuery("queryOrderedFormBlockDtosBySectionIdsAndInstanceGuid")
-    @RegisterConstructorMapper(value = FormBlockDto.class)
+    @RegisterConstructorMapper(FormBlockDto.class)
     List<FormBlockDto> findOrderedFormBlocksForSectionsAndInstance(
                 @BindList(value = "sectionIds", onEmpty = EmptyHandling.NULL_VALUE) List<Long> sectionIds,
                 @Bind("instanceGuid") String instanceGuid);
@@ -94,7 +94,7 @@ public interface JdbiFormSectionBlock extends SqlObject {
     
     @UseStringTemplateSqlLocator
     @SqlQuery("queryOrderedFormBlockDtosBySectionIdsAndTimestamp")
-    @RegisterConstructorMapper(value = FormBlockDto.class)
+    @RegisterConstructorMapper(FormBlockDto.class)
     List<FormBlockDto> findOrderedFormBlockDtosBySectionIdsAndTimestamp(
             @BindList(value = "sectionIds", onEmpty = EmptyHandling.NULL_VALUE) Iterable<Long> sectionIds,
             @Bind("timestamp") long timestamp);
