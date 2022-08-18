@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import com.easypost.exception.EasyPostException;
 import com.easypost.model.Address;
@@ -47,9 +48,13 @@ import org.broadinstitute.dsm.model.KitSubKits;
 import org.broadinstitute.dsm.model.KitType;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.model.ddp.KitDetail;
+import org.broadinstitute.dsm.model.elastic.ESDsm;
+import org.broadinstitute.dsm.model.elastic.ESProfile;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
+import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
+import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.filter.prefilter.HasDdpInstanceId;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -230,7 +235,12 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
     private String collaboratorParticipantId;
 
-    @ColumnName(DBConstants.BSP_COLLABORATOR_SAMPLE_ID)
+    private String ddpParticipantId;
+    private String firstName;
+    private String lastName;
+    private String dateOfBirth;
+
+    @ColumnName (DBConstants.BSP_COLLABORATOR_SAMPLE_ID)
     private String bspCollaboratorSampleId;
     private String easypostAddressId;
     private String realm;
@@ -396,6 +406,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                         rs.getString(DBConstants.UPS_RETURN_STATUS), (Long) rs.getObject(DBConstants.EXTERNAL_ORDER_DATE),
                         rs.getBoolean(DBConstants.CARE_EVOLVE), rs.getString(DBConstants.UPLOAD_REASON), null, null, null,
                         rs.getString(DBConstants.COLLECTION_DATE), rs.getString(DBConstants.SEQUENCING_RESTRICTION));
+        kitRequestShipping.setDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID));
         if (DBUtil.columnExists(rs, DBConstants.UPS_STATUS_DESCRIPTION) && StringUtils.isNotBlank(
                 rs.getString(DBConstants.UPS_STATUS_DESCRIPTION))) {
             String upsPackageTrackingNumber = rs.getString(DBConstants.UPS_PACKAGE_TABLE_ABBR + DBConstants.UPS_TRACKING_NUMBER);
@@ -605,7 +616,28 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         for (List<KitRequestShipping> kitRequestList : kits) {
             wholeList.addAll(kitRequestList);
         }
+        ElasticSearch participantsByIds = new ElasticSearch()
+                .getParticipantsByIds(new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow().getEsParticipantIndex(),
+                        wholeList.stream().map(KitRequestShipping::getDdpParticipantId).collect(Collectors.toList()));
+        List<ElasticSearchParticipantDto> esParticipants = participantsByIds.getEsParticipants();
+        for (KitRequestShipping kit: wholeList) {
+            esParticipants.stream().filter(elasticSearchParticipantDto ->
+                            existsParticipant(kit, elasticSearchParticipantDto))
+                    .findFirst()
+                    .ifPresent(elasticSearchParticipantDto -> setFirstLastDOB(kit, elasticSearchParticipantDto));
+        }
         return wholeList;
+    }
+
+    private static void setFirstLastDOB(KitRequestShipping kit, ElasticSearchParticipantDto elasticSearchParticipantDto) {
+        kit.setFirstName(elasticSearchParticipantDto.getProfile().map(ESProfile::getFirstName).orElse(StringUtils.EMPTY));
+        kit.setLastName(elasticSearchParticipantDto.getProfile().map(ESProfile::getLastName).orElse(StringUtils.EMPTY));
+        kit.setDateOfBirth(elasticSearchParticipantDto.getDsm().map(ESDsm::getDateOfBirth).orElse(StringUtils.EMPTY));
+    }
+
+    private static boolean existsParticipant(KitRequestShipping kit, ElasticSearchParticipantDto elasticSearchParticipantDto) {
+        return Objects.nonNull(elasticSearchParticipantDto.getParticipantId())
+                && elasticSearchParticipantDto.getParticipantId().equals(kit.getDdpParticipantId());
     }
 
     public static Map<String, List<KitRequestShipping>> getAllKitRequestsByRealm(@NonNull String realm, String target, String kitType,
