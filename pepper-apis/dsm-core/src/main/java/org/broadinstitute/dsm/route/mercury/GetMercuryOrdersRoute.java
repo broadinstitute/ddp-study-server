@@ -45,7 +45,7 @@ public class GetMercuryOrdersRoute extends RequestHandler {
         }
         if (request.url().contains(RoutePath.GET_MERCURY_ORDERS_ROUTE)) {
             ArrayList<ClinicalOrderDto> orders = clinicalOrderDao.getOrdersForRealm(realm);
-            clinicalOrderUseCase.publishStatusActionMessage(orders, projectId, topicId);
+//            clinicalOrderUseCase.publishStatusActionMessage(orders, projectId, topicId);
             log.info(String.format("Returning a list of %d orders", orders.size()));
             return orders;
         }

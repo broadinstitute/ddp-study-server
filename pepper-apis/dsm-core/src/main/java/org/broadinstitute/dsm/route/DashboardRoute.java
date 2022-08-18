@@ -108,7 +108,7 @@ public class DashboardRoute extends RequestHandler {
                         abstractionActivityMap != null ? abstractionActivityMap.get(ddpParticipantId) : null,
                         abstractionSummary != null ? abstractionSummary.get(ddpParticipantId) : null,
                         null,
-                        null));
+                        null, null));
             }
         }
         logger.info("Returning list w/ " + participantList.size() + " pts now");

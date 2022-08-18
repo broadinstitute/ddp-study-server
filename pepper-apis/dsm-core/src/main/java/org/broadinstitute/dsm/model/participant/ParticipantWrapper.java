@@ -7,6 +7,7 @@ import org.broadinstitute.dsm.db.*;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.model.Filter;
+import org.broadinstitute.dsm.db.ClinicalOrder;
 import org.broadinstitute.dsm.model.elastic.ESProfile;
 import org.broadinstitute.dsm.model.elastic.filter.FilterParser;
 import org.broadinstitute.dsm.model.elastic.filter.query.DsmAbstractQueryBuilder;
@@ -144,6 +145,7 @@ public class ParticipantWrapper {
             List<KitRequestShipping> kitRequestShipping = esDsm.getKitRequestShipping();
             List<Tissue> tissues = esDsm.getTissue();
             List<SmId> smIds = esDsm.getSmId();
+            List<ClinicalOrder> clinicalOrders = esDsm.getClinicalOrders();
 
             mapSmIdsToProperTissue(tissues, smIds);
 
@@ -162,6 +164,7 @@ public class ParticipantWrapper {
             participantWrapperDto.setParticipantData(participantData);
             participantWrapperDto.setAbstractionActivities(Collections.emptyList());
             participantWrapperDto.setAbstractionSummary(Collections.emptyList());
+            participantWrapperDto.setClinicalOrders(clinicalOrders);
             result.add(participantWrapperDto);
         });
     }

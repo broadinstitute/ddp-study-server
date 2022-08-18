@@ -530,6 +530,8 @@ public class DBConstants {
     public static final String MERCURY_ORDER_STATUS = "order_status";
     public static final String MERCURY_STATUS_DETAIL = "status_detail";
     public static final String MERCURY_SAMPLE_TYPE = "sample_type";
-
-
+    public static final String DDP_MERCURY_SEQUENCING = "ddp_mercury_sequencing";
+    public static final String MERCURY_SEQUENCING_ID = "mercury_sequencing_id";
+    public static final String MERCURY_PDO_ID = "mercury_pddo_id";
+    public static final String DDP_MERCURY_SEQUENCING_ALIAS = "clinical";
 }

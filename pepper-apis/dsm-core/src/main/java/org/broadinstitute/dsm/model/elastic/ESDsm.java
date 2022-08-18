@@ -8,6 +8,7 @@ import java.util.Optional;
 import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 import lombok.Setter;
+import org.broadinstitute.dsm.db.ClinicalOrder;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistory;
@@ -77,6 +78,8 @@ public class ESDsm {
 
     List<CohortTag> cohortTag;
 
+    List<ClinicalOrder> clinicalOrders;
+
     public List<Tissue> getTissue() {
         if (tissue == null) {
             tissue = Collections.emptyList();
@@ -136,5 +139,12 @@ public class ESDsm {
 
     public Optional<Participant> getNewOsteoParticipant() {
         return Optional.ofNullable(newOsteoParticipant);
+    }
+
+    public List<ClinicalOrder> getClinicalOrders() {
+        if (clinicalOrders == null) {
+            clinicalOrders = Collections.emptyList();
+        }
+        return clinicalOrders;
     }
 }
