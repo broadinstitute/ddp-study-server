@@ -12,6 +12,7 @@ import org.broadinstitute.dsm.util.NotificationUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+//used before we had the connection with GP, so we needed a way to tell dsm that a kit was back
 public class KitReceivedUseCase extends BaseKitUseCase {
 
     private static final Logger logger = LoggerFactory.getLogger(KitReceivedUseCase.class);

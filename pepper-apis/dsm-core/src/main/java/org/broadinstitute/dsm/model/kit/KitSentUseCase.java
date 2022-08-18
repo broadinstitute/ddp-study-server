@@ -8,6 +8,7 @@ import org.broadinstitute.dsm.route.kit.KitPayload;
 import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
 import org.broadinstitute.dsm.route.kit.ScanPayload;
 
+//setting a kit to sent without the final scan (where there is no barcode)
 public class KitSentUseCase extends KitFinalSentBaseUseCase {
 
     public KitSentUseCase(KitPayload kitPayload, KitDao kitDao) {
