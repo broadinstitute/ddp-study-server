@@ -136,7 +136,6 @@ public class DataLoader {
     private static final String DOB_DATE_FORMAT = "d/M/yyyy";
     private static final String DEFAULT_DSM_BIOPSY_GUID = "1";
     private static final int DSM_DEFAULT_ON_DEMAND_TRIGGER_ID = -2;
-
     void loadMailingListData(Handle handle, MailingListData data, String studyCode) {
         log.info("load mailinglist");
         JdbiMailingList dao = handle.attach(JdbiMailingList.class);
@@ -575,6 +574,8 @@ public class DataLoader {
         String ddpLastUpdated = releaseSurvey.getDdpLastupdated();
         Integer submissionStatus = releaseSurvey.getDatstatSubmissionstatus();
 
+        JdbiMedicalProvider jdbiMedicalProvider = handle.attach(JdbiMedicalProvider.class);
+
         Long statusLastUpdatedAt = null;
         Long ddpCreatedAt = null;
         Long ddpCompletedAt = null;
@@ -641,7 +642,7 @@ public class DataLoader {
             for (Physician physician : physicianList) {
 
                 String guid = getMedicalProviderGuid(handle);
-                long countryAdressId = getCountryAdressId(handle, physician.getCountry());
+                long countryAddressId = getCountryAddressId(jdbiMedicalProvider, physician.getCountry());
                 medicalProviderDao.insert(new MedicalProviderDto(
                         null,
                         guid,
@@ -652,7 +653,7 @@ public class DataLoader {
                         physician.getName(),
                         physician.getCity(),
                         physician.getState(),
-                        countryAdressId,
+                        countryAddressId,
                         physician.getZipcode(),
                         physician.getPhonenumber(),
                         physician.getPhysicianid(),
@@ -668,7 +669,7 @@ public class DataLoader {
             for (Institution institution : institutionList) {
 
                 String guid = getMedicalProviderGuid(handle);
-                long countryAdressId = getCountryAdressId(handle, institution.getCountry());
+                long countryAddressId = getCountryAddressId(jdbiMedicalProvider, institution.getCountry());
                 medicalProviderDao.insert(new MedicalProviderDto(
                         null,
                         guid,
@@ -679,7 +680,7 @@ public class DataLoader {
                         null, //name
                         institution.getCity(),
                         institution.getState(),
-                        countryAdressId,
+                        countryAddressId,
                         null,
                         null,
                         institution.getInstitutionId(),
@@ -692,7 +693,7 @@ public class DataLoader {
                 || releaseSurvey.getInitialBiopsyCity() != null
                 || releaseSurvey.getInitialBiopsyState() != null) {
             String guid = getMedicalProviderGuid(handle);
-            long countryAdressId = getCountryAdressId(handle, releaseSurvey.getCountry());
+            long countryAddressId = getCountryAddressId(jdbiMedicalProvider, releaseSurvey.getCountry());
             medicalProviderDao.insert(new MedicalProviderDto(
                     null,
                     guid,
@@ -703,7 +704,7 @@ public class DataLoader {
                     null, //name
                     releaseSurvey.getInitialBiopsyCity(),
                     releaseSurvey.getInitialBiopsyState(),
-                    countryAdressId,
+                    countryAddressId,
                     null,
                     null,
                     DEFAULT_DSM_BIOPSY_GUID, null
@@ -738,8 +739,8 @@ public class DataLoader {
                 MedicalProviderTable.TABLE_NAME, MedicalProviderTable.MEDICAL_PROVIDER_GUID);
     }
 
-    long getCountryAdressId(Handle handle, String countryName) {
-        return handle.attach(JdbiMedicalProvider.class).getCountryAddressInfoId(countryName);
+    long getCountryAddressId(JdbiMedicalProvider JdbiMedicalProvider, String countryName) {
+        return JdbiMedicalProvider.getCountryAddressInfoId(countryName);
     }
 
     public void loadConsentSurveyData(Handle handle,

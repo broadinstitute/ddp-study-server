@@ -218,7 +218,7 @@ public interface JdbiMedicalProvider extends SqlObject {
     );
 
     @SqlQuery("SELECT country_address_info_id from country_address_info where name =: name")
-    long getCountryAddressInfoId(@Bind("name")String countryName);
+    long getCountryAddressInfoId(@Bind("name") String countryName);
 
     @SqlQuery("SELECT "
             + "     ump.user_medical_provider_id, "
