@@ -3,13 +3,11 @@ package org.broadinstitute.dsm.route;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.NonNull;
-import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDaoImpl;
 import org.broadinstitute.dsm.exception.DuplicateException;
 import org.broadinstitute.dsm.model.patch.BasePatch;
 import org.broadinstitute.dsm.model.patch.BasePatchPreProcessor;
 import org.broadinstitute.dsm.model.patch.Patch;
 import org.broadinstitute.dsm.model.patch.PatchFactory;
-import org.broadinstitute.dsm.model.patch.ParentRelatedPatchPreProcessor;
 import org.broadinstitute.dsm.model.patch.PatchPreProcessorPayload;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -48,7 +46,7 @@ public class PatchRoute extends RequestHandler {
                 String requestBody   = request.body();
                 Patch patch          = GSON.fromJson(requestBody, Patch.class);
                 Patch processedPatch = BasePatchPreProcessor
-                        .fromPayload(PatchPreProcessorPayload.of(patch.getTableAlias(), patch.getParent()))
+                        .produce(PatchPreProcessorPayload.of(patch.getTableAlias(), patch.getParent()))
                         .process(patch);
                 BasePatch patcher    = PatchFactory.makePatch(processedPatch, notificationUtil);
                 return patcher.doPatch();

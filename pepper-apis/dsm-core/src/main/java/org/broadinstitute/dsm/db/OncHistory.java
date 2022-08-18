@@ -8,14 +8,19 @@ import java.sql.SQLException;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.NonNull;
+import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
+import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.model.NameValue;
+import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@TableName(name = DBConstants.DDP_ONC_HISTORY, alias = DBConstants.DDP_ONC_HISTORY_ALIAS,
+        primaryKey = DBConstants.ONC_HISTORY_ID, columnPrefix = "")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class OncHistory {
@@ -25,13 +30,18 @@ public class OncHistory {
     private static final String SQL_UPDATE_ONC_HISTORY =
             "UPDATE ddp_onc_history SET created = ?, last_changed = ?, changed_by = ? WHERE participant_id = ? AND created IS NULL";
 
+    @ColumnName(DBConstants.PARTICIPANT_ID)
     private long participantId;
 
+    @ColumnName(DBConstants.ONC_HISTORY_CREATED)
     @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String created;
 
+    @ColumnName(DBConstants.ONC_HISTORY_REVIEWED)
     @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String reviewed;
+
+    @ColumnName(DBConstants.CHANGED_BY)
     private String changedBy;
 
     public OncHistory() {
