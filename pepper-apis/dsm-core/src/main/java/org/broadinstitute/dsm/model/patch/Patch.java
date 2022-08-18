@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Data
-public class Patch {
+public class Patch implements Cloneable {
 
     public static final String SQL_CHECK_UNIQUE = "SELECT * FROM $table WHERE ($colName = ? ) and deleted <=> 0 ";
     public static final String TABLE = "$table";
@@ -50,6 +50,12 @@ public class Patch {
 
     public Patch() {
 
+    }
+
+    // used in PatchPreProcessorTest.java
+    public Patch(String parent, String parentId) {
+        this.parent = parent;
+        this.parentId = parentId;
     }
 
     //regular patch
@@ -181,5 +187,14 @@ public class Patch {
             return dbVals;
         });
         return (Boolean) results.resultValue;
+    }
+
+    @Override
+    protected Patch clone() {
+        try {
+            return (Patch) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
