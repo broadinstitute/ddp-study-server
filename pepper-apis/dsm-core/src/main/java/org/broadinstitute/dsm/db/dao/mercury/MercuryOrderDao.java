@@ -9,11 +9,14 @@ import java.sql.Types;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.dsm.db.ClinicalOrder;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderDto;
+import org.broadinstitute.dsm.db.dto.mercury.MercuryOrderUseCase;
 import org.broadinstitute.dsm.exception.DSMPubSubException;
 import org.broadinstitute.dsm.model.mercury.BaseMercuryStatusMessage;
 import org.broadinstitute.dsm.model.mercury.MercuryStatusMessage;
@@ -52,17 +55,25 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                     + "AND NOT sm.sm_id_value IS NULL";
 
     public static String SQL_SELECT_ORDER_NUMBER = "Select * from ddp_mercury_sequencing where order_id = ?";
+    public static String SQL_SELECT_LAST_UPDATED_ORDER =
+            "Select min(mercury_sequencing_id) as mercury_sequencing_id, min(ddp_instance_id) as ddp_instance_id, min(ddp_participant_id) "
+                    +
+                    "  as ddp_participant_id, min(order_date) as order_date, order_id, tissue_id, dsm_kit_request_id from ddp_mercury_sequencing "
+                    + " where order_id =?  group by order_id, tissue_id, dsm_kit_request_id ";
     public static String SQL_UPDATE_ORDER_STATUS =
             "UPDATE ddp_mercury_sequencing SET order_status = ?, status_date = ?, mercury_pdo_id = ?,  "
                     + " status_detail = ? where order_id = ?";
 
+
     public static void updateOrderStatus(BaseMercuryStatusMessage baseMercuryStatusMessage) throws Exception {
+        long orderDate = System.currentTimeMillis();
+        AtomicReference<ClinicalOrder> clinicalOrderAtomicReference = new AtomicReference<>();
         SimpleResult results = TransactionWrapper.inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult();
             MercuryStatusMessage mercuryStatusMessage = baseMercuryStatusMessage.getStatus();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_ORDER_STATUS)) {
                 stmt.setString(1, mercuryStatusMessage.getOrderStatus());
-                stmt.setLong(2, System.currentTimeMillis());
+                stmt.setLong(2, orderDate);
                 stmt.setString(3, mercuryStatusMessage.getPdoKey());
                 stmt.setString(4, mercuryStatusMessage.getDetails());
                 stmt.setString(5, mercuryStatusMessage.getOrderID());
@@ -82,11 +93,30 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
                 dbVals.resultException =
                         new RuntimeException("Error updating Mercury status for order id " + mercuryStatusMessage.getOrderID(), ex);
             }
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_LAST_UPDATED_ORDER)) {
+                stmt.setString(1, mercuryStatusMessage.getOrderID());
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    clinicalOrderAtomicReference.set(new ClinicalOrder(rs.getString(DBConstants.MERCURY_SEQUENCING_ID),
+                            rs.getString(DBConstants.MERCURY_ORDER_ID),
+                            rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getLong(DBConstants.MERCURY_ORDER_DATE),
+                            rs.getLong(DBConstants.DDP_INSTANCE_ID),
+                            null, 0L, null,
+                            rs.getLong(DBConstants.TISSUE_ID), rs.getLong(DBConstants.DSM_KIT_REQUEST_ID), null));
+                } else {
+                    dbVals.resultException = new RuntimeException(
+                            "Couldn't get ddp instance id for order " + mercuryStatusMessage.getOrderID());
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException =
+                        new RuntimeException("Error getting ddp instance id for order " + mercuryStatusMessage.getOrderID(), ex);
+            }
             return dbVals;
         });
         if (results.resultException != null) {
             throw new DSMPubSubException("Unable to process the status of the order " + baseMercuryStatusMessage, results.resultException);
         }
+        MercuryOrderUseCase.exportStatusToES(baseMercuryStatusMessage, clinicalOrderAtomicReference.get(), orderDate);
     }
 
     public HashMap<String, MercuryOrderDto> getPossibleBarcodesForParticipant(String ddpParticipantId) {

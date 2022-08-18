@@ -1,12 +1,10 @@
 package org.broadinstitute.dsm.db.dto.mercury;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.dsm.db.ClinicalOrder;
@@ -16,20 +14,13 @@ import org.broadinstitute.dsm.db.dao.ddp.tissue.TissueSMIDDao;
 import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.db.dao.mercury.MercurySampleDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.model.NameValue;
-import org.broadinstitute.dsm.model.elastic.export.ExportFacade;
-import org.broadinstitute.dsm.model.elastic.export.ExportFacadePayload;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
-import org.broadinstitute.dsm.model.elastic.export.generate.GeneratorPayload;
 import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
-import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.mercury.BaseMercuryStatusMessage;
 import org.broadinstitute.dsm.model.mercury.MercuryStatusMessage;
-import org.broadinstitute.dsm.model.patch.Patch;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
 @Slf4j
 public class MercuryOrderUseCase {
@@ -79,49 +70,31 @@ public class MercuryOrderUseCase {
                     new PutToNestedScriptBuilder()).export();
         } catch (Exception e) {
             log.error(String.format("Error inserting newly created clinical order: %s in "
-                    + "ElasticSearch for instance ", clinicalOrder.getOrderId(), ddpInstanceDto.getInstanceName()));
+                    + "ElasticSearch for instance %s ", clinicalOrder.getOrderId(), ddpInstanceDto.getInstanceName()));
             e.printStackTrace();
         }
     }
 
-    /**
-     * This function is supposed to export the new status to ES,
-     * but I can't get a hold of ddpInstance from the
-     * BaseMercuryStatusMessage
-     */
-    public static void exportStatusToES(BaseMercuryStatusMessage baseMercuryStatusMessage, DDPInstanceDto ddpInstance) {
-        String matchQueryName = "dsm.clinicalOrder.orderId";
-        Optional<ElasticSearchParticipantDto> elasticSearchParticipantDto = null;
-        String orderId = baseMercuryStatusMessage.getStatus().getOrderID();
-        try {
-            elasticSearchParticipantDto =
-                    Optional.of(ElasticSearchUtil.getElasticSearchForGivenMatch(ddpInstance.getEsParticipantIndex(),
-                            orderId, ElasticSearchUtil.getClientInstance(), matchQueryName));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        Patch patch = new Patch();
-        patch.setId(orderId);
+    public static void exportStatusToES(BaseMercuryStatusMessage baseMercuryStatusMessage, ClinicalOrder clinicalOrder, long orderDate) {
+        DDPInstanceDto ddpInstanceDto =
+                new DDPInstanceDao().getDDPInstanceByInstanceId((int) clinicalOrder.getDdpInstanceId()).orElseThrow();
         MercuryStatusMessage mercuryStatusMessage = baseMercuryStatusMessage.getStatus();
-        exportStatusFields("clinicalOrder.orderStatus", mercuryStatusMessage.getOrderStatus(), ddpInstance, elasticSearchParticipantDto,
-                patch);
-        exportStatusFields("clinicalOrder.orderDate", System.currentTimeMillis(), ddpInstance, elasticSearchParticipantDto, patch);
-        exportStatusFields("clinicalOrder.mercuryPdoId", mercuryStatusMessage.getPdoKey(), ddpInstance, elasticSearchParticipantDto, patch);
-        exportStatusFields("clinicalOrder.statusDetail", mercuryStatusMessage.getDetails(), ddpInstance, elasticSearchParticipantDto,
-                patch);
+        clinicalOrder.setOrderStatus(mercuryStatusMessage.getOrderStatus());
+        clinicalOrder.setOrderDate(orderDate);
+        clinicalOrder.setMercuryPdoId(mercuryStatusMessage.getPdoKey());
+        clinicalOrder.setStatusDetail(mercuryStatusMessage.getDetails());
 
-    }
+        try {
+            UpsertPainlessFacade.of(DBConstants.DDP_MERCURY_SEQUENCING_ALIAS, clinicalOrder, ddpInstanceDto,
+                    ESObjectConstants.MERCURY_SEQUENCING_ID, ESObjectConstants.DOC_ID,
+                    Exportable.getParticipantGuid(clinicalOrder.getDdpParticipantId(), ddpInstanceDto.getEsParticipantIndex()),
+                    new PutToNestedScriptBuilder()).export();
+        } catch (Exception e) {
+            log.error(String.format("Error inserting updated status for clinical order: %s in "
+                    + "ElasticSearch for instance %s", clinicalOrder.getOrderId(), ddpInstanceDto.getInstanceName()));
+            e.printStackTrace();
+        }
 
-    private static void exportStatusFields(String fieldPath, Object fieldValue, DDPInstanceDto ddpInstance,
-                                           Optional<ElasticSearchParticipantDto> elasticSearchParticipantDto, Patch patch) {
-        GeneratorPayload
-                generatorPayload = new GeneratorPayload(new NameValue(fieldPath, fieldValue), patch);
-        ExportFacadePayload exportFacadePayload =
-                new ExportFacadePayload(ddpInstance.getEsParticipantIndex(), elasticSearchParticipantDto.orElseThrow().getParticipantId(),
-                        generatorPayload, ddpInstance.getInstanceName());
-        ExportFacade exportFacade = new ExportFacade(exportFacadePayload);
-        exportFacade.export();
     }
 
     public List<String> collectBarcodes(MercurySampleDto[] mercurySampleDtos) {
