@@ -1,7 +1,7 @@
 package org.broadinstitute.dsm.db;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -12,7 +12,6 @@ import org.broadinstitute.dsm.statics.DBConstants;
         alias = DBConstants.DDP_MERCURY_SEQUENCING_ALIAS,
         primaryKey = DBConstants.MERCURY_SEQUENCING_ID,
         columnPrefix = "")
-@AllArgsConstructor
 public class ClinicalOrder {
     @ColumnName(DBConstants.MERCURY_SEQUENCING_ID)
     public String mercurySequencingId;
@@ -53,6 +52,28 @@ public class ClinicalOrder {
     @ColumnName(DBConstants.MERCURY_STATUS_DETAIL)
     public String statusDetail;
 
+    public ClinicalOrder(String mercurySequencingId, String orderId, String ddpParticipantId, Long orderDate,
+                         long ddpInstanceId, String orderStatus, Long statusDate, String mercuryPdoId, Long tissueId,
+                         Long dsmKitRequestId, String statusDetail) {
+        this.mercurySequencingId = mercurySequencingId;
+        this.orderId = orderId;
+        this.orderDate = orderDate;
+        this.orderStatus = orderStatus;
+        if (StringUtils.isBlank(orderStatus)) {
+            this.orderStatus = "Sent";
+        }
+        this.statusDate = statusDate;
+        this.mercuryPdoId = mercuryPdoId;
+        this.tissueId = tissueId;
+        this.dsmKitRequestId = dsmKitRequestId;
+        this.statusDetail = statusDetail;
+        this.ddpParticipantId = ddpParticipantId;
+        this.ddpInstanceId = ddpInstanceId;
+    }
+
+    public ClinicalOrder() {
+
+    }
 
 
 }

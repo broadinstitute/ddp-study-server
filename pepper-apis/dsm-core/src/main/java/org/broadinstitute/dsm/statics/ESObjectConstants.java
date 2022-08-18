@@ -140,4 +140,5 @@ public class ESObjectConstants {
     public static final String UPLOADED_AT = "uploadedAt";
     public static final String SCANNED_AT = "scannedAt";
     public static final String SCAN_RESULT = "scanResult";
+    public static final String MERCURY_SEQUENCING_ID = "orderId";
 }

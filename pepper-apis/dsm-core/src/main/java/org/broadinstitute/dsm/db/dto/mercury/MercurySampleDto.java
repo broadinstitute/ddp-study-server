@@ -12,4 +12,6 @@ public class MercurySampleDto {
     Long tissueId;
     Long dsmKitRequestId;
     String sequencingRestriction;
+    String lastStatus;
+    String lastOrderNumber;
 }

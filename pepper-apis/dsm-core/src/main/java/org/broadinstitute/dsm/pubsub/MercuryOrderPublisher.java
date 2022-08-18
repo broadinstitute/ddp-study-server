@@ -122,6 +122,7 @@ public class MercuryOrderPublisher {
                 List<MercuryOrderDto> newOrders = MercuryOrderUseCase.createAllOrders(barcodes, ddpParticipantId, mercuryOrderId, userId);
                 this.publishWithErrorHandler(projectId, topicId, json);
                 this.mercuryOrderDao.insertMercuryOrders(newOrders);
+                MercuryOrderUseCase.exportToES(newOrders);
                 return mercuryOrderId;
             } catch (Exception e) {
                 throw new RuntimeException("Unable to  publish to pubsub/ db " + json, e);

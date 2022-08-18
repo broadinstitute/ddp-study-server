@@ -31,9 +31,13 @@ public class ClinicalOrderDao implements Dao<ClinicalOrderDto> {
             + "LEFT join ddp_kit_request kit on (ms.dsm_kit_request_id = kit.dsm_kit_request_id)"
             + "WHERE ms.ddp_instance_id = (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = ? ) order by order_date desc";
 
-    public static String SQL_GET_ALL_ORDERS_FOR_REALM = "select mercury_sequencing_id, order_id, ddp_participant_id, order_date, barcode, "
-            + " ddp_instance_id, kit_type_id, order_status, status_date, mercury_pdo_id, tissue_id, dsm_kit_request_id, status_detail"
-            + " from ddp_mercury_sequencing";
+    public static String SQL_GET_ALL_ORDERS_FOR_REALM =
+            "select min(mercury_sequencing_id) as mercury_sequencing_id, order_id, min(ddp_participant_id) as ddp_participant_id, "
+                    + "  min(order_date) as order_date, min(ddp_instance_id) as ddp_instance_id, min(order_status) as order_status,  "
+                    + "  min(status_date) as status_date,min(mercury_pdo_id) as mercury_pdo_id, tissue_id, dsm_kit_request_id,"
+                    + "  min(status_detail) as status_detail from ddp_mercury_sequencing "
+                    + " WHERE ddp_instance_id = (SELECT ddp_instance_id FROM ddp_instance WHERE instance_name = ? ) "
+                    + " group by order_id, tissue_id, dsm_kit_request_id";
 
 
     public static String COMPLETED_ORDER_STATUS = "Completed";
@@ -117,8 +121,8 @@ public class ClinicalOrderDao implements Dao<ClinicalOrderDto> {
                                 new ClinicalOrder(rs.getString(DBConstants.MERCURY_SEQUENCING_ID),
                                         rs.getString(DBConstants.MERCURY_ORDER_ID),
                                         rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getLong(DBConstants.MERCURY_ORDER_DATE),
-                                        rs.getString(DBConstants.MERCURY_BARCODE), rs.getLong(DBConstants.DDP_INSTANCE_ID),
-                                        rs.getLong(DBConstants.KIT_TYPE_ID), rs.getString(DBConstants.MERCURY_ORDER_STATUS),
+                                        rs.getLong(DBConstants.DDP_INSTANCE_ID),
+                                        rs.getString(DBConstants.MERCURY_ORDER_STATUS),
                                         rs.getLong(DBConstants.MERCURY_STATUS_DATE), rs.getString(DBConstants.MERCURY_PDO_ID),
                                         rs.getLong(DBConstants.TISSUE_ID), rs.getLong(DBConstants.DSM_KIT_REQUEST_ID),
                                         rs.getString(DBConstants.MERCURY_STATUS_DETAIL)));

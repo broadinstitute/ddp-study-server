@@ -2081,7 +2081,7 @@
                   "type": "keyword"
                 },
                 "orderId": {
-                  "type": "text",
+                  "type": "keyword",
                   "fields": {
                     "keyword": {
                       "type": "keyword"
