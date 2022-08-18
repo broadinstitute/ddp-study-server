@@ -33,6 +33,7 @@ public class PropertyInfo {
                     Map.entry(DBConstants.SM_ID_TABLE_ALIAS, new PropertyInfo(SmId.class, true)),
                     Map.entry(DBConstants.COHORT_ALIAS, new PropertyInfo(CohortTag.class, true)),
                     Map.entry(DBConstants.DDP_KIT_REQUEST_ALIAS, new PropertyInfo(KitRequestShipping.class, true)),
+                    Map.entry(DBConstants.DDP_KIT_ALIAS, new PropertyInfo(KitRequestShipping.class, true)),
                     Map.entry(DBConstants.DDP_MERCURY_SEQUENCING_ALIAS, new PropertyInfo(ClinicalOrder.class, true))));
 
     private Class<?> propertyClass;

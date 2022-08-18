@@ -534,4 +534,5 @@ public class DBConstants {
     public static final String MERCURY_SEQUENCING_ID = "mercury_sequencing_id";
     public static final String MERCURY_PDO_ID = "mercury_pdo_id";
     public static final String DDP_MERCURY_SEQUENCING_ALIAS = "cl";
+    public static final String DDP_KIT_ALIAS = "kit";
 }
