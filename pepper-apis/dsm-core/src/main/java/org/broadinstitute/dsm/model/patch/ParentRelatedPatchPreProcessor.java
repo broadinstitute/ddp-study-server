@@ -22,14 +22,16 @@ public class ParentRelatedPatchPreProcessor extends BasePatchPreProcessor {
 
     @Override
     protected final Patch updatePatchIfRequired() {
-        Patch maybeUpdatedResult = originalPatch;
-        if (parentEqualsGuid(originalPatch)) {
-            maybeUpdatedResult = fetchDdpInstanceId
-                    .andThen(fetchParticipantId)
-                    .andThen(updatePatch)
-                    .apply(originalPatch.getRealm());
-        }
-        return maybeUpdatedResult;
+        return parentEqualsGuid(originalPatch)
+                ? updatePatchAndGet()
+                : originalPatch;
+    }
+
+    private Patch updatePatchAndGet() {
+        return fetchDdpInstanceId
+                .andThen(fetchParticipantId)
+                .andThen(updatePatch)
+                .apply(originalPatch.getRealm());
     }
 
     private final Function<String, Integer> fetchDdpInstanceId = this::getDdpInstanceIdAsInt;
