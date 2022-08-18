@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDaoImpl;
+import org.broadinstitute.dsm.model.patch.process.ParentRelatedPatchPreProcessor;
 import org.junit.Assert;
 import org.junit.Test;
 

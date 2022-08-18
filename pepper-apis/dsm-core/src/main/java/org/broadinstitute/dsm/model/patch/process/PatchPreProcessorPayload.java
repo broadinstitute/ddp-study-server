@@ -1,5 +1,5 @@
 
-package org.broadinstitute.dsm.model.patch;
+package org.broadinstitute.dsm.model.patch.process;
 
 import lombok.Data;
 

@@ -1,6 +1,7 @@
-package org.broadinstitute.dsm.model.patch;
+package org.broadinstitute.dsm.model.patch.process;
 
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDaoImpl;
+import org.broadinstitute.dsm.model.patch.Patch;
 import org.broadinstitute.dsm.statics.DBConstants;
 
 // A base class for processing and transforming Patch instance.
