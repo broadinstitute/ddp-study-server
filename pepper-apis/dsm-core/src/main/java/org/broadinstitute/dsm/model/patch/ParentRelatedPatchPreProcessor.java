@@ -11,9 +11,6 @@ import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 // Correct value for patch.parent is "participantId" and for patch.parentId the correct value is read from DB.
 public class ParentRelatedPatchPreProcessor extends BasePatchPreProcessor {
 
-    private static final String DDP_PARTICIPANT_ID = "ddpParticipantId";
-    private static final String PARTICIPANT_ID     = "participantId";
-
     private ParticipantDao participantDao;
 
     public ParentRelatedPatchPreProcessor(ParticipantDao participantDao) {

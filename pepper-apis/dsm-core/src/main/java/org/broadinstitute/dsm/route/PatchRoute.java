@@ -6,9 +6,11 @@ import lombok.NonNull;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDaoImpl;
 import org.broadinstitute.dsm.exception.DuplicateException;
 import org.broadinstitute.dsm.model.patch.BasePatch;
+import org.broadinstitute.dsm.model.patch.BasePatchPreProcessor;
 import org.broadinstitute.dsm.model.patch.Patch;
 import org.broadinstitute.dsm.model.patch.PatchFactory;
 import org.broadinstitute.dsm.model.patch.ParentRelatedPatchPreProcessor;
+import org.broadinstitute.dsm.model.patch.PatchPreProcessorPayload;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
@@ -43,10 +45,12 @@ public class PatchRoute extends RequestHandler {
                 || UserUtil.checkUserAccess(null, userId, DBConstants.MR_VIEW, userIdRequest)
                 || UserUtil.checkUserAccess(null, userId, DBConstants.PT_LIST_VIEW, userIdRequest)) {
             try {
-                String requestBody = request.body();
-                Patch patch = new ParentRelatedPatchPreProcessor(new ParticipantDaoImpl())
-                        .process(GSON.fromJson(requestBody, Patch.class));
-                BasePatch patcher = PatchFactory.makePatch(patch, notificationUtil);
+                String requestBody   = request.body();
+                Patch patch          = GSON.fromJson(requestBody, Patch.class);
+                Patch processedPatch = BasePatchPreProcessor
+                        .fromPayload(PatchPreProcessorPayload.of(patch.getTableAlias(), patch.getParent()))
+                        .process(patch);
+                BasePatch patcher    = PatchFactory.makePatch(processedPatch, notificationUtil);
                 return patcher.doPatch();
             } catch (DuplicateException e) {
                 response.status(500);
