@@ -2074,7 +2074,7 @@
                 }
               }
             },
-            "clinicalOrders": {
+            "clinicalOrder": {
               "type": "nested",
               "properties": {
                 "mercurySequencingId": {
