@@ -83,10 +83,12 @@ public class MercuryOrderUseCase {
             e.printStackTrace();
         }
     }
-    /** This function is supposed to export the new status to ES,
+
+    /**
+     * This function is supposed to export the new status to ES,
      * but I can't get a hold of ddpInstance from the
      * BaseMercuryStatusMessage
-     * */
+     */
     public static void exportStatusToES(BaseMercuryStatusMessage baseMercuryStatusMessage, DDPInstanceDto ddpInstance) {
         String matchQueryName = "dsm.clinicalOrder.orderId";
         Optional<ElasticSearchParticipantDto> elasticSearchParticipantDto = null;
