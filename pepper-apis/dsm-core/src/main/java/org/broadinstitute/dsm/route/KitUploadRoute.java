@@ -213,8 +213,8 @@ public class KitUploadRoute extends RequestHandler {
                 return e.getMessage();
             }
         } else {
-            response.status(500);
-            return new Result(500, UserErrorMessages.NO_RIGHTS);
+            response.status(403);
+            return UserErrorMessages.NO_RIGHTS;
         }
     }
 
