@@ -1,11 +1,11 @@
 
-package org.broadinstitute.dsm.model.patch;
+package org.broadinstitute.dsm.model.patch.process;
 
 import java.util.Optional;
 
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDaoImpl;
-import org.broadinstitute.dsm.model.patch.process.ParentRelatedPatchPreProcessor;
+import org.broadinstitute.dsm.model.patch.Patch;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -34,7 +34,7 @@ public class ParentRelatedPatchPreProcessorTest {
         }
 
         @Override
-        int getDdpInstanceIdAsInt(String realm) {
+        protected int getDdpInstanceIdAsInt(String realm) {
             return 0;
         }
     }

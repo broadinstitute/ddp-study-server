@@ -52,9 +52,9 @@ public class Patch implements Cloneable {
 
     }
 
-    // used in PatchPreProcessorTest.java
+    // used in ParentRelatedPatchPreProcessorTest.java
     public Patch(String parent, String parentId) {
-        this.parent = parent;
+        this.parent   = parent;
         this.parentId = parentId;
     }
 
@@ -190,7 +190,7 @@ public class Patch implements Cloneable {
     }
 
     @Override
-    protected Patch clone() {
+    public Patch clone() {
         try {
             return (Patch) super.clone();
         } catch (CloneNotSupportedException e) {
