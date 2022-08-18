@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.model.patch;
 
+// A base class for processing and transforming Patch instance.
+// A child class must implement updatePatchIfRequired();
 public abstract class BasePatchPreProcessor implements PreProcessor<Patch> {
 
     protected Patch originalPatch;

@@ -6,17 +6,17 @@ import java.util.function.Function;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 
-// PatchPreProcessor makes sure that patch.parent and patch.parentId are set to correct values.
-// It must be done in order for the patch request to work correctly in DB and ES.
+// ParentRelatedPatchPreProcessor makes sure that patch.parent and patch.parentId are set to correct values.
+// It must be done in order for the patch request to exercise correct operations in DB and ES.
 // Correct value for patch.parent is "participantId" and for patch.parentId the correct value is read from DB.
-public class PatchPreProcessor extends BasePatchPreProcessor {
+public class ParentRelatedPatchPreProcessor extends BasePatchPreProcessor {
 
     private static final String DDP_PARTICIPANT_ID = "ddpParticipantId";
     private static final String PARTICIPANT_ID     = "participantId";
 
     private ParticipantDao participantDao;
 
-    public PatchPreProcessor(ParticipantDao participantDao) {
+    public ParentRelatedPatchPreProcessor(ParticipantDao participantDao) {
         this.participantDao = participantDao;
     }
 

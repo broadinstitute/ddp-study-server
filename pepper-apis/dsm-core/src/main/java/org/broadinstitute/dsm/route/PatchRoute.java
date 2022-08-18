@@ -8,7 +8,7 @@ import org.broadinstitute.dsm.exception.DuplicateException;
 import org.broadinstitute.dsm.model.patch.BasePatch;
 import org.broadinstitute.dsm.model.patch.Patch;
 import org.broadinstitute.dsm.model.patch.PatchFactory;
-import org.broadinstitute.dsm.model.patch.PatchPreProcessor;
+import org.broadinstitute.dsm.model.patch.ParentRelatedPatchPreProcessor;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
@@ -44,7 +44,7 @@ public class PatchRoute extends RequestHandler {
                 || UserUtil.checkUserAccess(null, userId, DBConstants.PT_LIST_VIEW, userIdRequest)) {
             try {
                 String requestBody = request.body();
-                Patch patch = new PatchPreProcessor(new ParticipantDaoImpl())
+                Patch patch = new ParentRelatedPatchPreProcessor(new ParticipantDaoImpl())
                         .process(GSON.fromJson(requestBody, Patch.class));
                 BasePatch patcher = PatchFactory.makePatch(patch, notificationUtil);
                 return patcher.doPatch();
