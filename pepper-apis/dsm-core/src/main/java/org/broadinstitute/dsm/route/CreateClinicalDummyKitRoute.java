@@ -139,6 +139,7 @@ public class CreateClinicalDummyKitRoute implements Route {
                     .writeRequest(ddpInstance.getDdpInstanceId(), kitRequestId, desiredKitType.getKitId(), ddpParticipantId,
                             participantCollaboratorId, collaboratorSampleId, USER_ID, "", "", "", false, "", ddpInstance);
             bspDummyKitDao.updateKitLabel(kitLabel, dsmKitRequestId);
+            bspDummyKitDao.updateCollectionDate(dsmKitRequestId);
             logger.info("Inserted new " + kitTypeString + " for participant " + participantCollaboratorId);
             response.status(200);
             return null;
@@ -173,6 +174,7 @@ public class CreateClinicalDummyKitRoute implements Route {
                 logger.info("found short id " + maybeParticipantByParticipantId.get().getProfile().map(ESProfile::getHruid));
                 // check the test participant is still valid, enrolled and haas a valid onc history, if not choose a new one, for a max 10 tries.
                 while (tries < 10 && (oncHistoryDetail == null || StringUtils.isBlank(oncHistoryDetail.getAccessionNumber())
+                        || StringUtils.isBlank(oncHistoryDetail.getDatePx())
                         || maybeParticipantByParticipantId.isEmpty()
                         || maybeParticipantByParticipantId.get().getProfile().map(ESProfile::getHruid).isEmpty()
                         || !participantIsEnrolled(maybeParticipantByParticipantId))) {

@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dto.kit.ClinicalKitDto;
 import org.broadinstitute.dsm.model.gp.ClinicalKitWrapper;
+import org.broadinstitute.dsm.route.ClinicalKitsRoute;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 
@@ -19,7 +20,7 @@ import org.broadinstitute.lddp.db.SimpleResult;
 public class ClinicalKitDao {
     public static final String PECGS = "PE-CGS";
     private static final String SQL_GET_CLINICAL_KIT_BASED_ON_SM_ID_VALUE =
-            "SELECT p.ddp_participant_id, accession_number, ddp.instance_name, t.collaborator_sample_id,  "
+            "SELECT p.ddp_participant_id, accession_number, ddp.instance_name, t.collaborator_sample_id, date_px,  "
                     + "kit_type_name, bsp_material_type, bsp_receptacle_type, ddp.ddp_instance_id FROM sm_id sm "
                     + "LEFT JOIN ddp_tissue t on (t.tissue_id  = sm.tissue_id) "
                     + "LEFT JOIN ddp_onc_history_detail oD on (oD.onc_history_detail_id = t.onc_history_detail_id) "
@@ -29,6 +30,7 @@ public class ClinicalKitDao {
                     + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
                     + "LEFT JOIN sm_id_type sit on (sit.sm_id_type_id = sm.sm_id_type_id) "
                     + "LEFT JOIN kit_type ktype on ( sit.kit_type_id = ktype.kit_type_id) WHERE sm.sm_id_value = ? ";
+    private static final String SQL_SET_ACCESSION_TIME = "UPDATE sm_id SET received_date = ?, received_by = ? WHERE sm_id_value = ?";
 
     public Optional<ClinicalKitWrapper> getClinicalKitFromSMId(String smIdValue) {
         SimpleResult results = inTransaction((conn) -> {
@@ -42,8 +44,7 @@ public class ClinicalKitDao {
                                 rs.getString(DBConstants.BSP_MATERIAL_TYPE), rs.getString(DBConstants.BSP_RECEPTABLE_TYPE), null, null,
                                 null, null, null, rs.getString(DBConstants.ACCESSION_NUMBER), null);
                         clinicalKitDto.setSampleType(rs.getString(DBConstants.KIT_TYPE_NAME));
-                        clinicalKitDto.setCollectionDate(
-                                "01/31/2021"); //TODO needs to get replaced to real values after we add these values to DSM
+                        clinicalKitDto.setCollectionDate(rs.getString(DBConstants.DATE_PX));
                         ClinicalKitWrapper clinicalKitWrapper =
                                 new ClinicalKitWrapper(clinicalKitDto, Integer.parseInt(rs.getString(DBConstants.DDP_INSTANCE_ID)),
                                         rs.getString(DBConstants.DDP_PARTICIPANT_ID));
@@ -75,8 +76,33 @@ public class ClinicalKitDao {
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(clinicalKitWrapper.getDdpInstanceId());
         clinicalKitDto.setNecessaryParticipantDataToClinicalKit(clinicalKitWrapper.getDdpParticipantId(), ddpInstance);
         if (StringUtils.isNotBlank(clinicalKitDto.getAccessionNumber())) {
+            setAccessionTimeForSMID(smIdValue);
             return clinicalKitDto;
         }
         throw new RuntimeException("The kit doesn't have an accession number! SM ID is: " + smIdValue);
+    }
+
+    private void setAccessionTimeForSMID(String smIdValue) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SET_ACCESSION_TIME)) {
+                stmt.setLong(1, System.currentTimeMillis());
+                stmt.setString(2, ClinicalKitsRoute.MERCURY);
+                stmt.setString(3, smIdValue);
+                int r = stmt.executeUpdate();
+                if (r != 1) { //number of sm ids with that value
+                    throw new RuntimeException(
+                            "Update query for smId accession time updated " + r + " rows! with smId value " + smIdValue);
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Error updating accession time for smId " + smIdValue, results.resultException);
+        }
     }
 }
