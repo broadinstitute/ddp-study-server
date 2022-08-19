@@ -8,6 +8,7 @@ import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+//class to generate data as map which needs to be exported to ElasticSearch
 public abstract class SourceGenerator extends BaseGenerator {
 
     private static final Logger logger = LoggerFactory.getLogger(SourceGenerator.class);

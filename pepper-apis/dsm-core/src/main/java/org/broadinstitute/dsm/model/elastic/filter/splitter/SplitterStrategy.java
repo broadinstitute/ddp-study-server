@@ -9,6 +9,7 @@ import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
+//abstract class to get different values like property name, field name, etc from filter
 public abstract class SplitterStrategy {
 
     public static final int NESTED_FIELD_LEVEL = 2;

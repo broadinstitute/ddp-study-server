@@ -14,6 +14,7 @@ import org.broadinstitute.dsm.model.elastic.export.generate.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+//class to process either collection(nested type ES objects) or single type data
 public abstract class BaseProcessor implements Processor {
 
 

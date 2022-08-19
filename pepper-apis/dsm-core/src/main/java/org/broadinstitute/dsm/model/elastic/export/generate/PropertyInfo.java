@@ -28,6 +28,7 @@ import org.broadinstitute.dsm.model.elastic.filter.query.ElasticSearchPropertyNa
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 
+//class to hold property information such as profile, dsm, etc, as well as whether it is collection type or not
 public class PropertyInfo {
 
     private static final Map<String, PropertyInfo> TABLE_ALIAS_MAPPINGS;

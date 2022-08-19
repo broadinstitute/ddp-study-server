@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.broadinstitute.dsm.model.Filter;
 
+//class to separate 'AND' or 'OR' conditions into type of Map<String, List<String>>
 public class AndOrFilterSeparator {
 
     private static final String DSM_ALIAS_REGEX = "(NO|c|m|p|r|t|d|o|k|JS|ST|DA|\\()(\\.|\\s)*([a-z]|O|R|T|D|)(\\.)*";

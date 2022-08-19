@@ -11,6 +11,7 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.elasticsearch.index.query.QueryBuilder;
 
+//abstract class to handle different way of building ES queries for objects which go under activities in ES
 public abstract class BaseActivitiesStrategy extends BaseQueryStrategy {
     private static final List<String> BASE_ACTIVITY_PROPERTIES = Arrays.asList(
             ElasticSearchUtil.CREATED_AT, ElasticSearchUtil.COMPLETED_AT, ElasticSearchUtil.LAST_UPDATED, ElasticSearchUtil.STATUS
