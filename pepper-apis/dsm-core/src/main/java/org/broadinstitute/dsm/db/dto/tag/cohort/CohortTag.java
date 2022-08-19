@@ -6,6 +6,7 @@ import lombok.Data;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.util.SystemUtil;
 
 @Data
 @TableName(
@@ -37,6 +38,7 @@ public class CohortTag implements Cloneable {
         this.cohortTagName = cohortTagName;
         this.ddpParticipantId = ddpParticipantId;
         this.ddpInstanceId = ddpInstanceId;
+        this.createdBy = SystemUtil.SYSTEM;
     }
 
     public CohortTag() {

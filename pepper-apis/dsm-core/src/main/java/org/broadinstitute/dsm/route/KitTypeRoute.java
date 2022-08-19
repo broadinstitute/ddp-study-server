@@ -9,7 +9,6 @@ import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.lddp.handlers.util.Result;
 import spark.Request;
 import spark.Response;
 
@@ -31,8 +30,8 @@ public class KitTypeRoute extends RequestHandler {
                         || UserUtil.checkUserAccess(realm, userId, "kit_shipping_view", userIdRequest)) {
                     return KitType.getKitTypes(realm, userIdRequest);
                 } else {
-                    response.status(500);
-                    return new Result(500, UserErrorMessages.NO_RIGHTS);
+                    response.status(403);
+                    return UserErrorMessages.NO_RIGHTS;
                 }
             } else {
                 if (request.url().contains(RoutePath.UPLOAD_REASONS)) {
@@ -40,8 +39,8 @@ public class KitTypeRoute extends RequestHandler {
                             || UserUtil.checkUserAccess(realm, userId, "kit_shipping_view", userIdRequest)) {
                         return KitType.getUploadReasons(realm);
                     } else {
-                        response.status(500);
-                        return new Result(500, UserErrorMessages.NO_RIGHTS);
+                        response.status(403);
+                        return UserErrorMessages.NO_RIGHTS;
                     }
                 }
             }

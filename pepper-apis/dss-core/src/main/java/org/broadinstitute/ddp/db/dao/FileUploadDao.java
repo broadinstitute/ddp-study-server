@@ -30,9 +30,20 @@ public interface FileUploadDao extends SqlObject {
         long id = getFileUploadSql().insert(
                 guid, studyId, operatorUserId, participantUserId,
                 blobName, mimeType, fileName, fileSize, now);
-        return new FileUpload(
-                id, guid, studyId, operatorUserId, participantUserId,
-                blobName, mimeType, fileName, fileSize, false, now, null, null, null);
+
+        return FileUpload.builder()
+                .id(id)
+                .guid(guid)
+                .studyId(studyId)
+                .operatorUserId(operatorUserId)
+                .participantUserId(participantUserId)
+                .blobName(blobName)
+                .mimeType(mimeType)
+                .fileName(fileName)
+                .fileSize(fileSize)
+                .isVerified(false)
+                .createdAt(now)
+                .build();
     }
 
     default void markVerified(long fileUploadId) {
@@ -108,6 +119,22 @@ public interface FileUploadDao extends SqlObject {
     Stream<FileUpload> findVerifiedAndAssociatedUploadsForParticipants(
             @Bind("studyId") long studyId,
             @BindList(value = "userIds", onEmpty = EmptyHandling.NULL) Iterable<Long> participantUserIds);
+
+    @SqlQuery("select f.* "
+            + "  from file_upload as f "
+            + " where f.notification_sent_at IS NULL")
+    @RegisterConstructorMapper(FileUpload.class)
+    Stream<FileUpload> findWithoutSentNotification();
+
+    @SqlUpdate("update file_upload f "
+            + "    set f.notification_sent_at = NOW() "
+            + "  where f.notification_sent_at IS NULL AND f.study_id = :studyId")
+    void setNotificationSentByStudyId(@Bind("studyId") long studyId);
+
+    @SqlUpdate("update file_upload f "
+            + "    set f.notification_sent_at = NOW() "
+            + "  where f.notification_sent_at IS NULL AND f.file_upload_id in (<fileUploadIds>)")
+    void setNotificationSentByFileUploadIds(@BindList(value = "fileUploadIds", onEmpty = EmptyHandling.NULL) Iterable<Long> fileUploadIds);
 
     @SqlQuery("select file_upload_id, file_upload_guid, file_name, file_size"
             + "  from file_upload where file_upload_guid = :guid")

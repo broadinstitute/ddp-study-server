@@ -17,6 +17,7 @@ import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoGovernanceFix;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoLovedOneV2;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoMRFv2;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoNewActivities;
+import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoNewFamilyHistory;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoPDFv2;
 import org.broadinstitute.ddp.studybuilder.task.osteo.OsteoPdfUpdates;
 import org.jdbi.v3.core.Handle;
@@ -29,6 +30,7 @@ public class OsteoV2Updates implements CustomTask {
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
         tasks.add(new OsteoNewActivities());
         tasks.add(new OsteoConsentVersion2());
+        tasks.add(new OsteoDobValidations());
         tasks.add(new OsteoGovernanceFix());
         tasks.add(new OsteoDdp7601());
         tasks.add(new OsteoAboutYouV2());
@@ -43,6 +45,7 @@ public class OsteoV2Updates implements CustomTask {
         tasks.add(new OsteoAboutYouChildTitleUpdates());
 
         // Last
+        tasks.add(new OsteoNewFamilyHistory());
         tasks.add(new OsteoPdfUpdates());
         tasks.add(new UpdateStudyNonSyncEvents());
         tasks.add(new OsteoInsertSyncEvents());

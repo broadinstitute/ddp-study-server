@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -28,7 +27,6 @@ import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.rpc.ApiException;
 import com.google.auth.oauth2.GoogleCredentials;
-import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.cloud.pubsub.v1.Subscriber;
@@ -79,15 +77,16 @@ import org.broadinstitute.ddp.housekeeping.handler.PdfGenerationHandler;
 import org.broadinstitute.ddp.housekeeping.message.HousekeepingMessage;
 import org.broadinstitute.ddp.housekeeping.message.NotificationMessage;
 import org.broadinstitute.ddp.housekeeping.message.PdfGenerationMessage;
-import org.broadinstitute.ddp.housekeeping.schedule.CheckAgeUpJob;
-import org.broadinstitute.ddp.housekeeping.schedule.CheckKitsJob;
-import org.broadinstitute.ddp.housekeeping.schedule.DataSyncJob;
-import org.broadinstitute.ddp.housekeeping.schedule.DatabaseBackupCheckJob;
-import org.broadinstitute.ddp.housekeeping.schedule.DatabaseBackupJob;
-import org.broadinstitute.ddp.housekeeping.schedule.FileUploadCleanupJob;
 import org.broadinstitute.ddp.housekeeping.schedule.OnDemandExportJob;
+import org.broadinstitute.ddp.housekeeping.schedule.DatabaseBackupJob;
+import org.broadinstitute.ddp.housekeeping.schedule.DataSyncJob;
 import org.broadinstitute.ddp.housekeeping.schedule.StudyDataExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.TemporaryUserCleanupJob;
+import org.broadinstitute.ddp.housekeeping.schedule.FileUploadNotificationJob;
+import org.broadinstitute.ddp.housekeeping.schedule.FileUploadCleanupJob;
+import org.broadinstitute.ddp.housekeeping.schedule.CheckAgeUpJob;
+import org.broadinstitute.ddp.housekeeping.schedule.CheckKitsJob;
+import org.broadinstitute.ddp.housekeeping.schedule.DatabaseBackupCheckJob;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.event.ActivityInstanceCreationEventAction;
 import org.broadinstitute.ddp.model.event.EventConfiguration;
@@ -118,8 +117,6 @@ import spark.Spark;
 public class Housekeeping {
 
     public static final AtomicBoolean startupMonitor = new AtomicBoolean();
-
-    private static final Map<Object, Long> lastLogTimeForException = new HashMap<>();
 
     private static final String DDP_ATTRIBUTE_PREFIX = "ddp.";
     /**
@@ -498,6 +495,7 @@ public class Housekeeping {
                     DatabaseBackupJob.register(scheduler, cfg);
                     DatabaseBackupCheckJob.register(scheduler, cfg);
                     FileUploadCleanupJob.register(scheduler, cfg);
+                    FileUploadNotificationJob.register(scheduler, cfg);
                     TemporaryUserCleanupJob.register(scheduler, cfg);
                     StudyDataExportJob.register(scheduler, cfg);
                     CustomExportJob.register(scheduler, cfg);
@@ -721,120 +719,117 @@ public class Housekeeping {
         final SendGridSupplier sendGridProvider = sendGridSupplier;
         try {
             MessageReceiver receiver =
-                    new MessageReceiver() {
-                        @Override
-                        public void receiveMessage(PubsubMessage message, AckReplyConsumer consumer) {
-                            try {
-                                String ddpMessageId = message.getAttributesOrThrow(DDP_MESSAGE_ID);
-                                String ddpEventConfigurationId = message.getAttributesOrThrow(DDP_EVENT_CONFIGURATION_ID);
-                                String ddpEventId = message.getAttributesOrThrow(Housekeeping.DDP_EVENT_ID);
-                                String ddpEventType = message.getAttributesOrThrow(Housekeeping.DDP_EVENT_TYPE);
-                                String ddpIgnoreAfterStr = message.getAttributesOrDefault(DDP_IGNORE_AFTER, null);
-                                AtomicReference<Integer> ddpIgnoreAfter = new AtomicReference<>();
-                                if (StringUtils.isNotBlank(ddpIgnoreAfterStr)) {
-                                    ddpIgnoreAfter.set(Integer.parseInt(ddpIgnoreAfterStr));
-                                }
-                                TransactionWrapper.useTxn(TransactionWrapper.DB.HOUSEKEEPING, handle -> {
-                                    JdbiMessage jdbiMessage = handle.attach(JdbiMessage.class);
-                                    JdbiEvent jdbiEvent = handle.attach(JdbiEvent.class);
-                                    //Check for message for duplicate message id. Handle only once
-                                    if (jdbiMessage.shouldProcessMessage(ddpMessageId)) {
-                                        String messageText = message.getData().toStringUtf8();
-                                        Map<String, String> attributes = message.getAttributesMap();
-                                        log.info("Received ddp message {} of type/version {}/{} for event {} with text {}",
-                                                attributes.get(DDP_MESSAGE_ID),
-                                                attributes.get(Housekeeping.DDP_EVENT_TYPE),
-                                                attributes.get(DDP_HOUSEKEEPING_VERSION),
-                                                ddpEventId,
-                                                messageText);
-
-                                        HousekeepingMessage messageContents;
-                                        if (EventActionType.NOTIFICATION.name().equals(ddpEventType)) {
-                                            NotificationMessage notificationMessage = gson.fromJson(
-                                                    message.getData().toStringUtf8(), NotificationMessage.class);
-                                            messageContents = notificationMessage;
-                                            String participantGuid = notificationMessage.getParticipantGuid();
-                                            if (StringUtils.isNotBlank(participantGuid) && !checkUserExists(participantGuid)) {
-                                                throw new MissingUserException("Error processing notification message, "
-                                                        + "GUID " + notificationMessage.getParticipantGuid()
-                                                        + " is not in the pepper database");
-                                            }
-
-                                            var sendGridKey = notificationMessage.getApiKey();
-
-                                            /*
-                                                SendGrid keys are in the format:
-                                                SG.<key-id>.<key>
-                                                The <key-id> part is not considered secret, and
-                                                can be used to refer to the key directly (SendGrid's
-                                                APIs allow for this as well)
-                                            */
-                                            var keyParts = sendGridKey.split("\\.");
-
-                                            /*
-                                            Be a little careful here. If the key doesn't match
-                                                the exact format we're looking for, note that there's
-                                                an issue with the format, and don't log anything else.
-                                            This is to avoid a situation where the format changes and
-                                                we accidentally write the entire key to the log.
-                                            */
-                                            if (keyParts.length == 3 && keyParts[0].equals("SG")) {
-                                                log.info("creating EmailNotificationHandler using SendGrid key id {}", keyParts[1]);
-                                            } else {
-                                                log.warn("SendGrid API key is in an unexpected format.");
-                                            }
-
-                                            new EmailNotificationHandler(sendGridProvider.get(sendGridKey),
-                                                    pdfService, pdfBucketService, pdfGenerationService)
-                                                    .handleMessage(notificationMessage);
-
-                                        } else if (EventActionType.PDF_GENERATION.name().equals(ddpEventType)) {
-                                            PdfGenerationMessage pdfGenerationMessage = gson.fromJson(
-                                                    message.getData().toStringUtf8(), PdfGenerationMessage.class);
-                                            messageContents = pdfGenerationMessage;
-                                            String participantGuid = pdfGenerationMessage.getParticipantGuid();
-                                            if (StringUtils.isNotBlank(participantGuid) && !checkUserExists(participantGuid)) {
-                                                throw new MissingUserException("Error processing pdf generation message, "
-                                                        + "GUID " + pdfGenerationMessage.getParticipantGuid()
-                                                        + " is not in the pepper database");
-                                            }
-
-                                            pdfGenerationHandler.handleMessage(pdfGenerationMessage);
-                                        } else {
-                                            consumer.nack(); // message not handled; pubsub should retry it
-                                            throw new DDPException("Cannot handle event action type " + ddpEventType);
-                                        }
-
-                                        synchronized (afterHandlerGuard) {
-                                            if (afterHandling != null) {
-                                                afterHandling.messageHandled(messageContents, ddpEventConfigurationId);
-                                            }
-                                        }
-                                        jdbiMessage.markMessageAsProcessed(ddpMessageId);
-                                        jdbiEvent.incrementOccurrencesProcessed(ddpEventId);
-                                        consumer.ack(); // message fully processed
-                                    } else {
-                                        consumer.ack(); // deliberate decision to *not* handle duplicated message, so
-                                        // do not redeliver
-                                        log.warn("Skipping duplicate message {} for event {}", ddpMessageId,
-                                                ddpEventId);
-                                    }
-                                });
-                            } catch (MissingUserException e) {
-                                log.error("We have a message for which we no longer have a user, "
-                                        + "ack-ing and skipping it: ", e);
-                                consumer.ack();
-                            } catch (MessageHandlingException e) {
-                                log.error("Trouble processing message", e);
-                                if (e.shouldRetry()) {
-                                    consumer.nack();
-                                } else {
-                                    consumer.ack();
-                                }
-                            } catch (Exception e) {
-                                consumer.nack();
-                                log.error("Could not make sense of message " + message.getMessageId(), e);
+                    (message, consumer) -> {
+                        try {
+                            String ddpMessageId = message.getAttributesOrThrow(DDP_MESSAGE_ID);
+                            String ddpEventConfigurationId = message.getAttributesOrThrow(DDP_EVENT_CONFIGURATION_ID);
+                            String ddpEventId = message.getAttributesOrThrow(Housekeeping.DDP_EVENT_ID);
+                            String ddpEventType = message.getAttributesOrThrow(Housekeeping.DDP_EVENT_TYPE);
+                            String ddpIgnoreAfterStr = message.getAttributesOrDefault(DDP_IGNORE_AFTER, null);
+                            AtomicReference<Integer> ddpIgnoreAfter = new AtomicReference<>();
+                            if (StringUtils.isNotBlank(ddpIgnoreAfterStr)) {
+                                ddpIgnoreAfter.set(Integer.parseInt(ddpIgnoreAfterStr));
                             }
+                            TransactionWrapper.useTxn(TransactionWrapper.DB.HOUSEKEEPING, handle -> {
+                                JdbiMessage jdbiMessage = handle.attach(JdbiMessage.class);
+                                JdbiEvent jdbiEvent = handle.attach(JdbiEvent.class);
+                                //Check for message for duplicate message id. Handle only once
+                                if (jdbiMessage.shouldProcessMessage(ddpMessageId)) {
+                                    String messageText = message.getData().toStringUtf8();
+                                    Map<String, String> attributes = message.getAttributesMap();
+                                    log.info("Received ddp message {} of type/version {}/{} for event {} with text {}",
+                                            attributes.get(DDP_MESSAGE_ID),
+                                            attributes.get(Housekeeping.DDP_EVENT_TYPE),
+                                            attributes.get(DDP_HOUSEKEEPING_VERSION),
+                                            ddpEventId,
+                                            messageText);
+
+                                    HousekeepingMessage messageContents;
+                                    if (EventActionType.NOTIFICATION.name().equals(ddpEventType)) {
+                                        NotificationMessage notificationMessage = gson.fromJson(
+                                                message.getData().toStringUtf8(), NotificationMessage.class);
+                                        messageContents = notificationMessage;
+                                        String participantGuid = notificationMessage.getParticipantGuid();
+                                        if (StringUtils.isNotBlank(participantGuid) && !checkUserExists(participantGuid)) {
+                                            throw new MissingUserException("Error processing notification message, "
+                                                    + "GUID " + notificationMessage.getParticipantGuid()
+                                                    + " is not in the pepper database");
+                                        }
+
+                                        var sendGridKey = notificationMessage.getApiKey();
+
+                                        /*
+                                            SendGrid keys are in the format:
+                                            SG.<key-id>.<key>
+                                            The <key-id> part is not considered secret, and
+                                            can be used to refer to the key directly (SendGrid's
+                                            APIs allow for this as well)
+                                        */
+                                        var keyParts = sendGridKey.split("\\.");
+
+                                        /*
+                                        Be a little careful here. If the key doesn't match
+                                            the exact format we're looking for, note that there's
+                                            an issue with the format, and don't log anything else.
+                                        This is to avoid a situation where the format changes and
+                                            we accidentally write the entire key to the log.
+                                        */
+                                        if (keyParts.length == 3 && keyParts[0].equals("SG")) {
+                                            log.info("creating EmailNotificationHandler using SendGrid key id {}", keyParts[1]);
+                                        } else {
+                                            log.warn("SendGrid API key is in an unexpected format.");
+                                        }
+
+                                        new EmailNotificationHandler(sendGridProvider.get(sendGridKey),
+                                                pdfService, pdfBucketService, pdfGenerationService)
+                                                .handleMessage(notificationMessage);
+
+                                    } else if (EventActionType.PDF_GENERATION.name().equals(ddpEventType)) {
+                                        PdfGenerationMessage pdfGenerationMessage = gson.fromJson(
+                                                message.getData().toStringUtf8(), PdfGenerationMessage.class);
+                                        messageContents = pdfGenerationMessage;
+                                        String participantGuid = pdfGenerationMessage.getParticipantGuid();
+                                        if (StringUtils.isNotBlank(participantGuid) && !checkUserExists(participantGuid)) {
+                                            throw new MissingUserException("Error processing pdf generation message, "
+                                                    + "GUID " + pdfGenerationMessage.getParticipantGuid()
+                                                    + " is not in the pepper database");
+                                        }
+
+                                        pdfGenerationHandler.handleMessage(pdfGenerationMessage);
+                                    } else {
+                                        consumer.nack(); // message not handled; pubsub should retry it
+                                        throw new DDPException("Cannot handle event action type " + ddpEventType);
+                                    }
+
+                                    synchronized (afterHandlerGuard) {
+                                        if (afterHandling != null) {
+                                            afterHandling.messageHandled(messageContents, ddpEventConfigurationId);
+                                        }
+                                    }
+                                    jdbiMessage.markMessageAsProcessed(ddpMessageId);
+                                    jdbiEvent.incrementOccurrencesProcessed(ddpEventId);
+                                    consumer.ack(); // message fully processed
+                                } else {
+                                    consumer.ack(); // deliberate decision to *not* handle duplicated message, so
+                                    // do not redeliver
+                                    log.warn("Skipping duplicate message {} for event {}", ddpMessageId,
+                                            ddpEventId);
+                                }
+                            });
+                        } catch (MissingUserException e) {
+                            log.error("We have a message for which we no longer have a user, "
+                                    + "ack-ing and skipping it: ", e);
+                            consumer.ack();
+                        } catch (MessageHandlingException e) {
+                            log.error("Trouble processing message", e);
+                            if (e.shouldRetry()) {
+                                consumer.nack();
+                            } else {
+                                consumer.ack();
+                            }
+                        } catch (Exception e) {
+                            consumer.nack();
+                            log.error("Could not make sense of message " + message.getMessageId(), e);
                         }
                     };
 

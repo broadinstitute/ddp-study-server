@@ -108,6 +108,7 @@ import org.broadinstitute.dsm.route.ParticipantEventRoute;
 import org.broadinstitute.dsm.route.ParticipantExitRoute;
 import org.broadinstitute.dsm.route.ParticipantStatusRoute;
 import org.broadinstitute.dsm.route.PatchRoute;
+import org.broadinstitute.dsm.route.StoolUploadRoute;
 import org.broadinstitute.dsm.route.TriggerSurveyRoute;
 import org.broadinstitute.dsm.route.UserSettingRoute;
 import org.broadinstitute.dsm.route.ViewFilterRoute;
@@ -120,6 +121,7 @@ import org.broadinstitute.dsm.route.participantfiles.DownloadParticipantFileRout
 import org.broadinstitute.dsm.route.tag.cohort.BulkCreateCohortTagRoute;
 import org.broadinstitute.dsm.route.tag.cohort.CreateCohortTagRoute;
 import org.broadinstitute.dsm.route.tag.cohort.DeleteCohortTagRoute;
+import org.broadinstitute.dsm.service.FileDownloadService;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -764,6 +766,7 @@ public class DSMServer {
         patch(UI_ROOT + RoutePath.LABEL_SETTING_REQUEST, labelSettingRoute, new JsonTransformer());
 
         post(UI_ROOT + RoutePath.KIT_UPLOAD_REQUEST, new KitUploadRoute(notificationUtil), new JsonTransformer());
+        post(UI_ROOT + RoutePath.STOOL_UPLOAD_REQUEST, new StoolUploadRoute(), new JsonTransformer());
 
         KitLabelRoute kitLabelRoute = new KitLabelRoute();
         get(UI_ROOT + RoutePath.KIT_LABEL_REQUEST, kitLabelRoute, new JsonTransformer());
@@ -920,7 +923,9 @@ public class DSMServer {
             PostMercuryOrderDummyRoute postMercuryOrderDummyRoute = new PostMercuryOrderDummyRoute(projectId, mercuryTopicId);
             post(API_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, postMercuryOrderDummyRoute, new JsonTransformer());
         }
-        get(UI_ROOT + RoutePath.DOWNLOAD_PARTICIPANT_FILE, new DownloadParticipantFileRoute(projectId));
+
+        FileDownloadService fileDownloadService = FileDownloadService.fromConfig(config);
+        get(UI_ROOT + RoutePath.DOWNLOAD_PARTICIPANT_FILE, new DownloadParticipantFileRoute(fileDownloadService), new JsonTransformer());
     }
 
     private void setupJobs(@NonNull Config cfg, @NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil,

@@ -9,7 +9,7 @@ import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 @AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class Expression {
     @ColumnName("expression_id")
-    long id;
+    Long id;
 
     @ColumnName("expression_guid")
     String guid;
@@ -18,6 +18,6 @@ public class Expression {
     String text;
 
     public Expression(final String text) {
-        this(0, null, text);
+        this(null, null, text);
     }
 }

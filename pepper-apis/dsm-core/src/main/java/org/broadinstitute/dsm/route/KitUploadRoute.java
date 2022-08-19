@@ -213,8 +213,8 @@ public class KitUploadRoute extends RequestHandler {
                 return e.getMessage();
             }
         } else {
-            response.status(500);
-            return new Result(500, UserErrorMessages.NO_RIGHTS);
+            response.status(403);
+            return UserErrorMessages.NO_RIGHTS;
         }
     }
 
@@ -411,11 +411,11 @@ public class KitUploadRoute extends RequestHandler {
         }
 
         String firstRow = rows[0];
-        if (!firstRow.contains(SystemUtil.SEPARATOR)) {
+        if (!firstRow.contains(SystemUtil.TAB_SEPARATOR)) {
             throw new FileWrongSeparator("Please use tab as separator in the text file");
         }
 
-        List<String> fieldNamesFromFileHeader = Arrays.asList(firstRow.trim().split(SystemUtil.SEPARATOR));
+        List<String> fieldNamesFromFileHeader = Arrays.asList(firstRow.trim().split(SystemUtil.TAB_SEPARATOR));
         String missingHeader = getMissingHeader(fieldNamesFromFileHeader);
         if (missingHeader != null) {
             throw new FileColumnMissing("File is missing column " + missingHeader);
@@ -476,7 +476,7 @@ public class KitUploadRoute extends RequestHandler {
 
     Map<String, String> getParticipantDataAsMap(String row, List<String> fieldNamesFromHeader, int rowIndex) {
         Map<String, String> participantDataByFieldName = new LinkedHashMap<>();
-        String[] rowItems = row.trim().split(SystemUtil.SEPARATOR);
+        String[] rowItems = row.trim().split(SystemUtil.TAB_SEPARATOR);
         if (rowItems.length != fieldNamesFromHeader.size()) {
             throw new UploadLineException("Error in line " + (rowIndex + 1));
         }
@@ -492,7 +492,7 @@ public class KitUploadRoute extends RequestHandler {
         int lastNonEmptyRowIndex = rows.length - 1;
 
         for (int i = rows.length - 1; i > 0; i--) {
-            String[] row = rows[i].trim().split(SystemUtil.SEPARATOR);
+            String[] row = rows[i].trim().split(SystemUtil.TAB_SEPARATOR);
             if (!"".equals(String.join("", row))) {
                 lastNonEmptyRowIndex = i;
                 break;

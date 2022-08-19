@@ -774,8 +774,18 @@ public interface SectionBlockDao extends SqlObject {
             blockDef.getNested().addAll(nestedDefs);
             blockDef.setBlockId(blockDto.getId());
             blockDef.setBlockGuid(blockDto.getGuid());
-            blockDef.setShownExpr(blockDto.getShownExpr());
-            blockDef.setEnabledExpr(blockDto.getEnabledExpr());
+            
+            var shownExpression = blockDto.getShownExpression();
+            if (shownExpression != null) {
+                blockDef.setShownExprId(shownExpression.getId());
+                blockDef.setShownExpr(shownExpression.getText());
+            }
+
+            var enabledExpression = blockDto.getEnabledExpression();
+            if (enabledExpression != null) {
+                blockDef.setEnabledExprId(enabledExpression.getId());
+                blockDef.setEnabledExpr(enabledExpression.getText());
+            }
 
             blockDefs.put(blockDto.getId(), blockDef);
         }
