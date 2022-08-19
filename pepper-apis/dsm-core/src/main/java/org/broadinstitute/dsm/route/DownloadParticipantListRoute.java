@@ -1,15 +1,5 @@
 package org.broadinstitute.dsm.route;
 
-import static org.broadinstitute.dsm.util.ElasticSearchUtil.DEFAULT_FROM;
-import static org.broadinstitute.dsm.util.ElasticSearchUtil.MAX_RESULT_SIZE;
-
-import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
 import com.google.common.net.MediaType;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.model.elastic.export.tabular.DataDictionaryExporter;
@@ -35,6 +25,15 @@ import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import static org.broadinstitute.dsm.util.ElasticSearchUtil.DEFAULT_FROM;
+import static org.broadinstitute.dsm.util.ElasticSearchUtil.MAX_RESULT_SIZE;
+
 public class DownloadParticipantListRoute extends RequestHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(DownloadParticipantListRoute.class);
@@ -58,7 +57,7 @@ public class DownloadParticipantListRoute extends RequestHandler {
         DDPInstance instance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.MEDICAL_RECORD_ACTIVATED);
 
         TabularParticipantParser parser = new TabularParticipantParser(payload.getColumnNames(), instance,
-                params.isSplitOptions(), params.isOnlyMostRecent(), null);
+                params.isHumanReadable(), params.isOnlyMostRecent(), null);
         setResponseHeaders(response, realm + "_export.zip");
 
         Filterable filterable = FilterFactory.of(request);

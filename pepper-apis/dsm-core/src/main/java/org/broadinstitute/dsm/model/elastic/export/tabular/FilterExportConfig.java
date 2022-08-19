@@ -21,6 +21,7 @@ public class FilterExportConfig {
     private final ModuleExportConfig parent;
     private final String type;
     private boolean splitOptionsIntoColumns = false;
+    private boolean stableIdsForOptions = true;
     private Set<String> optionIdsWithDetails = new HashSet<String>();
     private String collationSuffix = null;
     private Map<String, Object> questionDef = null;
@@ -33,19 +34,20 @@ public class FilterExportConfig {
     private boolean allowMultiple = false;
     private String questionType = null;
 
-    public FilterExportConfig(ModuleExportConfig parent, Filter filterColumn, boolean splitOptionsIntoColumns,
+    public FilterExportConfig(ModuleExportConfig parent, Filter filterColumn, boolean splitOptionsIntoColumns, boolean stableIdsForOptions,
                               String collationSuffix, Map<String, Object> questionDef, int questionIndex) {
         this.column = filterColumn.getParticipantColumn();
         this.type = filterColumn.getType();
         this.parent = parent;
         this.splitOptionsIntoColumns = splitOptionsIntoColumns;
+        this.stableIdsForOptions = stableIdsForOptions;
         this.collationSuffix = collationSuffix;
         this.questionIndex = questionIndex;
         this.questionDef = questionDef;
         this.allowMultiple = isAllowMultiple(questionDef);
         this.questionType = this.type;
         if (this.questionDef != null) {
-            this.options = getOptionsForQuestion(questionDef);
+            this.options = getOptionsForQuestion(questionDef, optionIdsWithDetails);
             this.questionType = (String) questionDef.get(ESObjectConstants.QUESTION_TYPE);
         }
         List<Map<String, Object>> childQuestions = getChildQuestions();
@@ -79,8 +81,8 @@ public class FilterExportConfig {
         this.column.setDisplay(childDisplayText);
 
         this.questionDef = childQuestion;
-        this.options = getOptionsForQuestion(childQuestion);
-
+        this.options = getOptionsForQuestion(childQuestion, optionIdsWithDetails);
+        this.stableIdsForOptions = parent.isStableIdsForOptions();
     }
 
     public boolean isAllowMultiple(Map<String, Object> questionDef) {
@@ -101,7 +103,7 @@ public class FilterExportConfig {
         return optionIdsWithDetails.size() > 0;
     }
 
-    private List<Map<String, Object>> getOptionsForQuestion(Map<String, Object> questionDef) {
+    private List<Map<String, Object>> getOptionsForQuestion(Map<String, Object> questionDef, Set<String> optionIdsWithDetails) {
         List<Map<String, Object>> options = (List<Map<String, Object>>) questionDef.get(ESObjectConstants.OPTIONS);
         if (questionDef.containsKey(ESObjectConstants.OPTION_GROUPS)) {
             Object groups = questionDef.get(ESObjectConstants.OPTION_GROUPS);
@@ -113,6 +115,11 @@ public class FilterExportConfig {
                 }
             }
         }
+        if (options instanceof List) {
+            options.stream().filter(opt -> (boolean) opt.getOrDefault(ESObjectConstants.OPTION_DETAILS_ALLOWED, false))
+                    .forEach(opt -> optionIdsWithDetails.add((String) opt.get(ESObjectConstants.OPTION_STABLE_ID)));
+        }
+
         return options;
     }
 

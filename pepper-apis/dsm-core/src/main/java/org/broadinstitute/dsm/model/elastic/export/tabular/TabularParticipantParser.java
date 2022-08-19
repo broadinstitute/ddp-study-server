@@ -1,14 +1,5 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.export.WorkflowAndFamilyIdExporter;
@@ -21,6 +12,15 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.stream.Collectors;
 
 /**
  * Parses a list of ParticipantDtos from elasticSearch into a map of column names to string values.
@@ -37,16 +37,16 @@ public class TabularParticipantParser {
     private static final String COLUMN_UNSELECTED = "0";
     private final List<Filter> filters;
     private final DDPInstance ddpInstance;
-    private final boolean splitOptions;
+    private final boolean humanReadable;
     private final boolean onlyMostRecent;
     private final List<String> nestedArrayObjects = Arrays.asList(ESObjectConstants.KIT_TEST_RESULT);
     private  Map<String, Map<String, Object>> activityDefs;
 
-    public TabularParticipantParser(List<Filter> filters, DDPInstance ddpInstance, boolean splitOptions, boolean onlyMostRecent,
+    public TabularParticipantParser(List<Filter> filters, DDPInstance ddpInstance, boolean humanReadable, boolean onlyMostRecent,
                                     Map<String, Map<String, Object>> activityDefs) {
         this.filters = filters;
         this.ddpInstance = ddpInstance;
-        this.splitOptions = splitOptions;
+        this.humanReadable = humanReadable;
         this.onlyMostRecent = onlyMostRecent;
         if (activityDefs == null) {
             activityDefs = ElasticSearchUtil.getActivityDefinitions(ddpInstance);
@@ -94,7 +94,7 @@ public class TabularParticipantParser {
                 if (ESObjectConstants.OPTIONS_TYPE.equals(filter.getType())) {
                     if (questionDef != null) {
                         // create a column for each option if it's a multiselect
-                        splitChoicesIntoColumns = splitOptions
+                        splitChoicesIntoColumns = !humanReadable
                                 && ESObjectConstants.MULTIPLE.equals(questionDef.get(ESObjectConstants.SELECT_MODE));
                     }
                 }
@@ -106,7 +106,7 @@ public class TabularParticipantParser {
                         .findFirst()
                         .orElse(null);
 
-                FilterExportConfig colConfig = new FilterExportConfig(moduleExport, filter, splitChoicesIntoColumns,
+                FilterExportConfig colConfig = new FilterExportConfig(moduleExport, filter, splitChoicesIntoColumns, !humanReadable,
                         collationSuffix, questionDef, questionIndex);
                 if (collationSuffix != null) {
                     if (collationColumnMap.containsKey(collationSuffix)) {

@@ -1,12 +1,12 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular.renderer;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.QuestionType;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 public class ValueProviderFactory {
     private static final String AMBULATION = "AMBULATION";
@@ -24,6 +24,7 @@ public class ValueProviderFactory {
             Map.entry(QuestionType.MATRIX, defaultValueProvider),
             Map.entry(QuestionType.DATE, new DateValueProvider()),
             Map.entry(QuestionType.OPTIONS, pickListValueProvider),
+            Map.entry(QuestionType.PICKLIST, pickListValueProvider),
             Map.entry(QuestionType.JSON_ARRAY, defaultValueProvider),
             Map.entry(QuestionType.RADIO, pickListValueProvider)
     );
