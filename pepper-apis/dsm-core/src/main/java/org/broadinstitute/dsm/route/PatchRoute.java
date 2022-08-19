@@ -44,11 +44,8 @@ public class PatchRoute extends RequestHandler {
                 || UserUtil.checkUserAccess(null, userId, DBConstants.PT_LIST_VIEW, userIdRequest)) {
             try {
                 String requestBody   = request.body();
-                Patch patch          = GSON.fromJson(requestBody, Patch.class);
-                Patch processedPatch = BasePatchPreProcessor
-                        .produce(PatchPreProcessorPayload.of(patch.getTableAlias(), patch.getParent()))
-                        .process(patch);
-                BasePatch patcher    = PatchFactory.makePatch(processedPatch, notificationUtil);
+                Patch patch          = buildPatch(requestBody);
+                BasePatch patcher    = PatchFactory.makePatch(patch, notificationUtil);
                 return patcher.doPatch();
             } catch (DuplicateException e) {
                 response.status(500);
@@ -61,5 +58,12 @@ public class PatchRoute extends RequestHandler {
             response.status(403);
             return UserErrorMessages.NO_RIGHTS;
         }
+    }
+
+    private static Patch buildPatch(String requestBody) {
+        Patch patch = GSON.fromJson(requestBody, Patch.class);
+        return BasePatchPreProcessor
+                .produce(PatchPreProcessorPayload.of(patch.getTableAlias(), patch.getParent()))
+                .process(patch);
     }
 }

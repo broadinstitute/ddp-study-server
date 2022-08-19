@@ -5,7 +5,7 @@ import org.broadinstitute.dsm.model.patch.Patch;
 import org.broadinstitute.dsm.statics.DBConstants;
 
 // A base class for processing and transforming Patch instance.
-// A child class must implement updatePatchIfRequired();
+// A concrete class must implement updatePatchIfRequired() and act accordingly;
 public abstract class BasePatchPreProcessor implements PreProcessor<Patch> {
 
     protected static final String DDP_PARTICIPANT_ID = "ddpParticipantId";
@@ -26,7 +26,7 @@ public abstract class BasePatchPreProcessor implements PreProcessor<Patch> {
 
     private static boolean isNotParticipantRecordPatchAndIsParentGuid(PatchPreProcessorPayload patchPreProcessorPayload) {
         //  if the tableAlias is `r` then its' parent is actually planned to be `ddpParticipantId`
-        //  which means that the Patch won't need any preprocessing / updating, it will return back the original patch (line 21)
+        //  which means that the Patch won't need any preprocessing / updating, it will return back the original patch (line 22)
         return !DBConstants.DDP_PARTICIPANT_RECORD_ALIAS.equals(patchPreProcessorPayload.getTableAlias())
                 && DDP_PARTICIPANT_ID.equals(patchPreProcessorPayload.getParent());
     }

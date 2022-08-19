@@ -20,40 +20,34 @@ public class ParentRelatedPatchPreProcessor extends BasePatchPreProcessor {
 
     @Override
     protected final Patch updatePatchIfRequired() {
-        return parentEqualsGuid(originalPatch)
-                ? updatePatchAndGet()
-                : originalPatch;
+        return updatePatchAndGet();
     }
 
     private Patch updatePatchAndGet() {
         return fetchDdpInstanceId
                 .andThen(fetchParticipantId)
-                .andThen(updatePatch)
+                .andThen(updateParentAndParentId)
                 .apply(originalPatch.getRealm());
     }
 
     private final Function<String, Integer> fetchDdpInstanceId = this::getDdpInstanceIdAsInt;
-
-    private final Function<Integer, String> fetchParticipantId = ddpInstanceId -> participantDao
-            .getParticipantIdByGuidAndDdpInstanceId(ddpParticipantId, ddpInstanceId)
-            .map(Object::toString)
-            .orElseThrow(() -> new PatchProcessingException("Could not process the patch"));
-
-    private final Function<String, Patch> updatePatch = participantId -> {
-        Patch updatedPatch = originalPatch.clone();
-        updatedPatch.setParent(PARTICIPANT_ID);
-        updatedPatch.setParentId(participantId);
-        return updatedPatch;
-    };
 
     // extracted as an instance method for testing purposes
     protected int getDdpInstanceIdAsInt(String realm) {
         return DDPInstance.getDDPInstance(realm).getDdpInstanceIdAsInt();
     }
 
-    private static boolean parentEqualsGuid(Patch patch) {
-        return DDP_PARTICIPANT_ID.equals(patch.getParent());
-    }
+    private final Function<Integer, String> fetchParticipantId = ddpInstanceId -> participantDao
+            .getParticipantIdByGuidAndDdpInstanceId(ddpParticipantId, ddpInstanceId)
+            .map(Object::toString)
+            .orElseThrow(() -> new PatchProcessingException("Could not process the patch"));
+
+    private final Function<String, Patch> updateParentAndParentId = participantId -> {
+        Patch updatedPatch = originalPatch.clone();
+        updatedPatch.setParent(PARTICIPANT_ID);
+        updatedPatch.setParentId(participantId);
+        return updatedPatch;
+    };
 
     private static class PatchProcessingException extends RuntimeException {
 
