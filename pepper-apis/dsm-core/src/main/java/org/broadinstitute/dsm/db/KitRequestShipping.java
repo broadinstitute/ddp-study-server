@@ -214,7 +214,6 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
     private String collaboratorParticipantId;
 
-    private String ddpParticipantId;
     private String firstName;
     private String lastName;
     private String dateOfBirth;

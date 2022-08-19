@@ -28,6 +28,10 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
         Optional<KitStatusChangeRoute.ScanError> result;
         String kitLabel = scanPayload.getKitLabel();
         String ddpLabel = scanPayload.getDdpLabel();
+        if (kitLabel.length() < 14) {
+            return Optional.of(new KitStatusChangeRoute.ScanError(ddpLabel, "Barcode contains less than 14 digits, "
+                    + "You can manually enter any missing digits above."));
+        }
         if (kitDao.isBloodKit(ddpLabel)) {
             if (kitDao.hasTrackingScan(kitLabel)) {
                 result = updateKitRequest(kitLabel, ddpLabel);

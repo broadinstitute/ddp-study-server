@@ -19,8 +19,6 @@ import spark.Response;
 
 public abstract class KitStatusChangeRoute extends RequestHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(KitStatusChangeRoute.class);
-
     protected NotificationUtil notificationUtil;
     protected KitPayload kitPayload;
     protected List<ScanError> scanErrorList;
