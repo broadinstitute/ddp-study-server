@@ -371,7 +371,7 @@ public class StudyDataLoaderTest {
         UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null, pretendUserGuid, pretendUserGuid, null,
                 null, now, now, null);
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
-                1L, 2L, null, false, null, null, false, null, false);
+                1L, 2L, null, false, null, null, false, null, false, null);
 
         ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, "X",
                 null, null, null, null, 1L, 1L, 1L, true, false, null, null, null, true, 0);
@@ -462,7 +462,7 @@ public class StudyDataLoaderTest {
         UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null, pretendUserGuid, pretendUserGuid, null,
                 null, now, now, null);
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
-                1L, 2L, null, false, null, null, false, null, false);
+                1L, 2L, null, false, null, null, false, null, false, null);
         ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, "X",
                 null, null, null, null, 1L, 1L, 1L, true, false, null, null, null, true, 0);
         mockDataLoader.loadBloodReleaseSurveyData(
@@ -520,7 +520,7 @@ public class StudyDataLoaderTest {
         UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null, pretendUserGuid, pretendUserGuid, null,
                 null, now, now, null);
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
-                1L, 2L, null, false, null, null, false, null, false);
+                1L, 2L, null, false, null, null, false, null, false, null);
 
         ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, "X",
                 null, null, null, null, 1L, 1L, 1L, true, false, null, null, null, true, 0);
@@ -858,7 +858,7 @@ public class StudyDataLoaderTest {
         UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null, pretendUserGuid, pretendUserGuid, null,
                 null, now, now, null);
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
-                1L, 2L, null, false, null, null, false, null, false);
+                1L, 2L, null, false, null, null, false, null, false, null);
 
         ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, "X",
                 null, null, null, null, 1L, 1L, 1L, true, false, null, null, null, true, 0);
@@ -984,7 +984,7 @@ public class StudyDataLoaderTest {
         UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null, pretendUserGuid, pretendUserGuid, null,
                 null, now, now, null);
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
-                1L, 2L, null, false, null, null, false, null, false);
+                1L, 2L, null, false, null, null, false, null, false, null);
 
         ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, "X",
                 null, null, null, null, 1L, 1L, 1L, true, false, null, null, null, true, 0);
@@ -1046,7 +1046,7 @@ public class StudyDataLoaderTest {
         UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, null, pretendUserGuid, pretendUserGuid, null,
                 null, now, now, null);
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
-                1L, 2L, null, false, null, null, false, null, false);
+                1L, 2L, null, false, null, null, false, null, false, null);
 
         ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, "X",
                 null, null, null, null, 1L, 1L, 1L, true, false, null, null, null, true, 0);

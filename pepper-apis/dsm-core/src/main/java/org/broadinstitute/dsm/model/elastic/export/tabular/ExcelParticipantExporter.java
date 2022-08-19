@@ -1,36 +1,39 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular;
 
-import javax.servlet.ServletOutputStream;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.IntStream;
-
-import com.google.common.net.MediaType;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import spark.Response;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.IntStream;
+
+
+/** generates an excel file with a single sheet containing the participant data */
 public class ExcelParticipantExporter extends TabularParticipantExporter {
     private final static int ROW_ACCESS_WINDOW_SIZE = 200;
-    private final SXSSFWorkbook workbook = new SXSSFWorkbook(ROW_ACCESS_WINDOW_SIZE);
+    protected final SXSSFWorkbook workbook;
 
-    private final SXSSFSheet sheet;
+    protected final SXSSFSheet sheet;
     private static final String SHEET_NAME = "Participant List";
+
+    public String getExportFilename() {
+        return getExportFilename("xlsx");
+    }
 
 
     public ExcelParticipantExporter(List<ModuleExportConfig> moduleConfigs,
                                     List<Map<String, String>> participantValueMaps, String fileFormat) {
         super(moduleConfigs, participantValueMaps, fileFormat);
-        this.sheet = workbook.createSheet(SHEET_NAME);
+        workbook = new SXSSFWorkbook(ROW_ACCESS_WINDOW_SIZE);
+        sheet = workbook.createSheet(getSheetName());
         sheet.trackAllColumnsForAutoSizing();
     }
 
-    public void export(Response response) throws IOException {
-        setResponseHeaders(response);
-
+    public void export(OutputStream os) throws IOException {
         List<String> headerValues = getHeaderRow();
         List<String> subHeaderValues = getSubHeaderRow();
 
@@ -43,21 +46,17 @@ public class ExcelParticipantExporter extends TabularParticipantExporter {
             writeRowToSheet(rowValues, i + 2);
         });
 
-        try (ServletOutputStream servOut = response.raw().getOutputStream()) {
-            workbook.write(servOut);
+        writeAndCloseSheet(os);
+    }
+
+    protected void writeAndCloseSheet(OutputStream os) throws IOException {
+        try (workbook) {
+            workbook.write(os);
+            workbook.dispose();
         }
-        workbook.dispose();
-        workbook.close();
-
     }
 
-    private void setResponseHeaders(Response response) {
-        response.type(MediaType.OCTET_STREAM.toString());
-        response.header("Access-Control-Expose-Headers", "Content-Disposition");
-        response.header("Content-Disposition", "attachment;filename=" + getExportFilename(fileFormat));
-    }
-
-    private void writeRowToSheet(List<String> rowValues, int rowNum) {
+    protected void writeRowToSheet(List<String> rowValues, int rowNum) {
         Row headerRow = sheet.createRow(rowNum);
         IntStream.range(0, rowValues.size()).forEach(i -> {
             headerRow.createCell(i).setCellValue(rowValues.get(i));
@@ -72,5 +71,9 @@ public class ExcelParticipantExporter extends TabularParticipantExporter {
             value = StringUtils.EMPTY;
         }
         return value;
+    }
+
+    protected String getSheetName() {
+        return SHEET_NAME;
     }
 }

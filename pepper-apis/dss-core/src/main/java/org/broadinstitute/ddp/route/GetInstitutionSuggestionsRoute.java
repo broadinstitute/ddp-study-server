@@ -32,7 +32,7 @@ public class GetInstitutionSuggestionsRoute implements Route {
                     .getLimitedSuggestionsByNamePatterns(anchored, free, limit)) {
                 return dtoStream.collect(
                         Collectors.toMap(
-                                k -> k.getName() + "/" + k.getCity() + "/" + k.getState(),
+                                k -> k.getName() + "/" + k.getCity() + "/" + k.getState() + "/" + k.getCountry(),
                                 Function.identity(),
                                 (k1, k2) -> {
                                     throw new IllegalStateException(String.format("Duplicate key %s", k1));

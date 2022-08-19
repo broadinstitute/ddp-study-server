@@ -12,6 +12,11 @@ public class Keys {
         public static final TriggerKey CheckTrigger = TriggerKey.triggerKey("check", "age-up");
     }
 
+    public static class Notification {
+        public static final JobKey FileUpload = JobKey.jobKey("file-upload", "notification");
+        public static final TriggerKey FileUploadTrigger = TriggerKey.triggerKey("file-upload", "notification");
+    }
+
     public static class Cleanup {
         public static final JobKey TempUserJob = JobKey.jobKey("temp-user", "cleanup");
         public static final JobKey FileUploadJob = JobKey.jobKey("file-upload", "cleanup");

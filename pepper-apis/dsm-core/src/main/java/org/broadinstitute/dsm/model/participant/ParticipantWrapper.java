@@ -1,22 +1,9 @@
 package org.broadinstitute.dsm.model.participant;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.KitRequestShipping;
-import org.broadinstitute.dsm.db.MedicalRecord;
-import org.broadinstitute.dsm.db.OncHistoryDetail;
-import org.broadinstitute.dsm.db.Participant;
-import org.broadinstitute.dsm.db.SmId;
-import org.broadinstitute.dsm.db.Tissue;
+import org.broadinstitute.dsm.db.*;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.model.Filter;
@@ -27,17 +14,22 @@ import org.broadinstitute.dsm.model.elastic.mapping.FieldTypeExtractor;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchable;
+import org.broadinstitute.dsm.model.elastic.search.UnparsedESParticipantDto;
 import org.broadinstitute.dsm.model.elastic.sort.Sort;
 import org.broadinstitute.dsm.model.elastic.sort.SortBy;
 import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter;
 import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilterPayload;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Data
 public class ParticipantWrapper {
@@ -52,6 +44,8 @@ public class ParticipantWrapper {
     public ParticipantWrapper(ParticipantWrapperPayload participantWrapperPayload, ElasticSearchable elasticSearchable) {
         this.participantWrapperPayload = Objects.requireNonNull(participantWrapperPayload);
         this.elasticSearchable = Objects.requireNonNull(elasticSearchable);
+        // use the same deserializer as the search results for parsing the proxy data
+        this.esData.setDeserializer(elasticSearchable.getDeserializer());
         participantWrapperPayload.getSortBy().ifPresent(sortBy -> {
             FieldTypeExtractor fieldTypeExtractor = new FieldTypeExtractor();
             fieldTypeExtractor.setIndex(participantWrapperPayload.getDdpInstanceDto().orElseThrow().getEsParticipantIndex());
@@ -117,51 +111,64 @@ public class ParticipantWrapper {
         List<String> proxyGuids = new ArrayList<>();
 
         for (ElasticSearchParticipantDto elasticSearchParticipantDto : esData.getEsParticipants()) {
-
-            elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
-
-                Participant participant = esDsm.getParticipant().orElse(new Participant());
-
-                esDsm.getOncHistory().ifPresent(oncHistory -> {
-                    participant.setCreated(oncHistory.getCreated());
-                    participant.setReviewed(oncHistory.getReviewed());
-                });
-
-                StudyPreFilter.fromPayload(StudyPreFilterPayload.of(elasticSearchParticipantDto, ddpInstanceDto))
-                        .ifPresent(StudyPreFilter::filter);
-
-                List<MedicalRecord> medicalRecord = esDsm.getMedicalRecord();
-                List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();
-                List<KitRequestShipping> kitRequestShipping = esDsm.getKitRequestShipping();
-                List<Tissue> tissues = esDsm.getTissue();
-                List<SmId> smIds = esDsm.getSmId();
-
-                mapSmIdsToProperTissue(tissues, smIds);
-
-                mapTissueToProperOncHistoryDetail(oncHistoryDetails, tissues);
-
-                proxyGuids.addAll(elasticSearchParticipantDto.getProxies());
-
-                List<ParticipantData> participantData = esDsm.getParticipantData();
-                sortBySelfElseById(participantData);
-
-                ParticipantWrapperDto participantWrapperDto = new ParticipantWrapperDto();
-                participantWrapperDto.setEsData(elasticSearchParticipantDto);
-                participantWrapperDto.setParticipant(participant);
-                participantWrapperDto.setMedicalRecords(medicalRecord);
-                participantWrapperDto.setOncHistoryDetails(oncHistoryDetails);
-                participantWrapperDto.setKits(kitRequestShipping);
-                participantWrapperDto.setParticipantData(participantData);
-                participantWrapperDto.setAbstractionActivities(Collections.emptyList());
-                participantWrapperDto.setAbstractionSummary(Collections.emptyList());
-
-                result.add(participantWrapperDto);
-
-            });
+            if (elasticSearchParticipantDto instanceof UnparsedESParticipantDto) {
+                addWrapperToList((UnparsedESParticipantDto) elasticSearchParticipantDto, result);
+            } else {
+                addWrapperToList(elasticSearchParticipantDto, result, ddpInstanceDto);
+            }
+            proxyGuids.addAll(elasticSearchParticipantDto.getProxies());
         }
         fillParticipantWrapperDtosWithProxies(result, proxyGuids);
         return result;
     }
+
+    private void addWrapperToList(UnparsedESParticipantDto elasticSearchParticipantDto, List<ParticipantWrapperDto> result) {
+        // don't do any copying of the main attributes, but do keep track of the proxies so that we can fetch them in bulk
+        ParticipantWrapperDto participantWrapperDto = new ParticipantWrapperDto();
+        participantWrapperDto.setEsData(elasticSearchParticipantDto);
+        result.add(participantWrapperDto);
+    }
+
+    private void addWrapperToList(ElasticSearchParticipantDto elasticSearchParticipantDto, List<ParticipantWrapperDto> result, DDPInstanceDto ddpInstanceDto) {
+
+        elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
+            Participant participant = esDsm.getParticipant().orElse(new Participant());
+
+            esDsm.getOncHistory().ifPresent(oncHistory -> {
+                participant.setCreated(oncHistory.getCreated());
+                participant.setReviewed(oncHistory.getReviewed());
+            });
+
+            StudyPreFilter.fromPayload(StudyPreFilterPayload.of(elasticSearchParticipantDto, ddpInstanceDto))
+                    .ifPresent(StudyPreFilter::filter);
+
+            List<MedicalRecord> medicalRecord = esDsm.getMedicalRecord();
+            List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();
+            List<KitRequestShipping> kitRequestShipping = esDsm.getKitRequestShipping();
+            List<Tissue> tissues = esDsm.getTissue();
+            List<SmId> smIds = esDsm.getSmId();
+
+            mapSmIdsToProperTissue(tissues, smIds);
+
+            mapTissueToProperOncHistoryDetail(oncHistoryDetails, tissues);
+
+
+
+            List<ParticipantData> participantData = esDsm.getParticipantData();
+            sortBySelfElseById(participantData);
+            ParticipantWrapperDto participantWrapperDto = new ParticipantWrapperDto();
+            participantWrapperDto.setEsData(elasticSearchParticipantDto);
+            participantWrapperDto.setParticipant(participant);
+            participantWrapperDto.setMedicalRecords(medicalRecord);
+            participantWrapperDto.setOncHistoryDetails(oncHistoryDetails);
+            participantWrapperDto.setKits(kitRequestShipping);
+            participantWrapperDto.setParticipantData(participantData);
+            participantWrapperDto.setAbstractionActivities(Collections.emptyList());
+            participantWrapperDto.setAbstractionSummary(Collections.emptyList());
+            result.add(participantWrapperDto);
+        });
+    }
+
 
     private void mapSmIdsToProperTissue(List<Tissue> tissues, List<SmId> smIds) {
         for (SmId smId : smIds) {
@@ -194,12 +201,33 @@ public class ParticipantWrapper {
         elasticSearchable.setSortBy(sort);
         ElasticSearch proxiesByIds = elasticSearchable.getParticipantsByIds(esUsersIndex, proxyGuids);
         result.forEach(participantWrapperDto -> {
-            List<String> participantProxyGuids = participantWrapperDto.getEsData().getProxies();
-            List<ElasticSearchParticipantDto> proxyEsData = proxiesByIds.getEsParticipants().stream()
-                    .filter(elasticSearchParticipantDto -> participantProxyGuids.contains(elasticSearchParticipantDto.getParticipantId()))
-                    .collect(Collectors.toList());
-            participantWrapperDto.setProxyData(proxyEsData);
+            if (participantWrapperDto.getEsData() instanceof UnparsedESParticipantDto) {
+                addProxyDataToDto((UnparsedESParticipantDto) participantWrapperDto.getEsData(), proxiesByIds);
+            } else {
+                addProxyDataToDto(participantWrapperDto, proxiesByIds);
+            }
         });
+    }
+
+    private void addProxyDataToDto(ParticipantWrapperDto participantWrapperDto, ElasticSearch proxiesByIds) {
+        List<String> participantProxyGuids = participantWrapperDto.getEsData().getProxies();
+        List<ElasticSearchParticipantDto> proxyEsData = proxiesByIds.getEsParticipants().stream()
+                .filter(elasticSearchParticipantDto -> participantProxyGuids.contains(elasticSearchParticipantDto.getParticipantId()))
+                .collect(Collectors.toList());
+        participantWrapperDto.setProxyData(proxyEsData);
+    }
+
+    private void addProxyDataToDto(UnparsedESParticipantDto esDto, ElasticSearch proxiesByIds) {
+        List<String> participantProxyGuids = (List<String>) esDto.getDataAsMap().get("proxies");
+        List<ElasticSearchParticipantDto> proxyEsData = proxiesByIds.getEsParticipants().stream()
+                .filter(proxyEsDto -> {
+                    Map<String, Object> profile = (Map<String, Object>) ((UnparsedESParticipantDto) proxyEsDto).getDataAsMap()
+                            .get(ESObjectConstants.PROFILE);
+                    return participantProxyGuids.contains((String) profile.get(ESObjectConstants.GUID));
+                }).collect(Collectors.toList());
+        List<Map<String, Object>> proxyEsDataAsMaps = proxyEsData.stream()
+                .map(proxyData -> ((UnparsedESParticipantDto) proxyData).getDataAsMap()).collect(Collectors.toList());
+        esDto.getDataAsMap().put(ESObjectConstants.PROXY_DATA, proxyEsDataAsMaps);
     }
 
     private void mapTissueToProperOncHistoryDetail(List<OncHistoryDetail> oncHistoryDetails, List<Tissue> tissues) {

@@ -70,6 +70,8 @@ public class ESObjectConstants {
     public static final String DO_NOT_CONTACT = "doNotContact";
     public static final String CREATED_AT = "createdAt";
 
+    public static final String PROXY_DATA = "proxyData";
+
     //dsm
     public static final String DATE_OF_MAJORITY = "dateOfMajority";
     public static final String HAS_CONSENTED_TO_BLOODD_RAW = "hasConsentedToBloodDraw";
@@ -86,18 +88,28 @@ public class ESObjectConstants {
     public static final String PARTICIPANT_RECORD = "participantRecord";
     public static final String PARTICIPANT = "participant";
     public static final String DYNAMIC_FIELDS = "dynamicFields";
+    public static final String ADDITIONAL_VALUE = "ADDITIONALVALUE";
     public static final String DOC_ID = "_id";
     public static final String SMID = "smId";
 
     //question
     public static final String QUESTIONS = "questions";
+    public static final String QUESTION_TYPE = "questionType";
     public static final String STABLE_ID = "stableId";
+    public static final String QUESTION_TEXT = "questionText";
     public static final String OPTIONDETAILS = "optionDetails";
     public static final String OPTION_TEXT = "optionText";
     public static final String OPTION_STABLE_ID = "optionStableId";
+    public static final String OPTION_DETAILS_ALLOWED = "isDetailsAllowed";
+    public static final String OPTION_DETAILS_TEXT = "detailsText";
     public static final String OPTION = "option";
     public static final String OPTIONS = "options";
+    public static final String ALLOW_MULTIPLE = "allowMultiple";
+    public static final String OPTION_GROUPS = "groups";
+    public static final String GROUPED_OPTIONS = "groupedOptions";
+    public static final String CHILD_QUESTIONS = "childQuestions";
     public static final String DETAIL = "detail";
+    public static final String DETAILS = "details";
     public static final String ANSWER = "answer";
     public static final String FIELD_TYPE_ID = "fieldTypeId";
     public static final String ACTIVITIES = "activities";

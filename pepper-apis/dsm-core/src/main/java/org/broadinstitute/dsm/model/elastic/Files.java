@@ -20,12 +20,15 @@ public class Files {
     @SerializedName(ESObjectConstants.MIME_TYPE)
     private String mimeType;
     @SerializedName(ESObjectConstants.AUTHORIZED_AT)
-    private Long authorizedAt;
+    private String authorizedAt;
     @SerializedName(ESObjectConstants.UPLOADED_AT)
-    private Long uploadedAt;
+    private String uploadedAt;
     @SerializedName(ESObjectConstants.SCANNED_AT)
-    private Long scannedAt;
+    private String scannedAt;
     @SerializedName(ESObjectConstants.SCAN_RESULT)
     private String scanResult;
 
+    public boolean isFileClean() {
+        return this.scannedAt != null && "CLEAN".equals(this.scanResult);
+    }
 }

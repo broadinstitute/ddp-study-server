@@ -1,7 +1,5 @@
 package org.broadinstitute.dsm.model.elastic.sort;
 
-import java.util.Objects;
-
 import com.google.common.base.Enums;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
@@ -9,6 +7,8 @@ import org.broadinstitute.dsm.model.ParticipantColumn;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
+
+import java.util.Objects;
 
 @Getter
 public enum Alias {
@@ -25,8 +25,11 @@ public enum Alias {
     R(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT), false, false),
     EX(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT), false, false),
     DSM(ElasticSearchUtil.DSM, false, false), STATUS(ElasticSearchUtil.STATUS, false, false),
-    PROFILE(ElasticSearchUtil.PROFILE, false, false), ADDRESS(ElasticSearchUtil.ADDRESS, false, false),
-    INVITATIONS(ElasticSearchUtil.INVITATIONS, false, false), PROXY(ElasticSearchUtil.PROFILE, false, false),
+    PROFILE(ElasticSearchUtil.PROFILE, false, false),
+    ADDRESS(ElasticSearchUtil.ADDRESS, false, false),
+    INVITATIONS(ElasticSearchUtil.INVITATIONS, true, false),
+    PROXY(ElasticSearchUtil.PROFILE, false, false),
+    FILES(ElasticSearchUtil.FILES, true, false),
     ACTIVITIES(ElasticSearchUtil.ACTIVITIES, true, false), REGISTRATION(ElasticSearchUtil.ACTIVITIES, true, false),
     RGP_PARTICIPANT_INFO_GROUP(
             String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA, ESObjectConstants.DATA),
@@ -56,7 +59,7 @@ public enum Alias {
     AT_GROUP_CONSENT(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA), true, true),
     AT_PARTICIPANT_INFO(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA), true, true),
     AT_PARTICIPANT_EXIT(String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, ESObjectConstants.PARTICIPANT_DATA), true, true),
-    DATA(StringUtils.EMPTY, false, false), FILES(ElasticSearchUtil.FILES, false, false);
+    DATA(StringUtils.EMPTY, false, false);
 
     Alias(String value, boolean isCollection, boolean isJson) {
         this.value = value;
@@ -86,8 +89,10 @@ public enum Alias {
 
     public static Alias of(ParticipantColumn column) {
         Alias esAlias;
-        if (Objects.nonNull(column.getObject())) {
+        if (Objects.nonNull(column.getObject()) && Alias.ofOrNull(column.getObject()) != null) {
             esAlias = Alias.of(column.getObject());
+        } else if (ElasticSearchUtil.QUESTIONS_ANSWER.equals(column.getObject())) {
+            esAlias = ACTIVITIES;
         } else {
             esAlias = Alias.of(column.getTableAlias());
         }
@@ -96,5 +101,9 @@ public enum Alias {
 
     private static Alias of(String alias) {
         return Enums.getIfPresent(Alias.class, alias.toUpperCase()).or(ACTIVITIES);
+    }
+
+    private static Alias ofOrNull(String alias) {
+        return Enums.getIfPresent(Alias.class, alias.toUpperCase()).orNull();
     }
 }

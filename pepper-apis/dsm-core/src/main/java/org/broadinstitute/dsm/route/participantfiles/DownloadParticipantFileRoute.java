@@ -2,15 +2,14 @@ package org.broadinstitute.dsm.route.participantfiles;
 
 import static org.broadinstitute.dsm.statics.DBConstants.FILE_DOWNLOAD_ROLE;
 
-import java.util.Optional;
-
-import com.google.cloud.storage.Blob;
-import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.Storage;
-import com.google.cloud.storage.StorageOptions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.exception.DownloadException;
+import org.broadinstitute.dsm.model.participantfiles.ParticipantFilesUseCase;
 import org.broadinstitute.dsm.security.RequestHandler;
+import org.broadinstitute.dsm.service.FileDownloadService;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.SecurityUtil;
 import org.broadinstitute.dsm.util.UserUtil;
@@ -19,14 +18,16 @@ import spark.Request;
 
 @Slf4j
 public class DownloadParticipantFileRoute extends RequestHandler {
-    private static String googleProjectName;
+    private static FileDownloadService fileDownloadService;
     private static String BUCKET = "bucket";
+    private static String BLOB_NAME = "blobName";
     private static String FILE_NAME = "fileName";
-    private static String BLOB = "blob";
+    private static String FILE_GUID = "fileGuid";
+    private static String DDP_PARTICIPANT_ID = "ddpParticipantId";
+    private static String BAD_FILE_RESPONSE = "File has not passed scanning and should not be downloaded!";
 
-
-    public DownloadParticipantFileRoute(String googleProjectName) {
-        this.googleProjectName = googleProjectName;
+    public DownloadParticipantFileRoute(FileDownloadService fileDownloadService) {
+        this.fileDownloadService = fileDownloadService;
     }
 
     @Override
@@ -43,27 +44,28 @@ public class DownloadParticipantFileRoute extends RequestHandler {
         String userIdR = UserUtil.getUserId(request);
         if (UserUtil.checkUserAccess(realm, userId, FILE_DOWNLOAD_ROLE, userIdR)) {
             String bucketName = queryParams.value(BUCKET);
-            String objectName = queryParams.value(FILE_NAME);
-            String blobName = queryParams.value(BLOB);
-            Optional<byte[]> downloadObject =
-                    downloadObject(googleProjectName, bucketName, objectName, blobName);
-            byte[] downloadObjectArray = downloadObject.orElseThrow();
-            response.status(200);
-            return downloadObjectArray;
+            String blobName = queryParams.value(BLOB_NAME);
+            String fileName = queryParams.value(FILE_NAME);
+            String fileGuid = queryParams.value(FILE_GUID);
+            String ddpParticipantId = queryParams.value(DDP_PARTICIPANT_ID);
+            DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
+            ParticipantFilesUseCase participantFilesUseCase =
+                    new ParticipantFilesUseCase(bucketName, blobName, ddpParticipantId, fileGuid, fileDownloadService, ddpInstanceDto);
+
+            try {
+                SignedUrlResponse url = participantFilesUseCase.createSignedURLForDownload();
+                log.info("Signed URL generated for file download for participant " + ddpParticipantId + " file");
+                response.status(200);
+                return url;
+            } catch (DownloadException e) {
+                log.error(String.format("File %s has not passed scanning %s and should not be downloaded!", blobName, bucketName));
+                response.status(500);
+                return BAD_FILE_RESPONSE;
+            }
+
         } else {
             response.status(401);
             return SecurityUtil.ResultType.AUTHENTICATION_ERROR.toString();
         }
-    }
-
-    public Optional<byte[]> downloadObject(String projectId, String bucketName, String objectName, String blobName) {
-        Storage storage = StorageOptions.newBuilder().setProjectId(projectId).build().getService();
-        Blob blob = storage.get(BlobId.of(bucketName, blobName));
-        byte[] content = null;
-        if (blob.exists()) {
-            content = blob.getContent();
-            log.info("Downloaded object " + objectName + " from bucket name " + bucketName);
-        }
-        return Optional.ofNullable(content);
     }
 }

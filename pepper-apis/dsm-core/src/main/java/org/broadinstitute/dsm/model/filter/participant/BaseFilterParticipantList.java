@@ -21,16 +21,19 @@ import org.broadinstitute.dsm.model.filter.Filterable;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapper;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperPayload;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
+import org.broadinstitute.dsm.model.elastic.search.Deserializer;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spark.QueryParamsMap;
 
 public abstract class BaseFilterParticipantList extends BaseFilter implements Filterable<ParticipantWrapperResult> {
 
     private static final Logger logger = LoggerFactory.getLogger(BaseFilterParticipantList.class);
     public static final String PARTICIPANT_DATA = "participantData";
     protected static final Gson GSON = new Gson();
+    private Deserializer deserializer = null;
 
     public BaseFilterParticipantList() {
         super(null);
@@ -40,6 +43,12 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
         super(jsonBody);
     }
 
+    @Override
+    public ParticipantWrapperResult filter(QueryParamsMap queryParamsMap, Deserializer deserializer) {
+        this.deserializer = deserializer;
+        return filter(queryParamsMap);
+    }
+
 
     protected ParticipantWrapperResult filterParticipantList(Filter[] filters, Map<String, DBElement> columnNameMap) {
         Map<String, String> queryConditions = new HashMap<>();
@@ -47,6 +56,9 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
         ParticipantWrapperPayload.Builder participantWrapperPayload =
                 new ParticipantWrapperPayload.Builder().withDdpInstanceDto(ddpInstanceDto).withFrom(from).withTo(to).withSortBy(sortBy);
         ElasticSearch elasticSearch = new ElasticSearch();
+        if (deserializer != null) {
+            elasticSearch.setDeserializer(deserializer);
+        }
         if (filters != null && columnNameMap != null && !columnNameMap.isEmpty()) {
             for (Filter filter : filters) {
                 if (filter != null) {
