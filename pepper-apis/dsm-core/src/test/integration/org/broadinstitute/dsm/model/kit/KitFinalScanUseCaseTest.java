@@ -12,7 +12,6 @@ import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.kit.KitTypeDto;
 import org.broadinstitute.dsm.route.kit.KitPayload;
-import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
 import org.broadinstitute.dsm.route.kit.ScanPayload;
 import org.broadinstitute.dsm.route.kit.SentAndFinalScanPayload;
 import org.junit.Test;
@@ -40,7 +39,7 @@ public class KitFinalScanUseCaseTest extends KitBaseUseCaseTest {
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(TestInstanceCreator.TEST_INSTANCE).orElseThrow();
         KitPayload kitPayload = new KitPayload(scanPayloads, 94, ddpInstanceDto);
         KitFinalScanUseCase kitFinalScanUseCase = new KitFinalScanUseCase(kitPayload, kitDao);
-        List<KitStatusChangeRoute.ScanError> scanErrors = kitFinalScanUseCase.get();
+        List<ScanError> scanErrors = kitFinalScanUseCase.get();
         assertEquals(0, scanErrors.size());
         assertEquals("kitLabel", kitDao.getKit(kitId.longValue()).map(KitRequestShipping::getKitLabel).orElse(StringUtils.EMPTY));
         assertEquals("kitLabel2", kitDao.getKit(kitId2.longValue()).map(KitRequestShipping::getKitLabel).orElse(StringUtils.EMPTY));
@@ -64,15 +63,15 @@ public class KitFinalScanUseCaseTest extends KitBaseUseCaseTest {
         setAndSaveKitRequestId(kitRequestShipping);
 
 
-        KitStatusChangeRoute.ScanError scanError =
-                new KitStatusChangeRoute.ScanError("ddpLabel", "Kit with DSM Label " + "ddpLabel" + " does not have a Tracking Label");
+        ScanError scanError =
+                new ScanError("ddpLabel", "Kit with DSM Label " + "ddpLabel" + " does not have a Tracking Label");
         List<ScanPayload> scanPayloads = List.of(
                 new SentAndFinalScanPayload("ddpLabel", "kitLabel")
         );
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(TestInstanceCreator.TEST_INSTANCE).orElseThrow();
         KitPayload kitPayload = new KitPayload(scanPayloads, 94, ddpInstanceDto);
         KitFinalScanUseCase kitFinalScanUseCase = new KitFinalScanUseCase(kitPayload, kitDao);
-        List<KitStatusChangeRoute.ScanError> scanErrors = kitFinalScanUseCase.get();
+        List<ScanError> scanErrors = kitFinalScanUseCase.get();
         assertEquals(1, scanErrors.size());
         assertEquals(scanError, scanErrors.get(0));
     }

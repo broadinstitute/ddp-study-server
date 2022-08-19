@@ -40,7 +40,7 @@ import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.model.gp.KitInfo;
 import org.broadinstitute.dsm.model.gp.bsp.BSPKitRegistration;
 import org.broadinstitute.dsm.model.gp.bsp.BSPKitStatus;
-import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
+import org.broadinstitute.dsm.model.kit.ScanError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
@@ -1475,7 +1475,7 @@ public class RouteTestSample extends TestHelper {
                         .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         String message = DDPRequestUtil.getContentAsString(response);
-        KitStatusChangeRoute.ScanError[] scanErrors = new GsonBuilder().create().fromJson(message, KitStatusChangeRoute.ScanError[].class);
+        ScanError[] scanErrors = new GsonBuilder().create().fromJson(message, ScanError[].class);
         //check that kit came back as scan error
         Assert.assertTrue(scanErrors.length > 0);
 
@@ -1491,7 +1491,7 @@ public class RouteTestSample extends TestHelper {
                 .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         message = DDPRequestUtil.getContentAsString(response);
-        scanErrors = new GsonBuilder().create().fromJson(message, KitStatusChangeRoute.ScanError[].class);
+        scanErrors = new GsonBuilder().create().fromJson(message, ScanError[].class);
         //check that kit came NOT back as scan error
         Assert.assertTrue(scanErrors.length == 0);
     }
@@ -1524,7 +1524,7 @@ public class RouteTestSample extends TestHelper {
                 .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         String message = DDPRequestUtil.getContentAsString(response);
-        KitStatusChangeRoute.ScanError[] scanErrors = new GsonBuilder().create().fromJson(message, KitStatusChangeRoute.ScanError[].class);
+        ScanError[] scanErrors = new GsonBuilder().create().fromJson(message, ScanError[].class);
         //check that kit came NOT back as scan error
         Assert.assertTrue(scanErrors.length == 0);
 
@@ -1551,7 +1551,7 @@ public class RouteTestSample extends TestHelper {
                         .returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         String message = DDPRequestUtil.getContentAsString(response);
-        KitStatusChangeRoute.ScanError[] scanErrors = new GsonBuilder().create().fromJson(message, KitStatusChangeRoute.ScanError[].class);
+        ScanError[] scanErrors = new GsonBuilder().create().fromJson(message, ScanError[].class);
         //check that kit came NOT back as scan error
         Assert.assertTrue(scanErrors.length == 0);
 

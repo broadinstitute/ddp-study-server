@@ -11,7 +11,6 @@ import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.route.kit.KitPayload;
-import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
 import org.broadinstitute.dsm.route.kit.ScanPayload;
 import org.broadinstitute.dsm.route.kit.SentAndFinalScanPayload;
 import org.junit.Test;
@@ -34,7 +33,7 @@ public class KitReceivedUseCaseTest extends KitBaseUseCaseTest {
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(TestInstanceCreator.TEST_INSTANCE).orElseThrow();
         KitPayload kitPayload = new KitPayload(scanPayloads, 94, ddpInstanceDto);
         KitReceivedUseCase kitReceivedUseCase = new KitReceivedUseCase(kitPayload, kitDao, null);
-        List<KitStatusChangeRoute.ScanError> scanErrors = kitReceivedUseCase.get();
+        List<ScanError> scanErrors = kitReceivedUseCase.get();
         assertEquals(0, scanErrors.size());
         assertTrue(Objects.nonNull(kitDao.getKit(kitId.longValue()).map(KitRequestShipping::getReceiveDate).orElse(null)));
     }

@@ -7,7 +7,6 @@ import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.route.kit.KitPayload;
-import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
 import org.broadinstitute.dsm.route.kit.ScanPayload;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.slf4j.Logger;
@@ -23,11 +22,11 @@ public class KitTrackingScanUseCase extends BaseKitUseCase {
     }
 
     @Override
-    protected Optional<KitStatusChangeRoute.ScanError> process(ScanPayload scanPayload) {
+    protected Optional<ScanError> process(ScanPayload scanPayload) {
         String kitLabel = scanPayload.getKitLabel();
         String trackingReturnId = scanPayload.getTrackingReturnId();
         KitRequestShipping kitRequestShipping = buildKitRequestShippingForInserting(kitLabel, trackingReturnId);
-        Optional<KitStatusChangeRoute.ScanError> maybeScanError =
+        Optional<ScanError> maybeScanError =
                 insertKitRequest(kitRequestShipping);
         if (isKitUpdateSuccessful(maybeScanError)) {
             exportToElasticSearch(trackingReturnId, kitRequestShipping);
@@ -45,7 +44,7 @@ public class KitTrackingScanUseCase extends BaseKitUseCase {
         }
     }
 
-    private Optional<KitStatusChangeRoute.ScanError> insertKitRequest(KitRequestShipping kitRequestShipping) {
+    private Optional<ScanError> insertKitRequest(KitRequestShipping kitRequestShipping) {
         return kitDao.insertKitTracking(kitRequestShipping, String.valueOf(kitPayload.getUserId()));
     }
 

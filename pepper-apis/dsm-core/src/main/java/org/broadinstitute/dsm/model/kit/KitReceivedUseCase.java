@@ -6,7 +6,6 @@ import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.model.at.ReceiveKitRequest;
 import org.broadinstitute.dsm.route.kit.KitPayload;
-import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
 import org.broadinstitute.dsm.route.kit.ScanPayload;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.slf4j.Logger;
@@ -25,11 +24,11 @@ public class KitReceivedUseCase extends BaseKitUseCase {
     }
 
     @Override
-    protected Optional<KitStatusChangeRoute.ScanError> process(ScanPayload scanPayload) {
+    protected Optional<ScanError> process(ScanPayload scanPayload) {
         String kitLabel = scanPayload.getKitLabel();
         KitRequestShipping kitRequestShipping = new KitRequestShipping();
         kitRequestShipping.setKitLabel(kitLabel);
-        Optional<KitStatusChangeRoute.ScanError> maybeScanError =
+        Optional<ScanError> maybeScanError =
                 kitDao.updateKitReceived(kitRequestShipping, String.valueOf(kitPayload.getUserId()));
         if (!isKitUpdateSuccessful(maybeScanError)) {
             if (isReceiveATKitRequest(kitLabel)) {

@@ -6,7 +6,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.NonNull;
 import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
 import org.broadinstitute.dsm.model.kit.KitReceivedUseCase;
-import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 

@@ -10,7 +10,6 @@ import org.broadinstitute.dsm.db.dao.ddp.kitrequest.KitRequestDao;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.db.dto.ddp.kitrequest.KitRequestDto;
 import org.broadinstitute.dsm.route.kit.KitPayload;
-import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
 import org.broadinstitute.dsm.route.kit.ScanPayload;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchDataUtil;
@@ -24,12 +23,12 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
     }
 
     @Override
-    protected Optional<KitStatusChangeRoute.ScanError> process(ScanPayload scanPayload) {
-        Optional<KitStatusChangeRoute.ScanError> result;
+    protected Optional<ScanError> process(ScanPayload scanPayload) {
+        Optional<ScanError> result;
         String kitLabel = scanPayload.getKitLabel();
         String ddpLabel = scanPayload.getDdpLabel();
         if (kitLabel.length() < 14) {
-            return Optional.of(new KitStatusChangeRoute.ScanError(ddpLabel, "Barcode contains less than 14 digits, "
+            return Optional.of(new ScanError(ddpLabel, "Barcode contains less than 14 digits, "
                     + "You can manually enter any missing digits above."));
         }
         if (kitDao.isBloodKit(ddpLabel)) {
@@ -40,7 +39,7 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
                 kitRequestDao.getKitRequestByLabel(ddpLabel).ifPresent(this::writeSampleSentToES);
             } else {
                 result = Optional.of(
-                        new KitStatusChangeRoute.ScanError(
+                        new ScanError(
                                 ddpLabel, "Kit with DSM Label " + ddpLabel + " does not have a Tracking Label"));
             }
         } else {
@@ -49,7 +48,7 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
         return result;
     }
 
-    private Optional<KitStatusChangeRoute.ScanError> updateKitRequest(String addValue, String kit) {
+    private Optional<ScanError> updateKitRequest(String addValue, String kit) {
         KitRequestShipping kitRequestShipping = getKitRequestShipping(addValue, kit);
         return kitDao.updateKitRequest(kitRequestShipping, String.valueOf(kitPayload.getUserId()));
     }

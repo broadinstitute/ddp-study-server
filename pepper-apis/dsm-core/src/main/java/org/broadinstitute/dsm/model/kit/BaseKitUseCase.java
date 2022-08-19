@@ -9,28 +9,27 @@ import lombok.AllArgsConstructor;
 import lombok.Setter;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.route.kit.KitPayload;
-import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
 import org.broadinstitute.dsm.route.kit.ScanPayload;
 
 @AllArgsConstructor
 @Setter
-public abstract class BaseKitUseCase implements Supplier<List<KitStatusChangeRoute.ScanError>> {
+public abstract class BaseKitUseCase implements Supplier<List<ScanError>> {
 
     protected KitPayload kitPayload;
     protected KitDao kitDao;
 
     @Override
-    public List<KitStatusChangeRoute.ScanError> get() {
-        List<KitStatusChangeRoute.ScanError> result = new ArrayList<>();
+    public List<ScanError> get() {
+        List<ScanError> result = new ArrayList<>();
         for (ScanPayload scanPayload : kitPayload.getScanPayloads()) {
             process(scanPayload).ifPresent(result::add);
         }
         return result;
     }
 
-    protected abstract Optional<KitStatusChangeRoute.ScanError> process(ScanPayload scanPayload);
+    protected abstract Optional<ScanError> process(ScanPayload scanPayload);
 
-    protected boolean isKitUpdateSuccessful(Optional<KitStatusChangeRoute.ScanError> maybeScanError) {
+    protected boolean isKitUpdateSuccessful(Optional<ScanError> maybeScanError) {
         return maybeScanError.isEmpty();
     }
 

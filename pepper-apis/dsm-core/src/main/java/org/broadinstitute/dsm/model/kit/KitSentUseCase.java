@@ -5,7 +5,6 @@ import java.util.Optional;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.route.kit.KitPayload;
-import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
 import org.broadinstitute.dsm.route.kit.ScanPayload;
 
 //setting a kit to sent without the final scan (where there is no barcode)
@@ -16,11 +15,11 @@ public class KitSentUseCase extends KitFinalSentBaseUseCase {
     }
 
     @Override
-    protected Optional<KitStatusChangeRoute.ScanError> process(ScanPayload scanPayload) {
+    protected Optional<ScanError> process(ScanPayload scanPayload) {
         String kitLabel = scanPayload.getKitLabel();
         KitRequestShipping kitRequestShipping = new KitRequestShipping();
         kitRequestShipping.setKitLabel(kitLabel);
-        Optional<KitStatusChangeRoute.ScanError> result =
+        Optional<ScanError> result =
                 kitDao.updateKitRequest(kitRequestShipping, String.valueOf(kitPayload.getUserId()));
         trigerEventsIfSuccessfulKitUpdate(result, kitLabel, kitRequestShipping);
         return result;

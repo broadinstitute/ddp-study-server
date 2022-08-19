@@ -4,8 +4,7 @@ import java.util.Optional;
 
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.Dao;
-import org.broadinstitute.dsm.db.dto.ddp.kitrequest.KitRequestDto;
-import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
+import org.broadinstitute.dsm.model.kit.ScanError;
 
 public interface KitDao extends Dao<KitRequestShipping> {
 
@@ -13,11 +12,11 @@ public interface KitDao extends Dao<KitRequestShipping> {
 
     Boolean hasTrackingScan(String kitLabel);
 
-    Optional<KitStatusChangeRoute.ScanError> updateKitRequest(KitRequestShipping kitRequestShipping, String userId);
+    Optional<ScanError> updateKitRequest(KitRequestShipping kitRequestShipping, String userId);
 
-    Optional<KitStatusChangeRoute.ScanError> insertKitTracking(KitRequestShipping kitRequestShipping, String userId);
+    Optional<ScanError> insertKitTracking(KitRequestShipping kitRequestShipping, String userId);
 
-    Optional<KitStatusChangeRoute.ScanError> updateKitReceived(KitRequestShipping kitRequestShipping, String userId);
+    Optional<ScanError> updateKitReceived(KitRequestShipping kitRequestShipping, String userId);
 
     Integer insertKit(KitRequestShipping kitRequestShipping);
 

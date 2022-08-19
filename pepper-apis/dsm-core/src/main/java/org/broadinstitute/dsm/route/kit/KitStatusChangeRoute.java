@@ -3,16 +3,14 @@ package org.broadinstitute.dsm.route.kit;
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.Data;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.model.kit.ScanError;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.NotificationUtil;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
@@ -55,14 +53,4 @@ public abstract class KitStatusChangeRoute extends RequestHandler {
     protected abstract List<? extends ScanPayload> getScanPayloads(String requestBody);
 
 
-    @Data
-    public static class ScanError {
-        private String kit;
-        private String error;
-
-        public ScanError(String kit, String error) {
-            this.kit = kit;
-            this.error = error;
-        }
-    }
 }

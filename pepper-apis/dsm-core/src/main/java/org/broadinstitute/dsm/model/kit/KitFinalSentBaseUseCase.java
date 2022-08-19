@@ -9,7 +9,6 @@ import org.broadinstitute.dsm.model.KitDDPNotification;
 import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.route.kit.KitPayload;
-import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DSMConfig;
@@ -25,7 +24,7 @@ public abstract class KitFinalSentBaseUseCase extends BaseKitUseCase {
         super(kitPayload, kitDao);
     }
 
-    protected void trigerEventsIfSuccessfulKitUpdate(Optional<KitStatusChangeRoute.ScanError> result, String kit,
+    protected void trigerEventsIfSuccessfulKitUpdate(Optional<ScanError> result, String kit,
                                                      KitRequestShipping kitRequestShipping) {
         if (isKitUpdateSuccessful(result)) {
             triggerEvents(kit, kitRequestShipping);

@@ -9,6 +9,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
+import org.broadinstitute.dsm.model.kit.ScanError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.TestUtil;
@@ -57,7 +58,7 @@ public class KitStatusChangeRouteTest extends TestHelper {
 
         String json = TestUtil.readFile("FinalScanPayload.json");
         JsonArray scans = (JsonArray) (new JsonParser().parse(json));
-        List<KitStatusChangeRoute.ScanError> scanErrorList = new ArrayList<>();
+        List<ScanError> scanErrorList = new ArrayList<>();
         //route.updateKits("finalScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
 
         List<String> strings = new ArrayList<>();
@@ -106,7 +107,7 @@ public class KitStatusChangeRouteTest extends TestHelper {
 
         String json = TestUtil.readFile("TrackingScanPayload.json");
         JsonArray scans = (JsonArray) (new JsonParser().parse(json));
-        List<KitStatusChangeRoute.ScanError> scanErrorList = new ArrayList<>();
+        List<ScanError> scanErrorList = new ArrayList<>();
         //route.updateKits("trackingScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
 
         List<String> strings = new ArrayList<>();
@@ -132,7 +133,7 @@ public class KitStatusChangeRouteTest extends TestHelper {
 
         String json = TestUtil.readFile("TrackingScanPayload.json");
         JsonArray scans = (JsonArray) (new JsonParser().parse(json));
-        List<KitStatusChangeRoute.ScanError> scanErrorList = new ArrayList<>();
+        List<ScanError> scanErrorList = new ArrayList<>();
         //route.updateKits("finalScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
 
         List<String> strings = new ArrayList<>();
@@ -154,7 +155,7 @@ public class KitStatusChangeRouteTest extends TestHelper {
         }
         String json = TestUtil.readFile("TrackingScanPayload.json");
         JsonArray scans = (JsonArray) (new JsonParser().parse(json));
-        List<KitStatusChangeRoute.ScanError> scanErrorList = new ArrayList<>();
+        List<ScanError> scanErrorList = new ArrayList<>();
         //route.updateKits("trackingScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
 
         List<String> strings = new ArrayList<>();
