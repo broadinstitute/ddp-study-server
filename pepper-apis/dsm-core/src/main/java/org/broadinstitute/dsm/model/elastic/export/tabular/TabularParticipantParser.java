@@ -30,16 +30,16 @@ public class TabularParticipantParser {
     private static final String COLUMN_UNSELECTED = "0";
     private final List<Filter> filters;
     private final DDPInstance ddpInstance;
-    private final boolean splitOptions;
+    private final boolean humanReadable;
     private final boolean onlyMostRecent;
     private final List<String> nestedArrayObjects = Arrays.asList(ESObjectConstants.KIT_TEST_RESULT);
     private  Map<String, Map<String, Object>> activityDefs;
 
-    public TabularParticipantParser(List<Filter> filters, DDPInstance ddpInstance, boolean splitOptions, boolean onlyMostRecent,
+    public TabularParticipantParser(List<Filter> filters, DDPInstance ddpInstance, boolean humanReadable, boolean onlyMostRecent,
                                     Map<String, Map<String, Object>> activityDefs) {
         this.filters = filters;
         this.ddpInstance = ddpInstance;
-        this.splitOptions = splitOptions;
+        this.humanReadable = humanReadable;
         this.onlyMostRecent = onlyMostRecent;
         if (activityDefs == null) {
             activityDefs = ElasticSearchUtil.getActivityDefinitions(ddpInstance);
@@ -87,7 +87,7 @@ public class TabularParticipantParser {
                 if (ESObjectConstants.OPTIONS_TYPE.equals(filter.getType())) {
                     if (questionDef != null) {
                         // create a column for each option if it's a multiselect
-                        splitChoicesIntoColumns = splitOptions
+                        splitChoicesIntoColumns = !humanReadable
                                 && ESObjectConstants.MULTIPLE.equals(questionDef.get(ESObjectConstants.SELECT_MODE));
                     }
                 }
@@ -99,7 +99,7 @@ public class TabularParticipantParser {
                         .findFirst()
                         .orElse(null);
 
-                FilterExportConfig colConfig = new FilterExportConfig(moduleExport, filter, splitChoicesIntoColumns,
+                FilterExportConfig colConfig = new FilterExportConfig(moduleExport, filter, splitChoicesIntoColumns, !humanReadable,
                         collationSuffix, questionDef, questionIndex);
                 if (collationSuffix != null) {
                     if (collationColumnMap.containsKey(collationSuffix)) {

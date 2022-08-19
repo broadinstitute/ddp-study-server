@@ -21,6 +21,7 @@ public class FilterExportConfig {
     private final ModuleExportConfig parent;
     private final String type;
     private boolean splitOptionsIntoColumns = false;
+    private boolean stableIdsForOptions = true;
     private Set<String> optionIdsWithDetails = new HashSet<String>();
     private String collationSuffix = null;
     private Map<String, Object> questionDef = null;
@@ -33,12 +34,13 @@ public class FilterExportConfig {
     private boolean allowMultiple = false;
     private String questionType = null;
 
-    public FilterExportConfig(ModuleExportConfig parent, Filter filterColumn, boolean splitOptionsIntoColumns,
+    public FilterExportConfig(ModuleExportConfig parent, Filter filterColumn, boolean splitOptionsIntoColumns, boolean stableIdsForOptions,
                               String collationSuffix, Map<String, Object> questionDef, int questionIndex) {
         this.column = filterColumn.getParticipantColumn();
         this.type = filterColumn.getType();
         this.parent = parent;
         this.splitOptionsIntoColumns = splitOptionsIntoColumns;
+        this.stableIdsForOptions = stableIdsForOptions;
         this.collationSuffix = collationSuffix;
         this.questionIndex = questionIndex;
         this.questionDef = questionDef;
@@ -80,7 +82,7 @@ public class FilterExportConfig {
 
         this.questionDef = childQuestion;
         this.options = getOptionsForQuestion(childQuestion, optionIdsWithDetails);
-
+        this.stableIdsForOptions = parent.isStableIdsForOptions();
     }
 
     public boolean isAllowMultiple(Map<String, Object> questionDef) {
