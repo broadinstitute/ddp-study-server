@@ -39,8 +39,8 @@ public abstract class BasePatchPreProcessor implements PreProcessor<Patch> {
     @Override
     public Patch process(Patch patch) {
         setData(patch);
-        return updatePatchIfRequired();
+        return updatePatch();
     }
 
-    protected abstract Patch updatePatchIfRequired();
+    protected abstract Patch updatePatch();
 }

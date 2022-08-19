@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.db;
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -29,6 +30,9 @@ public class OncHistory {
 
     private static final String SQL_UPDATE_ONC_HISTORY =
             "UPDATE ddp_onc_history SET created = ?, last_changed = ?, changed_by = ? WHERE participant_id = ? AND created IS NULL";
+
+    public static final String SELECT_ONC_HISTORY_ID_BY_PARTICIPANT_ID = "SELECT onc_history_id FROM ddp_onc_history"
+            + " where participant_id = ?";
 
     @ColumnName(DBConstants.PARTICIPANT_ID)
     private long participantId;
@@ -64,6 +68,7 @@ public class OncHistory {
                 stmt.setString(3, userId);
                 stmt.setString(4, participantId);
                 int result = stmt.executeUpdate();
+
                 // 0 is also fine, because then created was already set
                 if (result == 1) {
                     logger.info("Set oncHistoryDetails created for participant " + participantId);
@@ -84,8 +89,31 @@ public class OncHistory {
         if (results.resultException != null) {
             throw new RuntimeException("Error updating oncHistoryDetails ", results.resultException);
         }
-        return new NameValue("createdOncHistory", results.resultValue);
+        return new NameValue("o.created", results.resultValue);
     }
+
+    public static Long getOncHistoryIdByParticipantId(@NonNull String participantId) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SELECT_ONC_HISTORY_ID_BY_PARTICIPANT_ID)) {
+                stmt.setString(1, participantId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        dbVals.resultValue = rs.getLong(1);
+                    }
+                }
+            } catch (SQLException e) {
+                dbVals.resultException = e;
+            }
+            return dbVals;
+        });
+
+        if (results.resultException != null) {
+            throw new RuntimeException("Error updating oncHistoryDetails ", results.resultException);
+        }
+        return (long) results.resultValue;
+    }
+
 
     public long getParticipantId() {
         return participantId;

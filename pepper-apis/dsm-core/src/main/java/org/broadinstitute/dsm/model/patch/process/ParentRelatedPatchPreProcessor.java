@@ -6,6 +6,7 @@ import java.util.function.Function;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.model.patch.Patch;
+import org.broadinstitute.dsm.model.patch.process.exception.PatchProcessingException;
 
 // ParentRelatedPatchPreProcessor makes sure that patch.parent and patch.parentId are set to correct values.
 // It must be done in order for the patch request to exercise correct operations in DB and ES.
@@ -19,14 +20,14 @@ public class ParentRelatedPatchPreProcessor extends BasePatchPreProcessor {
     }
 
     @Override
-    protected final Patch updatePatchIfRequired() {
-        return updatePatchAndGet();
+    protected final Patch updatePatch() {
+        return fetchDependenciesAndThenUpdatePatch();
     }
 
-    private Patch updatePatchAndGet() {
+    private Patch fetchDependenciesAndThenUpdatePatch() {
         return fetchDdpInstanceId
                 .andThen(fetchParticipantId)
-                .andThen(updateParentAndParentId)
+                .andThen(updatePatchParentAndParentId)
                 .apply(originalPatch.getRealm());
     }
 
@@ -42,18 +43,11 @@ public class ParentRelatedPatchPreProcessor extends BasePatchPreProcessor {
             .map(Object::toString)
             .orElseThrow(() -> new PatchProcessingException("Could not process the patch"));
 
-    private final Function<String, Patch> updateParentAndParentId = participantId -> {
+    private final Function<String, Patch> updatePatchParentAndParentId = participantId -> {
         Patch updatedPatch = originalPatch.clone();
         updatedPatch.setParent(PARTICIPANT_ID);
         updatedPatch.setParentId(participantId);
         return updatedPatch;
     };
-
-    private static class PatchProcessingException extends RuntimeException {
-
-        public PatchProcessingException(String message) {
-            super(message);
-        }
-    }
 
 }
