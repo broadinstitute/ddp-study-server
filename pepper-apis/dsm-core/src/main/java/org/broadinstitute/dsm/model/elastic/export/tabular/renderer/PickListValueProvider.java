@@ -12,8 +12,8 @@ import java.util.stream.Collectors;
 public class PickListValueProvider extends TextValueProvider {
     @Override
     public List<String> formatRawValues(List<?> rawValues, FilterExportConfig filterConfig, Map<String, Object> formMap) {
-        if (filterConfig.getOptions() == null || filterConfig.isSplitOptionsIntoColumns()) {
-            // return the defaults (stableId), so they can be matched for the multicolumn format
+        if (filterConfig.getOptions() == null || filterConfig.isSplitOptionsIntoColumns() || filterConfig.isStableIdsForOptions() ) {
+            // return the text as-is (which are stableIds), so they can be matched for the multicolumn format or rendered directly
             return super.formatRawValues(rawValues, filterConfig, formMap);
         }
         // attempt to return the user-visible text, rather than the stableId
