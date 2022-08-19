@@ -19,9 +19,10 @@ public class KitInfo {
     private String accessionNumber;
     private String realm;
     private String kitTypeName;
+    private String collectionDate;
 
     public KitInfo(String sampleCollectionBarcode, int organismClassificationId, String gender, String bspParticipantId, String bspSampleId,
-                   String materialInfo, String receptacleName, String realm, String kitTypeName) {
+                   String materialInfo, String receptacleName, String realm, String kitTypeName, String collectionDate) {
         this.sampleCollectionBarcode = sampleCollectionBarcode;
         // note that organism is bsp's internal organismClassificationId, as per Damien
         this.organismClassificationId = organismClassificationId;
@@ -32,6 +33,7 @@ public class KitInfo {
         this.receptacleName = receptacleName;
         this.realm = realm;
         this.kitTypeName = kitTypeName;
+        this.collectionDate = collectionDate;
     }
 
     public String getKitType() {

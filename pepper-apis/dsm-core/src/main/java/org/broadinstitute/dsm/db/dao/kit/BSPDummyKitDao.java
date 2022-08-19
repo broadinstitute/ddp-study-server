@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 public class BSPDummyKitDao implements Dao<ClinicalKitDto> {
 
     private static final String SQL_UPDATE_DUMMY_KIT = "UPDATE ddp_kit SET kit_label = ? where dsm_kit_request_id = ?";
+    private static final String SQL_UPDATE_COLLECTION_DATE = "UPDATE ddp_kit SET collection_date = ? where dsm_kit_request_id = ?";
     private static final String SQL_SELECT_RANDOM_PT =
             "SELECT ddp_participant_id FROM ddp_kit_request req, ddp_kit kit where req.dsm_kit_request_id = kit.dsm_kit_request_id "
                     + "and deactivated_date is null and ddp_instance_id = ? group by ddp_participant_id ORDER BY RAND() LIMIT 1";
@@ -42,6 +43,28 @@ public class BSPDummyKitDao implements Dao<ClinicalKitDto> {
                     logger.info("Updated dummy kit, set KitLabel " + kitLabel + " for kit with dsmKitRequestId " + dsmKitRequestId);
                 } else {
                     throw new RuntimeException("Error updating kit  label for " + dsmKitRequestId + " updated " + result + " rows");
+                }
+            } catch (SQLException e) {
+                dbVals.resultException = e;
+            }
+            return dbVals;
+        });
+        if (results.resultException != null) {
+            throw new RuntimeException("Error updating kit  label for " + dsmKitRequestId, results.resultException);
+        }
+    }
+
+    public void updateCollectionDate(String dsmKitRequestId) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_COLLECTION_DATE)) {
+                stmt.setString(1, "12/31/2021");
+                stmt.setString(2, dsmKitRequestId);
+                int result = stmt.executeUpdate();
+                if (result == 1) {
+                    logger.info("Updated dummy kit, set collection date 12/31/2021  for kit with dsmKitRequestId " + dsmKitRequestId);
+                } else {
+                    throw new RuntimeException("Error updating collection date for " + dsmKitRequestId + " updated " + result + " rows");
                 }
             } catch (SQLException e) {
                 dbVals.resultException = e;
