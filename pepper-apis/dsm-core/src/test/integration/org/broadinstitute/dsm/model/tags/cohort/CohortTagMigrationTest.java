@@ -34,7 +34,8 @@ public class CohortTagMigrationTest {
         elasticSearchable = new ElasticSearch();
         ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(CohortTagUseCaseTest.INSTANCE_NAME).orElseThrow();
         elasticSearchable.createDocumentById(
-                ddpInstanceDto.getEsParticipantIndex(), CohortTagUseCaseTest.GUID, CohortTagUseCaseTest.buildMapWithDsmAndProfileGuid(CohortTagUseCaseTest.GUID)
+                ddpInstanceDto.getEsParticipantIndex(), CohortTagUseCaseTest.GUID,
+                CohortTagUseCaseTest.buildMapWithDsmAndProfileGuid(CohortTagUseCaseTest.GUID)
         );
         tagsToCreate = getCohortTagsByParticipantId();
         createCohortTagsAndSetPks(tagsToCreate);

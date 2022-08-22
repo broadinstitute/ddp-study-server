@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.export.parse.BaseParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.DynamicFieldsParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
@@ -39,7 +39,7 @@ public class DynamicFieldsConverter extends BaseConverter {
             parser.setRealm(realm);
             String elementValue = String.valueOf(object.getValue());
             Object parsedValue = parser.parse(elementValue);
-            String camelCaseField = Util.underscoresToCamelCase(field);
+            String camelCaseField = CamelCaseConverter.of(field).convert();
             transformedMap.put(camelCaseField, parsedValue);
         }
         finalResult = Map.of(ESObjectConstants.DYNAMIC_FIELDS, transformedMap);

@@ -2,7 +2,7 @@ package org.broadinstitute.dsm.model.defaultvalues;
 
 import java.util.List;
 
-import org.broadinstitute.dsm.model.elastic.ESActivities;
+import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.junit.Assert;
 import org.junit.Test;
@@ -13,11 +13,11 @@ public class ATDefaultValuesTest {
     public void isSelfOrDependentParticipant() {
         ATDefaultValues defaultValues = new ATDefaultValues();
 
-        ESActivities esActivities = new ESActivities();
+        Activities esActivities = new Activities();
         esActivities.setActivityCode(ATDefaultValues.ACTIVITY_CODE_REGISTRATION);
         esActivities.setStatus(ATDefaultValues.COMPLETE);
 
-        ESActivities esActivities2 = new ESActivities();
+        Activities esActivities2 = new Activities();
         esActivities2.setActivityCode(ATDefaultValues.ACTIVITY_CODE_REGISTRATION);
         esActivities2.setStatus(ATDefaultValues.COMPLETE);
 

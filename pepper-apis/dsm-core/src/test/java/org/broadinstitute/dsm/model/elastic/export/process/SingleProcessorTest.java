@@ -4,7 +4,7 @@ import java.util.Map;
 
 import org.broadinstitute.dsm.db.Participant;
 import org.broadinstitute.dsm.model.NameValue;
-import org.broadinstitute.dsm.model.elastic.ESDsm;
+import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator;
 import org.broadinstitute.dsm.model.elastic.export.generate.GeneratorFactory;
 import org.broadinstitute.dsm.model.elastic.export.generate.GeneratorPayload;
@@ -22,7 +22,7 @@ public class SingleProcessorTest {
 
     @Test
     public void processExisting() {
-        PropertyInfo propertyInfo = PropertyInfo.TABLE_ALIAS_MAPPINGS.get(DBConstants.DDP_PARTICIPANT_ALIAS);
+        PropertyInfo propertyInfo = PropertyInfo.of(DBConstants.DDP_PARTICIPANT_ALIAS);
         ValueParser valueParser = new ValueParser();
         valueParser.setPropertyInfo(propertyInfo);
 
@@ -37,7 +37,7 @@ public class SingleProcessorTest {
         patch.setId("0");
         generator.setPayload(new GeneratorPayload(new NameValue("p.additionalValuesJson", "{\"key\":\"value\"}"), patch));
 
-        ESDsm esDsm = new ESDsm();
+        Dsm esDsm = new Dsm();
         esDsm.setParticipant(new Participant(2174L, null, null, null, null, null, null,
                 null, null, null, false, false, "{\"key\": \"oldVal\"}", 12874512387612L));
         BaseProcessor processor = new SingleProcessor();
@@ -51,7 +51,7 @@ public class SingleProcessorTest {
 
     @Test
     public void processNew() {
-        PropertyInfo propertyInfo = PropertyInfo.TABLE_ALIAS_MAPPINGS.get(DBConstants.DDP_PARTICIPANT_ALIAS);
+        PropertyInfo propertyInfo = PropertyInfo.of(DBConstants.DDP_PARTICIPANT_ALIAS);
         ValueParser valueParser = new ValueParser();
 
         DynamicFieldsParser dynamicFieldsParser = new DynamicFieldsParser();
@@ -65,7 +65,7 @@ public class SingleProcessorTest {
         patch.setId("0");
         generator.setPayload(new GeneratorPayload(new NameValue("p.additionalValuesJson", "{\"key\":\"value\"}"), patch));
 
-        ESDsm esDsm = new ESDsm();
+        Dsm esDsm = new Dsm();
         esDsm.setParticipant(new Participant(2174L, null, null, null, null, null, null,
                 null, null, null, false, false, "", 12874512387612L));
         BaseProcessor processor = new SingleProcessor();
