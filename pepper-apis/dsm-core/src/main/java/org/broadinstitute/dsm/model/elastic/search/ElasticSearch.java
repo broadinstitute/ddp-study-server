@@ -70,6 +70,7 @@ public class ElasticSearch implements ElasticSearchable {
     public void setDeserializer(Deserializer deserializer) {
         this.deserializer = deserializer;
     }
+
     @Override
     public Deserializer getDeserializer() {
         return this.deserializer;

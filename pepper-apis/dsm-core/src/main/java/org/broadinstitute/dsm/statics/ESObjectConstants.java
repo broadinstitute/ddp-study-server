@@ -91,6 +91,7 @@ public class ESObjectConstants {
     public static final String ADDITIONAL_VALUE = "ADDITIONALVALUE";
     public static final String DOC_ID = "_id";
     public static final String SMID = "smId";
+    public static final String CLINICAL_ORDER = "clinicalOrder";
 
     //question
     public static final String QUESTIONS = "questions";
@@ -100,6 +101,8 @@ public class ESObjectConstants {
     public static final String OPTIONDETAILS = "optionDetails";
     public static final String OPTION_TEXT = "optionText";
     public static final String OPTION_STABLE_ID = "optionStableId";
+    public static final String OPTION_DETAILS_ALLOWED = "isDetailsAllowed";
+    public static final String OPTION_DETAILS_TEXT = "detailsText";
     public static final String OPTION = "option";
     public static final String OPTIONS = "options";
     public static final String ALLOW_MULTIPLE = "allowMultiple";
@@ -113,6 +116,8 @@ public class ESObjectConstants {
     public static final String ACTIVITIES = "activities";
     public static final String ACTIVITY_STATUS = "activityStatus";
     public static final String ACTIVITY_CODE = "activityCode";
+    public static final String QUESTIONS_ANSWERS = "questionsAnswers";
+
 
 
     //cohort tags
@@ -126,6 +131,18 @@ public class ESObjectConstants {
     public static final String MULTIPLE = "MULTIPLE";
     public static final String OPTIONS_TYPE = "OPTIONS";
 
+    // invitations
+    public static final String TYPE = "type";
+    public static final String VOIDED_AT = "voidedAt";
+    public static final String VERIFIED_AT = "verifiedAt";
+    public static final String ACCEPTED_AT = "acceptedAt";
+    public static final String CONTACT_EMAIL = "contactEmail";
+    public static final String NOTES = "notes";
+    public static final String INVITATIONS = "invitations";
+
+    // address
+    public static final String ADDRESS = "address";
+
     // files
     public static final String FILES = "files";
     public static final String BUCKET = "bucket";
@@ -137,4 +154,5 @@ public class ESObjectConstants {
     public static final String UPLOADED_AT = "uploadedAt";
     public static final String SCANNED_AT = "scannedAt";
     public static final String SCAN_RESULT = "scanResult";
+    public static final String MERCURY_SEQUENCING_ID = "orderId";
 }

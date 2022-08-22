@@ -71,7 +71,7 @@ public class ObjectTransformer {
 
     private Map<String, Object> convertToMap(String fieldName, Object fieldValue) {
         ConverterFactory converterFactory = new ConverterFactory(fieldName, fieldValue, realm);
-        Converter converter = converterFactory.of();
+        Converter<Map<String, Object>> converter = converterFactory.of();
         if (Objects.nonNull(parser)) {
             converter.setParser(parser);
         }

@@ -25,7 +25,7 @@ public class ConverterFactory {
     }
 
 
-    public Converter of() {
+    public Converter<Map<String, Object>> of() {
         BaseConverter converter = generators.getOrDefault(fieldName, new DefaultConverter());
         converter.fieldName = fieldName;
         converter.fieldValue = fieldValue;

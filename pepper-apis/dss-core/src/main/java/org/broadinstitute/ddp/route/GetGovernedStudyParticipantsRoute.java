@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.route;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -39,7 +40,8 @@ public class GetGovernedStudyParticipantsRoute implements Route {
                 throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, err);
             }
             try (Stream<Governance> govStream = handle.attach(UserGovernanceDao.class)
-                    .findActiveGovernancesByProxyAndStudyGuids(operatorGuid, studyGuid)) {
+                    .findActiveGovernancesByProxyAndStudyGuids(operatorGuid, studyGuid)
+                    .sorted(Comparator.comparingLong(Governance::getGovernedUserId))) {
                 return govStream.map(governed -> new GovernedParticipant(governed.getGovernedUserGuid(), governed.getAlias(),
                         userProfileDao.findProfileByUserGuid(governed.getGovernedUserGuid()).orElse(null)))
                         .collect(Collectors.toList());

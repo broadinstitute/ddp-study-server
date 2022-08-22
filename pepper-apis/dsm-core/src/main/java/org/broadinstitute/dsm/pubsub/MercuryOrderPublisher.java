@@ -29,8 +29,8 @@ import org.broadinstitute.dsm.util.NanoIdUtil;
 
 @Slf4j
 public class MercuryOrderPublisher {
-    private static MercuryOrderDao mercuryOrderDao;
-    private static ParticipantDao participantDao;
+    private MercuryOrderDao mercuryOrderDao;
+    private ParticipantDao participantDao;
 
     public MercuryOrderPublisher(MercuryOrderDao mercuryOrderDao,
                                  ParticipantDao participantDao) {
@@ -38,9 +38,9 @@ public class MercuryOrderPublisher {
         this.participantDao = participantDao;
     }
 
-    private static String createMercuryUniqueOrderId() {
+    private String createMercuryUniqueOrderId() {
         String orderNumber = NanoIdUtil.getNanoId("1234567890QWERTYUIOPASDFGHJKLZXCVBNM", 20);
-        while (mercuryOrderDao.orderNumberExists(orderNumber)) {
+        while (this.mercuryOrderDao.orderNumberExists(orderNumber)) {
             orderNumber = NanoIdUtil.getNanoId("1234567890QWERTYUIOPASDFGHJKLZXCVBNM", 20);
         }
         return orderNumber;
@@ -100,11 +100,16 @@ public class MercuryOrderPublisher {
     }
 
     public String createAndPublishMessage(String[] barcodes, String projectId, String topicId, DDPInstanceDto ddpInstance,
-                                          String collaboratorParticipantId, String userId) {
-        Optional<String> maybeParticipantId =
-                participantDao.getParticipantFromCollaboratorParticipantId(collaboratorParticipantId,
-                        String.valueOf(ddpInstance.getDdpInstanceId()));
-        String ddpParticipantId = maybeParticipantId.orElseThrow();
+                                          String collaboratorParticipantId, String userId, String ddpParticipantId) {
+        if (StringUtils.isBlank(collaboratorParticipantId) && StringUtils.isBlank(ddpParticipantId)) {
+            throw new RuntimeException("Invalid input!");
+        }
+        if (StringUtils.isBlank(ddpParticipantId)) {
+            Optional<String> maybeParticipantId =
+                    participantDao.getParticipantFromCollaboratorParticipantId(collaboratorParticipantId,
+                            String.valueOf(ddpInstance.getDdpInstanceId()));
+            ddpParticipantId = maybeParticipantId.orElseThrow();
+        }
         log.info("Publishing message to mercury");
         String researchProject = ddpInstance.getResearchProject().orElseThrow();
         String creatorId = ddpInstance.getMercuryOrderCreator().orElseThrow();
@@ -117,6 +122,7 @@ public class MercuryOrderPublisher {
                 List<MercuryOrderDto> newOrders = MercuryOrderUseCase.createAllOrders(barcodes, ddpParticipantId, mercuryOrderId, userId);
                 this.publishWithErrorHandler(projectId, topicId, json);
                 this.mercuryOrderDao.insertMercuryOrders(newOrders);
+                MercuryOrderUseCase.exportToES(newOrders);
                 return mercuryOrderId;
             } catch (Exception e) {
                 throw new RuntimeException("Unable to  publish to pubsub/ db " + json, e);

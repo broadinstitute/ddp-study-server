@@ -10,6 +10,7 @@ import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.mercury.MercuryOrderDummyRequest;
 import org.broadinstitute.dsm.pubsub.MercuryOrderPublisher;
+import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.lddp.handlers.util.Result;
@@ -34,7 +35,7 @@ public class PostMercuryOrderDummyRoute implements Route {
         log.info("Publishing message to Mercury");
         return mercuryOrderPublisher
                 .createAndPublishMessage(mercuryOrderRequest.getKitLabels(), projectId, topicId, ddpInstance,
-                        mercuryOrderRequest.getCollaboratorParticipantId(), userId);
+                        mercuryOrderRequest.getCollaboratorParticipantId(), userId, null);
     }
 
 
@@ -47,15 +48,23 @@ public class PostMercuryOrderDummyRoute implements Route {
         } else if (request.url().contains("/ddp")) {
             userId = "GP_UNIT_TEST";
         }
+        String realm = queryParams.get(RoutePath.REALM).value();
+        if (!UserUtil.checkUserAccess(realm, userId, "kit_sequencing_order", null)) {
+            log.warn("User doesn't have access");
+            response.status(500);
+            return UserErrorMessages.NO_RIGHTS;
+        }
         MercuryOrderDummyRequest mercuryOrderRequest = new Gson().fromJson(requestBody, MercuryOrderDummyRequest.class);
         if (!isValidRequest(mercuryOrderRequest)) {
             log.error("Request not valid");
-            return new Result(500, "Request body is not valid");
+            response.status(500);
+            return "Request body is not valid";
         }
         DDPInstanceDto ddpInstance = new DDPInstanceDao().getDDPInstanceByInstanceName(mercuryOrderRequest.getRealm()).orElseThrow();
         if (ddpInstance == null) {
             log.error("Realm was null for " + mercuryOrderRequest.getRealm());
-            return new Result(500, UserErrorMessages.CONTACT_DEVELOPER);
+            response.status(500);
+            return UserErrorMessages.CONTACT_DEVELOPER;
         }
         String pepperOrderId = publishMessage(mercuryOrderRequest, ddpInstance, userId);
         JSONObject main = new JSONObject();
