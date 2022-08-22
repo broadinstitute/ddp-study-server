@@ -18,6 +18,7 @@ import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.filter.BaseFilter;
 import org.broadinstitute.dsm.model.filter.Filterable;
+import org.broadinstitute.dsm.model.filter.prefilter.BasicPreFilterQueryProcessor;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapper;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperPayload;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
@@ -93,9 +94,8 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
             }
         }
 
-        if (StringUtils.isNotBlank(ddpInstanceDto.getQueryItems())) {
-            //if a base/pre filter is set for the selected study -> always apply that filter, no matter what user is querying for!
-            addEsPreFilterQueryCondition(queryConditions, ddpInstanceDto.getQueryItems());
+        if (isStudyPreFilterPresent(ddpInstanceDto)) {
+            queryConditions = updateQueryConditions(queryConditions, ddpInstanceDto);
         }
 
         if (!queryConditions.isEmpty()) {
@@ -114,6 +114,15 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
         } else {
             return new ParticipantWrapper(participantWrapperPayload.build(), elasticSearch).getFilteredList();
         }
+    }
+
+    private static Map<String, String> updateQueryConditions(Map<String, String> queryConditions, DDPInstanceDto ddpInstanceDto) {
+        return new BasicPreFilterQueryProcessor(queryConditions)
+                .update(ddpInstanceDto.getQueryItems());
+    }
+
+    private static boolean isStudyPreFilterPresent(DDPInstanceDto ddpInstanceDto) {
+        return StringUtils.isNotBlank(ddpInstanceDto.getQueryItems());
     }
 
     private void addParticipantDataQueryToQueryConditions(Map<String, String> queryConditions, Filter filter, String tmpName) {
@@ -154,14 +163,6 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
         } catch (Exception e) {
             return false;
         }
-    }
-
-    private void addEsPreFilterQueryCondition(Map<String, String> queryConditions, String preFilter) {
-        String queryCondition = "";
-        if (queryConditions.containsKey("ES")) {
-            queryCondition = queryConditions.get("ES");
-        }
-        queryConditions.put("ES", queryCondition.concat(preFilter));
     }
 
 }

@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.pubsub.study.osteo;
 
-import static org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter.NEW_OSTEO_INSTANCE_NAME;
+import static org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter.NEW_OSTEO_INSTANCE_NAME;
 
 import java.util.ArrayList;
 import java.util.List;
