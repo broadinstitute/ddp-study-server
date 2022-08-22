@@ -11,9 +11,9 @@ public class Util {
             Alias.P, Alias.M, Alias.OD, Alias.K, Alias.T, Alias.O, Alias.D, Alias.R, Alias.C, Alias.CL
     );
 
-    public static boolean isUnderDsmKey(String source) {
+    public static boolean isUnderDsmKey(String alias) {
         try {
-            return aliases.contains(Alias.valueOf(source.toUpperCase()));
+            return aliases.contains(Alias.valueOf(alias.toUpperCase()));
         } catch (IllegalArgumentException iae) {
             return false;
         }

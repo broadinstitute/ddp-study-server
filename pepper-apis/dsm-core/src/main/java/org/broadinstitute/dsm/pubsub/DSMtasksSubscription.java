@@ -123,6 +123,7 @@ public class DSMtasksSubscription {
                     new CohortTagMigrator(index, study, new CohortTagDaoImpl()),
                     new ClinicalOrderMigrator(index, study, new ClinicalOrderDao()));
             exportables.forEach(Exportable::export);
+            logger.info("Successfully finished migration of all DSM data to ES for study: " + study + " with index: " + index);
         });
     }
 

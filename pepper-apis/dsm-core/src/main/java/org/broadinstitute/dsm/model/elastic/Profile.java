@@ -5,7 +5,7 @@ import lombok.Data;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 
 @Data
-public class ESProfile {
+public class Profile {
     @SerializedName(ESObjectConstants.GUID)
     private String guid;
 

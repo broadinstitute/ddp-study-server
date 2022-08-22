@@ -24,6 +24,7 @@ import org.broadinstitute.dsm.db.SmId;
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.ViewFilter;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
+import org.broadinstitute.dsm.db.dto.onchistory.OncHistoryDto;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DBElement;
@@ -48,6 +49,7 @@ public class PatchUtil {
         getColumnNames(Participant.class);
         getColumnNames(MedicalRecord.class);
         getColumnNames(OncHistoryDetail.class);
+        getColumnNames(OncHistoryDto.class);
         getColumnNames(Tissue.class);
         getColumnNames(AbstractionFieldValue.class);
         getColumnNames(AbstractionReviewValue.class);

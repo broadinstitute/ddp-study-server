@@ -14,12 +14,19 @@ public class TestResultCollectionQueryBuilderTest {
 
     @Test
     public void build() {
-        BaseQueryBuilder queryBuilder = new TestResultCollectionQueryBuilder();
         QueryPayload queryPayload =
-                new QueryPayload("dsm.kitRequestShipping", "testResult.isCorrected", new FilterParser().parse(new String[] {"'true'"}));
+                new QueryPayload.Builder()
+                        .withPath("dsm.kitRequestShipping")
+                        .withProperty("testResult.isCorrected")
+                        .withValues(new FilterParser().parse(new String[] {"'true'"}))
+                        .build();
+        BaseQueryBuilder queryBuilder = new TestResultCollectionQueryBuilder(queryPayload);
         String filter = "JSON_CONTAINS(k.test_result, JSON_OBJECT('isCorrected', 'true'))";
         Operator.JSON_CONTAINS.getSplitterStrategy().setFilter(filter);
-        QueryBuilder query = queryBuilder.buildEachQuery(Operator.JSON_CONTAINS, queryPayload);
+        BuildQueryStrategy queryStrategy = Operator.JSON_CONTAINS.getQueryStrategy();
+        queryStrategy.setBaseQueryBuilder(queryBuilder);
+        queryBuilder.setOperator(Operator.JSON_CONTAINS);
+        QueryBuilder query = queryBuilder.build(queryStrategy.build());
         MatchQueryBuilder matchQueryBuilder = new MatchQueryBuilder("dsm.kitRequestShipping.testResult.isCorrected", true);
         NestedQueryBuilder expected = new NestedQueryBuilder("dsm.kitRequestShipping.testResult", matchQueryBuilder, ScoreMode.Avg);
 

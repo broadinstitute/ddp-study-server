@@ -48,8 +48,8 @@ import org.broadinstitute.dsm.model.KitSubKits;
 import org.broadinstitute.dsm.model.KitType;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.model.ddp.KitDetail;
-import org.broadinstitute.dsm.model.elastic.ESDsm;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Dsm;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
@@ -624,15 +624,16 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             esParticipants.stream().filter(elasticSearchParticipantDto ->
                             existsParticipant(kit, elasticSearchParticipantDto))
                     .findFirst()
-                    .ifPresent(elasticSearchParticipantDto -> setFirstLastDOB(kit, elasticSearchParticipantDto));
+                    .ifPresent(elasticSearchParticipantDto -> setFirstLastShortIdDOB(kit, elasticSearchParticipantDto));
         }
         return wholeList;
     }
 
-    private static void setFirstLastDOB(KitRequestShipping kit, ElasticSearchParticipantDto elasticSearchParticipantDto) {
-        kit.setFirstName(elasticSearchParticipantDto.getProfile().map(ESProfile::getFirstName).orElse(StringUtils.EMPTY));
-        kit.setLastName(elasticSearchParticipantDto.getProfile().map(ESProfile::getLastName).orElse(StringUtils.EMPTY));
-        kit.setDateOfBirth(elasticSearchParticipantDto.getDsm().map(ESDsm::getDateOfBirth).orElse(StringUtils.EMPTY));
+    private static void setFirstLastShortIdDOB(KitRequestShipping kit, ElasticSearchParticipantDto elasticSearchParticipantDto) {
+        kit.setFirstName(elasticSearchParticipantDto.getProfile().map(Profile::getFirstName).orElse(StringUtils.EMPTY));
+        kit.setLastName(elasticSearchParticipantDto.getProfile().map(Profile::getLastName).orElse(StringUtils.EMPTY));
+        kit.setDateOfBirth(elasticSearchParticipantDto.getDsm().map(Dsm::getDateOfBirth).orElse(StringUtils.EMPTY));
+        kit.setShortId(elasticSearchParticipantDto.getProfile().map(Profile::getHruid).orElse(StringUtils.EMPTY));
     }
 
     private static boolean existsParticipant(KitRequestShipping kit, ElasticSearchParticipantDto elasticSearchParticipantDto) {

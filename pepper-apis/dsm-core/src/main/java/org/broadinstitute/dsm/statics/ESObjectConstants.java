@@ -116,6 +116,8 @@ public class ESObjectConstants {
     public static final String ACTIVITIES = "activities";
     public static final String ACTIVITY_STATUS = "activityStatus";
     public static final String ACTIVITY_CODE = "activityCode";
+    public static final String QUESTIONS_ANSWERS = "questionsAnswers";
+
 
 
     //cohort tags
@@ -128,6 +130,18 @@ public class ESObjectConstants {
     public static final String SELECT_MODE = "selectMode";
     public static final String MULTIPLE = "MULTIPLE";
     public static final String OPTIONS_TYPE = "OPTIONS";
+
+    // invitations
+    public static final String TYPE = "type";
+    public static final String VOIDED_AT = "voidedAt";
+    public static final String VERIFIED_AT = "verifiedAt";
+    public static final String ACCEPTED_AT = "acceptedAt";
+    public static final String CONTACT_EMAIL = "contactEmail";
+    public static final String NOTES = "notes";
+    public static final String INVITATIONS = "invitations";
+
+    // address
+    public static final String ADDRESS = "address";
 
     // files
     public static final String FILES = "files";

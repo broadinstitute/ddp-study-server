@@ -14,8 +14,8 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.broadinstitute.dsm.model.elastic.ESDsm;
-import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
+import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
@@ -116,13 +116,13 @@ public class SourceMapDeserializer implements Deserializer {
 
     public String camelCaseToPascalSnakeCase(String camelCase) {
         String[] words = camelCase.split(UPPER_CASE_REGEX.toString());
-        String pascalSnakeCase = Arrays.stream(words).map(String::toUpperCase).collect(Collectors.joining(Util.UNDERSCORE_SEPARATOR));
+        String pascalSnakeCase = Arrays.stream(words).map(String::toUpperCase).collect(Collectors.joining(CamelCaseConverter.UNDERSCORE_SEPARATOR));
         return pascalSnakeCase;
     }
 
     private boolean hasSpecialCases(String outerProperty) {
         try {
-            Field property = ESDsm.class.getDeclaredField(outerProperty);
+            Field property = Dsm.class.getDeclaredField(outerProperty);
             Class<?> propertyType = getParameterizedType(property.getGenericType());
             Field[] declaredFields = propertyType.getDeclaredFields();
             return Arrays.stream(declaredFields).anyMatch(field -> isDynamicField(field) || isTestResult(field));
