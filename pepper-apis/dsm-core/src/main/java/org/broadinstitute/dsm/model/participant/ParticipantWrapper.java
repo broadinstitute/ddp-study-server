@@ -147,6 +147,7 @@ public class ParticipantWrapper {
             List<KitRequestShipping> kitRequestShipping = esDsm.getKitRequestShipping();
             List<Tissue> tissues = esDsm.getTissue();
             List<SmId> smIds = esDsm.getSmId();
+            List<ClinicalOrder> clinicalOrder = esDsm.getClinicalOrder();
 
             mapSmIdsToProperTissue(tissues, smIds);
 

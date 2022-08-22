@@ -1,16 +1,17 @@
 package org.broadinstitute.dsm.model.elastic.export.tabular;
 
+import org.broadinstitute.dsm.model.elastic.export.tabular.renderer.ValueProviderFactory;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import org.broadinstitute.dsm.model.elastic.export.tabular.renderer.ValueProviderFactory;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.statics.ESObjectConstants;
 
 /** base class for taking a String=>String map of participant data and writing out a tabular file
  * It is designed to work with the outputs from TabularParticipantParser
@@ -208,7 +209,7 @@ public abstract class TabularParticipantExporter {
         } else {
             colFunc.apply(filterConfig, activityRepeatNum, questionRepeatNum, null, null, parentConfig);
             if (filterConfig.hasAnyOptionDetails()) {
-                colFunc.apply(filterConfig, activityRepeatNum, questionRepeatNum, null, "DETAIL", parentConfig);
+            colFunc.apply(filterConfig, activityRepeatNum, questionRepeatNum, Collections.EMPTY_MAP, "DETAIL", parentConfig);
             }
         }
     }
