@@ -10,16 +10,16 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.broadinstitute.dsm.db.structure.TableName;
-import org.broadinstitute.dsm.model.elastic.ESDsm;
-import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
+import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.export.generate.Collector;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
-import org.elasticsearch.common.inject.internal.MoreTypes;
+
 import java.lang.reflect.ParameterizedType;
 
 public class CollectionProcessor extends BaseProcessor {
 
-    public CollectionProcessor(ESDsm esDsm, String propertyName, int recordId, Collector collector) {
+    public CollectionProcessor(Dsm esDsm, String propertyName, int recordId, Collector collector) {
         super(esDsm, propertyName, recordId, collector);
     }
 
@@ -61,10 +61,10 @@ public class CollectionProcessor extends BaseProcessor {
     }
 
     private boolean isExistingRecord(Map<String, Object> eachRecord) {
-        if (!eachRecord.containsKey(Util.underscoresToCamelCase(primaryKey))) {
+        if (!eachRecord.containsKey(CamelCaseConverter.of(primaryKey).convert())) {
             return false;
         }
-        double id = Double.parseDouble(String.valueOf(eachRecord.get(Util.underscoresToCamelCase(primaryKey))));
+        double id = Double.parseDouble(String.valueOf(eachRecord.get(CamelCaseConverter.of(primaryKey).convert())));
         return id == (double) recordId;
     }
 

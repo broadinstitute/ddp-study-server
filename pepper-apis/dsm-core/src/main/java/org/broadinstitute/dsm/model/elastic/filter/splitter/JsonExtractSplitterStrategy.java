@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.model.elastic.filter.splitter;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.Filter;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -36,7 +37,8 @@ public class JsonExtractSplitterStrategy extends SplitterStrategy {
     @Override
     public String getInnerProperty() {
         String[] separatedByDot = getFieldWithAlias()[1].split(ElasticSearchUtil.ESCAPE_CHARACTER_DOT_SEPARATOR);
-        return String.join(DBConstants.ALIAS_DELIMITER, separatedByDot[0], Util.underscoresToCamelCase(separatedByDot[1]));
+        camelCaseConverter.setStringToConvert(separatedByDot[1]);
+        return String.join(DBConstants.ALIAS_DELIMITER, separatedByDot[0], camelCaseConverter.convert());
     }
 
     @Override

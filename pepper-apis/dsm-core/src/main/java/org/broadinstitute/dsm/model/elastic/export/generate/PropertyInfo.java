@@ -16,25 +16,46 @@ import org.broadinstitute.dsm.db.SmId;
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
 import org.broadinstitute.dsm.db.structure.TableName;
+import org.broadinstitute.dsm.model.elastic.Activities;
+import org.broadinstitute.dsm.model.elastic.Address;
+import org.broadinstitute.dsm.model.elastic.Dsm;
+import org.broadinstitute.dsm.model.elastic.Files;
+import org.broadinstitute.dsm.model.elastic.Invitations;
+import org.broadinstitute.dsm.model.elastic.Profile;
+import org.broadinstitute.dsm.model.elastic.Status;
 import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
+import org.broadinstitute.dsm.model.elastic.filter.query.ElasticSearchPropertyName;
 import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.statics.ESObjectConstants;
 
+//class to hold property information such as profile, dsm, etc, as well as whether it is collection type or not
 public class PropertyInfo {
 
-    public static final Map<String, PropertyInfo> TABLE_ALIAS_MAPPINGS = new HashMap<>(
-            Map.ofEntries(
-                    Map.entry(DBConstants.DDP_MEDICAL_RECORD_ALIAS, new PropertyInfo(MedicalRecord.class, true)),
-                    Map.entry(DBConstants.DDP_TISSUE_ALIAS, new PropertyInfo(Tissue.class, true)),
-                    Map.entry(DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS, new PropertyInfo(OncHistoryDetail.class, true)),
-                    Map.entry(DBConstants.DDP_PARTICIPANT_DATA_ALIAS, new PropertyInfo(ParticipantData.class, true)),
-                    Map.entry(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS, new PropertyInfo(Participant.class, false)),
-                    Map.entry(DBConstants.DDP_PARTICIPANT_ALIAS, new PropertyInfo(Participant.class, false)),
-                    Map.entry(DBConstants.DDP_ONC_HISTORY_ALIAS, new PropertyInfo(OncHistory.class, false)),
-                    Map.entry(DBConstants.SM_ID_TABLE_ALIAS, new PropertyInfo(SmId.class, true)),
-                    Map.entry(DBConstants.COHORT_ALIAS, new PropertyInfo(CohortTag.class, true)),
-                    Map.entry(DBConstants.DDP_KIT_REQUEST_ALIAS, new PropertyInfo(KitRequestShipping.class, true)),
-                    Map.entry(DBConstants.DDP_KIT_ALIAS, new PropertyInfo(KitRequestShipping.class, true)),
-                    Map.entry(DBConstants.DDP_MERCURY_SEQUENCING_ALIAS, new PropertyInfo(ClinicalOrder.class, true))));
+    private static final Map<String, PropertyInfo> TABLE_ALIAS_MAPPINGS;
+
+    static {
+        TABLE_ALIAS_MAPPINGS = new HashMap<>(
+                Map.of(DBConstants.DDP_MEDICAL_RECORD_ALIAS, new PropertyInfo(MedicalRecord.class, true),
+                        DBConstants.DDP_TISSUE_ALIAS, new PropertyInfo(Tissue.class, true),
+                        DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS, new PropertyInfo(OncHistoryDetail.class, true),
+                        DBConstants.DDP_PARTICIPANT_DATA_ALIAS, new PropertyInfo(ParticipantData.class, true),
+                        DBConstants.DDP_PARTICIPANT_RECORD_ALIAS, new PropertyInfo(Participant.class, false),
+                        DBConstants.DDP_PARTICIPANT_ALIAS, new PropertyInfo(Participant.class, false),
+                        DBConstants.DDP_ONC_HISTORY_ALIAS, new PropertyInfo(OncHistory.class, false),
+                        DBConstants.SM_ID_TABLE_ALIAS, new PropertyInfo(SmId.class, true),
+                        DBConstants.COHORT_ALIAS, new PropertyInfo(CohortTag.class, true),
+                        DBConstants.DDP_KIT_REQUEST_ALIAS, new PropertyInfo(KitRequestShipping.class, true)
+                ));
+        TABLE_ALIAS_MAPPINGS.put(DBConstants.DDP_KIT_ALIAS, new PropertyInfo(KitRequestShipping.class, true));
+        TABLE_ALIAS_MAPPINGS.put(DBConstants.DDP_MERCURY_SEQUENCING_ALIAS, new PropertyInfo(ClinicalOrder.class, true));
+        TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.PROFILE, new PropertyInfo(Profile.class, false));
+        TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.INVITATIONS, new PropertyInfo(Invitations.class, false));
+        TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.ADDRESS, new PropertyInfo(Address.class, false));
+        TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.FILES, new PropertyInfo(Files.class, false));
+        TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.DSM, new PropertyInfo(Dsm.class, false));
+        TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.DATA, new PropertyInfo(Status.class, false));
+    }
 
     private Class<?> propertyClass;
     private boolean isCollection;
@@ -51,12 +72,15 @@ public class PropertyInfo {
     }
 
     public String getPropertyName() {
-        return Util.capitalCamelCaseToLowerCamelCase(propertyClass.getSimpleName());
+        ElasticSearchPropertyName elasticSearchPropertyName = propertyClass.getAnnotation(ElasticSearchPropertyName.class);
+        return Objects.isNull(elasticSearchPropertyName)
+                ? Util.capitalCamelCaseToLowerCamelCase(propertyClass.getSimpleName())
+                : elasticSearchPropertyName.value();
     }
 
     public String getPrimaryKeyAsCamelCase() {
         TableName tableName = Objects.requireNonNull(propertyClass.getAnnotation(TableName.class));
-        return Util.underscoresToCamelCase(tableName.primaryKey());
+        return CamelCaseConverter.of(tableName.primaryKey()).convert();
     }
 
     public boolean isCollection() {
@@ -76,5 +100,13 @@ public class PropertyInfo {
 
     public Class<?> getPropertyClass() {
         return propertyClass;
+    }
+
+    public static PropertyInfo of(String alias) {
+        return TABLE_ALIAS_MAPPINGS.getOrDefault(alias, new PropertyInfo(Activities.class, true));
+    }
+
+    public static boolean hasProperty(String alias) {
+        return TABLE_ALIAS_MAPPINGS.containsKey(alias);
     }
 }

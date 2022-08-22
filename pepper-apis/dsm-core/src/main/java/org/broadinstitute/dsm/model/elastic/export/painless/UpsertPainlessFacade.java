@@ -105,7 +105,7 @@ public abstract class UpsertPainlessFacade {
 
     public static UpsertPainlessFacade of(String alias, Object source, DDPInstanceDto ddpInstanceDto, String uniqueIdentifier,
                                           String fieldName, Object fieldValue, ScriptBuilder scriptBuilder) {
-        PropertyInfo propertyInfo = PropertyInfo.TABLE_ALIAS_MAPPINGS.get(alias);
+        PropertyInfo propertyInfo = PropertyInfo.of(alias);
         return propertyInfo.isCollection()
                 ? new NestedUpsertPainlessFacade(source, ddpInstanceDto, uniqueIdentifier, fieldName, fieldValue, scriptBuilder)
                 : new SingleUpsertPainlessFacade(source, ddpInstanceDto, uniqueIdentifier, fieldName, fieldValue, scriptBuilder);

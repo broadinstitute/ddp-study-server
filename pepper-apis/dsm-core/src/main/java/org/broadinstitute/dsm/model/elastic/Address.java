@@ -6,7 +6,7 @@ import lombok.Setter;
 
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ESAddress {
+public class Address {
 
     @SerializedName("street1")
     private String street1;
