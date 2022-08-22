@@ -6,7 +6,9 @@
 
     <changeSet author="gskhirel" id="physician_country_add">
         <addColumn tableName="user_medical_provider">
-            <column name="country" type="varchar(100)" />
+            <column name="country" type="varchar(100)" >
+                <constraints nullable="true"/>
+            </column>
         </addColumn>
     </changeSet>
 

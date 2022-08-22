@@ -2715,6 +2715,7 @@ MedicalProvider:
       type: string
     country:
       type: string
+      nullable: true
 ParticipantStatusTrackingInfo:
   type: object
   required:
