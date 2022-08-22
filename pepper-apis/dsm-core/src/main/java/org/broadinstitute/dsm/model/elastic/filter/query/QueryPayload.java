@@ -1,8 +1,5 @@
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
-import java.util.Objects;
-
-import lombok.Builder;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.statics.DBConstants;

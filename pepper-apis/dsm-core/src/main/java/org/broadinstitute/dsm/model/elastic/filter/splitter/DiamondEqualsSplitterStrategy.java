@@ -1,7 +1,6 @@
 package org.broadinstitute.dsm.model.elastic.filter.splitter;
 
 import org.broadinstitute.dsm.model.Filter;
-import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 
 public class DiamondEqualsSplitterStrategy extends SplitterStrategy {
 

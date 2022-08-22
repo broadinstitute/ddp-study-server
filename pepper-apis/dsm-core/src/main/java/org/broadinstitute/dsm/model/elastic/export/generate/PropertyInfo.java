@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.ClinicalOrder;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistory;
@@ -35,7 +36,7 @@ public class PropertyInfo {
 
     static {
         TABLE_ALIAS_MAPPINGS = new HashMap<>(
-                Map.ofEntries(DBConstants.DDP_MEDICAL_RECORD_ALIAS, new PropertyInfo(MedicalRecord.class, true),
+                Map.of(DBConstants.DDP_MEDICAL_RECORD_ALIAS, new PropertyInfo(MedicalRecord.class, true),
                         DBConstants.DDP_TISSUE_ALIAS, new PropertyInfo(Tissue.class, true),
                         DBConstants.DDP_ONC_HISTORY_DETAIL_ALIAS, new PropertyInfo(OncHistoryDetail.class, true),
                         DBConstants.DDP_PARTICIPANT_DATA_ALIAS, new PropertyInfo(ParticipantData.class, true),
@@ -44,10 +45,10 @@ public class PropertyInfo {
                         DBConstants.DDP_ONC_HISTORY_ALIAS, new PropertyInfo(OncHistory.class, false),
                         DBConstants.SM_ID_TABLE_ALIAS, new PropertyInfo(SmId.class, true),
                         DBConstants.COHORT_ALIAS, new PropertyInfo(CohortTag.class, true),
-                        DBConstants.DDP_KIT_REQUEST_ALIAS, new PropertyInfo(KitRequestShipping.class, true),
-                        Map.entry(DBConstants.DDP_KIT_ALIAS, new PropertyInfo(KitRequestShipping.class, true)),
-                        Map.entry(DBConstants.DDP_MERCURY_SEQUENCING_ALIAS, new PropertyInfo(ClinicalOrder.class, true)))
+                        DBConstants.DDP_KIT_REQUEST_ALIAS, new PropertyInfo(KitRequestShipping.class, true)
                 ));
+        TABLE_ALIAS_MAPPINGS.put(DBConstants.DDP_KIT_ALIAS, new PropertyInfo(KitRequestShipping.class, true));
+        TABLE_ALIAS_MAPPINGS.put(DBConstants.DDP_MERCURY_SEQUENCING_ALIAS, new PropertyInfo(ClinicalOrder.class, true));
         TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.PROFILE, new PropertyInfo(Profile.class, false));
         TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.INVITATIONS, new PropertyInfo(Invitations.class, false));
         TABLE_ALIAS_MAPPINGS.put(ESObjectConstants.ADDRESS, new PropertyInfo(Address.class, false));

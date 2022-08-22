@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Objects;
 
 import lombok.Setter;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
 import org.elasticsearch.index.query.BoolQueryBuilder;
