@@ -13,7 +13,7 @@ import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.NameValue;
-import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.filter.BaseFilter;
@@ -121,21 +121,21 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
                 DBConstants.ADDITIONAL_VALUES_JSON);
         if (isDateRange(filter)) {
             filter.getFilter1().setName(ESObjectConstants.ADDITIONAL_VALUES_JSON);
-            filter.getFilter2().setName(Util.underscoresToCamelCase(tmpName));
+            filter.getFilter2().setName(CamelCaseConverter.of(tmpName).convert());
             filter.setNotEmpty(false);
             filter.setParentName(DBConstants.DDP_PARTICIPANT_DATA_ALIAS);
             filter.setType(Filter.ADDITIONAL_VALUES);
             Filter.getQueryStringForFiltering(filter, dbElement);
         } else {
             filter.setFilter1(new NameValue(ESObjectConstants.ADDITIONAL_VALUES_JSON, filter.getFilter1().getValue()));
-            filter.setFilter2(new NameValue(Util.underscoresToCamelCase(tmpName), null));
+            filter.setFilter2(new NameValue(CamelCaseConverter.of(tmpName).convert(), null));
             filter.setParentName(DBConstants.DDP_PARTICIPANT_DATA_ALIAS);
             filter.setType(Filter.ADDITIONAL_VALUES);
         }
         if (Objects.nonNull(filter.getSelectedOptions()) && filter.getSelectedOptions().length > 0) {
             for (String selectedOption : filter.getSelectedOptions()) {
                 filter.getFilter1().setValue(selectedOption);
-                filter.getFilter2().setName(Util.underscoresToCamelCase(tmpName));
+                filter.getFilter2().setName(CamelCaseConverter.of(tmpName).convert());
                 String filterQuery = Filter.OR_TRIMMED + Filter.getQueryStringForFiltering(filter, dbElement).trim()
                         .substring(AndOrFilterSeparator.MINIMUM_STEP_FROM_OPERATOR);
                 queryConditions.merge(DBConstants.DDP_PARTICIPANT_DATA_ALIAS, filterQuery,

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -32,11 +33,10 @@ import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
-import org.broadinstitute.dsm.model.elastic.ESAddress;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Address;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
-import org.broadinstitute.dsm.model.gbf.Address;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -397,9 +397,9 @@ public class ElasticSearchUtil {
         return null;
     }
 
-    public static Map<String, Address> getParticipantAddresses(RestHighLevelClient client, String indexName, Set<String> participantGuids) {
+    public static Map<String, org.broadinstitute.dsm.model.gbf.Address> getParticipantAddresses(RestHighLevelClient client, String indexName, Set<String> participantGuids) {
         Gson gson = new Gson();
-        Map<String, Address> addressByParticipant = new HashMap<>();
+        Map<String, org.broadinstitute.dsm.model.gbf.Address> addressByParticipant = new HashMap<>();
         int scrollSize = 100;
         SearchRequest searchRequest = new SearchRequest(indexName);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
@@ -431,9 +431,10 @@ public class ElasticSearchUtil {
                 Map<String, Object> participantRecord = hit.getSourceAsMap();
                 JsonObject participantJson = new JsonParser().parse(new Gson().toJson(participantRecord)).getAsJsonObject();
                 if (participantJson.has(ADDRESS) && participantJson.has(PROFILE)) {
-                    ESAddress address = gson.fromJson(participantJson.get(ADDRESS), ESAddress.class);
-                    ESProfile profile = gson.fromJson(participantJson.get(PROFILE), ESProfile.class);
-                    Address gbfAddress = new Address(address.getRecipient(), address.getStreet1(), address.getStreet1(),
+                    Address address = gson.fromJson(participantJson.get(ADDRESS), Address.class);
+                    Profile profile = gson.fromJson(participantJson.get(PROFILE), Profile.class);
+                    org.broadinstitute.dsm.model.gbf.Address
+                            gbfAddress = new org.broadinstitute.dsm.model.gbf.Address(address.getRecipient(), address.getStreet1(), address.getStreet1(),
                             address.getCity(), address.getState(), address.getZip(), address.getCountry(), address.getPhone());
                     addressByParticipant.put(profile.getGuid(), gbfAddress);
                 }
@@ -492,7 +493,7 @@ public class ElasticSearchUtil {
             String participantId = ParticipantUtil.isGuid(ddpParticipantId) ? ddpParticipantId :
                     getParticipantESDataByAltpid(client, index, ddpParticipantId)
                             .getProfile()
-                            .map(ESProfile::getGuid)
+                            .map(Profile::getGuid)
                             .orElse(ddpParticipantId);
 
             Map<String, Object> workflowMapES = getObjectsMap(client, index, participantId, ESObjectConstants.WORKFLOWS);
@@ -731,7 +732,7 @@ public class ElasticSearchUtil {
         String participantId =
                 ParticipantUtil.isGuid(ddpParticipantId) ? ddpParticipantId : getParticipantESDataByAltpid(client, index, ddpParticipantId)
                         .getProfile()
-                        .map(ESProfile::getGuid)
+                        .map(Profile::getGuid)
                         .orElse(ddpParticipantId);
         UpdateRequest updateRequest = new UpdateRequest()
                 .index(index)
@@ -766,7 +767,7 @@ public class ElasticSearchUtil {
         objectList.add(newObjectMap);
     }
 
-    public static Optional<ESProfile> getParticipantProfileByGuidOrAltPid(String index, String guidOrAltPid) {
+    public static Optional<Profile> getParticipantProfileByGuidOrAltPid(String index, String guidOrAltPid) {
         try {
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
             searchSourceBuilder.query(QueryBuilders.boolQuery()
@@ -782,7 +783,7 @@ public class ElasticSearchUtil {
             logger.info("Getting ES profile for participant with guid/altpid: {}", guidOrAltPid);
             SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
 
-            ESProfile profile = null;
+            Profile profile = null;
             if (response.getHits().getTotalHits() > 0) {
                 Map<String, Object> source = response.getHits().getAt(0).getSourceAsMap();
                 profile = new ElasticSearch().parseSourceMap(source).flatMap(ElasticSearchParticipantDto::getProfile).orElse(null);
@@ -1463,9 +1464,9 @@ public class ElasticSearchUtil {
                     String endDate = userEntered + END_OF_DAY;
                     long end = SystemUtil.getLongFromDetailDateString(endDate);
                     rangeQueryBuilder(finalQuery, dataParam[1].trim(), start, end, must);
-                } catch (ParseException e) {
+                } catch (ParseException | DateTimeParseException e) {
                     //was no date string so go for normal text
-                    mustOrSearch(finalQuery, dataParam[1].trim(), userEntered, wildCard, must);
+                    mustOrSearch(finalQuery, nameValue[0].trim(), userEntered, wildCard, must);
                 }
             } else if (nameValue[0].startsWith(ADDRESS)) {
                 mustOrSearch(finalQuery, nameValue[0].trim(), userEntered, wildCard, must);

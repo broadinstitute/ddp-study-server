@@ -29,7 +29,7 @@ public class PanCanNewActivities implements CustomTask {
     private static final String DATA_FILE = "patches/new-activities.conf";
 
     private static final String STUDY_GUID = "cmi-pancan";
-    private static final int NUM_EVENTS = 20;
+    private static final int NUM_EVENTS = 16;
 
     private Path cfgPath;
     private Config cfg;
