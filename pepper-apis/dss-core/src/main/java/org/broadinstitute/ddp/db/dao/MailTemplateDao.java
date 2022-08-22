@@ -14,7 +14,7 @@ import java.util.Optional;
 public interface MailTemplateDao extends SqlObject {
     @SqlQuery("SELECT * FROM `mail_template` WHERE mail_template_id = :id")
     @RegisterConstructorMapper(MailTemplateDto.class)
-    Optional<MailTemplateDto> findById(@Bind("id") final Long id);
+    Optional<MailTemplateDto> findById(@Bind("id") final long id);
 
     @SqlUpdate("INSERT INTO `mail_template`"
             + "         SET content_type = :contentType,"

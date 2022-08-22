@@ -86,7 +86,7 @@
                         <th>Time Uploaded</th>
                       </tr>
 
-                      ${PROJECT_SINGULAR_FILE_UPLOAD_ROW}
+                      ${FILE_UPLOAD_RECORD}
                     </table>
                   </body>
                 </html> 

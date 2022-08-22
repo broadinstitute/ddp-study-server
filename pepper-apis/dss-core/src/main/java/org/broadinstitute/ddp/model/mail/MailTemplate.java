@@ -49,7 +49,10 @@ public class MailTemplate {
     }
 
     public void setSubstitutions(final String name, final List<MailTemplateSubstitution> values) {
-        substitutions.put(name, StreamEx.of(values).map(value -> transform(name, value)).toList());
+        substitutions.put(name, StreamEx.of(values)
+                .map(value -> transform(name, value))
+                .removeBy(MailTemplateRepeatableElement::getName, null)
+                .toList());
     }
 
     private MailTemplateRepeatableElement transform(final String elementName, final MailTemplateSubstitution substitution) {

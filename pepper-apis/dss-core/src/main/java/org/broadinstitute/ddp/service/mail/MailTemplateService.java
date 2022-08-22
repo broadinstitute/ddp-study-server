@@ -17,11 +17,11 @@ import java.util.HashMap;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MailTemplateService {
-    public static MailTemplate getTemplate(final Long id) {
+    public static MailTemplate getTemplate(final long id) {
         return TransactionWrapper.withTxn(handle -> getTemplate(handle, id));
     }
 
-    private static MailTemplate getTemplate(final Handle handle, final Long id) {
+    private static MailTemplate getTemplate(final Handle handle, final long id) {
         final var mailTemplate = handle.attach(MailTemplateDao.class).findById(id);
         if (mailTemplate.isEmpty()) {
             throw new DDPException("Mail template #" + id + " does not exist");

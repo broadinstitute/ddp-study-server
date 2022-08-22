@@ -27,7 +27,7 @@ public class FileUploadNotificationEmailFactory {
         }
 
         final var mailTemplate = MailTemplateService.getTemplate(study.getNotificationMailTemplateId());
-        mailTemplate.setSubstitutions("PROJECT_SINGULAR_FILE_UPLOAD_ROW", StreamEx.of(fileUploads)
+        mailTemplate.setSubstitutions("FILE_UPLOAD_RECORD", StreamEx.of(fileUploads)
                 .map(fileUpload -> toSubstitution(userGuid, fileUpload))
                 .toList());
 
