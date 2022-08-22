@@ -88,11 +88,12 @@ public class SingleQueryBuilderTest {
 
     @Test
     public void twoDifferentValue() {
-        String filter = " AND profile.doNotContact = true AND dsm.diagnosisYear = 2014";
+        String filter = " AND profile.doNotContact = true AND dsm.diagnosisYear = 2014 OR dsm.diagnosisYear = 2015";
 
         BoolQueryBuilder expectedQuery = new BoolQueryBuilder();
         expectedQuery.must(new MatchQueryBuilder("profile.doNotContact", true));
         expectedQuery.must(new MatchQueryBuilder("dsm.diagnosisYear", 2014L));
+        expectedQuery.should(new MatchQueryBuilder("dsm.diagnosisYear", 2015L));
 
         Assert.assertEquals(expectedQuery, getNonActivityQueryBuilder(filter));
 
