@@ -26,7 +26,7 @@ public class BasicPreFilterQueryProcessor implements PreFilterQueryProcessor {
     private Map<String, String> addIfAbsentOrMergeIfPresent(String query) {
         String prefixWithAlias = query.split(ElasticSearchUtil.ESCAPE_CHARACTER_DOT_SEPARATOR)[PREFIX_WITH_ALIAS_INDEX];
         String alias           = prefixWithAlias.split(Filter.SPACE)[ALIAS_INDEX];
-        if (isQueryPresent(alias)) {
+        if (isAliasPresent(alias)) {
             concatenateWithExistingQuery(query, alias);
         } else {
             addNewQuery(query, alias);
@@ -34,7 +34,7 @@ public class BasicPreFilterQueryProcessor implements PreFilterQueryProcessor {
         return filters;
     }
 
-    private boolean isQueryPresent(String alias) {
+    private boolean isAliasPresent(String alias) {
         return filters.containsKey(alias);
     }
 
