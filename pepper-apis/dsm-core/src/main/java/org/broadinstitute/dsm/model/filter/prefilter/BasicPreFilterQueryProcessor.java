@@ -43,7 +43,7 @@ public class BasicPreFilterQueryProcessor implements PreFilterQueryProcessor {
     }
 
     private void concatenateWithExistingQuery(String query, String alias) {
-        addNewQuery(filters.get(alias).concat(query), alias);
+        filters.put(alias, filters.get(alias).concat(query));
     }
 
 }
