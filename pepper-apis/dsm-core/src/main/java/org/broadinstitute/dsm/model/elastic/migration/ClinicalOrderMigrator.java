@@ -7,6 +7,7 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 
 public class ClinicalOrderMigrator extends BaseCollectionMigrator {
     private ClinicalOrderDao clinicalOrderDao;
+
     public ClinicalOrderMigrator(String index, String realm, ClinicalOrderDao clinicalOrderDao) {
         super(index, realm, ESObjectConstants.CLINICAL_ORDER);
         this.clinicalOrderDao = clinicalOrderDao;

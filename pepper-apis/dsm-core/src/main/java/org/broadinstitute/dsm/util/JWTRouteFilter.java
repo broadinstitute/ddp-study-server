@@ -86,8 +86,14 @@ public class JWTRouteFilter {
                                 logger.error("Invalid token: " + jwtToken, e);
                             }
                         }
+                    } else {
+                        logger.warn("Header was missing Bearer information (not length 2)");
                     }
+                } else {
+                    logger.warn("Header was missing Bearer information");
                 }
+            } else {
+                logger.warn("Header was missing Authorization information");
             }
         }
         return isAccessAllowed;
