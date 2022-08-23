@@ -58,7 +58,7 @@ public class JWTRouteFilterTest {
     public static void setup() {
         Config cfg = ConfigFactory.load();
         //secrets from vault in a config file
-        cfg = cfg.withFallback(ConfigFactory.parseFile(new File("config/test-config.conf")));
+        cfg = cfg.withFallback(ConfigFactory.parseFile(new File("config/dsm-test-config.conf")));
         auth0Domain = cfg.getString("auth0.domain");
         ;
         bspSecret = cfg.getString(ApplicationConfigConstants.BSP_SECRET);
@@ -97,7 +97,7 @@ public class JWTRouteFilterTest {
     public void printTestToken() throws Exception {
         Config cfg = ConfigFactory.load();
         //secrets from vault in a config file
-        cfg = cfg.withFallback(ConfigFactory.parseFile(new File("config/test-config.conf")));
+        cfg = cfg.withFallback(ConfigFactory.parseFile(new File("config/dsm-test-config.conf")));
         String bspSecret = cfg.getString("bsp.secret");
         String ddpSecret = cfg.getString("portal.jwtDdpSecret");
         String monitoringSecret = cfg.getString("portal.jwtMonitoringSecret");

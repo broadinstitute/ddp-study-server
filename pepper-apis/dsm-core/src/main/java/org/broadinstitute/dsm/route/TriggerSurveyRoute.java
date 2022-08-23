@@ -140,13 +140,13 @@ public class TriggerSurveyRoute extends RequestHandler {
                     List<ParticipantSurveyInfo> surveyInfos = null;
                     String comment = null;
                     Long surveyTriggerId = null;
-                        if (queryParams.value("comment") != null) {
-                            comment = queryParams.get("comment").value();
-                        } else {
-                            throw new RuntimeException("No comment query param was sent");
-                        }
-                        surveyInfos = DDPRequestUtil.getFollowupSurveysStatus(instance, surveyName);
-                        surveyTriggerId = addTriggerCommentIntoDB(userIdRequest, comment, currentTime);
+                    if (queryParams.value("comment") != null) {
+                        comment = queryParams.get("comment").value();
+                    } else {
+                        throw new RuntimeException("No comment query param was sent");
+                    }
+                    surveyInfos = DDPRequestUtil.getFollowupSurveysStatus(instance, surveyName);
+                    surveyTriggerId = addTriggerCommentIntoDB(userIdRequest, comment, currentTime);
                     if (isFileUpload || triggerAgain) {
                         List<ParticipantSurveyUploadObject> participantList = null;
                         if (triggerAgain) { //already participants and no file
