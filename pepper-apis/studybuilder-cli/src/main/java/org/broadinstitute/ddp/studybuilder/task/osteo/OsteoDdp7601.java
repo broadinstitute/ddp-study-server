@@ -115,9 +115,8 @@ public class OsteoDdp7601 implements CustomTask {
         @SqlQuery("select u.user_id, u.guid, ai.activity_instance_id, ai.study_activity_id from\n"
                 + "\tumbrella_study us \n"
                 + "\tjoin study_activity sa on us.guid='CMI-OSTEO' and sa.study_id = us.umbrella_study_id\n"
-                + "\t\tand sa.study_activity_code\n"
-                + "    join activity_instance ai on ai.study_activity_id = sa.study_activity_id\n"
-                + "    join user u on u.user_id = ai.participant_id")
+                + "\tjoin activity_instance ai on ai.study_activity_id = sa.study_activity_id\n"
+                + "\tjoin user u on u.user_id = ai.participant_id")
         @UseRowReducer(UserReducer.class)
         List<UserInfo> getUsersInfo();
 
