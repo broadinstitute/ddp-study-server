@@ -65,7 +65,6 @@ public class OsteoDdp7601 implements CustomTask {
             }
         }
 
-
         if (!toHide.isEmpty()) {
             sqlHelper.setInstancesToHide(toHide);
         }
@@ -108,8 +107,9 @@ public class OsteoDdp7601 implements CustomTask {
         int setInstancesToReadOnly(@BindList(value = "ids") Set<Long> ids);
 
         @SqlQuery("select count(*) from activity_instance_status ais \n"
-                + "                join activity_instance_status_type aist on ais.activity_instance_status_type_id = aist.activity_instance_status_type_id\n"
-                + "                    where activity_instance_id=:id and aist.activity_instance_status_type_code='COMPLETE'; ")
+                + "join activity_instance_status_type aist on "
+                + "ais.activity_instance_status_type_id = aist.activity_instance_status_type_id\n"
+                + "where activity_instance_id=:id and aist.activity_instance_status_type_code='COMPLETE'; ")
         int getActivityStatus(@Bind(value = "id") Long id);
 
         @SqlQuery("select u.user_id, u.guid, ai.activity_instance_id, ai.study_activity_id from\n"
