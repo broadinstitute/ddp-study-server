@@ -45,8 +45,8 @@ public class DDPInstance {
     private static final String SQL_SELECT_INSTANCE_WITH_KIT_BEHAVIOR =
             "SELECT main.ddp_instance_id, instance_name, base_url, collaborator_id_prefix, migrated_ddp, billing_reference, "
                     + "es_participant_index, es_activity_definition_index, es_users_index, mr_attention_flag_d, tissue_attention_flag_d, "
-                    +
-                    "auth0_token, notification_recipients, kit_behavior_change, research_project, display_name, main.mercury_order_creator  "
+                    + "auth0_token, notification_recipients, kit_behavior_change, research_project, "
+                    + "display_name, main.mercury_order_creator "
                     + "FROM ddp_instance main, instance_settings setting WHERE main.ddp_instance_id = setting.ddp_instance_id "
                     + "AND main.is_active = 1 AND setting.kit_behavior_change IS NOT NULL";
     private static final String SQL_SELECT_ACTIVE_REALMS_WITH_ROLE_INFORMATION_BY_PARTICIPANT_ID =
