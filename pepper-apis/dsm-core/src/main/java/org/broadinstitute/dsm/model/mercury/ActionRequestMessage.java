@@ -11,7 +11,7 @@ public class ActionRequestMessage {
 
     class ActionRequest {
         @SerializedName("action")
-        String action = "CheckStatus";
+        String action = "checkStatus";
 
         @SerializedName("orderID")
         String orderId;
