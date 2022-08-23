@@ -80,8 +80,8 @@ public class CreateClinicalDummyKitRoute implements Route {
         new BookmarkDao().getBookmarkByInstance(CLINICAL_KIT_REALM).ifPresentOrElse(book -> {
             realm = (int) book.getValue();
         }, () -> {
-            throw new RuntimeException("Bookmark doesn't exist for " + CLINICAL_KIT_REALM);
-        });
+                throw new RuntimeException("Bookmark doesn't exist for " + CLINICAL_KIT_REALM);
+            });
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(realm);
         BSPDummyKitDao bspDummyKitDao = new BSPDummyKitDao();
         if (ddpInstance == null) {
@@ -95,7 +95,8 @@ public class CreateClinicalDummyKitRoute implements Route {
             ddpParticipantId = new BSPDummyKitDao().getRandomParticipantForStudy(ddpInstance);
             maybeParticipantByParticipantId =
                     ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
-            // check the test participant is still valid, enrolled and haas a valid onc history, if not choose a new one, for a max 10 tries.
+            // check the test participant is still valid, enrolled and haas a valid onc history,
+            // if not choose a new one, for a max 10 tries.
             while (tries < 10 && (maybeParticipantByParticipantId.isEmpty()
                     || maybeParticipantByParticipantId.get().getProfile().map(Profile::getHruid).isEmpty()
                     || !participantIsEnrolled(maybeParticipantByParticipantId))) {
@@ -172,7 +173,8 @@ public class CreateClinicalDummyKitRoute implements Route {
                         ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
                 logger.info("found randomOncHistoryDetailId " + randomOncHistoryDetailId);
                 logger.info("found short id " + maybeParticipantByParticipantId.get().getProfile().map(Profile::getHruid));
-                // check the test participant is still valid, enrolled and haas a valid onc history, if not choose a new one, for a max 10 tries.
+                // check the test participant is still valid, enrolled and haas a valid onc history,
+                // if not choose a new one, for a max 10 tries.
                 while (tries < 10 && (oncHistoryDetail == null || StringUtils.isBlank(oncHistoryDetail.getAccessionNumber())
                         || StringUtils.isBlank(oncHistoryDetail.getDatePx())
                         || maybeParticipantByParticipantId.isEmpty()

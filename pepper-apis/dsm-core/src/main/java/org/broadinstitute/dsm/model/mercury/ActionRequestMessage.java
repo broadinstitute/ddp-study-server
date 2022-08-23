@@ -10,10 +10,10 @@ public class ActionRequestMessage {
     }
 
     class ActionRequest {
-        @SerializedName("Action")
-        String action = "CheckStatus";
+        @SerializedName("action")
+        String action = "checkStatus";
 
-        @SerializedName("OrderID")
+        @SerializedName("orderID")
         String orderId;
 
         public ActionRequest(String orderId) {
