@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 public class FieldSettingsDto {
 
-    private int fieldSettingsId;
+    private Integer fieldSettingsId;
     private int ddpInstanceId;
     private String fieldType;
     private String columnName;
@@ -40,7 +40,7 @@ public class FieldSettingsDto {
 
     public static class Builder {
 
-        private int fieldSettingsId;
+        private Integer fieldSettingsId;
         private int ddpInstanceId;
         private String fieldType;
         private String columnName;
