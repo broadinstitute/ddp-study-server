@@ -1,7 +1,5 @@
 package org.broadinstitute.dsm.util;
 
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 
@@ -32,8 +30,6 @@ public class JWTRouteFilter {
     public static final String DDP_ROLES_CLAIM = "org.broadinstitute.ddp.roles";
     private static final Logger logger = LoggerFactory.getLogger(JWTRouteFilter.class);
     private final String auth0Domain;
-    private final String bspSecret;
-    private final Collection<String> expectedRoles = new HashSet<>();
 
     /**
      * Create a filter that will only allow access if a
@@ -41,9 +37,8 @@ public class JWTRouteFilter {
      * secret, and optionally includes one or more of the
      * given roles in the roles claim.
      */
-    public JWTRouteFilter(String auth0Domain, String bspSecret) {
+    public JWTRouteFilter(String auth0Domain) {
         this.auth0Domain = auth0Domain;
-        this.bspSecret = bspSecret;
     }
 
     /**

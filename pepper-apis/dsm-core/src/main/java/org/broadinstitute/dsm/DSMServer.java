@@ -550,7 +550,7 @@ public class DSMServer {
         afterAfter((req, res) -> MDC.clear());
 
         before(API_ROOT + "*", (req, res) -> {
-            if (!new JWTRouteFilter(auth0Domain, bspSecret).isAccessAllowed(req, false, bspSecret)) {
+            if (!new JWTRouteFilter(auth0Domain).isAccessAllowed(req, false, bspSecret)) {
                 logger.info("Returning 404 because token was not verified");
                 halt(404);
             }
@@ -622,7 +622,7 @@ public class DSMServer {
 
                     boolean isTokenValid = false;
                     if (StringUtils.isNotBlank(tokenFromHeader)) {
-                        isTokenValid = new JWTRouteFilter(auth0Domain, bspSecret).isAccessAllowed(req, true, null);
+                        isTokenValid = new JWTRouteFilter(auth0Domain).isAccessAllowed(req, true, null);
                     }
                     if (!isTokenValid) {
                         halt(401, SecurityUtil.ResultType.AUTHENTICATION_ERROR.toString());
