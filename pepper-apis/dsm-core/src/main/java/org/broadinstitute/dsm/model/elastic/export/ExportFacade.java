@@ -19,6 +19,7 @@ import org.broadinstitute.dsm.model.elastic.export.parse.ValueParserFactory;
 import org.broadinstitute.dsm.model.elastic.export.process.BaseProcessor;
 import org.broadinstitute.dsm.model.elastic.export.process.ProcessorFactory;
 import org.broadinstitute.dsm.model.elastic.export.process.ProcessorFactoryImpl;
+import org.broadinstitute.dsm.model.elastic.mapping.FieldTypeExtractor;
 import org.broadinstitute.dsm.model.elastic.search.DefaultDeserializer;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
@@ -57,6 +58,9 @@ public class ExportFacade {
         typeParser.setPropertyInfo(propertyInfo);
         generator.setParser(typeParser);
         generator.setPayload(exportFacadePayload.getGeneratorPayload());
+        FieldTypeExtractor fieldTypeExtractor = new FieldTypeExtractor();
+        fieldTypeExtractor.setIndex(exportFacadePayload.getIndex());
+        generator.setFieldTypeExtractor(fieldTypeExtractor);
         Map<String, Object> mappingToUpsert = generator.generate();
         RequestPayload upsertMappingRequestPayload = new RequestPayload(exportFacadePayload.getIndex());
         propertyInfo.setFieldName(Util.underscoresToCamelCase(exportFacadePayload.getColumnName()));
