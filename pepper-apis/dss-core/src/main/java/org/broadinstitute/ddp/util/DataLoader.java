@@ -651,6 +651,7 @@ public class DataLoader {
                         physician.getName(),
                         physician.getCity(),
                         physician.getState(),
+                        physician.getCountry(),
                         physician.getZipcode(),
                         physician.getPhonenumber(),
                         physician.getPhysicianid(),
@@ -676,6 +677,7 @@ public class DataLoader {
                         null, //name
                         institution.getCity(),
                         institution.getState(),
+                        institution.getCountry(),
                         null,
                         null,
                         institution.getInstitutionId(),
@@ -698,6 +700,7 @@ public class DataLoader {
                     null, //name
                     releaseSurvey.getInitialBiopsyCity(),
                     releaseSurvey.getInitialBiopsyState(),
+                    releaseSurvey.getCountry(),
                     null,
                     null,
                     DEFAULT_DSM_BIOPSY_GUID, null
