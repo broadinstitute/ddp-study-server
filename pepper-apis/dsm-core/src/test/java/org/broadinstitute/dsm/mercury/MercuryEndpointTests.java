@@ -31,11 +31,11 @@ public class MercuryEndpointTests {
         String command =
                 "curl -i  -H \"Authorization: Bearer %s\" https://dsm-dev.datadonationplatform.org/ddp/createClinicalDummy/%s/%s/%s";
         command = String.format(command, bspToken, barcode, type, participantId);
-//        try {
-//            Process process = Runtime.getRuntime().exec(command);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        //        try {
+        //            Process process = Runtime.getRuntime().exec(command);
+        //        } catch (IOException e) {
+        //            e.printStackTrace();
+        //        }
 
         String accessionCommand = "curl -i -H \"Authorization: Bearer %s\" https://dsm-dev.datadonationplatform.org/ddp/ClinicalKits/%s";
 
