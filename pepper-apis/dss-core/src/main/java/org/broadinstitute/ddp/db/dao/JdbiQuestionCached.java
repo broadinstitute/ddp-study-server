@@ -24,7 +24,7 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
     private static RLocalCachedMap<Long, QuestionDto> questionIdToDtoCache;
     private static RLocalCachedMap<Long, List<String>> questionIdToTextSuggestionsCache;
     private static RLocalCachedMap<Long, Long> compositeChildIdToParentIdCache;
-    private static RLocalCachedMap<Long, List<Long>> compositeParentIdToChildIdsCache;
+    private static RLocalCachedMap<String, List<Long>> compositeParentIdToChildIdsCache;
     private static RLocalCachedMap<String, Long> stableIdInstanceGuidToQuestionIdCache;
 
     public JdbiQuestionCached(Handle handle) {
@@ -224,8 +224,9 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
             Map<Long, List<Long>> result = new HashMap<>();
 
             for (var parentId : parentQuestionIds) {
+                String key = parentId + ":" + instanceGuid;
                 try {
-                    var childIds = compositeParentIdToChildIdsCache.get(parentId);
+                    var childIds = compositeParentIdToChildIdsCache.get(key);
                     if (childIds != null) {
                         result.put(parentId, childIds);
                     } else {
@@ -233,7 +234,7 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
                     }
                 } catch (RedisException e) {
                     log.warn("Failed to retrieve value from Redis cache: " + compositeParentIdToChildIdsCache.getName()
-                            + " key:" + parentId + " Will try to retrieve from database", e);
+                            + " key:" + key + " Will try to retrieve from database", e);
                     missingParentIds.add(parentId);
                 }
             }
@@ -241,12 +242,12 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
             if (!missingParentIds.isEmpty()) {
                 var moreChildIds = delegate.collectOrderedCompositeChildIdsByParentIdsAndInstanceGuid(missingParentIds, instanceGuid);
                 try {
-                    compositeParentIdToChildIdsCache.putAll(moreChildIds);
                     for (var entry : moreChildIds.entrySet()) {
                         long parentId = entry.getKey();
                         for (var childId : entry.getValue()) {
                             compositeChildIdToParentIdCache.put(childId, parentId);
                         }
+                        compositeParentIdToChildIdsCache.put(parentId + ":" + instanceGuid, entry.getValue());
                     }
                 } catch (RedisException e) {
                     log.warn("Failed to store values to Redis cache: " + compositeParentIdToChildIdsCache.getName(), e);
@@ -274,8 +275,9 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
             Map<Long, List<Long>> result = new HashMap<>();
 
             for (var parentId : parentQuestionIds) {
+                String key = parentId + ":" + timestamp;
                 try {
-                    var childIds = compositeParentIdToChildIdsCache.get(parentId);
+                    var childIds = compositeParentIdToChildIdsCache.get(key);
                     if (childIds != null) {
                         result.put(parentId, childIds);
                     } else {
@@ -283,7 +285,7 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
                     }
                 } catch (RedisException e) {
                     log.warn("Failed to retrieve value from Redis cache: " + compositeParentIdToChildIdsCache.getName()
-                            + " key:" + parentId + " Will try to retrieve from database", e);
+                            + " key:" + key + " Will try to retrieve from database", e);
                     missingParentIds.add(parentId);
                 }
             }
@@ -291,12 +293,12 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
             if (!missingParentIds.isEmpty()) {
                 var moreChildIds = delegate.collectOrderedCompositeChildIdsByParentIdsAndTimestamp(missingParentIds, timestamp);
                 try {
-                    compositeParentIdToChildIdsCache.putAll(moreChildIds);
                     for (var entry : moreChildIds.entrySet()) {
                         long parentId = entry.getKey();
                         for (var childId : entry.getValue()) {
                             compositeChildIdToParentIdCache.put(childId, parentId);
                         }
+                        compositeParentIdToChildIdsCache.put(parentId + ":" + timestamp, entry.getValue());
                     }
                 } catch (RedisException e) {
                     log.warn("Failed to store values to Redis cache: " + compositeParentIdToChildIdsCache.getName(), e);
