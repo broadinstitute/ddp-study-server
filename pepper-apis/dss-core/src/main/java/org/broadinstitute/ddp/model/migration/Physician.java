@@ -20,6 +20,9 @@ public final class Physician {
     @SerializedName("state")
     private String state;
 
+    @SerializedName("country")
+    private String country;
+
     @SerializedName("zipcode")
     private String zipcode;
 
