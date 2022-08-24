@@ -117,7 +117,8 @@ public class SourceMapDeserializer implements Deserializer {
 
     public String camelCaseToPascalSnakeCase(String camelCase) {
         String[] words = camelCase.split(UPPER_CASE_REGEX.toString());
-        String pascalSnakeCase = Arrays.stream(words).map(String::toUpperCase).collect(Collectors.joining(CamelCaseConverter.UNDERSCORE_SEPARATOR));
+        String pascalSnakeCase =
+                Arrays.stream(words).map(String::toUpperCase).collect(Collectors.joining(CamelCaseConverter.UNDERSCORE_SEPARATOR));
         return pascalSnakeCase;
     }
 
