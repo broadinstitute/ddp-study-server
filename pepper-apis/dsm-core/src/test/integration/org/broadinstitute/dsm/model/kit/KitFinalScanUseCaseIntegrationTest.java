@@ -33,16 +33,16 @@ public class KitFinalScanUseCaseIntegrationTest extends KitBaseUseCaseTest {
 
 
         List<ScanPayload> scanPayloads = Arrays.asList(
-                new SentAndFinalScanPayload("ddpLabel", "kitLabel"),
-                new SentAndFinalScanPayload("ddpLabel2", "kitLabel2")
+                new SentAndFinalScanPayload("ddpLabel", "kitLabelMoreThan14"),
+                new SentAndFinalScanPayload("ddpLabel2", "kitLabelMoreThan142")
         );
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(TestInstanceCreator.TEST_INSTANCE).orElseThrow();
         KitPayload kitPayload = new KitPayload(scanPayloads, 94, ddpInstanceDto);
         KitFinalScanUseCase kitFinalScanUseCase = new KitFinalScanUseCase(kitPayload, kitDao);
         List<ScanError> scanErrors = kitFinalScanUseCase.get();
         assertEquals(0, scanErrors.size());
-        assertEquals("kitLabel", kitDao.getKit(kitId.longValue()).map(KitRequestShipping::getKitLabel).orElse(StringUtils.EMPTY));
-        assertEquals("kitLabel2", kitDao.getKit(kitId2.longValue()).map(KitRequestShipping::getKitLabel).orElse(StringUtils.EMPTY));
+        assertEquals("kitLabelMoreThan14", kitDao.getKit(kitId.longValue()).map(KitRequestShipping::getKitLabel).orElse(StringUtils.EMPTY));
+        assertEquals("kitLabelMoreThan142", kitDao.getKit(kitId2.longValue()).map(KitRequestShipping::getKitLabel).orElse(StringUtils.EMPTY));
     }
 
     @Test
@@ -66,7 +66,7 @@ public class KitFinalScanUseCaseIntegrationTest extends KitBaseUseCaseTest {
         ScanError scanError =
                 new ScanError("ddpLabel", "Kit with DSM Label " + "ddpLabel" + " does not have a Tracking Label");
         List<ScanPayload> scanPayloads = List.of(
-                new SentAndFinalScanPayload("ddpLabel", "kitLabel")
+                new SentAndFinalScanPayload("ddpLabel", "kitLabelMoreThan14")
         );
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(TestInstanceCreator.TEST_INSTANCE).orElseThrow();
         KitPayload kitPayload = new KitPayload(scanPayloads, 94, ddpInstanceDto);
