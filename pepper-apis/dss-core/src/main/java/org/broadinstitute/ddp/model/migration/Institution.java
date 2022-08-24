@@ -14,6 +14,9 @@ public final class Institution {
     @SerializedName("state")
     private String state;
 
+    @SerializedName("country")
+    private String country;
+
     @SerializedName("institutionid")
     private String institutionId;
 }

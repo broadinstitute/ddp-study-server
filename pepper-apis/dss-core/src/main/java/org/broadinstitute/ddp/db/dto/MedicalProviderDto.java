@@ -22,6 +22,7 @@ public class MedicalProviderDto {
     String physicianName;
     String city;
     String state;
+    String country;
     String postalCode;
     String phone;
     String legacyGuid;
