@@ -14,6 +14,7 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 import org.jdbi.v3.sqlobject.SqlObject;
+import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -50,11 +51,17 @@ public class OsteoDdp7601 implements CustomTask {
         JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
 
         Set<Long> consentIds = new HashSet<>();
+        Set<Long> toHide = new HashSet<>();
         for (var user : users) {
             consentIds.addAll(user.getConsents().keySet());
+            for (Long id : user.getConsents().values()) {
+                if (sqlHelper.getActivityStatus(id) == 0) {
+                    toHide.add(id);
+                }
+            }
         }
-        if (!consentIds.isEmpty()) {
-            sqlHelper.setInstancesToHide(consentIds);
+        if (!toHide.isEmpty()) {
+            sqlHelper.setInstancesToHide(toHide);
         }
         for (var consentId : consentIds) {
             jdbiActivity.updateMaxInstancesPerUserById(consentId, null);
@@ -69,10 +76,12 @@ public class OsteoDdp7601 implements CustomTask {
                     studyDto.getGuid(),
                     EventTriggerType.ACTIVITY_STATUS);
             for (long activityId : user.getConsents().keySet()) {
-                ActivityInstanceCreationEventSyncProcessorDefault activityInstanceCreationEventSyncProcessor =
-                        new ActivityInstanceCreationEventSyncProcessorDefault(handle, signal, activityId,
-                                new ActivityInstanceCreationService(signal));
-                activityInstanceCreationEventSyncProcessor.processInstancesCreation();
+                if (sqlHelper.getActivityStatus(activityId) == 0) {
+                    ActivityInstanceCreationEventSyncProcessorDefault activityInstanceCreationEventSyncProcessor =
+                            new ActivityInstanceCreationEventSyncProcessorDefault(handle, signal, activityId,
+                                    new ActivityInstanceCreationService(signal));
+                    activityInstanceCreationEventSyncProcessor.processInstancesCreation();
+                }
             }
         }
         for (var consentId : consentIds) {
@@ -82,7 +91,7 @@ public class OsteoDdp7601 implements CustomTask {
 
     private interface SqlHelper extends SqlObject {
 
-        @SqlUpdate("update study_activity set hide_existing_instances_on_creation = true where study_activity_id in (<ids>)")
+        @SqlUpdate("update activity_instance set is_hidden=true where activity_instance_id in (<ids>);")
         int setInstancesToHide(@BindList(value = "ids") Set<Long> ids);
 
         @SqlQuery("select u.user_id, u.guid, ai.activity_instance_id, ai.study_activity_id from\n"
@@ -93,6 +102,12 @@ public class OsteoDdp7601 implements CustomTask {
                 + "    join user u on u.user_id = ai.participant_id")
         @UseRowReducer(UserReducer.class)
         List<UserInfo> getUsersInfo();
+
+        @SqlQuery("select count(*) from activity_instance_status ais \n"
+                + "join activity_instance_status_type aist on "
+                + "ais.activity_instance_status_type_id = aist.activity_instance_status_type_id\n"
+                + "where activity_instance_id=:id and aist.activity_instance_status_type_code='COMPLETE'; ")
+        int getActivityStatus(@Bind(value = "id") Long id);
 
         class UserInfo {
             long id;
