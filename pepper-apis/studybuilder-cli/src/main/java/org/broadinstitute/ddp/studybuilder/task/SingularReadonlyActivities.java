@@ -67,7 +67,6 @@ public class SingularReadonlyActivities implements CustomTask {
         log.info("Updating activities configuration...");
         List<String> activities = dataCfg.getStringList("activities");
         activities.forEach(act -> updateActivity(handle, act, studyDto));
-        log.info("Events configuration has been removed in study {}", cfg.getString("study.guid"));
     }
 
     private void updateActivity(Handle handle, String activityCode, StudyDto studyDto) {
@@ -75,9 +74,17 @@ public class SingularReadonlyActivities implements CustomTask {
         long studyActivityId = helper.findActivityIdByStudyIdAndCode(studyDto.getId(), activityCode);
         List<Long> finishedActivities = helper.getDoneActivities(studyActivityId);
         finishedActivities.forEach(helper::updateActivityInstance);
+
+        //update activity definition
+        helper.updateActivityAsWriteOnce(studyActivityId);
+        log.info("updated activity: {} in study {}", activityCode, cfg.getString("study.guid"));
+
     }
 
     private interface SqlHelper extends SqlObject {
+        @SqlUpdate("update study_activity sa set sa.is_write_once = true where sa.study_activity_id = :studyActivityId")
+        void updateActivityAsWriteOnce(@Bind("studyActivityId") long studyActivityId);
+
         @SqlUpdate("update activity_instance set is_readonly=true where study_activity_id=:studyActivityId")
         void updateActivityInstance(@Bind("studyActivityId") long studyActivityId);
 
