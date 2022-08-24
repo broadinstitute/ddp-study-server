@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model.elastic.export.generate;
 
 import org.broadinstitute.dsm.model.NameValue;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.patch.Patch;
 
@@ -46,7 +47,7 @@ public class GeneratorPayload {
     }
 
     public String getCamelCaseFieldName() {
-        return Util.underscoresToCamelCase(Util.getDBElement(getName()).getColumnName());
+        return CamelCaseConverter.of(Util.getDBElement(getName()).getColumnName()).convert();
     }
 
     public String getRawFieldName() {

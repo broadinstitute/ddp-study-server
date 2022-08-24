@@ -1,12 +1,10 @@
 package org.broadinstitute.dsm.model.elastic.converters;
 
-import java.util.Map;
-
 import org.broadinstitute.dsm.model.elastic.export.parse.BaseParser;
 
-public interface Converter {
+public interface Converter<T> {
 
-    Map<String, Object> convert();
+    T convert();
 
     default void setParser(BaseParser parser) {}
 

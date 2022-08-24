@@ -36,7 +36,6 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
-import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
@@ -49,8 +48,8 @@ import org.broadinstitute.dsm.model.KitSubKits;
 import org.broadinstitute.dsm.model.KitType;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.model.ddp.KitDetail;
-import org.broadinstitute.dsm.model.elastic.ESDsm;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Dsm;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
@@ -90,10 +89,36 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     + "kit.receive_date, kit.deactivated_date, kit.easypost_address_id_to, kit.deactivation_reason, "
                     + "(select t.tracking_id from ddp_kit_tracking t where t.kit_label = kit.kit_label) as tracking_id, "
                     + "kit.kit_label, kit.express, kit.test_result, kit.needs_approval, kit.authorization, kit.denial_reason, "
-                    + "kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order " + "FROM ddp_kit_request request "
+                    + "kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order, kit.collection_date, "
+                    + "kit.sequencing_restriction FROM ddp_kit_request request "
                     + "LEFT JOIN ddp_kit kit on (kit.dsm_kit_request_id = request.dsm_kit_request_id) "
                     + "LEFT JOIN ddp_instance realm on (realm.ddp_instance_id = request.ddp_instance_id) "
                     + "LEFT JOIN kit_type kt on (request.kit_type_id = kt.kit_type_id) ";
+    public static final String SQL_SELECT_KIT_REQUEST =
+            "SELECT * FROM ( SELECT req.upload_reason, kt.kit_type_name, ddp_site.instance_name, ddp_site.ddp_instance_id, "
+                    + "ddp_site.base_url, ddp_site.auth0_token, ddp_site.billing_reference, "
+                    + "ddp_site.migrated_ddp, ddp_site.collaborator_id_prefix, ddp_site.es_participant_index, "
+                    + "req.bsp_collaborator_participant_id, req.bsp_collaborator_sample_id, req.ddp_participant_id, req.ddp_label, "
+                    + "req.dsm_kit_request_id, "
+                    + "req.kit_type_id, req.external_order_status, req.external_order_number, req.external_order_date, "
+                    + "req.external_response, kt.no_return, req.created_by FROM kit_type kt, ddp_kit_request req, ddp_instance ddp_site "
+                    + "WHERE req.ddp_instance_id = ddp_site.ddp_instance_id AND req.kit_type_id = kt.kit_type_id) AS request "
+                    + "LEFT JOIN (SELECT * FROM (SELECT kit.dsm_kit_request_id, kit.dsm_kit_id, kit.kit_complete, kit.label_url_to, "
+                    + "kit.label_url_return, kit.tracking_to_id, "
+                    + "kit.tracking_return_id, kit.easypost_tracking_to_url, kit.easypost_tracking_return_url, kit.easypost_to_id, "
+                    + "kit.easypost_shipment_status, kit.scan_date, kit.label_date, kit.error, kit.message, "
+                    + "kit.receive_date, kit.deactivated_date, kit.easypost_address_id_to, kit.deactivation_reason, tracking.tracking_id,"
+                    + " kit.kit_label, kit.express, kit.test_result, kit.needs_approval, kit.authorization, kit.denial_reason, "
+                    + " kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order, kit.collection_date, "
+                    + "  kit.sequencing_restriction FROM ddp_kit kit "
+                    + "INNER JOIN (SELECT dsm_kit_request_id, MAX(dsm_kit_id) AS kit_id FROM ddp_kit "
+                    + "GROUP BY dsm_kit_request_id) groupedKit ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id "
+                    + "AND kit.dsm_kit_id = groupedKit.kit_id LEFT JOIN ddp_kit_tracking tracking "
+                    + "ON (kit.kit_label = tracking.kit_label))as wtf) AS kit ON kit.dsm_kit_request_id = request.dsm_kit_request_id "
+                    + "LEFT JOIN ddp_participant_exit ex ON (ex.ddp_instance_id = request.ddp_instance_id "
+                    + "AND ex.ddp_participant_id = request.ddp_participant_id) "
+                    + "LEFT JOIN ddp_kit_request_settings dkc ON (request.ddp_instance_id = dkc.ddp_instance_id "
+                    + "AND request.kit_type_id = dkc.kit_type_id) WHERE ex.ddp_participant_exit_id is null";
     public static final String SQL_SELECT_KIT_WITH_QUERY_EXTENSION_FOR_UPS_TABLE =
             "SELECT kt.kit_type_name, realm.instance_name, request.bsp_collaborator_participant_id, request.bsp_collaborator_sample_id, "
                     + "request.ddp_participant_id, request.ddp_label, request.dsm_kit_request_id, "
@@ -105,8 +130,9 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     + "kit.receive_date, kit.deactivated_date, kit.easypost_address_id_to, kit.deactivation_reason, "
                     + "(select t.tracking_id from ddp_kit_tracking t where t.kit_label = kit.kit_label) as tracking_id, "
                     + "kit.kit_label, kit.express, kit.test_result, kit.needs_approval, kit.authorization, kit.denial_reason, "
-                    + "kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order, "
-                    + "activity.ups_status_description, pack.tracking_number " + "FROM ddp_kit_request request "
+                    + "kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order, kit.collection_date, "
+                    + "activity.ups_status_description, pack.tracking_number, kit.sequencing_restriction "
+                    + "FROM ddp_kit_request request "
                     + "LEFT JOIN ddp_kit kit on (kit.dsm_kit_request_id = request.dsm_kit_request_id) "
                     + "LEFT JOIN ddp_instance realm on (realm.ddp_instance_id = request.ddp_instance_id) "
                     + "LEFT JOIN kit_type kt on (request.kit_type_id = kt.kit_type_id) "
@@ -281,6 +307,11 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     private String uploadReason;
     @ColumnName(DBConstants.DDP_INSTANCE_ID)
     private long ddpInstanceId;
+    @ColumnName(DBConstants.COLLECTION_DATE)
+    @DbDateConversion(SqlDateConverter.STRING_DAY)
+    private String collectionDate;
+    @ColumnName(DBConstants.SEQUENCING_RESTRICTION)
+    private String sequencingRestriction;
 
     public KitRequestShipping() {
     }
@@ -296,21 +327,21 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         this(null, collaboratorParticipantId, null, null, null, kitTypeName, dsmKitRequestId, null, null, null, null, null, null, null,
                 scanDate, error, null, receiveDate, null, deactivatedDate, null, null, null, null, null, null, externalOrderNumber, null,
                 externalOrderStatus, null, testResult, upsTrackingStatus, upsReturnStatus, externalOrderDate, careEvolve, uploadReason,
-                null, null, null);
+                null, null, null, null, null);
     }
 
     public KitRequestShipping(String participantId, String collaboratorParticipantId, String dsmKitId, String realm, String trackingToId,
                               String receiveDateString, String hruid, String gender) {
         this(participantId, collaboratorParticipantId, null, null, realm, null, null, null, null, null, trackingToId, null, null, null,
                 null, null, null, null, null, null, null, dsmKitId, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, receiveDateString, hruid, gender);
+                null, null, receiveDateString, hruid, gender, null, null);
     }
 
     public KitRequestShipping(Long dsmKitRequestId, Long dsmKitId, String easypostToId, String easypostAddressId, Boolean error,
                               String message) {
         this(null, null, null, null, null, null, dsmKitRequestId, dsmKitId, null, null, null, null, null, null, null, error, message, null,
                 easypostAddressId, null, null, null, null, easypostToId, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null);
+                null, null, null, null, null, null);
     }
 
     // shippingId = ddp_label !!!
@@ -322,7 +353,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                               String easypostToId, Long labelDate, String easypostShipmentStatus, String externalOrderNumber,
                               Boolean noReturn, String externalOrderStatus, String createdBy, String testResult, String upsTrackingStatus,
                               String upsReturnStatus, Long externalOrderDate, Boolean careEvolve, String uploadReason,
-                              String receiveDateString, String hruid, String gender) {
+                              String receiveDateString, String hruid, String gender, String collectionDate, String sequencingRestriction) {
         super(dsmKitRequestId, participantId, null, shippingId, externalOrderNumber, null, externalOrderStatus, null, externalOrderDate);
         this.collaboratorParticipantId = collaboratorParticipantId;
         this.bspCollaboratorSampleId = bspCollaboratorSampleId;
@@ -357,6 +388,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         this.receiveDateString = receiveDateString;
         this.hruid = hruid;
         this.gender = gender;
+        this.collectionDate = collectionDate;
+        this.sequencingRestriction = sequencingRestriction;
     }
 
     public Boolean getError() {
@@ -381,15 +414,16 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                         rs.getString(DBConstants.DSM_TRACKING_URL_RETURN), (Long) rs.getObject(DBConstants.DSM_SCAN_DATE),
                         rs.getBoolean(DBConstants.ERROR), rs.getString(DBConstants.MESSAGE),
                         (Long) rs.getObject(DBConstants.DSM_RECEIVE_DATE),
-                        rs.getString(DBConstants.EASYPOST_ADDRESS_ID_TO), (Long)rs.getObject(DBConstants.DSM_DEACTIVATED_DATE),
+                        rs.getString(DBConstants.EASYPOST_ADDRESS_ID_TO), (Long) rs.getObject(DBConstants.DSM_DEACTIVATED_DATE),
                         rs.getString(DBConstants.DEACTIVATION_REASON), rs.getString(DBConstants.KIT_LABEL),
                         rs.getBoolean(DBConstants.EXPRESS), rs.getString(DBConstants.EASYPOST_TO_ID),
-                        (Long)rs.getObject(DBConstants.LABEL_TRIGGERED_DATE), rs.getString(DBConstants.EASYPOST_SHIPMENT_STATUS),
+                        (Long) rs.getObject(DBConstants.LABEL_TRIGGERED_DATE), rs.getString(DBConstants.EASYPOST_SHIPMENT_STATUS),
                         rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), rs.getBoolean(DBConstants.NO_RETURN),
                         rs.getString(DBConstants.EXTERNAL_ORDER_STATUS), rs.getString(DBConstants.CREATED_BY),
                         rs.getString(DBConstants.KIT_TEST_RESULT), rs.getString(DBConstants.UPS_TRACKING_STATUS),
-                        rs.getString(DBConstants.UPS_RETURN_STATUS), (Long)rs.getObject(DBConstants.EXTERNAL_ORDER_DATE),
-                        rs.getBoolean(DBConstants.CARE_EVOLVE), rs.getString(DBConstants.UPLOAD_REASON), null, null, null);
+                        rs.getString(DBConstants.UPS_RETURN_STATUS), (Long) rs.getObject(DBConstants.EXTERNAL_ORDER_DATE),
+                        rs.getBoolean(DBConstants.CARE_EVOLVE), rs.getString(DBConstants.UPLOAD_REASON), null, null, null,
+                        rs.getString(DBConstants.COLLECTION_DATE), rs.getString(DBConstants.SEQUENCING_RESTRICTION));
         kitRequestShipping.setDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID));
         if (DBUtil.columnExists(rs, DBConstants.UPS_STATUS_DESCRIPTION) && StringUtils.isNotBlank(
                 rs.getString(DBConstants.UPS_STATUS_DESCRIPTION))) {
@@ -608,15 +642,16 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             esParticipants.stream().filter(elasticSearchParticipantDto ->
                             existsParticipant(kit, elasticSearchParticipantDto))
                     .findFirst()
-                    .ifPresent(elasticSearchParticipantDto -> setFirstLastDOB(kit, elasticSearchParticipantDto));
+                    .ifPresent(elasticSearchParticipantDto -> setFirstLastShortIdDOB(kit, elasticSearchParticipantDto));
         }
         return wholeList;
     }
 
-    private static void setFirstLastDOB(KitRequestShipping kit, ElasticSearchParticipantDto elasticSearchParticipantDto) {
-        kit.setFirstName(elasticSearchParticipantDto.getProfile().map(ESProfile::getFirstName).orElse(StringUtils.EMPTY));
-        kit.setLastName(elasticSearchParticipantDto.getProfile().map(ESProfile::getLastName).orElse(StringUtils.EMPTY));
-        kit.setDateOfBirth(elasticSearchParticipantDto.getDsm().map(ESDsm::getDateOfBirth).orElse(StringUtils.EMPTY));
+    private static void setFirstLastShortIdDOB(KitRequestShipping kit, ElasticSearchParticipantDto elasticSearchParticipantDto) {
+        kit.setFirstName(elasticSearchParticipantDto.getProfile().map(Profile::getFirstName).orElse(StringUtils.EMPTY));
+        kit.setLastName(elasticSearchParticipantDto.getProfile().map(Profile::getLastName).orElse(StringUtils.EMPTY));
+        kit.setDateOfBirth(elasticSearchParticipantDto.getDsm().map(Dsm::getDateOfBirth).orElse(StringUtils.EMPTY));
+        kit.setShortId(elasticSearchParticipantDto.getProfile().map(Profile::getHruid).orElse(StringUtils.EMPTY));
     }
 
     private static boolean existsParticipant(KitRequestShipping kit, ElasticSearchParticipantDto elasticSearchParticipantDto) {
@@ -695,12 +730,12 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                                                           boolean getAll) throws SQLException {
         PreparedStatement stmt = null;
         if (getAll) {
-            String query = KitDaoImpl.SQL_SELECT_KIT_REQUEST.concat(QueryExtension.BY_REALM);
+            String query = SQL_SELECT_KIT_REQUEST.concat(QueryExtension.BY_REALM);
             stmt = conn.prepareStatement(query);
             stmt.setString(1, realm);
         } else {
             if (StringUtils.isNotBlank(realm) && StringUtils.isNotBlank(type)) {
-                String query = addQueryExtension(target, KitDaoImpl.SQL_SELECT_KIT_REQUEST.concat(QueryExtension.BY_REALM_AND_TYPE));
+                String query = addQueryExtension(target, SQL_SELECT_KIT_REQUEST.concat(QueryExtension.BY_REALM_AND_TYPE));
                 stmt = conn.prepareStatement(query);
                 stmt.setString(1, realm);
                 stmt.setString(2, type);
@@ -807,7 +842,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     public static KitRequestShipping getKitRequest(@NonNull String kitRequestId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(KitDaoImpl.SQL_SELECT_KIT_REQUEST + KitDaoImpl.KIT_BY_KIT_REQUEST_ID)) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KIT_REQUEST + QueryExtension.KIT_BY_KIT_REQUEST_ID)) {
                 stmt.setString(1, kitRequestId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     int numRows = 0;
@@ -932,8 +967,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
             try {
                 UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto,
-                    ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DOC_ID,
-                    Exportable.getParticipantGuid(ddpParticipantId, ddpInstance.getParticipantIndexES()),
+                        ESObjectConstants.DSM_KIT_REQUEST_ID, ESObjectConstants.DOC_ID,
+                        Exportable.getParticipantGuid(ddpParticipantId, ddpInstance.getParticipantIndexES()),
                         new PutToNestedScriptBuilder()).export();
             } catch (Exception e) {
                 logger.error(String.format("Error inserting newly created kit request shipping with dsm kit request id: %s in "
@@ -1023,7 +1058,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
             try {
                 UpsertPainlessFacade.of(DBConstants.DDP_KIT_REQUEST_ALIAS, kitRequestShipping, ddpInstanceDto, ESObjectConstants.DSM_KIT_ID,
-                    ESObjectConstants.DSM_KIT_ID, dsmKitId, new PutToNestedScriptBuilder()).export();
+                        ESObjectConstants.DSM_KIT_ID, dsmKitId, new PutToNestedScriptBuilder()).export();
             } catch (Exception e) {
                 logger.error(String.format("Error updating label date of kit request shipping with dsm kit id: %s in ElasticSearch",
                         dsmKitId));
@@ -1489,15 +1524,15 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
             } else {
                 throw new RuntimeException("Search field not known: " + field);
             }
-            try (PreparedStatement stmt = conn.prepareStatement(KitDaoImpl.SQL_SELECT_KIT_REQUEST.concat(search))) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KIT_REQUEST.concat(search))) {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         String realm = rs.getString(DBConstants.INSTANCE_NAME);
                         if (Arrays.asList(realms).contains(realm)) { //only if user has right to see that realm
                             String ddpParticipantId = rs.getString(DBConstants.DDP_PARTICIPANT_ID);
-                            String bspParticipantId = rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID);
+                            String bspSampleId = rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID);
                             String kitTypeName = rs.getString(DBConstants.KIT_TYPE_NAME);
-                            String key = ddpParticipantId + "_" + bspParticipantId + "_" + kitTypeName;
+                            String key = ddpParticipantId + "_" + bspSampleId + "_" + kitTypeName;
                             KitRequestShipping kitRequest = getKitRequestShipping(rs);
                             kitRequests.put(key, kitRequest);
                         }
@@ -1520,7 +1555,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         List<KitRequestShipping> kits = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(KitDaoImpl.SQL_SELECT_KIT_REQUEST + KIT_AFTER_BOOKMARK_ORDER_BY_ID)) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KIT_REQUEST + KIT_AFTER_BOOKMARK_ORDER_BY_ID)) {
                 stmt.setLong(1, bookmark);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
@@ -1654,6 +1689,10 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
     public List<Map<String, Object>> getTestResult() {
         try {
+            if (StringUtils.isBlank(testResult)) {
+                return ObjectMapperSingleton.instance().readValue("", new TypeReference<List<Map<String, Object>>>() {
+                });
+            }
             return ObjectMapperSingleton.instance().readValue(testResult, new TypeReference<List<Map<String, Object>>>() {
             });
         } catch (IOException | NullPointerException e) {

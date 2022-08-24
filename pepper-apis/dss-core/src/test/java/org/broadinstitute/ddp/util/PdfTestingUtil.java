@@ -336,7 +336,7 @@ public final class PdfTestingUtil {
                 String physicianName = NON_ASCII_NAME + nameIndex;
                 String city = TestMedicalProviderData.INSTITUTION_CITY + nameIndex;
                 String state = TestMedicalProviderData.INSTITUTION_STATE + nameIndex;
-
+                String country = TestMedicalProviderData.INSTITUTION_COUNTRY + nameIndex;
                 Map<String, String> expectedPdfSubstitutions = new HashMap<>();
 
 
@@ -359,6 +359,7 @@ public final class PdfTestingUtil {
                         physicianName,
                         city,
                         state,
+                        country,
                         null,
                         null,
                         null,
@@ -375,6 +376,7 @@ public final class PdfTestingUtil {
             String physicianName = "Doctor Nick";
             String city = TestMedicalProviderData.INSTITUTION_CITY;
             String state = TestMedicalProviderData.INSTITUTION_STATE;
+            String country = TestMedicalProviderData.INSTITUTION_COUNTRY;
             physicianValues.put(NAME_FIELD_NAME + fieldPostFix, physicianName);
             physicianValues.put(INSTITUTION_FIELD_NAME + fieldPostFix, institutionName);
             physicianValues.put(CITY_FIELD_NAME + fieldPostFix, city);
@@ -392,6 +394,7 @@ public final class PdfTestingUtil {
                     physicianName,
                     city,
                     state,
+                    country,
                     null,
                     null,
                     null,
@@ -685,6 +688,7 @@ public final class PdfTestingUtil {
         public static final String PHYSICIAN_NAME = "House MD";
         public static final String INSTITUTION_CITY = "West Windsor Township";
         public static final String INSTITUTION_STATE = "New Jersey";
+        public static final String INSTITUTION_COUNTRY = "United States";
     }
 
     public static class PdfDbInfo {
