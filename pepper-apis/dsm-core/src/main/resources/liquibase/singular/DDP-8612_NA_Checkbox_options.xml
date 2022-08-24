@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="pegah" id="DDP-8612_NA_checkboxes_tab1">
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CONOTRUNCAL_GROUP"/>
+            <column name="column_name" value="NA_CONOTRUNCAL_GROUP"/>
+            <column name="column_display" value="N/A"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="24"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AVSD_GROUP"/>
+            <column name="column_name" value="NA_AVSD_GROUP"/>
+            <column name="column_display" value="N/A"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="11"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="APVR_GROUP"/>
+            <column name="column_name" value="NA_APVR_GROUP"/>
+            <column name="column_display" value="N/A"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="8"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LVOTO_GROUP"/>
+            <column name="column_name" value="NA_LVOTO_GROUP"/>
+            <column name="column_display" value="N/A"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="20"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="RVOTO_GROUP"/>
+            <column name="column_name" value="NA_RVOTO_GROUP"/>
+            <column name="column_display" value="N/A"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="17"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SEPTAL_GROUP"/>
+            <column name="column_name" value="NA_SEPTAL_GROUP"/>
+            <column name="column_display" value="N/A"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="14"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="LATERALITY_GROUP"/>
+            <column name="column_name" value="NA_LATERALITY_GROUP"/>
+            <column name="column_display" value="N/A"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="18"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="SINGLE_VENTRICLE_GROUP"/>
+            <column name="column_name" value="NA_SINGLE_VENTRICLE_GROUP"/>
+            <column name="column_display" value="N/A"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="9"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="AORTOPATHY_GROUP"/>
+            <column name="column_name" value="NA_AORTOPATHY_GROUP"/>
+            <column name="column_display" value="N/A"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="13"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CORONARY_ANOMALY_GROUP"/>
+            <column name="column_name" value="NA_CORONARY_ANOMALY_GROUP"/>
+            <column name="column_display" value="N/A"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="5"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="CARDIOMYOPATHY_GROUP"/>
+            <column name="column_name" value="NA_CARDIOMYOPATHY_GROUP"/>
+            <column name="column_display" value="N/A"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="7"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='singular')"></column>
+            <column name="field_type" value="MYOCARDIAL_GROUP"/>
+            <column name="column_name" value="NA_MYOCARDIAL_GROUP"/>
+            <column name="column_display" value="N/A"/>
+            <column name="display_type" value="CHECKBOX"/>
+            <column name="order_number" value="13"/>
+        </insert>
+    </changeSet>
+    <changeSet id="DDP-8612_NA_checkboxes_tab3" author="pegah">
+        <sql>
+            select @newChange :=  '[{"value": "NA", "name": "N/A"}]';
+            select @pv := possible_values from field_settings where column_name = "KARYOTYPE_ABNORMAL" and field_type = 'GROUP_GENETIC_TESTING';
+            select JSON_MERGE_PRESERVE(@pv, @newChange);
+            UPDATE field_settings
+            SET possible_values =  JSON_MERGE_PRESERVE(@pv, @newChange)
+            WHERE field_settings_id &lt;&gt; 0 and field_settings_id in
+            (select field_settings_id from (select * from field_settings) as temp where column_name = "KARYOTYPE_ABNORMAL" and field_type = 'GROUP_GENETIC_TESTING');
+        </sql>
+        <sql>
+            select @newChange :=  '[{"value": "NA", "name": "N/A"}]';
+            select @pv := possible_values from field_settings where column_name = "MICROARRAY_ABNORMAL" and field_type = 'GROUP_GENETIC_TESTING';
+            select JSON_MERGE_PRESERVE(@pv, @newChange);
+            UPDATE field_settings
+            SET possible_values =  JSON_MERGE_PRESERVE(@pv, @newChange)
+            WHERE field_settings_id &lt;&gt; 0 and field_settings_id in
+            (select field_settings_id from (select * from field_settings) as temp where column_name = "MICROARRAY_ABNORMAL" and field_type = 'GROUP_GENETIC_TESTING');
+        </sql>
+        <sql>
+            select @newChange :=  '[{"value": "NA", "name": "N/A"}]';
+            select @pv := possible_values from field_settings where column_name = "GENE_SYNDROMES" and field_type = 'GROUP_GENETIC_TESTING';
+            select JSON_MERGE_PRESERVE(@pv, @newChange);
+            UPDATE field_settings
+            SET possible_values =  JSON_MERGE_PRESERVE(@pv, @newChange)
+            WHERE field_settings_id &lt;&gt; 0 and field_settings_id in
+            (select field_settings_id from (select * from field_settings) as temp where column_name = "GENE_SYNDROMES" and field_type = 'GROUP_GENETIC_TESTING');
+        </sql>
+        <sql>
+            select @newChange :=  '[{"value": "NA", "name": "N/A"}]';
+            select @pv := possible_values from field_settings where column_name = "MOLECULAR_CONFIRMATION" and field_type = 'GROUP_GENETIC_TESTING';
+            select JSON_MERGE_PRESERVE(@pv, @newChange);
+            UPDATE field_settings
+            SET possible_values =  JSON_MERGE_PRESERVE(@pv, @newChange)
+            WHERE field_settings_id &lt;&gt; 0 and field_settings_id in
+            (select field_settings_id from (select * from field_settings) as temp where column_name = "MOLECULAR_CONFIRMATION" and field_type = 'GROUP_GENETIC_TESTING');
+        </sql>
+        <sql>
+            select @newChange :=  '[{"value": "NA", "name": "N/A"}]';
+            select @pv := possible_values from field_settings where column_name = "CLINICAL_SYNDROMES" and field_type = 'GROUP_GENETIC_TESTING';
+            select JSON_MERGE_PRESERVE(@pv, @newChange);
+            UPDATE field_settings
+            SET possible_values =  JSON_MERGE_PRESERVE(@pv, @newChange)
+            WHERE field_settings_id &lt;&gt; 0 and field_settings_id in
+            (select field_settings_id from (select * from field_settings) as temp where column_name = "CLINICAL_SYNDROMES" and field_type = 'GROUP_GENETIC_TESTING');
+        </sql>
+    </changeSet>
+</databaseChangeLog>

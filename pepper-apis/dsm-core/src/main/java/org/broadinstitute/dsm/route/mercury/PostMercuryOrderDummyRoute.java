@@ -10,10 +10,7 @@ import org.broadinstitute.dsm.db.dao.mercury.MercuryOrderDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.mercury.MercuryOrderDummyRequest;
 import org.broadinstitute.dsm.pubsub.MercuryOrderPublisher;
-import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
-import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.lddp.handlers.util.Result;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
@@ -42,18 +39,6 @@ public class PostMercuryOrderDummyRoute implements Route {
     public Object handle(Request request, Response response) {
         String requestBody = request.body();
         QueryParamsMap queryParams = request.queryMap();
-        String userId = "";
-        if (queryParams.value(UserUtil.USER_ID) != null) {
-            userId = queryParams.get(UserUtil.USER_ID).value();
-        } else if (request.url().contains("/ddp")) {
-            userId = "GP_UNIT_TEST";
-        }
-        String realm = queryParams.get(RoutePath.REALM).value();
-        if (!UserUtil.checkUserAccess(realm, userId, "kit_sequencing_order", null)) {
-            log.warn("User doesn't have access");
-            response.status(500);
-            return UserErrorMessages.NO_RIGHTS;
-        }
         MercuryOrderDummyRequest mercuryOrderRequest = new Gson().fromJson(requestBody, MercuryOrderDummyRequest.class);
         if (!isValidRequest(mercuryOrderRequest)) {
             log.error("Request not valid");
@@ -66,7 +51,7 @@ public class PostMercuryOrderDummyRoute implements Route {
             response.status(500);
             return UserErrorMessages.CONTACT_DEVELOPER;
         }
-        String pepperOrderId = publishMessage(mercuryOrderRequest, ddpInstance, userId);
+        String pepperOrderId = publishMessage(mercuryOrderRequest, ddpInstance, "DUMMY_ROUTE");
         JSONObject main = new JSONObject();
         main.put(PEPPER_ORDER_ID, pepperOrderId);
         return main;
