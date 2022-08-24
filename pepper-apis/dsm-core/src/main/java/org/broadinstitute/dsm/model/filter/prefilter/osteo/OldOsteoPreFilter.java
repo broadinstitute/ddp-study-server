@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.model.elastic.ESActivities;
+import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.filter.prefilter.BaseStudyPreFilter;
 import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter;
@@ -24,13 +24,13 @@ public class OldOsteoPreFilter extends BaseStudyPreFilter {
 
     @Override
     public void filter() {
-        List<ESActivities> filteredActivities = elasticSearchParticipantDto.getActivities().stream()
+        List<Activities> filteredActivities = elasticSearchParticipantDto.getActivities().stream()
                 .filter(this::isActivityNotUpdated)
                 .collect(Collectors.toList());
         elasticSearchParticipantDto.setActivities(filteredActivities);
     }
 
-    private boolean isActivityNotUpdated(ESActivities activity) {
+    private boolean isActivityNotUpdated(Activities activity) {
         return ACTIVITY_VERSION_1.equals(activity.getActivityVersion());
     }
 }

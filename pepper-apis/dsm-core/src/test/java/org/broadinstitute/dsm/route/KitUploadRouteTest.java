@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.route;
 
 import java.util.Arrays;
@@ -8,7 +9,7 @@ import com.typesafe.config.Config;
 import org.broadinstitute.dsm.TestHelper;
 import org.broadinstitute.dsm.exception.FileColumnMissing;
 import org.broadinstitute.dsm.exception.UploadLineException;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
 import org.broadinstitute.dsm.util.NotificationUtil;
@@ -73,14 +74,14 @@ public class KitUploadRouteTest {
                 + "56\tNebula\tGalaxy\t415 Main St\t\tCambridge\tMA\t2142\tUS";
 
         String[] rows = fileContent.split(System.lineSeparator());
-        List<String> fieldNamesFromFileHeader = Arrays.asList(rows[0].trim().split(SystemUtil.SEPARATOR));
+        List<String> fieldNamesFromFileHeader = Arrays.asList(rows[0].trim().split(SystemUtil.TAB_SEPARATOR));
 
         Map<String, String> participantDataAsMap = route.getParticipantDataAsMap(rows[1], fieldNamesFromFileHeader, 1);
 
         String participantFirstNameFromDoc = participantDataAsMap.get("firstName");
         String participantLastNameFromDoc = participantDataAsMap.get("lastName");
 
-        ESProfile esProfile = new ESProfile();
+        Profile esProfile = new Profile();
         esProfile.setFirstName("Mickey");
         esProfile.setLastName("Mouse");
         esProfile.setHruid("");
@@ -95,7 +96,7 @@ public class KitUploadRouteTest {
                 + "56\tNebula\tGalaxy\t415 Main St\t\tCambridge\tMA\t2142\tUS";
 
         String[] rows = fileContent.split(System.lineSeparator());
-        List<String> fieldNamesFromFileHeader = Arrays.asList(rows[0].trim().split(SystemUtil.SEPARATOR));
+        List<String> fieldNamesFromFileHeader = Arrays.asList(rows[0].trim().split(SystemUtil.TAB_SEPARATOR));
 
         Map<String, String> participantDataAsMap = route.getParticipantDataAsMap(rows[1], fieldNamesFromFileHeader, 1);
 
@@ -109,7 +110,7 @@ public class KitUploadRouteTest {
 
     private ParticipantWrapperDto participantFactory(String firstName, String lastName, String shortId) {
         ParticipantWrapperDto participant = new ParticipantWrapperDto();
-        ESProfile esProfile = new ESProfile();
+        Profile esProfile = new Profile();
         esProfile.setFirstName(firstName);
         esProfile.setLastName(lastName);
         if (ParticipantUtil.isHruid(shortId)) {

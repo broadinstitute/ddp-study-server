@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.util;
 
 import java.util.List;
@@ -7,7 +8,7 @@ import com.google.gson.Gson;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 
@@ -26,7 +27,7 @@ public class ParticipantUtil {
         return participantId.length() == 20;
     }
 
-    public static boolean matchesApplicantEmail(ESProfile applicantProfile,
+    public static boolean matchesApplicantEmail(Profile applicantProfile,
                                                 Map<String, String> applicantDataMap,
                                                 Map<String, String> participantDataMap) {
         String currentParticipantEmail = participantDataMap.get(FamilyMemberConstants.EMAIL);
@@ -84,7 +85,7 @@ public class ParticipantUtil {
                 ElasticSearchUtil.getParticipantESDataByParticipantId(esParticipantIndex, participantId)
                         .orElse(new ElasticSearchParticipantDto.Builder().build());
         email.append(elasticSearchParticipantDto.getProfile()
-                .map(ESProfile::getEmail)
+                .map(Profile::getEmail)
                 .orElse(""));
         return email.toString();
     }

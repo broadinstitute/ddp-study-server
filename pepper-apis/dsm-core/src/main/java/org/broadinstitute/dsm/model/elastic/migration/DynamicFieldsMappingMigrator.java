@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.model.elastic.migration;
 
 import static org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator.DSM_OBJECT;
@@ -10,7 +11,7 @@ import java.util.Map;
 import org.broadinstitute.dsm.db.ParticipantData;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
-import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.export.ElasticMappingExportAdapter;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.model.elastic.export.RequestPayload;
@@ -46,7 +47,7 @@ public class DynamicFieldsMappingMigrator implements Exportable {
             parser.setDisplayType(fieldSettingsDto.getDisplayType());
             parser.setPossibleValuesJson(fieldSettingsDto.getPossibleValues());
             String fieldType = fieldSettingsDto.getFieldType();
-            PropertyInfo propertyInfo = PropertyInfo.TABLE_ALIAS_MAPPINGS.get(fieldType);
+            PropertyInfo propertyInfo = PropertyInfo.of(fieldType);
             if (propertyInfo != null) {
                 buildMapping(fieldSettingsDto, propertyInfo);
             } else {
@@ -66,7 +67,7 @@ public class DynamicFieldsMappingMigrator implements Exportable {
     }
 
     private void buildMapping(FieldSettingsDto fieldSettingsDto, PropertyInfo propertyInfo) {
-        String columnName = Util.underscoresToCamelCase(fieldSettingsDto.getColumnName());
+        String columnName = CamelCaseConverter.of(fieldSettingsDto.getColumnName()).convert();
         String propertyName = propertyInfo.getPropertyName();
         Object typeMap = parser.parse(fieldSettingsDto.getDisplayType());
         if (!(propertyMap.containsKey(propertyName))) {
@@ -87,4 +88,3 @@ public class DynamicFieldsMappingMigrator implements Exportable {
         }
     }
 }
-

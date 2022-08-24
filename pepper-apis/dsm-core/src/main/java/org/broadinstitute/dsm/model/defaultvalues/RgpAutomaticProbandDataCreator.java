@@ -11,7 +11,7 @@ import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
-import org.broadinstitute.dsm.model.elastic.ESActivities;
+import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberDetails;
 import org.broadinstitute.dsm.model.participant.data.ParticipantData;
@@ -63,7 +63,7 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
     }
 
     private Map<String, String> extractProbandDefaultDataFromParticipantProfile(Optional<BookmarkDto> maybeBookmark) {
-        List<ESActivities> participantActivities = elasticSearchParticipantDto.getActivities();
+        List<Activities> participantActivities = elasticSearchParticipantDto.getActivities();
         String mobilePhone = getPhoneNumberFromActivities(participantActivities);
         return elasticSearchParticipantDto.getProfile().map(esProfile -> {
             logger.info("Starting extracting data from participant: " + esProfile.getGuid() + " ES profile");
@@ -84,8 +84,8 @@ public class RgpAutomaticProbandDataCreator extends BasicDefaultDataMaker {
         }).orElse(Map.of());
     }
 
-    private String getPhoneNumberFromActivities(List<ESActivities> activities) {
-        Optional<ESActivities> maybeEnrollmentActivity =
+    private String getPhoneNumberFromActivities(List<Activities> activities) {
+        Optional<Activities> maybeEnrollmentActivity =
                 activities.stream().filter(activity -> DDPActivityConstants.ACTIVITY_ENROLLMENT.equals(activity.getActivityCode()))
                         .findFirst();
         return (String) maybeEnrollmentActivity.map(enrollment -> {

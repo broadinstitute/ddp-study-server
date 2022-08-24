@@ -21,7 +21,7 @@ import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.Value;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -112,7 +112,7 @@ public class ExistingRecordPatch extends BasePatch {
         return question.get(STATUS) != null && question.get(STATUS).equals(ESObjectConstants.SENT);
     }
 
-    private void controlWorkflowByEmail(Patch patch, NameValue nameValue, DDPInstance ddpInstance, ESProfile profile) {
+    private void controlWorkflowByEmail(Patch patch, NameValue nameValue, DDPInstance ddpInstance, Profile profile) {
         if (profile == null || nameValue.getValue() == null) {
             return;
         }
@@ -140,7 +140,7 @@ public class ExistingRecordPatch extends BasePatch {
         }
     }
 
-    private void writeFamilyMemberWorklow(Patch patch, DDPInstance ddpInstance, ESProfile profile, Map<String, String> participantDataMap) {
+    private void writeFamilyMemberWorklow(Patch patch, DDPInstance ddpInstance, Profile profile, Map<String, String> participantDataMap) {
         logger.info("Email in patch data matches participant profile email, will update workflows");
         int ddpInstanceIdByGuid = Integer.parseInt(ddpInstance.getDdpInstanceId());
         FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
@@ -168,7 +168,7 @@ public class ExistingRecordPatch extends BasePatch {
         });
     }
 
-    private void removeFamilyMemberWorkflowData(DDPInstance ddpInstance, ESProfile profile, Map<String, String> participantDataMap,
+    private void removeFamilyMemberWorkflowData(DDPInstance ddpInstance, Profile profile, Map<String, String> participantDataMap,
                                                 Map<String, Object> esMap) throws IOException {
         logger.info("Email in patch data does not match participant profile email, will remove workflows");
         CopyOnWriteArrayList<Map<String, Object>> workflowsList =
@@ -191,7 +191,7 @@ public class ExistingRecordPatch extends BasePatch {
         }
     }
 
-    private void writeESWorkflowElseTriggerParticipantEvent(Patch patch, DDPInstance ddpInstance, ESProfile profile, NameValue nameValue) {
+    private void writeESWorkflowElseTriggerParticipantEvent(Patch patch, DDPInstance ddpInstance, Profile profile, NameValue nameValue) {
         for (Value action : patch.getActions()) {
             if (hasProfileAndESWorkflowType(profile, action)) {
                 writeESWorkflow(patch, nameValue, action, ddpInstance, profile.getGuid());

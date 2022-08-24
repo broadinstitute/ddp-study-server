@@ -1,5 +1,5 @@
-package org.broadinstitute.dsm.model.elastic.export.generate;
 
+package org.broadinstitute.dsm.model.elastic.export.generate;
 
 import static org.broadinstitute.dsm.model.elastic.export.generate.BaseGenerator.PROPERTIES;
 
@@ -10,7 +10,7 @@ import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.model.NameValue;
-import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.export.TestPatchUtil;
 import org.broadinstitute.dsm.model.elastic.export.parse.BaseParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.DynamicFieldsParser;
@@ -29,7 +29,7 @@ public class MappingGeneratorTest {
         return new GeneratorPayload(new NameValue(columnName, value), patch) {
             @Override
             public String getCamelCaseFieldName() {
-                return Util.underscoresToCamelCase(columnName);
+                return CamelCaseConverter.of(columnName).convert();
             }
         };
     }
@@ -85,7 +85,7 @@ public class MappingGeneratorTest {
         Map<String, Object> resultMap = generator.generate();
         Map<String, Object> dsmLevelProperty = Map.of(generator.getPropertyName(),
                 Map.of(MappingGenerator.TYPE, MappingGenerator.NESTED, PROPERTIES,
-                        Map.of(Util.underscoresToCamelCase(TestPatchUtil.DATE_FIELD), Map.of(MappingGenerator.TYPE, "date"))));
+                        Map.of(CamelCaseConverter.of(TestPatchUtil.DATE_FIELD).convert(), Map.of(MappingGenerator.TYPE, "date"))));
         Map<String, Object> dsmLevelProperties = Map.of(PROPERTIES, dsmLevelProperty);
         Map<String, Object> dsmLevel = Map.of(MappingGenerator.DSM_OBJECT, dsmLevelProperties);
         Map<String, Object> topLevel = Map.of(PROPERTIES, dsmLevel);
@@ -107,18 +107,18 @@ public class MappingGeneratorTest {
         Map<String, Object> additionalValuesJson = (Map) parseJson.get("dynamicFields");
         Assert.assertNotNull(additionalValuesJson);
         Assert.assertEquals(TypeParser.TEXT_KEYWORD_MAPPING,
-                ((Map) additionalValuesJson.get(PROPERTIES)).get(Util.underscoresToCamelCase("DDP_INSTANCE")));
+                ((Map) additionalValuesJson.get(PROPERTIES)).get(CamelCaseConverter.of("DDP_INSTANCE").convert()));
     }
 
 
     private String extractDeepestLeveleValue(Map<String, Object> objectMap, String field) {
-        return (String) ((Map) ((Map) getMedicalRecordProperty(objectMap).get(PROPERTIES)).get(Util.underscoresToCamelCase(field))).get(
+        return (String) ((Map) ((Map) getMedicalRecordProperty(objectMap).get(PROPERTIES)).get(CamelCaseConverter.of(field).convert())).get(
                 "type");
     }
 
     private String extractKeywordType(Map<String, Object> objectMap, String field) {
         return (String) ((Map) ((Map) ((Map) ((Map) getMedicalRecordProperty(objectMap).get(PROPERTIES)).get(
-                Util.underscoresToCamelCase(field))).get("fields")).get("keyword")).get("type");
+                CamelCaseConverter.of(field).convert())).get("fields")).get("keyword")).get("type");
     }
 
     private Map getMedicalRecordProperty(Map<String, Object> objectMap) {

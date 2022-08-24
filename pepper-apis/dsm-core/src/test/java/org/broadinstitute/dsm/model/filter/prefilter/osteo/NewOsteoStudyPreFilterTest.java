@@ -12,7 +12,7 @@ import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.model.elastic.ESDsm;
+import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter;
 import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilterPayload;
@@ -25,8 +25,8 @@ public class NewOsteoStudyPreFilterTest {
     public void filter() {
         int ddpInstanceId = 1;
         String oldOsteoInstanceName = "osteo2";
-        ESDsm esDsm = new ESDsm();
-        
+        Dsm esDsm = new Dsm();
+
         esDsm.setMedicalRecord(new ArrayList<>(List.of(
                 new MedicalRecord(1),
                 new MedicalRecord(2),

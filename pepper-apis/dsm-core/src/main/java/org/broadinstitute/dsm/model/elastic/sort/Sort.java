@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.model.elastic.sort;
 
 import java.util.Map;
@@ -5,7 +6,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.export.parse.TypeParser;
 import org.broadinstitute.dsm.model.elastic.mapping.TypeExtractor;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -22,7 +23,7 @@ public class Sort {
     private Alias alias;
 
     Sort(SortBy sortBy,
-                TypeExtractor<Map<String, String>> typeExtractor) {
+         TypeExtractor<Map<String, String>> typeExtractor) {
         this.typeExtractor = typeExtractor;
         this.sortBy = sortBy;
         this.alias = Alias.of(sortBy);
@@ -44,7 +45,7 @@ public class Sort {
                 return new Sort(sortBy, typeExtractor);
         }
     }
-    
+
     boolean isNestedSort() {
         return getAlias().isCollection();
     }
@@ -70,7 +71,7 @@ public class Sort {
         if (Alias.ACTIVITIES == getAlias() || Alias.REGISTRATION == getAlias()) {
             return sortBy.getInnerProperty();
         }
-        return Util.underscoresToCamelCase(sortBy.getInnerProperty());
+        return CamelCaseConverter.of(sortBy.getInnerProperty()).convert();
     }
 
     private String buildPath(String... args) {

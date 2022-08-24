@@ -3,7 +3,7 @@ package org.broadinstitute.dsm.model.elastic.export.generate;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,8 +27,7 @@ public class SingleSourceGenerator extends SourceGenerator {
         logger.info("Constructing single field with value");
         Map<String, Object> elementMap = new HashMap<>();
         elementMap.put(getPrimaryKey(), generatorPayload.getRecordId());
-        elementMap.put(Util.underscoresToCamelCase(getDBElement().getColumnName()), element);
+        elementMap.put(CamelCaseConverter.of(getDBElement().getColumnName()).convert(), element);
         return elementMap;
     }
 }
-

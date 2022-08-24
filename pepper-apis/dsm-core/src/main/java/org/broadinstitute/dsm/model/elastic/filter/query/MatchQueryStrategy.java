@@ -1,7 +1,9 @@
+
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
 import java.util.Map;
 
+import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.export.generate.MappingGenerator;
 import org.broadinstitute.dsm.model.elastic.export.parse.TypeParser;
@@ -12,11 +14,16 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 
-public class MatchQueryStrategy implements BuildQueryStrategy {
+@NoArgsConstructor
+public class MatchQueryStrategy extends BaseQueryStrategy {
     TypeExtractor<Map<String, String>> typeExtractor;
 
-    public MatchQueryStrategy() {
+    {
         typeExtractor = new NullObjectTypeExtractor();
+    }
+
+    public MatchQueryStrategy(BaseQueryBuilder baseQueryBuilder) {
+        super(baseQueryBuilder);
     }
 
     @Override
@@ -25,10 +32,9 @@ public class MatchQueryStrategy implements BuildQueryStrategy {
     }
 
     @Override
-    public QueryBuilder build(BaseQueryBuilder baseQueryBuilder) {
+    protected QueryBuilder getMainQueryBuilderFromChild(BaseQueryBuilder baseQueryBuilder) {
         String fieldName = getFieldName(baseQueryBuilder);
-        return baseQueryBuilder
-                .build(new MatchQueryBuilder(fieldName, baseQueryBuilder.payload.getValues()[0]));
+        return new MatchQueryBuilder(fieldName, baseQueryBuilder.payload.getValues()[0]);
     }
 
     protected String getFieldName(BaseQueryBuilder baseQueryBuilder) {

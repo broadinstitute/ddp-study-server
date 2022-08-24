@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.model.elastic.search;
 
 import java.util.Collections;
@@ -9,43 +10,34 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.model.elastic.ESActivities;
-import org.broadinstitute.dsm.model.elastic.ESAddress;
+import org.broadinstitute.dsm.model.elastic.Activities;
+import org.broadinstitute.dsm.model.elastic.Address;
 import org.broadinstitute.dsm.model.elastic.ESComputed;
-import org.broadinstitute.dsm.model.elastic.ESDsm;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
-import org.elasticsearch.search.SearchHit;
+import org.broadinstitute.dsm.model.elastic.Dsm;
+import org.broadinstitute.dsm.model.elastic.Profile;
+import org.broadinstitute.dsm.model.elastic.Files;
 
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ElasticSearchParticipantDto {
 
-    private ESAddress address;
+    private Address address;
     private List<Object> medicalProviders;
     private List<Object> invitations;
-    private List<ESActivities> activities;
+    private List<Activities> activities;
     private List<String> governedUsers;
     private ESComputed computed;
     private Long statusTimestamp;
-    private ESProfile profile;
-    private List<Object> files;
+    private Profile profile;
+    private List<Files> files;
     private List<String> proxies;
     private List<Map<String, Object>> workflows;
     private String status;
-    private ESDsm dsm;
+    private Dsm dsm;
     @Getter
     private String ddp;
 
-    @Getter
-    private Map<String, Object> dataAsMap;
 
-
-    public ElasticSearchParticipantDto() {
-    }
-
-    public ElasticSearchParticipantDto(SearchHit searchHit) {
-        this.dataAsMap = searchHit.getSourceAsMap();
-    }
 
     private ElasticSearchParticipantDto(ElasticSearchParticipantDto.Builder builder) {
         this.address = builder.address;
@@ -63,7 +55,9 @@ public class ElasticSearchParticipantDto {
         this.governedUsers = builder.governedUsers;
     }
 
-    public Optional<ESAddress> getAddress() {
+    protected ElasticSearchParticipantDto() {  }
+
+    public Optional<Address> getAddress() {
         return Optional.ofNullable(address);
     }
 
@@ -75,7 +69,7 @@ public class ElasticSearchParticipantDto {
         return invitations == null ? Collections.emptyList() : invitations;
     }
 
-    public List<ESActivities> getActivities() {
+    public List<Activities> getActivities() {
         return activities == null ? Collections.emptyList() : activities;
     }
 
@@ -83,11 +77,11 @@ public class ElasticSearchParticipantDto {
         return Optional.ofNullable(statusTimestamp);
     }
 
-    public Optional<ESProfile> getProfile() {
+    public Optional<Profile> getProfile() {
         return Optional.ofNullable(profile);
     }
 
-    public List<Object> getFiles() {
+    public List<Files> getFiles() {
         return files == null ? Collections.emptyList() : files;
     }
 
@@ -103,7 +97,7 @@ public class ElasticSearchParticipantDto {
         return Optional.ofNullable(status);
     }
 
-    public Optional<ESDsm> getDsm() {
+    public Optional<Dsm> getDsm() {
         return Optional.ofNullable(dsm);
     }
 
@@ -123,25 +117,25 @@ public class ElasticSearchParticipantDto {
     }
 
     public static class Builder {
-        private ESAddress address;
+        private Address address;
         private List<Object> medicalProviders;
         private List<Object> invitations;
         private ESComputed computed;
-        private List<ESActivities> activities;
+        private List<Activities> activities;
         private List<String> governedUsers;
         private Long statusTimeStamp;
-        private ESProfile profile;
-        private List<Object> files;
+        private Profile profile;
+        private List<Files> files;
         private List<String> proxies;
         private List<Map<String, Object>> workflows;
         private String status;
-        private ESDsm dsm;
+        private Dsm dsm;
 
         public Builder() {
         }
 
-        public Builder withAddress(ESAddress esAddress) {
-            this.address = esAddress;
+        public Builder withAddress(Address address) {
+            this.address = address;
             return this;
         }
 
@@ -155,7 +149,7 @@ public class ElasticSearchParticipantDto {
             return this;
         }
 
-        public Builder withActivities(List<ESActivities> activities) {
+        public Builder withActivities(List<Activities> activities) {
             this.activities = activities;
             return this;
         }
@@ -165,12 +159,12 @@ public class ElasticSearchParticipantDto {
             return this;
         }
 
-        public Builder withProfile(ESProfile profile) {
+        public Builder withProfile(Profile profile) {
             this.profile = profile;
             return this;
         }
 
-        public Builder withFiles(List<Object> files) {
+        public Builder withFiles(List<Files> files) {
             this.files = files;
             return this;
         }
@@ -190,7 +184,7 @@ public class ElasticSearchParticipantDto {
             return this;
         }
 
-        public Builder withDsm(ESDsm dsm) {
+        public Builder withDsm(Dsm dsm) {
             this.dsm = dsm;
             return this;
         }

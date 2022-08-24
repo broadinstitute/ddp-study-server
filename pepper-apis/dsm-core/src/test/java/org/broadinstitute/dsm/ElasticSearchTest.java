@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm;
 
 import java.io.IOException;
@@ -13,7 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.export.WorkflowForES;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -445,7 +446,7 @@ public class ElasticSearchTest extends TestHelper {
                 cfg.getString("elasticSearch.username"), cfg.getString("elasticSearch.password"))) {
             Optional<ElasticSearchParticipantDto> esObject =
                     ElasticSearchUtil.fetchESDataByParticipantId("participants_structured.rgp.rgp", participantIdToFilter, client);
-            fetchedPid = esObject.orElse(new ElasticSearchParticipantDto.Builder().build()).getProfile().map(ESProfile::getLegacyAltPid)
+            fetchedPid = esObject.orElse(new ElasticSearchParticipantDto.Builder().build()).getProfile().map(Profile::getLegacyAltPid)
                     .orElse("");
         } catch (IOException e) {
             Assert.fail();
@@ -462,7 +463,7 @@ public class ElasticSearchTest extends TestHelper {
                 cfg.getString("elasticSearch.username"), cfg.getString("elasticSearch.password"))) {
             ElasticSearchParticipantDto esObject =
                     ElasticSearchUtil.fetchESDataByAltpid("participants_structured.atcp.atcp", altpid, client);
-            fetchedPid = esObject.getProfile().map(ESProfile::getLegacyAltPid).orElse("");
+            fetchedPid = esObject.getProfile().map(Profile::getLegacyAltPid).orElse("");
         } catch (IOException e) {
             Assert.fail();
             e.printStackTrace();

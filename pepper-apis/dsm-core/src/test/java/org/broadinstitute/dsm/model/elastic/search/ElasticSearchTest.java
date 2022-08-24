@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.model.elastic.search;
 
 
@@ -7,8 +8,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.google.gson.Gson;
-import org.broadinstitute.dsm.model.elastic.ESAddress;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Address;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperTest;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.elasticsearch.search.SearchHit;
@@ -19,21 +20,21 @@ public class ElasticSearchTest {
 
     private static final Gson GSON = new Gson();
 
-    private static ESProfile esProfileGeneratorWithGuid() {
-        ESProfile esProfile = new ESProfile();
+    private static Profile esProfileGeneratorWithGuid() {
+        Profile esProfile = new Profile();
         esProfile.setGuid(ParticipantWrapperTest.randomGuidGenerator());
         return esProfile;
     }
 
-    private static ESProfile esProfileGeneratorWithLegacyAltPid() {
-        ESProfile esProfile = new ESProfile();
+    private static Profile esProfileGeneratorWithLegacyAltPid() {
+        Profile esProfile = new Profile();
         esProfile.setLegacyAltPid(ParticipantWrapperTest.randomLegacyAltPidGenerator());
         return esProfile;
     }
 
     @Test
     public void getParticipantIdFromProfile() {
-        ESProfile profile = esProfileGeneratorWithGuid();
+        Profile profile = esProfileGeneratorWithGuid();
         ElasticSearchParticipantDto elasticSearchParticipantDto = new ElasticSearchParticipantDto.Builder().withProfile(profile).build();
         String participantId = elasticSearchParticipantDto.getParticipantId();
         Assert.assertEquals(profile.getGuid(), participantId);
@@ -41,7 +42,7 @@ public class ElasticSearchTest {
 
     @Test
     public void getParticipantIdFromProfileIfGuidEmpty() {
-        ESProfile esProfileWithLegacyAltPid = esProfileGeneratorWithLegacyAltPid();
+        Profile esProfileWithLegacyAltPid = esProfileGeneratorWithLegacyAltPid();
         ElasticSearchParticipantDto elasticSearchParticipantDto =
                 new ElasticSearchParticipantDto.Builder().withProfile(esProfileWithLegacyAltPid).build();
         String participantId = elasticSearchParticipantDto.getParticipantId();
@@ -50,7 +51,7 @@ public class ElasticSearchTest {
 
     @Test
     public void getParticipantIdFromProfileIfEmpty() {
-        ESProfile esProfile = new ESProfile();
+        Profile esProfile = new Profile();
         ElasticSearchParticipantDto elasticSearchParticipantDto = new ElasticSearchParticipantDto.Builder().build();
         String participantId = elasticSearchParticipantDto.getParticipantId();
         Assert.assertEquals("", participantId);
@@ -75,9 +76,9 @@ public class ElasticSearchTest {
 
     @Test
     public void parseSourceMap() {
-        ESProfile esProfile = new ESProfile();
+        Profile esProfile = new Profile();
         esProfile.setFirstName("Tommy");
-        ESAddress esAddress = new ESAddress();
+        Address esAddress = new Address();
         esAddress.setCountry("Barsum");
         ElasticSearchParticipantDto elasticSearchParticipantDto =
                 new ElasticSearchParticipantDto.Builder().withStatusTimeStamp(1_000_000L).withProfile(esProfile).withStatus("TESTING")
@@ -86,8 +87,8 @@ public class ElasticSearchTest {
         Optional<ElasticSearchParticipantDto> maybeElasticSearchParticipantDto = new ElasticSearch().parseSourceMap(esMap);
         try {
             ElasticSearchParticipantDto esParticipantDto = maybeElasticSearchParticipantDto.get();
-            Assert.assertEquals("Tommy", esParticipantDto.getProfile().map(ESProfile::getFirstName).orElse(""));
-            Assert.assertEquals("Barsum", esParticipantDto.getAddress().map(ESAddress::getCountry).orElse(""));
+            Assert.assertEquals("Tommy", esParticipantDto.getProfile().map(Profile::getFirstName).orElse(""));
+            Assert.assertEquals("Barsum", esParticipantDto.getAddress().map(Address::getCountry).orElse(""));
             Assert.assertEquals("TESTING", esParticipantDto.getStatus().orElse(""));
         } catch (Exception e) {
             Assert.fail();

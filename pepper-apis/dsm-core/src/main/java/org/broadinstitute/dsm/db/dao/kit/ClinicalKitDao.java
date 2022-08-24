@@ -1,82 +1,156 @@
-package org.broadinstitute.dsm.db.dao.kit;
+package org.broadinstitute.dsm.db.dto.kit;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
-import lombok.extern.slf4j.Slf4j;
+import com.google.gson.annotations.SerializedName;
+import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.dto.kit.ClinicalKitDto;
-import org.broadinstitute.dsm.model.gp.ClinicalKitWrapper;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.lddp.db.SimpleResult;
+import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.model.ddp.DDPActivityConstants;
+import org.broadinstitute.dsm.model.elastic.Activities;
+import org.broadinstitute.dsm.model.elastic.Dsm;
+import org.broadinstitute.dsm.model.elastic.Profile;
+import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
+import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@Slf4j
-public class ClinicalKitDao {
-    public static final String PECGS = "PE-CGS";
-    private static final String SQL_GET_CLINICAL_KIT_BASED_ON_SM_ID_VALUE =
-            "SELECT p.ddp_participant_id, accession_number, ddp.instance_name, t.collaborator_sample_id,  "
-                    + "kit_type_name, bsp_material_type, bsp_receptacle_type, ddp.ddp_instance_id FROM sm_id sm "
-                    + "LEFT JOIN ddp_tissue t on (t.tissue_id  = sm.tissue_id) "
-                    + "LEFT JOIN ddp_onc_history_detail oD on (oD.onc_history_detail_id = t.onc_history_detail_id) "
-                    + "LEFT JOIN ddp_medical_record mr on (mr.medical_record_id = oD.medical_record_id) "
-                    + "LEFT JOIN ddp_institution inst on  (mr.institution_id = inst.institution_id AND NOT mr.deleted <=> 1) "
-                    + "LEFT JOIN ddp_participant as p on (p.participant_id = inst.participant_id) "
-                    + "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) "
-                    + "LEFT JOIN sm_id_type sit on (sit.sm_id_type_id = sm.sm_id_type_id) "
-                    + "LEFT JOIN kit_type ktype on ( sit.kit_type_id = ktype.kit_type_id) WHERE sm.sm_id_value = ? ";
+@Data
+public class ClinicalKitDto {
 
-    public Optional<ClinicalKitWrapper> getClinicalKitFromSMId(String smIdValue) {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_CLINICAL_KIT_BASED_ON_SM_ID_VALUE)) {
-                stmt.setString(1, smIdValue);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        ClinicalKitDto clinicalKitDto = new ClinicalKitDto(null,
-                                rs.getString(DBConstants.DDP_TISSUE_ALIAS + "." + DBConstants.COLLABORATOR_SAMPLE_ID), PECGS,
-                                rs.getString(DBConstants.BSP_MATERIAL_TYPE), rs.getString(DBConstants.BSP_RECEPTABLE_TYPE), null, null,
-                                null, null, null, rs.getString(DBConstants.ACCESSION_NUMBER), null);
-                        clinicalKitDto.setSampleType(rs.getString(DBConstants.KIT_TYPE_NAME));
-                        clinicalKitDto.setCollectionDate(
-                                "01/31/2021"); //TODO needs to get replaced to real values after we add these values to DSM
-                        ClinicalKitWrapper clinicalKitWrapper =
-                                new ClinicalKitWrapper(clinicalKitDto, Integer.parseInt(rs.getString(DBConstants.DDP_INSTANCE_ID)),
-                                        rs.getString(DBConstants.DDP_PARTICIPANT_ID));
-                        dbVals.resultValue = clinicalKitWrapper;
-                        log.info("found clinical kit for sm id value: " + smIdValue);
-                    }
-                } catch (Exception e) {
-                    throw new RuntimeException("Error getting clinical kit", e);
-                }
-            } catch (SQLException ex) {
-                dbVals.resultException = ex;
-            }
+    private static final Logger logger = LoggerFactory.getLogger(ClinicalKitDto.class);
+    @SerializedName("participant_id")
+    String collaboratorParticipantId;
+    @SerializedName("sample_id")
+    String sampleId;
+    @SerializedName("sample_collection")
+    String sampleCollection;
+    @SerializedName("material_type")
+    String materialType;
+    @SerializedName("vessel_type")
+    String vesselType;
+    @SerializedName("first_name")
+    String firstName;
+    @SerializedName("last_name")
+    String lastName;
+    @SerializedName("date_of_birth")
+    String dateOfBirth;
+    @SerializedName("sample_type")
+    String sampleType;
+    @SerializedName("gender")
+    String gender;
+    @SerializedName("accession_number")
+    String accessionNumber;
+    @SerializedName ("sample_collection_date")
+    String collectionDate;
+    @SerializedName("kit_label")
+    String mfBarcode;
 
-            return dbVals;
-        });
-
-        if (results.resultException != null) {
-            throw new RuntimeException("Error getting clinicalKit based on smId " + smIdValue, results.resultException);
-        }
-        return Optional.ofNullable((ClinicalKitWrapper) results.resultValue);
+    public ClinicalKitDto(String collaboratorParticipantId, String sampleId, String sampleCollection, String materialType,
+                          String vesselType,
+                          String firstName, String lastName, String dateOfBirth, String sampleType, String gender, String accessionNumber,
+                          String mfBarcode) {
+        this.collaboratorParticipantId = collaboratorParticipantId;
+        this.sampleId = sampleId;
+        this.sampleCollection = sampleCollection;
+        this.materialType = materialType;
+        this.vesselType = vesselType;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.dateOfBirth = dateOfBirth;
+        this.sampleType = sampleType;
+        this.gender = gender;
+        this.accessionNumber = accessionNumber;
+        this.mfBarcode = mfBarcode;
     }
 
-    public ClinicalKitDto getClinicalKitBasedOnSmId(String smIdValue) {
-        log.info("Checking the kit for SM Id value " + smIdValue);
-        Optional<ClinicalKitWrapper> maybeClinicalKitWrapper = getClinicalKitFromSMId(smIdValue);
-        maybeClinicalKitWrapper.orElseThrow();
-        ClinicalKitWrapper clinicalKitWrapper = maybeClinicalKitWrapper.get();
-        ClinicalKitDto clinicalKitDto = clinicalKitWrapper.getClinicalKitDto();
-        DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(clinicalKitWrapper.getDdpInstanceId());
-        clinicalKitDto.setNecessaryParticipantDataToClinicalKit(clinicalKitWrapper.getDdpParticipantId(), ddpInstance);
-        if (StringUtils.isNotBlank(clinicalKitDto.getAccessionNumber())) {
-            return clinicalKitDto;
+    public ClinicalKitDto() {
+    }
+
+    public void setSampleType(String kitType) {
+        switch (kitType.toLowerCase()) {
+            case "saliva":
+                this.sampleType = "Normal";
+                break;
+            case "blood":
+                this.sampleType = "N/A";
+                break;
+            default: //tissue
+                this.sampleType = "Tumor";
+                break;
         }
-        throw new RuntimeException("The kit doesn't have an accession number! SM ID is: " + smIdValue);
+    }
+
+    public void setGender(String genderString) {
+        switch (genderString.toLowerCase()) {
+            case "male":
+                this.gender = "M";
+                break;
+            case "female":
+                this.gender = "F";
+                break;
+            default: //intersex or prefer_not_answer
+                this.gender = "U";
+                break;
+        }
+    }
+
+    public void setNecessaryParticipantDataToClinicalKit(String ddpParticipantId, DDPInstance ddpInstance) {
+        Optional<ElasticSearchParticipantDto> maybeParticipantESDataByParticipantId =
+                ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
+        if (maybeParticipantESDataByParticipantId.isEmpty()) {
+            throw new RuntimeException("Participant ES Data is not found for " + ddpParticipantId);
+        }
+
+        try {
+            this.setDateOfBirth(maybeParticipantESDataByParticipantId.get().getDsm().map(Dsm::getDateOfBirth).orElse(""));
+            this.setFirstName(maybeParticipantESDataByParticipantId.get().getProfile().map(Profile::getFirstName).orElse(""));
+            this.setLastName(maybeParticipantESDataByParticipantId.get().getProfile().map(Profile::getLastName).orElse(""));
+            this.setGender(getParticipantGender(maybeParticipantESDataByParticipantId.get(), ddpInstance.getName()));
+            String shortId = maybeParticipantESDataByParticipantId.get().getProfile().map(Profile::getHruid).orElse("");
+            String collaboratorParticipantId =
+                    KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(),
+                            ddpInstance.isMigratedDDP(),
+                            ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId, shortId, null);
+            this.setCollaboratorParticipantId(collaboratorParticipantId);
+        } catch (Exception e) {
+            throw new RuntimeException("Participant doesn't exist / is not valid for kit " + e.getMessage());
+        }
+    }
+
+    private String getParticipantGender(ElasticSearchParticipantDto participantByShortId, String realm) {
+        // if gender is set on tissue page use that
+        List<String> list = new ArrayList();
+        list.add(participantByShortId.getParticipantId());
+        Map<String, List<OncHistoryDetail>> oncHistoryDetails = OncHistoryDetail.getOncHistoryDetailsByParticipantIds(realm, list);
+        if (!oncHistoryDetails.isEmpty()) {
+            Optional<OncHistoryDetail> oncHistoryWithGender = oncHistoryDetails.get(participantByShortId.getParticipantId()).stream()
+                    .filter(o -> StringUtils.isNotBlank(o.getGender())).findFirst();
+            if (oncHistoryWithGender.isPresent()) {
+                return oncHistoryWithGender.get().getGender();
+            }
+        }
+        //if gender is not set on tissue page get answer from "ABOUT_YOU.ASSIGNED_SEX"
+        return getGenderFromActivities(participantByShortId.getActivities());
+    }
+
+    private String getGenderFromActivities(List<Activities> activities) {
+        Optional<Activities> maybeAboutYouActivity = activities.stream()
+                .filter(activity -> DDPActivityConstants.ACTIVITY_ABOUT_YOU.equals(activity.getActivityCode()))
+                .findFirst();
+        return (String) maybeAboutYouActivity.map(aboutYou -> {
+            List<Map<String, Object>> questionsAnswers = aboutYou.getQuestionsAnswers();
+            Optional<Map<String, Object>> maybeGenderQuestionAnswer = questionsAnswers.stream()
+                    .filter(q -> DDPActivityConstants.ABOUT_YOU_ACTIVITY_GENDER.equals(q.get(DDPActivityConstants.DDP_ACTIVITY_STABLE_ID)))
+                    .findFirst();
+            return maybeGenderQuestionAnswer
+                    .map(answer -> answer.get(DDPActivityConstants.ACTIVITY_QUESTION_ANSWER))
+                    .orElse("U");
+        }).orElse("U"); //todo we have to decide what will happen in this case?
     }
 }

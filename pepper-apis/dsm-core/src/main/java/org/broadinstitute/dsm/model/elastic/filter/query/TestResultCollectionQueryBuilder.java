@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
 import org.apache.lucene.search.join.ScoreMode;
@@ -9,9 +10,13 @@ public class TestResultCollectionQueryBuilder extends BaseQueryBuilder {
 
     public static final String TEST_RESULT = "testResult";
 
+    public TestResultCollectionQueryBuilder(QueryPayload queryPayload) {
+        super(queryPayload);
+    }
+
     @Override
-    protected QueryBuilder build(QueryBuilder queryBuilder) {
-        String path = String.join(DBConstants.ALIAS_DELIMITER, this.payload.getPath(), operator.getSplitterStrategy().getFieldName());
-        return new NestedQueryBuilder(path, queryBuilder, ScoreMode.Avg);
+    protected QueryBuilder getFinalQuery(QueryBuilder query) {
+        String path = String.join(DBConstants.ALIAS_DELIMITER, payload.getPath(), operator.getSplitterStrategy().getFieldName());
+        return new NestedQueryBuilder(path, query, ScoreMode.Avg);
     }
 }

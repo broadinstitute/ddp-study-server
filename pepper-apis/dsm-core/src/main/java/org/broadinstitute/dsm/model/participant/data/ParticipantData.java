@@ -17,7 +17,7 @@ import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
@@ -196,7 +196,7 @@ public class ParticipantData {
         return applicantEmail.equalsIgnoreCase(familyMemberEmail);
     }
 
-    public boolean hasFamilyMemberApplicantEmail(ESProfile applicantProfile) {
+    public boolean hasFamilyMemberApplicantEmail(Profile applicantProfile) {
         if (Objects.isNull(this.data) || StringUtils.isBlank(this.ddpParticipantId)) {
             return false;
         }

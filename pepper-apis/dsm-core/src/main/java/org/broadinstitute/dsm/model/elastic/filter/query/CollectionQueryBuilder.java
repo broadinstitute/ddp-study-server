@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
 import org.apache.lucene.search.join.ScoreMode;
@@ -6,9 +7,12 @@ import org.elasticsearch.index.query.QueryBuilder;
 
 public class CollectionQueryBuilder extends BaseQueryBuilder {
 
+    public CollectionQueryBuilder(QueryPayload queryPayload) {
+        super(queryPayload);
+    }
+
     @Override
-    protected QueryBuilder build(QueryBuilder queryBuilder) {
-        return new NestedQueryBuilder(payload.getPath(), queryBuilder, ScoreMode.Avg);
+    protected QueryBuilder getFinalQuery(QueryBuilder query) {
+        return new NestedQueryBuilder(payload.getPath(), query, ScoreMode.Avg);
     }
 }
-

@@ -1,27 +1,19 @@
 package org.broadinstitute.dsm.model.elastic;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.broadinstitute.dsm.util.PatchUtil;
 
 public class Util {
 
-    public static final int FIRST_ELEMENT_INDEX = 0;
-    public static final String UNDERSCORE_SEPARATOR = "_";
     public static final String COMMA_SEPARATOR = ",";
     public static final String DOC = "_doc";
     public static final String ESCAPE_CHARACTER = "\\";
     public static final String FORWARD_SLASH_SEPARATOR = "/";
-    private static final Pattern CAMEL_CASE_REGEX = Pattern.compile("(([a-z])+([A-z])+(\\.)*)*");
 
     public static <A> A orElseNull(Optional<A> optionalValue, A defaultValue) {
         try {
@@ -47,44 +39,6 @@ public class Util {
 
     public static DBElement getDBElement(String fieldName) {
         return PatchUtil.getColumnNameMap().get(Objects.requireNonNull(fieldName));
-    }
-
-    public static String underscoresToCamelCase(String fieldName) {
-        String[] splittedWords = fieldName.split(UNDERSCORE_SEPARATOR);
-        if (hasNoUnderscores(splittedWords)) {
-            return handleAllUppercase(fieldName);
-        }
-        return makeCamelCaseFrom(makeWordsLowerCase(splittedWords));
-    }
-
-    private static boolean hasNoUnderscores(String[] splittedWords) {
-        return splittedWords.length < 2;
-    }
-
-    private static String handleAllUppercase(String word) {
-        return CAMEL_CASE_REGEX.matcher(word).matches() ? word : word.toLowerCase();
-    }
-
-    private static String makeCamelCaseFrom(List<StringBuilder> words) {
-        for (int i = FIRST_ELEMENT_INDEX; i < words.size(); i++) {
-            StringBuilder word = words.get(i);
-            if (isNotFirstWord(i, word)) {
-                makeFirstLetterUpperCase(word);
-            }
-        }
-        return String.join(StringUtils.EMPTY, words);
-    }
-
-    private static boolean isNotFirstWord(int i, StringBuilder word) {
-        return i != FIRST_ELEMENT_INDEX && word.length() > FIRST_ELEMENT_INDEX;
-    }
-
-    private static void makeFirstLetterUpperCase(StringBuilder word) {
-        word.replace(FIRST_ELEMENT_INDEX, 1, String.valueOf(word.charAt(FIRST_ELEMENT_INDEX)).toUpperCase());
-    }
-
-    private static List<StringBuilder> makeWordsLowerCase(String[] splittedWords) {
-        return Arrays.stream(splittedWords).map(word -> new StringBuilder(word.toLowerCase())).collect(Collectors.toList());
     }
 
 

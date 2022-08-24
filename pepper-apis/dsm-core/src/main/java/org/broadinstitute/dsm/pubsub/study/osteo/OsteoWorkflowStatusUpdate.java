@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.pubsub.study.osteo;
 
 import static org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter.NEW_OSTEO_INSTANCE_NAME;
@@ -25,7 +26,7 @@ import org.broadinstitute.dsm.db.dto.ddp.institution.DDPInstitutionDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
-import org.broadinstitute.dsm.model.elastic.ESDsm;
+import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.Util;
 import org.broadinstitute.dsm.model.elastic.export.ElasticDataExportAdapter;
 import org.broadinstitute.dsm.model.elastic.export.RequestPayload;
@@ -125,7 +126,7 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
         elasticDataExportAdapter.export();
     }
 
-    private void updateEsDsm(long newOsteoParticipantId, List<MedicalRecord> newOsteoMedicalRecords, ESDsm dsm) {
+    private void updateEsDsm(long newOsteoParticipantId, List<MedicalRecord> newOsteoMedicalRecords, Dsm dsm) {
         logger.info("Attempting to update the `dsm` object in ES");
         dsm.getParticipant().ifPresent(oldOsteoPt -> updateNewOsteoParticipant(newOsteoParticipantId, dsm, oldOsteoPt));
         dsm.setCohortTag(Stream.concat(dsm.getCohortTag().stream(), Stream.of(newCohortTag)).collect(Collectors.toList()));
@@ -136,7 +137,7 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
         logger.info("`dsm` object was updated successfully");
     }
 
-    private void updateNewOsteoParticipant(long newOsteoParticipantId, ESDsm dsm, Participant oldOsteoPt) {
+    private void updateNewOsteoParticipant(long newOsteoParticipantId, Dsm dsm, Participant oldOsteoPt) {
         Participant newOsteoPt = oldOsteoPt.clone();
         newOsteoPt.setParticipantId(newOsteoParticipantId);
         newOsteoPt.setDdpInstanceId(newOsteoInstanceId);

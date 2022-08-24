@@ -21,7 +21,7 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 
 @Getter
 @Setter
-public class ESDsm {
+public class Dsm {
 
     @SerializedName(ESObjectConstants.DATE_OF_MAJORITY)
     Object dateOfMajority;

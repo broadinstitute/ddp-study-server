@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.model.elastic.filter;
 
 import java.util.Arrays;
@@ -69,6 +70,11 @@ public enum Operator {
     }
 
     public BuildQueryStrategy getQueryStrategy() {
+        return this.queryStrategy;
+    }
+
+    public BuildQueryStrategy getQueryStrategy(BuildQueryStrategy... queryStrategy) {
+        this.queryStrategy.addAdditionalQueryStrategy(queryStrategy);
         return this.queryStrategy;
     }
 

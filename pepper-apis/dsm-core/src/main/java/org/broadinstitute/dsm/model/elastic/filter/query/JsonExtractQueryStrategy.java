@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
 import org.apache.commons.lang3.StringUtils;
@@ -8,28 +9,28 @@ import org.broadinstitute.dsm.model.elastic.filter.splitter.LessThanEqualsSplitt
 import org.broadinstitute.dsm.model.elastic.filter.splitter.LikeSplitterStrategy;
 import org.elasticsearch.index.query.QueryBuilder;
 
-public class JsonExtractQueryStrategy implements BuildQueryStrategy {
+public class JsonExtractQueryStrategy extends BaseQueryStrategy {
+
     @Override
-    public QueryBuilder build(BaseQueryBuilder baseQueryBuilder) {
+    protected QueryBuilder getMainQueryBuilderFromChild(BaseQueryBuilder baseQueryBuilder) {
         QueryBuilder qb;
         Object[] dynamicFieldValues = baseQueryBuilder.payload.getValues();
         JsonExtractSplitterStrategy jsonExtractSplitter = (JsonExtractSplitterStrategy) baseQueryBuilder.operator.getSplitterStrategy();
         if (!StringUtils.EMPTY.equals(dynamicFieldValues[0])) {
             if (jsonExtractSplitter.getDecoratedSplitter() instanceof GreaterThanEqualsSplitterStrategy) {
-                qb = new RangeGTEQueryStrategy().build(baseQueryBuilder);
+                qb = new RangeGTEQueryStrategy().getMainQueryBuilder(baseQueryBuilder);
             } else if (jsonExtractSplitter.getDecoratedSplitter() instanceof LessThanEqualsSplitterStrategy) {
-                qb = new RangeLTEQueryStrategy().build(baseQueryBuilder);
+                qb = new RangeLTEQueryStrategy().getMainQueryBuilder(baseQueryBuilder);
             } else if (jsonExtractSplitter.getDecoratedSplitter() instanceof LikeSplitterStrategy) {
-                qb = new NonExactMatchQueryStrategy().build(baseQueryBuilder);
+                qb = new NonExactMatchQueryStrategy().getMainQueryBuilder(baseQueryBuilder);
             } else {
-                qb = new MatchQueryStrategy().build(baseQueryBuilder);
+                qb = new MatchQueryStrategy().getMainQueryBuilder(baseQueryBuilder);
             }
-            baseQueryBuilder.build(qb);
         } else {
             if (jsonExtractSplitter.getDecoratedSplitter() instanceof IsNullSplitterStrategy) {
-                qb = new MustNotExistsQueryStrategy().build(baseQueryBuilder);
+                qb = new MustNotExistsQueryStrategy().getMainQueryBuilder(baseQueryBuilder);
             } else {
-                qb = new MustExistsQueryStrategy().build(baseQueryBuilder);
+                qb = new MustExistsQueryStrategy().getMainQueryBuilder(baseQueryBuilder);
             }
         }
         return qb;

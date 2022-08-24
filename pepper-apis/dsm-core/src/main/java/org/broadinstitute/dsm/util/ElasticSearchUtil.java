@@ -1,3 +1,4 @@
+
 package org.broadinstitute.dsm.util;
 
 import java.io.IOException;
@@ -33,11 +34,10 @@ import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
-import org.broadinstitute.dsm.model.elastic.ESAddress;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Address;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
-import org.broadinstitute.dsm.model.gbf.Address;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -398,9 +398,9 @@ public class ElasticSearchUtil {
         return null;
     }
 
-    public static Map<String, Address> getParticipantAddresses(RestHighLevelClient client, String indexName, Set<String> participantGuids) {
+    public static Map<String, org.broadinstitute.dsm.model.gbf.Address> getParticipantAddresses(RestHighLevelClient client, String indexName, Set<String> participantGuids) {
         Gson gson = new Gson();
-        Map<String, Address> addressByParticipant = new HashMap<>();
+        Map<String, org.broadinstitute.dsm.model.gbf.Address> addressByParticipant = new HashMap<>();
         int scrollSize = 100;
         SearchRequest searchRequest = new SearchRequest(indexName);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
@@ -432,9 +432,10 @@ public class ElasticSearchUtil {
                 Map<String, Object> participantRecord = hit.getSourceAsMap();
                 JsonObject participantJson = new JsonParser().parse(new Gson().toJson(participantRecord)).getAsJsonObject();
                 if (participantJson.has(ADDRESS) && participantJson.has(PROFILE)) {
-                    ESAddress address = gson.fromJson(participantJson.get(ADDRESS), ESAddress.class);
-                    ESProfile profile = gson.fromJson(participantJson.get(PROFILE), ESProfile.class);
-                    Address gbfAddress = new Address(address.getRecipient(), address.getStreet1(), address.getStreet1(),
+                    Address address = gson.fromJson(participantJson.get(ADDRESS), Address.class);
+                    Profile profile = gson.fromJson(participantJson.get(PROFILE), Profile.class);
+                    org.broadinstitute.dsm.model.gbf.Address
+                            gbfAddress = new org.broadinstitute.dsm.model.gbf.Address(address.getRecipient(), address.getStreet1(), address.getStreet1(),
                             address.getCity(), address.getState(), address.getZip(), address.getCountry(), address.getPhone());
                     addressByParticipant.put(profile.getGuid(), gbfAddress);
                 }
@@ -493,7 +494,7 @@ public class ElasticSearchUtil {
             String participantId = ParticipantUtil.isGuid(ddpParticipantId) ? ddpParticipantId :
                     getParticipantESDataByAltpid(client, index, ddpParticipantId)
                             .getProfile()
-                            .map(ESProfile::getGuid)
+                            .map(Profile::getGuid)
                             .orElse(ddpParticipantId);
 
             Map<String, Object> workflowMapES = getObjectsMap(client, index, participantId, ESObjectConstants.WORKFLOWS);
@@ -732,7 +733,7 @@ public class ElasticSearchUtil {
         String participantId =
                 ParticipantUtil.isGuid(ddpParticipantId) ? ddpParticipantId : getParticipantESDataByAltpid(client, index, ddpParticipantId)
                         .getProfile()
-                        .map(ESProfile::getGuid)
+                        .map(Profile::getGuid)
                         .orElse(ddpParticipantId);
         UpdateRequest updateRequest = new UpdateRequest()
                 .index(index)
@@ -767,7 +768,7 @@ public class ElasticSearchUtil {
         objectList.add(newObjectMap);
     }
 
-    public static Optional<ESProfile> getParticipantProfileByGuidOrAltPid(String index, String guidOrAltPid) {
+    public static Optional<Profile> getParticipantProfileByGuidOrAltPid(String index, String guidOrAltPid) {
         try {
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
             searchSourceBuilder.query(QueryBuilders.boolQuery()
@@ -783,7 +784,7 @@ public class ElasticSearchUtil {
             logger.info("Getting ES profile for participant with guid/altpid: {}", guidOrAltPid);
             SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
 
-            ESProfile profile = null;
+            Profile profile = null;
             if (response.getHits().getTotalHits() > 0) {
                 Map<String, Object> source = response.getHits().getAt(0).getSourceAsMap();
                 profile = new ElasticSearch().parseSourceMap(source).flatMap(ElasticSearchParticipantDto::getProfile).orElse(null);
@@ -963,6 +964,21 @@ public class ElasticSearchUtil {
                             } catch (ParseException e) {
                                 logger.error("range was not date. user entered: " + userEntered);
                             }
+                        } else if (nameValue[0].startsWith(FILES)) {
+                            String[] fileParam = nameValue[0].split("\\.");
+                            QueryBuilder tmpBuilder = findQueryBuilderForFieldName(finalQuery, fileParam[1].trim());
+                            try {
+                                long date = SystemUtil.getLongFromString(userEntered);
+                                if (tmpBuilder != null) {
+                                    ((RangeQueryBuilder) tmpBuilder).gte(date);
+                                } else {
+                                    finalQuery.must(
+                                            QueryBuilders.rangeQuery(FILES + DBConstants.ALIAS_DELIMITER + fileParam[1].trim())
+                                                    .gte(date));
+                                }
+                            } catch (ParseException e) {
+                                logger.error("range was not date. user entered: " + userEntered);
+                            }
                         } else {
                             String[] surveyParam = nameValue[0].split("\\.");
                             if (CREATED_AT.equals(surveyParam[1].trim()) || COMPLETED_AT.equals(surveyParam[1].trim())
@@ -1057,6 +1073,21 @@ public class ElasticSearchUtil {
                             } catch (ParseException e) {
                                 logger.error("range was not date. user entered: " + userEntered);
                             }
+                        } else if (nameValue[0].startsWith(FILES)) {
+                            String[] fileParam = nameValue[0].split("\\.");
+                            QueryBuilder tmpBuilder = findQueryBuilderForFieldName(finalQuery, fileParam[1].trim());
+                            try {
+                                long date = SystemUtil.getLongFromString(userEntered);
+                                if (tmpBuilder != null) {
+                                    ((RangeQueryBuilder) tmpBuilder).lte(date);
+                                } else {
+                                    finalQuery.must(
+                                            QueryBuilders.rangeQuery(FILES + DBConstants.ALIAS_DELIMITER + fileParam[1].trim())
+                                                    .lte(date));
+                                }
+                            } catch (ParseException e) {
+                                logger.error("range was not date. user entered: " + userEntered);
+                            }
                         } else {
                             String[] surveyParam = nameValue[0].split("\\.");
                             if (CREATED_AT.equals(surveyParam[1].trim()) || COMPLETED_AT.equals(surveyParam[1].trim())
@@ -1116,6 +1147,11 @@ public class ElasticSearchUtil {
                             String[] invitationParam = nameValue[0].split("\\.");
                             ExistsQueryBuilder existsQuery =
                                     new ExistsQueryBuilder(INVITATIONS + DBConstants.ALIAS_DELIMITER + invitationParam[1].trim());
+                            finalQuery.must(existsQuery);
+                        } else if (nameValue[0].startsWith(FILES)) {
+                            String[] fileParam = nameValue[0].split("\\.");
+                            ExistsQueryBuilder existsQuery =
+                                    new ExistsQueryBuilder(FILES + DBConstants.ALIAS_DELIMITER + fileParam[1].trim());
                             finalQuery.must(existsQuery);
                         } else {
                             String[] surveyParam = nameValue[0].split("\\.");
@@ -1303,8 +1339,8 @@ public class ElasticSearchUtil {
      *                                            a same fieldName (for example related tp `SELF_CURRENT_AGE`)
      * @param parentNestedOfRangeBuilderOfNumbers reference to NestedQueryBuilder containing a Range of numbers
      * @return BoolQueryBuilder  finalQuery: it can be the same finalQuery or it can be reorganized finalQuery
-     *      where RangeQueryBuilder removed from the initial place inside finalQuery and added into a must()-block
-     *      together with `IS NOT NULL` query (for a field `fieldName`)
+     * where RangeQueryBuilder removed from the initial place inside finalQuery and added into a must()-block
+     * together with `IS NOT NULL` query (for a field `fieldName`).
      */
     private static BoolQueryBuilder processIsNotNullForRangeOfNumbers(
             String fieldName,
@@ -1431,7 +1467,7 @@ public class ElasticSearchUtil {
                     rangeQueryBuilder(finalQuery, dataParam[1].trim(), start, end, must);
                 } catch (ParseException | DateTimeParseException e) {
                     //was no date string so go for normal text
-                    mustOrSearch(finalQuery, dataParam[1].trim(), userEntered, wildCard, must);
+                    mustOrSearch(finalQuery, nameValue[0].trim(), userEntered, wildCard, must);
                 }
             } else if (nameValue[0].startsWith(ADDRESS)) {
                 mustOrSearch(finalQuery, nameValue[0].trim(), userEntered, wildCard, must);
@@ -1468,6 +1504,45 @@ public class ElasticSearchUtil {
                                     INVITATIONS + DBConstants.ALIAS_DELIMITER + invitationParam[1].trim());
                             alreadyAdded = mustOrSearchActivity(queryBuilder, tmpBuilder,
                                     INVITATIONS + DBConstants.ALIAS_DELIMITER + invitationParam[1].trim(), userEntered);
+                        }
+                    }
+                }
+                if (!alreadyAdded) {
+                    finalQuery.must(queryBuilder);
+                }
+            } else if (nameValue[0].startsWith(FILES)) {
+                String[] fileParams = nameValue[0].split("\\.");
+                BoolQueryBuilder queryBuilder = new BoolQueryBuilder();
+
+                boolean alreadyAdded = false;
+                try {
+                    long start = SystemUtil.getLongFromString(userEntered);
+                    //set endDate to midnight of that date
+                    String endDate = userEntered + END_OF_DAY;
+                    long end = SystemUtil.getLongFromDetailDateString(endDate);
+                    rangeQueryBuilder(queryBuilder, FILES + DBConstants.ALIAS_DELIMITER + fileParams[1].trim(), start, end,
+                            must);
+                } catch (Exception e) {
+                    if (wildCard) {
+                        if (must) {
+                            queryBuilder.must(
+                                    QueryBuilders.wildcardQuery(FILES + DBConstants.ALIAS_DELIMITER + fileParams[1].trim(),
+                                            userEntered + "*"));
+                        } else {
+                            queryBuilder.should(
+                                    QueryBuilders.wildcardQuery(FILES + DBConstants.ALIAS_DELIMITER + fileParams[1].trim(),
+                                            userEntered + "*"));
+                        }
+                    } else {
+                        if (must) {
+                            queryBuilder.must(
+                                    QueryBuilders.matchQuery(FILES + DBConstants.ALIAS_DELIMITER + fileParams[1].trim(),
+                                            userEntered));
+                        } else {
+                            QueryBuilder tmpBuilder = findQueryBuilderForFieldName(finalQuery,
+                                    FILES + DBConstants.ALIAS_DELIMITER + fileParams[1].trim());
+                            alreadyAdded = mustOrSearchActivity(queryBuilder, tmpBuilder,
+                                    FILES + DBConstants.ALIAS_DELIMITER + fileParams[1].trim(), userEntered);
                         }
                     }
                 }

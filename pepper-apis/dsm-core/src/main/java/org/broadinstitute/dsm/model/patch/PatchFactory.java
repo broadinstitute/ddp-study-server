@@ -46,7 +46,7 @@ public class PatchFactory {
         if (Objects.isNull(patch.getTableAlias())) {
             return false;
         }
-        return PropertyInfo.TABLE_ALIAS_MAPPINGS.containsKey(patch.getTableAlias());
+        return PropertyInfo.hasProperty(patch.getTableAlias());
     }
 
     private static boolean isExistingRecord(Patch patch) {
