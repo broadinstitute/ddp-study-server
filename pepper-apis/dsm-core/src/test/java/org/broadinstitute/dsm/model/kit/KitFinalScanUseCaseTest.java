@@ -11,7 +11,6 @@ import org.broadinstitute.dsm.route.kit.SentAndFinalScanPayload;
 import org.junit.Test;
 
 public class KitFinalScanUseCaseTest {
-
     @Test
     public void barcodeLessThan14Digits() {
         List<ScanPayload> scanPayloads = Arrays.asList(
