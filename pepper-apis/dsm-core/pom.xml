@@ -267,9 +267,17 @@
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <excludes>**/foobar/**</excludes>
+                    <excludes>${dsm.test.excludes}</excludes>
                 </configuration>
             </plugin>
         </plugins>
     </build>
+    <properties>
+            <dsm.test.excludes></dsm.test.excludes>
+            <dsm.test.ci.excludes>
+                org.broadinstitute.dsm.DDPRequestRouteTest,
+                org.broadinstitute.dsm.DDPRequestRouteTest,
+                org.broadinstitute.dsm.DDPRequestUtilTest
+            </dsm.test.ci.excludes>
+    </properties>
 </project>
