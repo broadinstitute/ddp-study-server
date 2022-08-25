@@ -104,6 +104,7 @@ public class DBConstants {
     public static final String EASYPOST_RETURN_ID = "easypost_return_id";
     public static final String DSM_SCAN_DATE = "scan_date";
     public static final String DSM_RECEIVE_DATE = "receive_date";
+    public static final String DSM_RECEIVE_BY = "receive_by";
     public static final String DSM_DEACTIVATED_DATE = "deactivated_date";
     public static final String COLLABORATOR_ID_PREFIX = "collaborator_id_prefix";
     public static final String COLLABORATOR_PARTICIPANT_ID = "bsp_collaborator_participant_id";
