@@ -229,17 +229,38 @@ public class RenderValueProvider {
         if (useDefaultsForDdpMethods) {
             return String.format("%s/%s", stringIfMatches, stringOtherwise);
         }
-        Answer answer = null;
+
+        // Defaulting to `true` if the activity or question does not
+        // have a response or answer (respectively). This behavior is currently
+        // expected and relied upon in some templates (a notable example being
+        // in the About Me/About My Child activity names in Singular)
+        //
+        // (bskinner 2022.08.25)
+        var optionIsSelected = true;
+
         if (formResponse != null) {
-            answer = formResponse.getAnswer(questionStableId);
-            if (answer.getQuestionType() != QuestionType.PICKLIST) {
-                throw new DDPException(String.format("Activity code: %s. Rendering questionStableId: %s must be PICKLIST type.",
-                        formResponse.getActivityCode(), questionStableId));
+            var answer = formResponse.getAnswer(questionStableId);
+
+            if (answer != null) {
+                if (answer.getQuestionType() != QuestionType.PICKLIST) {
+                    var message = String.format("Only %s answers are supported by the `checkAnswer` macro [activity:%s,question:%s]",
+                            QuestionType.PICKLIST,
+                            formResponse.getActivityCode(),
+                            questionStableId);
+                    throw new DDPException(message);
+                }
+
+                optionIsSelected = ((PicklistAnswer) answer).getValue()
+                        .stream()
+                        .anyMatch((selected) -> selected.getStableId().equals(optionStableId));
             }
         }
-        return answer == null || ((PicklistAnswer) answer).getValue().stream()
-                .anyMatch(selected -> selected.getStableId().equals(optionStableId))
-                ? stringIfMatches : stringOtherwise;
+
+        if (optionIsSelected) {
+            return stringIfMatches;
+        } else {
+            return stringOtherwise;
+        }
     }
 
     /**
