@@ -57,7 +57,7 @@ public class SingularFileUploadNotifications implements CustomTask {
         insertMailTemplateRepeatableElement(handle, mailTemplateId);
         log.info("Mail template inserted");
 
-        handle.attach(SqlHelper.class).updateActivityInstance(cfg.getString("study.guid"), mailTemplateId);
+        handle.attach(SqlHelper.class).updateStudyMailTemplate(cfg.getString("study.guid"), mailTemplateId);
         log.info("Study {} mail template was updated", cfg.getString("study.guid"));
     }
 
@@ -82,6 +82,6 @@ public class SingularFileUploadNotifications implements CustomTask {
 
     private interface SqlHelper extends SqlObject {
         @SqlUpdate("UPDATE umbrella_study SET notification_mail_template_id=:mailTemplateId WHERE guid=:studyGuid")
-        void updateActivityInstance(@Bind("studyGuid") final String studyGuid, @Bind("mailTemplateId") final long mailTemplateId);
+        void updateStudyMailTemplate(@Bind("studyGuid") final String studyGuid, @Bind("mailTemplateId") final long mailTemplateId);
     }
 }
