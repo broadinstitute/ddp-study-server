@@ -45,7 +45,7 @@
                              constraintName="mail_template_repeatable_element_unique" />
     </changeSet>
 
-    <changeSet author="Dmitrii Eliseev" id="2022-08-17-mail-template-for-singular-reference">
+    <changeSet author="Dmitrii Eliseev" id="2022-08-17-study-to-mail-template-reference">
         <addColumn tableName="umbrella_study">
             <column name="notification_mail_template_id" type="bigint" defaultValue="null">
                 <constraints nullable="true" references="mail_template(mail_template_id)" foreignKeyName="umbrella_study_file_upload_notification_mail_template_fk"/>
