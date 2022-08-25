@@ -810,7 +810,7 @@ jobs:
                 skip_tests: true
                 skip_checkstyle: false
                 config_file_path: ''
-                additional_options: -am -Ddsm.test.excludes=\${dsm.test.ci.excludes}
+                additional_options: -am
                 restore_m2_cache: true
                 save_m2_cache: false
             - render-configs
