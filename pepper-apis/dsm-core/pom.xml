@@ -267,7 +267,9 @@
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <excludes>${dsm.test.excludes}</excludes>
+                    <excludes>
+                        <exclude>${dsm.test.excludes}</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
         </plugins>
@@ -275,7 +277,9 @@
     <properties>
             <dsm.test.excludes></dsm.test.excludes>
             <dsm.test.ci.excludes>
-                org.broadinstitute.dsm.DDPRequestRouteTest, org.broadinstitute.dsm.DDPRequestUtilTest, org.broadinstitute.dsm.DirectMethodTest,
+                org.broadinstitute.dsm.DDPRequestRouteTest,
+                org.broadinstitute.dsm.DDPRequestUtilTest,
+                org.broadinstitute.dsm.DirectMethodTest,
                 org.broadinstitute.dsm.ElasticSearchTest,
                 org.broadinstitute.dsm.EventQueueToolTest,
                 org.broadinstitute.dsm.GBFOrderFinderTest,
