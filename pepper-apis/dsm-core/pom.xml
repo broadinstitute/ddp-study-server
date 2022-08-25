@@ -275,7 +275,8 @@
         </plugins>
     </build>
     <properties>
-            <dsm.test.excludes>
+            <dsm.test.excludes></dsm.test.excludes>
+            <dsm.test.ci.excludes>
                 org.broadinstitute.dsm.DDPRequestRouteTest,
                 org.broadinstitute.dsm.DDPRequestUtilTest,
                 org.broadinstitute.dsm.DirectMethodTest,
@@ -302,6 +303,6 @@
                 org.broadinstitute.dsm.route.familymember.AddFamilyMemberRouteTest,
                 org.broadinstitute.dsm.route.KitUploadRouteTest,
                 org.broadinstitute.dsm.KitStatusChangeRouteTest
-            </dsm.test.excludes>
+            </dsm.test.ci.excludes>
     </properties>
 </project>
