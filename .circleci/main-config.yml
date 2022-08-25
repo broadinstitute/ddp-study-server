@@ -818,12 +818,12 @@ jobs:
             - restore-ddp-cache
             - run-maven-with-pepper-options:
                 module: dsm-core
-                phase: validate #NOTE: NOT RUNNING TESTS YET!
+                phase: test
                 skip_tests: false
                 config_file_path: ''
                 skip_checkstyle: true
                 restore_m2_cache: false
-                save_m2_cache: true    #REMOVE WHEN DONE
+                save_m2_cache: false    #REMOVE WHEN DONE
             - save-ddp-cache
             - persist_to_workspace:
                 root: *root_path

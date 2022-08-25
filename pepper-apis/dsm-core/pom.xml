@@ -264,6 +264,12 @@
                     <failOnViolation>false</failOnViolation>
                 </configuration>
             </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <excludes>**/foobar/**</excludes>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>
