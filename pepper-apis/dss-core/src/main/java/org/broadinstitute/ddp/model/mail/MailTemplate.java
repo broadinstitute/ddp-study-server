@@ -13,7 +13,6 @@ import java.util.Map;
 @Value
 @AllArgsConstructor
 public class MailTemplate {
-    String name;
     String contentType;
     String subject;
     String body;

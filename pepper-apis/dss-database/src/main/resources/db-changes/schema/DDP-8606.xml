@@ -18,12 +18,7 @@
             <column name="body" type="TEXT">
                 <constraints nullable="false" />
             </column>
-            <column name="name" type="VARCHAR(500)">
-                <constraints nullable="false" />
-            </column>
         </createTable>
-
-        <addUniqueConstraint tableName="mail_template" columnNames="name" constraintName="mail_template_unique" />
 
         <createTable tableName="mail_template_repeatable_element">
             <column name="mail_template_repeatable_element_id" type="bigint" autoIncrement="true">

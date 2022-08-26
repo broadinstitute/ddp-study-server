@@ -19,8 +19,7 @@ public interface MailTemplateDao extends SqlObject {
     @SqlUpdate("INSERT INTO `mail_template`"
             + "         SET content_type = :contentType,"
             + "             subject = :subject,"
-            + "             body = :body,"
-            + "             name = :name")
+            + "             body = :body")
     @GetGeneratedKeys
     long insert(@BindBean final MailTemplateDto mailTemplate);
 }

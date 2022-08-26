@@ -8,7 +8,6 @@ import org.broadinstitute.ddp.db.dto.MailTemplateDto;
 import org.broadinstitute.ddp.db.dto.MailTemplateRepeatableElementDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.mail.MailTemplateSubstitution;
-import org.broadinstitute.ddp.util.GuidUtils;
 import org.jdbi.v3.core.Handle;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -27,7 +26,6 @@ public class MailTemplateServiceTest extends TxnAwareBaseTest {
 
     private static void init(final Handle handle) {
         TEMPLATE_ID = handle.attach(MailTemplateDao.class).insert(MailTemplateDto.builder()
-                .name(GuidUtils.randomUUID())
                 .subject("This is the subject")
                 .body("Dear, ${USER} This is the body!")
                 .contentType("text/html")

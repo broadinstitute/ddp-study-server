@@ -13,9 +13,6 @@ public class MailTemplateDto {
     @ColumnName("mail_template_id")
     long id;
 
-    @ColumnName("name")
-    String name;
-
     @ColumnName("content_type")
     String contentType;
 

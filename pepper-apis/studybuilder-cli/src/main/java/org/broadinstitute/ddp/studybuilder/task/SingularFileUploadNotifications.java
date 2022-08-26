@@ -65,7 +65,6 @@ public class SingularFileUploadNotifications implements CustomTask {
     private long insertMailTemplate(final Handle handle) {
         return handle.attach(MailTemplateDao.class).insert(MailTemplateDto.builder()
                 .contentType("text/html")
-                .name("Project Singular: File Upload Notification")
                 .subject("Project Singular: New Participant File(s) Uploaded")
                 .body(Files.readString(new File(BODY_FILE).toPath()))
                 .build());

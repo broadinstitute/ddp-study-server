@@ -33,7 +33,7 @@ public class MailTemplateService {
     private static MailTemplate getTemplate(final Handle handle, final MailTemplateDto mailTemplate) {
         final var repeatableElements = handle.attach(MailTemplateRepeatableElementDao.class).findByMailTemplateId(mailTemplate.getId());
 
-        return new MailTemplate(mailTemplate.getName(),
+        return new MailTemplate(
                 mailTemplate.getContentType(),
                 mailTemplate.getSubject(),
                 mailTemplate.getBody(),
