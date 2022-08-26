@@ -4,6 +4,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.MailTemplateDao;
 import org.broadinstitute.ddp.db.dao.MailTemplateRepeatableElementDao;
 import org.broadinstitute.ddp.db.dto.MailTemplateDto;
@@ -51,14 +52,27 @@ public class SingularFileUploadNotifications implements CustomTask {
 
     @Override
     public void run(final Handle handle) {
+        final var sqlHelper = handle.attach(SqlHelper.class);
         log.info("TASK:: {}", SingularFileUploadNotifications.class.getSimpleName());
+
+        final var study = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(STUDY_GUID);
+        log.info("Study has following mail template #{}", study.getNotificationMailTemplateId());
+
+        sqlHelper.updateStudyMailTemplate(STUDY_GUID, null);
+        log.info("Existing {} study was unlinked from the mail template", STUDY_GUID);
+
+        if (study.getNotificationMailTemplateId() != null) {
+            sqlHelper.deleteMailTemplateRepeatableElements(study.getNotificationMailTemplateId());
+            sqlHelper.deleteMailTemplate(study.getNotificationMailTemplateId());
+            log.info("Existing mail template #{} was removed", study.getNotificationMailTemplateId());
+        }
 
         final var mailTemplateId = insertMailTemplate(handle);
         insertMailTemplateRepeatableElement(handle, mailTemplateId);
-        log.info("Mail template inserted");
+        log.info("Mail template #{} inserted", mailTemplateId);
 
-        handle.attach(SqlHelper.class).updateStudyMailTemplate(cfg.getString("study.guid"), mailTemplateId);
-        log.info("Study {} mail template was updated", cfg.getString("study.guid"));
+        sqlHelper.updateStudyMailTemplate(cfg.getString("study.guid"), mailTemplateId);
+        log.info("Study {} was linked to mail template #{}", cfg.getString("study.guid"), mailTemplateId);
     }
 
     @SneakyThrows
@@ -81,6 +95,12 @@ public class SingularFileUploadNotifications implements CustomTask {
 
     private interface SqlHelper extends SqlObject {
         @SqlUpdate("UPDATE umbrella_study SET notification_mail_template_id=:mailTemplateId WHERE guid=:studyGuid")
-        void updateStudyMailTemplate(@Bind("studyGuid") final String studyGuid, @Bind("mailTemplateId") final long mailTemplateId);
+        void updateStudyMailTemplate(@Bind("studyGuid") final String studyGuid, @Bind("mailTemplateId") final Long mailTemplateId);
+
+        @SqlUpdate("DELETE FROM mail_template_repeatable_element WHERE mail_template_id = :mailTemplateId")
+        void deleteMailTemplateRepeatableElements(@Bind("mailTemplateId") final long mailTemplateId);
+
+        @SqlUpdate("DELETE FROM mail_template WHERE mail_template_id = :mailTemplateId")
+        void deleteMailTemplate(@Bind("mailTemplateId") final long mailTemplateId);
     }
 }
