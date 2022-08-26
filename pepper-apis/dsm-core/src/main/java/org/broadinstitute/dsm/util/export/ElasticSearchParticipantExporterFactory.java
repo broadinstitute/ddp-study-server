@@ -1,11 +1,8 @@
 
-package org.broadinstitute.dsm.util;
+package org.broadinstitute.dsm.util.export;
 
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter;
-import org.broadinstitute.dsm.util.export.NewOsteoParticipantExporter;
-import org.broadinstitute.dsm.util.export.ParticipantExportPayload;
-import org.broadinstitute.dsm.util.export.DefaultParticipantExporter;
 
 public class ElasticSearchParticipantExporterFactory {
 

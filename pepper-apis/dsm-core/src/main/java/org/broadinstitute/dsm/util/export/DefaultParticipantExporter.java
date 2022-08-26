@@ -4,25 +4,27 @@ package org.broadinstitute.dsm.util.export;
 import java.util.function.Function;
 
 import org.broadinstitute.dsm.db.Participant;
+import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.model.elastic.export.painless.AddToSingleScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 
-public class PlainParticipantExporter {
+public class DefaultParticipantExporter implements Exportable {
 
     protected final ParticipantExportPayload participantExportPayload;
 
-    protected Function<ParticipantExportPayload, Participant> buildParticipant      = this::buildParticipantFromPayload;
-    protected Function<Participant, UpsertPainlessFacade> buildUpsertPainlessFacade = this::buildUpsertPainlessFacadeFromParticipant;
+    protected final Function<ParticipantExportPayload, Participant> buildParticipant = this::buildParticipantFromPayload;
+    protected final Function<Participant, UpsertPainlessFacade> buildUpsertPainless  = this::buildUpsertPainlessFacadeFromParticipant;
 
-    public PlainParticipantExporter(ParticipantExportPayload participantExportPayload) {
+    public DefaultParticipantExporter(ParticipantExportPayload participantExportPayload) {
         this.participantExportPayload = participantExportPayload;
     }
 
+    @Override
     public void export() {
         buildParticipant
-                .andThen(buildUpsertPainlessFacade)
+                .andThen(buildUpsertPainless)
                 .apply(participantExportPayload)
                 .export();
     }
