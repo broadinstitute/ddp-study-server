@@ -24,6 +24,10 @@ public class ParticipantRecordDao implements Dao<ParticipantRecordDto> {
                     + "minimal_mr = ?, abstraction_ready = ?, additional_values_json = ?, last_changed = ?, "
                     + "changed_by = ? ON DUPLICATE KEY UPDATE last_changed = ?, changed_by = ?";
 
+    private static final String SQL_UPDATE_PARTICIPANT_ADDITIONAL_VALUES =
+            "UPDATE ddp_participant_record SET additional_values_json = ?, last_changed = ?, "
+                    + "changed_by = ? ";
+
     public static final String SQL_FILTER_BY_PARTICIPANT_ID = " WHERE participant_id = ?";
 
     private static final String SQL_GET_PARTICIPANT_RECORD_DTO_BY_PARTICIPANT_ID = "SELECT * FROM ddp_participant_record"
@@ -115,6 +119,32 @@ public class ParticipantRecordDao implements Dao<ParticipantRecordDto> {
                 .withAdditionalValuesJson(rs.getString(DBConstants.ADDITIONAL_VALUES_JSON))
                 .withChangedBy(rs.getString(DBConstants.CHANGED_BY))
                 .build();
+    }
+
+    public void insertDefaultAdditionalValues(int participantId, String additionalValues) {
+        logger.info(String.format("Attempting to insert default values for participant_id = %s",
+                participantId));
+        SimpleResult simpleResult = inTransaction(conn -> {
+            SimpleResult dbVals = new SimpleResult(-1);
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_PARTICIPANT_ADDITIONAL_VALUES
+                    + SQL_FILTER_BY_PARTICIPANT_ID, Statement.RETURN_GENERATED_KEYS)) {
+                stmt.setString(1, additionalValues);
+                stmt.setLong(2, System.currentTimeMillis());
+                stmt.setString(3, "SYSTEM");
+                stmt.setInt(4, participantId);
+                stmt.executeUpdate();
+
+            } catch (SQLException sqle) {
+                dbVals.resultException = sqle;
+            }
+            return dbVals;
+        });
+        if (simpleResult.resultException != null) {
+            throw new RuntimeException("Error inserting participant record for participant id: " + participantId,
+                    simpleResult.resultException);
+        }
+        logger.info(String.format(" participant_record with participant_id = %s has been updated successfully",
+                participantId));
     }
 
 }
