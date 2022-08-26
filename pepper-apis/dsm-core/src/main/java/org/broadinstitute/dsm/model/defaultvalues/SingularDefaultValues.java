@@ -58,7 +58,7 @@ public class SingularDefaultValues extends BasicDefaultDataMaker {
         ParticipantRecord participantRecord = new ParticipantRecord(ddpParticipantId, Integer.parseInt(instance.getDdpInstanceId()),
                 (ParticipantRecordDao) dataAccess);
         int newParticipantId = participantRecord.createNewParticipantRecord();
-        return participantRecord.insertDefaultValues(data, newParticipantId, instance);
+        return participantRecord.insertDefaultValues(data, newParticipantId, instance, this.elasticSearchParticipantDto);
     }
 
     private void setDataAccess(Dao dao) {
