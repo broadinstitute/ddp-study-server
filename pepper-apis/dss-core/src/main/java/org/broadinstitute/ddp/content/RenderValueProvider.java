@@ -215,13 +215,20 @@ public class RenderValueProvider {
     }
 
     /**
-     * checkAnswer
-     *
-     * @param questionStableId the question stable id
-     * @param optionStableId    the option stable Id
-     * @param stringIfMatches    string if question is answered with option stable Id
-     * @param stringOtherwise    string if question is not answered with option stable Id
-     * @return string stringIfMatches or stringOtherwise
+     * Returns a string value depending on whether a specified PICKLIST question's option
+     * is selected or not.
+     * 
+     * <p>If {@link useDefaultsForDdpMethods} is true, this method will always return
+     * a value of the form "stringIfMatches/stringOtherwise".
+     * 
+     * <p>If an activity does not have a response,
+     * or the question does not have an associated answer, a match will be assumed,
+     * and the `stringIfMatches` value will be returned.
+     * @param questionStableId  the stable id of the PICKLIST question
+     * @param optionStableId    the stable id of the option to check
+     * @param stringIfMatches    string to return if the option is selected, or there is no answer
+     * @param stringOtherwise    string to return if the option is not selected
+     * @return the string value based on the option's selected state
      */
     public String checkAnswer(String questionStableId, String optionStableId,
                               String stringIfMatches, String stringOtherwise) {
@@ -230,11 +237,8 @@ public class RenderValueProvider {
             return String.format("%s/%s", stringIfMatches, stringOtherwise);
         }
 
-        // Defaulting to `true` if the activity or question does not
-        // have a response or answer (respectively). This behavior is currently
-        // expected and relied upon in some templates (a notable example being
-        // in the About Me/About My Child activity names in Singular)
-        //
+        // Defaulting to `true` is intentional- a null response or answer
+        // is assumed to be "selected"
         // (bskinner 2022.08.25)
         var optionIsSelected = true;
 
