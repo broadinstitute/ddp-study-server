@@ -83,6 +83,7 @@ public class OncHistoryDetailPatch extends BasePatch {
             if (dbElement.getTableName().equals(DBConstants.DDP_ONC_HISTORY_DETAIL)) {
                 NameValue oncHistoryCreated = OncHistory.setOncHistoryCreated(patch.getParentId(), patch.getUser());
                 if (oncHistoryCreated.getValue() != null) {
+                    exportToESWithId(patch.getParentId(), oncHistoryCreated);
                     nameValues.add(oncHistoryCreated);
                 }
             }
