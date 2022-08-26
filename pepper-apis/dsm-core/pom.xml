@@ -293,6 +293,7 @@
                 org.broadinstitute.dsm.RouteInfoTest,
                 org.broadinstitute.dsm.TissueDataMigrationToolTest,
                 org.broadinstitute.dsm.files.parser.TSVRecordsParserTest,
+                org.broadinstitute.dsm.model.elastic.export.generate.MappingGeneratorTest,
                 org.broadinstitute.dsm.model.participant.data.AddFamilyMemberPayloadTest,
                 org.broadinstitute.dsm.model.patch.DefaultDBElementBuilderTest,
                 org.broadinstitute.dsm.model.settings.field.FieldSettingsTest,
