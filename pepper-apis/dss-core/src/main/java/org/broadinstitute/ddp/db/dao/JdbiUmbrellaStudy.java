@@ -43,7 +43,7 @@ public interface JdbiUmbrellaStudy extends SqlObject {
 
     @SqlQuery("select us.umbrella_study_id, us.umbrella_id, us.study_name, us.guid, us.irb_password, us.web_base_url, us.auth0_tenant_id,"
             + " op.olc_precision_code, us.share_participant_location, us.study_email, us.enable_data_export, us.recaptcha_site_key,"
-            + " us.default_auth0_connection, us.error_present_status_enabled, us.notification_email"
+            + " us.default_auth0_connection, us.error_present_status_enabled, us.notification_email, us.notification_mail_template_id"
             + " from umbrella_study us"
             + " left join olc_precision op on op.olc_precision_id = us.olc_precision_id"
             + " where us.umbrella_study_id = :studyId")
