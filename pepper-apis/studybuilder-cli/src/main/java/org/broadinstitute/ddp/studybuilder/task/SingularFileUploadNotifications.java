@@ -20,7 +20,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Task to update existing singular study by specifying newly added mail template
+ * Task to update existing singular study by specifying newly added mail template.
+ * If existing template is set for the study, it will be deleted.
  */
 @Slf4j
 public class SingularFileUploadNotifications implements CustomTask {
