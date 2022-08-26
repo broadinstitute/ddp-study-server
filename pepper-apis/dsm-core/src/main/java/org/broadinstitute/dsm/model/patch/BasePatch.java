@@ -86,6 +86,18 @@ public abstract class BasePatch {
         exportFacade.export();
     }
 
+    private void exportToES(List<NameValue> nameValues) {
+        if (!isElasticSearchExportable) {
+            return;
+        }
+        GeneratorPayload generatorPayload = new GeneratorPayload(nameValues, patch);
+        ExportFacadePayload exportFacadePayload =
+                new ExportFacadePayload(ddpInstance.getParticipantIndexES(), patch.getDdpParticipantId(), generatorPayload,
+                        patch.getRealm());
+        ExportFacade exportFacade = new ExportFacade(exportFacadePayload);
+        exportFacade.export();
+    }
+
     public abstract Object doPatch();
 
     protected abstract Object patchNameValuePairs();
@@ -116,6 +128,7 @@ public abstract class BasePatch {
 
     List<Object> processMultipleNameValues() {
         List<Object> updatedNameValues = new ArrayList<>();
+        exportToESWithId(patch.getId(), patch.getNameValues());
         for (NameValue nameValue : patch.getNameValues()) {
             dbElement = dbElementBuilder.fromName(nameValue.getName());
             if (dbElement != null) {
@@ -133,6 +146,14 @@ public abstract class BasePatch {
         }
         patch.setId(Objects.requireNonNull(id));
         exportToES(Objects.requireNonNull(nameValue));
+    }
+
+    protected void exportToESWithId(String id, List<NameValue> nameValues) {
+        if (!isElasticSearchExportable) {
+            return;
+        }
+        patch.setId(Objects.requireNonNull(id));
+        exportToES(Objects.requireNonNull(nameValues));
     }
 
     abstract Optional<Object> processEachNameValue(NameValue nameValue);

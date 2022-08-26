@@ -16,6 +16,7 @@ import org.broadinstitute.dsm.model.elastic.export.parse.BaseParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.DynamicFieldsParser;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.broadinstitute.dsm.model.elastic.export.parse.TypeParser;
+import org.broadinstitute.dsm.model.elastic.mapping.FieldTypeExtractor;
 import org.broadinstitute.dsm.model.patch.Patch;
 import org.junit.Assert;
 import org.junit.Test;
@@ -103,7 +104,13 @@ public class MappingGeneratorTest {
         parser.setHelperParser(new TypeParser());
         parser.setPropertyInfo(new PropertyInfo(MedicalRecord.class, true));
         BaseGenerator mappingGenerator = new CollectionMappingGenerator(parser, generatorPayload);
-        Map<String, Object> parseJson = mappingGenerator.parseJson();
+        mappingGenerator.setFieldTypeExtractor(new FieldTypeExtractor() {
+            @Override
+            public Map<String, String> extract() {
+                return Map.of();
+            }
+        });
+        Map<String, Object> parseJson = mappingGenerator.parseJson();;
         Map<String, Object> additionalValuesJson = (Map) parseJson.get("dynamicFields");
         Assert.assertNotNull(additionalValuesJson);
         Assert.assertEquals(TypeParser.TEXT_KEYWORD_MAPPING,

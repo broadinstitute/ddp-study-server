@@ -52,7 +52,7 @@ public class ParticipantDataPatch extends BasePatch {
         ParticipantDataNameValue participantDataNameValue =
                 new ParticipantDataNameValue(nameValue.getName(), nameValue.getValue(), ddpInstance.getDdpInstanceIdAsInt(),
                         patch.getDdpParticipantId(), patch.getFieldId());
-        exportToESWithId(participantDataId, participantDataNameValue);
+        //exportToESWithId(participantDataId, participantDataNameValue);
         if (patch.getActions() != null) {
             profile = ElasticSearchUtil.getParticipantProfileByGuidOrAltPid(ddpInstance.getParticipantIndexES(), patch.getParentId())
                     .orElseThrow(() -> new RuntimeException("Unable to find ES profile for participant: " + patch.getParentId()));
