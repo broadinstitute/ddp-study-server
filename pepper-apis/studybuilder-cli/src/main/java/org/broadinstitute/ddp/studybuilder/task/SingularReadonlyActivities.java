@@ -7,6 +7,7 @@ import java.util.List;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
@@ -20,7 +21,9 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 /**
- * Task to update existing singular completed activity instances as read-only.
+ * Task to update existing singular RELEASE completed activity instances as read-only.
+ * Update release activity defintiion
+ * Update release mailing_address component def.
  *
  */
 @Slf4j
@@ -79,6 +82,12 @@ public class SingularReadonlyActivities implements CustomTask {
         helper.updateActivityAsWriteOnce(studyActivityId);
         log.info("updated activity: {} in study {}", activityCode, cfg.getString("study.guid"));
 
+        //update mailing_address_component
+        Long componentId = helper.getMailingAddressComponent(studyDto.getId(), studyActivityId);
+        int rowCount = helper.updateMailingAddressComponent(componentId);
+        DBUtils.checkUpdate(1, rowCount);
+        log.info("updated mailing_address_component of activity: {} in study {}", activityCode, cfg.getString("study.guid"));
+
     }
 
     private interface SqlHelper extends SqlObject {
@@ -99,6 +108,25 @@ public class SingularReadonlyActivities implements CustomTask {
                 + "ais.activity_instance_status_type_id=(select activity_instance_status_type_id from activity_instance_status_type "
                 + "where activity_instance_status_type_code='COMPLETE')")
         List<Long> getDoneActivities(@Bind("studyActivityId") long studyActivityId);
+
+
+        @SqlQuery("select c.component_id from component as c"
+                + " join component_type as ct on ct.component_type_id = c.component_type_id "
+                + " join block_component as bc on bc.component_id = c.component_id "
+                + " where bc.block_id in ( "
+                + " select fsb.block_id "
+                + " from form_section__block as fsb "
+                + " join form_activity__form_section as fafs on fafs.form_section_id = fsb.form_section_id "
+                + " join study_activity as act on act.study_activity_id = fafs.form_activity_id "
+                + " where act.study_id = :studyId and act.study_activity_id = :studyActivityId) "
+                + " and ct.component_type_code = 'MAILING_ADDRESS' ")
+        Long getMailingAddressComponent(@Bind("studyId") long studyId, @Bind("studyActivityId") long studyActivityId);
+
+        @SqlUpdate("update mailing_address_component mac set mac.require_verified = true, require_phone = true "
+                + " where mac.component_id = :componentId")
+        int updateMailingAddressComponent(@Bind("componentId") long componentId);
+
     }
+
 
 }
