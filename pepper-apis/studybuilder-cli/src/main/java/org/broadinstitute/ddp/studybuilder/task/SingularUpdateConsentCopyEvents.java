@@ -118,6 +118,6 @@ public class SingularUpdateConsentCopyEvents implements CustomTask {
 
     private interface SqlHelper extends SqlObject {
         @SqlUpdate("delete from copy_configuration_pair where copy_configuration_pair_id in (<copyConfigPairIds>)")
-        int deleteCopyConfigPairById(@BindList(value ="copyConfigPairIds") Set<Long> copyConfigPairIds);
+        int deleteCopyConfigPairById(@BindList(value = "copyConfigPairIds") Set<Long> copyConfigPairIds);
     }
 }
