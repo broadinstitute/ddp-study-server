@@ -76,12 +76,10 @@ public class OsteoDdp7601 implements CustomTask {
                     studyDto.getGuid(),
                     EventTriggerType.ACTIVITY_STATUS);
             for (long activityId : user.getConsents().keySet()) {
-                if (sqlHelper.getActivityStatus(activityId) == 0) {
-                    ActivityInstanceCreationEventSyncProcessorDefault activityInstanceCreationEventSyncProcessor =
-                            new ActivityInstanceCreationEventSyncProcessorDefault(handle, signal, activityId,
-                                    new ActivityInstanceCreationService(signal));
-                    activityInstanceCreationEventSyncProcessor.processInstancesCreation();
-                }
+                ActivityInstanceCreationEventSyncProcessorDefault activityInstanceCreationEventSyncProcessor =
+                        new ActivityInstanceCreationEventSyncProcessorDefault(handle, signal, activityId,
+                                new ActivityInstanceCreationService(signal));
+                activityInstanceCreationEventSyncProcessor.processInstancesCreation();
             }
         }
         for (var consentId : consentIds) {
