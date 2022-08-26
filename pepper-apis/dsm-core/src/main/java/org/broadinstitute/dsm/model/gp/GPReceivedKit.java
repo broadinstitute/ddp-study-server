@@ -68,6 +68,7 @@ public class GPReceivedKit {
         String bspSampleId = bspKitQueryResult.getBspSampleId();
         String bspMaterialType = bspKitQueryResult.getBspMaterialType();
         String bspReceptacleType = bspKitQueryResult.getBspReceptacleType();
+        String collectionDate = bspKitQueryResult.getCollectionDate();
         int bspOrganism;
         try {
             bspOrganism = Integer.parseInt(bspKitQueryResult.getBspOrganism());
@@ -79,7 +80,7 @@ public class GPReceivedKit {
         logger.info("Kit returned has sample id " + bspSampleId);
         return Optional.of(
                 new KitInfo(bspKitQueryResult.getBspCollection(), bspOrganism, "U", bspParticipantId, bspSampleId, bspMaterialType,
-                        bspReceptacleType, ddpInstance.getName(), bspKitQueryResult.getKitTypeName()));
+                        bspReceptacleType, ddpInstance.getName(), bspKitQueryResult.getKitTypeName(), collectionDate));
 
     }
 

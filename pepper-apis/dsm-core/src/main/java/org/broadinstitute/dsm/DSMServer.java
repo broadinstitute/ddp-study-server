@@ -51,6 +51,8 @@ import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetrics;
 import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.dsm.careevolve.Provider;
 import org.broadinstitute.dsm.db.dao.ddp.onchistory.OncHistoryDetailDaoImpl;
+import org.broadinstitute.dsm.db.dao.mercury.ClinicalOrderDao;
+import org.broadinstitute.dsm.db.dao.mercury.MercurySampleDao;
 import org.broadinstitute.dsm.jetty.JettyConfig;
 import org.broadinstitute.dsm.jobs.DDPEventJob;
 import org.broadinstitute.dsm.jobs.DDPRequestJob;
@@ -61,6 +63,7 @@ import org.broadinstitute.dsm.jobs.NotificationJob;
 import org.broadinstitute.dsm.jobs.PubSubLookUp;
 import org.broadinstitute.dsm.log.SlackAppender;
 import org.broadinstitute.dsm.pubsub.DSMtasksSubscription;
+import org.broadinstitute.dsm.pubsub.MercuryOrderStatusListener;
 import org.broadinstitute.dsm.pubsub.PubSubResultMessageSubscription;
 import org.broadinstitute.dsm.route.AbstractionFormControlRoute;
 import org.broadinstitute.dsm.route.AbstractionRoute;
@@ -113,7 +116,10 @@ import org.broadinstitute.dsm.route.TriggerSurveyRoute;
 import org.broadinstitute.dsm.route.UserSettingRoute;
 import org.broadinstitute.dsm.route.ViewFilterRoute;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
+import org.broadinstitute.dsm.route.mercury.GetMercuryEligibleSamplesRoute;
+import org.broadinstitute.dsm.route.mercury.GetMercuryOrdersRoute;
 import org.broadinstitute.dsm.route.mercury.PostMercuryOrderDummyRoute;
+import org.broadinstitute.dsm.route.mercury.PostMercuryOrderRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
 import org.broadinstitute.dsm.route.participantfiles.DownloadParticipantFileRoute;
@@ -182,7 +188,7 @@ public class DSMServer {
     public static final String GCP_PATH_TO_DSM_TO_DSS_TOPIC = "pubsub.dsm_to_dss_topic";
     public static final String GCP_PATH_TO_DSM_TASKS_SUB = "pubsub.dsm_tasks_subscription";
     public static final String GCP_PATH_TO_DSM_TO_MERCURY_TOPIC = "pubsub.dsm_to_mercury_topic";
-    public static final String GCP_PATH_TO_DSM_TO_MERCURY_SUB = "pubsub.dsm_to_mercury_subscription";
+    public static final String GCP_PATH_TO_MERCURY_TO_DSM_SUB = "pubsub.mercury_to_dsm_subscription";
     private static final Logger logger = LoggerFactory.getLogger(DSMServer.class);
     private static final String API_ROOT = "/ddp/";
     private static final String UI_ROOT = "/ui/";
@@ -543,7 +549,7 @@ public class DSMServer {
         afterAfter((req, res) -> MDC.clear());
 
         before(API_ROOT + "*", (req, res) -> {
-            if (!new JWTRouteFilter(auth0Domain, bspSecret).isAccessAllowed(req, false, bspSecret)) {
+            if (!new JWTRouteFilter(auth0Domain).isAccessAllowed(req, false, bspSecret)) {
                 logger.info("Returning 404 because token was not verified");
                 halt(404);
             }
@@ -615,7 +621,7 @@ public class DSMServer {
 
                     boolean isTokenValid = false;
                     if (StringUtils.isNotBlank(tokenFromHeader)) {
-                        isTokenValid = new JWTRouteFilter(auth0Domain, bspSecret).isAccessAllowed(req, true, null);
+                        isTokenValid = new JWTRouteFilter(auth0Domain).isAccessAllowed(req, true, null);
                     }
                     if (!isTokenValid) {
                         halt(401, SecurityUtil.ResultType.AUTHENTICATION_ERROR.toString());
@@ -686,6 +692,7 @@ public class DSMServer {
         String subscriptionId = cfg.getString(GCP_PATH_TO_PUBSUB_SUB);
         String dsmToDssSubscriptionId = cfg.getString(GCP_PATH_TO_DSS_TO_DSM_SUB);
         String dsmTasksSubscriptionId = cfg.getString(GCP_PATH_TO_DSM_TASKS_SUB);
+        String mercuryDsmSubscriptionId = cfg.getString(GCP_PATH_TO_MERCURY_TO_DSM_SUB);
 
         logger.info("Setting up pubsub for {}/{}", projectId, subscriptionId);
 
@@ -733,6 +740,12 @@ public class DSMServer {
 
         try {
             DSMtasksSubscription.subscribeDSMtasks(projectId, dsmTasksSubscriptionId);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            MercuryOrderStatusListener.subscribeToOrderStatus(projectId, mercuryDsmSubscriptionId);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -923,6 +936,17 @@ public class DSMServer {
 
         FileDownloadService fileDownloadService = FileDownloadService.fromConfig(config);
         get(UI_ROOT + RoutePath.DOWNLOAD_PARTICIPANT_FILE, new DownloadParticipantFileRoute(fileDownloadService), new JsonTransformer());
+
+        post(UI_ROOT + RoutePath.SUBMIT_MERCURY_ORDER, new PostMercuryOrderRoute(projectId, mercuryTopicId), new JsonTransformer());
+
+        GetMercuryEligibleSamplesRoute getMercuryEligibleSamplesRoute = new GetMercuryEligibleSamplesRoute(
+                new MercurySampleDao(), projectId, mercuryTopicId);
+        get(UI_ROOT + RoutePath.MERCURY_SAMPLES_ROUTE, getMercuryEligibleSamplesRoute, new JsonTransformer());
+
+        GetMercuryOrdersRoute getMercuryOrdersRoute = new GetMercuryOrdersRoute(
+                new MercurySampleDao(), new ClinicalOrderDao(), projectId, mercuryTopicId);
+        get(UI_ROOT + RoutePath.GET_MERCURY_ORDERS_ROUTE, getMercuryOrdersRoute, new JsonTransformer());
+
     }
 
     private void setupJobs(@NonNull Config cfg, @NonNull KitUtil kitUtil, @NonNull NotificationUtil notificationUtil,

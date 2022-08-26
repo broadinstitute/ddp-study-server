@@ -6,7 +6,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.dsm.db.dto.tag.cohort.CohortTag;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.filter.Filterable;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
 
@@ -69,7 +69,7 @@ public class FilteredOrAllPatientsCohortStrategy extends BaseCohortStrategy {
 
     private List<String> extractSelectedPatientsGuids() {
         return filteredResult.getParticipants().stream()
-                .map(participantWrapperDto -> participantWrapperDto.getEsData().getProfile().map(ESProfile::getGuid))
+                .map(participantWrapperDto -> participantWrapperDto.getEsData().getProfile().map(Profile::getGuid))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toList());

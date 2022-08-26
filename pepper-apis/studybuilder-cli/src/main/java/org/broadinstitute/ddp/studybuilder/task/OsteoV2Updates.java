@@ -45,11 +45,12 @@ public class OsteoV2Updates implements CustomTask {
         tasks.add(new OsteoAboutYouChildTitleUpdates());
 
         // Last
+        tasks.add(new OsteoNewFamilyHistory());
         tasks.add(new OsteoPdfUpdates());
         tasks.add(new UpdateStudyNonSyncEvents());
         tasks.add(new OsteoInsertSyncEvents());
         tasks.add(new UpdateStudyWorkflows());
-        tasks.add(new OsteoNewFamilyHistory());
+
         tasks.forEach(t -> t.init(cfgPath, studyCfg, varsCfg));
     }
 

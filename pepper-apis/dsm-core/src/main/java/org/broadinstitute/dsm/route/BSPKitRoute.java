@@ -6,6 +6,8 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dto.kit.BSPKitDto;
 import org.broadinstitute.dsm.model.gp.BSPKit;
+import org.broadinstitute.dsm.model.gp.BSPKitInfo;
+import org.broadinstitute.dsm.model.gp.KitInfo;
 import org.broadinstitute.dsm.model.gp.bsp.BSPKitStatus;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.util.NotificationUtil;
@@ -44,6 +46,7 @@ public class BSPKitRoute implements Route {
         }
 
         //kit found in ddp_kit table
-        return bspKit.receiveKit(kitLabel, optionalBSPKitDto.get(), this.notificationUtil, bsp).get();
+        KitInfo kitInfo = bspKit.receiveKit(kitLabel, optionalBSPKitDto.get(), this.notificationUtil, bsp).get();
+        return new BSPKitInfo(kitInfo);
     }
 }
