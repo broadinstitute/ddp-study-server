@@ -15,7 +15,6 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -81,7 +80,7 @@ public class SingularFileUploadNotifications implements CustomTask {
         return handle.attach(MailTemplateDao.class).insert(MailTemplateDto.builder()
                 .contentType("text/html")
                 .subject("Project Singular: New Participant File(s) Uploaded")
-                .body(Files.readString(new File(BODY_FILE).toPath()))
+                .body(Files.readString(cfgPath.getParent().resolve(BODY_FILE)))
                 .build());
     }
 
@@ -90,7 +89,7 @@ public class SingularFileUploadNotifications implements CustomTask {
         handle.attach(MailTemplateRepeatableElementDao.class).insert(MailTemplateRepeatableElementDto.builder()
                 .mailTemplateId(mailTemplateId)
                 .name("FILE_UPLOAD_RECORD")
-                .content(Files.readString(new File(RECORD_FILE).toPath()))
+                .content(Files.readString(cfgPath.getParent().resolve(RECORD_FILE)))
                 .build());
     }
 
