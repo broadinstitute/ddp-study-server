@@ -1966,6 +1966,7 @@ public class StudyDataLoader {
             String postalCode = getStringValueFromElement(physicianEl, "zipcode");
             String phoneNumber = getStringValueFromElement(physicianEl, "phonenumber");
             String streetAddress = getStringValueFromElement(physicianEl, "streetaddress");
+            String country = getStringValueFromElement(physicianEl, "country");
 
             //check if this physician already exists in DB.. probably populated by release survey for same ptp
             List<MedicalProviderDto> matchedPhysicianList = dbPhysicianList.stream().filter(physician ->
@@ -1989,6 +1990,7 @@ public class StudyDataLoader {
                         name,
                         city,
                         state,
+                        country,
                         postalCode,
                         phoneNumber,
                         physicianId,
@@ -2009,6 +2011,7 @@ public class StudyDataLoader {
         String instName = getStringValueFromElement(sourceDataElement, "initial_biopsy_institution");
         String instCity = getStringValueFromElement(sourceDataElement, "initial_biopsy_city");
         String instState = getStringValueFromElement(sourceDataElement, "initial_biopsy_state");
+        String country = getStringValueFromElement(sourceDataElement, "country");
 
         if (StringUtils.isNotBlank(instName)) {
             String guid = getMedicalProviderGuid(handle);
@@ -2016,7 +2019,7 @@ public class StudyDataLoader {
                     null,
                     guid, userDto.getUserId(), studyDto.getId(),
                     InstitutionType.INITIAL_BIOPSY, instName, null, instCity, instState,
-                    null, null, null, null));
+                    country, null, null, null, null));
         }
     }
 
@@ -2041,6 +2044,7 @@ public class StudyDataLoader {
             String postalCode = getStringValueFromElement(physicianEl, "zipcode");
             String phoneNumber = getStringValueFromElement(physicianEl, "phonenumber");
             String streetAddress = getStringValueFromElement(physicianEl, "streetaddress");
+            String country = getStringValueFromElement(physicianEl, "country");
 
             String guid = getMedicalProviderGuid(handle);
             String legacyGuid;
@@ -2060,6 +2064,7 @@ public class StudyDataLoader {
                     name,
                     city,
                     state,
+                    country,
                     postalCode,
                     phoneNumber,
                     legacyGuid,
