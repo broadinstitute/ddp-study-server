@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="Dmitrii Eliseev" id="2022-08-17-mail-template">
+        <createTable tableName="mail_template">
+            <column name="mail_template_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="mail_template_pk"/>
+            </column>
+            <column name="content_type" type="VARCHAR(1000)">
+                <constraints nullable="false" />
+            </column>
+            <column name="subject" type="TEXT">
+                <constraints nullable="false" />
+            </column>
+            <column name="body" type="TEXT">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <createTable tableName="mail_template_repeatable_element">
+            <column name="mail_template_repeatable_element_id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="mail_template_repeatable_element_pk"/>
+            </column>
+            <column name="mail_template_id" type="bigint">
+                <constraints references="mail_template(mail_template_id)" foreignKeyName="mail_template_repeatable_element_mail_template_fk"/>
+            </column>
+            <column name="name" type="VARCHAR(500)">
+                <constraints nullable="false" />
+            </column>
+            <column name="content" type="TEXT">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <addUniqueConstraint tableName="mail_template_repeatable_element"
+                             columnNames="mail_template_id, name"
+                             constraintName="mail_template_repeatable_element_unique" />
+    </changeSet>
+
+    <changeSet author="Dmitrii Eliseev" id="2022-08-17-study-to-mail-template-reference">
+        <addColumn tableName="umbrella_study">
+            <column name="notification_mail_template_id" type="bigint" defaultValue="null">
+                <constraints nullable="true" references="mail_template(mail_template_id)" foreignKeyName="umbrella_study_file_upload_notification_mail_template_fk"/>
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>
