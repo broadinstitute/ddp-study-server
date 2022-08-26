@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.experimental.Accessors;
 import lombok.experimental.SuperBuilder;
+import org.apache.commons.io.FileUtils;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
@@ -64,4 +65,8 @@ public class FileUpload {
     @Nullable
     @ColumnName("notification_sent_at")
     Instant notificationSentAt;
+
+    public String getHumanReadableFileSize() {
+        return FileUtils.byteCountToDisplaySize(fileSize);
+    }
 }
