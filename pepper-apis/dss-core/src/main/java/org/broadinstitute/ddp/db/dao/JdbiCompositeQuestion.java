@@ -9,6 +9,7 @@ import org.broadinstitute.ddp.model.activity.types.OrientationType;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlBatch;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public interface JdbiCompositeQuestion extends SqlObject {
@@ -31,4 +32,12 @@ public interface JdbiCompositeQuestion extends SqlObject {
     void insertChild(@Bind("parentQuestionId") long parentQuestionId, @Bind("childQuestionId") List<Long> childQuestionIds,
                      @Bind("orderIndex") List<Integer> orderIdxs);
 
+    @SqlQuery("SELECT child_question_id FROM composite_question__question where parent_question_id=:parentQuestionId")
+    List<Long> getChildQuestionIds(@Bind("parentQuestionId") long parentQuestionId);
+
+    @SqlUpdate("DELETE FROM composite_question__question where parent_question_id=:parentQuestionId")
+    int deleteChildQuestionMembership(@Bind("parentQuestionId") long parentQuestionId);
+
+    @SqlUpdate("DELETE FROM composite_question where question_id=:questionId")
+    boolean deleteCompositeQuestionParentRecord(@Bind("questionId") long questionId);
 }

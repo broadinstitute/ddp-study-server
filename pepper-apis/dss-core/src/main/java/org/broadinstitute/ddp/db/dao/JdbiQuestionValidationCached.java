@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.validation.RuleDto;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.RedisConnectionValidator;
 import org.jdbi.v3.core.Handle;
 import org.redisson.api.RLocalCachedMap;
@@ -96,5 +97,10 @@ public class JdbiQuestionValidationCached extends SQLObjectWrapper<JdbiQuestionV
     @Override
     public Stream<RuleDto> findDtosByQuestionIdsAndTimestamp(Iterable<Long> questionIds, long timestamp) {
         return delegate.findDtosByQuestionIdsAndTimestamp(questionIds, timestamp);
+    }
+
+    @Override
+    public boolean deleteForQuestion(long questionId) {
+        throw new DDPException("Not supported");
     }
 }

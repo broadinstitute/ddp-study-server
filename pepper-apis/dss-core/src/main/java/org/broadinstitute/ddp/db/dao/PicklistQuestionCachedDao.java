@@ -9,6 +9,7 @@ import javax.cache.expiry.Duration;
 
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.cache.ModelChangeType;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.jdbi.v3.core.Handle;
 import org.redisson.client.RedisException;
 
@@ -28,6 +29,11 @@ public class PicklistQuestionCachedDao extends SQLObjectWrapper<PicklistQuestion
                     ModelChangeType.STUDY,
                     this.getClass());
         }
+    }
+
+    @Override
+    public JdbiPicklistQuestion getJdbiPicklistQuestion() {
+        return delegate.getJdbiPicklistQuestion();
     }
 
     @Override
@@ -94,5 +100,10 @@ public class PicklistQuestionCachedDao extends SQLObjectWrapper<PicklistQuestion
 
             return result;
         }
+    }
+
+    @Override
+    public void delete(Long questionId) {
+        throw new DDPException("Not supported");
     }
 }

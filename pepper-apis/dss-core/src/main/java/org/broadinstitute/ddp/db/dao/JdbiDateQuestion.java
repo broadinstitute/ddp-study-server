@@ -24,4 +24,6 @@ public interface JdbiDateQuestion extends SqlObject {
                     @Bind("shouldDisplayCalendar") boolean suggestionType,
                     @Bind("placeholderTemplateId") Long placeholderTemplateId);
 
+    @SqlUpdate("DELETE FROM date_question WHERE question_id=:questionId")
+    boolean delete(@Bind("questionId") long questionId);
 }

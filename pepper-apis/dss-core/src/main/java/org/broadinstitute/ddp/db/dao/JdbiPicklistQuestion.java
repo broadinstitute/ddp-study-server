@@ -23,4 +23,6 @@ public interface JdbiPicklistQuestion extends SqlObject {
                @Bind("renderMode") PicklistRenderMode renderMode,
                @Bind("picklistLabelTemplateId") Long picklistLabelTemplateId);
 
+    @SqlUpdate("DELETE FROM picklist_question where question_id=:questionId")
+    boolean delete(@Bind("questionId")Long questionId);
 }

@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.ListUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
@@ -287,6 +288,7 @@ public interface FormActivityDao extends SqlObject {
 
         List<Long> orderedSectionIds = getJdbiFormActivityFormSection()
                 .findOrderedSectionIdsByActivityIdAndTimestamp(activityDto.getActivityId(), revisionStart);
+        LOG.info("Retrieving the ids {}", StringUtils.join(orderedSectionIds));
         Set<Long> allSectionIds = new HashSet<>(orderedSectionIds);
         Long introSectionId = null;
         Long closingSectionId = null;

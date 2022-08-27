@@ -46,6 +46,7 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceSelectQuestionDto;
 import org.broadinstitute.ddp.db.dto.TypedQuestionId;
 import org.broadinstitute.ddp.db.dto.validation.RuleDto;
 import org.broadinstitute.ddp.equation.QuestionEvaluator;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
@@ -1024,6 +1025,55 @@ public interface QuestionDao extends SqlObject {
     }
 
     /**
+     * Delete an "orphan" question that has no answers and is not reference by a block
+     * Added for purpose of supporting tests and studybuilder patch operations.
+     * Note: Implementation is incomplete at this time (August 27 2022) and only supports deletion of question types
+     * that were needed at time.
+     * @param questionDef question to delete
+     *
+     * @throws org.broadinstitute.ddp.exception.DDPException if deletion failed for some reason
+     */
+    default void deleteQuestion(QuestionDef questionDef) {
+        Long questionId = questionDef.getQuestionId();
+        switch (questionDef.getQuestionType()) {
+            case TEXT:
+                deleteTextQuestion(questionId);
+                break;
+            case PICKLIST:
+                getPicklistQuestionDao().delete(questionId);
+                break;
+            case COMPOSITE:
+                deleteCompositeQuestion((CompositeQuestionDef) questionDef, questionId);
+                break;
+            case DATE:
+                deleteDateQuestion(questionId);
+                break;
+            default:
+                throw new DDPException("Deletion of questions of type: " + questionDef.getQuestionType()
+                        + " is not supported. Consider implementing it");
+        }
+        deleteBaseQuestion(questionId);
+    }
+
+    private void deleteTextQuestion(Long questionId) {
+        var wasDeleted = getJdbiTextQuestion().delete(questionId);
+        LOG.info("Deleted text question with id {}?: {}", questionId, wasDeleted);
+    }
+
+    private void deleteCompositeQuestion(CompositeQuestionDef questionDef, Long questionId) {
+        getJdbiCompositeQuestion().deleteChildQuestionMembership(questionId);
+        var wasDeleted =  getJdbiCompositeQuestion().deleteCompositeQuestionParentRecord(questionId);
+        LOG.info("Deleted parent composite question with id {}?: {}", questionId, wasDeleted);
+        questionDef.getChildren().forEach(child -> deleteQuestion(child));
+    }
+
+    default boolean deleteBaseQuestion(long questionId) {
+        getJdbiQuestionValidation().deleteForQuestion(questionId);
+
+        return getJdbiQuestion().deleteBaseQuestion(questionId);
+    }
+
+    /**
      * Create new question by looking at its type.
      *
      * @param activityId the associated activity
@@ -1591,6 +1641,13 @@ public interface QuestionDao extends SqlObject {
         if (numInserted != 1) {
             throw new DaoException("Inserted " + numInserted + " for agreement question " + agreementQuestion.getStableId());
         }
+    }
+
+    default boolean deleteDateQuestion(long questionId) {
+        getJdbiDateQuestionFieldOrder().deleteForQuestionId(questionId);
+        var val =  getJdbiDateQuestion().delete(questionId);
+        LOG.info("Deleted date question id? {}", val);
+        return val;
     }
 
     /**

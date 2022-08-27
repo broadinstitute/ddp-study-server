@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.RedisConnectionValidator;
 import org.jdbi.v3.core.Handle;
 import org.redisson.api.RLocalCachedMap;
@@ -185,6 +186,8 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
         }
     }
 
+
+
     @Override
     public Optional<Long> findCompositeParentIdByChildId(long childQuestionId) {
         if (isNullCache(compositeChildIdToParentIdCache)) {
@@ -309,6 +312,11 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
 
             return result;
         }
+    }
+
+    @Override
+    public boolean deleteBaseQuestion(long questionId) {
+        throw new DDPException("Not implemented for cached version");
     }
 
     @Override
