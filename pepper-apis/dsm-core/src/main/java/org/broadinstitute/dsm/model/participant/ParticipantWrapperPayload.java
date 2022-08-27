@@ -14,6 +14,7 @@ public class ParticipantWrapperPayload {
     private int from;
     private int to;
     private SortBy sortBy;
+    private boolean hideMedicalRecordRequestTracking;
 
     public Optional<DDPInstanceDto> getDdpInstanceDto() {
         return Optional.ofNullable(ddpInstanceDto);
@@ -39,6 +40,10 @@ public class ParticipantWrapperPayload {
         return this.to;
     }
 
+    public boolean isHideMedicalRecordRequestTracking() {
+        return this.hideMedicalRecordRequestTracking;
+    }
+
     private ParticipantWrapperPayload(Builder builder) {
         this.ddpInstanceDto = builder.ddpInstanceDto;
         this.filter = builder.filter;
@@ -46,6 +51,7 @@ public class ParticipantWrapperPayload {
         this.from = builder.from;
         this.to = builder.to;
         this.sortBy = builder.sortBy;
+        this.hideMedicalRecordRequestTracking = builder.hideMedicalRecordRequestTracking;
     }
 
     public static class Builder {
@@ -56,6 +62,7 @@ public class ParticipantWrapperPayload {
         private DDPInstanceDto ddpInstanceDto;
         private Map<String, String> filter;
         private int userId;
+        private boolean hideMedicalRecordRequestTracking;
 
         public Builder withDdpInstanceDto(DDPInstanceDto ddpInstanceDto) {
             this.ddpInstanceDto = ddpInstanceDto;
@@ -84,6 +91,11 @@ public class ParticipantWrapperPayload {
 
         public Builder withSortBy(SortBy sortBy) {
             this.sortBy = sortBy;
+            return this;
+        }
+
+        public Builder withHideMedicalRecordRequestTracking(boolean hideMedicalRecordRequestTracking) {
+            this.hideMedicalRecordRequestTracking = hideMedicalRecordRequestTracking;
             return this;
         }
 
