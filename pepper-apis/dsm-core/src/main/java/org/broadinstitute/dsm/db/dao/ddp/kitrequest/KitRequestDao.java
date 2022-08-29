@@ -65,24 +65,23 @@ public class KitRequestDao implements Dao<KitRequestDto> {
         return Optional.empty();
     }
 
-    public KitRequestDto getKitRequestByLabel(String kitLabel) {
-        List<KitRequestDto> kitRequestDtoList = new ArrayList<>();
+    public Optional<KitRequestDto> getKitRequestByLabel(String kitLabel) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult(0);
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_REQUEST + BY_DDP_LABEL)) {
                 stmt.setString(1, kitLabel);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                        kitRequestDtoList.add(
-                                new KitRequestDto(rs.getInt(DBConstants.DSM_KIT_REQUEST_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
-                                        rs.getString(DBConstants.DDP_KIT_REQUEST_ID), rs.getInt(DBConstants.KIT_TYPE_ID),
-                                        rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
-                                        rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID),
-                                        rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.DSM_LABEL),
-                                        rs.getString(DBConstants.CREATED_BY), rs.getLong(DBConstants.CREATED_DATE),
-                                        rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), rs.getLong(DBConstants.EXTERNAL_ORDER_DATE),
-                                        rs.getString(DBConstants.EXTERNAL_ORDER_STATUS), rs.getString(DBConstants.EXTERNAL_RESPONSE),
-                                        rs.getString(DBConstants.UPLOAD_REASON), rs.getTimestamp(DBConstants.ORDER_TRANSMITTED_AT)));
+                        dbVals.resultValue =
+                            new KitRequestDto(rs.getInt(DBConstants.DSM_KIT_REQUEST_ID), rs.getInt(DBConstants.DDP_INSTANCE_ID),
+                                    rs.getString(DBConstants.DDP_KIT_REQUEST_ID), rs.getInt(DBConstants.KIT_TYPE_ID),
+                                    rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID),
+                                    rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID),
+                                    rs.getString(DBConstants.DDP_PARTICIPANT_ID), rs.getString(DBConstants.DSM_LABEL),
+                                    rs.getString(DBConstants.CREATED_BY), rs.getLong(DBConstants.CREATED_DATE),
+                                    rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER), rs.getLong(DBConstants.EXTERNAL_ORDER_DATE),
+                                    rs.getString(DBConstants.EXTERNAL_ORDER_STATUS), rs.getString(DBConstants.EXTERNAL_RESPONSE),
+                                    rs.getString(DBConstants.UPLOAD_REASON), rs.getTimestamp(DBConstants.ORDER_TRANSMITTED_AT));
                     }
                 }
             } catch (SQLException ex) {
@@ -93,7 +92,7 @@ public class KitRequestDao implements Dao<KitRequestDto> {
             }
             return dbVals;
         });
-        return kitRequestDtoList.get(0);
+        return Optional.ofNullable((KitRequestDto) results.resultValue);
     }
 
     public List<ESSamplesDto> getESSamplesByInstanceId(int instanceId) {

@@ -675,11 +675,17 @@ public class DataExporter {
                     ? participantProxyGuids.get(participantGuid).stream().findFirst().get()
                     : participantGuid;
             if (governancePolicy != null) {
-                AgeOfMajorityRule aomRule = governancePolicy.getApplicableAgeOfMajorityRule(handle,
-                        pexInterpreter,
-                        participantGuid,
-                        operatorGuid)
-                        .orElse(null);
+                AgeOfMajorityRule aomRule = null;
+                try {
+                    aomRule = governancePolicy.getApplicableAgeOfMajorityRule(handle,
+                            pexInterpreter,
+                            participantGuid,
+                            operatorGuid)
+                            .orElse(null);
+                } catch (Exception e) {
+                    log.error("Error while evaluating age-of-majority rules for participant {} operator {} and studyId {}, ignoring.",
+                            participantGuid, operatorGuid, studyId, e); //log & skip AOM content for the ptp.
+                }
 
                 if (birthDate != null && aomRule != null) {
                     dateOfMajority = aomRule.getDateOfMajority(birthDate);
