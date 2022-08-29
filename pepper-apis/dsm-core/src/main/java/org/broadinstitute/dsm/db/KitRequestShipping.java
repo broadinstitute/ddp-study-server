@@ -36,6 +36,7 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dao.kit.KitDaoImpl;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
@@ -212,6 +213,11 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     @ColumnName(DBConstants.DSM_KIT_ID)
     private Long dsmKitId;
 
+    @ColumnName(DBConstants.DDP_KIT_REQUEST_ID)
+    private String ddpKitRequestId;
+
+    private String ddpParticipantId;
+
     @ColumnName(DBConstants.LABEL_URL_TO)
     private String labelUrlTo;
 
@@ -235,18 +241,21 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
 
     private String collaboratorParticipantId;
 
-    private String ddpParticipantId;
     private String firstName;
     private String lastName;
     private String dateOfBirth;
 
     @ColumnName (DBConstants.BSP_COLLABORATOR_SAMPLE_ID)
     private String bspCollaboratorSampleId;
+
+    private String bspCollaboratorParticipantId;
     private String easypostAddressId;
     private String realm;
 
     @ColumnName(DBConstants.KIT_TYPE_NAME)
     private String kitTypeName;
+
+    private String kitTypeId;
 
     @ColumnName(DBConstants.DEACTIVATION_REASON)
     private String deactivationReason;
@@ -282,6 +291,9 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     private String nameLabel;
     @ColumnName(DBConstants.CREATED_BY)
     private String createdBy;
+
+    private Long createdDate;
+
     private String preferredLanguage;
     private String hruid;
     private String gender;
@@ -301,6 +313,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     private String collectionDate;
     @ColumnName(DBConstants.SEQUENCING_RESTRICTION)
     private String sequencingRestriction;
+
+    private Boolean requiresInsertInKitTracking;
 
     public KitRequestShipping() {
     }
@@ -379,6 +393,13 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         this.gender = gender;
         this.collectionDate = collectionDate;
         this.sequencingRestriction = sequencingRestriction;
+    }
+
+    public Boolean getError() {
+        if (Objects.isNull(error)) {
+            return false;
+        }
+        return error;
     }
 
     public static KitRequestShipping getKitRequestShipping(@NonNull ResultSet rs) throws SQLException {
@@ -824,7 +845,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     public static KitRequestShipping getKitRequest(@NonNull String kitRequestId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KIT_REQUEST + QueryExtension.KIT_BY_KIT_REQUEST_ID)) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KIT_REQUEST + KitDaoImpl.KIT_BY_KIT_REQUEST_ID)) {
                 stmt.setString(1, kitRequestId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     int numRows = 0;
@@ -1697,5 +1718,13 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     @Override
     public long extractDdpInstanceId() {
         return getDdpInstanceId();
+    }
+
+    public boolean isBloodKit() {
+        return requiresInsertInKitTracking;
+    }
+
+    public boolean hasTrackingScan() {
+        return StringUtils.isNotBlank(trackingId);
     }
 }
