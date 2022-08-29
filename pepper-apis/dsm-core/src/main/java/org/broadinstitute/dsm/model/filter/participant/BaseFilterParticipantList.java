@@ -37,7 +37,7 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
     protected static final Gson GSON = new Gson();
     private Deserializer deserializer = null;
 
-    boolean hideMedicalRecordRequestTracking = false;
+    boolean showMedicalRecordRequestTracking = false;
 
     public BaseFilterParticipantList() {
         super(null);
@@ -54,7 +54,7 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
         //no need to check if realm and userID is set because it was already checked in FilterRoute
         String realm = queryParamsMap.get(RoutePath.REALM).value();
         String userIdRequest = queryParamsMap.get(UserUtil.USER_ID).value();
-        this.hideMedicalRecordRequestTracking = !UserUtil.checkUserAccess(realm, userIdRequest, "mr_view", null);
+        this.showMedicalRecordRequestTracking = UserUtil.checkUserAccess(realm, userIdRequest, "mr_view", null);
         return filter(queryParamsMap);
     }
 
@@ -64,7 +64,7 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
         ParticipantWrapperPayload.Builder participantWrapperPayload =
                 new ParticipantWrapperPayload.Builder().withDdpInstanceDto(ddpInstanceDto).withFrom(from).withTo(to).withSortBy(sortBy)
-                        .withHideMedicalRecordRequestTracking(hideMedicalRecordRequestTracking);
+                        .withShowMedicalRecordRequestTracking(showMedicalRecordRequestTracking);
         ElasticSearch elasticSearch = new ElasticSearch();
         if (deserializer != null) {
             elasticSearch.setDeserializer(deserializer);

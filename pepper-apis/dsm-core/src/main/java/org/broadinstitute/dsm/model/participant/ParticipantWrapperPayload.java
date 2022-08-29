@@ -14,7 +14,7 @@ public class ParticipantWrapperPayload {
     private int from;
     private int to;
     private SortBy sortBy;
-    private boolean hideMedicalRecordRequestTracking;
+    private boolean showMedicalRecordRequestTracking;
 
     public Optional<DDPInstanceDto> getDdpInstanceDto() {
         return Optional.ofNullable(ddpInstanceDto);
@@ -40,8 +40,8 @@ public class ParticipantWrapperPayload {
         return this.to;
     }
 
-    public boolean isHideMedicalRecordRequestTracking() {
-        return this.hideMedicalRecordRequestTracking;
+    public boolean isShowMedicalRecordRequestTracking() {
+        return this.showMedicalRecordRequestTracking;
     }
 
     private ParticipantWrapperPayload(Builder builder) {
@@ -51,7 +51,7 @@ public class ParticipantWrapperPayload {
         this.from = builder.from;
         this.to = builder.to;
         this.sortBy = builder.sortBy;
-        this.hideMedicalRecordRequestTracking = builder.hideMedicalRecordRequestTracking;
+        this.showMedicalRecordRequestTracking = builder.showMedicalRecordRequestTracking;
     }
 
     public static class Builder {
@@ -62,7 +62,7 @@ public class ParticipantWrapperPayload {
         private DDPInstanceDto ddpInstanceDto;
         private Map<String, String> filter;
         private int userId;
-        private boolean hideMedicalRecordRequestTracking;
+        private boolean showMedicalRecordRequestTracking;
 
         public Builder withDdpInstanceDto(DDPInstanceDto ddpInstanceDto) {
             this.ddpInstanceDto = ddpInstanceDto;
@@ -94,8 +94,8 @@ public class ParticipantWrapperPayload {
             return this;
         }
 
-        public Builder withHideMedicalRecordRequestTracking(boolean hideMedicalRecordRequestTracking) {
-            this.hideMedicalRecordRequestTracking = hideMedicalRecordRequestTracking;
+        public Builder withShowMedicalRecordRequestTracking(boolean showMedicalRecordRequestTracking) {
+            this.showMedicalRecordRequestTracking = showMedicalRecordRequestTracking;
             return this;
         }
 

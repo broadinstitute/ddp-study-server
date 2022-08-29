@@ -76,10 +76,12 @@ public class ParticipantWrapper {
 
         return participantWrapperPayload.getFilter().map(filters -> {
             fetchAndPrepareDataByFilters(filters);
-            return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto, participantWrapperPayload.isHideMedicalRecordRequestTracking()));
+            return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto,
+                    participantWrapperPayload.isShowMedicalRecordRequestTracking()));
         }).orElseGet(() -> {
             fetchAndPrepareData();
-            return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto, participantWrapperPayload.isHideMedicalRecordRequestTracking()));
+            return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto,
+                    participantWrapperPayload.isShowMedicalRecordRequestTracking()));
         });
     }
 
@@ -116,7 +118,7 @@ public class ParticipantWrapper {
     }
 
 
-    private List<ParticipantWrapperDto> collectData(DDPInstanceDto ddpInstanceDto, boolean hideMedicalRecordRequestTracking) {
+    private List<ParticipantWrapperDto> collectData(DDPInstanceDto ddpInstanceDto, boolean showMedicalRecordRequestTracking) {
         logger.info("Collecting participant data...");
         List<ParticipantWrapperDto> result = new ArrayList<>();
         List<String> proxyGuids = new ArrayList<>();
@@ -125,7 +127,7 @@ public class ParticipantWrapper {
             if (elasticSearchParticipantDto instanceof UnparsedESParticipantDto) {
                 addWrapperToList((UnparsedESParticipantDto) elasticSearchParticipantDto, result);
             } else {
-                addWrapperToList(elasticSearchParticipantDto, result, ddpInstanceDto, hideMedicalRecordRequestTracking);
+                addWrapperToList(elasticSearchParticipantDto, result, ddpInstanceDto, showMedicalRecordRequestTracking);
             }
             proxyGuids.addAll(elasticSearchParticipantDto.getProxies());
         }
@@ -141,7 +143,7 @@ public class ParticipantWrapper {
     }
 
     private void addWrapperToList(ElasticSearchParticipantDto elasticSearchParticipantDto, List<ParticipantWrapperDto> result, DDPInstanceDto ddpInstanceDto,
-                                  boolean hideMedicalRecordRequestTracking) {
+                                  boolean showMedicalRecordRequestTracking) {
 
         elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
             Participant participant = esDsm.getParticipant().orElse(new Participant());
@@ -159,7 +161,7 @@ public class ParticipantWrapper {
             participantWrapperDto.setParticipant(participant);
             participantWrapperDto.setParticipantData(participantData);
 
-            if (hideMedicalRecordRequestTracking) {
+            if (showMedicalRecordRequestTracking) {
                 esDsm.getOncHistory().ifPresent(oncHistory -> {
                     participant.setCreated(oncHistory.getCreated());
                     participant.setReviewed(oncHistory.getReviewed());
