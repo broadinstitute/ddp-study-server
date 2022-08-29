@@ -1,11 +1,11 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigException;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -53,7 +53,6 @@ public class SingularAboutHealthySelectLogic implements CustomTask {
         }
     }
 
-    private Config studyConfig;
     private Config patchConfig;
 
     private JdbiUmbrellaStudy studySql;
@@ -64,14 +63,17 @@ public class SingularAboutHealthySelectLogic implements CustomTask {
 
     @Override
     public void init(Path configPath, Config studyConfig, Config varsConfig) {
-        var studyRoot = configPath.getParent();
         var patchConfPath = Paths.get(PATCH_PATH, PATCH_CONF_NAME);
-        var patchPath = studyRoot.resolve(patchConfPath);
+        var patchPath = configPath.getParent().resolve(patchConfPath);
+
+        if (!Files.exists(patchPath)) {
+            throw new DDPException(String.format("the configuration file named '%s' cannot be found", patchConfPath));
+        }
 
         final Config patchConfig;
         try {
             patchConfig = ConfigFactory.parseFile(patchPath.toFile()).resolveWith(varsConfig);
-        } catch (ConfigException configException) {
+        } catch (Exception configException) {
             var message = String.format("failed to load patch data file expected at '%s'", patchPath);
             throw new DDPException(message, configException);
         }
@@ -86,12 +88,11 @@ public class SingularAboutHealthySelectLogic implements CustomTask {
         }
 
         this.patchConfig = patchConfig;
-        this.studyConfig = studyConfig;
     }
 
     @Override
-    public void run(Handle handle) {
-        var taskName = this.getClass().getSimpleName();
+    public void run(final Handle handle) {
+        final var taskName = this.getClass().getSimpleName();
         log.info("TASK:: {}", taskName);
 
         daoSetup(handle);
@@ -112,7 +113,7 @@ public class SingularAboutHealthySelectLogic implements CustomTask {
                     final var picklistDef = getPicklistDef(activityDef, questionStableId);
 
                     final var optionStableId = config.getString(Keys.ChangeContent.OPTION_ID);
-                    var optionDef = picklistDef.getAllPicklistOptions().stream()
+                    final var optionDef = picklistDef.getAllPicklistOptions().stream()
                             .filter((option) -> StringUtils.equals(optionStableId, option.getStableId()))
                             .findFirst()
                             .orElseThrow(() -> {
@@ -122,7 +123,7 @@ public class SingularAboutHealthySelectLogic implements CustomTask {
                                 return new DDPException(message);
                             });
 
-                    var newValue = config.getBoolean(Keys.ChangeContent.EXCLUSIVE);
+                    final var newValue = config.getBoolean(Keys.ChangeContent.EXCLUSIVE);
 
                     if (optionDef.isExclusive() == newValue) {
                         log.info("No change required- the value of isExclusive is already '{}' [question:{},option:{}]",
@@ -134,12 +135,12 @@ public class SingularAboutHealthySelectLogic implements CustomTask {
 
                     assert optionDef.getOptionId() != null;
 
-                    var optionDto = picklistOptionSql.findById(optionDef.getOptionId())
+                    final var optionDto = picklistOptionSql.findById(optionDef.getOptionId())
                             .orElseThrow(() -> {
                                 return new DDPException(String.format("failed to find option with id %s", optionDef.getOptionId()));
                             });
                     optionDto.setExclusive(newValue);
-                    var rowsUpdated = picklistOptionSql.update(optionDto);
+                    final var rowsUpdated = picklistOptionSql.update(optionDto);
                     DBUtils.checkInsert(1, rowsUpdated);
 
                     log.info("Successfully set isExclusive = {} for [question:{},option:{}]",
@@ -199,7 +200,7 @@ public class SingularAboutHealthySelectLogic implements CustomTask {
                                 versionTag,
                                 ActivityType.FORMS,
                                 studyGuid);
-                        throw new DDPException(message);
+                        return new DDPException(message);
                     });
     }
 
@@ -213,7 +214,7 @@ public class SingularAboutHealthySelectLogic implements CustomTask {
                             stableId,
                             QuestionType.PICKLIST,
                             activityDef.getActivityCode());
-                    throw new DDPException(message);
+                    return new DDPException(message);
                 });
     }
     
