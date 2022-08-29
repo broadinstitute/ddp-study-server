@@ -32,11 +32,11 @@ public class FilterRoute extends RequestHandler {
             throw new IllegalAccessException("User id was not equal. User Id in token " + userId + " user Id in request " + userIdRequest);
         }
 
-        if (!UserUtil.checkUserAccess(realm, userId, "mr_view", userIdRequest)
-                && !UserUtil.checkUserAccess(realm, userId, "pt_list_view", userIdRequest)) {
+        if (!UserUtil.checkUserAccess(realm, userId, "pt_list_view", userIdRequest)) {
             response.status(500);
             return UserErrorMessages.NO_RIGHTS;
         }
+
         Filterable filterable = FilterFactory.of(request);
         return filterable.filter(queryParams);
     }
