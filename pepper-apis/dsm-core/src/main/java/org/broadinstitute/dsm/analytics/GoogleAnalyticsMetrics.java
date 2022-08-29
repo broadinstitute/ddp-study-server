@@ -23,6 +23,8 @@ public class GoogleAnalyticsMetrics {
 
     public static final String EVENT_CATEGORY_TISSUE_LIST = "tissue-list";
     public static final String EVENT_TISSUE_LIST_LOAD_TIME = "tissue-list-load-time";
+    public static final String EVENT_CATEGORY_PARTICIPANT_LIST_EXPORT = "participant-list-export";
+    public static final String EVENT_PARTICIPANT_LIST_EXPORT_LOAD_TIME = "participant-list-export-load-time";
 
     public static int getTimeDifferenceToNow(Long start) {
         return (int) Math.ceil((System.currentTimeMillis() - start) / 1000);
