@@ -314,6 +314,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     private String collectionDate;
     @ColumnName(DBConstants.SEQUENCING_RESTRICTION)
     private String sequencingRestriction;
+    @ColumnName(DBConstants.DSM_RECEIVE_BY)
     private String receivedBy;
 
     private Boolean requiresInsertInKitTracking;
