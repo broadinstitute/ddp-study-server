@@ -59,4 +59,8 @@ public class StudyDto implements Serializable {
     @Nullable
     @ColumnName("notification_email")
     String notificationEmail;
+
+    @Nullable
+    @ColumnName("notification_mail_template_id")
+    Long notificationMailTemplateId;
 }

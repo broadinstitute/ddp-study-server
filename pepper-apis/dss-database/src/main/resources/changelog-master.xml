@@ -318,4 +318,5 @@
     <include file="db-changes/schema/DDP-8248.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-8484-copy-configuration-operator.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-8631-add-country-field-to-medical-provider.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-8606.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
