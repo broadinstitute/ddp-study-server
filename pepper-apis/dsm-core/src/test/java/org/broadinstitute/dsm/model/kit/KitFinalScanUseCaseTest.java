@@ -19,6 +19,7 @@ public class KitFinalScanUseCaseTest {
         );
         KitPayload kitPayload = new KitPayload(scanPayloads, 94, null);
         KitFinalScanUseCase kitFinalScanUseCase = new KitFinalScanUseCase(kitPayload, null);
+        kitFinalScanUseCase.setKitDao(new KitDaoMock());
         List<ScanError> scanErrors = kitFinalScanUseCase.get();
         assertEquals(2, scanErrors.size());
         assertEquals(new ScanError("ddpLabel", "Barcode contains less than 14 digits, "
