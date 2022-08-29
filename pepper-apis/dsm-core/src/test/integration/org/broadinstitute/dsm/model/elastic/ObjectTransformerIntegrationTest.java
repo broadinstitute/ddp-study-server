@@ -5,10 +5,9 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.broadinstitute.dsm.TestHelper;
+import org.broadinstitute.dsm.TestInstanceCreator;
 import org.broadinstitute.dsm.db.ParticipantData;
-import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
-import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.model.Filter;
 import org.junit.AfterClass;
@@ -18,25 +17,17 @@ import org.junit.Test;
 
 public class ObjectTransformerIntegrationTest {
 
-    public static final String TEST_INSTANCE = "TestInstance";
     public static final String TEST_FIELD_TYPE = "TestFieldType";
     public static final String TEST_COLUMN = "TEST_COLUMN";
     static Integer newlyCreatedFieldSettingsId;
-    static Integer newlyCreatedInstanceId;
     static FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
-    private static DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
+
+    private static final TestInstanceCreator testInstanceCreator = new TestInstanceCreator();
 
     @BeforeClass
     public static void setUp() {
         TestHelper.setupDB();
-        DDPInstanceDto instanceDto = new DDPInstanceDto.Builder()
-                .withIsActive(false)
-                .withAuth0Token(false)
-                .withMigratedDdp(false)
-                .withInstanceName(TEST_INSTANCE)
-                .build();
-        newlyCreatedInstanceId = ddpInstanceDao.create(instanceDto);
-        FieldSettingsDto fieldSettingsDto = new FieldSettingsDto.Builder(newlyCreatedInstanceId)
+        FieldSettingsDto fieldSettingsDto = new FieldSettingsDto.Builder(testInstanceCreator.create())
                 .withColumnName(TEST_COLUMN)
                 .withDisplayType(Filter.TEXT)
                 .withFieldType(TEST_FIELD_TYPE)
@@ -49,15 +40,13 @@ public class ObjectTransformerIntegrationTest {
         if (Objects.nonNull(newlyCreatedFieldSettingsId)) {
             fieldSettingsDao.delete(newlyCreatedFieldSettingsId);
         }
-        if (Objects.nonNull(newlyCreatedInstanceId)) {
-            ddpInstanceDao.delete(newlyCreatedInstanceId);
-        }
+        testInstanceCreator.delete();
     }
 
 
     @Test
     public void transformObjectToMap() {
-        ObjectTransformer objectTransformer = new ObjectTransformer(TEST_INSTANCE);
+        ObjectTransformer objectTransformer = new ObjectTransformer(TestInstanceCreator.TEST_INSTANCE);
         String json = "{\"TEST_COLUMN\":\"TestValue\"}";
         long participantDataId = 9999;
         ParticipantData participantData = new ParticipantData(participantDataId, TEST_FIELD_TYPE, json);

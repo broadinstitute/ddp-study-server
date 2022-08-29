@@ -18,6 +18,8 @@ public class DBConstants {
     public static final String DDP_KIT_REQUEST = "ddp_kit_request";
     public static final String DDP_KIT = "ddp_kit";
 
+    public static final String REQUIRES_INSERT_KIT_TRACKING = "requires_insert_in_kit_tracking";
+
     //table alias
     public static final String DDP_PARTICIPANT_ALIAS = "p";
     public static final String DDP_PARTICIPANT_RECORD_ALIAS = "r";
@@ -104,6 +106,7 @@ public class DBConstants {
     public static final String EASYPOST_RETURN_ID = "easypost_return_id";
     public static final String DSM_SCAN_DATE = "scan_date";
     public static final String DSM_RECEIVE_DATE = "receive_date";
+    public static final String DSM_RECEIVE_BY = "receive_by";
     public static final String DSM_DEACTIVATED_DATE = "deactivated_date";
     public static final String COLLABORATOR_ID_PREFIX = "collaborator_id_prefix";
     public static final String COLLABORATOR_PARTICIPANT_ID = "bsp_collaborator_participant_id";
@@ -535,4 +538,5 @@ public class DBConstants {
     public static final String MERCURY_PDO_ID = "mercury_pdo_id";
     public static final String DDP_MERCURY_SEQUENCING_ALIAS = "cl";
     public static final String DDP_KIT_ALIAS = "kit";
+    public static final String TRACKING = "tracking";
 }
