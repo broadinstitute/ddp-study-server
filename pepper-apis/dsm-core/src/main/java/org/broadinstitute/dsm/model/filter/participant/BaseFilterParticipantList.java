@@ -24,6 +24,8 @@ import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
 import org.broadinstitute.dsm.model.elastic.search.Deserializer;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
+import org.broadinstitute.dsm.statics.RoutePath;
+import org.broadinstitute.dsm.util.UserUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.QueryParamsMap;
@@ -34,6 +36,8 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
     public static final String PARTICIPANT_DATA = "participantData";
     protected static final Gson GSON = new Gson();
     private Deserializer deserializer = null;
+
+    boolean showMedicalRecordRequestTracking = false;
 
     public BaseFilterParticipantList() {
         super(null);
@@ -46,6 +50,11 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
     @Override
     public ParticipantWrapperResult filter(QueryParamsMap queryParamsMap, Deserializer deserializer) {
         this.deserializer = deserializer;
+
+        //no need to check if realm and userID is set because it was already checked in FilterRoute
+        String realm = queryParamsMap.get(RoutePath.REALM).value();
+        String userIdRequest = queryParamsMap.get(UserUtil.USER_ID).value();
+        this.showMedicalRecordRequestTracking = UserUtil.checkUserAccess(realm, userIdRequest, "mr_view", null);
         return filter(queryParamsMap);
     }
 
@@ -54,7 +63,8 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
         Map<String, String> queryConditions = new HashMap<>();
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
         ParticipantWrapperPayload.Builder participantWrapperPayload =
-                new ParticipantWrapperPayload.Builder().withDdpInstanceDto(ddpInstanceDto).withFrom(from).withTo(to).withSortBy(sortBy);
+                new ParticipantWrapperPayload.Builder().withDdpInstanceDto(ddpInstanceDto).withFrom(from).withTo(to).withSortBy(sortBy)
+                        .withShowMedicalRecordRequestTracking(showMedicalRecordRequestTracking);
         ElasticSearch elasticSearch = new ElasticSearch();
         if (deserializer != null) {
             elasticSearch.setDeserializer(deserializer);
