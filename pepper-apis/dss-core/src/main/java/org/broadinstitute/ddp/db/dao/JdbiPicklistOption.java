@@ -8,6 +8,7 @@ import org.broadinstitute.ddp.db.dto.PicklistOptionDto;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.BindMethods;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
@@ -56,6 +57,14 @@ public interface JdbiPicklistOption extends SqlObject {
     long[] bulkInsertByDtos(@BindMethods("dto") List<PicklistOptionDto> optionDtos,
                             @Bind("picklistQuestionId") long picklistQuestionId,
                             @Bind("revisionId") long revisionId);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("fetchOptionById")
+    Optional<PicklistOptionDto> findById(@Bind("id") long id);
+    
+    @UseStringTemplateSqlLocator
+    @SqlUpdate("updateOptionByDto")
+    int update(@BindBean("dto") PicklistOptionDto optionDto);
 
     /**
      * Get all picklist options for given picklist question that are/were active at creation time of given
