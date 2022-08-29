@@ -87,7 +87,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     + "kit.dsm_kit_request_id, kit.dsm_kit_id, kit.kit_complete, kit.label_url_to, kit.label_url_return, "
                     + "kit.tracking_to_id, kit.tracking_return_id, kit.easypost_tracking_to_url, kit.easypost_tracking_return_url, "
                     + "kit.easypost_to_id, kit.easypost_shipment_status, kit.scan_date, kit.label_date, kit.error, kit.message, "
-                    + "kit.receive_date, kit.deactivated_date, kit.easypost_address_id_to, kit.deactivation_reason, "
+                    + "kit.receive_date, kit.receive_by, kit.deactivated_date, kit.easypost_address_id_to, kit.deactivation_reason, "
                     + "(select t.tracking_id from ddp_kit_tracking t where t.kit_label = kit.kit_label) as tracking_id, "
                     + "kit.kit_label, kit.express, kit.test_result, kit.needs_approval, kit.authorization, kit.denial_reason, "
                     + "kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order, kit.collection_date, "
@@ -108,7 +108,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     + "kit.label_url_return, kit.tracking_to_id, "
                     + "kit.tracking_return_id, kit.easypost_tracking_to_url, kit.easypost_tracking_return_url, kit.easypost_to_id, "
                     + "kit.easypost_shipment_status, kit.scan_date, kit.label_date, kit.error, kit.message, "
-                    + "kit.receive_date, kit.deactivated_date, kit.easypost_address_id_to, kit.deactivation_reason, tracking.tracking_id,"
+                    + "kit.receive_date, kit.receive_by, kit.deactivated_date, kit.easypost_address_id_to, kit.deactivation_reason, "
+                    + "tracking.tracking_id,"
                     + " kit.kit_label, kit.express, kit.test_result, kit.needs_approval, kit.authorization, kit.denial_reason, "
                     + " kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order, kit.collection_date, "
                     + "  kit.sequencing_restriction FROM ddp_kit kit "
@@ -313,6 +314,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     private String collectionDate;
     @ColumnName(DBConstants.SEQUENCING_RESTRICTION)
     private String sequencingRestriction;
+    @ColumnName(DBConstants.DSM_RECEIVE_BY)
+    private String receivedBy;
 
     private Boolean requiresInsertInKitTracking;
 
@@ -330,21 +333,21 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         this(null, collaboratorParticipantId, null, null, null, kitTypeName, dsmKitRequestId, null, null, null, null, null, null, null,
                 scanDate, error, null, receiveDate, null, deactivatedDate, null, null, null, null, null, null, externalOrderNumber, null,
                 externalOrderStatus, null, testResult, upsTrackingStatus, upsReturnStatus, externalOrderDate, careEvolve, uploadReason,
-                null, null, null, null, null);
+                null, null, null, null, null, null);
     }
 
     public KitRequestShipping(String participantId, String collaboratorParticipantId, String dsmKitId, String realm, String trackingToId,
                               String receiveDateString, String hruid, String gender) {
         this(participantId, collaboratorParticipantId, null, null, realm, null, null, null, null, null, trackingToId, null, null, null,
                 null, null, null, null, null, null, null, dsmKitId, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, receiveDateString, hruid, gender, null, null);
+                null, null, receiveDateString, hruid, gender, null, null, null);
     }
 
     public KitRequestShipping(Long dsmKitRequestId, Long dsmKitId, String easypostToId, String easypostAddressId, Boolean error,
                               String message) {
         this(null, null, null, null, null, null, dsmKitRequestId, dsmKitId, null, null, null, null, null, null, null, error, message, null,
                 easypostAddressId, null, null, null, null, easypostToId, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null);
+                null, null, null, null, null, null, null);
     }
 
     // shippingId = ddp_label !!!
@@ -356,7 +359,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                               String easypostToId, Long labelDate, String easypostShipmentStatus, String externalOrderNumber,
                               Boolean noReturn, String externalOrderStatus, String createdBy, String testResult, String upsTrackingStatus,
                               String upsReturnStatus, Long externalOrderDate, Boolean careEvolve, String uploadReason,
-                              String receiveDateString, String hruid, String gender, String collectionDate, String sequencingRestriction) {
+                              String receiveDateString, String hruid, String gender, String collectionDate, String sequencingRestriction,
+                              String receivedBy) {
         super(dsmKitRequestId, participantId, null, shippingId, externalOrderNumber, null, externalOrderStatus, null, externalOrderDate);
         this.collaboratorParticipantId = collaboratorParticipantId;
         this.bspCollaboratorSampleId = bspCollaboratorSampleId;
@@ -393,6 +397,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         this.gender = gender;
         this.collectionDate = collectionDate;
         this.sequencingRestriction = sequencingRestriction;
+        this.receivedBy = receivedBy;
     }
 
     public Boolean getError() {
@@ -426,7 +431,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                         rs.getString(DBConstants.KIT_TEST_RESULT), rs.getString(DBConstants.UPS_TRACKING_STATUS),
                         rs.getString(DBConstants.UPS_RETURN_STATUS), (Long) rs.getObject(DBConstants.EXTERNAL_ORDER_DATE),
                         rs.getBoolean(DBConstants.CARE_EVOLVE), rs.getString(DBConstants.UPLOAD_REASON), null, null, null,
-                        rs.getString(DBConstants.COLLECTION_DATE), rs.getString(DBConstants.SEQUENCING_RESTRICTION));
+                        rs.getString(DBConstants.COLLECTION_DATE), rs.getString(DBConstants.SEQUENCING_RESTRICTION),
+                        rs.getString(DBConstants.DSM_RECEIVE_BY));
         kitRequestShipping.setDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID));
         if (DBUtil.columnExists(rs, DBConstants.UPS_STATUS_DESCRIPTION) && StringUtils.isNotBlank(
                 rs.getString(DBConstants.UPS_STATUS_DESCRIPTION))) {
