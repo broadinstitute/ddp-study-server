@@ -18,6 +18,8 @@ public class DBConstants {
     public static final String DDP_KIT_REQUEST = "ddp_kit_request";
     public static final String DDP_KIT = "ddp_kit";
 
+    public static final String REQUIRES_INSERT_KIT_TRACKING = "requires_insert_in_kit_tracking";
+
     //table alias
     public static final String DDP_PARTICIPANT_ALIAS = "p";
     public static final String DDP_PARTICIPANT_RECORD_ALIAS = "r";
@@ -535,4 +537,5 @@ public class DBConstants {
     public static final String MERCURY_PDO_ID = "mercury_pdo_id";
     public static final String DDP_MERCURY_SEQUENCING_ALIAS = "cl";
     public static final String DDP_KIT_ALIAS = "kit";
+    public static final String TRACKING = "tracking";
 }
