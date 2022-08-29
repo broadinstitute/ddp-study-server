@@ -5,8 +5,10 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.Dao;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantRecordDao;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.model.participant.data.ParticipantRecord;
 import org.broadinstitute.dsm.model.settings.field.FieldSettings;
@@ -54,28 +56,17 @@ public class SingularDefaultValues extends BasicDefaultDataMaker {
 
     private boolean insertParticipantData(Map<String, String> data, String ddpParticipantId) {
         this.setDataAccess(ParticipantRecordDao.of());
-
-        ParticipantRecord participantRecord = new ParticipantRecord(ddpParticipantId, Integer.parseInt(instance.getDdpInstanceId()),
+        DDPInstanceDto ddpInstanceDto =
+                new DDPInstanceDao().getDDPInstanceByInstanceId(Integer.parseInt(instance.getDdpInstanceId())).orElseThrow();
+        ParticipantRecord participantRecord = new ParticipantRecord(ddpParticipantId, ddpInstanceDto,
                 (ParticipantRecordDao) dataAccess);
         int newParticipantId = participantRecord.createNewParticipantRecord();
-        return participantRecord.insertDefaultValues(data, newParticipantId, instance, this.elasticSearchParticipantDto);
+        return participantRecord.insertDefaultValues(data, newParticipantId);
     }
 
     private void setDataAccess(Dao dao) {
         this.dataAccess = dao;
     }
 
-//     this.setDataAccess(new ParticipantDataDao());
-//    org.broadinstitute.dsm.model.participant.data.ParticipantData participantData =
-//            new org.broadinstitute.dsm.model.participant.data.ParticipantData(dataAccess);
-//        participantData.setData(ddpParticipantId, Integer.parseInt(instance.getDdpInstanceId()), fieldTypeId, data);
-//        try {
-//        participantData.insertParticipantData("SYSTEM");
-//        logger.info("values: " + data.keySet().stream().collect(Collectors.joining(", ", "[", "]"))
-//                + " were created for participant with id: " + ddpParticipantId + " at " + FIELD_TYPE);
-//        return true;
-//    } catch (RuntimeException re) {
-//        return false;
-//    }
 
 }

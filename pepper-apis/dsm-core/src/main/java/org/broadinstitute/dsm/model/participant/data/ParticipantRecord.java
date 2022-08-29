@@ -5,9 +5,7 @@ import java.util.Map;
 import com.google.gson.Gson;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.Participant;
-import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantRecordDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -16,9 +14,11 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.broadinstitute.dsm.model.elastic.export.painless.AddToSingleScriptBuilder;
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
-import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
+import org.broadinstitute.dsm.util.export.DefaultParticipantExporter;
+import org.broadinstitute.dsm.util.export.ElasticSearchParticipantExporterFactory;
+import org.broadinstitute.dsm.util.export.ParticipantExportPayload;
 
 @Slf4j
 @Data
@@ -26,16 +26,18 @@ public class ParticipantRecord {
     private String ddpParticipantId;
     private int participantId;
     private int participantRecordId;
-    private int ddpInstanceId;
+    private DDPInstanceDto ddpInstanceDto;
     private String fieldTypeId;
+    private ParticipantExportPayload participantExportPayload;
+    private Participant participant;
 
     private ParticipantRecordDao participantRecordDao;
     private Map<String, String> data;
 
 
-    public ParticipantRecord(String ddpParticipantId, int ddpInstanceId, ParticipantRecordDao participantRecordDao) {
+    public ParticipantRecord(String ddpParticipantId, DDPInstanceDto ddpInstanceDto, ParticipantRecordDao participantRecordDao) {
         this.ddpParticipantId = ddpParticipantId;
-        this.ddpInstanceId = ddpInstanceId;
+        this.ddpInstanceDto = ddpInstanceDto;
         this.participantRecordDao = participantRecordDao;
     }
 
@@ -47,13 +49,26 @@ public class ParticipantRecord {
 
     private int insertDdpParticipant() {
         ParticipantDto participantDto =
-                new ParticipantDto.Builder(ddpInstanceId, System.currentTimeMillis())
+                new ParticipantDto.Builder(ddpInstanceDto.getDdpInstanceId(), System.currentTimeMillis())
                         .withDdpParticipantId(ddpParticipantId)
                         .withLastVersion(0)
                         .withLastVersionDate("")
                         .withChangedBy("SYSTEM")
                         .build();
-        return new ParticipantDao().create(participantDto);
+
+        int participantId = new ParticipantDao().create(participantDto);
+        participantExportPayload = new ParticipantExportPayload(
+                participantId,
+                ddpParticipantId,
+                String.valueOf(ddpInstanceDto.getDdpInstanceId()),
+                ddpInstanceDto.getInstanceName(),
+                ddpInstanceDto
+        );
+        ElasticSearchParticipantExporterFactory.fromPayload(
+                participantExportPayload
+        ).export();
+
+        return participantId;
     }
 
     private int insertDdpParticipantRecord(int participantId) {
@@ -64,15 +79,12 @@ public class ParticipantRecord {
         return participantRecordDao.create(participantRecordDto);
     }
 
-    public boolean insertDefaultValues(Map<String, String> data, int participantId, DDPInstance instance,
-                                       ElasticSearchParticipantDto elasticSearchParticipantDto) {
+    public boolean insertDefaultValues(Map<String, String> data, int participantId) {
         String additionalValues = new Gson().toJson(data);
         participantRecordDao.insertDefaultAdditionalValues(participantId, additionalValues);
-        Participant participant = elasticSearchParticipantDto.getDsm().orElseThrow().getParticipant().orElse(new Participant());
+        participant = new DefaultParticipantExporter(participantExportPayload).buildParticipantFromPayload(participantExportPayload);
         participant.setAdditionalValuesJson(additionalValues);
-        DDPInstanceDto ddpInstanceDto =
-                new DDPInstanceDao().getDDPInstanceByInstanceId(Integer.parseInt(instance.getDdpInstanceId())).orElseThrow();
-        String participantGuid = Exportable.getParticipantGuid(ddpParticipantId, instance.getParticipantIndexES());
+        String participantGuid = Exportable.getParticipantGuid(ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
         try {
             UpsertPainlessFacade.of(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS, participant, ddpInstanceDto,
                     DBConstants.PARTICIPANT_ID, ESObjectConstants.DOC_ID,

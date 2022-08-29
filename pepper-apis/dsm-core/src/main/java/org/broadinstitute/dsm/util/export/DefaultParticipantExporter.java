@@ -35,7 +35,7 @@ public class DefaultParticipantExporter implements Exportable {
                 new AddToSingleScriptBuilder());
     }
 
-    protected Participant buildParticipantFromPayload(ParticipantExportPayload payload) {
+    public Participant buildParticipantFromPayload(ParticipantExportPayload payload) {
         return new Participant(payload.getParticipantId(),
                 payload.getDdpParticipantId(),
                 Integer.parseInt(payload.getInstanceId())
