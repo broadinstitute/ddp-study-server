@@ -33,7 +33,7 @@ import org.jdbi.v3.core.Handle;
 @Slf4j
 public class SingularAboutHealthySelectLogic implements CustomTask {
     private static final String PATCH_PATH = "patches";
-    private static final String PATCH_CONF_NAME = "SingularAboutHealthySelectLogic.conf";
+    private static final String PATCH_CONF_NAME = "ddp-8576-select-logic.conf";
     private static final String CONFIG_STUDY_GUID = "study.guid";
 
     private static class Keys {
@@ -96,7 +96,7 @@ public class SingularAboutHealthySelectLogic implements CustomTask {
 
         daoSetup(handle);
 
-        final var studyGuid = studyConfig.getString(Keys.ChangeSet.STUDY);
+        final var studyGuid = patchConfig.getString(Keys.ChangeSet.STUDY);
         final var studyDto = Optional.ofNullable(studySql.findByStudyGuid(studyGuid)).orElseThrow(() -> {
             return new DDPException(String.format("failed to locate the study '%s'", studyGuid));
         });
@@ -108,10 +108,10 @@ public class SingularAboutHealthySelectLogic implements CustomTask {
 
                     final var activityDef = getActivityDef(studyDto, activityCode, versionTag);
 
-                    final var questionStableId = patchConfig.getString(Keys.ChangeContent.STABLE_ID);
+                    final var questionStableId = config.getString(Keys.ChangeContent.STABLE_ID);
                     final var picklistDef = getPicklistDef(activityDef, questionStableId);
 
-                    final var optionStableId = patchConfig.getString(Keys.ChangeContent.OPTION_ID);
+                    final var optionStableId = config.getString(Keys.ChangeContent.OPTION_ID);
                     var optionDef = picklistDef.getAllPicklistOptions().stream()
                             .filter((option) -> StringUtils.equals(optionStableId, option.getStableId()))
                             .findFirst()
@@ -122,7 +122,7 @@ public class SingularAboutHealthySelectLogic implements CustomTask {
                                 return new DDPException(message);
                             });
 
-                    var newValue = patchConfig.getBoolean(Keys.ChangeContent.EXCLUSIVE);
+                    var newValue = config.getBoolean(Keys.ChangeContent.EXCLUSIVE);
 
                     if (optionDef.isExclusive() == newValue) {
                         log.info("No change required- the value of isExclusive is already '{}' [question:{},option:{}]",
@@ -138,7 +138,6 @@ public class SingularAboutHealthySelectLogic implements CustomTask {
                             .orElseThrow(() -> {
                                 return new DDPException(String.format("failed to find option with id %s", optionDef.getOptionId()));
                             });
-                    
                     optionDto.setExclusive(newValue);
                     var rowsUpdated = picklistOptionSql.update(optionDto);
                     DBUtils.checkInsert(1, rowsUpdated);

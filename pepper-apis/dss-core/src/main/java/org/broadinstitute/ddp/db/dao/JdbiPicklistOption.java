@@ -60,11 +60,12 @@ public interface JdbiPicklistOption extends SqlObject {
 
     @UseStringTemplateSqlLocator
     @SqlQuery("fetchOptionById")
+    @RegisterConstructorMapper(PicklistOptionDto.class)
     Optional<PicklistOptionDto> findById(@Bind("id") long id);
     
     @UseStringTemplateSqlLocator
     @SqlUpdate("updateOptionByDto")
-    int update(@BindBean("dto") PicklistOptionDto optionDto);
+    int update(@BindMethods("dto") PicklistOptionDto optionDto);
 
     /**
      * Get all picklist options for given picklist question that are/were active at creation time of given

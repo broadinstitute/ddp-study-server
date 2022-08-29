@@ -15,16 +15,16 @@ insert into picklist_option (picklist_question_id, picklist_option_stable_id, to
        display_order, revision_id)
 values (:picklistQuestionId, :dto.getStableId, :dto.getTooltipTemplateId,
        :dto.getOptionLabelTemplateId, :dto.getDetailLabelTemplateId,
-       :dto.isAllowDetails, :dto.isExclusive, :dto.isDefault, :dto.getDisplayOrder, :revisionId)
+       :dto.isAllowDetails, :dto.exclusive, :dto.isDefault, :dto.getDisplayOrder, :revisionId)
 >>
 
 fetchOptionById() ::= <<
 SELECT  picklist_option_id,
         picklist_option_stable_id,
         value,
-        option_table_template_id,
+        option_label_template_id,
         tooltip_template_id,
-        default_label_template_id,
+        detail_label_template_id,
         allow_details,
         is_exclusive,
         is_default,
@@ -34,25 +34,30 @@ SELECT  picklist_option_id,
         revision.end_date AS revision_end_timestamp,
         nested_options_template_id
 FROM picklist_option
-    JOIN revision ON revision.revision_id = picklist_option.picklist_option_id
+    JOIN revision ON revision.revision_id = picklist_option.revision_id
 WHERE picklist_option.picklist_option_id = :id
 >>
 
+<!
+    The longer names here are due to the PicklistOptionDto
+    not being completely Java Bean compatible.
+    (bskinner - 2022.08.29)
+!>
 updateOptionByDto() ::= <<
 UPDATE `picklist_option`
-SET picklist_option_stable_id = :dto.stableId,
-    value = :dto.value,
-    option_label_template_id = :dto.optionLabelTemplateId,
-    tooltip_template_id = :dto.tooltipTemplateId,
-    detail_label_template_id = :dto.detailLabelTemplateId,
-    allow_details = :dto.allowDetails,
+SET picklist_option_stable_id = :dto.getStableId,
+    value = :dto.getValue,
+    option_label_template_id = :dto.getOptionLabelTemplateId,
+    tooltip_template_id = :dto.getTooltipTemplateId,
+    detail_label_template_id = :dto.getDetailLabelTemplateId,
+    allow_details = :dto.isAllowDetails,
     is_exclusive = :dto.isExclusive,
     is_default = :dto.isDefault,
-    display_order = :dto.displayOrder,
-    revision.revision_id = :dto.revisionId,
-    nested_options_template_id = :dto.nestedOptionsTemplateId
+    display_order = :dto.getDisplayOrder,
+    revision_id = :dto.getRevisionId,
+    nested_options_template_id = :dto.getNestedOptionsTemplateId
 WHERE
-    picklist_option_id = :dto.id
+    picklist_option_id = :dto.getId
 >>
 
 queryInfoByOptionStableIdAndRevision() ::= <<
