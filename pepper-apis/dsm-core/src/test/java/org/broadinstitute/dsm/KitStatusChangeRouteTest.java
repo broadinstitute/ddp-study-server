@@ -8,7 +8,8 @@ import java.util.List;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.dsm.route.KitStatusChangeRoute;
+import org.broadinstitute.dsm.route.kit.KitStatusChangeRoute;
+import org.broadinstitute.dsm.model.kit.ScanError;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.TestUtil;
@@ -32,7 +33,7 @@ public class KitStatusChangeRouteTest extends TestHelper {
     public static void first() {
         setupDB();
 
-        route = new KitStatusChangeRoute(notificationUtil);
+        //route = new KitStatusChangeRoute(notificationUtil);
     }
 
     @AfterClass
@@ -57,8 +58,8 @@ public class KitStatusChangeRouteTest extends TestHelper {
 
         String json = TestUtil.readFile("FinalScanPayload.json");
         JsonArray scans = (JsonArray) (new JsonParser().parse(json));
-        List<KitStatusChangeRoute.ScanError> scanErrorList = new ArrayList<>();
-        route.updateKits("finalScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
+        List<ScanError> scanErrorList = new ArrayList<>();
+        //route.updateKits("finalScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
 
         List<String> strings = new ArrayList<>();
         strings.add(FAKE_LATEST_KIT + "_1");
@@ -106,8 +107,8 @@ public class KitStatusChangeRouteTest extends TestHelper {
 
         String json = TestUtil.readFile("TrackingScanPayload.json");
         JsonArray scans = (JsonArray) (new JsonParser().parse(json));
-        List<KitStatusChangeRoute.ScanError> scanErrorList = new ArrayList<>();
-        route.updateKits("trackingScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
+        List<ScanError> scanErrorList = new ArrayList<>();
+        //route.updateKits("trackingScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
 
         List<String> strings = new ArrayList<>();
         strings.add(FAKE_DSM_LABEL_UID + "_3");
@@ -115,7 +116,7 @@ public class KitStatusChangeRouteTest extends TestHelper {
         //check if kitlabel was added to tracking table
         Assert.assertEquals("1", count);
 
-        route.updateKits("finalScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
+        //route.updateKits("finalScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
 
         strings = new ArrayList<>();
         strings.add(FAKE_LATEST_KIT + "_3");
@@ -132,8 +133,8 @@ public class KitStatusChangeRouteTest extends TestHelper {
 
         String json = TestUtil.readFile("TrackingScanPayload.json");
         JsonArray scans = (JsonArray) (new JsonParser().parse(json));
-        List<KitStatusChangeRoute.ScanError> scanErrorList = new ArrayList<>();
-        route.updateKits("finalScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
+        List<ScanError> scanErrorList = new ArrayList<>();
+        //route.updateKits("finalScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
 
         List<String> strings = new ArrayList<>();
         strings.add(FAKE_LATEST_KIT + "_4");
@@ -154,8 +155,8 @@ public class KitStatusChangeRouteTest extends TestHelper {
         }
         String json = TestUtil.readFile("TrackingScanPayload.json");
         JsonArray scans = (JsonArray) (new JsonParser().parse(json));
-        List<KitStatusChangeRoute.ScanError> scanErrorList = new ArrayList<>();
-        route.updateKits("trackingScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
+        List<ScanError> scanErrorList = new ArrayList<>();
+        //route.updateKits("trackingScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
 
         List<String> strings = new ArrayList<>();
         strings.add(FAKE_DSM_LABEL_UID + "_3");
@@ -164,6 +165,6 @@ public class KitStatusChangeRouteTest extends TestHelper {
         Assert.assertEquals("1", count);
 
         scanErrorList = new ArrayList<>();
-        route.updateKits("trackingScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
+        //route.updateKits("trackingScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
     }
 }
