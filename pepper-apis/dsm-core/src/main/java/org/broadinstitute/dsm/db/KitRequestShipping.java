@@ -314,6 +314,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     @ColumnName(DBConstants.SEQUENCING_RESTRICTION)
     private String sequencingRestriction;
 
+    private Boolean requiresInsertInKitTracking;
+
     public KitRequestShipping() {
     }
 
@@ -1716,5 +1718,13 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     @Override
     public long extractDdpInstanceId() {
         return getDdpInstanceId();
+    }
+
+    public boolean isBloodKit() {
+        return requiresInsertInKitTracking;
+    }
+
+    public boolean hasTrackingScan() {
+        return StringUtils.isNotBlank(trackingId);
     }
 }

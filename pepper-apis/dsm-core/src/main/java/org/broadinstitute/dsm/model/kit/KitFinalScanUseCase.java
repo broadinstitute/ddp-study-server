@@ -6,9 +6,7 @@ import java.util.Optional;
 
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
-import org.broadinstitute.dsm.db.dao.ddp.kitrequest.KitRequestDao;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
-import org.broadinstitute.dsm.db.dto.ddp.kitrequest.KitRequestDto;
 import org.broadinstitute.dsm.route.kit.KitPayload;
 import org.broadinstitute.dsm.route.kit.ScanPayload;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -27,23 +25,29 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
         Optional<ScanError> result;
         String kitLabel = scanPayload.getKitLabel();
         String ddpLabel = scanPayload.getDdpLabel();
-        if (kitLabel.length() < 14) {
+        if (isSalivaKit(ddpLabel) && kitLabel.length() < 14) {
             return Optional.of(new ScanError(ddpLabel, "Barcode contains less than 14 digits, "
                     + "You can manually enter any missing digits above."));
         }
-        if (kitDao.isBloodKit(ddpLabel)) {
-            if (kitDao.hasTrackingScan(kitLabel)) {
-                result = updateKitRequest(kitLabel, ddpLabel);
-                trigerEventsIfSuccessfulKitUpdate(result, ddpLabel, getKitRequestShipping(kitLabel, ddpLabel));
-                KitRequestDao kitRequestDao = new KitRequestDao();
-                kitRequestDao.getKitRequestByLabel(ddpLabel).ifPresent(this::writeSampleSentToES);
+        Optional<KitRequestShipping> kitByDdpLabel = kitDao.getKitByDdpLabel(ddpLabel);
+        if (kitByDdpLabel.isPresent()) {
+            KitRequestShipping kitRequestShipping = kitByDdpLabel.get();
+            if (kitRequestShipping.isBloodKit()) {
+                if (kitRequestShipping.hasTrackingScan()) {
+                    result = updateKitRequest(kitLabel, ddpLabel);
+                    trigerEventsIfSuccessfulKitUpdate(result, ddpLabel, getKitRequestShipping(kitLabel, ddpLabel));
+                    this.writeSampleSentToES(kitRequestShipping);
+                } else {
+                    result = Optional.of(
+                            new ScanError(
+                                    ddpLabel, "Kit with DSM Label " + ddpLabel + " does not have a Tracking Label"));
+                }
             } else {
-                result = Optional.of(
-                        new ScanError(
-                                ddpLabel, "Kit with DSM Label " + ddpLabel + " does not have a Tracking Label"));
+                result = updateKitRequest(kitLabel, ddpLabel);
             }
         } else {
-            result = updateKitRequest(kitLabel, ddpLabel);
+            result = Optional.of(new ScanError(
+                    ddpLabel, "Kit with DSM Label " + ddpLabel + " does not exist"));
         }
         return result;
     }
@@ -60,8 +64,8 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
         return kitRequestShipping;
     }
 
-    private void writeSampleSentToES(KitRequestDto kitRequest) {
-        int ddpInstanceId = kitRequest.getDdpInstanceId();
+    private void writeSampleSentToES(KitRequestShipping kitRequest) {
+        int ddpInstanceId = Long.valueOf(kitRequest.getDdpInstanceId()).intValue();
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(ddpInstanceId);
         Map<String, Object> nameValuesMap = new HashMap<>();
         ElasticSearchDataUtil.setCurrentStrictYearMonthDay(nameValuesMap, ESObjectConstants.SENT);
@@ -69,6 +73,10 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
             ElasticSearchUtil.writeSample(ddpInstance, kitRequest.getDdpKitRequestId(), kitRequest.getDdpParticipantId(),
                     ESObjectConstants.SAMPLES, ESObjectConstants.KIT_REQUEST_ID, nameValuesMap);
         }
+    }
+
+    private boolean isSalivaKit(String ddpLabel) {
+        return !kitDao.isBloodKit(ddpLabel);
     }
 
 }

@@ -74,6 +74,18 @@ public class KitDaoImpl implements KitDao {
             + "SET "
             + "scan_date = ?, scan_by = ?, tracking_id = ?, kit_label = ?";
 
+    private static final String SQL_GET_KIT_BY_DDP_LABEL = "SELECT req.ddp_kit_request_id, req.ddp_instance_id, req.ddp_kit_request_id, "
+            + "req.kit_type_id, req.bsp_collaborator_participant_id, req.bsp_collaborator_sample_id, req.ddp_participant_id, "
+            + "req.ddp_label, req.created_by, req.created_date, req.external_order_number, "
+            + "req.external_order_date, req.external_order_status, req.external_response, req.upload_reason, "
+            + "req.order_transmitted_at, req.dsm_kit_request_id, "
+            + "kt.requires_insert_in_kit_tracking, track.tracking_id "
+            + "FROM ddp_kit as kit "
+            + "LEFT JOIN ddp_kit_request AS req ON req.dsm_kit_request_id = kit.dsm_kit_request_id "
+            + "LEFT JOIN ddp_kit_tracking AS track ON kit.kit_label = track.kit_label "
+            + "LEFT JOIN kit_type AS kt ON kt.kit_type_id = req.kit_type_id "
+            + "WHERE req.ddp_label = ?";
+
     private static final String INSERT_KIT = "INSERT INTO "
             + "ddp_kit "
             + "(dsm_kit_request_id, "
@@ -361,6 +373,45 @@ public class KitDaoImpl implements KitDao {
             throw new RuntimeException("Error deleting kit with id: " + kitId, simpleResult.resultException);
         }
         return (int) simpleResult.resultValue;
+    }
+
+    @Override
+    public Optional<KitRequestShipping> getKitByDdpLabel(String ddpLabel) {
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult(0);
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_BY_DDP_LABEL)) {
+                stmt.setString(1, ddpLabel);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        KitRequestShipping kitRequestShipping = new KitRequestShipping();
+                        kitRequestShipping.setDsmKitRequestId(rs.getLong(DBConstants.DSM_KIT_REQUEST_ID));
+                        kitRequestShipping.setDdpInstanceId(rs.getLong(DBConstants.DDP_INSTANCE_ID));
+                        kitRequestShipping.setDdpKitRequestId(rs.getString(DBConstants.DDP_KIT_REQUEST_ID));
+                        kitRequestShipping.setKitTypeId(String.valueOf(rs.getInt(DBConstants.KIT_TYPE_ID)));
+                        kitRequestShipping.setBspCollaboratorParticipantId(rs.getString(DBConstants.COLLABORATOR_PARTICIPANT_ID));
+                        kitRequestShipping.setBspCollaboratorSampleId(rs.getString(DBConstants.BSP_COLLABORATOR_SAMPLE_ID));
+                        kitRequestShipping.setDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID));
+                        kitRequestShipping.setDdpLabel(rs.getString(DBConstants.DSM_LABEL));
+                        kitRequestShipping.setCreatedBy(rs.getString(DBConstants.CREATED_BY));
+                        kitRequestShipping.setCreatedDate(rs.getLong(DBConstants.CREATED_DATE));
+                        kitRequestShipping.setExternalOrderNumber(rs.getString(DBConstants.EXTERNAL_ORDER_NUMBER));
+                        kitRequestShipping.setExternalOrderDate(rs.getLong(DBConstants.EXTERNAL_ORDER_DATE));
+                        kitRequestShipping.setExternalOrderStatus(rs.getString(DBConstants.EXTERNAL_ORDER_STATUS));
+                        kitRequestShipping.setUploadReason(rs.getString(DBConstants.UPLOAD_REASON));
+                        kitRequestShipping.setRequiresInsertInKitTracking(rs.getBoolean(DBConstants.REQUIRES_INSERT_KIT_TRACKING));
+                        kitRequestShipping.setTrackingId(rs.getString(DBConstants.TRACKING_ID));
+                        dbVals.resultValue = kitRequestShipping;
+                    }
+                }
+            } catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            if (dbVals.resultException != null) {
+                throw new RuntimeException("Error getting kit request with ddp label " + ddpLabel, dbVals.resultException);
+            }
+            return dbVals;
+        });
+        return Optional.ofNullable((KitRequestShipping) results.resultValue);
     }
 
     public KitRequestShipping getKitRequestShipping(@NonNull ResultSet rs) throws SQLException {
