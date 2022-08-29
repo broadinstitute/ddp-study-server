@@ -50,6 +50,7 @@ public class SingularEmailEventUpdates implements CustomTask {
         log.info("TASK:: SingularEmailEventUpdates ");
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid"));
         updateEmailEvents(handle, studyDto);
+        updateEmailEventsExprs(handle, studyDto);
     }
 
     private void updateNotificationAction(Handle handle, StudyDto studyDto, String templateKey, String currDelaySeconds,
@@ -84,6 +85,30 @@ public class SingularEmailEventUpdates implements CustomTask {
         log.info("Email Event configurations (postDelaySeconds) has been updated in study {}", cfg.getString("study.guid"));
     }
 
+    private void updateEmailEventsExprs(Handle handle, StudyDto studyDto) {
+        var helper = handle.attach(SingularEmailEventUpdates.SqlHelper.class);
+        if (!dataCfg.hasPath("emailEventsExpr")) {
+            throw new DDPException("There is no 'emailEventsExpr' configuration.");
+        }
+        log.info("Updating singular DSM_NOTIFICATION email events configuration expressions...");
+        List<? extends Config> events = dataCfg.getConfigList("emailEventsExpr");
+        for (Config eventCfg : events) {
+            log.info("Updating event configuration expression for singular email : {}", eventCfg.getString("key"));
+            String templateKey = varsCfg.getString("emails." + eventCfg.getString("key"));
+            updateNotificationExpr(handle, studyDto, templateKey,
+                    eventCfg.getString("currExpr"), eventCfg.getString("newExpr"), helper);
+        }
+        log.info("Email Event configurations (expressions) has been updated in study {}", cfg.getString("study.guid"));
+    }
+
+    private void updateNotificationExpr(Handle handle, StudyDto studyDto, String templateKey, String currExpr,
+                                          String newExpr, SingularEmailEventUpdates.SqlHelper helper) {
+        Long dsmEventId = helper.findExistingSingularDsmEvent(studyDto.getId(), "DSM_NOTIFICATION", currExpr);
+        int rowCount = helper.updateExpressionTextById(dsmEventId, newExpr);
+        DBUtils.checkUpdate(1, rowCount);
+        log.info("Updated expression for event config ID : {} ", dsmEventId);
+    }
+
     private interface SqlHelper extends SqlObject {
 
         @SqlQuery("select e.event_configuration_id from user_notification_event_action AS act "
@@ -101,6 +126,22 @@ public class SingularEmailEventUpdates implements CustomTask {
         @SqlUpdate("update event_configuration ec set ec.post_delay_seconds = :postDelaySeconds"
                 + " where ec.event_configuration_id = :eventConfigId")
         int updateDelayToEvent(@Bind("eventConfigId") long eventConfigId, @Bind("postDelaySeconds") long postDelaySeconds);
+
+        @SqlQuery(" select event_configuration_id from event_configuration c, event_trigger et, event_trigger_type tt, expression e"
+                + " where c.event_trigger_id = et.event_trigger_id"
+                + " and tt.event_trigger_type_id = et.event_trigger_type_id"
+                + " and c.precondition_expression_id = e.expression_id"
+                + " and tt.event_trigger_type_code = :triggerType "
+                + " and c.umbrella_study_id = :studyId"
+                + " and e.expression_text = :exprText ")
+        Long findExistingSingularDsmEvent(@Bind("studyId") long studyId, @Bind("triggerType") String triggerType,
+                                                 @Bind("exprText") String exprText);
+
+        @SqlUpdate("update expression as e, "
+                + " (select precondition_expression_id from event_configuration ec where ec.event_configuration_id = :id) as e2"
+                + " set expression_text = :text where e.expression_id = e2.precondition_expression_id")
+        int updateExpressionTextById(@Bind("id") long id, @Bind("text") String text);
+
     }
 
 }
