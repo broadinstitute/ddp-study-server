@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.broadinstitute.dsm.model.elastic.mapping.FieldTypeExtractor;
@@ -46,9 +47,13 @@ public abstract class MappingGenerator extends BaseGenerator {
     }
 
     @Override
-    protected Object parseElement() {
-        parser.setFieldName(getFieldName());
-        return parser.parse(getFieldName());
+    protected String getValueForParser() {
+        return getFieldName();
+    }
+
+    @Override
+    protected String getValueForParser(NameValue nameValue) {
+        return nameValue.getCamelCaseFieldName();
     }
 
     public Map<String, Object> getCompleteMap(Object propertyMap) {
@@ -87,6 +92,8 @@ public abstract class MappingGenerator extends BaseGenerator {
     }
 
     private String getFieldFullName(String fieldName) {
-        return String.join(DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, getPropertyName(), ESObjectConstants.DYNAMIC_FIELDS, fieldName);
+        return String.join(
+                DBConstants.ALIAS_DELIMITER, ESObjectConstants.DSM, getPropertyName(), ESObjectConstants.DYNAMIC_FIELDS, fieldName
+        );
     }
 }

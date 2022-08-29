@@ -1,6 +1,8 @@
 package org.broadinstitute.dsm.model;
 
 import lombok.Data;
+import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 
 @Data
 public class NameValue {
@@ -15,5 +17,9 @@ public class NameValue {
 
     public NameValue() {
 
+    }
+
+    public String getCamelCaseFieldName() {
+        return CamelCaseConverter.of(Util.getDBElement(this.name).getColumnName()).convert();
     }
 }
