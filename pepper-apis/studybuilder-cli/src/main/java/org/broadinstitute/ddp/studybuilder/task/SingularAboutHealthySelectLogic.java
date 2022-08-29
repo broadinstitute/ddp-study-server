@@ -7,13 +7,13 @@ import java.util.Optional;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigException;
 import com.typesafe.config.ConfigFactory;
-
 import lombok.extern.slf4j.Slf4j;
-
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
+import org.broadinstitute.ddp.db.dao.JdbiPicklistOption;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -28,7 +28,7 @@ import org.jdbi.v3.core.Handle;
  * and IF_YOU_HAVE_HAD_ARRHYTHMIA (ABOUT_HEALTHY) questions to mark the DO_NOT_REQUIRE
  * and DID_NOT_REQUIRED options (respectively) as exclusive.
  * 
- * See https://broadinstitute.atlassian.net/browse/DDP-8576
+ * <p>See https://broadinstitute.atlassian.net/browse/DDP-8576
  */
 @Slf4j
 public class SingularAboutHealthySelectLogic implements CustomTask {
@@ -60,6 +60,7 @@ public class SingularAboutHealthySelectLogic implements CustomTask {
     private JdbiActivity activitySql;
     private JdbiActivityVersion activityVersionSql;
     private FormActivityDao activityDao;
+    private JdbiPicklistOption picklistOptionSql;
 
     @Override
     public void init(Path configPath, Config studyConfig, Config varsConfig) {
@@ -106,28 +107,49 @@ public class SingularAboutHealthySelectLogic implements CustomTask {
                     final var versionTag = config.getString(Keys.ChangeContent.VERSION_TAG);
 
                     final var activityDef = getActivityDef(studyDto, activityCode, versionTag);
-                    final var picklistDef = getPicklistDef(activityDef, patchConfig.getString(Keys.ChangeContent.STABLE_ID));
 
-                    var optionId = patchConfig.getString(Keys.ChangeContent.OPTION_ID);
+                    final var questionStableId = patchConfig.getString(Keys.ChangeContent.STABLE_ID);
+                    final var picklistDef = getPicklistDef(activityDef, questionStableId);
+
+                    final var optionStableId = patchConfig.getString(Keys.ChangeContent.OPTION_ID);
                     var optionDef = picklistDef.getAllPicklistOptions().stream()
-                            .filter((option) -> StringUtils.equals(optionId, option.getStableId()))
+                            .filter((option) -> StringUtils.equals(optionStableId, option.getStableId()))
                             .findFirst()
                             .orElseThrow(() -> {
-                                return new DDPException();
+                                var message = String.format("failed to find option definition for [question:%s,option:%s]",
+                                        questionStableId,
+                                        optionStableId);
+                                return new DDPException(message);
                             });
 
                     var newValue = patchConfig.getBoolean(Keys.ChangeContent.EXCLUSIVE);
 
-                    if (optionDef.isExclusive() != newValue) {
-                        log.info("setting isExclusive:{} for [activity:{},question:{},option:{}]",
-                            newValue,
-                            activityCode,
-                            picklistDef.getStableId(),
-                            optionId);
-                        optionDef = optionDef.toBuilder().isExclusive(newValue).build();
-
+                    if (optionDef.isExclusive() == newValue) {
+                        log.info("No change required- the value of isExclusive is already '{}' [question:{},option:{}]",
+                                newValue,
+                                questionStableId,
+                                optionStableId);
+                        return;
                     }
+
+                    assert optionDef.getOptionId() != null;
+
+                    var optionDto = picklistOptionSql.findById(optionDef.getOptionId())
+                            .orElseThrow(() -> {
+                                return new DDPException(String.format("failed to find option with id %s", optionDef.getOptionId()));
+                            });
+                    
+                    optionDto.setExclusive(newValue);
+                    var rowsUpdated = picklistOptionSql.update(optionDto);
+                    DBUtils.checkInsert(1, rowsUpdated);
+
+                    log.info("Successfully set isExclusive = {} for [question:{},option:{}]",
+                            newValue,
+                            questionStableId,
+                            optionStableId);
                 });
+
+        log.info("TASK:: {} was successfully applied", taskName);
 
         daoTearDown();
     }
@@ -137,6 +159,7 @@ public class SingularAboutHealthySelectLogic implements CustomTask {
         this.activitySql = handle.attach(JdbiActivity.class);
         this.activityVersionSql = handle.attach(JdbiActivityVersion.class);
         this.activityDao = handle.attach(FormActivityDao.class);
+        this.picklistOptionSql = handle.attach(JdbiPicklistOption.class);
     }
 
     private void daoTearDown() {
@@ -144,6 +167,7 @@ public class SingularAboutHealthySelectLogic implements CustomTask {
         this.activitySql = null;
         this.activityVersionSql = null;
         this.activityDao = null;
+        this.picklistOptionSql = null;
     }
 
     private FormActivityDef getActivityDef(StudyDto study, String activityCode, String versionTag) {
@@ -151,18 +175,18 @@ public class SingularAboutHealthySelectLogic implements CustomTask {
         final var studyId = study.getId();
 
         final var activity = activitySql.findActivityByStudyGuidAndCode(studyGuid, activityCode)
-        .orElseThrow(() -> {
-            return new DDPException(String.format("failed to locate the activity '%s' in study '%s'",
-                    activityCode,
-                    studyGuid));
-        });
+                .orElseThrow(() -> {
+                    return new DDPException(String.format("failed to locate the activity '%s' in study '%s'",
+                            activityCode,
+                            studyGuid));
+                });
 
         final var activityVersion = activityVersionSql.findByActivityCodeAndVersionTag(studyId, activityCode, versionTag)
                 .orElseThrow(() -> {
                     var message = String.format("failed to locate the version tag '%s' for the activity '%s' in study '%s'",
-                        versionTag,
-                        activityCode,
-                        studyGuid);
+                            versionTag,
+                            activityCode,
+                            studyGuid);
                     return new DDPException(message);
                 });
 
