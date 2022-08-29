@@ -93,9 +93,13 @@ public class OncHistoryDetailPatch extends BasePatch {
     }
 
     @Override
+    protected String getIdForES() {
+        return oncHistoryDetailId;
+    }
+
+    @Override
     Optional<Object> processEachNameValue(NameValue nameValue) {
         Patch.patch(oncHistoryDetailId, patch.getUser(), nameValue, dbElement);
-        //exportToESWithId(oncHistoryDetailId, nameValue);
         return Optional.empty();
     }
 

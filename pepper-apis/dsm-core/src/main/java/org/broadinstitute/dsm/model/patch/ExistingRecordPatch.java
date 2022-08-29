@@ -209,4 +209,9 @@ public class ExistingRecordPatch extends BasePatch {
         }
         return nameValues;
     }
+
+    @Override
+    protected String getIdForES() {
+        return patch.getId();
+    }
 }

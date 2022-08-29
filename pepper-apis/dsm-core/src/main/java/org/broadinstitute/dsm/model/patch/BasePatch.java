@@ -128,7 +128,6 @@ public abstract class BasePatch {
 
     List<Object> processMultipleNameValues() {
         List<Object> updatedNameValues = new ArrayList<>();
-        exportToESWithId(patch.getId(), patch.getNameValues());
         for (NameValue nameValue : patch.getNameValues()) {
             dbElement = dbElementBuilder.fromName(nameValue.getName());
             if (dbElement != null) {
@@ -137,7 +136,16 @@ public abstract class BasePatch {
                 throw new RuntimeException("DBElement not found in ColumnNameMap: " + nameValue.getName());
             }
         }
+        exportToESWithId(getIdForES(), getNameValuesForES());
         return updatedNameValues;
+    }
+
+    protected String getIdForES() {
+        return patch.getId();
+    }
+
+    protected List<NameValue> getNameValuesForES() {
+        return patch.getNameValues();
     }
 
     protected void exportToESWithId(String id, NameValue nameValue) {

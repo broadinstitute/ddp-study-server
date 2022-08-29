@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.model.patch;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.broadinstitute.dsm.db.ParticipantData;
@@ -40,6 +42,21 @@ public class ParticipantDataPatch extends BasePatch {
     }
 
     @Override
+    protected String getIdForES() {
+        return participantDataId;
+    }
+
+    @Override
+    protected List<NameValue> getNameValuesForES() {
+        List<NameValue> result = new ArrayList<>();
+        for (NameValue nameValue: patch.getNameValues()) {
+            result.add(new ParticipantDataNameValue(nameValue.getName(), nameValue.getValue(), ddpInstance.getDdpInstanceIdAsInt(),
+                    patch.getDdpParticipantId(), patch.getFieldId()));
+        }
+        return result;
+    }
+
+    @Override
     Optional<Object> processEachNameValue(NameValue nameValue) {
         if (participantDataId == null) {
             participantDataId =
@@ -49,10 +66,6 @@ public class ParticipantDataPatch extends BasePatch {
         } else {
             Patch.patch(participantDataId, patch.getUser(), nameValue, dbElement);
         }
-        ParticipantDataNameValue participantDataNameValue =
-                new ParticipantDataNameValue(nameValue.getName(), nameValue.getValue(), ddpInstance.getDdpInstanceIdAsInt(),
-                        patch.getDdpParticipantId(), patch.getFieldId());
-        //exportToESWithId(participantDataId, participantDataNameValue);
         if (patch.getActions() != null) {
             profile = ElasticSearchUtil.getParticipantProfileByGuidOrAltPid(ddpInstance.getParticipantIndexES(), patch.getParentId())
                     .orElseThrow(() -> new RuntimeException("Unable to find ES profile for participant: " + patch.getParentId()));
