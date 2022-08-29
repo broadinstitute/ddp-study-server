@@ -683,8 +683,8 @@ public class DataExporter {
                             operatorGuid)
                             .orElse(null);
                 } catch (Exception e) {
-                    log.warn("Error while evaluating age-of-majority rules for participant {} operator {} and studyId {}, ignoring.",
-                            participantGuid, operatorGuid, studyId, e.getMessage()); //log & skip AOM content for the ptp.
+                    log.error("Error while evaluating age-of-majority rules for participant {} operator {} and studyId {}, ignoring.",
+                            participantGuid, operatorGuid, studyId, e); //log & skip AOM content for the ptp.
                 }
 
                 if (birthDate != null && aomRule != null) {
