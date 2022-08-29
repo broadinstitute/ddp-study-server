@@ -127,4 +127,7 @@ public class ESObjectConstants {
     public static final String SELECT_MODE = "selectMode";
     public static final String MULTIPLE = "MULTIPLE";
     public static final String OPTIONS_TYPE = "OPTIONS";
+
+    // participant
+    public static final String PARTICIPANT_ID = "participantId";
 }

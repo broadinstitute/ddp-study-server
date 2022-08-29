@@ -58,6 +58,7 @@ public class Participant implements Cloneable {
     @ColumnName(DBConstants.ASSIGNEE_ID_MR)
     private String assigneeIdMr;
 
+    @ColumnName(DBConstants.DDP_INSTANCE_ID)
     private Integer ddpInstanceId;
 
     @TableName(name = DBConstants.DDP_PARTICIPANT, alias = DBConstants.DDP_PARTICIPANT_ALIAS, primaryKey = DBConstants.PARTICIPANT_ID,
@@ -122,6 +123,12 @@ public class Participant implements Cloneable {
     private Long exitDate;
 
     public Participant() {
+    }
+
+    public Participant(long participantId, String ddpParticipantId, int ddpInstanceId) {
+        this.participantId    = participantId;
+        this.ddpParticipantId = ddpParticipantId;
+        this.ddpInstanceId    = ddpInstanceId;
     }
 
     public Participant(Long participantId, String ddpParticipantId, String assigneeIdMr, String assigneeIdTissue, String instanceName,
