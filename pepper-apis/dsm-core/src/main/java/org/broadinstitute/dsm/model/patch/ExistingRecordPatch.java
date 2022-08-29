@@ -174,6 +174,9 @@ public class ExistingRecordPatch extends BasePatch {
         int startingSize = workflowsList.size();
         workflowsList.forEach(workflow -> {
             Map<String, String> workflowDataMap = (Map<String, String>) workflow.get(ESObjectConstants.DATA);
+            if (workflowDataMap == null || !workflowDataMap.containsKey(ESObjectConstants.SUBJECT_ID)) {
+                return;
+            }
             String collaboratorParticipantId = workflowDataMap.get(ESObjectConstants.SUBJECT_ID);
             if (Objects.isNull(collaboratorParticipantId)) {
                 return;
