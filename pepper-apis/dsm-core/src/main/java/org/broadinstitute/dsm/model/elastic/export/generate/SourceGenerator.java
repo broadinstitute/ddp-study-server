@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.model.elastic.export.generate;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.slf4j.Logger;
@@ -32,9 +33,13 @@ public abstract class SourceGenerator extends BaseGenerator {
     }
 
     @Override
-    protected Object parseElement() {
-        parser.setFieldName(getFieldName());
-        return parser.parse(String.valueOf(getNameValue().getValue()));
+    protected String getValueForParser() {
+        return String.valueOf(getNameValue().getValue());
+    }
+
+    @Override
+    protected String getValueForParser(NameValue nameValue) {
+        return String.valueOf(nameValue.getValue());
     }
 
     @Override
