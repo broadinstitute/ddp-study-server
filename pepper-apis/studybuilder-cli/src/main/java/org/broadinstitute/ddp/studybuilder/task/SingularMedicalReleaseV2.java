@@ -69,7 +69,7 @@ public class SingularMedicalReleaseV2 implements CustomTask {
 
         this.studyCfg = studyCfg;
         versionTag = dataCfg.getString("versionTag");
-        timestamp = Instant.now(); //parse(dataCfg.getString("timestamp"));
+        timestamp = Instant.now();
         gson = GsonUtil.standardGson();
 
     }
