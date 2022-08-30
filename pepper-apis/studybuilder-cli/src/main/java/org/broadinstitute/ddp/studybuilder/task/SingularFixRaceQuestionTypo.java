@@ -32,9 +32,9 @@ public class SingularFixRaceQuestionTypo implements CustomTask {
             "  AND lc.iso_language_code = ? " +
             "  AND us.guid = ?;";
 
-    
+
     private Config dataCfg;
-    
+
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
@@ -49,12 +49,10 @@ public class SingularFixRaceQuestionTypo implements CustomTask {
         }
     }
 
-
     @Override
     public void run(Handle handle) {
         String newSubstitutionValue = dataCfg.getString("prompt");
         int rowsModified = handle.execute(QUESTION_TEMPLATE_VARIABLE_SUBSTITUTION_VALUE, newSubstitutionValue, TEMPLATE_VARIABLE_NAME, QUESTION_STABLE_ID, LANGUAGE_CODE_EN, STUDY_GUID);
-        System.out.println("Modified number of rows: " + rowsModified);
+        log.info("Modified number of rows: {}", rowsModified);
     }
-
 }
