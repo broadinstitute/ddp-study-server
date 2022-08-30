@@ -16,21 +16,21 @@ public class SingularFixRaceQuestionTypo implements CustomTask {
     private static final String TEMPLATE_VARIABLE_NAME = "what_is_your_race_prompt_p1";
     private static final String QUESTION_STABLE_ID = "RACE";
     private static final String LANGUAGE_CODE_EN = "en";
-    private static final String QUESTION_TEMPLATE_VARIABLE_SUBSTITUTION_VALUE = "UPDATE " +
-            "  template_variable tv " +
-            "  join question q on q.question_prompt_template_id = tv.template_id natural " +
-            "  join question_stable_code qsc natural " +
-            "  join language_code lc " +
-            "  join study_activity sa on sa.study_activity_id = q.study_activity_id " +
-            "  join i18n_template_substitution its on its.template_variable_id = tv.template_variable_id " +
-            "  join umbrella_study us on us.umbrella_study_id = sa.study_id " +
-            "set " +
-            "  substitution_value = ?" +
-            "where " +
-            "  tv.variable_name = ? " +
-            "  AND qsc.stable_id = ? " +
-            "  AND lc.iso_language_code = ? " +
-            "  AND us.guid = ?;";
+    private static final String QUESTION_TEMPLATE_VARIABLE_SUBSTITUTION_VALUE = "UPDATE "
+            + "  template_variable tv "
+             + "  join question q on q.question_prompt_template_id = tv.template_id natural "
+             + "  join question_stable_code qsc natural "
+             + "  join language_code lc "
+             + "  join study_activity sa on sa.study_activity_id = q.study_activity_id "
+             + "  join i18n_template_substitution its on its.template_variable_id = tv.template_variable_id "
+             + "  join umbrella_study us on us.umbrella_study_id = sa.study_id "
+             + "set "
+             + "  substitution_value = ?"
+             + "where "
+             + "  tv.variable_name = ? "
+             + "  AND qsc.stable_id = ? "
+             + "  AND lc.iso_language_code = ? "
+             + "  AND us.guid = ?";
 
 
     private Config dataCfg;
@@ -52,7 +52,8 @@ public class SingularFixRaceQuestionTypo implements CustomTask {
     @Override
     public void run(Handle handle) {
         String newSubstitutionValue = dataCfg.getString("prompt");
-        int rowsModified = handle.execute(QUESTION_TEMPLATE_VARIABLE_SUBSTITUTION_VALUE, newSubstitutionValue, TEMPLATE_VARIABLE_NAME, QUESTION_STABLE_ID, LANGUAGE_CODE_EN, STUDY_GUID);
+        int rowsModified = handle.execute(QUESTION_TEMPLATE_VARIABLE_SUBSTITUTION_VALUE, newSubstitutionValue,
+                TEMPLATE_VARIABLE_NAME, QUESTION_STABLE_ID, LANGUAGE_CODE_EN, STUDY_GUID);
         log.info("Modified number of rows: {}", rowsModified);
     }
 }
