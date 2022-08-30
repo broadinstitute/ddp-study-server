@@ -12,10 +12,10 @@ values (:picklistQuestionId, :stableId, :tooltipTemplateId,
 insertOptionByDto() ::= <<
 insert into picklist_option (picklist_question_id, picklist_option_stable_id, tooltip_template_id,
        option_label_template_id, detail_label_template_id, allow_details, is_exclusive, is_default,
-       display_order, revision_id)
+       display_order, revision_id, value)
 values (:picklistQuestionId, :dto.getStableId, :dto.getTooltipTemplateId,
        :dto.getOptionLabelTemplateId, :dto.getDetailLabelTemplateId,
-       :dto.isAllowDetails, :dto.exclusive, :dto.isDefault, :dto.getDisplayOrder, :revisionId)
+       :dto.isAllowDetails, :dto.isExclusive, :dto.isDefault, :dto.getDisplayOrder, :revisionId, :dto.getValue)
 >>
 
 fetchOptionById() ::= <<
@@ -39,8 +39,8 @@ WHERE picklist_option.picklist_option_id = :id
 >>
 
 <!
-    The longer names here are due to the PicklistOptionDto
-    not being completely Java Bean compatible.
+    The lombok-generated method names used here are due to
+    the PicklistOptionDto not being Java Bean compatible.
     (bskinner - 2022.08.29)
 !>
 updateOptionByDto() ::= <<
