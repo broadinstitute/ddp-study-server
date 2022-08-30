@@ -35,7 +35,7 @@ public interface JdbiCompositeQuestion extends SqlObject {
     @SqlQuery("SELECT child_question_id FROM composite_question__question WHERE parent_question_id = :parentQuestionId")
     List<Long> getChildQuestionIds(@Bind("parentQuestionId") long parentQuestionId);
 
-    @SqlUpdate("DELETE FROM composite_question__question where parent_question_id=:parentQuestionId")
+    @SqlUpdate("DELETE FROM composite_question__question WHERE parent_question_id = :parentQuestionId")
     int deleteChildQuestionMembership(@Bind("parentQuestionId") long parentQuestionId);
 
     @SqlUpdate("DELETE FROM composite_question where question_id=:questionId")
