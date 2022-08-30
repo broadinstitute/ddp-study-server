@@ -38,11 +38,9 @@ FROM picklist_option
 WHERE picklist_option.picklist_option_id = :id
 >>
 
-<!
-    The lombok-generated method names used here are due to
-    the PicklistOptionDto not being Java Bean compatible.
-    (bskinner - 2022.08.29)
-!>
+// The lombok-generated method names used here are due to
+// the PicklistOptionDto not being Java Bean compatible.
+// (bskinner - 2022.08.29)
 updateOptionByDto() ::= <<
 UPDATE `picklist_option`
 SET picklist_option_stable_id = :dto.getStableId,
