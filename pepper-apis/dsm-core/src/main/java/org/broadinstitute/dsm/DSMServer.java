@@ -195,7 +195,6 @@ public class DSMServer {
     private static final String API_ROOT = "/ddp/";
     private static final String UI_ROOT = "/ui/";
     public static final String SIGNER = "org.broadinstitute.kdux";
-    public static final String BSP_SIGNER = "https://dsm-dev.datadonationplatform.org/ddp/";
     private static final String[] CORS_HTTP_METHODS = new String[] {"GET", "PUT", "POST", "OPTIONS", "PATCH"};
     private static final String[] CORS_HTTP_HEADERS =
             new String[] {"Content-Type", "Authorization", "X-Requested-With", "Content-Length", "Accept", "Origin", ""};
@@ -522,6 +521,7 @@ public class DSMServer {
         String bspSecret = cfg.getString(ApplicationConfigConstants.BSP_SECRET);
         boolean bspSecretEncoded =
                 cfg.hasPath(ApplicationConfigConstants.BSP_ENCODED) ? cfg.getBoolean(ApplicationConfigConstants.BSP_ENCODED) : false;
+        String bspIssClaim = cfg.getString(ApplicationConfigConstants.BSP_ISS);
         String ddpSecret = cfg.getString(ApplicationConfigConstants.DDP_SECRET);
         boolean ddpSecretEncoded =
                 cfg.hasPath(ApplicationConfigConstants.DDP_ENCODED) ? cfg.getBoolean(ApplicationConfigConstants.DDP_ENCODED) : false;
@@ -544,7 +544,7 @@ public class DSMServer {
 
         //  capture basic route info for logging
         //        before("*", new LoggingFilter(auth0Domain, auth0claimNameSpace));
-        before(API_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, bspSecret, BSP_SIGNER, bspSecretEncoded));
+        before(API_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, bspSecret, bspIssClaim, bspSecretEncoded));
         before(UI_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, null, null, false));
         before(INFO_ROOT + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, ddpSecret, SIGNER, ddpSecretEncoded));
         before(appRoute + "*", new LoggingFilter(auth0Domain, auth0claimNameSpace, ddpSecret, SIGNER, ddpSecretEncoded));
