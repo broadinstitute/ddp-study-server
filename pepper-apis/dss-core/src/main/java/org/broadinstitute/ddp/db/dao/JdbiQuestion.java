@@ -173,7 +173,7 @@ public interface JdbiQuestion extends SqlObject {
         return parentIdToChildIds;
     }
 
-    @SqlUpdate("delete from question where question_id=:questionId")
+    @SqlUpdate("DELETE FROM question WHERE question_id = :questionId")
     boolean deleteBaseQuestion(@Bind("questionId") long questionId);
 
     @SqlQuery("select cqq.parent_question_id, cqq.child_question_id"
