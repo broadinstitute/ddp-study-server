@@ -243,7 +243,6 @@ public class SingularMedicalReleaseV2 implements CustomTask {
     }
 
     private ActivityVersionDto createNewVersion(long activityId, String activityCode, String studyGuid, User adminUser) {
-        //SqlHelper helper = handle.attach(SqlHelper.class);
         String reason = String.format(
                 "Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
                 studyGuid, activityCode, versionTag);
@@ -263,7 +262,6 @@ public class SingularMedicalReleaseV2 implements CustomTask {
     }
 
     private void updateSectionVersion(long activityId, ActivityVersionDto v1Dto) {
-        //    log.info("{}: disabling {} sections...", V1_VERSION_TAG, V1_NUM_SECTIONS);
         List<FormSectionMembershipDto> v1SectionMemberships = jdbiFormActivityFormSection
                 .findOrderedSectionMemberships(activityId, v1Dto.getRevStart());
         log.info("Before updating");
