@@ -14,6 +14,6 @@ public interface JdbiDateQuestionFieldOrder extends SqlObject {
     @GetGeneratedKeys
     long insert(@Bind("questionId") long questionId, @Bind("dateFieldTypeId") long dateFieldTypeId, @Bind("displayOrder") int displayOrder);
 
-    @SqlUpdate("DELETE FROM date_question_field_order WHERE date_question_id=:questionId")
+    @SqlUpdate("DELETE FROM date_question_field_order WHERE date_question_id = :questionId")
     int deleteForQuestionId(@Bind("questionId")long questionId);
 }
