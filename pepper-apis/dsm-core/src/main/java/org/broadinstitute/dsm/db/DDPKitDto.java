@@ -22,4 +22,7 @@ public class DDPKitDto {
     @ColumnName(DBConstants.SEQUENCING_RESTRICTION)
     private String sequencingRestriction;
 
+    @ColumnName(DBConstants.SAMPLE_NOTES)
+    private String sampleNotes;
+
 }

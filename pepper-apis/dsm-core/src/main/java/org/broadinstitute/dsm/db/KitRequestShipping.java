@@ -91,7 +91,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     + "(select t.tracking_id from ddp_kit_tracking t where t.kit_label = kit.kit_label) as tracking_id, "
                     + "kit.kit_label, kit.express, kit.test_result, kit.needs_approval, kit.authorization, kit.denial_reason, "
                     + "kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order, kit.collection_date, "
-                    + "kit.sequencing_restriction FROM ddp_kit_request request "
+                    + "kit.sequencing_restriction, kit.sample_notes FROM ddp_kit_request request "
                     + "LEFT JOIN ddp_kit kit on (kit.dsm_kit_request_id = request.dsm_kit_request_id) "
                     + "LEFT JOIN ddp_instance realm on (realm.ddp_instance_id = request.ddp_instance_id) "
                     + "LEFT JOIN kit_type kt on (request.kit_type_id = kt.kit_type_id) ";
@@ -112,7 +112,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     + "tracking.tracking_id,"
                     + " kit.kit_label, kit.express, kit.test_result, kit.needs_approval, kit.authorization, kit.denial_reason, "
                     + " kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order, kit.collection_date, "
-                    + "  kit.sequencing_restriction FROM ddp_kit kit "
+                    + "  kit.sequencing_restriction, kit.sample_notes FROM ddp_kit kit "
                     + "INNER JOIN (SELECT dsm_kit_request_id, MAX(dsm_kit_id) AS kit_id FROM ddp_kit "
                     + "GROUP BY dsm_kit_request_id) groupedKit ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id "
                     + "AND kit.dsm_kit_id = groupedKit.kit_id LEFT JOIN ddp_kit_tracking tracking "
@@ -133,7 +133,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                     + "(select t.tracking_id from ddp_kit_tracking t where t.kit_label = kit.kit_label) as tracking_id, "
                     + "kit.kit_label, kit.express, kit.test_result, kit.needs_approval, kit.authorization, kit.denial_reason, "
                     + "kit.authorized_by, kit.ups_tracking_status, kit.ups_return_status, kit.CE_order, kit.collection_date, "
-                    + "activity.ups_status_description, pack.tracking_number, kit.sequencing_restriction "
+                    + "activity.ups_status_description, pack.tracking_number, kit.sequencing_restriction, kit.sample_notes "
                     + "FROM ddp_kit_request request "
                     + "LEFT JOIN ddp_kit kit on (kit.dsm_kit_request_id = request.dsm_kit_request_id) "
                     + "LEFT JOIN ddp_instance realm on (realm.ddp_instance_id = request.ddp_instance_id) "
@@ -316,6 +316,8 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     private String sequencingRestriction;
     @ColumnName(DBConstants.DSM_RECEIVE_BY)
     private String receivedBy;
+    @ColumnName(DBConstants.SAMPLE_NOTES)
+    private String sampleNotes;
 
     private Boolean requiresInsertInKitTracking;
 
@@ -360,7 +362,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                               Boolean noReturn, String externalOrderStatus, String createdBy, String testResult, String upsTrackingStatus,
                               String upsReturnStatus, Long externalOrderDate, Boolean careEvolve, String uploadReason,
                               String receiveDateString, String hruid, String gender, String collectionDate, String sequencingRestriction,
-                              String receivedBy) {
+                              String receivedBy, String sampleNotes) {
         super(dsmKitRequestId, participantId, null, shippingId, externalOrderNumber, null, externalOrderStatus, null, externalOrderDate);
         this.collaboratorParticipantId = collaboratorParticipantId;
         this.bspCollaboratorSampleId = bspCollaboratorSampleId;
@@ -398,6 +400,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
         this.collectionDate = collectionDate;
         this.sequencingRestriction = sequencingRestriction;
         this.receivedBy = receivedBy;
+        this.sampleNotes = sampleNotes;
     }
 
     public Boolean getError() {
@@ -432,7 +435,7 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
                         rs.getString(DBConstants.UPS_RETURN_STATUS), (Long) rs.getObject(DBConstants.EXTERNAL_ORDER_DATE),
                         rs.getBoolean(DBConstants.CARE_EVOLVE), rs.getString(DBConstants.UPLOAD_REASON), null, null, null,
                         rs.getString(DBConstants.COLLECTION_DATE), rs.getString(DBConstants.SEQUENCING_RESTRICTION),
-                        rs.getString(DBConstants.DSM_RECEIVE_BY));
+                        rs.getString(DBConstants.DSM_RECEIVE_BY), rs.getString(DBConstants.SAMPLE_NOTES));
         kitRequestShipping.setDdpParticipantId(rs.getString(DBConstants.DDP_PARTICIPANT_ID));
         if (DBUtil.columnExists(rs, DBConstants.UPS_STATUS_DESCRIPTION) && StringUtils.isNotBlank(
                 rs.getString(DBConstants.UPS_STATUS_DESCRIPTION))) {
