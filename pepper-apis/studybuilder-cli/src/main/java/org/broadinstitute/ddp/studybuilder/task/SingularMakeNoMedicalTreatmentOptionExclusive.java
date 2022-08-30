@@ -31,7 +31,7 @@ import org.jdbi.v3.core.Handle;
  * <p>See https://broadinstitute.atlassian.net/browse/DDP-8576
  */
 @Slf4j
-public class SingularAboutHealthySelectLogic implements CustomTask {
+public class SingularMakeNoMedicalTreatmentOptionExclusive implements CustomTask {
     private static final String PATCH_PATH = "patches";
     private static final String PATCH_CONF_NAME = "ddp-8576-select-logic.conf";
     private static final String CONFIG_STUDY_GUID = "study.guid";
