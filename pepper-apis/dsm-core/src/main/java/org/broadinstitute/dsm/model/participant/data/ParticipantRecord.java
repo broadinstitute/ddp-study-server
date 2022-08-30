@@ -84,14 +84,13 @@ public class ParticipantRecord {
         participantRecordDao.insertDefaultAdditionalValues(participantId, additionalValues);
         participant = new DefaultParticipantExporter(participantExportPayload).buildParticipantFromPayload(participantExportPayload);
         participant.setAdditionalValuesJson(additionalValues);
-        String participantGuid = Exportable.getParticipantGuid(ddpParticipantId, ddpInstanceDto.getEsParticipantIndex());
         try {
             UpsertPainlessFacade.of(DBConstants.DDP_PARTICIPANT_RECORD_ALIAS, participant, ddpInstanceDto,
                     DBConstants.PARTICIPANT_ID, ESObjectConstants.DOC_ID,
-                    participantGuid, new AddToSingleScriptBuilder())
+                    ddpParticipantId, new AddToSingleScriptBuilder())
                     .export();
         } catch (Exception e) {
-            log.error(String.format("Error inserting participant record for guid: %s in ElasticSearch", participantGuid));
+            log.error(String.format("Error inserting participant record for guid: %s in ElasticSearch", ddpParticipantId));
             e.printStackTrace();
             return false;
         }
