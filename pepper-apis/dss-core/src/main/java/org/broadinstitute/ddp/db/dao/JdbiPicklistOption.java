@@ -8,7 +8,6 @@ import org.broadinstitute.ddp.db.dto.PicklistOptionDto;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.BindMethods;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
