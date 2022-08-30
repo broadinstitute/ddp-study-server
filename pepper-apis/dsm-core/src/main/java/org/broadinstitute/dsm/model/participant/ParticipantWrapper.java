@@ -140,7 +140,8 @@ public class ParticipantWrapper {
         result.add(participantWrapperDto);
     }
 
-    private void addWrapperToList(ElasticSearchParticipantDto elasticSearchParticipantDto, List<ParticipantWrapperDto> result, DDPInstanceDto ddpInstanceDto) {
+    private void addWrapperToList(ElasticSearchParticipantDto elasticSearchParticipantDto, List<ParticipantWrapperDto> result,
+                                  DDPInstanceDto ddpInstanceDto) {
 
         elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
             Participant participant = esDsm.getParticipant().orElse(new Participant());
