@@ -65,7 +65,6 @@ public class ExistingRecordPatch extends BasePatch {
     Optional<Object> processEachNameValue(NameValue nameValue) {
         Optional<Object> maybeUpdatedNameValue = Optional.empty();
         Patch.patch(patch.getId(), patch.getUser(), nameValue, dbElement);
-        exportToESWithId(patch.getId(), nameValue);
         if (hasQuestion(nameValue)) {
             maybeUpdatedNameValue = sendNotificationEmailAndUpdateStatus(patch, nameValue, dbElement);
         }
@@ -175,6 +174,9 @@ public class ExistingRecordPatch extends BasePatch {
         int startingSize = workflowsList.size();
         workflowsList.forEach(workflow -> {
             Map<String, String> workflowDataMap = (Map<String, String>) workflow.get(ESObjectConstants.DATA);
+            if (workflowDataMap == null || !workflowDataMap.containsKey(ESObjectConstants.SUBJECT_ID)) {
+                return;
+            }
             String collaboratorParticipantId = workflowDataMap.get(ESObjectConstants.SUBJECT_ID);
             if (Objects.isNull(collaboratorParticipantId)) {
                 return;
@@ -209,5 +211,10 @@ public class ExistingRecordPatch extends BasePatch {
             return nameValues;
         }
         return nameValues;
+    }
+
+    @Override
+    protected String getIdForES() {
+        return patch.getId();
     }
 }
