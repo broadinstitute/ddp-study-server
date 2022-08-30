@@ -150,5 +150,5 @@ public interface JdbiPicklistOption extends SqlObject {
     }
 
     @SqlUpdate("DELETE FROM picklist_option WHERE picklist_question_id =:questionId")
-    boolean deleteForQuestionId(@Bind("questionId")Long questionId);
+    boolean deleteForQuestionId(@Bind("questionId") Long questionId);
 }
