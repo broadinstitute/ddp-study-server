@@ -231,11 +231,10 @@ public class SingularMedicalReleaseV2 implements CustomTask {
                 .findByActivityCodeAndVersionTag(studyId, activityCode, versionTag)
                 .orElseThrow(() -> new DDPException("Could not find activity version"));
         JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
-        Optional<ActivityDto> activityDto = jdbiActivity.findActivityByStudyIdAndCode(studyId, activityCode);
-        if (activityDto.isEmpty()) {
-            throw new DDPException("Could not find activity with study id: " + studyId + " and code:" + activityCode);
-        }
-        var def = handle.attach(ActivityDao.class).findDefByDtoAndVersion(activityDto.get(), originalV1VersionDto);
+        ActivityDto activityDto = jdbiActivity.findActivityByStudyIdAndCode(studyId, activityCode)
+                .orElseThrow(() -> new DDPException("Could not find activity with study id: " + studyId + " and code:"
+                        + activityCode));
+        var def = handle.attach(ActivityDao.class).findDefByDtoAndVersion(activityDto, originalV1VersionDto);
         if (def instanceof FormActivityDef) {
             return (FormActivityDef) def;
         } else {
