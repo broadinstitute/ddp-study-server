@@ -13,9 +13,6 @@ public class DefaultableMaker {
             case RGP:
                 defaultable = new RgpAutomaticProbandDataCreator();
                 break;
-            case SINGULAR:
-                defaultable = new SingularDefaultValues();
-                break;
             default:
                 break;
         }
