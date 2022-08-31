@@ -10,7 +10,6 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.validation.RuleDto;
-import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.RedisConnectionValidator;
 import org.jdbi.v3.core.Handle;
 import org.redisson.api.RLocalCachedMap;

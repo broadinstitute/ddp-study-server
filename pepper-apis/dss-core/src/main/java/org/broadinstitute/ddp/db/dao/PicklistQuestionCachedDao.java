@@ -10,7 +10,6 @@ import javax.cache.expiry.Duration;
 import org.apache.commons.lang3.NotImplementedException;
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.cache.ModelChangeType;
-import org.broadinstitute.ddp.exception.DDPException;
 import org.jdbi.v3.core.Handle;
 import org.redisson.client.RedisException;
 
