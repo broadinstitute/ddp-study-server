@@ -1646,7 +1646,7 @@ public interface QuestionDao extends SqlObject {
     default boolean deleteDateQuestion(long questionId) {
         getJdbiDateQuestionFieldOrder().deleteForQuestionId(questionId);
         var val = getJdbiDateQuestion().delete(questionId);
-        LOG.info("Deleted date question id? {}", val);
+        LOG.info("Deleted date question id {}? {}", questionId, val);
         return val;
     }
 
