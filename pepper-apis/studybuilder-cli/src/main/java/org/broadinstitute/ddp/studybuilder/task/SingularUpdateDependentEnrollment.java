@@ -1,36 +1,17 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.DBUtils;
-import org.broadinstitute.ddp.db.dao.CopyConfigurationDao;
-import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
-import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dto.StudyDto;
-import org.broadinstitute.ddp.db.dto.UserDto;
-import org.broadinstitute.ddp.exception.DDPException;
-import org.broadinstitute.ddp.model.activity.types.EventActionType;
-import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
-import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
-import org.broadinstitute.ddp.model.copy.CopyAnswerLocation;
-import org.broadinstitute.ddp.model.copy.CopyConfiguration;
-import org.broadinstitute.ddp.model.event.ActivityStatusChangeTrigger;
-import org.broadinstitute.ddp.model.event.CopyAnswerEventAction;
-import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
-import org.broadinstitute.ddp.studybuilder.EventBuilder;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
-import java.io.File;
 import java.nio.file.Path;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Task to fix for Singular Consent copy events to handle parent/self name overriding.
@@ -73,8 +54,8 @@ public class SingularUpdateDependentEnrollment implements CustomTask {
         //update Question expression
         long expressionId = helper.getExpressionId("ADD_PARTICIPANT_INCAPACITATED_DEPENDENT", studyDto.getId());
         //update expression
-        String expressionText = "user.studies[\"singular\"].forms[\"ADD_PARTICIPANT_DEPENDENT\"].questions[\"ENROLLING_DEPENDENT_AGE\"].isAnswered()\n" +
-                " && user.studies[\"singular\"].forms[\"ADD_PARTICIPANT_DEPENDENT\"].questions[\"ENROLLING_DEPENDENT_AGE\"].answers.value() >= 18";
+        String expressionText = "user.studies[\"singular\"].forms[\"ADD_PARTICIPANT_DEPENDENT\"].questions[\"ENROLLING_DEPENDENT_AGE\"].isAnswered() \n"
+                + " && user.studies[\"singular\"].forms[\"ADD_PARTICIPANT_DEPENDENT\"].questions[\"ENROLLING_DEPENDENT_AGE\"].answers.value() >= 18";
         rowCount = helper.updateExpression(expressionId, expressionText);
         DBUtils.checkUpdate(1, rowCount);
 
@@ -90,16 +71,16 @@ public class SingularUpdateDependentEnrollment implements CustomTask {
 
     private interface SqlHelper extends SqlObject {
 
-        @SqlQuery("select v.validation_id from validation v, validation_type vt , int_range_validation irv, \n" +
-                "                question q, question_stable_code qsc, question__validation qv\n" +
-                "                where v.validation_type_id = vt.validation_type_id\n" +
-                "                and irv.validation_id = v.validation_id\n" +
-                "                and qv.validation_id = v.validation_id\n" +
-                "                and qv.question_id = q.question_id\n" +
-                "                and qsc.question_stable_code_id = q.question_stable_code_id\n" +
-                "                and qsc.stable_id = :stableId \n" +
-                "                and vt.validation_type_code = :validationType\n" +
-                "                and qsc.umbrella_study_id = :studyId")
+        @SqlQuery("select v.validation_id from validation v, validation_type vt , int_range_validation irv, \n"
+                + "                question q, question_stable_code qsc, question__validation qv \n"
+                + "                where v.validation_type_id = vt.validation_type_id \n"
+                + "                and irv.validation_id = v.validation_id \n"
+                + "                and qv.validation_id = v.validation_id \n"
+                + "                and qv.question_id = q.question_id \n"
+                + "                and qsc.question_stable_code_id = q.question_stable_code_id \n"
+                + "                and qsc.stable_id = :stableId \n"
+                + "                and vt.validation_type_code = :validationType \n"
+                + "                and qsc.umbrella_study_id = :studyId ")
         long getValidationId(@Bind("stableId") String stableId, @Bind("validationType") String validationType, @Bind("studyId") long studyId);
 
         @SqlUpdate("update validation set allow_save = true where validation_id = :validationId")
@@ -109,24 +90,24 @@ public class SingularUpdateDependentEnrollment implements CustomTask {
         int updateIntRangeValidation(@Bind("validationId") long validationId, @Bind("min") int min);
 
 
-        @SqlQuery("select e.expression_id from block__expression be, expression e, block__question bq, question q, question_stable_code qsc\n" +
-                "                where be.expression_id = e.expression_id\n" +
-                "                and bq.block_id = be.block_id\n" +
-                "                and q.question_id = bq.question_id\n" +
-                "                and qsc.question_stable_code_id = q.question_stable_code_id\n" +
-                "                and qsc.stable_id = :stableId\n" +
-                "                and qsc.umbrella_study_id = :studyId")
+        @SqlQuery("select e.expression_id from block__expression be, expression e, block__question bq, question q, question_stable_code qsc \n"
+                + "                where be.expression_id = e.expression_id \n"
+                + "                and bq.block_id = be.block_id \n"
+                + "                and q.question_id = bq.question_id \n"
+                + "                and qsc.question_stable_code_id = q.question_stable_code_id \n"
+                + "                and qsc.stable_id = :stableId \n"
+                + "                and qsc.umbrella_study_id = :studyId")
         long getExpressionId(@Bind("stableId") String stableId, @Bind("studyId") long studyId);
 
         @SqlUpdate("update expression set expression_text = :expressionText where expression_id = :expressionId")
         int updateExpression(@Bind("expressionId") long expressionId, @Bind("expressionText") String expressionText);
 
 
-        @SqlQuery("select av.activity_validation_id from activity_validation av, study_activity sa\n" +
-                "where sa.study_activity_id = av.study_activity_id\n" +
-                "and sa.study_activity_code = :activityCode \n" +
-                "and av.precondition_text like '%ADD_PARTICIPANT_INCAPACITATED_DEPENDENT%'\n" +
-                "and sa.study_id = :studyId")
+        @SqlQuery("select av.activity_validation_id from activity_validation av, study_activity sa \n"
+                +" where sa.study_activity_id = av.study_activity_id \n"
+                +" and sa.study_activity_code = :activityCode \n"
+                + " and av.precondition_text like '%ADD_PARTICIPANT_INCAPACITATED_DEPENDENT%' \n"
+                + " and sa.study_id = :studyId")
         long getActivityValidationId(@Bind("activityCode") String activityCode, @Bind("studyId") long studyId);
 
         @SqlUpdate("update activity_validation set expression_text = :expressionText where activity_validation_id = :validationId")
