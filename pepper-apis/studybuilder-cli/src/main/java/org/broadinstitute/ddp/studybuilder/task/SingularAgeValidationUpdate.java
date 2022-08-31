@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.studybuilder.task;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
@@ -22,21 +23,20 @@ import java.util.List;
  * Task to replace age validations to singular activities
  */
 @Slf4j
+@NoArgsConstructor
 public class SingularAgeValidationUpdate implements CustomTask {
+    private static final String DATA_FILE_DEPENDENT = "patches/ddp-8554-dependent-validations.conf";
     private static final String DATA_FILE_PARENTAL = "patches/ddp-8554-parental-validations.conf";
     private static final String DATA_FILE_SELF     = "patches/ddp-8554-self-validation.conf";
     private static final String STUDY_GUID         = "singular";
 
+    protected Config dataDependentCfg;
     protected Config dataParentalCfg;
     protected Config dataSelfCfg;
 
     protected Path cfgPath;
     protected Config cfg;
     protected Config varsCfg;
-
-    public SingularAgeValidationUpdate() {
-        super();
-    }
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
@@ -54,6 +54,12 @@ public class SingularAgeValidationUpdate implements CustomTask {
             throw new DDPException("Data file is missing: " + DATA_FILE_PARENTAL);
         }
 
+        final var dependentFile = cfgPath.getParent().resolve(DATA_FILE_DEPENDENT).toFile();
+        if (!parentalFile.exists()) {
+            throw new DDPException("Data file is missing: " + DATA_FILE_DEPENDENT);
+        }
+
+        this.dataDependentCfg = ConfigFactory.parseFile(dependentFile).resolveWith(varsCfg);
         this.dataParentalCfg = ConfigFactory.parseFile(parentalFile).resolveWith(varsCfg);
         this.dataSelfCfg = ConfigFactory.parseFile(selfFile).resolveWith(varsCfg);
         this.cfgPath = cfgPath;
@@ -68,17 +74,22 @@ public class SingularAgeValidationUpdate implements CustomTask {
         final var study = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid"));
         final var user = handle.attach(JdbiUser.class).findByUserGuid(cfg.getString("adminUser.guid"));
 
-        final var addParentalActivity = handle.attach(JdbiActivity.class)
-                .findActivityByStudyGuidAndCode(cfg.getString("study.guid"), "ADD_PARTICIPANT_PARENTAL")
-                .orElseThrow(() -> new DDPException("Activity ADD_PARTICIPANT_PARENTAL doesn't exist"));
+        final var consentDependentActivity = handle.attach(JdbiActivity.class)
+                .findActivityByStudyGuidAndCode(cfg.getString("study.guid"), "CONSENT_DEPENDENT")
+                .orElseThrow(() -> new DDPException("Activity CONSENT_DEPENDENT doesn't exist"));
 
-        final var addSelfActivity = handle.attach(JdbiActivity.class)
-                .findActivityByStudyGuidAndCode(cfg.getString("study.guid"), "ADD_PARTICIPANT_SELF")
-                .orElseThrow(() -> new DDPException("Activity ADD_PARTICIPANT_SELF doesn't exist"));
+        final var consentParentalActivity = handle.attach(JdbiActivity.class)
+                .findActivityByStudyGuidAndCode(cfg.getString("study.guid"), "CONSENT_PARENTAL")
+                .orElseThrow(() -> new DDPException("Activity CONSENT_PARENTAL doesn't exist"));
+
+        final var consentSelfActivity = handle.attach(JdbiActivity.class)
+                .findActivityByStudyGuidAndCode(cfg.getString("study.guid"), "CONSENT_SELF")
+                .orElseThrow(() -> new DDPException("Activity CONSENT_SELF doesn't exist"));
 
         final var builder = new ActivityBuilder(cfgPath.getParent(), cfg, varsCfg, study, user.getUserId());
-        updateValidations(handle, builder, addParentalActivity, dataParentalCfg);
-        updateValidations(handle, builder, addSelfActivity, dataSelfCfg);
+        updateValidations(handle, builder, consentDependentActivity, dataDependentCfg);
+        updateValidations(handle, builder, consentParentalActivity, dataParentalCfg);
+        updateValidations(handle, builder, consentSelfActivity, dataSelfCfg);
     }
 
     private void updateValidations(final Handle handle, final ActivityBuilder builder, final ActivityDto activity, final Config config) {

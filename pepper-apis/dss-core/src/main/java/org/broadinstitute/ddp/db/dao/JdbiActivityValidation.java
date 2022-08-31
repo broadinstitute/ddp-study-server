@@ -78,11 +78,6 @@ public interface JdbiActivityValidation extends SqlObject {
     List<ActivityValidationDto> _findByActivityId(@Bind("activityId") long activityId);
 
     default int _deleteByActivityId(long activityId) {
-        List<ActivityValidationDto> activityValidations = _findByActivityId(activityId);
-        List<Long> validationIdsForActivity = activityValidations
-                .stream()
-                .map(dto -> dto.getActivityValidationId())
-                .collect(Collectors.toList());
         return _deleteValidationsByActivityId(activityId);
     }
 
