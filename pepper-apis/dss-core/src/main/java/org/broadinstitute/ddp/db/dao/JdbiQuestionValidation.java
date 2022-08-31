@@ -84,7 +84,7 @@ public interface JdbiQuestionValidation extends SqlObject {
             @Bind("timestamp") long timestamp);
 
     @SqlUpdate("DELETE FROM question__validation WHERE question_id = :questionId")
-    boolean deleteForQuestion(@Bind("questionId")long questionId);
+    boolean deleteForQuestion(@Bind("questionId") long questionId);
 
     class RuleDtoReducer implements LinkedHashMapRowReducer<Long, RuleDto> {
         @Override
