@@ -5,18 +5,23 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import lombok.AllArgsConstructor;
 import lombok.Setter;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
 import org.broadinstitute.dsm.route.kit.KitPayload;
 import org.broadinstitute.dsm.route.kit.ScanPayload;
 
-@AllArgsConstructor
 @Setter
 public abstract class BaseKitUseCase implements Supplier<List<ScanError>> {
 
     protected KitPayload kitPayload;
     protected KitDao kitDao;
+
+    protected BaseKitUseCase decoratedScanUseCase;
+
+    public BaseKitUseCase(KitPayload kitPayload, KitDao kitDao) {
+        this.kitPayload = kitPayload;
+        this.kitDao = kitDao;
+    }
 
     @Override
     public List<ScanError> get() {
