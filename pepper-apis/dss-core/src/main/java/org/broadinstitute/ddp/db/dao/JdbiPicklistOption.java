@@ -57,6 +57,15 @@ public interface JdbiPicklistOption extends SqlObject {
                             @Bind("picklistQuestionId") long picklistQuestionId,
                             @Bind("revisionId") long revisionId);
 
+    @UseStringTemplateSqlLocator
+    @SqlQuery("fetchOptionById")
+    @RegisterConstructorMapper(PicklistOptionDto.class)
+    Optional<PicklistOptionDto> findById(@Bind("id") long id);
+    
+    @UseStringTemplateSqlLocator
+    @SqlUpdate("updateOptionByDto")
+    int update(@BindMethods("dto") PicklistOptionDto optionDto);
+
     /**
      * Get all picklist options for given picklist question that are/were active at creation time of given
      * activity instance, in proper display order.
@@ -140,5 +149,6 @@ public interface JdbiPicklistOption extends SqlObject {
                 .isPresent();
     }
 
-
+    @SqlUpdate("DELETE FROM picklist_option WHERE picklist_question_id = :questionId")
+    boolean deleteForQuestionId(@Bind("questionId") Long questionId);
 }
