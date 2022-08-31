@@ -7,7 +7,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
 
