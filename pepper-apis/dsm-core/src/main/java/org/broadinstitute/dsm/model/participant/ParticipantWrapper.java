@@ -76,12 +76,10 @@ public class ParticipantWrapper {
 
         return participantWrapperPayload.getFilter().map(filters -> {
             fetchAndPrepareDataByFilters(filters);
-            return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto,
-                    participantWrapperPayload.isShowMedicalRecordRequestTracking()));
+            return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto));
         }).orElseGet(() -> {
             fetchAndPrepareData();
-            return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto,
-                    participantWrapperPayload.isShowMedicalRecordRequestTracking()));
+            return new ParticipantWrapperResult(esData.getTotalCount(), collectData(ddpInstanceDto));
         });
     }
 
@@ -118,7 +116,7 @@ public class ParticipantWrapper {
     }
 
 
-    private List<ParticipantWrapperDto> collectData(DDPInstanceDto ddpInstanceDto, boolean showMedicalRecordRequestTracking) {
+    private List<ParticipantWrapperDto> collectData(DDPInstanceDto ddpInstanceDto) {
         logger.info("Collecting participant data...");
         List<ParticipantWrapperDto> result = new ArrayList<>();
         List<String> proxyGuids = new ArrayList<>();
@@ -127,7 +125,7 @@ public class ParticipantWrapper {
             if (elasticSearchParticipantDto instanceof UnparsedESParticipantDto) {
                 addWrapperToList((UnparsedESParticipantDto) elasticSearchParticipantDto, result);
             } else {
-                addWrapperToList(elasticSearchParticipantDto, result, ddpInstanceDto, showMedicalRecordRequestTracking);
+                addWrapperToList(elasticSearchParticipantDto, result, ddpInstanceDto);
             }
             proxyGuids.addAll(elasticSearchParticipantDto.getProxies());
         }
@@ -142,8 +140,7 @@ public class ParticipantWrapper {
         result.add(participantWrapperDto);
     }
 
-    private void addWrapperToList(ElasticSearchParticipantDto elasticSearchParticipantDto, List<ParticipantWrapperDto> result, DDPInstanceDto ddpInstanceDto,
-                                  boolean showMedicalRecordRequestTracking) {
+    private void addWrapperToList(ElasticSearchParticipantDto elasticSearchParticipantDto, List<ParticipantWrapperDto> result, DDPInstanceDto ddpInstanceDto) {
 
         elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
             Participant participant = esDsm.getParticipant().orElse(new Participant());
@@ -161,25 +158,23 @@ public class ParticipantWrapper {
             participantWrapperDto.setParticipant(participant);
             participantWrapperDto.setParticipantData(participantData);
 
-            if (showMedicalRecordRequestTracking) {
-                esDsm.getOncHistory().ifPresent(oncHistory -> {
-                    participant.setCreated(oncHistory.getCreated());
-                    participant.setReviewed(oncHistory.getReviewed());
-                });
+            esDsm.getOncHistory().ifPresent(oncHistory -> {
+                participant.setCreated(oncHistory.getCreated());
+                participant.setReviewed(oncHistory.getReviewed());
+            });
 
-                List<MedicalRecord> medicalRecord = esDsm.getMedicalRecord();
-                List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();
-                List<Tissue> tissues = esDsm.getTissue();
-                List<SmId> smIds = esDsm.getSmId();
-                List<ClinicalOrder> clinicalOrder = esDsm.getClinicalOrder();
-                mapSmIdsToProperTissue(tissues, smIds);
-                mapTissueToProperOncHistoryDetail(oncHistoryDetails, tissues);
+            List<MedicalRecord> medicalRecord = esDsm.getMedicalRecord();
+            List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();
+            List<Tissue> tissues = esDsm.getTissue();
+            List<SmId> smIds = esDsm.getSmId();
+            List<ClinicalOrder> clinicalOrder = esDsm.getClinicalOrder();
+            mapSmIdsToProperTissue(tissues, smIds);
+            mapTissueToProperOncHistoryDetail(oncHistoryDetails, tissues);
 
-                participantWrapperDto.setMedicalRecords(medicalRecord);
-                participantWrapperDto.setOncHistoryDetails(oncHistoryDetails);
-                participantWrapperDto.setAbstractionActivities(Collections.emptyList());
-                participantWrapperDto.setAbstractionSummary(Collections.emptyList());
-            }
+            participantWrapperDto.setMedicalRecords(medicalRecord);
+            participantWrapperDto.setOncHistoryDetails(oncHistoryDetails);
+            participantWrapperDto.setAbstractionActivities(Collections.emptyList());
+            participantWrapperDto.setAbstractionSummary(Collections.emptyList());
 
             participantWrapperDto.setKits(kitRequestShipping);
             result.add(participantWrapperDto);

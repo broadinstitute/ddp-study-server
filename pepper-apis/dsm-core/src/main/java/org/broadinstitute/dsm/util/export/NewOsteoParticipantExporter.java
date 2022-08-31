@@ -11,7 +11,7 @@ public class NewOsteoParticipantExporter extends DefaultParticipantExporter {
     }
 
     @Override
-    protected Participant buildParticipantFromPayload(ParticipantExportPayload payload) {
+    public Participant buildParticipantFromPayload(ParticipantExportPayload payload) {
         return new NewOsteoParticipant(
                 payload.getParticipantId(),
                 payload.getDdpParticipantId(),
