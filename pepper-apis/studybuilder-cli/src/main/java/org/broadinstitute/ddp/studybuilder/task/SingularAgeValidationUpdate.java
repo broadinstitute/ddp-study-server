@@ -25,71 +25,46 @@ import java.util.List;
 @Slf4j
 @NoArgsConstructor
 public class SingularAgeValidationUpdate implements CustomTask {
-    private static final String DATA_FILE_DEPENDENT = "patches/ddp-8554-dependent-validations.conf";
-    private static final String DATA_FILE_PARENTAL  = "patches/ddp-8554-parental-validations.conf";
-    private static final String DATA_FILE_SELF      = "patches/ddp-8554-self-validation.conf";
-    private static final String STUDY_GUID          = "singular";
-
-    protected Config dataDependentCfg;
-    protected Config dataParentalCfg;
-    protected Config dataSelfCfg;
-
     protected Path cfgPath;
     protected Config cfg;
     protected Config varsCfg;
 
     @Override
-    public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
-        if (!studyCfg.getString("study.guid").equals(STUDY_GUID)) {
-            throw new DDPException("This task is only for the " + STUDY_GUID + " study!");
+    public void init(final Path cfgPath, final Config studyCfg, final Config varsCfg) {
+        if (!studyCfg.getString("study.guid").equals("singular")) {
+            throw new DDPException("This task is only for the singular study!");
         }
 
-        final var selfFile = cfgPath.getParent().resolve(DATA_FILE_SELF).toFile();
-        if (!selfFile.exists()) {
-            throw new DDPException("Data file is missing: " + selfFile);
-        }
-
-        final var parentalFile = cfgPath.getParent().resolve(DATA_FILE_PARENTAL).toFile();
-        if (!parentalFile.exists()) {
-            throw new DDPException("Data file is missing: " + DATA_FILE_PARENTAL);
-        }
-
-        final var dependentFile = cfgPath.getParent().resolve(DATA_FILE_DEPENDENT).toFile();
-        if (!parentalFile.exists()) {
-            throw new DDPException("Data file is missing: " + DATA_FILE_DEPENDENT);
-        }
-
-        this.dataDependentCfg = ConfigFactory.parseFile(dependentFile).resolveWith(varsCfg);
-        this.dataParentalCfg = ConfigFactory.parseFile(parentalFile).resolveWith(varsCfg);
-        this.dataSelfCfg = ConfigFactory.parseFile(selfFile).resolveWith(varsCfg);
         this.cfgPath = cfgPath;
         this.cfg = studyCfg;
         this.varsCfg = varsCfg;
     }
 
     @Override
-    public void run(Handle handle) {
+    public void run(final Handle handle) {
         log.info("TASK::{}", SingularAgeValidationUpdate.class.getSimpleName());
 
         final var study = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid"));
         final var user = handle.attach(JdbiUser.class).findByUserGuid(cfg.getString("adminUser.guid"));
 
-        final var consentDependentActivity = handle.attach(JdbiActivity.class)
-                .findActivityByStudyGuidAndCode(cfg.getString("study.guid"), "CONSENT_DEPENDENT")
-                .orElseThrow(() -> new DDPException("Activity CONSENT_DEPENDENT doesn't exist"));
-
-        final var consentParentalActivity = handle.attach(JdbiActivity.class)
-                .findActivityByStudyGuidAndCode(cfg.getString("study.guid"), "CONSENT_PARENTAL")
-                .orElseThrow(() -> new DDPException("Activity CONSENT_PARENTAL doesn't exist"));
-
-        final var consentSelfActivity = handle.attach(JdbiActivity.class)
-                .findActivityByStudyGuidAndCode(cfg.getString("study.guid"), "CONSENT_SELF")
-                .orElseThrow(() -> new DDPException("Activity CONSENT_SELF doesn't exist"));
-
         final var builder = new ActivityBuilder(cfgPath.getParent(), cfg, varsCfg, study, user.getUserId());
-        updateValidations(handle, builder, consentDependentActivity, dataDependentCfg);
-        updateValidations(handle, builder, consentParentalActivity, dataParentalCfg);
-        updateValidations(handle, builder, consentSelfActivity, dataSelfCfg);
+        updateValidations(handle, builder, "CONSENT_DEPENDENT", "patches/ddp-8554-dependent-validations.conf");
+        updateValidations(handle, builder, "CONSENT_PARENTAL", "patches/ddp-8554-parental-validations.conf");
+        updateValidations(handle, builder, "CONSENT_SELF", "patches/ddp-8554-self-validation.conf");
+    }
+
+    private void updateValidations(final Handle handle, final ActivityBuilder builder, final String activityCode, final String patchFile) {
+        final var file = cfgPath.getParent().resolve(patchFile).toFile();
+        if (!file.exists()) {
+            throw new DDPException("Data file is missing: " + patchFile);
+        }
+
+        updateValidations(handle,
+                builder,
+                handle.attach(JdbiActivity.class)
+                        .findActivityByStudyGuidAndCode(cfg.getString("study.guid"), activityCode)
+                        .orElseThrow(() -> new DDPException("Activity " + activityCode + " doesn't exist")),
+                ConfigFactory.parseFile(file).resolveWith(varsCfg));
     }
 
     private void updateValidations(final Handle handle, final ActivityBuilder builder, final ActivityDto activity, final Config config) {
