@@ -48,20 +48,23 @@ public class SingularUpdateDependentEnrollment implements CustomTask {
         long validationId = helper.getValidationId("ENROLLING_DEPENDENT_AGE", "INT_RANGE", studyDto.getId());
         int rowCount = helper.updateValidation(validationId);
         DBUtils.checkUpdate(1, rowCount);
-        rowCount = helper.updateValidation(validationId);
+        rowCount = helper.updateIntRangeValidation(validationId, 18);
         DBUtils.checkUpdate(1, rowCount);
 
         //update Question expression
         long expressionId = helper.getExpressionId("ADD_PARTICIPANT_INCAPACITATED_DEPENDENT", studyDto.getId());
         //update expression
-        String expressionText = "user.studies[\"singular\"].forms[\"ADD_PARTICIPANT_DEPENDENT\"].questions[\"ENROLLING_DEPENDENT_AGE\"].isAnswered() \n"
-                + " && user.studies[\"singular\"].forms[\"ADD_PARTICIPANT_DEPENDENT\"].questions[\"ENROLLING_DEPENDENT_AGE\"].answers.value() >= 18";
+        String expressionText = "user.studies[\"singular\"].forms[\"ADD_PARTICIPANT_DEPENDENT\"] "
+                + ".questions[\"ENROLLING_DEPENDENT_AGE\"].isAnswered() \n"
+                + " && user.studies[\"singular\"].forms[\"ADD_PARTICIPANT_DEPENDENT\"].questions[\"ENROLLING_DEPENDENT_AGE\"]"
+                + ".answers.value() >= 18";
         rowCount = helper.updateExpression(expressionId, expressionText);
         DBUtils.checkUpdate(1, rowCount);
 
         //update activity validation
         long activityValidationId = helper.getActivityValidationId("ADD_PARTICIPANT_DEPENDENT", studyDto.getId());
-        String activityExpressionText = "user.studies[\"singular\"].forms[\"ADD_PARTICIPANT_DEPENDENT\"].questions[\"ENROLLING_DEPENDENT_AGE\"].answers.value() >= 18";
+        String activityExpressionText = "user.studies[\"singular\"].forms[\"ADD_PARTICIPANT_DEPENDENT\"]"
+                + ".questions[\"ENROLLING_DEPENDENT_AGE\"].answers.value() >= 18";
         rowCount = helper.updateActivityValidation(activityValidationId, activityExpressionText);
         DBUtils.checkUpdate(1, rowCount);
 
@@ -81,7 +84,8 @@ public class SingularUpdateDependentEnrollment implements CustomTask {
                 + "                and qsc.stable_id = :stableId \n"
                 + "                and vt.validation_type_code = :validationType \n"
                 + "                and qsc.umbrella_study_id = :studyId ")
-        long getValidationId(@Bind("stableId") String stableId, @Bind("validationType") String validationType, @Bind("studyId") long studyId);
+        long getValidationId(@Bind("stableId") String stableId, @Bind("validationType") String validationType,
+                             @Bind("studyId") long studyId);
 
         @SqlUpdate("update validation set allow_save = true where validation_id = :validationId")
         int updateValidation(@Bind("validationId") long validationId);
@@ -90,7 +94,8 @@ public class SingularUpdateDependentEnrollment implements CustomTask {
         int updateIntRangeValidation(@Bind("validationId") long validationId, @Bind("min") int min);
 
 
-        @SqlQuery("select e.expression_id from block__expression be, expression e, block__question bq, question q, question_stable_code qsc \n"
+        @SqlQuery("select e.expression_id from block__expression be, expression e, block__question bq, "
+                + " question q, question_stable_code qsc \n"
                 + "                where be.expression_id = e.expression_id \n"
                 + "                and bq.block_id = be.block_id \n"
                 + "                and q.question_id = bq.question_id \n"
@@ -104,8 +109,8 @@ public class SingularUpdateDependentEnrollment implements CustomTask {
 
 
         @SqlQuery("select av.activity_validation_id from activity_validation av, study_activity sa \n"
-                +" where sa.study_activity_id = av.study_activity_id \n"
-                +" and sa.study_activity_code = :activityCode \n"
+                + " where sa.study_activity_id = av.study_activity_id \n"
+                + " and sa.study_activity_code = :activityCode \n"
                 + " and av.precondition_text like '%ADD_PARTICIPANT_INCAPACITATED_DEPENDENT%' \n"
                 + " and sa.study_id = :studyId")
         long getActivityValidationId(@Bind("activityCode") String activityCode, @Bind("studyId") long studyId);
