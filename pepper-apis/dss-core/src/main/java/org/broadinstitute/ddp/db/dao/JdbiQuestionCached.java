@@ -186,8 +186,6 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
         }
     }
 
-
-
     @Override
     public Optional<Long> findCompositeParentIdByChildId(long childQuestionId) {
         if (isNullCache(compositeChildIdToParentIdCache)) {
