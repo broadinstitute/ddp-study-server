@@ -288,7 +288,7 @@ public interface FormActivityDao extends SqlObject {
 
         List<Long> orderedSectionIds = getJdbiFormActivityFormSection()
                 .findOrderedSectionIdsByActivityIdAndTimestamp(activityDto.getActivityId(), revisionStart);
-        LOG.info("Retrieving the ids {}", StringUtils.join(orderedSectionIds));
+        LOG.info("Retrieving section ids {}", StringUtils.join(orderedSectionIds));
         Set<Long> allSectionIds = new HashSet<>(orderedSectionIds);
         Long introSectionId = null;
         Long closingSectionId = null;
