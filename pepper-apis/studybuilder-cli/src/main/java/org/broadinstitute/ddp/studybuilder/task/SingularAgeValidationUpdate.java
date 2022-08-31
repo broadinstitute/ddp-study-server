@@ -26,9 +26,9 @@ import java.util.List;
 @NoArgsConstructor
 public class SingularAgeValidationUpdate implements CustomTask {
     private static final String DATA_FILE_DEPENDENT = "patches/ddp-8554-dependent-validations.conf";
-    private static final String DATA_FILE_PARENTAL = "patches/ddp-8554-parental-validations.conf";
-    private static final String DATA_FILE_SELF     = "patches/ddp-8554-self-validation.conf";
-    private static final String STUDY_GUID         = "singular";
+    private static final String DATA_FILE_PARENTAL  = "patches/ddp-8554-parental-validations.conf";
+    private static final String DATA_FILE_SELF      = "patches/ddp-8554-self-validation.conf";
+    private static final String STUDY_GUID          = "singular";
 
     protected Config dataDependentCfg;
     protected Config dataParentalCfg;
