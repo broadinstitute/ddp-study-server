@@ -82,7 +82,7 @@ public class KitDaoImpl implements KitDao {
             + "kt.requires_insert_in_kit_tracking, track.tracking_id "
             + "FROM ddp_kit as kit "
             + "LEFT JOIN ddp_kit_request AS req ON req.dsm_kit_request_id = kit.dsm_kit_request_id "
-            + "LEFT JOIN ddp_kit_tracking AS track ON kit.kit_label = track.kit_label "
+            + "LEFT JOIN ddp_kit_tracking AS track ON track.kit_label = ?"
             + "LEFT JOIN kit_type AS kt ON kt.kit_type_id = req.kit_type_id "
             + "WHERE req.ddp_label = ?";
 
@@ -376,11 +376,12 @@ public class KitDaoImpl implements KitDao {
     }
 
     @Override
-    public Optional<KitRequestShipping> getKitByDdpLabel(String ddpLabel) {
+    public Optional<KitRequestShipping> getKitByDdpLabel(String ddpLabel, String kitLabel) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult(0);
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_BY_DDP_LABEL)) {
-                stmt.setString(1, ddpLabel);
+                stmt.setString(1, kitLabel);
+                stmt.setString(2, ddpLabel);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         KitRequestShipping kitRequestShipping = new KitRequestShipping();

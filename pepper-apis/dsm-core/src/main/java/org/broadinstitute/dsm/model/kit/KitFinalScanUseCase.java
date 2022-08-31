@@ -29,7 +29,7 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
             return Optional.of(new ScanError(ddpLabel, "Barcode contains less than 14 digits, "
                     + "You can manually enter any missing digits above."));
         }
-        Optional<KitRequestShipping> kitByDdpLabel = kitDao.getKitByDdpLabel(ddpLabel);
+        Optional<KitRequestShipping> kitByDdpLabel = kitDao.getKitByDdpLabel(ddpLabel, kitLabel);
         if (kitByDdpLabel.isPresent()) {
             KitRequestShipping kitRequestShipping = kitByDdpLabel.get();
             if (kitRequestShipping.isBloodKit()) {
