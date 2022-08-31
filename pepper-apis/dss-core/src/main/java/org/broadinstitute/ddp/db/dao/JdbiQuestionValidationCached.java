@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.validation.RuleDto;
@@ -101,6 +102,6 @@ public class JdbiQuestionValidationCached extends SQLObjectWrapper<JdbiQuestionV
 
     @Override
     public boolean deleteForQuestion(long questionId) {
-        throw new DDPException("Not supported");
+        throw new NotImplementedException("Not implemented yet in cached version");
     }
 }

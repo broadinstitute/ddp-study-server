@@ -7,6 +7,7 @@ import java.util.Set;
 import javax.cache.Cache;
 import javax.cache.expiry.Duration;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.cache.ModelChangeType;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -104,6 +105,6 @@ public class PicklistQuestionCachedDao extends SQLObjectWrapper<PicklistQuestion
 
     @Override
     public void delete(Long questionId) {
-        throw new DDPException("Not supported");
+        throw new NotImplementedException("Not implemented in Cached version");
     }
 }

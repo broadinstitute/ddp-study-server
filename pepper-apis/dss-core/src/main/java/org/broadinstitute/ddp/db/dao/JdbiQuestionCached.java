@@ -1,5 +1,14 @@
 package org.broadinstitute.ddp.db.dao;
 
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
+import org.broadinstitute.ddp.cache.CacheService;
+import org.broadinstitute.ddp.db.dto.QuestionDto;
+import org.broadinstitute.ddp.util.RedisConnectionValidator;
+import org.jdbi.v3.core.Handle;
+import org.redisson.api.RLocalCachedMap;
+import org.redisson.client.RedisException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,15 +19,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import lombok.extern.slf4j.Slf4j;
-import org.broadinstitute.ddp.cache.CacheService;
-import org.broadinstitute.ddp.db.dto.QuestionDto;
-import org.broadinstitute.ddp.exception.DDPException;
-import org.broadinstitute.ddp.util.RedisConnectionValidator;
-import org.jdbi.v3.core.Handle;
-import org.redisson.api.RLocalCachedMap;
-import org.redisson.client.RedisException;
 
 @Slf4j
 public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implements JdbiQuestion {
@@ -314,7 +314,7 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
 
     @Override
     public boolean deleteBaseQuestion(long questionId) {
-        throw new DDPException("Not implemented for cached version");
+        throw new NotImplementedException("Not implemented for cached version");
     }
 
     @Override
