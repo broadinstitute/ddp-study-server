@@ -140,7 +140,11 @@ public class ParticipantWrapper {
         result.add(participantWrapperDto);
     }
 
-    private void addWrapperToList(ElasticSearchParticipantDto elasticSearchParticipantDto, List<ParticipantWrapperDto> result, DDPInstanceDto ddpInstanceDto) {
+    private void addWrapperToList(
+            ElasticSearchParticipantDto elasticSearchParticipantDto,
+            List<ParticipantWrapperDto> result,
+            DDPInstanceDto ddpInstanceDto
+    ) {
 
         elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
             Participant participant = esDsm.getParticipant().orElse(new Participant());
@@ -148,8 +152,8 @@ public class ParticipantWrapper {
             List<ParticipantData> participantData = esDsm.getParticipantData();
             sortBySelfElseById(participantData);
 
-            StudyPreFilter.fromPayload(StudyPreFilterPayload.of(elasticSearchParticipantDto, ddpInstanceDto))
-                    .ifPresent(StudyPreFilter::filter);
+            StudyPostFilter.fromPayload(StudyPostFilterPayload.of(elasticSearchParticipantDto, ddpInstanceDto))
+                    .ifPresent(StudyPostFilter::filter);
 
             List<KitRequestShipping> kitRequestShipping = esDsm.getKitRequestShipping();
 
@@ -162,9 +166,6 @@ public class ParticipantWrapper {
                 participant.setCreated(oncHistory.getCreated());
                 participant.setReviewed(oncHistory.getReviewed());
             });
-
-            StudyPostFilter.fromPayload(StudyPostFilterPayload.of(elasticSearchParticipantDto, ddpInstanceDto))
-                    .ifPresent(StudyPostFilter::filter);
                     
             List<MedicalRecord> medicalRecord = esDsm.getMedicalRecord();
             List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();
