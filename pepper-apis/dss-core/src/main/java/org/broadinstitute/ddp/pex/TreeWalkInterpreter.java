@@ -70,6 +70,7 @@ import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.pex.lang.PexBaseVisitor;
 import org.broadinstitute.ddp.pex.lang.PexParser;
 import org.broadinstitute.ddp.pex.lang.PexParser.AgeAtLeastPredicateContext;
+import org.broadinstitute.ddp.pex.lang.PexParser.AgeAtMostPredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.AnswerQueryContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.DefaultLatestAnswerQueryContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.FormPredicateContext;
@@ -716,12 +717,19 @@ public class TreeWalkInterpreter implements PexInterpreter {
      * @return true if dateValue is present and is at least minimumAge. False otherwise, including if dateValue is empty
      */
     private boolean isOldEnough(Optional<DateValue> dateValue, ChronoUnit timeUnit, long minimumAge) {
-        boolean isOldEnough = false;
-        if (dateValue.isPresent()) {
-            long age = dateValue.get().between(timeUnit, LocalDate.now());  // Instant is zoneless; use LocalDate.
-            isOldEnough = age >= minimumAge;
-        }
-        return isOldEnough;
+        return dateValue.isPresent() && (dateValue.get().between(timeUnit, LocalDate.now()) >= minimumAge);
+    }
+
+    /**
+     * Returns true if the given date is at most maximumAge old.
+     *
+     * @param dateValue  the date to check
+     * @param timeUnit   the time unit
+     * @param maximumAge maximum age, inclusive
+     * @return true if dateValue is present and is at most maximumAge. False otherwise, including if dateValue is empty
+     */
+    private boolean isYoungEnough(Optional<DateValue> dateValue, ChronoUnit timeUnit, long maximumAge) {
+        return dateValue.isPresent() && (dateValue.get().between(timeUnit, LocalDate.now()) <= maximumAge);
     }
 
     private Object applyDateAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
@@ -741,6 +749,16 @@ public class TreeWalkInterpreter implements PexInterpreter {
                     : fetcher.findSpecificDateAnswer(ictx, activityCode, instanceGuid, stableId);
 
             return isOldEnough(dateValue, timeUnit, minimumAge);
+        } else if (predicateCtx instanceof PexParser.AgeAtMostPredicateContext) {
+            AgeAtMostPredicateContext predCtx = (AgeAtMostPredicateContext) predicateCtx;
+            long maximalAge = extractLong(predCtx.INT());
+            ChronoUnit timeUnit = ChronoUnit.valueOf(predCtx.TIMEUNIT().getText());
+
+            Optional<DateValue> dateValue = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestDateAnswer(ictx, userGuid, activityCode, stableId, studyId)
+                    : fetcher.findSpecificDateAnswer(ictx, activityCode, instanceGuid, stableId);
+
+            return isYoungEnough(dateValue, timeUnit, maximalAge);
         } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
             Optional<DateValue> dateValue = StringUtils.isBlank(instanceGuid)
                     ? fetcher.findLatestDateAnswer(ictx, userGuid, activityCode, stableId, studyId)
