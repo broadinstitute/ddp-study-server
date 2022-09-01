@@ -56,7 +56,8 @@ public class SourceGeneratorTest {
         Assert.assertEquals(objectMap.keySet().stream().findFirst().get(), SourceGenerator.DSM_OBJECT);
         List<Map<String, Object>> medicalRecords = (List) ((Map) objectMap.get(SourceGenerator.DSM_OBJECT)).get("medicalRecord");
         Optional<Map<String, Object>> first =
-                medicalRecords.stream().filter(i -> i.get(CamelCaseConverter.of(TestPatchUtil.NUMERIC_FIELD).convert()) != null).findFirst();
+                medicalRecords.stream()
+                        .filter(i -> i.get(CamelCaseConverter.of(TestPatchUtil.NUMERIC_FIELD).convert()) != null).findFirst();
         first.ifPresentOrElse(val -> Assert.assertEquals(1L, val.get(CamelCaseConverter.of(TestPatchUtil.NUMERIC_FIELD).convert())),
                 Assert::fail);
     }

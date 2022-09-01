@@ -86,6 +86,18 @@ public abstract class BasePatch {
         exportFacade.export();
     }
 
+    private void exportToES(List<NameValue> nameValues) {
+        if (!isElasticSearchExportable) {
+            return;
+        }
+        GeneratorPayload generatorPayload = new GeneratorPayload(nameValues, patch);
+        ExportFacadePayload exportFacadePayload =
+                new ExportFacadePayload(ddpInstance.getParticipantIndexES(), patch.getDdpParticipantId(), generatorPayload,
+                        patch.getRealm());
+        ExportFacade exportFacade = new ExportFacade(exportFacadePayload);
+        exportFacade.export();
+    }
+
     public abstract Object doPatch();
 
     protected abstract Object patchNameValuePairs();
@@ -124,7 +136,16 @@ public abstract class BasePatch {
                 throw new RuntimeException("DBElement not found in ColumnNameMap: " + nameValue.getName());
             }
         }
+        exportToESWithId(getIdForES(), getNameValuesForES());
         return updatedNameValues;
+    }
+
+    protected String getIdForES() {
+        return patch.getId();
+    }
+
+    protected List<NameValue> getNameValuesForES() {
+        return patch.getNameValues();
     }
 
     protected void exportToESWithId(String id, NameValue nameValue) {
@@ -133,6 +154,14 @@ public abstract class BasePatch {
         }
         patch.setId(Objects.requireNonNull(id));
         exportToES(Objects.requireNonNull(nameValue));
+    }
+
+    protected void exportToESWithId(String id, List<NameValue> nameValues) {
+        if (!isElasticSearchExportable) {
+            return;
+        }
+        patch.setId(Objects.requireNonNull(id));
+        exportToES(Objects.requireNonNull(nameValues));
     }
 
     abstract Optional<Object> processEachNameValue(NameValue nameValue);

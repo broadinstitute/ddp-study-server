@@ -215,13 +215,20 @@ public class RenderValueProvider {
     }
 
     /**
-     * checkAnswer
-     *
-     * @param questionStableId the question stable id
-     * @param optionStableId    the option stable Id
-     * @param stringIfMatches    string if question is answered with option stable Id
-     * @param stringOtherwise    string if question is not answered with option stable Id
-     * @return string stringIfMatches or stringOtherwise
+     * Returns a string value depending on whether a specified PICKLIST question's option
+     * is selected or not.
+     * 
+     * <p>If {@link useDefaultsForDdpMethods} is true, this method will always return
+     * a value of the form "stringIfMatches/stringOtherwise".
+     * 
+     * <p>If an activity does not have a response,
+     * or the question does not have an associated answer, a match will be assumed,
+     * and the `stringIfMatches` value will be returned.
+     * @param questionStableId  the stable id of the PICKLIST question
+     * @param optionStableId    the stable id of the option to check
+     * @param stringIfMatches    string to return if the option is selected, or there is no answer
+     * @param stringOtherwise    string to return if the option is not selected
+     * @return the string value based on the option's selected state
      */
     public String checkAnswer(String questionStableId, String optionStableId,
                               String stringIfMatches, String stringOtherwise) {
@@ -229,17 +236,35 @@ public class RenderValueProvider {
         if (useDefaultsForDdpMethods) {
             return String.format("%s/%s", stringIfMatches, stringOtherwise);
         }
-        Answer answer = null;
+
+        // Defaulting to `true` is intentional- a null response or answer
+        // is assumed to be "selected"
+        // (bskinner 2022.08.25)
+        var optionIsSelected = true;
+
         if (formResponse != null) {
-            answer = formResponse.getAnswer(questionStableId);
-            if (answer.getQuestionType() != QuestionType.PICKLIST) {
-                throw new DDPException(String.format("Activity code: %s. Rendering questionStableId: %s must be PICKLIST type.",
-                        formResponse.getActivityCode(), questionStableId));
+            var answer = formResponse.getAnswer(questionStableId);
+
+            if (answer != null) {
+                if (answer.getQuestionType() != QuestionType.PICKLIST) {
+                    var message = String.format("Only %s answers are supported by the `checkAnswer` macro [activity:%s,question:%s]",
+                            QuestionType.PICKLIST,
+                            formResponse.getActivityCode(),
+                            questionStableId);
+                    throw new DDPException(message);
+                }
+
+                optionIsSelected = ((PicklistAnswer) answer).getValue()
+                        .stream()
+                        .anyMatch((selected) -> selected.getStableId().equals(optionStableId));
             }
         }
-        return answer == null || ((PicklistAnswer) answer).getValue().stream()
-                .anyMatch(selected -> selected.getStableId().equals(optionStableId))
-                ? stringIfMatches : stringOtherwise;
+
+        if (optionIsSelected) {
+            return stringIfMatches;
+        } else {
+            return stringOtherwise;
+        }
     }
 
     /**

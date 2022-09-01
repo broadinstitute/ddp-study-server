@@ -25,6 +25,8 @@ import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
 import org.broadinstitute.dsm.model.elastic.search.Deserializer;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
+import org.broadinstitute.dsm.statics.RoutePath;
+import org.broadinstitute.dsm.util.UserUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.QueryParamsMap;
@@ -47,6 +49,7 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
     @Override
     public ParticipantWrapperResult filter(QueryParamsMap queryParamsMap, Deserializer deserializer) {
         this.deserializer = deserializer;
+
         return filter(queryParamsMap);
     }
 

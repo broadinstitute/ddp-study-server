@@ -146,7 +146,8 @@ public class WorkflowStatusUpdate {
     public static int addNewParticipantDataWithStatus(String workflow, String status, String ddpParticipantId, FieldSettingsDto setting) {
         JsonObject dataJsonObject = new JsonObject();
         dataJsonObject.addProperty(workflow, status);
-        ParticipantData participantData = new ParticipantData.Builder().withDdpParticipantId(ddpParticipantId).withDdpInstanceId(setting.getDdpInstanceId())
+        ParticipantData participantData = new ParticipantData.Builder().withDdpParticipantId(ddpParticipantId)
+                .withDdpInstanceId(setting.getDdpInstanceId())
                 .withFieldTypeId(setting.getFieldType()).withData(dataJsonObject.toString())
                 .withLastChanged(System.currentTimeMillis()).withChangedBy(WorkflowStatusUpdate.DSS).build();
         int participantDataId = participantDataDao.create(participantData);
