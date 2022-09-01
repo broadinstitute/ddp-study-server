@@ -104,4 +104,5 @@
     <include file="liquibase/singular/DDP-6584_download_participant_file.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/CMI/DDP-8217_sm_id_receive_fields.xml" relativeToChangelogFile="true"/>
     <include file="liquibase/singular/DDP-8612_NA_Checkbox_options.xml" relativeToChangelogFile="true"/>
+    <include file="liquibase/CMI/DDP-8569_sampleNotes.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
