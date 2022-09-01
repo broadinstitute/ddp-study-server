@@ -2,7 +2,6 @@ package org.broadinstitute.ddp.db.dao;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.db.dto.ActivityValidationDto;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
@@ -78,11 +77,6 @@ public interface JdbiActivityValidation extends SqlObject {
     List<ActivityValidationDto> _findByActivityId(@Bind("activityId") long activityId);
 
     default int _deleteByActivityId(long activityId) {
-        List<ActivityValidationDto> activityValidations = _findByActivityId(activityId);
-        List<Long> validationIdsForActivity = activityValidations
-                .stream()
-                .map(dto -> dto.getActivityValidationId())
-                .collect(Collectors.toList());
         return _deleteValidationsByActivityId(activityId);
     }
 
