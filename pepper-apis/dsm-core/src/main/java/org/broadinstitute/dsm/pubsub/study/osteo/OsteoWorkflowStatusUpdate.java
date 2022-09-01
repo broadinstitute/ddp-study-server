@@ -103,7 +103,10 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
             ElasticSearchParticipantDto esPtDto = elasticSearch
                     .getParticipantById(instance.getEsParticipantIndex(), oldOsteoDdpParticipantId);
             int newOsteoParticipantId = maybeNewOsteoParticipantId.orElseThrow();
-            esPtDto.getDsm().ifPresent(esDsm -> updateEsDsm(newOsteoParticipantId, newOsteoMedicalRecords, esDsm));
+            esPtDto.getDsm().ifPresentOrElse(
+                    esDsm -> updateEsDsm(newOsteoParticipantId, newOsteoMedicalRecords, esDsm),
+                    ()    -> logger.warn(String.format("Could not find participant in ES with guid %s", ddpParticipantId))
+            );
             Map<String, Object> esPtDtoAsMap = ObjectMapperSingleton
                     .readValue(GSON.toJson(esPtDto), new TypeReference<Map<String, Object>>() {});
             writeDataToES(esPtDtoAsMap);
