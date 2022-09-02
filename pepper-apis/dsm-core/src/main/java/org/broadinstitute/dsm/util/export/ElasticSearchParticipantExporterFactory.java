@@ -2,7 +2,7 @@
 package org.broadinstitute.dsm.util.export;
 
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
-import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter;
+import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter;
 
 public class ElasticSearchParticipantExporterFactory {
 
@@ -13,7 +13,7 @@ public class ElasticSearchParticipantExporterFactory {
     }
 
     private static boolean isNewOsteoInstance(String instanceName) {
-        return instanceName.equals(StudyPreFilter.NEW_OSTEO_INSTANCE_NAME);
+        return instanceName.equals(StudyPostFilter.NEW_OSTEO_INSTANCE_NAME);
     }
 
 }
