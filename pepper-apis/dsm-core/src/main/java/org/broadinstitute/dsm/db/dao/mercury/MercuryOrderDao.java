@@ -57,8 +57,8 @@ public class MercuryOrderDao implements Dao<MercuryOrderDto> {
     public static String SQL_SELECT_ORDER_NUMBER = "Select * from ddp_mercury_sequencing where order_id = ?";
     public static String SQL_SELECT_LAST_UPDATED_ORDER =
             "Select min(mercury_sequencing_id) as mercury_sequencing_id, min(ddp_instance_id) as ddp_instance_id, min(ddp_participant_id) "
-                    +
-                    "  as ddp_participant_id, min(order_date) as order_date, order_id, tissue_id, dsm_kit_request_id from ddp_mercury_sequencing "
+                    + "  as ddp_participant_id, min(order_date) as order_date, "
+                    + " order_id, tissue_id, dsm_kit_request_id from ddp_mercury_sequencing "
                     + " where order_id =?  group by order_id, tissue_id, dsm_kit_request_id ";
     public static String SQL_UPDATE_ORDER_STATUS =
             "UPDATE ddp_mercury_sequencing SET order_status = ?, status_date = ?, mercury_pdo_id = ?,  "

@@ -397,7 +397,9 @@ public class ElasticSearchUtil {
         return null;
     }
 
-    public static Map<String, org.broadinstitute.dsm.model.gbf.Address> getParticipantAddresses(RestHighLevelClient client, String indexName, Set<String> participantGuids) {
+    public static Map<String, org.broadinstitute.dsm.model.gbf.Address> getParticipantAddresses(RestHighLevelClient client,
+                                                                                                String indexName,
+                                                                                                Set<String> participantGuids) {
         Gson gson = new Gson();
         Map<String, org.broadinstitute.dsm.model.gbf.Address> addressByParticipant = new HashMap<>();
         int scrollSize = 100;
@@ -434,8 +436,9 @@ public class ElasticSearchUtil {
                     Address address = gson.fromJson(participantJson.get(ADDRESS), Address.class);
                     Profile profile = gson.fromJson(participantJson.get(PROFILE), Profile.class);
                     org.broadinstitute.dsm.model.gbf.Address
-                            gbfAddress = new org.broadinstitute.dsm.model.gbf.Address(address.getRecipient(), address.getStreet1(), address.getStreet1(),
-                            address.getCity(), address.getState(), address.getZip(), address.getCountry(), address.getPhone());
+                            gbfAddress = new org.broadinstitute.dsm.model.gbf.Address(address.getRecipient(),
+                            address.getStreet1(), address.getStreet1(), address.getCity(), address.getState(),
+                            address.getZip(), address.getCountry(), address.getPhone());
                     addressByParticipant.put(profile.getGuid(), gbfAddress);
                 }
                 hitNumber++;
@@ -1338,8 +1341,8 @@ public class ElasticSearchUtil {
      *                                            a same fieldName (for example related tp `SELF_CURRENT_AGE`)
      * @param parentNestedOfRangeBuilderOfNumbers reference to NestedQueryBuilder containing a Range of numbers
      * @return BoolQueryBuilder  finalQuery: it can be the same finalQuery or it can be reorganized finalQuery
-     * where RangeQueryBuilder removed from the initial place inside finalQuery and added into a must()-block
-     * together with `IS NOT NULL` query (for a field `fieldName`).
+     *         where RangeQueryBuilder removed from the initial place inside finalQuery and added into a must()-block
+     *         together with `IS NOT NULL` query (for a field `fieldName`).
      */
     private static BoolQueryBuilder processIsNotNullForRangeOfNumbers(
             String fieldName,

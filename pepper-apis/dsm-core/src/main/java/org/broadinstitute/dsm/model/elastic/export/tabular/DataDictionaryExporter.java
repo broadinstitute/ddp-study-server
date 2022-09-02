@@ -161,13 +161,13 @@ public class DataDictionaryExporter extends ExcelParticipantExporter {
     }
 
     private void addModuleRepeatDescription(String moduleName, SXSSFRow moduleNameRow, ModuleExportConfig moduleExportConfig) {
-        String repeatString = "Up to " + moduleExportConfig.getNumMaxRepeats() +
-                " entries for this module exist for each participant.\n";
+        String repeatString = "Up to " + moduleExportConfig.getNumMaxRepeats()
+                + " entries for this module exist for each participant.\n";
         repeatString += "Entries are indicated in reverse chronological order.\n";
-        repeatString += "The most recent entry has no suffix, the next-most-recent is suffixed with _2," +
-                " the next-most-recent is suffixed with _3, etc...\n ";
-        repeatString += "e.g. " + moduleName + ".[QUESTION] is the most recent completion, and " + moduleName +
-                "_2.QUESTION is the next-most recent completion.";
+        repeatString += "The most recent entry has no suffix, the next-most-recent is suffixed with _2,"
+                + " the next-most-recent is suffixed with _3, etc...\n ";
+        repeatString += "e.g. " + moduleName + ".[QUESTION] is the most recent completion, and " + moduleName
+                + "_2.QUESTION is the next-most recent completion.";
         moduleNameRow.createCell(DATATYPE_COL_NUMBER).setCellValue(repeatString);
     }
 
@@ -186,8 +186,8 @@ public class DataDictionaryExporter extends ExcelParticipantExporter {
                 null) + "]]";
         String descriptionText = (String) parentConfig.getQuestionDef().get(ESObjectConstants.QUESTION_TEXT);
         if (parentConfig.getMaxRepeats() > 1) {
-            descriptionText += "\n May have up to " + parentConfig.getMaxRepeats() +
-                    " response variables for each question, denoted with _2, _3, etc. for each response after the first.";
+            descriptionText += "\n May have up to " + parentConfig.getMaxRepeats()
+                    + " response variables for each question, denoted with _2, _3, etc. for each response after the first.";
         }
         addRowToSheet(questionRootName, null, "COMPOSITE", descriptionText, null);
 
@@ -235,11 +235,11 @@ public class DataDictionaryExporter extends ExcelParticipantExporter {
         }
         if (descriptionText.contains("_")) {
             descriptionText = Arrays.stream(descriptionText.split("_"))
-                    .map(word -> StringUtils.toRootLowerCase(word)).collect(Collectors.joining(" "));
+                    .map(StringUtils::toRootLowerCase).collect(Collectors.joining(" "));
         }
         if (filterConfig.getMaxRepeats() > 1) {
-            descriptionText += "\n May have up to " + filterConfig.getMaxRepeats() +
-                    " response variables, denoted with _2, _3, etc. for each response after the first.";
+            descriptionText += "\n May have up to " + filterConfig.getMaxRepeats()
+                    + " response variables, denoted with _2, _3, etc. for each response after the first.";
         }
 
         String optionText = null;

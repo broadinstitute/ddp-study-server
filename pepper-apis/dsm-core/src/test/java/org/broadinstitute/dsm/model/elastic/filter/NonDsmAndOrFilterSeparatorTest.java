@@ -1,12 +1,13 @@
 package org.broadinstitute.dsm.model.elastic.filter;
 
-import static org.junit.Assert.*;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 public class NonDsmAndOrFilterSeparatorTest {
 

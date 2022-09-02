@@ -14,8 +14,8 @@ import static org.junit.Assert.assertEquals;
 public class TabularParticipantParserTest {
     private static final Filter DDP_FILTER = buildFilter("ddp", "data", null, "TEXT", "DDP");
     private static final Filter HRUID_FILTER = buildFilter("hruid", "data", "profile", "TEXT", "Short ID");
-    private static final Filter FIRST_NAME_FILTER= buildFilter("firstName", "data", "profile", "TEXT", "First Name");
-    private static final Filter EMAIL_FILTER= buildFilter("email", "data", "profile", "TEXT", "Email");
+    private static final Filter FIRST_NAME_FILTER = buildFilter("firstName", "data", "profile", "TEXT", "First Name");
+    private static final Filter EMAIL_FILTER = buildFilter("email", "data", "profile", "TEXT", "Email");
     private static final Filter INCONTINENCE_FILTER = buildFilter("INCONTINENCE",
             "MEDICAL_HISTORY", "questionsAnswers", "OPTIONS", "describe incontinence");
     private static final Filter TELANGIECTASIA_FILTER = buildFilter("TELANGIECTASIA",
@@ -64,7 +64,8 @@ public class TabularParticipantParserTest {
                 true, true, SIMPLE_HISTORY_DEF);
         List<ModuleExportConfig> moduleConfigs = parser.generateExportConfigs();
         List<Map<String, String>> participantValueMaps = parser.parse(moduleConfigs, Collections.singletonList(SIMPLE_PARTICIPANT));
-        assertEquals("text values not rendered correctly", "minor pollen allergy", participantValueMaps.get(0).get("MEDICAL_HISTORY.ALLERGY_DESCRIPTION"));
+        assertEquals("text values not rendered correctly", "minor pollen allergy", participantValueMaps.get(0)
+                .get("MEDICAL_HISTORY.ALLERGY_DESCRIPTION"));
     }
 
     @Test
@@ -73,7 +74,8 @@ public class TabularParticipantParserTest {
                 true, true, ATCP_ACTIVITY_DEFS);
         List<ModuleExportConfig> moduleConfigs = parser.generateExportConfigs();
         List<Map<String, String>> participantValueMaps = parser.parse(moduleConfigs, Collections.singletonList(TEST_ATCP_PARTICIPANT));
-        assertEquals("single select value not correct", "Occasional (up to two times per week)", participantValueMaps.get(0).get("MEDICAL_HISTORY.INCONTINENCE"));
+        assertEquals("single select value not correct", "Occasional (up to two times per week)", participantValueMaps.get(0)
+                .get("MEDICAL_HISTORY.INCONTINENCE"));
     }
 
     @Test
@@ -82,7 +84,8 @@ public class TabularParticipantParserTest {
                 false, true, ATCP_ACTIVITY_DEFS);
         List<ModuleExportConfig> moduleConfigs = parser.generateExportConfigs();
         List<Map<String, String>> participantValueMaps = parser.parse(moduleConfigs, Collections.singletonList(TEST_ATCP_PARTICIPANT));
-        assertEquals("single select value not correct", "INCONTINENCE_OCCASIONAL", participantValueMaps.get(0).get("MEDICAL_HISTORY.INCONTINENCE"));
+        assertEquals("single select value not correct", "INCONTINENCE_OCCASIONAL", participantValueMaps.get(0)
+                .get("MEDICAL_HISTORY.INCONTINENCE"));
     }
 
 

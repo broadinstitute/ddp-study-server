@@ -209,7 +209,7 @@ public abstract class TabularParticipantExporter {
         } else {
             colFunc.apply(filterConfig, activityRepeatNum, questionRepeatNum, null, null, parentConfig);
             if (filterConfig.hasAnyOptionDetails()) {
-            colFunc.apply(filterConfig, activityRepeatNum, questionRepeatNum, Collections.EMPTY_MAP, "DETAIL", parentConfig);
+                colFunc.apply(filterConfig, activityRepeatNum, questionRepeatNum, Collections.EMPTY_MAP, "DETAIL", parentConfig);
             }
         }
     }

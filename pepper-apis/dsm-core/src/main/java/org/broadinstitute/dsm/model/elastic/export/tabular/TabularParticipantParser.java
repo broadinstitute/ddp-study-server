@@ -12,7 +12,13 @@ import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -351,7 +357,7 @@ public class TabularParticipantParser {
         } else if (moduleConfig.getFilterKey().isJson() && moduleConfig.getName().startsWith(ESObjectConstants.DSM_PARTICIPANT_DATA)) {
             return getNestedCompletions(esDataAsMap, moduleConfig, subParticipant, onlyMostRecent);
         } else if ("proxy".equals(moduleConfig.getTableAlias())) {
-             return getProxyCompletions(esDataAsMap, moduleConfig);
+            return getProxyCompletions(esDataAsMap, moduleConfig);
         } else {
             return getOtherCompletions(esDataAsMap, moduleConfig, subParticipant, onlyMostRecent);
         }
@@ -429,7 +435,7 @@ public class TabularParticipantParser {
             // we need to traverse a nested path like "dsm.participant"
             String[] pathSegments = mapPath.split("\\.");
             rootObject = esDataAsMap;
-            for(String segment : pathSegments) {
+            for (String segment : pathSegments) {
                 if (rootObject != null && rootObject instanceof Map) {
                     rootObject = ((Map<String, Object>) rootObject).get(segment);
                 }

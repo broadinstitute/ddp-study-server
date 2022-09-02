@@ -11,10 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 
-
 /** generates an excel file with a single sheet containing the participant data */
 public class ExcelParticipantExporter extends TabularParticipantExporter {
-    private final static int ROW_ACCESS_WINDOW_SIZE = 200;
+    private static final int ROW_ACCESS_WINDOW_SIZE = 200;
     protected final SXSSFWorkbook workbook;
 
     protected final SXSSFSheet sheet;
@@ -58,9 +57,7 @@ public class ExcelParticipantExporter extends TabularParticipantExporter {
 
     protected void writeRowToSheet(List<String> rowValues, int rowNum) {
         Row headerRow = sheet.createRow(rowNum);
-        IntStream.range(0, rowValues.size()).forEach(i -> {
-            headerRow.createCell(i).setCellValue(rowValues.get(i));
-        });
+        IntStream.range(0, rowValues.size()).forEach(i -> headerRow.createCell(i).setCellValue(rowValues.get(i)));
     }
 
     /**
