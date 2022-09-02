@@ -76,6 +76,7 @@ predicate
   | 'hasOptionStartsWith' '(' STR ( ',' STR )* ')'  # HasOptionStartsWithPredicate
   | 'hasDate' '(' ')'                               # HasDatePredicate
   | 'ageAtLeast' '(' INT ',' TIMEUNIT ')'           # AgeAtLeastPredicate
+  | 'ageAtMost' '(' INT ',' TIMEUNIT ')'            # AgeAtMostPredicate
   | 'value' '(' ')' # ValueQuery    // Not exactly a predicate but putting this here eases implementation and backwards-compatibility.
   ;
 

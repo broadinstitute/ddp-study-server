@@ -1727,6 +1727,9 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     }
 
     public boolean isBloodKit() {
+        if (Objects.isNull(requiresInsertInKitTracking)) {
+            return false;
+        }
         return requiresInsertInKitTracking;
     }
 
