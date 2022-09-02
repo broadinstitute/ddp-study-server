@@ -1,5 +1,5 @@
 
-package org.broadinstitute.dsm.model.filter.prefilter.osteo;
+package org.broadinstitute.dsm.model.filter.postfilter.osteo;
 
 import java.util.List;
 import java.util.function.Predicate;
@@ -10,21 +10,21 @@ import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
-import org.broadinstitute.dsm.model.filter.prefilter.BaseStudyPreFilter;
-import org.broadinstitute.dsm.model.filter.prefilter.HasDdpInstanceId;
-import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter;
+import org.broadinstitute.dsm.model.filter.postfilter.BaseStudyPostFilter;
+import org.broadinstitute.dsm.model.filter.postfilter.HasDdpInstanceId;
+import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter;
 
-public class NewOsteoPreFilter extends BaseStudyPreFilter {
+public class NewOsteoPostFilter extends BaseStudyPostFilter {
 
     private final Predicate<HasDdpInstanceId> matchByDdpInstanceId;
 
-    protected NewOsteoPreFilter(ElasticSearchParticipantDto elasticSearchParticipantDto, DDPInstanceDto ddpInstanceDto) {
+    protected NewOsteoPostFilter(ElasticSearchParticipantDto elasticSearchParticipantDto, DDPInstanceDto ddpInstanceDto) {
         super(elasticSearchParticipantDto, ddpInstanceDto);
         this.matchByDdpInstanceId = hasDdpInstanceId -> hasDdpInstanceId.extractDdpInstanceId() == ddpInstanceDto.getDdpInstanceId();
     }
 
-    public static StudyPreFilter of(ElasticSearchParticipantDto elasticSearchParticipantDto, DDPInstanceDto ddpInstanceDto) {
-        return new NewOsteoPreFilter(elasticSearchParticipantDto, ddpInstanceDto);
+    public static StudyPostFilter of(ElasticSearchParticipantDto elasticSearchParticipantDto, DDPInstanceDto ddpInstanceDto) {
+        return new NewOsteoPostFilter(elasticSearchParticipantDto, ddpInstanceDto);
     }
 
     @Override

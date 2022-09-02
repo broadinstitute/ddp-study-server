@@ -56,7 +56,7 @@ import org.broadinstitute.dsm.model.elastic.export.painless.PutToNestedScriptBui
 import org.broadinstitute.dsm.model.elastic.export.painless.UpsertPainlessFacade;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
-import org.broadinstitute.dsm.model.filter.prefilter.HasDdpInstanceId;
+import org.broadinstitute.dsm.model.filter.postfilter.HasDdpInstanceId;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -1727,6 +1727,9 @@ public class KitRequestShipping extends KitRequest implements HasDdpInstanceId {
     }
 
     public boolean isBloodKit() {
+        if (Objects.isNull(requiresInsertInKitTracking)) {
+            return false;
+        }
         return requiresInsertInKitTracking;
     }
 
