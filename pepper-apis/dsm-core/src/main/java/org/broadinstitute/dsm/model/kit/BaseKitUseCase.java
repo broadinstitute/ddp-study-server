@@ -21,6 +21,7 @@ public abstract class BaseKitUseCase implements Supplier<List<ScanError>> {
     public BaseKitUseCase(KitPayload kitPayload, KitDao kitDao) {
         this.kitPayload = kitPayload;
         this.kitDao = kitDao;
+        this.decoratedScanUseCase = new NullObjectDecorator();
     }
 
     @Override
