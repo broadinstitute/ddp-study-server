@@ -68,6 +68,13 @@ public class KitDaoImpl implements KitDao {
             + "dsm_kit_request_id = (SELECT dsm_kit_request_id FROM ddp_kit_request WHERE ddp_label = ?) "
             + "AND not kit_complete <=> 1 "
             + "AND deactivated_date is null";
+    private static final String UPDATE_KIT_BY_HRUID = "UPDATE ddp_kit SET "
+            + "kit_label = ? "
+            + "WHERE "
+            + "dsm_kit_request_id = (SELECT req.dsm_kit_request_id "
+            + "FROM ddp_kit_request req "
+            + "LEFT JOIN ddp_kit k ON ( req.dsm_kit_request_id = k.dsm_kit_request_id) "
+            + "WHERE bsp_collaborator_participant_id like '%#%' AND NOT k.kit_complete <=> 1 AND k.deactivated_date IS NULL)";
 
     private static final String INSERT_KIT_TRACKING = "INSERT INTO "
             + "ddp_kit_tracking "
@@ -515,6 +522,30 @@ public class KitDaoImpl implements KitDao {
         return (int) results.resultValue > 0;
     }
 
-
-
+    @Override
+    public Optional<ScanError> updateKitByHruid(KitRequestShipping kitRequestShipping) {
+        Optional<ScanError> result = Optional.empty();
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult();
+            try (PreparedStatement stmt = conn.prepareStatement(UPDATE_KIT_BY_HRUID.replace("#", kitRequestShipping.getShortId()))) {
+                stmt.setString(1, kitRequestShipping.getKitLabel());
+                int rowsAffected = stmt.executeUpdate();
+                if (rowsAffected != 1) {
+                    dbVals.resultValue = new ScanError(kitRequestShipping.getHruid(), "Kit with shortID "
+                            + kitRequestShipping.getHruid() + " does not exist or already has a Kit Label");
+                } else {
+                    logger.info("Updated kitRequests for " + kitRequestShipping.getHruid());
+                }
+            } catch (Exception ex) {
+                dbVals.resultValue = new ScanError(kitRequestShipping.getHruid(),
+                        "HRUID \"" + kitRequestShipping.getHruid() + "\" was already scanned or has 2 kits with no label yet\n"
+                                + UserErrorMessages.IF_QUESTIONS_CONTACT_DEVELOPER);
+            }
+            return dbVals;
+        });
+        if (Objects.nonNull(results.resultValue)) {
+            result = Optional.ofNullable((ScanError) results.resultValue);
+        }
+        return result;
+    }
 }

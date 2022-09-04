@@ -80,4 +80,9 @@ public class KitDaoMock implements KitDao {
     public Optional<KitRequestShipping> getKitByDdpLabel(String ddpLabel) {
         return Optional.empty();
     }
+
+    @Override
+    public Optional<ScanError> updateKitByHruid(KitRequestShipping kitRequestShipping) {
+        return Optional.empty();
+    }
 }
