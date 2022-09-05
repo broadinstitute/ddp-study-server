@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.model.kit;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -16,12 +17,11 @@ public abstract class BaseKitUseCase implements Supplier<List<ScanError>> {
     protected KitPayload kitPayload;
     protected KitDao kitDao;
 
-    protected BaseKitUseCase decoratedScanUseCase;
+    private BaseKitUseCase decoratedScanUseCase;
 
     public BaseKitUseCase(KitPayload kitPayload, KitDao kitDao) {
         this.kitPayload = kitPayload;
         this.kitDao = kitDao;
-        this.decoratedScanUseCase = new NullObjectDecorator();
     }
 
     @Override
@@ -39,4 +39,10 @@ public abstract class BaseKitUseCase implements Supplier<List<ScanError>> {
         return maybeScanError.isEmpty();
     }
 
+    protected BaseKitUseCase getDecoratedScanUseCase() {
+        if (Objects.isNull(decoratedScanUseCase)) {
+            decoratedScanUseCase = new NullObjectDecorator();
+        }
+        return decoratedScanUseCase;
+    }
 }

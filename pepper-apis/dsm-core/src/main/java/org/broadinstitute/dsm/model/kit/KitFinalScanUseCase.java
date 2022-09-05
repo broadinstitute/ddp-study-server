@@ -30,7 +30,7 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
             return Optional.of(new ScanError(ddpLabel, "Barcode contains less than 14 digits, "
                     + "You can manually enter any missing digits above."));
         }
-        Optional<ScanError> decoratedProcess = decoratedScanUseCase.process(scanPayload);
+        Optional<ScanError> decoratedProcess = getDecoratedScanUseCase().process(scanPayload);
         if (decoratedProcess.isPresent()) {
             return decoratedProcess;
         }
