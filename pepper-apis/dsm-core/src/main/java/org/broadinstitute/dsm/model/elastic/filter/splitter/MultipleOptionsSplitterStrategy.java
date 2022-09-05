@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.Filter;
-import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 
 public class MultipleOptionsSplitterStrategy extends SplitterStrategy {
 

@@ -11,6 +11,7 @@ import org.broadinstitute.dsm.model.elastic.mapping.NullObjectTypeExtractor;
 import org.broadinstitute.dsm.model.elastic.mapping.TypeExtractor;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.index.query.QueryBuilder;
 
 @NoArgsConstructor
@@ -33,7 +34,11 @@ public class MatchQueryStrategy extends BaseQueryStrategy {
     @Override
     protected QueryBuilder getMainQueryBuilderFromChild(BaseQueryBuilder baseQueryBuilder) {
         String fieldName = getFieldName(baseQueryBuilder);
-        return new MatchQueryBuilder(fieldName, baseQueryBuilder.payload.getValues()[0]);
+        return addOperator(new MatchQueryBuilder(fieldName, baseQueryBuilder.payload.getValues()[0]));
+    }
+
+    protected MatchQueryBuilder addOperator(MatchQueryBuilder baseQuery) {
+        return baseQuery.operator(Operator.AND);
     }
 
     protected String getFieldName(BaseQueryBuilder baseQueryBuilder) {
