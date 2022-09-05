@@ -2,6 +2,8 @@ package org.broadinstitute.dsm.model.elastic.filter.query;
 
 import java.util.List;
 
+import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.javalite.common.Collections;
@@ -23,5 +25,10 @@ public class NonExactMatchQueryStrategy extends MatchQueryStrategy {
             queryBuilder = super.getMainQueryBuilder(baseQueryBuilder);
         }
         return Collections.li(queryBuilder);
+    }
+
+    @Override
+    protected MatchQueryBuilder addOperator(MatchQueryBuilder baseQuery) {
+        return baseQuery.operator(Operator.OR);
     }
 }
