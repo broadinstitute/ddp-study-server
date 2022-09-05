@@ -92,7 +92,8 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
             Optional<Integer> maybeNewOsteoParticipantId = maybeOldOsteoParticipant
                     .map(this::updateParticipantDto)
                     .map(participantDao::create);
-            cohortTagDao.create(newCohortTag);
+            int newCohortTagId = cohortTagDao.create(newCohortTag);
+            newCohortTag.setCohortTagId(newCohortTagId);
             Optional<ParticipantRecordDto> maybeOldOsteoParticipantRecord = maybeOldOsteoParticipantId
                     .flatMap(participantRecordDao::getParticipantRecordByParticipantId);
             maybeOldOsteoParticipantRecord.ifPresent(participantRecord -> maybeNewOsteoParticipantId
