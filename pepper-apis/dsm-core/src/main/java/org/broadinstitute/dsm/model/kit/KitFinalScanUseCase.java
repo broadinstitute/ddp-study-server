@@ -18,6 +18,7 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
 
     public KitFinalScanUseCase(KitPayload kitPayload, KitDao kitDao) {
         super(kitPayload, kitDao);
+        setDecoratedScanUseCase(new PecgsDecorator(kitPayload, kitDao));
     }
 
     @Override
@@ -28,6 +29,10 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
         if (isSalivaKit(ddpLabel) && kitLabel.length() < 14) {
             return Optional.of(new ScanError(ddpLabel, "Barcode contains less than 14 digits, "
                     + "You can manually enter any missing digits above."));
+        }
+        Optional<ScanError> decoratedProcess = getDecoratedScanUseCase().process(scanPayload);
+        if (decoratedProcess.isPresent()) {
+            return decoratedProcess;
         }
         Optional<KitRequestShipping> kitByDdpLabel = kitDao.getKitByDdpLabel(ddpLabel);
         if (kitByDdpLabel.isPresent()) {
