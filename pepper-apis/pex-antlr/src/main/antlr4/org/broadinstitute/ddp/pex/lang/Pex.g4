@@ -77,6 +77,8 @@ predicate
   | 'hasDate' '(' ')'                               # HasDatePredicate
   | 'ageAtLeast' '(' INT ',' TIMEUNIT ')'           # AgeAtLeastPredicate
   | 'ageAtMost' '(' INT ',' TIMEUNIT ')'            # AgeAtMostPredicate
+  | 'ageGreater' '(' INT ',' TIMEUNIT ')'           # AgeGreaterPredicate
+  | 'ageLess' '(' INT ',' TIMEUNIT ')'              # AgeLessPredicate
   | 'value' '(' ')' # ValueQuery    // Not exactly a predicate but putting this here eases implementation and backwards-compatibility.
   ;
 
