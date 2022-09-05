@@ -18,6 +18,7 @@ public class MultipleOptionsSplitterTest {
                         + "'unable To Obtain' OR oD.fax_sent = 'sent' OR oD.fax_sent = 'received' OR oD.fax_sent = 'returned' )";
         SplitterStrategy multipleSplitter = Operator.MULTIPLE_OPTIONS.getSplitterStrategy();
         multipleSplitter.setCamelCaseConverter(CamelCaseConverter.of());
+        multipleSplitter.setFilterSeparator(new AndOrFilterSeparator(filter));
         multipleSplitter.setFilter(filter);
         assertEquals("faxSent", multipleSplitter.getInnerProperty());
     }
@@ -27,6 +28,7 @@ public class MultipleOptionsSplitterTest {
         String filter = "( d.status = 'EXITED_BEFORE_ENROLLMENT' OR d.status = 'EXITED_AFTER_ENROLLMENT' )";
         String[] filters = new String[] {"d.status = 'EXITED_BEFORE_ENROLLMENT'", "d.status = 'EXITED_AFTER_ENROLLMENT'"};
         SplitterStrategy multipleSplitter = Operator.MULTIPLE_OPTIONS.getSplitterStrategy();
+        multipleSplitter.setFilterSeparator(new AndOrFilterSeparator(filter));
         multipleSplitter.setFilter(filter);
         multipleSplitter.setFilterSeparator(new AndOrFilterSeparator(StringUtils.EMPTY));
         String[] actualFilters = multipleSplitter.split();

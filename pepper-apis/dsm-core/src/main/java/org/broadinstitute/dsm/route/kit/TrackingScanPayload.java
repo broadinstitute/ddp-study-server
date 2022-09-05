@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 public class TrackingScanPayload extends BaseScanPayload {
 
     String trackingReturnId;
+
     @Override
     public String getTrackingReturnId() {
         return trackingReturnId;
