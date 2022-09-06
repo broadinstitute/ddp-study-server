@@ -35,7 +35,7 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
         if (decoratedProcess.isPresent()) {
             return decoratedProcess;
         }
-        Optional<KitRequestShipping> kitByDdpLabel = kitDao.getKitByDdpLabel(ddpLabel);
+        Optional<KitRequestShipping> kitByDdpLabel = kitDao.getKitByDdpLabel(ddpLabel, kitLabel);
         if (kitByDdpLabel.isPresent()) {
             KitRequestShipping kitRequestShipping = kitByDdpLabel.get();
             if (kitRequestShipping.isBloodKit()) {
