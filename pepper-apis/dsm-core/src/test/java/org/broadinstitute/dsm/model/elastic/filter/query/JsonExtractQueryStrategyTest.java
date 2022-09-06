@@ -73,7 +73,8 @@ public class JsonExtractQueryStrategyTest {
         NestedQueryBuilder nestedQueryBuilder =
                 (NestedQueryBuilder) baseQueryBuilder.build(queryStrategy.build());
 
-        MatchQueryBuilder expected = new MatchQueryBuilder("dsm.medicalRecord.dynamicFields.numberTest", 100L);
+        MatchQueryBuilder expected = new MatchQueryBuilder("dsm.medicalRecord.dynamicFields.numberTest", 100L).operator(
+                org.elasticsearch.index.query.Operator.AND);
         Assert.assertEquals(expected, nestedQueryBuilder.query());
     }
 }

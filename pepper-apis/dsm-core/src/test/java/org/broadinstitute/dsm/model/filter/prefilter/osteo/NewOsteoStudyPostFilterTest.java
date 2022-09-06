@@ -14,12 +14,12 @@ import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.elastic.Dsm;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
-import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter;
-import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilterPayload;
+import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter;
+import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilterPayload;
 import org.junit.Test;
 
 
-public class NewOsteoStudyPreFilterTest {
+public class NewOsteoStudyPostFilterTest {
 
     @Test
     public void filter() {
@@ -51,8 +51,8 @@ public class NewOsteoStudyPreFilterTest {
                 .withDdpInstanceId(ddpInstanceId)
                 .build();
 
-        Optional<StudyPreFilter> preFilter = StudyPreFilter.fromPayload(StudyPreFilterPayload.of(esDto, ddpInstanceDto));
-        preFilter.ifPresent(StudyPreFilter::filter);
+        Optional<StudyPostFilter> postFilter = StudyPostFilter.fromPayload(StudyPostFilterPayload.of(esDto, ddpInstanceDto));
+        postFilter.ifPresent(StudyPostFilter::filter);
 
         assertEquals(2, esDsm.getMedicalRecord().size());
         assertEquals(List.of(1L, 1L), esDsm.getMedicalRecord().stream().map(MedicalRecord::getDdpInstanceId).collect(Collectors.toList()));
