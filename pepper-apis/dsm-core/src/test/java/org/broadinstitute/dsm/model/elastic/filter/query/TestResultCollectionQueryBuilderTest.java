@@ -27,7 +27,8 @@ public class TestResultCollectionQueryBuilderTest {
         queryStrategy.setBaseQueryBuilder(queryBuilder);
         queryBuilder.setOperator(Operator.JSON_CONTAINS);
         QueryBuilder query = queryBuilder.build(queryStrategy.build());
-        MatchQueryBuilder matchQueryBuilder = new MatchQueryBuilder("dsm.kitRequestShipping.testResult.isCorrected", true);
+        MatchQueryBuilder matchQueryBuilder = new MatchQueryBuilder("dsm.kitRequestShipping.testResult.isCorrected", true).operator(
+                org.elasticsearch.index.query.Operator.AND);
         NestedQueryBuilder expected = new NestedQueryBuilder("dsm.kitRequestShipping.testResult", matchQueryBuilder, ScoreMode.Avg);
 
         Assert.assertEquals(expected, query);
