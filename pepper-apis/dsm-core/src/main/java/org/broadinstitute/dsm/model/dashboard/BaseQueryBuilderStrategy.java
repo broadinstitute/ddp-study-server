@@ -6,6 +6,7 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.filter.FilterStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.Operator;
+import org.broadinstitute.dsm.model.elastic.filter.query.BuildQueryStrategy;
 import org.broadinstitute.dsm.model.elastic.filter.query.QueryPayload;
 import org.broadinstitute.dsm.model.elastic.filter.splitter.SplitterStrategy;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -51,11 +52,23 @@ abstract class BaseQueryBuilderStrategy {
                 QueryPayload queryPayload = new QueryPayload(queryBuildPayload.getLabel().getDashboardFilterDto().getEsNestedPath(),
                         queryBuildPayload.getLabel().getDashboardFilterDto().getEsFilterPath(),
                         values, queryBuildPayload.getEsParticipantsIndex());
-                filterStrategy.build(boolQueryBuilder, queryBuildPayload.getBaseQueryBuilder().buildEachQuery(operator, queryPayload));
+                queryBuildPayload.getBaseQueryBuilder().setPayload(queryPayload);
+                BuildQueryStrategy queryStrategy = operator.getQueryStrategy();
+                queryStrategy.setBaseQueryBuilder(queryBuildPayload.getBaseQueryBuilder());
+                queryBuildPayload.getBaseQueryBuilder().setOperator(operator);
+                filterStrategy.build(boolQueryBuilder, queryBuildPayload.getBaseQueryBuilder().build(queryStrategy.build()));
             }
         }
         return boolQueryBuilder;
     }
 
-    protected abstract QueryBuilder buildQueryForNoAdditionalFilter();
+    protected QueryBuilder buildQueryForNoAdditionalFilter() {
+        queryBuildPayload.getBaseQueryBuilder().setPayload(getQueryPayload());
+        BuildQueryStrategy queryStrategy = Operator.EQUALS.getQueryStrategy();
+        queryStrategy.setBaseQueryBuilder(queryBuildPayload.getBaseQueryBuilder());
+        queryBuildPayload.getBaseQueryBuilder().setOperator(Operator.EQUALS);
+        return queryBuildPayload.getBaseQueryBuilder().build(queryStrategy.build());
+    }
+
+    protected abstract QueryPayload getQueryPayload();
 }

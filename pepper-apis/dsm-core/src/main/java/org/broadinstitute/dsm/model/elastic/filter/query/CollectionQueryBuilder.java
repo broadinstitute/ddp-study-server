@@ -10,6 +10,10 @@ public class CollectionQueryBuilder extends BaseQueryBuilder {
         super(queryPayload);
     }
 
+    public CollectionQueryBuilder() {
+        super(null);
+    }
+
     @Override
     protected QueryBuilder getFinalQuery(QueryBuilder query) {
         return new NestedQueryBuilder(payload.getPath(), query, ScoreMode.Avg);

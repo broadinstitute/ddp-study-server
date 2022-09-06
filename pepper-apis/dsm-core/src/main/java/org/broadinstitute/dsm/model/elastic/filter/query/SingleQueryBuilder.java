@@ -8,6 +8,10 @@ public class SingleQueryBuilder extends BaseQueryBuilder {
         super(queryPayload);
     }
 
+    public SingleQueryBuilder() {
+        super(null);
+    }
+
     @Override
     protected QueryBuilder getFinalQuery(QueryBuilder query) {
         return query;
