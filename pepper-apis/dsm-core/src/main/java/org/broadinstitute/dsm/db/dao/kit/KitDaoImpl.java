@@ -51,7 +51,7 @@ public class KitDaoImpl implements KitDao {
                     + "AND request.kit_type_id = dkc.kit_type_id) WHERE ex.ddp_participant_exit_id is null";
     public static final String KIT_BY_KIT_REQUEST_ID = " and kit.dsm_kit_request_id = ?";
     public static final String KIT_BY_KIT_ID = " and kit.dsm_kit_id = ?";
-    public static final String KIT_BY_HRUID_AND_DDP_LABEL = " and bsp_collaborator_participant_id like '%#%' AND not kit_complete <=> 1 "
+    public static final String KIT_BY_HRUID = " and bsp_collaborator_participant_id like '%#%' AND not kit_complete <=> 1 "
             + "AND deactivated_date is null";
 
     private static final String SQL_IS_BLOOD_KIT_QUERY = "SELECT kt.requires_insert_in_kit_tracking AS found "
@@ -528,8 +528,7 @@ public class KitDaoImpl implements KitDao {
     public Optional<KitRequestShipping> getKitByHruid(String hruid) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KIT_REQUEST
-                    + KIT_BY_HRUID_AND_DDP_LABEL.replace("#", hruid))) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KIT_REQUEST + KIT_BY_HRUID.replace("#", hruid))) {
                 try (ResultSet rs = stmt.executeQuery()) {
                     int numRows = 0;
                     while (rs.next()) {
