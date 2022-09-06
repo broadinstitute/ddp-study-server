@@ -24,7 +24,7 @@ import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.Value;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.elastic.export.ExportFacade;
 import org.broadinstitute.dsm.model.elastic.export.ExportFacadePayload;
 import org.broadinstitute.dsm.model.elastic.export.generate.GeneratorPayload;
@@ -48,7 +48,7 @@ public abstract class BasePatch {
     static final Logger logger = LoggerFactory.getLogger(BasePatch.class);
     protected static Map<String, Object> NULL_KEY;
     protected Patch patch;
-    protected ESProfile profile;
+    protected Profile profile;
     protected DDPInstance ddpInstance;
     protected DBElement dbElement;
     protected DBElementBuilder dbElementBuilder;
@@ -79,6 +79,18 @@ public abstract class BasePatch {
             return;
         }
         GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, patch);
+        ExportFacadePayload exportFacadePayload =
+                new ExportFacadePayload(ddpInstance.getParticipantIndexES(), patch.getDdpParticipantId(), generatorPayload,
+                        patch.getRealm());
+        ExportFacade exportFacade = new ExportFacade(exportFacadePayload);
+        exportFacade.export();
+    }
+
+    private void exportToES(List<NameValue> nameValues) {
+        if (!isElasticSearchExportable) {
+            return;
+        }
+        GeneratorPayload generatorPayload = new GeneratorPayload(nameValues, patch);
         ExportFacadePayload exportFacadePayload =
                 new ExportFacadePayload(ddpInstance.getParticipantIndexES(), patch.getDdpParticipantId(), generatorPayload,
                         patch.getRealm());
@@ -124,7 +136,16 @@ public abstract class BasePatch {
                 throw new RuntimeException("DBElement not found in ColumnNameMap: " + nameValue.getName());
             }
         }
+        exportToESWithId(getIdForES(), getNameValuesForES());
         return updatedNameValues;
+    }
+
+    protected String getIdForES() {
+        return patch.getId();
+    }
+
+    protected List<NameValue> getNameValuesForES() {
+        return patch.getNameValues();
     }
 
     protected void exportToESWithId(String id, NameValue nameValue) {
@@ -135,13 +156,21 @@ public abstract class BasePatch {
         exportToES(Objects.requireNonNull(nameValue));
     }
 
+    protected void exportToESWithId(String id, List<NameValue> nameValues) {
+        if (!isElasticSearchExportable) {
+            return;
+        }
+        patch.setId(Objects.requireNonNull(id));
+        exportToES(Objects.requireNonNull(nameValues));
+    }
+
     abstract Optional<Object> processEachNameValue(NameValue nameValue);
 
     protected boolean hasQuestion(NameValue nameValue) {
         return nameValue.getName().contains("question");
     }
 
-    protected boolean hasProfileAndESWorkflowType(ESProfile profile, Value action) {
+    protected boolean hasProfileAndESWorkflowType(Profile profile, Value action) {
         return ESObjectConstants.ELASTIC_EXPORT_WORKFLOWS.equals(action.getType()) && profile != null;
     }
 

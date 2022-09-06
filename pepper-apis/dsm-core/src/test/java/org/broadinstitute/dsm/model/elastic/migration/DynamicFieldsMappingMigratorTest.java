@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.broadinstitute.dsm.TestHelper;
+import org.broadinstitute.dsm.db.dao.mercury.ClinicalOrderDao;
 import org.broadinstitute.dsm.db.dao.tag.cohort.CohortTagDaoImpl;
 import org.broadinstitute.dsm.model.elastic.export.Exportable;
 import org.junit.BeforeClass;
@@ -22,8 +23,8 @@ public class DynamicFieldsMappingMigratorTest {
     @Ignore
     public void testExport() {
 
-        final String index = "participants_structured.cmi.cmi-osteo";
-        final String study = "osteo";
+        final String index = "participants_structured.cmi.cmi-brain";
+        final String study = "brain";
 
         List<? extends Exportable> exportables = Arrays.asList(
                 //DynamicFieldsMappingMigrator should be first in the list to make sure that mapping will be exported for first
@@ -37,7 +38,8 @@ public class DynamicFieldsMappingMigratorTest {
                 new OncHistoryDetailsMigrator(index, study),
                 new TissueMigrator(index, study),
                 new SMIDMigrator(index, study),
-                new CohortTagMigrator(index, study, new CohortTagDaoImpl()));
+                new CohortTagMigrator(index, study, new CohortTagDaoImpl()),
+                new ClinicalOrderMigrator(index, study, new ClinicalOrderDao()));
 
         exportables.forEach(Exportable::export);
 

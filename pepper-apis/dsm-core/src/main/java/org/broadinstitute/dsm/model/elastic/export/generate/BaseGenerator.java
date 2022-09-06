@@ -1,6 +1,9 @@
 package org.broadinstitute.dsm.model.elastic.export.generate;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -48,7 +51,7 @@ public abstract class BaseGenerator implements Generator, Collector, GeneratorHe
     }
 
     protected PropertyInfo getOuterPropertyByAlias() {
-        return PropertyInfo.TABLE_ALIAS_MAPPINGS.get(getTableAlias());
+        return PropertyInfo.of(getTableAlias());
     }
 
     protected String getTableAlias() {
@@ -96,9 +99,40 @@ public abstract class BaseGenerator implements Generator, Collector, GeneratorHe
         return getElement(element);
     }
 
-    protected abstract Object parseElement();
+    protected Object parseElement() {
+        Object result;
+        if (generatorPayload.getNameValues().size() > 1) {
+            List<Object> parsedObjects = new ArrayList<>();
+            for (NameValue nameValue : generatorPayload.getNameValues()) {
+                parser.setFieldName(nameValue.getCamelCaseFieldName());
+                parsedObjects.add(parser.parse(getValueForParser(nameValue)));
+            }
+            result = parsedObjects;
+        } else {
+            parser.setFieldName(getFieldName());
+            result = parser.parse(getValueForParser());
 
-    protected abstract Object getElement(Object type);
+        }
+        return result;
+    }
+
+    protected abstract String getValueForParser();
+
+    protected abstract String getValueForParser(NameValue nameValue);
+
+    protected Object getElement(Object value) {
+        Map<String, Object> result = new HashMap<>();
+        List<NameValue> nameValues = generatorPayload.getNameValues();
+        if (nameValues.size() > 1) {
+            List<Object> values = (List<Object>) value;
+            for (int i = 0; i < nameValues.size(); i++) {
+                result.put(nameValues.get(i).getCamelCaseFieldName(), values.get(i));
+            }
+        } else {
+            result.put(getFieldName(), value);
+        }
+        return result;
+    }
 
     public abstract Object construct();
 

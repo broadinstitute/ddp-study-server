@@ -4,8 +4,6 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.Filter;
-import org.broadinstitute.dsm.model.elastic.Util;
-import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
 
 public class MultipleOptionsSplitterStrategy extends SplitterStrategy {
 
@@ -23,7 +21,8 @@ public class MultipleOptionsSplitterStrategy extends SplitterStrategy {
     public String getInnerProperty() {
         String propertyWithValue = super.getInnerProperty();
         String innerProperty = propertyWithValue.split(Filter.EQUALS_TRIMMED)[0].trim();
-        return Util.underscoresToCamelCase(innerProperty);
+        camelCaseConverter.setStringToConvert(innerProperty);
+        return camelCaseConverter.convert();
     }
 
     @Override
@@ -31,7 +30,13 @@ public class MultipleOptionsSplitterStrategy extends SplitterStrategy {
         String multipleFilters =
                 Filter.OR + filter.replace(Filter.OPEN_PARENTHESIS, StringUtils.EMPTY).replace(Filter.CLOSE_PARENTHESIS, StringUtils.EMPTY)
                         .trim();
-        List<String> splittedFilter = new AndOrFilterSeparator(multipleFilters).parseFiltersByLogicalOperators().get(Filter.OR_TRIMMED);
+        filterSeparator.setFilter(multipleFilters);
+        List<String> splittedFilter = filterSeparator.parseFiltersByLogicalOperators().get(Filter.OR_TRIMMED);
         return splittedFilter.toArray(new String[] {});
+    }
+
+    @Override
+    public String getFieldName() {
+        return super.getFieldName().split(Filter.EQUALS)[0];
     }
 }

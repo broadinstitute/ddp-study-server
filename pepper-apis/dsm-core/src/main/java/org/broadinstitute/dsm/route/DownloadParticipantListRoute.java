@@ -1,17 +1,8 @@
 package org.broadinstitute.dsm.route;
 
-import static org.broadinstitute.dsm.util.ElasticSearchUtil.DEFAULT_FROM;
-import static org.broadinstitute.dsm.util.ElasticSearchUtil.MAX_RESULT_SIZE;
-
-import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
 import com.google.common.net.MediaType;
+import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetrics;
+import org.broadinstitute.dsm.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.model.elastic.export.tabular.DataDictionaryExporter;
 import org.broadinstitute.dsm.model.elastic.export.tabular.ModuleExportConfig;
@@ -31,12 +22,24 @@ import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
-import org.broadinstitute.lddp.handlers.util.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import static org.broadinstitute.dsm.util.ElasticSearchUtil.DEFAULT_FROM;
+import static org.broadinstitute.dsm.util.ElasticSearchUtil.MAX_RESULT_SIZE;
+
 
 public class DownloadParticipantListRoute extends RequestHandler {
 
@@ -57,11 +60,11 @@ public class DownloadParticipantListRoute extends RequestHandler {
             response.status(403);
             return UserErrorMessages.NO_RIGHTS;
         }
-
+        Instant startInstant = Instant.now();
         DDPInstance instance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.MEDICAL_RECORD_ACTIVATED);
 
         TabularParticipantParser parser = new TabularParticipantParser(payload.getColumnNames(), instance,
-                params.isSplitOptions(), params.isOnlyMostRecent(), null);
+                params.isHumanReadable(), params.isOnlyMostRecent(), null);
         setResponseHeaders(response, realm + "_export.zip");
 
         Filterable filterable = FilterFactory.of(request);
@@ -86,6 +89,12 @@ public class DownloadParticipantListRoute extends RequestHandler {
         dictionaryExporter.export(zos);
         zos.closeEntry();
         zos.finish();
+        Instant endInstant = Instant.now();
+        long perfTime = Duration.between(startInstant, endInstant).toMillis();
+        GoogleAnalyticsMetricsTracker.getInstance()
+                .sendAnalyticsMetrics(realm, GoogleAnalyticsMetrics.EVENT_CATEGORY_PARTICIPANT_LIST_EXPORT,
+                        GoogleAnalyticsMetrics.EVENT_PARTICIPANT_LIST_EXPORT_LOAD_TIME,
+                        GoogleAnalyticsMetrics.EVENT_PARTICIPANT_LIST_EXPORT_LOAD_TIME, (int) perfTime);
         return response.raw();
     }
 

@@ -51,6 +51,7 @@ public class PatchMedicalProviderRouteTest extends IntegrationTestSuite.TestCase
                                 TestMedicalProviderData.PHYSICIAN_NAME,
                                 TestMedicalProviderData.CITY,
                                 TestMedicalProviderData.STATE,
+                                TestMedicalProviderData.COUNTRY,
                                 null,
                                 null,
                                 null,
@@ -190,7 +191,8 @@ public class PatchMedicalProviderRouteTest extends IntegrationTestSuite.TestCase
                 TestMedicalProviderData.INSTITUTION_NAME,
                 TestMedicalProviderData.PHYSICIAN_NAME.toUpperCase(),
                 TestMedicalProviderData.CITY,
-                TestMedicalProviderData.STATE
+                TestMedicalProviderData.STATE,
+                TestMedicalProviderData.COUNTRY
         );
         Request request = RouteTestUtil.buildAuthorizedPatchRequest(
                 token,
@@ -236,7 +238,7 @@ public class PatchMedicalProviderRouteTest extends IntegrationTestSuite.TestCase
         public static final String PHYSICIAN_NAME = "House MD";
         public static final String CITY = "West Windsor Township";
         public static final String STATE = "New Jersey";
-
+        public static final String COUNTRY = "United States";
         public static final String UPDATED_INSTITUTION_URL_COMPONENT = "physician";
     }
 }

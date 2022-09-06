@@ -13,15 +13,16 @@ import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.NameValue;
-import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
+import org.broadinstitute.dsm.model.elastic.search.Deserializer;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.filter.BaseFilter;
 import org.broadinstitute.dsm.model.filter.Filterable;
+import org.broadinstitute.dsm.model.filter.prefilter.BasicPreFilterQueryProcessor;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapper;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperPayload;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
-import org.broadinstitute.dsm.model.elastic.search.Deserializer;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.slf4j.Logger;
@@ -46,6 +47,7 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
     @Override
     public ParticipantWrapperResult filter(QueryParamsMap queryParamsMap, Deserializer deserializer) {
         this.deserializer = deserializer;
+
         return filter(queryParamsMap);
     }
 
@@ -93,9 +95,8 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
             }
         }
 
-        if (StringUtils.isNotBlank(ddpInstanceDto.getQueryItems())) {
-            //if a base/pre filter is set for the selected study -> always apply that filter, no matter what user is querying for!
-            addEsPreFilterQueryCondition(queryConditions, ddpInstanceDto.getQueryItems());
+        if (isStudyPreFilterPresent(ddpInstanceDto)) {
+            queryConditions = updateQueryConditions(queryConditions, ddpInstanceDto);
         }
 
         if (!queryConditions.isEmpty()) {
@@ -116,26 +117,35 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
         }
     }
 
+    private static Map<String, String> updateQueryConditions(Map<String, String> queryConditions, DDPInstanceDto ddpInstanceDto) {
+        return new BasicPreFilterQueryProcessor(queryConditions)
+                .update(ddpInstanceDto.getQueryItems());
+    }
+
+    private static boolean isStudyPreFilterPresent(DDPInstanceDto ddpInstanceDto) {
+        return StringUtils.isNotBlank(ddpInstanceDto.getQueryItems());
+    }
+
     private void addParticipantDataQueryToQueryConditions(Map<String, String> queryConditions, Filter filter, String tmpName) {
         DBElement dbElement = new DBElement(DBConstants.DDP_PARTICIPANT_DATA, DBConstants.DDP_PARTICIPANT_DATA_ALIAS, null,
                 DBConstants.ADDITIONAL_VALUES_JSON);
         if (isDateRange(filter)) {
             filter.getFilter1().setName(ESObjectConstants.ADDITIONAL_VALUES_JSON);
-            filter.getFilter2().setName(Util.underscoresToCamelCase(tmpName));
+            filter.getFilter2().setName(CamelCaseConverter.of(tmpName).convert());
             filter.setNotEmpty(false);
             filter.setParentName(DBConstants.DDP_PARTICIPANT_DATA_ALIAS);
             filter.setType(Filter.ADDITIONAL_VALUES);
             Filter.getQueryStringForFiltering(filter, dbElement);
         } else {
             filter.setFilter1(new NameValue(ESObjectConstants.ADDITIONAL_VALUES_JSON, filter.getFilter1().getValue()));
-            filter.setFilter2(new NameValue(Util.underscoresToCamelCase(tmpName), null));
+            filter.setFilter2(new NameValue(CamelCaseConverter.of(tmpName).convert(), null));
             filter.setParentName(DBConstants.DDP_PARTICIPANT_DATA_ALIAS);
             filter.setType(Filter.ADDITIONAL_VALUES);
         }
         if (Objects.nonNull(filter.getSelectedOptions()) && filter.getSelectedOptions().length > 0) {
             for (String selectedOption : filter.getSelectedOptions()) {
                 filter.getFilter1().setValue(selectedOption);
-                filter.getFilter2().setName(Util.underscoresToCamelCase(tmpName));
+                filter.getFilter2().setName(CamelCaseConverter.of(tmpName).convert());
                 String filterQuery = Filter.OR_TRIMMED + Filter.getQueryStringForFiltering(filter, dbElement).trim()
                         .substring(AndOrFilterSeparator.MINIMUM_STEP_FROM_OPERATOR);
                 queryConditions.merge(DBConstants.DDP_PARTICIPANT_DATA_ALIAS, filterQuery,
@@ -154,14 +164,6 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
         } catch (Exception e) {
             return false;
         }
-    }
-
-    private void addEsPreFilterQueryCondition(Map<String, String> queryConditions, String preFilter) {
-        String queryCondition = "";
-        if (queryConditions.containsKey("ES")) {
-            queryCondition = queryConditions.get("ES");
-        }
-        queryConditions.put("ES", queryCondition.concat(preFilter));
     }
 
 }

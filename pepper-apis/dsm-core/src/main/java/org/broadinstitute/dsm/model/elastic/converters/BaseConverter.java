@@ -1,6 +1,8 @@
 package org.broadinstitute.dsm.model.elastic.converters;
 
-public abstract class BaseConverter implements Converter {
+import java.util.Map;
+
+public abstract class BaseConverter implements Converter<Map<String, Object>> {
 
     protected String fieldName;
     protected Object fieldValue;

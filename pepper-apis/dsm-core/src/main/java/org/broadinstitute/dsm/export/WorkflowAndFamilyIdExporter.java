@@ -15,7 +15,7 @@ import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.model.Value;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -93,7 +93,7 @@ public class WorkflowAndFamilyIdExporter implements Exporter {
                 continue;
             }
 
-            ESProfile profile = ElasticSearchUtil.getParticipantProfileByGuidOrAltPid(index, guidOrAltPid).orElse(null);
+            Profile profile = ElasticSearchUtil.getParticipantProfileByGuidOrAltPid(index, guidOrAltPid).orElse(null);
             if (profile == null) {
                 logger.error("Unable to find ES profile for participant with guid/altpid: {}, continuing with export", guidOrAltPid);
                 continue;
@@ -148,7 +148,7 @@ public class WorkflowAndFamilyIdExporter implements Exporter {
 
     private void processWorkflows(DDPInstance instance, List<String> workflowColumnNames, String guidOrAltPid,
                                   ParticipantData participantData, ParticipantData applicantData,
-                                  ESProfile applicantProfile, WorkflowsEditor editor) {
+                                  Profile applicantProfile, WorkflowsEditor editor) {
         Map<String, String> dataMap = participantData.getDataMap();
         if (participantData.getFieldTypeId().orElse("").equals(RGP_PARTICIPANTS)) {
             // RGP_PARTICIPANTS only exports workflows with study-specific data, so remove if no data.

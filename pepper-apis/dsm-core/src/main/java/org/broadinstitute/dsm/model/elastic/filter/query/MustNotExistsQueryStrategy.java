@@ -4,11 +4,12 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.ExistsQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 
-public class MustNotExistsQueryStrategy implements BuildQueryStrategy {
+public class MustNotExistsQueryStrategy extends BaseQueryStrategy {
+
     @Override
-    public QueryBuilder build(BaseQueryBuilder baseQueryBuilder) {
+    protected QueryBuilder getMainQueryBuilderFromChild(BaseQueryBuilder baseQueryBuilder) {
         BoolQueryBuilder existsWithEmpty = new BoolQueryBuilder();
-        existsWithEmpty.mustNot(baseQueryBuilder.build(new ExistsQueryBuilder(baseQueryBuilder.payload.getFieldName())));
+        existsWithEmpty.mustNot(new ExistsQueryBuilder(baseQueryBuilder.payload.getFieldName()));
         return existsWithEmpty;
     }
 }

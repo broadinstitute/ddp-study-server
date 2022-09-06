@@ -540,9 +540,17 @@ public class TestDataSetupUtil {
 
         long studyId = handle.attach(JdbiUmbrellaStudy.class).insert(studyName, studyGuid, umbrellaId, webBaseUrl,
                 auth0TenantDto.getId(), studyPrecision, shareParticipantLocation, null, null, null, false);
-        return new StudyDto(studyId, studyGuid, studyName, null, webBaseUrl, umbrellaId, auth0TenantDto.getId(),
-                studyPrecision,
-                shareParticipantLocation, null, null, false, null, false, null);
+
+        return StudyDto.builder()
+                .id(studyId)
+                .guid(studyGuid)
+                .name(studyName)
+                .webBaseUrl(webBaseUrl)
+                .umbrellaId(umbrellaId)
+                .auth0TenantId(auth0TenantDto.getId())
+                .olcPrecision(studyPrecision)
+                .publicDataSharingEnabled(shareParticipantLocation)
+                .build();
     }
 
     public static FormActivityDef generateTestFormActivityForUser(Handle handle, String userGuid, String studyGuid) {
@@ -966,6 +974,8 @@ public class TestDataSetupUtil {
                                 TestConstants.TEST_INSTITUTION_CITY,
                         random ? "State" + GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 10) :
                                 TestConstants.TEST_INSTITUTION_STATE,
+                        random ? "Country " + GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 10) :
+                                TestConstants.TEST_INSTITUTION_COUNTRY,
                         random ? GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 5) :
                                 TestConstants.TEST_INSTITUTION_ZIP,
                         random ? GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 12) :

@@ -1,15 +1,29 @@
 package org.broadinstitute.dsm.model.participant;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.*;
+import org.broadinstitute.dsm.db.ClinicalOrder;
+import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.db.MedicalRecord;
+import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.db.Participant;
+import org.broadinstitute.dsm.db.SmId;
+import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.model.Filter;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
-import org.broadinstitute.dsm.model.elastic.filter.FilterParser;
-import org.broadinstitute.dsm.model.elastic.filter.query.DsmAbstractQueryBuilder;
+import org.broadinstitute.dsm.model.elastic.Profile;
+import org.broadinstitute.dsm.model.elastic.filter.query.AbstractQueryBuilderFactory;
+import org.broadinstitute.dsm.model.elastic.filter.query.BaseAbstractQueryBuilder;
 import org.broadinstitute.dsm.model.elastic.mapping.FieldTypeExtractor;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
@@ -17,18 +31,16 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearchable;
 import org.broadinstitute.dsm.model.elastic.search.UnparsedESParticipantDto;
 import org.broadinstitute.dsm.model.elastic.sort.Sort;
 import org.broadinstitute.dsm.model.elastic.sort.SortBy;
-import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter;
-import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilterPayload;
+import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter;
+import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilterPayload;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.proxy.jackson.ObjectMapperSingleton;
+import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Data
 public class ParticipantWrapper {
@@ -72,24 +84,26 @@ public class ParticipantWrapper {
     }
 
     private void fetchAndPrepareDataByFilters(Map<String, String> filters) {
-        FilterParser parser = new FilterParser();
-        BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
-        for (String source : filters.keySet()) {
-            if (StringUtils.isNotBlank(filters.get(source))) {
-                if (Util.isUnderDsmKey(source)) {
-                    DsmAbstractQueryBuilder queryBuilder = new DsmAbstractQueryBuilder();
-                    queryBuilder.setFilter(filters.get(source));
-                    queryBuilder.setParser(parser);
-                    queryBuilder.setEsIndex(getEsParticipantIndex());
-                    boolQueryBuilder.must(queryBuilder.build());
-                } else if (ElasticSearchUtil.ES.equals(source)) {
-                    //source is not of any study-manager table so it must be ES
-                    boolQueryBuilder.must(ElasticSearchUtil.createESQuery(filters.get(source)));
+        AbstractQueryBuilder<?> mainQuery = prepareQuery(filters);
+        esData = elasticSearchable.getParticipantsByRangeAndFilter(getEsParticipantIndex(), participantWrapperPayload.getFrom(),
+                participantWrapperPayload.getTo(), mainQuery);
+    }
+
+    AbstractQueryBuilder<?> prepareQuery(Map<String, String> filters) {
+        AbstractQueryBuilder<?> mainQuery = new BoolQueryBuilder();
+        boolean hasSeveralFilters = filters.size() > 1;
+        for (String alias : filters.keySet()) {
+            if (StringUtils.isNotBlank(filters.get(alias))) {
+                BaseAbstractQueryBuilder queryBuilder = AbstractQueryBuilderFactory.create(alias, filters.get(alias));
+                queryBuilder.setEsIndex(getEsParticipantIndex());
+                if (hasSeveralFilters) {
+                    ((BoolQueryBuilder) mainQuery).must(queryBuilder.build());
+                } else {
+                    mainQuery = queryBuilder.build();
                 }
             }
         }
-        esData = elasticSearchable.getParticipantsByRangeAndFilter(getEsParticipantIndex(), participantWrapperPayload.getFrom(),
-                participantWrapperPayload.getTo(), boolQueryBuilder);
+        return mainQuery;
     }
 
     private String getEsParticipantIndex() {
@@ -126,42 +140,47 @@ public class ParticipantWrapper {
         result.add(participantWrapperDto);
     }
 
-    private void addWrapperToList(ElasticSearchParticipantDto elasticSearchParticipantDto, List<ParticipantWrapperDto> result, DDPInstanceDto ddpInstanceDto) {
+    private void addWrapperToList(
+            ElasticSearchParticipantDto elasticSearchParticipantDto,
+            List<ParticipantWrapperDto> result,
+            DDPInstanceDto ddpInstanceDto
+    ) {
 
         elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
             Participant participant = esDsm.getParticipant().orElse(new Participant());
+
+            List<ParticipantData> participantData = esDsm.getParticipantData();
+            sortBySelfElseById(participantData);
+
+            StudyPostFilter.fromPayload(StudyPostFilterPayload.of(elasticSearchParticipantDto, ddpInstanceDto))
+                    .ifPresent(StudyPostFilter::filter);
+
+            List<KitRequestShipping> kitRequestShipping = esDsm.getKitRequestShipping();
+
+            ParticipantWrapperDto participantWrapperDto = new ParticipantWrapperDto();
+            participantWrapperDto.setEsData(elasticSearchParticipantDto);
+            participantWrapperDto.setParticipant(participant);
+            participantWrapperDto.setParticipantData(participantData);
 
             esDsm.getOncHistory().ifPresent(oncHistory -> {
                 participant.setCreated(oncHistory.getCreated());
                 participant.setReviewed(oncHistory.getReviewed());
             });
-
-            StudyPreFilter.fromPayload(StudyPreFilterPayload.of(elasticSearchParticipantDto, ddpInstanceDto))
-                    .ifPresent(StudyPreFilter::filter);
-
+                    
             List<MedicalRecord> medicalRecord = esDsm.getMedicalRecord();
             List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();
-            List<KitRequestShipping> kitRequestShipping = esDsm.getKitRequestShipping();
             List<Tissue> tissues = esDsm.getTissue();
             List<SmId> smIds = esDsm.getSmId();
-
+            List<ClinicalOrder> clinicalOrder = esDsm.getClinicalOrder();
             mapSmIdsToProperTissue(tissues, smIds);
-
             mapTissueToProperOncHistoryDetail(oncHistoryDetails, tissues);
 
-
-
-            List<ParticipantData> participantData = esDsm.getParticipantData();
-            sortBySelfElseById(participantData);
-            ParticipantWrapperDto participantWrapperDto = new ParticipantWrapperDto();
-            participantWrapperDto.setEsData(elasticSearchParticipantDto);
-            participantWrapperDto.setParticipant(participant);
             participantWrapperDto.setMedicalRecords(medicalRecord);
             participantWrapperDto.setOncHistoryDetails(oncHistoryDetails);
-            participantWrapperDto.setKits(kitRequestShipping);
-            participantWrapperDto.setParticipantData(participantData);
             participantWrapperDto.setAbstractionActivities(Collections.emptyList());
             participantWrapperDto.setAbstractionSummary(Collections.emptyList());
+
+            participantWrapperDto.setKits(kitRequestShipping);
             result.add(participantWrapperDto);
         });
     }
@@ -254,7 +273,7 @@ public class ParticipantWrapper {
     }
 
     List<String> getParticipantIdsFromElasticList(List<ElasticSearchParticipantDto> elasticSearchParticipantDtos) {
-        return elasticSearchParticipantDtos.stream().flatMap(elasticSearch -> elasticSearch.getProfile().stream()).map(ESProfile::getGuid)
+        return elasticSearchParticipantDtos.stream().flatMap(elasticSearch -> elasticSearch.getProfile().stream()).map(Profile::getGuid)
                 .collect(Collectors.toList());
     }
 

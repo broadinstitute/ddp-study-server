@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.export.parse.TypeParser;
 import org.broadinstitute.dsm.model.elastic.mapping.TypeExtractor;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -70,7 +70,7 @@ public class Sort {
         if (Alias.ACTIVITIES == getAlias() || Alias.REGISTRATION == getAlias()) {
             return sortBy.getInnerProperty();
         }
-        return Util.underscoresToCamelCase(sortBy.getInnerProperty());
+        return CamelCaseConverter.of(sortBy.getInnerProperty()).convert();
     }
 
     private String buildPath(String... args) {

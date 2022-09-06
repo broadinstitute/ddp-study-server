@@ -38,6 +38,7 @@ public class DeleteMedicalProviderRouteTest extends IntegrationTestSuite.TestCas
                                 TestMedicalProviderData.PHYSICIAN_NAME,
                                 TestMedicalProviderData.CITY,
                                 TestMedicalProviderData.STATE,
+                                TestMedicalProviderData.COUNTRY,
                                 null,
                                 null,
                                 null,
@@ -109,7 +110,7 @@ public class DeleteMedicalProviderRouteTest extends IntegrationTestSuite.TestCas
         public static final String PHYSICIAN_NAME = "House MD";
         public static final String CITY = "West Windsor Township";
         public static final String STATE = "New Jersey";
-
+        public static final String COUNTRY = "United States";
         public static final String INSTITUTION_URL_COMPONENT = "institution";
     }
 }

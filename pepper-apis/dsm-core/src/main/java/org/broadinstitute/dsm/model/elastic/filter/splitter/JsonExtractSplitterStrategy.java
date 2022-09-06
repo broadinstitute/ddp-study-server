@@ -36,7 +36,8 @@ public class JsonExtractSplitterStrategy extends SplitterStrategy {
     @Override
     public String getInnerProperty() {
         String[] separatedByDot = getFieldWithAlias()[1].split(ElasticSearchUtil.ESCAPE_CHARACTER_DOT_SEPARATOR);
-        return String.join(DBConstants.ALIAS_DELIMITER, separatedByDot[0], Util.underscoresToCamelCase(separatedByDot[1]));
+        camelCaseConverter.setStringToConvert(separatedByDot[1]);
+        return String.join(DBConstants.ALIAS_DELIMITER, separatedByDot[0], camelCaseConverter.convert());
     }
 
     @Override

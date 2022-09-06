@@ -3,11 +3,13 @@ package org.broadinstitute.dsm.model.elastic.export.generate;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.broadinstitute.dsm.model.elastic.Util;
+import org.broadinstitute.dsm.model.NameValue;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+//class to generate data as map which needs to be exported to ElasticSearch
 public abstract class SourceGenerator extends BaseGenerator {
 
     private static final Logger logger = LoggerFactory.getLogger(SourceGenerator.class);
@@ -31,9 +33,13 @@ public abstract class SourceGenerator extends BaseGenerator {
     }
 
     @Override
-    protected Object parseElement() {
-        parser.setFieldName(getFieldName());
-        return parser.parse(String.valueOf(getNameValue().getValue()));
+    protected String getValueForParser() {
+        return String.valueOf(getNameValue().getValue());
+    }
+
+    @Override
+    protected String getValueForParser(NameValue nameValue) {
+        return String.valueOf(nameValue.getValue());
     }
 
     @Override
@@ -48,7 +54,7 @@ public abstract class SourceGenerator extends BaseGenerator {
         for (Map.Entry<String, Object> entry : dynamicFieldValues.entrySet()) {
             Object value = entry.getValue();
             parser.setFieldName(entry.getKey());
-            transformedMap.put(Util.underscoresToCamelCase(entry.getKey()), parser.parse(String.valueOf(value)));
+            transformedMap.put(CamelCaseConverter.of(entry.getKey()).convert(), parser.parse(String.valueOf(value)));
         }
         return transformedMap;
     }

@@ -20,7 +20,7 @@ import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.Value;
-import org.broadinstitute.dsm.model.elastic.ESProfile;
+import org.broadinstitute.dsm.model.elastic.Profile;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
@@ -65,7 +65,6 @@ public class ExistingRecordPatch extends BasePatch {
     Optional<Object> processEachNameValue(NameValue nameValue) {
         Optional<Object> maybeUpdatedNameValue = Optional.empty();
         Patch.patch(patch.getId(), patch.getUser(), nameValue, dbElement);
-        exportToESWithId(patch.getId(), nameValue);
         if (hasQuestion(nameValue)) {
             maybeUpdatedNameValue = sendNotificationEmailAndUpdateStatus(patch, nameValue, dbElement);
         }
@@ -111,7 +110,7 @@ public class ExistingRecordPatch extends BasePatch {
         return question.get(STATUS) != null && question.get(STATUS).equals(ESObjectConstants.SENT);
     }
 
-    private void controlWorkflowByEmail(Patch patch, NameValue nameValue, DDPInstance ddpInstance, ESProfile profile) {
+    private void controlWorkflowByEmail(Patch patch, NameValue nameValue, DDPInstance ddpInstance, Profile profile) {
         if (profile == null || nameValue.getValue() == null) {
             return;
         }
@@ -139,7 +138,7 @@ public class ExistingRecordPatch extends BasePatch {
         }
     }
 
-    private void writeFamilyMemberWorklow(Patch patch, DDPInstance ddpInstance, ESProfile profile, Map<String, String> participantDataMap) {
+    private void writeFamilyMemberWorklow(Patch patch, DDPInstance ddpInstance, Profile profile, Map<String, String> participantDataMap) {
         logger.info("Email in patch data matches participant profile email, will update workflows");
         int ddpInstanceIdByGuid = Integer.parseInt(ddpInstance.getDdpInstanceId());
         FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
@@ -167,7 +166,7 @@ public class ExistingRecordPatch extends BasePatch {
         });
     }
 
-    private void removeFamilyMemberWorkflowData(DDPInstance ddpInstance, ESProfile profile, Map<String, String> participantDataMap,
+    private void removeFamilyMemberWorkflowData(DDPInstance ddpInstance, Profile profile, Map<String, String> participantDataMap,
                                                 Map<String, Object> esMap) throws IOException {
         logger.info("Email in patch data does not match participant profile email, will remove workflows");
         CopyOnWriteArrayList<Map<String, Object>> workflowsList =
@@ -175,6 +174,9 @@ public class ExistingRecordPatch extends BasePatch {
         int startingSize = workflowsList.size();
         workflowsList.forEach(workflow -> {
             Map<String, String> workflowDataMap = (Map<String, String>) workflow.get(ESObjectConstants.DATA);
+            if (workflowDataMap == null || !workflowDataMap.containsKey(ESObjectConstants.SUBJECT_ID)) {
+                return;
+            }
             String collaboratorParticipantId = workflowDataMap.get(ESObjectConstants.SUBJECT_ID);
             if (Objects.isNull(collaboratorParticipantId)) {
                 return;
@@ -190,7 +192,7 @@ public class ExistingRecordPatch extends BasePatch {
         }
     }
 
-    private void writeESWorkflowElseTriggerParticipantEvent(Patch patch, DDPInstance ddpInstance, ESProfile profile, NameValue nameValue) {
+    private void writeESWorkflowElseTriggerParticipantEvent(Patch patch, DDPInstance ddpInstance, Profile profile, NameValue nameValue) {
         for (Value action : patch.getActions()) {
             if (hasProfileAndESWorkflowType(profile, action)) {
                 writeESWorkflow(patch, nameValue, action, ddpInstance, profile.getGuid());
@@ -209,5 +211,10 @@ public class ExistingRecordPatch extends BasePatch {
             return nameValues;
         }
         return nameValues;
+    }
+
+    @Override
+    protected String getIdForES() {
+        return patch.getId();
     }
 }

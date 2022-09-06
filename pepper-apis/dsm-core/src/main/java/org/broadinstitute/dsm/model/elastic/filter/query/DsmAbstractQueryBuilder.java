@@ -1,75 +1,20 @@
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
-import java.util.List;
-import java.util.Map;
-
-import org.broadinstitute.dsm.model.Filter;
-import org.broadinstitute.dsm.model.elastic.export.generate.PropertyInfo;
-import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
-import org.broadinstitute.dsm.model.elastic.filter.FilterStrategy;
-import org.broadinstitute.dsm.model.elastic.filter.Operator;
-import org.broadinstitute.dsm.model.elastic.filter.splitter.SplitterStrategy;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
-import org.elasticsearch.index.query.AbstractQueryBuilder;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
 
-public class DsmAbstractQueryBuilder {
+public class DsmAbstractQueryBuilder extends BaseAbstractQueryBuilder {
 
     protected static final String DSM_WITH_DOT = ESObjectConstants.DSM + DBConstants.ALIAS_DELIMITER;
-    protected String filter;
-    protected Parser parser;
-    protected String esIndex;
-    protected BoolQueryBuilder boolQueryBuilder;
-    protected QueryBuilder queryBuilder;
-    protected SplitterStrategy splitter;
-    protected AndOrFilterSeparator filterSeparator;
-    private BaseQueryBuilder baseQueryBuilder;
 
-    public DsmAbstractQueryBuilder() {
-        boolQueryBuilder = new BoolQueryBuilder();
+    protected DsmAbstractQueryBuilder() {
+        super();
+        filterSeparator = new AndOrFilterSeparator(filter);
     }
 
-    public void setEsIndex(String index) {
-        this.esIndex = index;
-    }
-
-    public void setFilter(String filter) {
-        this.filter = filter;
-        this.filterSeparator = new AndOrFilterSeparator(filter);
-    }
-
-    public void setParser(Parser parser) {
-        this.parser = parser;
-    }
-
-    public AbstractQueryBuilder build() {
-        Map<String, List<String>> parsedFilters = filterSeparator.parseFiltersByLogicalOperators();
-        for (Map.Entry<String, List<String>> parsedFilter : parsedFilters.entrySet()) {
-            List<String> filterValues = parsedFilter.getValue();
-            buildUpQuery(filterValues, FilterStrategy.of(parsedFilter.getKey()));
-        }
-        return boolQueryBuilder;
-    }
-
-    protected void buildUpQuery(List<String> filterValues, FilterStrategy filterStrategy) {
-        for (String filterValue : filterValues) {
-            Operator operator = Operator.extract(filterValue);
-            splitter = operator.getSplitterStrategy();
-            splitter.setFilter(filterValue);
-            baseQueryBuilder = BaseQueryBuilder.of(splitter.getAlias(), splitter.getFieldName());
-            QueryPayload queryPayload = new QueryPayload(
-                    buildPath(), splitter.getInnerProperty(), parser.parse(splitter.getValue()), esIndex
-            );
-            filterStrategy.build(boolQueryBuilder, baseQueryBuilder.buildEachQuery(operator, queryPayload));
-        }
-    }
-
+    @Override
     protected String buildPath() {
-        return DSM_WITH_DOT + PropertyInfo.TABLE_ALIAS_MAPPINGS.get(splitter.getAlias()).getPropertyName();
+        return DSM_WITH_DOT + super.buildPath();
     }
-
-
 }

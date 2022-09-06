@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="DDP-7556_mercury_sequencing_order_table_id_changes" author="pegah">
+        <addColumn tableName="mercury_sequencing">
+            <column name="tissue_id" type="INT"></column>
+        </addColumn>
+        <addColumn tableName="mercury_sequencing">
+            <column name="dsm_kit_request_id" type="INT"></column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="DDP-7556_ddp_kit_changes" author="pegah">
+        <addColumn tableName="ddp_kit">
+            <column name="collection_date" type="VARCHAR(45)"></column>
+        </addColumn>
+        <addColumn tableName="ddp_kit">
+            <column name="last_changed" type="BIGINT"></column>
+        </addColumn>
+        <addColumn tableName="ddp_kit">
+            <column name="changed_by" type="VARCHAR(45)"></column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="ddp_kit_changes" author="pegah">
+        <modifyDataType tableName="ddp_kit" columnName="last_changed" newDataType="BIGINT(20)"></modifyDataType>
+    </changeSet>
+    <changeSet id="mercury_sequencing_further_changes" author="pegah">
+        <addColumn tableName="mercury_sequencing">
+            <column name="status_detail" type="VARCHAR(500)"></column>
+        </addColumn>
+        <modifyDataType tableName="mercury_sequencing" columnName="ddp_instance_id" newDataType="INT"/>
+    </changeSet>
+    <changeSet id="mercury_sequencing_foreign_keys" author="pegah">
+        <addForeignKeyConstraint baseTableName="mercury_sequencing" baseColumnNames="ddp_instance_id"
+                                 constraintName="mercury_sequencing_ddp_instance_id_fk"
+                                 referencedTableName="ddp_instance"
+                                 referencedColumnNames="ddp_instance_id"></addForeignKeyConstraint>
+        <addForeignKeyConstraint baseTableName="mercury_sequencing" baseColumnNames="tissue_id"
+                                 constraintName="mercury_sequencing_tissue_id_fk" referencedTableName="ddp_tissue"
+                                 referencedColumnNames="tissue_id"></addForeignKeyConstraint>
+        <addForeignKeyConstraint baseTableName="mercury_sequencing" baseColumnNames="dsm_kit_request_id"
+                                 constraintName="mercury_sequencing_dsm_kit_request_id_fk" referencedTableName="ddp_kit"
+                                 referencedColumnNames="dsm_kit_request_id"></addForeignKeyConstraint>
+    </changeSet>
+    <changeSet id="DDP-7556_sample_sequencing_field" author="pegah">
+        <addColumn tableName="ddp_kit">
+            <column name="sequencing_restriction" type="VARCHAR(200)" defaultValue="NULL">
+                <constraints nullable="true"></constraints>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="DDP-7556_clinical_kit_instance_roles" author="pegah">
+        <insert tableName="instance_role">
+            <column name="name" value="has_clinical_kit"></column>
+        </insert>
+    </changeSet>
+    <changeSet id="DDP-7556_mercury_access_roles" author="pegah">
+        <insert tableName="access_role">
+            <column name="name" value="kit_sequencing_order"></column>
+        </insert>
+    </changeSet>
+    <changeSet id="DDP-7556_table_name_change" author="pegah">
+        <renameTable oldTableName="mercury_sequencing" newTableName="ddp_mercury_sequencing"></renameTable>
+    </changeSet>
+</databaseChangeLog>

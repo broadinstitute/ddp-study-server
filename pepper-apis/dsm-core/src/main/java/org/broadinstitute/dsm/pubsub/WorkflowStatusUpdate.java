@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.pubsub;
 
-import static org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter.OLD_OSTEO_INSTANCE_NAME;
+import static org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter.OLD_OSTEO_INSTANCE_NAME;
 
 import java.util.List;
 import java.util.Map;
@@ -146,7 +146,8 @@ public class WorkflowStatusUpdate {
     public static int addNewParticipantDataWithStatus(String workflow, String status, String ddpParticipantId, FieldSettingsDto setting) {
         JsonObject dataJsonObject = new JsonObject();
         dataJsonObject.addProperty(workflow, status);
-        ParticipantData participantData = new ParticipantData.Builder().withDdpParticipantId(ddpParticipantId).withDdpInstanceId(setting.getDdpInstanceId())
+        ParticipantData participantData = new ParticipantData.Builder().withDdpParticipantId(ddpParticipantId)
+                .withDdpInstanceId(setting.getDdpInstanceId())
                 .withFieldTypeId(setting.getFieldType()).withData(dataJsonObject.toString())
                 .withLastChanged(System.currentTimeMillis()).withChangedBy(WorkflowStatusUpdate.DSS).build();
         int participantDataId = participantDataDao.create(participantData);

@@ -1,24 +1,34 @@
 package org.broadinstitute.dsm.model.elastic.filter.query;
 
+import java.util.List;
+
+import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.javalite.common.Collections;
 
 public class NonExactMatchQueryStrategy extends MatchQueryStrategy {
 
     public static final String WILDCARD_ASTERISK = "*";
 
     @Override
-    public QueryBuilder build(BaseQueryBuilder baseQueryBuilder) {
+    public List<QueryBuilder> build(BaseQueryBuilder baseQueryBuilder) {
         QueryBuilder queryBuilder;
         if (isTextType(baseQueryBuilder)) {
-            queryBuilder = baseQueryBuilder.build(QueryBuilders.wildcardQuery(
+            queryBuilder = QueryBuilders.wildcardQuery(
                     baseQueryBuilder.payload.getFieldName(),
                     String.format("%s%s%s",
-                            WILDCARD_ASTERISK, String.valueOf(baseQueryBuilder.payload.getValues()[0]).toLowerCase(), WILDCARD_ASTERISK)));
+                            WILDCARD_ASTERISK, String.valueOf(baseQueryBuilder.payload.getValues()[0]).toLowerCase(), WILDCARD_ASTERISK));
 
         } else {
-            queryBuilder = super.build(baseQueryBuilder);
+            queryBuilder = super.getMainQueryBuilder(baseQueryBuilder);
         }
-        return queryBuilder;
+        return Collections.li(queryBuilder);
+    }
+
+    @Override
+    protected MatchQueryBuilder addOperator(MatchQueryBuilder baseQuery) {
+        return baseQuery.operator(Operator.OR);
     }
 }
