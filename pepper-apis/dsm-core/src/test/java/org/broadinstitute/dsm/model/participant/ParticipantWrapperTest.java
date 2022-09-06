@@ -22,6 +22,7 @@ import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.NestedQueryBuilder;
+import org.elasticsearch.index.query.Operator;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -150,7 +151,7 @@ public class ParticipantWrapperTest {
         tissueQuery.must(new NestedQueryBuilder("dsm.tissue", orQuery, ScoreMode.Avg));
 
         BoolQueryBuilder esQuery = new BoolQueryBuilder();
-        esQuery.must(new MatchQueryBuilder("dsm.diagnosisYear", 2014L));
+        esQuery.must(new MatchQueryBuilder("dsm.diagnosisYear", 2014L).operator(Operator.AND));
 
         expectedQuery.must(tissueQuery);
         expectedQuery.must(esQuery);

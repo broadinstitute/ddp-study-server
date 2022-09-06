@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.pubsub.study.osteo;
 
-import static org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter.NEW_OSTEO_INSTANCE_NAME;
+import static org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter.NEW_OSTEO_INSTANCE_NAME;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -92,7 +92,8 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
             Optional<Integer> maybeNewOsteoParticipantId = maybeOldOsteoParticipant
                     .map(this::updateParticipantDto)
                     .map(participantDao::create);
-            cohortTagDao.create(newCohortTag);
+            int newCohortTagId = cohortTagDao.create(newCohortTag);
+            newCohortTag.setCohortTagId(newCohortTagId);
             Optional<ParticipantRecordDto> maybeOldOsteoParticipantRecord = maybeOldOsteoParticipantId
                     .flatMap(participantRecordDao::getParticipantRecordByParticipantId);
             maybeOldOsteoParticipantRecord.ifPresent(participantRecord -> maybeNewOsteoParticipantId
@@ -103,7 +104,10 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
             ElasticSearchParticipantDto esPtDto = elasticSearch
                     .getParticipantById(instance.getEsParticipantIndex(), oldOsteoDdpParticipantId);
             int newOsteoParticipantId = maybeNewOsteoParticipantId.orElseThrow();
-            esPtDto.getDsm().ifPresent(esDsm -> updateEsDsm(newOsteoParticipantId, newOsteoMedicalRecords, esDsm));
+            esPtDto.getDsm().ifPresentOrElse(
+                    esDsm -> updateEsDsm(newOsteoParticipantId, newOsteoMedicalRecords, esDsm),
+                    ()    -> logger.warn(String.format("Could not find participant in ES with guid %s", ddpParticipantId))
+            );
             Map<String, Object> esPtDtoAsMap = ObjectMapperSingleton
                     .readValue(GSON.toJson(esPtDto), new TypeReference<Map<String, Object>>() {});
             writeDataToES(esPtDtoAsMap);

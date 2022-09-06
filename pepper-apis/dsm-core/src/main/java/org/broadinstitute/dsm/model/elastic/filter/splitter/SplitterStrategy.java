@@ -5,7 +5,9 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.elastic.converters.camelcase.CamelCaseConverter;
+import org.broadinstitute.dsm.model.elastic.converters.camelcase.NullObjectCamelCaseConverter;
 import org.broadinstitute.dsm.model.elastic.filter.AndOrFilterSeparator;
+import org.broadinstitute.dsm.model.participant.Util;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
@@ -62,6 +64,7 @@ public abstract class SplitterStrategy {
     public void setFilter(String filter) {
         this.filter = filter;
         splittedFilter = split();
+        this.setCamelCaseConverter(Util.isUnderDsmKey(this.getAlias()) ? CamelCaseConverter.of() : NullObjectCamelCaseConverter.of());
     }
 
     public void setFilterSeparator(AndOrFilterSeparator filterSeparator) {

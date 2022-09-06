@@ -8,19 +8,21 @@ import java.util.Optional;
 
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
-import org.broadinstitute.dsm.model.filter.prefilter.osteo.NewOsteoPreFilter;
-import org.broadinstitute.dsm.model.filter.prefilter.osteo.OldOsteoPreFilter;
+import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter;
+import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilterPayload;
+import org.broadinstitute.dsm.model.filter.postfilter.osteo.NewOsteoPostFilter;
+import org.broadinstitute.dsm.model.filter.postfilter.osteo.OldOsteoPostFilter;
 import org.junit.Test;
 
-public class StudyPreFilterTest {
+public class StudyPostFilterTest {
 
     @Test
     public void buildNewOsteoInstance() {
         String newOsteoInstanceName = "osteo2";
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder().withInstanceName(newOsteoInstanceName).build();
         ElasticSearchParticipantDto esDto = new ElasticSearchParticipantDto.Builder().build();
-        Optional<StudyPreFilter> maybeNewOsteoPreFilter = StudyPreFilter.fromPayload(StudyPreFilterPayload.of(esDto, ddpInstanceDto));
-        assertTrue(maybeNewOsteoPreFilter.get() instanceof NewOsteoPreFilter);
+        Optional<StudyPostFilter> maybeNewOsteoPreFilter = StudyPostFilter.fromPayload(StudyPostFilterPayload.of(esDto, ddpInstanceDto));
+        assertTrue(maybeNewOsteoPreFilter.get() instanceof NewOsteoPostFilter);
 
     }
 
@@ -29,14 +31,14 @@ public class StudyPreFilterTest {
         String oldOsteoInstanceName = "Osteo";
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder().withInstanceName(oldOsteoInstanceName).build();
         ElasticSearchParticipantDto esDto = new ElasticSearchParticipantDto.Builder().build();
-        Optional<StudyPreFilter> maybeOldOsteoPreFilter = StudyPreFilter.fromPayload(StudyPreFilterPayload.of(esDto, ddpInstanceDto));
-        assertTrue(maybeOldOsteoPreFilter.get() instanceof OldOsteoPreFilter);
+        Optional<StudyPostFilter> maybeOldOsteoPreFilter = StudyPostFilter.fromPayload(StudyPostFilterPayload.of(esDto, ddpInstanceDto));
+        assertTrue(maybeOldOsteoPreFilter.get() instanceof OldOsteoPostFilter);
 
     }
 
     @Test
     public void buildEmpty() {
-        Optional<StudyPreFilter> maybeEmpty = StudyPreFilter.fromPayload(StudyPreFilterPayload.of(null,
+        Optional<StudyPostFilter> maybeEmpty = StudyPostFilter.fromPayload(StudyPostFilterPayload.of(null,
                 new DDPInstanceDto.Builder().build()));
         try {
             maybeEmpty.get();

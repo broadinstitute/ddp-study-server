@@ -20,8 +20,8 @@ public class DDPInstitutionDao implements Dao<DDPInstitutionDto> {
 
     private static final Logger logger = LoggerFactory.getLogger(DDPInstitutionDao.class);
 
-    public static final String SQL_INSERT_NEW_DDP_INSTITUTION = "INSERT INTO ddp_institution SET ddp_institution_id = ?,"
-            + " type = ?, participant_id = ?, last_changed = ?";
+    public static final String SQL_INSERT_NEW_DDP_INSTITUTION = "INSERT INTO ddp_institution "
+            + "(ddp_institution_id, type, participant_id, last_changed) VALUES (?, ?, ?, ?)";
 
     public static final String SQL_SELECT_INSTITUTION_BY_INSTITUTION_ID = "SELECT * FROM ddp_institution WHERE institution_id = ?;";
 
