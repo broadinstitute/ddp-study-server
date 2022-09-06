@@ -38,6 +38,9 @@ public interface PicklistQuestionDao extends SqlObject {
     int DISPLAY_ORDER_GAP = 10;
 
     @CreateSqlObject
+    JdbiPicklistQuestion getJdbiPicklistQuestion();
+
+    @CreateSqlObject
     JdbiPicklistGroup getJdbiPicklistGroup();
 
     @CreateSqlObject
@@ -509,6 +512,12 @@ public interface PicklistQuestionDao extends SqlObject {
         );
 
         return dtosMap;
+    }
+
+    default void delete(Long questionId) {
+        getJdbiPicklistOption().deleteForQuestionId(questionId);
+        var wasDeleted = getJdbiPicklistQuestion().delete(questionId);
+        LOG.info("Delete date question with id {}? : {}", questionId, wasDeleted);
     }
 
     class GroupAndOptionDtos implements Serializable {
