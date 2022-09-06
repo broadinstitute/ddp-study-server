@@ -82,7 +82,12 @@ public class KitDaoMock implements KitDao {
     }
 
     @Override
-    public Optional<ScanError> updateKitByHruid(KitRequestShipping kitRequestShipping) {
+    public Optional<KitRequestShipping> getKitByHruid(String hruid) {
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<ScanError> updateKitLabel(KitRequestShipping kitRequestShipping) {
         return Optional.empty();
     }
 }
