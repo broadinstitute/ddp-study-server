@@ -32,4 +32,8 @@ public interface KitDao extends Dao<KitRequestShipping> {
 
     Optional<KitRequestShipping> getKitByDdpLabel(String ddpLabel);
 
+    Optional<KitRequestShipping> getKitByHruid(String hruid);
+
+    Optional<ScanError> updateKitLabel(KitRequestShipping kitRequestShipping);
+
 }
