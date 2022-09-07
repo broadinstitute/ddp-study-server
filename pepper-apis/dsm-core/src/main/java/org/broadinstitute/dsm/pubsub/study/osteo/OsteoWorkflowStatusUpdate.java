@@ -155,6 +155,7 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
         oldOsteoMedicalRecords.forEach(medicalRecord -> {
             int newOsteoInstitutionId = updateAndThenSaveNewInstitution(newOsteoParticipantId, medicalRecord.getInstitutionId());
             medicalRecord.setInstitutionId(newOsteoInstitutionId);
+            medicalRecord.setDdpInstanceId(newOsteoInstanceId);
             int newMedicalRecordId = medicalRecordDao.create(medicalRecord);
             medicalRecord.setMedicalRecordId(newMedicalRecordId);
             newOsteoMedicalRecords.add(medicalRecord);
