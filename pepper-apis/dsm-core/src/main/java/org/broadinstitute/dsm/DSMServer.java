@@ -99,6 +99,7 @@ import org.broadinstitute.dsm.route.kit.KitFinalScanRoute;
 import org.broadinstitute.dsm.route.KitLabelRoute;
 import org.broadinstitute.dsm.route.KitRequestRoute;
 import org.broadinstitute.dsm.route.KitSearchRoute;
+import org.broadinstitute.dsm.route.kit.KitInitialScanRoute;
 import org.broadinstitute.dsm.route.kit.KitTrackingScanRoute;
 import org.broadinstitute.dsm.route.KitTypeRoute;
 import org.broadinstitute.dsm.route.KitUploadRoute;
@@ -762,6 +763,7 @@ public class DSMServer {
         post(UI_ROOT + RoutePath.TRACKING_SCAN_REQUEST, new KitTrackingScanRoute(), new JsonTransformer());
         post(UI_ROOT + RoutePath.SENT_KIT_REQUEST, new SentKitRoute(), new JsonTransformer());
         post(UI_ROOT + RoutePath.RECEIVED_KIT_REQUEST, new ReceivedKitsRoute(notificationUtil), new JsonTransformer());
+        post(UI_ROOT + RoutePath.INITIAL_SCAN_REQUEST, new KitInitialScanRoute(), new JsonTransformer());
 
         KitDeactivationRoute kitDeactivationRoute = new KitDeactivationRoute(notificationUtil);
         patch(UI_ROOT + RoutePath.DEACTIVATE_KIT_REQUEST, kitDeactivationRoute, new JsonTransformer());

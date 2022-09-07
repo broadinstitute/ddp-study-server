@@ -139,12 +139,18 @@ public class AuthenticationRoute implements Route {
         Map<String, Claim> auth0Claims = Auth0Util.verifyAndParseAuth0TokenClaims(auth0Token, auth0Domain);
 
         if (!auth0Claims.containsKey(tenantDomain) || !auth0Claims.containsKey(clientId) || !auth0Claims.containsKey(userId)) {
-            throw new RuntimeException("Missing dss claims in auth0 claims, can not authenticate");
+            logger.warn("Missing dss claims in auth0 claims, can not authenticate for DSS!");
         }
-        claims.put(tenantDomain, auth0Claims.get(tenantDomain).asString());
-        claims.put(clientId, auth0Claims.get(clientId).asString());
-        claims.put(userId, auth0Claims.get(userId).asString());
-        //todo pegah get user id from database once DDP-7172 is done
+
+        if (auth0Claims.containsKey(tenantDomain)) {
+            claims.put(tenantDomain, auth0Claims.get(tenantDomain).asString());
+        }
+        if (auth0Claims.containsKey(clientId)) {
+            claims.put(clientId, auth0Claims.get(clientId).asString());
+        }
+        if (auth0Claims.containsKey(userId)) {
+            claims.put(userId, auth0Claims.get(userId).asString());
+        }
 
         return claims;
     }

@@ -15,7 +15,8 @@ BUCKET="$2"
 TOPIC="$3"
 
 gsutil notification create \
-  -f none -e OBJECT_FINALIZE \
+  -f json \
+  -e OBJECT_FINALIZE \
   -t "projects/$PROJECT_ID/topics/$TOPIC" \
   "gs://$BUCKET"
 

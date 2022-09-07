@@ -1,17 +1,17 @@
 package org.broadinstitute.ddp.db.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.experimental.Accessors;
-import org.jdbi.v3.core.mapper.reflect.ColumnName;
-import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
-
-import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nullable;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.experimental.Accessors;
+import org.jdbi.v3.core.mapper.reflect.ColumnName;
+import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 @Data
 @AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
@@ -20,45 +20,45 @@ public final class PicklistOptionDto implements Serializable {
     private final long id;
 
     @ColumnName("picklist_option_stable_id")
-    private final String stableId;
+    private String stableId;
 
     @Nullable
     @ColumnName("value")
-    private final String value;
+    private String value;
 
     @ColumnName("option_label_template_id")
-    private final long optionLabelTemplateId;
+    private long optionLabelTemplateId;
 
     @ColumnName("tooltip_template_id")
-    private final Long tooltipTemplateId;
+    private Long tooltipTemplateId;
 
     @ColumnName("detail_label_template_id")
-    private final Long detailLabelTemplateId;
+    private Long detailLabelTemplateId;
 
     @ColumnName("allow_details")
-    private final boolean allowDetails;
+    private boolean allowDetails;
 
     @ColumnName("is_exclusive")
-    private final boolean exclusive;
+    private boolean exclusive;
 
     @Accessors(fluent = true)
     @ColumnName("is_default")
-    private final boolean isDefault;
+    private boolean isDefault;
 
     @ColumnName("display_order")
     private int displayOrder;
 
     @ColumnName("revision_id")
-    private final long revisionId;
+    private long revisionId;
 
     @ColumnName("revision_start_timestamp")
-    private final Long revisionStartTimestamp;
+    private Long revisionStartTimestamp;
 
     @ColumnName("revision_end_timestamp")
-    private final Long revisionEndTimestamp;
+    private Long revisionEndTimestamp;
 
     @ColumnName("nested_options_template_id")
-    private final Long nestedOptionsTemplateId;
+    private Long nestedOptionsTemplateId;
 
     private final List<PicklistOptionDto> nestedOptions = new ArrayList<>();
 

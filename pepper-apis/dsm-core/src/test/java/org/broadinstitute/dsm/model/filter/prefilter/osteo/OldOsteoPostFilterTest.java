@@ -11,11 +11,11 @@ import java.util.stream.Collectors;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.broadinstitute.dsm.model.elastic.Activities;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
-import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter;
-import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilterPayload;
+import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter;
+import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilterPayload;
 import org.junit.Test;
 
-public class OldOsteoPreFilterTest {
+public class OldOsteoPostFilterTest {
 
     @Test
     public void filter() {
@@ -34,8 +34,8 @@ public class OldOsteoPreFilterTest {
                 .withInstanceName(newOsteoInstanceName)
                 .withDdpInstanceId(ddpInstanceId)
                 .build();
-        Optional<StudyPreFilter> preFilter = StudyPreFilter.fromPayload(StudyPreFilterPayload.of(esDto, ddpInstanceDto));
-        preFilter.ifPresent(StudyPreFilter::filter);
+        Optional<StudyPostFilter> postFilter = StudyPostFilter.fromPayload(StudyPostFilterPayload.of(esDto, ddpInstanceDto));
+        postFilter.ifPresent(StudyPostFilter::filter);
         assertEquals(2, esDto.getActivities().size());
         assertEquals(List.of("FAMILY_HISTORY", "ABOUT_YOU"), esDto.getActivities().stream()
                 .map(Activities::getActivityCode)

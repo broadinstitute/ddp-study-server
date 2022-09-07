@@ -31,8 +31,8 @@ import org.broadinstitute.dsm.model.elastic.search.ElasticSearchable;
 import org.broadinstitute.dsm.model.elastic.search.UnparsedESParticipantDto;
 import org.broadinstitute.dsm.model.elastic.sort.Sort;
 import org.broadinstitute.dsm.model.elastic.sort.SortBy;
-import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter;
-import org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilterPayload;
+import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter;
+import org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilterPayload;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
@@ -140,7 +140,11 @@ public class ParticipantWrapper {
         result.add(participantWrapperDto);
     }
 
-    private void addWrapperToList(ElasticSearchParticipantDto elasticSearchParticipantDto, List<ParticipantWrapperDto> result, DDPInstanceDto ddpInstanceDto) {
+    private void addWrapperToList(
+            ElasticSearchParticipantDto elasticSearchParticipantDto,
+            List<ParticipantWrapperDto> result,
+            DDPInstanceDto ddpInstanceDto
+    ) {
 
         elasticSearchParticipantDto.getDsm().ifPresent(esDsm -> {
             Participant participant = esDsm.getParticipant().orElse(new Participant());
@@ -148,8 +152,8 @@ public class ParticipantWrapper {
             List<ParticipantData> participantData = esDsm.getParticipantData();
             sortBySelfElseById(participantData);
 
-            StudyPreFilter.fromPayload(StudyPreFilterPayload.of(elasticSearchParticipantDto, ddpInstanceDto))
-                    .ifPresent(StudyPreFilter::filter);
+            StudyPostFilter.fromPayload(StudyPostFilterPayload.of(elasticSearchParticipantDto, ddpInstanceDto))
+                    .ifPresent(StudyPostFilter::filter);
 
             List<KitRequestShipping> kitRequestShipping = esDsm.getKitRequestShipping();
 
@@ -162,7 +166,7 @@ public class ParticipantWrapper {
                 participant.setCreated(oncHistory.getCreated());
                 participant.setReviewed(oncHistory.getReviewed());
             });
-
+                    
             List<MedicalRecord> medicalRecord = esDsm.getMedicalRecord();
             List<OncHistoryDetail> oncHistoryDetails = esDsm.getOncHistoryDetail();
             List<Tissue> tissues = esDsm.getTissue();

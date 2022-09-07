@@ -40,4 +40,6 @@ public interface JdbiTextQuestion extends SqlObject {
                    @Bind("suggestionType") SuggestionType suggestionType,
                    @Bind("placeholderTemplateId") Long placeholderTemplateId);
 
+    @SqlUpdate("DELETE FROM text_question WHERE question_id = :questionId")
+    boolean delete(@Bind("questionId") long questionId);
 }
