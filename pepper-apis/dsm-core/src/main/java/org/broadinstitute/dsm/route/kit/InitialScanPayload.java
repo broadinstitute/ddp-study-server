@@ -3,12 +3,12 @@ package org.broadinstitute.dsm.route.kit;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
-public class SentAndFinalScanPayload extends BaseScanPayload {
+public class InitialScanPayload extends BaseScanPayload {
 
-    String ddpLabel;
+    String hruid;
 
-    public SentAndFinalScanPayload(String ddpLabel, String kitLabel) {
-        this.ddpLabel = ddpLabel;
+    public InitialScanPayload(String hruid, String kitLabel) {
+        this.hruid = hruid;
         this.kitLabel = kitLabel;
     }
 
@@ -19,11 +19,11 @@ public class SentAndFinalScanPayload extends BaseScanPayload {
 
     @Override
     public String getDdpLabel() {
-        return ddpLabel;
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public String getHruid()  {
-        throw new UnsupportedOperationException();
+    public String getHruid() {
+        return hruid;
     }
 }
