@@ -3,9 +3,6 @@ package org.broadinstitute.dsm.model.elastic.filter;
 import static org.junit.Assert.assertEquals;
 
 import org.broadinstitute.dsm.model.Filter;
-import org.broadinstitute.dsm.model.elastic.filter.query.BuildQueryStrategy;
-import org.broadinstitute.dsm.model.elastic.filter.query.CollectionQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
