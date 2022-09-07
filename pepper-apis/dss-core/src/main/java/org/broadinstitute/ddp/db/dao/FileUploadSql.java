@@ -18,7 +18,7 @@ public interface FileUploadSql extends SqlObject {
             + "        created_at, uploaded_at, scanned_at, scan_result_id)"
             + " values (:guid, :studyId, :operatorId, :participantId,"
             + "        :blobName, :mimeType, :fileName, :fileSize, false,"
-            + "        :createdAt, null, null, null)")
+            + "        :createdAt, :createdAt, null, null)")
     long insert(
             @Bind("guid") String fileUploadGuid,
             @Bind("studyId") long studyId,
@@ -35,12 +35,11 @@ public interface FileUploadSql extends SqlObject {
             @Bind("id") long fileUploadId,
             @Bind("verified") boolean isVerified);
 
-    @SqlUpdate("update file_upload set uploaded_at = :uploadedAt, scanned_at = :scannedAt, scan_result_id = ("
+    @SqlUpdate("update file_upload set scanned_at = :scannedAt, scan_result_id = ("
             + " select file_scan_result_id from file_scan_result where file_scan_result_code = :scanResult)"
             + "  where file_upload_id = :id")
     int updateStatus(
             @Bind("id") long fileUploadId,
-            @Bind("uploadedAt") Instant uploadedAt,
             @Bind("scannedAt") Instant scannedAt,
             @Bind("scanResult") FileScanResult scanResult);
 

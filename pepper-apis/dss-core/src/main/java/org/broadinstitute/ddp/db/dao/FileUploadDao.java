@@ -50,8 +50,8 @@ public interface FileUploadDao extends SqlObject {
         DBUtils.checkUpdate(1, getFileUploadSql().updateIsVerified(fileUploadId, true));
     }
 
-    default void updateStatus(long fileUploadId, Instant uploadedAt, Instant scannedAt, FileScanResult scanResult) {
-        DBUtils.checkUpdate(1, getFileUploadSql().updateStatus(fileUploadId, uploadedAt, scannedAt, scanResult));
+    default void updateStatus(long fileUploadId, Instant scannedAt, FileScanResult scanResult) {
+        DBUtils.checkUpdate(1, getFileUploadSql().updateStatus(fileUploadId, scannedAt, scanResult));
     }
 
     default void deleteById(long fileUploadId) {

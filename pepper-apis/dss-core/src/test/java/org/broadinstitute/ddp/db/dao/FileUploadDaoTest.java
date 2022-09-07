@@ -20,13 +20,12 @@ import org.testcontainers.shaded.org.apache.commons.lang.StringUtils;
 
 public class FileUploadDaoTest extends TxnAwareBaseTest {
 
-    private static TestDataSetupUtil.GeneratedTestData testData;
     private static long studyId;
     private static long userId;
 
     @BeforeClass
     public static void setup() {
-        testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
+        final var testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
         studyId = testData.getStudyId();
         userId = testData.getUserId();
     }
@@ -66,6 +65,7 @@ public class FileUploadDaoTest extends TxnAwareBaseTest {
 
             dao.markVerified(upload.getId());
             FileUpload actual = dao.findById(upload.getId()).orElse(null);
+            assertNotNull(actual);
             assertTrue(actual.isVerified());
 
             handle.rollback();
@@ -83,9 +83,9 @@ public class FileUploadDaoTest extends TxnAwareBaseTest {
             assertNull(upload.getScanResult());
 
             var now = Instant.now();
-            dao.updateStatus(upload.getId(), now, now, FileScanResult.CLEAN);
+            dao.updateStatus(upload.getId(), now, FileScanResult.CLEAN);
             FileUpload actual = dao.findById(upload.getId()).orElse(null);
-            assertEquals(now, actual.getUploadedAt());
+            assertNotNull(actual);
             assertEquals(now, actual.getScannedAt());
             assertEquals(FileScanResult.CLEAN, actual.getScanResult());
 

@@ -142,8 +142,7 @@ public class FileScanResultReceiver implements MessageReceiver {
             return false;
         }
 
-        Instant uploadedAt = Instant.ofEpochMilli(blob.getCreateTime());
-        uploadDao.updateStatus(upload.getId(), uploadedAt, scannedAt, scanResult);
+        uploadDao.updateStatus(upload.getId(), scannedAt, scanResult);
         handle.attach(DataExportDao.class)
                 .queueDataSync(upload.getParticipantUserId(), upload.getStudyId());
         log.info("Finished processing file scan result for file upload {}", uploadGuid);
