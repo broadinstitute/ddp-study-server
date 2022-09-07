@@ -21,4 +21,9 @@ public class SentAndFinalScanPayload extends BaseScanPayload {
     public String getDdpLabel() {
         return ddpLabel;
     }
+
+    @Override
+    public String getHruid()  {
+        throw new UnsupportedOperationException();
+    }
 }

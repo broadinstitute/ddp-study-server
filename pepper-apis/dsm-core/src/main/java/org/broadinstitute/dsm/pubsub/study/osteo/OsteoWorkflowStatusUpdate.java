@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.pubsub.study.osteo;
 
-import static org.broadinstitute.dsm.model.filter.prefilter.StudyPreFilter.NEW_OSTEO_INSTANCE_NAME;
+import static org.broadinstitute.dsm.model.filter.postfilter.StudyPostFilter.NEW_OSTEO_INSTANCE_NAME;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -92,7 +92,8 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
             Optional<Integer> maybeNewOsteoParticipantId = maybeOldOsteoParticipant
                     .map(this::updateParticipantDto)
                     .map(participantDao::create);
-            cohortTagDao.create(newCohortTag);
+            int newCohortTagId = cohortTagDao.create(newCohortTag);
+            newCohortTag.setCohortTagId(newCohortTagId);
             Optional<ParticipantRecordDto> maybeOldOsteoParticipantRecord = maybeOldOsteoParticipantId
                     .flatMap(participantRecordDao::getParticipantRecordByParticipantId);
             maybeOldOsteoParticipantRecord.ifPresent(participantRecord -> maybeNewOsteoParticipantId
@@ -103,10 +104,10 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
             ElasticSearchParticipantDto esPtDto = elasticSearch
                     .getParticipantById(instance.getEsParticipantIndex(), oldOsteoDdpParticipantId);
             int newOsteoParticipantId = maybeNewOsteoParticipantId.orElseThrow();
-            esPtDto.getDsm().ifPresent(esDsm -> updateEsDsm(newOsteoParticipantId, newOsteoMedicalRecords, esDsm));
-            Map<String, Object> esPtDtoAsMap = ObjectMapperSingleton
-                    .readValue(GSON.toJson(esPtDto), new TypeReference<Map<String, Object>>() {});
-            writeDataToES(esPtDtoAsMap);
+            esPtDto.getDsm().ifPresentOrElse(
+                    esDsm -> updateDsmAndWriteToES(newOsteoParticipantId, newOsteoMedicalRecords, esDsm),
+                    ()    -> logger.warn(String.format("Could not find participant in ES with guid %s", ddpParticipantId))
+            );
         } else {
             logger.warn(String.format("Participant with id %s does not exist", ddpParticipantId));
         }
@@ -121,11 +122,12 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
     }
 
     private void writeDataToES(Map<String, Object> esPtDtoAsMap) {
+        logger.info("Attempting to write `dsm` object in ES");
         elasticDataExportAdapter.setSource(esPtDtoAsMap);
         elasticDataExportAdapter.export();
     }
 
-    private void updateEsDsm(long newOsteoParticipantId, List<MedicalRecord> newOsteoMedicalRecords, Dsm dsm) {
+    private void updateDsmAndWriteToES(long newOsteoParticipantId, List<MedicalRecord> newOsteoMedicalRecords, Dsm dsm) {
         logger.info("Attempting to update the `dsm` object in ES");
         dsm.getParticipant().ifPresent(oldOsteoPt -> updateNewOsteoParticipant(newOsteoParticipantId, dsm, oldOsteoPt));
         dsm.setCohortTag(Stream.concat(dsm.getCohortTag().stream(), Stream.of(newCohortTag)).collect(Collectors.toList()));
@@ -134,6 +136,10 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
                 .collect(Collectors.toList());
         dsm.setMedicalRecord(updatedMedicalRecords);
         logger.info("`dsm` object was updated successfully");
+        Map<String, Object> dsmAsMap =
+                ObjectMapperSingleton.readValue(ObjectMapperSingleton.writeValueAsString(dsm),
+                        new TypeReference<Map<String, Object>>() {});
+        writeDataToES(dsmAsMap);
     }
 
     private void updateNewOsteoParticipant(long newOsteoParticipantId, Dsm dsm, Participant oldOsteoPt) {
@@ -151,6 +157,7 @@ public class OsteoWorkflowStatusUpdate implements HasWorkflowStatusUpdate {
         oldOsteoMedicalRecords.forEach(medicalRecord -> {
             int newOsteoInstitutionId = updateAndThenSaveNewInstitution(newOsteoParticipantId, medicalRecord.getInstitutionId());
             medicalRecord.setInstitutionId(newOsteoInstitutionId);
+            medicalRecord.setDdpInstanceId(newOsteoInstanceId);
             int newMedicalRecordId = medicalRecordDao.create(medicalRecord);
             medicalRecord.setMedicalRecordId(newMedicalRecordId);
             newOsteoMedicalRecords.add(medicalRecord);
