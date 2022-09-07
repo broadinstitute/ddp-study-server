@@ -172,8 +172,10 @@ public class KitDaoImpl implements KitDao {
                             + kitRequestShipping.getDdpLabel() + " does not exist or already has a Kit Label");
                 } else {
                     logger.info("Updated kitRequests w/ ddp_label " + kitRequestShipping.getDdpLabel());
-                    dbVals.resultValue = new ScanError(kitRequestShipping.getBspCollaboratorParticipantId(),
-                            kitRequestShipping.getBspCollaboratorParticipantId());
+                    if (StringUtils.isNotBlank(kitRequestShipping.getBspCollaboratorParticipantId())) {
+                        dbVals.resultValue = new ScanError(kitRequestShipping.getBspCollaboratorParticipantId(),
+                                kitRequestShipping.getBspCollaboratorParticipantId());
+                    }
                 }
             } catch (Exception ex) {
                 dbVals.resultValue = new ScanError(kitRequestShipping.getDdpLabel(),

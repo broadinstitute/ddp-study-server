@@ -20,7 +20,11 @@ public enum Study {
                 .replace(CMI_PREFIX, StringUtils.EMPTY)
                 .toUpperCase();
 
-        Study study = valueOf(instanceName);
-        return PE_CGS.contains(study);
+        for (Study study : Study.values()) {
+            if (study.equals(instanceName)) {
+                return PE_CGS.contains(study);
+            }
+        }
+        return false;
     }
 }
