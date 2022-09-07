@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 public class TrackingScanPayload extends BaseScanPayload {
 
     String trackingReturnId;
+
     @Override
     public String getTrackingReturnId() {
         return trackingReturnId;
@@ -15,6 +16,11 @@ public class TrackingScanPayload extends BaseScanPayload {
 
     @Override
     public String getDdpLabel() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getHruid() {
         throw new UnsupportedOperationException();
     }
 }

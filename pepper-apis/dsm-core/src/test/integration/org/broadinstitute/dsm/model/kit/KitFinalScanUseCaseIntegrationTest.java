@@ -42,7 +42,8 @@ public class KitFinalScanUseCaseIntegrationTest extends KitBaseUseCaseTest {
         List<ScanError> scanErrors = kitFinalScanUseCase.get();
         assertEquals(0, scanErrors.size());
         assertEquals("kitLabelMoreThan14", kitDao.getKit(kitId.longValue()).map(KitRequestShipping::getKitLabel).orElse(StringUtils.EMPTY));
-        assertEquals("kitLabelMoreThan142", kitDao.getKit(kitId2.longValue()).map(KitRequestShipping::getKitLabel).orElse(StringUtils.EMPTY));
+        assertEquals("kitLabelMoreThan142",
+                kitDao.getKit(kitId2.longValue()).map(KitRequestShipping::getKitLabel).orElse(StringUtils.EMPTY));
     }
 
     @Test

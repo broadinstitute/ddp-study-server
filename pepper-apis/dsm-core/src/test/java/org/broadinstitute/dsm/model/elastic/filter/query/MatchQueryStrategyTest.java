@@ -35,7 +35,8 @@ public class MatchQueryStrategyTest {
         NestedQueryBuilder queryBuilder =
                 (NestedQueryBuilder)
                         baseQueryBuilder.build(getQueryBuilders(payload, baseQueryBuilder));
-        MatchQueryBuilder expectedMatchQueryBuilder = new MatchQueryBuilder("dsm.medicalRecord.duplicate", true);
+        MatchQueryBuilder expectedMatchQueryBuilder = new MatchQueryBuilder("dsm.medicalRecord.duplicate", true).operator(
+                org.elasticsearch.index.query.Operator.AND);
         Assert.assertEquals(expectedMatchQueryBuilder, queryBuilder.query());
     }
 
@@ -53,6 +54,7 @@ public class MatchQueryStrategyTest {
                 (NestedQueryBuilder)
                         baseQueryBuilder.build(getQueryBuilders(payload, baseQueryBuilder));
         MatchQueryBuilder expectedMatchQueryBuilder = new MatchQueryBuilder("dsm.medicalRecord.notes.keyword", "test note");
+        expectedMatchQueryBuilder.operator(org.elasticsearch.index.query.Operator.AND);
         Assert.assertEquals(expectedMatchQueryBuilder, queryBuilder.query());
     }
 
@@ -70,6 +72,7 @@ public class MatchQueryStrategyTest {
                 (NestedQueryBuilder)
                         baseQueryBuilder.build(getQueryBuilders(payload, baseQueryBuilder));
         MatchQueryBuilder expectedMatchQueryBuilder = new MatchQueryBuilder("dsm.medicalRecord.faxSent", "09/22/2020");
+        expectedMatchQueryBuilder.operator(org.elasticsearch.index.query.Operator.AND);
         Assert.assertEquals(expectedMatchQueryBuilder, queryBuilder.query());
     }
 
@@ -87,6 +90,7 @@ public class MatchQueryStrategyTest {
                 (NestedQueryBuilder)
                         baseQueryBuilder.build(getQueryBuilders(payload, baseQueryBuilder));
         MatchQueryBuilder expectedMatchQueryBuilder = new MatchQueryBuilder("dsm.tissue.ussCount", "5");
+        expectedMatchQueryBuilder.operator(org.elasticsearch.index.query.Operator.AND);
         Assert.assertEquals(expectedMatchQueryBuilder, queryBuilder.query());
     }
 
