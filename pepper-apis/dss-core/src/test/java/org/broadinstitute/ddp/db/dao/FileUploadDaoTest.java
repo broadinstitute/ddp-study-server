@@ -47,7 +47,7 @@ public class FileUploadDaoTest extends TxnAwareBaseTest {
             assertNotNull(actual);
             assertEquals(upload.getGuid(), actual.getGuid());
             assertNotNull(actual.getCreatedAt());
-            assertNull("should not be marked uploaded yet", actual.getUploadedAt());
+            assertNotNull("should be marked uploaded yet", actual.getUploadedAt());
             assertNull("should not be scanned yet", actual.getScannedAt());
             assertNull(actual.getScanResult());
 
