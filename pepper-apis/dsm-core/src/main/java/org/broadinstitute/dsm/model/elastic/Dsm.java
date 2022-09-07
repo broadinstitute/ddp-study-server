@@ -153,7 +153,7 @@ public class Dsm {
     }
 
     @JsonGetter("newOsteoParticipant")
-    public Participant newOsteoParticipant  () {
+    public Participant newOsteoParticipant() {
         return newOsteoParticipant;
     }
 
