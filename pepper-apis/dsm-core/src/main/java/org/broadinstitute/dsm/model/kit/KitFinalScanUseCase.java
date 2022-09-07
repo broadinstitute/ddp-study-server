@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.kit.KitDao;
@@ -27,8 +28,8 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
         String kitLabel = scanPayload.getKitLabel();
         String ddpLabel = scanPayload.getDdpLabel();
         if (isSalivaKit(ddpLabel) && kitLabel.length() < 14) {
-            return Optional.of(new ScanError(ddpLabel, "Barcode contains less than 14 digits, "
-                    + "You can manually enter any missing digits above."));
+            return Optional.of(
+                    new ScanError(ddpLabel, "Barcode contains less than 14 digits, " + "You can manually enter any missing digits above."));
         }
         Optional<ScanError> decoratedProcess = getDecoratedScanUseCase().process(scanPayload);
         if (decoratedProcess.isPresent()) {
@@ -39,26 +40,36 @@ public class KitFinalScanUseCase extends KitFinalSentBaseUseCase {
             KitRequestShipping kitRequestShipping = kitByDdpLabel.get();
             if (kitRequestShipping.isBloodKit()) {
                 if (kitRequestShipping.hasTrackingScan()) {
-                    result = updateKitRequest(kitLabel, ddpLabel);
-                    trigerEventsIfSuccessfulKitUpdate(result, ddpLabel, getKitRequestShipping(kitLabel, ddpLabel));
-                    this.writeSampleSentToES(kitRequestShipping);
+                    if (StringUtils.isNotEmpty(kitRequestShipping.getKitLabel()) && kitLabel.equals(kitRequestShipping.getKitLabel())
+                            || StringUtils.isEmpty(kitRequestShipping.getKitLabel())) {
+                        result = updateKitRequest(kitLabel, ddpLabel, kitRequestShipping.getBspCollaboratorParticipantId());
+                        trigerEventsIfSuccessfulKitUpdate(result, ddpLabel, getKitRequestShipping(kitLabel, ddpLabel));
+                        this.writeSampleSentToES(kitRequestShipping);
+                    } else {
+                        result = Optional.of(
+                                new ScanError(ddpLabel, "Kit Label was scanned on Initial Scan page with another ShortID " + kitLabel));
+                    }
                 } else {
-                    result = Optional.of(
-                            new ScanError(
-                                    ddpLabel, "Kit with DSM Label " + ddpLabel + " does not have a Tracking Label"));
+                    result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + ddpLabel + " does not have a Tracking Label"));
                 }
             } else {
-                result = updateKitRequest(kitLabel, ddpLabel);
+                if (StringUtils.isNotEmpty(kitRequestShipping.getKitLabel()) && kitLabel.equals(kitRequestShipping.getKitLabel())
+                        || StringUtils.isEmpty(kitRequestShipping.getKitLabel())) {
+                    result = updateKitRequest(kitLabel, ddpLabel, kitRequestShipping.getBspCollaboratorParticipantId());
+                } else {
+                    result = Optional.of(
+                            new ScanError(ddpLabel, "Kit Label " + kitLabel + " was scanned on Initial Scan page with another ShortID"));
+                }
             }
         } else {
-            result = Optional.of(new ScanError(
-                    ddpLabel, "Kit with DSM Label " + ddpLabel + " does not exist"));
+            result = Optional.of(new ScanError(ddpLabel, "Kit with DSM Label " + ddpLabel + " does not exist"));
         }
         return result;
     }
 
-    private Optional<ScanError> updateKitRequest(String addValue, String kit) {
+    private Optional<ScanError> updateKitRequest(String addValue, String kit, String bspCollaboratorParticipantId) {
         KitRequestShipping kitRequestShipping = getKitRequestShipping(addValue, kit);
+        kitRequestShipping.setBspCollaboratorParticipantId(bspCollaboratorParticipantId);
         return kitDao.updateKitRequest(kitRequestShipping, String.valueOf(kitPayload.getUserId()));
     }
 
