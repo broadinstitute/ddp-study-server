@@ -17,4 +17,9 @@ public class TrackingScanPayload extends BaseScanPayload {
     public String getDdpLabel() {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public String getHruid() {
+        throw new UnsupportedOperationException();
+    }
 }
