@@ -139,8 +139,7 @@ public class ElasticSearchUtil {
     public static synchronized void initClient() {
         if (client == null) {
             try {
-                client = getClientForElasticsearchCloud(
-                        DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_URL),
+                client = getClientForElasticsearchCloud(DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_URL),
                         DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_USERNAME),
                         DSMConfig.getSqlFromConfig(ApplicationConfigConstants.ES_PASSWORD));
             } catch (MalformedURLException e) {
@@ -154,9 +153,7 @@ public class ElasticSearchUtil {
         request.indices(PARTICIPANTS_STRUCTURED_ANY);
         try {
             logger.info("Getting ES data field mapping");
-            fieldMappings = getClientInstance().indices()
-                    .getMapping(request, RequestOptions.DEFAULT)
-                    .mappings();
+            fieldMappings = getClientInstance().indices().getMapping(request, RequestOptions.DEFAULT).mappings();
         } catch (IOException e) {
             throw new RuntimeException("Error while fetching field mappings from ES", e);
         }
@@ -167,8 +164,7 @@ public class ElasticSearchUtil {
         return client;
     }
 
-    public static RestHighLevelClient getClientForElasticsearchCloud(@NonNull String baseUrl,
-                                                                     @NonNull String userName,
+    public static RestHighLevelClient getClientForElasticsearchCloud(@NonNull String baseUrl, @NonNull String userName,
                                                                      @NonNull String password) throws MalformedURLException {
         final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(userName, password));
@@ -179,10 +175,8 @@ public class ElasticSearchUtil {
         return getClientForElasticsearchCloud(baseUrl, userName, password, proxy);
     }
 
-    public static RestHighLevelClient getClientForElasticsearchCloud(@NonNull String baseUrl,
-                                                                     @NonNull String userName,
-                                                                     @NonNull String password,
-                                                                     String proxy) throws MalformedURLException {
+    public static RestHighLevelClient getClientForElasticsearchCloud(@NonNull String baseUrl, @NonNull String userName,
+                                                                     @NonNull String password, String proxy) throws MalformedURLException {
         final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(userName, password));
 
@@ -201,16 +195,14 @@ public class ElasticSearchUtil {
                         httpClientBuilder.setDefaultIOReactorConfig(IOReactorConfig.custom().setSoKeepAlive(true).build());
                     }
                     return httpClientBuilder;
-                })
-                .setMaxRetryTimeoutMillis(100000);
+                }).setMaxRetryTimeoutMillis(100000);
 
         return new RestHighLevelClient(builder);
     }
 
-    public static RestHighLevelClient getClientForElasticsearchCloudCF(@NonNull String baseUrl,
-                                                                       @NonNull String userName,
-                                                                       @NonNull String password,
-                                                                       String proxy) throws MalformedURLException {
+    public static RestHighLevelClient getClientForElasticsearchCloudCF(@NonNull String baseUrl, @NonNull String userName,
+                                                                       @NonNull String password, String proxy)
+            throws MalformedURLException {
         final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(userName, password));
 
@@ -218,10 +210,8 @@ public class ElasticSearchUtil {
         return getClientForElasticsearchCloud(baseUrl, userName, password, proxy);
     }
 
-    public static Map<String, Map<String, Object>> getSingleParticipantFromES(@NonNull String realm,
-                                                                              @NonNull String index,
-                                                                              RestHighLevelClient client,
-                                                                              String participantHruid) {
+    public static Map<String, Map<String, Object>> getSingleParticipantFromES(@NonNull String realm, @NonNull String index,
+                                                                              RestHighLevelClient client, String participantHruid) {
         Map<String, Map<String, Object>> esData = new HashMap<>();
         if (StringUtils.isNotBlank(index)) {
             logger.info("Collecting ES data from index " + index);
@@ -251,8 +241,7 @@ public class ElasticSearchUtil {
     }
 
 
-    public static Map<String, Map<String, Object>> getDDPParticipantsFromES(@NonNull String instanceDisplayName,
-                                                                            @NonNull String index,
+    public static Map<String, Map<String, Object>> getDDPParticipantsFromES(@NonNull String instanceDisplayName, @NonNull String index,
                                                                             RestHighLevelClient client) {
         Map<String, Map<String, Object>> esData = new HashMap<>();
         if (StringUtils.isNotBlank(index)) {
@@ -397,7 +386,9 @@ public class ElasticSearchUtil {
         return null;
     }
 
-    public static Map<String, org.broadinstitute.dsm.model.gbf.Address> getParticipantAddresses(RestHighLevelClient client, String indexName, Set<String> participantGuids) {
+    public static Map<String, org.broadinstitute.dsm.model.gbf.Address> getParticipantAddresses(RestHighLevelClient client,
+                                                                                                String indexName,
+                                                                                                Set<String> participantGuids) {
         Gson gson = new Gson();
         Map<String, org.broadinstitute.dsm.model.gbf.Address> addressByParticipant = new HashMap<>();
         int scrollSize = 100;
@@ -433,9 +424,9 @@ public class ElasticSearchUtil {
                 if (participantJson.has(ADDRESS) && participantJson.has(PROFILE)) {
                     Address address = gson.fromJson(participantJson.get(ADDRESS), Address.class);
                     Profile profile = gson.fromJson(participantJson.get(PROFILE), Profile.class);
-                    org.broadinstitute.dsm.model.gbf.Address
-                            gbfAddress = new org.broadinstitute.dsm.model.gbf.Address(address.getRecipient(), address.getStreet1(), address.getStreet1(),
-                            address.getCity(), address.getState(), address.getZip(), address.getCountry(), address.getPhone());
+                    org.broadinstitute.dsm.model.gbf.Address gbfAddress =
+                            new org.broadinstitute.dsm.model.gbf.Address(address.getRecipient(), address.getStreet1(), address.getStreet1(),
+                                    address.getCity(), address.getState(), address.getZip(), address.getCountry(), address.getPhone());
                     addressByParticipant.put(profile.getGuid(), gbfAddress);
                 }
                 hitNumber++;
@@ -459,10 +450,10 @@ public class ElasticSearchUtil {
                 return;
             }
             List<Map<String, Object>> workflowListES = (List<Map<String, Object>>) workflowMapES.get(ESObjectConstants.WORKFLOWS);
-            boolean removed = workflowListES.removeIf(workflow -> !workflow.containsKey(ESObjectConstants.DATA)
-                    || (((Map) workflow.get(ESObjectConstants.DATA)).get(ESObjectConstants.SUBJECT_ID) != null
-                    && (collaboratorParticipantId != null && collaboratorParticipantId.equals(
-                    ((Map) workflow.get(ESObjectConstants.DATA)).get(ESObjectConstants.SUBJECT_ID)))));
+            boolean removed = workflowListES.removeIf(workflow -> !workflow.containsKey(ESObjectConstants.DATA) || (
+                    ((Map) workflow.get(ESObjectConstants.DATA)).get(ESObjectConstants.SUBJECT_ID) != null && (
+                            collaboratorParticipantId != null && collaboratorParticipantId.equals(
+                                    ((Map) workflow.get(ESObjectConstants.DATA)).get(ESObjectConstants.SUBJECT_ID)))));
             if (!removed) {
                 return;
             }
@@ -472,8 +463,9 @@ public class ElasticSearchUtil {
                 updateRequest(ddpParticipantId, index, workflowMapES);
             }
         } catch (Exception e) {
-            logger.error("Couldn't remove workflows for participant " + ddpParticipantId + " to ES index "
-                    + ddpInstance.getParticipantIndexES() + " for instance " + ddpInstance.getName(), e);
+            logger.error(
+                    "Couldn't remove workflows for participant " + ddpParticipantId + " to ES index " + ddpInstance.getParticipantIndexES()
+                            + " for instance " + ddpInstance.getName(), e);
         }
     }
 
@@ -491,9 +483,7 @@ public class ElasticSearchUtil {
         try {
 
             String participantId = ParticipantUtil.isGuid(ddpParticipantId) ? ddpParticipantId :
-                    getParticipantESDataByAltpid(client, index, ddpParticipantId)
-                            .getProfile()
-                            .map(Profile::getGuid)
+                    getParticipantESDataByAltpid(client, index, ddpParticipantId).getProfile().map(Profile::getGuid)
                             .orElse(ddpParticipantId);
 
             Map<String, Object> workflowMapES = getObjectsMap(client, index, participantId, ESObjectConstants.WORKFLOWS);
@@ -527,11 +517,8 @@ public class ElasticSearchUtil {
 
     public static Map<String, Object> addWorkflows(String workflow, String status, WorkflowForES.StudySpecificData studySpecificData) {
         Map<String, Object> workflowMapES;
-        Map<String, Object> newWorkflowMap = new HashMap<>(Map.of(
-                ESObjectConstants.WORKFLOW, workflow,
-                STATUS, status,
-                ESObjectConstants.DATE, SystemUtil.getISO8601DateString()
-        ));
+        Map<String, Object> newWorkflowMap = new HashMap<>(
+                Map.of(ESObjectConstants.WORKFLOW, workflow, STATUS, status, ESObjectConstants.DATE, SystemUtil.getISO8601DateString()));
         if (studySpecificData != null) {
             newWorkflowMap.put(ESObjectConstants.DATA, new ObjectMapper().convertValue(studySpecificData, Map.class));
         }
@@ -565,12 +552,9 @@ public class ElasticSearchUtil {
         }
         if (!updated) {
             //add workflow
-            workflowListES.add(new HashMap<>(Map.of(
-                    ESObjectConstants.WORKFLOW, workflow,
-                    STATUS, status,
-                    ESObjectConstants.DATE, SystemUtil.getISO8601DateString(),
-                    ESObjectConstants.DATA, new ObjectMapper().convertValue(studySpecificData, Map.class)
-            )));
+            workflowListES.add(new HashMap<>(
+                    Map.of(ESObjectConstants.WORKFLOW, workflow, STATUS, status, ESObjectConstants.DATE, SystemUtil.getISO8601DateString(),
+                            ESObjectConstants.DATA, new ObjectMapper().convertValue(studySpecificData, Map.class))));
         }
         return updated;
     }
@@ -596,29 +580,19 @@ public class ElasticSearchUtil {
         }
         if (!updated) {
             //add workflow
-            workflowListES.add(new HashMap<>(Map.of(
-                    ESObjectConstants.WORKFLOW, workflow,
-                    STATUS, status,
-                    ESObjectConstants.DATE, SystemUtil.getISO8601DateString()
-            )));
+            workflowListES.add(new HashMap<>(Map.of(ESObjectConstants.WORKFLOW, workflow, STATUS, status, ESObjectConstants.DATE,
+                    SystemUtil.getISO8601DateString())));
         }
         return updated;
     }
 
-    public static void writeDsmRecord(@NonNull DDPInstance instance,
-                                      Integer id,
-                                      @NonNull String ddpParticipantId,
-                                      @NonNull String objectType,
-                                      @NonNull String idName,
-                                      Map<String, Object> nameValues) {
+    public static void writeDsmRecord(@NonNull DDPInstance instance, Integer id, @NonNull String ddpParticipantId,
+                                      @NonNull String objectType, @NonNull String idName, Map<String, Object> nameValues) {
         writeDsmRecord(client, instance, id, ddpParticipantId, objectType, idName, nameValues);
     }
 
-    public static void writeDsmRecord(RestHighLevelClient client, @NonNull DDPInstance instance,
-                                      Integer id,
-                                      @NonNull String ddpParticipantId,
-                                      @NonNull String objectType,
-                                      @NonNull String idName,
+    public static void writeDsmRecord(RestHighLevelClient client, @NonNull DDPInstance instance, Integer id,
+                                      @NonNull String ddpParticipantId, @NonNull String objectType, @NonNull String idName,
                                       Map<String, Object> nameValues) {
         String index = instance.getParticipantIndexES();
         try {
@@ -661,19 +635,14 @@ public class ElasticSearchUtil {
         }
     }
 
-    public static void writeSample(@NonNull DDPInstance instance,
-                                   @NonNull String id,
-                                   @NonNull String ddpParticipantId,
-                                   @NonNull String objectType,
-                                   String idName, Map<String, Object> nameValues) {
+    public static void writeSample(@NonNull DDPInstance instance, @NonNull String id, @NonNull String ddpParticipantId,
+                                   @NonNull String objectType, String idName, Map<String, Object> nameValues) {
         writeSample(client, instance, id, ddpParticipantId, objectType, idName, nameValues);
     }
 
-    public static void writeSample(RestHighLevelClient client, @NonNull DDPInstance instance,
-                                   @NonNull String id,
-                                   @NonNull String ddpParticipantId,
-                                   @NonNull String objectType,
-                                   String idName, Map<String, Object> nameValues) {
+    public static void writeSample(RestHighLevelClient client, @NonNull DDPInstance instance, @NonNull String id,
+                                   @NonNull String ddpParticipantId, @NonNull String objectType, String idName,
+                                   Map<String, Object> nameValues) {
         String index = instance.getParticipantIndexES();
         try {
             if (StringUtils.isNotBlank(index)) {
@@ -729,18 +698,10 @@ public class ElasticSearchUtil {
 
     private static void updateRequest(@NonNull String ddpParticipantId, String index, Map<String, Object> objectsMapES,
                                       RestHighLevelClient client) throws IOException {
-        String participantId =
-                ParticipantUtil.isGuid(ddpParticipantId) ? ddpParticipantId : getParticipantESDataByAltpid(client, index, ddpParticipantId)
-                        .getProfile()
-                        .map(Profile::getGuid)
-                        .orElse(ddpParticipantId);
-        UpdateRequest updateRequest = new UpdateRequest()
-                .index(index)
-                .type("_doc")
-                .id(participantId)
-                .doc(objectsMapES)
-                .docAsUpsert(true)
-                .retryOnConflict(5);
+        String participantId = ParticipantUtil.isGuid(ddpParticipantId) ? ddpParticipantId :
+                getParticipantESDataByAltpid(client, index, ddpParticipantId).getProfile().map(Profile::getGuid).orElse(ddpParticipantId);
+        UpdateRequest updateRequest =
+                new UpdateRequest().index(index).type("_doc").id(participantId).doc(objectsMapES).docAsUpsert(true).retryOnConflict(5);
 
         UpdateResponse updateResponse = client.update(updateRequest, RequestOptions.DEFAULT);
         logger.info("Update workflow information for participant " + ddpParticipantId + " to ES index " + index);
@@ -770,8 +731,7 @@ public class ElasticSearchUtil {
     public static Optional<Profile> getParticipantProfileByGuidOrAltPid(String index, String guidOrAltPid) {
         try {
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-            searchSourceBuilder.query(QueryBuilders.boolQuery()
-                    .should(QueryBuilders.termQuery(PROFILE_GUID, guidOrAltPid))
+            searchSourceBuilder.query(QueryBuilders.boolQuery().should(QueryBuilders.termQuery(PROFILE_GUID, guidOrAltPid))
                     .should(QueryBuilders.termQuery(PROFILE_LEGACYALTPID, guidOrAltPid)));
             searchSourceBuilder.size(1);
             searchSourceBuilder.from(0);
@@ -802,11 +762,7 @@ public class ElasticSearchUtil {
         String[] includes = new String[] {object};
         String[] excludes = Strings.EMPTY_ARRAY;
         FetchSourceContext fetchSourceContext = new FetchSourceContext(true, includes, excludes);
-        GetRequest getRequest = new GetRequest()
-                .index(index)
-                .type("_doc")
-                .id(id)
-                .fetchSourceContext(fetchSourceContext);
+        GetRequest getRequest = new GetRequest().index(index).type("_doc").id(id).fetchSourceContext(fetchSourceContext);
 
         GetResponse getResponse = null;
         if (client.exists(getRequest, RequestOptions.DEFAULT)) {
@@ -829,17 +785,17 @@ public class ElasticSearchUtil {
                 if (address != null && !address.isEmpty() && profile != null && !profile.isEmpty()) {
                     String firstName = "";
                     String lastName = "";
-                    if (StringUtils.isNotBlank((String) profile.get("firstName"))
-                            && StringUtils.isNotBlank((String) profile.get("lastName"))) {
+                    if (StringUtils.isNotBlank((String) profile.get("firstName")) && StringUtils.isNotBlank(
+                            (String) profile.get("lastName"))) {
                         firstName = (String) profile.get("firstName");
                         lastName = (String) profile.get("lastName");
                     } else {
                         lastName = (String) address.get("mailToName");
                     }
-                    return new DDPParticipant(ddpParticipantId, firstName, lastName,
-                            (String) address.get("country"), (String) address.get("city"), (String) address.get("zip"),
-                            (String) address.get("street1"), (String) address.get("street2"), (String) address.get("state"),
-                            (String) profile.get(ESObjectConstants.HRUID), null);
+                    return new DDPParticipant(ddpParticipantId, firstName, lastName, (String) address.get("country"),
+                            (String) address.get("city"), (String) address.get("zip"), (String) address.get("street1"),
+                            (String) address.get("street2"), (String) address.get("state"), (String) profile.get(ESObjectConstants.HRUID),
+                            null);
                 } else if (profile != null && !profile.isEmpty()) {
                     return new DDPParticipant((String) profile.get(ESObjectConstants.HRUID), "", (String) profile.get("firstName"),
                             (String) profile.get("lastName"));
@@ -972,8 +928,7 @@ public class ElasticSearchUtil {
                                     ((RangeQueryBuilder) tmpBuilder).gte(date);
                                 } else {
                                     finalQuery.must(
-                                            QueryBuilders.rangeQuery(FILES + DBConstants.ALIAS_DELIMITER + fileParam[1].trim())
-                                                    .gte(date));
+                                            QueryBuilders.rangeQuery(FILES + DBConstants.ALIAS_DELIMITER + fileParam[1].trim()).gte(date));
                                 }
                             } catch (ParseException e) {
                                 logger.error("range was not date. user entered: " + userEntered);
@@ -1004,17 +959,17 @@ public class ElasticSearchUtil {
                                     logger.error("range was not date. user entered: " + userEntered);
                                 }
                             } else if (StringUtils.isNumeric(userEntered)) { // separately process expressions with numbers
-                                NestedQueryBuilder query = addRangeLimitForNumber(
-                                        Filter.LARGER_EQUALS, surveyParam[1].trim(), userEntered, finalQuery, queryPartsMap,
-                                        ACTIVITIES_QUESTIONS_ANSWER_ANSWER);
+                                NestedQueryBuilder query =
+                                        addRangeLimitForNumber(Filter.LARGER_EQUALS, surveyParam[1].trim(), userEntered, finalQuery,
+                                                queryPartsMap, ACTIVITIES_QUESTIONS_ANSWER_ANSWER);
                                 if (query != null) {
                                     parentNestedOfRangeBuilderOfNumbers = query;
                                 }
                             } else if (userEntered.trim()
                                     .matches("\\d{4}-\\d{1,2}-\\d{1,2}")) { // separately process expressions with numbers
-                                NestedQueryBuilder query = addRangeLimitForNumber(
-                                        Filter.LARGER_EQUALS, surveyParam[1].trim(), userEntered, finalQuery, queryPartsMap,
-                                        ACTIVITIES_QUESTIONS_ANSWER_DATE);
+                                NestedQueryBuilder query =
+                                        addRangeLimitForNumber(Filter.LARGER_EQUALS, surveyParam[1].trim(), userEntered, finalQuery,
+                                                queryPartsMap, ACTIVITIES_QUESTIONS_ANSWER_DATE);
                                 if (query != null) {
                                     parentNestedOfRangeBuilderOfNumbers = query;
                                 }
@@ -1081,8 +1036,7 @@ public class ElasticSearchUtil {
                                     ((RangeQueryBuilder) tmpBuilder).lte(date);
                                 } else {
                                     finalQuery.must(
-                                            QueryBuilders.rangeQuery(FILES + DBConstants.ALIAS_DELIMITER + fileParam[1].trim())
-                                                    .lte(date));
+                                            QueryBuilders.rangeQuery(FILES + DBConstants.ALIAS_DELIMITER + fileParam[1].trim()).lte(date));
                                 }
                             } catch (ParseException e) {
                                 logger.error("range was not date. user entered: " + userEntered);
@@ -1113,17 +1067,17 @@ public class ElasticSearchUtil {
                                     logger.error("range was not date. user entered: " + userEntered);
                                 }
                             } else if (StringUtils.isNumeric(userEntered)) { // separately process expressions with numbers
-                                NestedQueryBuilder query = addRangeLimitForNumber(
-                                        Filter.SMALLER_EQUALS, surveyParam[1].trim(), userEntered, finalQuery, queryPartsMap,
-                                        ACTIVITIES_QUESTIONS_ANSWER_ANSWER);
+                                NestedQueryBuilder query =
+                                        addRangeLimitForNumber(Filter.SMALLER_EQUALS, surveyParam[1].trim(), userEntered, finalQuery,
+                                                queryPartsMap, ACTIVITIES_QUESTIONS_ANSWER_ANSWER);
                                 if (query != null) {
                                     parentNestedOfRangeBuilderOfNumbers = query;
                                 }
                             } else if (userEntered.trim()
                                     .matches("\\d{4}-\\d{1,2}-\\d{1,2}")) { // separately process expressions with numbers
-                                NestedQueryBuilder query = addRangeLimitForNumber(
-                                        Filter.SMALLER_EQUALS, surveyParam[1].trim(), userEntered, finalQuery, queryPartsMap,
-                                        ACTIVITIES_QUESTIONS_ANSWER_DATE);
+                                NestedQueryBuilder query =
+                                        addRangeLimitForNumber(Filter.SMALLER_EQUALS, surveyParam[1].trim(), userEntered, finalQuery,
+                                                queryPartsMap, ACTIVITIES_QUESTIONS_ANSWER_DATE);
                                 if (query != null) {
                                     parentNestedOfRangeBuilderOfNumbers = query;
                                 }
@@ -1183,9 +1137,9 @@ public class ElasticSearchUtil {
                                 queryBuilder.must(queryActivityAnswer);
                                 NestedQueryBuilder query = QueryBuilders.nestedQuery(ACTIVITIES, queryBuilder, ScoreMode.Avg);
                                 finalQuery.must(query);
-                                finalQuery = processIsNotNullForRangeOfNumbers(
-                                        surveyParam[1].trim(), activityAnswer, finalQuery, queryPartsMap,
-                                        parentNestedOfRangeBuilderOfNumbers);
+                                finalQuery =
+                                        processIsNotNullForRangeOfNumbers(surveyParam[1].trim(), activityAnswer, finalQuery, queryPartsMap,
+                                                parentNestedOfRangeBuilderOfNumbers);
                             }
                         }
                     } else {
@@ -1231,8 +1185,7 @@ public class ElasticSearchUtil {
         if (!tmpFilters.isEmpty()) {
             for (Iterator<QueryBuilder> iterator = tmpFilters.iterator(); iterator.hasNext() && tmpBuilder == null; ) {
                 QueryBuilder builder = iterator.next();
-                if (builder instanceof RangeQueryBuilder
-                        && (((RangeQueryBuilder) builder).fieldName().equals(fieldName)
+                if (builder instanceof RangeQueryBuilder && (((RangeQueryBuilder) builder).fieldName().equals(fieldName)
                         || queryPartsMap != null && fieldName.equals(queryPartsMap.get(((RangeQueryBuilder) builder).fieldName())))) {
                     tmpBuilder = builder;
                 } else if (builder instanceof NestedQueryBuilder) {
@@ -1292,13 +1245,9 @@ public class ElasticSearchUtil {
      *                         a same fieldName (for example related tp `SELF_CURRENT_AGE`)
      * @return NestedQueryBuilder - built query containing the numeric Range
      */
-    private static NestedQueryBuilder addRangeLimitForNumber(
-            String operatorType,
-            String fieldName,
-            String userEnteredValue,
-            BoolQueryBuilder finalQuery,
-            Map<String, String> queryPartsMap,
-            String questionAnswerType) {
+    private static NestedQueryBuilder addRangeLimitForNumber(String operatorType, String fieldName, String userEnteredValue,
+                                                             BoolQueryBuilder finalQuery, Map<String, String> queryPartsMap,
+                                                             String questionAnswerType) {
 
         QueryBuilder tmpBuilder = findQueryBuilderForFieldName(finalQuery, fieldName, queryPartsMap);
         if (tmpBuilder != null) {
@@ -1341,12 +1290,9 @@ public class ElasticSearchUtil {
      * where RangeQueryBuilder removed from the initial place inside finalQuery and added into a must()-block
      * together with `IS NOT NULL` query (for a field `fieldName`).
      */
-    private static BoolQueryBuilder processIsNotNullForRangeOfNumbers(
-            String fieldName,
-            BoolQueryBuilder activityAnswer,
-            BoolQueryBuilder finalQuery,
-            Map<String, String> queryPartsMap,
-            NestedQueryBuilder parentNestedOfRangeBuilderOfNumbers) {
+    private static BoolQueryBuilder processIsNotNullForRangeOfNumbers(String fieldName, BoolQueryBuilder activityAnswer,
+                                                                      BoolQueryBuilder finalQuery, Map<String, String> queryPartsMap,
+                                                                      NestedQueryBuilder parentNestedOfRangeBuilderOfNumbers) {
 
         QueryBuilder tmpBuilder = findQueryBuilderForFieldName(finalQuery, fieldName, queryPartsMap);
         if (tmpBuilder instanceof RangeQueryBuilder && parentNestedOfRangeBuilderOfNumbers != null) {
@@ -1519,27 +1465,23 @@ public class ElasticSearchUtil {
                     //set endDate to midnight of that date
                     String endDate = userEntered + END_OF_DAY;
                     long end = SystemUtil.getLongFromDetailDateString(endDate);
-                    rangeQueryBuilder(queryBuilder, FILES + DBConstants.ALIAS_DELIMITER + fileParams[1].trim(), start, end,
-                            must);
+                    rangeQueryBuilder(queryBuilder, FILES + DBConstants.ALIAS_DELIMITER + fileParams[1].trim(), start, end, must);
                 } catch (Exception e) {
                     if (wildCard) {
                         if (must) {
-                            queryBuilder.must(
-                                    QueryBuilders.wildcardQuery(FILES + DBConstants.ALIAS_DELIMITER + fileParams[1].trim(),
-                                            userEntered + "*"));
+                            queryBuilder.must(QueryBuilders.wildcardQuery(FILES + DBConstants.ALIAS_DELIMITER + fileParams[1].trim(),
+                                    userEntered + "*"));
                         } else {
-                            queryBuilder.should(
-                                    QueryBuilders.wildcardQuery(FILES + DBConstants.ALIAS_DELIMITER + fileParams[1].trim(),
-                                            userEntered + "*"));
+                            queryBuilder.should(QueryBuilders.wildcardQuery(FILES + DBConstants.ALIAS_DELIMITER + fileParams[1].trim(),
+                                    userEntered + "*"));
                         }
                     } else {
                         if (must) {
                             queryBuilder.must(
-                                    QueryBuilders.matchQuery(FILES + DBConstants.ALIAS_DELIMITER + fileParams[1].trim(),
-                                            userEntered));
+                                    QueryBuilders.matchQuery(FILES + DBConstants.ALIAS_DELIMITER + fileParams[1].trim(), userEntered));
                         } else {
-                            QueryBuilder tmpBuilder = findQueryBuilderForFieldName(finalQuery,
-                                    FILES + DBConstants.ALIAS_DELIMITER + fileParams[1].trim());
+                            QueryBuilder tmpBuilder =
+                                    findQueryBuilderForFieldName(finalQuery, FILES + DBConstants.ALIAS_DELIMITER + fileParams[1].trim());
                             alreadyAdded = mustOrSearchActivity(queryBuilder, tmpBuilder,
                                     FILES + DBConstants.ALIAS_DELIMITER + fileParams[1].trim(), userEntered);
                         }
@@ -1554,8 +1496,8 @@ public class ElasticSearchUtil {
                 BoolQueryBuilder queryBuilder = new BoolQueryBuilder();
 
                 boolean alreadyAdded = false;
-                if (CREATED_AT.equals(surveyParam[1].trim()) || COMPLETED_AT.equals(surveyParam[1].trim())
-                        || LAST_UPDATED.equals(surveyParam[1].trim())) {
+                if (CREATED_AT.equals(surveyParam[1].trim()) || COMPLETED_AT.equals(surveyParam[1].trim()) || LAST_UPDATED.equals(
+                        surveyParam[1].trim())) {
                     try {
                         //activity dates
                         long start = SystemUtil.getLongFromString(userEntered);
@@ -1715,9 +1657,7 @@ public class ElasticSearchUtil {
         HashMap fieldsMap = gson.fromJson(fields, HashMap.class);
         HashMap propertiesMap = getField(gson, fieldsMap, PROPERTIES);
         HashMap finalField = getField(gson, propertiesMap, outerField);
-        return isFieldNested(fieldsArray)
-                ? (String) getFinalField(fieldsArray, gson, finalField).get(TYPE)
-                : (String) finalField.get(TYPE);
+        return isFieldNested(fieldsArray) ? (String) getFinalField(fieldsArray, gson, finalField).get(TYPE) : (String) finalField.get(TYPE);
     }
 
     private static HashMap getFinalField(String[] fieldsArray, Gson gson, HashMap finalField) {
@@ -1728,9 +1668,7 @@ public class ElasticSearchUtil {
     }
 
     private static HashMap getFinalFieldDynamically(Gson gson, HashMap finalField, String field) {
-        return finalField.containsKey(PROPERTIES)
-                ? getPropertiesAndThenField(gson, finalField, field)
-                : getField(gson, finalField, field);
+        return finalField.containsKey(PROPERTIES) ? getPropertiesAndThenField(gson, finalField, field) : getField(gson, finalField, field);
     }
 
     private static HashMap getField(Gson gson, HashMap finalField, String field) {
