@@ -22,7 +22,7 @@ import org.junit.Test;
 public class NewOsteoStudyPostFilterTest {
 
     @Test
-    public void filter() {
+    public void filterWithExistingInstanceId() {
         int ddpInstanceId = 1;
         String oldOsteoInstanceName = "osteo2";
         Dsm esDsm = new Dsm();
@@ -64,6 +64,44 @@ public class NewOsteoStudyPostFilterTest {
         assertEquals(3, esDsm.getKitRequestShipping().size());
         assertEquals(List.of(1L, 1L, 1L), esDsm.getKitRequestShipping().stream().map(KitRequestShipping::getDdpInstanceId)
                 .collect(Collectors.toList()));
+
+    }
+
+    @Test
+    public void filterWithNonExistingInstanceId() {
+        String oldOsteoInstanceName = "osteo2";
+        Dsm esDsm = new Dsm();
+
+        esDsm.setMedicalRecord(new ArrayList<>(List.of(
+                new MedicalRecord(),
+                new MedicalRecord(),
+                new MedicalRecord())));
+
+        esDsm.setOncHistoryDetail(new ArrayList<>(List.of(
+                new OncHistoryDetail(),
+                new OncHistoryDetail(),
+                new OncHistoryDetail())));
+
+        esDsm.setKitRequestShipping(new ArrayList<>(List.of(
+                new KitRequestShipping(),
+                new KitRequestShipping(),
+                new KitRequestShipping())));
+
+        ElasticSearchParticipantDto esDto = new ElasticSearchParticipantDto.Builder()
+                .withDsm(esDsm)
+                .build();
+
+        DDPInstanceDto ddpInstanceDto = new DDPInstanceDto.Builder()
+                .withInstanceName(oldOsteoInstanceName)
+                .withDdpInstanceId(5)
+                .build();
+
+        Optional<StudyPostFilter> postFilter = StudyPostFilter.fromPayload(StudyPostFilterPayload.of(esDto, ddpInstanceDto));
+        postFilter.ifPresent(StudyPostFilter::filter);
+
+        assertEquals(0, esDsm.getMedicalRecord().size());
+        assertEquals(0, esDsm.getOncHistoryDetail().size());
+        assertEquals(0, esDsm.getKitRequestShipping().size());
 
     }
 }
