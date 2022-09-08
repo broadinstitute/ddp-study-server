@@ -386,7 +386,7 @@ public class KitDaoImpl implements KitDao {
     @Override
     public Optional<KitRequestShipping> getKitByDdpLabel(String ddpLabel, String kitLabel) {
         SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult(0);
+            SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_GET_KIT_BY_DDP_LABEL)) {
                 stmt.setString(1, kitLabel);
                 stmt.setString(2, ddpLabel);

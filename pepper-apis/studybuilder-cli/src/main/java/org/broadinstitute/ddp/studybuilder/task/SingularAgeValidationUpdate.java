@@ -51,6 +51,8 @@ public class SingularAgeValidationUpdate implements CustomTask {
         updateValidations(handle, builder, "CONSENT_DEPENDENT", "patches/ddp-8554-dependent-validations.conf");
         updateValidations(handle, builder, "CONSENT_PARENTAL", "patches/ddp-8554-parental-validations.conf");
         updateValidations(handle, builder, "CONSENT_SELF", "patches/ddp-8554-self-validation.conf");
+
+        updateValidations(handle, builder, "MEDICAL_RECORD_RELEASE", "patches/ddp-8705-medical-release-dob-validations.conf");
     }
 
     private void updateValidations(final Handle handle, final ActivityBuilder builder, final String activityCode, final String patchFile) {
